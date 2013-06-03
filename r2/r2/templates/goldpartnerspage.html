@@ -34,7 +34,7 @@
 </%def>
 
 <%def name="partner_item(name, how_to_use, img_src, description_md, extra_class='')">
-  <%call expr="feature_item(img_src, description_md, extra_class)">
+  <%call expr="feature_item(name, img_src, description_md, extra_class)">
     %if c.user.gold:
       <div class="how-to-use">
         ${_md(how_to_use)}

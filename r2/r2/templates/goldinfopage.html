@@ -32,8 +32,8 @@
   ${less_stylesheet('goldinfo.less')}
 </%def>
 
-<%def name="feature_item(img_src, description_md, extra_class='')">
-  <section ${tags(_class=extra_class)}>
+<%def name="feature_item(name, img_src, description_md, extra_class='')">
+  <section id="${name}" ${tags(_class=extra_class)}>
     <div class="sample"><img src="${img_src}" alt=""></div>
     <div class="description">
       %if 'new' in extra_class.split():
@@ -72,46 +72,53 @@
   <section id="about-gold">
     ${goldinfo_header(_('Make reddit better.'),
                       _('reddit gold adds shiny extra features to your account that are made possible thanks to support from people like you.'))}
-    ${feature_item(static('gold/sample-filterall.png'),
+    ${feature_item('filter-all',
+      static('gold/sample-filterall.png'),
       _(
         "# Filter specific subreddits from /r/all.\n"
         "Are there subreddits you don't want to see? Customize /r/all by removing them with a url like /r/all-operative-badger (up to ~300 removals - limited by maximum url length)."
       ))}
-    ${feature_item(static('gold/sample-butler.png'),
+    ${feature_item('username-notifications',
+      static('gold/sample-butler.png'),
       _(
         "# Notifications when you're mentioned in comments.\n"
         """Want to say "boo" when people talk about you?  """
         """Get an orangered whenever someone "/u/" mentions your username in a comment."""
       ), "new")}
-    ${feature_item(static('gold/sample-morecomments.png'),
+    ${feature_item('more-comments',
+      static('gold/sample-morecomments.png'),
       _(
         '# More subreddits and comments per page.\n'
         'Our servers work harder for gold members.  \n'
         'Subscribe to up to 100 subreddits on your front page.  \n'
         'Read comment threads 1500 comments at a time.'
       ))}
-    ${feature_item(static('gold/sample-commenthighlighting.png'),
+    ${feature_item('comment-highlighting',
+      static('gold/sample-commenthighlighting.png'),
       _(
         '# New comment highlighting.\n'
         "What's new? Highlight which comments are new since the last time you viewed a thread."
       ))}
-    ${feature_item(static('gold/sample-savecomments.png'),
+    ${feature_item('save-comments',
+      static('gold/sample-savecomments.png'),
     _(
         '# Save comments and view by subreddit.\n'
         "Save the great comments you'd like to revisit later.  \n"
         'Filter your favorite posts and comments by subreddit.'
       ))}
-    ${feature_item(static('gold/sample-adsoptions.png'),
+    ${feature_item('ads-optional',
+      static('gold/sample-adsoptions.png'),
       _(
         '# Turn off ads.\n'
         'Advertisements are optional to gold members.'
       ))}
-    ${feature_item(static('gold/sample-friends.png'),
+    ${feature_item('friend-notes',
+      static('gold/sample-friends.png'),
       _(
         '# Friends with benefits.\n'
         'Add notes to keep track of them all.'
       ))}
-    <section class="etc last">
+    <section id="other-benefits" class="etc last">
       <h1>Last, but not least:</h1>
       <ul>
         <li><strong>${_('The Lounge.')}</strong>&#32;${_('Access to a super-secret members-only community that may or may not exist.')}</li>
