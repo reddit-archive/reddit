@@ -779,14 +779,18 @@ class VAdmin(Validator):
         if not c.user_is_admin:
             abort(404, "page not found")
 
-class VAdminOrAdminSecret(VAdmin):
-    def run(self, secret):
-        '''If validation succeeds, return True if the secret was used,
-        False otherwise'''
-        if secret and constant_time_compare(secret, g.ADMINSECRET):
-            return True
-        super(VAdminOrAdminSecret, self).run()
-        return False
+def make_or_admin_secret_cls(base_cls):
+    class VOrAdminSecret(base_cls):
+        def run(self, secret=None):
+            '''If validation succeeds, return True if the secret was used,
+            False otherwise'''
+            if secret and constant_time_compare(secret, g.ADMINSECRET):
+                return True
+            super(VOrAdminSecret, self).run()
+            return False
+    return VOrAdminSecret
+
+VAdminOrAdminSecret = make_or_admin_secret_cls(VAdmin)
 
 class VVerifiedUser(VUser):
     def run(self):
@@ -812,6 +816,8 @@ class VSponsorAdmin(VVerifiedUser):
         if c.user_is_sponsor:
             return
         abort(403, 'forbidden')
+
+VSponsorAdminOrAdminSecret = make_or_admin_secret_cls(VSponsorAdmin)
 
 class VSponsor(VVerifiedUser):
     """
