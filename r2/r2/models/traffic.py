@@ -37,6 +37,7 @@ import datetime
 from pylons import g
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.schema import Column
 from sqlalchemy.sql.expression import desc, distinct
 from sqlalchemy.sql.functions import sum as sa_sum
@@ -358,10 +359,13 @@ def campaign_history(cls, codenames, start, stop):
 @memoize("traffic_last_modified", time=60 * 10)
 def get_traffic_last_modified():
     """Guess how far behind the traffic processing system is."""
-    return (Session.query(SitewidePageviews.date)
+    try:
+        return (Session.query(SitewidePageviews.date)
                    .order_by(desc(SitewidePageviews.date))
                    .limit(1)
                    .one()).date
+    except NoResultFound:
+        return datetime.datetime.min
 
 
 class SitewidePageviews(Base):
