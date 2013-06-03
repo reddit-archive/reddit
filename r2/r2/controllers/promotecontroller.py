@@ -56,6 +56,7 @@ from r2.lib.utils import make_offset_date
 from r2.lib.validator import (
     nop,
     noresponse,
+    VAccountByName,
     ValidAddress,
     validate,
     validatedForm,
@@ -89,6 +90,7 @@ from r2.models import (
     NotFound,
     PromoCampaign,
     PromotionLog,
+    PromotionWeights,
     Subreddit,
 )
 
@@ -763,27 +765,38 @@ class PromoteController(ListingController):
     @validate(VSponsorAdmin(),
               start=VDate('startdate'),
               end=VDate('enddate'),
-              link_text=nop('link_text'))
-    def GET_report(self, start, end, link_text=None):
+              link_text=nop('link_text'),
+              owner=VAccountByName('owner'))
+    def GET_report(self, start, end, link_text=None, owner=None):
         now = datetime.now(g.tz).replace(hour=0, minute=0, second=0,
                                          microsecond=0)
         end = end or now - timedelta(days=1)
         start = start or end - timedelta(days=7)
 
+        links = []
+        bad_links = []
+        owner_name = owner.name if owner else ''
+
+        if owner:
+            promo_weights = PromotionWeights.get_campaigns(start, end,
+                                                           author_id=owner._id)
+            campaign_ids = [pw.promo_idx for pw in promo_weights]
+            campaigns = PromoCampaign._byID(campaign_ids, data=True)
+            link_ids = {camp.link_id for camp in campaigns.itervalues()}
+            links.extend(Link._byID(link_ids, data=True, return_dict=False))
+
         if link_text is not None:
             id36s = link_text.replace(',', ' ').split()
             try:
-                links = Link._byID36(id36s, data=True)
+                links_from_text = Link._byID36(id36s, data=True)
             except NotFound:
-                links = {}
+                links_from_text = {}
 
-            bad_links = [id36 for id36 in id36s if id36 not in links]
-            links = links.values()
-        else:
-            links = []
-            bad_links = []
+            bad_links = [id36 for id36 in id36s if id36 not in links_from_text]
+            links.extend(links_from_text.values())
 
-        content = PromoteReport(links, link_text, bad_links, start, end)
+        content = PromoteReport(links, link_text, owner_name, bad_links, start,
+                                end)
         if c.render_style == 'csv':
             return content.as_csv()
         else:

@@ -3781,7 +3781,7 @@ class Promote_Graph(Templated):
 
 
 class PromoteReport(Templated):
-    def __init__(self, links, link_text, bad_links, start, end):
+    def __init__(self, links, link_text, owner_name, bad_links, start, end):
         self.links = links
         self.start = start
         self.end = end
@@ -3795,7 +3795,8 @@ class PromoteReport(Templated):
             self.campaign_report = None
             self.csv_url = None
 
-        Templated.__init__(self, link_text=link_text, bad_links=bad_links)
+        Templated.__init__(self, link_text=link_text, owner_name=owner_name,
+                           bad_links=bad_links)
 
     def as_csv(self):
         out = cStringIO.StringIO()
