@@ -28,7 +28,14 @@ import re
 from pylons import g
 from sqlalchemy import func
 
-from r2.models import traffic
+from r2.lib.memoize import memoize
+from r2.lib.utils import to_date, tup
+from r2.models import (
+    PromoCampaign,
+    PromotionWeights,
+    NO_TRANSACTION,
+    traffic,
+)
 from r2.models.promo_metrics import PromoMetrics
 from r2.models.subreddit import DefaultSR
 
@@ -79,3 +86,72 @@ def _min_daily_pageviews_by_sr(ndays=NDAYS_TO_QUERY, end_date=None):
         if m:
             retval[m.group(1)] = row[1]
     return retval
+
+
+def get_date_range(start, end):
+    start, end = map(to_date, [start, end])
+    dates = [start + timedelta(i) for i in xrange((end - start).days)]
+    return dates
+
+
+def get_sold_pageviews(srs, start, end):
+    srs, is_single = tup(srs, ret_is_single=True)
+    sr_names = ['' if isinstance(sr, DefaultSR) else sr.name for sr in srs]
+    dates = set(get_date_range(start, end))
+    q = (PromotionWeights.query()
+                .filter(PromotionWeights.sr_name.in_(sr_names))
+                .filter(PromotionWeights.date.in_(dates)))
+    campaign_ids = {pw.promo_idx for pw in q}
+    campaigns = PromoCampaign._byID(campaign_ids, data=True, return_dict=False)
+
+    ret = {sr.name: dict.fromkeys(dates, 0) for sr in srs}
+    for camp in campaigns:
+        if camp.trans_id == NO_TRANSACTION:
+            continue
+
+        if camp.impressions <= 0:
+            # pre-CPM campaign
+            continue
+
+        sr_name = camp.sr_name or DefaultSR.name
+        ndays = (camp.end_date - camp.start_date).days
+        daily_impressions = camp.impressions / ndays
+        camp_dates = set(get_date_range(camp.start_date, camp.end_date))
+        for date in camp_dates.intersection(dates):
+            ret[sr_name][date] += daily_impressions
+
+    if is_single:
+        return ret[srs[0].name]
+    else:
+        return ret
+
+
+def get_available_pageviews(srs, start, end, datestr=False):
+    srs, is_single = tup(srs, ret_is_single=True)
+    sr_names = [sr.name for sr in srs]
+    daily_inventory = PromoMetrics.get(MIN_DAILY_CASS_KEY, sr_names=sr_names)
+    sold_by_sr_by_date = get_sold_pageviews(srs, start, end)
+
+    datekey = lambda dt: dt.strftime('%m/%d/%Y') if datestr else dt
+
+    ret = {}
+    for sr in srs:
+        sold_by_date = sold_by_sr_by_date[sr.name]
+        ret[sr.name] = {
+            datekey(date): max(0, daily_inventory.get(sr.name, 0) - sold)
+            for date, sold in sold_by_date.iteritems()
+        }
+
+    if is_single:
+        return ret[srs[0].name]
+    else:
+        return ret
+
+
+def get_oversold(sr, start, end, daily_request):
+    available_by_date = get_available_pageviews(sr, start, end, datestr=True)
+    oversold = {}
+    for datestr, available in available_by_date.iteritems():
+        if available < daily_request:
+            oversold[datestr] = available
+    return oversold
