@@ -33,19 +33,27 @@
   ${less_stylesheet('goldinfo.less')}
 </%def>
 
-<%def name="partner_item(name, how_to_use, img_src, description_md, extra_class='')">
+<%def name="partner_item(name, how_to_use, img_src, description_md, extra_class='', button_dest=None, button_label=None)">
   <%call expr="feature_item(name, img_src, description_md, extra_class)">
     %if c.user.gold:
       <div class="how-to-use">
         ${_md(how_to_use)}
       </div>
     %endif
-    %if name in thing.existing_codes:
-      <input class="code" type="text" value="${thing.existing_codes[name]}" readonly="readonly">
-    %elif c.user.gold:
-      <a class="claim-code-button" onclick="r.gold.claim_gold_partner_deal_code(this, '${name}')">${_('claim code')}</a>
-    %else:
-      <a class="claim-code-button" href="/gold">${_('buy reddit gold')}</a>
+    %if button_dest == 'claim':
+      %if name in thing.existing_codes:
+        <input class="code" type="text" value="${thing.existing_codes[name]}" readonly="readonly">
+      %elif c.user.gold:
+        <a class="claim-code-button" onclick="r.gold.claim_gold_partner_deal_code(this, '${name}')">${button_label or _('claim code')}</a>
+      %else:
+        <a class="claim-code-button" href="/gold">${_('buy reddit gold')}</a>
+      %endif
+    %elif button_dest:
+      %if c.user.gold:
+        <a class="claim-code-button" href="${button_dest}">${button_label or _('visit partner')}</a>
+      %else:
+        <a class="claim-code-button" href="/gold">${_('buy reddit gold')}</a>
+      %endif
     %endif
   </%call>
 </%def>
@@ -60,7 +68,40 @@
                    static('gold/partner-backblaze.png'), 
                    _('# Backblaze Online Backup\n'
                      '3 months of free service from Backblaze Online Backup.'),
+                   'new',
+                   'claim')}
+
+    ${partner_item('empiremayo',
+                   _("Claim your code below, then use it during the second step of the checkout process at http://empiremayo.com."),
+                   static('gold/partner-empiremayo.png'),
+                   _('# Empire Mayonnaise\n'
+                     '15% discount (two uses per customer).'),
+                   'new',
+                   'claim')}
+
+    ${partner_item('goldbely',
+                   _("Use the button below to visit Goldbely, then click *their* button and follow the process to authorize them to verify your gold status."),
+                   static('gold/partner-goldbely.png'),
+                   _('# Goldbely Food Explorers\n'
+                     '$20 off purchases of $50 or more.'),
+                   'new',
+                   'https://www.goldbely.com/reddit-gold',
+                   _('visit Goldbely'))}
+
+    ${partner_item('uniqlo',
+                   _("Keep an eye on your reddit PMs, as once a week Uniqlo will be sending out a message to a lucky gold member. Redeem your free prize within 24 hours, and you'll be lookin' snazzy in no time!"),
+                   static('gold/partner-uniqlo.png'),
+                   _('# Uniqlo Clothing\n'
+                     'With our "Golden Tikkit" program, one lucky gold member will be getting some sweet new digs from Uniqlo every week.'),
                    'new')}
+
+    ${partner_item('urbilis',
+                   _("Claim your code below, then use it during the second step of the checkout process at http://urbilis.com."),
+                   static('gold/partner-urbilis.png'),
+                   _('# Urbilis Urban Gardening\n'
+                     '$10 off purchases of $50 or more.'),
+                   'new',
+                   'claim')}
 
     ${goldinfo_footer()}
   </section>
