@@ -30,9 +30,9 @@ from pylons.i18n import _
 
 class WikiView(Templated):
     def __init__(self, content, edit_by, edit_date, may_revise=False,
-                 page=None, diff=None, renderer=None):
+                 page=None, diff=None, renderer='wiki'):
         self.page_content_md = content
-        if not renderer or renderer == 'wiki':
+        if renderer == 'wiki':
             self.page_content = wikimarkdown(content)
         elif renderer == 'reddit':
             self.page_content = safemarkdown(content)
@@ -141,7 +141,7 @@ class WikiBasePage(Reddit):
                         **context)
 
 class WikiPageView(WikiBasePage):
-    def __init__(self, content, page, diff=None, renderer=None, **context):
+    def __init__(self, content, page, diff=None, renderer='wiki', **context):
         may_revise = context.get('may_revise')
         if not content and not context.get('alert'):
             if may_revise:

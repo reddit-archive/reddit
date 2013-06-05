@@ -571,7 +571,7 @@ class VTitle(VLength):
         }
 
 class VMarkdown(VLength):
-    def __init__(self, param, max_length = 10000, renderer=None, **kw):
+    def __init__(self, param, max_length = 10000, renderer='reddit', **kw):
         VLength.__init__(self, param, max_length, **kw)
         self.renderer = renderer
 

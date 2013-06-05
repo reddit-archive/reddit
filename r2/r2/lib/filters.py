@@ -197,11 +197,11 @@ markdown_xhtml_dtd_path = os.path.join(
 
 markdown_dtd = '<!DOCTYPE div- SYSTEM "file://%s">' % markdown_xhtml_dtd_path
 
-def markdown_souptest(text, nofollow=False, target=None, renderer=None):
+def markdown_souptest(text, nofollow=False, target=None, renderer='reddit'):
     if not text:
         return text
     
-    if not renderer or renderer == 'reddit':
+    if renderer == 'reddit':
         smd = safemarkdown(text, nofollow=nofollow, target=target)
     elif renderer == 'wiki':
         smd = wikimarkdown(text)
