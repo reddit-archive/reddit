@@ -1377,11 +1377,15 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
 
     @property
     def path(self):
-        return self._id
+        if isinstance(self.owner, Account):
+            return '/user/%(username)s/m/%(multiname)s' % {
+                'username': self.owner.name,
+                'multiname': self.name,
+            }
 
     @property
     def name(self):
-        return self.path.split('/')[-1]
+        return self._id.split('/')[-1]
 
     @property
     def analytics_name(self):
