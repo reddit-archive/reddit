@@ -366,12 +366,21 @@ r.multi.MultiAddNoticeBubble = r.ui.Bubble.extend({
 })
 
 r.multi.SubscribeButton = Backbone.View.extend({
-    initialize: function() {
+    events: {
+        'mouseenter': 'createBubble'
+    },
+
+    createBubble: function() {
+        if (this.bubble) {
+            return
+        }
+
         this.bubble = new r.multi.MultiSubscribeBubble({
             parent: this.$el,
             group: this.options.bubbleGroup,
             srName: String(this.$el.data('sr_name'))
         })
+        this.bubble.queueShow()
     }
 })
 
