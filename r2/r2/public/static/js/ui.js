@@ -234,7 +234,7 @@ r.ui.Bubble = Backbone.View.extend({
 
     hideNow: function() {
         this.cancelTimeout()
-        if (this.options.group) {
+        if (this.options.group && this.options.group.current == this) {
             this.options.group.current = null
         }
         this.$el.hide()
