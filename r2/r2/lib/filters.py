@@ -150,6 +150,7 @@ valid_link_schemes = (
     'mumble://',
     'ssh://',
     'git://',
+    'ts3server://',
 )
 
 class SouptestSaxHandler(ContentHandler):
