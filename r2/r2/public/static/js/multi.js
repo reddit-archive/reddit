@@ -370,7 +370,7 @@ r.multi.SubscribeButton = Backbone.View.extend({
         this.bubble = new r.multi.MultiSubscribeBubble({
             parent: this.$el,
             group: this.options.bubbleGroup,
-            srName: this.$el.data('sr_name')
+            srName: String(this.$el.data('sr_name'))
         })
     }
 })
