@@ -33,15 +33,6 @@ from r2.lib.emr_helpers import (EmrJob, get_compatible_jobflows,
     LIVE_STATES, COMPLETED, PENDING, NOTFOUND)
 
 
-class MemoryIntesiveBootstrap(BootstrapAction):
-    def __init__(self):
-        name = 'memory intensive'
-        path = 's3://elasticmapreduce/bootstrap-actions/' \
-               'configurations/latest/memory-intensive'
-        args = []
-        BootstrapAction.__init__(self, name, path, args)
-
-
 class TrafficBase(EmrJob):
 
     """Base class for all traffic jobs.
@@ -73,7 +64,7 @@ class TrafficBase(EmrJob):
         path = cls.BOOTSTRAP_SCRIPT
         bootstrap_action_args = [g.TRAFFIC_SRC_DIR, g.tracking_secret]
         bootstrap = BootstrapAction(name, path, bootstrap_action_args)
-        return [MemoryIntesiveBootstrap(), bootstrap]
+        return [bootstrap]
 
     @classmethod
     def _setup_steps(self):
