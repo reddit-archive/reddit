@@ -23,7 +23,14 @@
 from r2.lib.db.thing import (
     Thing, Relation, NotFound, MultiRelation, CreationError)
 from r2.lib.db.operators import desc
-from r2.lib.utils import base_url, tup, domain, title_to_url, UrlParser
+from r2.lib.utils import (
+    base_url,
+    domain,
+    timesince,
+    title_to_url,
+    tup,
+    UrlParser,
+)
 from account import Account, DeletedUser
 from subreddit import Subreddit, DomainSR
 from printable import Printable
@@ -547,13 +554,20 @@ class Link(Thing, Printable):
                 verdict = getattr(item, "verdict", None)
                 if verdict in ('admin-approved', 'mod-approved'):
                     approver = None
-                    if getattr(item, "ban_info", None):
-                        approver = item.ban_info.get("unbanner", None)
+                    baninfo = getattr(item, "ban_info", None)
+                    if baninfo:
+                        approver = baninfo.get("unbanner", None)
+                        approval_time = baninfo.get("unbanned_at", None)
 
-                    if approver:
-                        item.approval_checkmark = _("approved by %s") % approver
+                    approver = approver or _("a moderator")
+
+                    if approval_time:
+                        text = _("approved by %(who)s %(when)s ago") % {
+                                    "who": approver,
+                                    "when": timesince(approval_time)}
                     else:
-                        item.approval_checkmark = _("approved by a moderator")
+                        text = _("approved by %s") % approver
+                    item.approval_checkmark = text
 
             item.expunged = False
             if item.is_self:
