@@ -218,7 +218,7 @@ def modify_slave_count(emr_connection, jobflow_name, num_slaves=1):
 class EmrJob(object):
     def __init__(self, emr_connection, name, steps=[], setup_steps=[],
                  bootstrap_actions=[], log_uri=None, keep_alive=True,
-                 ec2_keyname=None, hadoop_version='0.20.205',
+                 ec2_keyname=None, hadoop_version='1.0.3',
                  ami_version='latest', master_instance_type='m1.small',
                  slave_instance_type='m1.small', num_slaves=1,
                  visible_to_all_users=True):
