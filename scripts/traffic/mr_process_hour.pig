@@ -11,7 +11,6 @@
 /****************************************************
  * DEFINITIONS
  ****************************************************/
-%default TEMPDIR 'hdfs:///tmp/processed_logs';
 
 -- Binaries - location is specified in traffic_bootstrap.sh
 DEFINE PARSE_HOUR `/home/hadoop/traffic/parse_hour`;
@@ -26,7 +25,6 @@ DEFINE VERIFY `/home/hadoop/traffic/verify`;
 
 -- Cleanup
 rmf $OUTPUT
-rmf $TEMPDIR
 
 /****************************************************
  * LOAD LOGFILE 
@@ -43,16 +41,9 @@ SPLIT log_parsed INTO
 
 pageviews_encrypted = FOREACH pageviews_with_path GENERATE unique_id, query;
 
--- Store intermediate results because of bug: https://issues.apache.org/jira/browse/PIG-2442
--- If/when EMR gets to 0.10 or 0.9.3 we can remove this 
-STORE pageviews_encrypted INTO '$TEMPDIR/pageviews_encrypted';
-STORE unverified_hits INTO '$TEMPDIR/unverified_hits';
-
  /****************************************************
  * PAGEVIEWS
  ****************************************************/
-
-pageviews_encrypted = LOAD '$TEMPDIR/pageviews_encrypted' AS (unique_id, query);
 
 pageviews = STREAM pageviews_encrypted THROUGH DECRYPT_USERINFO AS (unique_id, srpath, subreddit, lang, cname);
 
@@ -103,8 +94,6 @@ STORE lang_hourly_uniques INTO '$OUTPUT/lang';
  * HITS 
  ****************************************************/
 
-unverified_hits = LOAD '$TEMPDIR/unverified_hits' AS (ip, path:chararray, query, unique_id);
-
 -- process unverified hits
 verified = STREAM unverified_hits THROUGH VERIFY AS (unique_id, path:chararray, fullname, sr);
 
@@ -154,5 +143,3 @@ targeted_thing_impressions_hourly = FOREACH targeted_thing_impressions_grouped
                                              AS count;
 
 STORE targeted_thing_impressions_hourly INTO '$OUTPUT/thingtarget';
-
-rmf $TEMPDIR
