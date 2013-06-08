@@ -345,16 +345,14 @@ class IdentityJsonTemplate(ThingJsonTemplate):
         is_mod="is_mod",
         link_karma="safe_karma",
         name="name",
-        over_18="pref_over_18",
     )
-
-    @extra_oauth2_scope("privatemessages")
-    def add_message_data(self, data, thing):
-        data['has_mail'] = self.thing_attr(thing, 'has_mail')
-        data['has_mod_mail'] = self.thing_attr(thing, 'has_mod_mail')
+    _private_data_attrs = dict(over_18="pref_over_18")
 
     def raw_data(self, thing):
-        data = ThingJsonTemplate.raw_data(self, thing)
+        attrs = self._data_attrs_.copy()
+        if c.user_is_loggedin and thing._id == c.user._id:
+            attrs.update(self._private_data_attrs)
+        data = {k: self.thing_attr(thing, v) for k, v in attrs.iteritems()}
         try:
             self.add_message_data(data, thing)
         except OAuth2Scope.InsufficientScopeError:
@@ -363,38 +361,37 @@ class IdentityJsonTemplate(ThingJsonTemplate):
             pass
         return data
 
+    @extra_oauth2_scope("privatemessages")
+    def add_message_data(self, data, thing):
+        if c.user_is_loggedin and thing._id == c.user._id:
+            data['has_mail'] = self.thing_attr(thing, 'has_mail')
+            data['has_mod_mail'] = self.thing_attr(thing, 'has_mod_mail')
+
     def thing_attr(self, thing, attr):
         if attr == "is_mod":
             t = thing.lookups[0] if isinstance(thing, Wrapped) else thing
             return t.is_moderator_somewhere
-        if attr == "has_mail":
-            if c.user_is_loggedin and thing._id == c.user._id:
-                return bool(c.have_messages)
-            return None
-        if attr == "has_mod_mail":
-            if c.user_is_loggedin and thing._id == c.user._id:
-                return bool(c.have_mod_messages)
-            return None
+        elif attr == "has_mail":
+            return bool(c.have_messages)
+        elif attr == "has_mod_mail":
+            return bool(c.have_mod_messages)
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
 
 class AccountJsonTemplate(IdentityJsonTemplate):
-    _data_attrs_ = IdentityJsonTemplate.data_attrs(
-        has_mail="has_mail",
-        has_mod_mail="has_mod_mail",
-        is_friend="is_friend",
+    _data_attrs_ = IdentityJsonTemplate.data_attrs(is_friend="is_friend")
+    _private_data_attrs = dict(
+        modhash="modhash",
+        **IdentityJsonTemplate._private_data_attrs
     )
 
     def thing_attr(self, thing, attr):
         if attr == "is_friend":
             return c.user_is_loggedin and thing._id in c.user.friends
+        elif attr == "modhash":
+            return c.modhash
         return IdentityJsonTemplate.thing_attr(self, thing, attr)
 
-    def raw_data(self, thing):
-        data = ThingJsonTemplate.raw_data(self, thing)
-        if c.user_is_loggedin and thing._id == c.user._id:
-            data["modhash"] = c.modhash
-        return data
 
 class LinkJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = ThingJsonTemplate.data_attrs(
