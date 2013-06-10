@@ -3099,7 +3099,7 @@ class BannedList(UserList):
     def __init__(self, *k, **kw):
         UserList.__init__(self, *k, **kw)
         rels = getattr(c.site, 'each_%s' % self.type)
-        self.rels = OrderedDict((rel._thing2_id, rel) for rel in rels())
+        self.rels = OrderedDict((rel._thing2_id, rel) for rel in rels(data=True))
         self.cells += ('note',)
 
     def user_row(self, row_type, user, editable=True):
