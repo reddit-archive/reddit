@@ -433,6 +433,7 @@ def set_content_type():
         c.allowed_callback = callback
         c.user = UnloggedUser(get_browser_langs())
         c.user_is_loggedin = False
+        response.content_type = "application/javascript"
 
 def get_browser_langs():
     browser_langs = []
