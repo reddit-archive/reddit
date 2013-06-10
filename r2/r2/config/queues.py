@@ -75,8 +75,8 @@ def declare_queues(g):
     queues = Queues({
         "scraper_q": MessageQueue(),
         "newcomments_q": MessageQueue(),
-        "commentstree_q": MessageQueue(),
-        "commentstree_fastlane_q": MessageQueue(),
+        "commentstree_q": MessageQueue(bind_to_self=True),
+        "commentstree_fastlane_q": MessageQueue(bind_to_self=True),
         "vote_link_q": MessageQueue(bind_to_self=True),
         "vote_comment_q": MessageQueue(bind_to_self=True),
         "vote_fastlane_q": MessageQueue(bind_to_self=True),
@@ -92,13 +92,15 @@ def declare_queues(g):
                                for i in xrange(10)}
         queues.declare(sharded_vote_queues)
 
+    if g.shard_commentstree_queues:
+        sharded_commentstree_queues = {"commentstree_%d_q" % i :
+                                       MessageQueue(bind_to_self=True)
+                                       for i in xrange(10)}
+        queues.declare(sharded_commentstree_queues)
+
     queues.cloudsearch_changes << "search_changes"
     queues.scraper_q << "new_link"
-    queues.newcomments_q << ("new_comment",
-                             "new_fastlane_comment",
-                            )
-    queues.commentstree_q << "new_comment"
-    queues.commentstree_fastlane_q << "new_fastlane_comment"
+    queues.newcomments_q << "new_comment"
     queues.butler_q << ("new_comment",
                         "usertext_edited")
     return queues

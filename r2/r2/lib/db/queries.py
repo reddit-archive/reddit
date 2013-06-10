@@ -867,10 +867,15 @@ def new_comment(comment, inbox_rels):
                     not (sr.exclude_banned_modqueue and author._spam)):
                 m.insert(get_spam_filtered_comments(sr), [comment])
 
+            amqp.add_item('new_comment', comment._fullname)
+
             if utils.to36(comment.link_id) in g.live_config["fastlane_links"]:
-                amqp.add_item('new_fastlane_comment', comment._fullname)
+                amqp.add_item('commentstree_fastlane_q', comment._fullname)
+            elif g.shard_commentstree_queues:
+                amqp.add_item('commentstree_%d_q' % (comment.link_id % 10),
+                              comment._fullname)
             else:
-                amqp.add_item('new_comment', comment._fullname)
+                amqp.add_item('commentstree_q', comment._fullname)
 
             if not g.amqp_host:
                 add_comments([comment])
@@ -1385,7 +1390,7 @@ def run_commentstree(qname="commentstree_q", limit=100):
         # messages that were put into the non-fastlane queue and are causing
         # both to back up. a full recompute of the old thread will fix these
         # missed messages.
-        if qname == "commentstree_q":
+        if qname != "commentstree_fastlane_q":
             fastlaned_links = g.live_config["fastlane_links"]
             links = Link._byID([com.link_id for com in comments], data=True)
             comments = [com for com in comments

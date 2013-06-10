@@ -159,6 +159,7 @@ class Globals(object):
             'static_secure_pre_gzipped',
             'trust_local_proxies',
             'shard_link_vote_queues',
+            'shard_commentstree_queues',
         ],
 
         ConfigValue.tuple: [
