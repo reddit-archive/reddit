@@ -57,7 +57,7 @@ def cache_lists():
             continue
 
         type = getattr(sr, 'type', 'private')
-        if type not in ('public', 'restricted'):
+        if type not in ('public', 'restricted', 'gold_restricted'):
             # skips reddits that can't appear in the default list
             # because of permissions
             continue

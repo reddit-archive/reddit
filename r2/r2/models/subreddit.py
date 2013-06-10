@@ -336,6 +336,8 @@ class Subreddit(Thing, Printable):
             return True
         elif self.is_banned(user):
             return False
+        elif self.type == 'gold_restricted' and user.gold:
+            return True
         elif self.type in ('public','restricted'):
             return True
         elif self.is_moderator(user) or self.is_contributor(user):
@@ -355,6 +357,8 @@ class Subreddit(Thing, Printable):
             return True
         elif self.is_moderator(user) or self.is_contributor(user):
             #restricted/private require contributorship
+            return True
+        elif self.type == 'gold_restricted' and user.gold:
             return True
         else:
             return False
@@ -453,7 +457,8 @@ class Subreddit(Thing, Printable):
         
         if self.spammy():
             return False
-        elif self.type in ('public', 'restricted', 'archived'):
+        elif self.type in ('public', 'restricted',
+                           'gold_restricted', 'archived'):
             return True
         elif c.user_is_loggedin:
             return (self.is_contributor(user) or

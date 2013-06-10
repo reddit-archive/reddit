@@ -1704,7 +1704,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                    show_media = VBoolean('show_media'),
                    exclude_banned_modqueue = VBoolean('exclude_banned_modqueue'),
                    show_cname_sidebar = VBoolean('show_cname_sidebar'),
-                   type = VOneOf('type', ('public', 'private', 'restricted', 'archived')),
+                   type = VOneOf('type', ('public', 'private', 'restricted', 'gold_restricted', 'archived')),
                    link_type = VOneOf('link_type', ('any', 'link', 'self')),
                    submit_link_label=VLength('submit_link_label', max_length=60),
                    submit_text_label=VLength('submit_text_label', max_length=60),
@@ -1801,6 +1801,10 @@ class ApiController(RedditController, OAuth2ResourceController):
 
         can_set_archived = c.user_is_admin or (sr and sr.type == 'archived')
         if kw['type'] == 'archived' and not can_set_archived:
+            c.errors.add(errors.INVALID_OPTION, field='type')
+
+        can_set_gold_restricted = c.user_is_admin or (sr and sr.type == 'gold_restricted')
+        if kw['type'] == 'gold_restricted' and not can_set_gold_restricted:
             c.errors.add(errors.INVALID_OPTION, field='type')
 
         if not sr and form.has_errors("ratelimit", errors.RATELIMIT):

@@ -353,7 +353,9 @@ class Reddit(Templated):
                 and (c.user_is_loggedin or not g.read_only_mode)
                 and not user_banned):
             if (not isinstance(c.site, FakeSubreddit)
-                    and c.site.type in ("archived", "restricted")
+                    and c.site.type in ("archived",
+                                        "restricted",
+                                        "gold_restricted")
                     and not (c.user_is_loggedin
                              and c.site.can_submit(c.user))):
                 if c.site.type == "archived":
@@ -365,8 +367,12 @@ class Reddit(Templated):
                                       subtitles=[subtitle],
                                       show_icon=False))
                 else:
-                    subtitle = _('submission in this subreddit '
-                                 'is restricted to approved submitters.')
+                    if c.site.type == 'restricted':
+                        subtitle = _('submission in this subreddit '
+                                     'is restricted to approved submitters.')
+                    elif c.site.type == 'gold_restricted':
+                        subtitle = _('submission in this subreddit '
+                                     'is restricted to reddit gold members.')
                     ps.append(SideBox(title=_('Submissions restricted'),
                                       css_class="submit",
                                       disabled=True,

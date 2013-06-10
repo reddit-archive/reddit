@@ -133,6 +133,13 @@
                            _("anyone can view, but submissions are no longer accepted"),
                            is_archived)}
       %endif
+
+      <% is_gold_restricted = thing.site and thing.site.type == 'gold_restricted' %>
+      %if c.user_is_admin or is_gold_restricted:
+        ${utils.radio_type('type', "gold_restricted", _("gold restricted"),
+                           _("anyone can view, but only reddit gold members can submit or comment"),
+                           is_gold_restricted)}
+      %endif
       </table>
       ${error_field("INVALID_OPTION", "type")}
     </div>
