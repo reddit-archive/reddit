@@ -78,10 +78,10 @@ class UserRelManager(object):
                                  self.relation.c._name == self.name)
         return [r._thing1_id for r in q]
 
-    def by_thing(self, thing):
+    def by_thing(self, thing, **kw):
         for r in self.relation._query(self.relation.c._thing1_id == thing._id,
                                       self.relation.c._name == self.name,
-                                      sort='_date'):
+                                      sort='_date', **kw):
             r._permission_class = self.permission_class
             yield r
 
