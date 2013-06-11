@@ -327,17 +327,19 @@ r.multi.MultiDetails = Backbone.View.extend({
                 .select()
                 .focus()
 
-        this.copyForm = new r.multi.MultiCreateForm({
-            el: $copyForm,
-            navOnCreate: true,
-            createMulti: _.bind(function(name) {
-                var newMulti = new r.multi.MultiReddit({
-                    path: r.multi.mine.pathByName(name)
-                }, {isNew: true})
-                this.model.copyTo(newMulti)
-                return newMulti
-            }, this)
-        })
+        if (!this.copyForm) {
+            this.copyForm = new r.multi.MultiCreateForm({
+                el: $copyForm,
+                navOnCreate: true,
+                createMulti: _.bind(function(name) {
+                    var newMulti = new r.multi.MultiReddit({
+                        path: r.multi.mine.pathByName(name)
+                    }, {isNew: true})
+                    this.model.copyTo(newMulti)
+                    return newMulti
+                }, this)
+            })
+        }
     },
 
     deleteMulti: function() {
