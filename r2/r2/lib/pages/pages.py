@@ -3806,22 +3806,22 @@ class PromoteReport(Templated):
         writer.writerow([])
         writer.writerow((_("links"),))
         writer.writerow((
-            _("name"),
+            _("id"),
             _("owner"),
             _("comments"),
             _("upvotes"),
             _("downvotes"),
         ))
         for row in self.link_report:
-            writer.writerow((row['name'], row['owner'], row['comments'],
+            writer.writerow((row['id36'], row['owner'], row['comments'],
                              row['upvotes'], row['downvotes']))
 
         writer.writerow([])
         writer.writerow((_("campaigns"),))
         writer.writerow((
-            _("link"),
+            _("link id"),
             _("owner"),
-            _("campaign"),
+            _("campaign id"),
             _("target"),
             _("bid"),
             _("frontpage clicks"), _("frontpage impressions"),
@@ -3844,7 +3844,7 @@ class PromoteReport(Templated):
 
         for link in self.links:
             row = {
-                'name': link._fullname,
+                'id36': link._id36,
                 'owner': owners[link.author_id].name,
                 'comments': link.num_comments,
                 'upvotes': link._ups,
@@ -3909,9 +3909,9 @@ class PromoteReport(Templated):
                                   - max(camp.start_date, self.start)).days
             bid = camp.bid * (float(effective_duration) / camp_duration)
             row = {
-                'link': link._fullname,
+                'link': link._id36,
                 'owner': owners[link.author_id].name,
-                'campaign': fullname,
+                'campaign': camp._id36,
                 'target': camp.sr_name or 'frontpage',
                 'bid': format_currency(bid, 'USD', locale=c.locale),
                 'fp_impressions': fp_imps[fullname],

@@ -51,7 +51,7 @@ ${unsafe(js.use('sponsored'))}
       function(elem) { return elem; }
   </%pr:datepicker>
 
-    <h2>link names</h2>
+    <h2>link ids</h2>
     <textarea name="link_text" rows="5" cols="80">
         ${thing.link_text}
     </textarea>
@@ -70,7 +70,7 @@ ${unsafe(js.use('sponsored'))}
 <table id="link-report" class="promote-report-table">
   <thead>
     <tr>
-      <th>name</th>
+      <th>id</th>
       <th>owner</th>
       <th>comments</th>
       <th>upvotes</th>
@@ -80,7 +80,7 @@ ${unsafe(js.use('sponsored'))}
   <tbody>
     %for row in thing.link_report:
     <tr>
-      <td class="text">${row['name']}</td>
+      <td class="text">${row['id36']}</td>
       <td class="text">${row['owner']}</td>
       <td>${format_number(row['comments'])}</td>
       <td>${format_number(row['upvotes'])}</td>
@@ -106,9 +106,9 @@ ${unsafe(js.use('sponsored'))}
       <th colspan="2">total</th>
     </tr>
     <tr>
-      <th>link</th>
+      <th>link id</th>
       <th>owner</th>
-      <th>campaign</th>
+      <th>campaign id</th>
       <th>target</th>
       <th>bid</th>
       <th>clicks</th>

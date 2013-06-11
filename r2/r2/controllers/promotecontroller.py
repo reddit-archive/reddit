@@ -771,13 +771,13 @@ class PromoteController(ListingController):
         start = start or end - timedelta(days=7)
 
         if link_text is not None:
-            names = link_text.replace(',', ' ').split()
+            id36s = link_text.replace(',', ' ').split()
             try:
-                links = Link._by_fullname(names, data=True)
+                links = Link._byID36(id36s, data=True)
             except NotFound:
                 links = {}
 
-            bad_links = [name for name in names if name not in links]
+            bad_links = [id36 for id36 in id36s if id36 not in links]
             links = links.values()
         else:
             links = []
