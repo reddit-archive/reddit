@@ -46,7 +46,7 @@ textarea {
 /*UI stuff*/
 .newbutton {
     @include appearance(none);
-    border-width: 8px;
+    border: 8px solid transparent;
     @include border-image(url($static + 'border-button.png') 8 fill);
     color: white;
     font: {
@@ -708,7 +708,7 @@ body[orient="landscape"] > #topbar > h1 {
     text-align: right;
 }
 .commentcount > .comments {
-    border-width: 8px;
+    border: 8px solid transparent;
     @include border-image(url($static + 'border-button.png') 8 fill);
 
     color: white; font-family: inherit; font-size: 12px;
