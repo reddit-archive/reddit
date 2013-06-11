@@ -551,6 +551,7 @@ def ratelimit_agents():
     for s in g.agents:
         if s and user_agent and s in user_agent:
             ratelimit_agent(s)
+            return
 
 def ratelimit_throttled():
     ip = request.ip.strip()
