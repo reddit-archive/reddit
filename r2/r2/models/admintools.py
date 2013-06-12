@@ -308,7 +308,7 @@ def admin_ratelimit(user):
 def is_banned_IP(ip):
     return False
 
-def is_banned_domain(dom, ip):
+def is_banned_domain(dom):
     return None
 
 def is_shamed_domain(dom, ip):
