@@ -76,6 +76,7 @@ from r2.lib.validator import (
     VOneOf,
     VPromoCampaign,
     VRatelimit,
+    VShamedDomain,
     VSponsor,
     VSponsorAdmin,
     VSponsorAdminOrAdminSecret,
@@ -355,6 +356,7 @@ class PromoteController(ListingController):
                    VRatelimit(rate_user=True,
                               rate_ip=True,
                               prefix='create_promo_'),
+                   VShamedDomain('url'),
                    l=VLink('link_id'),
                    title=VTitle('title'),
                    url=VUrl('url', allow_self=False, lookup=False),
@@ -389,6 +391,11 @@ class PromoteController(ListingController):
 
         if not should_ratelimit:
             c.errors.remove((errors.RATELIMIT, 'ratelimit'))
+
+        # check for shame banned domains
+        if form.has_errors("url", errors.DOMAIN_BANNED):
+            g.stats.simple_event('spam.shame.link')
+            return
 
         # demangle URL in canonical way
         if url:

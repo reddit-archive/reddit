@@ -282,6 +282,7 @@ ${self.javascript_setup()}
             value="${('self' if thing.link.is_self else thing.link.url) if thing.link else ""}" class="rounded"/>
   ${error_field("NO_URL", "url", "div")}
   ${error_field("BAD_URL", "url", "div")}
+  ${error_field("DOMAIN_BANNED", "url", "div")}
   ${error_field("ALREADY_SUB", "url", "div")}
   <div class="infotext rounded">
       <p>Provide the URL of your ad.&#32;<em>No redirects please!</em></p>
