@@ -109,6 +109,16 @@ class ApiminimalController(MinimalController):
     @validatedForm()
     @api_doc(api_section.captcha)
     def POST_new_captcha(self, form, jquery, *a, **kw):
+        """
+        Responds with an `iden` of a new CAPTCHA
+
+        Use this endpoint if a user cannot read a given CAPTCHA,
+        and wishes to receive a new CAPTCHA.
+
+        To request the CAPTCHA image for an iden, use
+        [/captcha/`iden`](#GET_captcha_{iden}).
+        """
+
         iden = get_iden()
         jquery("body").captcha(iden)
         form._send_data(iden = iden) 
