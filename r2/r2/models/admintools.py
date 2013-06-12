@@ -311,7 +311,7 @@ def is_banned_IP(ip):
 def is_banned_domain(dom):
     return None
 
-def is_shamed_domain(dom, ip):
+def is_shamed_domain(dom):
     return False, None, None
 
 def valid_thing(v, karma, *a, **kw):

@@ -1211,7 +1211,7 @@ class VShamedDomain(Validator):
         if not url:
             return
 
-        is_shamed, domain, reason = is_shamed_domain(url, request.ip)
+        is_shamed, domain, reason = is_shamed_domain(url)
 
         if is_shamed:
             self.set_error(errors.DOMAIN_BANNED, dict(domain=domain,

@@ -109,7 +109,7 @@ class ToolbarController(RedditController):
             return self.redirect(link.make_permalink_slow(force_domain=True))
         
         # if the domain is shame-banned, bail out.
-        if is_shamed_domain(link.url, request.ip)[0]:
+        if is_shamed_domain(link.url)[0]:
             self.abort404()
         
         if not link.subreddit_slow.can_view(c.user):
@@ -137,7 +137,7 @@ class ToolbarController(RedditController):
             self.abort404()
 
         # if the domain is shame-banned, bail out.
-        if is_shamed_domain(path, request.ip)[0]:
+        if is_shamed_domain(path)[0]:
             self.abort404()
 
         link = utils.link_from_url(path, multiple = False)
