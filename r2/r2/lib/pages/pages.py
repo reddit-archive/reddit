@@ -1081,7 +1081,7 @@ class CommentsPanel(Templated):
 class CommentVisitsBox(Templated):
     def __init__(self, visits, *a, **kw):
         self.visits = []
-        for visit in visits:
+        for visit in reversed(visits):
             pretty = timesince(visit, precision=60)
             self.visits.append(pretty)
         Templated.__init__(self, *a, **kw)

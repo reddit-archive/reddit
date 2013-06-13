@@ -22,35 +22,20 @@
 
 <div class="rounded gold-accent comment-visits-box">
   <div class="title">
-    ${_("You've been here before. To highlight comments that were posted since one of your visits, select it below:")}
+    ${_("Highlight comments posted since previous visit:")}&#32;
+    <select id="comment-visits" onchange="highlight_new_comments(this.value)">
+      %for i, visit in enumerate(thing.visits, start=1):
+        <option value="${len(thing.visits) - i}"
+          %if i == 1:
+            selected="selected"
+          %endif
+        >${visit} ${_("ago")}</option>
+      %endfor
+      <option value="-1">${_("no highlighting")}</option>
+    </select>
   </div>
-
-  %for i, visit in enumerate(thing.visits):
-  <div>
-    <input id="comment-visits-${i}" name="comment-visits"
-           type="radio" value="${i}"
-           onclick="highlight_new_comments(this.value)"
-           %if i + 1 == len(thing.visits):
-             class="last-comment-visit"
-           %endif
-         />
-    <label for="comment-visits-${i}">
-      ${visit} ${_("ago")}
-    </label>
-  </div>
-  %endfor
-
-  <div>
-    <input id="comment-visits-none" name="comment-visits"
-           type="radio" value="-1"
-           onclick="highlight_new_comments(-1)" />
-    <label for="comment-visits-none">
-      ${_("no highlighting")}
-    </label>
-  </div>
-
 </div>
 
 <script type="text/javascript">
-  $(function() { $(".last-comment-visit").click() })
+  $(function() { highlight_new_comments(${len(thing.visits) - 1}) })
 </script>
