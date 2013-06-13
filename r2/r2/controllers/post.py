@@ -119,10 +119,14 @@ class PostController(ApiController):
         if kw.get("pref_no_profanity") or c.user.pref_no_profanity:
             kw['pref_label_nsfw'] = True
 
+        # default all the gold options to on if they don't have gold
         if not c.user.gold:
-            kw['pref_show_adbox'] = True
-            kw['pref_show_sponsors'] = True
-            kw['pref_show_sponsorships'] = True
+            for pref in ('pref_show_adbox',
+                         'pref_show_sponsors',
+                         'pref_show_sponsorships',
+                         'pref_highlight_new_comments',
+                         'pref_monitor_mentions'):
+                kw[pref] = True
 
         self.set_options(all_langs, pref_lang, **kw)
         u = UrlParser(c.site.path + "prefs")
