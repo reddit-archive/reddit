@@ -2,7 +2,6 @@
 
 command=${UPSTART_JOB#reddit-consumers-}
 for consumerpath in $REDDIT_CONSUMER_CONFIG/*; do
-    instance_count=$(cat $consumerpath)
     consumer=$(basename $consumerpath)
 
     # allow targeting which consumer the event is meant for (defaulting to 'all')
@@ -10,8 +9,19 @@ for consumerpath in $REDDIT_CONSUMER_CONFIG/*; do
         continue
     fi
 
-    for i in $(seq 1 "$instance_count"); do
-        "/sbin/$command" "reddit-consumer-$consumer" "x=$i"
+    if [ -d $consumerpath ]; then
+        types=$consumerpath/*
+    else
+        types=$consumerpath
+    fi
+
+    for typepath in $types; do
+        instance_count=$(cat $typepath)
+        type_=$(basename $typepath)
+
+        for i in $(seq 1 "$instance_count"); do
+            "/sbin/$command" "reddit-consumer-$consumer" "type=$type_" "x=$i"
+        done
     done
 done
 
