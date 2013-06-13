@@ -105,8 +105,6 @@ class Validator(object):
         param_info = {}
         for param in filter(None, tup(self.param)):
             param_info[param] = None
-        if self.docs:
-            param_info.update(self.docs)
         return param_info
 
     def __call__(self, url):
@@ -164,7 +162,10 @@ def set_api_docs(fn, simple_vals, param_vals, extra_vals=None):
     doc = fn._api_doc = getattr(fn, '_api_doc', {})
     param_info = doc.get('parameters', {})
     for validator in chain(simple_vals, param_vals.itervalues()):
-        param_info.update(validator.param_docs())
+        param_docs = validator.param_docs()
+        if validator.docs:
+            param_docs.update(validator.docs)
+        param_info.update(param_docs)
     if extra_vals:
         param_info.update(extra_vals)
     doc['parameters'] = param_info
