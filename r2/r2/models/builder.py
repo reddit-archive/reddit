@@ -267,6 +267,26 @@ class Builder(object):
                              and item.sr_id in can_own_flair_set)))):
                 w.can_flair = True
 
+            w.approval_checkmark = None
+            if w.can_ban:
+                verdict = getattr(w, "verdict", None)
+                if verdict in ('admin-approved', 'mod-approved'):
+                    approver = None
+                    baninfo = getattr(w, "ban_info", None)
+                    if baninfo:
+                        approver = baninfo.get("unbanner", None)
+                        approval_time = baninfo.get("unbanned_at", None)
+
+                    approver = approver or _("a moderator")
+
+                    if approval_time:
+                        text = _("approved by %(who)s %(when)s ago") % {
+                                    "who": approver,
+                                    "when": timesince(approval_time)}
+                    else:
+                        text = _("approved by %s") % approver
+                    w.approval_checkmark = text
+
         # recache the user object: it may be None if user is not logged in,
         # whereas now we are happy to have the UnloggedUser object
         user = c.user

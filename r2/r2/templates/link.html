@@ -25,7 +25,6 @@
    from r2.lib.template_helpers import s3_https_if_secure
    from r2.lib.pages.things import LinkButtons
    from r2.lib.pages import WrappedUser
-   from r2.lib.template_helpers import static
    from r2.lib.strings import Score, strings
 %>
  
@@ -93,13 +92,7 @@
     %if c.site.link_flair_position == 'right':
       <%call expr="flair()" />
     %endif
-    %if getattr(thing, "approval_checkmark", None):
-        <img class="approval-checkmark" title="${thing.approval_checkmark}"
-             src="${static('green-check.png')}"
-             onclick="alert('${thing.approval_checkmark}\n\n' +
-'${_("(no need to click for this info; just hover over the checkmark next time)")}')"
-           />
-    %endif
+    ${self.approval_checkmark()}
     &#32;
 
     ${self.domain()}

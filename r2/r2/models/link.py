@@ -542,32 +542,11 @@ class Link(Thing, Printable):
                 item.author = DeletedUser()
                 item.as_deleted = True
 
-            item.approval_checkmark = None
-
             item_age = datetime.now(g.tz) - item._date
             if item_age.days > g.VOTE_AGE_LIMIT and item.promoted is None:
                 item.votable = False
             else:
                 item.votable = True
-
-            if item.can_ban:
-                verdict = getattr(item, "verdict", None)
-                if verdict in ('admin-approved', 'mod-approved'):
-                    approver = None
-                    baninfo = getattr(item, "ban_info", None)
-                    if baninfo:
-                        approver = baninfo.get("unbanner", None)
-                        approval_time = baninfo.get("unbanned_at", None)
-
-                    approver = approver or _("a moderator")
-
-                    if approval_time:
-                        text = _("approved by %(who)s %(when)s ago") % {
-                                    "who": approver,
-                                    "when": timesince(approval_time)}
-                    else:
-                        text = _("approved by %s") % approver
-                    item.approval_checkmark = text
 
             item.expunged = False
             if item.is_self:
