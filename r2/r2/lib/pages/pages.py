@@ -1167,7 +1167,7 @@ class LinkInfoPage(Reddit):
             buttons.extend([info_button('comments'),
                             info_button('related')])
 
-            if not self.link.is_self and self.num_duplicates > 0:
+            if self.num_duplicates > 0:
                 buttons.append(info_button('duplicates', num=self.num_duplicates))
 
         if c.user_is_admin:

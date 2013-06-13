@@ -1030,8 +1030,12 @@ def filter_links(links, filter_spam = False, multiple = True):
 
 def url_links_builder(url, exclude=None, num=None, after=None, reverse=None,
                       count=None):
+    from r2.lib.template_helpers import add_sr
     from r2.models import IDBuilder, Link, NotFound
     from operator import attrgetter
+
+    if url.startswith('/'):
+        url = add_sr(url, force_hostname=True)
 
     try:
         links = tup(Link._by_url(url, None))

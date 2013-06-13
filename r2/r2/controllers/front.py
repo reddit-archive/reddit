@@ -759,16 +759,11 @@ class FrontController(RedditController, OAuth2ResourceController):
         if not can_view_link_comments(article):
             abort(403, 'forbidden')
 
-        # only look up duplicates if it's not a self-post
-        if not getattr(article, 'is_self', False):
-            builder = url_links_builder(article.url, exclude=article._fullname,
-                                        num=num, after=after, reverse=reverse,
-                                        count=count)
-            num_duplicates = len(builder.get_items()[0])
-            listing = LinkListing(builder).listing()
-        else:
-            num_duplicates = 0
-            listing = None
+        builder = url_links_builder(article.url, exclude=article._fullname,
+                                    num=num, after=after, reverse=reverse,
+                                    count=count)
+        num_duplicates = len(builder.get_items()[0])
+        listing = LinkListing(builder).listing()
 
         res = LinkInfoPage(link=article,
                            comment=None,
