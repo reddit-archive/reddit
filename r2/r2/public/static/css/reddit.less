@@ -5148,7 +5148,7 @@ table.calendar {
             cursor: pointer;
         }
 
-        label, .show-copy, .delete {
+        label, & > button {
             margin-right: 12px;
         }
 
@@ -5163,7 +5163,7 @@ table.calendar {
         margin-bottom: 3px;
     }
 
-    form.copy-multi {
+    form.copy-multi, form.rename-multi {
         display: none;
         margin-bottom: 10px;
 
@@ -5175,7 +5175,22 @@ table.calendar {
         button {
             .light-button;
             padding: 3px 4px;
-            background: #eeffdd;
+        }
+    }
+
+    form.copy-multi button {
+        background: #eeffdd;
+    }
+
+    form.rename-multi {
+        button {
+            background: #ffffdd;
+        }
+
+        .warning {
+            margin-top: .5em;
+            font-weight: bold;
+            color: #c2461f;
         }
     }
 

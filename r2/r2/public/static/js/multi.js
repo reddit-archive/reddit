@@ -124,6 +124,26 @@ r.multi.MultiReddit = Backbone.Model.extend({
         this.subreddits.getByName(name).destroy(options)
     },
 
+    rename: function(newPath) {
+        var deferred = new $.Deferred
+        Backbone.ajax({
+            type: 'POST',
+            url: this.url() + '/rename',
+            data: {
+                to: newPath
+            },
+            success: _.bind(function(resp) {
+                var collection = this.collection
+                this.trigger('destroy', this, this.collection)
+                var multi = r.multi.multis.reify(resp)
+                r.multi.mine.add(multi)
+                deferred.resolve(multi)
+            }, this),
+            error: _.bind(deferred.reject, deferred)
+        })
+        return deferred
+    },
+
     copyTo: function(newMulti) {
         var attrs = _.clone(this.attributes)
         delete attrs.path
@@ -216,6 +236,7 @@ r.multi.MultiDetails = Backbone.View.extend({
         'submit .add-sr': 'addSubreddit',
         'change [name="visibility"]': 'setVisibility',
         'click .show-copy': 'showCopyMulti',
+        'click .show-rename': 'showRenameMulti',
         'confirm .delete': 'deleteMulti'
     },
 
@@ -318,6 +339,8 @@ r.multi.MultiDetails = Backbone.View.extend({
     },
 
     showCopyMulti: function() {
+        this.$('form.rename-multi').hide()
+
         var $copyForm = this.$('form.copy-multi')
 
         $copyForm
@@ -328,16 +351,31 @@ r.multi.MultiDetails = Backbone.View.extend({
                 .focus()
 
         if (!this.copyForm) {
-            this.copyForm = new r.multi.MultiCreateForm({
+            this.copyForm = new r.multi.MultiCopyForm({
                 el: $copyForm,
                 navOnCreate: true,
-                createMulti: _.bind(function(name) {
-                    var newMulti = new r.multi.MultiReddit({
-                        path: r.multi.mine.pathByName(name)
-                    }, {isNew: true})
-                    this.model.copyTo(newMulti)
-                    return newMulti
-                }, this)
+                sourceMulti: this.model
+            })
+        }
+    },
+
+    showRenameMulti: function() {
+        this.$('form.copy-multi').hide()
+
+        var $renameForm = this.$('form.rename-multi')
+
+        $renameForm
+            .show()
+            .find('.multi-name')
+                .val(this.model.name())
+                .select()
+                .focus()
+
+        if (!this.renameForm) {
+            this.renameForm = new r.multi.MultiRenameForm({
+                el: $renameForm,
+                navOnCreate: true,
+                sourceMulti: this.model
             })
         }
     },
@@ -453,10 +491,6 @@ r.multi.MultiCreateForm = Backbone.View.extend({
         'submit': 'createMulti'
     },
 
-    initialize: function() {
-        this.showWorkingDeferred = _.bind(r.ui.showWorkingDeferred, this, this.$el)
-    },
-
     createMulti: function(ev) {
         ev.preventDefault()
 
@@ -466,29 +500,40 @@ r.multi.MultiCreateForm = Backbone.View.extend({
             return
         }
 
-        var newMulti
-        if (this.options.createMulti) {
-            newMulti = this.options.createMulti(name)
-        } else {
-            var newMulti = new r.multi.MultiReddit({
-                path: r.multi.mine.pathByName(name)
-            }, {isNew: true})
-        }
+        var deferred = this._createMulti(name)
 
-        r.multi.mine.create(newMulti, {
-            wait: true,
-            beforeSend: this.showWorkingDeferred,
-            success: _.bind(function(multi) {
+        deferred
+            .done(_.bind(function(multi) {
                 this.trigger('create', multi)
                 if (this.options.navOnCreate) {
                     window.location = multi.get('path') + '#created'
                 }
-            }, this),
-            error: _.bind(function(multi, xhr) {
+            }, this))
+            .fail(_.bind(function(xhr) {
                 var resp = JSON.parse(xhr.responseText)
                 this.showError(resp.explanation)
-            }, this)
+            }, this))
+
+        r.ui.showWorkingDeferred(this.$el, deferred)
+    },
+
+    _createMulti: function(name) {
+        var newMulti = new r.multi.MultiReddit({
+                path: r.multi.mine.pathByName(name)
+            }, {isNew: true})
+
+        this._alterMulti(newMulti)
+
+        var deferred = new $.Deferred
+        r.multi.mine.create(newMulti, {
+            wait: true,
+            success: _.bind(deferred.resolve, deferred),
+            error: function(multi, xhr) {
+                deferred.reject(xhr)
+            }
         })
+
+        return deferred
     },
 
     showError: function(error) {
@@ -497,6 +542,18 @@ r.multi.MultiCreateForm = Backbone.View.extend({
 
     focus: function() {
         this.$('.multi-name').focus()
+    }
+})
+
+r.multi.MultiCopyForm = r.multi.MultiCreateForm.extend({
+    _alterMulti: function(multi) {
+        this.options.sourceMulti.copyTo(multi)
+    }
+})
+
+r.multi.MultiRenameForm = r.multi.MultiCopyForm.extend({
+    _createMulti: function(name) {
+        return this.options.sourceMulti.rename(r.multi.mine.pathByName(name))
     }
 })
 

@@ -42,6 +42,9 @@
       %if thing.can_copy:
         <button class="show-copy">${_('copy')}</button>
       %endif
+      %if thing.can_rename:
+        <button class="show-rename">${_('rename')}</button>
+      %endif
       <button class="delete">${_('delete')}</button>
     %else:
       %if thing.can_copy:
@@ -54,6 +57,14 @@
     <form class="copy-multi">
       <input type="text" class="multi-name" placeholder="${_('copy name')}"><button class="copy">${_('copy')} &rsaquo;</button>
       <div class="error copy-error"></div>
+    </form>
+  %endif
+
+  %if thing.can_rename:
+    <form class="rename-multi">
+      <p class="warning">${_('warning: renaming a multi will break any links and references to the old name.')}</p>
+      <input type="text" class="multi-name" placeholder="${_('new name')}"><button class="rename">${_('rename')} &rsaquo;</button>
+      <div class="error rename-error"></div>
     </form>
   %endif
 

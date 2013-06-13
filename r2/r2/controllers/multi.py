@@ -190,6 +190,34 @@ class MultiApiController(RedditController, OAuth2ResourceController):
         """Delete a multi."""
         multi.delete()
 
+    @require_oauth2_scope("subscribe")
+    @api_doc(
+        api_section.multis,
+        uri="/api/multi/{multipath}/rename",
+    )
+    @validate(
+        VUser(),
+        VModhash(),
+        from_multi=VMultiByPath("multipath", require_edit=True),
+        to_path_info=VMultiPath("to",
+            docs={"to": "destination multireddit url path"},
+        ),
+    )
+    def POST_multi_rename(self, multi, to_path_info):
+        """Rename a multi."""
+
+        self._check_new_multi_path(to_path_info)
+
+        try:
+            LabeledMulti._byID(to_path_info['path'])
+        except tdb_cassandra.NotFound:
+            to_multi = LabeledMulti.copy(to_path_info['path'], multi)
+        else:
+            raise RedditError('MULTI_EXISTS', code=409, fields='multipath')
+
+        multi.delete()
+        return self._format_multi(to_multi)
+
     def _get_multi_subreddit(self, multi, sr):
         resp = LabeledMultiJsonTemplate.sr_props(multi, [sr])[0]
         return self.api_wrapper(resp)

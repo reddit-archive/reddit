@@ -1423,6 +1423,13 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         return obj
 
     @classmethod
+    def copy(cls, path, multi):
+        obj = cls(_id=path, **multi._t)
+        obj._commit()
+        obj._owner = multi.owner
+        return obj
+
+    @classmethod
     def sr_props_to_columns(cls, sr_props):
         columns = {}
         sr_ids = []
