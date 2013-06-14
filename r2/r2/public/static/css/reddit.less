@@ -5198,6 +5198,16 @@ table.calendar {
         }
     }
 
+    .description {
+        margin: .75em 0;
+
+        .usertext-edit, textarea {
+            // use !important to override legacy inline style width set by
+            // show_edit_usertext()
+            width: 294px !important;
+        }
+    }
+
     ul, form.add-sr {
         margin-left: 12px;
     }

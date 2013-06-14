@@ -43,6 +43,7 @@ from r2.lib.validator import (
     VModhash,
     VSRByName,
     VJSON,
+    VMarkdown,
     VMultiPath,
     VMultiByPath,
 )
@@ -129,6 +130,10 @@ class MultiApiController(RedditController, OAuth2ResourceController):
             except TooManySubredditsError as e:
                 multi._revert()
                 raise RedditError('MULTI_TOO_MANY_SUBREDDITS', code=409)
+
+        if 'description_md' in data:
+            md = VMarkdown('description_md').run(data['description_md'])
+            multi.description_md = md
 
         multi._commit()
         return multi

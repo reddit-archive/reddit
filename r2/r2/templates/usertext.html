@@ -38,7 +38,9 @@
 
 %if thing.have_form:
   <form action="#" class="${thing.css_class}"
+      %if thing.post_form:
         onsubmit="return post_form(this, '${thing.post_form}')"
+      %endif
         ${"style='display:none'" if not thing.display else ""}
         id="form-${thing.fullname + randstr(3)}">
 %else:
@@ -77,13 +79,15 @@
 
         <a href="/wiki/reddiquette" class="reddiquette" target="_blank" tabindex="100">${_('reddiquette')}</a>
 
-        ${error_field("TOO_LONG", thing.name, "span")}
-        ${error_field("RATELIMIT", "ratelimit", "span")}
-        ${error_field("NO_TEXT", thing.name, "span")}
-        ${error_field("TOO_OLD", "parent", "span")}
-        ${error_field("DELETED_COMMENT", "parent", "span")}
-        ${error_field("DELETED_LINK", "parent", "span")}
-        ${error_field("USER_BLOCKED", "parent", "span")}
+        %if thing.include_errors:
+          ${error_field("TOO_LONG", thing.name, "span")}
+          ${error_field("RATELIMIT", "ratelimit", "span")}
+          ${error_field("NO_TEXT", thing.name, "span")}
+          ${error_field("TOO_OLD", "parent", "span")}
+          ${error_field("DELETED_COMMENT", "parent", "span")}
+          ${error_field("DELETED_LINK", "parent", "span")}
+          ${error_field("USER_BLOCKED", "parent", "span")}
+        %endif
         <div class="usertext-buttons">
           ${action_button("save", "submit", "",
                           thing.creating and thing.have_form)}

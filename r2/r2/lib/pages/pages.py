@@ -1845,6 +1845,7 @@ class MultiInfoBar(Templated):
         self.can_copy = c.user_is_loggedin
         self.can_rename = c.user_is_loggedin and multi.owner == c.user
         srs.sort(key=lambda sr: sr.name.lower())
+        self.description_md = multi.description_md
         self.srs = srs
 
 
@@ -3543,7 +3544,8 @@ class UserText(CachedTemplate):
                  cloneable = False,
                  extra_css = '',
                  name = "text",
-                 expunged=False):
+                 expunged=False,
+                 include_errors=True):
 
         css_class = "usertext"
         if cloneable:
@@ -3567,7 +3569,8 @@ class UserText(CachedTemplate):
                                 cloneable = cloneable,
                                 css_class = css_class,
                                 name = name,
-                                expunged=expunged)
+                                expunged=expunged,
+                                include_errors=include_errors)
 
 class MediaEmbedBody(CachedTemplate):
     """What's rendered inside the iframe that contains media objects"""

@@ -22,7 +22,7 @@
 
 <%!
    from r2.lib.strings import strings, Score
-   from r2.lib.pages import WrappedUser, ModList
+   from r2.lib.pages import WrappedUser, ModList, UserText
  %>
 
 <%namespace file="utils.html" import="plain_link, thing_timestamp, text_with_links"/>
@@ -69,6 +69,15 @@
       <div class="error rename-error"></div>
     </form>
   %endif
+
+  <div class="description">
+    ${UserText(None, text=thing.description_md, post_form=None, editable=True, include_errors=False)}
+    %if thing.can_edit:
+      <div class="gray-buttons settings">
+        <button class="edit-description">${_('edit description')}</button>
+      </div>
+    %endif
+  </div>
 
   <h3>${unsafe(_('%(count)s subreddits in this multi:') % dict(count='<span class="count">%d</span>&#32;' % len(thing.srs)))}</h3>
   <ul class="subreddits">

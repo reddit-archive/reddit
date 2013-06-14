@@ -237,6 +237,8 @@ r.multi.MultiDetails = Backbone.View.extend({
         'change [name="visibility"]': 'setVisibility',
         'click .show-copy': 'showCopyMulti',
         'click .show-rename': 'showRenameMulti',
+        'click .edit-description': 'editDescription',
+        'submit .description': 'saveDescription',
         'confirm .delete': 'deleteMulti'
     },
 
@@ -278,6 +280,10 @@ r.multi.MultiDetails = Backbone.View.extend({
         }
 
         this.$el.toggleClass('readonly', !canEdit)
+
+        this.$('.description .usertext-body').html(
+            _.unescape(this.model.get('description_html'))
+        )
 
         this.$('.count').text(this.model.subreddits.length)
 
@@ -385,6 +391,21 @@ r.multi.MultiDetails = Backbone.View.extend({
             success: function() {
                 window.location = '/'
             }
+        })
+    },
+
+    editDescription: function() {
+        show_edit_usertext(this.$el)
+    },
+
+    saveDescription: function(ev) {
+        ev.preventDefault()
+        this.model.save({
+            'description_md': this.$('.description textarea').val()
+        }, {
+            success: _.bind(function() {
+                hide_edit_usertext(this.$el)
+            }, this)
         })
     },
 
