@@ -1197,12 +1197,6 @@ class LinkInfoPage(Reddit):
         if c.user_is_admin:
             buttons.append(NamedButton("details", dest="/details/"+self.link._fullname))
 
-        # should we show a traffic tab (promoted and author or sponsor)
-        if (self.link.promoted is not None and
-            (c.user_is_sponsor or
-             (c.user_is_loggedin and c.user._id == self.link.author_id))):
-            buttons += [info_button('traffic')]
-
         toolbar = [NavMenu(buttons, base_path = "", type="tabmenu")]
 
         if not isinstance(c.site, DefaultSR) and not c.cname:
