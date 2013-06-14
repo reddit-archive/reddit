@@ -148,6 +148,10 @@ r.multi.MultiReddit = Backbone.Model.extend({
         var attrs = _.clone(this.attributes)
         delete attrs.path
         attrs.visibility = 'private'
+        attrs.description_md = this.get('description_md') + '\n\n' + r.strings('copied_from', {
+            // ensure that linking happens (currently /user/foo is not autolinked)
+            source: '[' + this.get('path') + '](' + this.get('path') + ')'
+        })
         newMulti.set(attrs)
         return newMulti
     }
