@@ -32,9 +32,15 @@
   ${less_stylesheet('goldinfo.less')}
 </%def>
 
-<%def name="feature_item(name, img_src, description_md, extra_class='')">
+<%def name="feature_item(name, img_src, description_md, extra_class='', img_url=None)">
   <section id="${name}" ${classes(extra_class)}>
-    <div class="sample"><img src="${img_src}" alt=""></div>
+    %if img_url:
+      <a href="${img_url}">
+    %endif
+        <div class="sample"><img src="${img_src}" alt=""></div>
+    %if img_url:
+      </a>
+    %endif
     <div class="description">
       %if 'new' in extra_class.split():
         <div class="new-mark">${_('New!')}</div>

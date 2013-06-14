@@ -33,8 +33,8 @@
   ${less_stylesheet('goldinfo.less')}
 </%def>
 
-<%def name="partner_item(name, how_to_use, img_src, description_md, extra_class='', button_dest=None, button_label=None)">
-  <%call expr="feature_item(name, img_src, description_md, extra_class)">
+<%def name="partner_item(name, how_to_use, img_src, img_url=None, description_md='', extra_class='', button_dest=None, button_label=None)">
+  <%call expr="feature_item(name, img_src, description_md, extra_class, img_url)">
     %if c.user.gold:
       <div class="how-to-use">
         ${_md(how_to_use)}
@@ -67,6 +67,7 @@
     ${partner_item('backblaze',
                    _("Claim your code below, then visit https://secure.backblaze.com/gift/XXXXXXX (replacing Xs with your code), and click 'Redeem &amp; Download' to install the product and enter your email/password."),
                    static('gold/partner-backblaze.png'), 
+                   'http://backblaze.com',
                    _('# Backblaze Online Backup\n'
                      '3 months of free service from Backblaze Online Backup.'),
                    'new',
@@ -75,6 +76,7 @@
     ${partner_item('empiremayo',
                    _("Claim your code below, then use it during the second step of the checkout process at http://empiremayo.com."),
                    static('gold/partner-empiremayo.png'),
+                   'http://empiremayo.com',
                    _('# Empire Mayonnaise\n'
                      '15% discount (two uses per customer).'),
                    'new',
@@ -83,6 +85,7 @@
     ${partner_item('goldbely',
                    _("Use the button below to visit Goldbely, then click *their* button and follow the process to authorize them to verify your gold status."),
                    static('gold/partner-goldbely.png'),
+                   'http://goldbely.com',
                    _('# Goldbely Food Explorers\n'
                      '$20 off purchases of $50 or more.'),
                    'new',
@@ -92,6 +95,7 @@
     ${partner_item('uniqlo',
                    _("Keep an eye on your reddit PMs, as once a week Uniqlo will be sending out a message to a lucky gold member. Redeem your free prize within 24 hours, and you'll be lookin' snazzy in no time!"),
                    static('gold/partner-uniqlo.png'),
+                   'http://uniqlo.com/us/',
                    _('# Uniqlo Clothing\n'
                      'With our "Golden Tikkit" program, one lucky gold member will be getting some sweet new digs from Uniqlo every week.'),
                    'new')}
@@ -99,6 +103,7 @@
     ${partner_item('urbilis',
                    _("Claim your code below, then use it during the second step of the checkout process at http://urbilis.com."),
                    static('gold/partner-urbilis.png'),
+                   'http://urbilis.com',
                    _('# Urbilis Urban Gardening\n'
                      '$10 off purchases of $50 or more.'),
                    'new last',
