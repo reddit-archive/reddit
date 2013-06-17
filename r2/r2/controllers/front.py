@@ -167,6 +167,9 @@ class FrontController(RedditController, OAuth2ResourceController):
         return self.abort404()
 
     def _comment_visits(self, article, user, new_visit=None):
+        timer = g.stats.get_timer("gold.comment_visits")
+        timer.start()
+
         hc_key = "comment_visits-%s-%s" % (user.name, article._id36)
         old_visits = g.hardcache.get(hc_key, [])
 
@@ -193,6 +196,8 @@ class FrontController(RedditController, OAuth2ResourceController):
             if len(copy) > 10:
                 copy.pop(0)
             g.hardcache.set(hc_key, copy, 86400 * 2)
+
+        timer.stop()
 
         return old_visits
 
@@ -246,15 +251,7 @@ class FrontController(RedditController, OAuth2ResourceController):
             c.focal_comment = comment._id36
         elif (c.user_is_loggedin and c.user.gold and
               c.user.pref_highlight_new_comments):
-            #TODO: remove this profiling if load seems okay
-            from datetime import datetime
-            before = datetime.now(g.tz)
             previous_visits = self._comment_visits(article, c.user, c.start_time)
-            after = datetime.now(g.tz)
-            delta = (after - before)
-            msec = (delta.seconds * 1000 + delta.microseconds / 1000)
-            if msec >= 100:
-                g.log.warning("previous_visits code took %d msec" % msec)
 
         # check if we just came from the submit page
         infotext = None
