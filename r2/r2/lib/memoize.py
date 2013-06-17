@@ -29,6 +29,7 @@ from r2.lib.lock import make_lock_factory
 from pylons import g
 
 make_lock = g.make_lock
+memoizecache = g.memoizecache
 
 def memoize(iden, time = 0, stale=False, timeout=30):
     def memoize_fn(fn):
@@ -59,6 +60,7 @@ def memoize(iden, time = 0, stale=False, timeout=30):
                         res = fn(*a, **kw)
                         if res is None:
                             res = NoneResult
+                        memoizecache.set(key, res, time=time)
                         cache.set(key, res, time = time)
 
             if res == NoneResult:
