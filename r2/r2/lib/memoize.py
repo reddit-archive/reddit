@@ -22,7 +22,6 @@
 
 from hashlib import md5
 
-from r2.config import cache
 from r2.lib.filters import _force_utf8
 from r2.lib.cache import NoneResult, make_key
 from r2.lib.lock import make_lock_factory
@@ -61,7 +60,6 @@ def memoize(iden, time = 0, stale=False, timeout=30):
                         if res is None:
                             res = NoneResult
                         memoizecache.set(key, res, time=time)
-                        cache.set(key, res, time = time)
 
             if res == NoneResult:
                 res = None
