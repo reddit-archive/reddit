@@ -881,6 +881,25 @@ function save_usertext(elem) {
 
 function reply(elem) {
     var form = comment_reply_for_elem(elem);
+
+    // quote any selected text and put it in the textarea if it's empty
+    // not compatible with IE < 9
+    var textarea = form.find("textarea")
+    if (window.getSelection && textarea.val().length == 0) {
+        // check if the selection is all inside one markdown element
+        var sel = window.getSelection()
+        var focusParentDiv = $(sel.focusNode).parents(".md").first()
+        var anchorParentDiv = $(sel.anchorNode).parents(".md").first()
+        if (focusParentDiv.length && focusParentDiv.is(anchorParentDiv)) {
+            var selectedText = sel.toString()
+            if (selectedText.length > 0) {
+                selectedText = selectedText.replace(/^/gm, "> ")
+                textarea.val(selectedText+"\n\n")
+                textarea.scrollTop(textarea.scrollHeight)
+            }
+        }
+    }
+
     //show the right buttons
     show_edit_usertext(form);
     //re-show the whole form if required
