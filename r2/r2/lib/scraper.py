@@ -201,7 +201,8 @@ class Scraper:
         max_url = None
 
         if self.soup:
-            og_image = self.soup.find('meta', property='og:image')
+            og_image = (self.soup.find('meta', property='og:image') or
+                        self.soup.find('meta', attrs={'name': 'og:image'}))
             if og_image and og_image['content']:
                 log.debug("Using og:image")
                 return og_image['content']
