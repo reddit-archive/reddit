@@ -24,6 +24,7 @@
    from r2.lib.filters import safemarkdown
    from r2.lib.pages.things import MessageButtons
    from r2.lib.pages import WrappedUser
+   from r2.lib.template_helpers import static
 %>
 <%inherit file="comment_skeleton.html"/>
 <%namespace file="utils.html" import="thing_timestamp" />
@@ -38,7 +39,7 @@
 </%def>
 
 <%def name="thing_css_class(what)" buffered="True">
-${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if thing.was_comment else ""} ${"recipient" if thing.recipient else ""} ${"message-reply" if getattr(thing, "is_child", False) else ""} ${"message-parent" if getattr(thing, "is_parent", False) else ""} ${"focal" if getattr(thing, "focal", False) else ""}
+${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if thing.was_comment else ""} ${"recipient" if thing.recipient else ""} ${"message-reply" if getattr(thing, "is_child", False) else ""} ${"message-parent" if getattr(thing, "is_parent", False) else ""} ${"focal" if getattr(thing, "focal", False) else ""} ${"gold" if getattr(thing, "distinguished", "") == "gold" else ""}
 </%def>
 
 <%def name="tagline(collapse=False)">
@@ -108,6 +109,9 @@ ${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if
 </%def>
 
 <%def name="ParentDiv()">
+  %if getattr(thing, 'distinguished', '') == 'gold':
+    <div class="insignia"><img src="${static('gold/gold-insignia-big.png')}"></div>
+  %endif
 ${self.subject()}
 </%def>
 

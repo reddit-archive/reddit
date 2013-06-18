@@ -1802,6 +1802,83 @@ textarea.gray { color: gray; }
 
 .message .subject { font-weight: bold; font-size: larger; }
 
+.message.gold {
+    font-family: "Bitstream Charter", "Hoefler Text", "Palatino Linotype",
+                 "Book Antiqua", Palatino, georgia, garamond, FreeSerif, serif;
+    background: url(../gold/tikkit-bg.png);
+    max-width: 80em;
+    text-align: center;
+    padding: 20px;
+    border-radius: 4px;
+    border: 1px solid #555;
+
+    .insignia {
+        float: left;
+        margin: 6em 20px 0 20px;
+    }
+
+    .subject {
+        font-size: 2.6em;
+        line-height: 1.5em;
+        text-shadow: -1px -1px 0px rgba(255, 255, 255, 0.8);
+    }
+
+    .tagline, .correspondent, .expand-btn, .unread-button, .block-button, .report-button, ul.buttons li.first {
+        display: none;
+    }
+
+    .entry {
+        margin: 0;
+        border: 0;
+    }
+
+    .md {
+        margin: 0;
+        margin-bottom: 10px;
+        padding: 15px;
+        max-width: 100%;
+        text-shadow: 0 0 2px #fff;
+        border: 0 dashed #000;
+        border-width: 1px 0;
+    }
+
+    .md blockquote {
+        border: 0;
+        font-size: 0.7em;
+        font-style: italic;
+    }
+
+    .md p {
+        font-size: 1.2em;
+        line-height: 1.4em;
+    }
+
+    .usertext-edit {
+        margin: 0 auto;
+    }
+
+    .usertext-buttons {
+        text-align: left;
+    }
+
+    ul.buttons li a {
+        font-size: 2em;
+        text-shadow: 0 0 3px #fff;
+        color: #7a5d0e;
+    }
+
+    ul.buttons, ul.buttons li {
+        margin: 0;
+        padding: 0;
+    }
+
+    &.new > .entry {
+        background-color: transparent;
+        border: 0;
+        padding: 0;
+    }
+}
+
 .clippy img {
     float: left;
 }
