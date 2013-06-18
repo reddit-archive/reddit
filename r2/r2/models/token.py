@@ -72,6 +72,8 @@ class Token(tdb_cassandra.Thing):
 
     @classmethod
     def get_token(cls, _id):
+        if _id is None:
+            return None
         try:
             return cls._byID(_id)
         except tdb_cassandra.NotFound:
