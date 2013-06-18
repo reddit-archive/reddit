@@ -34,8 +34,8 @@ from r2.models.token import EmailVerificationToken, PasswordResetToken
 def _feedback_email(email, body, kind, name='', reply_to = ''):
     """Function for handling feedback and ad_inq emails.  Adds an
     email to the mail queue to the feedback email account."""
-    Email.handler.add_to_queue(c.user if c.user_is_loggedin else None, 
-                               g.feedback_email, name, email, 
+    Email.handler.add_to_queue(c.user if c.user_is_loggedin else None,
+                               g.feedback_email, name, email,
                                kind, body = body, reply_to = reply_to)
 
 def _system_email(email, body, kind, reply_to = "", thing = None):
@@ -107,7 +107,7 @@ def password_email(user):
 
 def feedback_email(email, body, name='', reply_to = ''):
     """Queues a feedback email to the feedback account."""
-    return _feedback_email(email, body,  Email.Kind.FEEDBACK, name = name, 
+    return _feedback_email(email, body,  Email.Kind.FEEDBACK, name = name,
                            reply_to = reply_to)
 
 def ad_inq_email(email, body, name='', reply_to = ''):
@@ -195,11 +195,11 @@ def send_queued_mail(test = False):
     finally:
         if not test:
             session.quit()
-        
+
     # clear is true if anything was found and processed above
     if clear:
         Email.handler.clear_queue(now)
-            
+
 
 
 def opt_out(msg_hash):
@@ -209,7 +209,7 @@ def opt_out(msg_hash):
     if email and added:
         _system_email(email, "", Email.Kind.OPTOUT)
     return email, added
-        
+
 def opt_in(msg_hash):
     """Queues an opt-in email (i.e., that the email has been removed
     from our opt out list)"""
@@ -232,7 +232,7 @@ def new_promo(thing):
     return _promo_email(thing, Email.Kind.NEW_PROMO)
 
 def promo_bid(thing, bid, start_date):
-    return _promo_email(thing, Email.Kind.BID_PROMO, bid = bid, 
+    return _promo_email(thing, Email.Kind.BID_PROMO, bid = bid,
                         start_date = start_date)
 
 def accept_promo(thing):
