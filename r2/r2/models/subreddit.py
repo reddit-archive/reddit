@@ -1142,7 +1142,11 @@ class DefaultSR(_DefaultSR):
     @property
     def wiki_edit_karma(self):
         return self._base.wiki_edit_karma
-    
+
+    @property
+    def wiki_edit_age(self):
+        return self._base.wiki_edit_age
+
     def is_wikicontributor(self, user):
         return self._base.is_wikicontributor(user)
     
