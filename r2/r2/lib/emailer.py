@@ -21,12 +21,13 @@
 ###############################################################################
 
 from email.MIMEText import MIMEText
-from pylons.i18n import _
-from pylons import c, g
-from r2.lib.utils import timeago, query_string, randstr
-from r2.models import passhash, Email, DefaultSR, has_opted_out, Account, Award
-import os, random, datetime
+import datetime
 import traceback, sys, smtplib
+
+from pylons import c, g
+
+from r2.lib.utils import timeago
+from r2.models import Email, DefaultSR, Account, Award
 from r2.models.token import EmailVerificationToken, PasswordResetToken
 
 
@@ -135,7 +136,7 @@ def send_queued_mail(test = False):
     """sends mail from the mail queue to smtplib for delivery.  Also,
     on successes, empties the mail queue and adds all emails to the
     sent_mail list."""
-    from r2.lib.pages import PasswordReset, Share, Mail_Opt, VerifyEmail
+    from r2.lib.pages import Share, Mail_Opt
     now = datetime.datetime.now(g.tz)
     if not c.site:
         c.site = DefaultSR()
