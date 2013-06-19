@@ -28,9 +28,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql.base import PGInet
 
 from r2.lib.db.tdb_sql import make_metadata, index_str, create_table
-from r2.lib.utils import Storage, timeago, Enum, tup
-from account import Account
-from r2.lib.db.thing import Thing
+from r2.lib.utils import Enum, tup
 from r2.lib.memoize import memoize
 from pylons import g, request
 from pylons.i18n import _
@@ -372,7 +370,6 @@ class Email(object):
 
     def set_sent(self, date = None, rejected = False):
         if not self.sent:
-            from pylons import g
             self.date = date or datetime.datetime.now(g.tz)
             t = self.handler.reject_table if rejected else self.handler.track_table
             try:
