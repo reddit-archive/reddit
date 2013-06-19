@@ -2060,6 +2060,10 @@ class PasswordReset(Templated):
     entered their user name in Password.)"""
     pass
 
+class PasswordChangeEmail(Templated):
+    """Notification e-mail that a user's password has changed."""
+    pass
+
 class VerifyEmail(Templated):
     pass
 

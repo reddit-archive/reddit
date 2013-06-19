@@ -105,6 +105,14 @@ def password_email(user):
                   Email.Kind.RESET_PASSWORD)
     return True
 
+def password_change_email(user):
+    """Queues a system email for a password change notification."""
+    from r2.lib.pages import PasswordChangeEmail
+
+    return _system_email(user.email,
+                         PasswordChangeEmail(user=user).render(style='email'),
+                         Email.Kind.PASSWORD_CHANGE)
+
 def feedback_email(email, body, name='', reply_to = ''):
     """Queues a feedback email to the feedback account."""
     return _feedback_email(email, body,  Email.Kind.FEEDBACK, name = name,
