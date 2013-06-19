@@ -957,6 +957,8 @@ class ApiController(RedditController, OAuth2ResourceController):
             not (form.has_errors("newpass", errors.BAD_PASSWORD) or
                  form.has_errors("verpass", errors.BAD_PASSWORD_MATCH))):
             change_password(c.user, password)
+            if c.user.email_verified:
+                emailer.password_change_email(c.user)
             if updated:
                 form.set_html(".status",
                               _('your email and password have been updated'))
@@ -2454,6 +2456,8 @@ class ApiController(RedditController, OAuth2ResourceController):
 
         # successfully entered user name and valid new password
         change_password(user, password)
+        if user.email_verified:
+            emailer.password_change_email(user)
         g.log.warning("%s did a password reset for %s via %s",
                       request.ip, user.name, token._id)
 
