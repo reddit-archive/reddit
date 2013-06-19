@@ -113,6 +113,14 @@ def password_change_email(user):
                          PasswordChangeEmail(user=user).render(style='email'),
                          Email.Kind.PASSWORD_CHANGE)
 
+def email_change_email(user):
+    """Queues a system email for a email change notification."""
+    from r2.lib.pages import EmailChangeEmail
+
+    return _system_email(user.email,
+                         EmailChangeEmail(user=user).render(style='email'),
+                         Email.Kind.EMAIL_CHANGE)
+
 def feedback_email(email, body, name='', reply_to = ''):
     """Queues a feedback email to the feedback account."""
     return _feedback_email(email, body,  Email.Kind.FEEDBACK, name = name,

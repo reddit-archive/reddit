@@ -2064,6 +2064,10 @@ class PasswordChangeEmail(Templated):
     """Notification e-mail that a user's password has changed."""
     pass
 
+class EmailChangeEmail(Templated):
+    """Notification e-mail that a user's e-mail has changed."""
+    pass
+
 class VerifyEmail(Templated):
     pass
 

@@ -927,6 +927,8 @@ class ApiController(RedditController, OAuth2ResourceController):
         if (not form.has_errors("email", errors.BAD_EMAILS) and
             email):
             if (not hasattr(c.user,'email') or c.user.email != email):
+                if c.user.email_verified:
+                    emailer.email_change_email(c.user)
                 c.user.email = email
                 # unverified email for now
                 c.user.email_verified = None
