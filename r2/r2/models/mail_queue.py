@@ -42,7 +42,7 @@ def mail_queue(metadata):
 
                     # unique hash of the message to carry around
                     sa.Column("msg_hash", sa.String),
-                    
+
                     # the id of the account who started it
                     sa.Column('account_id', sa.BigInteger),
 
@@ -54,13 +54,13 @@ def mail_queue(metadata):
 
                     # the "From" address of the email
                     sa.Column('fr_addr', sa.String),
-                    
+
                     # the "Reply-To" address of the email
                     sa.Column('reply_to', sa.String),
 
                     # fullname of the thing
                     sa.Column('fullname', sa.String),
-                    
+
                     # when added to the queue
                     sa.Column('date',
                               sa.DateTime(timezone = True),
@@ -71,26 +71,26 @@ def mail_queue(metadata):
 
                     # enum of kind of event
                     sa.Column('kind', sa.Integer),
-                    
+
                     # any message that may have been included
                     sa.Column('body', sa.String),
-                    
+
                     )
 
 def sent_mail_table(metadata, name = 'sent_mail'):
     return sa.Table(g.db_app_name + '_' + name, metadata,
                     # tracking hash of the email
                     sa.Column('msg_hash', sa.String, primary_key=True),
-                    
+
                     # the account who started it
                     sa.Column('account_id', sa.BigInteger),
-                    
+
                     # the "To" address of the email
                     sa.Column('to_addr', sa.String),
 
                     # the "From" address of the email
                     sa.Column('fr_addr', sa.String),
-                    
+
                     # the "reply-to" address of the email
                     sa.Column('reply_to', sa.String),
 
@@ -110,7 +110,7 @@ def sent_mail_table(metadata, name = 'sent_mail'):
                     sa.Column('kind', sa.Integer),
 
                     )
-                    
+
 
 def opt_out(metadata):
     return sa.Table(g.db_app_name + '_opt_out', metadata,
@@ -139,7 +139,7 @@ class EmailHandler(object):
 
         self.track_table = sent_mail_table(self.metadata)
         self.reject_table = sent_mail_table(self.metadata, name = "reject_mail")
-        
+
         def sent_indices(tab):
             indices = [index_str(tab, 'to_addr', 'to_addr'),
                        index_str(tab, 'date', 'date'),
@@ -149,7 +149,7 @@ class EmailHandler(object):
                        index_str(tab, 'account_id', 'account_id'),
                        index_str(tab, 'msg_hash', 'msg_hash'),
                        ]
-        
+
         create_table(self.track_table, sent_indices(self.track_table))
         create_table(self.reject_table, sent_indices(self.reject_table))
 
@@ -196,14 +196,14 @@ class EmailHandler(object):
             else:
                 return (email, False)
         return (None, False)
-        
+
     def get_recipient(self, msg_hash):
         t = self.track_table
         s = sa.select([t.c.to_addr], t.c.msg_hash == msg_hash).execute()
         res = s.fetchall()
         return res[0][0] if res and res[:1] else None
 
-        
+
     def add_to_queue(self, user, emails, from_name, fr_addr, kind,
                      date = None, ip = None,
                      body = "", reply_to = "", thing = None):
@@ -244,9 +244,9 @@ class EmailHandler(object):
                 where.append(s.c.uid > min_id)
             if kind:
                 where.append(s.c.kind == kind)
-                
+
             res = sa.select([s.c.to_addr, s.c.account_id,
-                             s.c.from_name, s.c.fullname, s.c.body, 
+                             s.c.from_name, s.c.fullname, s.c.body,
                              s.c.kind, s.c.ip, s.c.date, s.c.uid,
                              s.c.msg_hash, s.c.fr_addr, s.c.reply_to],
                             sa.and_(*where),
@@ -274,13 +274,13 @@ class EmailHandler(object):
 
             # did we not fetch them all?
             keep_trying = (len(res) == batch_limit)
-        
-            for (addr, acct, fname, fulln, body, kind, ip, date, uid, 
+
+            for (addr, acct, fname, fulln, body, kind, ip, date, uid,
                  msg_hash, fr_addr, reply_to) in res:
                 yield (accts.get(acct), things.get(fulln), addr,
                        fname, date, ip, ips[ip], kind, msg_hash, body,
                        fr_addr, reply_to)
-                
+
     def clear_queue(self, max_date, kind = None):
         s = self.queue_table
         where = [s.c.date < max_date]
@@ -345,7 +345,7 @@ class Email(object):
             self.subject = self.subject % dict(user = self.from_name())
         except UnicodeDecodeError:
             self.subject = self.subject % dict(user = "a user")
-        
+
 
     def from_name(self):
         if not self.user:
@@ -410,14 +410,14 @@ class Email(object):
                 msg['Reply-To'] = utf8(self.reply_to)
             return msg
         return None
-            
+
 @memoize('r2.models.mail_queue.has_opted_out')
 def has_opted_out(email):
     o = Email.handler.opt_table
     s = sa.select([o.c.email], o.c.email == email, limit = 1)
     res = s.execute()
     return bool(res.fetchall())
-    
+
 
 @memoize('r2.models.mail_queue.opt_count')
 def opt_count():
