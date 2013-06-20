@@ -1,3 +1,11 @@
+.transition (@property, @duration, @function: ease, @delay: 0s) {
+    -webkit-transition: @arguments;
+    -moz-transition: @arguments;
+    -o-transition: @arguments;
+    -ms-transition: @arguments;
+    transition: @arguments;
+}
+
 .transform(...) {
     -webkit-transform: @arguments;
     -moz-transform: @arguments;
@@ -94,6 +102,25 @@ section#gold-letter {
                 top: -10px;
                 font-family: sans-serif;
                 font-size: .75em;
+            }
+
+            &:after {
+                content: '';
+                display: block;
+                position: absolute;
+                top: 85px;
+                left: 310px;
+                width: 200px;
+                height: 276px;
+                background: url(../gold/sparklepants.png);
+                z-index: 100;
+                opacity: 0;
+            }
+
+            &:hover:after {
+                opacity: 1;
+                left: 210px;
+                .transition(all, 0.5s, ease, 7s);
             }
         }
     }
