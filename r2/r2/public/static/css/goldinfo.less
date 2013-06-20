@@ -6,14 +6,103 @@
     transform: @arguments;
 }
 
-section#about-gold, section#about-gold-partners, section#postcard, .or-box {
+.inset-white-with-shadow {
+    @border-radius: 6px;
+    background: white;
+    border-radius: @border-radius;
+    position: relative;
+
+    &:after {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        border-radius: @border-radius;
+        box-shadow: 0 1px 5px #735121 inset;
+    }
+}
+
+section#gold-letter, section#about-gold, section#about-gold-partners, section#postcard, .or-box {
     font-family: "Bitstream Charter", "Hoefler Text", "Palatino Linotype",
                  "Book Antiqua", Palatino, georgia, garamond, FreeSerif, serif;
 }
 
+section#gold-letter {
+    @width: 944px;
+    @padding: 13px;
+    position: relative;
+    width: @width - 2 * @padding;
+    margin: 30px auto;
+    padding: (@padding + 2) @padding;
+
+    &:before, &:after {
+        content: '';
+        position: absolute;
+        display: block;
+        height: 30px;
+        left: 0;
+        right: 0;
+        z-index: 1;
+    }
+
+    &, &:before, &:after {
+        background: url(../gold/letter-bg.png) repeat-y;
+    }
+
+    &:before {
+        top: 0;
+    }
+
+    & {
+        background-position: -@width 0;
+    }
+
+    &:after {
+        bottom: 0;
+        background-position: -(@width * 2) 0;
+    }
+
+    .letter-body {
+        position: relative;
+        z-index: 2;
+        border: 1px solid #ece9e3;
+        padding: 20px 40px;
+        background: url(../gold/letter-watermark.png) 360px -45px no-repeat;
+        font-size: 17px;
+
+        .logo {
+            margin-bottom: .5em;
+        }
+
+        p {
+            margin-bottom: 1em;
+            margin-right: 3em;
+        }
+
+        .signature {
+            text-align: right;
+            line-height: .9em;
+            margin-top: -1em;
+            margin-bottom: 0;
+            margin-right: 0;
+
+            a {
+                position: relative;
+                margin-left: -47px;
+                top: -10px;
+                font-family: sans-serif;
+                font-size: .75em;
+            }
+        }
+    }
+}
+
 section#about-gold, section#about-gold-partners {
-    width: 960px;
-    margin: 40px auto;
+    @section-width: 960px;
+    width: @section-width;
+    margin: 30px auto 40px;
     background: url(../gold/inner-bg.jpg) 11px repeat-y;
 
     h1 {
@@ -105,20 +194,67 @@ section#about-gold, section#about-gold-partners {
     }
 
     header {
-        // could use box-sizing here, but want to look semi-decent in IE7
         @width: 960px;
-        @height: 164px;
-        @padding-left: 242px;
         @padding-right: 50px;
         @padding-top: 23px;
         position: relative;
-        top: -10px;
-        width: @width - @padding-left - @padding-right;
-        height: @height - @padding-top;
-        padding-top: @padding-top;
-        padding-left: @padding-left;
-        padding-right: @padding-right;
-        background: url(../gold/header-bg.jpg) no-repeat center top;
+        z-index: 5;
+
+        &.large {
+            // could use box-sizing here, but want to look semi-decent in IE7
+            @height: 161px;
+            @padding-left: 242px;
+            top: -10px;
+            width: @width - @padding-left - @padding-right;
+            height: @height - @padding-top;
+            padding-top: @padding-top;
+            padding-left: @padding-left;
+            padding-right: @padding-right;
+            background: url(../gold/header-bg.jpg) no-repeat center top;
+
+            .actions {
+                margin-top: 10px;
+            }
+        }
+
+        &.short {
+            @height: 101px;
+            @padding-left: 42px;
+            width: @width - @padding-left - @padding-right;
+            height: @height - @padding-top;
+            padding-top: @padding-top;
+            padding-left: @padding-left;
+            padding-right: @padding-right;
+            background: url(../gold/header-bg-short.jpg) no-repeat center top;
+
+            .insignia {
+                display: none;
+            }
+
+            h1 {
+                float: left;
+                line-height: 52px;
+                margin: 0;
+            }
+
+            .actions {
+                float: right;
+            }
+        }
+
+        &:before {
+            // shadow after the header
+            @size: 40px;
+            content: '';
+            position: absolute;
+            display: block;
+            bottom: -@size + 2;
+            left: 11px;
+            right: 11px;
+            height: @size;
+            box-shadow: 0 @size @size -@size rgba(0, 0, 0, .35) inset;
+            z-index: 1;
+        }
 
         .insignia {
             position: absolute;
@@ -133,10 +269,6 @@ section#about-gold, section#about-gold-partners {
         h1 {
             font-size: 24px;
             margin-right: .5em;
-        }
-
-        .actions {
-            margin-top: 10px;
         }
 
         .or {
@@ -189,34 +321,57 @@ section#about-gold, section#about-gold-partners {
         }
 
         .sample {
-            @border-radius: 6px;
-            position: relative;
+            .inset-white-with-shadow;
             float: right;
             width: 315px;
             height: @section-height;
             margin: 0;
-            background: white;
-            border-radius: @border-radius;
             text-align: center;
 
             & img {
                 vertical-align: middle;
             }
-
-            &:after {
-                content: '';
-                position: absolute;
-                left: 0;
-                top: 0;
-                right: 0;
-                bottom: 0;
-                border-radius: @border-radius;
-                box-shadow: 0 1px 5px #735121 inset;
-            }
         }
 
-        &.lounge .sample {
-            background: white url(../gold/gold-pattern.png)
+        &#partner-benefits {
+            height: auto;
+            line-height: inherit;
+            text-align: center;
+
+            h1 {
+                text-align: center;
+            }
+
+            li {
+                display: inline-block;
+                padding: 10px;
+                margin: 10px 12px;
+                text-align: center;
+                width: 210px;
+                height: 110px;
+                font-size: 18px;
+
+                .label-container {
+                    line-height: 2em;
+                    height: 2em;
+                    margin-bottom: 8px;
+                }
+
+                .partner-label {
+                    display: inline-block;
+                    line-height: 1em;
+                    vertical-align: middle;
+                }
+
+                .logo {
+                    .inset-white-with-shadow;
+
+                    img {
+                        width: 200px;
+                        padding-top: 5px;
+                    }
+                }
+            }
         }
     }
 
@@ -231,8 +386,8 @@ section#about-gold, section#about-gold-partners {
     }
 
     footer {
-        @height: 169px;
-        @padding-top: 18px;
+        @height: 159px;
+        @padding-top: 6px;
         position: relative;
         top: 10px;
         width: 960px;
@@ -247,6 +402,20 @@ section#about-gold, section#about-gold-partners {
 
         p {
             margin-bottom: 18px;
+        }
+
+        &:after {
+            // shadow above the footer
+            @size: 10px;
+            content: '';
+            position: absolute;
+            display: block;
+            top: -@size;
+            left: 11px;
+            right: 11px;
+            height: @size;
+            box-shadow: 0 -@size @size -@size rgba(0, 0, 0, .25) inset;
+            z-index: 1;
         }
     }
 

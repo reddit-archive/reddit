@@ -61,7 +61,8 @@
 <%def name="content()">
   <section id="about-gold-partners">
     ${goldinfo_header(_('reddit gold partners'),
-                      strings.gold_partners_description)}
+                      strings.gold_partners_description,
+                      css_class='large')}
 
     ${partner_item('backblaze',
                    _("Claim your code below, then visit https://secure.backblaze.com/gift/XXXXXXX (replacing Xs with your code), and click 'Redeem &amp; Download' to install the product and enter your email/password."),
