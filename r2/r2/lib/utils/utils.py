@@ -542,7 +542,9 @@ class UrlParser(object):
         from pylons import g
         from r2.models import Subreddit, Sub, NotFound, DefaultSR
         try:
-            if not self.hostname or self.hostname.startswith(g.domain):
+            if (not self.hostname or
+                    is_subdomain(self.hostname, g.domain) or
+                    self.hostname.startswith(g.domain)):
                 if self.path.startswith('/r/'):
                     return Subreddit._by_name(self.path.split('/')[2])
                 elif self.path.startswith(('/subreddits/', '/reddits/')):
