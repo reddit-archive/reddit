@@ -45,14 +45,10 @@
         <input class="code" type="text" value="${thing.existing_codes[name]}" readonly="readonly">
       %elif c.user.gold:
         <a class="claim-code-button" onclick="r.gold.claim_gold_partner_deal_code(this, '${name}')">${button_label or _('claim code')}</a>
-      %else:
-        <a class="claim-code-button" href="/gold">${_('buy reddit gold')}</a>
       %endif
     %elif button_dest:
       %if c.user.gold:
         <a class="claim-code-button" href="${button_dest}">${button_label or _('visit partner')}</a>
-      %else:
-        <a class="claim-code-button" href="/gold">${_('buy reddit gold')}</a>
       %endif
     %endif
   </%call>
