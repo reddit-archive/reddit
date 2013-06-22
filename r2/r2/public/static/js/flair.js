@@ -50,7 +50,7 @@ $(function() {
             input.css("display", "block");
             input.val($.trim($(this).children(".flair").text())).select();
             input.keyup(function() {
-                $(".flairselection .flair").text($(input).val());
+                $(".flairselection .flair").text($(input).val()).attr("title", $(input).val());
             });
         } else {
             customizer.removeClass("texteditable");
