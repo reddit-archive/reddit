@@ -1127,12 +1127,12 @@ class _DefaultSR(FakeSubreddit):
 
 # This is the base class for the instantiated front page reddit
 class DefaultSR(_DefaultSR):
-    def __init__(self):
-        _DefaultSR.__init__(self)
+    @property
+    def _base(self):
         try:
-            self._base = Subreddit._by_name(g.default_sr, stale=True)
+            return Subreddit._by_name(g.default_sr, stale=True)
         except NotFound:
-            self._base = None
+            return None
 
     def wiki_can_submit(self, user):
         return True
