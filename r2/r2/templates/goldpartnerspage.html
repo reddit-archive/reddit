@@ -63,53 +63,53 @@
     ${partner_item('backblaze',
                    _("Claim your code below, then visit https://secure.backblaze.com/gift/XXXXXXX (replacing Xs with your code), and click 'Redeem &amp; Download' to install the product and enter your email/password."),
                    static('gold/partner-backblaze.png'), 
-                   'http://backblaze.com',
-                   _('# Backblaze Online Backup\n'
-                     '3 months of free service from Backblaze Online Backup.'),
-                   'claim')}
+                   img_url='http://backblaze.com',
+                   description_md=_('# Backblaze Online Backup\n'
+                                    '3 months of free service from Backblaze Online Backup.'),
+                   button_dest='claim')}
 
     ${partner_item('betabrand',
                    _("Presently Pantless? Get 20% off all stylish leg coverings at Betabrand.com, from Karate Casual Drawstring Trousers to Sons of Britches Jeans to Dress Pant Sweatpants. (Or enjoy your discount on any product.)"),
                    static('gold/partner-betabrand.png'), 
-                   'http://betabrand.com',
-                   _('# Betabrand Unique Online Fashions\n'
-                     '20% off any item in our collection.'),
-                   'new',
-                   'claim')}
+                   img_url='http://betabrand.com',
+                   description_md=_('# Betabrand Unique Online Fashions\n'
+                                    '20% off any item in our collection.'),
+                   extra_class='new',
+                   button_dest='claim')}
 
     ${partner_item('empiremayo',
                    _("Claim your code below, then use it during the second step of the checkout process at http://empiremayo.com."),
                    static('gold/partner-empiremayo.png'),
-                   'http://empiremayo.com',
-                   _('# Empire Mayonnaise\n'
-                     '15% discount (two uses per customer).'),
-                   'claim')}
+                   img_url='http://empiremayo.com',
+                   description_md=_('# Empire Mayonnaise\n'
+                                    '15% discount (two uses per customer).'),
+                   button_dest='claim')}
 
     ${partner_item('goldbely',
                    _("Use the button below to visit Goldbely, then click *their* button and follow the process to authorize them to verify your gold status."),
                    static('gold/partner-goldbely.png'),
-                   'http://goldbely.com',
-                   _('# Goldbely Food Explorers\n'
-                     '$20 off purchases of $50 or more.'),
+                   img_url='http://goldbely.com',
+                   description_md=_('# Goldbely Food Explorers\n'
+                                    '$20 off purchases of $50 or more.'),
                    button_dest='https://www.goldbely.com/reddit-gold',
                    button_label=_('visit Goldbely'))}
 
     ${partner_item('uniqlo',
                    _("Keep an eye on your reddit PMs, as once a week Uniqlo will be sending out a message to a lucky gold member. Redeem your free prize within 24 hours, and you'll be lookin' snazzy in no time!"),
                    static('gold/partner-uniqlo.png'),
-                   'http://uniqlo.com/us/',
-                   _('# Uniqlo Clothing\n'
-                     'With our "Golden Tikkit" program, one lucky gold member will be getting some sweet new digs from Uniqlo every week.'),
+                   img_url='http://uniqlo.com/us/',
+                   description_md=_('# Uniqlo Clothing\n'
+                                    'With our "Golden Tikkit" program, one lucky gold member will be getting some sweet new digs from Uniqlo every week.'),
                    )}
 
     ${partner_item('urbilis',
                    _("Claim your code below, then use it during the second step of the checkout process at http://urbilis.com."),
                    static('gold/partner-urbilis.png'),
-                   'http://urbilis.com',
-                   _('# Urbilis Urban Gardening\n'
-                     '$10 off purchases of $50 or more.'),
-                   'last',
-                   'claim')}
+                   img_url='http://urbilis.com',
+                   description_md=_('# Urbilis Urban Gardening\n'
+                                    '$10 off purchases of $50 or more.'),
+                   extra_class='last',
+                   button_dest='claim')}
 
     ${goldinfo_footer()}
   </section>
