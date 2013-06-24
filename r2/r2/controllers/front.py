@@ -1075,34 +1075,39 @@ class FrontController(RedditController, OAuth2ResourceController):
                             default="claimed-gold"))
     def GET_goldthanks(self, vendor):
         vendor_url = None
-        vendor_claim_msg = _("thanks for buying reddit gold! your transaction "
-                             "has been completed and emailed to you. you can "
-                             "check the details by logging into your account "
-                             "at:")
-        lounge_md = None
+        if g.lounge_reddit:
+            lounge_url = "/r/" + g.lounge_reddit
+            lounge_md = strings.lounge_msg % {'link': lounge_url}
+        else:
+            lounge_md = None
+
         if vendor == "claimed-gold":
             claim_msg = _("claimed! enjoy your reddit gold membership.")
         elif vendor == "claimed-creddits":
-            claim_msg = _("your gold creddits have been claimed!")
-            lounge_md = _("now go to someone's userpage and give "
-                          "them a present!")
+            claim_msg = _("your gold creddits have been claimed! now go to "
+                          "someone's userpage and give them a present!")
+            lounge_md = None
         elif vendor == "paypal":
-            claim_msg = vendor_claim_msg
+            claim_msg = _("thanks for buying reddit gold! your transaction "
+                          "has been completed and emailed to you. you can "
+                          "check the details by logging into your account "
+                          "at:")
             vendor_url = "https://www.paypal.com/us"
         elif vendor == "google-checkout":
-            claim_msg = vendor_claim_msg
+            claim_msg = _("thanks for buying reddit gold! your transaction "
+                          "is being processed and a receipt has been emailed "
+                          "to you. you can check the details by logging into "
+                          "your account at:")
             vendor_url = "https://wallet.google.com/manage"
+            lounge_md = None
         elif vendor == "coinbase":
             claim_msg = _("thanks for buying reddit gold! your transaction is "
                           "being processed. if you have any questions please "
                           "email us at %(gold_email)s")
             claim_msg = claim_msg % {'gold_email': g.goldthanks_email}
+            lounge_md = None
         else:
             abort(404)
-
-        if g.lounge_reddit and not lounge_md:
-            lounge_url = "/r/" + g.lounge_reddit
-            lounge_md = strings.lounge_msg % {'link': lounge_url}
 
         return BoringPage(_("thanks"), show_sidebar=False,
                           content=GoldThanks(claim_msg=claim_msg,
