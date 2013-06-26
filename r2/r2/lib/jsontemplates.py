@@ -232,9 +232,7 @@ class SubredditJsonTemplate(ThingJsonTemplate):
                                                 )
 
     def thing_attr(self, thing, attr):
-        # Don't reveal revenue information via /r/lounge's subscribers
-        if (attr == "_ups" and g.lounge_reddit
-            and thing.name == g.lounge_reddit):
+        if attr == "_ups" and thing.hide_subscribers:
             return 0
         # Don't return accounts_active counts in /subreddits
         elif (attr == "accounts_active" and isinstance(c.site, SubSR)):

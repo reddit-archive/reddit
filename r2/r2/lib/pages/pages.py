@@ -3013,7 +3013,7 @@ class ContributorList(UserList):
         return _("approved submitters for %(reddit)s") % dict(reddit = c.site.name)
 
     def user_ids(self):
-        if c.site.name == g.lounge_reddit:
+        if c.site.hide_subscribers:
             return [] # /r/lounge has too many subscribers to load without timing out,
                       # and besides, some people might not want this list to be so
                       # easily accessible.

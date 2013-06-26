@@ -103,6 +103,7 @@ class Subreddit(Thing, Printable):
                      prev_description_id = "",
                      prev_public_description_id = "",
                      allow_comment_gilding=True,
+                     hide_subscribers=False,
                      )
     _essentials = ('type', 'name', 'lang')
     _data_int_props = Thing._data_int_props + ('mod_actions', 'reported',
@@ -561,9 +562,7 @@ class Subreddit(Thing, Printable):
                                     (item.moderator or
                                      rels.get((item, user, 'contributor'))))
 
-            # Don't reveal revenue information via /r/lounge's subscribers
-            if (g.lounge_reddit and item.name == g.lounge_reddit
-                and not c.user_is_admin):
+            if item.hide_subscribers and not c.user_is_admin:
                 item._ups = 0
 
             item.score = item._ups
