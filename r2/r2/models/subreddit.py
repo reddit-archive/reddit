@@ -1471,7 +1471,7 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
 
     def del_srs(self, sr_ids):
         """Delete subreddit(s)."""
-        sr_props = dict.fromkeys(tup(sr_ids), '')
+        sr_props = dict.fromkeys(tup(sr_ids), {})
         sr_ids, sr_columns = self.sr_props_to_columns(sr_props)
 
         for key in sr_columns.iterkeys():
