@@ -21,6 +21,7 @@
 ###############################################################################
 
 from datetime import timedelta
+import itertools
 
 from r2.lib.db import tdb_cassandra
 from r2.lib.utils import tup
@@ -247,7 +248,10 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
             rowkeys = [sr._id36 for sr in srs]
             q = ModActionBySR.query(rowkeys, after=after, reverse=reverse, count=count)
         elif mod and not action:
-            rowkeys = ['%s_%s' % (sr._id36, mod._id36) for sr in srs]
+            mods = tup(mod)
+            rowkeys = itertools.product([sr._id36 for sr in srs],
+                [mod._id36 for mod in mods])
+            rowkeys = ['%s_%s' % (sr, mod) for sr, mod in rowkeys]
             q = ModActionBySRMod.query(rowkeys, after=after, reverse=reverse, count=count)
         elif not mod and action:
             rowkeys = ['%s_%s' % (sr._id36, action) for sr in srs]
