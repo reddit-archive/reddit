@@ -460,10 +460,14 @@ class FrontController(RedditController, OAuth2ResourceController):
             return self.abort404()
 
         if mod:
-            try:
-                mod = Account._by_name(mod, allow_deleted=True)
-            except NotFound:
-                mod = None
+            modnames = g.admins if mod == 'a' else (mod,)
+            mod = []
+            for name in modnames:
+                try:
+                    mod.append(Account._by_name(name, allow_deleted=True))
+                except NotFound:
+                    continue
+            mod = mod or None
 
         if isinstance(c.site, (MultiReddit, ModSR)):
             srs = Subreddit._byID(c.site.sr_ids, return_dict=False)
@@ -494,6 +498,7 @@ class FrontController(RedditController, OAuth2ResourceController):
         for mod_id in mod_ids:
             mod = mods[mod_id]
             mod_buttons.append(NavButton(mod.name, mod.name, opt='mod'))
+        mod_buttons.append(NavButton('admins*', 'a', opt='mod'))
         base_path = request.path
         menus = [NavMenu(action_buttons, base_path=base_path,
                          title=_('filter by action'), type='lightdrop', css_class='modaction-drop'),
