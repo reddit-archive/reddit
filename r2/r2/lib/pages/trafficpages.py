@@ -33,12 +33,13 @@ from babel.dates import format_datetime
 from babel.numbers import format_currency
 
 from r2.lib import promote
+from r2.lib.db.sorts import epoch_seconds
 from r2.lib.menus import menu
 from r2.lib.menus import NavButton, NamedButton, PageNameNav, NavMenu
 from r2.lib.pages.pages import Reddit, TimeSeriesChart, UserList, TabbedPane
 from r2.lib.promote import cost_per_mille, cost_per_click
 from r2.lib.template_helpers import format_number
-from r2.lib.utils import Storage, to_date
+from r2.lib.utils import Storage, to_date, timedelta_by_name
 from r2.lib.wrapped import Templated
 from r2.models import Thing, Link, PromoCampaign, traffic
 from r2.models.subreddit import Subreddit, _DefaultSR
@@ -104,6 +105,8 @@ class AdvertTrafficPage(TrafficPage):
 class RedditTraffic(Templated):
     """A generalized content pane for traffic reporting."""
 
+    make_period_link = None
+
     def __init__(self, place):
         self.place = place
 
@@ -144,7 +147,9 @@ class RedditTraffic(Templated):
                                     columns,
                                     data,
                                     self.traffic_last_modified,
-                                    classes=["traffic-table"])
+                                    classes=["traffic-table"],
+                                    make_period_link=self.make_period_link,
+                                   )
             self.tables.append(graph)
 
         try:
@@ -414,6 +419,26 @@ class SubredditTraffic(RedditTraffic):
             self.codenames = [(code,
                                AdvertTrafficSummary.split_codename(code)[1])
                                for code in codes]
+
+    @staticmethod
+    def make_period_link(interval, date):
+        date = date.replace(tzinfo=g.tz)  # won't be necessary after tz fixup
+        if interval == "month":
+            if date.month != 12:
+                end = date.replace(month=date.month + 1)
+            else:
+                end = date.replace(month=1, year=date.year + 1)
+        else:
+            end = date + timedelta_by_name(interval)
+
+        query = urllib.urlencode({
+            "syntax": "cloudsearch",
+            "restrict_sr": "on",
+            "sort": "top",
+            "q": "timestamp:{:d}..{:d}".format(int(epoch_seconds(date)),
+                                               int(epoch_seconds(end))),
+        })
+        return "/r/%s/search?%s" % (c.site.name, query)
 
     def get_dow_summary(self):
         return traffic.PageviewsBySubreddit.history("day", c.site.name)

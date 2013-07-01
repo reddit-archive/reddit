@@ -52,12 +52,18 @@
   % endif
   >
   <th data-value="${js_timestamp(date)}" scope="row">
+      % if thing.make_period_link:
+      <a href="${thing.make_period_link(thing.interval, date)}">
+      % endif
       % if thing.interval == "hour":
       ${babel.dates.format_datetime(date, format="short", locale=c.locale)}
       % elif thing.interval == "day":
       ${babel.dates.format_date(date, format="short", locale=c.locale)}
       % else:
       ${month_names[date.month]}
+      % endif
+      % if thing.make_period_link:
+      </a>
       % endif
   </th>
   % for datum in data:

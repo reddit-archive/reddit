@@ -3992,7 +3992,8 @@ class ConfirmAwardClaim(Templated):
 
 class TimeSeriesChart(Templated):
     def __init__(self, id, title, interval, columns, rows,
-                 latest_available_data=None, classes=[]):
+                 latest_available_data=None, classes=[],
+                 make_period_link=None):
         self.id = id
         self.title = title
         self.interval = interval
@@ -4001,6 +4002,7 @@ class TimeSeriesChart(Templated):
         self.latest_available_data = (latest_available_data or
                                       datetime.datetime.utcnow())
         self.classes = " ".join(classes)
+        self.make_period_link = make_period_link
 
         Templated.__init__(self)
 
