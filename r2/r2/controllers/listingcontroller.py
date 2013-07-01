@@ -514,7 +514,8 @@ class ByIDController(ListingController):
         return self.names
 
     @require_oauth2_scope("read")
-    @validate(links = VByName("names", thing_cls = Link, multiple = True))
+    @validate(links=VByName("names", thing_cls=Link,
+                            ignore_missing=True, multiple=True))
     def GET_listing(self, links, **env):
         if not links:
             return self.abort404()
