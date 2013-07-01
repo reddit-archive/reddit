@@ -1204,6 +1204,10 @@ class LinkInfoPage(Reddit):
     def page_classes(self):
         classes = Reddit.page_classes(self)
 
+        if self.link.flair_css_class:
+            for css_class in self.link.flair_css_class.split():
+                classes.add('linkflair-' + css_class)
+
         if c.user_is_loggedin and self.link.author == c.user:
             classes.add("post-submitter")
 
