@@ -90,6 +90,7 @@ class LogQueueErrorReporter(Reporter):
         import r2.lib.lock
 
         return (
+            SystemExit,  # gunicorn is shutting us down
             _pylibmc.MemcachedError,
             r2.lib.db.thing.NotFound,
             r2.lib.lock.TimeoutExpired,
