@@ -65,15 +65,24 @@
                    static('gold/partner-backblaze.png'), 
                    img_url='http://backblaze.com',
                    description_md=_('# Backblaze Online Backup\n'
-                                    '3 months of free service from Backblaze Online Backup.'),
+                                    '3 months of free service (new accounts only).'),
+                   button_dest='claim')}
+
+    ${partner_item('bartsbakery',
+                   _("Claim your code below, then enter it as a Coupon code in your cart at http://bartsbakery.com to get 20% off any product."),
+                   static('gold/partner-bartsbakery.png'), 
+                   img_url='http://bartsbakery.com',
+                   description_md=_("# Bart's Bakery Chocolate Chip Cookies\n"
+                                    'Cookies. Really good cookies. 20% off any product.'),
+                   extra_class='new',
                    button_dest='claim')}
 
     ${partner_item('betabrand',
-                   _("Presently Pantless? Get 20% off all stylish leg coverings at Betabrand.com, from Karate Casual Drawstring Trousers to Sons of Britches Jeans to Dress Pant Sweatpants. (Or enjoy your discount on any product.)"),
+                   _("Claim your code below, then enter it as a Gift code in your cart at http://betabrand.com to get 20% off."),
                    static('gold/partner-betabrand.png'), 
                    img_url='http://betabrand.com',
                    description_md=_('# Betabrand Unique Online Fashions\n'
-                                    '20% off any item in our collection.'),
+                                    'Presently Pantless? Get 20% off any item in our collection.'),
                    extra_class='new',
                    button_dest='claim')}
 
@@ -82,7 +91,7 @@
                    static('gold/partner-empiremayo.png'),
                    img_url='http://empiremayo.com',
                    description_md=_('# Empire Mayonnaise\n'
-                                    '15% discount (two uses per customer).'),
+                                    'Exquisite mayonnaises. 15% discount (two uses per customer).'),
                    button_dest='claim')}
 
     ${partner_item('goldbely',
@@ -90,9 +99,44 @@
                    static('gold/partner-goldbely.png'),
                    img_url='http://goldbely.com',
                    description_md=_('# Goldbely Food Explorers\n'
-                                    '$20 off purchases of $50 or more.'),
+                                    'Gourmet dishes, delivered. $20 off purchases of $50 or more.'),
                    button_dest='https://www.goldbely.com/reddit-gold',
                    button_label=_('visit Goldbely'))}
+
+    ${partner_item('ifixit',
+                   _("Claim your code below, then enter it as a Coupon Code in your cart at http://ifixit.com for $20 off a $50+ order."),
+                   static('gold/partner-ifixit.png'),
+                   img_url='http://ifixit.com',
+                   description_md=_('# iFixit\n'
+                                    'Guides, parts and tools for repairs. $20 off purchases of $50 or more.'),
+                   extra_class='new',
+                   button_dest='claim')}
+
+    ${partner_item('outgrowme',
+                   _("Claim your code below, then use it during the second step of the checkout process at http://outgrow.me/gold."),
+                   static('gold/partner-outgrowme.png'),
+                   img_url='http://outgrow.me/gold',
+                   description_md=_('# Outgrow.me Marketplace\n'
+                                    'Successful crowd-funded items. 15% discount.'),
+                   extra_class='new',
+                   button_dest='claim')}
+
+    ${partner_item('redditgifts',
+                   _("Watch your reddit PMs to see if you're one of the lucky Golden Tikkit recipients!"),
+                   static('gold/partner-redditgifts.png'), 
+                   img_url='http://redditgifts.com',
+                   description_md=_('# redditgifts marketplace\n'
+                                    'With our "Golden Tikkit" program, five lucky gold members will be getting a t-shirt and 3 months of redditgifts Elves every week.'),
+                   extra_class='new')}
+
+    ${partner_item('uber',
+                   _("Claim your code below, then visit http://uber.com/app and enter the code while signing up."),
+                   static('gold/partner-uber.png'),
+                   img_url='http://uber.com',
+                   description_md=_('# Uber Private Car Service\n'
+                                    'Black car service requested via mobile app. $25 off your first ride (valid only in the US).'),
+                   extra_class='new',
+                   button_dest='claim')}
 
     ${partner_item('uniqlo',
                    _("Keep an eye on your reddit PMs, as once a week Uniqlo will be sending out a message to a lucky gold member. Redeem your free prize within 24 hours, and you'll be lookin' snazzy in no time!"),
@@ -107,7 +151,7 @@
                    static('gold/partner-urbilis.png'),
                    img_url='http://urbilis.com',
                    description_md=_('# Urbilis Urban Gardening\n'
-                                    '$10 off purchases of $50 or more.'),
+                                    'Creative & elegant gardening solutions. $10 off purchases of $50 or more.'),
                    button_dest='claim')}
 
     <section id="terms" class="etc last">
