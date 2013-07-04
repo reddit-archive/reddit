@@ -20,8 +20,9 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-import datetime
 import re
+
+from r2.lib.utils import timeinterval_fromstr
 
 
 class ConfigValue(object):
@@ -71,8 +72,8 @@ class ConfigValue(object):
         return (x.strip() for x in v.split(delim) if x)
 
     @staticmethod
-    def days(v, key=None, data=None):
-        return datetime.timedelta(int(v))
+    def timeinterval(v, key=None, data=None):
+        return timeinterval_fromstr(v)
 
     messages_re = re.compile(r'"([^"]+)"')
     @staticmethod
