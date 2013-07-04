@@ -346,10 +346,6 @@ class CloudSearchUploader(object):
                 fullnames.add(item['fullname'])
         return fullnames
 
-    @classmethod
-    def desired_things(cls, things):
-        return [t for t in things if isinstance(t, cls.types)]
-
     def _version_tenths(self):
         '''Cloudsearch documents don't update unless the sent "version" field
         is higher than the one currently indexed. As our documents don't have
