@@ -53,7 +53,8 @@ special_pages = ('config/stylesheet', 'config/sidebar', 'config/description')
 # Pages which have a special length restrictions (In bytes)
 special_length_restrictions_bytes = {'config/stylesheet': 128*1024, 'config/sidebar': 5120, 'config/description': 500}
 
-modactions = {'config/sidebar': "Updated subreddit sidebar"}
+modactions = {'config/sidebar': "Updated subreddit sidebar",
+              'config/description': "Updated subreddit description"}
 
 # Page "index" in the subreddit "reddit.com" and a seperator of "\t" becomes:
 #   "reddit.com\tindex"
