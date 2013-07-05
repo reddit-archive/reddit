@@ -1585,7 +1585,7 @@ class VOneOf(Validator):
 
     def run(self, val):
         if self.options and val not in self.options:
-            self.set_error(errors.INVALID_OPTION)
+            self.set_error(errors.INVALID_OPTION, code=400)
             return self.default
         else:
             return val
