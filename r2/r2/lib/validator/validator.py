@@ -2185,6 +2185,46 @@ class VJSON(Validator):
         }
 
 
+class VValidatedJSON(VJSON):
+    def __init__(self, param, spec, **kw):
+        VJSON.__init__(self, param, **kw)
+        self.spec = spec
+
+    def run(self, json_str):
+        data = VJSON.run(self, json_str)
+        if not data:
+            return
+
+        # Note: this relies on the fact that all validator errors are dumped
+        # into a global (c.errors) and then checked by @validate.
+        validated_data = {}
+        for key, validator in self.spec.iteritems():
+            validated_data[key] = validator.run(data[key])
+
+        return validated_data
+
+    def param_docs(self):
+        spec_docs = {}
+        for validator in self.spec.itervalues():
+            spec_docs.update(validator.param_docs())
+            if validator.docs:
+                spec_docs.update(validator.docs)
+
+        # generate markdown json schema docs
+        spec_lines = []
+        spec_lines.append('{')
+        for key in sorted(spec_docs.keys()):
+            spec_lines.append('  "%s": <%s>' % (key, spec_docs[key]))
+        spec_lines.append('}')
+        spec_md = "json data:\n\n" + "\n".join(
+            '    ' + line for line in spec_lines
+        )
+
+        return {
+            self.param: spec_md,
+        }
+
+
 multi_name_rx = re.compile(r"\A[A-Za-z0-9][A-Za-z0-9_]{1,20}\Z")
 multi_name_chars_rx = re.compile(r"[^A-Za-z0-9_]")
 

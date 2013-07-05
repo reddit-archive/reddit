@@ -38,11 +38,13 @@ from r2.models.subreddit import (
 from r2.lib.db import tdb_cassandra
 from r2.lib.wrapped import Wrapped
 from r2.lib.validator import (
+    nop,
     validate,
     VUser,
     VModhash,
+    VOneOf,
     VSRByName,
-    VJSON,
+    VValidatedJSON,
     VMarkdown,
     VMultiPath,
     VMultiByPath,
@@ -51,6 +53,12 @@ from r2.lib.pages.things import wrap_things
 from r2.lib.jsontemplates import LabeledMultiJsonTemplate
 from r2.lib.errors import errors, reddit_http_error, RedditError
 from r2.lib.base import abort
+
+
+multi_json_spec = {
+    'visibility': VOneOf('visibility', ('private', 'public')),
+    'subreddits': nop('subreddits', docs={'subreddits': 'subreddit data'}),
+}
 
 
 class MultiApiController(RedditController, OAuth2ResourceController):
@@ -97,40 +105,33 @@ class MultiApiController(RedditController, OAuth2ResourceController):
                               fields='multipath')
 
     def _write_multi_data(self, multi, data):
-        if 'visibility' in data:
-            if data['visibility'] not in ('private', 'public'):
-                raise RedditError('INVALID_OPTION', code=400, fields="data")
-            multi.visibility = data['visibility']
+        multi.visibility = data['visibility']
 
-        if 'subreddits' in data:
-            multi.clear_srs()
-            srs = Subreddit._by_name(sr['name'] for sr in data['subreddits'])
+        # multi subreddits
+        multi.clear_srs()
+        srs = Subreddit._by_name(sr['name'] for sr in data['subreddits'])
 
-            for sr in srs.itervalues():
-                if isinstance(sr, FakeSubreddit):
-                    multi._revert()
-                    raise RedditError('MULTI_SPECIAL_SUBREDDIT',
-                                      msg_params={'path': sr.path},
-                                      code=400)
-
-            sr_props = {}
-            for sr_data in data['subreddits']:
-                try:
-                    sr = srs[sr_data['name']]
-                except KeyError:
-                    raise RedditError('SUBREDDIT_NOEXIST', code=400)
-                else:
-                    sr_props[sr] = sr_data
-
-            try:
-                multi.add_srs(sr_props)
-            except TooManySubredditsError as e:
+        for sr in srs.itervalues():
+            if isinstance(sr, FakeSubreddit):
                 multi._revert()
-                raise RedditError('MULTI_TOO_MANY_SUBREDDITS', code=409)
+                raise RedditError('MULTI_SPECIAL_SUBREDDIT',
+                                  msg_params={'path': sr.path},
+                                  code=400)
 
-        if 'description_md' in data:
-            md = VMarkdown('description_md').run(data['description_md'])
-            multi.description_md = md
+        sr_props = {}
+        for sr_data in data['subreddits']:
+            try:
+                sr = srs[sr_data['name']]
+            except KeyError:
+                raise RedditError('SUBREDDIT_NOEXIST', code=400)
+            else:
+                sr_props[sr] = sr_data
+
+        try:
+            multi.add_srs(sr_props)
+        except TooManySubredditsError as e:
+            multi._revert()
+            raise RedditError('MULTI_TOO_MANY_SUBREDDITS', code=409)
 
         multi._commit()
         return multi
@@ -141,7 +142,7 @@ class MultiApiController(RedditController, OAuth2ResourceController):
         VUser(),
         VModhash(),
         path_info=VMultiPath("multipath"),
-        data=VJSON("model"),
+        data=VValidatedJSON("model", multi_json_spec),
     )
     def POST_multi(self, path_info, data):
         """Create a multi. Responds with 409 Conflict if it already exists."""
@@ -165,7 +166,7 @@ class MultiApiController(RedditController, OAuth2ResourceController):
         VUser(),
         VModhash(),
         path_info=VMultiPath("multipath"),
-        data=VJSON("model"),
+        data=VValidatedJSON("model", multi_json_spec),
     )
     def PUT_multi(self, path_info, data):
         """Create or update a multi."""

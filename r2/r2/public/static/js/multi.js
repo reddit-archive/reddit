@@ -57,6 +57,10 @@ r.multi.MultiReddit = Backbone.Model.extend({
         return r.utils.joinURLs('/api/multi', this.id)
     },
 
+    defaults: {
+        visibility: 'private'
+    },
+
     initialize: function(attributes, options) {
         this.uncreated = options && !!options.isNew
         this.subreddits = new r.multi.MultiRedditList(this.get('subreddits'), {parse: true})
