@@ -1419,7 +1419,13 @@ class Message(Thing, Printable):
             else:
                 taglinetext = _("to %(dest)s from %(author)s sent %(when)s ago")
             item.taglinetext = taglinetext
-            item.dest = item.to.name if item.to else ""
+            if item.to:
+                if item.to._deleted:
+                    item.dest = "[deleted]"
+                else:
+                    item.dest = item.to.name
+            else:
+                item.dest = ""
             if item.sr_id:
                 if item.hide_author:
                     item.updated_author = _("via %(subreddit)s")
