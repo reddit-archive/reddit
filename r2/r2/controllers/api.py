@@ -726,22 +726,29 @@ class ApiController(RedditController, OAuth2ResourceController):
             if not container:
                 return
 
+        # Don't let banned users make subreddit access changes
+        if type in self._sr_friend_types and c.user._spam:
+            return
+
         if type == "moderator" and not c.user_is_admin:
             # attempts to add moderators now create moderator invites.
             type = "moderator_invite"
 
         fn = getattr(container, 'add_' + type)
 
-        # The user who made the request must be an admin or a moderator
-        # for the privilege change to succeed.
-        perm = 'wiki' if type.startswith('wiki') else 'access'
-        if (not c.user_is_admin
-                and type in self._sr_friend_types
-                and (not container.is_moderator_with_perms(c.user, perm)
-                     or c.user._spam)):
-            if c.user._spam:
-                return
+        # Make sure the user making the request has the correct permissions
+        # to be able to make this status change
+        if type in self._sr_friend_types:
+            if c.user_is_admin:
+                has_perms = True
+            elif type.startswith('wiki'):
+                has_perms = container.is_moderator_with_perms(c.user, 'wiki')
+            elif type == 'moderator_invite':
+                has_perms = container.is_unlimited_moderator(c.user)
             else:
+                has_perms = container.is_moderator_with_perms(c.user, 'access')
+
+            if not has_perms:
                 abort(403, 'forbidden')
 
         if type in self._sr_friend_types and not c.user_is_admin:
