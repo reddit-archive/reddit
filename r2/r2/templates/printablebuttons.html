@@ -146,7 +146,9 @@
       %endif
     </span>
 
-    ${ignore_reports_toggle(thing)}
+    %if not thing._spam:
+      ${ignore_reports_toggle(thing)}
+    %endif
 
     &#32;
     <span class="status-msg spammed">
