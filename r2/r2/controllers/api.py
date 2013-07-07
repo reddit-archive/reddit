@@ -3162,7 +3162,10 @@ class ApiController(RedditController, OAuth2ResourceController):
 
         wrapped = wrap_links(link)
         wrapped = list(wrapped)[0]
-        return websafe(spaceCompress(wrapped.link_child.content()))
+        link_child = wrapped.link_child
+        if not link_child:
+            abort(404, 'not found')
+        return websafe(spaceCompress(link_child.content()))
 
     @validatedForm(VUser('password', default=''),
                    VModhash(),
