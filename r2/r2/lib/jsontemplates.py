@@ -231,6 +231,14 @@ class SubredditJsonTemplate(ThingJsonTemplate):
                                                 accounts_active = "accounts_active",
                                                 )
 
+    def raw_data(self, thing):
+        data = ThingJsonTemplate.raw_data(self, thing)
+        permissions = getattr(thing, 'mod_permissions', None)
+        if permissions:
+            permissions = [perm for perm, has in permissions.iteritems() if has]
+            data['mod_permissions'] = permissions
+        return data
+
     def thing_attr(self, thing, attr):
         if attr == "_ups" and thing.hide_subscribers:
             return 0

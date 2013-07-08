@@ -1005,6 +1005,14 @@ class MyredditsController(ListingController, OAuth2ResourceController):
     def title(self):
         return _('subreddits: ') + self.where
 
+    def builder_wrapper(self, thing):
+        w = ListingController.builder_wrapper(thing)
+        if self.where == 'moderator':
+            is_moderator = thing.is_moderator(c.user)
+            if is_moderator:
+                w.mod_permissions = is_moderator.get_permissions()
+        return w
+
     def query(self):
         reddits = SRMember._query(SRMember.c._name == self.where,
                                   SRMember.c._thing2_id == c.user._id,
