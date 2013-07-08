@@ -396,18 +396,21 @@ def filter_quotas(unfiltered):
         return baskets, None
 
 
-def send_system_message(user, subject, body):
+def send_system_message(user, subject, body, system_user=None,
+                        distinguished='admin', repliable=False):
     from r2.lib.db import queries
 
-    system_user = Account.system_user()
+    if system_user is None:
+        system_user = Account.system_user()
     if not system_user:
-        g.log.warning("g.system_user isn't set properly. Can't send system message.")
+        g.log.warning("Can't send system message "
+                      "- invalid system_user or g.system_user setting")
         return
 
     item, inbox_rel = Message._new(system_user, user, subject, body,
                                    ip='0.0.0.0')
-    item.distinguished = 'admin'
-    item.repliable = False
+    item.distinguished = distinguished
+    item.repliable = repliable
     item._commit()
 
     try:
