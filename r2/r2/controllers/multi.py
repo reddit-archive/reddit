@@ -59,18 +59,20 @@ from r2.lib.errors import errors, reddit_http_error, RedditError
 from r2.lib.base import abort
 
 
-multi_json_spec = {
+multi_sr_data_json_spec = VValidatedJSON.Object({
+    'name': nop('name', docs={'name': 'subreddit name'}),
+})
+
+
+multi_json_spec = VValidatedJSON.Object({
     'visibility': VOneOf('visibility', ('private', 'public')),
-    'subreddits': nop('subreddits', docs={'subreddits': 'subreddit data'}),
-}
+    'subreddits': VValidatedJSON.ArrayOf(multi_sr_data_json_spec),
+})
 
 
-multi_description_json_spec = {
+multi_description_json_spec = VValidatedJSON.Object({
     'body_md': VMarkdown('body_md', empty_error=None),
-}
-
-
-multi_sr_data_json_spec = {}
+})
 
 
 class MultiApiController(RedditController, OAuth2ResourceController):

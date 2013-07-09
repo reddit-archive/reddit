@@ -2186,6 +2186,68 @@ class VJSON(Validator):
 
 
 class VValidatedJSON(VJSON):
+    """Apply validators to the values of JSON formatted data."""
+    class ArrayOf(object):
+        """A JSON array of objects with the specified schema."""
+        def __init__(self, spec):
+            self.spec = spec
+
+        def run(self, data):
+            if not isinstance(data, list):
+                raise ValueError
+
+            validated_data = []
+            for item in data:
+                validated_data.append(self.spec.run(item))
+            return validated_data
+
+        def spec_docs(self):
+            spec_lines = []
+            spec_lines.append('[')
+            for line in self.spec.spec_docs().split('\n'):
+                spec_lines.append('  ' + line)
+            spec_lines[-1] += ','
+            spec_lines.append('  ...')
+            spec_lines.append(']')
+            return '\n'.join(spec_lines)
+
+
+    class Object(object):
+        """A JSON object with validators for specified fields."""
+        def __init__(self, spec):
+            self.spec = spec
+
+        def run(self, data):
+            if not isinstance(data, dict):
+                raise ValueError
+
+            validated_data = {}
+            for key, validator in self.spec.iteritems():
+                validated_data[key] = validator.run(data[key])
+            return validated_data
+
+        def spec_docs(self):
+            spec_docs = {}
+            for key, validator in self.spec.iteritems():
+                if hasattr(validator, 'spec_docs'):
+                    spec_docs[key] = validator.spec_docs()
+                elif hasattr(validator, 'param_docs'):
+                    spec_docs.update(validator.param_docs())
+                    if validator.docs:
+                        spec_docs.update(validator.docs)
+
+            # generate markdown json schema docs
+            spec_lines = []
+            spec_lines.append('{')
+            for key in sorted(spec_docs.keys()):
+                key_docs = spec_docs[key]
+                # indent any new lines
+                key_docs = key_docs.replace('\n', '\n  ')
+                spec_lines.append('  "%s": %s,' % (key, key_docs))
+            spec_lines.append('}')
+            return '\n'.join(spec_lines)
+
+
     def __init__(self, param, spec, **kw):
         VJSON.__init__(self, param, **kw)
         self.spec = spec
@@ -2197,31 +2259,18 @@ class VValidatedJSON(VJSON):
 
         # Note: this relies on the fact that all validator errors are dumped
         # into a global (c.errors) and then checked by @validate.
-        validated_data = {}
-        for key, validator in self.spec.iteritems():
-            validated_data[key] = validator.run(data[key])
-
-        return validated_data
+        return self.spec.run(data)
 
     def param_docs(self):
-        spec_docs = {}
-        for validator in self.spec.itervalues():
-            spec_docs.update(validator.param_docs())
-            if validator.docs:
-                spec_docs.update(validator.docs)
+        spec_md = self.spec.spec_docs()
 
-        # generate markdown json schema docs
-        spec_lines = []
-        spec_lines.append('{')
-        for key in sorted(spec_docs.keys()):
-            spec_lines.append('  "%s": <%s>' % (key, spec_docs[key]))
-        spec_lines.append('}')
-        spec_md = "json data:\n\n" + "\n".join(
-            '    ' + line for line in spec_lines
+        # indent for code formatting
+        spec_md = '\n'.join(
+            '    ' + line for line in spec_md.split('\n')
         )
 
         return {
-            self.param: spec_md,
+            self.param: 'json data:\n\n' + spec_md,
         }
 
 
