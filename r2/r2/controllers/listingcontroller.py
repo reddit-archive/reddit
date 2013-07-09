@@ -553,6 +553,9 @@ class UserController(ListingController):
         if self.where == 'saved' and c.user.gold:
             srnames = LinkSavesBySubreddit.get_saved_subreddits(self.vuser)
             srnames += CommentSavesBySubreddit.get_saved_subreddits(self.vuser)
+            srs = Subreddit._by_name(srnames)
+            srnames = [name for name, sr in srs.iteritems()
+                            if sr.can_view(c.user)]
             srnames = sorted(list(set(srnames)))
             if len(srnames) > 1:
                 sr_buttons = [NavButton(_('all'), None, opt='sr',
