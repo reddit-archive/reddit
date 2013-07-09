@@ -448,6 +448,8 @@ class FrontController(RedditController, OAuth2ResourceController):
         pane = listing.listing()
         return pane
 
+    modname_splitter = re.compile('[ ,]+')
+
     @require_oauth2_scope("modlog")
     @prevent_framing_and_css(allow_cname_frame=True)
     @paginated_listing(max_page_size=500, backend='cassandra')
@@ -460,7 +462,10 @@ class FrontController(RedditController, OAuth2ResourceController):
             return self.abort404()
 
         if mod:
-            modnames = g.admins if mod == 'a' else (mod,)
+            if mod == 'a':
+                modnames = g.admins
+            else:
+                modnames = self.modname_splitter.split(mod)
             mod = []
             for name in modnames:
                 try:
