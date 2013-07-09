@@ -539,9 +539,9 @@ class VLength(Validator):
     def run(self, text, text2 = ''):
         text = text or text2
         if self.empty_error and (not text or self.only_whitespace.match(text)):
-            self.set_error(self.empty_error)
+            self.set_error(self.empty_error, code=400)
         elif len(text) > self.max_length:
-            self.set_error(self.length_error, {'max_length': self.max_length})
+            self.set_error(self.length_error, {'max_length': self.max_length}, code=400)
         else:
             return text
 

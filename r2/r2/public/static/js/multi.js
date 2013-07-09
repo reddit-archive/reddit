@@ -51,6 +51,16 @@ r.multi.MultiRedditList = Backbone.Collection.extend({
     }
 })
 
+r.multi.MultiRedditDescription = Backbone.Model.extend({
+    parse: function(response) {
+        return response.data
+    },
+
+    isNew: function() {
+        return false
+    }
+})
+
 r.multi.MultiReddit = Backbone.Model.extend({
     idAttribute: 'path',
     url: function() {
@@ -63,8 +73,13 @@ r.multi.MultiReddit = Backbone.Model.extend({
 
     initialize: function(attributes, options) {
         this.uncreated = options && !!options.isNew
-        this.subreddits = new r.multi.MultiRedditList(this.get('subreddits'), {parse: true})
-        this.subreddits.url = this.url() + '/r/'
+        this.subreddits = new r.multi.MultiRedditList(this.get('subreddits'), {
+            url: this.url() + '/r/',
+            parse: true
+        })
+        this.description = new r.multi.MultiRedditDescription(null, {
+            url: this.url() + '/description'
+        })
         this.on('change:subreddits', function(model, value) {
             this.subreddits.set(value, {parse: true})
         }, this)
@@ -128,19 +143,20 @@ r.multi.MultiReddit = Backbone.Model.extend({
         this.subreddits.getByName(name).destroy(options)
     },
 
-    rename: function(newPath) {
+    _copyOp: function(op, newCollection, newName) {
         var deferred = new $.Deferred
         Backbone.ajax({
             type: 'POST',
-            url: this.url() + '/rename',
+            url: this.url() + '/' + op,
             data: {
-                to: newPath
+                to: newCollection.pathByName(newName)
             },
             success: _.bind(function(resp) {
-                var collection = this.collection
-                this.trigger('destroy', this, this.collection)
+                if (op == 'rename') {
+                    this.trigger('destroy', this, this.collection)
+                }
                 var multi = r.multi.multis.reify(resp)
-                r.multi.mine.add(multi)
+                newCollection.add(multi)
                 deferred.resolve(multi)
             }, this),
             error: _.bind(deferred.reject, deferred)
@@ -148,16 +164,12 @@ r.multi.MultiReddit = Backbone.Model.extend({
         return deferred
     },
 
-    copyTo: function(newMulti) {
-        var attrs = _.clone(this.attributes)
-        delete attrs.path
-        attrs.visibility = 'private'
-        attrs.description_md = this.get('description_md') + '\n\n' + r.strings('copied_from', {
-            // ensure that linking happens (currently /user/foo is not autolinked)
-            source: '[' + this.get('path') + '](' + this.get('path') + ')'
-        })
-        newMulti.set(attrs)
-        return newMulti
+    copyTo: function(newCollection, name) {
+        return this._copyOp('copy', newCollection, name)
+    },
+
+    renameTo: function(newCollection, name) {
+        return this._copyOp('rename', newCollection, name)
     }
 })
 
@@ -252,6 +264,7 @@ r.multi.MultiDetails = Backbone.View.extend({
 
     initialize: function() {
         this.listenTo(this.model, 'change', this.render)
+        this.listenTo(this.model.description, 'change', this.render)
         this.listenTo(this.model.subreddits, 'add', this.addOne)
         this.listenTo(this.model.subreddits, 'remove', this.removeOne)
         this.listenTo(this.model.subreddits, 'sort', this.resort)
@@ -289,9 +302,11 @@ r.multi.MultiDetails = Backbone.View.extend({
 
         this.$el.toggleClass('readonly', !canEdit)
 
-        this.$('.description .usertext-body').html(
-            _.unescape(this.model.get('description_html'))
-        )
+        if (this.model.description.has('body_html')) {
+            this.$('.description .usertext-body').html(
+                _.unescape(this.model.description.get('body_html'))
+            )
+        }
 
         this.$('.count').text(this.model.subreddits.length)
 
@@ -408,8 +423,8 @@ r.multi.MultiDetails = Backbone.View.extend({
 
     saveDescription: function(ev) {
         ev.preventDefault()
-        this.model.save({
-            'description_md': this.$('.description textarea').val()
+        this.model.description.save({
+            'body_md': this.$('.description textarea').val()
         }, {
             success: _.bind(function() {
                 hide_edit_usertext(this.$el)
@@ -551,8 +566,6 @@ r.multi.MultiCreateForm = Backbone.View.extend({
                 path: r.multi.mine.pathByName(name)
             }, {isNew: true})
 
-        this._alterMulti(newMulti)
-
         var deferred = new $.Deferred
         r.multi.mine.create(newMulti, {
             wait: true,
@@ -575,14 +588,14 @@ r.multi.MultiCreateForm = Backbone.View.extend({
 })
 
 r.multi.MultiCopyForm = r.multi.MultiCreateForm.extend({
-    _alterMulti: function(multi) {
-        this.options.sourceMulti.copyTo(multi)
+    _createMulti: function(name) {
+        return this.options.sourceMulti.copyTo(r.multi.mine, name)
     }
 })
 
 r.multi.MultiRenameForm = r.multi.MultiCopyForm.extend({
     _createMulti: function(name) {
-        return this.options.sourceMulti.rename(r.multi.mine.pathByName(name))
+        return this.options.sourceMulti.renameTo(r.multi.mine, name)
     }
 })
 

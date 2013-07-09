@@ -1289,6 +1289,7 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
     _defaults = dict(MultiReddit._defaults,
         visibility='private',
         description_md='',
+        copied_from=None,  # for internal analysis/bookkeeping purposes
     )
     _extra_schema_creation_args = {
         "key_validation_class": tdb_cassandra.UTF8_TYPE,

@@ -257,8 +257,6 @@ class LabeledMultiJsonTemplate(ThingJsonTemplate):
         subreddits="srs",
         visibility="visibility",
         can_edit="can_edit",
-        description_md="description_md",
-        description_html="description_html",
     )
     del _data_attrs_["id"]
 
@@ -275,7 +273,20 @@ class LabeledMultiJsonTemplate(ThingJsonTemplate):
             return self.sr_props(thing, thing.srs)
         elif attr == "can_edit":
             return c.user_is_loggedin and thing.can_edit(c.user)
-        elif attr == "description_html":
+        else:
+            return ThingJsonTemplate.thing_attr(self, thing, attr)
+
+class LabeledMultiDescriptionJsonTemplate(ThingJsonTemplate):
+    _data_attrs_ = dict(
+        body_md="description_md",
+        body_html="description_html",
+    )
+
+    def kind(self, wrapped):
+        return "LabeledMultiDescription"
+
+    def thing_attr(self, thing, attr):
+        if attr == "description_html":
             # if safemarkdown is passed a falsy string it returns None :/
             description_html = safemarkdown(thing.description_md) or ''
             return description_html

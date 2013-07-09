@@ -217,7 +217,6 @@ Note: there are a couple of places outside of your subreddit where someone can c
     awesomeness_goes_here = _('awesomeness goes here'),
     add_multi_sr = _('add a subreddit to your multi.'),
     open_multi = _('open this multi'),
-    copied_from = _('copied from %(source)s'),
 )
 
 class StringHandler(object):

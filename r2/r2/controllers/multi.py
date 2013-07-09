@@ -21,6 +21,7 @@
 ###############################################################################
 
 from pylons import c, request, response
+from pylons.i18n import _
 
 from r2.config.extensions import set_extension
 from r2.controllers.api_docs import api_doc, api_section
@@ -50,7 +51,10 @@ from r2.lib.validator import (
     VMultiByPath,
 )
 from r2.lib.pages.things import wrap_things
-from r2.lib.jsontemplates import LabeledMultiJsonTemplate
+from r2.lib.jsontemplates import (
+    LabeledMultiJsonTemplate,
+    LabeledMultiDescriptionJsonTemplate,
+)
 from r2.lib.errors import errors, reddit_http_error, RedditError
 from r2.lib.base import abort
 
@@ -58,6 +62,11 @@ from r2.lib.base import abort
 multi_json_spec = {
     'visibility': VOneOf('visibility', ('private', 'public')),
     'subreddits': nop('subreddits', docs={'subreddits': 'subreddit data'}),
+}
+
+
+multi_description_json_spec = {
+    'body_md': VMarkdown('body_md', empty_error=None),
 }
 
 
@@ -193,6 +202,52 @@ class MultiApiController(RedditController, OAuth2ResourceController):
         """Delete a multi."""
         multi.delete()
 
+    def _copy_multi(self, from_multi, to_path_info):
+        self._check_new_multi_path(to_path_info)
+
+        try:
+            LabeledMulti._byID(to_path_info['path'])
+        except tdb_cassandra.NotFound:
+            to_multi = LabeledMulti.copy(to_path_info['path'], from_multi)
+        else:
+            raise RedditError('MULTI_EXISTS', code=409, fields='multipath')
+
+        return to_multi
+
+    @require_oauth2_scope("subscribe")
+    @api_doc(
+        api_section.multis,
+        uri="/api/multi/{multipath}/copy",
+    )
+    @validate(
+        VUser(),
+        VModhash(),
+        from_multi=VMultiByPath("multipath", require_view=True),
+        to_path_info=VMultiPath("to",
+            docs={"to": "destination multireddit url path"},
+        ),
+    )
+    def POST_multi_copy(self, from_multi, to_path_info):
+        """Copy a multi.
+
+        Responds with 409 Conflict if the target already exists.
+
+        A "copied from ..." line will automatically be appended to the
+        description.
+
+        """
+        to_multi = self._copy_multi(from_multi, to_path_info)
+        from_path = from_multi.path
+        to_multi.copied_from = from_path
+        if to_multi.description_md:
+            to_multi.description_md += '\n\n'
+        to_multi.description_md += _('copied from %(source)s') % {
+            # force markdown linking since /user/foo is not autolinked
+            'source': '[%s](%s)' % (from_path, from_path)
+        }
+        to_multi._commit()
+        return self._format_multi(to_multi)
+
     @require_oauth2_scope("subscribe")
     @api_doc(
         api_section.multis,
@@ -206,19 +261,11 @@ class MultiApiController(RedditController, OAuth2ResourceController):
             docs={"to": "destination multireddit url path"},
         ),
     )
-    def POST_multi_rename(self, multi, to_path_info):
+    def POST_multi_rename(self, from_multi, to_path_info):
         """Rename a multi."""
 
-        self._check_new_multi_path(to_path_info)
-
-        try:
-            LabeledMulti._byID(to_path_info['path'])
-        except tdb_cassandra.NotFound:
-            to_multi = LabeledMulti.copy(to_path_info['path'], multi)
-        else:
-            raise RedditError('MULTI_EXISTS', code=409, fields='multipath')
-
-        multi.delete()
+        to_multi = self._copy_multi(from_multi, to_path_info)
+        from_multi.delete()
         return self._format_multi(to_multi)
 
     def _get_multi_subreddit(self, multi, sr):
@@ -281,3 +328,33 @@ class MultiApiController(RedditController, OAuth2ResourceController):
         """Remove a subreddit from a multi."""
         multi.del_srs(sr)
         multi._commit()
+
+    def _format_multi_description(self, multi):
+        resp = LabeledMultiDescriptionJsonTemplate().render(multi).finalize()
+        return self.api_wrapper(resp)
+
+    @require_oauth2_scope("read")
+    @api_doc(
+        api_section.multis,
+        uri="/api/multi/{multipath}/description",
+    )
+    @validate(
+        VUser(),
+        multi=VMultiByPath("multipath", require_view=True),
+    )
+    def GET_multi_description(self, multi):
+        """Get a multi's description."""
+        return self._format_multi_description(multi)
+
+    @require_oauth2_scope("read")
+    @api_doc(api_section.multis, extends=GET_multi_description)
+    @validate(
+        VUser(),
+        multi=VMultiByPath("multipath", require_edit=True),
+        data=VValidatedJSON('model', multi_description_json_spec),
+    )
+    def PUT_multi_description(self, multi, data):
+        """Change a multi's markdown description."""
+        multi.description_md = data['body_md']
+        multi._commit()
+        return self._format_multi_description(multi)
