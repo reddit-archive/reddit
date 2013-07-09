@@ -70,6 +70,9 @@ multi_description_json_spec = {
 }
 
 
+multi_sr_data_json_spec = {}
+
+
 class MultiApiController(RedditController, OAuth2ResourceController):
     def pre(self):
         set_extension(request.environ, "json")
@@ -293,8 +296,9 @@ class MultiApiController(RedditController, OAuth2ResourceController):
         VModhash(),
         multi=VMultiByPath("multipath", require_edit=True),
         sr=VSRByName('srname'),
+        data=VValidatedJSON("model", multi_sr_data_json_spec),
     )
-    def PUT_multi_subreddit(self, multi, sr):
+    def PUT_multi_subreddit(self, multi, sr, data):
         """Add a subreddit to a multi."""
 
         if isinstance(sr, FakeSubreddit):
@@ -303,9 +307,8 @@ class MultiApiController(RedditController, OAuth2ResourceController):
                               code=400)
 
         new = sr not in multi._srs
-
         try:
-            multi.add_srs({sr: {}})
+            multi.add_srs({sr: data})
         except TooManySubredditsError as e:
             raise RedditError('MULTI_TOO_MANY_SUBREDDITS', code=409)
         else:
