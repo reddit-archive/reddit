@@ -39,11 +39,11 @@ from r2.models.subreddit import (
 from r2.lib.db import tdb_cassandra
 from r2.lib.wrapped import Wrapped
 from r2.lib.validator import (
-    nop,
     validate,
     VUser,
     VModhash,
     VOneOf,
+    VSubredditName,
     VSRByName,
     VValidatedJSON,
     VMarkdown,
@@ -60,7 +60,7 @@ from r2.lib.base import abort
 
 
 multi_sr_data_json_spec = VValidatedJSON.Object({
-    'name': nop('name', docs={'name': 'subreddit name'}),
+    'name': VSubredditName('name'),
 })
 
 
@@ -118,34 +118,43 @@ class MultiApiController(RedditController, OAuth2ResourceController):
             raise RedditError('MULTI_CANNOT_EDIT', code=403,
                               fields='multipath')
 
-    def _write_multi_data(self, multi, data):
-        multi.visibility = data['visibility']
-
-        # multi subreddits
-        multi.clear_srs()
-        srs = Subreddit._by_name(sr['name'] for sr in data['subreddits'])
+    def _add_multi_srs(self, multi, sr_datas):
+        srs = Subreddit._by_name(sr_data['name'] for sr_data in sr_datas)
 
         for sr in srs.itervalues():
             if isinstance(sr, FakeSubreddit):
-                multi._revert()
                 raise RedditError('MULTI_SPECIAL_SUBREDDIT',
                                   msg_params={'path': sr.path},
                                   code=400)
 
         sr_props = {}
-        for sr_data in data['subreddits']:
+        for sr_data in sr_datas:
             try:
                 sr = srs[sr_data['name']]
             except KeyError:
                 raise RedditError('SUBREDDIT_NOEXIST', code=400)
             else:
+                # name is passed in via the API data format, but should not be
+                # stored on the model.
+                del sr_data['name']
                 sr_props[sr] = sr_data
 
         try:
             multi.add_srs(sr_props)
         except TooManySubredditsError as e:
-            multi._revert()
             raise RedditError('MULTI_TOO_MANY_SUBREDDITS', code=409)
+
+        return sr_props
+
+    def _write_multi_data(self, multi, data):
+        multi.visibility = data['visibility']
+
+        multi.clear_srs()
+        try:
+            self._add_multi_srs(multi, data['subreddits'])
+        except:
+            multi._revert()
+            raise
 
         multi._commit()
         return multi
@@ -297,24 +306,18 @@ class MultiApiController(RedditController, OAuth2ResourceController):
         VUser(),
         VModhash(),
         multi=VMultiByPath("multipath", require_edit=True),
-        sr=VSRByName('srname'),
+        sr_name=VSubredditName('srname'),
         data=VValidatedJSON("model", multi_sr_data_json_spec),
     )
-    def PUT_multi_subreddit(self, multi, sr, data):
+    def PUT_multi_subreddit(self, multi, sr_name, data):
         """Add a subreddit to a multi."""
 
-        if isinstance(sr, FakeSubreddit):
-            raise RedditError('MULTI_SPECIAL_SUBREDDIT',
-                              msg_params={'path': sr.path},
-                              code=400)
+        new = not any(sr.name.lower() == sr_name.lower() for sr in multi.srs)
 
-        new = sr not in multi._srs
-        try:
-            multi.add_srs({sr: data})
-        except TooManySubredditsError as e:
-            raise RedditError('MULTI_TOO_MANY_SUBREDDITS', code=409)
-        else:
-            multi._commit()
+        data['name'] = sr_name
+        sr_props = self._add_multi_srs(multi, [data])
+        sr = sr_props.items()[0][0]
+        multi._commit()
 
         if new:
             response.status = 201
