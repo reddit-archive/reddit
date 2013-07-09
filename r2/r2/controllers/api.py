@@ -623,6 +623,8 @@ class ApiController(RedditController, OAuth2ResourceController):
         """
         if type in self._sr_friend_types:
             container = c.site
+            if c.user._spam:
+                return
         else:
             container = VByName('container').run(container)
             if not container:
@@ -675,6 +677,9 @@ class ApiController(RedditController, OAuth2ResourceController):
         if form.has_errors('type', errors.INVALID_PERMISSION_TYPE):
             return
         if form.has_errors('permissions', errors.INVALID_PERMISSIONS):
+            return
+
+        if c.user._spam:
             return
 
         type, permissions = type_and_permissions
