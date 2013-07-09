@@ -1731,7 +1731,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                               rate_ip = True,
                               prefix = 'create_reddit_'),
                    sr = VByName('sr'),
-                   name = VSubredditName("name"),
+                   name = VAvailableSubredditName("name"),
                    title = VLength("title", max_length = 100),
                    header_title = VLength("header-title", max_length = 500),
                    domain = VCnameDomain("domain"),

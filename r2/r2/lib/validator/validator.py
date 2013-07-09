@@ -618,7 +618,18 @@ class VSubredditName(VRequired):
         name = chksrname(name)
         if not name:
             return self.error()
-        else:
+        return name
+
+    def param_docs(self):
+        return {
+            self.param: "subreddit name",
+        }
+
+
+class VAvailableSubredditName(VSubredditName):
+    def run(self, name):
+        name = VSubredditName.run(self, name)
+        if name:
             try:
                 a = Subreddit._by_name(name)
                 return self.error(errors.SUBREDDIT_EXISTS)
