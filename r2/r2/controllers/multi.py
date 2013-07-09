@@ -222,7 +222,7 @@ class MultiApiController(RedditController, OAuth2ResourceController):
     @validate(
         VUser(),
         VModhash(),
-        from_multi=VMultiByPath("multipath", require_view=True),
+        from_multi=VMultiByPath("from", require_view=True),
         to_path_info=VMultiPath("to",
             docs={"to": "destination multireddit url path"},
         ),
@@ -256,7 +256,7 @@ class MultiApiController(RedditController, OAuth2ResourceController):
     @validate(
         VUser(),
         VModhash(),
-        from_multi=VMultiByPath("multipath", require_edit=True),
+        from_multi=VMultiByPath("from", require_edit=True),
         to_path_info=VMultiPath("to",
             docs={"to": "destination multireddit url path"},
         ),

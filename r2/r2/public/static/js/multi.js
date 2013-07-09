@@ -147,8 +147,9 @@ r.multi.MultiReddit = Backbone.Model.extend({
         var deferred = new $.Deferred
         Backbone.ajax({
             type: 'POST',
-            url: this.url() + '/' + op,
+            url: '/api/multi/' + op,
             data: {
+                from: this.get('path'),
                 to: newCollection.pathByName(newName)
             },
             success: _.bind(function(resp) {

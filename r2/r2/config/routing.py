@@ -321,8 +321,8 @@ def make_map():
     mc('/api/:action', controller='api')
 
     mc("/api/multi/mine", controller="multiapi", action="my_multis")
-    mc("/api/multi/*multipath/copy", controller="multiapi", action="multi_copy")
-    mc("/api/multi/*multipath/rename", controller="multiapi", action="multi_rename")
+    mc("/api/multi/copy", controller="multiapi", action="multi_copy")
+    mc("/api/multi/rename", controller="multiapi", action="multi_rename")
     mc("/api/multi/*multipath/r/:srname", controller="multiapi", action="multi_subreddit")
     mc("/api/multi/*multipath/description", controller="multiapi", action="multi_description")
     mc("/api/multi/*multipath", controller="multiapi", action="multi")
