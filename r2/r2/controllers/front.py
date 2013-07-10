@@ -509,10 +509,11 @@ class FrontController(RedditController, OAuth2ResourceController):
                          title=_('filter by action'), type='lightdrop', css_class='modaction-drop'),
                 NavMenu(mod_buttons, base_path=base_path,
                         title=_('filter by moderator'), type='lightdrop')]
+        extension_handling = "private" if c.user.pref_private_feeds else False
         return EditReddit(content=panes,
                           nav_menus=menus,
                           location="log",
-                          extension_handling=False).render()
+                          extension_handling=extension_handling).render()
 
     def _make_spamlisting(self, location, only, num, after, reverse, count):
         include_links, include_comments = True, True
