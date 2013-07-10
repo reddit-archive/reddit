@@ -3856,6 +3856,7 @@ class PromoteReport(Templated):
         writer.writerow((
             _("id"),
             _("owner"),
+            _("url"),
             _("comments"),
             _("upvotes"),
             _("downvotes"),
@@ -3863,9 +3864,9 @@ class PromoteReport(Templated):
             _("impressions"),
         ))
         for row in self.link_report:
-            writer.writerow((row['id36'], row['owner'], row['comments'],
-                             row['upvotes'], row['downvotes'], row['clicks'],
-                             row['impressions']))
+            writer.writerow((row['id36'], row['owner'], row['url'],
+                             row['comments'], row['upvotes'], row['downvotes'],
+                             row['clicks'], row['impressions']))
 
         writer.writerow([])
         writer.writerow((_("campaigns"),))
@@ -3906,6 +3907,7 @@ class PromoteReport(Templated):
                 'downvotes': link._downs,
                 'clicks': self.clicks_by_link.get(link._id36, 0),
                 'impressions': self.impressions_by_link.get(link._id36, 0),
+                'url': link.url,
             }
             link_report.append(row)
         self.link_report = link_report
