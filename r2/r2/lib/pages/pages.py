@@ -20,7 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from collections import OrderedDict
+from collections import Counter, OrderedDict
 
 from r2.lib.wrapped import Wrapped, Templated, CachedTemplate
 from r2.models import Account, FakeAccount, DefaultSR, make_feedurl
@@ -3834,8 +3834,7 @@ class PromoteReport(Templated):
         self.start = start
         self.end = end
         if links:
-            self.make_link_report()
-            self.make_campaign_report()
+            self.make_reports()
             p = request.get.copy()
             self.csv_url = '%s.csv?%s' % (request.path, urlencode(p))
         else:
@@ -3860,10 +3859,13 @@ class PromoteReport(Templated):
             _("comments"),
             _("upvotes"),
             _("downvotes"),
+            _("clicks"),
+            _("impressions"),
         ))
         for row in self.link_report:
             writer.writerow((row['id36'], row['owner'], row['comments'],
-                             row['upvotes'], row['downvotes']))
+                             row['upvotes'], row['downvotes'], row['clicks'],
+                             row['impressions']))
 
         writer.writerow([])
         writer.writerow((_("campaigns"),))
@@ -3886,6 +3888,10 @@ class PromoteReport(Templated):
             )
         return out.getvalue()
 
+    def make_reports(self):
+        self.make_campaign_report()
+        self.make_link_report()
+
     def make_link_report(self):
         link_report = []
         owners = Account._byID([link.author_id for link in self.links],
@@ -3898,6 +3904,8 @@ class PromoteReport(Templated):
                 'comments': link.num_comments,
                 'upvotes': link._ups,
                 'downvotes': link._downs,
+                'clicks': self.clicks_by_link.get(link._id36, 0),
+                'impressions': self.impressions_by_link.get(link._id36, 0),
             }
             link_report.append(row)
         self.link_report = link_report
@@ -3949,6 +3957,8 @@ class PromoteReport(Templated):
                                data=True)
         links_by_id = {link._id: link for link in self.links}
         campaign_report = []
+        self.clicks_by_link = Counter()
+        self.impressions_by_link = Counter()
 
         for camp in campaigns:
             link = links_by_id[camp.link_id]
@@ -3970,6 +3980,8 @@ class PromoteReport(Templated):
                 'total_impressions': fp_imps[fullname] + sr_imps[fullname],
                 'total_clicks': fp_clicks[fullname] + sr_clicks[fullname],
             }
+            self.clicks_by_link[link._id36] += row['total_clicks']
+            self.impressions_by_link[link._id36] += row['total_impressions']
             campaign_report.append(row)
         self.campaign_report = sorted(campaign_report, key=lambda r: r['link'])
 

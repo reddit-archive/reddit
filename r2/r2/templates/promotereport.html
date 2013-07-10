@@ -78,6 +78,8 @@ ${unsafe(js.use('sponsored'))}
       <th>comments</th>
       <th>upvotes</th>
       <th>downvotes</th>
+      <th>clicks</th>
+      <th>impressions</th>
     </tr>
   </thead>
   <tbody>
@@ -88,6 +90,8 @@ ${unsafe(js.use('sponsored'))}
       <td>${format_number(row['comments'])}</td>
       <td>${format_number(row['upvotes'])}</td>
       <td>${format_number(row['downvotes'])}</td>
+      <td>${format_number(row['clicks'])}</td>
+      <td>${format_number(row['impressions'])}</td>
     </tr>
     %endfor
   </tbody>
