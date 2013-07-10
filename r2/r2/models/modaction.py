@@ -166,7 +166,7 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
                      'permission_moderator_invite': _('set permissions on moderator invitation')}
 
     # This stuff won't change
-    cache_ignore = set(['subreddit', 'target']).union(Printable.cache_ignore)
+    cache_ignore = set(['subreddit', 'target', 'mod', 'button']).union(Printable.cache_ignore)
 
     # Thing properties for Printable
     @property
