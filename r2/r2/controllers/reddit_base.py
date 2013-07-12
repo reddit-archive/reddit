@@ -534,7 +534,7 @@ def ratelimit_agent(agent):
         request.environ['retry_after'] = SLICE_SIZE - remainder
         abort(429)
 
-appengine_re = re.compile(r'AppEngine-Google; \(\+http://code.google.com/appengine; appid: s~([a-z0-9-]{6,30})\)\Z')
+appengine_re = re.compile(r'AppEngine-Google; \(\+http://code.google.com/appengine; appid: (?:dev|s)~([a-z0-9-]{6,30})\)\Z')
 def ratelimit_agents():
     user_agent = request.user_agent
 
