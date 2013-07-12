@@ -940,6 +940,13 @@ class FrontController(RedditController, OAuth2ResourceController):
 
         captcha = Captcha() if c.user.needs_captcha() else None
 
+        extra_subreddits = []
+        if isinstance(c.site, MultiReddit):
+            extra_subreddits.append((
+                _('%s subreddits') % c.site.name,
+                c.site.srs
+            ))
+
         newlink = NewLink(
             url=url or '',
             title=title or '',
@@ -948,6 +955,7 @@ class FrontController(RedditController, OAuth2ResourceController):
             captcha=captcha,
             resubmit=resubmit,
             default_sr=c.site if not c.default_sr else None,
+            extra_subreddits=extra_subreddits,
             show_link=c.default_sr or c.site.link_type != 'self',
             show_self=((c.default_sr or c.site.link_type != 'link')
                       and not request.get.get('no_self')),

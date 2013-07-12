@@ -812,20 +812,6 @@ class Subreddit(Thing, Printable, BaseSite):
             user.has_subscribed = True
             user._commit()
 
-    @classmethod
-    def submit_sr_names(cls, user):
-        """subreddit names that appear in a user's submit page. basically a
-        sorted/rearranged version of user_subreddits()."""
-        srs = cls.user_subreddits(user, ids = False)
-        names = [s.name for s in srs if s.can_submit(user)]
-        names.sort(key=str.lower)
-
-        if c.lang in names:
-            names.remove(c.lang)
-            names.insert(0, c.lang)
-
-        return names
-
     def keep_item(self, wrapped):
         if c.user_is_admin:
             return True

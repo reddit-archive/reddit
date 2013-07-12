@@ -33,12 +33,14 @@ ${error_field("SUBREDDIT_NOTALLOWED", "sr", "div")}
 ${error_field("SUBREDDIT_REQUIRED", "sr", "div")}
 
 <div id="suggested-reddits">
-  <span>${_("popular choices")}&#32;</span>
-  <ul>
-    %for name in thing.subreddits:
-    <li>
-      <a href="#" tabindex="100" onclick="set_sr_name(this); return false">${name}</a>&#32;
-    </li>
-    %endfor
-  </ul>
+  % for title, subreddits in thing.subreddit_names:
+    <h3>${title}</h3>
+    <ul>
+      %for name in subreddits:
+      <li>
+        <a href="#" tabindex="100" onclick="set_sr_name(this); return false">${name}</a>&#32;
+      </li>
+      %endfor
+    </ul>
+  % endfor
 </div>

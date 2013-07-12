@@ -414,19 +414,20 @@ class Reddit(Templated):
                                       show_icon=False))
             else:
                 fake_sub = isinstance(c.site, FakeSubreddit)
+                is_multi = isinstance(c.site, MultiReddit)
                 if c.site.link_type != 'self':
                     ps.append(SideBox(title=c.site.submit_link_label or
                                             strings.submit_link_label,
                                       css_class="submit submit-link",
                                       link="/submit",
-                                      sr_path=not fake_sub,
+                                      sr_path=not fake_sub or is_multi,
                                       show_cover=True))
                 if c.site.link_type != 'link':
                     ps.append(SideBox(title=c.site.submit_text_label or
                                             strings.submit_text_label,
                                       css_class="submit submit-text",
                                       link="/submit?selftext=true",
-                                      sr_path=not fake_sub,
+                                      sr_path=not fake_sub or is_multi,
                                       show_cover=True))
 
         no_ads_yet = True
@@ -2296,7 +2297,7 @@ class NewLink(Templated):
     """Render the link submission form"""
     def __init__(self, captcha=None, url='', title='', text='', selftext='',
                  then='comments', resubmit=False, default_sr=None,
-                 show_link=True, show_self=True):
+                 extra_subreddits=None, show_link=True, show_self=True):
 
         self.show_link = show_link
         self.show_self = show_self
@@ -2331,6 +2332,7 @@ class NewLink(Templated):
 
         self.resubmit = resubmit
         self.default_sr = default_sr
+        self.extra_subreddits = extra_subreddits
 
         Templated.__init__(self, captcha = captcha, url = url,
                          title = title, text = text, then = then)
@@ -4187,17 +4189,30 @@ class SubscribeButton(Templated):
 
 
 class SubredditSelector(Templated):
-    def __init__(self, subreddits=None, default_sr=None, required=False):
+    def __init__(self, default_sr=None, extra_subreddits=None, required=False):
         Templated.__init__(self)
 
-        if subreddits:
-            self.subreddits = subreddits
+        if extra_subreddits:
+            self.subreddits = extra_subreddits
         else:
-            self.subreddits = (Subreddit.submit_sr_names(c.user) or
-                               Subreddit.submit_sr_names(None))
+            self.subreddits = []
+
+        self.subreddits.append((
+            _('popular choices'),
+            Subreddit.user_subreddits(c.user, ids=False)
+        ))
 
         self.default_sr = default_sr
         self.required = required
         self.sr_searches = simplejson.dumps(
             popular_searches(include_over_18=c.over18)
         )
+
+    @property
+    def subreddit_names(self):
+        groups = []
+        for title, subreddits in self.subreddits:
+            names = [sr.name for sr in subreddits if sr.can_submit(c.user)]
+            names.sort(key=str.lower)
+            groups.append((title, names))
+        return groups

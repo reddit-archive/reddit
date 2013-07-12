@@ -116,6 +116,8 @@ def make_map():
        where='overview')
 
     mc('/user/:username/m/:multipath', controller='hot', action='listing')
+    mc('/user/:username/m/:multipath/submit', controller='front',
+       action='submit')
     mc('/user/:username/m/:multipath/:sort', controller='browse', sort='top',
        action='listing', requirements=dict(sort='top|controversial'))
     mc('/user/:username/m/:multipath/:controller', action='listing',
