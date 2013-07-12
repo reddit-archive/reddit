@@ -2294,8 +2294,8 @@ class FrameToolbar(Wrapped):
 
 class NewLink(Templated):
     """Render the link submission form"""
-    def __init__(self, captcha = None, url = '', title= '', text = '', selftext = '',
-                 then = 'comments', resubmit=False, never_show_self=False):
+    def __init__(self, captcha=None, url='', title='', text='', selftext='',
+                 then='comments', resubmit=False, never_show_self=False):
 
         self.show_link = self.show_self = False
 
