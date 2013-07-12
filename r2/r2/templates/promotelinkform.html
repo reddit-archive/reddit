@@ -25,13 +25,14 @@
   from r2.lib.media import thumbnail_url
   from r2.lib.template_helpers import static
   from r2.lib import promote
+  from r2.lib.pages import SubredditSelector
   from r2.lib.strings import strings
   from r2.models import Account
   from r2.lib import js
   import simplejson
 %>
 <%namespace file="utils.html" 
-            import="error_field, checkbox, image_upload, reddit_selector" />
+            import="error_field, checkbox, image_upload" />
 <%namespace name="utils" file="utils.html"/>
 
 ${unsafe(js.use('sponsored'))}
@@ -193,7 +194,7 @@ ${self.javascript_setup()}
          <li>You can only target one subreddit per campaign.  If you would like to submit to more than one subreddit, add a new campaign (its easy, you just fill this form out again).</li>
        </ul>
        ${error_field("OVERSOLD", "sr", "div")}
-       ${reddit_selector(thing.default_sr, thing.sr_searches, thing.subreddits)}
+       ${SubredditSelector()}
      </div>
      <div class="buttons">
        <input type="hidden" name="campaign_id36" value="" />

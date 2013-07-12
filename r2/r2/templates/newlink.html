@@ -22,11 +22,11 @@
 
 <%!
    from r2.lib.strings import strings
-   from r2.lib.pages import UserText
+   from r2.lib.pages import SubredditSelector, UserText
    from r2.lib.template_helpers import add_sr
 %>
 
-<%namespace file="utils.html" import="error_field, submit_form, _a_buffered, reddit_selector, text_with_links"/>
+<%namespace file="utils.html" import="error_field, submit_form, _a_buffered, text_with_links"/>
 <%namespace name="utils" file="utils.html"/>
 
 <%
@@ -99,7 +99,7 @@ ${thing.formtabs_menu}
 
 <div class="spacer">
   <%utils:round_field title="${_('choose a subreddit')}" id="reddit-field">
-    ${reddit_selector(thing.default_sr.name if thing.default_sr else None, thing.sr_searches, thing.subreddits, required=True)}
+    ${SubredditSelector(thing.default_sr, required=True)}
   </%utils:round_field>
 </div>
 

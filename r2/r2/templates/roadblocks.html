@@ -21,13 +21,14 @@
 ###############################################################################
 
 <%!
+  from r2.lib.pages import SubredditSelector
   from r2.lib.template_helpers import static
   from r2.lib import js
  %>
 <%namespace name="utils" file="utils.html"/>
 <%namespace file="promotelinkform.html" name="p" />
 <%namespace file="utils.html" 
-            import="error_field, checkbox, image_upload, reddit_selector" />
+            import="error_field, checkbox, image_upload" />
 
 ${unsafe(js.use('sponsored'))}
 
@@ -77,7 +78,7 @@ ${unsafe(js.use('sponsored'))}
        })
      </script>
      <div class="targeting">
-       ${reddit_selector(thing.default_sr, thing.sr_searches, thing.subreddits)}
+       ${SubredditSelector()}
      </div>
      <div class="buttons">
        <span class="status error"></span>

@@ -1,0 +1,44 @@
+<%namespace file="utils.html" import="error_field"/>
+
+<%doc>
+  Fires custom event when subreddit selection changes. Add handler like:
+  $("#sr-autocomplete").bind("sr-changed", function() { dostuff; })
+</%doc>
+
+<div id="sr-autocomplete-area">
+  <input id="sr-autocomplete" name="sr" type="text"
+         autocomplete="off"
+         onkeyup="sr_name_up(event)"
+         onkeydown="return sr_name_down(event)"
+         onblur="hide_sr_name_list()"
+         % if thing.default_sr:
+           value="${thing.default_sr.name}"
+         % endif
+         % if thing.required:
+         required
+         % endif
+         />
+  <ul id="sr-drop-down">
+    <li class="sr-name-row"
+        onmouseover="highlight_reddit(this)"
+        onmousedown="return sr_dropdown_mdown(this)"
+        onmouseup="sr_dropdown_mup(this)">nothin</li>
+  </ul>
+</div>
+<script type="text/javascript">
+  reddit.sr_cache = ${unsafe(thing.sr_searches)};
+</script>
+${error_field("SUBREDDIT_NOEXIST", "sr", "div")}
+${error_field("SUBREDDIT_NOTALLOWED", "sr", "div")}
+${error_field("SUBREDDIT_REQUIRED", "sr", "div")}
+
+<div id="suggested-reddits">
+  <span>${_("popular choices")}&#32;</span>
+  <ul>
+    %for name in thing.subreddits:
+    <li>
+      <a href="#" tabindex="100" onclick="set_sr_name(this); return false">${name}</a>&#32;
+    </li>
+    %endfor
+  </ul>
+</div>
