@@ -940,19 +940,24 @@ class FrontController(RedditController, OAuth2ResourceController):
 
         captcha = Captcha() if c.user.needs_captcha() else None
 
-        never_show_self = request.get.get('no_self')
+        newlink = NewLink(
+            url=url or '',
+            title=title or '',
+            text=text or '',
+            selftext=selftext or '',
+            captcha=captcha,
+            resubmit=resubmit,
+            default_sr=c.site if not c.default_sr else None,
+            show_link=c.default_sr or c.site.link_type != 'self',
+            show_self=((c.default_sr or c.site.link_type != 'link')
+                      and not request.get.get('no_self')),
+            then=then,
+        )
 
         return FormPage(_("submit"),
                         show_sidebar=True,
                         page_classes=['submit-page'],
-                        content=NewLink(url=url or '',
-                                        title=title or '',
-                                        text=text or '',
-                                        selftext=selftext or '',
-                                        captcha=captcha,
-                                        resubmit=resubmit,
-                                        never_show_self=never_show_self,
-                                        then=then)).render()
+                        content=newlink).render()
 
     def GET_frame(self):
         """used for cname support.  makes a frame and

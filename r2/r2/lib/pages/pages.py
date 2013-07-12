@@ -2295,17 +2295,17 @@ class FrameToolbar(Wrapped):
 class NewLink(Templated):
     """Render the link submission form"""
     def __init__(self, captcha=None, url='', title='', text='', selftext='',
-                 then='comments', resubmit=False, never_show_self=False):
+                 then='comments', resubmit=False, default_sr=None,
+                 show_link=True, show_self=True):
 
-        self.show_link = self.show_self = False
+        self.show_link = show_link
+        self.show_self = show_self
 
         tabs = []
-        if c.default_sr or c.site.link_type != 'self':
+        if show_link:
             tabs.append(('link', ('link-desc', 'url-field')))
-            self.show_link = True
-        if c.default_sr or c.site.link_type != 'link':
+        if show_self:
             tabs.append(('text', ('text-desc', 'text-field')))
-            self.show_self = not never_show_self
 
         if self.show_self and self.show_link:
             all_fields = set(chain(*(parts for (tab, parts) in tabs)))
@@ -2330,10 +2330,7 @@ class NewLink(Templated):
             self.formtabs_menu = JsNavMenu(buttons, type = 'formtab')
 
         self.resubmit = resubmit
-        if c.default_sr:
-            self.default_sr = None
-        else:
-            self.default_sr = c.site
+        self.default_sr = default_sr
 
         Templated.__init__(self, captcha = captcha, url = url,
                          title = title, text = text, then = then)
@@ -4199,13 +4196,7 @@ class SubredditSelector(Templated):
             self.subreddits = (Subreddit.submit_sr_names(c.user) or
                                Subreddit.submit_sr_names(None))
 
-        if default_sr:
-            self.default_sr = default_sr
-        elif subreddits:
-            self.default_sr = subreddits[0]
-        else:
-            self.default_sr = None
-
+        self.default_sr = default_sr
         self.required = required
         self.sr_searches = simplejson.dumps(
             popular_searches(include_over_18=c.over18)
