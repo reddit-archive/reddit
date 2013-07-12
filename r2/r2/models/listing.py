@@ -39,7 +39,7 @@ class Listing(object):
     _js_cls = "Listing"
 
     def __init__(self, builder, nextprev = True, next_link = True,
-                 prev_link = True, vote_hash_type = 'valid', **kw):
+                 prev_link = True, **kw):
         self.builder = builder
         self.nextprev = nextprev
         self.next_link = True
@@ -47,7 +47,6 @@ class Listing(object):
         self.next = None
         self.prev = None
         self._max_num = 1
-        self.vote_hash_type = vote_hash_type
 
     @property
     def max_score(self):
@@ -138,7 +137,6 @@ class SpotlightListing(Listing):
     _js_cls = "OrganicListing"
 
     def __init__(self, *a, **kw):
-        self.vote_hash_type = kw.get('vote_hash_type', 'organic')
         self.nextprev   = False
         self.show_nums  = True
         self._parent_max_num   = kw.get('max_num', 0)

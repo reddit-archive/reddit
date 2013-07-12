@@ -31,7 +31,7 @@
              title="${_('vote %(direction)s') % dict(direction=direction)}"
            %if thing.user_is_loggedin:
              href="javascript:void(0);"
-             onclick="$(this).vote('${thing.votehash}', null, event)"
+             onclick="$(this).vote(r.config.vote_hash, null, event)"
            %else:
              href="${thing.loginurl}"
              target="_top"

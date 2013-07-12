@@ -22,7 +22,7 @@
 
 from r2.models import *
 from filters import unsafe, websafe, _force_unicode, _force_utf8
-from r2.lib.utils import vote_hash, UrlParser, timesince, is_subdomain
+from r2.lib.utils import UrlParser, timesince, is_subdomain
 
 from r2.lib import hooks
 from r2.lib.static import static_mtime
@@ -162,6 +162,7 @@ def js_config(extra_config=None):
         "uitracker_url": g.uitracker_url,
         "static_root": static(''),
         "over_18": bool(c.over18),
+        "vote_hash": c.vote_hash,
     }
 
     if extra_config:
@@ -280,10 +281,6 @@ def replace_render(listing, item, render_func):
 
                 replacements["midcolmargin"] = mid_margin
 
-            #$votehash is only present when voting arrows are present
-            if c.user_is_loggedin:
-                replacements['votehash'] = vote_hash(c.user, item,
-                                                     listing.vote_hash_type)
         if hasattr(item, "num_comments"):
             com_label, com_cls = comment_label(item.num_comments)
             if style == "compact":

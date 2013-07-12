@@ -46,7 +46,7 @@ class Printable(object):
                         'downvotes', '_downs',
                         'subreddit_slow', '_deleted', '_spam',
                         'cachable', 'make_permalink', 'permalink',
-                        'timesince', 'votehash'
+                        'timesince',
                         ])
 
     @classmethod
@@ -57,7 +57,6 @@ class Printable(object):
             # caching of thing templates
             item.display = CachedVariable("display")
             item.timesince = CachedVariable("timesince")
-            item.votehash = CachedVariable("votehash")
             item.childlisting = CachedVariable("childlisting")
 
             score_fmt = getattr(item, "score_fmt", Score.number_only)

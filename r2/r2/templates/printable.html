@@ -153,7 +153,7 @@ ${self.RenderPrintable()}
 %>
   <div class="arrow ${_class} login-required"
        %if getattr(thing, "votable", True):
-         onclick="$(this).vote('${thing.votehash}', null, event)"
+         onclick="$(this).vote(r.config.vote_hash, null, event)"
        %else:
          onclick="$(this).show_unvotable_message()"
        %endif
