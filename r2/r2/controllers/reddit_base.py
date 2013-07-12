@@ -542,7 +542,7 @@ def ratelimit_agents():
         return
 
     # parse out the appid for appengine apps
-    appengine_match = appengine_re.match(user_agent)
+    appengine_match = appengine_re.search(user_agent)
     if appengine_match:
         appid = appengine_match.group(1)
         ratelimit_agent(appid)
