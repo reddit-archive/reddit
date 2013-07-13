@@ -20,32 +20,54 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+import itertools
+import math
+from collections import defaultdict
 from datetime import timedelta
+from operator import itemgetter
 
 from r2.models import Subreddit
+from r2.lib.sgm import sgm
 from r2.lib.db import tdb_cassandra
 from r2.lib.memoize import memoize
+from r2.lib.utils import tup
 
-def get_recommendations(srs):
+from pylons import g
+
+SRC_LINKVOTES = 'lv'
+SRC_MULTIREDDITS = 'mr'
+
+
+def get_recommendations(srs, count=10, source=SRC_MULTIREDDITS, to_omit=None):
+    """Return subreddits recommended if you like the given subreddits.
+
+    Args:
+    - srs is one Subreddit object or a list of Subreddits
+    - count is total number of results to return
+    - source is a prefix telling which set of recommendations to use
+    - to_omit is one Subreddit object or a list of Subreddits that should not
+        be included. (Useful for omitting recs that were already rejected.)
+
     """
-    Return the subreddits recommended if you like the given subreddit
-    """
+    srs = tup(srs)
+    to_omit = tup(to_omit) if to_omit else []
+    
+    # fetch more recs than requested because some might get filtered out
+    rec_id36s = SRRecommendation.for_srs([sr._id36 for sr in srs],
+                                         [o._id36 for o in to_omit],
+                                          count * 2,
+                                          source)
 
-    # for now, but keep the API open for multireddits later
-    assert len(srs) == 1 and srs[0].__class__ == Subreddit
+    # always check for private subreddits at runtime since type might change
+    rec_srs = Subreddit._byID36(rec_id36s, return_dict=False)
+    filtered = [sr for sr in rec_srs if sr.type != 'private']
 
-    sr = srs[0]
-    recs = _get_recommendations(sr._id36)
-    if not recs:
-        return []
+    # don't recommend adult srs unless one of the originals was over_18
+    if not any(sr.over_18 for sr in srs):
+        filtered = [sr for sr in filtered if not sr.over_18]
 
-    srs = Subreddit._byID36(recs, return_dict=True, data=True)
+    return filtered[:count]
 
-    return srs
-
-@memoize('_get_recommendations', stale=True)
-def _get_recommendations(srid36):
-    return SRRecommendation.for_sr(srid36)
 
 class SRRecommendation(tdb_cassandra.View):
     _use_db = True
@@ -54,28 +76,60 @@ class SRRecommendation(tdb_cassandra.View):
 
     # don't keep these around if a run hasn't happened lately, or if the last
     # N runs didn't generate recommendations for a given subreddit
-    _ttl = timedelta(days=2)
+    _ttl = timedelta(days=7, hours=12)
 
     # we know that we mess with these but it's okay
     _warn_on_partial_ttl = False
 
     @classmethod
-    def for_sr(cls, srid36, count=5):
+    def for_srs(cls, srid36, to_omit, count=10, source=SRC_MULTIREDDITS):
+        # It's usually better to use get_recommendations() than to call this
+        # function directly because it does privacy filtering.
+
+        srid36s = tup(srid36)
+        to_omit = set(to_omit)
+        to_omit.update(srid36s)  # don't show the originals
+        rowkeys = ['%s.%s' % (source, srid36) for srid36 in srid36s]
+
+        # fetch multiple sets of recommendations, one for each input srid36
+        d = sgm(g.cache, rowkeys, SRRecommendation._byID, prefix='srr.')
+        rows = d.values()
+
+        sorted_recs = SRRecommendation._merge_and_sort_by_count(rows)
+        
+        # heuristic: if the input set is large, rec should match more than one
+        min_count = math.floor(.1 * len(srid36s))
+        sorted_recs = (rec[0] for rec in sorted_recs if rec[1] > min_count)
+
+        # remove duplicates and ids listed in to_omit
+        filtered = []
+        for r in sorted_recs:
+            if r not in to_omit:
+                filtered.append(r)
+                to_omit.add(r)
+        return filtered[:count]
+
+    @classmethod
+    def _merge_and_sort_by_count(cls, rows):
+        """Combine and sort multiple sets of recs.
+
+        Combines multiple sets of recs and sorts by number of times each rec
+        appears, the reasoning being that an item recommended for several of
+        the original srs is more likely to match the "theme" of the set.
+
         """
-        Return the subreddits ID36s recommended by the sr whose id36 is passed
-        """
-
-        cq = tdb_cassandra.ColumnQuery(cls, [srid36],
-                                       column_count = count+1,
-                                       column_reversed = True)
-
-        recs = [ r.values()[0] for r in cq if r.values()[0] != srid36 ][:count]
-
-        return recs
+        # combine recs from all input srs
+        rank_id36_pairs = itertools.chain(*[row._values().iteritems()
+                                            for row in rows])
+        ranks = defaultdict(list)
+        for rank, id36 in rank_id36_pairs:
+            ranks[id36].append(rank)
+        recs = [(id36, len(ranks), max(ranks)) for id36, ranks in ranks.iteritems()]
+        # sort by number of times appeared, then max rank
+        return sorted(recs, key=itemgetter(1, 2), reverse=True)
 
     def _to_recs(self):
         recs = self._values() # [ {rank, srid} ]
         recs = sorted(recs.items(), key=lambda x: int(x[0]))
         recs = [x[1] for x in recs]
         return recs
-
