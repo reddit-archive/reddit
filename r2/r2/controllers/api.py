@@ -1600,7 +1600,7 @@ class ApiController(RedditController, OAuth2ResourceController):
     @api_doc(api_section.subreddits)
     def POST_delete_sr_img(self, form, jquery, name):
         """
-        Called called upon requested delete on /about/stylesheet.
+        Called upon requested delete on /about/stylesheet.
         Updates the site's image list, and causes the <li> which wraps
         the image to be hidden.
         """
