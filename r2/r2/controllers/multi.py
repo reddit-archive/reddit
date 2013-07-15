@@ -30,13 +30,14 @@ from r2.controllers.oauth2 import (
     OAuth2ResourceController,
     require_oauth2_scope,
 )
+from r2.models.account import Account
 from r2.models.subreddit import (
     FakeSubreddit,
     Subreddit,
     LabeledMulti,
     TooManySubredditsError,
 )
-from r2.lib.db import tdb_cassandra
+from r2.lib.db import tdb_cassandra, thing
 from r2.lib.wrapped import Wrapped
 from r2.lib.validator import (
     validate,
@@ -219,10 +220,13 @@ class MultiApiController(RedditController, OAuth2ResourceController):
     def _copy_multi(self, from_multi, to_path_info):
         self._check_new_multi_path(to_path_info)
 
+        to_owner = Account._by_name(to_path_info['username'])
+
         try:
             LabeledMulti._byID(to_path_info['path'])
         except tdb_cassandra.NotFound:
-            to_multi = LabeledMulti.copy(to_path_info['path'], from_multi)
+            to_multi = LabeledMulti.copy(to_path_info['path'], from_multi,
+                                         owner=to_owner)
         else:
             raise RedditError('MULTI_EXISTS', code=409, fields='multipath')
 

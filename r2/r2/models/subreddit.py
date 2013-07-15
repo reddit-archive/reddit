@@ -1406,10 +1406,11 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         return obj
 
     @classmethod
-    def copy(cls, path, multi):
+    def copy(cls, path, multi, owner):
         obj = cls(_id=path, **multi._t)
+        obj.owner_fullname = owner._fullname
         obj._commit()
-        obj._owner = multi.owner
+        obj._owner = owner
         return obj
 
     @classmethod
