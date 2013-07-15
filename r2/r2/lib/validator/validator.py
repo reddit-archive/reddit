@@ -617,7 +617,7 @@ class VSubredditName(VRequired):
     def run(self, name):
         name = chksrname(name)
         if not name:
-            return self.error()
+            self.set_error(self._error, code=400)
         return name
 
     def param_docs(self):
