@@ -462,6 +462,8 @@ class Subreddit(Thing, Printable, BaseSite):
             return True
         elif self.type == 'gold_restricted' and user.gold:
             return True
+        elif self.type == 'restricted' and promotion:
+            return True
         else:
             return False
 
