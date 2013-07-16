@@ -701,6 +701,7 @@ class StripeController(GoldPaymentController):
         'customer.card.created': 'noop',
         'transfer.created': 'noop',
         'transfer.paid': 'noop',
+        'balance.available': 'noop',
     }
 
     @classmethod
