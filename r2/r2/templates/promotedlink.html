@@ -52,6 +52,12 @@ ${unsafe(taglinetext % dict(date = thing._date.strftime("%Y-%m-%d"),
                 report = report)}
 </%def>
 
+<%def name="domain()">
+  %if not thing.is_self:
+    ${parent.domain()}
+  %endif
+</%def>
+
 <%def name="entry()">
   ${parent.entry()}
   <p class="sponsored-tagline">

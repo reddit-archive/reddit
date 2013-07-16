@@ -80,6 +80,7 @@ from r2.lib.validator import (
     VOneOf,
     VPromoCampaign,
     VRatelimit,
+    VSelfText,
     VShamedDomain,
     VSponsor,
     VSponsorAdmin,
@@ -391,6 +392,8 @@ class PromoteController(ListingController):
                    l=VLink('link_id'),
                    title=VTitle('title'),
                    url=VUrl('url', allow_self=False, lookup=False),
+                   selftext=VSelfText('text'),
+                   kind=VOneOf('kind', ['link', 'self']),
                    ip=ValidIP(),
                    disable_comments=VBoolean("disable_comments"),
                    media_width=VInt("media-width", min=0),
@@ -399,7 +402,7 @@ class PromoteController(ListingController):
                    media_override=VBoolean("media-override"),
                    domain_override=VLength("domain", 100)
                    )
-    def POST_edit_promo(self, form, jquery, ip, l, title, url,
+    def POST_edit_promo(self, form, jquery, ip, l, title, url, selftext, kind,
                         disable_comments,
                         media_height, media_width, media_embed,
                         media_override, domain_override):
@@ -426,17 +429,29 @@ class PromoteController(ListingController):
                 # want the URL
                 url = url[0].url
 
+        if kind == 'link':
+            if form.has_errors('url', errors.NO_URL, errors.BAD_URL):
+                return
+
         # users can change the disable_comments on promoted links
         if ((not l or not promote.is_promoted(l)) and
-            (form.has_errors('title', errors.NO_TEXT,
-                            errors.TOO_LONG) or
-            form.has_errors('url', errors.NO_URL, errors.BAD_URL) or
-            jquery.has_errors('ratelimit', errors.RATELIMIT))):
+            (form.has_errors('title', errors.NO_TEXT, errors.TOO_LONG) or
+             jquery.has_errors('ratelimit', errors.RATELIMIT))):
             return
 
         if not l:
-            l = promote.new_promotion(title, url, c.user, ip)
+            l = promote.new_promotion(title, url if kind == 'link' else 'self',
+                                      selftext if kind == 'self' else '',
+                                      c.user, ip)
+
         elif promote.is_promo(l):
+            # changing link type is not allowed
+            if ((l.is_self and kind == 'link') or
+                (not l.is_self and kind == 'self')):
+                c.errors.add(errors.NO_CHANGE_KIND, field="kind")
+                form.set_error(errors.NO_CHANGE_KIND, "kind")
+                return
+
             changed = False
             # live items can only be changed by a sponsor, and also
             # pay the cost of de-approving the link
@@ -445,7 +460,8 @@ class PromoteController(ListingController):
                 if title and title != l.title:
                     l.title = title
                     changed = not trusted
-                if url and url != l.url:
+
+                if kind == 'link' and url and url != l.url:
                     l.url = url
                     changed = not trusted
 
@@ -454,6 +470,10 @@ class PromoteController(ListingController):
                 promote.unapprove_promotion(l)
             if trusted and promote.is_unapproved(l):
                 promote.accept_promotion(l)
+
+            # selftext can be changed at any time
+            if kind == 'self':
+                l.selftext = selftext
 
             # comment disabling is free to be changed any time.
             l.disable_comments = disable_comments

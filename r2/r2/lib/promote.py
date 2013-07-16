@@ -290,7 +290,7 @@ def traffic_totals():
     traffic_data = traffic.zip_timeseries(impressions, clicks)
     return [(d.date(), v) for d, v in traffic_data]
 
-def new_promotion(title, url, user, ip):
+def new_promotion(title, url, selftext, user, ip):
     """
     Creates a new promotion with the provided title, etc, and sets it
     status to be 'unpaid'.
@@ -300,6 +300,12 @@ def new_promotion(title, url, user, ip):
     l.promoted = True
     l.disable_comments = False
     PromotionLog.add(l, 'promotion created')
+
+    if url == 'self':
+        l.url = l.make_permalink_slow()
+        l.is_self = True
+        l.selftext = selftext
+
     l._commit()
 
     # set the status of the link, populating the query queue

@@ -20,7 +20,7 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%namespace file="promotelinkform.html" import="title_field, url_field" />
+<%namespace file="promotelinkform.html" import="title_field, url_field, text_field, kind_selector" />
 <%namespace file="utils.html" import="error_field" />
 <%namespace name="utils" file="utils.html"/>
 
@@ -33,7 +33,9 @@
     <div class="pretty-form" id="promo-form">
 
       ${title_field(None, editable=True)}
+      ${kind_selector()}
       ${url_field(None, editable=True, enable_override=c.user_is_sponsor)}
+      ${text_field(visible=False)}
 
       <div class="rules">
         By clicking "next" you agree to the&#32;<a href="http://www.reddit.com/wiki/selfservicepromotion">Self Serve Advertising Rules.</a>

@@ -25,6 +25,7 @@
   from r2.lib.media import thumbnail_url
   from r2.lib.template_helpers import static
   from r2.lib import promote
+  from r2.lib.pages import UserText
   from r2.lib.strings import strings
   from r2.models import Account
   from r2.lib import js
@@ -86,8 +87,14 @@ ${unsafe(js.use('sponsored'))}
          editable = trusted or not promote.is_promoted(thing.link)
        %>
 
+      <input name="kind" value="${'self' if thing.link.is_self else 'link'}" type="hidden">
       ${title_field(thing.link, editable=editable)}
-      ${url_field(thing.link, editable=editable, enable_override=c.user_is_sponsor)}
+      %if thing.link.is_self:
+        ${text_field(thing.link.selftext)}
+      %else:
+        ${url_field(thing.link, editable=editable, enable_override=c.user_is_sponsor)}
+      %endif
+      ${error_field("NO_CHANGE_KIND", "kind", "div")}
 
       %if editable:
         ${image_field(thing.link)}
@@ -129,9 +136,25 @@ ${self.javascript_setup()}
   </%utils:line_field>
 </%def>
 
+<%def name="kind_selector(link_selected=True)">
+  <%utils:line_field title="${_('post type')}" id="kind-selector" css_class="rounded">
+    <div class="linefield-content">
+      <input id="url_link" class="nomargin" 
+             type="radio" value="link" name="kind"
+             onclick="$('#text-field').hide(); $('#url-field').show()"
+             ${"checked='checked'" if link_selected else ""}>
+      <label for="url_link">${_("link")}</label>
+      <input id="self_link" class="nomargin" 
+             type="radio" value="self" name="kind"
+             onclick="$('#url-field').hide(); $('#text-field').show()"
+             ${"" if link_selected else "checked='checked'"}>
+      <label for="self_link">${_("text")}</label>
+    </div>
+  </%utils:line_field>
+</%def>
+
 <%def name="url_field(link, editable=False, enable_override=False)">
   <%utils:line_field title="${_('url')}" id="url-field" css_class="rounded">
-    <input name="kind" value="link" type="hidden"/>
     <input id="url" name="url" type="text" 
            ${"disabled" if not editable else ""}
            value="${('self' if link.is_self else link.url) if link else ""}"
@@ -158,6 +181,13 @@ ${self.javascript_setup()}
         <p>${_("Choose a different domain name to display on the site (the small grey text next to a link")}</p>
       </div>
     %endif
+  </%utils:line_field>
+</%def>
+
+<%def name="text_field(text='', visible=True)">
+  <%utils:line_field title="${_('text')}" id="text-field" css_class="rounded"
+                     style="${('' if visible else 'display:none')}">
+    ${UserText(None, text=text, have_form=False, creating=True)}
   </%utils:line_field>
 </%def>
 
