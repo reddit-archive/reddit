@@ -576,6 +576,7 @@ def chunk_xml(xml, depth=0):
             yield chunk
 
 
+@g.stats.amqp_processor('cloudsearch_q')
 def _run_changed(msgs, chan):
     '''Consume the cloudsearch_changes queue, and print reporting information
     on how long it took and how many remain
