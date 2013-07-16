@@ -441,12 +441,34 @@ class CloudSearchUploader(object):
         '''
         xml_things = self.xml_from_things()
 
+        if not len(xml_things):
+            return 0
+
         cs_start = datetime.now(g.tz)
-        if len(xml_things):
-            sent = self.send_documents(xml_things)
-            if not quiet:
-                print sent
-        return (datetime.now(g.tz) - cs_start).total_seconds()
+        sent = self.send_documents(xml_things)
+        cs_time = (datetime.now(g.tz) - cs_start).total_seconds()
+
+        adds, deletes, warnings = 0, 0, []
+        for record in sent:
+            response = etree.fromstring(record)
+            adds += int(response.get("adds", 0))
+            deletes += int(response.get("deletes", 0))
+            if response.get("warnings"):
+                warnings.append(response.get("warnings"))
+
+        g.stats.simple_event("cloudsearch.uploads.adds", delta=adds)
+        g.stats.simple_event("cloudsearch.uploads.deletes", delta=deletes)
+        g.stats.simple_event("cloudsearch.uploads.warnings",
+                delta=len(warnings))
+
+        if not quiet:
+            print "%s Changes: +%i -%i" % (self.__class__.__name__,
+                                           adds, deletes)
+            if len(warnings):
+                print "%s Warnings: %s" % (self.__class__.__name__,
+                                           "; ".join(warnings))
+
+        return cs_time
 
     def send_documents(self, docs):
         '''Open a connection to the cloudsearch endpoint, and send the documents
