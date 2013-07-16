@@ -709,7 +709,10 @@ class StripeController(GoldPaymentController):
         event_dict = json.loads(request.body)
         event = stripe.Event.construct_from(event_dict, g.STRIPE_SECRET_KEY)
         status = event.type
-        if cls.event_type_mappings.get(status) == 'noop':
+        event_type = cls.event_type_mappings.get(status)
+        if not event_type:
+            raise ValueError('Stripe: unrecognized status %s' % status)
+        elif event_type == 'noop':
             return status, None, None, None, None
 
         charge = event.data.object
