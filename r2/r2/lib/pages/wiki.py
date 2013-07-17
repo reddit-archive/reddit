@@ -138,6 +138,9 @@ class WikiBasePage(Reddit):
                         show_wiki_actions=True, page_classes=page_classes,
                         content=content, **context)
 
+    def content(self):
+        return self._content
+
 class WikiPageView(WikiBasePage):
     def __init__(self, content, page, diff=None, renderer='wiki', **context):
         may_revise = context.get('may_revise')
