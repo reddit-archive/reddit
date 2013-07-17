@@ -2265,7 +2265,7 @@ class VValidatedJSON(VJSON):
 
     def run(self, json_str):
         data = VJSON.run(self, json_str)
-        if not data:
+        if self.has_errors:
             return
 
         # Note: this relies on the fact that all validator errors are dumped
