@@ -2183,12 +2183,12 @@ class VPermissions(Validator):
 class VJSON(Validator):
     def run(self, json_str):
         if not json_str:
-            return self.set_error('BAD_JSON', code=400)
+            return self.set_error('JSON_PARSE_ERROR', code=400)
         else:
             try:
                 return json.loads(json_str)
             except ValueError:
-                return self.set_error('BAD_JSON', code=400)
+                return self.set_error('JSON_PARSE_ERROR', code=400)
 
     def param_docs(self):
         return {

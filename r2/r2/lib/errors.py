@@ -128,7 +128,7 @@ error_list = dict((
         ('MULTI_CANNOT_EDIT', _('you can\'t change that multireddit')),
         ('MULTI_TOO_MANY_SUBREDDITS', _('no more space for subreddits in that multireddit')),
         ('MULTI_SPECIAL_SUBREDDIT', _("can't add special subreddit %(path)s")),
-        ('BAD_JSON', _('unable to parse JSON data')),
+        ('JSON_PARSE_ERROR', _('unable to parse JSON data')),
     ))
 
 errors = Storage([(e, e) for e in error_list.keys()])
