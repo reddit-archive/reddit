@@ -111,7 +111,7 @@ class ApiminimalController(MinimalController):
     @api_doc(api_section.captcha)
     def POST_new_captcha(self, form, jquery, *a, **kw):
         """
-        Responds with an `iden` of a new CAPTCHA
+        Responds with an `iden` of a new CAPTCHA.
 
         Use this endpoint if a user cannot read a given CAPTCHA,
         and wishes to receive a new CAPTCHA.
@@ -233,7 +233,7 @@ class ApiController(RedditController, OAuth2ResourceController):
     @api_doc(api_section.messages)
     def POST_compose(self, form, jquery, to, subject, body, ip):
         """
-        handles message composition under /message/compose.
+        Handles message composition under /message/compose.
         """
         if not (form.has_errors("to",  errors.USER_DOESNT_EXIST,
                                 errors.NO_USER, errors.SUBREDDIT_NOEXIST,
@@ -502,12 +502,12 @@ class ApiController(RedditController, OAuth2ResourceController):
     @cross_domain(allow_credentials=True)
     @api_doc(api_section.account, extends=_handle_login)
     def POST_login(self, *args, **kwargs):
-        """Log in to an account.
+        """Log into an account.
 
         `rem` specifies whether or not the session cookie returned should last
         beyond the current browser session (that is, if `rem` is `True` the
         cookie will have an explicit expiration far in the future indicating
-        that it is not a session cookie.)
+        that it is not a session cookie).
 
         """
         return self._handle_login(*args, **kwargs)
@@ -567,7 +567,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         `rem` specifies whether or not the session cookie returned should last
         beyond the current browser session (that is, if `rem` is `True` the
         cookie will have an explicit expiration far in the future indicating
-        that it is not a session cookie.)
+        that it is not a session cookie).
 
         """
         return self._handle_register(*args, **kwargs)
@@ -592,7 +592,7 @@ class ApiController(RedditController, OAuth2ResourceController):
     @api_doc(api_section.moderation)
     def POST_leavecontributor(self, container):
         """
-        same comment as for POST_leave_moderator.
+        Same comment as for POST_leave_moderator.
         """
         if container and container.is_contributor(c.user):
             container.remove_contributor(c.user)
@@ -1212,7 +1212,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                 thing=VByName('id'))
     @api_doc(api_section.messages)
     def POST_block(self, thing):
-        '''for blocking via inbox'''
+        '''For blocking via inbox.'''
         if not thing:
             return
 
