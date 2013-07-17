@@ -872,28 +872,28 @@ class DenormalizedRelation(object):
                                        default_validation_class=UTF8_TYPE)
 
     @classmethod
-    def value_for(cls, thing1, thing2, opaque):
+    def value_for(cls, thing1, thing2, **kw):
         """Return a value to store for a relationship between thing1/thing2."""
         raise NotImplementedError()
 
     @classmethod
-    def create(cls, thing1, thing2s, opaque=None):
+    def create(cls, thing1, thing2s, **kw):
         """Create a relationship between thing1 and thing2s.
 
         If there are any other views of this data, they will be updated as
         well.
 
-        Takes an optional parameter "opaque" which can be used by views
+        Takes kwargs which can be used by views
         or value_for to get additional information.
 
         """
         thing2s = tup(thing2s)
-        values = {thing2._id36 : cls.value_for(thing1, thing2, opaque)
+        values = {thing2._id36 : cls.value_for(thing1, thing2, **kw)
                   for thing2 in thing2s}
         cls._cf.insert(thing1._id36, values)
 
         for view in cls._views:
-            view.create(thing1, thing2s, opaque)
+            view.create(thing1, thing2s, **kw)
 
         if cls._write_last_modified:
             from r2.models.last_modified import LastModified

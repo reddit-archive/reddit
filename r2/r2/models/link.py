@@ -1471,7 +1471,7 @@ class GildedCommentsByAccount(tdb_cassandra.DenormalizedRelation):
     _views = []
 
     @classmethod
-    def value_for(cls, thing1, thing2, opaque):
+    def value_for(cls, thing1, thing2):
         return ''
 
     @classmethod
@@ -1493,7 +1493,7 @@ class GildingsByThing(tdb_cassandra.View):
         return [int(account_id, 36) for account_id in columns.iterkeys()]
 
     @classmethod
-    def create(cls, user, things, opaque):
+    def create(cls, user, things):
         for thing in things:
             cls._set_values(thing._fullname, {user._id36: ""})
 
@@ -1533,7 +1533,7 @@ class GildingsByDay(tdb_cassandra.View):
         return gildings
 
     @classmethod
-    def create(cls, user, things, opaque):
+    def create(cls, user, things):
         key = cls._rowkey(datetime.now(g.tz))
 
         columns = {}
@@ -1552,7 +1552,7 @@ class GildingsByDay(tdb_cassandra.View):
 
 class _SaveHideByAccount(tdb_cassandra.DenormalizedRelation):
     @classmethod
-    def value_for(cls, thing1, thing2, opaque):
+    def value_for(cls, thing1, thing2):
         return ''
 
     @classmethod
@@ -1660,7 +1660,7 @@ class _ThingSavesBySubreddit(tdb_cassandra.View):
         return sorted([sr.name for sr in srs])
 
     @classmethod
-    def create(cls, user, things, opaque):
+    def create(cls, user, things):
         for thing in things:
             rowkey = cls._rowkey(user, thing)
             column = cls._column(user, thing)
@@ -1790,7 +1790,7 @@ class CommentsByAccount(tdb_cassandra.DenormalizedRelation):
     _views = []
 
     @classmethod
-    def value_for(cls, thing1, thing2, opaque):
+    def value_for(cls, thing1, thing2):
         return ''
 
     @classmethod
@@ -1804,7 +1804,7 @@ class LinksByAccount(tdb_cassandra.DenormalizedRelation):
     _views = []
 
     @classmethod
-    def value_for(cls, thing1, thing2, opaque):
+    def value_for(cls, thing1, thing2):
         return ''
 
     @classmethod

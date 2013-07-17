@@ -67,11 +67,11 @@ class VotesByAccount(tdb_cassandra.DenormalizedRelation):
     @classmethod
     def copy_from(cls, pgvote):
         rel = cls.rel(Account, pgvote._thing2.__class__)
-        rel.create(pgvote._thing1, pgvote._thing2, opaque=pgvote)
+        rel.create(pgvote._thing1, pgvote._thing2, pgvote=pgvote)
 
     @classmethod
-    def value_for(cls, thing1, thing2, opaque):
-        return opaque._name
+    def value_for(cls, thing1, thing2, pgvote):
+        return pgvote._name
 
 
 class LinkVotesByAccount(VotesByAccount):
