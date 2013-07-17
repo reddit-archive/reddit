@@ -732,6 +732,7 @@ class SubredditSettingsTemplate(ThingJsonTemplate):
                         title = 'site.title',
                         description = 'site.description',
                         public_description = 'site.public_description',
+                        public_traffic = 'site.public_traffic',
                         prev_description_id = 'site.prev_description_id',
                         prev_public_description_id = 'site.prev_public_description_id',
                         language = 'site.lang',
