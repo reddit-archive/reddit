@@ -124,6 +124,8 @@ class FakeTrophy(object):
         self._thing1 = recipient
         self.description = description
         self.url = url
+        self.trophy_url = getattr(self, "url",
+                                  getattr(self._thing2, "url", None))
         self.cup_info = cup_info
         self._id = self._id36 = None
 
