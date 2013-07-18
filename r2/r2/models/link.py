@@ -1010,6 +1010,7 @@ class Comment(Thing, Printable):
                         item.subreddit_path += item.subreddit.path
 
             item.full_comment_path = item.link.make_permalink(item.subreddit)
+            item.full_comment_count = item.link.num_comments
 
             # don't collapse for admins, on profile pages, or if deleted
             item.collapsed = False

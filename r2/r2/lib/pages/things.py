@@ -169,6 +169,7 @@ class CommentButtons(PrintableButtons):
                                   ignore_reports = thing.ignore_reports,
                                   new_window = c.user.pref_newwindow,
                                   full_comment_path = thing.full_comment_path,
+                                  full_comment_count = thing.full_comment_count,
                                   deleted = thing.deleted,
                                   parent_permalink = thing.parent_permalink, 
                                   can_reply = thing.can_reply,
