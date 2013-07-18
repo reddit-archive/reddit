@@ -83,6 +83,10 @@ r.multi.MultiReddit = Backbone.Model.extend({
         return this.uncreated
     },
 
+    name: function() {
+        return this.get('path').split('/').pop()
+    },
+
     sync: function(method, model, options) {
         var res = Backbone.sync.apply(this, arguments)
         if (method == 'create') {
@@ -316,7 +320,10 @@ r.multi.MultiDetails = Backbone.View.extend({
 
         $copyForm
             .show()
-            .find('.multi-name').focus()
+            .find('.multi-name')
+                .val(this.model.name())
+                .select()
+                .focus()
 
         this.copyForm = new r.multi.MultiCreateForm({
             el: $copyForm,
