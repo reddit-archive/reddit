@@ -1596,9 +1596,10 @@ class ProfileBar(Templated):
                     if gold_days_left < 1:
                         self.gold_remaining = _("less than a day")
                     else:
-                        # "X months, Y days" if less than 2 months left, otherwise "X months"
-                        precision = 60 * 60 * 24 * 30 if gold_days_left > 60 else 60 * 60 * 24
-                        self.gold_remaining = timeuntil(self.gold_expiration, precision)
+                        # Round remaining gold to number of days
+                        precision = 60 * 60 * 24
+                        self.gold_remaining = timeuntil(self.gold_expiration,
+                                                        precision)
 
                 if hasattr(user, "gold_subscr_id"):
                     self.gold_subscr_id = user.gold_subscr_id
