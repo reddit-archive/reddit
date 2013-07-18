@@ -263,6 +263,7 @@ class MultiApiController(RedditController, OAuth2ResourceController):
             # force markdown linking since /user/foo is not autolinked
             'source': '[%s](%s)' % (from_path, from_path)
         }
+        to_multi.visibility = 'private'
         to_multi._commit()
         return self._format_multi(to_multi)
 
