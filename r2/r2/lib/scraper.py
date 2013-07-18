@@ -682,7 +682,7 @@ class OEmbed(Scraper):
         #Either a 404 or 500. 
         if not self.content:
             #raise ValueError('ISSUE CALLING %s' %api_url)
-            log.warn('oEmbed call (%s) failed to return content for %s'
+            log.warning('oEmbed call (%s) failed to return content for %s'
                     %(api_url, self.url))
             return None
 
