@@ -765,6 +765,13 @@ class ApiController(RedditController, OAuth2ResourceController):
             if not has_perms:
                 abort(403, 'forbidden')
 
+        if type == 'moderator_invite':
+            invites = sum(1 for i in container.each_moderator_invite())
+            if invites >= g.sr_invite_limit:
+                c.errors.add(errors.SUBREDDIT_RATELIMIT, field="name")
+                form.set_error(errors.SUBREDDIT_RATELIMIT, "name")
+                return
+
         if type in self._sr_friend_types and not c.user_is_admin:
             quota_key = "sr%squota-%s" % (str(type), container._id36)
             g.cache.add(quota_key, 0, time=g.sr_quota_time)

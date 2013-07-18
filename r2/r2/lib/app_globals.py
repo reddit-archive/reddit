@@ -123,6 +123,7 @@ class Globals(object):
             'sr_moderator_invite_quota',
             'sr_contributor_quota',
             'sr_quota_time',
+            'sr_invite_limit',
             'wiki_keep_recent_days',
             'wiki_max_page_length_bytes',
             'wiki_max_page_name_length',
