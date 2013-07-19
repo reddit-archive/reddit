@@ -7073,6 +7073,9 @@ body.gold .buttons li.comment-save-button { display: inline; }
 @lc-shadow-width: 6px;
 @lc-grippy-width: 8px;
 body.with-listing-chooser {
+    @grippy-image-width: 6px;
+    @grippy-image-height: 65px;
+    @grippy-fudge: 6px;  // extra width for easy targeting
     position: relative;
 
     & #header .tabmenu {
@@ -7098,56 +7101,76 @@ body.with-listing-chooser {
         left: 0;
         bottom: 0;
         width: @lc-width;
-        border-right: 1px dotted #e5e5e5;
-        padding-right: @lc-grippy-width;
+        padding-right: @lc-grippy-width + @grippy-fudge;
         background: #f7f7f7;
         overflow: hidden;
 
         &.initialized {
             .transition(width, .25s);
-        }
 
-        &:after {
-            content: '';
-            position: absolute;
-            right: 0;
-            top: 0;
-            bottom: 0;
-            left: @lc-width - @lc-shadow-width;
-            box-shadow: (-@lc-shadow-width - @lc-grippy-width) 0 2*@lc-shadow-width -@lc-shadow-width rgba(0, 0, 0, .25) inset;
-            z-index: 20;
+            .grippy, .grippy:before, .grippy:after {
+                // the 0.03s delay here is intended to prevent flashes when the
+                // mouse is passing over en route to a tab.
+                .transition(all, 0.1s, ease, 0.03s);
+            }
         }
 
         .grippy {
             position: absolute;
             right: 0;
-            width: @lc-grippy-width;
+            width: @lc-grippy-width + @grippy-fudge;
             height: 100%;
             background: white;
             border-left: 1px solid #ccc;
+            box-shadow: 0 0 @lc-shadow-width rgba(0, 0, 0, .2);
             z-index: 25;
             cursor: pointer;
 
-            &:after {
-                @height: 50px;
+            &:before {
                 content: '';
                 display: block;
                 position: fixed;
                 top: 50%;
-                margin-left: (@lc-grippy-width - 2px) / 2;
-                margin-top: -@height / 2;
-                border-left: 2px dotted #ccc;
-                height: @height;
+                width: @lc-grippy-width;
+                height: @grippy-image-height;
+                margin-top: -@grippy-image-height / 2;
+                background-image: url(../sidebar-grippy-hide.png);  /* SPRITE */
+                background-repeat: no-repeat;
+                margin-left: (@lc-grippy-width - @grippy-image-width) / 2;
+                opacity: .5;
+            }
+
+            &:after {
+                content: '';
+                display: block;
+                position: absolute;
+                height: 100%;
+                right: @grippy-fudge - 1;
+                width: @lc-grippy-width;
+                border-right: 1px dotted #e5e5e5;
+                z-index: -1;
             }
 
             &:hover {
-                background: #f4f4f4;
+                &:before {
+                    opacity: 1;
+                }
+
+                &:after {
+                    background: #f4f4f4;
+                }
+            }
+        }
+
+        &:hover {
+            .grippy:before {
+                opacity: .8;
             }
         }
     }
 
     &.listing-chooser-collapsed {
-        @lc-grippy-width: 8px;
+        @lc-grippy-width: 9px;
 
         & #header .tabmenu {
             margin-left: 0;
@@ -7163,13 +7186,24 @@ body.with-listing-chooser {
 
         .listing-chooser {
             width: 0;
-            padding-right: @lc-grippy-width;
-            border-right: 1px solid #ccc;
+            padding-right: @lc-grippy-width + @grippy-fudge;
+            z-index: -1;
+
             .grippy {
                 z-index: 40;
-                width: @lc-grippy-width;
+                width: @lc-grippy-width + @grippy-fudge;
+
+                &:before {
+                    background-image: url(../sidebar-grippy-show.png);  /* SPRITE */
+                    background-repeat: no-repeat;
+                    margin-left: (@lc-grippy-width - @grippy-image-width) / 2;
+                    width: @lc-grippy-width;
+                }
+
                 &:after {
-                    margin-left: (@lc-grippy-width - 2px) / 2;
+                    right: @grippy-fudge - 1;
+                    width: @lc-grippy-width;
+                    border-right: 1px solid #ccc;
                 }
             }
         }
