@@ -43,18 +43,6 @@ else:
     })
 
 
-try:
-    from babel.messages import frontend as babel
-    commands.update({
-        "compile_catalog": babel.compile_catalog,
-        "extract_messages": babel.extract_messages,
-        "init_catalog": babel.init_catalog,
-        "update_catalog": babel.update_catalog,
-    })
-except ImportError:
-    pass
-
-
 # add the cython modules
 pyx_extensions = []
 for root, directories, files in os.walk('.'):
