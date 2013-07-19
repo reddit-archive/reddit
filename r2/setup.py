@@ -30,6 +30,7 @@ import os
 import fnmatch
 
 
+
 commands = {}
 
 
@@ -41,6 +42,14 @@ else:
     commands.update({
         "build_ext": build_ext
     })
+
+
+try:
+    import r2.lib.translation
+except ImportError:
+    pass
+else:
+    commands["extract_messages"] = r2.lib.translation.extract_messages
 
 
 # add the cython modules

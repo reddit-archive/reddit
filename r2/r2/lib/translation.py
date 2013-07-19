@@ -22,7 +22,10 @@
 
 import json
 import os
+
+import babel.messages.frontend
 import pylons
+
 from pylons.i18n.translation import translation, LanguageError, NullTranslations
 
 try:
@@ -106,3 +109,24 @@ def get_active_langs(path=I18N_PATH, default_lang='en'):
     if default_lang not in trans_name:
         trans_name[default_lang] = default_lang
     return trans, trans_name
+
+
+class extract_messages(babel.messages.frontend.extract_messages):
+    """Extract messages from all specified directories.
+
+    This is a work around for a bug in Babel which causes the --input-dirs
+    parameter to extract_messages to not work properly.
+
+    The bug has been fixed in babel, but no releases have been made since the
+    fix. This class will do the trick until that time and should be safe once
+    the fix is released.
+
+    http://babel.edgewall.org/ticket/232
+
+    """
+
+    def finalize_options(self):
+        if self.input_dirs:
+            self.input_dirs = self.input_dirs.split(",")
+
+        babel.messages.frontend.extract_messages.finalize_options(self)
