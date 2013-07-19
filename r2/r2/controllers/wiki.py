@@ -299,7 +299,7 @@ class WikiApiController(WikiController):
               pageandprevious=VWikiPageRevise(('page', 'previous'), restricted=True),
               content=nop(('content')),
               page_name=VWikiPageName('page'),
-              reason=VPrintable('reason', 256))
+              reason=VPrintable('reason', 256, empty_error=None))
     @api_doc(api_section.wiki, uri='/api/wiki/edit')
     def POST_wiki_edit(self, pageandprevious, content, page_name, reason):
         page, previous = pageandprevious
