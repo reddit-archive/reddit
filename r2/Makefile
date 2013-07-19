@@ -71,7 +71,7 @@ GENERATED_STRINGS_FILE := r2/lib/generated_strings.py
 
 # POTFILE is set by Makefile.py
 i18n: $(GENERATED_STRINGS_FILE)
-	$(PYTHON) setup.py extract_messages -o $(POTFILE)
+	$(PYTHON) setup.py extract_messages --input-dirs=r2,$(PLUGIN_I18N_PATHS) -o $(POTFILE)
 
 $(GENERATED_STRINGS_FILE): $(STRINGS_FILE)
 	paster run standalone $(STRINGS_FILE) -c "generate_strings()" > $(GENERATED_STRINGS_FILE)

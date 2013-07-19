@@ -34,6 +34,7 @@ class Plugin(object):
     config = {}
     live_config = {}
     needs_static_build = False
+    needs_translation = True
     errors = {}
 
     def __init__(self, entry_point):

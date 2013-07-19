@@ -30,6 +30,11 @@ print 'POTFILE := ' + os.path.join(I18N_PATH, 'r2.pot')
 plugins = PluginLoader()
 print 'PLUGINS := ' + ' '.join(plugin.name for plugin in plugins
                                if plugin.needs_static_build)
+
+print 'PLUGIN_I18N_PATHS := ' + ','.join(os.path.relpath(plugin.path)
+                                         for plugin in plugins
+                                         if plugin.needs_translation)
+
 import sys
 for plugin in plugins:
     print 'PLUGIN_PATH_%s := %s' % (plugin.name, plugin.path)
