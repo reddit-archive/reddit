@@ -31,7 +31,6 @@ from r2.lib.utils        import constant_time_compare, canonicalize_email
 from r2.lib.cache        import sgm
 from r2.lib import filters
 from r2.lib.log import log_text
-from r2.lib.zookeeper import LiveDict
 from r2.models.last_modified import LastModified
 
 from pylons import c, g, request
@@ -539,21 +538,13 @@ class Account(Thing):
             canons_by_domain.setdefault(domain, [])
             canons_by_domain[domain].append(canon)
 
-        # Now, build a list of subdomains to check for ban status; for
-        # abc@foo.bar.com, we need to check foo.bar.com, bar.com, and .com
-        canons_by_subdomain = {}
-        for domain, canons in canons_by_domain.iteritems():
-            parts = domain.rstrip(".").split(".")
-            while len(parts) >= 1:
-                whole = ".".join(parts)
-                canons_by_subdomain.setdefault(whole, [])
-                canons_by_subdomain[whole].extend(canons)
-                parts.pop(0)
+        # Hand off to the domain ban system; it knows in the case of
+        # abc@foo.bar.com to check foo.bar.com, bar.com, and .com
+        from r2.models.admintools import bans_for_domain_parts
 
-        for subdomain, d in g.banned_domains.iteritems():
-            if(d and d.get("no_email", None) and
-                    subdomain in canons_by_subdomain):
-                for canon in canons_by_subdomain[subdomain]:
+        for domain, canons in canons_by_domain.iteritems():
+            for d in bans_for_domain_parts(domain):
+                if d.no_email:
                     rv[canon] = "domain"
 
         return rv
