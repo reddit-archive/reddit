@@ -5096,6 +5096,23 @@ table.calendar {
     margin-left: 5px;
 }
 
+#side-multi-list {
+    li {
+        display: inline-block;
+        width: 7.5em;
+        margin-right: .5em;
+        text-overflow: ellipsis;
+        overflow: hidden;
+    }
+
+    & + .expand-summary {
+        padding: 0 4px;
+        margin: 0;
+        margin-top: 3px;
+        font-size: x-small;
+    }
+}
+
 .confirm-button .confirmation {
     color: red;
     white-space: nowrap;

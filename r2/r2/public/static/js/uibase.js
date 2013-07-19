@@ -42,6 +42,55 @@ r.ui.Collapse.prototype = {
     }
 }
 
+r.ui.Summarize = function(el, maxCount) {
+    r.ui.Base.call(this, el)
+    this.maxCount = maxCount
+
+    this._updateItems()
+    if (this.$hiddenItems.length > 0) {
+        this.$toggleButton = $('<button class="expand-summary">')
+            .click($.proxy(this, '_toggle'))
+        this.$el.after(this.$toggleButton)
+        this._summarize()
+    }
+}
+r.ui.Summarize.prototype = {
+    _updateItems: function() {
+        var $important = this.$el.children('.important'),
+            $unimportant = this.$el.children(':not(.important)'),
+            unimportantToShow = this.maxCount
+                                ? Math.max(0, this.maxCount - $important.length)
+                                : 0,
+            $unimportantToShow = $unimportant.slice(0, unimportantToShow - 1)
+
+        this.$summaryItems = $important.add($unimportantToShow)
+        this.$hiddenItems = $unimportant.slice(unimportantToShow)
+    },
+
+    _summarize: function() {
+        this.$el.addClass('summarized')
+        this.$hiddenItems.hide()
+        this.$toggleButton.html(r.strings('summarize_and_n_more', {
+            count: this.$hiddenItems.length
+        }))
+    },
+
+    _expand: function() {
+        this.$el.removeClass('summarized')
+        this.$hiddenItems.show()
+        this.$toggleButton.html(r.strings('summarize_less'))
+    },
+
+    _toggle: function(e) {
+        if (this.$el.hasClass('summarized')) {
+            this._expand()
+        } else {
+            this._summarize()
+        }
+        e.preventDefault()
+    }
+};
+
 r.ui.collapseListingChooser = function() {
     if (store.get('ui.collapse.listingchooser') == true) {
         $('body').addClass('listing-chooser-collapsed')

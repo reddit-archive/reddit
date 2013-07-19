@@ -217,6 +217,8 @@ Note: there are a couple of places outside of your subreddit where someone can c
     awesomeness_goes_here = _('awesomeness goes here'),
     add_multi_sr = _('add a subreddit to your multi.'),
     open_multi = _('open this multi'),
+    summarize_and_n_more = _('&hellip; and %(count)s more &rArr;'),
+    summarize_less = _('&lArr; less'),
 )
 
 class StringHandler(object):
