@@ -281,7 +281,8 @@ class LocalizedModule(Module):
         with open(self.path) as f:
             reddit_source = f.read()
         string_keys = re.findall("r\.strings\(['\"]([\w$_]+)['\"]", reddit_source)
-        string_keys.append("permissions")
+        if "r.strings.permissions" in reddit_source:
+            string_keys.append("permissions")
 
         print >> sys.stderr, "Creating language-specific files:"
         for lang, unused in iter_langs():
