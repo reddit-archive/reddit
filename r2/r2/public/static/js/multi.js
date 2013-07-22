@@ -608,6 +608,13 @@ r.multi.ListingChooser = Backbone.View.extend({
 
     initialize: function() {
         this.$el.addClass('initialized')
+
+        // HACK: fudge page heights for long lists of multis / short pages
+        var thisHeight = this.$('.contents').height(),
+            bodyHeight = $('body').height()
+        if (thisHeight > bodyHeight) {
+            $('body').css('padding-bottom', thisHeight - bodyHeight + 100)
+        }
     },
 
     createClick: function(ev) {

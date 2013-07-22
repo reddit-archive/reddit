@@ -40,32 +40,34 @@
 <script>r.ui.collapseListingChooser()</script>
 <div class="listing-chooser">
   <div class="grippy"></div>
-  <ul class="global">
-    ${section_items(thing.sections['global'])}
-  </ul>
+  <div class="contents">
+    <ul class="global">
+      ${section_items(thing.sections['global'])}
+    </ul>
 
-  <h3>${_('multireddits')}</h3>
-  %if thing.show_samples:
-    <div class="intro">
-      <p>${_('new! create sets of subreddits to view together.')}</p>
-      <p>${_('for starters, try one of these:')}</p>
-      <ul class="multis">
-        ${section_items(thing.sections['sample'])}
-      </ul>
-    </div>
-  %endif
-  <ul class="multis">
-    ${section_items(thing.sections['multi'])}
-    <li class="create">
-      <form>
-        <input type="text" class="multi-name" placeholder="${_('name')}"></input>
-        <div class="error"></div>
-        <button>${_('create')}</button><div class="throbber"></div>
-      </form>
-    </li>
-  </ul>
+    <h3>${_('multireddits')}</h3>
+    %if thing.show_samples:
+      <div class="intro">
+        <p>${_('new! create sets of subreddits to view together.')}</p>
+        <p>${_('for starters, try one of these:')}</p>
+        <ul class="multis">
+          ${section_items(thing.sections['sample'])}
+        </ul>
+      </div>
+    %endif
+    <ul class="multis">
+      ${section_items(thing.sections['multi'])}
+      <li class="create">
+        <form>
+          <input type="text" class="multi-name" placeholder="${_('name')}"></input>
+          <div class="error"></div>
+          <button>${_('create')}</button><div class="throbber"></div>
+        </form>
+      </li>
+    </ul>
 
-  <ul class="other">
-    ${section_items(thing.sections['other'])}
-  </ul>
+    <ul class="other">
+      ${section_items(thing.sections['other'])}
+    </ul>
+  </div>
 </div>
