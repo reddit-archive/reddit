@@ -1568,9 +1568,9 @@ class ProfilePage(Reddit):
         rb.push(scb)
 
         multis = [m for m in LabeledMulti.by_owner(self.user)
-                  if m.can_view(c.user)]
+                  if m.visibility == "public"]
         if multis:
-            scb = SideContentBox(title=_("multireddits"), content=[
+            scb = SideContentBox(title=_("public multireddits"), content=[
                 SidebarMultiList(multis)
             ])
             rb.push(scb)
