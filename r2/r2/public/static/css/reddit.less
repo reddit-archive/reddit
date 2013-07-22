@@ -5098,9 +5098,11 @@ table.calendar {
 
 #side-multi-list {
     li {
+        @columns: 3;
+        @column-spacing: 3px;
         display: inline-block;
-        width: 7.5em;
-        margin-right: .5em;
+        width: 288px / @columns - @column-spacing;
+        margin-right: @column-spacing;
         text-overflow: ellipsis;
         overflow: hidden;
     }
