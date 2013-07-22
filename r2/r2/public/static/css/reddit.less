@@ -7129,13 +7129,11 @@ body.with-listing-chooser {
             &:before {
                 content: '';
                 display: block;
-                position: fixed;
-                top: 50%;
+                position: absolute;
                 width: @lc-grippy-width;
-                height: @grippy-image-height;
-                margin-top: -@grippy-image-height / 2;
-                background-image: url(../sidebar-grippy-hide.png);  /* SPRITE */
-                background-repeat: no-repeat;
+                height: 100%;
+                background: url(../sidebar-grippy-hide.png) fixed no-repeat;
+                background-position: (@lc-width + (@lc-grippy-width - @grippy-image-width) / 2) center;
                 margin-left: (@lc-grippy-width - @grippy-image-width) / 2;
                 opacity: .5;
             }
@@ -7194,8 +7192,8 @@ body.with-listing-chooser {
                 width: @lc-grippy-width + @grippy-fudge;
 
                 &:before {
-                    background-image: url(../sidebar-grippy-show.png);  /* SPRITE */
-                    background-repeat: no-repeat;
+                    background-image: url(../sidebar-grippy-show.png);
+                    background-position: ((@lc-grippy-width - @grippy-image-width) / 2 + 1) center;
                     margin-left: (@lc-grippy-width - @grippy-image-width) / 2;
                     width: @lc-grippy-width;
                 }
