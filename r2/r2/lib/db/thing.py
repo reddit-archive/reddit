@@ -485,7 +485,7 @@ class DataThing(object):
                 thing_id = int(thing_id, 36)
                 lookup[fullname] = (real_type, thing_id)
                 table.setdefault(real_type, []).append(thing_id)
-            except ValueError:
+            except (KeyError, ValueError):
                 if single:
                     raise NotFound
 
