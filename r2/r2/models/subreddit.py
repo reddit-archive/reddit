@@ -94,6 +94,10 @@ class BaseSite(object):
         return "/r/%s/" % self.name
 
     @property
+    def user_path(self):
+        return self.path
+
+    @property
     def analytics_name(self):
         return self.name
 
@@ -1365,6 +1369,13 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
                 'username': self.owner.name,
                 'multiname': self.name,
             }
+
+    @property
+    def user_path(self):
+        if self.owner == c.user:
+            return '/me/m/%s' % self.name
+        else:
+            return self.path
 
     @property
     def name(self):

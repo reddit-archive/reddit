@@ -32,6 +32,18 @@ def not_in_sr(environ, results):
             'sub_domain' not in environ and
             'domain' not in environ)
 
+
+# FIXME: submappers with path prefixes are broken in Routes 1.11. Once we
+# upgrade, we should be able to replace this ugliness with submappers.
+def partial_connect(mc, **override_args):
+    def connect(path, **kwargs):
+        if 'path_prefix' in override_args:
+            path = override_args['path_prefix'] + path
+        kwargs.update(override_args)
+        mc(path, **kwargs)
+    return connect
+
+
 def make_map():
     map = Mapper()
     mc = map.connect
@@ -115,31 +127,36 @@ def make_map():
     mc('/user/:username/:where', controller='user', action='listing',
        where='overview')
 
-    mc('/user/:username/m/:multipath', controller='hot', action='listing')
-    mc('/user/:username/m/:multipath/submit', controller='front',
-       action='submit')
-    mc('/user/:username/m/:multipath/:sort', controller='browse', sort='top',
-       action='listing', requirements=dict(sort='top|controversial'))
-    mc('/user/:username/m/:multipath/:controller', action='listing',
-       requirements=dict(controller="hot|new|rising|randomrising"))
+    multi_prefixes = (
+       partial_connect(mc, path_prefix='/user/:username/m/:multipath'),
+       partial_connect(mc, path_prefix='/me/m/:multipath', my_multi=True),
+    )
+
+    for connect in multi_prefixes:
+       connect('/', controller='hot', action='listing')
+       connect('/submit', controller='front', action='submit')
+       connect('/:sort', controller='browse', sort='top',
+          action='listing', requirements=dict(sort='top|controversial'))
+       connect('/:controller', action='listing',
+          requirements=dict(controller="hot|new|rising|randomrising"))
 
     mc('/about/sidebar', controller='front', action='sidebar')
     mc('/about/flair', controller='front', action='flairlisting')
     mc('/about', controller='front', action='about')
     mc('/comments/gilded', controller='redirect', action='gilded_comments',
        conditions={'function': not_in_sr})
-    for prefix in ('', '/user/:username/m/:multipath'):
-       mc(prefix + '/about/message/:where', controller='message',
+    for connect in (mc,) + multi_prefixes:
+       connect('/about/message/:where', controller='message',
           action='listing')
-       mc(prefix + '/about/log', controller='front', action='moderationlog')
-       mc(prefix + '/about/:location', controller='front',
+       connect('/about/log', controller='front', action='moderationlog')
+       connect('/about/:location', controller='front',
           action='spamlisting',
           requirements=dict(location='reports|spam|modqueue|unmoderated'))
-       mc(prefix + '/about/:location', controller='front', action='editreddit',
+       connect('/about/:location', controller='front', action='editreddit',
           location='about')
-       mc(prefix + '/comments', controller='comments', action='listing')
-       mc(prefix + '/comments/gilded', action='listing', controller='gilded')
-       mc(prefix + '/search', controller='front', action='search')
+       connect('/comments', controller='comments', action='listing')
+       connect('/comments/gilded', action='listing', controller='gilded')
+       connect('/search', controller='front', action='search')
 
     mc('/u/:username', controller='redirect', action='user_redirect')
     mc('/u/:username/*rest', controller='redirect', action='user_redirect')

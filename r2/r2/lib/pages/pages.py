@@ -4132,7 +4132,7 @@ class ListingChooser(Templated):
         self.sections[section].append({
             "name": name,
             "description": description,
-            "path": path or site.path,
+            "path": path or site.user_path,
             "site": site,
             "selected": False,
         })

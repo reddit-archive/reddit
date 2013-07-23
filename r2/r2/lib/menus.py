@@ -305,7 +305,7 @@ class NavButton(Styled):
         else:
             if self.stripped_path == self.bare_path:
                 return True
-            site_path = c.site.path.lower() + self.bare_path
+            site_path = c.site.user_path.lower() + self.bare_path
             if self.sr_path and self.stripped_path == site_path:
                 return True
             if self.bare_path and self.stripped_path.startswith(self.bare_path):

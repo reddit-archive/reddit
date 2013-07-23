@@ -388,21 +388,38 @@ def set_subreddit():
             elif not c.error_page and not request.path.startswith("/api/login/") :
                 abort(404)
 
-    routes_dict = request.environ["pylons.routes_dict"]
-    if "multipath" in routes_dict and "username" in routes_dict:
-        try:
-            path = '/user/%s/m/%s' % (routes_dict["username"].lower(),
-                                      routes_dict["multipath"].lower())
-            c.site = LabeledMulti._byID(path)
-        except tdb_cassandra.NotFound:
-            abort(404)
-
     #if we didn't find a subreddit, check for a domain listing
     if not sr_name and isinstance(c.site, DefaultSR) and domain:
         c.site = DomainSR(domain)
 
     if isinstance(c.site, FakeSubreddit):
         c.default_sr = True
+
+
+def set_multireddit():
+    routes_dict = request.environ["pylons.routes_dict"]
+    if "multipath" in routes_dict:
+        multipath = routes_dict["multipath"].lower()
+        multi_id = None
+
+        if c.user_is_loggedin and routes_dict.get("my_multi"):
+            multi_id = "/user/%s/m/%s" % (c.user.name.lower(), multipath)
+        elif "username" in routes_dict:
+            username = routes_dict["username"].lower()
+
+            if c.user_is_loggedin:
+                # redirect /user/foo/m/... to /me/m/... for user foo.
+                if username == c.user.name.lower():
+                    abort(302, location="/me/m/%s" % multipath)
+
+            multi_id = "/user/%s/m/%s" % (username, multipath)
+
+        if multi_id:
+            try:
+                c.site = LabeledMulti._byID(multi_id)
+            except tdb_cassandra.NotFound:
+                abort(404)
+
 
 def set_content_type():
     e = request.environ
@@ -1032,6 +1049,9 @@ class RedditController(MinimalController):
 
         c.over18 = over18()
         set_obey_over18()
+
+        # looking up the multireddit requires c.user.
+        set_multireddit()
 
         #set_browser_langs()
         set_host_lang()
