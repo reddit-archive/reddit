@@ -3024,13 +3024,14 @@ class ApiController(RedditController, OAuth2ResourceController):
 
             # Push some client-side updates back to the browser.
 
-            jquery('.id-%s .entry .linkflair' % link._fullname).remove()
+            jquery('.id-%s .entry .linkflairlabel' % link._fullname).remove()
             title_path = '.id-%s .entry > .title > .title' % link._fullname
 
             # TODO: move this to a template
             if flair_template:
-                flair = '<span class="linkflair %s">%s</span>' % (
-                    ' '.join('linkflair-' + c for c in css_class.split()), text)
+                flair = '<span class="linkflairlabel %s">%s</span>' % (
+                    ' '.join('linkflair-' + c for c in css_class.split()),
+                    websafe(text))
                 if site.link_flair_position == 'left':
                     jquery(title_path).before(flair)
                 elif site.link_flair_position == 'right':
