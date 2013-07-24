@@ -90,6 +90,8 @@ r.login.hoist = {
                 deferred.resolve(data)
             }
         }, 100)
+
+        return deferred
     }
 }
 
