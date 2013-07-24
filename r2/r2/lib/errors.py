@@ -75,7 +75,6 @@ error_list = dict((
         ('BAD_CNAME', "that domain isn't going to work"),
         ('USED_CNAME', "that domain is already in use"),
         ('INVALID_OPTION', _('that option is not valid')),
-        ('CHEATER', 'what do you think you\'re doing there?'),
         ('BAD_EMAILS', _('the following emails are invalid: %(emails)s')),
         ('NO_EMAILS', _('please enter at least one email address')),
         ('TOO_MANY_EMAILS', _('please only share to %(num)s emails at a time.')),

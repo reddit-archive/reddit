@@ -421,8 +421,7 @@ class ApiController(RedditController, OAuth2ResourceController):
             l._commit()
             l.set_url_cache()
 
-        queries.queue_vote(c.user, l, True, ip,
-                           cheater = (errors.CHEATER, None) in c.errors)
+        queries.queue_vote(c.user, l, True, ip, cheater=c.cheater)
         if save:
             r = l._save(c.user)
 
@@ -1358,8 +1357,7 @@ class ApiController(RedditController, OAuth2ResourceController):
             else:
                 item, inbox_rel = Comment._new(c.user, link, parent_comment,
                                                comment, ip)
-                queries.queue_vote(c.user, item, True, ip,
-                                   cheater = (errors.CHEATER, None) in c.errors)
+                queries.queue_vote(c.user, item, True, ip, cheater=c.cheater)
 
                 # adding to comments-tree is done as part of
                 # newcomments_q, so if they refresh immediately they
@@ -1542,7 +1540,7 @@ class ApiController(RedditController, OAuth2ResourceController):
 
         queries.queue_vote(user, thing, dir, ip, vote_info=vote_info,
                            store=store,
-                           cheater = (errors.CHEATER, None) in c.errors)
+                           cheater=c.cheater)
 
     @require_oauth2_scope("modconfig")
     @validatedForm(VUser(),
@@ -2437,7 +2435,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                     for link in links:
                         queries.queue_vote(c.user, link,
                                            action == 'like', request.ip,
-                                           cheater = (errors.CHEATER, None) in c.errors)
+                                           cheater=c.cheater)
                 elif action == 'save':
                     link = max(links, key = lambda x: x._score)
                     r = link._save(c.user)
