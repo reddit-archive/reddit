@@ -83,6 +83,9 @@ class MultiApiController(RedditController, OAuth2ResourceController):
         RedditController.pre(self)
 
     def on_validation_error(self, error):
+        if not error.code:
+            raise ValueError('Error %r missing status code' % error)
+
         abort(reddit_http_error(
             code=error.code,
             error_name=error.name,
