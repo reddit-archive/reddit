@@ -1544,6 +1544,7 @@ class SubSR(FakeSubreddit):
     stylesheet = 'subreddit.css'
     #this will make the javascript not send an SR parameter
     name = ''
+    title = ''
 
     def can_view(self, user):
         return True
