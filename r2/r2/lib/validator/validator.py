@@ -512,14 +512,22 @@ class VCssMeasure(Validator):
         return value if value and self.measure.match(value) else ''
 
 subreddit_rx = re.compile(r"\A[A-Za-z0-9][A-Za-z0-9_]{2,20}\Z")
+language_subreddit_rx = re.compile(r"\A[a-z]{2}\Z")
 
-def chksrname(x):
+def chksrname(x, allow_language_srs=False):
+    if not x:
+        return None
+
     #notice the space before reddit.com
     if x in ('friends', 'all', ' reddit.com'):
         return False
 
     try:
-        return str(x) if x and subreddit_rx.match(x) else None
+        valid = subreddit_rx.match(x)
+        if allow_language_srs:
+            valid = valid or language_subreddit_rx.match(x)
+
+        return str(x) if valid else None
     except UnicodeEncodeError:
         return None
 
@@ -611,11 +619,12 @@ class VSelfText(VMarkdown):
     max_length = property(get_max_length, set_max_length)
 
 class VSubredditName(VRequired):
-    def __init__(self, item, *a, **kw):
+    def __init__(self, item, allow_language_srs=False, *a, **kw):
         VRequired.__init__(self, item, errors.BAD_SR_NAME, *a, **kw)
+        self.allow_language_srs = allow_language_srs
 
     def run(self, name):
-        name = chksrname(name)
+        name = chksrname(name, self.allow_language_srs)
         if not name:
             self.set_error(self._error, code=400)
         return name

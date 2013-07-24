@@ -61,7 +61,7 @@ from r2.lib.base import abort
 
 
 multi_sr_data_json_spec = VValidatedJSON.Object({
-    'name': VSubredditName('name'),
+    'name': VSubredditName('name', allow_language_srs=True),
 })
 
 
@@ -314,7 +314,7 @@ class MultiApiController(RedditController, OAuth2ResourceController):
         VUser(),
         VModhash(),
         multi=VMultiByPath("multipath", require_edit=True),
-        sr_name=VSubredditName('srname'),
+        sr_name=VSubredditName('srname', allow_language_srs=True),
         data=VValidatedJSON("model", multi_sr_data_json_spec),
     )
     def PUT_multi_subreddit(self, multi, sr_name, data):
