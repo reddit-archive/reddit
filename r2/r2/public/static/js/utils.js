@@ -90,6 +90,58 @@ r.utils = {
             return numberAsInt.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
         } else {
             return number
+		}
+	},
+
+    LRUCache: function(maxItems) {
+        var _maxItems = maxItems > 0 ? maxItems : 16
+        var _cacheIndex = []
+        var _cache = {}
+
+        var _updateIndex = function(key) {
+            _deleteFromIndex(key)
+            _cacheIndex.push(key)
+            if (_cacheIndex.length > _maxItems) {
+                delete _cache[_cacheIndex.shift()]
+            }
+        }
+
+        var _deleteFromIndex = function(key) {
+            var index = _.indexOf(_cacheIndex, key)
+            if (index >= 0) {
+                _cacheIndex.splice(index, 1)
+            }
+        }
+
+        this.remove = function(key) {
+            _deleteFromIndex(key)
+            delete _cache[key]
+        }
+
+        this.set = function(key, data) {
+            if (_.isUndefined(data)) {
+                this.remove(key)
+            } else {
+                _cache[key] = data
+                _updateIndex(key)
+            }
+        }
+
+        this.get = function(key) {
+            var value = _cache[key]
+            if (!_.isUndefined(value)) {
+                _updateIndex(key)
+            }
+            return value
+        }
+
+        this.ajax = function(key, options) {
+            var cached = this.get(key)
+            if (!_.isUndefined(cached)) {
+                return (new $.Deferred()).resolve(cached)
+            } else {
+                return $.ajax(options).done(_.bind(this.set, this, key))
+            }
         }
     }
 
