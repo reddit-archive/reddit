@@ -115,7 +115,7 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
 
     _details_text = {# approve comment/link
                      'unspam': _('unspam'),
-                     'confirm_ham': _('confirmed ham'),
+                     'confirm_ham': _('approved'),
                      # remove comment/link
                      'confirm_spam': _('confirmed spam'),
                      'remove': _('removed not spam'),
