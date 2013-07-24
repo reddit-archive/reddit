@@ -131,25 +131,18 @@
   ${pretty_button(label, "big_mod_toggle", "'ignore_reports', 'unignore_reports'", "neutral" + (" pressed" if thing.ignore_reports else ""))}
 </%def>
 
-<%def name="big_modbuttons(thing, kind)">
+<%def name="big_modbuttons(thing)">
   <span class="big-mod-buttons">
     <span role="radiogroup">
-      %if getattr(thing, "moderator_banned", None):
-        <!-- pass -->
-      %elif thing._spam:
-        ${pretty_button(_("confirm spam"), "big_mod_action", -2, "negative")}
-        ${pretty_button(_("remove ham"), "big_mod_action", -1, "neutral")}
-      %else:
+      %if not getattr(thing, "moderator_banned", None):
         ${pretty_button(_("spam"), "big_mod_action", -2, "negative")}
         ${pretty_button(_("remove"), "big_mod_action", -1, "neutral")}
       %endif
   
       %if getattr(thing, "approval_checkmark", None):
-        ${pretty_button(_("reapprove %(obj)s") % dict(obj=kind),
-        "big_mod_action",  1, "positive")}
+        ${pretty_button(_("reapprove"), "big_mod_action",  1, "positive")}
       %else:
-        ${pretty_button(_("approve %(obj)s") % dict(obj=kind),
-        "big_mod_action",  1, "positive")}
+        ${pretty_button(_("approve"), "big_mod_action",  1, "positive")}
       %endif
     </span>
 
@@ -253,7 +246,7 @@
   %endif
 
   %if getattr(thing.thing, "use_big_modbuttons", False):
-     ${big_modbuttons(thing.thing, "link")}
+     ${big_modbuttons(thing.thing)}
   %elif thing.ignore_reports and thing.can_ban:
     ${ignore_reports_toggle(thing.thing)}
   %endif
@@ -325,7 +318,7 @@
      </li>
     %endif
     %if getattr(thing.thing, "use_big_modbuttons", False):
-       ${big_modbuttons(thing.thing, "comment")}
+       ${big_modbuttons(thing.thing)}
     %elif thing.ignore_reports and thing.can_ban:
       ${ignore_reports_toggle(thing.thing)}
     %endif
