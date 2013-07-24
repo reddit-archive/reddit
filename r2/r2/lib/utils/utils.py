@@ -575,7 +575,7 @@ class UrlParser(object):
         prefix is not already present.
         """
         if not (self.path_has_subreddit()
-                or self.path.startswith(subreddit.path)):
+                or self.path.startswith(subreddit.user_path)):
             self.path = (subreddit.user_path + self.path)
         return self
 
