@@ -412,7 +412,9 @@ class ThingBase(object):
         return '%s_%s' % (self._type_prefix, self._id)
 
     @classmethod
-    def _by_fullname(cls, fnames, return_dict=True):
+    def _by_fullname(cls, fnames, return_dict=True, ignore_missing=False):
+        if ignore_missing:
+            raise NotImplementedError
         ids, is_single = tup(fnames, True)
 
         by_cls = {}
