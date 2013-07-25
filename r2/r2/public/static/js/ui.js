@@ -17,7 +17,7 @@ r.ui.init = function() {
     if (smallScreen && onFrontPage && r.config.renderstyle != 'compact') {
         var infobar = $('<div class="infobar mellow">')
             .html(r.utils.formatMarkdownLinks(
-                r.strings('compact_suggest', {
+                r._("Looks like you're browsing on a small screen. Would you like to try [reddit's mobile interface](%(url)s)?").format({
                     url: location + '.compact'
                 })
             ))
@@ -151,7 +151,9 @@ r.ui.Form.prototype = $.extend(new r.ui.Base(), {
     },
 
     _handleNetError: function(xhr) {
-        this.showStatus(r.strings('an_error_occurred', {status: xhr.status}), true)
+        var message = r._('an error occurred (status: %(status)s)')
+                         .format({status: xhr.status})
+        this.showStatus(message, true)
     }
 })
 
@@ -317,7 +319,7 @@ r.ui.PermissionEditor = function(el) {
     var permission_type = params.type
     var name = params.name
     this.form_id = permission_type + "-permissions-" + name
-    this.permission_info = r.strings.permissions.info[permission_type]
+    this.permission_info = r.permissions[permission_type]
     this.sorted_perm_keys = $.map(this.permission_info,
                                   function(v, k) { return k })
     this.sorted_perm_keys.sort()
@@ -340,7 +342,7 @@ r.ui.PermissionEditor.init = function() {
         })
     }
     activate('body')
-    for (var permission_type in r.strings.permissions.info) {
+    for (var permission_type in r.permissions) {
         $('.' + permission_type + '-table')
             .on('insert-row', 'tr', function(e) { activate(this) })
     }
@@ -395,11 +397,11 @@ r.ui.PermissionEditor.prototype = $.extend(new r.ui.Base(), {
                 update()
             })
             $label.append(
-                document.createTextNode(r.strings.permissions.all_msg))
+                document.createTextNode(r._('full permissions')))
         } else if (info) {
             $input.change(update)
-            $label.append(document.createTextNode(info.title))
-            $label.attr("title", info.description)
+            $label.append(document.createTextNode(r._(info.title)))
+            $label.attr("title", r._(info.description))
         }
         return $label
     },
@@ -445,15 +447,15 @@ r.ui.PermissionEditor.prototype = $.extend(new r.ui.Base(), {
         var info = this.permission_info[perm]
         var text
         if (perm == "all") {
-            text = r.strings.permissions.all_msg
+            text = r._("full permissions")
         } else if (info) {
-            text = info.title
+            text = r._(info.title)
         } else {
             text = perm
         }
         var $span = $('<span class="permission-bit"/>').text(text)
         if (info) {
-            $span.attr("title", info.description)
+            $span.attr("title", r._(info.description))
         }
         return $span
     },
@@ -494,7 +496,7 @@ r.ui.PermissionEditor.prototype = $.extend(new r.ui.Base(), {
         }
         if (!spans.length) {
             spans.push($('<span class="permission-bit">')
-                .text(r.strings.permissions.none_msg)
+                .text(r._('no permissions'))
                 .addClass("none"))
         }
         var $new_summary = $('<div class="permission-summary">')
@@ -590,9 +592,9 @@ r.ui.ConfirmButton = Backbone.View.extend({
         if (this.$target.is(target)) {
             this.$target.hide()
             this.$el.append(this.confirmTemplate({
-                are_you_sure: r.strings('are_you_sure'),
-                yes: r.strings('yes'),
-                no: r.strings('no')
+                are_you_sure: r._('are you sure?'),
+                yes: r._('yes'),
+                no: r._('no')
             }))
         } else if (target.is('.no')) {
             this.$('.confirmation').remove()

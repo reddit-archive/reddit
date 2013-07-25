@@ -33,7 +33,6 @@ from pylons.i18n import _, ungettext, get_lang
 import random
 import babel.numbers
 
-from r2.lib.permissions import ModeratorPermissionSet
 from r2.lib.translation import set_lang
 
 __all__ = ['StringHandler', 'strings', 'PluralManager', 'plurals',
@@ -77,8 +76,6 @@ string_dict = dict(
 
     oauth_login_msg = _(
         "Log in or register to connect your reddit account with %(app)s."),
-
-    login_fallback_msg = _("try using our secure login form."),
 
     legal = _("I understand and agree that registration on or use of this site constitutes agreement to its %(user_agreement)s and %(privacy_policy)s."),
 
@@ -178,47 +175,12 @@ Below are the traffic statistics for your subreddit. Each graph represents one o
 Note: there are a couple of places outside of your subreddit where someone can click "subscribe", so it is possible (though unlikely) that the subscription count can exceed the unique count on a given day.
 """),
 
-    go = _("go"),
-    view_subreddit_traffic = _("view subreddit traffic"),
-
-    an_error_occurred = _("an error occurred (status: %(status)s)"),
-    an_error_occurred_friendly = _("an error occurred. please try again later! (status: %(status)s)"),
-    rate_limit = _("please wait a few seconds and try again."),
     subscribed_multi = _("multireddit of your subscriptions"),
     mod_multi = _("multireddit of subreddits you moderate"),
 
     r_all_description = _("/r/all displays content from all of reddit, including subreddits you aren't subscribed to."),
     r_all_minus_description = _("Displaying content from /r/all of reddit, except the following subreddits:"),
     all_minus_gold_only = _('Filtering /r/all is a feature only available to [reddit gold](/gold/about) subscribers. Displaying unfiltered results from /r/all.'),
-
-    missing_credit_name = _("missing name"),
-    bad_credit_number = _("invalid credit card number"),
-    bad_credit_expiry = _("invalid expiration date"),
-    bad_credit_cvc = _("invalid cvc"),
-    missing_credit_address = _("missing address"),
-    missing_credit_city = _("missing city"),
-    missing_credit_state = _("missing state or province"),
-    missing_credit_country = _("missing country"),
-    missing_credit_zip = _("missing zip code"),
-
-    permissions = dict(
-        info=dict(
-            moderator=ModeratorPermissionSet.info,
-            moderator_invite=ModeratorPermissionSet.info,
-        ),
-        all_msg=_("full permissions"),
-        none_msg=_("no permissions"),
-    ),
-    categorize = _('categorize'),
-    are_you_sure = _('are you sure?'),
-    yes = _('yes'),
-    no = _('no'),
-    create_multi = _('create a new multi'),
-    awesomeness_goes_here = _('awesomeness goes here'),
-    add_multi_sr = _('add a subreddit to your multi.'),
-    open_multi = _('open this multi'),
-    summarize_and_n_more = _('&hellip; and %(count)s more &rArr;'),
-    summarize_less = _('&lArr; less'),
 )
 
 class StringHandler(object):

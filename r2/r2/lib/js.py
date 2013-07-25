@@ -27,7 +27,12 @@ from subprocess import Popen, PIPE
 import re
 import json
 
-from r2.lib.translation import iter_langs
+from r2.lib.translation import (
+    extract_javascript_msgids,
+    get_catalog,
+    iter_langs,
+    validate_plural_forms,
+)
 from r2.lib.plugin import PluginLoader
 
 
@@ -105,6 +110,20 @@ class FileSource(Source):
     @property
     def path(self):
         """The path to the source file on the filesystem."""
+
+        from r2.lib.static import locate_static_file
+
+        try:
+            g.plugins
+        except TypeError:
+            # g.plugins isn't available. this means we're in the build system.
+            # we can safely find all files in one place in this case since the
+            # build system copies them in from plugins first.
+            pass
+        else:
+            # this is in-request. we should check all the plugin directories
+            return locate_static_file(os.path.join("static", "js", self.name))
+
         return os.path.join(STATIC_ROOT, "static", "js", self.name)
 
     def use(self):
@@ -184,8 +203,7 @@ class DataSource(Source):
 
     def get_source(self):
         content = self.get_content()
-        encoder = getattr(self, '_encoder', None)
-        json_data = json.dumps(content, default=encoder)
+        json_data = json.dumps(content)
         return self.wrap.format(content=json_data) + "\n"
 
     def use(self):
@@ -196,6 +214,45 @@ class DataSource(Source):
     @property
     def dependencies(self):
         return []
+
+
+class PermissionsDataSource(DataSource):
+    """DataSource for PermissionEditor configuration data."""
+
+    def __init__(self):
+        pass
+
+    @classmethod
+    def _make_marked_json(cls, obj):
+        """Return serialized psuedo-JSON with translation support.
+
+        Strings are marked for extraction with r.N_. Dictionaries are
+        serialized to JSON objects as normal.
+
+        """
+        if isinstance(obj, dict):
+            props = []
+            for key, value in obj.iteritems():
+                value_encoded = cls._make_marked_json(value)
+                props.append("%s: %s" % (key, value_encoded))
+            return "{%s}" % ",".join(props)
+        elif isinstance(obj, basestring):
+            return "r.N_(%s)" % json.dumps(obj)
+        else:
+            raise ValueError, "unsupported type"
+
+    def get_source(self):
+        from r2.lib.permissions import ModeratorPermissionSet
+        permissions = self._make_marked_json({
+            "moderator": ModeratorPermissionSet.info,
+            "moderator_invite": ModeratorPermissionSet.info,
+        })
+        return "r.permissions = %s" % permissions
+
+    @property
+    def dependencies(self):
+        return (super(PermissionsDataSource, self).dependencies +
+                [os.path.join(REDDIT_ROOT, "lib/permissions.py")])
 
 
 class TemplateFileSource(DataSource, FileSource):
@@ -218,57 +275,61 @@ class TemplateFileSource(DataSource, FileSource):
 
 
 class StringsSource(DataSource):
-    """A virtual source consisting of localized strings from r2.lib.strings."""
-    def __init__(self, lang=None, keys=None, wrap="r.strings.set({content})"):
-        DataSource.__init__(self, wrap=wrap)
-        self.lang = lang
+    """Translations sourced from a gettext catalog."""
+
+    def __init__(self, lang, keys):
+        DataSource.__init__(self, wrap="r.i18n.addMessages({content})")
+        self.catalog = get_catalog(lang)
         self.keys = keys
 
-    @staticmethod
-    def _encoder(obj):
-        from r2.lib import strings, translation
-        if isinstance(obj, strings.StringHandler):
-            return obj.string_dict
-        raise TypeError
+    def get_plural_forms(self):
+        validate_plural_forms(self.catalog.plural_expr)
+        return "r.i18n.setPluralForms('%s');" % self.catalog.plural_expr
 
     invalid_formatting_specifier_re = re.compile(r"(?<!%)%\w|(?<!%)%\(\w+\)[^s]")
-    def _check_formatting_specifiers(self, key, string):
-        if not isinstance(string, str):
+    def _check_formatting_specifiers(self, string):
+        if not isinstance(string, basestring):
             return
 
         if self.invalid_formatting_specifier_re.search(string):
-            raise ValueError("Invalid string formatting specifier:"
-                             " strings[%r]" % key)
+            raise ValueError("Invalid string formatting specifier: %r" % string)
 
     def get_content(self):
-        from pylons.i18n import get_lang
-        from r2.lib import strings, translation
-
-        if self.lang:
-            old_lang = get_lang()
-            translation.set_lang(self.lang)
+        # relies on pyx files, so it can't be imported at global scope
+        from r2.lib.utils import tup
 
         data = {}
-        if self.keys is not None:
-            for key in self.keys:
-                data[key] = strings.strings[key]
-                self._check_formatting_specifiers(key, data[key])
-        else:
-            data = dict(strings.strings)
+        for key in self.keys:
+            key = tup(key)[0]  # because the key for plurals is (sing, plur)
+            self._check_formatting_specifiers(key)
+            msg = self.catalog[key]
 
-        if self.lang:
-            translation.set_lang(old_lang)
+            if not msg or not msg.string:
+                continue
 
+            # jed expects to ignore the first value in the translations array
+            # so we'll just make it null
+            strings = tup(msg.string)
+            data[key] = [None] + list(strings)
         return data
 
 
 class LocalizedModule(Module):
-    """A module that is localized with r2.lib.strings.
+    """A module that generates localized code for each language.
 
-    References to `r.strings(<string>)` are parsed out of the module source.
-    A StringsSource is created and included which contains localized versions
-    of the strings referenced in the module.
+    Strings marked for translation with one of the functions in i18n.js (viz.
+    r._, r.P_, and r.N_) are extracted from the source and their translations
+    are built into the compiled source.
+
+    If `inject_plural_forms` is `True`, then the language's plural forms
+    expression will be baked into the module as well. This is only necessary
+    once per page.
+
     """
+
+    def __init__(self, *args, **kwargs):
+        self.inject_plural_forms = kwargs.pop("inject_plural_forms", False)
+        Module.__init__(self, *args, **kwargs)
 
     @staticmethod
     def languagize_path(path, lang):
@@ -280,14 +341,12 @@ class LocalizedModule(Module):
 
         with open(self.path) as f:
             reddit_source = f.read()
-        string_keys = re.findall("r\.strings\(['\"]([\w$_]+)['\"]", reddit_source)
-        if "r.strings.permissions" in reddit_source:
-            string_keys.append("permissions")
+
+        msgids = extract_javascript_msgids(reddit_source)
 
         print >> sys.stderr, "Creating language-specific files:"
         for lang, unused in iter_langs():
-            strings = StringsSource(lang, string_keys)
-            source = strings.get_source()
+            strings = StringsSource(lang, msgids)
             lang_path = LocalizedModule.languagize_path(self.path, lang)
 
             # make sure we're not rewriting a different mangled file
@@ -297,14 +356,28 @@ class LocalizedModule(Module):
 
             with open(lang_path, "w") as out:
                 print >> sys.stderr, "  " + lang_path
-                out.write(reddit_source+source)
+                out.write(reddit_source)
+                if self.inject_plural_forms:
+                    out.write(strings.get_plural_forms())
+                out.write(strings.get_source())
 
     def use(self):
         from pylons.i18n import get_lang
         from r2.lib.template_helpers import static
-        embed = Module.use(self)
+
         if g.uncompressedJS:
-            return embed + StringsSource().use()
+            if c.lang == "en":
+                # in this case, the msgids *are* the translated strings and we
+                # can save ourselves the pricey step of lexing the js source
+                return Module.use(self)
+
+            msgids = extract_javascript_msgids(Module.get_source(self))
+            strings = StringsSource(c.lang, msgids)
+            return "\n".join((
+                Module.use(self),
+                inline_script_tag.format(content=strings.get_plural_forms()),
+                strings.use(),
+            ))
         else:
             langs = get_lang() or [g.lang]
             url = LocalizedModule.languagize_path(self.name, langs[0])
@@ -354,15 +427,17 @@ module["reddit-init"] = LocalizedModule("reddit-init.js",
     "lib/json2.js",
     "lib/underscore-1.4.4.js",
     "lib/store.js",
+    "lib/jed.js",
     "base.js",
     "preload.js",
     "uibase.js",
-    "strings.js",
+    "i18n.js",
     "utils.js",
     "analytics.js",
     "jquery.reddit.js",
     "reddit.js",
     "spotlight.js",
+    inject_plural_forms=True,
 )
 
 module["reddit"] = LocalizedModule("reddit.js",
@@ -378,6 +453,7 @@ module["reddit"] = LocalizedModule("reddit.js",
     "apps.js",
     "gold.js",
     "multi.js",
+    PermissionsDataSource(),
 )
 
 module["admin"] = Module("admin.js",

@@ -70,7 +70,8 @@ r.ui.Summarize.prototype = {
     _summarize: function() {
         this.$el.addClass('summarized')
         this.$hiddenItems.hide()
-        this.$toggleButton.html(r.strings('summarize_and_n_more', {
+
+        this.$toggleButton.html(r._('&hellip; and %(count)s more &rArr;').format({
             count: this.$hiddenItems.length
         }))
     },
@@ -78,7 +79,7 @@ r.ui.Summarize.prototype = {
     _expand: function() {
         this.$el.removeClass('summarized')
         this.$hiddenItems.show()
-        this.$toggleButton.html(r.strings('summarize_less'))
+        this.$toggleButton.html(r._('&lArr; less'))
     },
 
     _toggle: function(e) {

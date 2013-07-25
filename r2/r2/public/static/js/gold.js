@@ -47,7 +47,6 @@ r.gold = {
 
         var form = $('.gold-form.cloneable:first').clone(),
             authorName = $link.thing().find('.entry .author:first').text(),
-            message = r.strings('gold_summary_comment_gift', {recipient: authorName}),
             passthroughs = form.find('.passthrough'),
             cbBaseUrl = form.find('[name="cbbaseurl"]').val()
 
@@ -150,23 +149,23 @@ r.gold = {
         Stripe.setPublishableKey(publicKey)
 
         if (!cardName) {
-            status.text(r.strings('missing_credit_name'))
+            status.text(r._('missing name'))
         } else if (!(Stripe.validateCardNumber(cardNumber))) {
-            status.text(r.strings('bad_credit_number'))
+            status.text(r._('invalid credit card number'))
         } else if (!Stripe.validateExpiry(expiryMonth, expiryYear)) {
-            status.text(r.strings('bad_credit_expiry'))
+            status.text(r._('invalid expiration date'))
         } else if (!Stripe.validateCVC(cardCvc)) {
-            status.text(r.strings('bad_credit_cvc'))
+            status.text(r._('invalid cvc'))
         } else if (!cardAddress1) {
-            status.text(r.strings('missing_credit_address'))
+            status.text(r._('missing address'))
         } else if (!cardCity) {
-            status.text(r.strings('missing_credit_city'))
+            status.text(r._('missing city'))
         } else if (!cardState) {
-            status.text(r.strings('missing_credit_state'))
+            status.text(r._('missing state or province'))
         } else if (!cardCountry) {
-            status.text(r.strings('missing_credit_country'))
+            status.text(r._('missing country'))
         } else if (!cardZip) {
-            status.text(r.strings('missing_credit_zip'))
+            status.text(r._('missing zip code'))
         } else {
 
             status.text('')

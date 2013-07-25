@@ -195,7 +195,7 @@ r.ui.LoginForm.prototype = $.extend(new r.ui.Form(), {
         if (xhr.status == 0 && r.config.currentOrigin != r.config.https_endpoint) {
             $('<p>').append(
                 $('<a>')
-                    .text(r.strings('login_fallback_msg'))
+                    .text(r._('try using our secure login form.'))
                     .attr('href', r.config.https_endpoint + '/login')
             ).appendTo(this.$el.find('.status'))
         }

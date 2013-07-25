@@ -77,7 +77,7 @@ r.ui.InterestBar.prototype = {
             .removeClass('working')
             .addClass('error')
             .find('.error-caption')
-                .text(r.strings('an_error_occurred_friendly', {status: xhr.status}))
+                .text(r._('an error occurred. please try again later! (status: %(status)s)').format({status: xhr.status}))
 
         this.hideResults()
     }

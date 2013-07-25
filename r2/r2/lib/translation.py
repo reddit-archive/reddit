@@ -22,8 +22,14 @@
 
 import json
 import os
+import token
+import tokenize
+
+from babel.messages.extract import extract_javascript
+from cStringIO import StringIO
 
 import babel.messages.frontend
+import babel.messages.pofile
 import pylons
 
 from pylons.i18n.translation import translation, LanguageError, NullTranslations
@@ -111,6 +117,13 @@ def get_active_langs(path=I18N_PATH, default_lang='en'):
     return trans, trans_name
 
 
+def get_catalog(lang):
+    """Return a Catalog object given the language code."""
+    path = os.path.join(I18N_PATH, lang, "LC_MESSAGES", "r2.po")
+    with open(path, "r") as f:
+        return babel.messages.pofile.read_po(f)
+
+
 class extract_messages(babel.messages.frontend.extract_messages):
     """Extract messages from all specified directories.
 
@@ -130,3 +143,36 @@ class extract_messages(babel.messages.frontend.extract_messages):
             self.input_dirs = self.input_dirs.split(",")
 
         babel.messages.frontend.extract_messages.finalize_options(self)
+
+
+def validate_plural_forms(plural_forms_str):
+    """Ensure the gettext plural forms expression supplied is valid."""
+
+    # this code is taken from the python stdlib; gettext.py:c2py
+    tokens = tokenize.generate_tokens(StringIO(plural_forms_str).readline)
+
+    try:
+        danger = [x for x in tokens if x[0] == token.NAME and x[1] != 'n']
+    except tokenize.TokenError:
+        raise ValueError, \
+              'plural forms expression error, maybe unbalanced parenthesis'
+    else:
+        if danger:
+            raise ValueError, 'plural forms expression could be dangerous'
+
+
+def extract_javascript_msgids(source):
+    """Return message ids of translateable strings in JS source."""
+
+    extracted = extract_javascript(
+        fileobj=StringIO(source),
+        keywords={
+            "_": None,
+            "P_": (1, 2),
+            "N_": None,
+        },
+        comment_tags={},
+        options={},
+    )
+
+    return [msg_id for line, func, msg_id, comments in extracted]

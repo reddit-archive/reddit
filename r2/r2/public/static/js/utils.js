@@ -75,3 +75,8 @@ r.utils = {
         })
     }
 }
+
+// Nothing is true. Everything is permitted.
+String.prototype.format = function (params) {
+    return r.utils.pyStrFormat(this, params)
+}

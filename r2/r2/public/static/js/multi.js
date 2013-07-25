@@ -444,8 +444,8 @@ r.multi.MultiAddNoticeBubble = r.ui.Bubble.extend({
 
     render: function() {
         this.$el.html(this.template({
-            awesomeness_goes_here: r.strings('awesomeness_goes_here'),
-            add_multi_sr: r.strings('add_multi_sr')
+            awesomeness_goes_here: r._('awesomeness goes here'),
+            add_multi_sr: r._('add a subreddit to your multi.')
         }))
     }
 })
@@ -491,7 +491,7 @@ r.multi.MultiSubscribeBubble = r.ui.Bubble.extend({
 
     render: function() {
         this.$el.html(this.template({
-            title: r.strings('categorize'),
+            title: r._('categorize'),
             sr_name: this.options.srName
         }))
 
@@ -507,11 +507,11 @@ r.multi.MultiSubscribeBubble = r.ui.Bubble.extend({
                     path: multi.get('path'),
                     checked: multi.subreddits.getByName(this.options.srName)
                              ? 'checked' : '',
-                    open_multi: r.strings('open_multi')
+                    open_multi: r._('open this multi')
                 }))
             }, this)
         content.append(this.itemCreateTemplate({
-            create_msg: r.strings('create_multi')
+            create_msg: r._('create a new multi')
         }))
         this.$el.append(content)
 

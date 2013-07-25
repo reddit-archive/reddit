@@ -8,9 +8,9 @@ r.traffic = {
     addSubredditSelector: function () {
         $('<form>').append(
             $('<fieldset>').append(
-                $('<legend>').text(r.strings('view_subreddit_traffic')),
+                $('<legend>').text(r._('view subreddit traffic')),
                 $('<input type="text" id="srname">'),
-                $('<input type="submit">').attr('value', r.strings('go'))
+                $('<input type="submit">').attr('value', r._('go'))
             )
         ).submit(r.traffic._onSubredditSelected)
         .prependTo('.traffic-tables-side')
