@@ -557,15 +557,15 @@ def set_colors():
         c.bordercolor = request.get.get('bordercolor')
 
 
-def ratelimit_agent(agent):
-    SLICE_SIZE = 10
-    slice, remainder = map(int, divmod(time.time(), SLICE_SIZE))
-    time_slice = time.gmtime(slice * SLICE_SIZE)
+def ratelimit_agent(agent, limit=10, slice_size=10):
+    slice_size = min(slice_size, 60)
+    slice, remainder = map(int, divmod(time.time(), slice_size))
+    time_slice = time.gmtime(slice * slice_size)
     key = "rate_agent_" + agent + time.strftime("_%S", time_slice)
 
-    g.cache.add(key, 0, time=SLICE_SIZE + 1)
-    if g.cache.incr(key) > SLICE_SIZE:
-        request.environ['retry_after'] = SLICE_SIZE - remainder
+    g.cache.add(key, 0, time=slice_size + 1)
+    if g.cache.incr(key) > limit:
+        request.environ['retry_after'] = slice_size - remainder
         abort(429)
 
 appengine_re = re.compile(r'AppEngine-Google; \(\+http://code.google.com/appengine; appid: (?:dev|s)~([a-z0-9-]{6,30})\)\Z')
@@ -583,9 +583,9 @@ def ratelimit_agents():
         return
 
     user_agent = user_agent.lower()
-    for s in g.agents:
-        if s and user_agent and s in user_agent:
-            ratelimit_agent(s)
+    for agent, limit in g.agents.iteritems():
+        if agent in user_agent:
+            ratelimit_agent(agent, limit)
             return
 
 def ratelimit_throttled():

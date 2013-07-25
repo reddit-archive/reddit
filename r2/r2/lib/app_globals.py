@@ -175,7 +175,6 @@ class Globals(object):
             'admins',
             'sponsors',
             'automatic_reddits',
-            'agents',
             'allowed_css_linked_domains',
             'authorized_cnames',
             'hardcache_categories',
@@ -187,6 +186,10 @@ class Globals(object):
             'exempt_login_user_agents',
             'timed_templates',
             'sample_multis',
+        ],
+
+        ConfigValue.dict(ConfigValue.str, ConfigValue.int): [
+            'agents',
         ],
 
         ConfigValue.str: [
