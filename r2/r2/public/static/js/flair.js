@@ -48,9 +48,10 @@ $(function() {
             customizer.addClass("texteditable");
             input.removeAttr("disabled");
             input.css("display", "block");
-            input.val($.trim($(this).children(".flair").text())).select();
+            input.val($.trim($(this).find(".flair, .linkflairlabel").text())).select();
             input.keyup(function() {
-                $(".flairselection .flair").text($(input).val()).attr("title", $(input).val());
+                $(".flairselection .flair, .flairselection .linkflairlabel")
+                    .text($(input).val()).attr("title", $(input).val());
             });
         } else {
             customizer.removeClass("texteditable");
