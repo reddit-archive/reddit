@@ -19,6 +19,7 @@
 # All portions of the code written by reddit are Copyright (c) 2006-2013 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
+from pylons import request
 from pylons.controllers.util import abort, redirect_to
 
 from r2.lib.base import BaseController
@@ -36,6 +37,8 @@ class RedirectController(BaseController):
         url = "/user/" + user
         if rest:
             url += "/" + rest
+        if request.query_string:
+            url += "?" + request.query_string
         return redirect_to(str(url), _code=301)
 
     def GET_timereddit_redirect(self, timereddit, rest=None):
