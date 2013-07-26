@@ -410,7 +410,10 @@ def set_multireddit():
             if c.user_is_loggedin:
                 # redirect /user/foo/m/... to /me/m/... for user foo.
                 if username == c.user.name.lower():
-                    abort(302, location="/me/m/%s" % multipath)
+                    # trim off multi id
+                    url_parts = request.path_qs.split("/")[5:]
+                    url_parts.insert(0, "/me/m/%s" % multipath)
+                    abort(302, location="/".join(url_parts))
 
             multi_id = "/user/%s/m/%s" % (username, multipath)
 
