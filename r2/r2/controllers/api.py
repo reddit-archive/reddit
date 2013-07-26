@@ -1458,13 +1458,13 @@ class ApiController(RedditController, OAuth2ResourceController):
     @require_oauth2_scope("vote")
     @noresponse(VUser(),
                 VModhash(),
-                vote_type = VVotehash(('vh', 'id')),
+                vote_info=VVotehash('vh'),
                 ip = ValidIP(),
                 dir=VInt('dir', min=-1, max=1, docs={"dir":
                     "vote direction. one of (1, 0, -1)"}),
                 thing = VByName('id'))
     @api_doc(api_section.links_and_comments)
-    def POST_vote(self, dir, thing, ip, vote_type):
+    def POST_vote(self, dir, thing, ip, vote_info):
         """Cast a vote on a thing.
 
         `id` should be the fullname of the Link or Comment to vote on.
@@ -1487,7 +1487,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         if not thing or thing._deleted:
             return
 
-        if vote_type == "rejected":
+        if vote_info == 'rejected':
             reject_vote(thing)
             store = False
 
@@ -1503,8 +1503,8 @@ class ApiController(RedditController, OAuth2ResourceController):
                else False if dir < 0
                else None)
 
-        organic = vote_type == 'organic'
-        queries.queue_vote(user, thing, dir, ip, organic, store = store,
+        queries.queue_vote(user, thing, dir, ip, vote_info=vote_info,
+                           store=store,
                            cheater = (errors.CHEATER, None) in c.errors)
 
     @require_oauth2_scope("modconfig")

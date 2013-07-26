@@ -916,11 +916,8 @@ def valid_hash(user, hash):
 def check_cheating(loc):
     pass
 
-def vote_hash(user, thing, note='valid'):
-    return user.name
-
-def valid_vote_hash(hash, user, thing):
-    return True
+def vote_hash():
+    return ''
 
 def safe_eval_str(unsafe_str):
     return unsafe_str.replace('\\x3d', '=').replace('\\x26', '&')

@@ -819,8 +819,8 @@ class VModhash(Validator):
         }
 
 class VVotehash(Validator):
-    def run(self, vh, thing_name):
-        return True
+    def run(self, vh):
+        return None
 
     def param_docs(self):
         return {

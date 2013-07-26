@@ -65,12 +65,13 @@ class VotesByAccount(tdb_cassandra.DenormalizedRelation):
                            % (cls, thing1_cls, thing2_cls))
 
     @classmethod
-    def copy_from(cls, pgvote):
+    def copy_from(cls, pgvote, vote_info):
         rel = cls.rel(Account, pgvote._thing2.__class__)
-        rel.create(pgvote._thing1, pgvote._thing2, pgvote=pgvote)
+        rel.create(pgvote._thing1, pgvote._thing2, pgvote=pgvote,
+                   vote_info=vote_info)
 
     @classmethod
-    def value_for(cls, thing1, thing2, pgvote):
+    def value_for(cls, thing1, thing2, pgvote, vote_info):
         return pgvote._name
 
 
@@ -96,7 +97,7 @@ class VoteDetailsByThing(tdb_cassandra.View):
                                        default_validation_class=UTF8_TYPE)
 
     @classmethod
-    def create(cls, thing1, thing2s, pgvote):
+    def create(cls, thing1, thing2s, pgvote, vote_info):
         assert len(thing2s) == 1
 
         voter = pgvote._thing1
@@ -108,9 +109,9 @@ class VoteDetailsByThing(tdb_cassandra.View):
             valid_user=pgvote.valid_user,
             valid_thing=pgvote.valid_thing,
             ip=getattr(pgvote, "ip", ""),
-            organic=getattr(pgvote, "organic", False),
         )
-
+        if vote_info and isinstance(vote_info, basestring):
+            details['vote_info'] = vote_info
         cls._set_values(votee._id36, {voter._id36: json.dumps(details)})
 
     @classmethod
@@ -152,7 +153,7 @@ class Vote(MultiRelation('vote',
     _defaults = {'organic': False}
 
     @classmethod
-    def vote(cls, sub, obj, dir, ip, organic = False, cheater = False,
+    def vote(cls, sub, obj, dir, ip, vote_info = None, cheater = False,
              timer=None, date=None):
         from admintools import valid_user, valid_thing, update_score
         from r2.lib.count import incr_sr_count
@@ -200,8 +201,6 @@ class Vote(MultiRelation('vote',
             old_valid_thing = v.valid_thing = valid_thing(v, karma, cheater = cheater)
             v.valid_user = (v.valid_thing and valid_user(v, sr, karma)
                             and not is_self_link)
-            if organic:
-                v.organic = organic
 
         v._commit()
 
@@ -229,7 +228,7 @@ class Vote(MultiRelation('vote',
 
         # now write it out to Cassandra. We'll write it out to both
         # this way for a while
-        VotesByAccount.copy_from(v)
+        VotesByAccount.copy_from(v, vote_info)
         timer.intermediate("cassavotes")
 
         queries.changed(v._thing2, True)

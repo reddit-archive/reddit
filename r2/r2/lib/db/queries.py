@@ -1406,7 +1406,7 @@ vote_link_q = 'vote_link_q'
 vote_comment_q = 'vote_comment_q'
 vote_fastlane_q = 'vote_fastlane_q'
 
-def queue_vote(user, thing, dir, ip, organic = False,
+def queue_vote(user, thing, dir, ip, vote_info=None,
                cheater = False, store = True):
     # set the vote in memcached so the UI gets updated immediately
     key = prequeued_vote_key(user, thing)
@@ -1435,9 +1435,9 @@ def queue_vote(user, thing, dir, ip, organic = False,
 
             amqp.add_item(qname,
                           pickle.dumps((user._id, thing._fullname,
-                                        dir, ip, organic, cheater)))
+                                        dir, ip, vote_info, cheater)))
         else:
-            handle_vote(user, thing, dir, ip, organic)
+            handle_vote(user, thing, dir, ip, vote_info)
 
 def prequeued_vote_key(user, item):
     return 'registered_vote_%s_%s' % (user._id, item._fullname)
@@ -1478,7 +1478,7 @@ def get_likes(user, items):
 
     return res
 
-def handle_vote(user, thing, dir, ip, organic,
+def handle_vote(user, thing, dir, ip, vote_info,
                 cheater=False, foreground=False, timer=None, date=None):
     if timer is None:
         timer = SimpleSillyStub()
@@ -1486,8 +1486,8 @@ def handle_vote(user, thing, dir, ip, organic,
     from r2.lib.db import tdb_sql
     from sqlalchemy.exc import IntegrityError
     try:
-        v = Vote.vote(user, thing, dir, ip, organic, cheater = cheater,
-                      timer=timer, date=date)
+        v = Vote.vote(user, thing, dir, ip, vote_info=vote_info,
+                      cheater=cheater, timer=timer, date=date)
     except (tdb_sql.CreationError, IntegrityError):
         g.log.error("duplicate vote for: %s" % str((user, thing, dir)))
         return
@@ -1540,7 +1540,7 @@ def process_votes(qname, limit=0):
         #assert(len(msgs) == 1)
         r = pickle.loads(msg.body)
 
-        uid, tid, dir, ip, organic, cheater = r
+        uid, tid, dir, ip, vote_info, cheater = r
         voter = Account._byID(uid, data=True)
         votee = Thing._by_fullname(tid, data = True)
         timer.intermediate("preamble")
@@ -1553,8 +1553,8 @@ def process_votes(qname, limit=0):
         # I don't know how, but somebody is sneaking in votes
         # for subreddits
         if isinstance(votee, (Link, Comment)):
-            print (voter, votee, dir, ip, organic, cheater)
-            handle_vote(voter, votee, dir, ip, organic,
+            print (voter, votee, dir, ip, vote_info, cheater)
+            handle_vote(voter, votee, dir, ip, vote_info,
                         cheater = cheater, foreground=True, timer=timer,
                         date=date)
 
