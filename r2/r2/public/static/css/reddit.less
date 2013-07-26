@@ -1476,9 +1476,10 @@ a.star { text-decoration: none; color: #ff8b60 }
 
 /* buttons on main link style */
 .entry .buttons li {
-    display: inline;
+    display: inline-block;
     border: none;
     padding-right: 4px;
+    line-height: 1.6em;
 }
 .entry .buttons li + li {
     padding-left: 4px;
@@ -5633,6 +5634,7 @@ a.adminbox:hover {
 a.pretty-button:hover { text-decoration: none !important }
 
 .pretty-button {
+    display: inline-block;
     margin-left: 5px;
     margin-bottom: 5px;
 
@@ -5644,7 +5646,6 @@ a.pretty-button:hover { text-decoration: none !important }
     font-size: 10px;
     font-weight: normal;
 
-    line-height: 20px;
     border-radius: 3px;
     outline-style: none;
 }
