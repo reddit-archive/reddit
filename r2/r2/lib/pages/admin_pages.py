@@ -68,6 +68,12 @@ class AdminProfileMenu(NavMenu):
         NavMenu.__init__(self, [], base_path = path,
                          title = 'admin', type="tabdrop")
 
+
+class AdminLinkMenu(NavMenu):
+    def __init__(self, link):
+        NavMenu.__init__(self, [], title='admin', type="tabdrop")
+
+
 try:
     from r2admin.lib.pages import *
 except ImportError:

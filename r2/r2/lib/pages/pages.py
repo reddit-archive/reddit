@@ -1194,13 +1194,14 @@ class LinkInfoPage(Reddit):
             if self.num_duplicates > 0:
                 buttons.append(info_button('duplicates', num=self.num_duplicates))
 
-        if c.user_is_admin:
-            buttons.append(NamedButton("details", dest="/details/"+self.link._fullname))
-
         toolbar = [NavMenu(buttons, base_path = "", type="tabmenu")]
 
         if not isinstance(c.site, DefaultSR) and not c.cname:
             toolbar.insert(0, PageNameNav('subreddit'))
+
+        if c.user_is_admin:
+            from admin_pages import AdminLinkMenu
+            toolbar.append(AdminLinkMenu(self.link))
 
         return toolbar
 
