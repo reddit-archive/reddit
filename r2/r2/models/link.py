@@ -242,13 +242,24 @@ class Link(Thing, Printable):
                 #return False
 
         if user and not c.ignore_hide_rules:
-            if user.pref_hide_ups and wrapped.likes == True and self.author_id != user._id:
+            # whether the user must deliberately hide the item
+            # (not automatic due to score or having upvoted/downvoted it)
+            require_explicit_hide = wrapped.stickied
+
+            if (user.pref_hide_ups and
+                    wrapped.likes == True and
+                    self.author_id != user._id and
+                    not require_explicit_hide):
                 return False
 
-            if user.pref_hide_downs and wrapped.likes == False and self.author_id != user._id:
+            if (user.pref_hide_downs and
+                    wrapped.likes == False and
+                    self.author_id != user._id and
+                    not require_explicit_hide):
                 return False
 
-            if wrapped._score < user.pref_min_link_score:
+            if (wrapped._score < user.pref_min_link_score and
+                    not require_explicit_hide):
                 return False
 
             if wrapped.hidden:
@@ -483,6 +494,8 @@ class Link(Thing, Printable):
             # is this link a member of a different (non-c.site) subreddit?
             item.different_sr = (isinstance(site, FakeSubreddit) or
                                  site.name != item.subreddit.name)
+            item.stickied = (not item.different_sr and
+                             site.sticky_fullname == item._fullname)
 
             if user_is_loggedin and item.author_id == user._id:
                 item.nofollow = False

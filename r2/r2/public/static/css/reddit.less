@@ -744,16 +744,19 @@ ul.flat-vert {text-align: left;}
     font-size:x-small;
 }
 
+@moderator-color: #228822;
+
 .tagline { color:#888; font-size:x-small; }
 .tagline a {color: #369; text-decoration: none; }
 .tagline .friend    { color: orangered }
 .tagline .submitter { color: #0055df }
-.tagline .moderator, .green { color: #228822 }
+.tagline .moderator, .green { color: @moderator-color }
 .tagline .admin { color: #ff0011; }
 .tagline .alum { color: #BE1337; }
 .tagline a.author.admin { font-weight: bold }
 .tagline a:hover { text-decoration: underline }
 .tagline .edited-timestamp{ cursor: default }
+.tagline .stickied-tagline { color: @moderator-color }
 
 a.author { margin-right: 0.5em; }
 
@@ -929,6 +932,16 @@ a.author { margin-right: 0.5em; }
 .thing .title.loggedin:visited { color: #551a8b }
 .thing .title.loggedin.click { color: #551a8b } 
 .thing .title.loggedin.click:visited { color: #551a8b }
+
+.stickied-link { font-weight: bold; color: @moderator-color; }
+.thing.stickied {
+    a.title { .stickied-link }
+    a.title:visited { .stickied-link }
+    a.title.loggedin { .stickied-link }
+    a.title.loggedin:visited { .stickied-link }
+    a.title.loggedin.click { .stickied-link }
+    a.title.loggedin.click:visited { .stickied-link }
+}
 
 .sitetable { list-style-type: none; }
 .ajaxhook { position: absolute; top: -1000px; left: 0px; }

@@ -276,6 +276,15 @@
     </div>
     <div class="usertext-edit">
       <div class="delete-field">
+        <label for="sticky_permalink">${_('Permalink to stickied self-post (blank for none):')}</label>
+        <input id="sticky_permalink" type="text" name="sticky_permalink"
+            %if thing.site:
+                value="${thing.site.sticky_permalink}"
+            %endif
+        >
+        ${error_field("BAD_URL", "sticky_permalink")}
+      </div>
+      <div class="delete-field">
         <label for="comment_score_hide_mins">${_('Minutes to hide comment scores:')}</label>
             %if thing.site:
                 <input id="comment_score_hide_mins" type="text" name="comment_score_hide_mins" placeholder="0" 

@@ -621,6 +621,9 @@ body[orient="landscape"] > #topbar > h1 {
     text-overflow: ellipsis; overflow: hidden;
     color: #25A; 
 }
+.link.stickied p.title > a {
+    color: #228822;
+}
 
 .link .domain {
     color: hsl(0,0%,45%);
@@ -650,6 +653,10 @@ body[orient="landscape"] > #topbar > h1 {
 
 .link .tagline a {
     font-weight: bold; 
+}
+
+.link .tagline .stickied-tagline {
+    color: #228822;
 }
 
 /*Expando*/

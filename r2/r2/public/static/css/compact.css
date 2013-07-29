@@ -196,6 +196,8 @@ body[orient="landscape"] > #topbar > h1 { margin-left: -125px; width: 250px; }
 
 .link p.title > a { text-overflow: ellipsis; overflow: hidden; color: #25A; }
 
+.link.stickied p.title > a { color: #228822; }
+
 .link .domain { color: #737373; font-size: 9px; margin-left: 5px; }
 .link .domain a, .link .domain a:hover { color: inherit; }
 
@@ -204,6 +206,8 @@ body[orient="landscape"] > #topbar > h1 { margin-left: -125px; width: 250px; }
 .link .tagline > span { margin-right: 2px; }
 
 .link .tagline a { font-weight: bold; }
+
+.link .tagline .stickied-tagline { color: #228822; }
 
 /*Expando*/
 .link .expando-button { float: left; display: block; height: auto; line-height: inherit; margin: 3px 10px 2px 0; width: 30px; height: 30px; background-image: url("../compact/selftext.png"); /*SPRITE*/ }

@@ -358,6 +358,21 @@ class HotController(FixListing, ListingController):
         elif isinstance(c.site, MultiReddit):
             return normalized_hot(c.site.kept_sr_ids, obey_age_limit=False)
         else:
+            if c.site.sticky_fullname:
+                link_list = [c.site.sticky_fullname]
+                wrapped = wrap_links(link_list,
+                                     wrapper=self.builder_wrapper,
+                                     keep_fn=self.keep_fn(),
+                                     skip=True)
+                # add all other items and decrement count if sticky is visible
+                if wrapped.things:
+                    link_list += [l for l in c.site.get_links('hot', 'all')
+                                    if l != c.site.sticky_fullname]
+                    if not self.after:
+                        self.count -= 1
+                    return link_list
+            
+            # no sticky or sticky hidden
             return c.site.get_links('hot', 'all')
 
     def content(self):

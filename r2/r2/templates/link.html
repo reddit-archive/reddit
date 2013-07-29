@@ -35,7 +35,9 @@
 <%def name="numcol()">
   <% num = thing.num %>
   <span class="rank" style="width:${thing.numcolmargin};">
-    ${thing.num}
+    %if thing.num > 0:
+      ${thing.num}
+    %endif
   </span>
 </%def>
 
@@ -215,6 +217,9 @@ ${parent.thing_data_attributes(what)} data-ups="${what.upvotes}" data-downs="${w
                               author=WrappedUser(thing.author, thing.attribs, thing).render(),
                               lastedited=capture(edited, thing, thing.lastedited)
                               ))}
+  %if thing.stickied:
+    &#32;-&#32;<span class="stickied-tagline" title="selected by this subreddit's moderators">stickied post</span>
+  %endif
 </%def>
 
 <%def name="child()">

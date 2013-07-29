@@ -1748,6 +1748,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                    show_cname_sidebar = VBoolean('show_cname_sidebar'),
                    type = VOneOf('type', ('public', 'private', 'restricted', 'gold_restricted', 'archived')),
                    link_type = VOneOf('link_type', ('any', 'link', 'self')),
+                   sticky_permalink=VUrl('sticky_permalink'),
                    submit_link_label=VLength('submit_link_label', max_length=60),
                    submit_text_label=VLength('submit_text_label', max_length=60),
                    comment_score_hide_mins=VInt('comment_score_hide_mins',
@@ -1794,7 +1795,8 @@ class ApiController(RedditController, OAuth2ResourceController):
                   if k in ('name', 'title', 'domain', 'description',
                            'show_media', 'exclude_banned_modqueue',
                            'show_cname_sidebar', 'type', 'public_traffic',
-                           'link_type', 'submit_link_label', 'comment_score_hide_mins',
+                           'link_type', 'sticky_permalink',
+                           'submit_link_label', 'comment_score_hide_mins',
                            'submit_text_label', 'lang', 'css_on_cname',
                            'header_title', 'over_18', 'wikimode', 'wiki_edit_karma',
                            'wiki_edit_age', 'allow_top', 'public_description'))
@@ -1841,6 +1843,17 @@ class ApiController(RedditController, OAuth2ResourceController):
         if cname_sr and (not sr or sr != cname_sr):
             c.errors.add(errors.USED_CNAME)
 
+        sticky_fullname = None
+        if kw['sticky_permalink']:
+            sticky_url = UrlParser(kw['sticky_permalink']).path
+            if sticky_url:
+                try:
+                    sticky_fullname = Link._by_url(sticky_url, sr)._fullname
+                except NotFound:
+                    c.errors.add(errors.BAD_URL, field='sticky_permalink')
+            else:
+                c.errors.add(errors.BAD_URL, field='sticky_permalink')
+
         can_set_archived = c.user_is_admin or (sr and sr.type == 'archived')
         if kw['type'] == 'archived' and not can_set_archived:
             c.errors.add(errors.INVALID_OPTION, field='type')
@@ -1868,6 +1881,8 @@ class ApiController(RedditController, OAuth2ResourceController):
             pass
         elif (form.has_errors(('wiki_edit_karma', 'wiki_edit_age'), 
                               errors.BAD_NUMBER)):
+            pass
+        elif form.has_errors('sticky_permalink', errors.BAD_URL):
             pass
         elif form.has_errors('comment_score_hide_mins', errors.BAD_NUMBER):
             pass
@@ -1901,6 +1916,8 @@ class ApiController(RedditController, OAuth2ResourceController):
             old_domain = sr.domain
 
             success = update_wiki_text(sr)
+
+            sr.sticky_fullname = sticky_fullname
 
             if not sr.domain:
                 del kw['css_on_cname']
