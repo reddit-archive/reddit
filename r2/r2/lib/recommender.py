@@ -29,7 +29,6 @@ from operator import itemgetter
 from r2.models import Subreddit
 from r2.lib.sgm import sgm
 from r2.lib.db import tdb_cassandra
-from r2.lib.memoize import memoize
 from r2.lib.utils import tup
 
 from pylons import g

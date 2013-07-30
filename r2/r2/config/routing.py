@@ -339,6 +339,9 @@ def make_map():
        requirements=dict(type='wikibannednote|bannednote'),
        action='relnote')
     mc('/api/:action', controller='api')
+    
+    mc('/api/recommend/sr/:srnames', controller='api',
+       action='subreddit_recommendations')
 
     mc("/api/multi/mine", controller="multiapi", action="my_multis")
     mc("/api/multi/copy", controller="multiapi", action="multi_copy")

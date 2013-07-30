@@ -5409,6 +5409,103 @@ table.calendar {
     }
 }
 
+.side .recommend-box {
+    margin: 15px 5px 30px 0px;
+    opacity: 0;
+    transition: all .1s ease-in-out;
+
+    h1 {
+        display: inline-block;
+        font-size: 1.35em;
+        font-weight: bold;
+        white-space: nowrap;
+    }
+
+    ul {
+        margin: 4px 0;
+    }
+
+    .rec-item {
+        background-color: rgb(247, 247, 247);
+        border: solid thin silver;
+        display: inline-block;
+        font-size: 1.0em;
+        margin: 2px;
+        padding: 0 0 1px 5px;
+        position: relative;
+        width: 136px;
+        white-space: nowrap;
+
+        a {
+            display: inline-block;
+            height: 100%;
+            overflow: hidden;
+            line-height: 1.8em;
+            padding-left: 2px;
+            text-overflow: ellipsis;
+            vertical-align: middle;
+            width: 111px;
+        }
+
+        button.add {
+            background-color: rgb(247, 247, 247);
+            background-image: none;
+            border: none;
+            cursor: pointer;
+            height: 100%;
+            opacity: 0.3;
+
+            &:after {
+                background-image: url(../add.png);  /* SPRITE */
+                content: "";
+                display: block;
+                height: 15px;
+                width: 15px;
+            }
+
+            &:hover {
+                opacity: 1.0;
+            }
+        }
+    }
+    
+    .more {
+        color: #369;
+        cursor: pointer;
+        display: inline-block;
+        font-weight: bold;
+        vertical-align: top;
+    }
+
+    .endoflist {
+        background-color: #f7f7f7;
+        padding: 15px 25px;
+
+        h1 {
+            margin-bottom: 10px;
+        }
+
+        .heading {
+            color: #555;
+            font-weight: bold;
+        }
+
+        ul {
+            font-size: x-small;
+            list-style-type: disc;
+            margin: 4px 0 0 20px;
+        }
+
+        .reset {
+            cursor: pointer;
+        }
+    }
+}
+
+.readonly .recommend-box li > button {
+    display: none;
+}
+
 .hover-bubble.multi-add-notice {
     @bg-color: lighten(orange, 42%);
     @border-color: lighten(orangered, 30%);

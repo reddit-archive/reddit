@@ -19,6 +19,12 @@ r.multi = {
             if (location.hash == '#created') {
                 detailsView.focusAdd()
             }
+
+            // if page has a recs box, wire it up to refresh with the multi.
+            var recsEl = $('#multi-recs')
+            if (recsEl.length) {
+                detailsView.initRecommendations(recsEl)
+            }
         }
 
         var subscribeBubbleGroup = {}
@@ -171,6 +177,10 @@ r.multi.MultiReddit = Backbone.Model.extend({
 
     renameTo: function(newCollection, name) {
         return this._copyOp('rename', newCollection, name)
+    },
+
+    getSubredditNames: function() {
+        return this.subreddits.pluck('name')
     }
 })
 
@@ -289,6 +299,32 @@ r.multi.MultiDetails = Backbone.View.extend({
         this.itemViews = {}
         this.$('.subreddits').empty()
         this.model.subreddits.each(this.addOne, this)
+    },
+
+    // create child model and view to manage recommendations
+    initRecommendations: function(recsEl) {
+        var recs = new r.recommend.RecommendationList()
+        this.recsView = new r.recommend.RecommendationsView({
+            collection: recs,
+            el: recsEl
+        })
+ 
+        // fetch initial data
+        if (!this.model.subreddits.isEmpty()) {
+            recs.fetchForSrs(this.model.getSubredditNames())
+        }
+ 
+        // update recs when multi changes
+        this.listenTo(this.model.subreddits, 'add remove reset',
+            function() {
+                var srNames = this.model.getSubredditNames()
+                recs.fetchForSrs(srNames)
+            })
+        // update multi when a rec is selected
+        this.recsView.bind('recs:select',
+            function(data) {
+                this.model.addSubreddit(data['srName'])
+            }, this)
     },
 
     render: function() {

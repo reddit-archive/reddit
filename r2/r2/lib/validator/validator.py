@@ -669,6 +669,33 @@ class VSRByName(Validator):
         }
 
 
+class VSRByNames(Validator):
+    """Returns a dict mapping subreddit names to subreddit objects.
+
+    sr_names_csv - a comma delimited string of subreddit names
+    required - if true (default) an empty subreddit name list is an error
+
+    """
+    def __init__(self, sr_names_csv, required=True):
+        self.required = required
+        Validator.__init__(self, sr_names_csv)
+
+    def run(self, sr_names_csv):
+        if sr_names_csv:
+            sr_names = [s.strip() for s in sr_names_csv.split(',')]
+            return Subreddit._by_name(sr_names)
+        elif self.required:
+            self.set_error(errors.BAD_SR_NAME, code=400)
+            return
+        else:
+            return {}
+
+    def param_docs(self):
+        return {
+            self.param: "comma-delimited list of subreddit names",
+        }
+
+
 class VSubredditTitle(Validator):
     def run(self, title):
         if not title:

@@ -38,6 +38,7 @@ from r2.lib.validator import *
 from r2.models import *
 
 from r2.lib import amqp
+from r2.lib import recommender
 
 from r2.lib.utils import get_title, sanitize_url, timeuntil, set_last_modified
 from r2.lib.utils import query_string, timefromnow, randstr
@@ -3507,3 +3508,17 @@ class ApiController(RedditController, OAuth2ResourceController):
         c.user.pref_collapse_left_bar = collapsed
         c.user._commit()
 
+    @validate(srs=VSRByNames("srnames"),
+              to_omit=VSRByNames("omit", required=False))
+    @api_doc(api_section.subreddits)
+    def GET_subreddit_recommendations(self, srs, to_omit):
+        """Return subreddits recommended for the given subreddit(s).
+
+        Gets a list of subreddits recommended for `srnames`, filtering out any
+        that appear in the optional `omit` param.
+
+        """
+        rec_srs = recommender.get_recommendations(srs.values(),
+                                                  to_omit=to_omit.values())
+        sr_names = [sr.name for sr in rec_srs]
+        return json.dumps(sr_names)
