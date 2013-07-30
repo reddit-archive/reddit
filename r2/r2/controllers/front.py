@@ -568,6 +568,9 @@ class FrontController(RedditController, OAuth2ResourceController):
                     return True # spam, unless banned by a moderator
                 return False
             elif location == "unmoderated":
+                # banned user, don't show if subreddit pref excludes
+                if x.author._spam and x.subreddit.exclude_banned_modqueue:
+                    return False
                 return not getattr(x, 'verdict', None)
             else:
                 raise ValueError

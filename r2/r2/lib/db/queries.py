@@ -840,7 +840,8 @@ def new_link(link):
     with CachedQueryMutator() as m:
         if link._spam:    
             m.insert(get_spam_links(sr), [link])
-        m.insert(get_unmoderated_links(sr), [link])
+        if not (sr.exclude_banned_modqueue and author._spam):
+            m.insert(get_unmoderated_links(sr), [link])
 
     add_queries(results, insert_items = link)
     amqp.add_item('new_link', link._fullname)
