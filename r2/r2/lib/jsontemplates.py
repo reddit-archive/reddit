@@ -638,19 +638,22 @@ class UserTableItemJsonTemplate(ThingJsonTemplate):
     def thing_attr(self, thing, attr):
         return ThingJsonTemplate.thing_attr(self, thing.user, attr)
 
-    def inject_note(self, thing, d):
+    def inject_data(self, thing, d):
         if (thing.type in ("banned", "wikibanned") or
             (c.user.gold and thing.type == "friend")):
             d["note"] = getattr(thing.rel, 'note', '')
+        if thing.type == "moderator":
+            permissions = thing.rel.permissions.iteritems()
+            d["mod_permissions"] = [perm for perm, has in permissions if has]
         return d
 
     def rendered_data(self, thing):
         d = ThingJsonTemplate.rendered_data(self, thing)
-        return self.inject_note(thing, d)
+        return self.inject_data(thing, d)
 
     def raw_data(self, thing):
         d = ThingJsonTemplate.raw_data(self, thing)
-        return self.inject_note(thing, d)
+        return self.inject_data(thing, d)
 
     def render(self, thing, *a, **kw):
         return ObjectTemplate(self.data(thing))
