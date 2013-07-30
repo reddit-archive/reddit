@@ -1790,6 +1790,9 @@ class ApiController(RedditController, OAuth2ResourceController):
                    public_traffic = VBoolean('public_traffic'),
                    exclude_banned_modqueue = VBoolean('exclude_banned_modqueue'),
                    show_cname_sidebar = VBoolean('show_cname_sidebar'),
+                   spam_links = VOneOf('spam_links', ('low', 'high')),
+                   spam_selfposts = VOneOf('spam_selfposts', ('low', 'high')),
+                   spam_comments = VOneOf('spam_comments', ('low', 'high')),
                    type = VOneOf('type', ('public', 'private', 'restricted', 'gold_restricted', 'archived')),
                    link_type = VOneOf('link_type', ('any', 'link', 'self')),
                    submit_link_label=VLength('submit_link_label', max_length=60),
@@ -1829,7 +1832,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                 c.errors.add(errors.BAD_REVISION, field=id_field_name)
                 form.has_errors(id_field_name, errors.BAD_REVISION)
             return False
-        
+
         # the status button is outside the form -- have to reset by hand
         form.parent().set_html('.status', "")
 
@@ -1842,7 +1845,8 @@ class ApiController(RedditController, OAuth2ResourceController):
                            'submit_link_label', 'comment_score_hide_mins',
                            'submit_text_label', 'lang', 'css_on_cname',
                            'header_title', 'over_18', 'wikimode', 'wiki_edit_karma',
-                           'wiki_edit_age', 'allow_top', 'public_description'))
+                           'wiki_edit_age', 'allow_top', 'public_description',
+                           'spam_links', 'spam_selfposts', 'spam_comments'))
 
         public_description = kw.pop('public_description')
         description = kw.pop('description')

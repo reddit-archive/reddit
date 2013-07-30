@@ -529,6 +529,21 @@ ${unsafe(txt)}
   </tr>
 </%def>
 
+<%def name="inline_radio_type(field_name, val_name, text=None, checked=False)">
+	<% full_name = field_name + "_" + val_name %>
+	<label>
+	<input class="nomargin" type="radio" name="${field_name}"
+		id="${full_name}" value="${val_name}"
+		%if checked:
+			checked="checked"
+		%endif
+	>
+	%if text:
+		${text}
+	%endif
+	</label>
+</%def>
+
 <%def name="timestamp(date, since=None)">
   ## todo: use pubdate attribute once things are <article> tags.
   ## note: comment and link templates will pass a CachedVariable stub as since.
