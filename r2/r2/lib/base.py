@@ -179,7 +179,7 @@ class BaseController(WSGIController):
         and added as the "dest" parameter of the new url.
         """
         from r2.lib.template_helpers import add_sr
-        params = dict(dest=cls.format_output_url(request.url))
+        params = dict(dest=cls.format_output_url(request.fullurl))
         if c.extension == "widget" and request.GET.get("callback"):
             params['callback'] = request.GET.get("callback")
 
