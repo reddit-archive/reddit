@@ -101,6 +101,7 @@ class BaseController(WSGIController):
         request.referer = environ.get('HTTP_REFERER')
         request.user_agent = environ.get('HTTP_USER_AGENT')
         request.fullpath = environ.get('FULLPATH', request.path)
+        request.fullurl = environ.get('FULLURL', request.url)
         request.port = environ.get('request_port')
         
         if_modified_since = environ.get('HTTP_IF_MODIFIED_SINCE')
