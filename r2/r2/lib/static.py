@@ -34,7 +34,7 @@ def locate_static_file(name):
     static_dirs = [plugin.static_dir for plugin in g.plugins]
     static_dirs.insert(0, g.paths['static_files'])
 
-    for static_dir in static_dirs:
+    for static_dir in reversed(static_dirs):
         file_path = os.path.join(static_dir, name.lstrip('/'))
         if os.path.exists(file_path):
             return file_path
