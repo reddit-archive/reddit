@@ -80,12 +80,15 @@ from r2.lib.errors import reddit_http_error
 import json
 
 page_descriptions = {'config/stylesheet':_("This page is the subreddit stylesheet, changes here apply to the subreddit css"),
+                     'config/submit_text':_("The contents of this page appear on the submit page"),
                      'config/sidebar':_("The contents of this page appear on the subreddit sidebar"),
                      'config/description':_("The contents of this page appear in the public subreddit description")}
 
 ATTRIBUTE_BY_PAGE = {"config/sidebar": "description",
+                     "config/submit_text": "submit_text",
                      "config/description": "public_description"}
 RENDERERS_BY_PAGE = {"config/sidebar": "reddit",
+                     "config/submit_text": "reddit",
                      "config/description": "reddit",
                      "config/stylesheet": "stylesheet"}
 

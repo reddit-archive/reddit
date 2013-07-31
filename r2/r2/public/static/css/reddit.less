@@ -7688,3 +7688,42 @@ body.with-listing-chooser {
         }
     }
 }
+
+.submit_text {
+    display: none;
+    max-height: 250px;
+    overflow: auto;
+
+    ol, ul {
+        margin: 0;
+        margin-left: 2em;
+    }
+
+    &.working .content:before {
+        content: "";
+        width: 16px;
+        height: 16px;
+        display: block;
+        background-image: url(../throbber.gif); 
+    }
+
+    h1 {
+        color: rgb(51, 102, 153);
+        display: block;
+        font-size: 16px;
+        font-weight: bold;
+    }
+
+    .content {
+        margin: 0;
+
+        p {
+            word-wrap: break-word;
+            clear: both;
+        }
+    }
+
+    &.enabled {
+        display: inline-block;
+    }
+}

@@ -28,6 +28,10 @@ r.ui.init = function() {
         $(el).data('HelpBubble', new r.ui.Bubble({el: el}))
     })
 
+    $('.submit_text').each(function(idx, el) {
+        $(el).data('SubredditSubmitText', new r.ui.SubredditSubmitText({el: el}))
+    })
+
     r.ui.PermissionEditor.init()
 }
 
@@ -601,6 +605,56 @@ r.ui.ConfirmButton = Backbone.View.extend({
             this.$target.show()
         } else if (target.is('.yes')) {
             this.$target.trigger('confirm')
+        }
+    }
+})
+
+r.ui.SubredditSubmitText = Backbone.View.extend({
+    initialize: function() {
+        this.lookup = _.throttle(this._lookup, 500)
+        this.cache = new r.utils.LRUCache()
+        this.$input = $('#sr-autocomplete')
+        this.$input.on('sr-changed change input', _.bind(this.lookup, this))
+        this.$sr = this.$el.find('.sr').first()
+        this.$content = this.$el.find('.content').first()
+        if (this.$content.text().trim()) {
+            this.$sr.text(r.config.post_site)
+            this.show()
+        }
+    },
+
+    _lookup: function() {
+        this.$content.empty()
+        var sr = this.$input.val()
+        this.$sr.text(sr)
+        this.$el.addClass('working')
+        this.cache.ajax(sr, {
+            url: '/r/' + sr + '/api/submit_text/.json',
+            dataType: 'json'
+        }).done(_.bind(this.settext, this, sr))
+          .fail(_.bind(this.error, this))
+    },
+
+    show: function() {
+        this.$el.addClass('enabled')
+    },
+
+    hide: function() {
+        this.$el.removeClass('enabled')
+    },
+
+    error: function() {
+        this.hide()
+    },
+
+    settext: function(sr, data) {
+        if (!data.submit_text || !data.submit_text.trim()) {
+            this.hide()
+        } else {
+            this.$sr.text(sr)
+            this.$content.html($.unsafe(data.submit_text_html))
+            this.$el.removeClass('working')
+            this.show()
         }
     }
 })

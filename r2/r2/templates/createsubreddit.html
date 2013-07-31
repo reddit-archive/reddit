@@ -92,15 +92,31 @@
     </div>
     ${error_field("CONFLICT", "description")}
   </%utils:line_field>
-  
-  
+
+  <%utils:line_field title="${_('submission text')}" css_class="usertext"
+                     description="${_('text to show on submission page. 1024 characters max.')}">
+    %if thing.site and thing.site.submit_text:
+     ${UserText(None, text=thing.site.submit_text or "", editable=True, creating=True, name="submit_text", have_form=False)}
+    %else:
+     ${UserText(None, text="", creating=True, name="submit_text", have_form=False)}
+    %endif
+    <div id="submit_text_conflict_box" style="display: none">
+        <div id="submit_text_conflict_diff"></div>
+        ${UserText(None, text="", editable=True, creating=True, name="submit_text_conflict_old", have_form=False)}
+    </div>
+    ${error_field("CONFLICT", "submit_text")}
+  </%utils:line_field>
+
   %if thing.site:
         <input type="hidden" name="prev_public_description_id" value="${thing.site.prev_public_description_id}"/>
         <input type="hidden" name="prev_description_id" value="${thing.site.prev_description_id}"/>
+        <input type="hidden" name="prev_submit_text_id" value="${thing.site.prev_submit_text_id}"/>
         ${error_field("TOO_LONG", "prev_public_description_id")}
         ${error_field("TOO_LONG", "prev_description_id")}
+        ${error_field("TOO_LONG", "prev_submit_text_id")}
         ${error_field("BAD_REVISION", "prev_public_description_id")}
         ${error_field("BAD_REVISION", "prev_description_id")}
+        ${error_field("BAD_REVISION", "prev_submit_text_id")}
   %endif
 
   <%utils:line_field title="${_('language')}">

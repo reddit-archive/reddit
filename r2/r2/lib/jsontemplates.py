@@ -237,6 +237,8 @@ class SubredditJsonTemplate(ThingJsonTemplate):
         submission_type="link_type",
         submit_link_label="submit_link_label",
         submit_text_label="submit_text_label",
+        submit_text="submit_text",
+        submit_text_html="submit_text_html",
         subreddit_type="type",
         subscribers="_ups",
         title="title",
@@ -286,6 +288,8 @@ class SubredditJsonTemplate(ThingJsonTemplate):
                 check_func = getattr(thing, attr)
                 return bool(check_func(c.user))
             return None
+        elif attr == 'submit_text_html':
+            return safemarkdown(thing.submit_text)
         else:
             return ThingJsonTemplate.thing_attr(self, thing, attr)
 
@@ -853,11 +857,13 @@ class SubredditSettingsTemplate(ThingJsonTemplate):
         over_18='site.over_18',
         prev_description_id='site.prev_description_id',
         prev_public_description_id='site.prev_public_description_id',
+        prev_submit_text_id='site.prev_submit_text_id',
         public_description='site.public_description',
         public_traffic='site.public_traffic',
         show_media='site.show_media',
         submit_link_label='site.submit_link_label',
         submit_text_label='site.submit_text_label',
+        submit_text='site.submit_text',
         subreddit_id='site._fullname',
         subreddit_type='site.type',
         title='site.title',

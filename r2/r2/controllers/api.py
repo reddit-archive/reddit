@@ -249,6 +249,18 @@ class ApiController(RedditController, OAuth2ResourceController):
 
             queries.new_message(m, inbox_rel)
 
+    @json_validate()
+    @api_doc(api_section.subreddits)
+    def GET_submit_text(self, responder):
+        if c.site.over_18 and not c.over18:
+            submit_text = None
+            submit_text_html = None
+        else:
+            submit_text = c.site.submit_text
+            submit_text_html = safemarkdown(c.site.submit_text)
+        return {'submit_text': submit_text,
+                'submit_text_html': submit_text_html}
+
     @require_oauth2_scope("submit")
     @validatedForm(VUser(),
                    VModhash(),
@@ -1797,6 +1809,8 @@ class ApiController(RedditController, OAuth2ResourceController):
                    title = VLength("title", max_length = 100),
                    header_title = VLength("header-title", max_length = 500),
                    domain = VCnameDomain("domain"),
+                   submit_text = VMarkdown("submit_text", max_length=1024),
+                   prev_submit_text_id = VLength('prev_submit_text_id', max_length=36),
                    public_description = VMarkdown("public_description", max_length = 500),
                    prev_public_description_id = VLength('prev_public_description_id', max_length = 36),
                    description = VMarkdown("description", max_length = 5120),
@@ -1868,10 +1882,12 @@ class ApiController(RedditController, OAuth2ResourceController):
                            'submit_text_label', 'lang', 'css_on_cname',
                            'header_title', 'over_18', 'wikimode', 'wiki_edit_karma',
                            'wiki_edit_age', 'allow_top', 'public_description',
-                           'spam_links', 'spam_selfposts', 'spam_comments'))
+                           'spam_links', 'spam_selfposts', 'spam_comments',
+                           'submit_text'))
 
         public_description = kw.pop('public_description')
         description = kw.pop('description')
+        submit_text = kw.pop('submit_text')
 
         # Use the raw POST value as we need to tell the difference between
         # None/Undefined and an empty string.  The validators use a default
@@ -1879,6 +1895,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         # In order to avoid breaking functionality, this was done instead.
         prev_desc = request.post.get('prev_description_id')
         prev_pubdesc = request.post.get('prev_public_description_id')
+        prev_submit_text = request.post.get('prev_submit_text_id')
 
         def update_wiki_text(sr):
             error = False
@@ -1889,6 +1906,15 @@ class ApiController(RedditController, OAuth2ResourceController):
                                      prev_desc,
                                      'description',
                                      _("Sidebar was not saved")):
+                error = True
+
+            if not apply_wikid_field(sr,
+                                     form,
+                                     'config/submit_text',
+                                     submit_text,
+                                     prev_submit_text,
+                                     'submit_text',
+                                     _("Submission text was not saved")):
                 error = True
 
             if not apply_wikid_field(sr,

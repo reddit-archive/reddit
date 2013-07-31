@@ -50,12 +50,19 @@ impossible_namespaces = ('edit/', 'revisions/', 'settings/', 'discussions/',
 restricted_namespaces = ('reddit/', 'config/', 'special/')
 
 # Pages which may only be edited by mods, must be within restricted namespaces
-special_pages = ('config/stylesheet', 'config/sidebar', 'config/description')
+special_pages = ('config/stylesheet', 'config/sidebar',
+                 'config/submit_text', 'config/description')
 
 # Pages which have a special length restrictions (In bytes)
-special_length_restrictions_bytes = {'config/stylesheet': 128*1024, 'config/sidebar': 5120, 'config/description': 500}
+special_length_restrictions_bytes = {
+    'config/stylesheet': 128*1024,
+    'config/submit_text': 1024,
+    'config/sidebar': 5120,
+    'config/description': 500
+}
 
 modactions = {'config/sidebar': "Updated subreddit sidebar",
+              'config/submit_text': "Updated submission text",
               'config/description': "Updated subreddit description"}
 
 # Page "index" in the subreddit "reddit.com" and a seperator of "\t" becomes:

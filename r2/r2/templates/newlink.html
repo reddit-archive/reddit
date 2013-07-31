@@ -24,6 +24,7 @@
    from r2.lib.strings import strings
    from r2.lib.pages import SubredditSelector, UserText
    from r2.lib.template_helpers import add_sr
+   from r2.lib.filters import safemarkdown
 %>
 
 <%namespace file="utils.html" import="error_field, submit_form, _a_buffered, text_with_links"/>
@@ -35,6 +36,7 @@
   else:
     sr = _("reddit")
 %>
+
 <h1>${unsafe(_("submit to %(sr)s") % dict(sr=sr))}</h1>
 
 <%utils:submit_form onsubmit="return post_form(this, 'submit', linkstatus, null, true)" 
@@ -101,6 +103,17 @@ ${thing.formtabs_menu}
   <%utils:round_field title="${_('choose a subreddit')}" id="reddit-field">
     ${SubredditSelector(thing.default_sr, extra_subreddits=thing.extra_subreddits, required=True)}
   </%utils:round_field>
+</div>
+
+<div class="spacer">
+    <div class="submit_text roundfield">
+        <h1>${unsafe(_('submitting to %(sr)s') % dict(sr='/r/<span class="sr"></span>'))}</h1>
+        <span class="content">
+            %if thing.default_sr and thing.default_sr.submit_text:
+                ${unsafe(safemarkdown(thing.default_sr.submit_text))}
+            %endif
+        </span>
+    </div>
 </div>
 
 %if c.user.gold:
