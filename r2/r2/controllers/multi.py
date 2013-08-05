@@ -94,8 +94,8 @@ class MultiApiController(RedditController, OAuth2ResourceController):
         ))
 
     @require_oauth2_scope("read")
-    @api_doc(api_section.multis)
     @validate(VUser())
+    @api_doc(api_section.multis)
     def GET_my_multis(self):
         """Fetch a list of multis belonging to the current user."""
         multis = LabeledMulti.by_owner(c.user)
@@ -108,11 +108,11 @@ class MultiApiController(RedditController, OAuth2ResourceController):
         return self.api_wrapper(resp)
 
     @require_oauth2_scope("read")
+    @validate(multi=VMultiByPath("multipath", require_view=True))
     @api_doc(
         api_section.multis,
         uri="/api/multi/{multipath}",
     )
-    @validate(multi=VMultiByPath("multipath", require_view=True))
     def GET_multi(self, multi):
         """Fetch a multi's data and subreddit list by name."""
         return self._format_multi(multi)
@@ -164,13 +164,13 @@ class MultiApiController(RedditController, OAuth2ResourceController):
         return multi
 
     @require_oauth2_scope("subscribe")
-    @api_doc(api_section.multis, extends=GET_multi)
     @validate(
         VUser(),
         VModhash(),
         path_info=VMultiPath("multipath"),
         data=VValidatedJSON("model", multi_json_spec),
     )
+    @api_doc(api_section.multis, extends=GET_multi)
     def POST_multi(self, path_info, data):
         """Create a multi. Responds with 409 Conflict if it already exists."""
 
@@ -188,13 +188,13 @@ class MultiApiController(RedditController, OAuth2ResourceController):
         return self._format_multi(multi)
 
     @require_oauth2_scope("subscribe")
-    @api_doc(api_section.multis, extends=GET_multi)
     @validate(
         VUser(),
         VModhash(),
         path_info=VMultiPath("multipath"),
         data=VValidatedJSON("model", multi_json_spec),
     )
+    @api_doc(api_section.multis, extends=GET_multi)
     def PUT_multi(self, path_info, data):
         """Create or update a multi."""
 
@@ -210,12 +210,12 @@ class MultiApiController(RedditController, OAuth2ResourceController):
         return self._format_multi(multi)
 
     @require_oauth2_scope("subscribe")
-    @api_doc(api_section.multis, extends=GET_multi)
     @validate(
         VUser(),
         VModhash(),
         multi=VMultiByPath("multipath", require_edit=True),
     )
+    @api_doc(api_section.multis, extends=GET_multi)
     def DELETE_multi(self, multi):
         """Delete a multi."""
         multi.delete()
@@ -236,10 +236,6 @@ class MultiApiController(RedditController, OAuth2ResourceController):
         return to_multi
 
     @require_oauth2_scope("subscribe")
-    @api_doc(
-        api_section.multis,
-        uri="/api/multi/{multipath}/copy",
-    )
     @validate(
         VUser(),
         VModhash(),
@@ -247,6 +243,10 @@ class MultiApiController(RedditController, OAuth2ResourceController):
         to_path_info=VMultiPath("to",
             docs={"to": "destination multireddit url path"},
         ),
+    )
+    @api_doc(
+        api_section.multis,
+        uri="/api/multi/{multipath}/copy",
     )
     def POST_multi_copy(self, from_multi, to_path_info):
         """Copy a multi.
@@ -271,10 +271,6 @@ class MultiApiController(RedditController, OAuth2ResourceController):
         return self._format_multi(to_multi)
 
     @require_oauth2_scope("subscribe")
-    @api_doc(
-        api_section.multis,
-        uri="/api/multi/{multipath}/rename",
-    )
     @validate(
         VUser(),
         VModhash(),
@@ -282,6 +278,10 @@ class MultiApiController(RedditController, OAuth2ResourceController):
         to_path_info=VMultiPath("to",
             docs={"to": "destination multireddit url path"},
         ),
+    )
+    @api_doc(
+        api_section.multis,
+        uri="/api/multi/{multipath}/rename",
     )
     def POST_multi_rename(self, from_multi, to_path_info):
         """Rename a multi."""
@@ -295,21 +295,20 @@ class MultiApiController(RedditController, OAuth2ResourceController):
         return self.api_wrapper(resp)
 
     @require_oauth2_scope("read")
-    @api_doc(
-        api_section.multis,
-        uri="/api/multi/{multipath}/r/{srname}",
-    )
     @validate(
         VUser(),
         multi=VMultiByPath("multipath", require_view=True),
         sr=VSRByName('srname'),
+    )
+    @api_doc(
+        api_section.multis,
+        uri="/api/multi/{multipath}/r/{srname}",
     )
     def GET_multi_subreddit(self, multi, sr):
         """Get data about a subreddit in a multi."""
         return self._get_multi_subreddit(multi, sr)
 
     @require_oauth2_scope("subscribe")
-    @api_doc(api_section.multis, extends=GET_multi_subreddit)
     @validate(
         VUser(),
         VModhash(),
@@ -317,6 +316,7 @@ class MultiApiController(RedditController, OAuth2ResourceController):
         sr_name=VSubredditName('srname', allow_language_srs=True),
         data=VValidatedJSON("model", multi_sr_data_json_spec),
     )
+    @api_doc(api_section.multis, extends=GET_multi_subreddit)
     def PUT_multi_subreddit(self, multi, sr_name, data):
         """Add a subreddit to a multi."""
 
@@ -333,13 +333,13 @@ class MultiApiController(RedditController, OAuth2ResourceController):
         return self._get_multi_subreddit(multi, sr)
 
     @require_oauth2_scope("subscribe")
-    @api_doc(api_section.multis, extends=GET_multi_subreddit)
     @validate(
         VUser(),
         VModhash(),
         multi=VMultiByPath("multipath", require_edit=True),
         sr=VSRByName('srname'),
     )
+    @api_doc(api_section.multis, extends=GET_multi_subreddit)
     def DELETE_multi_subreddit(self, multi, sr):
         """Remove a subreddit from a multi."""
         multi.del_srs(sr)
@@ -350,25 +350,25 @@ class MultiApiController(RedditController, OAuth2ResourceController):
         return self.api_wrapper(resp)
 
     @require_oauth2_scope("read")
-    @api_doc(
-        api_section.multis,
-        uri="/api/multi/{multipath}/description",
-    )
     @validate(
         VUser(),
         multi=VMultiByPath("multipath", require_view=True),
+    )
+    @api_doc(
+        api_section.multis,
+        uri="/api/multi/{multipath}/description",
     )
     def GET_multi_description(self, multi):
         """Get a multi's description."""
         return self._format_multi_description(multi)
 
     @require_oauth2_scope("read")
-    @api_doc(api_section.multis, extends=GET_multi_description)
     @validate(
         VUser(),
         multi=VMultiByPath("multipath", require_edit=True),
         data=VValidatedJSON('model', multi_description_json_spec),
     )
+    @api_doc(api_section.multis, extends=GET_multi_description)
     def PUT_multi_description(self, multi, data):
         """Change a multi's markdown description."""
         multi.description_md = data['body_md']
