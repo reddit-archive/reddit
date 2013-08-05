@@ -370,6 +370,7 @@ class HotController(FixListing, ListingController):
                                     if l != c.site.sticky_fullname]
                     if not self.after:
                         self.count -= 1
+                        self.num += 1
                     return link_list
             
             # no sticky or sticky hidden
