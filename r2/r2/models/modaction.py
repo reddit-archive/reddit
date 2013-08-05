@@ -232,7 +232,8 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
         Update all Views.
         """
 
-        views = (ModActionBySR, ModActionBySRMod, ModActionBySRAction)
+        views = (ModActionBySR, ModActionBySRMod, ModActionBySRAction, 
+                 ModActionBySRActionMod)
 
         for v in views:
             v.add_object(self)
@@ -391,6 +392,18 @@ class ModActionBySRMod(tdb_cassandra.View):
     @classmethod
     def _rowkey(cls, ma):
         return '%s_%s' % (ma.sr_id36, ma.mod_id36)
+
+class ModActionBySRActionMod(tdb_cassandra.View):
+    _use_db = True
+    _connection_pool = 'main'
+    _compare_with = TIME_UUID_TYPE
+    _view_of = ModAction
+    _ttl = timedelta(days=90)
+    _read_consistency_level = tdb_cassandra.CL.ONE
+
+    @classmethod
+    def _rowkey(cls, ma):
+        return '%s_%s_%s' % (ma.sr_id36, ma.mod_id36, ma.action)
 
 class ModActionBySRAction(tdb_cassandra.View):
     _use_db = True
