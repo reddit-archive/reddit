@@ -95,7 +95,7 @@ class MultiApiController(RedditController, OAuth2ResourceController):
 
     @require_oauth2_scope("read")
     @validate(VUser())
-    @api_doc(api_section.multis)
+    @api_doc(api_section.multis, uri="/api/multi/mine")
     def GET_my_multis(self):
         """Fetch a list of multis belonging to the current user."""
         multis = LabeledMulti.by_owner(c.user)
