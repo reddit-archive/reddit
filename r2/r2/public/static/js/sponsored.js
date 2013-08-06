@@ -518,7 +518,7 @@ function create_campaign() {
             $("#campaign")
                 .find('button[name="edit"]').hide().end()
                 .find('button[name="create"]').show().end()
-                .find('input[name="campaign"]').val('').end()
+                .find('input[name="campaign_id36"]').val('').end()
                 .find('input[name="sr"]').val('').end()
                 .find('input[name="targeting"][value="none"]')
                                 .prop("checked", "checked").end()
