@@ -454,21 +454,21 @@ class PromoteController(ListingController):
                                   reference_date=promote.promo_datetime_now,
                                   business_days=False,
                                   sponsor_override=True),
-                   l=VLink('link_id'),
+                   link=VLink('link_id'),
                    bid=VFloat('bid', min=0, max=g.max_promote_bid,
                                   coerce=False, error=errors.BAD_BID),
                    sr=VSubmitSR('sr', promotion=True),
                    campaign_id36=nop("campaign_id36"),
                    targeting=VLength("targeting", 10))
-    def POST_edit_campaign(self, form, jquery, l, campaign_id36,
+    def POST_edit_campaign(self, form, jquery, link, campaign_id36,
                           dates, bid, sr, targeting):
-        if not l:
+        if not link:
             return
 
         start, end = dates or (None, None)
         cpm = g.cpm_selfserve.pennies
 
-        if (start and end and not promote.is_accepted(l) and
+        if (start and end and not promote.is_accepted(link) and
             not c.user_is_sponsor):
             # if the ad is not approved already, ensure the start date
             # is at least 2 days in the future
@@ -482,7 +482,6 @@ class PromoteController(ListingController):
                              msg_params=dict(day=g.min_promote_future),
                              field="startdate")
 
-
         if (form.has_errors('startdate', errors.BAD_DATE,
                             errors.BAD_FUTURE_DATE) or
             form.has_errors('enddate', errors.BAD_DATE,
@@ -492,7 +491,7 @@ class PromoteController(ListingController):
         # Limit the number of PromoCampaigns a Link can have
         # Note that the front end should prevent the user from getting
         # this far
-        existing_campaigns = list(PromoCampaign._by_link(l._id))
+        existing_campaigns = list(PromoCampaign._by_link(link._id))
         if len(existing_campaigns) > g.MAX_CAMPAIGNS_PER_LINK:
             c.errors.add(errors.TOO_MANY_CAMPAIGNS,
                          msg_params={'count': g.MAX_CAMPAIGNS_PER_LINK},
@@ -508,8 +507,8 @@ class PromoteController(ListingController):
             try:
                 campaign = PromoCampaign._byID36(campaign_id36)
                 if (bid != campaign.bid and
-                    campaign.start_date < datetime.now(g.tz)
-                    and not campaign.is_freebie()):
+                    campaign.start_date < datetime.now(g.tz) and
+                    not campaign.is_freebie()):
                     c.errors.add(errors.BID_LIVE, field='bid')
                     form.has_errors('bid', errors.BID_LIVE)
                     return
@@ -531,15 +530,17 @@ class PromoteController(ListingController):
                 # checking to get the error set in the form, but we can't
                 # check for rate-limiting if there's no subreddit
                 return
-            oversold = PromotedLinkRoadblock.is_roadblocked(sr, start, end)
-            if oversold and not c.user_is_sponsor:
-                msg_params = {"start": oversold[0].strftime('%m/%d/%Y'),
-                              "end": oversold[1].strftime('%m/%d/%Y')}
+
+            roadblock = PromotedLinkRoadblock.is_roadblocked(sr, start, end)
+            if roadblock and not c.user_is_sponsor:
+                msg_params = {"start": roadblock[0].strftime('%m/%d/%Y'),
+                              "end": roadblock[1].strftime('%m/%d/%Y')}
                 c.errors.add(errors.OVERSOLD, field='sr',
                              msg_params=msg_params)
                 form.has_errors('sr', errors.OVERSOLD)
                 return
-        if targeting == 'none':
+
+        elif targeting == 'none':
             sr = None
 
         # Check inventory
@@ -558,14 +559,14 @@ class PromoteController(ListingController):
 
         if campaign_id36 is not None:
             campaign = PromoCampaign._byID36(campaign_id36)
-            promote.edit_campaign(l, campaign, dates, bid, cpm, sr)
-            r = promote.get_renderable_campaigns(l, campaign)
+            promote.edit_campaign(link, campaign, dates, bid, cpm, sr)
+            r = promote.get_renderable_campaigns(link, campaign)
             jquery.update_campaign(r.campaign_id36, r.start_date, r.end_date,
                                    r.duration, r.bid, r.spent, r.cpm,
                                    r.sr, r.status)
         else:
-            campaign = promote.new_campaign(l, dates, bid, cpm, sr)
-            r = promote.get_renderable_campaigns(l, campaign)
+            campaign = promote.new_campaign(link, dates, bid, cpm, sr)
+            r = promote.get_renderable_campaigns(link, campaign)
             jquery.new_campaign(r.campaign_id36, r.start_date, r.end_date,
                                 r.duration, r.bid, r.spent, r.cpm,
                                 r.sr, r.status)
