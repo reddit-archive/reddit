@@ -30,6 +30,7 @@ from r2.models.token import AwardClaimToken
 
 from _pylibmc import MemcachedError
 from pylons import g
+from pylons.i18n import _
 
 from datetime import datetime, timedelta
 from copy import copy
@@ -248,6 +249,14 @@ def update_gold_users(verbose=False):
     count = 0
     expiration_dates = {}
 
+    renew_msg = _("[Click here for details on how to set up an "
+                  "automatically-renewing subscription or to renew.]"
+                  "(/gold) If you have any thoughts, complaints, "
+                  "rants, suggestions about reddit gold, please write "
+                  "to us at %(gold_email)s. Your feedback would be "
+                  "much appreciated.\n\nThank you for your past "
+                  "patronage.") % {'gold_email': g.goldthanks_email}
+
     for account in all_gold_users():
         if not hasattr(account, "gold_expiration"):
             g.log.error("%s has no gold_expiration" % account.name)
@@ -262,8 +271,10 @@ def update_gold_users(verbose=False):
             if verbose:
                 print "%s just expired" % account.name
             admintools.degolden(account)
-            send_system_message(account, "Your reddit gold subscription has expired. :(",
-               "Your subscription to reddit gold has expired. [Click here for details on how to renew, or to set up an automatically-renewing subscription.](http://www.reddit.com/gold) Or, if you don't want to, please write to us at 912@reddit.com and tell us where we let you down, so we can work on fixing the problem.")
+            subject = _("Your reddit gold subscription has expired.")
+            message = _("Your subscription to reddit gold has expired.")
+            message += "\n\n" + renew_msg
+            send_system_message(account, subject, message)
             continue
 
         count += 1
@@ -288,8 +299,12 @@ def update_gold_users(verbose=False):
                 if verbose:
                     print "Sending notice to %s" % account.name
                 g.hardcache.set(hc_key, True, 86400 * 10)
-                send_system_message(account, "Your reddit gold subscription is about to expire!",
-                                    "Your subscription to reddit gold will be expiring soon. [Click here for details on how to renew, or to set up an automatically-renewing subscription.](http://www.reddit.com/gold) Or, if you don't want to, please write to us at 912@reddit.com and tell us where we let you down, so we can work on fixing the problem.")
+                subject = _("Your reddit gold subscription is about to "
+                            "expire!")
+                message = _("Your subscription to reddit gold will be "
+                            "expiring soon.")
+                message += "\n\n" + renew_msg
+                send_system_message(account, subject, message)
 
     if verbose:
         for exp_date in sorted(expiration_dates.keys()):

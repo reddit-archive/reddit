@@ -227,8 +227,8 @@ def send_gift(buyer, recipient, months, days, signed, giftmessage, comment_id):
         sender = buyer.name
         md_sender = "[%s](/user/%s)" % (sender, sender)
     else:
-        sender = "someone"
-        md_sender = "An anonymous redditor"
+        sender = _("An anonymous redditor")
+        md_sender = _("An anonymous redditor")
 
     create_gift_gold (buyer._id, recipient._id, days, c.start_time, signed)
 
@@ -238,19 +238,19 @@ def send_gift(buyer, recipient, months, days, signed, giftmessage, comment_id):
         amount = "%d months" % months
 
     if not comment:
+        subject = _('Let there be gold! %s just sent you reddit gold!') % sender
         message = strings.youve_got_gold % dict(sender=md_sender, amount=amount)
 
         if giftmessage and giftmessage.strip():
             message += "\n\n" + strings.giftgold_note + giftmessage + '\n\n----'
     else:
+        subject = _('Your comment has been gilded.')
         message = strings.youve_got_comment_gold % dict(
             url=comment.make_permalink_slow(),
         )
 
     message += '\n\n' + strings.gold_benefits_msg
-    message += '\n\n' + strings.lounge_msg % {'link': '/r/'+g.lounge_reddit}
-
-    subject = sender + " just sent you reddit gold!"
+    message += '\n\n' + strings.lounge_msg
 
     try:
         send_system_message(recipient, subject, message)
@@ -403,11 +403,12 @@ class IpnController(RedditController):
                     if custom:
                         payment_blob = validate_blob(custom)
                         buyer = payment_blob['buyer']
-                        subject = _('gold order')
-                        msg = _('your order has been received and gold will'
-                                ' be delivered shortly. please bear with us'
-                                ' as google wallet payments can take up to an'
-                                ' hour to complete')
+                        subject = _('Your gold order has been received')
+                        msg = _('Your order for reddit gold has been '
+                                'received, and will be delivered shortly. '
+                                'Please bear with us as Google Wallet '
+                                'payments can take up to an hour to '
+                                'complete.')
                         try:
                             send_system_message(buyer, subject, msg)
                         except MessageError:
@@ -546,18 +547,29 @@ class IpnController(RedditController):
         if payment_blob['goldtype'] in ('autorenew', 'onetime'):
             admintools.engolden(buyer, days)
 
-            subject = _("thanks for buying reddit gold!")
-
+            subject = _("Eureka! Thank you for investing in reddit gold!")
+            
+            message = _("Thank you for buying reddit gold. Your patronage "
+                        "supports the site and makes future development "
+                        "possible. For example, one month of reddit gold "
+                        "pays for 5 instance hours of reddit's servers.")
+            message += "\n\n" + strings.gold_benefits_msg
             if g.lounge_reddit:
-                lounge_url = "/r/" + g.lounge_reddit
-                message = strings.lounge_msg % dict(link=lounge_url)
-            else:
-                message = ":)"
+                message += "\n\n" + strings.lounge_msg
         elif payment_blob['goldtype'] == 'creddits':
             buyer._incr("gold_creddits", months)
             buyer._commit()
-            subject = _("thanks for buying creddits!")
-            message = _("To spend them, visit [/gold](/gold) or your favorite person's userpage.")
+            subject = _("Eureka! Thank you for investing in reddit gold "
+                        "creddits!")
+
+            message = _("Thank you for buying creddits. Your patronage "
+                        "supports the site and makes future development "
+                        "possible. To spend your creddits and spread reddit "
+                        "gold, visit [/gold](/gold) or your favorite "
+                        "person's user page.")
+            message += "\n\n" + strings.gold_benefits_msg + "\n\n"
+            message += _("Thank you again for your support, and have fun "
+                         "spreading gold!")
         elif payment_blob['goldtype'] == 'gift':
             recipient_name = payment_blob.get('recipient', None)
             try:
@@ -571,8 +583,14 @@ class IpnController(RedditController):
             comment_id = payment_blob.get("comment")
             send_gift(buyer, recipient, months, days, signed, giftmessage, comment_id)
             instagift = True
-            subject = _("thanks for giving reddit gold!")
-            message = _("Your gift to %s has been delivered." % recipient.name)
+            subject = _("Thanks for giving the gift of reddit gold!")
+            message = _("Your classy gift to %s has been delivered.\n\n"
+                        "Thank you for gifting reddit gold. Your patronage "
+                        "supports the site and makes future development "
+                        "possible.") % recipient.name
+            message += "\n\n" + strings.gold_benefits_msg + "\n\n"
+            message += _("Thank you again for your support, and have fun "
+                         "spreading gold!")
         else:
             dump_parameters(parameters)
             raise ValueError("Got status '%s' in IPN/GC" % payment_blob['status'])
@@ -651,10 +669,10 @@ class GoldPaymentController(RedditController):
         existing = retrieve_gold_transaction(transaction_id)
 
         if event_type == 'cancelled':
-            subject = 'gold payment cancelled'
-            msg = ('your gold payment has been cancelled, contact '
-                   '%(gold_email)s for details' % {'gold_email':
-                                                   g.goldthanks_email})
+            subject = _('reddit gold payment cancelled')
+            msg = _('Your reddit gold payment has been cancelled, contact '
+                    '%(gold_email)s for details') % {'gold_email':
+                                                     g.goldthanks_email}
             send_system_message(buyer, subject, msg)
             if existing:
                 # note that we don't check status on existing, probably
@@ -673,19 +691,20 @@ class GoldPaymentController(RedditController):
                                    goldtype, buyer, recipient, signed,
                                    giftmessage, comment)
         elif event_type == 'failed':
-            subject = 'gold payment failed'
-            msg = ('your gold payment has failed, contact %(gold_email)s for '
-                   'details' % {'gold_email': g.goldthanks_email})
+            subject = _('reddit gold payment failed')
+            msg = _('Your reddit gold payment has failed, contact '
+                    '%(gold_email)s for details') % {'gold_email':
+                                                     g.goldthanks_email}
             send_system_message(buyer, subject, msg)
             # probably want to update gold_table here
         elif event_type == 'refunded':
             if not (existing and existing.status == 'processed'):
                 return
 
-            subject = 'gold refund'
-            msg = ('your gold payment has been refunded, contact '
-                   '%(gold_email)s for details' % {'gold_email':
-                                                   g.goldthanks_email})
+            subject = _('reddit gold refund')
+            msg = _('Your reddit gold payment has been refunded, contact '
+                   '%(gold_email)s for details') % {'gold_email':
+                                                    g.goldthanks_email}
             send_system_message(buyer, subject, msg)
             reverse_gold_purchase(transaction_id)
 
@@ -795,9 +814,9 @@ class StripeController(GoldPaymentController):
             form.set_html('.status', _('payment submitted'))
 
             # webhook usually sends near instantly, send a message in case
-            subject = _('gold payment')
-            msg = _('your payment is being processed and gold will be'
-                    ' delivered shortly')
+            subject = _('reddit gold payment')
+            msg = _('Your payment is being processed and reddit gold will be '
+                    'delivered shortly.')
             send_system_message(c.user, subject, msg)
 
 
@@ -967,8 +986,7 @@ def complete_gold_purchase(secret, transaction_id, payer_email, payer_id,
             if goldtype == 'onetime':
                 subject = "thanks for buying reddit gold!"
                 if g.lounge_reddit:
-                    lounge_url = "/r/" + g.lounge_reddit
-                    message = strings.lounge_msg % dict(link=lounge_url)
+                    message = strings.lounge_msg
                 else:
                     message = ":)"
             else:

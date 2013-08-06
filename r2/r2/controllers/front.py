@@ -1080,8 +1080,7 @@ class FrontController(RedditController, OAuth2ResourceController):
     def GET_goldthanks(self, vendor):
         vendor_url = None
         if g.lounge_reddit:
-            lounge_url = "/r/" + g.lounge_reddit
-            lounge_md = strings.lounge_msg % {'link': lounge_url}
+            lounge_md = strings.lounge_msg
         else:
             lounge_md = None
 
