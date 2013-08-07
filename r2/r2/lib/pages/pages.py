@@ -4094,11 +4094,13 @@ class Goldvertisement(Templated):
 class LinkCommentsSettings(Templated):
     def __init__(self, link):
         Templated.__init__(self)
+        sr = link.subreddit_slow
         self.link = link
         self.contest_mode = link.contest_mode
+        self.stickied = link._fullname == sr.sticky_fullname
         self.can_edit = (c.user_is_loggedin
                            and (c.user_is_admin or
-                                link.subreddit_slow.is_moderator(c.user)))
+                                sr.is_moderator(c.user)))
 
 class ModeratorPermissions(Templated):
     def __init__(self, user, permissions_type, permissions,

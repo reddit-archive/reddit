@@ -807,7 +807,6 @@ class SubredditSettingsTemplate(ThingJsonTemplate):
                         wiki_edit_age = 'site.wiki_edit_age',
                         domain_sidebar = 'site.show_cname_sidebar',
                         header_hover_text='site.header_title',
-                        sticky_permalink='site.sticky_permalink',
                         )
 
     def kind(self, wrapped):

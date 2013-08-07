@@ -206,7 +206,6 @@ class Subreddit(Thing, Printable, BaseSite):
         mod_actions=0,
         # do we allow self-posts, links only, or any?
         link_type='any', # one of ('link', 'self', 'any')
-        sticky_permalink=None,
         sticky_fullname=None,
         submit_link_label='',
         submit_text_label='',
