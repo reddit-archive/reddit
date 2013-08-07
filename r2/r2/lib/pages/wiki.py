@@ -132,7 +132,7 @@ class WikiBasePage(Reddit):
             context["title"] = _("%(page)s - %(site)s") % {
                 "site": c.site.name,
                 "page": page}
-            page_classes = ['wiki-page-%s' % page]
+            page_classes = ['wiki-page-%s' % page.replace('/', '-')]
 
         Reddit.__init__(self, extra_js_config={'wiki_page': page}, 
                         show_wiki_actions=True, page_classes=page_classes,
