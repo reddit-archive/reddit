@@ -28,6 +28,15 @@
 <%namespace file="utils.html" import="_md"/>
 <%inherit file="reddit.html"/>
 
+<%def name="javascript_bottom()">
+  ${parent.javascript_bottom()}
+  <script type="text/javascript">
+    if (window.location.hash == '#terms') {
+      $('#giveaway-rules').show()
+    }
+  </script>
+</%def>
+
 <%def name="stylesheet()">
   ${parent.stylesheet()}
   ${less_stylesheet('goldinfo.less')}
