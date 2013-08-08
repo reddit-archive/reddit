@@ -934,9 +934,7 @@ class VSrModerator(Validator):
 
 class VCanDistinguish(VByName):
     def run(self, thing_name, how):
-        if c.user_is_admin:
-            return True
-        elif c.user_is_loggedin:
+        if c.user_is_loggedin:
             item = VByName.run(self, thing_name)
             if item.author_id == c.user._id:
                 # will throw a legitimate 500 if this isn't a link or
@@ -946,6 +944,8 @@ class VCanDistinguish(VByName):
                 if how in ("yes", "no") and subreddit.can_distinguish(c.user):
                     return True
                 elif how in ("special", "no") and c.user_special_distinguish:
+                    return True
+                elif how in ("admin", "no") and c.user.employee:
                     return True
 
         abort(403,'forbidden')

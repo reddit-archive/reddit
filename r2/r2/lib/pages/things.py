@@ -96,7 +96,10 @@ class LinkButtons(PrintableButtons):
         # do we show the distinguish button? among other things,
         # we never want it to appear on link listings -- only
         # comments pages
-        show_distinguish = (is_author and (thing.can_ban or c.user_special_distinguish)
+        show_distinguish = (is_author and
+                            (thing.can_ban or  # Moderator distinguish
+                             c.user.employee or  # Admin distinguish
+                             c.user_special_distinguish)
                             and getattr(thing, "expand_children", False))
 
         kw = {}
