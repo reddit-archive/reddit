@@ -1959,7 +1959,7 @@ class Gold(Templated):
     def __init__(self, goldtype, period, months, signed,
                  recipient, recipient_name):
 
-        if c.user_is_admin:
+        if c.user.employee:
             user_creddits = 50
         else:
             user_creddits = c.user.gold_creddits
@@ -1992,7 +1992,7 @@ class GoldPayment(Templated):
                 years = months / 12
                 price = unit_price * years
 
-        if c.user_is_admin:
+        if c.user.employee:
             user_creddits = 50
         else:
             user_creddits = c.user.gold_creddits
@@ -2096,7 +2096,7 @@ class CreditGild(Templated):
 class GiftGold(Templated):
     """The page to gift reddit gold trophies"""
     def __init__(self, recipient):
-        if c.user_is_admin:
+        if c.user.employee:
             gold_creddits = 500
         else:
             gold_creddits = c.user.gold_creddits

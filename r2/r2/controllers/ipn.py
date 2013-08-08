@@ -341,7 +341,7 @@ class IpnController(RedditController):
             form.set_html(".status", _("that user has deleted their account"))
             return
 
-        if not c.user_is_admin:
+        if not c.user.employee:
             if months > c.user.gold_creddits:
                 raise ValueError("%s is trying to sneak around the creddit check"
                                  % c.user.name)
@@ -354,7 +354,7 @@ class IpnController(RedditController):
         comment = send_gift(c.user, recipient, months, days, signed,
                             giftmessage, comment_id)
 
-        if not c.user_is_admin:
+        if not c.user.employee:
             c.user.gold_creddit_escrow -= months
             c.user._commit()
 
