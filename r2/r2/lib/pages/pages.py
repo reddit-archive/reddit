@@ -3318,7 +3318,7 @@ class PromoteLinkForm(Templated):
     def setup(self, link, listing):
         self.bids = []
         if c.user_is_sponsor:
-            self.author = Account._byID(link.author_id)
+            self.author = Account._byID(link.author_id, data=True)
             try:
                 bids = bidding.Bid.lookup(thing_id=link._id)
             except NotFound:
