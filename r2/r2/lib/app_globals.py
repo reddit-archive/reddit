@@ -174,6 +174,7 @@ class Globals(object):
             'cassandra_seeds',
             'admins',
             'sponsors',
+            'employees',
             'automatic_reddits',
             'allowed_css_linked_domains',
             'authorized_cnames',

@@ -630,6 +630,17 @@ class Account(Thing):
         '''
         return setattr(self, 'received_trophy_%s' % uid, trophy_id)
 
+    @property
+    def employee(self):
+        """Return if the user is an employee.
+
+        Being an employee grants them various special privileges.
+
+        """
+        return (self.name in g.admins or
+                self.name in g.sponsors or
+                self.name in g.employees)
+
 class FakeAccount(Account):
     _nodb = True
     pref_no_profanity = True
