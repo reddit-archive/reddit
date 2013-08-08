@@ -1129,7 +1129,14 @@ class ApiController(RedditController, OAuth2ResourceController):
                    VSrCanBan('id'),
                    thing=VByName('id'),
                    state=VBoolean('state'))
+    @api_doc(api_section.links_and_comments)
     def POST_set_contest_mode(self, form, jquery, thing, state):
+        """Set or unset "contest mode" for a link's comments.
+        
+        `state` is a boolean that indicates whether you are enabling or
+        disabling contest mode - true to enable, false to disable.
+
+        """
         thing.contest_mode = state
         thing._commit()
         jquery.refresh()
@@ -1140,8 +1147,17 @@ class ApiController(RedditController, OAuth2ResourceController):
                    VSrCanBan('id'),
                    thing=VByName('id'),
                    state=VBoolean('state'))
+    @api_doc(api_section.links_and_comments)
     def POST_set_subreddit_sticky(self, form, jquery, thing, state):
-        """Sets or unsets a self-post as the sticky post in its subreddit."""
+        """Set or unset a self-post as the sticky post in its subreddit.
+        
+        `state` is a boolean that indicates whether to sticky or unsticky
+        this post - true to sticky, false to unsticky.
+
+        Note that if another post was previously stickied, stickying a new
+        one will replace the previous one.
+        
+        """
         if not isinstance(thing, Link) or not thing.is_self:
             return
 
