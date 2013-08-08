@@ -58,7 +58,7 @@ r.utils = {
         return params
     },
 
-    _pyStrFormatRe: /%\((\w+)\)s/,
+    _pyStrFormatRe: /%\((\w+)\)s/g,
     pyStrFormat: function(format, params) {
         return format.replace(this._pyStrFormatRe, function(match, fieldName) {
             if (!(fieldName in params)) {
