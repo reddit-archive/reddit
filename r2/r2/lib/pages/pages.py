@@ -3411,8 +3411,7 @@ class PromoAdminTool(Reddit):
         accounts = Account._byID(account_ids, data=True, return_dict=True)
         for link, campaign_id, scheduled_start, scheduled_end in scheduled:
             campaign = campaigns[campaign_id]
-            days = (campaign.end_date - campaign.start_date).days
-            bid_per_day = float(campaign.bid) / days
+            bid_per_day = float(campaign.bid) / campaign.ndays
             account = accounts[campaign.owner_id]
             promo_info[campaign._id] = {
                 'username': account.name,
@@ -3990,10 +3989,9 @@ class PromoteReport(Templated):
         for camp in campaigns:
             link = links_by_id[camp.link_id]
             fullname = camp._fullname
-            camp_duration = (camp.end_date - camp.start_date).days
             effective_duration = (min(camp.end_date, self.end)
                                   - max(camp.start_date, self.start)).days
-            bid = camp.bid * (float(effective_duration) / camp_duration)
+            bid = camp.bid * (float(effective_duration) / camp.ndays)
             row = {
                 'link': link._id36,
                 'owner': owners[link.author_id].name,

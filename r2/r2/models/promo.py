@@ -95,6 +95,10 @@ class PromoCampaign(Thing):
         '''
         return cls._query(PromoCampaign.c.owner_id == account_id, data=True)
 
+    @property
+    def ndays(self):
+        return (self.end_date - self.start_date).days
+
     def is_freebie(self):
         return self.trans_id < 0
 

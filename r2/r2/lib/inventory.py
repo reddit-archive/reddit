@@ -114,8 +114,7 @@ def get_sold_pageviews(srs, start, end):
             continue
 
         sr_name = camp.sr_name or DefaultSR.name
-        ndays = (camp.end_date - camp.start_date).days
-        daily_impressions = camp.impressions / ndays
+        daily_impressions = camp.impressions / camp.ndays
         camp_dates = set(get_date_range(camp.start_date, camp.end_date))
         for date in camp_dates.intersection(dates):
             ret[sr_name][date] += daily_impressions

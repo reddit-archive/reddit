@@ -193,7 +193,7 @@ class RenderableCampaign():
             campaign_id36 = camp._id36
             start_date = camp.start_date.strftime("%m/%d/%Y")
             end_date = camp.end_date.strftime("%m/%d/%Y")
-            ndays = (camp.end_date - camp.start_date).days
+            ndays = camp.ndays
             duration = strings.time_label % dict(num=ndays,
                             time=ungettext("day", "days", ndays))
             bid = "%.2f" % camp.bid
