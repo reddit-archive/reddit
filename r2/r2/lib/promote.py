@@ -335,7 +335,7 @@ def new_campaign(link, dates, bid, cpm, sr):
     campaign = PromoCampaign._new(link, sr_name, bid, cpm, dates[0], dates[1])
     PromotionWeights.add(link, campaign._id, sr_name, dates[0], dates[1], bid)
     PromotionLog.add(link, 'campaign %s created' % campaign._id)
-    author = Account._byID(link.author_id, True)
+    author = Account._byID(link.author_id, data=True)
     if getattr(author, "complimentary_promos", False):
         free_campaign(link, campaign, c.user)
     return campaign
