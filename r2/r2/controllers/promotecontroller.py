@@ -93,6 +93,7 @@ from r2.models import (
     Account,
     calc_impressions,
     Frontpage,
+    get_promote_srid,
     Link,
     LiveAdWeights,
     Message,
@@ -236,6 +237,8 @@ class PromoteController(ListingController):
                                                        return_dict=False)
                 link_ids = [camp.link_id for camp in campaigns]
                 return [Link._fullname_from_id36(to36(id)) for id in link_ids]
+            elif self.sort == 'reported':
+                return queries.get_reported_links(get_promote_srid())
             return queries.get_all_promoted_links()
         else:
             if self.sort == "future_promos":

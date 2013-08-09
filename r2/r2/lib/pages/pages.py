@@ -3305,6 +3305,7 @@ class PromotePage(Reddit):
                                        dest='/admin/graph'))
             buttons.append(NavButton('report', 'report'))
             buttons.append(NavButton('underdelivered', 'underdelivered'))
+            buttons.append(NavButton('reported links', 'reported'))
 
         menu  = NavMenu(buttons, base_path = '/promoted',
                         type='flatlist')
