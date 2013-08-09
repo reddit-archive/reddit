@@ -1208,8 +1208,6 @@ class ApiController(RedditController, OAuth2ResourceController):
         """
         if not thing or thing._deleted:
             return
-        elif getattr(thing, 'promoted', False):
-            return
 
         # if it is a message that is being reported, ban it.
         # every user is admin over their own personal inbox
