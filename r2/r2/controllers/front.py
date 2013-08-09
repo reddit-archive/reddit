@@ -648,7 +648,7 @@ class FrontController(RedditController, OAuth2ResourceController):
                           c.site.stylesheet_contents)
             pane = SubredditStylesheetSource(stylesheet_contents=stylesheet)
         elif location == 'traffic' and (c.site.public_traffic or
-                                        (is_moderator or c.user_is_sponsor)):
+                                        (is_moderator or c.user.employee)):
             pane = trafficpages.SubredditTraffic()
         elif (location == "about") and is_api():
             return self.redirect(add_sr('about.json'), code=301)
@@ -1045,19 +1045,19 @@ class FrontController(RedditController, OAuth2ResourceController):
                             comment=None,
                             content=content).render()
 
-    @validate(VSponsorAdmin())
+    @validate(VEmployee())
     def GET_site_traffic(self):
         return trafficpages.SitewideTrafficPage().render()
 
-    @validate(VSponsorAdmin())
+    @validate(VEmployee())
     def GET_lang_traffic(self, langcode):
         return trafficpages.LanguageTrafficPage(langcode).render()
 
-    @validate(VSponsorAdmin())
+    @validate(VEmployee())
     def GET_advert_traffic(self, code):
         return trafficpages.AdvertTrafficPage(code).render()
 
-    @validate(VSponsorAdmin())
+    @validate(VEmployee())
     def GET_subreddit_traffic_report(self):
         content = trafficpages.SubredditTrafficReport()
 

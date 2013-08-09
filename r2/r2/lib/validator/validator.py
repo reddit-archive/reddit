@@ -912,6 +912,15 @@ class VSponsor(VVerifiedUser):
                 pass
             abort(403, 'forbidden')
 
+
+class VEmployee(VVerifiedUser):
+    """Validate that user is an employee."""
+    def run(self):
+        if not c.user.employee:
+            abort(403, 'forbidden')
+        VVerifiedUser.run(self)
+
+
 class VTrafficViewer(VSponsor):
     def user_test(self, thing):
         return (VSponsor.user_test(self, thing) or
