@@ -637,9 +637,10 @@ class Account(Thing):
         Being an employee grants them various special privileges.
 
         """
-        return (self.name in g.admins or
-                self.name in g.sponsors or
-                self.name in g.employees)
+        return (hasattr(self, 'name') and
+                (self.name in g.admins or
+                 self.name in g.sponsors or
+                 self.name in g.employees))
 
 class FakeAccount(Account):
     _nodb = True
