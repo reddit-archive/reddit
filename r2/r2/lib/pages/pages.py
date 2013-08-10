@@ -3296,6 +3296,7 @@ class PromotePage(Reddit):
             buttons.append(NamedButton('admin_graph',
                                        dest='/admin/graph'))
             buttons.append(NavButton('report', 'report'))
+            buttons.append(NavButton('underdelivered', 'underdelivered'))
 
         menu  = NavMenu(buttons, base_path = '/promoted',
                         type='flatlist')
@@ -3444,6 +3445,22 @@ class PromoAdminTool(Reddit):
             }
         return promo_info
 
+
+class RefundPage(Reddit):
+    def __init__(self, link, campaign):
+        self.link = link
+        self.campaign = campaign
+        self.listing = wrap_links(link, wrapper=promote.sponsor_wrapper,
+                                  skip=False)
+        billable_impressions = promote.get_billable_impressions(campaign)
+        billable_amount = promote.get_billable_amount(campaign,
+                                                      billable_impressions)
+        refund_amount = campaign.bid - billable_amount
+        self.billable_impressions = billable_impressions
+        self.billable_amount = billable_amount
+        self.refund_amount = refund_amount
+        self.traffic_url = '/traffic/%s/%s' % (link._id36, campaign._id36)
+        Reddit.__init__(self, title="refund", show_sidebar=False)
 
 
 class Roadblocks(Templated):

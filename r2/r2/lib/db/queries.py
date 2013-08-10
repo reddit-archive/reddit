@@ -745,6 +745,25 @@ def get_all_accepted_links():
     return _promoted_link_query(None, 'accepted')
 
 
+@cached_query(UserQueryCache, sort=[desc('_date')])
+def get_underdelivered_campaigns():
+    return
+
+
+def set_underdelivered_campaigns(campaigns):
+    campaigns = tup(campaigns)
+    with CachedQueryMutator() as m:
+        q = get_underdelivered_campaigns()
+        m.insert(q, campaigns)
+
+
+def unset_underdelivered_campaigns(campaigns):
+    campaigns = tup(campaigns)
+    with CachedQueryMutator() as m:
+        q = get_underdelivered_campaigns()
+        m.delete(q, campaigns)
+
+
 @merged_cached_query
 def get_promoted_links(user_id):
     queries = [get_unpaid_links(user_id), get_unapproved_links(user_id),

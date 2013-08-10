@@ -272,6 +272,9 @@ function get_flag_class(flags) {
     if (flags.sponsor) {
         css_class += " sponsor";
     }
+    if (flags.refund) {
+        css_class += " refund";
+    }
     return css_class
 }
 
@@ -294,6 +297,10 @@ $.new_campaign = function(campaign_id36, start_date, end_date, duration,
       if (flags && flags.view_live_url) {
           data += ("<input type='hidden' name='view_live_url' value='" + 
                    flags.view_live_url + "'/>");
+      }
+      if (flags && flags.refund_url) {
+          data += ("<input type='hidden' name='refund_url' value='" + 
+                   flags.refund_url + "'/>");
       }
       var row = [start_date, end_date, duration, "$" + bid, "$" + spent, targeting, data];
       $(".existing-campaigns .error").hide();
@@ -338,6 +345,7 @@ $.set_up_campaigns = function() {
     var free = "<button>free</button>";
     var repay = "<button>change</button>";
     var view = "<button>view live</button>";
+    var refund = "<button>refund</button>";
     $(".existing-campaigns tr").each(function() {
             var tr = $(this);
             var td = $(this).find("td:last");
@@ -348,6 +356,12 @@ $.set_up_campaigns = function() {
                     $(td).append($(view).addClass("view fancybutton")
                             .click(function() { view_campaign(tr) }));
                 }
+
+                if (tr.hasClass('refund')) {
+                    $(bid_td).append($(refund).addClass("refund fancybutton")
+                            .click(function() { refund_campaign(tr) }));
+                }
+
                 /* once paid, we shouldn't muck around with the campaign */
                 if(!tr.hasClass("complete") && !tr.hasClass("live")) {
                     if (tr.hasClass("sponsor") && !tr.hasClass("free")) {
@@ -543,4 +557,8 @@ function pay_campaign(elem) {
 
 function view_campaign(elem) {
     $.redirect($(elem).find('input[name="view_live_url"]').val());
+}
+
+function refund_campaign(elem) {
+    $.redirect($(elem).find('input[name="refund_url"]').val());
 }

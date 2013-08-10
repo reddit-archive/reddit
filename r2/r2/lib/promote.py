@@ -41,7 +41,11 @@ from r2.lib import (
     inventory,
     hooks,
 )
-from r2.lib.db.queries import set_promote_status
+from r2.lib.db.queries import (
+    set_promote_status,
+    set_underdelivered_campaigns,
+    unset_underdelivered_campaigns,
+)
 from r2.lib.memoize import memoize
 from r2.lib.organic import keep_fresh_links
 from r2.lib.strings import strings
@@ -124,6 +128,12 @@ def view_live_url(l, srname):
     if srname:
         url += '/r/%s' % srname
     return 'http://%s/?ad=%s' % (url, l._fullname)
+
+
+def refund_url(link, campaign):
+    return "%spromoted/refund/%s/%s" % (g.payment_domain, link._id36,
+                                        campaign._id36)
+
 
 # booleans
 
@@ -219,6 +229,11 @@ class RenderableCampaign():
             if transaction and transaction.is_void():
                 status['paid'] = False
                 status['free'] = False
+
+            if complete and user_is_sponsor and not transaction.is_refund():
+                if spent < bid:
+                    status['refund'] = True
+                    status['refund_url'] = refund_url(link, camp)
 
             rc = cls(campaign_id36, start_date, end_date, duration, bid, spent,
                      cpm, sr, status)
@@ -776,6 +791,7 @@ def finalize_completed_campaigns(daysago=1):
                          "Missing traffic from %s" % (date, missing_traffic))
 
     links = Link._byID([camp.link_id for camp in campaigns], data=True)
+    underdelivered_campaigns = []
 
     for camp in campaigns:
         if hasattr(camp, 'refund_amount'):
@@ -793,26 +809,35 @@ def finalize_completed_campaigns(daysago=1):
                 text = '%s completed with $%s billable (pre-CPM).'
                 text %= (camp, billable_amount) 
             PromotionLog.add(link, text)
-            refund_amount = 0.
+            camp.refund_amount = 0.
+            camp._commit()
         else:
-            refund_amount = camp.bid - billable_amount
-            user = Account._byID(link.author_id, data=True)
-            try:
-                success = authorize.refund_transaction(user, camp.trans_id,
-                                                       camp._id, refund_amount)
-            except authorize.AuthorizeNetException as e:
-                text = ('%s $%s refund failed' % (camp, refund_amount))
-                PromotionLog.add(link, text)
-                g.log.debug(text + ' (response: %s)' % e)
-                continue
-            text = ('%s completed with $%s billable (%s impressions @ $%s).'
-                    ' %s refunded.' % (camp, billable_amount,
-                                       billable_impressions, camp.cpm,
-                                       refund_amount))
-            PromotionLog.add(link, text)
+            underdelivered_campaigns.append(camp)
 
-        camp.refund_amount = refund_amount
-        camp._commit()
+        if underdelivered_campaigns:
+            set_underdelivered_campaigns(underdelivered_campaigns)
+
+
+def refund_campaign(link, camp, billable_amount):
+    refund_amount = camp.bid - billable_amount
+    owner = Account._byID(camp.owner_id, data=True)
+    try:
+        success = authorize.refund_transaction(user, camp.trans_id,
+                                               camp._id, refund_amount)
+    except authorize.AuthorizeNetException as e:
+        text = ('%s $%s refund failed' % (camp, refund_amount))
+        PromotionLog.add(link, text)
+        g.log.debug(text + ' (response: %s)' % e)
+        return
+
+    text = ('%s completed with $%s billable (%s impressions @ $%s).'
+            ' %s refunded.' % (camp, billable_amount,
+                               billable_impressions, camp.cpm,
+                               refund_amount))
+    PromotionLog.add(link, text)
+    camp.refund_amount = refund_amount
+    camp._commit()
+    unset_underdelivered_campaigns(camp)
 
 
 PromoTuple = namedtuple('PromoTuple', ['link', 'weight', 'campaign'])

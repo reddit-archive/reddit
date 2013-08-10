@@ -47,13 +47,14 @@ from r2.lib.pages import (
     PromoteLinkNew,
     PromoteReport,
     Reddit,
+    RefundPage,
     Roadblocks,
     UploadedImage,
 )
 from r2.lib.pages.trafficpages import TrafficViewerList
 from r2.lib.pages.things import wrap_links
 from r2.lib.system_messages import user_added_messages
-from r2.lib.utils import make_offset_date, to_date
+from r2.lib.utils import make_offset_date, to_date, to36
 from r2.lib.validator import (
     json_validate,
     nop,
@@ -196,6 +197,12 @@ class PromoteController(ListingController):
                 return self.live_by_subreddit(self.sr)
             elif self.sort == 'live_promos':
                 return queries.get_all_live_links()
+            elif self.sort == 'underdelivered':
+                q = queries.get_underdelivered_campaigns()
+                campaigns = PromoCampaign._by_fullname(list(q), data=True,
+                                                       return_dict=False)
+                link_ids = [camp.link_id for camp in campaigns]
+                return [Link._fullname_from_id36(to36(id)) for id in link_ids]
             return queries.get_all_promoted_links()
         else:
             if self.sort == "future_promos":
@@ -314,6 +321,30 @@ class PromoteController(ListingController):
     def POST_unpromote(self, thing, reason):
         if promote.is_promo(thing):
             promote.reject_promotion(thing, reason=reason)
+
+    @validate(VSponsorAdmin(),
+              link=VLink("link"),
+              campaign=VPromoCampaign("campaign"))
+    def GET_refund(self, link, campaign):
+        if campaign.link_id != link._id:
+            return self.abort404()
+
+        content = RefundPage(link, campaign)
+        return Reddit("refund", content=content, show_sidebar=False).render()
+
+    @validatedForm(VSponsorAdmin(),
+                   link=VLink('link'),
+                   campaign=VPromoCampaign('campaign'))
+    def POST_refund_campaign(self, form, jquery, link, campaign):
+        billable_impressions = promote.get_billable_impressions(campaign)
+        billable_amount = promote.get_billable_amount(campaign,
+                                                      billable_impressions)
+        refund_amount = campaign.bid - billable_amount
+        if refund_amount > 0:
+            promote.refund_campaign(link, campaign, billable_amount)
+            form.set_html('.status', _('refund succeeded'))
+        else:
+            form.set_html('.status', _('refund not needed'))
 
     @validatedForm(VSponsor('link_id'),
                    VModhash(),
