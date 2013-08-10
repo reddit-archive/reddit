@@ -838,6 +838,7 @@ def refund_campaign(link, camp, billable_amount):
     camp.refund_amount = refund_amount
     camp._commit()
     unset_underdelivered_campaigns(camp)
+    emailer.refunded_promo(link)
 
 
 PromoTuple = namedtuple('PromoTuple', ['link', 'weight', 'campaign'])

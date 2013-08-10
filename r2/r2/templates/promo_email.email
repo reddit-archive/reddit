@@ -108,6 +108,13 @@ Thank you again for advertising on reddit, we hope you'll come back and do busin
   http://www.reddit.com/r/selfserve
 
 We're hoping to create a place for you to exchange tips and tricks for getting the most out of your sponsored links, as well as to provide support for new users.
+%elif thing.kind == Email.Kind.REFUNDED_PROMO:
+We're sorry, but we weren't able to deliver as many impressions as you paid for.
+
+  ${edit_url}
+
+We're working to improve the systems to predict our pageview inventory so this doesn't happen again. You have been refunded the unspent portion of your budget. If you have any questions or concerns please reply to this email.
+
 %endif
 
 Thank you,
