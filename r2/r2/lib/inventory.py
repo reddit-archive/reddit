@@ -60,14 +60,15 @@ def update_prediction_data():
 def _min_daily_pageviews_by_sr(ndays=NDAYS_TO_QUERY, end_date=None):
     """Return dict mapping sr_name to min_pageviews over the last ndays."""
     if not end_date:
-        end_date = datetime.now()
+        last_modified = traffic.get_traffic_last_modified()
+        end_date = last_modified - timedelta(days=1)
     stop = end_date.date()
     start = stop - timedelta(ndays)
+    time_points = traffic.get_time_points('day', start, stop)
     cls = traffic.PageviewsBySubredditAndPath
     q = (traffic.Session.query(cls.srpath, func.min(cls.pageview_count))
                                .filter(cls.interval == 'day')
-                               .filter(cls.date >= start)
-                               .filter(cls.date < stop)
+                               .filter(cls.date.in_(time_points))
                                .filter(cls.srpath.like('%-GET_listing'))
                                .group_by(cls.srpath))
 
