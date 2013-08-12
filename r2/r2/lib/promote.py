@@ -64,6 +64,7 @@ from r2.models import (
     PromotedLink,
     PromotionLog,
     PromotionWeights,
+    PromotedLinkRoadblock,
     Subreddit,
 )
 from r2.models.keyvalue import NamedGlobals
@@ -222,6 +223,14 @@ def get_roadblocks():
                 blobs.append((k, sd, ed))
     blobs.sort(key=lambda x: x[1])
     return blobs
+
+
+def migrate_roadblocks():
+    q = get_roadblocks()
+    for sr_name, start, end in q:
+        sr = Subreddit._by_name(sr_name)
+        PromotedLinkRoadblock.add(sr, start, end)
+
 
 # control functions
 
