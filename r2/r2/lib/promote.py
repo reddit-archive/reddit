@@ -206,7 +206,7 @@ def is_roadblocked(sr_name, start_date, end_date):
         d += timedelta(1)
 
 def get_roadblocks():
-    rbs = g.hardcache.backend.ids_by_category(roadblock_prefix)
+    rbs = g.hardcache.backend.ids_by_category(roadblock_prefix, limit=50000)
     by_sr = {}
     for rb in rbs:
         rb = rb.rsplit('_', 3)  # subreddit_name_YYYY_MM_DD
