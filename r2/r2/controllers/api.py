@@ -1630,6 +1630,10 @@ class ApiController(RedditController, OAuth2ResourceController):
                 jquery('#preview_link_compressed').html(
                     cssfilter.rendered_link(links, media = 'off',
                                             compress=True))
+                # do a stickied link
+                jquery('#preview_link_stickied').html(
+                    cssfilter.rendered_link(links, media='off',
+                                            compress=False, stickied=True))
     
             # and do a comment
             comments = cssfilter.find_preview_comments(c.site)
