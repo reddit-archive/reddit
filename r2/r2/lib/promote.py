@@ -64,7 +64,6 @@ from r2.models import (
     PromotedLink,
     PromotionLog,
     PromotionWeights,
-    PromotedLinkRoadblock,
     Subreddit,
 )
 from r2.models.keyvalue import NamedGlobals
@@ -168,68 +167,6 @@ def campaign_is_live(link, campaign_index):
         return False
     live = scheduled_campaigns_by_link(link)
     return campaign_index in live
-
-
-# subreddit roadblocking functions
-
-roadblock_prefix = "promotion_roadblock"
-def roadblock_key(sr_name, d):
-    return "%s-%s_%s" % (roadblock_prefix,
-                         sr_name, d.strftime("%Y_%m_%d"))
-
-def roadblock_reddit(sr_name, start_date, end_date):
-    d = start_date
-    now = promo_datetime_now().date()
-    # set the expire to be 1 week after the roadblock end date
-    expire = ((end_date - now).days + 7) * 86400
-    while d < end_date:
-        g.hardcache.add(roadblock_key(sr_name, d),
-                        "%s-%s" % (start_date.strftime("%Y_%m_%d"),
-                                   end_date.strftime("%Y_%m_%d")),
-                        time=expire)
-        d += timedelta(1)
-
-def unroadblock_reddit(sr_name, start_date, end_date):
-    d = start_date
-    while d < end_date:
-        g.hardcache.delete(roadblock_key(sr_name, d))
-        d += timedelta(1)
-
-def is_roadblocked(sr_name, start_date, end_date):
-    d = start_date
-    while d < end_date:
-        res = g.hardcache.get(roadblock_key(sr_name, d))
-        if res:
-            start_date, end_date = res.split('-')
-            start_date = datetime.strptime(start_date, "%Y_%m_%d").date()
-            end_date = datetime.strptime(end_date, "%Y_%m_%d").date()
-            return (start_date, end_date)
-        d += timedelta(1)
-
-def get_roadblocks():
-    rbs = g.hardcache.backend.ids_by_category(roadblock_prefix, limit=50000)
-    by_sr = {}
-    for rb in rbs:
-        rb = rb.rsplit('_', 3)  # subreddit_name_YYYY_MM_DD
-        date = datetime.strptime('_'.join(rb[1:]), "%Y_%m_%d").date()
-        by_sr.setdefault(rb[0], []).append((date, date + timedelta(1)))
-
-    blobs = []
-    for k, v in by_sr.iteritems():
-        for sd, ed in sorted(v):
-            if blobs and  blobs[-1][0] == k and blobs[-1][-1] == sd:
-                blobs[-1] = (k, blobs[-1][1], ed)
-            else:
-                blobs.append((k, sd, ed))
-    blobs.sort(key=lambda x: x[1])
-    return blobs
-
-
-def migrate_roadblocks():
-    q = get_roadblocks()
-    for sr_name, start, end in q:
-        sr = Subreddit._by_name(sr_name)
-        PromotedLinkRoadblock.add(sr, start, end)
 
 
 # control functions
