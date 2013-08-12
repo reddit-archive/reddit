@@ -93,6 +93,7 @@ from r2.models import (
     PromoCampaign,
     PromotionLog,
     PromotionWeights,
+    PromotedLinkRoadblock,
     Subreddit,
 )
 
@@ -482,7 +483,7 @@ class PromoteController(ListingController):
             return
         if dates and sr:
             sd, ed = dates
-            promote.roadblock_reddit(sr.name, sd.date(), ed.date())
+            PromotedLinkRoadblock.add(sr, sd, ed)
             jquery.refresh()
 
     @validatedForm(VSponsorAdmin(),
@@ -496,7 +497,7 @@ class PromoteController(ListingController):
     def POST_rm_roadblock(self, form, jquery, dates, sr):
         if dates and sr:
             sd, ed = dates
-            promote.unroadblock_reddit(sr.name, sd.date(), ed.date())
+            PromotedLinkRoadblock.remove(sr, sd, ed)
             jquery.refresh()
 
     @validatedForm(VSponsor('link_id'),
@@ -592,7 +593,7 @@ class PromoteController(ListingController):
                 # checking to get the error set in the form, but we can't
                 # check for rate-limiting if there's no subreddit
                 return
-            oversold = promote.is_roadblocked(sr.name, start, end)
+            oversold = PromotedLinkRoadblock.is_roadblocked(sr, start, end)
             if oversold and not c.user_is_sponsor:
                 msg_params = {"start": oversold[0].strftime('%m/%d/%Y'),
                               "end": oversold[1].strftime('%m/%d/%Y')}

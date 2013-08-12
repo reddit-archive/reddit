@@ -30,7 +30,7 @@ from r2.models import Link, Printable, Trophy, bidding, PromoCampaign, Promotion
 from r2.models import Flair, FlairTemplate, FlairTemplateBySubredditIndex
 from r2.models import USER_FLAIR, LINK_FLAIR
 from r2.models import GoldPartnerDealCode
-from r2.models.promo import NO_TRANSACTION, PromotionLog
+from r2.models.promo import NO_TRANSACTION, PromotionLog, PromotedLinkRoadblock
 from r2.models.token import OAuth2Client, OAuth2AccessToken
 from r2.models import traffic
 from r2.models import ModAction
@@ -3430,7 +3430,7 @@ class PromoAdminTool(Reddit):
 
 class Roadblocks(Templated):
     def __init__(self):
-        self.roadblocks = promote.get_roadblocks()
+        self.roadblocks = PromotedLinkRoadblock.get_roadblocks()
         Templated.__init__(self)
         # reference "now" to what we use for promtions
         now = promote.promo_datetime_now()
