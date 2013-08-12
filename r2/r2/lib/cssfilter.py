@@ -392,11 +392,13 @@ def find_preview_links(sr):
 
     return links
 
-def rendered_link(links, media, compress):
+def rendered_link(links, media, compress, stickied=False):
     with c.user.safe_set_attr:
         c.user.pref_compress = compress
         c.user.pref_media    = media
     links = wrap_links(links, show_nums = True, num = 1)
+    for wrapped in links:
+        wrapped.stickied = stickied
     delattr(c.user, 'pref_compress')
     delattr(c.user, 'pref_media') 
     return links.render(style = "html")
