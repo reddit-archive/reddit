@@ -37,6 +37,7 @@ from r2.lib.template_helpers import join_urls
 from r2.lib.validator import (
     nop,
     validate,
+    VBoolean,
     VExistingUname,
     VInt,
     VMarkdown,
@@ -217,7 +218,7 @@ class WikiController(RedditController):
 
     def GET_wiki_listing(self):
         def check_hidden(page):
-            return this_may_view(page)
+            return page.listed and this_may_view(page)
         pages, linear_pages = WikiPage.get_listing(c.site, filter_check=check_hidden)
         return WikiListing(pages, linear_pages).render()
 
@@ -236,7 +237,8 @@ class WikiController(RedditController):
 
     @validate(page=VWikiPage('page', restricted=True, modonly=True))
     def GET_wiki_settings(self, page):
-        settings = {'permlevel': page._get('permlevel', 0)}
+        settings = {'permlevel': page._get('permlevel', 0),
+                    'listed': page.listed}
         mayedit = page.get_editor_accounts()
         restricted = (not page.special) and page.restricted
         show_editors = not restricted
@@ -247,16 +249,27 @@ class WikiController(RedditController):
 
     @validate(VModhash(),
               page=VWikiPage('page', restricted=True, modonly=True),
-              permlevel=VInt('permlevel'))
-    def POST_wiki_settings(self, page, permlevel):
+              permlevel=VInt('permlevel'),
+              listed=VBoolean('listed'))
+    def POST_wiki_settings(self, page, permlevel, listed):
         oldpermlevel = page.permlevel
         try:
             page.change_permlevel(permlevel)
         except ValueError:
             self.handle_error(403, 'INVALID_PERMLEVEL')
-        description = 'Page: %s, Changed from %s to %s' % (page.name, oldpermlevel, permlevel)
-        ModAction.create(c.site, c.user, 'wikipermlevel',
-                         description=description)
+        if page.listed != listed:
+            page.listed = listed
+            page._commit()
+            verb = 'Relisted' if listed else 'Delisted'
+            description = '%s page %s' % (verb, page.name)
+            ModAction.create(c.site, c.user, 'wikipagelisted',
+                             description=description)
+        if oldpermlevel != permlevel:
+            description = 'Page: %s, Changed from %s to %s' % (
+                page.name, oldpermlevel, permlevel
+            )
+            ModAction.create(c.site, c.user, 'wikipermlevel',
+                             description=description)
         return self.GET_wiki_settings(page=page.name)
 
     def on_validation_error(self, error):

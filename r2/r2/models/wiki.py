@@ -91,7 +91,7 @@ class WikiRevision(tdb_cassandra.UuidThing, Printable):
     
     _str_props = ('pageid', 'content', 'author', 'reason')
     _bool_props = ('hidden')
-    
+
     cache_ignore = set(list(_str_props)).union(Printable.cache_ignore).union(['wikipage'])
     
     def get_author(self):
@@ -192,8 +192,9 @@ class WikiPage(tdb_cassandra.Thing):
     _date_props = ('last_edit_date')
     _str_props = ('revision', 'name', 'last_edit_by', 'content', 'sr')
     _int_props = ('permlevel')
-    _bool_props = ('listed_')
-    
+    _bool_props = ('listed')
+    _defaults = {'listed': True}
+
     def get_author(self):
         if self._get('last_edit_by'):
             return Account._byID36(self.last_edit_by, data=True)
@@ -225,7 +226,7 @@ class WikiPage(tdb_cassandra.Thing):
         if not name or not sr:
             raise ValueError
         name = name.lower()
-        kw = dict(sr=sr._id36, name=name, permlevel=0, content='', listed_=False)
+        kw = dict(sr=sr._id36, name=name, permlevel=0, content='')
         page = cls(**kw)
         page._commit()
         return page

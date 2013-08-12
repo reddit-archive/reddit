@@ -73,6 +73,7 @@ class WikiPageSettings(Templated):
     def __init__(self, settings, mayedit, show_editors=True,
                  show_settings=True, page=None, **context):
         self.permlevel = settings['permlevel']
+        self.listed = settings['listed']
         self.show_settings = show_settings
         self.show_editors = show_editors
         self.page = page

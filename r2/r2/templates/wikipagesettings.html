@@ -49,6 +49,14 @@
                 %endif
                 /><label for="permlevel2">${_('only mods may edit and view')}</label><br/>
             </%utils:line_field>
+
+            <%utils:line_field title=" ${_('show this page on the listing?')}">
+                <input type="checkbox" name="listed" id="listed"
+                    %if thing.listed:
+                        checked
+                    %endif
+                /><label for="listed">${_('show this page on the list of wiki pages')}</label><br/>
+            </%utils:line_field>
         </form>
     %endif
     %if thing.show_editors and thing.permlevel != 2:
