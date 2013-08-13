@@ -352,12 +352,6 @@ def build_rel_tables():
         rel_types_name[name] = rel
 build_rel_tables()
 
-def get_type_id(name):
-    return types_name[name][0]
-
-def get_rel_type_id(name):
-    return rel_types_name[name][0]
-
 def get_write_table(tables):
     if g.disallow_db_writes:
         raise Exception("not so fast! writes are not allowed on this app.")
