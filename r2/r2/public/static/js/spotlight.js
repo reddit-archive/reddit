@@ -148,6 +148,9 @@ r.spotlight._advance = function(dir) {
             .width($('#siteTable .rank').width())
             .end()
 
+        // match the listing background to that of the displayed thing
+        listing.css('background-color', $next.css('background-color'))
+
         visible.hide()
         $next.show()
 
