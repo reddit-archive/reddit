@@ -31,6 +31,8 @@ from r2.models.printable import Printable
 from r2.models.account import Account
 from collections import OrderedDict
 
+import pycassa.types
+
 # Used for the key/id for pages,
 PAGE_ID_SEP = '\t'
 
@@ -402,3 +404,36 @@ class WikiRevisionsRecentBySR(tdb_cassandra.DenormalizedView):
         return wr.sr
 
 
+class ImagesByWikiPage(tdb_cassandra.View):
+    _use_db = True
+    _read_consistency_level = tdb_cassandra.CL.QUORUM
+    _write_consistency_level = tdb_cassandra.CL.QUORUM
+    _extra_schema_creation_args = {
+        "key_validation_class": pycassa.types.AsciiType(),
+        "column_name_class": pycassa.types.UTF8Type(),
+        "default_validation_class": pycassa.types.UTF8Type(),
+    }
+
+    @classmethod
+    def add_image(cls, sr, page_name, image_name, url):
+        rowkey = WikiPage.id_for(sr, page_name)
+        cls._set_values(rowkey, {image_name: url})
+
+    @classmethod
+    def get_images(cls, sr, page_name):
+        rowkey = WikiPage.id_for(sr, page_name)
+        try:
+            return cls._byID(rowkey)._values()
+        except tdb_cassandra.NotFound:
+            return {}
+
+    @classmethod
+    def get_image_count(cls, sr, page_name):
+        rowkey = WikiPage.id_for(sr, page_name)
+        return cls._cf.get_count(rowkey,
+            read_consistency_level=cls._read_consistency_level)
+
+    @classmethod
+    def delete_image(cls, sr, page_name, image_name):
+        rowkey = WikiPage.id_for(sr, page_name)
+        cls._remove(rowkey, [image_name])
