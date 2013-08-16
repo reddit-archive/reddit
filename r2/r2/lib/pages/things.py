@@ -162,7 +162,10 @@ class CommentButtons(PrintableButtons):
             and thing.subreddit.allow_comment_gilding
         )
 
-        show_distinguish = is_author and (thing.can_ban or c.user_special_distinguish)
+        show_distinguish = (is_author and
+                            (thing.can_ban or  # Moderator distinguish
+                             c.user.employee or  # Admin distinguish
+                             c.user_special_distinguish))
 
         PrintableButtons.__init__(self, "commentbuttons", thing,
                                   is_author = is_author, 
