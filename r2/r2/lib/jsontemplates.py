@@ -32,6 +32,9 @@ import time, pytz
 from pylons import c, g
 from pylons.i18n import _
 
+from r2.models.wiki import ImagesByWikiPage
+
+
 def make_typename(typ):
     return 't%s' % to36(typ._type_id)
 
@@ -797,8 +800,9 @@ class StylesheetTemplate(ThingJsonTemplate):
         return 'stylesheet'
 
     def images(self):
+        sr_images = ImagesByWikiPage.get_images(c.site, "config/stylesheet")
         images = []
-        for name, url in c.site.get_images():
+        for name, url in sr_images.iteritems():
             images.append({'name': name,
                            'link': 'url(%%%%%s%%%%)' % name,
                            'url': url})

@@ -35,7 +35,7 @@ from r2.models.token import OAuth2Client, OAuth2AccessToken
 from r2.models import traffic
 from r2.models import ModAction
 from r2.models import Thing
-from r2.models.wiki import WikiPage
+from r2.models.wiki import WikiPage, ImagesByWikiPage
 from r2.lib.db import tdb_cassandra
 from r2.config import cache
 from r2.config.extensions import is_api
@@ -1916,7 +1916,9 @@ class SubredditStylesheet(Templated):
     """form for editing or creating subreddit stylesheets"""
     def __init__(self, site = None,
                  stylesheet_contents = ''):
-        Templated.__init__(self, site = site,
+
+        images = ImagesByWikiPage.get_images(c.site, "config/stylesheet")
+        Templated.__init__(self, site = site, images=images,
                          stylesheet_contents = stylesheet_contents)
 
 class SubredditStylesheetSource(Templated):

@@ -239,15 +239,20 @@ def safemarkdown(text, nofollow=False, wrap=True, **kwargs):
         return SC_OFF + text + SC_ON
 
 def wikimarkdown(text, include_toc=True, target=None):
-    from r2.lib.cssfilter import legacy_s3_url
+    from r2.lib.template_helpers import s3_https_if_secure
+
+    # this hard codes the stylesheet page for now, but should be parameterized
+    # in the future to allow per-page images.
+    from r2.models.wiki import ImagesByWikiPage
+    page_images = ImagesByWikiPage.get_images(c.site, "config/stylesheet")
     
     def img_swap(tag):
         name = tag.get('src')
         name = custom_img_url.search(name)
         name = name and name.group(1)
-        if name and c.site.images.has_key(name):
-            url = c.site.images[name]
-            url = legacy_s3_url(url, c.site)
+        if name and name in page_images:
+            url = page_images[name]
+            url = s3_https_if_secure(url)
             tag['src'] = url
         else:
             tag.extract()

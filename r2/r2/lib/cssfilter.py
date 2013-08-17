@@ -23,6 +23,7 @@
 from __future__ import with_statement
 
 from r2.models import *
+from r2.models.wiki import ImagesByWikiPage
 from r2.lib.utils import sanitize_url, strip_www, randstr
 from r2.lib.strings import string_dict
 from r2.lib.pages.things import wrap_links
@@ -177,16 +178,6 @@ class ValidationError(Exception):
         obj = str(self.obj) if hasattr(self,'obj') else ''
         return "ValidationError%s: %s (%s)" % (line, self.message, obj)
 
-def legacy_s3_url(url, site):
-    if isinstance(url, int): # legacy url, needs to be generated
-        bucket = g.s3_old_thumb_bucket
-        baseurl = "http://%s" % (bucket)
-        if g.s3_media_direct:
-            baseurl = "http://%s/%s" % (s3_direct_url, bucket)
-        url = "%s/%s_%d.png"\
-                % (baseurl, site._fullname, url)
-    url = s3_https_if_secure(url)
-    return url
 
 # local urls should be in the static directory
 local_urls = re.compile(r'\A/static/[a-z./-]+\Z')
@@ -219,10 +210,12 @@ def valid_url(prop,value,report):
     # custom urls are allowed, but need to be transformed into a real path
     elif custom_img_urls.match(url):
         name = custom_img_urls.match(url).group(1)
-        # the label -> image number lookup is stored on the subreddit
-        if c.site.images.has_key(name):
-            url = c.site.images[name]
-            url = legacy_s3_url(url, c.site)
+
+        # this relies on localcache to not be doing a lot of lookups
+        images = ImagesByWikiPage.get_images(c.site, "config/stylesheet")
+
+        if name in images:
+            url = s3_https_if_secure(images[name])
             value._setCssText("url(%s)"%url)
         else:
             # unknown image label -> error

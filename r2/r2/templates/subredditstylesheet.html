@@ -293,8 +293,8 @@
         </li>
         </%def>
       ${make_li(prototype=True)}
-      %for name, img_num in c.site.get_images():
-         ${make_li(name=name, img=img_num)}
+      %for name, url in thing.images.iteritems():
+         ${make_li(name=name, img=url)}
       %endfor
     </ul>
 

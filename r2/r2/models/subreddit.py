@@ -831,23 +831,8 @@ class Subreddit(Thing, Printable, BaseSite):
 
         user = c.user if c.user_is_loggedin else None
         return self.can_view(user)
-
-    def get_images(self):
-        """
-        Iterator over list of (name, url) pairs which have been
-        uploaded for custom styling of this subreddit. 
-        """
-        for name, img in self.images.iteritems():
-            if name != "/empties/":
-                yield (name, img)
     
-    def get_num_images(self):
-        if '/empties/' in self.images:
-            return len(self.images) - 1
-        else:
-            return len(self.images)
-    
-    def add_image(self, name, url, max_num = None):
+    def add_image(self, name, url):
         """
         Adds an image to the subreddit's image list.  The resulting
         number of the image is returned.  Note that image numbers are
@@ -860,9 +845,6 @@ class Subreddit(Thing, Printable, BaseSite):
         The Subreddit will be _dirty if a new image has been added to
         its images list, and no _commit is called.
         """
-        if max_num is not None and self.get_num_images() >= max_num:
-            raise ValueError, "too many images"
-        
         # copy and blank out the images list to flag as _dirty
         l = self.images
         self.images = None
