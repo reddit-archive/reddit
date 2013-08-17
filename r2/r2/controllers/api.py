@@ -1655,8 +1655,6 @@ class ApiController(RedditController, OAuth2ResourceController):
         # just in case we need to kill this feature from XSS
         if g.css_killswitch:
             return self.abort(403,'forbidden')
-        c.site.del_image(name)
-        c.site._commit()
         wiki.ImagesByWikiPage.delete_image(c.site, "config/stylesheet", name)
         ModAction.create(c.site, c.user, action='editsettings', 
                          details='del_image', description=name)
@@ -1755,11 +1753,10 @@ class ApiController(RedditController, OAuth2ResourceController):
             if header:
                 c.site.header = new_url
                 c.site.header_size = size
+                c.site._commit()
             if add_image_to_sr:
-                c.site.add_image(name, url = new_url)
                 wiki.ImagesByWikiPage.add_image(c.site, "config/stylesheet",
                                                 name, new_url)
-            c.site._commit()
 
             if header:
                 kw = dict(details='upload_image_header')

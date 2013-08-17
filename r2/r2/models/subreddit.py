@@ -191,7 +191,6 @@ class Subreddit(Thing, Printable, BaseSite):
         stylesheet_modified=None,
         header_size=None,
         allow_top=False, # overridden in "_new"
-        images={},
         reported=0,
         valid_votes=0,
         show_media=False,
@@ -831,41 +830,6 @@ class Subreddit(Thing, Printable, BaseSite):
 
         user = c.user if c.user_is_loggedin else None
         return self.can_view(user)
-    
-    def add_image(self, name, url):
-        """
-        Adds an image to the subreddit's image list.  The resulting
-        number of the image is returned.  Note that image numbers are
-        non-sequential insofar as unused numbers in an existing range
-        will be populated before a number outside the range is
-        returned.
-
-        raises ValueError if the resulting number is >= max_num.
-
-        The Subreddit will be _dirty if a new image has been added to
-        its images list, and no _commit is called.
-        """
-        # copy and blank out the images list to flag as _dirty
-        l = self.images
-        self.images = None
-        # update the dictionary and rewrite to images attr
-        l[name] = url
-        self.images = l
-
-    def del_image(self, name):
-        """
-        Deletes an image from the images dictionary assuming an image
-        of that name is in the current dictionary.
-
-        The Subreddit will be _dirty if image has been removed from
-        its images list, and no _commit is called.
-        """
-        if self.images.has_key(name):
-            l = self.images
-            self.images = None
-
-            del l[name]
-            self.images = l
 
     def __eq__(self, other):
         if type(self) != type(other):
@@ -1154,10 +1118,6 @@ class DefaultSR(_DefaultSR):
     @property
     def _fullname(self):
         return "t5_6"
-    
-    @property
-    def images(self):
-        return self._base.images
     
     @property
     def _id36(self):
