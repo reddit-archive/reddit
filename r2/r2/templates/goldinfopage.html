@@ -102,7 +102,7 @@
       _(
         '# New comment highlighting.\n'
         "What's new? Highlight which comments are new since the last time you viewed a thread."
-      ))}
+      ), "first")}
     ${feature_item('username-notifications',
       static('gold/sample-butler.png'),
       _(
@@ -126,6 +126,7 @@
           <li>${partner_item('ifixit', 'technological rectifications')}</li>
           <li>${partner_item('rover', 'canine accomodation')}</li>
           <li>${partner_item('solrepublic', 'acoustic accoutrements')}</li>
+          <li>${partner_item('ups', 'logistics provider and gold supporter')}</li>
         </ul>
     </section>
     ${feature_item('filter-all',
@@ -161,7 +162,7 @@
         '# Friends with benefits.\n'
         'Add notes to keep track of them all.'
       ))}
-    <section id="other-benefits" class="etc last">
+    <section id="other-benefits" class="etc">
       <h1>Last, but not least:</h1>
       <ul>
         <li><strong>${_('The Lounge.')}</strong>&#32;${_('Access to a super-secret members-only community that may or may not exist.')}</li>

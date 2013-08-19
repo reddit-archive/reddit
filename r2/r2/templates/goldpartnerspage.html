@@ -42,7 +42,7 @@
   ${less_stylesheet('goldinfo.less')}
 </%def>
 
-<%def name="partner_item(name, how_to_use, img_src, img_url=None, description_md='', extra_class='', button_dest=None, button_label=None)">
+<%def name="partner_item(name, how_to_use, img_src, img_url=None, description_md='', extra_class='', button_dest=None, button_label=None, claim_dest='')">
   <%call expr="feature_item(name, img_src, description_md, extra_class, img_url)">
     %if c.user.gold:
       <div class="how-to-use">
@@ -51,9 +51,13 @@
     %endif
     %if button_dest == 'claim':
       %if name in thing.existing_codes:
-        <input class="code" type="text" value="${thing.existing_codes[name]}" readonly="readonly">
+        %if not claim_dest:
+          <input class="code" type="text" value="${thing.existing_codes[name]}" readonly="readonly">
+        %else:
+          <a class="claim-code-button" href="${claim_dest.replace('{{code}}', thing.existing_codes[name])}">${button_label or _('claim code')}</a>
+        %endif
       %elif c.user.gold:
-        <a class="claim-code-button" onclick="r.gold.claim_gold_partner_deal_code(this, '${name}')">${button_label or _('claim code')}</a>
+        <a class="claim-code-button" onclick="r.gold.claim_gold_partner_deal_code(this, '${name}', '${claim_dest}')">${button_label or _('claim code')}</a>
       %endif
     %elif button_dest:
       %if c.user.gold:
@@ -75,7 +79,8 @@
                    img_url='http://backblaze.com',
                    description_md='# Backblaze Online Backup\n'
                                   '3 months of free service (new accounts only).',
-                   button_dest='claim')}
+                   button_dest='claim',
+                   extra_class='first')}
 
     ${partner_item('bartsbakery',
                    "Claim your code below, then enter it as a Coupon code in your cart at http://bartsbakery.com to get 20% off any product.",
@@ -176,7 +181,17 @@
                                   'Creative & elegant gardening solutions. $10 off purchases of $50 or more.',
                    button_dest='claim')}
 
-    <section id="terms" class="etc last">
+    ${partner_item('ups',
+                   "Claim your code below.",
+                   static('gold/partner-ups.png'),
+                   img_url='https://wwwapps.ups.com/mcdp?loc=en_US&WT.ac=UPS_HS_MyChoiceTab_notice_Mrktg_PX_U1_en_us&WT.mc_id=UPS_HS_MyChoiceTab_notice&WT.svl=BnrMsg',
+                   description_md='# UPS&reg; Logistics Provider and Gold Supporter\n'
+                                  '3 months of free premium [UPS My Choice&reg;](https://wwwapps.ups.com/mcdp?loc=en_US&WT.ac=UPS_HS_MyChoiceTab_notice_Mrktg_PX_U1_en_us&WT.mc_id=UPS_HS_MyChoiceTab_notice&WT.svl=BnrMsg) service to make home delivery quick and easy.',
+                   extra_class='ups new',
+                   button_dest='claim',
+                   claim_dest='https://www.ups.com/pea/register?inc={{code}}')}
+
+    <section id="terms" class="etc" style="border-top: none">
       <a href="#terms" onclick="$('#giveaway-rules').toggle()">View official rules for "Golden Tikkit" giveaways</a>
       <div id="giveaway-rules">
         <h2>REDDIT</h2>
