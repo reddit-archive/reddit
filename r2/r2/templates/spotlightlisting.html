@@ -28,7 +28,7 @@
    from r2.lib.wrapped import Templated
 %>
 
-<div id="siteTable_organic" class="organic-listing loading">
+<div id="siteTable_organic" class="organic-listing loading${' compressed' if thing.compress_display else ''}">
   %if thing.things:
     %for link in thing.things:
       ${unsafe(link.render(display=False))}
