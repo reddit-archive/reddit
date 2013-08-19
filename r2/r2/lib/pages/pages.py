@@ -3363,6 +3363,14 @@ class PromoteLinkForm(Templated):
 
         self.subreddit_selector = SubredditSelector()
 
+        self.link = promote.wrap_promoted(link)
+        self.listing = listing
+        campaigns = PromoCampaign._by_link(link._id)
+        self.campaigns = promote.get_renderable_campaigns(link, campaigns)
+        self.promotion_log = PromotionLog.get(link)
+
+        self.min_bid = 0 if c.user_is_sponsor else g.min_promote_bid
+
         # preload some inventory
         srnames = []
         for title, names in self.subreddit_selector.subreddit_names:
@@ -3371,19 +3379,13 @@ class PromoteLinkForm(Templated):
         srs.append(Frontpage)
         inv_start = startdate
         inv_end = startdate + datetime.timedelta(days=14)
+        ignore = [camp._id for camp in campaigns]
         sr_inventory = inventory.get_available_pageviews(srs, inv_start,
-                                                         inv_end, datestr=True)
+                                                         inv_end, datestr=True,
+                                                         ignore=ignore)
         sr_inventory[''] = sr_inventory[Frontpage.name]
         del sr_inventory[Frontpage.name]
         self.inventory = sr_inventory
-
-        self.link = promote.wrap_promoted(link)
-        self.listing = listing
-        campaigns = PromoCampaign._by_link(link._id)
-        self.campaigns = promote.get_renderable_campaigns(link, campaigns)
-        self.promotion_log = PromotionLog.get(link)
-
-        self.min_bid = 0 if c.user_is_sponsor else g.min_promote_bid
 
 
 class PromoAdminTool(Reddit):

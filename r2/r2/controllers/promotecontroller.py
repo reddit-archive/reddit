@@ -547,8 +547,9 @@ class PromoteController(ListingController):
         ndays = (to_date(end) - to_date(start)).days
         total_request = calc_impressions(bid, cpm)
         daily_request = int(total_request / ndays)
+        ignore = [campaign._id] if campaign_id36 else []
         oversold = inventory.get_oversold(sr or Frontpage, start, end,
-                                          daily_request)
+                                          daily_request, ignore)
         if oversold:
             msg_params = {'daily_request': format_number(daily_request,
                                                          locale=c.locale)}

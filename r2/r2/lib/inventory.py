@@ -94,10 +94,11 @@ def get_date_range(start, end):
     return dates
 
 
-def get_sold_pageviews(srs, start, end):
+def get_sold_pageviews(srs, start, end, ignore=None):
     srs, is_single = tup(srs, ret_is_single=True)
     sr_names = ['' if isinstance(sr, DefaultSR) else sr.name for sr in srs]
     dates = set(get_date_range(start, end))
+    ignore = [] if ignore is None else ignore
     q = (PromotionWeights.query()
                 .filter(PromotionWeights.sr_name.in_(sr_names))
                 .filter(PromotionWeights.date.in_(dates)))
@@ -107,6 +108,9 @@ def get_sold_pageviews(srs, start, end):
     ret = {sr.name: dict.fromkeys(dates, 0) for sr in srs}
     for camp in campaigns:
         if camp.trans_id == NO_TRANSACTION:
+            continue
+
+        if ignore and camp._id in ignore:
             continue
 
         if camp.impressions <= 0:
@@ -125,11 +129,12 @@ def get_sold_pageviews(srs, start, end):
         return ret
 
 
-def get_available_pageviews(srs, start, end, datestr=False):
+def get_available_pageviews(srs, start, end, datestr=False,
+                            ignore=None):
     srs, is_single = tup(srs, ret_is_single=True)
     sr_names = [sr.name for sr in srs]
     daily_inventory = PromoMetrics.get(MIN_DAILY_CASS_KEY, sr_names=sr_names)
-    sold_by_sr_by_date = get_sold_pageviews(srs, start, end)
+    sold_by_sr_by_date = get_sold_pageviews(srs, start, end, ignore)
 
     datekey = lambda dt: dt.strftime('%m/%d/%Y') if datestr else dt
 
@@ -148,8 +153,9 @@ def get_available_pageviews(srs, start, end, datestr=False):
         return ret
 
 
-def get_oversold(sr, start, end, daily_request):
-    available_by_date = get_available_pageviews(sr, start, end, datestr=True)
+def get_oversold(sr, start, end, daily_request, ignore):
+    available_by_date = get_available_pageviews(sr, start, end, datestr=True,
+                                                ignore=ignore)
     oversold = {}
     for datestr, available in available_by_date.iteritems():
         if available < daily_request:
