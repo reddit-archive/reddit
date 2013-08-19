@@ -221,6 +221,7 @@ class ThingJsonTemplate(JsonTemplate):
 class SubredditJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = ThingJsonTemplate.data_attrs(
         accounts_active="accounts_active",
+        comment_score_hide_mins="comment_score_hide_mins",
         description="description",
         description_html="description_html",
         display_name="name",
@@ -229,9 +230,18 @@ class SubredditJsonTemplate(ThingJsonTemplate):
         header_title="header_title",
         over18="over_18",
         public_description="public_description",
+        public_traffic="public_traffic",
+        submission_type="link_type",
+        submit_link_label="submit_link_label",
+        submit_text_label="submit_text_label",
         subscribers="_ups",
         title="title",
+        type="type",
         url="path",
+        user_is_banned="is_banned",
+        user_is_contributor="is_contributor",
+        user_is_moderator="is_moderator",
+        user_is_subscriber="is_subscriber",
     )
 
     def raw_data(self, thing):
@@ -250,6 +260,12 @@ class SubredditJsonTemplate(ThingJsonTemplate):
             return None
         elif attr == 'description_html':
             return safemarkdown(thing.description)
+        elif attr in ('is_banned', 'is_contributor', 'is_moderator',
+                      'is_subscriber'):
+            if c.user_is_loggedin:
+                check_func = getattr(thing, attr)
+                return bool(check_func(c.user))
+            return None
         else:
             return ThingJsonTemplate.thing_attr(self, thing, attr)
 
