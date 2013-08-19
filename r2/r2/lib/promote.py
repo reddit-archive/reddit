@@ -780,8 +780,12 @@ def finalize_completed_campaigns(daysago=1):
         billable_amount = get_billable_amount(camp, billable_impressions)
 
         if billable_amount >= camp.bid:
-            text = ('%s completed with $%s billable (%s impressions @ $%s).'
-                    % (camp, billable_amount, billable_impressions, camp.cpm))
+            if hasattr(camp, 'cpm'):
+                text = '%s completed with $%s billable (%s impressions @ $%s).'
+                text %= (camp, billable_amount, billable_impressions, camp.cpm)
+            else:
+                text = '%s completed with $%s billable (pre-CPM).'
+                text %= (camp, billable_amount) 
             PromotionLog.add(link, text)
             refund_amount = 0.
         else:
