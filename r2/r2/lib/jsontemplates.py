@@ -103,10 +103,12 @@ class UserItemHTMLJsonTemplate(TableRowTemplate):
 
 
 class ThingJsonTemplate(JsonTemplate):
-    _data_attrs_ = dict(id           = "_id36",
-                        name         = "_fullname",
-                        created      = "created",
-                        created_utc  = "created_utc")
+    _data_attrs_ = dict(
+        created="created",
+        created_utc="created_utc",
+        id="_id36",
+        name="_fullname",
+    )
 
     @classmethod
     def data_attrs(cls, **kw):
@@ -217,19 +219,20 @@ class ThingJsonTemplate(JsonTemplate):
                                    data = self.data(thing)))
 
 class SubredditJsonTemplate(ThingJsonTemplate):
-    _data_attrs_ = ThingJsonTemplate.data_attrs(subscribers  = "_ups",
-                                                title        = "title",
-                                                url          = "path",
-                                                over18       = "over_18",
-                                                description  = "description",
-                                                description_html = "description_html",
-                                                public_description = "public_description",
-                                                display_name = "name",
-                                                header_img   = "header",
-                                                header_size  = "header_size",
-                                                header_title = "header_title",
-                                                accounts_active = "accounts_active",
-                                                )
+    _data_attrs_ = ThingJsonTemplate.data_attrs(
+        accounts_active="accounts_active",
+        description="description",
+        description_html="description_html",
+        display_name="name",
+        header_img="header",
+        header_size="header_size",
+        header_title="header_title",
+        over18="over_18",
+        public_description="public_description",
+        subscribers="_ups",
+        title="title",
+        url="path",
+    )
 
     def raw_data(self, thing):
         data = ThingJsonTemplate.raw_data(self, thing)
@@ -252,11 +255,11 @@ class SubredditJsonTemplate(ThingJsonTemplate):
 
 class LabeledMultiJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = ThingJsonTemplate.data_attrs(
-        path="path",
+        can_edit="can_edit",
         name="name",
+        path="path",
         subreddits="srs",
         visibility="visibility",
-        can_edit="can_edit",
     )
     del _data_attrs_["id"]
 
@@ -278,8 +281,8 @@ class LabeledMultiJsonTemplate(ThingJsonTemplate):
 
 class LabeledMultiDescriptionJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = dict(
-        body_md="description_md",
         body_html="description_html",
+        body_md="description_md",
     )
 
     def kind(self, wrapped):
@@ -294,14 +297,15 @@ class LabeledMultiDescriptionJsonTemplate(ThingJsonTemplate):
             return ThingJsonTemplate.thing_attr(self, thing, attr)
 
 class IdentityJsonTemplate(ThingJsonTemplate):
-    _data_attrs_ = ThingJsonTemplate.data_attrs(name = "name",
-                                                link_karma = "safe_karma",
-                                                comment_karma = "comment_karma",
-                                                is_gold = "gold",
-                                                is_mod = "is_mod",
-                                                over_18 = "pref_over_18",
-                                                has_verified_email = "email_verified",
-                                                )
+    _data_attrs_ = ThingJsonTemplate.data_attrs(
+        comment_karma="comment_karma",
+        has_verified_email="email_verified",
+        is_gold="gold",
+        is_mod="is_mod",
+        link_karma="safe_karma",
+        name="name",
+        over_18="pref_over_18",
+    )
 
     def thing_attr(self, thing, attr):
         from r2.models import Subreddit
@@ -311,11 +315,12 @@ class IdentityJsonTemplate(ThingJsonTemplate):
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
 class AccountJsonTemplate(IdentityJsonTemplate):
-    _data_attrs_ = IdentityJsonTemplate.data_attrs(has_mail = "has_mail",
-                                                  has_mod_mail = "has_mod_mail",
-                                                  is_mod = "is_mod",
-                                                  is_friend = "is_friend",
-                                                  )
+    _data_attrs_ = IdentityJsonTemplate.data_attrs(
+        has_mail="has_mail",
+        has_mod_mail="has_mod_mail",
+        is_friend="is_friend",
+        is_mod="is_mod",
+    )
 
     def thing_attr(self, thing, attr):
         if attr == "has_mail":
@@ -337,43 +342,40 @@ class AccountJsonTemplate(IdentityJsonTemplate):
         return data
 
 class LinkJsonTemplate(ThingJsonTemplate):
-    _data_attrs_ = ThingJsonTemplate.data_attrs(ups          = "upvotes",
-                                                downs        = "downvotes",
-                                                score        = "score",
-                                                saved        = "saved",
-                                                clicked      = "clicked",
-                                                hidden       = "hidden",
-                                                over_18      = "over_18",
-                                                likes        = "likes",
-                                                domain       = "domain",
-                                                title        = "title",
-                                                url          = "url",
-                                                author       = "author",
-                                                author_flair_text =
-                                                    "author_flair_text",
-                                                author_flair_css_class =
-                                                    "author_flair_css_class",
-                                                link_flair_text =
-                                                    "flair_text",
-                                                link_flair_css_class =
-                                                    "flair_css_class",
-                                                thumbnail    = "thumbnail",
-                                                media        = "media_object",
-                                                media_embed  = "media_embed",
-                                                selftext     = "selftext",
-                                                selftext_html= "selftext_html",
-                                                distinguished= "distinguished",
-                                                num_comments = "num_comments",
-                                                num_reports  = "num_reports",
-                                                banned_by    = "banned_by",
-                                                approved_by  = "approved_by",
-                                                subreddit    = "subreddit",
-                                                subreddit_id = "subreddit_id",
-                                                is_self      = "is_self", 
-                                                permalink    = "permalink",
-                                                edited       = "editted",
-                                                stickied     = "stickied",
-                                                )
+    _data_attrs_ = ThingJsonTemplate.data_attrs(
+        approved_by="approved_by",
+        author="author",
+        author_flair_css_class="author_flair_css_class",
+        author_flair_text="author_flair_text",
+        banned_by="banned_by",
+        clicked="clicked",
+        distinguished="distinguished",
+        domain="domain",
+        downs="downvotes",
+        edited="editted",
+        hidden="hidden",
+        is_self="is_self",
+        likes="likes",
+        link_flair_css_class="flair_css_class",
+        link_flair_text="flair_text",
+        media="media_object",
+        media_embed="media_embed",
+        num_comments="num_comments",
+        num_reports="num_reports",
+        over_18="over_18",
+        permalink="permalink",
+        saved="saved",
+        score="score",
+        selftext="selftext",
+        selftext_html="selftext_html",
+        stickied="stickied",
+        subreddit="subreddit",
+        subreddit_id="subreddit_id",
+        thumbnail="thumbnail",
+        title="title",
+        ups="upvotes",
+        url="url",
+    )
 
     def thing_attr(self, thing, attr):
         from r2.lib.scraper import get_media_embed
@@ -413,33 +415,34 @@ class LinkJsonTemplate(ThingJsonTemplate):
 
 
 class PromotedLinkJsonTemplate(LinkJsonTemplate):
-    _data_attrs_ = LinkJsonTemplate.data_attrs(promoted = "promoted")
+    _data_attrs_ = LinkJsonTemplate.data_attrs(
+        promoted="promoted",
+    )
     del _data_attrs_['author']
 
 class CommentJsonTemplate(ThingJsonTemplate):
-    _data_attrs_ = ThingJsonTemplate.data_attrs(ups          = "upvotes",
-                                                downs        = "downvotes",
-                                                score_hidden = "score_hidden",
-                                                replies      = "child",
-                                                body         = "body",
-                                                body_html    = "body_html",
-                                                distinguished= "distinguished",
-                                                likes        = "likes",
-                                                author       = "author", 
-                                                author_flair_text =
-                                                    "author_flair_text",
-                                                author_flair_css_class =
-                                                    "author_flair_css_class",
-                                                link_id      = "link_id",
-                                                subreddit    = "subreddit",
-                                                subreddit_id = "subreddit_id",
-                                                num_reports  = "num_reports",
-                                                banned_by    = "banned_by",
-                                                approved_by  = "approved_by",
-                                                parent_id    = "parent_id",
-                                                edited       = "editted",
-                                                gilded       = "gilded",
-                                                )
+    _data_attrs_ = ThingJsonTemplate.data_attrs(
+        approved_by="approved_by",
+        author="author",
+        author_flair_css_class="author_flair_css_class",
+        author_flair_text="author_flair_text",
+        banned_by="banned_by",
+        body="body",
+        body_html="body_html",
+        distinguished="distinguished",
+        downs="downvotes",
+        edited="editted",
+        gilded="gilded",
+        likes="likes",
+        link_id="link_id",
+        num_reports="num_reports",
+        parent_id="parent_id",
+        replies="child",
+        score_hidden="score_hidden",
+        subreddit="subreddit",
+        subreddit_id="subreddit_id",
+        ups="upvotes",
+    )
 
     def thing_attr(self, thing, attr):
         from r2.models import Comment, Link, Subreddit
@@ -483,11 +486,13 @@ class CommentJsonTemplate(ThingJsonTemplate):
         return d
 
 class MoreCommentJsonTemplate(CommentJsonTemplate):
-    _data_attrs_ = dict(id           = "_id36",
-                        name         = "_fullname",
-                        children     = "children",
-                        count        = "count",
-                        parent_id    = "parent_id")
+    _data_attrs_ = dict(
+        children="children",
+        count="count",
+        id="_id36",
+        name="_fullname",
+        parent_id="parent_id",
+    )
 
     def kind(self, wrapped):
         return "more"
@@ -503,20 +508,22 @@ class MoreCommentJsonTemplate(CommentJsonTemplate):
         return CommentJsonTemplate.rendered_data(self, wrapped)
 
 class MessageJsonTemplate(ThingJsonTemplate):
-    _data_attrs_ = ThingJsonTemplate.data_attrs(new          = "new",
-                                                subject      = "subject",
-                                                body         = "body",
-                                                replies      = "child",
-                                                body_html    = "body_html",
-                                                author       = "author",
-                                                dest         = "dest",
-                                                subreddit = "subreddit",
-                                                was_comment  = "was_comment",
-                                                context      = "context", 
-                                                created      = "created",
-                                                parent_id    = "parent_id",
-                                                first_message= "first_message",
-                                                first_message_name = "first_message_name")
+    _data_attrs_ = ThingJsonTemplate.data_attrs(
+        author="author",
+        body="body",
+        body_html="body_html",
+        context="context",
+        created="created",
+        dest="dest",
+        first_message="first_message",
+        first_message_name="first_message_name",
+        new="new",
+        parent_id="parent_id",
+        replies="child",
+        subject="subject",
+        subreddit="subreddit",
+        was_comment="was_comment",
+    )
 
     def thing_attr(self, thing, attr):
         from r2.models import Comment, Link, Message
@@ -590,10 +597,12 @@ class NullJsonTemplate(JsonTemplate):
         return self
 
 class ListingJsonTemplate(ThingJsonTemplate):
-    _data_attrs_ = dict(children = "things",
-                        after = "after",
-                        before = "before",
-                        modhash = "modhash")
+    _data_attrs_ = dict(
+        after="after",
+        before="before",
+        children="things",
+        modhash="modhash",
+    )
     
     def thing_attr(self, thing, attr):
         if attr == "modhash":
@@ -615,7 +624,9 @@ class ListingJsonTemplate(ThingJsonTemplate):
         return "Listing"
 
 class UserListJsonTemplate(ThingJsonTemplate):
-    _data_attrs_ = dict(children = "users")
+    _data_attrs_ = dict(
+        children="users",
+    )
 
     def thing_attr(self, thing, attr):
         if attr == "users":
@@ -633,8 +644,10 @@ class UserListJsonTemplate(ThingJsonTemplate):
         return "UserList"
 
 class UserTableItemJsonTemplate(ThingJsonTemplate):
-    _data_attrs_ = dict(id = "_fullname",
-                        name = "name")
+    _data_attrs_ = dict(
+        id="_fullname",
+        name="name",
+    )
 
     def thing_attr(self, thing, attr):
         return ThingJsonTemplate.thing_attr(self, thing.user, attr)
@@ -757,10 +770,12 @@ class FlairCsvJsonTemplate(JsonTemplate):
         return ObjectTemplate([l.__dict__ for l in thing.results_by_line])
 
 class StylesheetTemplate(ThingJsonTemplate):
-    _data_attrs_ = dict(subreddit_id = '_fullname',
-                        stylesheet = 'stylesheet_contents',
-                        images = '_images',
-                        prevstyle = 'prev_stylesheet')
+    _data_attrs_ = dict(
+        images='_images',
+        prevstyle='prev_stylesheet',
+        stylesheet='stylesheet_contents',
+        subreddit_id='_fullname',
+    )
 
     def kind(self, wrapped):
         return 'stylesheet'
@@ -783,31 +798,32 @@ class StylesheetTemplate(ThingJsonTemplate):
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
 class SubredditSettingsTemplate(ThingJsonTemplate):
-    _data_attrs_ = dict(subreddit_id = 'site._fullname',
-                        title = 'site.title',
-                        description = 'site.description',
-                        public_description = 'site.public_description',
-                        public_traffic = 'site.public_traffic',
-                        prev_description_id = 'site.prev_description_id',
-                        prev_public_description_id = 'site.prev_public_description_id',
-                        language = 'site.lang',
-                        subreddit_type = 'site.type',
-                        submit_link_label = 'site.submit_link_label',
-                        submit_text_label = 'site.submit_text_label',
-                        comment_score_hide_mins = 'site.comment_score_hide_mins',
-                        content_options = 'site.link_type',
-                        over_18 = 'site.over_18',
-                        default_set = 'site.allow_top',
-                        show_media = 'site.show_media',
-                        exclude_banned_modqueue = 'site.exclude_banned_modqueue',
-                        domain = 'site.domain',
-                        domain_css = 'site.css_on_cname',
-                        wikimode = 'site.wikimode',
-                        wiki_edit_karma = 'site.wiki_edit_karma',
-                        wiki_edit_age = 'site.wiki_edit_age',
-                        domain_sidebar = 'site.show_cname_sidebar',
-                        header_hover_text='site.header_title',
-                        )
+    _data_attrs_ = dict(
+        comment_score_hide_mins='site.comment_score_hide_mins',
+        content_options='site.link_type',
+        default_set='site.allow_top',
+        description='site.description',
+        domain='site.domain',
+        domain_css='site.css_on_cname',
+        domain_sidebar='site.show_cname_sidebar',
+        exclude_banned_modqueue='site.exclude_banned_modqueue',
+        header_hover_text='site.header_title',
+        language='site.lang',
+        over_18='site.over_18',
+        prev_description_id='site.prev_description_id',
+        prev_public_description_id='site.prev_public_description_id',
+        public_description='site.public_description',
+        public_traffic='site.public_traffic',
+        show_media='site.show_media',
+        submit_link_label='site.submit_link_label',
+        submit_text_label='site.submit_text_label',
+        subreddit_id='site._fullname',
+        subreddit_type='site.type',
+        title='site.title',
+        wiki_edit_age='site.wiki_edit_age',
+        wiki_edit_karma='site.wiki_edit_karma',
+        wikimode='site.wikimode',
+    )
 
     def kind(self, wrapped):
         return 'subreddit_settings'
@@ -818,16 +834,18 @@ class SubredditSettingsTemplate(ThingJsonTemplate):
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
 class ModActionTemplate(ThingJsonTemplate):
-    _data_attrs_ = dict(sr_id36='sr_id36',
-                        mod_id36='mod_id36',
-                        id='_fullname',
-                        subreddit='sr_name',
-                        mod='author',
-                        created_utc='date',
-                        action='action',
-                        details='details',
-                        description='description',
-                        target_fullname='target_fullname')
+    _data_attrs_ = dict(
+        action='action',
+        created_utc='date',
+        description='description',
+        details='details',
+        id='_fullname',
+        mod='author',
+        mod_id36='mod_id36',
+        sr_id36='sr_id36',
+        subreddit='sr_name',
+        target_fullname='target_fullname',
+    )
 
     def thing_attr(self, thing, attr):
         if attr == 'date':
@@ -842,9 +860,9 @@ class ModActionTemplate(ThingJsonTemplate):
 class PolicyViewJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = dict(
         body_html="body_html",
-        toc_html="toc_html",
-        revs="revs",
         display_rev="display_rev",
+        revs="revs",
+        toc_html="toc_html",
     )
 
     def kind(self, wrapped):
