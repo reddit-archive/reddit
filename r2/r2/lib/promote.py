@@ -769,7 +769,7 @@ def finalize_completed_campaigns(daysago=1):
         raise ValueError("Can't finalize campaigns finished on %s."
                          "Missing traffic from %s" % (date, missing_traffic))
 
-    links = Link._byID([camp.link_id for link in links], data=True)
+    links = Link._byID([camp.link_id for camp in campaigns], data=True)
 
     for camp in campaigns:
         if hasattr(camp, 'refund_amount'):
