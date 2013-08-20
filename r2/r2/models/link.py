@@ -484,7 +484,7 @@ class Link(Thing, Printable):
                         item.domain_str = ('{0}/r/{1}'
                                            .format(item.domain,
                                                    url_subreddit.name))
-                elif item.media_object:
+                elif isinstance(item.media_object, dict):
                     try:
                         author_url = item.media_object['oembed']['author_url']
                         if domain(author_url) == item.domain:
