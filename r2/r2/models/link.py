@@ -555,7 +555,7 @@ class Link(Thing, Printable):
                 get_domain(cname=cname, subreddit=False),
                 item._id36)
 
-            if item.is_self:
+            if item.is_self and not item.promoted:
                 item.href_url = item.permalink
             else:
                 item.href_url = item.url
