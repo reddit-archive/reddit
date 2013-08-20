@@ -84,20 +84,14 @@ r.sponsored = {
 
         $.when(r.sponsored.get_check_inventory(srname, dates)).done(
             function() {
-                var oversold = {}
+                var minDaily = _.min(_.map(dates, function(date) {
+                    var datestr = $.datepicker.formatDate('mm/dd/yy', date)
+                    return r.sponsored.inventory[srname][datestr]
+                }))
 
-                _.each(dates, function(date) {
-                    var datestr = $.datepicker.formatDate('mm/dd/yy', date),
-                        available = r.sponsored.inventory[srname][datestr]
-                    if (available < daily_request) {
-                        oversold[datestr] = available
-                    }
-                })
+                var available = minDaily * ndays
 
-                if (!_.isEmpty(oversold)) {
-                    var minDaily = _.min(_.values(oversold)),
-                        available = minDaily * ndays
-
+                if (available < requested) {
                     var message = r._("We have insufficient inventory to fulfill" +
                                       " your requested budget, target, and dates." +
                                       " Only %(available)s impressions available" +
@@ -109,9 +103,11 @@ r.sponsored = {
                                       end: enddate
                                   })
 
+                    $(".available-info").text('')
                     $(".OVERSOLD_DETAIL").text(message).show()
                     r.sponsored.disable_form($form)
                 } else {
+                    $(".available-info").text(r._("(%(num)s available)").format({num: r.utils.prettyNumber(available)}))
                     $(".OVERSOLD_DETAIL").hide()
                     r.sponsored.enable_form($form)
                 }
