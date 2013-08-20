@@ -263,31 +263,8 @@ def replace_render(listing, item, render_func):
             replacements['childlisting'] = ''
 
         #only LinkListing has a show_nums attribute
-        if listing:
-            if hasattr(listing, "show_nums"):
-                if listing.show_nums:
-                    num_str = str(item.num)
-                    if hasattr(listing, "num_margin"):
-                        num_margin = str(listing.num_margin)
-                    else:
-                        num_margin = "%.2fex" % (len(str(listing.max_num))*1.1)
-                else:
-                    num_str = ''
-                    num_margin = "0px;display:none"
-
-                replacements["numcolmargin"] = num_margin
-                replacements["num"] = num_str
-
-            if hasattr(listing, "max_score"):
-                mid_margin = len(str(listing.max_score))
-                if hasattr(listing, "mid_margin"):
-                    mid_margin = str(listing.mid_margin)
-                elif mid_margin == 1:
-                    mid_margin = "15px"
-                else:
-                    mid_margin = "%dex" % (mid_margin+1)
-
-                replacements["midcolmargin"] = mid_margin
+        if listing and hasattr(listing, "show_nums"):
+            replacements["num"] = str(item.num) if listing.show_nums else ""
 
         if hasattr(item, "num_comments"):
             com_label, com_cls = comment_label(item.num_comments)

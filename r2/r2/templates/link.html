@@ -34,7 +34,7 @@
  
 <%def name="numcol()">
   <% num = thing.num %>
-  <span class="rank" style="width:${thing.numcolmargin};">
+  <span class="rank">
     %if thing.num > 0:
       ${thing.num}
     %endif
@@ -175,11 +175,7 @@ ${parent.thing_data_attributes(what)} data-ups="${what.upvotes}" data-downs="${w
 </%def>
 
 <%def name="midcol(display=True, cls = '')">
-  %if thing.pref_compress:
     <div class="midcol ${cls}"
-  %else:
-    <div class="midcol ${cls}" style="width:${thing.midcolmargin};" 
-  %endif
        ${not display and "style='display:none'" or ''}>
     ${self.arrow(thing, 1, thing.likes)}
     %if thing.pref_compress:

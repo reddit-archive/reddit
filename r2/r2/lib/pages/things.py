@@ -222,17 +222,12 @@ def default_thing_wrapper(**params):
 # TODO: move this into lib somewhere?
 def wrap_links(links, wrapper = default_thing_wrapper(),
                listing_cls = LinkListing, 
-               num = None, show_nums = False, nextprev = False,
-               num_margin = None, mid_margin = None, **kw):
+               num = None, show_nums = False, nextprev = False, **kw):
     links = tup(links)
     if not all(isinstance(x, basestring) for x in links):
         links = [x._fullname for x in links]
     b = IDBuilder(links, num = num, wrap = wrapper, **kw)
     l = listing_cls(b, nextprev = nextprev, show_nums = show_nums)
-    if num_margin is not None:
-        l.num_margin = num_margin
-    if mid_margin is not None:
-        l.mid_margin = mid_margin
     return l.listing()
 
 

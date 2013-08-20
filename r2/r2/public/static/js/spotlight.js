@@ -142,13 +142,6 @@ r.spotlight._advance = function(dir) {
         $nextprev.removeClass('working')
         listing.removeClass('loading')
 
-        // size the rank element so that spotlight box
-        // items line up with the main page listing
-        $next
-            .find('.rank')
-            .width($('#siteTable .rank').width())
-            .end()
-
         // match the listing background to that of the displayed thing
         listing.css('background-color', $next.css('background-color'))
 
