@@ -243,27 +243,16 @@ class Link(Thing, Printable):
                 #return False
 
         if user and not c.ignore_hide_rules:
-            # whether the user must deliberately hide the item
-            # (not automatic due to score or having upvoted/downvoted it)
-            require_explicit_hide = wrapped.stickied
-
-            if (user.pref_hide_ups and
-                    wrapped.likes == True and
-                    self.author_id != user._id and
-                    not require_explicit_hide):
-                return False
-
-            if (user.pref_hide_downs and
-                    wrapped.likes == False and
-                    self.author_id != user._id and
-                    not require_explicit_hide):
-                return False
-
-            if (wrapped._score < user.pref_min_link_score and
-                    not require_explicit_hide):
-                return False
-
             if wrapped.hidden:
+                return False
+
+            # never automatically hide user's own posts or stickies
+            allow_auto_hide = (not wrapped.stickied and
+                               self.author_id != user._id)
+            if (allow_auto_hide and
+                    ((user.pref_hide_ups and wrapped.likes == True) or
+                     (user.pref_hide_downs and wrapped.likes == False) or
+                     wrapped._score < user.pref_min_link_score)):
                 return False
 
         # Always show NSFW to API users unless obey_over18=true in querystring
