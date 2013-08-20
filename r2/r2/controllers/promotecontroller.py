@@ -551,8 +551,14 @@ class PromoteController(ListingController):
         oversold = inventory.get_oversold(sr or Frontpage, start, end,
                                           daily_request, ignore)
         if oversold:
-            msg_params = {'daily_request': format_number(daily_request,
-                                                         locale=c.locale)}
+            min_daily = min(oversold.values())
+            available = min_daily * ndays
+            msg_params = {
+                'available': format_number(available, locale=c.locale),
+                'target': sr.name if sr else 'the frontpage',
+                'start': start.strftime('%m/%d/%Y'),
+                'end': end.strftime('%m/%d/%Y'),
+            }
             c.errors.add(errors.OVERSOLD_DETAIL, field='bid',
                          msg_params=msg_params)
             form.has_errors('bid', errors.OVERSOLD_DETAIL)

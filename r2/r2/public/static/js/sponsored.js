@@ -95,24 +95,21 @@ r.sponsored = {
                 })
 
                 if (!_.isEmpty(oversold)) {
-                    var oversold_dates = _.keys(oversold)
+                    var minDaily = _.min(_.values(oversold)),
+                        available = minDaily * ndays
 
                     var message = r._("We have insufficient inventory to fulfill" +
                                       " your requested budget, target, and dates." +
-                                      " Requested %(daily_request)s impressions " +
-                                      "per day."
-                                  ).format({daily_request: r.utils.prettyNumber(daily_request)})
+                                      " Only %(available)s impressions available" +
+                                      " on %(target)s from %(start)s to %(end)s."
+                                  ).format({
+                                      available: r.utils.prettyNumber(available),
+                                      target: targeted ? srname : 'the frontpage',
+                                      start: startdate,
+                                      end: enddate
+                                  })
 
                     $(".OVERSOLD_DETAIL").text(message).show()
-                    var available_list = $('<ul>').appendTo(".OVERSOLD_DETAIL")
-                    _.each(oversold, function(num, datestr) {
-                        var available_msg = r._("%(num)s available on %(date)s").format({
-                                                 num: r.utils.prettyNumber(num),
-                                                 date: datestr
-                                            })
-                        available_list.append($('<li>').text(available_msg))
-                    })
-
                     r.sponsored.disable_form($form)
                 } else {
                     $(".OVERSOLD_DETAIL").hide()
