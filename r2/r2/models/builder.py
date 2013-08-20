@@ -272,6 +272,7 @@ class Builder(object):
                 verdict = getattr(w, "verdict", None)
                 if verdict in ('admin-approved', 'mod-approved'):
                     approver = None
+                    approval_time = None
                     baninfo = getattr(w, "ban_info", None)
                     if baninfo:
                         approver = baninfo.get("unbanner", None)
