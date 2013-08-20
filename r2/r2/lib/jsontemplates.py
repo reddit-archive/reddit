@@ -247,6 +247,18 @@ class SubredditJsonTemplate(ThingJsonTemplate):
         user_is_subscriber="is_subscriber",
     )
 
+    _private_attrs = set([
+        "accounts_active",
+        "comment_score_hide_mins",
+        "description",
+        "description_html",
+        "header_img",
+        "header_size",
+        "header_title",
+        "submit_link_label",
+        "submit_text_label",
+    ])
+
     def raw_data(self, thing):
         data = ThingJsonTemplate.raw_data(self, thing)
         permissions = getattr(thing, 'mod_permissions', None)
@@ -256,6 +268,9 @@ class SubredditJsonTemplate(ThingJsonTemplate):
         return data
 
     def thing_attr(self, thing, attr):
+        if attr in self._private_attrs and not thing.can_view(c.user):
+            return None
+
         if attr == "_ups" and thing.hide_subscribers:
             return 0
         # Don't return accounts_active counts in /subreddits
