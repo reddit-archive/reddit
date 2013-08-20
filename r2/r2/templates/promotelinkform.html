@@ -348,14 +348,14 @@ ${self.javascript_setup()}
                        type="radio"  value="none" name="targeting"
                        onclick="r.sponsored.targeting_off()"
                        checked="checked">
-                ${_("no targeting (displays site-wide)")}
+                ${_("frontpage (displayed on the home page to anyone)")}
               </label>
               <br />
               <label>
                 <input id="targeting" class="nomargin" 
                        type="radio"  value="one" name="targeting"
                        onclick="r.sponsored.targeting_on()">
-                ${_("enable targeting (runs on a specific subreddit)")}
+                ${_("targeted (targets a subreddit and its subscribers)")}
               </label>
 
               <script type="text/javascript">
