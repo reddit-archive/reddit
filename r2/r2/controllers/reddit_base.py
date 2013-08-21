@@ -437,6 +437,10 @@ def set_content_type():
             if not valid_jsonp_callback(wrapper):
                 abort(BadRequestError(errors.BAD_JSONP_CALLBACK))
 
+            # force logged-out state since these can be accessed cross-domain
+            c.user = UnloggedUser(get_browser_langs())
+            c.user_is_loggedin = False
+
             def to_js(content):
                 return wrapper + "(" + utils.string2js(content) + ");"
 
