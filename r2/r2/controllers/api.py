@@ -1163,8 +1163,10 @@ class ApiController(RedditController, OAuth2ResourceController):
 
         if state:
             sr.sticky_fullname = thing._fullname
+            ModAction.create(sr, c.user, 'sticky', target=thing)
         elif not state:
             sr.sticky_fullname = None
+            ModAction.create(sr, c.user, 'unsticky', target=thing)
 
         sr._commit()
         jquery.refresh()

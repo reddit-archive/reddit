@@ -57,7 +57,8 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
                'editsettings', 'editflair', 'distinguish', 'marknsfw', 
                'wikibanned', 'wikicontributor', 'wikiunbanned',
                'removewikicontributor', 'wikirevise', 'wikipermlevel',
-               'ignorereports', 'unignorereports', 'setpermissions')
+               'ignorereports', 'unignorereports', 'setpermissions', 'sticky',
+               'unsticky')
 
     _menu = {'banuser': _('ban user'),
              'unbanuser': _('unban user'),
@@ -84,7 +85,10 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
              'wikipermlevel': _('wiki page permissions'),
              'ignorereports': _('ignore reports'),
              'unignorereports': _('unignore reports'),
-             'setpermissions': _('permissions')}
+             'setpermissions': _('permissions'),
+             'sticky': _('sticky post'),
+             'unsticky': _('unsticky post'),
+            }
 
     _text = {'banuser': _('banned'),
              'wikibanned': _('wiki banned'),
@@ -111,7 +115,10 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
              'marknsfw': _('marked nsfw'),
              'ignorereports': _('ignored reports'),
              'unignorereports': _('unignored reports'),
-             'setpermissions': _('changed permissions on')}
+             'setpermissions': _('changed permissions on'),
+             'sticky': _('stickied'),
+             'unsticky': _('unstickied'),
+            }
 
     _details_text = {# approve comment/link
                      'unspam': _('unspam'),
