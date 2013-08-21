@@ -1655,6 +1655,10 @@ class ApiController(RedditController, OAuth2ResourceController):
         # just in case we need to kill this feature from XSS
         if g.css_killswitch:
             return self.abort(403,'forbidden')
+
+        if form.has_errors("img_name", errors.BAD_CSS_NAME):
+            return
+
         wiki.ImagesByWikiPage.delete_image(c.site, "config/stylesheet", name)
         ModAction.create(c.site, c.user, action='editsettings', 
                          details='del_image', description=name)
