@@ -568,9 +568,17 @@ def charge_pending(offset=1):
     for l, camp, weight in accepted_campaigns(offset=offset):
         user = Account._byID(l.author_id)
         try:
-            if (authorize.is_charged_transaction(camp.trans_id, camp._id) or not
-                authorize.charge_transaction(user, camp.trans_id, camp._id)):
+            if authorize.is_charged_transaction(camp.trans_id, camp._id):
+                # already charged
                 continue
+
+            charge_succeeded = authorize.charge_transaction(user, camp.trans_id,
+                                                            camp._id)
+
+            if not charge_succeeded:
+                continue
+
+            hooks.get_hook('promote.new_charge').call(link=l, campaign=camp)
 
             if is_promoted(l):
                 emailer.queue_promo(l, camp.bid, camp.trans_id)
@@ -582,8 +590,6 @@ def charge_pending(offset=1):
             PromotionLog.add(l, text)
         except:
             print "Error on %s, campaign %s" % (l, camp._id)
-
-    hooks.get_hook('promote.charge_pending').call(offset=offset)
 
 
 def scheduled_campaigns_by_link(l, date=None):
