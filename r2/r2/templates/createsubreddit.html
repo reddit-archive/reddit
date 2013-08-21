@@ -218,9 +218,9 @@
     </div>
   </%utils:line_field>
   
-  <%utils:line_field title="${_('spam filter strength')}"
-  		description='${_("high is the standard filter, low disables most filtering")}'>
+  <%utils:line_field title="${_('spam filter strength')}">
   	<div class="delete-field">
+        <p class="little gray">${_("high is the standard filter, low disables most filtering, all will filter every post initially and they will need to be approved manually to be visible.")}</p>
   		<table>
   			<tr>
   				<td>${_("links")}:</td>
@@ -229,6 +229,8 @@
   						checked=thing.site and thing.site.spam_links == 'low')}
   					${utils.inline_radio_type('spam_links', 'high', _("high"),
   						checked=thing.site and thing.site.spam_links == 'high')}
+  					${utils.inline_radio_type('spam_links', 'all', _("all"),
+  						checked=thing.site and thing.site.spam_links == 'all')}
 	  			</td>
 	  		</tr>
 	  		<tr>
@@ -238,6 +240,8 @@
   						checked=thing.site and thing.site.spam_selfposts == 'low')}
   					${utils.inline_radio_type('spam_selfposts', 'high', _("high"),
   						checked=thing.site and thing.site.spam_selfposts == 'high')}
+  					${utils.inline_radio_type('spam_selfposts', 'all', _("all"),
+  						checked=thing.site and thing.site.spam_selfposts == 'all')}
 	  			</td>
 	  		</tr>
 	  		<tr>
@@ -247,6 +251,8 @@
   						checked=thing.site and thing.site.spam_comments == 'low')}
   					${utils.inline_radio_type('spam_comments', 'high', _("high"),
   						checked=thing.site and thing.site.spam_comments == 'high')}
+  					${utils.inline_radio_type('spam_comments', 'all', _("all"),
+  						checked=thing.site and thing.site.spam_comments == 'all')}
 	  			</td>
 	  		</tr>
 		</table>
