@@ -200,6 +200,7 @@ class RenderableCampaign():
         transactions = get_transactions(link, campaigns)
         live_campaigns = scheduled_campaigns_by_link(link)
         user_is_sponsor = c.user_is_sponsor
+        today = promo_datetime_now().date()
         r = []
         for camp in campaigns:
             transaction = transactions.get(camp._id)
@@ -214,9 +215,10 @@ class RenderableCampaign():
             cpm = getattr(camp, 'cpm', g.cpm_selfserve.pennies)
             sr = camp.sr_name
             live = camp._id in live_campaigns
+            pending = today < to_date(camp.start_date)
             complete = (transaction and (transaction.is_charged() or
                                          transaction.is_refund()) and
-                        not live)
+                        not (live or pending))
 
             status = {'paid': bool(transaction),
                       'complete': complete,
