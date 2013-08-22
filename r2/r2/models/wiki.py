@@ -421,8 +421,8 @@ class ImagesByWikiPage(tdb_cassandra.View):
 
     @classmethod
     def get_images(cls, sr, page_name):
-        rowkey = WikiPage.id_for(sr, page_name)
         try:
+            rowkey = WikiPage.id_for(sr, page_name)
             return cls._byID(rowkey)._values()
         except tdb_cassandra.NotFound:
             return {}
