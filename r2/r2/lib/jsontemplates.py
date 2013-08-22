@@ -254,7 +254,7 @@ class SubredditJsonTemplate(ThingJsonTemplate):
         "comment_score_hide_mins",
         "description",
         "description_html",
-        "header_img",
+        "header",
         "header_size",
         "header_title",
         "submit_link_label",
