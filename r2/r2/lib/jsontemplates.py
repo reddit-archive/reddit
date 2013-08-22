@@ -247,6 +247,8 @@ class SubredditJsonTemplate(ThingJsonTemplate):
         user_is_subscriber="is_subscriber",
     )
 
+    # subreddit *attributes* (right side of the equals)
+    # that are only accessible if the user can view the subreddit
     _private_attrs = set([
         "accounts_active",
         "comment_score_hide_mins",
