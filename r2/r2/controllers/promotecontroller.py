@@ -46,6 +46,7 @@ from r2.lib.pages import (
     PromoteReport,
     Reddit,
     RefundPage,
+    RenderableCampaign,
     Roadblocks,
     UploadedImage,
 )
@@ -655,17 +656,10 @@ class PromoteController(ListingController):
 
         if campaign:
             promote.edit_campaign(link, campaign, dates, bid, cpm, sr, priority)
-            r = promote.get_renderable_campaigns(link, campaign)
-            jquery.update_campaign(r.campaign_id36, r.start_date, r.end_date,
-                                   r.duration, r.bid, r.spent, r.cpm, r.sr,
-                                   r.priority_name, r.inventory_override,
-                                   r.status)
         else:
             campaign = promote.new_campaign(link, dates, bid, cpm, sr, priority)
-            r = promote.get_renderable_campaigns(link, campaign)
-            jquery.new_campaign(r.campaign_id36, r.start_date, r.end_date,
-                                r.duration, r.bid, r.spent, r.cpm, r.sr,
-                                r.priority_name, r.inventory_override, r.status)
+        rc = RenderableCampaign.from_campaigns(link, campaign)
+        jquery.update_campaign(campaign._fullname, rc.render_html())
 
     @validatedForm(VSponsor('link_id'),
                    VModhash(),

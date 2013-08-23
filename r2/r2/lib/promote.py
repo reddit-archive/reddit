@@ -46,7 +46,7 @@ from r2.lib.cache import sgm
 from r2.lib.memoize import memoize
 from r2.lib.strings import strings
 from r2.lib.template_helpers import get_domain
-from r2.lib.utils import tup, to_date, weighted_lottery
+from r2.lib.utils import to_date, weighted_lottery
 from r2.models import (
     Account,
     Bid,
@@ -152,87 +152,6 @@ def is_promoted(link):
 
 def is_live_on_sr(link, sr):
     return bool(live_campaigns_by_link(link, sr=sr))
-
-
-# control functions
-
-class RenderableCampaign():
-    def __init__(self, campaign_id36, start_date, end_date, duration, bid,
-                 spent, cpm, sr, priority, status):
-        self.campaign_id36 = campaign_id36
-        self.start_date = start_date
-        self.end_date = end_date
-        self.duration = duration
-
-        if priority.cpm:
-            self.bid = "%.2f" % bid
-            self.spent = "%.2f" % spent
-        else:
-            self.bid = "N/A"
-            self.spent = "N/A"
-
-        self.cpm = cpm
-        self.sr = sr
-        self.priority_name = priority.name
-        self.inventory_override = ("override" if priority.inventory_override
-                                              else "")
-        self.status = status
-
-    @classmethod
-    def create(cls, link, campaigns):
-        transactions = get_transactions(link, campaigns)
-        live_campaigns = live_campaigns_by_link(link)
-        user_is_sponsor = c.user_is_sponsor
-        today = promo_datetime_now().date()
-        r = []
-        for camp in campaigns:
-            transaction = transactions.get(camp._id)
-            campaign_id36 = camp._id36
-            start_date = camp.start_date.strftime("%m/%d/%Y")
-            end_date = camp.end_date.strftime("%m/%d/%Y")
-            ndays = camp.ndays
-            duration = strings.time_label % dict(num=ndays,
-                            time=ungettext("day", "days", ndays))
-            bid = camp.bid
-            spent = get_spent_amount(camp)
-            cpm = getattr(camp, 'cpm', g.cpm_selfserve.pennies)
-            sr = camp.sr_name
-            live = camp in live_campaigns
-            pending = today < to_date(camp.start_date)
-            complete = (transaction and (transaction.is_charged() or
-                                         transaction.is_refund()) and
-                        not (live or pending))
-
-            status = {'paid': bool(transaction),
-                      'complete': complete,
-                      'free': camp.is_freebie(),
-                      'pay_url': pay_url(link, camp),
-                      'view_live_url': view_live_url(link, sr),
-                      'sponsor': user_is_sponsor,
-                      'live': live,
-                      'non_cpm': not camp.priority.cpm}
-
-            if transaction and transaction.is_void():
-                status['paid'] = False
-                status['free'] = False
-
-            if complete and user_is_sponsor and not transaction.is_refund():
-                if spent < bid:
-                    status['refund'] = True
-                    status['refund_url'] = refund_url(link, camp)
-
-            rc = cls(campaign_id36, start_date, end_date, duration, bid, spent,
-                     cpm, sr, camp.priority, status)
-            r.append(rc)
-        return r
-
-
-def get_renderable_campaigns(link, campaigns):
-    campaigns, is_single = tup(campaigns, ret_is_single=True)
-    r = RenderableCampaign.create(link, campaigns)
-    if is_single:
-        r = r[0]
-    return r
 
 
 # These could be done with relationships, but that seeks overkill as

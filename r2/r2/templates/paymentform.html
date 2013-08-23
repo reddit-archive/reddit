@@ -20,14 +20,7 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%!
-  from babel.numbers import format_currency
-  from r2.lib.template_helpers import static
-  from r2.lib import js
-%>
 <%namespace file="utils.html" import="error_field"/>
-
-${unsafe(js.use('sponsored'))}
 
 <div class="payment-setup">
   <h1>${_("set up payment for this link")}</h1>
@@ -35,14 +28,13 @@ ${unsafe(js.use('sponsored'))}
         class="pretty-form"
         onsubmit="return post_form(this, 'update_pay')">
     <p>
-      The duration of this link is ${thing.campaign.duration} 
-      (from ${thing.campaign.start_date} to ${thing.campaign.end_date}).
+      The duration of this link is ${thing.duration} 
+      (from ${thing.start_date} to ${thing.end_date}).
     </p>
     <p id="bid-field">
-      <input type="hidden" name="campaign" value="${thing.campaign.campaign_id36}" />
+      <input type="hidden" name="campaign" value="${thing.campaign_id36}" />
       <input type="hidden" name="link" value="${thing.link._fullname}" />
-      <% budget=format_currency(float(thing.campaign.bid), 'USD', locale=c.locale) %>
-      ${unsafe(_("Your current budget is %(budget)s") % dict(budget=budget))}
+      ${unsafe(_("Your current budget is %(budget)s") % dict(budget=thing.budget))}
       ${error_field("OVERSOLD_DETAIL", "bid", "div")}
   </p>
   %if thing.profiles:
@@ -80,9 +72,6 @@ ${unsafe(js.use('sponsored'))}
   </form>
   
   <script type="text/javascript">
-    function cancel_enable_all(elem) {
-      
-    }
     function enable_all(elem) {
        $(elem).parents("div.pay-form").andSelf()
              .find("[disabled]").removeAttr("disabled").end()

@@ -85,7 +85,7 @@ from r2.lib.log import log_text
 from r2.lib.memoize import memoize
 from r2.lib.utils import trunc_string as _truncate, to_date
 from r2.lib.filters import safemarkdown
-from r2.lib.utils import Storage
+from r2.lib.utils import Storage, tup
 from r2.lib.utils import precise_format_timedelta
 
 from babel.numbers import format_currency
@@ -3566,7 +3566,7 @@ class PromoteLinkForm(Templated):
         self.link = link
         self.listing = listing
         campaigns = PromoCampaign._by_link(link._id)
-        self.campaigns = promote.get_renderable_campaigns(link, campaigns)
+        self.campaigns = RenderableCampaign.from_campaigns(link, campaigns)
         self.promotion_log = PromotionLog.get(link)
 
         self.min_bid = 0 if c.user_is_sponsor else g.min_promote_bid
@@ -3592,6 +3592,51 @@ class PromoteLinkForm(Templated):
                     "[Here's how it works](%(link)s)")
         message %= {'link': 'http://www.slideshare.net/reddit/how-to-use-reddits-selfserve-advertising-platform'}
         self.infobar = InfoBar(message=message)
+
+
+class RenderableCampaign(Templated):
+    def __init__(self, link, campaign, transaction, is_pending, is_live,
+                 is_complete):
+        self.link = link
+        self.campaign = campaign
+        self.spent = promote.get_spent_amount(campaign)
+        self.paid = bool(transaction and not transaction.is_void())
+        self.free = campaign.is_freebie()
+        self.is_pending = is_pending
+        self.is_live = is_live
+        self.is_complete = is_complete
+        self.needs_refund = (is_complete and c.user_is_sponsor and
+                             not transaction.is_refund() and
+                             self.spent < campaign.bid)
+        self.pay_url = promote.pay_url(link, campaign)
+        self.view_live_url = promote.view_live_url(link, campaign.sr_name)
+        self.refund_url = promote.refund_url(link, campaign)
+        Templated.__init__(self)
+
+    @classmethod
+    def from_campaigns(cls, link, campaigns):
+        campaigns, is_single = tup(campaigns, ret_is_single=True)
+        transactions = promote.get_transactions(link, campaigns)
+        live_campaigns = promote.live_campaigns_by_link(link)
+        today = promote.promo_datetime_now().date()
+
+        ret = []
+        for camp in campaigns:
+            transaction = transactions.get(camp._id)
+            is_pending = today < to_date(camp.start_date)
+            is_live = camp in live_campaigns
+            is_complete = (transaction and (transaction.is_charged() or
+                                            transaction.is_refund()) and
+                           not (is_live or is_pending))
+            rc = cls(link, camp, transaction, is_pending, is_live, is_complete)
+            ret.append(rc)
+        if is_single:
+            return ret[0]
+        else:
+            return ret
+
+    def render_html(self):
+        return spaceCompress(self.render(style='html'))
 
 
 class RefundPage(Reddit):
@@ -3783,7 +3828,14 @@ class MediaEmbedBody(CachedTemplate):
 class PaymentForm(Templated):
     def __init__(self, link, campaign, **kw):
         self.link = link
-        self.campaign = promote.get_renderable_campaigns(link, campaign)
+        self.duration = strings.time_label
+        self.duration %= {'num': campaign.ndays,
+                          'time': ungettext("day", "days", campaign.ndays)}
+        self.start_date = campaign.start_date.strftime("%m/%d/%Y")
+        self.end_date = campaign.end_date.strftime("%m/%d/%Y")
+        self.campaign_id36 = campaign._id36
+        self.budget = format_currency(float(campaign.bid), 'USD',
+                                      locale=c.locale)
         Templated.__init__(self, **kw)
 
 class Promotion_Summary(Templated):

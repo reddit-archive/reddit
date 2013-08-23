@@ -4666,12 +4666,16 @@ ul.tabmenu.formtab {
     border: none;
 }
 
-.existing-campaigns td.bid { 
+.existing-campaigns td.campaign-bid { 
     background: none no-repeat scroll center right;
     padding-right: 15px;
+
+    .bid-amount {
+        display: block;
+    }
 }
 
-.existing-campaigns td.bid.paid { 
+.existing-campaigns td.campaign-bid.paid { 
     background-image: url(../green-check.png);  
 }
 
@@ -4680,8 +4684,9 @@ ul.tabmenu.formtab {
     font-weight: bold;
 }
 
-.existing-campaigns td.bid .info{ 
+.existing-campaigns td.campaign-bid .info{ 
     margin-right: 3px; 
+    margin-left: 3px; 
 }
 
 .prefright p.minimum-spend {

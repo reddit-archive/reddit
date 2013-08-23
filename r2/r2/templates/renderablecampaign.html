@@ -1,0 +1,131 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be
+## consistent with Exhibit B.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is reddit.
+##
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is reddit Inc.
+##
+## All portions of the code written by reddit are Copyright (c) 2006-2013
+## reddit Inc. All Rights Reserved.
+###############################################################################
+
+<%!
+  import json
+  from r2.lib.strings import strings
+  from babel.numbers import format_currency
+%>
+
+<% jquery_row = "$('." + thing.campaign._fullname + "')" %>
+
+<tr class="campaign-row ${thing.campaign._fullname} ${'refund' if thing.needs_refund else ''}"
+    data-startdate="${thing.campaign.start_date.strftime('%m/%d/%Y')}"
+    data-enddate="${thing.campaign.end_date.strftime('%m/%d/%Y')}"
+    data-bid="${'%.2f' % thing.campaign.bid}"
+    data-targeting="${thing.campaign.sr_name}"
+    data-cpm="${getattr(thing.campaign, 'cpm', g.cpm_selfserve.pennies)}"
+    data-campaign_id36="${thing.campaign._id36}"
+    data-campaign_name="${thing.campaign._fullname}"
+    data-priority="${thing.campaign.priority.name}"
+    data-override="${json.dumps(thing.campaign.priority.inventory_override)}"
+    data-paid="${json.dumps(thing.paid)}">
+  <td class="campaign-start-date">
+    ${thing.campaign.start_date.strftime("%m/%d/%Y")}
+  </td>
+
+  <td class="campaign-end-date">
+    ${thing.campaign.end_date.strftime("%m/%d/%Y")}
+  </td>
+
+  <td class="campaign-duration">
+    ${strings.time_label % dict(num=thing.campaign.ndays,
+                                time=ungettext("day", "days", thing.campaign.ndays))}
+  </td>
+
+  <td class="campaign-priority"
+      style="${'display:none' if not c.user_is_sponsor else ''}">
+    ${thing.campaign.priority.text}
+  </td>
+
+  <td class="campaign-bid ${'paid' if thing.paid else ''}">
+    <div class="bid-amount">
+      %if thing.campaign.priority.cpm:
+      ${format_currency(thing.campaign.bid, 'USD', locale=c.locale)}
+      %else:
+      ${_("N/A")}
+      %endif
+    </div>
+
+    %if thing.campaign.priority.cpm:
+      %if not thing.paid:
+        %if c.user_is_sponsor:
+          <button class="free fancybutton" onclick="free_campaign(${jquery_row})">
+            ${_("free")}
+          </button>
+        %else:
+          <button class="pay fancybutton" onclick="$.redirect('${thing.pay_url}')">
+            ${_("pay")}
+          </button>
+        %endif
+      %elif not (thing.is_complete or thing.is_live):
+        <button class="pay fancybutton" onclick="$.redirect('${thing.pay_url}')">
+          ${_("change")}
+        </button>
+      %elif thing.free:
+        <span class='info'>${_("freebie")}</span>
+      %endif
+    %endif
+
+    %if not thing.free and c.user_is_sponsor and thing.needs_refund:
+      <button class="refund fancybutton" onclick="$.redirect('${thing.refund_url}')">
+        ${_("refund")}
+      </button>
+    %endif
+  </td>
+
+  <td class="campaign-spent">
+    %if thing.campaign.priority.cpm:
+    ${format_currency(thing.spent, 'USD', locale=c.locale)}
+    %else:
+    ${_("N/A")}
+    %endif
+  </td>
+
+  <td class="campaign-target">
+    ${'/r/%s' % thing.campaign.sr_name if thing.campaign.sr_name else _('frontpage')}
+  </td>
+
+  <td class="campaign-buttons">
+    %if thing.is_complete:
+      <span class='info'>${_("complete")}</span>
+    %else:
+      %if not thing.is_live or c.user_is_sponsor:
+        <button class="edit fancybutton" onclick="edit_campaign(${jquery_row})">
+          ${_("edit")}
+        </button>
+      %endif
+
+      %if not thing.is_live:
+        <button class="delete fancybutton" onclick="del_campaign(${jquery_row})">
+          ${_("delete")}
+        </button>
+      %endif
+
+      %if thing.is_live:
+        <button class="view fancybutton" onclick="$.redirect('${thing.view_live_url}')">
+          ${_("view live")}
+        </button>
+      %endif
+    %endif
+  </td>
+</tr>

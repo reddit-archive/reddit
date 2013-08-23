@@ -42,8 +42,10 @@ ${unsafe(js.use('sponsored'))}
 
 <%def name="javascript_setup()">
 <script type="text/javascript">
-  r.sponsored.init(${unsafe(simplejson.dumps(c.user_is_sponsor))});
-  r.sponsored.setup(${unsafe(simplejson.dumps(thing.inventory))})
+  r.sponsored.init();
+  r.sponsored.setup(${unsafe(simplejson.dumps(thing.inventory))},
+                    ${simplejson.dumps(not thing.campaigns)})
+
 </script>
 </%def>
 
@@ -227,7 +229,7 @@ ${self.javascript_setup()}
       <br />
     </div>
 
-    <div class="infotext rounded">
+    <div class="help infotext rounded">
       <p>${_("Comments are a great way to get feedback from customers, and the reddit community is known for being vocal in comment threads.")}</p>
     </div>
   </%utils:line_field>
@@ -347,15 +349,15 @@ ${self.javascript_setup()}
           <tr style="${'display:none' if not c.user_is_sponsor else ''}">
             <th>${_("priority")}</th>
             <td class="prefright">
-              %for value, text, description, default, inventory_override, cpm in thing.priorities:
+              %for value, text, description, default, override, cpm in thing.priorities:
               <label>
                 <input id="${value}" class="nomargin" 
                        type="radio"  value="${value}" name="priority"
                        onclick="r.sponsored.priority_changed()"
                        ${"checked='checked'" if default else ""}
-                       ${"default='default'" if default else ""}
-                       ${"override='override'" if inventory_override else ""}
-                       ${"cpm='cpm'" if cpm else ""}>
+                       data-default="${simplejson.dumps(default)}"
+                       data-override="${simplejson.dumps(override)}"
+                       data-cpm="${simplejson.dumps(cpm)}">
                        %if description:
                        <span>${"%s (%s)" % (text, description)}</span>
                        %else:
@@ -414,18 +416,6 @@ ${self.javascript_setup()}
                        onclick="r.sponsored.targeting_on()">
                 ${_("targeted (targets a subreddit and its subscribers)")}
               </label>
-
-              <script type="text/javascript">
-                $(function() { 
-                    var c =  $(".campaign input[name=targeting]:checked");
-                    if (c.val() == 'one') {
-                      r.sponsored.targeting_on();
-                    } else {
-                      r.sponsored.targeting_off();
-                    }
-                  })
-              </script>
-
             </td>
           </tr>
         </table>
@@ -453,7 +443,8 @@ ${self.javascript_setup()}
         </div>
 
         <div class="buttons">
-          <input type="hidden" name="campaign_id36" value="" />
+          <input type="hidden" name="campaign_id36" value="">
+          <input type="hidden" name="campaign_name" value="">
           <span class="status error"></span>
           <button name="cancel"
                   onclick="return cancel_edit()" class="fancybutton">
@@ -492,7 +483,9 @@ ${self.javascript_setup()}
             <th title="${start_title}">${_("start")}</th>
             <th title="${end_title}">${_("end")}</th>
             <th>${_("duration")}</th>
-            <th>${_("priority")}</th>
+            <th style="${'display:none' if not c.user_is_sponsor else ''}">
+              ${_("priority")}
+            </th>
             <th>${_("total budget")}</th>
             <th>${_("spent")}</th>
             <th title="${targeting_title}">${_("targeting")}</th>
@@ -503,19 +496,10 @@ ${self.javascript_setup()}
                       onclick="return create_campaign()">+ add new</button>
             </th>
           </tr>
+          %for camp in thing.campaigns:
+            ${camp}
+          %endfor
         </table>
-
-        <script type="text/javascript">
-          $(function() {
-              %for rc in sorted(thing.campaigns, key=lambda rc: rc.start_date):
-                $.new_campaign(${unsafe(','.join(simplejson.dumps(attr) for attr in
-                    [rc.campaign_id36, rc.start_date, rc.end_date, rc.duration,
-                     rc.bid, rc.spent, rc.cpm, rc.sr, rc.priority_name,
-                     rc.inventory_override, rc.status]))});
-              %endfor
-              $.set_up_campaigns();
-            });
-        </script>
 
         <p class="error"
            style="${'display:none' if thing.campaigns else ''}">
