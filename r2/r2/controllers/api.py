@@ -246,8 +246,6 @@ class ApiController(RedditController, OAuth2ResourceController):
             form.set_html(".status", _("your message has been delivered"))
             form.set_inputs(to = "", subject = "", text = "", captcha="")
 
-            amqp.add_item('new_message', m._fullname)
-
             queries.new_message(m, inbox_rel)
 
     @require_oauth2_scope("submit")

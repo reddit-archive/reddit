@@ -986,6 +986,7 @@ def new_message(message, inbox_rels):
 
             set_unread(message, to, unread=True, mutator=m)
 
+    amqp.add_item('new_message', message._fullname)
     add_message(message)
 
 def set_unread(messages, to, unread, mutator=None):
