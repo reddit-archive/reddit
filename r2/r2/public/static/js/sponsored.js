@@ -53,13 +53,48 @@ r.sponsored = {
                     }
 
                     for (var datestr in data.inventory) {
-                        r.sponsored.inventory[srname][datestr] = data.inventory[datestr]
+                        if (!r.sponsored.inventory[srname][datestr]) {
+                            r.sponsored.inventory[srname][datestr] = data.inventory[datestr]
+                        }
                     }
                 }
             })
         } else {
             return true
         }
+    },
+
+    get_booked_inventory: function($form, srname) {
+        var campaign_id36 = $form.find('input[name="campaign_id36"]').val(),
+            campaign_row = $('.existing-campaigns .campaign-row input[name="campaign_id36"]')
+                                .filter('*[value="' + campaign_id36 + '"]')
+                                .parents("tr")
+
+        if (!campaign_row.length) {
+            return {}
+        }
+
+        var existing_srname = campaign_row.find('*[name="targeting"]').val()
+        if (srname != existing_srname) {
+            return {}
+        }
+
+        var startdate = campaign_row.find('*[name="startdate"]').val(),
+            enddate = campaign_row.find('*[name="enddate"]').val(),
+            dates = this.get_dates(startdate, enddate),
+            bid = campaign_row.find('*[name="bid"]').val(),
+            cpm = campaign_row.find('*[name="cpm"]').val(),
+            ndays = this.duration_from_dates(startdate, enddate),
+            impressions = this.calc_impressions(bid, cpm),
+            daily = Math.floor(impressions / ndays),
+            booked = {}
+
+        _.each(dates, function(date) {
+            var datestr = $.datepicker.formatDate('mm/dd/yy', date)
+            booked[datestr] = daily
+        })
+        return booked
+
     },
 
     check_inventory: function($form) {
@@ -73,7 +108,8 @@ r.sponsored = {
             targeted = $form.find('#targeting').is(':checked'),
             target = $form.find('*[name="sr"]').val(),
             srname = targeted ? target : '',
-            dates = r.sponsored.get_dates(startdate, enddate)
+            dates = r.sponsored.get_dates(startdate, enddate),
+            booked = this.get_booked_inventory($form, srname)
 
         // bail out in state where targeting is selected but srname
         // has not been entered yet
@@ -85,8 +121,9 @@ r.sponsored = {
         $.when(r.sponsored.get_check_inventory(srname, dates)).done(
             function() {
                 var minDaily = _.min(_.map(dates, function(date) {
-                    var datestr = $.datepicker.formatDate('mm/dd/yy', date)
-                    return r.sponsored.inventory[srname][datestr]
+                    var datestr = $.datepicker.formatDate('mm/dd/yy', date),
+                        daily_booked = booked[datestr] || 0
+                    return r.sponsored.inventory[srname][datestr] + daily_booked
                 }))
 
                 var available = minDaily * ndays
@@ -115,9 +152,15 @@ r.sponsored = {
         )
     },
 
+    duration_from_dates: function(start, end) {
+        return Math.round((Date.parse(end) - Date.parse(start)) / (86400*1000))
+    },
+
     get_duration: function($form) {
-        return Math.round((Date.parse($form.find('*[name="enddate"]').val()) -
-                           Date.parse($form.find('*[name="startdate"]').val())) / (86400*1000))
+        var start = $form.find('*[name="startdate"]').val(),
+            end = $form.find('*[name="enddate"]').val()
+
+        return this.duration_from_dates(start, end)
     },
 
     get_bid: function($form) {

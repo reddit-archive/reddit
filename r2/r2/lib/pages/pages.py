@@ -3373,17 +3373,16 @@ class PromoteLinkForm(Templated):
         self.min_bid = 0 if c.user_is_sponsor else g.min_promote_bid
 
         # preload some inventory
-        srnames = []
+        srnames = set()
         for title, names in self.subreddit_selector.subreddit_names:
-            srnames.extend(names)
-        srs = Subreddit._by_name(srnames).values()
-        srs.append(Frontpage)
+            srnames.update(names)
+        srs = Subreddit._by_name(srnames)
+        srs[''] = Frontpage
         inv_start = startdate
         inv_end = startdate + datetime.timedelta(days=14)
-        ignore = [camp._id for camp in campaigns]
-        sr_inventory = inventory.get_available_pageviews(srs, inv_start,
-                                                         inv_end, datestr=True,
-                                                         ignore=ignore)
+        sr_inventory = inventory.get_available_pageviews(
+            srs.values(), inv_start, inv_end, datestr=True)
+
         sr_inventory[''] = sr_inventory[Frontpage.name]
         del sr_inventory[Frontpage.name]
         self.inventory = sr_inventory
