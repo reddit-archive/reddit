@@ -750,6 +750,8 @@ class MinimalController(BaseController):
         # upstream things like stunnel/haproxy.
         if c.secure:
             request.environ["wsgi.url_scheme"] = "https"
+            # update request.fullurl since wsgi.url_scheme changed.
+            request.fullurl = request.host_url + request.fullpath
 
         c.request_origin = request.host_url
 

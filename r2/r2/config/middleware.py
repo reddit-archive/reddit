@@ -275,11 +275,6 @@ class FullPathMiddleware(object):
         qs = environ.get('QUERY_STRING')
         if qs:
             environ['FULLPATH'] += '?' + qs
-        environ['FULLURL'] = "%s://%s%s" % (
-            environ['wsgi.url_scheme'],
-            environ['HTTP_HOST'],
-            environ['FULLPATH']
-        )
         return self.app(environ, start_response)
 
 class StaticTestMiddleware(object):
