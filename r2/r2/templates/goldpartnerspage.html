@@ -83,7 +83,6 @@
                    img_url='http://bartsbakery.com',
                    description_md="# Bart's Bakery Chocolate Chip Cookies\n"
                                   'Cookies. Really good cookies. 20% off any product.',
-                   extra_class='new',
                    button_dest='claim')}
 
     ${partner_item('betabrand',
@@ -92,7 +91,6 @@
                    img_url='http://betabrand.com',
                    description_md='# Betabrand Unique Online Fashions\n'
                                   'Presently Pantless? Get 20% off any item in our collection.',
-                   extra_class='new',
                    button_dest='claim')}
 
     ${partner_item('empiremayo',
@@ -118,7 +116,6 @@
                    img_url='http://ifixit.com',
                    description_md='# iFixit\n'
                                   'Guides, parts and tools for repairs. $20 off purchases of $50 or more.',
-                   extra_class='new',
                    button_dest='claim')}
 
     ${partner_item('outgrowme',
@@ -127,7 +124,6 @@
                    img_url='http://outgrow.me/gold',
                    description_md='# Outgrow.me Marketplace\n'
                                   'Successful crowd-funded items. 15% discount.',
-                   extra_class='new',
                    button_dest='claim')}
 
     ${partner_item('redditgifts',
@@ -136,7 +132,25 @@
                    img_url='http://redditgifts.com',
                    description_md='# redditgifts marketplace\n'
                                   'With our "Golden Tikkit" program, five lucky gold members will be getting a t-shirt and 3 months of redditgifts Elves every week.',
-                   extra_class='new')}
+                   )}
+
+    ${partner_item('rover',
+                   "Claim your code below, then sign up and enter it at http://rover.com/redditgoldmembers to redeem your $50 credit.",
+                   static('gold/partner-rover.png'),
+                   img_url='http://rover.com/redditgoldmembers',
+                   description_md='# Rover Dogsitting Service\n'
+                                  'Dogsitting by dog lovers. $50 credit.',
+                   extra_class='new',
+                   button_dest='claim')}
+
+    ${partner_item('solrepublic',
+                   "Claim your code below, then enter it as a coupon code in your cart at http://solrepublic.com/shop",
+                   static('gold/partner-solrepublic.png'),
+                   img_url='http://solrepublic.com',
+                   description_md='# SOL Republic Headphones\n'
+                                  '20% off purchases of $99 or more + one lucky gold member will receive a pair of custom Tracks HD headphones every month.',
+                   extra_class='new',
+                   button_dest='claim')}
 
     ${partner_item('uber',
                    "Claim your code below, then visit http://uber.com/app and enter the code while signing up.",
@@ -144,7 +158,6 @@
                    img_url='http://uber.com',
                    description_md='# Uber Private Car Service\n'
                                   'Black car service requested via mobile app. $25 off your first ride (valid only in the US).',
-                   extra_class='new',
                    button_dest='claim')}
 
     ${partner_item('uniqlo',
