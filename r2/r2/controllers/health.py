@@ -23,11 +23,12 @@
 import json
 import os
 
+import pylibmc
 from pylons import g, request, response
 from pylons.controllers.util import abort
 
 from r2.controllers.reddit_base import MinimalController
-from r2.lib import promote
+from r2.lib import promote, cache
 
 
 class HealthController(MinimalController):
@@ -51,3 +52,23 @@ class HealthController(MinimalController):
     def GET_promohealth(self):
         response.content_type = "application/json"
         return json.dumps(promote.health_check())
+
+    def GET_cachehealth(self):
+        results = {}
+        behaviors = {
+            "connect_timeout": 3,
+            "receive_timeout": 3,
+            "send_timeout": 3,
+        }
+        for server in cache._CACHE_SERVERS:
+            try:
+                if server.startswith("udp:"):
+                    # libmemcached doesn't support UDP get/fetch operations
+                    continue
+                mc = pylibmc.Client([server], behaviors=behaviors)
+                mc.get("__health_check_%s__" % server)
+                results[server] = "OK"
+            except pylibmc.Error as e:
+                g.log.warning("Health check for %s FAILED: %s", server, e)
+                results[server] = "FAILED %s" % e
+        return json.dumps(results)

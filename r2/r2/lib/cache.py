@@ -38,6 +38,9 @@ from r2.lib.hardcachebackend import HardCacheBackend
 from r2.lib.sgm import sgm # get this into our namespace so that it's
                            # importable from us
 
+# This is for use in the health controller
+_CACHE_SERVERS = set()
+
 class NoneResult(object): pass
 
 class CacheUtils(object):
@@ -82,6 +85,8 @@ class CMemcache(CacheUtils):
             self.clients.put(client)
 
         self.min_compress_len = min_compress_len
+
+        _CACHE_SERVERS.update(servers)
 
     def get(self, key, default = None):
         with self.clients.reserve() as mc:

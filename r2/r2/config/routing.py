@@ -219,6 +219,7 @@ def make_map():
 
     mc('/health', controller='health', action='health')
     mc('/health/ads', controller='health', action='promohealth')
+    mc('/health/caches', controller='health', action='cachehealth')
 
     mc('/', controller='hot', action='listing')
 
