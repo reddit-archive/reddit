@@ -66,7 +66,7 @@ from r2.lib import tracking,  cssfilter, emailer
 from r2.lib.subreddit_search import search_reddits
 from r2.lib.log import log_text
 from r2.lib.filters import safemarkdown
-from r2.lib.scraper import str_to_image
+from r2.lib.media import str_to_image
 from r2.controllers.api_docs import api_doc, api_section
 from r2.lib.search import SearchQuery
 from r2.controllers.oauth2 import OAuth2ResourceController, require_oauth2_scope

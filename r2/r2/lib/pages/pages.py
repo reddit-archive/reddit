@@ -67,7 +67,6 @@ from r2.lib.utils import url_links_builder, make_offset_date, median, to36
 from r2.lib.utils import trunc_time, timesince, timeuntil, weighted_lottery
 from r2.lib.template_helpers import add_sr, get_domain, format_number
 from r2.lib.subreddit_search import popular_searches
-from r2.lib.scraper import get_media_embed
 from r2.lib.log import log_text
 from r2.lib.memoize import memoize
 from r2.lib.utils import trunc_string as _truncate, to_date
@@ -3454,7 +3453,7 @@ def make_link_child(item):
             media_embed = item.media_object
         else:
             try:
-                media_embed = get_media_embed(item.media_object)
+                media_embed = media.get_media_embed(item.media_object)
             except TypeError:
                 g.log.warning("link %s has a bad media object" % item)
                 media_embed = None

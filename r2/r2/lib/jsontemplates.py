@@ -414,7 +414,7 @@ class LinkJsonTemplate(ThingJsonTemplate):
     )
 
     def thing_attr(self, thing, attr):
-        from r2.lib.scraper import get_media_embed
+        from r2.lib.media import get_media_embed
         if attr == "media_embed":
            if (thing.media_object and
                not isinstance(thing.media_object, basestring)):
