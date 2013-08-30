@@ -90,7 +90,7 @@ r.ui.Summarize.prototype = {
         }
         e.preventDefault()
     }
-};
+}
 
 r.ui.collapseListingChooser = function() {
     if (store.get('ui.collapse.listingchooser') == true) {
