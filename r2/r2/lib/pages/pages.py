@@ -616,6 +616,8 @@ class Reddit(Templated):
 
         if self.show_chooser:
             classes.add('with-listing-chooser')
+            if c.user.pref_collapse_left_bar:
+                classes.add('listing-chooser-collapsed')
 
         if self.extra_page_classes:
             classes.update(self.extra_page_classes)

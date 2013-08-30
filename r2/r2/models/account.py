@@ -91,6 +91,7 @@ class Account(Thing):
                      pref_show_sponsorships = True,
                      pref_highlight_new_comments = True,
                      pref_monitor_mentions=True,
+                     pref_collapse_left_bar=False,
                      mobile_compress = False,
                      mobile_thumbnail = True,
                      trusted_sponsor = False,

@@ -3495,3 +3495,13 @@ class ApiController(RedditController, OAuth2ResourceController):
             giftmessage=None,
             comment=comment._fullname,
         ))
+
+    @json_validate(
+        VUser(),
+        VModhash(),
+        collapsed=VBoolean('collapsed'),
+    )
+    def POST_set_left_bar_collapsed(self, responder, collapsed):
+        c.user.pref_collapse_left_bar = collapsed
+        c.user._commit()
+

@@ -609,6 +609,12 @@ r.multi.ListingChooser = Backbone.View.extend({
     initialize: function() {
         this.$el.addClass('initialized')
 
+        // transition collapsed state to server pref
+        if (store.get('ui.collapse.listingchooser') == true) {
+            this.toggleCollapsed(true)
+            store.remove('ui.collapse.listingchooser')
+        }
+
         // HACK: fudge page heights for long lists of multis / short pages
         var thisHeight = this.$('.contents').height(),
             bodyHeight = $('body').height()
@@ -629,8 +635,14 @@ r.multi.ListingChooser = Backbone.View.extend({
         }
     },
 
-    toggleCollapsed: function() {
-        $('body').toggleClass('listing-chooser-collapsed')
-        store.set('ui.collapse.listingchooser', $('body').is('.listing-chooser-collapsed'))
+    toggleCollapsed: function(value) {
+        $('body').toggleClass('listing-chooser-collapsed', value)
+        Backbone.ajax({
+            type: 'POST',
+            url: '/api/set_left_bar_collapsed.json',
+            data: {
+                'collapsed': $('body').is('.listing-chooser-collapsed')
+            }
+        })
     }
 })
