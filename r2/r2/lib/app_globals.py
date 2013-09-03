@@ -227,6 +227,7 @@ class Globals(object):
         ConfigValue.tuple: [
             'sr_discovery_links',
             'fastlane_links',
+            'listing_chooser_sample_multis',
         ],
         ConfigValue.dict(ConfigValue.int, ConfigValue.float): [
             'comment_tree_version_weights',
