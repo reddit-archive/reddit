@@ -76,6 +76,15 @@ class BaseController(WSGIController):
         self.post()
 
     def __call__(self, environ, start_response):
+        # we override this here to ensure that this header, and only this
+        # header, is trusted to reduce the number of potential
+        # misconfigurations between wsgi application servers (e.g. gunicorn
+        # which trusts three different headers out of the box for this) and
+        # haproxy (which won't clean out bad headers by default)
+        forwarded_proto = environ.get("HTTP_X_FORWARDED_PROTO", "http").lower()
+        assert forwarded_proto in ("http", "https")
+        request.environ["wsgi.url_scheme"] = forwarded_proto
+
         true_client_ip = environ.get('HTTP_TRUE_CLIENT_IP')
         ip_hash = environ.get('HTTP_TRUE_CLIENT_IP_HASH')
         forwarded_for = environ.get('HTTP_X_FORWARDED_FOR', ())

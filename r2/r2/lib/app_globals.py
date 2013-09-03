@@ -327,16 +327,12 @@ class Globals(object):
 
         origin_prefix = self.domain_prefix + "." if self.domain_prefix else ""
         self.origin = "http://" + origin_prefix + self.domain
-        self.secure_domains = set([urlparse(self.payment_domain).netloc])
 
         self.trusted_domains = set([self.domain])
         self.trusted_domains.update(self.authorized_cnames)
         if self.https_endpoint:
             https_url = urlparse(self.https_endpoint)
-            self.secure_domains.add(https_url.netloc)
             self.trusted_domains.add(https_url.hostname)
-        if getattr(self, 'oauth_domain', None):
-            self.secure_domains.add(self.oauth_domain)
 
         # load the unique hashed names of files under static
         static_files = os.path.join(self.paths.get('static_files'), 'static')

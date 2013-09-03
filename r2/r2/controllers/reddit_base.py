@@ -741,18 +741,7 @@ class MinimalController(BaseController):
 
         c.domain_prefix = request.environ.get("reddit-domain-prefix",
                                               g.domain_prefix)
-        c.secure = request.host in g.secure_domains
-
-        # wsgi.url_scheme is used in generating absolute urls, such as by webob
-        # for translating some of our relative-url redirects to rfc compliant
-        # absolute-url ones. TODO: consider using one of webob's methods of
-        # setting wsgi.url_scheme based on incoming request headers added by
-        # upstream things like stunnel/haproxy.
-        if c.secure:
-            request.environ["wsgi.url_scheme"] = "https"
-            # update request.fullurl since wsgi.url_scheme changed.
-            request.fullurl = request.host_url + request.fullpath
-
+        c.secure = request.environ["wsgi.url_scheme"] == "https"
         c.request_origin = request.host_url
 
         #check if user-agent needs a dose of rate-limiting

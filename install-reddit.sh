@@ -333,6 +333,8 @@ frontend frontend 0.0.0.0:80
     option forwardfor except 127.0.0.1
     option httpclose
 
+    reqidel ^X-Forwarded-Proto:.*
+
     default_backend dynamic
 
 backend dynamic
