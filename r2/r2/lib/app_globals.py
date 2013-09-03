@@ -231,6 +231,7 @@ class Globals(object):
         ],
         ConfigValue.str: [
             'listing_chooser_gold_multi',
+            'listing_chooser_explore_sr',
         ],
         ConfigValue.dict(ConfigValue.int, ConfigValue.float): [
             'comment_tree_version_weights',

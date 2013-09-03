@@ -239,7 +239,10 @@ class Reddit(Templated):
             show_chooser and
             c.render_style == "html" and
             c.user_is_loggedin and
-            isinstance(c.site, (DefaultSR, AllSR, ModSR, LabeledMulti))
+            (
+                isinstance(c.site, (DefaultSR, AllSR, ModSR, LabeledMulti)) or
+                c.site.name == g.live_config["listing_chooser_explore_sr"]
+            )
         )
 
         self.toolbars = self.build_toolbars()
@@ -4138,6 +4141,12 @@ class ListingChooser(Templated):
             multis.sort(key=lambda multi: multi.name.lower())
             for multi in multis:
                 self.add_item("multi", multi.name, site=multi)
+
+            explore_sr = g.live_config["listing_chooser_explore_sr"]
+            if explore_sr:
+                self.add_item("multi", name=_("explore multis"),
+                              site=Subreddit._by_name(explore_sr))
+
             self.show_samples = not multis
 
         if self.show_samples:
