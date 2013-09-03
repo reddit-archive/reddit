@@ -4127,6 +4127,11 @@ class ListingChooser(Templated):
 
         self.add_item("other", _("saved"), path='/user/%s/saved' % c.user.name)
 
+        gold_multi = g.live_config["listing_chooser_gold_multi"]
+        if c.user_is_loggedin and c.user.gold and gold_multi:
+            self.add_item("other", name=_("gold perks"), path=gold_multi,
+                          extra_class="gold-perks")
+
         self.show_samples = False
         if c.user_is_loggedin:
             multis = LabeledMulti.by_owner(c.user)
@@ -4142,13 +4147,15 @@ class ListingChooser(Templated):
         if self.selected_item:
             self.selected_item["selected"] = True
 
-    def add_item(self, section, name, path=None, site=None, description=None):
+    def add_item(self, section, name, path=None, site=None, description=None,
+                 extra_class=None):
         self.sections[section].append({
             "name": name,
             "description": description,
             "path": path or site.user_path,
             "site": site,
             "selected": False,
+            "extra_class": extra_class,
         })
 
     def add_samples(self):

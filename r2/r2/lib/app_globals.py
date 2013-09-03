@@ -229,6 +229,9 @@ class Globals(object):
             'fastlane_links',
             'listing_chooser_sample_multis',
         ],
+        ConfigValue.str: [
+            'listing_chooser_gold_multi',
+        ],
         ConfigValue.dict(ConfigValue.int, ConfigValue.float): [
             'comment_tree_version_weights',
         ],
