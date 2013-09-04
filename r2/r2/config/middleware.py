@@ -38,7 +38,6 @@ from pylons.wsgiapp import PylonsApp
 from routes.middleware import RoutesMiddleware
 
 from r2.config.environment import load_environment
-from r2.config.rewrites import rewrites
 from r2.config.extensions import extension_mapping, set_extension
 from r2.lib.utils import is_subdomain
 
@@ -264,26 +263,14 @@ class ExtensionMiddleware(object):
 
         return self.app(environ, start_response)
 
-class RewriteMiddleware(object):
+class FullPathMiddleware(object):
+    # Debt: we have a lot of middleware which (unfortunately) modify the
+    # global URL PATH_INFO string. To work with the original request URL, we
+    # save it to a different location here.
     def __init__(self, app):
         self.app = app
 
-    def rewrite(self, regex, out_template, input):
-        m = regex.match(input)
-        out = out_template
-        if m:
-            for num, group in enumerate(m.groups('')):
-                out = out.replace('$%s' % (num + 1), group)
-            return out
-
     def __call__(self, environ, start_response):
-        path = environ['PATH_INFO']
-        for r in rewrites:
-            newpath = self.rewrite(r[0], r[1], path)
-            if newpath:
-                environ['PATH_INFO'] = newpath
-                break
-
         environ['FULLPATH'] = environ.get('PATH_INFO')
         qs = environ.get('QUERY_STRING')
         if qs:
@@ -468,8 +455,7 @@ def make_app(global_conf, full_stack=True, **app_conf):
         static_cascade.insert(0, plugin_static_apps)
     app = Cascade(static_cascade)
 
-    #add the rewrite rules
-    app = RewriteMiddleware(app)
+    app = FullPathMiddleware(app)
 
     if not g.config['uncompressedJS'] and g.config['debug']:
         static_fallback = StaticTestMiddleware(static_app, g.config['static_path'], g.config['static_domain'])
