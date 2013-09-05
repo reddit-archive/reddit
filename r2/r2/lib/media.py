@@ -308,9 +308,21 @@ def can_upload_icon():
     return g.media_store == 's3'
 
 
+def _make_custom_media_embed(media_object):
+    # this is for promoted links with custom media embeds.
+    return MediaEmbed(
+        height=media_object.get("height"),
+        width=media_object.get("width"),
+        content=media_object.get("content"),
+    )
+
+
 def get_media_embed(media_object):
     if not isinstance(media_object, dict):
         return
+
+    if media_object.get("type") == "custom":
+        return _make_custom_media_embed(media_object)
 
     if "oembed" not in media_object:
         return
