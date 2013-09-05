@@ -132,12 +132,14 @@ r.sponsored = {
                     var message = r._("We have insufficient inventory to fulfill" +
                                       " your requested budget, target, and dates." +
                                       " Only %(available)s impressions available" +
-                                      " on %(target)s from %(start)s to %(end)s."
+                                      " on %(target)s from %(start)s to %(end)s. " +
+                                      "Maximum budget is $%(max)s."
                                   ).format({
                                       available: r.utils.prettyNumber(available),
                                       target: targeted ? srname : 'the frontpage',
                                       start: startdate,
-                                      end: enddate
+                                      end: enddate,
+                                      max: r.sponsored.calc_bid(available, cpm)
                                   })
 
                     $(".available-info").text('')
@@ -231,6 +233,10 @@ r.sponsored = {
 
     calc_impressions: function(bid, cpm_pennies) {
         return bid / cpm_pennies * 1000 * 100
+    },
+
+    calc_bid: function(impressions, cpm_pennies) {
+        return impressions * cpm_pennies / 1000 / 100
     }
 }
 
