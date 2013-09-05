@@ -126,7 +126,8 @@ r.sponsored = {
                     return r.sponsored.inventory[srname][datestr] + daily_booked
                 }))
 
-                var available = minDaily * ndays
+                var available = minDaily * ndays,
+                    maxbid = r.sponsored.calc_bid(available, cpm)
 
                 if (available < requested) {
                     var message = r._("We have insufficient inventory to fulfill" +
@@ -139,14 +140,14 @@ r.sponsored = {
                                       target: targeted ? srname : 'the frontpage',
                                       start: startdate,
                                       end: enddate,
-                                      max: r.sponsored.calc_bid(available, cpm)
+                                      max: maxbid
                                   })
 
                     $(".available-info").text('')
                     $(".OVERSOLD_DETAIL").text(message).show()
                     r.sponsored.disable_form($form)
                 } else {
-                    $(".available-info").text(r._("(%(num)s available)").format({num: r.utils.prettyNumber(available)}))
+                    $(".available-info").text(r._("%(num)s available (maximum budget is $%(max)s)").format({num: r.utils.prettyNumber(available), max: maxbid}))
                     $(".OVERSOLD_DETAIL").hide()
                     r.sponsored.enable_form($form)
                 }
@@ -166,7 +167,7 @@ r.sponsored = {
     },
 
     get_bid: function($form) {
-        return parseFloat($form.find('*[name="bid"]').val())
+        return parseFloat($form.find('*[name="bid"]').val()) || 0
     },
 
     get_cpm: function($form) {
@@ -181,6 +182,16 @@ r.sponsored = {
         this.fill_campaign_editor()
     },
 
+    on_impression_change: function() {
+        var $form = $("#campaign"),
+            cpm = this.get_cpm($form),
+            impressions = parseInt($form.find('*[name="impressions"]').val().replace(/,/g, "") || 0)
+            bid = this.calc_bid(impressions, cpm),
+            $bid = $form.find('*[name="bid"]')
+        $bid.val(bid)
+        $bid.trigger("change")
+    },
+
     fill_campaign_editor: function() {
         var $form = $("#campaign"),
             bid = this.get_bid($form),
@@ -189,8 +200,8 @@ r.sponsored = {
             impressions = this.calc_impressions(bid, cpm);
 
         $(".duration").text(ndays + " " + ((ndays > 1) ? r._("days") : r._("day")))
-        $(".impression-info").text(r._("%(num)s impressions").format({num: r.utils.prettyNumber(impressions)}))
         $(".price-info").text(r._("$%(cpm)s per 1,000 impressions").format({cpm: (cpm/100).toFixed(2)}))
+        $form.find('*[name="impressions"]').val(r.utils.prettyNumber(impressions))
 
         this.check_bid($form)
         this.check_inventory($form)
@@ -236,7 +247,7 @@ r.sponsored = {
     },
 
     calc_bid: function(impressions, cpm_pennies) {
-        return impressions * cpm_pennies / 1000 / 100
+        return (impressions * cpm_pennies / 1000 / 100).toFixed(2)
     }
 }
 

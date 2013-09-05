@@ -305,7 +305,15 @@ ${self.javascript_setup()}
           </tr>
 
           <tr>
-            <th>${_("total budget")}</th>
+            <th>${_("price")}</th>
+            <td class="prefright">
+              <input id="cpm" name="cpm" value="${g.cpm_selfserve.pennies}" type="hidden">
+              <span class="price-info"></span>
+            </td>
+          </tr>
+
+          <tr>
+            <th>${_("budget")}</th>
             <td class="prefright">
               ${error_field("BAD_BID", "bid", "div")}
               ${error_field("BID_LIVE", "bid", "div")}
@@ -317,27 +325,19 @@ ${self.javascript_setup()}
                       value="${format_decimal(5 * thing.min_bid, format='.00', locale=c.locale)}"
                       data-min_bid="${thing.min_bid}"
                       data-base_cpm="${g.cpm_selfserve.pennies}"/>
-              <div class="minimum-spend">
-                ${_('%(minimum)s minimum') % dict(minimum=format_currency(thing.min_bid, 'USD', locale=c.locale))}
-              </div>
-            </td>
-          </tr>
-
-          <tr>
-            <th>${_("price")}</th>
-            <td class="prefright">
-              <input id="cpm" name="cpm" value="${g.cpm_selfserve.pennies}" type="hidden">
-              <span class="price-info"></span>
+              &#32;${_('%(minimum)s minimum') % dict(minimum=format_currency(thing.min_bid, 'USD', locale=c.locale))}
             </td>
           </tr>
 
           <tr>
             <th>${_("impressions")}</th>
-              <td class="prefright">
-                <span class="impression-info"></span>
-                <span class="available-info"></span>
-                ${error_field("OVERSOLD_DETAIL", "bid", "div")}
-              </td>
+            <td class="prefright">
+              <input id="impressions" name="impressions" size="10" type="text"
+                     class="rounded styled-input"
+                     onchange="r.sponsored.on_impression_change()">
+              <div class="available-info"></div>
+              ${error_field("OVERSOLD_DETAIL", "bid", "div")}
+            </td>
           </tr>
 
           <tr>
