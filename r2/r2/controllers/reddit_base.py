@@ -431,7 +431,7 @@ def set_content_type():
 
     if e.has_key('extension'):
         c.extension = ext = e['extension']
-        if ext in ('embed', 'wired', 'widget'):
+        if ext in ('embed', 'widget'):
             wrapper = request.params.get("callback", "document.write")
             wrapper = filters._force_utf8(wrapper)
             if not valid_jsonp_callback(wrapper):

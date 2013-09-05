@@ -22,7 +22,6 @@ Disallow: /*.xml
 Disallow: /*.rss
 Disallow: /*.i
 Disallow: /*.embed
-Disallow: /*.wired
 Disallow: /*/comments/*?*sort=
 Disallow: /r/*/comments/*/*/c*
 Disallow: /comments/*/*/c*
