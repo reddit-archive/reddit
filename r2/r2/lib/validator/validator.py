@@ -815,7 +815,7 @@ class VModhash(Validator):
 
     def param_docs(self):
         return {
-            self.param: 'a [modhash](#modhashes)',
+            '%s / X-Modhash header' % self.param: 'a [modhash](#modhashes)',
         }
 
 class VVotehash(Validator):
