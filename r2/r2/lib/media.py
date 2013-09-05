@@ -39,6 +39,7 @@ import urlparse
 import BeautifulSoup
 import Image
 import ImageFile
+import requests
 
 from pylons import g
 
@@ -443,7 +444,7 @@ class _ThumbnailOnlyScraper(Scraper):
 
 
 class _EmbedlyScraper(Scraper):
-    EMBEDLY_API_URL = "http://api.embed.ly/1/oembed"
+    EMBEDLY_API_URL = "https://api.embed.ly/1/oembed"
 
     def __init__(self, url):
         self.url = url
@@ -469,8 +470,8 @@ class _EmbedlyScraper(Scraper):
             "maxwidth": 600,
             "key": g.embedly_api_key,
         })
-        response = urllib2.urlopen(self.EMBEDLY_API_URL + "?" + params)
-        oembed = json.load(response, object_hook=self._utf8_encode)
+        content = requests.get(self.EMBEDLY_API_URL + "?" + params).content
+        oembed = json.loads(content, object_hook=self._utf8_encode)
 
         if not oembed:
             return None, None
@@ -509,8 +510,7 @@ class _EmbedlyScraper(Scraper):
 
 @memoize("media.embedly_services", time=3600)
 def _fetch_embedly_services():
-    response = urllib2.urlopen("http://api.embed.ly/1/services/python")
-    service_data = json.load(response)
+    service_data = requests.get("https://api.embed.ly/1/services/python").json
 
     patterns_by_domain = collections.defaultdict(set)
     for service in service_data:
