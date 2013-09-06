@@ -1564,6 +1564,9 @@ def process_votes(qname, limit=0):
             update_comment_votes([votee])
             timer.intermediate("update_comment_votes")
 
+        stats.simple_event('vote.total')
+        if cheater:
+            stats.simple_event('vote.cheater')
         timer.flush()
 
     amqp.consume_items(qname, _handle_vote, verbose = False)
