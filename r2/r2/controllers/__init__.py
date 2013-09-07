@@ -70,6 +70,7 @@ def load_controllers():
     from mediaembed import MediaembedController
     from mediaembed import AdController
     from policies import PoliciesController
+    from web import WebLogController
     
     from wiki import WikiController
     from wiki import WikiApiController

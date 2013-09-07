@@ -382,6 +382,9 @@ def make_map():
 
     mc("/try", controller="forms", action="try_compact")
 
+    mc("/web/log/:level", controller="weblog", action="message",
+       requirements=dict(level="error"))
+
     # This route handles displaying the error page and
     # graphics used in the 404/500
     # error pages. It should likely stay at the top

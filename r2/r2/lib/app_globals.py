@@ -219,6 +219,7 @@ class Globals(object):
     live_config_spec = {
         ConfigValue.bool: [
             'frontpage_dart',
+            'frontend_logging',
         ],
         ConfigValue.float: [
             'spotlight_interest_sub_p',

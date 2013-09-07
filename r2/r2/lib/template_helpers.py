@@ -36,6 +36,8 @@ from copy import copy
 import random
 import urlparse
 import calendar
+import math
+import time
 from pylons import g, c, request
 from pylons.i18n import _, ungettext
 
@@ -150,6 +152,8 @@ def js_config(extra_config=None):
         "https_endpoint": is_subdomain(request.host, g.domain) and g.https_endpoint,
         # debugging?
         "debug": g.debug,
+        "send_logs": g.live_config["frontend_logging"],
+        "server_time": math.floor(time.time()),
         "status_msg": {
           "fetching": _("fetching title..."),
           "submitting": _("submitting..."),
