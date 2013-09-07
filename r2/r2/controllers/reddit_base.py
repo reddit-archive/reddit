@@ -54,6 +54,7 @@ from r2.lib.errors import (
     BadRequestError,
     ForbiddenError,
     errors,
+    reddit_http_error,
 )
 from r2.lib.filters import _force_utf8
 from r2.lib.strings import strings
@@ -695,6 +696,18 @@ def flatten_response(content):
     # TODO: it would be nice to replace this with response.body someday
     # once unicode issues are ironed out.
     return "".join(_force_utf8(x) for x in tup(content) if x)
+
+
+def abort_with_error(error):
+    if not error.code:
+        raise ValueError('Error %r missing status code' % error)
+
+    abort(reddit_http_error(
+        code=error.code,
+        error_name=error.name,
+        explanation=error.message,
+        fields=error.fields,
+    ))
 
 
 class MinimalController(BaseController):

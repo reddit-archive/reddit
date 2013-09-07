@@ -25,7 +25,7 @@ from pylons.i18n import _
 
 from r2.config.extensions import set_extension
 from r2.controllers.api_docs import api_doc, api_section
-from r2.controllers.reddit_base import RedditController
+from r2.controllers.reddit_base import RedditController, abort_with_error
 from r2.controllers.oauth2 import (
     OAuth2ResourceController,
     require_oauth2_scope,
@@ -56,8 +56,7 @@ from r2.lib.jsontemplates import (
     LabeledMultiJsonTemplate,
     LabeledMultiDescriptionJsonTemplate,
 )
-from r2.lib.errors import errors, reddit_http_error, RedditError
-from r2.lib.base import abort
+from r2.lib.errors import errors, RedditError
 
 
 multi_sr_data_json_spec = VValidatedJSON.Object({
@@ -77,21 +76,12 @@ multi_description_json_spec = VValidatedJSON.Object({
 
 
 class MultiApiController(RedditController, OAuth2ResourceController):
+    on_validation_error = staticmethod(abort_with_error)
+
     def pre(self):
         set_extension(request.environ, "json")
         self.check_for_bearer_token()
         RedditController.pre(self)
-
-    def on_validation_error(self, error):
-        if not error.code:
-            raise ValueError('Error %r missing status code' % error)
-
-        abort(reddit_http_error(
-            code=error.code,
-            error_name=error.name,
-            explanation=error.message,
-            fields=error.fields,
-        ))
 
     @require_oauth2_scope("read")
     @validate(VUser())
