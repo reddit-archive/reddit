@@ -13,7 +13,7 @@ r.ui.Collapse = function(el, target, key) {
     r.ui.Base.call(this, el)
     this.target = target
     this.key = 'ui.collapse.' + key
-    this.isCollapsed = store.get(this.key) == true
+    this.isCollapsed = store.safeGet(this.key) == true
     this.$el.click($.proxy(this, 'toggle', null, false))
     this.toggle(this.isCollapsed, true)
 }
@@ -33,7 +33,7 @@ r.ui.Collapse.prototype = {
         }
 
         this.isCollapsed = collapsed
-        store.set(this.key, collapsed)
+        store.safeSet(this.key, collapsed)
         this.update()
     },
 

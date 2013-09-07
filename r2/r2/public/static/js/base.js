@@ -36,6 +36,35 @@ r.ajax = function(request) {
     return $.ajax(request)
 }
 
+store.safeGet = function(key, errorValue) {
+    // errorValue defaults to undefined, equivalent to the key being unset.
+    try {
+        return store.get(key)
+    } catch (err) {
+        r.sendError('Unable to read storage key "%(key)s" (%(err)s)'.format({
+            key: key,
+            err: err
+        }))
+        // TODO: reset value to errorValue?
+        return errorValue
+    }
+}
+
+store.safeSet = function(key, val) {
+    // swallow exceptions upon storage set for non-trivial operations. returns
+    // a boolean value indicating success.
+    try {
+        store.set(key, val)
+        return true
+    } catch (err) {
+        r.warn('Unable to set storage key "%(key)s" (%(err)s)'.format({
+            key: key,
+            err: err
+        }))
+        return false
+    }
+}
+
 r.setupBackbone = function() {
     Backbone.emulateJSON = true
     Backbone.ajax = r.ajax

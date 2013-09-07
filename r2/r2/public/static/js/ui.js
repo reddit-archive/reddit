@@ -3,10 +3,10 @@ r.ui.init = function() {
     if ($.cookie('reddit_first')) {
         // save welcome seen state and delete obsolete cookie
         $.cookie('reddit_first', null, {domain: r.config.cur_domain})
-        store.set('ui.shown.welcome', true)
-    } else if (store.get('ui.shown.welcome') != true) {
+        store.safeSet('ui.shown.welcome', true)
+    } else if (store.safeGet('ui.shown.welcome') != true) {
         $('.infobar.welcome').show()
-        store.set('ui.shown.welcome', true)
+        store.safeSet('ui.shown.welcome', true)
     }
 
     // mobile suggest infobar
