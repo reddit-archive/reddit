@@ -56,9 +56,11 @@ class HealthController(MinimalController):
     def GET_cachehealth(self):
         results = {}
         behaviors = {
-            "connect_timeout": 3,
-            "receive_timeout": 3,
-            "send_timeout": 3,
+            # Passed on to poll(2) in milliseconds
+            "connect_timeout": 1000,
+            # Passed on to setsockopt(2) in microseconds
+            "receive_timeout": int(1e6),
+            "send_timeout": int(1e6),
         }
         for server in cache._CACHE_SERVERS:
             try:
