@@ -21,7 +21,6 @@
 ###############################################################################
 
 import base64
-import collections
 import cStringIO
 import hashlib
 import json
@@ -53,6 +52,15 @@ from r2.models.link import Link
 s3_direct_url = "s3.amazonaws.com"
 MEDIA_FILENAME_LENGTH = 12
 thumbnail_size = 70, 70
+
+# TODO: replace this with data from the embedly service api when available
+_SECURE_SERVICES = [
+    "youtube",
+    "vimeo",
+    "soundcloud",
+    "wistia",
+    "slideshare",
+]
 
 
 def _image_to_str(image):
@@ -246,20 +254,6 @@ def upload_media(image, never_expire=True, file_type='.jpg'):
     return url
 
 
-def update_link(link, thumbnail, media_object, thumbnail_size=None):
-    """Sets the link's has_thumbnail and media_object attributes iin the
-    database."""
-    if thumbnail:
-        link.thumbnail_url = thumbnail
-        link.thumbnail_size = thumbnail_size
-        g.log.debug("Updated link with thumbnail: %s" % link.thumbnail_url)
-        
-    if media_object:
-        link.media_object = media_object
-
-    link._commit()
-
-
 def _set_media(embedly_services, link, force=False):
     if link.is_self:
         return
@@ -269,7 +263,7 @@ def _set_media(embedly_services, link, force=False):
         return
 
     scraper = Scraper.for_url(embedly_services, link.url)
-    thumbnail, media_object = scraper.scrape()
+    thumbnail, media_object, secure_media_object = scraper.scrape()
 
     if media_object:
         # the scraper should be able to make a media embed out of the
@@ -281,16 +275,32 @@ def _set_media(embedly_services, link, force=False):
             print "%s made a bad media obj for link %s" % (scraper, link._id36)
             media_object = None
 
-    thumbnail_url = upload_media(thumbnail) if thumbnail else None
-    thumbnail_size = thumbnail.size if thumbnail else None
+    if secure_media_object:
+        res = scraper.media_embed(secure_media_object)
 
-    update_link(link, thumbnail_url, media_object, thumbnail_size=thumbnail_size)
+        if not res:
+            print "%s made a bad secure media obj for link %s" % (scraper,
+                                                                  link._id36)
+            secure_media_object = None
+
+    if thumbnail:
+        link.thumbnail_url = upload_media(thumbnail)
+        link.thumbnail_size = thumbnail.size
+
+    link.media_object = media_object
+    link.secure_media_object = secure_media_object
+    link._commit()
+
 
 def force_thumbnail(link, image_data, never_expire=True, file_type=".jpg"):
     image = str_to_image(image_data)
     image = _prepare_image(image)
     thumb_url = upload_media(image, never_expire=never_expire, file_type=file_type)
-    update_link(link, thumbnail=thumb_url, media_object=None, thumbnail_size=image.size)
+
+    link.thumbnail_url = thumb_url
+    link.thumbnail_size = image.size
+    link._commit()
+
 
 def upload_icon(file_name, image_data, size):
     assert g.media_store == 's3'
@@ -357,15 +367,13 @@ def _make_thumbnail_from_url(thumbnail_url, referer):
 class Scraper(object):
     @classmethod
     def for_url(cls, embedly_services, url):
-        url_domain = domain(url)
-        domain_embedly_regex = embedly_services.get(url_domain, None)
-
-        if domain_embedly_regex and re.match(domain_embedly_regex, url):
-            return _EmbedlyScraper(url)
+        for service_re, service_secure in embedly_services:
+            if service_re.match(url):
+                return _EmbedlyScraper(url, service_secure)
         return _ThumbnailOnlyScraper(url)
 
     def scrape(self):
-        # should return a 2-tuple of: thumbnail, media_object
+        # should return a 3-tuple of: thumbnail, media_object, secure_media_obj
         raise NotImplementedError
 
     @classmethod
@@ -381,7 +389,7 @@ class _ThumbnailOnlyScraper(Scraper):
     def scrape(self):
         thumbnail_url = self._find_thumbnail_image()
         thumbnail = _make_thumbnail_from_url(thumbnail_url, referer=self.url)
-        return thumbnail, None
+        return thumbnail, None, None
 
     def _extract_image_urls(self, soup):
         for img in soup.findAll("img", src=True):
@@ -446,8 +454,9 @@ class _ThumbnailOnlyScraper(Scraper):
 class _EmbedlyScraper(Scraper):
     EMBEDLY_API_URL = "https://api.embed.ly/1/oembed"
 
-    def __init__(self, url):
+    def __init__(self, url, can_embed_securely):
         self.url = url
+        self.can_embed_securely = can_embed_securely
 
     @classmethod
     def _utf8_encode(cls, input):
@@ -463,18 +472,29 @@ class _EmbedlyScraper(Scraper):
         else:
             return input
 
-    def scrape(self):
+    def _fetch_from_embedly(self, secure):
         params = urllib.urlencode({
             "url": self.url,
             "format": "json",
             "maxwidth": 600,
             "key": g.embedly_api_key,
+            "secure": "true" if secure else "false",
         })
         content = requests.get(self.EMBEDLY_API_URL + "?" + params).content
-        oembed = json.loads(content, object_hook=self._utf8_encode)
+        return json.loads(content, object_hook=self._utf8_encode)
 
+    def _make_media_object(self, oembed):
+        if oembed.get("type") in ("video", "rich"):
+            return {
+                "type": domain(self.url),
+                "oembed": oembed,
+            }
+        return None
+
+    def scrape(self):
+        oembed = self._fetch_from_embedly(secure=False)
         if not oembed:
-            return None, None
+            return None, None, None
 
         if oembed.get("type") == "photo":
             thumbnail_url = oembed.get("url")
@@ -482,14 +502,15 @@ class _EmbedlyScraper(Scraper):
             thumbnail_url = oembed.get("thumbnail_url")
         thumbnail = _make_thumbnail_from_url(thumbnail_url, referer=self.url)
 
-        embed = {}
-        if oembed.get("type") in ("video", "rich"):
-            embed = {
-                "type": domain(self.url),
-                "oembed": oembed,
-            }
+        secure_oembed = {}
+        if self.can_embed_securely:
+            secure_oembed = self._fetch_from_embedly(secure=True)
 
-        return thumbnail, embed
+        return (
+            thumbnail,
+            self._make_media_object(oembed),
+            self._make_media_object(secure_oembed),
+        )
 
     @classmethod
     def media_embed(cls, media_object):
@@ -508,17 +529,21 @@ class _EmbedlyScraper(Scraper):
         )
 
 
-@memoize("media.embedly_services", time=3600)
+@memoize("media.embedly_services2", time=3600)
+def _fetch_embedly_service_data():
+    return requests.get("https://api.embed.ly/1/services/python").json
+
+
 def _fetch_embedly_services():
-    service_data = requests.get("https://api.embed.ly/1/services/python").json
+    service_data = _fetch_embedly_service_data()
 
-    patterns_by_domain = collections.defaultdict(set)
+    services = []
     for service in service_data:
-        for domain in [service["domain"]] + service["subdomains"]:
-            patterns_by_domain[domain].update(service["regex"])
-
-    return {domain: "(?:%s)" % "|".join(patterns)
-            for domain, patterns in patterns_by_domain.iteritems()}
+        services.append((
+            re.compile("(?:%s)" % "|".join(service["regex"])),
+            service["name"] in _SECURE_SERVICES,
+        ))
+    return services
 
 
 def run():

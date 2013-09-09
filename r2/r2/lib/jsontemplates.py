@@ -402,6 +402,8 @@ class LinkJsonTemplate(ThingJsonTemplate):
         permalink="permalink",
         saved="saved",
         score="score",
+        secure_media="secure_media_object",
+        secure_media_embed="secure_media_embed",
         selftext="selftext",
         selftext_html="selftext_html",
         stickied="stickied",
@@ -415,16 +417,18 @@ class LinkJsonTemplate(ThingJsonTemplate):
 
     def thing_attr(self, thing, attr):
         from r2.lib.media import get_media_embed
-        if attr == "media_embed":
-           if (thing.media_object and
-               not isinstance(thing.media_object, basestring)):
-               media_embed = get_media_embed(thing.media_object)
-               if media_embed:
-                   return dict(scrolling = media_embed.scrolling,
-                               width = media_embed.width,
-                               height = media_embed.height,
-                               content = media_embed.content)
-           return dict()
+        if attr in ("media_embed", "secure_media_embed"):
+            media_object = getattr(thing, attr.replace("_embed", "_object"))
+            if media_object and not isinstance(media_object, basestring):
+                media_embed = get_media_embed(media_object)
+                if media_embed:
+                    return {
+                        "scrolling": media_embed.scrolling,
+                        "width": media_embed.width,
+                        "height": media_embed.height,
+                        "content": media_embed.content,
+                    }
+            return {}
         elif attr == "editted" and not isinstance(thing.editted, bool):
             return (time.mktime(thing.editted.astimezone(pytz.UTC).timetuple())
                     - time.timezone)
