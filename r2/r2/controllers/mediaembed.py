@@ -20,7 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from pylons import request, g
+from pylons import request, g, c
 from pylons.controllers.util import abort
 
 from r2.controllers.reddit_base import MinimalController
@@ -37,11 +37,16 @@ class MediaembedController(MinimalController):
             # specifically untrusted domain
             abort(404)
 
-        if not link or not link.media_object:
+        if not c.secure:
+            media_object = link.media_object
+        else:
+            media_object = link.secure_media_object
+
+        if not media_object:
             abort(404)
-        elif isinstance(link.media_object, dict):
+        elif isinstance(media_object, dict):
             # otherwise it's the new style, which is a dict(type=type, **args)
-            media_embed = get_media_embed(link.media_object)
+            media_embed = get_media_embed(media_object)
             content = media_embed.content
 
         return MediaEmbedBody(body = content).render()

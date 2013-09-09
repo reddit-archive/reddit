@@ -3509,13 +3509,18 @@ def make_link_child(item):
     editable = False
 
     # if the item has a media_object, try to make a MediaEmbed for rendering
-    if item.media_object:
+    if not c.secure:
+        media_object = item.media_object
+    else:
+        media_object = item.secure_media_object
+
+    if media_object:
         media_embed = None
-        if isinstance(item.media_object, basestring):
-            media_embed = item.media_object
+        if isinstance(media_object, basestring):
+            media_embed = media_object
         else:
             try:
-                media_embed = media.get_media_embed(item.media_object)
+                media_embed = media.get_media_embed(media_object)
             except TypeError:
                 g.log.warning("link %s has a bad media object" % item)
                 media_embed = None
