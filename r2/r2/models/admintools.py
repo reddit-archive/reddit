@@ -329,6 +329,9 @@ def is_banned_domain(dom):
 def is_shamed_domain(dom):
     return False, None, None
 
+def bans_for_domain_parts(dom):
+    return []
+
 def valid_thing(v, karma, *a, **kw):
     return not v._thing1._spam
 
