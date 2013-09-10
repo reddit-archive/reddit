@@ -437,18 +437,9 @@ class FrontController(RedditController, OAuth2ResourceController):
             return self.abort404()
 
     def _make_moderationlog(self, srs, num, after, reverse, count, mod=None, action=None):
-
-        if mod and action:
-            query = Subreddit.get_modactions(srs, mod=mod, action=None)
-            def keep_fn(ma):
-                return ma.action == action
-        else:
-            query = Subreddit.get_modactions(srs, mod=mod, action=action)
-            def keep_fn(ma):
-                return True
-
-        builder = QueryBuilder(query, skip=True, num=num, after=after,
-                               keep_fn=keep_fn, count=count,
+        query = Subreddit.get_modactions(srs, mod=mod, action=action)
+        builder = QueryBuilder(query, num=num, after=after,
+                               count=count,
                                reverse=reverse,
                                wrap=default_thing_wrapper())
         listing = ModActionListing(builder)

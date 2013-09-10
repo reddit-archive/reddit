@@ -257,17 +257,17 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
         if not mod and not action:
             rowkeys = [sr._id36 for sr in srs]
             q = ModActionBySR.query(rowkeys, after=after, reverse=reverse, count=count)
-        elif mod and not action:
+        elif mod:
             mods = tup(mod)
+            key = '%s_%s' if not action else '%%s_%%s_%s' % action
             rowkeys = itertools.product([sr._id36 for sr in srs],
                 [mod._id36 for mod in mods])
-            rowkeys = ['%s_%s' % (sr, mod) for sr, mod in rowkeys]
-            q = ModActionBySRMod.query(rowkeys, after=after, reverse=reverse, count=count)
-        elif not mod and action:
+            rowkeys = [key % (sr, mod) for sr, mod in rowkeys]
+            view = ModActionBySRActionMod if action else ModActionBySRMod
+            q = view.query(rowkeys, after=after, reverse=reverse, count=count)
+        else:
             rowkeys = ['%s_%s' % (sr._id36, action) for sr in srs]
             q = ModActionBySRAction.query(rowkeys, after=after, reverse=reverse, count=count)
-        else:
-            raise NotImplementedError("Can't query by both mod and action")
 
         return q
 
