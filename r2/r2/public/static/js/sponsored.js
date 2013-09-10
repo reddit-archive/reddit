@@ -247,7 +247,7 @@ r.sponsored = {
     },
 
     calc_bid: function(impressions, cpm_pennies) {
-        return (impressions * cpm_pennies / 1000 / 100).toFixed(2)
+        return (Math.floor(impressions * cpm_pennies / 1000) / 100).toFixed(2)
     }
 }
 
