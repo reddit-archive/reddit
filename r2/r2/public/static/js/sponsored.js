@@ -202,6 +202,7 @@ r.sponsored = {
         $(".duration").text(ndays + " " + ((ndays > 1) ? r._("days") : r._("day")))
         $(".price-info").text(r._("$%(cpm)s per 1,000 impressions").format({cpm: (cpm/100).toFixed(2)}))
         $form.find('*[name="impressions"]').val(r.utils.prettyNumber(impressions))
+        $(".OVERSOLD").hide()
 
         this.check_bid($form)
         this.check_inventory($form)
