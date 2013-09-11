@@ -65,6 +65,7 @@ from r2.lib.validator import (
     validatedForm,
     ValidCard,
     ValidIP,
+    VBid,
     VBoolean,
     VByName,
     VDate,
@@ -486,8 +487,8 @@ class PromoteController(ListingController):
                                   business_days=False,
                                   sponsor_override=True),
                    link=VLink('link_id'),
-                   bid=VFloat('bid', min=0, max=g.max_promote_bid,
-                                  coerce=False, error=errors.BAD_BID),
+                   bid=VBid('bid', min=0, max=g.max_promote_bid,
+                            coerce=False, error=errors.BAD_BID),
                    sr=VSubmitSR('sr', promotion=True),
                    campaign_id36=nop("campaign_id36"),
                    targeting=VLength("targeting", 10))

@@ -1402,6 +1402,17 @@ class VNumber(Validator):
     def cast(self, val):
         raise NotImplementedError
 
+    def _set_error(self):
+        if self.max is None and self.min is None:
+            range = ""
+        elif self.max is None:
+            range = _("%(min)d to any") % dict(min=self.min)
+        elif self.min is None:
+            range = _("any to %(max)d") % dict(max=self.max)
+        else:
+            range = _("%(min)d to %(max)d") % dict(min=self.min, max=self.max)
+        self.set_error(self.error, msg_params=dict(range=range))
+
     def run(self, val):
         if not val:
             return self.num_default
@@ -1419,15 +1430,7 @@ class VNumber(Validator):
                     raise ValueError, ""
             return val
         except ValueError:
-            if self.max is None and self.min is None:
-                range = ""
-            elif self.max is None:
-                range = _("%(min)d to any") % dict(min=self.min)
-            elif self.min is None:
-                range = _("any to %(max)d") % dict(max=self.max)
-            else:
-                range = _("%(min)d to %(max)d") % dict(min=self.min, max=self.max)
-            self.set_error(self.error, msg_params=dict(range=range))
+            self._set_error()
 
 class VInt(VNumber):
     def cast(self, val):
@@ -1437,6 +1440,9 @@ class VFloat(VNumber):
     def cast(self, val):
         return float(val)
 
+class VBid(VFloat):
+    def _set_error(self):
+        self.set_error(self.error, msg_params=dict(min=self.min, max=self.max))
 
 class VCssName(Validator):
     """
