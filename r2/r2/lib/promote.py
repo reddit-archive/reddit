@@ -189,8 +189,8 @@ class RenderableCampaign():
         self.start_date = start_date
         self.end_date = end_date
         self.duration = duration
-        self.bid = bid
-        self.spent = spent
+        self.bid = "%.2f" % bid
+        self.spent = "%.2f" % spent
         self.cpm = cpm
         self.sr = sr
         self.status = status
@@ -210,8 +210,8 @@ class RenderableCampaign():
             ndays = camp.ndays
             duration = strings.time_label % dict(num=ndays,
                             time=ungettext("day", "days", ndays))
-            bid = "%.2f" % camp.bid
-            spent = "%.2f" % get_spent_amount(camp)
+            bid = camp.bid
+            spent = get_spent_amount(camp)
             cpm = getattr(camp, 'cpm', g.cpm_selfserve.pennies)
             sr = camp.sr_name
             live = camp._id in live_campaigns
