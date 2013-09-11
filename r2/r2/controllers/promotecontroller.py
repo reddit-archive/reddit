@@ -124,6 +124,36 @@ def _check_dates(dates):
     return start, end, bad_dates
 
 
+def campaign_has_oversold_error(form, campaign):
+    target = Subreddit._by_name(campaign.sr_name) if campaign.sr_name else None
+    return has_oversold_error(form, campaign._id, campaign.start_date,
+                              campaign.end_date, campaign.bid, campaign.cpm,
+                              target)
+
+
+def has_oversold_error(form, campaign_id, start, end, bid, cpm, target):
+    ndays = (to_date(end) - to_date(start)).days
+    total_request = calc_impressions(bid, cpm)
+    daily_request = int(total_request / ndays)
+    ignore = [campaign_id] if campaign_id else []
+    oversold = inventory.get_oversold(target or Frontpage, start, end,
+                                      daily_request, ignore)
+
+    if oversold:
+        min_daily = min(oversold.values())
+        available = min_daily * ndays
+        msg_params = {
+            'available': format_number(available, locale=c.locale),
+            'target': target.name if target else 'the frontpage',
+            'start': start.strftime('%m/%d/%Y'),
+            'end': end.strftime('%m/%d/%Y'),
+        }
+        c.errors.add(errors.OVERSOLD_DETAIL, field='bid',
+                     msg_params=msg_params)
+        form.has_errors('bid', errors.OVERSOLD_DETAIL)
+        return True
+
+
 class PromoteController(ListingController):
     where = 'promoted'
     render_cls = PromotePage
@@ -296,6 +326,10 @@ class PromoteController(ListingController):
                    link=VLink("link_id"),
                    campaign=VPromoCampaign("campaign_id36"))
     def POST_freebie(self, form, jquery, link, campaign):
+        if campaign_has_oversold_error(form, campaign):
+            form.set_html(".freebie", "target oversold, can't freebie")
+            return
+
         if promote.is_promo(link) and campaign:
             promote.free_campaign(link, campaign, c.user)
             form.redirect(promote.promo_edit_url(link))
@@ -576,24 +610,8 @@ class PromoteController(ListingController):
             sr = None
 
         # Check inventory
-        ndays = (to_date(end) - to_date(start)).days
-        total_request = calc_impressions(bid, cpm)
-        daily_request = int(total_request / ndays)
-        ignore = [campaign._id] if campaign_id36 else []
-        oversold = inventory.get_oversold(sr or Frontpage, start, end,
-                                          daily_request, ignore)
-        if oversold:
-            min_daily = min(oversold.values())
-            available = min_daily * ndays
-            msg_params = {
-                'available': format_number(available, locale=c.locale),
-                'target': sr.name if sr else 'the frontpage',
-                'start': start.strftime('%m/%d/%Y'),
-                'end': end.strftime('%m/%d/%Y'),
-            }
-            c.errors.add(errors.OVERSOLD_DETAIL, field='bid',
-                         msg_params=msg_params)
-            form.has_errors('bid', errors.OVERSOLD_DETAIL)
+        campaign_id = campaign._id if campaign_id36 else None
+        if has_oversold_error(form, campaign_id, start, end, bid, cpm, sr):
             return
 
         if campaign_id36 is not None:
@@ -673,6 +691,10 @@ class PromoteController(ListingController):
                                            "cardCode"]))
     def POST_update_pay(self, form, jquery, link, campaign, customer_id, pay_id,
                         edit, address, creditcard):
+        # Check inventory
+        if campaign_has_oversold_error(form, campaign):
+            return
+
         address_modified = not pay_id or edit
         form_has_errors = False
         if address_modified:

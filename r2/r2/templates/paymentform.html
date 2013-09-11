@@ -43,6 +43,7 @@ ${unsafe(js.use('sponsored'))}
       <input type="hidden" name="link" value="${thing.link._fullname}" />
       <% budget=format_currency(float(thing.campaign.bid), 'USD', locale=c.locale) %>
       ${unsafe(_("Your current budget is %(budget)s") % dict(budget=budget))}
+      ${error_field("OVERSOLD_DETAIL", "bid", "div")}
   </p>
   %if thing.profiles:
   <p>
