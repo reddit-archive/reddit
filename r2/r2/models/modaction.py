@@ -46,6 +46,7 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
     _read_consistency_level = tdb_cassandra.CL.ONE
     _use_db = True
     _connection_pool = 'main'
+    _ttl = timedelta(days=120)
     _str_props = ('sr_id36', 'mod_id36', 'target_fullname', 'action', 'details', 
                   'description')
     _defaults = {}
