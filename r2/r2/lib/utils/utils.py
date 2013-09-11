@@ -349,21 +349,21 @@ def sanitize_url(url, require_scheme = False):
             return
         if u.username is not None or u.password is not None:
             return
-        labels = u.hostname.split('.')
-        for label in labels:
-            try:
-                #if this succeeds, this portion of the dns is almost
-                #valid and converted to ascii
-                label = label.encode('idna')
-            except TypeError:
-                print "label sucks: [%r]" % label
-                raise
-            except UnicodeError:
+
+        try:
+            idna_hostname = u.hostname.encode('idna')
+        except TypeError as e:
+            g.log.warning("Bad hostname given [%r]: %s", u.hostname, e)
+            raise
+        except UnicodeError:
+            return
+
+        for label in idna_hostname.split('.'):
+            if not re.match(valid_dns, label):
                 return
-            else:
-                #then if this success, this portion of the dns is really valid
-                if not re.match(valid_dns, label):
-                    return
+
+        if idna_hostname != u.hostname:
+            url = urlunparse((u[0], idna_hostname, u[2], u[3], u[4], u[5]))
         return url
 
 def trunc_string(text, length):
