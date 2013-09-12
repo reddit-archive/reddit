@@ -26,6 +26,7 @@ from r2.lib.filters import websafe
 from r2.lib.log import log_text
 from r2.models import Account, Message, Report, Subreddit
 from r2.models.award import Award
+from r2.models.gold import append_random_bottlecap_phrase
 from r2.models.token import AwardClaimToken
 
 from _pylibmc import MemcachedError
@@ -274,7 +275,10 @@ def update_gold_users(verbose=False):
             subject = _("Your reddit gold subscription has expired.")
             message = _("Your subscription to reddit gold has expired.")
             message += "\n\n" + renew_msg
-            send_system_message(account, subject, message)
+            message = append_random_bottlecap_phrase(message)
+
+            send_system_message(account, subject, message,
+                                distinguished='gold-auto')
             continue
 
         count += 1
@@ -304,7 +308,10 @@ def update_gold_users(verbose=False):
                 message = _("Your subscription to reddit gold will be "
                             "expiring soon.")
                 message += "\n\n" + renew_msg
-                send_system_message(account, subject, message)
+                message = append_random_bottlecap_phrase(message)
+
+                send_system_message(account, subject, message,
+                                    distinguished='gold-auto')
 
     if verbose:
         for exp_date in sorted(expiration_dates.keys()):

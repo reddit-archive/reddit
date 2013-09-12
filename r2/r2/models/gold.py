@@ -38,10 +38,16 @@ from sqlalchemy.types import DateTime, Integer, String
 from xml.dom.minidom import Document
 from r2.lib.utils import tup, randstr
 from httplib import HTTPSConnection
+import re
+from random import choice
 from urlparse import urlparse
 from time import time
 import socket, base64
 from BeautifulSoup import BeautifulStoneSoup
+
+from r2.lib.db.tdb_cassandra import NotFound
+from r2.models.subreddit import Frontpage
+from r2.models.wiki import WikiPage
 
 gold_bonus_cutoff = datetime(2010,7,27,0,0,0,0,g.tz)
 
@@ -454,3 +460,25 @@ def retrieve_gold_transaction(transaction_id):
 def update_gold_transaction(transaction_id, status):
     rp = gold_table.update(gold_table.c.trans_id == str(transaction_id),
                            values={gold_table.c.status: status}).execute()
+
+def append_random_bottlecap_phrase(message):
+    """Appends a random "bottlecap" phrase from the wiki page.
+
+    The wiki page should be an unordered list with each item a separate
+    bottlecap.
+    """
+
+    bottlecap = None
+    try:
+        wp = WikiPage.get(Frontpage, g.wiki_page_gold_bottlecaps)
+
+        split_list = re.split('^[*-] ', wp.content, flags=re.MULTILINE)
+        choices = [item.strip() for item in split_list if item.strip()]
+        if len(choices):
+            bottlecap = choice(choices)
+    except NotFound:
+        pass
+
+    if bottlecap:
+        message += '\n\n> ' + bottlecap
+    return message

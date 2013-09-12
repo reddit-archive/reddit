@@ -137,7 +137,8 @@ class Builder(object):
             if hasattr(item, "distinguished"):
                 if item.distinguished == 'yes':
                     w.distinguished = 'moderator'
-                elif item.distinguished in ('admin', 'special', 'gold'):
+                elif item.distinguished in ('admin', 'special',
+                                            'gold', 'gold-auto'):
                     w.distinguished = item.distinguished
 
             try:

@@ -55,6 +55,7 @@ from r2.models import (
     account_by_payingid,
     accountid_from_paypalsubscription,
     admintools,
+    append_random_bottlecap_phrase,
     cancel_subscription,
     Comment,
     create_claimed_gold,
@@ -251,9 +252,11 @@ def send_gift(buyer, recipient, months, days, signed, giftmessage, comment_id):
 
     message += '\n\n' + strings.gold_benefits_msg
     message += '\n\n' + strings.lounge_msg
+    message = append_random_bottlecap_phrase(message)
 
     try:
-        send_system_message(recipient, subject, message)
+        send_system_message(recipient, subject, message,
+                            distinguished='gold-auto')
     except MessageError:
         g.log.error('send_gift: could not send system message')
 
@@ -409,8 +412,11 @@ class IpnController(RedditController):
                                 'Please bear with us as Google Wallet '
                                 'payments can take up to an hour to '
                                 'complete.')
+                        msg = append_random_bottlecap_phrase(msg)
+
                         try:
-                            send_system_message(buyer, subject, msg)
+                            send_system_message(buyer, subject, msg,
+                                                distinguished='gold-auto')
                         except MessageError:
                             g.log.error('gcheckout send_system_message failed')
             elif auth.find("financial-order-state"
@@ -608,7 +614,9 @@ class IpnController(RedditController):
                             secret, buyer_id, c.start_time,
                             subscr_id, status=status)
 
-        send_system_message(buyer, subject, message)
+        message = append_random_bottlecap_phrase(message)
+
+        send_system_message(buyer, subject, message, distinguished='gold-auto')
 
         payment_blob["status"] = "processed"
         g.hardcache.set(blob_key, payment_blob, 86400 * 30)
@@ -667,13 +675,13 @@ class GoldPaymentController(RedditController):
         comment = payment_blob.get('comment', None)
         comment = comment._fullname if comment else None
         existing = retrieve_gold_transaction(transaction_id)
+        msg = None
 
         if event_type == 'cancelled':
             subject = _('reddit gold payment cancelled')
             msg = _('Your reddit gold payment has been cancelled, contact '
                     '%(gold_email)s for details') % {'gold_email':
                                                      g.goldthanks_email}
-            send_system_message(buyer, subject, msg)
             if existing:
                 # note that we don't check status on existing, probably
                 # should update gold_table when a cancellation happens
@@ -695,7 +703,6 @@ class GoldPaymentController(RedditController):
             msg = _('Your reddit gold payment has failed, contact '
                     '%(gold_email)s for details') % {'gold_email':
                                                      g.goldthanks_email}
-            send_system_message(buyer, subject, msg)
             # probably want to update gold_table here
         elif event_type == 'refunded':
             if not (existing and existing.status == 'processed'):
@@ -705,8 +712,11 @@ class GoldPaymentController(RedditController):
             msg = _('Your reddit gold payment has been refunded, contact '
                    '%(gold_email)s for details') % {'gold_email':
                                                     g.goldthanks_email}
-            send_system_message(buyer, subject, msg)
             reverse_gold_purchase(transaction_id)
+
+        if msg:
+            msg = append_random_bottlecap_phrase(msg)
+            send_system_message(buyer, subject, msg, distinguished='gold-auto')
 
 
 class StripeController(GoldPaymentController):
@@ -817,7 +827,10 @@ class StripeController(GoldPaymentController):
             subject = _('reddit gold payment')
             msg = _('Your payment is being processed and reddit gold will be '
                     'delivered shortly.')
-            send_system_message(c.user, subject, msg)
+            msg = append_random_bottlecap_phrase(msg)
+
+            send_system_message(c.user, subject, msg,
+                                distinguished='gold-auto')
 
 
 class CoinbaseController(GoldPaymentController):
@@ -1021,7 +1034,9 @@ def complete_gold_purchase(secret, transaction_id, payer_email, payer_id,
             g.log.error('gold: got duplicate gold transaction')
 
         try:
-            send_system_message(buyer, subject, message)
+            message = append_random_bottlecap_phrase(message)
+            send_system_message(buyer, subject, message,
+                                distinguished='gold-auto')
         except MessageError:
             g.log.error('complete_gold_purchase: could not send system message')
 
