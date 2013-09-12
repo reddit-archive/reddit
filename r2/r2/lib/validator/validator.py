@@ -1507,7 +1507,7 @@ class VRatelimit(Validator):
                 if self.seconds < 3:  # Don't ratelimit within three seconds
                     return
                 self.set_error(errors.RATELIMIT, {'time': time},
-                               field = 'ratelimit')
+                               field='ratelimit', code=429)
             else:
                 self.set_error(self.error)
 
