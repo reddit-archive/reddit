@@ -33,7 +33,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.schema import Column
 from sqlalchemy.sql import and_
-from sqlalchemy.types import String, Integer
+from sqlalchemy.types import DateTime, Integer, String
 
 from xml.dom.minidom import Document
 from r2.lib.utils import tup, randstr
@@ -102,6 +102,7 @@ class GoldPartnerDealCode(Base):
     deal = Column(String, nullable=False)
     code = Column(String, nullable=False)
     user = Column(Integer, nullable=True)
+    date = Column(DateTime(timezone=True), nullable=True)
 
     @classmethod
     @with_sqlalchemy_session
@@ -135,6 +136,7 @@ class GoldPartnerDealCode(Base):
             raise GoldPartnerCodesExhaustedError
 
         claiming.user = user._id
+        claiming.date = datetime.now(g.tz)
         Session.add(claiming)
         Session.commit()
 
