@@ -569,6 +569,12 @@ class VPrintable(VLength):
         self.set_error(errors.BAD_STRING)
         return None
 
+    def param_docs(self):
+        return {
+            self.param: "a string up to %d characters long,"
+                        " consisting of printable characters."
+                            % self.max_length,
+        }
 
 class VTitle(VLength):
     def __init__(self, param, max_length = 300, **kw):
