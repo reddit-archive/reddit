@@ -149,7 +149,6 @@ r.sponsored = {
                 } else {
                     $(".available-info").text(r._("%(num)s available (maximum budget is $%(max)s)").format({num: r.utils.prettyNumber(available), max: maxbid}))
                     $(".OVERSOLD_DETAIL").hide()
-                    r.sponsored.enable_form($form)
                 }
             }
         )
@@ -204,6 +203,7 @@ r.sponsored = {
         $form.find('*[name="impressions"]').val(r.utils.prettyNumber(impressions))
         $(".OVERSOLD").hide()
 
+        this.enable_form($form)
         this.check_bid($form)
         this.check_inventory($form)
     },
@@ -238,8 +238,6 @@ r.sponsored = {
         if (bid < minimum_bid) {
             $(".minimum-spend").addClass("error");
             this.disable_form($form)
-        } else {
-            this.enable_form($form)
         }
     },
 
