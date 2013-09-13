@@ -66,7 +66,7 @@ class Award (Thing):
 
     @classmethod
     def give_if_needed(cls, codename, user,
-                       description=None, url=None, cup_info=None):
+                       description=None, url=None):
         """Give an award to a user, unless they already have it.
            Returns the trophy. Does nothing and prints nothing
            (except for g.log.debug) if the award doesn't exist."""
@@ -86,7 +86,7 @@ class Award (Thing):
 
         g.log.debug("Gave %s to %s" % (codename, user))
         return Trophy._new(user, award, description=description,
-                        url=url, cup_info=cup_info)
+                        url=url)
 
     @classmethod
     def take_away(cls, codename, user):
@@ -118,21 +118,19 @@ class Award (Thing):
             g.log.debug("%s didn't have %s" % (user, codename))
 
 class FakeTrophy(object):
-    def __init__(self, recipient, award, description=None, url=None,
-                 cup_info=None):
+    def __init__(self, recipient, award, description=None, url=None):
         self._thing2 = award
         self._thing1 = recipient
         self.description = description
         self.url = url
         self.trophy_url = getattr(self, "url",
                                   getattr(self._thing2, "url", None))
-        self.cup_info = cup_info
         self._id = self._id36 = None
 
 class Trophy(Relation(Account, Award)):
     @classmethod
     def _new(cls, recipient, award, description = None,
-             url = None, cup_info = None):
+             url = None):
 
         # The "name" column of the relation can't be a constant or else a
         # given account would not be allowed to win a given award more than
@@ -149,9 +147,6 @@ class Trophy(Relation(Account, Award)):
 
         if url:
             t.url = url
-
-        if cup_info:
-            recipient.set_cup(cup_info)
 
         t._commit()
         t.update_caches()

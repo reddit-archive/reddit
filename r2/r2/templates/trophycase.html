@@ -52,24 +52,6 @@
   </td>
 </%def>
 
-%if c.user_is_admin and thing.cup_info:
-  <div class="cup-info-box">
-    cup:
-    &#32;
-    <img src="${thing.cup_info['img_url']}" alt="[image not found]" />
-    <br/>
-    &laquo;
-    <tt>${thing.cup_info["label_template"] % dict(user=thing.user.name)}</tt>
-    &raquo;
-    <br/>
-    show cup until:
-    ${thing.cup_info["expiration"].astimezone(g.display_tz).strftime("%Y-%m-%d %H:%M:%S %Z")}
-    &#32;
-    ${ynbutton(_("remove"), _("removed"), "removecup", "hide_thing",
-               hidden_data=dict(account=thing.user.name))}
-  </div>
-%endif
-
 ## for now
 %if not thing.trophies:
   <div class="dust">${_("dust")}</div>

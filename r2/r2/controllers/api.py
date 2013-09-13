@@ -3101,11 +3101,9 @@ class ApiController(RedditController, OAuth2ResourceController):
                    award=VByName("fullname"),
                    description=VLength("description", max_length=1000),
                    url=VLength("url", max_length=1000),
-                   cup_hours=VFloat("cup_hours",
-                                      coerce=False, min=0, max=24 * 365),
                    recipient=VExistingUname("recipient"))
     def POST_givetrophy(self, form, jquery, secret_used, award, description,
-                        url, cup_hours, recipient):
+                        url, recipient):
         if form.has_errors("recipient", errors.USER_DOESNT_EXIST,
                                         errors.NO_USER):
             pass
@@ -3113,9 +3111,6 @@ class ApiController(RedditController, OAuth2ResourceController):
         if form.has_errors("fullname", errors.NO_TEXT, errors.NO_THING_ID):
             pass
 
-        if form.has_errors("cup_hours", errors.BAD_NUMBER):
-            pass
-        
         if secret_used and not award.api_ok:
             c.errors.add(errors.NO_API, field='secret')
             form.has_errors('secret', errors.NO_API)
@@ -3123,24 +3118,10 @@ class ApiController(RedditController, OAuth2ResourceController):
         if form.has_error():
             return
 
-        if cup_hours:
-            cup_seconds = int(cup_hours * 3600)
-            cup_expiration = timefromnow("%s seconds" % cup_seconds)
-        else:
-            cup_expiration = None
-        
-        t = Trophy._new(recipient, award, description=description, url=url,
-                        cup_info=dict(expiration=cup_expiration))
+        t = Trophy._new(recipient, award, description=description, url=url)
 
         form.set_html(".status", _('saved'))
         form._send_data(trophy_fn=t._id36)
-    
-    @validatedForm(VAdmin(),
-                   account = VExistingUname("account"))
-    def POST_removecup(self, form, jquery, account):
-        if not account:
-            return self.abort404()
-        account.remove_cup()
 
     @validatedForm(secret_used=VAdminOrAdminSecret("secret"),
                    trophy = VTrophy("trophy_fn"))

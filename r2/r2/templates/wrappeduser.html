@@ -61,19 +61,14 @@
     <span class="userattrs">
     %if thing.attribs:
       [
-      %for priority, abbv, css_class, label, attr_link, img in thing.attribs:
+      %for priority, abbv, css_class, label, attr_link in thing.attribs:
         %if attr_link:
           <a class="${css_class}" title="${label}"
           %if target:
              target="${target}"
           %endif
              href="${attr_link}">
-          %if img:
-            <% (src, alt, width, height) = img %>
-            <img src="${src}" alt="${alt}" width="${width}" height="${height}"/>
-          %else:
             ${unsafe(abbv)}
-          %endif
           </a>
         %else:
           <span class="${css_class}" title="${label}">${abbv}</span>

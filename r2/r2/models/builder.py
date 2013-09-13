@@ -71,16 +71,17 @@ class Builder(object):
         #get authors
         #TODO pull the author stuff into add_props for links and
         #comments and messages?
-
         aids = set(l.author_id for l in items if hasattr(l, 'author_id')
                    and l.author_id is not None)
 
         authors = {}
-        cup_infos = {}
+        cakes = {}
         friend_rels = None
         if aids:
             authors = Account._byID(aids, data=True, stale=self.stale) if aids else {}
-            cup_infos = Account.cup_info_multi(aids)
+            now = datetime.datetime.now(g.tz)
+            cakes = {a._id for a in authors.itervalues()
+                     if a.cake_expiration and a.cake_expiration >= now}
             if user and user.gold:
                 friend_rels = user.friend_rels()
 
@@ -174,13 +175,14 @@ class Builder(object):
                     args['kind'] = 'special'
                 add_attr(w.attribs, **args)
 
-            if w.author and w.author._id in cup_infos and not c.profilepage:
-                cup_info = cup_infos[w.author._id]
-                label = _(cup_info["label_template"]) % \
-                        {'user':w.author.name}
-                add_attr(w.attribs, 'trophy:' + cup_info["img_url"],
-                         label=label,
-                         link = "/user/%s" % w.author.name)
+            if w.author and w.author._id in cakes and not c.profilepage:
+                add_attr(
+                    w.attribs,
+                    kind="cake",
+                    label=(_("%(user)s just celebrated a reddit birthday!") %
+                           {"user": w.author.name}),
+                    link="/user/%s" % w.author.name,
+                )
 
             if hasattr(item, "sr_id") and item.sr_id is not None:
                 w.subreddit = subreddits[item.sr_id]

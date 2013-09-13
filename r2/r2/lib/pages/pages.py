@@ -1617,7 +1617,6 @@ class TrophyCase(Templated):
                 self.trophies.append(trophy)
                 award_ids_seen.append(trophy._thing2_id)
 
-        self.cup_info = user.cup_info()
         Templated.__init__(self)
 
 

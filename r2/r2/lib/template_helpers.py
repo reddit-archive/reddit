@@ -494,11 +494,10 @@ def panel_size(state):
 
 # Appends to the list "attrs" a tuple of:
 # <priority (higher trumps lower), letter,
-#  css class, i18n'ed mouseover label, hyperlink (opt), img (opt)>
+#  css class, i18n'ed mouseover label, hyperlink (opt)>
 def add_attr(attrs, kind, label=None, link=None, cssclass=None, symbol=None):
     from r2.lib.template_helpers import static
 
-    img = None
     symbol = symbol or kind
 
     if kind == 'F':
@@ -546,10 +545,10 @@ def add_attr(attrs, kind, label=None, link=None, cssclass=None, symbol=None):
             raise ValueError ("Need a label")
     elif kind == 'special':
         priority = 98
-    elif kind.startswith ('trophy:'):
-        img = (kind[7:], '!', 11, 8)
+    elif kind == "cake":
         priority = 99
-        cssclass = 'recent-trophywinner'
+        cssclass = "cakeday"
+        symbol = "&#x1F370;"
         if not label:
             raise ValueError ("Need a label")
         if not link:
@@ -557,7 +556,7 @@ def add_attr(attrs, kind, label=None, link=None, cssclass=None, symbol=None):
     else:
         raise ValueError ("Got weird kind [%s]" % kind)
 
-    attrs.append( (priority, symbol, cssclass, label, link, img) )
+    attrs.append( (priority, symbol, cssclass, label, link) )
 
 
 def search_url(query, subreddit, restrict_sr="off", sort=None, recent=None):

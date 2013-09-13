@@ -446,43 +446,6 @@ class Account(Thing):
 
         self.share = share
 
-    def set_cup(self, cup_info):
-        from r2.lib.template_helpers import static
-
-        if cup_info is None:
-            return
-
-        if cup_info.get("expiration", None) is None:
-            return
-
-        cup_info.setdefault("label_template",
-          "%(user)s recently won a trophy! click here to see it.")
-
-        cup_info.setdefault("img_url", static('award.png'))
-
-        existing_info = self.cup_info()
-
-        if (existing_info and
-            existing_info["expiration"] > cup_info["expiration"]):
-            # The existing award has a later expiration,
-            # so it trumps the new one as far as cups go
-            return
-
-        td = cup_info["expiration"] - timefromnow("0 seconds")
-
-        cache_lifetime = td.seconds
-
-        if cache_lifetime <= 0:
-            g.log.error("Adding a cup that's already expired?")
-        else:
-            g.hardcache.set("cup_info-%d" % self._id, cup_info, cache_lifetime)
-
-    def remove_cup(self):
-        g.hardcache.delete("cup_info-%d" % self._id)
-
-    def cup_info(self):
-        return g.hardcache.get("cup_info-%d" % self._id)
-
     def special_distinguish(self):
         if self._t.get("special_distinguish_name"):
             return dict((k, self._t.get("special_distinguish_"+k, None))
@@ -598,10 +561,6 @@ class Account(Thing):
                 filled_quota = key
 
         return filled_quota
-
-    @classmethod
-    def cup_info_multi(cls, ids):
-        return g.hardcache.get_multi(ids, prefix="cup_info-")
 
     @classmethod
     def system_user(cls):
