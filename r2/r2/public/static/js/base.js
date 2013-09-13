@@ -37,6 +37,10 @@ r.ajax = function(request) {
 }
 
 store.safeGet = function(key, errorValue) {
+    if (store.disabled) {
+        return errorValue
+    }
+
     // errorValue defaults to undefined, equivalent to the key being unset.
     try {
         return store.get(key)
@@ -51,6 +55,10 @@ store.safeGet = function(key, errorValue) {
 }
 
 store.safeSet = function(key, val) {
+    if (store.disabled) {
+        return false
+    }
+
     // swallow exceptions upon storage set for non-trivial operations. returns
     // a boolean value indicating success.
     try {
