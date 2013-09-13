@@ -325,7 +325,9 @@ ${self.javascript_setup()}
                       value="${format_decimal(5 * thing.min_bid, format='.00', locale=c.locale)}"
                       data-min_bid="${thing.min_bid}"
                       data-base_cpm="${g.cpm_selfserve.pennies}"/>
-              &#32;${_('%(minimum)s minimum') % dict(minimum=format_currency(thing.min_bid, 'USD', locale=c.locale))}
+              <div class="minimum-spend">
+                ${_('%(minimum)s minimum') % dict(minimum=format_currency(thing.min_bid, 'USD', locale=c.locale))}
+              </div>
             </td>
           </tr>
 
