@@ -21,6 +21,8 @@
 ###############################################################################
 
 <%!
+from babel.numbers import format_currency
+from pylons import g, c
 from r2.lib.pages import Feedback
 from r2.lib.template_helpers import static
 %>
@@ -50,8 +52,8 @@ from r2.lib.template_helpers import static
 
                 <h2>Control your budget</h2>
                 <ul>
-                    <li>Bid-based system ensures you get a fair piece of the daily pie</li>
-                    <li>Low CPM, even with low bids</li>
+                    <li>With a CPM starting at ${format_currency(g.cpm_selfserve.decimal, 'USD', locale=c.locale)}, enjoy above-the-fold exposure at a price that won't break your budget</li>
+                    <li>Campaigns start at ${format_currency(g.min_promote_bid, 'USD', locale=c.locale)}, and you can build out a plan to as many subreddits as you wish</li>
                 </ul>
             </div>
         </div>
@@ -85,7 +87,7 @@ from r2.lib.template_helpers import static
                 <a href="/promoted" class="manage-ads">manage existing ads</a>
             </div>
             <div class="bottom-box-title">Start advertising today!</div>
-            <p><a href="/selfserviceoatmeal">A comic that explains it all.</a><br/>
+            <p>
                 Have questions? Read the&#32;<a href="/wiki/selfserve">FAQ</a>, or send us an&#32; <a href="mailto:selfservicesupport@reddit.com?subject=Questions about reddit advertising">email</a>.
             <br/>
             Interested in a bigger campaign?&#32;<a href="mailto:marketing@reddit.com?subject=campaign%20inquiry">Talk to our sales team</a>.
