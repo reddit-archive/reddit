@@ -566,7 +566,7 @@ class VPrintable(VLength):
         except UnicodeEncodeError:
             pass
 
-        self.set_error(errors.BAD_STRING)
+        self.set_error(errors.BAD_STRING, code=400)
         return None
 
     def param_docs(self):
