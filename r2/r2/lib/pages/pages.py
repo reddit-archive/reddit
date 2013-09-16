@@ -65,7 +65,7 @@ from r2.lib.strings import plurals, rand_strings, strings, Score
 from r2.lib.utils import title_to_url, query_string, UrlParser, vote_hash
 from r2.lib.utils import url_links_builder, make_offset_date, median, to36
 from r2.lib.utils import trunc_time, timesince, timeuntil, weighted_lottery
-from r2.lib.template_helpers import add_sr, get_domain, format_number
+from r2.lib.template_helpers import add_sr, get_domain, format_number, s3_https_if_secure
 from r2.lib.subreddit_search import popular_searches
 from r2.lib.log import log_text
 from r2.lib.memoize import memoize
@@ -1937,8 +1937,10 @@ class SubredditStylesheet(Templated):
     """form for editing or creating subreddit stylesheets"""
     def __init__(self, site = None,
                  stylesheet_contents = ''):
+        raw_images = ImagesByWikiPage.get_images(c.site, "config/stylesheet")
+        images = {name: s3_https_if_secure(url)
+                  for name, url in raw_images.iteritems()}
 
-        images = ImagesByWikiPage.get_images(c.site, "config/stylesheet")
         Templated.__init__(self, site = site, images=images,
                          stylesheet_contents = stylesheet_contents)
 
