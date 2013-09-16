@@ -79,14 +79,18 @@ r.setupBackbone = function() {
 }
 
 $(function() {
-    r.setupBackbone()
+    try {
+        r.setupBackbone()
 
-    r.login.ui.init()
-    r.analytics.init()
-    r.ui.init()
-    r.interestbar.init()
-    r.apps.init()
-    r.wiki.init()
-    r.gold.init()
-    r.multi.init()
+        r.login.ui.init()
+        r.analytics.init()
+        r.ui.init()
+        r.interestbar.init()
+        r.apps.init()
+        r.wiki.init()
+        r.gold.init()
+        r.multi.init()
+    } catch (err) {
+        r.sendError('Error during base.js init', err)
+    }
 })
