@@ -50,7 +50,6 @@ from r2.models.wiki import WikiPage
 from r2.lib.merge import ConflictException
 from r2.lib.cache import CL_ONE
 from r2.lib.contrib.rcssmin import cssmin
-from r2.lib import s3cp
 from r2.models.query_cache import MergedCachedQuery
 import pycassa
 
@@ -496,13 +495,44 @@ class Subreddit(Thing, Printable, BaseSite):
         from r2.lib import cssfilter
         if g.css_killswitch or (verify and not self.can_change_stylesheet(c.user)):
             return (None, None)
-    
-        parsed, report = cssfilter.validate_css(content)
-        parsed = parsed.cssText if parsed else ''
-        return (report, parsed)
+
+        # in the new world order, you can only use %%custom%% images so that we
+        # can manage https urls more easily. however, we'll only hold people to
+        # the new rules if they were already abiding by them.
+        is_empty = not self.stylesheet_hash and not self.stylesheet_url_http
+        is_already_secure = bool(self.stylesheet_url_https)
+        enforce_img_restriction = is_empty or is_already_secure
+
+        # parse in regular old http mode
+        parsed_http, report_http = cssfilter.validate_css(
+            content,
+            generate_https_urls=False,
+            enforce_custom_images_only=enforce_img_restriction,
+        )
+
+        # parse and resolve images with https-safe urls
+        parsed_https, report_https = cssfilter.validate_css(
+            content,
+            generate_https_urls=True,
+            enforce_custom_images_only=True,
+        )
+
+        # the above https parsing was optimistic. if the subreddit isn't
+        # subject to the new "custom images only" rule and their stylesheet
+        # doesn't validate with it turned on, we'll just ignore the error and
+        # silently throw out the https parsing.
+        if not enforce_img_restriction and report_https.errors:
+            parsed_https = ""
+
+        # the two reports should be identical except in the already handled
+        # case of using non-custom images, so we'll just return the http one.
+        return (report_http, (parsed_http, parsed_https))
 
     def change_css(self, content, parsed, prev=None, reason=None, author=None, force=False):
         from r2.models import ModAction
+        from r2.lib.template_helpers import s3_direct_https
+        from r2.lib.media import upload_stylesheet
+
         author = author if author else c.user._id36
         if content is None:
             content = ''
@@ -512,29 +542,32 @@ class Subreddit(Thing, Printable, BaseSite):
             wiki = WikiPage.create(self, 'config/stylesheet')
         wr = wiki.revise(content, previous=prev, author=author, reason=reason, force=force)
 
-        minified = cssmin(parsed)
-        if minified:
-            if g.static_stylesheet_bucket:
-                digest = hashlib.sha1(minified).digest()
-                self.stylesheet_hash = (base64.urlsafe_b64encode(digest)
-                                              .rstrip("="))
+        minified_http, minified_https = map(cssmin, parsed)
+        if minified_http or minified_https:
+            if g.subreddit_stylesheets_static:
+                self.stylesheet_url_http = upload_stylesheet(minified_http)
+                if minified_https:
+                    self.stylesheet_url_https = s3_direct_https(
+                        upload_stylesheet(minified_https))
+                else:
+                    self.stylesheet_url_https = ""
 
-                s3cp.send_file(g.static_stylesheet_bucket,
-                               self.static_stylesheet_name,
-                               minified,
-                               content_type="text/css",
-                               never_expire=True,
-                               replace=False,
-                              )
-
+                self.stylesheet_hash = ""
                 self.stylesheet_contents = ""
+                self.stylesheet_contents_secure = ""
                 self.stylesheet_modified = None
             else:
-                self.stylesheet_hash = hashlib.md5(minified).hexdigest()
-                self.stylesheet_contents = minified
+                self.stylesheet_url_http = ""
+                self.stylesheet_url_https = ""
+                self.stylesheet_hash = hashlib.md5(minified_https).hexdigest()
+                self.stylesheet_contents = minified_http
+                self.stylesheet_contents_secure = minified_https
                 self.stylesheet_modified = datetime.datetime.now(g.tz)
         else:
+            self.stylesheet_url_http = ""
+            self.stylesheet_url_https = ""
             self.stylesheet_contents = ""
+            self.stylesheet_contents_secure = ""
             self.stylesheet_hash = ""
             self.stylesheet_modified = datetime.datetime.now(g.tz)
         self.stylesheet_contents_user = ""  # reads from wiki; ensure pg clean

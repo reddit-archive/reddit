@@ -254,6 +254,18 @@ def upload_media(image, never_expire=True, file_type='.jpg'):
     return url
 
 
+def upload_stylesheet(content):
+    file_name = get_filename_from_content(content)
+
+    return s3_upload_media(
+        content,
+        file_name=file_name,
+        file_type=".css",
+        mime_type="text/css",
+        never_expire=True,
+    )
+
+
 def _set_media(embedly_services, link, force=False):
     if link.is_self:
         return

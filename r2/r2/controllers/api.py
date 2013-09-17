@@ -1579,9 +1579,7 @@ class ApiController(RedditController, OAuth2ResourceController):
             form.find('#conflict_box').hide()
             form.set_html(".errors ul", '')
 
-        stylesheet_contents_parsed = parsed or ''
         if op == 'save':
-            c.site.stylesheet_contents = stylesheet_contents_parsed
             try:
                 wr = c.site.change_css(stylesheet_contents, parsed, prevstyle)
                 form.find('.conflict_box').hide()
@@ -1607,7 +1605,13 @@ class ApiController(RedditController, OAuth2ResourceController):
                 c.errors.add(errors.BAD_REVISION, field="prevstyle")
                 form.has_errors("prevstyle", errors.BAD_REVISION)
                 return
-        jquery.apply_stylesheet(stylesheet_contents_parsed)
+
+        parsed_http, parsed_https = parsed
+        if c.secure:
+            jquery.apply_stylesheet(parsed_https)
+        else:
+            jquery.apply_stylesheet(parsed_http)
+
         if op == 'preview':
             # try to find a link to use, otherwise give up and
             # return

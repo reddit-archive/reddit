@@ -106,6 +106,7 @@ string_dict = dict(
         syntax_error = _('syntax error: "%(syntaxerror)s"'),
         no_imports = _('@imports are not allowed'),
         invalid_property_list = _('invalid CSS property list "%(proplist)s"'),
+        custom_images_only = _('only uploaded images are allowed; reference them with the %%imagename%% system below'),
         unknown_rule_type = _('unknown CSS rule type "%(ruletype)s"')
     ),
     permalink_title = _("%(author)s comments on %(title)s"),

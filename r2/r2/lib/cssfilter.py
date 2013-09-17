@@ -38,7 +38,7 @@ from r2.lib import s3cp
 
 from r2.lib.media import upload_media
 
-from r2.lib.template_helpers import s3_https_if_secure
+from r2.lib.template_helpers import s3_direct_https
 
 import re
 from urlparse import urlparse
@@ -184,7 +184,7 @@ local_urls = re.compile(r'\A/static/[a-z./-]+\Z')
 # substitutable urls will be css-valid labels surrounded by "%%"
 custom_img_urls = re.compile(r'%%([a-zA-Z0-9\-]+)%%')
 valid_url_schemes = ('http', 'https')
-def valid_url(prop,value,report):
+def valid_url(prop, value, report, generate_https_urls, enforce_custom_images_only):
     """
     checks url(...) arguments in CSS, ensuring that the contents are
     officially sanctioned.  Sanctioned urls include:
@@ -199,6 +199,10 @@ def valid_url(prop,value,report):
         raise
     # local urls are allowed
     if local_urls.match(url):
+        if enforce_custom_images_only:
+            report.append(ValidationError(msgs["custom_images_only"], value))
+            return
+
         t_url = None
         while url != t_url:
             t_url, url = url, filters.url_unescape(url)
@@ -215,7 +219,10 @@ def valid_url(prop,value,report):
         images = ImagesByWikiPage.get_images(c.site, "config/stylesheet")
 
         if name in images:
-            url = s3_https_if_secure(images[name])
+            if not generate_https_urls:
+                url = images[name]
+            else:
+                url = s3_direct_https(images[name])
             value._setCssText("url(%s)"%url)
         else:
             # unknown image label -> error
@@ -223,6 +230,10 @@ def valid_url(prop,value,report):
                                           % dict(brokenurl = value.cssText),
                                           value))
     else:
+        if enforce_custom_images_only:
+            report.append(ValidationError(msgs["custom_images_only"], value))
+            return
+
         try:
             u = urlparse(url)
             valid_scheme = u.scheme and u.scheme in valid_url_schemes
@@ -245,7 +256,7 @@ def strip_browser_prefix(prop):
     t = prefix_regex.split(prop, maxsplit=1)
     return t[len(t) - 1]
 
-def valid_value(prop,value,report):
+def valid_value(prop, value, report, generate_https_urls, enforce_custom_images_only):
     prop_name = strip_browser_prefix(prop.name) # Remove browser-specific prefixes eg: -moz-border-radius becomes border-radius
     if not (value.valid and value.wellformed):
         if (value.wellformed
@@ -280,11 +291,17 @@ def valid_value(prop,value,report):
             report.append(ValidationError(error,value))
 
     if value.primitiveType == CSSPrimitiveValue.CSS_URI:
-        valid_url(prop,value,report)
+        valid_url(
+            prop,
+            value,
+            report,
+            generate_https_urls,
+            enforce_custom_images_only,
+        )
 
 error_message_extract_re = re.compile('.*\\[([0-9]+):[0-9]*:.*\\]\Z')
 only_whitespace          = re.compile('\A\s*\Z')
-def validate_css(string):
+def validate_css(string, generate_https_urls, enforce_custom_images_only):
     p = CSSParser(raiseExceptions = True)
 
     if not string or only_whitespace.match(string):
@@ -330,13 +347,25 @@ def validate_css(string):
 
                 if prop.cssValue.cssValueType == CSSValue.CSS_VALUE_LIST:
                     for i in range(prop.cssValue.length):
-                        valid_value(prop,prop.cssValue.item(i),report)
+                        valid_value(
+                            prop,
+                            prop.cssValue.item(i),
+                            report,
+                            generate_https_urls,
+                            enforce_custom_images_only,
+                        )
                     if not (prop.cssValue.valid and prop.cssValue.wellformed):
                         report.append(ValidationError(msgs['invalid_property_list']
                                                       % dict(proplist = prop.cssText),
                                                       prop.cssValue))
                 elif prop.cssValue.cssValueType == CSSValue.CSS_PRIMITIVE_VALUE:
-                    valid_value(prop,prop.cssValue,report)
+                    valid_value(
+                        prop,
+                        prop.cssValue,
+                        report,
+                        generate_https_urls,
+                        enforce_custom_images_only,
+                    )
 
                 # cssutils bug: because valid values might be marked
                 # as invalid, we can't trust cssutils to properly
@@ -358,7 +387,7 @@ def validate_css(string):
                                           % dict(ruletype = rule.cssText),
                                           rule))
 
-    return parsed,report
+    return parsed.cssText if parsed else "", report
 
 def find_preview_comments(sr):
     from r2.lib.db.queries import get_sr_comments, get_all_comments

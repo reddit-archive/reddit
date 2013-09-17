@@ -127,6 +127,10 @@ def s3_https_if_secure(url):
     # In the event that more media sources (other than s3) are added, this function should be corrected
     if not c.secure:
         return url
+    return s3_direct_https(url)
+
+
+def s3_direct_https(url):
     replace = "https://"
     if not url.startswith("http://%s" % s3_direct_url):
          replace = "https://%s/" % s3_direct_url

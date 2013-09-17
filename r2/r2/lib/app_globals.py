@@ -160,6 +160,7 @@ class Globals(object):
             'trust_local_proxies',
             'shard_link_vote_queues',
             'shard_commentstree_queues',
+            'subreddit_stylesheets_static',
         ],
 
         ConfigValue.tuple: [
