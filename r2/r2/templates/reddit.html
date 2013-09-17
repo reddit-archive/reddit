@@ -71,9 +71,9 @@
 </%def>
 
 <%def name="sr_stylesheets()">
-  %if c.can_apply_styles and c.allow_styles and c.site.stylesheet_hash:
+  %if thing.subreddit_stylesheet_url:
     <link rel="stylesheet"
-          href="${c.site.stylesheet_url}"
+          href="${thing.subreddit_stylesheet_url}"
           title="applied_subreddit_stylesheet"
           type="text/css">
   %endif

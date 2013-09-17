@@ -407,9 +407,12 @@ class FrontController(RedditController, OAuth2ResourceController):
 
         if c.site.stylesheet_is_static:
             # TODO: X-Private-Subreddit?
-            return redirect_to(c.site.stylesheet_url)
+            redirect_to(Reddit.get_subreddit_stylesheet_url())
         else:
-            stylesheet_contents = c.site.stylesheet_contents
+            if not c.secure:
+                stylesheet_contents = c.site.stylesheet_contents
+            else:
+                stylesheet_contents = c.site.stylesheet_contents_secure
 
         if stylesheet_contents:
             c.allow_loggedin_cache = True

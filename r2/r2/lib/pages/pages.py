@@ -246,6 +246,23 @@ class Reddit(Templated):
         )
 
         self.toolbars = self.build_toolbars()
+        self.subreddit_stylesheet_url = self.get_subreddit_stylesheet_url()
+
+    @staticmethod
+    def get_subreddit_stylesheet_url():
+        if c.can_apply_styles and c.allow_styles:
+            if c.secure:
+                if c.site.stylesheet_url_https:
+                    return c.site.stylesheet_url_https
+                elif c.site.stylesheet_contents_secure:
+                    return c.site.stylesheet_url
+            else:
+                if c.site.stylesheet_url_http:
+                    return c.site.stylesheet_url_http
+                elif c.site.stylesheet_is_static:
+                    return c.site.legacy_static_stylesheet_url
+                elif c.site.stylesheet_contents:
+                    return c.site.stylesheet_url
 
     def wiki_actions_menu(self, moderator=False):
         buttons = []

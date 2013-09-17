@@ -167,15 +167,17 @@ class BaseSite(object):
                         ".css"))
 
     @property
-    def stylesheet_url(self):
-        from r2.lib.template_helpers import static, get_domain
+    def legacy_static_stylesheet_url(self):
+        from r2.lib.template_helpers import static
+        assert self.stylesheet_is_static
+        return static(self.static_stylesheet_name, kind='sr_stylesheet')
 
-        if self.stylesheet_is_static:
-            return static(self.static_stylesheet_name, kind='sr_stylesheet')
-        else:
-            return "http://%s/stylesheet.css?v=%s" % (get_domain(cname=False,
-                                                                 subreddit=True),
-                                                      self.stylesheet_hash)
+    @property
+    def stylesheet_url(self):
+        from r2.lib.template_helpers import get_domain
+        return "//%s/stylesheet.css?v=%s" % (get_domain(cname=False,
+                                                        subreddit=True),
+                                             self.stylesheet_hash)
 
 
 class SubredditExists(Exception): pass
@@ -188,7 +190,10 @@ class Subreddit(Thing, Printable, BaseSite):
     _defaults = dict(BaseSite._defaults,
         stylesheet_rtl=None,
         stylesheet_contents='',
+        stylesheet_contents_secure='',
         stylesheet_modified=None,
+        stylesheet_url_http="",
+        stylesheet_url_https="",
         header_size=None,
         allow_top=False, # overridden in "_new"
         reported=0,
