@@ -28,6 +28,12 @@ from r2.lib.db import queries
 
 
 user_added_messages = {
+    "moderator": {
+        "pm": {
+            "subject": N_("you are a moderator"),
+            "msg": N_("you have been added as a moderator to [%(title)s](%(url)s)."),
+        },
+    },
     "moderator_invite": {
         "pm": {
             "subject": N_("invitation to moderate %(url)s"),
