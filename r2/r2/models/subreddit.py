@@ -1182,6 +1182,18 @@ class DefaultSR(_DefaultSR):
         return self._base.stylesheet_contents if self._base else ""
 
     @property
+    def stylesheet_contents_secure(self):
+        return self._base.stylesheet_contents_secure if self._base else ""
+
+    @property
+    def stylesheet_url_http(self):
+        return self._base.stylesheet_url_http if self._base else ""
+
+    @property
+    def stylesheet_url_https(self):
+        return self._base.stylesheet_url_https if self._base else ""
+
+    @property
     def stylesheet_hash(self):
         return self._base.stylesheet_hash if self._base else ""
 
