@@ -245,13 +245,14 @@ def send_gift(buyer, recipient, months, days, signed, giftmessage, comment_id):
         if giftmessage and giftmessage.strip():
             message += "\n\n" + strings.giftgold_note + giftmessage + '\n\n----'
     else:
-        subject = _('Your comment has been gilded.')
+        subject = _('Your comment has been gilded!')
         message = strings.youve_got_comment_gold % dict(
             url=comment.make_permalink_slow(),
         )
 
     message += '\n\n' + strings.gold_benefits_msg
-    message += '\n\n' + strings.lounge_msg
+    if g.lounge_reddit:
+        message += '\n* ' + strings.lounge_msg
     message = append_random_bottlecap_phrase(message)
 
     try:
@@ -561,7 +562,7 @@ class IpnController(RedditController):
                         "pays for 5 instance hours of reddit's servers.")
             message += "\n\n" + strings.gold_benefits_msg
             if g.lounge_reddit:
-                message += "\n\n" + strings.lounge_msg
+                message += "\n* " + strings.lounge_msg
         elif payment_blob['goldtype'] == 'creddits':
             buyer._incr("gold_creddits", months)
             buyer._commit()
