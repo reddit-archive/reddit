@@ -407,7 +407,11 @@ class FrontController(RedditController, OAuth2ResourceController):
 
         if c.site.stylesheet_is_static:
             # TODO: X-Private-Subreddit?
-            redirect_to(Reddit.get_subreddit_stylesheet_url())
+            url = Reddit.get_subreddit_stylesheet_url()
+            if url:
+                redirect_to(url)
+            else:
+                self.abort404()
         else:
             if not c.secure:
                 stylesheet_contents = c.site.stylesheet_contents
