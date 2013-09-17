@@ -144,6 +144,8 @@ class SpotlightListing(Listing):
         self.interestbar = kw.get('interestbar')
         self.interestbar_prob = kw.get('interestbar_prob', 0.)
         self.show_promo = kw.get('show_promo', False)
+        srnames = kw.get('srnames', [])
+        self.srnames = '+'.join(srnames)
         self.navigable = kw.get('navigable', True)
         self.things = kw.get('organic_links', [])
 

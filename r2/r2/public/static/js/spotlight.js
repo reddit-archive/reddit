@@ -29,7 +29,7 @@ r.spotlight.init = function() {
     r.spotlight._advance(0)
 }
 
-r.spotlight.setup = function(organic_links, interest_prob, show_promo) {
+r.spotlight.setup = function(organic_links, interest_prob, show_promo, srnames) {
     this.organics = []
     this.lineup = []
 
@@ -44,6 +44,7 @@ r.spotlight.setup = function(organic_links, interest_prob, show_promo) {
 
     this.interest_prob = interest_prob
     this.show_promo = show_promo
+    this.srnames = srnames
 
     this.init()
 }
@@ -52,7 +53,7 @@ r.spotlight.requestPromo = function() {
     return $.ajax({
         type: "POST",
         url: '/api/request_promo',
-        data: {'r': reddit.post_site}
+        data: {'srnames': this.srnames}
     }).pipe(function(promo) {
         if (promo) {
             $item = $(promo)

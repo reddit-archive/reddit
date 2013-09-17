@@ -96,7 +96,8 @@
   r.spotlight.setup(
     ${unsafe(json.dumps([link._fullname for link in thing.things]))},
     ${unsafe(json.dumps(thing.interestbar_prob))},
-    ${unsafe(json.dumps(thing.show_promo))}
+    ${unsafe(json.dumps(thing.show_promo))},
+    ${unsafe(json.dumps(thing.srnames))}
   )
 </script>
 

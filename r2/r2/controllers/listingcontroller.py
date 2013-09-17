@@ -246,8 +246,11 @@ class HotController(FixListing, ListingController):
             return res
 
     def make_single_ad(self):
-        if promote.srids_with_live_promos(c.user, c.site):
-            return SpotlightListing(show_promo=True, navigable=False).listing()
+        srs = promote.srs_with_live_promos(c.user, c.site)
+        if srs:
+            srnames = [sr.name for sr in srs]
+            return SpotlightListing(show_promo=True, srnames=srnames,
+                                    navigable=False).listing()
 
     def make_spotlight(self):
         """Build the Spotlight.
@@ -282,10 +285,13 @@ class HotController(FixListing, ListingController):
             organic_fullnames.extend(g.live_config['sr_discovery_links'])
 
         show_promo = False
+        srnames = []
         if c.user.pref_show_sponsors or not c.user.gold:
-            if promote.srids_with_live_promos(c.user, c.site):
+            srs = promote.srs_with_live_promos(c.user, c.site)
+            if srs:
                 if ((c.user_is_loggedin and random.random() > 0.5) or
                     not c.user_is_loggedin):
+                    srnames = [sr.name for sr in srs]
                     show_promo = True
 
         random.shuffle(organic_fullnames)
@@ -306,6 +312,7 @@ class HotController(FixListing, ListingController):
                              interestbar=interestbar,
                              interestbar_prob=interestbar_prob,
                              show_promo=show_promo,
+                             srnames=srnames,
                              max_num = self.listing_obj.max_num,
                              max_score = self.listing_obj.max_score).listing()
         return s

@@ -58,6 +58,7 @@ from r2.models import (
     DefaultSR,
     FakeAccount,
     FakeSubreddit,
+    Frontpage,
     get_promote_srid,
     IDBuilder,
     Link,
@@ -658,10 +659,19 @@ def srids_from_site(user, site):
     return srids
 
 
-def srids_with_live_promos(user, site):
+def srs_with_live_promos(user, site):
     srids = srids_from_site(user, site)
     weights = get_live_promotions(srids)
-    return [srid for srid, adweights in weights.iteritems() if adweights]
+    srids = [srid for srid, adweights in weights.iteritems() if adweights]
+
+    if '' in srids:
+        srs = [Frontpage]
+        srids.remove('')
+    else:
+        srs = []
+
+    srs.extend(Subreddit._byID(srids, data=True, return_dict=False))
+    return srs
 
 
 def set_live_promotions(weights):
@@ -846,33 +856,27 @@ def refund_campaign(link, camp, billable_amount):
 PromoTuple = namedtuple('PromoTuple', ['link', 'weight', 'campaign'])
 
 
-def get_promotion_list(user, site):
-    srids = srids_from_site(user, site)
-    tuples = get_promotion_list_cached(srids)
-    return [PromoTuple(*t) for t in tuples]
-
-
-def get_promotion_list_cached(sites):
-    weights = get_live_promotions(sites)
+def get_promotion_list(srids):
+    weights = get_live_promotions(srids)
     if not weights:
         return []
 
     promos = []
     total = 0.
     for sr_id, sr_weights in weights.iteritems():
-        if sr_id not in sites:
+        if sr_id not in srids:
             continue
         for link, weight, campaign in sr_weights:
             total += weight
             promos.append((link, weight, campaign))
 
-    return [(link, weight / total, campaign)
+    return [PromoTuple(link, weight / total, campaign)
             for link, weight, campaign in promos]
 
 
-def lottery_promoted_links(user, site, n=10):
+def lottery_promoted_links(srids, n=10):
     """Run weighted_lottery to order and choose a subset of promoted links."""
-    promo_tuples = get_promotion_list(user, site)
+    promo_tuples = get_promotion_list(srids)
     weights = {p: p.weight for p in promo_tuples if p.weight}
     selected = []
     while weights and len(selected) < n:
