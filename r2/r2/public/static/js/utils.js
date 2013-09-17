@@ -7,6 +7,14 @@ r.utils = {
         return r.config.static_root + '/' + item
     },
 
+    s3HTTPS: function(url) {
+        if (location.protocol == 'https:') {
+            return url.replace('http://', 'https://s3.amazonaws.com/')
+        } else {
+            return url
+        }
+    },
+
     joinURLs: function(/* arguments */) {
         return _.map(arguments, function(url, idx) {
             if (idx > 0 && url && url[0] != '/') {
