@@ -648,8 +648,8 @@ r.multi.ListingChooser = Backbone.View.extend({
         // transition collapsed state to server pref
         if (store.safeGet('ui.collapse.listingchooser') == true) {
             this.toggleCollapsed(true)
-            store.safeSet('ui.collapse.listingchooser')
         }
+        store.safeSet('ui.collapse.listingchooser')
 
         // HACK: fudge page heights for long lists of multis / short pages
         var thisHeight = this.$('.contents').height(),
