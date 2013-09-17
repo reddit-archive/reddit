@@ -141,7 +141,7 @@ def get_available_pageviews(srs, start, end, datestr=False,
     ret = {}
     for sr in srs:
         sold_by_date = sold_by_sr_by_date[sr.name]
-        sr_ad_inventory = int(daily_inventory.get(sr.name, 0) * 0.5)
+        sr_ad_inventory = int(daily_inventory.get(sr.name, 0) * 0.75)
         ret[sr.name] = {
             datekey(date): max(0, sr_ad_inventory - sold)
             for date, sold in sold_by_date.iteritems()
