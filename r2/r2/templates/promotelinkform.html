@@ -309,7 +309,7 @@ ${self.javascript_setup()}
           <tr>
             <th>${_("price")}</th>
             <td class="prefright">
-              <input id="cpm" name="cpm" value="${g.cpm_selfserve.pennies}" type="hidden">
+              <input id="cpm" name="cpm" value="${thing.author.cpm_selfserve_pennies}" type="hidden">
               <span class="price-info"></span>
             </td>
           </tr>
@@ -326,7 +326,7 @@ ${self.javascript_setup()}
                       onkeyup="r.sponsored.on_bid_change()"
                       value="${format_decimal(5 * thing.min_bid, format='.00', locale=c.locale)}"
                       data-min_bid="${thing.min_bid}"
-                      data-base_cpm="${g.cpm_selfserve.pennies}"/>
+                      data-base_cpm="${thing.author.cpm_selfserve_pennies}"/>
               <div class="minimum-spend">
                 ${_('%(minimum)s minimum') % dict(minimum=format_currency(thing.min_bid, 'USD', locale=c.locale))}
               </div>

@@ -644,6 +644,12 @@ class Account(Thing):
                  self.name in g.sponsors or
                  self.name in g.employees))
 
+    @property
+    def cpm_selfserve_pennies(self):
+        return getattr(self, 'cpm_selfserve_pennies_override',
+                       g.cpm_selfserve.pennies)
+
+
 class FakeAccount(Account):
     _nodb = True
     pref_no_profanity = True

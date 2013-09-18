@@ -89,6 +89,7 @@ from r2.lib.validator import (
     VUrl,
 )
 from r2.models import (
+    Account,
     calc_impressions,
     Frontpage,
     Link,
@@ -532,7 +533,9 @@ class PromoteController(ListingController):
             return
 
         start, end = dates or (None, None)
-        cpm = g.cpm_selfserve.pennies
+
+        author = Account._byID(link.author_id, data=True)
+        cpm = author.cpm_selfserve_pennies
 
         if (start and end and not promote.is_accepted(link) and
             not c.user_is_sponsor):
