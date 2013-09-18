@@ -385,6 +385,8 @@ def edit_campaign(link, campaign, dates, bid, cpm, sr):
         if getattr(author, "complimentary_promos", False):
             free_campaign(link, campaign, c.user)
 
+        hooks.get_hook('campaign.edit').call(link=link, campaign=campaign)
+
     except Exception, e: # record error and rethrow 
         g.log.error("Failed to update PromoCampaign %s on link %d. Error was: %r" %
                     (campaign._id, link._id, e))
