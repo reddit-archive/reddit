@@ -83,7 +83,7 @@ reddit, reddit.com, vote, comment, submit
 </%def>
 
 <%def name="head()">
-%if g.tracker_url and thing.site_tracking and not c.secure:
+%if g.tracker_url and thing.site_tracking:
 <script type="text/javascript">
     (function() {
         var url = '${tracking.get_pageview_pixel_url()}';
