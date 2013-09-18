@@ -29,7 +29,7 @@ from r2.lib.utils        import modhash, valid_hash, randstr, timefromnow
 from r2.lib.utils        import UrlParser
 from r2.lib.utils        import constant_time_compare, canonicalize_email
 from r2.lib.cache        import sgm
-from r2.lib import filters
+from r2.lib import filters, hooks
 from r2.lib.log import log_text
 from r2.models.last_modified import LastModified
 
@@ -42,6 +42,7 @@ from datetime import datetime, timedelta
 import bcrypt
 import hmac
 import hashlib
+import itertools
 from pycassa.system_manager import ASCII_TYPE
 
 
@@ -522,17 +523,17 @@ class Account(Thing):
     # When true, returns the reason
     @classmethod
     def which_emails_are_banned(cls, canons):
-        banned = g.hardcache.get_multi(canons, prefix="email_banned-")
+        banned = hooks.get_hook('email.get_banned').call(canons=canons)
 
-        # Filter out all the ones that are simply banned by address.
-        # Of the remaining ones, create a dictionary like:
+        # Create a dictionary like:
         # d["abc.def.com"] = [ "bob@abc.def.com", "sue@abc.def.com" ]
         rv = {}
         canons_by_domain = {}
-        for canon in canons:
-            if banned.get(canon, False):
-                rv[canon] = "address"
-                continue
+
+        # email.get_banned will return a list of lists (one layer from the
+        # hooks system, the second from the function itself); chain them
+        # together for easy processing
+        for canon in itertools.chain(*banned):
             rv[canon] = None
 
             at_sign = canon.find("@")
