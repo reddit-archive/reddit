@@ -386,8 +386,8 @@ class HotController(FixListing, ListingController):
     @require_oauth2_scope("read")
     @listing_api_doc(uri='/hot', uses_site=True)
     def GET_listing(self, **env):
-        self.requested_ad = request.get.get('ad')
-        self.infotext = request.get.get('deleted') and strings.user_deleted
+        self.requested_ad = request.GET.get('ad')
+        self.infotext = request.GET.get('deleted') and strings.user_deleted
         return ListingController.GET_listing(self, **env)
 
 class NewController(ListingController):
@@ -641,7 +641,7 @@ class UserController(ListingController):
             q = queries.get_hidden(self.vuser)
 
         elif self.where == 'saved':
-            srname = request.get.get('sr')
+            srname = request.GET.get('sr')
             if srname and c.user.gold:
                 try:
                     sr_id = Subreddit._by_name(srname)._id

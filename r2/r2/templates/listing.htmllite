@@ -26,7 +26,7 @@
   <% 
      t = thing.things
      l = len(t)
-     two_col = request.get.has_key("twocolumn") if l else False
+     two_col = request.GET.has_key("twocolumn") if l else False
    %>
   %for i, a in enumerate(t):
    <% 

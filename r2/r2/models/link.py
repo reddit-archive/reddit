@@ -288,7 +288,7 @@ class Link(Thing, Printable):
                       c.user_is_sponsor,
                       wrapped.url, repr(wrapped.title)])
         if style == "htmllite":
-             s.extend([request.get.has_key('twocolumn'),
+             s.extend([request.GET.has_key('twocolumn'),
                        c.link_target])
         elif style == "xml":
             s.append(request.GET.has_key("nothumbs"))

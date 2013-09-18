@@ -48,8 +48,8 @@
    from r2.lib.strings import Score
    domain = get_domain(subreddit=False)
    permalink = "http://%s%s" % (domain, thing.permalink)
-   expanded = request.get.get("expanded")
-   two_col = request.get.has_key("twocolumn") if l else False
+   expanded = request.GET.get("expanded")
+   two_col = request.GET.has_key("twocolumn") if l else False
  %>
   ${self.arrows(thing)}
   <div class="reddit-entry entry ${thing.like_cls}" 

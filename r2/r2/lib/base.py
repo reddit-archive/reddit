@@ -26,7 +26,7 @@ from pylons.i18n import N_, _, ungettext, get_lang
 from webob.exc import HTTPException, status_map
 from r2.lib.filters import spaceCompress, _force_unicode
 from r2.lib.template_helpers import get_domain
-from utils import storify, string2js, read_http_date
+from utils import string2js, read_http_date
 
 import re, hashlib
 from urllib import quote
@@ -105,8 +105,6 @@ class BaseController(WSGIController):
         if environ.get('HTTP_X_DONT_DECODE'):
             request.charset = None
 
-        request.get = storify(request.GET)
-        request.post = storify(request.POST)
         request.referer = environ.get('HTTP_REFERER')
         request.user_agent = environ.get('HTTP_USER_AGENT')
         request.fullpath = environ.get('FULLPATH', request.path)

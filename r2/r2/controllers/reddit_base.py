@@ -556,10 +556,10 @@ def set_colors():
     theme_rx = re.compile(r'')
     color_rx = re.compile(r'\A([a-fA-F0-9]){3}(([a-fA-F0-9]){3})?\Z')
     c.theme = None
-    if color_rx.match(request.get.get('bgcolor') or ''):
-        c.bgcolor = request.get.get('bgcolor')
-    if color_rx.match(request.get.get('bordercolor') or ''):
-        c.bordercolor = request.get.get('bordercolor')
+    if color_rx.match(request.GET.get('bgcolor') or ''):
+        c.bgcolor = request.GET.get('bgcolor')
+    if color_rx.match(request.GET.get('bordercolor') or ''):
+        c.bordercolor = request.GET.get('bordercolor')
 
 
 def ratelimit_agent(agent, limit=10, slice_size=10):
@@ -924,7 +924,7 @@ class MinimalController(BaseController):
         self.check_cors()
 
     def update_qstring(self, dict):
-        merged = copy(request.get)
+        merged = copy(request.GET)
         merged.update(dict)
         return request.path + utils.query_string(merged)
 

@@ -112,10 +112,10 @@ class Validator(object):
         a = []
         if self.param:
             for p in utils.tup(self.param):
-                if self.post and request.post.get(p):
-                    val = request.post[p]
-                elif self.get and request.get.get(p):
-                    val = request.get[p]
+                if self.post and request.POST.get(p):
+                    val = request.POST[p]
+                elif self.get and request.GET.get(p):
+                    val = request.GET[p]
                 elif self.url and url.get(p):
                     val = url[p]
                 else:

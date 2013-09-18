@@ -650,7 +650,7 @@ class PromotedLinkTraffic(Templated):
                 display_start = display_end - self.period
 
             if display_start > start:
-                p = request.get.copy()
+                p = request.GET.copy()
                 p.update({
                     'after': None,
                     'before': display_start.strftime('%Y%m%d%H'),
@@ -660,7 +660,7 @@ class PromotedLinkTraffic(Templated):
                 display_start = start
 
             if display_end < end:
-                p = request.get.copy()
+                p = request.GET.copy()
                 p.update({
                     'after': display_end.strftime('%Y%m%d%H'),
                     'before': None,

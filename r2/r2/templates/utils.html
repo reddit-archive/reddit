@@ -261,7 +261,7 @@ ${unsafe(txt)}
 </%def>
 
 <%def name="optionalstyle(style)">
-  %if request.get.get('style') != "off":
+  %if request.GET.get('style') != "off":
     style="${style}"
   %endif
 </%def>

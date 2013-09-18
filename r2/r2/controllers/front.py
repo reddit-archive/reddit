@@ -98,7 +98,7 @@ class FrontController(RedditController, OAuth2ResourceController):
             if c.extension:
                 new_url = new_url + "/.%s" % c.extension
 
-            new_url = new_url + query_string(request.get)
+            new_url = new_url + query_string(request.GET)
 
             # redirect should be smarter and handle extensions, etc.
             return self.redirect(new_url, code=301)
@@ -256,7 +256,7 @@ class FrontController(RedditController, OAuth2ResourceController):
 
         # check if we just came from the submit page
         infotext = None
-        if request.get.get('already_submitted'):
+        if request.GET.get('already_submitted'):
             infotext = strings.already_submitted % article.resubmit_link()
 
         check_cheating('comments')
@@ -947,7 +947,7 @@ class FrontController(RedditController, OAuth2ResourceController):
               then=VOneOf('then', ('tb','comments'), default='comments'))
     def GET_submit(self, url, title, text, selftext, then):
         """Submit form."""
-        resubmit = request.get.get('resubmit')
+        resubmit = request.GET.get('resubmit')
         if url and not resubmit:
             # check to see if the url has already been submitted
             links = link_from_url(url)
@@ -987,7 +987,7 @@ class FrontController(RedditController, OAuth2ResourceController):
             extra_subreddits=extra_subreddits,
             show_link=c.default_sr or c.site.link_type != 'self',
             show_self=((c.default_sr or c.site.link_type != 'link')
-                      and not request.get.get('no_self')),
+                      and not request.GET.get('no_self')),
             then=then,
         )
 
@@ -1268,7 +1268,7 @@ class FormsController(RedditController):
         content = None
         infotext = None
         if not location or location == 'options':
-            content = PrefOptions(done=request.get.get('done'))
+            content = PrefOptions(done=request.GET.get('done'))
         elif location == 'friends':
             content = PaneStack()
             infotext = strings.friends % Friends.path

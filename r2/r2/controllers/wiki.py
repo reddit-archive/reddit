@@ -325,7 +325,7 @@ class WikiApiController(WikiController):
         # None/Undefined and an empty string.  The validators use a default
         # value with both of those cases and would need to be changed.
         # In order to avoid breaking functionality, this was done instead.
-        previous = previous._id if previous else request.post.get('previous')
+        previous = previous._id if previous else request.POST.get('previous')
         try:
             if page.name == 'config/stylesheet':
                 report, parsed = c.site.parse_css(content, verify=False)

@@ -718,7 +718,7 @@ class ClickGadget(Templated):
 
     def make_content(self):
         #this will disable the hardcoded widget styles
-        request.get.style = "off"
+        request.GET["style"] = "off"
         wrapper = default_thing_wrapper(embed_voting_style = 'votable',
                                         style = "htmllite")
         content = wrap_links(self.links, wrapper = wrapper)
@@ -3271,7 +3271,7 @@ class Cnameframe(Templated):
             self.title = "%s - %s" % (subreddit.title, sub_domain)
             u = UrlParser(subreddit.path + original_path)
             u.hostname = get_domain(cname = False, subreddit = False)
-            u.update_query(**request.get.copy())
+            u.update_query(**request.GET.copy())
             u.put_in_frame()
             self.frame_target = u.unparse()
         else:
@@ -3921,7 +3921,7 @@ class PromoteReport(Templated):
         self.end = end
         if links:
             self.make_reports()
-            p = request.get.copy()
+            p = request.GET.copy()
             self.csv_url = '%s.csv?%s' % (request.path, urlencode(p))
         else:
             self.link_report = None

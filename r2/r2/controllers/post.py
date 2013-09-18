@@ -42,7 +42,7 @@ class PostController(ApiController):
         elif all_langs == 'some':
             langs = []
             for lang in g.all_languages:
-                if request.post.get('lang-' + lang):
+                if request.POST.get('lang-' + lang):
                     langs.append(str(lang)) #unicode
             if langs:
                 langs.sort()
@@ -183,7 +183,7 @@ class PostController(ApiController):
         response.content_type = "text/html"
 
         if c.errors:
-            return LoginPage(user_login = request.post.get('user'),
+            return LoginPage(user_login = request.POST.get('user'),
                              dest = dest).render()
 
         return self.redirect(dest)
@@ -195,7 +195,7 @@ class PostController(ApiController):
         response.content_type = "text/html"
 
         if c.errors:
-            return LoginPage(user_reg = request.post.get('user'),
+            return LoginPage(user_reg = request.POST.get('user'),
                              dest = dest).render()
 
         return self.redirect(dest)

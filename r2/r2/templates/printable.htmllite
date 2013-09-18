@@ -103,7 +103,7 @@ ${self.Child()}
 <%def name="arrows(thing)">
   %if getattr(thing, 'embed_voting_style',None) == 'votable':
     ${self.real_arrows(thing)}
-  %elif request.get.get("expanded") or getattr(thing, 'embed_voting_style',None) == 'expanded':
+  %elif request.GET.get("expanded") or getattr(thing, 'embed_voting_style', None) == 'expanded':
     ${self.iframe_arrows(thing)}
   %else:
     ${self.static_arrows(thing)}

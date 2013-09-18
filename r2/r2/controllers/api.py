@@ -411,11 +411,11 @@ class ApiController(RedditController, OAuth2ResourceController):
                 form.set_error(errors.QUOTA_FILLED, None)
                 return
 
-        if not c.user.gold or not hasattr(request.post, 'sendreplies'):
+        if not c.user.gold or not request.POST.get('sendreplies'):
             sendreplies = kind == 'self'
 
         # get rid of extraneous whitespace in the title
-        cleaned_title = re.sub(r'\s+', ' ', request.post.title, flags=re.UNICODE)
+        cleaned_title = re.sub(r'\s+', ' ', title, flags=re.UNICODE)
         cleaned_title = cleaned_title.strip()
 
         # well, nothing left to do but submit it
@@ -1584,7 +1584,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         # None/Undefined and an empty string.  The validators use a default
         # value with both of those cases and would need to be changed. 
         # In order to avoid breaking functionality, this was done instead.
-        prevstyle = request.post.get('prevstyle')
+        prevstyle = request.POST.get('prevstyle')
         if not report:
             return abort(403, 'forbidden')
         
@@ -1891,9 +1891,9 @@ class ApiController(RedditController, OAuth2ResourceController):
         # None/Undefined and an empty string.  The validators use a default
         # value with both of those cases and would need to be changed. 
         # In order to avoid breaking functionality, this was done instead.
-        prev_desc = request.post.get('prev_description_id')
-        prev_pubdesc = request.post.get('prev_public_description_id')
-        prev_submit_text = request.post.get('prev_submit_text_id')
+        prev_desc = request.POST.get('prev_description_id')
+        prev_pubdesc = request.POST.get('prev_public_description_id')
+        prev_submit_text = request.POST.get('prev_submit_text_id')
 
         def update_wiki_text(sr):
             error = False
@@ -3405,9 +3405,9 @@ class ApiController(RedditController, OAuth2ResourceController):
             form.has_errors('redirect_uri', errors.BAD_URL, errors.NO_URL)):
             return
 
-        description = request.post.get('description', '')
+        description = request.POST.get('description', '')
 
-        client_id = request.post.get('client_id')
+        client_id = request.POST.get('client_id')
         if client_id:
             # client_id was specified, updating existing OAuth2Client
             client = OAuth2Client.get_token(client_id)
