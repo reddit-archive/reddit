@@ -886,15 +886,6 @@ def lottery_promoted_links(srids, n=10):
     return selected
 
 
-def sample_promoted_links(user, site, n=10):
-    """Return a selection of promoted links."""
-    promo_tuples = get_promotion_list(user, site)
-    if len(promo_tuples) <= n:
-        return promo_tuples
-    else:
-        return random.sample(promo_tuples, n)
-
-
 def get_total_run(thing):
     """Return the total time span this link or campaign will run.
 
