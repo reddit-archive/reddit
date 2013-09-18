@@ -124,8 +124,11 @@ class SRRecommendation(tdb_cassandra.View):
         for rank, id36 in rank_id36_pairs:
             ranks[id36].append(rank)
         recs = [(id36, len(ranks), max(ranks)) for id36, ranks in ranks.iteritems()]
-        # sort by number of times appeared, then max rank
-        return sorted(recs, key=itemgetter(1, 2), reverse=True)
+        # first, sort ascending by rank
+        recs = sorted(recs, key=itemgetter(2))
+        # next, sort descending by number of times the rec appeared. since
+        # python sort is stable, tied items will still be ordered by rank
+        return sorted(recs, key=itemgetter(1), reverse=True)
 
     def _to_recs(self):
         recs = self._values() # [ {rank, srid} ]
