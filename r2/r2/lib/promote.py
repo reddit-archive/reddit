@@ -76,7 +76,6 @@ QUEUE_ALL = 'all'
 
 PROMO_HEALTH_KEY = 'promotions_last_updated'
 
-
 def _mark_promos_updated():
     NamedGlobals.set(PROMO_HEALTH_KEY, time.time())
 
@@ -339,6 +338,7 @@ def new_campaign(link, dates, bid, cpm, sr):
     if getattr(author, "complimentary_promos", False):
         free_campaign(link, campaign, c.user)
     return campaign
+
 
 def free_campaign(link, campaign, user):
     auth_campaign(link, campaign, user, -1)
