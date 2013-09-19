@@ -102,9 +102,6 @@ r.analytics = {
             },
             click_url
 
-        if (adServerClickUrl) {
-            click_params['adserverclick'] = adServerClickUrl
-        }
         click_url = r.config.clicktracker_url + '?' + $.param(click_params)
 
         save_href(link)
