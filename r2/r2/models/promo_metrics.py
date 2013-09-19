@@ -53,8 +53,11 @@ class PromoMetrics(tdb_cassandra.View):
     @classmethod
     def get(cls, metric_name, sr_names=None):
         sr_names = tup(sr_names)
-        metric = cls._byID(metric_name, properties=sr_names)
-        return metric._values()  # might have additional values
+        try:
+            metric = cls._byID(metric_name, properties=sr_names)
+            return metric._values()  # might have additional values
+        except tdb_cassandra.NotFound:
+            return {}
 
     @classmethod
     def set(cls, metric_name, values_by_sr):
