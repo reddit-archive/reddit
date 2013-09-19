@@ -146,6 +146,7 @@ python-kazoo
 python-stripe
 
 nodejs
+node-less
 gettext
 make
 optipng
