@@ -4253,7 +4253,8 @@ class SubscribeButton(Templated):
 
 
 class SubredditSelector(Templated):
-    def __init__(self, default_sr=None, extra_subreddits=None, required=False):
+    def __init__(self, default_sr=None, extra_subreddits=None, required=False,
+                 include_searches=True):
         Templated.__init__(self)
 
         if extra_subreddits:
@@ -4268,9 +4269,13 @@ class SubredditSelector(Templated):
 
         self.default_sr = default_sr
         self.required = required
-        self.sr_searches = simplejson.dumps(
-            popular_searches(include_over_18=c.over18)
-        )
+        if include_searches:
+            self.sr_searches = simplejson.dumps(
+                popular_searches(include_over_18=c.over18)
+            )
+        else:
+            self.sr_searches = simplejson.dumps({})
+        self.include_searches = include_searches
 
     @property
     def subreddit_names(self):

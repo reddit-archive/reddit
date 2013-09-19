@@ -8,7 +8,9 @@
 <div id="sr-autocomplete-area">
   <input id="sr-autocomplete" name="sr" type="text"
          autocomplete="off"
-         onkeyup="sr_name_up(event)"
+         %if thing.include_searches:
+           onkeyup="sr_name_up(event)"
+         %endif
          onkeydown="return sr_name_down(event)"
          onblur="hide_sr_name_list()"
          % if thing.default_sr:
