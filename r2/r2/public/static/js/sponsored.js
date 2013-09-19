@@ -75,6 +75,13 @@ r.sponsored = {
             srname = targeted ? target : '',
             dates = r.sponsored.get_dates(startdate, enddate)
 
+        // bail out in state where targeting is selected but srname
+        // has not been entered yet
+        if (targeted && srname == '') {
+            r.sponsored.disable_form($form)
+            return
+        }
+
         $.when(r.sponsored.get_check_inventory(srname, dates)).done(
             function() {
                 var oversold = {}
@@ -519,11 +526,9 @@ function create_campaign() {
                 .find('button[name="edit"]').hide().end()
                 .find('button[name="create"]').show().end()
                 .find('input[name="campaign_id36"]').val('').end()
-                .find('input[name="sr"]').val('').end()
-                .find('input[name="targeting"][value="none"]')
-                                .prop("checked", "checked").end()
+                .find('input[name="sr"]').val('').prop("disabled", "disabled").end()
+                .find('input[name="targeting"][value="none"]').prop("checked", "checked").end()
                 .find(".targeting").hide().end()
-                .find('*[name="sr"]').val("").prop("disabled", "disabled").end()
                 .find('input[name="cpm"]').val(base_cpm).end()
                 .fadeIn();
             r.sponsored.fill_campaign_editor();
