@@ -1096,6 +1096,16 @@ class FrontController(RedditController, OAuth2ResourceController):
     def GET_account_activity(self):
         return AccountActivityPage().render()
 
+    def GET_contact_us(self):
+        return BoringPage(_("contact us"), show_sidebar=False,
+                          content=ContactUs(), page_classes=["contact-us-page"]
+                          ).render()
+
+    def GET_ad_inq(self):
+        return FormPage('advertise',
+                        content = SelfServeBlurb(),
+                        loginbox = False).render()
+
     def GET_rules(self):
         return BoringPage(_("rules of reddit"), show_sidebar=False,
                           content=RulesPage(), page_classes=["rulespage-body"]

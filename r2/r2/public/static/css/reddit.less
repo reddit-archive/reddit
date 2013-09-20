@@ -3196,25 +3196,66 @@ button.button[disabled] {
     padding-top: 10px; 
 }
 
-.feedback.instructions dl { 
-    margin-left: 20px; 
+body.contact-us-page {
+    overflow-y: scroll;
 }
 
-.feedback.instructions dt { 
-    margin-top: 10px;
-    margin-bottom: 10px;
+.contact-us-page .content {
+    width: 600px;
+    margin: 0px auto;
 }
 
-.feedback.instructions dd:before { 
-    background-image: url(../continue-thread.png); /* SPRITE */
-    height: 15px;
-    width: 30px;
+.contact-us-page h1 {
+    font-size: xx-large;
+    text-align: center;
+    margin: 20px 0px;
+}
+
+.contact-us-page .info {
+    font-size: larger;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.contact-us-page h2.button {
+    background-color: #cee2f5;
+    font-size: x-large;
+    font-weight: bold;
+    color: #369;
+    text-align: center;
+    border-radius: 7px;
+    border: 2px solid #369;
+    line-height: 1.5em;
+    margin: 0px 10px 10px 10px;
+}
+
+.contact-us-page h2.button:hover {
+    background-color: #daeaf8; 
+    cursor: pointer;   
+}
+
+.contact-us-page .details{
+    margin: 0;
+    display: none;
+}
+
+.contact-us-page li:target .details {
     display: block;
-    content: " ";
-    float: left;
-    margin: 2px 5px 0 0;
 }
 
+.contact-us-page .details li {
+    background-color: #fafafa;
+    font-size: small;
+    border: 1px solid #ccc;
+    margin: 0px 40px 10px 40px;
+    padding: 10px;
+    width: 500px;
+}
+
+.contact-us-page img.space-snoo {
+    display: block;
+    margin: 50px auto 0 auto;
+}
 
 .button-demo a.view-code,
 .button-demo a.hide-code { float: right; margin-bottom: 1em; }

@@ -113,8 +113,10 @@ def make_map():
 
     mc('/i18n', controller='redirect', action='redirect',
        dest='http://www.reddit.com/r/i18n')
-    mc('/feedback', controller='feedback', action='feedback')
-    mc('/ad_inq', controller='feedback', action='ad_inq')
+    mc('/feedback', controller='redirect', action='redirect',
+       dest='/contact')
+    mc('/contact', controller='front', action='contact_us')
+    mc('/ad_inq', controller='front', action='ad_inq')
 
     mc('/admin/awards', controller='awards')
     mc('/admin/awards/:awardcn/:action', controller='awards',
