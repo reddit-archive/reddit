@@ -394,7 +394,7 @@ class Link(Thing, Printable):
                 item.score_fmt = Score.points
             item.pref_compress = user.pref_compress
             if user.pref_compress:
-                item.render_css_class = "compressed link"
+                item.extra_css_class = "compressed"
                 item.score_fmt = Score.points
             elif pref_media == 'on' and not user.pref_compress:
                 show_media = True

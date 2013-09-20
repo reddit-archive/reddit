@@ -106,7 +106,9 @@ ${self.RenderPrintable()}
       cls = thing.render_class.__name__.lower()
    else:
       cls = thing.lookups[0].__class__.__name__.lower()
-   
+
+   cls += ' ' + getattr(thing, 'extra_css_class', '')
+
    if getattr(thing, "is_self", False):
       selflink = "self"
    else:
