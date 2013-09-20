@@ -286,13 +286,12 @@ class DataThing(object):
                         del self._dirties[k]
             else:
                 self._dirties.clear()
-
-            self._cache_myself()
         except:
             rollback()
             raise
         else:
             commit()
+            self._cache_myself()
         finally:
             if lock:
                 lock.release()
