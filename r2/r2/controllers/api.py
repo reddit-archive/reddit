@@ -870,7 +870,7 @@ class ApiController(RedditController, OAuth2ResourceController):
     @validatedForm(VUser(),
                    VModhash(),
                    ip=ValidIP())
-    @api_doc(api_section.subreddits, uses_site=True)
+    @api_doc(api_section.moderation, uses_site=True)
     def POST_accept_moderator_invite(self, form, jquery, ip):
         rel = c.site.get_moderator_invite(c.user)
         if not c.site.remove_moderator_invite(c.user):
