@@ -677,7 +677,7 @@ class ApiController(RedditController, OAuth2ResourceController):
     @validatedForm(VSrModerator(), VModhash(),
                    target=VExistingUname('name'),
                    type_and_permissions=VPermissions('type', 'permissions'))
-    @api_doc(api_section.users)
+    @api_doc(api_section.users, uses_site=True)
     def POST_setpermissions(self, form, jquery, target, type_and_permissions):
         if form.has_errors('name', errors.USER_DOESNT_EXIST, errors.NO_USER):
             return
@@ -870,7 +870,7 @@ class ApiController(RedditController, OAuth2ResourceController):
     @validatedForm(VUser(),
                    VModhash(),
                    ip=ValidIP())
-    @api_doc(api_section.subreddits)
+    @api_doc(api_section.subreddits, uses_site=True)
     def POST_accept_moderator_invite(self, form, jquery, ip):
         rel = c.site.get_moderator_invite(c.user)
         if not c.site.remove_moderator_invite(c.user):
@@ -1550,7 +1550,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                    stylesheet_contents = nop('stylesheet_contents'),
                    prevstyle = VLength('prevstyle', max_length=36),
                    op = VOneOf('op',['save','preview']))
-    @api_doc(api_section.subreddits)
+    @api_doc(api_section.subreddits, uses_site=True)
     def POST_subreddit_stylesheet(self, form, jquery,
                                   stylesheet_contents = '', prevstyle='', op='save'):
         
@@ -1648,7 +1648,7 @@ class ApiController(RedditController, OAuth2ResourceController):
     @validatedForm(VSrModerator(perms='config'),
                    VModhash(),
                    name = VCssName('img_name'))
-    @api_doc(api_section.subreddits)
+    @api_doc(api_section.subreddits, uses_site=True)
     def POST_delete_sr_img(self, form, jquery, name):
         """
         Called upon requested delete on /about/stylesheet.
@@ -1669,7 +1669,7 @@ class ApiController(RedditController, OAuth2ResourceController):
     @require_oauth2_scope("modconfig")
     @validatedForm(VSrModerator(perms='config'),
                    VModhash())
-    @api_doc(api_section.subreddits)
+    @api_doc(api_section.subreddits, uses_site=True)
     def POST_delete_sr_header(self, form, jquery):
         """
         Called when the user request that the header on a sr be reset.
@@ -1711,7 +1711,7 @@ class ApiController(RedditController, OAuth2ResourceController):
               img_type = VImageType('img_type'),
               form_id = VLength('formid', max_length = 100), 
               header = VInt('header', max=1, min=0))
-    @api_doc(api_section.subreddits)
+    @api_doc(api_section.subreddits, uses_site=True)
     def POST_upload_sr_img(self, file, header, name, form_id, img_type):
         """
         Called on /about/stylesheet when an image needs to be replaced
@@ -2668,7 +2668,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                    link = VFlairLink('link'),
                    text = VFlairText("text"),
                    css_class = VFlairCss("css_class"))
-    @api_doc(api_section.flair)
+    @api_doc(api_section.flair, uses_site=True)
     def POST_flair(self, form, jquery, user, link, text, css_class):
         if link:
             flair_type = LINK_FLAIR
@@ -2740,7 +2740,7 @@ class ApiController(RedditController, OAuth2ResourceController):
     @validatedForm(VSrModerator(perms='flair'),
                    VModhash(),
                    user = VFlairAccount("name"))
-    @api_doc(api_section.flair)
+    @api_doc(api_section.flair, uses_site=True)
     def POST_deleteflair(self, form, jquery, user):
         # Check validation.
         if form.has_errors('name', errors.USER_DOESNT_EXIST, errors.NO_USER):
@@ -2762,7 +2762,7 @@ class ApiController(RedditController, OAuth2ResourceController):
     @validate(VSrModerator(perms='flair'),
               VModhash(),
               flair_csv = nop('flair_csv'))
-    @api_doc(api_section.flair)
+    @api_doc(api_section.flair, uses_site=True)
     def POST_flaircsv(self, flair_csv):
         limit = 100  # max of 100 flair settings per call
         results = FlairCsv()
@@ -2829,7 +2829,7 @@ class ApiController(RedditController, OAuth2ResourceController):
     @validatedForm(VUser(),
                    VModhash(),
                    flair_enabled = VBoolean("flair_enabled"))
-    @api_doc(api_section.flair)
+    @api_doc(api_section.flair, uses_site=True)
     def POST_setflairenabled(self, form, jquery, flair_enabled):
         setattr(c.user, 'flair_%s_enabled' % c.site._id, flair_enabled)
         c.user._commit()
@@ -2846,7 +2846,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         flair_self_assign_enabled = VBoolean("flair_self_assign_enabled"),
         link_flair_self_assign_enabled =
             VBoolean("link_flair_self_assign_enabled"))
-    @api_doc(api_section.flair)
+    @api_doc(api_section.flair, uses_site=True)
     def POST_flairconfig(self, form, jquery, flair_enabled, flair_position,
                          link_flair_position, flair_self_assign_enabled,
                          link_flair_self_assign_enabled):
@@ -2878,7 +2878,7 @@ class ApiController(RedditController, OAuth2ResourceController):
     @require_oauth2_scope("modflair")
     @paginated_listing(max_page_size=1000)
     @validate(user = VFlairAccount('name'))
-    @api_doc(api_section.flair)
+    @api_doc(api_section.flair, uses_site=True)
     def GET_flairlist(self, num, after, reverse, count, user):
         flair = FlairList(num, after, reverse, '', user)
         return BoringPage(_("API"), content = flair).render()
@@ -2892,7 +2892,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                    text_editable = VBoolean('text_editable'),
                    flair_type = VOneOf('flair_type', (USER_FLAIR, LINK_FLAIR),
                                        default=USER_FLAIR))
-    @api_doc(api_section.flair)
+    @api_doc(api_section.flair, uses_site=True)
     def POST_flairtemplate(self, form, jquery, flair_template, text,
                            css_class, text_editable, flair_type):
         if text is None:
@@ -2957,7 +2957,7 @@ class ApiController(RedditController, OAuth2ResourceController):
     @validatedForm(VSrModerator(perms='flair'),
                    VModhash(),
                    flair_template = VFlairTemplateByID('flair_template_id'))
-    @api_doc(api_section.flair)
+    @api_doc(api_section.flair, uses_site=True)
     def POST_deleteflairtemplate(self, form, jquery, flair_template):
         idx = FlairTemplateBySubredditIndex.by_sr(c.site._id)
         if idx.delete_by_id(flair_template._id):
@@ -2969,7 +2969,7 @@ class ApiController(RedditController, OAuth2ResourceController):
     @validatedForm(VSrModerator(perms='flair'), VModhash(),
                    flair_type = VOneOf('flair_type', (USER_FLAIR, LINK_FLAIR),
                                        default=USER_FLAIR))
-    @api_doc(api_section.flair)
+    @api_doc(api_section.flair, uses_site=True)
     def POST_clearflairtemplates(self, form, jquery, flair_type):
         FlairTemplateBySubredditIndex.clear(c.site._id, flair_type=flair_type)
         jquery.refresh()
@@ -2998,7 +2998,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                    link = VFlairLink('link'),
                    flair_template_id = nop('flair_template_id'),
                    text = VFlairText('text'))
-    @api_doc(api_section.flair)
+    @api_doc(api_section.flair, uses_site=True)
     def POST_selectflair(self, form, jquery, user, link, flair_template_id,
                          text):
         if link:

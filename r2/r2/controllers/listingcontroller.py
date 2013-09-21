@@ -380,7 +380,7 @@ class HotController(FixListing, ListingController):
         return c.site.title
 
     @require_oauth2_scope("read")
-    @listing_api_doc(uri='/hot')
+    @listing_api_doc(uri='/hot', uses_site=True)
     def GET_listing(self, **env):
         self.requested_ad = request.get.get('ad')
         self.infotext = request.get.get('deleted') and strings.user_deleted
@@ -422,7 +422,7 @@ class NewController(ListingController):
         return self.redirect(request.fullpath)
 
     @require_oauth2_scope("read")
-    @listing_api_doc(uri='/new')
+    @listing_api_doc(uri='/new', uses_site=True)
     def GET_listing(self, **env):
         if request.params.get('sort') == 'rising':
             return self.redirect(add_sr('/rising'))
@@ -468,7 +468,8 @@ class BrowseController(ListingController):
 
     @require_oauth2_scope("read")
     @validate(t = VMenu('sort', ControversyTimeMenu))
-    @listing_api_doc(uri='/{sort}', uri_variants=['/top', '/controversial'])
+    @listing_api_doc(uri='/{sort}', uri_variants=['/top', '/controversial'],
+                     uses_site=True)
     def GET_listing(self, sort, t, **env):
         self.sort = sort
         if sort == 'top':

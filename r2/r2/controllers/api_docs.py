@@ -82,7 +82,7 @@ section_info = {
 
 api_section = Storage((k, k) for k in section_info)
 
-def api_doc(section, **kwargs):
+def api_doc(section, uses_site=False, **kwargs):
     """
     Add documentation annotations to the decorated function.
 
@@ -93,6 +93,7 @@ def api_doc(section, **kwargs):
         if 'extends' in kwargs:
             kwargs['extends'] = kwargs['extends']._api_doc
         doc.update(kwargs)
+        doc['uses_site'] = uses_site
         doc['section'] = section
         doc['lineno'] = api_function.func_code.co_firstlineno
 
@@ -147,6 +148,9 @@ class ApidocsController(RedditController):
                         uri += '.' + docs['extensions'][0]
                         del docs['extensions']
                 docs['uri'] = uri
+
+                if api_doc['uses_site']:
+                    docs["in-subreddit"] = True
 
                 oauth_perms = getattr(func, 'oauth2_perms', {})
                 docs['oauth_scopes'] = oauth_perms.get('allowed_scopes', [])

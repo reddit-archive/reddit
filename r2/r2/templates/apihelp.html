@@ -30,6 +30,7 @@
 
 <%def name="api_method_id(uri, method)">${method}_${uri.replace('/', '_').strip('_')}</%def>
 <%def name="api_uri(uri)">${unsafe(re.sub(r'{(\w+)}', r'<em class="placeholder">\1</em>', uri))}</%def>
+<%def name="api_uri_with_sr_maybe(uri, in_sr)">${api_uri(("[/r/{subreddit}]" if in_sr else "") + uri)}</%def>
 
 <%def name="mode_selector(current_mode)">
   <span class="mode-selector">
@@ -181,6 +182,8 @@
             if docs['uri'] != uri:
               continue
 
+            in_subreddit = 'in-subreddit' in docs
+
             extends = docs.get('extends')
           %>
           <div class="endpoint" id="${api_method_id(uri, method)}">
@@ -192,7 +195,7 @@
             </div>
             <h3>
               <span class="method">${method}&nbsp;</span>
-              ${api_uri(uri)}
+              ${api_uri_with_sr_maybe(uri, in_subreddit)}
               %if 'extensions' in docs:
                 <span class="extensions">
                   [ ${' | '.join('.'+extension for extension in docs['extensions'])} ]
@@ -209,7 +212,7 @@
             %if 'uri_variants' in docs:
               <ul class="uri-variants">
                 %for variant in docs['uri_variants']:
-                <li id="${api_method_id(variant, method)}">&rarr; ${api_uri(variant)}</li>
+                <li id="${api_method_id(variant, method)}">&rarr; ${api_uri_with_sr_maybe(variant, in_subreddit)}</li>
                 %endfor
               </ul>
             %endif

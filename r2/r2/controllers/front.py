@@ -103,7 +103,7 @@ class FrontController(RedditController, OAuth2ResourceController):
             # redirect should be smarter and handle extensions, etc.
             return self.redirect(new_url, code=301)
 
-    @api_doc(api_section.listings)
+    @api_doc(api_section.listings, uses_site=True)
     def GET_random(self):
         """The Serendipity button"""
         sort = rand.choice(('new','hot'))
@@ -222,6 +222,7 @@ class FrontController(RedditController, OAuth2ResourceController):
               depth=VInt('depth'))
     @api_doc(api_section.listings,
              uri='/comments/{article}',
+             uses_site=True,
              extensions=['json', 'xml'])
     def GET_comments(self, article, comment, context, sort, limit, depth):
         """Comment page for a given 'article'."""
@@ -395,7 +396,7 @@ class FrontController(RedditController, OAuth2ResourceController):
 
     @pagecache_policy(PAGECACHE_POLICY.LOGGEDIN_AND_LOGGEDOUT)
     @require_oauth2_scope("modconfig")
-    @api_doc(api_section.moderation)
+    @api_doc(api_section.moderation, uses_site=True)
     def GET_stylesheet(self):
         """Fetches a subreddit's current stylesheet."""
         if g.css_killswitch:
@@ -453,7 +454,7 @@ class FrontController(RedditController, OAuth2ResourceController):
     @paginated_listing(max_page_size=500, backend='cassandra')
     @validate(mod=nop('mod'),
               action=VOneOf('type', ModAction.actions))
-    @api_doc(api_section.moderation)
+    @api_doc(api_section.moderation, uses_site=True)
     def GET_moderationlog(self, num, after, reverse, count, mod, action):
         if not c.user_is_loggedin or not (c.user_is_admin or
                                           c.site.is_moderator(c.user)):
@@ -816,7 +817,7 @@ class FrontController(RedditController, OAuth2ResourceController):
               recent=VMenu('t', TimeMenu, remember=False),
               restrict_sr=VBoolean('restrict_sr', default=False),
               syntax=VOneOf('syntax', options=SearchQuery.known_syntaxes))
-    @api_doc(api_section.search, extensions=['json', 'xml'])
+    @api_doc(api_section.search, extensions=['json', 'xml'], uses_site=True)
     def GET_search(self, query, num, reverse, after, count, sort, recent,
                    restrict_sr, syntax):
         """Search links page."""

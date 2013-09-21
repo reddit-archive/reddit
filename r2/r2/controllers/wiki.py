@@ -300,7 +300,7 @@ class WikiApiController(WikiController):
               content=nop(('content')),
               page_name=VWikiPageName('page'),
               reason=VPrintable('reason', 256, empty_error=None))
-    @api_doc(api_section.wiki, uri='/api/wiki/edit')
+    @api_doc(api_section.wiki, uri='/api/wiki/edit', uses_site=True)
     def POST_wiki_edit(self, pageandprevious, content, page_name, reason):
         page, previous = pageandprevious
 
@@ -358,6 +358,7 @@ class WikiApiController(WikiController):
               act=VOneOf('act', ('del', 'add')),
               user=VExistingUname('username'))
     @api_doc(api_section.wiki, uri='/api/wiki/alloweditor/{act}',
+             uses_site=True,
              uri_variants=['/api/wiki/alloweditor/%s' % act for act in ('del', 'add')])
     def POST_wiki_allow_editor(self, act, page, user):
         if not user:
@@ -373,7 +374,7 @@ class WikiApiController(WikiController):
     @validate(VModhash(),
               VWikiModerator(),
               pv=VWikiPageAndVersion(('page', 'revision')))
-    @api_doc(api_section.wiki, uri='/api/wiki/hide')
+    @api_doc(api_section.wiki, uri='/api/wiki/hide', uses_site=True)
     def POST_wiki_revision_hide(self, pv):
         page, revision = pv
         if not revision:
@@ -383,7 +384,7 @@ class WikiApiController(WikiController):
     @validate(VModhash(),
               VWikiModerator(),
               pv=VWikiPageAndVersion(('page', 'revision')))
-    @api_doc(api_section.wiki, uri='/api/wiki/revert')
+    @api_doc(api_section.wiki, uri='/api/wiki/revert', uses_site=True)
     def POST_wiki_revision_revert(self, pv):
         page, revision = pv
         if not revision:
