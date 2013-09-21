@@ -42,7 +42,7 @@ logging.getLogger('scgi-wsgi').setLevel(logging.CRITICAL)
 
 def is_local_address(ip):
     # TODO: support the /20 and /24 private networks? make this configurable?
-    return ip.startswith('10.')
+    return ip.startswith('10.') or ip == "127.0.0.1"
 
 def abort(code_or_exception=None, detail="", headers=None, comment=None,
           **kwargs):
