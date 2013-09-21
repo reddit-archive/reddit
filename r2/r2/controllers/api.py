@@ -577,9 +577,10 @@ class ApiController(RedditController, OAuth2ResourceController):
                 container = VByName('id'))
     @api_doc(api_section.moderation)
     def POST_leavemoderator(self, container):
-        """
-        Handles self-removal as moderator from a subreddit as rendered
-        in the subreddit sidebox on any of that subreddit's pages.
+        """Abdicate moderator status in a subreddit.
+
+        See also: [/api/friend](#POST_api_friend).
+
         """
         if container and container.is_moderator(c.user):
             container.remove_moderator(c.user)
@@ -591,8 +592,10 @@ class ApiController(RedditController, OAuth2ResourceController):
                 container = VByName('id'))
     @api_doc(api_section.moderation)
     def POST_leavecontributor(self, container):
-        """
-        Same comment as for POST_leave_moderator.
+        """Abdicate approved submitter status in a subreddit.
+
+        See also: [/api/friend](#POST_api_friend).
+
         """
         if container and container.is_contributor(c.user):
             container.remove_contributor(c.user)
@@ -872,6 +875,15 @@ class ApiController(RedditController, OAuth2ResourceController):
                    ip=ValidIP())
     @api_doc(api_section.moderation, uses_site=True)
     def POST_accept_moderator_invite(self, form, jquery, ip):
+        """Accept an invite to moderate the specified subreddit.
+
+        The authenticated user must have been invited to moderate the subreddit
+        by one of its current moderators.
+
+        See also: [/api/friend](#POST_api_friend).
+
+        """
+
         rel = c.site.get_moderator_invite(c.user)
         if not c.site.remove_moderator_invite(c.user):
             c.errors.add(errors.NO_INVITE_FOUND)
@@ -2008,6 +2020,15 @@ class ApiController(RedditController, OAuth2ResourceController):
                 spam = VBoolean('spam', default=True))
     @api_doc(api_section.moderation)
     def POST_remove(self, thing, spam):
+        """Remove a link or comment.
+
+        If the thing is a link, it will be removed from all subreddit listings.
+        If the thing is a comment, it will be redacted and removed from all
+        subreddit comment listings.
+
+        See also: [/api/approve](#POST_api_approve).
+
+        """
 
         # Don't remove a promoted link
         if getattr(thing, "promoted", None):
@@ -2046,6 +2067,14 @@ class ApiController(RedditController, OAuth2ResourceController):
                 thing = VByName('id'))
     @api_doc(api_section.moderation)
     def POST_approve(self, thing):
+        """Approve a link or comment.
+
+        If the thing was removed, it will be re-inserted into appropriate
+        listings. Any reports on the approved thing will be discarded.
+
+        See also: [/api/remove](#POST_api_remove).
+
+        """
         if not thing: return
         if thing._deleted: return
         kw = {'target': thing}
@@ -2073,6 +2102,15 @@ class ApiController(RedditController, OAuth2ResourceController):
                 thing=VByName('id'))
     @api_doc(api_section.moderation)
     def POST_ignore_reports(self, thing):
+        """Prevent future reports on a thing from causing notifications.
+
+        Any reports made about a thing after this flag is set on it will not
+        cause notifications or make the thing show up in the various moderation
+        listings.
+
+        See also: [/api/unignore_reports](#POST_api_unignore_reports).
+
+        """
         if not thing: return
         if thing._deleted: return
         if thing.ignore_reports: return
@@ -2089,6 +2127,11 @@ class ApiController(RedditController, OAuth2ResourceController):
                 thing=VByName('id'))
     @api_doc(api_section.moderation)
     def POST_unignore_reports(self, thing):
+        """Allow future reports on a thing to cause notifications.
+
+        See also: [/api/ignore_reports](#POST_api_ignore_reports).
+
+        """
         if not thing: return
         if thing._deleted: return
         if not thing.ignore_reports: return
@@ -2106,6 +2149,23 @@ class ApiController(RedditController, OAuth2ResourceController):
                    how = VOneOf('how', ('yes','no','admin','special')))
     @api_doc(api_section.moderation)
     def POST_distinguish(self, form, jquery, thing, how):
+        """Distinguish a thing's author with a sigil.
+
+        This can be useful to draw attention to and confirm the identity of the
+        user in the context of a link or comment of theirs. The options for
+        distinguish are as follows:
+
+        * `yes` - add a moderator distinguish (`[M]`). only if the user is a
+                  moderator of the subreddit the thing is in.
+        * `no` - remove any distinguishes.
+        * `admin` - add an admin distinguish (`[A]`). admin accounts only.
+        * `special` - add a user-specific distinguish. depends on user.
+
+        The first time a top-level comment is moderator distinguished, the
+        author of the link the comment is in reply to will get a notification
+        in their inbox.
+
+        """
         if not thing:return
 
         log_modaction = True

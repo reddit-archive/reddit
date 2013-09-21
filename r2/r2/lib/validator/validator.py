@@ -992,6 +992,9 @@ class VCanDistinguish(VByName):
 
         abort(403,'forbidden')
 
+    def param_docs(self):
+        return {}
+
 class VSrCanAlter(VByName):
     def run(self, thing_name):
         if c.user_is_admin:

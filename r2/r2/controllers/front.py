@@ -398,7 +398,14 @@ class FrontController(RedditController, OAuth2ResourceController):
     @require_oauth2_scope("modconfig")
     @api_doc(api_section.moderation, uses_site=True)
     def GET_stylesheet(self):
-        """Fetches a subreddit's current stylesheet."""
+        """Get the subreddit's current stylesheet.
+
+        This will return either the content of or a redirect to the subreddit's
+        current stylesheet if one exists.
+
+        See also: [/api/subreddit_stylesheet](#POST_api_subreddit_stylesheet).
+
+        """
         if g.css_killswitch:
             self.abort404()
 
@@ -452,11 +459,27 @@ class FrontController(RedditController, OAuth2ResourceController):
     @require_oauth2_scope("modlog")
     @prevent_framing_and_css(allow_cname_frame=True)
     @paginated_listing(max_page_size=500, backend='cassandra')
-    @validate(mod=nop('mod'),
-              action=VOneOf('type', ModAction.actions))
+    @validate(
+        mod=nop('mod', docs={"mod": "(optional) a moderator filter"}),
+        action=VOneOf('type', ModAction.actions),
+    )
     @api_doc(api_section.moderation, uses_site=True,
              uri="/about/log", extensions=["json", "xml"])
     def GET_moderationlog(self, num, after, reverse, count, mod, action):
+        """Get a list of recent moderation actions.
+
+        Moderator actions taken within a subreddit are logged. This listing is
+        a view of that log with various filters to aid in analyzing the
+        information.
+
+        The optional `mod` parameter can be a comma-delimited list of moderator
+        names to restrict the results to, or the string `a` to restrict the
+        results to admin actions taken within the subreddit.
+
+        The `type` parameter is optional and if sent limits the log entries
+        returned to only those of the type specified.
+
+        """
         if not c.user_is_loggedin or not (c.user_is_admin or
                                           c.site.is_moderator(c.user)):
             return self.abort404()
