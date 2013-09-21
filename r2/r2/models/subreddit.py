@@ -1249,6 +1249,10 @@ class MultiReddit(FakeSubreddit):
     def path(self):
         return self._path
 
+    @property
+    def over_18(self):
+        return any(sr.over_18 for sr in self.srs)
+
     def get_links(self, sort, time):
         return get_links_sr_ids(self.kept_sr_ids, sort, time)
 
