@@ -1495,7 +1495,8 @@ class VMenu(Validator):
 
     def param_docs(self):
         return {
-            self.param[0]: 'one of (%s)' % ', '.join(self.nav.options),
+            self.param[0]: 'one of (%s)' % ', '.join("`%s`" % s
+                                                  for s in self.nav.options),
         }
 
 
@@ -1660,7 +1661,8 @@ class VOneOf(Validator):
 
     def param_docs(self):
         return {
-            self.param: 'one of (%s)' % ', '.join(self.options)
+            self.param: 'one of (%s)' % ', '.join("`%s`" % s
+                                                  for s in self.options),
         }
 
 class VImageType(Validator):
