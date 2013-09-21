@@ -1130,7 +1130,7 @@ class RedditController(MinimalController):
             if (c.site.over_18 and not c.over18 and
                 request.path not in ("/frame", "/over18")
                 and c.render_style == 'html'):
-                return self.intermediate_redirect("/over18")
+                return self.intermediate_redirect("/over18", sr_path=False)
 
         #check whether to allow custom styles
         c.allow_styles = True

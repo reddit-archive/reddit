@@ -180,7 +180,7 @@ class BaseController(WSGIController):
 
 
     @classmethod
-    def intermediate_redirect(cls, form_path):
+    def intermediate_redirect(cls, form_path, sr_path=True):
         """
         Generates a /login or /over18 redirect from the current
         fullpath, after having properly reformated the path via
@@ -193,7 +193,7 @@ class BaseController(WSGIController):
             params['callback'] = request.GET.get("callback")
 
         path = add_sr(cls.format_output_url(form_path) +
-                      query_string(params))
+                      query_string(params), sr_path=sr_path)
         abort(302, location=path)
 
     @classmethod
