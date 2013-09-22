@@ -187,12 +187,16 @@ class ListingController(RedditController, OAuth2ResourceController):
 
     @require_oauth2_scope("read")
     @base_listing
-    @api_doc(api_section.listings, extensions=['json', 'xml'])
     def GET_listing(self, **env):
         check_cheating('site')
         return self.build_listing(**env)
 
-listing_api_doc = partial(api_doc, section=api_section.listings, extends=ListingController.GET_listing)
+listing_api_doc = partial(
+    api_doc,
+    section=api_section.listings,
+    extends=ListingController.GET_listing,
+    extensions=["json", "xml"],
+)
 
 class FixListing(object):
     """When sorting by hotness, computing a listing when the before/after
