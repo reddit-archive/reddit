@@ -48,7 +48,7 @@ r.recommend.RecommendationList = Backbone.Collection.extend({
     // adds current recs to the dismissed list so they won't be shown again
     // and refetches. fires reset event
     fetchNewRecs: function() {
-        var currentRecs = this.pluck('srName')
+        var currentRecs = this.pluck('sr_name')
         this.dismissed = _.union(this.dismissed, currentRecs)
         this.fetchRecs()
     },
@@ -62,15 +62,6 @@ r.recommend.RecommendationList = Backbone.Collection.extend({
                      error: _.bind(function() {
                          this.reset([])
                      }, this)})
-    },
-
-    parse: function(resp) {
-        if ($.isArray(resp)) {
-            return _.map(resp, function(srName) {
-                return new r.recommend.Recommendation({'srName': srName})
-            })
-        }
-        return []
     },
 
     // allows previously dismissed recs to be shown again
@@ -105,7 +96,7 @@ r.recommend.RecommendationsView = Backbone.View.extend({
             var el = this.$el
             var view = this
             this.collection.each(function(rec) {
-                this.$('.recommendations').append(view.itemTemplate({sr_name: rec.get('srName')}))
+                this.$('.recommendations').append(view.itemTemplate({sr_name: rec.get('sr_name')}))
             }, this)
             this.$el.css({opacity: 1.0})
         // if recs are empty but the dismissed list is not, all available recs

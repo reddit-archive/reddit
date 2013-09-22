@@ -3607,5 +3607,5 @@ class ApiController(RedditController, OAuth2ResourceController):
         """
         rec_srs = recommender.get_recommendations(srs.values(),
                                                   to_omit=to_omit.values())
-        sr_names = [sr.name for sr in rec_srs]
-        return json.dumps(sr_names)
+        sr_data = [{'sr_name': sr.name} for sr in rec_srs]
+        return json.dumps(sr_data)
