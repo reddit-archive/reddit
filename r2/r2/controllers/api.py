@@ -1844,7 +1844,11 @@ class ApiController(RedditController, OAuth2ResourceController):
                 form.has_errors(field, errors.CONFLICT)
                 form.parent().set_html('.status', error)
                 form.find('#%s_conflict_box' % field).show()
-                form.set_inputs(**{id_field_name: e.new_id, '%s_conflict_old' % field: e.your, field: e.new})
+                form.set_inputs(**{
+                    id_field_name: str(e.new_id),
+                    '%s_conflict_old' % field: e.your,
+                    field: e.new,
+                })
                 form.set_html('#%s_conflict_diff' % field, e.htmldiff)
             except (tdb_cassandra.NotFound, ValueError):
                 c.errors.add(errors.BAD_REVISION, field=id_field_name)
