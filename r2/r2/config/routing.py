@@ -250,7 +250,7 @@ def make_map():
 
     mc('/password', controller='forms', action="password")
     mc('/:action', controller='front',
-       requirements=dict(action="random|framebuster|selfserviceoatmeal"))
+       requirements=dict(action="random|framebuster"))
     mc('/:action', controller='embed',
        requirements=dict(action="blog"))
     mc('/help/gold', controller='redirect', action='redirect',
@@ -389,6 +389,9 @@ def make_map():
 
     mc("/web/log/:level", controller="weblog", action="message",
        requirements=dict(level="error"))
+
+    # Obsolete content redirects
+    mc("/selfserviceoatmeal", controller="redirect", dest="/ad_inq")
 
     # This route handles displaying the error page and
     # graphics used in the 404/500

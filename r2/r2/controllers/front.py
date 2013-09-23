@@ -154,12 +154,6 @@ class FrontController(RedditController, OAuth2ResourceController):
             kw['reverse'] = False
         return DetailsPage(thing=thing, expand_children=False, **kw).render()
 
-    def GET_selfserviceoatmeal(self):
-        return BoringPage(_("self service help"),
-                          show_sidebar=False,
-                          content=SelfServiceOatmeal()).render()
-
-
     @validate(article=VLink('article'))
     def GET_shirt(self, article):
         if not can_view_link_comments(article):
