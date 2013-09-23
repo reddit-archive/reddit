@@ -141,8 +141,13 @@ r.analytics = {
         // If GA is loaded, have GA process form submission after firing
         // (and cancel the default).
         _gaq.push(['_trackPageview', '/gold/external/' + vendor])
-        _gaq.push(function(){ form.submit() })
-        
+        _gaq.push(function() {
+            // Give GA half a second to send out its pixel.
+            setTimeout(function() {
+                form.submit()
+            }, 500)
+        })
+
         if (_gat && _gat._getTracker){
           // GA is loaded; form will submit via the _gaq.push'ed function
           event.preventDefault()
