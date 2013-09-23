@@ -187,7 +187,6 @@ class Globals(object):
             'TRAFFIC_LOG_HOSTS',
             'exempt_login_user_agents',
             'timed_templates',
-            'sample_multis',
         ],
 
         ConfigValue.dict(ConfigValue.str, ConfigValue.int): [
