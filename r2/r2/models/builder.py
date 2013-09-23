@@ -215,8 +215,6 @@ class Builder(object):
                 if getattr(item, "verdict", None):
                     if not item.verdict.endswith("-approved"):
                         w.link_notes.append(w.verdict)
-                if hasattr(item, 'url') and is_banned_domain(item.url):
-                    w.link_notes.append("banned domain")
 
             if c.user_is_admin and getattr(item, 'ip', None):
                 w.ip_span = ip_span(item.ip)

@@ -44,6 +44,7 @@ from mako.filters import url_escape
 from r2.lib.strings import strings, Score
 from r2.lib.db import tdb_cassandra
 from r2.lib.db.tdb_cassandra import NotFoundException, view_of
+from r2.lib.utils import sanitize_url
 from r2.models.subreddit import MultiReddit
 from r2.models.query_cache import CachedQueryMutator
 from r2.models.promo import PROMOTE_STATUS, get_promote_srid
@@ -374,6 +375,15 @@ class Link(Thing, Printable):
         cname = c.cname
         site = c.site
 
+        if user_is_admin:
+            # Checking if a domain's banned isn't even cheap
+            urls = [item.url for item in wrapped if hasattr(item, 'url')]
+            # bans_for_domain_parts is just a generator; convert to a set for
+            # easy use of 'intersection'
+            from r2.models.admintools import bans_for_domain_parts
+            banned_domains = {ban.domain
+                              for ban in bans_for_domain_parts(urls)}
+
         if user_is_loggedin:
             try:
                 saved = LinkSavesByAccount.fast_query(user, wrapped)
@@ -621,6 +631,22 @@ class Link(Thing, Printable):
                 else:
                     taglinetext = _("submitted %(when)s ago by %(author)s")
             item.taglinetext = taglinetext
+
+            if user_is_admin:
+                # Link notes
+                url = getattr(item, 'url')
+                # Pull just the relevant portions out of the url
+                urlf = sanitize_url(_force_unicode(url))
+                if urlf:
+                    urlp = UrlParser(urlf)
+                    hostname = urlp.hostname
+                    if hostname:
+                        parts = (hostname.encode("utf-8").rstrip(".").
+                            split("."))
+                        subparts = {".".join(parts[y:])
+                                    for y in xrange(len(parts))}
+                        if subparts.intersection(banned_domains):
+                            item.link_notes.append('banned domain')
 
         if user_is_loggedin:
             incr_counts(wrapped)
