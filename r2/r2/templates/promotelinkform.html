@@ -273,7 +273,7 @@ ${self.javascript_setup()}
 
         <table class="preftable">
           <tr>
-            <th>${_("dates")}</th>
+            <th>${_("start")}</th>
             <td class="prefright">
               <%
                   mindate = thing.startdate
@@ -288,7 +288,11 @@ ${self.javascript_setup()}
                   r.sponsored.on_date_change();
                 }
               </%self:datepicker>
-              -
+            </td>
+          </tr>
+          <tr>
+            <th>${_("end")}</th>
+            <td class="prefright">
               <%self:datepicker name="enddate", value="${thing.enddate}"
                                 minDateSrc="startdate" initfuncname="init_enddate"
                                 min_date_offset="86400000">
