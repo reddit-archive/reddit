@@ -480,16 +480,11 @@ class PromoteController(ListingController):
     @validatedForm(VSponsorAdmin(),
                    VModhash(),
                    dates=VDateRange(['startdate', 'enddate'],
-                                      future=1,
-                                      reference_date=promote.promo_datetime_now,
-                                      business_days=False,
-                                      sponsor_override=True),
+                                    reference_date=promote.promo_datetime_now),
                    sr=VSubmitSR('sr', promotion=True))
     def POST_add_roadblock(self, form, jquery, dates, sr):
-        if (form.has_errors('startdate', errors.BAD_DATE,
-                            errors.BAD_FUTURE_DATE) or
-            form.has_errors('enddate', errors.BAD_DATE,
-                            errors.BAD_FUTURE_DATE, errors.BAD_DATE_RANGE)):
+        if (form.has_errors('startdate', errors.BAD_DATE) or
+            form.has_errors('enddate', errors.BAD_DATE, errors.BAD_DATE_RANGE)):
             return
         if form.has_errors('sr', errors.SUBREDDIT_NOEXIST,
                            errors.SUBREDDIT_NOTALLOWED,
@@ -503,10 +498,7 @@ class PromoteController(ListingController):
     @validatedForm(VSponsorAdmin(),
                    VModhash(),
                    dates=VDateRange(['startdate', 'enddate'],
-                                      future=1,
-                                      reference_date=promote.promo_datetime_now,
-                                      business_days=False,
-                                      sponsor_override=True),
+                                    reference_date=promote.promo_datetime_now),
                    sr=VSubmitSR('sr', promotion=True))
     def POST_rm_roadblock(self, form, jquery, dates, sr):
         if dates and sr:
