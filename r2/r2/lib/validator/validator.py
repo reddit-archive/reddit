@@ -1854,7 +1854,7 @@ class VDate(Validator):
         except (ValueError, TypeError):
             self.set_error(errors.BAD_DATE)
 
-class VDateRange(VDate):
+class VDateRange(Validator):
     """
     Adds range validation to VDate.  In addition to satisfying
     future/past requirements in VDate, two date fields must be
@@ -1870,12 +1870,14 @@ class VDateRange(VDate):
     def __init__(self, param, max_range=None, required=True, **kw):
         self.max_range = max_range
         self.required = required
-        VDate.__init__(self, param, **kw)
+        self.vstart = VDate(param[0], **kw)
+        self.vend = VDate(param[1], **kw)
+        Validator.__init__(self, param)
 
-
-    def run(self, *a):
+    def run(self, start, end):
         try:
-            start_date, end_date = [VDate.run(self, x) for x in a]
+            start_date = self.vstart.run(start)
+            end_date = self.vend.run(end)
             # If either date is missing and dates are "required",
             # it's a bad range. Additionally, if one date is missing,
             # but the other is provided, it's always an error.
