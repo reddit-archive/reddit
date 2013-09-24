@@ -511,7 +511,7 @@ class PromoteController(ListingController):
                    dates=VDateRange(['startdate', 'enddate'],
                                   future=1,
                                   reference_date=promote.promo_datetime_now,
-                                  business_days=False,
+                                  business_days=True,
                                   sponsor_override=True),
                    link=VLink('link_id'),
                    bid=VBid('bid', min=0, max=g.max_promote_bid,
