@@ -509,10 +509,11 @@ class PromoteController(ListingController):
     @validatedForm(VSponsor('link_id'),
                    VModhash(),
                    dates=VDateRange(['startdate', 'enddate'],
-                                  earliest=promote.promo_datetime_now(offset=1),
-                                  reference_date=promote.promo_datetime_now,
-                                  business_days=True,
-                                  sponsor_override=True),
+                       earliest=promote.promo_datetime_now(offset=1),
+                       latest=promote.promo_datetime_now(offset=g.max_promote_future),
+                       reference_date=promote.promo_datetime_now,
+                       business_days=True,
+                       sponsor_override=True),
                    link=VLink('link_id'),
                    bid=VBid('bid', min=0, max=g.max_promote_bid,
                             coerce=False, error=errors.BAD_BID),
@@ -545,9 +546,9 @@ class PromoteController(ListingController):
                              field="startdate")
 
         if (form.has_errors('startdate', errors.BAD_DATE,
-                            errors.DATE_TOO_EARLY) or
-            form.has_errors('enddate', errors.BAD_DATE,
-                            errors.DATE_TOO_EARLY, errors.BAD_DATE_RANGE)):
+                            errors.DATE_TOO_EARLY, errors.DATE_TOO_LATE) or
+            form.has_errors('enddate', errors.BAD_DATE, errors.DATE_TOO_EARLY,
+                            errors.DATE_TOO_LATE, errors.BAD_DATE_RANGE)):
             return
 
         # Limit the number of PromoCampaigns a Link can have

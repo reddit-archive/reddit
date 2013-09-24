@@ -275,14 +275,12 @@ ${self.javascript_setup()}
           <tr>
             <th>${_("start")}</th>
             <td class="prefright">
-              <%
-                  mindate = thing.startdate
-                  if c.user_is_sponsor:
-                      mindate = thing.promote_date_today.strftime('%m/%d/%Y')
-               %>
-              <input type="hidden" id="date-min" name="date-min" value="${mindate}" />
+              <input type="hidden" id="date-min" name="date-min" value="${thing.startdate}">
+              <input type="hidden" id="date-start-max" name="date-start-max" value="${thing.maxstart}">
+              <input type="hidden" id="date-end-max" name="date-end-max" value="${thing.maxend}">
               <%self:datepicker name="startdate", value="${thing.startdate}"
-                                minDateSrc="date-min" initfuncname="init_startdate">
+                                minDateSrc="date-min" maxDateSrc="date-start-max"
+                                initfuncname="init_startdate">
                 function(elem) {
                   check_enddate(elem, $("#enddate"));
                   r.sponsored.on_date_change();
@@ -294,8 +292,8 @@ ${self.javascript_setup()}
             <th>${_("end")}</th>
             <td class="prefright">
               <%self:datepicker name="enddate", value="${thing.enddate}"
-                                minDateSrc="startdate" initfuncname="init_enddate"
-                                min_date_offset="86400000">
+                                minDateSrc="startdate" maxDateSrc="date-end-max"
+                                initfuncname="init_enddate" min_date_offset="86400000">
                 function(elem) { r.sponsored.on_date_change(); }
               </%self:datepicker>
               ${error_field("BAD_DATE_RANGE", "enddate", "div")}

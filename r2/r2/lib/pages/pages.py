@@ -3345,22 +3345,25 @@ class PromoteLinkForm(Templated):
                     )
                     self.bids.append(row)
 
-        # reference "now" to what we use for promtions
+        # determine date range
         now = promote.promo_datetime_now()
 
-        # min date is the day before the first possible start date.
-        self.promote_date_today = now
-        mindate = make_offset_date(now, g.min_promote_future,
-                                  business_days=True)
-        mindate -= datetime.timedelta(1)
+        if c.user_is_sponsor:
+            mindate = now
+        elif promote.is_accepted(link):
+            mindate = make_offset_date(now, 1, business_days=True)
+        else:
+            mindate = make_offset_date(now, g.min_promote_future,
+                                       business_days=True)
 
-        startdate = mindate + datetime.timedelta(1)
-        enddate = startdate + datetime.timedelta(3)
+        maxstart = now + datetime.timedelta(days=g.max_promote_future-1)
+        self.maxstart = maxstart.strftime("%m/%d/%Y")
+        maxend = now + datetime.timedelta(days=g.max_promote_future)
+        self.maxend = maxend.strftime("%m/%d/%Y")
 
-        self.startdate = startdate.strftime("%m/%d/%Y")
+        self.startdate = mindate.strftime("%m/%d/%Y")
+        enddate = mindate + datetime.timedelta(days=2)
         self.enddate = enddate.strftime("%m/%d/%Y")
-
-        self.mindate = mindate.strftime("%m/%d/%Y")
 
         self.subreddit_selector = SubredditSelector()
 
@@ -3378,8 +3381,8 @@ class PromoteLinkForm(Templated):
             srnames.update(names)
         srs = Subreddit._by_name(srnames)
         srs[''] = Frontpage
-        inv_start = startdate
-        inv_end = startdate + datetime.timedelta(days=14)
+        inv_start = mindate
+        inv_end = mindate + datetime.timedelta(days=14)
         sr_inventory = inventory.get_available_pageviews(
             srs.values(), inv_start, inv_end, datestr=True)
 
