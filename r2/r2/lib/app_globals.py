@@ -127,6 +127,7 @@ class Globals(object):
             'wiki_max_page_length_bytes',
             'wiki_max_page_name_length',
             'wiki_max_page_separators',
+            'min_promote_future',
         ],
 
         ConfigValue.float: [
