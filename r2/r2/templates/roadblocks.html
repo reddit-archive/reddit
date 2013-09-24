@@ -44,8 +44,6 @@ ${unsafe(js.use('sponsored'))}
       <tr>
         <th>for date</th>
         <td class="prefright">
-          ${error_field("BAD_DATE", "startdate", "div")}
-          ${error_field("BAD_DATE", "enddate", "div")}
           ${error_field("BAD_DATE_RANGE", "enddate", "div")}
         <%p:datepicker name="startdate", value="${thing.startdate}"
                           minDateSrc="date-min" initfuncname="init_startdate">

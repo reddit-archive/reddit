@@ -55,6 +55,9 @@ ${unsafe(js.use('sponsored'))}
     <input name="${name}"
            value="${value}" id="${name}" class="rounded styled-input" readonly="readonly" size="10" />
     <div id="datepicker-${name}" class="datepicker"></div>
+    ${error_field("BAD_DATE", name, "div")}
+    ${error_field("DATE_TOO_EARLY", name, "div")}
+    ${error_field("DATE_TOO_LATE", name, "div")}
     <script type="text/javascript">
       ${initfuncname} = function() {
           attach_calendar("#${name}", "#${minDateSrc}", "#${maxDateSrc}",
@@ -291,11 +294,6 @@ ${self.javascript_setup()}
                                 min_date_offset="86400000">
                 function(elem) { r.sponsored.on_date_change(); }
               </%self:datepicker>
-
-              ${error_field("BAD_DATE", "startdate", "div")}
-              ${error_field("DATE_TOO_EARLY", "startdate", "div")}
-              ${error_field("BAD_DATE", "enddate", "div")}
-              ${error_field("DATE_TOO_EARLY", "enddate", "div")}
               ${error_field("BAD_DATE_RANGE", "enddate", "div")}
             </td>
           </tr>
