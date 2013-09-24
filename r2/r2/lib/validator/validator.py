@@ -1809,24 +1809,21 @@ class VDate(Validator):
     """
     Date checker that accepts string inputs.
 
-    Optional parameters include 'past' and 'future' which specify how
-    far (in days) into the past or future the date must be to be
-    acceptable.
-
-    NOTE: the 'future' param will have precidence during evaluation.
+    Optional parameters 'earliest' and 'latest' specify the acceptable date
+    range (dates are inclusive).
 
     Error conditions:
        * BAD_DATE on mal-formed date strings (strptime parse failure)
-       * BAD_FUTURE_DATE and BAD_PAST_DATE on respective range errors.
+       * DATE_TOO_EARLY and DATE_TOO_LATE on range errors.
 
     """
-    def __init__(self, param, future=None, past = None,
+    def __init__(self, param, earliest=None, latest=None,
                  sponsor_override = False,
                  reference_date = lambda : datetime.now(g.tz),
                  business_days = False,
                  format = "%m/%d/%Y"):
-        self.future = future
-        self.past   = past
+        self.earliest = earliest
+        self.latest = latest
 
         # are weekends to be exluded from the interval?
         self.business_days = business_days
@@ -1846,17 +1843,13 @@ class VDate(Validator):
         try:
             date = datetime.strptime(date, self.format)
             if not override:
-                # can't put in __init__ since we need the date on the fly
-                future = utils.make_offset_date(now, self.future,
-                                          business_days = self.business_days)
-                past = utils.make_offset_date(now, self.past, future = False,
-                                          business_days = self.business_days)
-                if self.future is not None and date.date() < future.date():
-                    self.set_error(errors.BAD_FUTURE_DATE,
-                               {"day": self.future})
-                elif self.past is not None and date.date() > past.date():
-                    self.set_error(errors.BAD_PAST_DATE,
-                                   {"day": self.past})
+                if self.earliest and not date.date() >= self.earliest.date():
+                    self.set_error(errors.DATE_TOO_EARLY,
+                                   {'day': self.earliest.strftime(self.format)})
+
+                if (self.latest and not date.date() <= self.latest.date()):
+                    self.set_error(errors.DATE_TOO_LATE,
+                                   {'day': self.latest.strftime(self.format)})
             return date.replace(tzinfo=g.tz)
         except (ValueError, TypeError):
             self.set_error(errors.BAD_DATE)

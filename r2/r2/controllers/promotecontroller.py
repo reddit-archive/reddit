@@ -107,8 +107,8 @@ from r2.models import (
 def _check_dates(dates):
     params = ('startdate', 'enddate')
     error_types = (errors.BAD_DATE,
-                   errors.BAD_FUTURE_DATE,
-                   errors.BAD_PAST_DATE,
+                   errors.DATE_TOO_EARLY,
+                   errors.DATE_TOO_LATE,
                    errors.BAD_DATE_RANGE,
                    errors.DATE_RANGE_TOO_LARGE)
     for error_case in itertools.product(error_types, params):
@@ -509,7 +509,7 @@ class PromoteController(ListingController):
     @validatedForm(VSponsor('link_id'),
                    VModhash(),
                    dates=VDateRange(['startdate', 'enddate'],
-                                  future=1,
+                                  earliest=promote.promo_datetime_now(offset=1),
                                   reference_date=promote.promo_datetime_now,
                                   business_days=True,
                                   sponsor_override=True),
@@ -539,14 +539,15 @@ class PromoteController(ListingController):
             future = make_offset_date(now, g.min_promote_future,
                                       business_days=True)
             if start < future.date():
-                c.errors.add(errors.BAD_FUTURE_DATE,
-                             msg_params=dict(day=g.min_promote_future),
+                day = promote.promo_datetime_now(offset=g.min_promote_future)
+                day = date.strftime("%m/%d/%Y")
+                c.errors.add(errors.DATE_TOO_EARLY, msg_params=dict(day=day),
                              field="startdate")
 
         if (form.has_errors('startdate', errors.BAD_DATE,
-                            errors.BAD_FUTURE_DATE) or
+                            errors.DATE_TOO_EARLY) or
             form.has_errors('enddate', errors.BAD_DATE,
-                            errors.BAD_FUTURE_DATE, errors.BAD_DATE_RANGE)):
+                            errors.DATE_TOO_EARLY, errors.BAD_DATE_RANGE)):
             return
 
         # Limit the number of PromoCampaigns a Link can have

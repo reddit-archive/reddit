@@ -293,9 +293,9 @@ ${self.javascript_setup()}
               </%self:datepicker>
 
               ${error_field("BAD_DATE", "startdate", "div")}
-              ${error_field("BAD_FUTURE_DATE", "startdate", "div")}
+              ${error_field("DATE_TOO_EARLY", "startdate", "div")}
               ${error_field("BAD_DATE", "enddate", "div")}
-              ${error_field("BAD_FUTURE_DATE", "enddate", "div")}
+              ${error_field("DATE_TOO_EARLY", "enddate", "div")}
               ${error_field("BAD_DATE_RANGE", "enddate", "div")}
             </td>
           </tr>
