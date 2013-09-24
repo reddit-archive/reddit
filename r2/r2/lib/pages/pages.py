@@ -610,7 +610,10 @@ class Reddit(Templated):
             toolbar.append(NavMenu(more_buttons, title=menu.more, type='tabdrop'))
 
         if not isinstance(c.site, DefaultSR) and not c.cname:
-            toolbar.insert(0, PageNameNav('subreddit'))
+            func = 'subreddit'
+            if isinstance(c.site, DomainSR):
+                func = 'domain'
+            toolbar.insert(0, PageNameNav(func))
 
         return toolbar
 

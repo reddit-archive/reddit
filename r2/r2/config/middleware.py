@@ -32,6 +32,7 @@ from paste.cascade import Cascade
 from paste.registry import RegistryManager
 from paste.urlparser import StaticURLParser
 from paste.deploy.converters import asbool
+from paste.request import path_info_split
 from pylons import config, response
 from pylons.middleware import ErrorDocuments, ErrorHandler
 from pylons.wsgiapp import PylonsApp
@@ -222,18 +223,17 @@ class SubredditMiddleware(object):
         return self.app(environ, start_response)
 
 class DomainListingMiddleware(object):
-    domain_pattern = re.compile(r'\A/domain/(([-\w]+\.)+[\w]+)')
-
     def __init__(self, app):
         self.app = app
 
     def __call__(self, environ, start_response):
         if not environ.has_key('subreddit'):
             path = environ['PATH_INFO']
-            domain = self.domain_pattern.match(path)
-            if domain:
-                environ['domain'] = domain.groups()[0]
-                environ['PATH_INFO'] = self.domain_pattern.sub('', path) or '/'
+            domain, rest = path_info_split(path)
+            if domain == "domain" and rest:
+                domain, rest = path_info_split(rest)
+                environ['domain'] = domain
+                environ['PATH_INFO'] = rest or '/'
         return self.app(environ, start_response)
 
 class ExtensionMiddleware(object):

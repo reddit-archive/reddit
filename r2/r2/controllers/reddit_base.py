@@ -55,7 +55,7 @@ from r2.lib.errors import (
     errors,
     reddit_http_error,
 )
-from r2.lib.filters import _force_utf8
+from r2.lib.filters import _force_utf8, _force_unicode
 from r2.lib.strings import strings
 from r2.lib.template_helpers import add_sr, JSPreload
 from r2.lib.tracking import encrypt, decrypt
@@ -331,6 +331,7 @@ def set_obey_over18():
     "querystring parameter for API to obey over18 filtering rules"
     c.obey_over18 = request.GET.get("obey_over18") == "true"
 
+valid_ascii_domain = re.compile(r'\A(\w[-\w]*\.)+[\w]+\Z')
 def set_subreddit():
     #the r parameter gets added by javascript for POST requests so we
     #can reference c.site in api.py
@@ -390,6 +391,12 @@ def set_subreddit():
 
     #if we didn't find a subreddit, check for a domain listing
     if not sr_name and isinstance(c.site, DefaultSR) and domain:
+        # Redirect IDN to their IDNA name if necessary
+        idna = _force_unicode(domain).encode("idna")
+        if idna != domain:
+            redirect_to("/domain/%s%s" % (idna, request.environ["PATH_INFO"]))
+        if not c.error_page and not valid_ascii_domain.match(domain):
+            abort(404)
         c.site = DomainSR(domain)
 
     if isinstance(c.site, FakeSubreddit):

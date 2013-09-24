@@ -1562,6 +1562,9 @@ class DomainSR(FakeSubreddit):
         self.domain = domain
         self.name = domain 
         self.title = domain + ' ' + _('on reddit.com')
+        idn = domain.decode('idna')
+        if idn != domain:
+            self.idn = idn
 
     def get_links(self, sort, time):
         from r2.lib.db import queries

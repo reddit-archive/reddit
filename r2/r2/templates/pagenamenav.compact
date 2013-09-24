@@ -22,6 +22,12 @@
 
 <%namespace file="utils.html" import="plain_link"/>
 
+<%def name="domain()">
+  <span class="hover pagename redditname">
+    ${plain_link(c.site.name, c.site.path, _sr_path=False)}
+  </span>
+</%def>
+
 <%def name="subreddit()">
   <span class="hover pagename redditname">
     ${plain_link(c.site.name, c.site.path, _sr_path=False)}

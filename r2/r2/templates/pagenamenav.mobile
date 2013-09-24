@@ -20,6 +20,12 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
+<%def name="domain()">
+  <span class="hover pagename redditname">
+    <a href="${c.site.path}">${c.site.name}</a>
+  </span>
+</%def>
+
 <%def name="subreddit()">
   <span class="hover pagename redditname">
     <a href="${c.site.path}">${c.site.name}</a>
