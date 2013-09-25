@@ -1929,10 +1929,6 @@ class VDestination(Validator):
         }
 
 class ValidAddress(Validator):
-    def __init__(self, param, allowed_countries = ["United States"]):
-        self.allowed_countries = allowed_countries
-        Validator.__init__(self, param)
-
     def set_error(self, msg, field):
         Validator.set_error(self, errors.BAD_ADDRESS,
                             dict(message=msg), field = field)
@@ -1952,11 +1948,7 @@ class ValidAddress(Validator):
         elif not zipCode:
             self.set_error(_("please provide your zip or post code"), "zip")
         elif not country:
-            self.set_error(_("please pick a country"), "country")
-        else:
-            country_name = g.countries.get(country)
-            if country_name not in self.allowed_countries:
-                self.set_error(_("Our ToS don't cover your country (yet). Sorry."), "country")
+            self.set_error(_("please provide your country"), "country")
 
         # Make sure values don't exceed max length defined in the authorize.net
         # xml schema: https://api.authorize.net/xml/v1/schema/AnetApiSchema.xsd
@@ -1968,6 +1960,7 @@ class ValidAddress(Validator):
             (city, 40, 'city'),
             (state, 40, 'state'),
             (zipCode, 20, 'zip'),
+            (country, 60, 'country'),
             (phoneNumber, 255, 'phoneNumber')
         ]
         for (arg, max_length, form_field_name) in max_lengths:
@@ -1980,7 +1973,7 @@ class ValidAddress(Validator):
                            company = company or "",
                            address = address,
                            city = city, state = state,
-                           zip = zipCode, country = country_name,
+                           zip = zipCode, country = country,
                            phoneNumber = phoneNumber or "")
 
 class ValidCard(Validator):

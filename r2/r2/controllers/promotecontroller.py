@@ -682,8 +682,7 @@ class PromoteController(ListingController):
                    edit=VBoolean("edit"),
                    address=ValidAddress(
                     ["firstName", "lastName", "company", "address",
-                     "city", "state", "zip", "country", "phoneNumber"],
-                    allowed_countries=g.allowed_pay_countries),
+                     "city", "state", "zip", "country", "phoneNumber"]),
                    creditcard=ValidCard(["cardNumber", "expirationDate",
                                            "cardCode"]))
     def POST_update_pay(self, form, jquery, link, campaign, customer_id, pay_id,

@@ -183,7 +183,6 @@ class Globals(object):
             'authorized_cnames',
             'hardcache_categories',
             's3_media_buckets',
-            'allowed_pay_countries',
             'case_sensitive_domains',
             'reserved_subdomains',
             'TRAFFIC_LOG_HOSTS',

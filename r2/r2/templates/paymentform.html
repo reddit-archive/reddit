@@ -154,14 +154,12 @@ ${unsafe(js.use('sponsored'))}
          %elif field == "country":
            ## TODO: pycountry does country name i18n
            <select name="${field}" ${disabled}>
-             %for code, country_name in g.countries.iteritems():
-               % if country_name in g.allowed_pay_countries:
+             %for code, country_name in sorted(g.countries.iteritems(), key=lambda t: t[1]):
                  <option value="${code}"
                        %if getattr(data, field, 'United States') == country_name:
                          selected="selected"
                        %endif
                          >${country_name}</option>
-               % endif
              %endfor
            </select>
          %else:
