@@ -413,18 +413,17 @@ class FrontController(RedditController, OAuth2ResourceController):
         if not isinstance(c.site, FakeSubreddit):
             c.site = Subreddit._byID(c.site._id, data=True, stale=False)
 
-        if c.site.stylesheet_is_static:
-            # TODO: X-Private-Subreddit?
+        if c.site.stylesheet_is_static or c.site.stylesheet_url_http:
             url = Reddit.get_subreddit_stylesheet_url()
             if url:
                 redirect_to(url)
             else:
                 self.abort404()
+
+        if not c.secure:
+            stylesheet_contents = c.site.stylesheet_contents
         else:
-            if not c.secure:
-                stylesheet_contents = c.site.stylesheet_contents
-            else:
-                stylesheet_contents = c.site.stylesheet_contents_secure
+            stylesheet_contents = c.site.stylesheet_contents_secure
 
         if stylesheet_contents:
             c.allow_loggedin_cache = True
