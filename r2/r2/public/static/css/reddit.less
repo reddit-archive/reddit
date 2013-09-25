@@ -5308,7 +5308,7 @@ table.calendar {
 }
 
 .gray-buttons {
-    button {
+    button, a {
         padding: 0;
         margin: 0;
         border: none;
@@ -5455,6 +5455,15 @@ table.calendar {
     &.readonly {
         button.remove-sr {
             display: none;
+        }
+    }
+
+    .share-in-sr {
+        display: none;
+    }
+    &.public {
+        .share-in-sr {
+            display: inline;
         }
     }
 

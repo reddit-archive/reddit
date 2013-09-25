@@ -338,6 +338,7 @@ r.multi.MultiDetails = Backbone.View.extend({
         }
 
         this.$el.toggleClass('readonly', !canEdit)
+        this.$el.toggleClass('public', this.model.get('visibility') == 'public')
 
         if (this.model.description.has('body_html')) {
             this.$('.description .usertext-body').html(

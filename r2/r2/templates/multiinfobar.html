@@ -75,6 +75,10 @@
     %if thing.can_edit:
       <div class="gray-buttons settings">
         <button class="edit-description">${_('edit description')}</button>
+
+        %if thing.share_url:
+          <a class="share-in-sr" href="${thing.share_url}">${_('share')} &rsaquo;</a>
+        %endif
       </div>
     %endif
   </div>

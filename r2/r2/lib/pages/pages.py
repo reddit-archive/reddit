@@ -1865,6 +1865,15 @@ class MultiInfoBar(Templated):
         self.description_md = multi.description_md
         self.srs = srs
 
+        explore_sr = g.live_config["listing_chooser_explore_sr"]
+        if explore_sr:
+            self.share_url = "/r/%(sr)s/submit?url=%(url)s" % {
+                "sr": explore_sr,
+                "url": add_sr(self.multi.path, sr_path=False),
+            }
+        else:
+            self.share_url = None
+
 
 class SubscriptionBox(Templated):
     """The list of reddits a user is currently subscribed to to go in
