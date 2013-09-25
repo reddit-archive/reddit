@@ -28,6 +28,10 @@
    from r2.lib.wrapped import Templated
 %>
 
+<%!
+   from babel.numbers import format_currency
+%>
+
 <div id="siteTable_organic" class="organic-listing loading${' compressed' if thing.compress_display else ''}">
   %if thing.things:
     %for link in thing.things:
@@ -61,7 +65,7 @@
         </p>
         <p>
           ${text_with_links(
-            _("Use of this tool is open to all members of reddit.com, and for as little as $20 you can advertise in this area. %(get_started)s"),
+            _("Use of this tool is open to all members of reddit.com, and for as little as %(price)s you can advertise in this area. %%(get_started)s") % dict(price=format_currency(g.min_promote_bid, 'USD', locale=c.locale)),
               get_started=dict(link_text=unsafe(_("Get started &rsaquo;")), path="/ad_inq")
           )}
         </p>
