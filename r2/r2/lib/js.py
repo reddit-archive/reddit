@@ -143,6 +143,7 @@ class Module(Source):
     def __init__(self, name, *sources, **kwargs):
         self.name = name
         self.should_compile = kwargs.get('should_compile', True)
+        self.wrap = kwargs.get('wrap')
         self.sources = []
         sources = sources or (name,)
         for source in sources:
@@ -165,12 +166,16 @@ class Module(Source):
 
     def build(self, closure):
         with open(self.path, "w") as out:
+            source = self.get_source()
+            if self.wrap:
+                source = self.wrap.format(content=source, name=self.name)
+
             if self.should_compile:
                 print >> sys.stderr, "Compiling {0}...".format(self.name),
-                closure.compile(self.get_source(), out)
+                closure.compile(source, out)
             else:
                 print >> sys.stderr, "Concatenating {0}...".format(self.name),
-                out.write(self.get_source())
+                out.write(source)
         print >> sys.stderr, " done."
 
     def use(self):
@@ -422,6 +427,7 @@ module["html5shiv"] = Module("html5shiv.js",
     should_compile=False
 )
 
+catch_errors = "try {{ {content} }} catch (err) {{ r.sendError('Error running module', '{name}', ':', err) }}"
 
 module["reddit-init"] = LocalizedModule("reddit-init.js",
     "lib/json2.js",
@@ -439,6 +445,7 @@ module["reddit-init"] = LocalizedModule("reddit-init.js",
     "reddit.js",
     "spotlight.js",
     inject_plural_forms=True,
+    wrap=catch_errors,
 )
 
 module["reddit"] = LocalizedModule("reddit.js",
@@ -456,6 +463,7 @@ module["reddit"] = LocalizedModule("reddit.js",
     "multi.js",
     "recommender.js",
     PermissionsDataSource(),
+    wrap=catch_errors,
 )
 
 module["admin"] = Module("admin.js",
