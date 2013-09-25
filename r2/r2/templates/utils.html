@@ -426,6 +426,7 @@ ${unsafe(txt)}
     var _gaq = _gaq || [];
     _gaq.push(
         ['_setAccount', '${g.googleanalytics}'],
+        ['_setDomainName', '${g.domain}'],
         ['_setCustomVar', 1, 'site', '${tracking.get_site()}', 3],
         ['_setCustomVar', 2, 'srpath', '${tracking.get_srpath()}', 3],
         ['_setCustomVar', 3, 'usertype', '${"loggedin" if c.user_is_loggedin else "guest"}', 2],
