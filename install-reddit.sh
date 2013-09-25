@@ -131,7 +131,6 @@ python-beautifulsoup
 python-cssutils
 python-chardet
 python-psycopg2
-python-pycountry
 python-pycassa
 python-imaging
 python-pycaptcha

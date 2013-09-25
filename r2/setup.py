@@ -83,7 +83,6 @@ setup(
         "cssutils==0.9.5.1",
         "chardet",
         "psycopg2",
-        "pycountry",
         "pycassa>=1.7.0",
         "PIL",
         "pycaptcha",
