@@ -187,7 +187,7 @@ ${self.javascript_setup()}
 <%def name="text_field(text='', visible=True)">
   <%utils:line_field title="${_('text')}" id="text-field" css_class="rounded"
                      style="${('' if visible else 'display:none')}">
-    ${UserText(None, text=text, have_form=False, creating=True)}
+    ${UserText(None, text=text, textarea_class='rounded', have_form=False, creating=True)}
   </%utils:line_field>
 </%def>
 
