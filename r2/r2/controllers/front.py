@@ -761,6 +761,7 @@ class FrontController(RedditController, OAuth2ResourceController):
     related_replace_with = ' '
 
     @base_listing
+    @require_oauth2_scope("read")
     @validate(article=VLink('article'))
     def GET_related(self, num, article, after, reverse, count):
         """Related page: performs a search using title of article as
@@ -791,6 +792,7 @@ class FrontController(RedditController, OAuth2ResourceController):
                             subtitle=_('related')).render()
 
     @base_listing
+    @require_oauth2_scope("read")
     @validate(article=VLink('article'))
     def GET_duplicates(self, article, num, after, reverse, count):
         if not can_view_link_comments(article):
@@ -835,6 +837,7 @@ class FrontController(RedditController, OAuth2ResourceController):
     search_help_page = "/wiki/search"
     verify_langs_regex = re.compile(r"\A[a-z][a-z](,[a-z][a-z])*\Z")
     @base_listing
+    @require_oauth2_scope("read")
     @validate(query=VLength('q', max_length=512),
               sort=VMenu('sort', SearchSortMenu, remember=False),
               recent=VMenu('t', TimeMenu, remember=False),
