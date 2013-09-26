@@ -3709,6 +3709,7 @@ class UserText(CachedTemplate):
                  post_form = 'editusertext',
                  cloneable = False,
                  extra_css = '',
+                 textarea_class = '',
                  name = "text",
                  expunged=False,
                  include_errors=True):
@@ -3734,6 +3735,7 @@ class UserText(CachedTemplate):
                                 post_form = post_form,
                                 cloneable = cloneable,
                                 css_class = css_class,
+                                textarea_class = textarea_class,
                                 name = name,
                                 expunged=expunged,
                                 include_errors=include_errors)
