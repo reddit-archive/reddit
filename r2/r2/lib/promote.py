@@ -415,6 +415,7 @@ def delete_campaign(link, campaign):
     void_campaign(link, campaign)
     campaign.delete()
     PromotionLog.add(link, 'deleted campaign %s' % campaign._id)
+    hooks.get_hook('campaign.void').call(link=link, campaign=campaign)
 
 def void_campaign(link, campaign):
     transactions = get_transactions(link, [campaign])
@@ -422,7 +423,6 @@ def void_campaign(link, campaign):
     if bid_record:
         a = Account._byID(link.author_id)
         authorize.void_transaction(a, bid_record.transaction, campaign._id)
-    hooks.get_hook('campaign.void').call(link=link, campaign=campaign)
 
 def auth_campaign(link, campaign, user, pay_id):
     """
