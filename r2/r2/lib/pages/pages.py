@@ -1869,7 +1869,7 @@ class MultiInfoBar(Templated):
         if explore_sr:
             self.share_url = "/r/%(sr)s/submit?url=%(url)s" % {
                 "sr": explore_sr,
-                "url": add_sr(self.multi.path, sr_path=False),
+                "url": g.origin + self.multi.path,
             }
         else:
             self.share_url = None
