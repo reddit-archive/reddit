@@ -20,39 +20,22 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%!
-   from r2.models import Sub
- %>
-<%namespace file="utils.html" import="plain_link" />
+<%namespace file="utils.html" import="text_with_links" />
 
-<%
-   _id = ("_%s" % thing.parent_name) if hasattr(thing, 'parent_name') else ''
-   cls = thing.lookups[0].__class__.__name__.lower()
- %>
-<div id="siteTable${_id}" class="sitetable ${cls}">
-  %for a in thing.things:
-      ${a}
+%if thing.suggestion_type:
+
+<span class="next-suggestions">
+%if thing.suggestion_type == 'multis':
+  ${_('or try a multi:')}
+  %for multi in thing.suggestions:
+      <a href="${multi.path}">/m/${multi.name}</a>
   %endfor
+%elif thing.suggestion_type == 'random':
+  ${text_with_links(
+    _('or try a %(random_subreddit)s'),
+    random_subreddit=dict(link_text=_("random subreddit"), path="/r/random")
+  )}
+%endif
+</span>
 
-  %if thing.nextprev and (thing.prev or thing.next):
-    <div class="nav-buttons">
-      <span class="nextprev">${_("view more:")}&#32;
-      %if thing.prev:
-        ${plain_link(unsafe("&lsaquo; " + _("prev")), thing.prev, _sr_path = (c.site != Sub), rel="nofollow prev")}
-      %endif
-      %if thing.prev and thing.next:
-        <span class="separator"></span>
-      %endif
-      %if thing.next:
-        ${plain_link(unsafe(_("next") + " &rsaquo;"), thing.next,  _sr_path = (c.site != Sub), rel="nofollow next")}
-      %endif
-      </span>
-      %if thing.next_suggestions:
-        ${thing.next_suggestions}
-      %endif
-    </div>
-  %endif
-  %if not thing.things:
-    <p id="noresults" class="error">${_("there doesn't seem to be anything here")}</p>
-  %endif
-</div>
+%endif

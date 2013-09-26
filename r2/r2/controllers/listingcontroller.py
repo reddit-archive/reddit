@@ -82,6 +82,9 @@ class ListingController(RedditController, OAuth2ResourceController):
     # class (probably a subclass of Reddit) to use to render the page.
     render_cls = Reddit
 
+    # class for suggestions next to "next/prev" buttons
+    next_suggestions_cls = None
+
     #extra parameters to send to the render_cls constructor
     render_params = {}
     extra_page_classes = ['listing-page']
@@ -168,7 +171,11 @@ class ListingController(RedditController, OAuth2ResourceController):
         if (getattr(c.site, "_id", -1) == get_promote_srid() and
             not c.user_is_sponsor):
             abort(403, 'forbidden')
-        pane = LinkListing(self.builder_obj, show_nums = self.show_nums).listing()
+        model = LinkListing(self.builder_obj, show_nums=self.show_nums)
+        suggestions = None
+        if self.next_suggestions_cls:
+            suggestions = self.next_suggestions_cls()
+        pane = model.listing(next_suggestions=suggestions)
         # Indicate that the comment tree wasn't built for comments
         for i in pane:
             if hasattr(i, 'full_comment_path'):
@@ -228,6 +235,7 @@ class HotController(FixListing, ListingController):
     where = 'hot'
     extra_page_classes = ListingController.extra_page_classes + ['hot-page']
     show_chooser = True
+    next_suggestions_cls = ListingSuggestions
 
     def make_requested_ad(self):
         try:
@@ -395,6 +403,7 @@ class NewController(ListingController):
     title_text = _('newest submissions')
     extra_page_classes = ListingController.extra_page_classes + ['new-page']
     show_chooser = True
+    next_suggestions_cls = ListingSuggestions
 
     def keep_fn(self):
         def keep(item):
@@ -444,6 +453,7 @@ class RisingController(NewController):
 class BrowseController(ListingController):
     where = 'browse'
     show_chooser = True
+    next_suggestions_cls = ListingSuggestions
 
     def keep_fn(self):
         """For merged time-listings, don't show items that are too old
@@ -493,6 +503,7 @@ class BrowseController(ListingController):
 class RandomrisingController(ListingController):
     where = 'randomrising'
     title_text = _('you\'re really bored now, eh?')
+    next_suggestions_cls = ListingSuggestions
 
     def query(self):
         links = get_rising(c.site)

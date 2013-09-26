@@ -963,7 +963,7 @@ a.author { margin-right: 0.5em; }
 .sitetable { list-style-type: none; }
 .ajaxhook { position: absolute; top: -1000px; left: 0px; }
 
-.nextprev {
+.nextprev, .next-suggestions {
     color: gray;
     font-size: larger;
     margin-top: 10px;
@@ -973,6 +973,7 @@ a.author { margin-right: 0.5em; }
         background: #eee;
         border: 1px solid #ddd;
         border-radius: 3px;
+        font-weight: bold;
     }
 
     a:hover {
@@ -989,6 +990,17 @@ a.author { margin-right: 0.5em; }
         margin-left: .5em;
         padding-left: .5em;
         border-left: 1px solid #ccc;
+    }
+
+}
+
+.next-suggestions {
+    margin-left: 1.5em;
+
+    a {
+        background: none;
+        font-weight: normal;
+        margin-left: .5em;
     }
 }
 

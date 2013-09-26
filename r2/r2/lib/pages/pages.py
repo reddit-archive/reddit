@@ -4329,3 +4329,20 @@ class SubredditSelector(Templated):
             names.sort(key=str.lower)
             groups.append((title, names))
         return groups
+
+
+class ListingSuggestions(Templated):
+    def __init__(self):
+        self.suggestion_type = None
+        if c.default_sr:
+            multis = c.user_is_loggedin and LabeledMulti.by_owner(c.user)
+            if multis:
+                self.suggestion_type = "multis"
+                if len(multis) <= 3:
+                    self.suggestions = multis
+                else:
+                    self.suggestions = random.sample(multis, 3)
+            else:
+                self.suggestion_type = "random"
+
+        Templated.__init__(self)
