@@ -564,7 +564,7 @@ class PromoteController(ListingController):
                                       business_days=True)
             if start < future.date():
                 day = promote.promo_datetime_now(offset=g.min_promote_future)
-                day = date.strftime("%m/%d/%Y")
+                day = day.strftime("%m/%d/%Y")
                 c.errors.add(errors.DATE_TOO_EARLY, msg_params=dict(day=day),
                              field="startdate")
 
