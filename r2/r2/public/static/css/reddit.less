@@ -5120,15 +5120,24 @@ div #campaign-field {
     width: 98%;
 }
 
+#promo-form {
+    .linefield, .usertext-edit {
+        width: auto;
+    }
+}
+
 .fancy-settings h1, .create-promotion h1 { font-size: 200%; color: #999; margin:10px 5px; }
 .fancy-settings h2 { font-size: 200%; font-weight:normal; color: #999; margin:10px 5px; }
 .fancy-settings h1 strong { font-weight:bold; color: #666;  }
 .create-promotion .sitetable { margin: 5px;  }
 
-.create-promotion .create-promo .save-button { float:right; margin-right:  3px;  }
-    .create-promotion .create-promo .save-button button {
+.create-promotion .create-promo .save-button {
+    float: right;
+
+    button {
         margin-top: 0px;
     }
+}
 
 .create-promo .hidden { display: none; }
 button.new-campaign:disabled { color: gray; }
