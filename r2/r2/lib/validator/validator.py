@@ -1809,8 +1809,8 @@ class VDate(Validator):
     """
     Date checker that accepts string inputs.
 
-    Optional parameters 'earliest' and 'latest' specify the acceptable date
-    range (dates are inclusive).
+    Optional parameters 'earliest' and 'latest' specify the acceptable timedelta
+    offsets (offsets are inclusive).
 
     Error conditions:
        * BAD_DATE on mal-formed date strings (strptime parse failure)
@@ -1839,17 +1839,19 @@ class VDate(Validator):
 
     def run(self, date):
         now = self.reference_date()
+        earliest = now + self.earliest if self.earliest is not None else None
+        latest = now + self.latest if self.latest is not None else None
         override = c.user_is_sponsor and self.override
         try:
             date = datetime.strptime(date, self.format)
             if not override:
-                if self.earliest and not date.date() >= self.earliest.date():
+                if earliest and not date.date() >= earliest.date():
                     self.set_error(errors.DATE_TOO_EARLY,
-                                   {'day': self.earliest.strftime(self.format)})
+                                   {'day': earliest.strftime(self.format)})
 
-                if (self.latest and not date.date() <= self.latest.date()):
+                if latest and not date.date() <= latest.date():
                     self.set_error(errors.DATE_TOO_LATE,
-                                   {'day': self.latest.strftime(self.format)})
+                                   {'day': latest.strftime(self.format)})
             return date.replace(tzinfo=g.tz)
         except (ValueError, TypeError):
             self.set_error(errors.BAD_DATE)
