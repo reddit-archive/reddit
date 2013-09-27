@@ -45,23 +45,14 @@ endif
 PYX_FILES := $(shell find . -name \*.pyx)
 PYX_C_FILES := $(PYX_FILES:.pyx=.c)
 PYX_SO_FILES := $(PYX_FILES:.pyx=.so)
-PYX_BUILDSTAMP := $(BUILD_DIR)/pyx-buildstamp
 
-.PHONY: clean_pyx
+.PHONY: pyx clean_pyx
 
-pyx: $(PYX_BUILDSTAMP)
-
-$(PYX_C_FILES): %.c: %.pyx
-	cython $<
-
-# this won't rebuild pyx if you're a jerk and delete a .so file without deleting the buildstamp
-# make clean && make pyx will fix this
-$(PYX_BUILDSTAMP): $(PYX_C_FILES)
+pyx:
 	$(PYTHON) setup.py build_ext --inplace
-	touch $@
 
 clean_pyx:
-	rm -f $(PYX_BUILDSTAMP) $(PYX_C_FILES) $(PYX_SO_FILES)
+	rm -f $(PYX_C_FILES) $(PYX_SO_FILES)
 
 #################### i18n
 STRINGS_FILE := r2/lib/strings.py

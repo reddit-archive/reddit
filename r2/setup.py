@@ -21,27 +21,24 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from ez_setup import use_setuptools
-use_setuptools()
-
-from setuptools import find_packages
-from distutils.core import setup, Extension
 import os
 import fnmatch
-
-
-
-commands = {}
+import sys
 
 
 try:
-    from Cython.Distutils import build_ext
+    import pkg_resources
 except ImportError:
-    pass
+    print "Distribute >= 0.6.16 is required to run this."
+    sys.exit(1)
 else:
-    commands.update({
-        "build_ext": build_ext
-    })
+    pkg_resources.require("distribute>=0.6.16")
+
+
+from setuptools import setup, find_packages, Extension
+
+
+commands = {}
 
 
 try:
@@ -52,15 +49,17 @@ else:
     commands["extract_messages"] = r2.lib.translation.extract_messages
 
 
-# add the cython modules
-pyx_extensions = []
-for root, directories, files in os.walk('.'):
-    for f in fnmatch.filter(files, '*.pyx'):
-        path = os.path.join(root, f)
-        module_name, _ = os.path.splitext(path)
-        module_name = os.path.normpath(module_name)
-        module_name = module_name.replace(os.sep, '.')
-        pyx_extensions.append(Extension(module_name, [path]))
+try:
+    from Cython.Build import cythonize
+except ImportError:
+    print "Cannot find Cython. Skipping Cython build."
+    pyx_extensions = []
+else:
+    pyx_files = []
+    for root, directories, files in os.walk('.'):
+        for f in fnmatch.filter(files, '*.pyx'):
+            pyx_files.append(os.path.join(root, f))
+    pyx_extensions = cythonize(pyx_files)
 
 
 setup(
