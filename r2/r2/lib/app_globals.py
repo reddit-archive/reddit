@@ -247,6 +247,9 @@ class Globals(object):
             'sidebar_message',
             'gold_sidebar_message',
         ],
+        ConfigValue.dict(ConfigValue.str, ConfigValue.float): [
+            'pennies_per_server_second',
+        ],
     }
 
     def __init__(self, global_conf, app_conf, paths, **extra):

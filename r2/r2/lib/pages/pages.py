@@ -26,10 +26,12 @@ from r2.lib.wrapped import Wrapped, Templated, CachedTemplate
 from r2.models import Account, FakeAccount, DefaultSR, make_feedurl
 from r2.models import FakeSubreddit, Subreddit, SubSR, AllMinus, AllSR
 from r2.models import Friends, All, Sub, NotFound, DomainSR, Random, Mod, RandomNSFW, RandomSubscription, MultiReddit, ModSR, Frontpage, LabeledMulti
-from r2.models import Link, Printable, Trophy, bidding, PromoCampaign, PromotionWeights, Comment
+from r2.models import Link, Printable, Trophy, PromoCampaign, PromotionWeights, Comment
 from r2.models import Flair, FlairTemplate, FlairTemplateBySubredditIndex
 from r2.models import USER_FLAIR, LINK_FLAIR
 from r2.models import GoldPartnerDealCode
+from r2.models.bidding import Bid
+from r2.models.gold import gold_payments_by_user
 from r2.models.promo import NO_TRANSACTION, PromotionLog, PromotedLinkRoadblock
 from r2.models.token import OAuth2Client, OAuth2AccessToken
 from r2.models import traffic
@@ -74,6 +76,7 @@ from r2.lib.filters import safemarkdown
 from r2.lib.utils import Storage
 
 from babel.numbers import format_currency
+from babel.dates import format_timedelta
 from collections import defaultdict
 import csv
 import cStringIO
@@ -1603,6 +1606,12 @@ class ProfilePage(Reddit):
         elif c.user_is_sponsor:
             from admin_pages import SponsorSidebar
             rb.push(SponsorSidebar(self.user))
+
+        if c.user == self.user or c.user.employee:
+            seconds_bar = ServerSecondsBar(self.user)
+            if seconds_bar.message:
+                rb.push(seconds_bar)
+
         rb.push(ProfileBar(self.user))
 
         return rb
@@ -1690,6 +1699,62 @@ class ProfileBar(Templated):
 
             self.my_fullname = c.user._fullname
             self.is_friend = self.user._id in c.user.friends
+
+
+class ServerSecondsBar(Templated):
+    pennies_per_server_second = {
+        datetime.datetime.strptime(datestr, "%Y/%m/%d").date(): v
+        for datestr, v in g.live_config['pennies_per_server_second'].iteritems()
+    }
+
+    @classmethod
+    def get_rate(cls, dt):
+        cutoff_dates = sorted(cls.pennies_per_server_second.keys())
+        dt = dt.date()
+        key = max(filter(lambda cutoff_date: dt >= cutoff_date, cutoff_dates))
+        return cls.pennies_per_server_second[key]
+
+    @classmethod
+    def subtract_fees(cls, pennies):
+        # for simplicity all payment processor fees are $0.30 + 2.9%
+        return pennies * (1 - 0.029) - 30
+
+    def __init__(self, user):
+        Templated.__init__(self)
+
+        seconds = 0.
+        gold_payments = gold_payments_by_user(user)
+
+        for payment in gold_payments:
+            rate = self.get_rate(payment.date)
+            seconds += self.subtract_fees(payment.pennies) / rate
+
+        try:
+            q = (Bid.query().filter(Bid.account_id == user._id)
+                    .filter(Bid.status == Bid.STATUS.CHARGE)
+                    .filter(Bid.transaction > 0))
+            selfserve_payments = list(q)
+        except NotFound:
+            selfserve_payments = []
+
+        for payment in selfserve_payments:
+            rate = self.get_rate(payment.date)
+            seconds += self.subtract_fees(payment.charge_amount * 100) / rate
+
+        if not seconds:
+            self.message = ''
+        else:
+            delta = datetime.timedelta(seconds=seconds)
+            server_time = format_timedelta(delta, threshold=5, locale=c.locale)
+
+            if user == c.user:
+                message = _("you have helped pay for %(time)s of reddit "
+                            "server time.")
+            else:
+                message = _("%(user)s has helped pay for %%(time)s of reddit "
+                            "server time.") % {'user': user.name}
+            self.message = message % {'time': server_time}
+
 
 class MenuArea(Templated):
     """Draws the gray box at the top of a page for sort menus"""
@@ -3337,7 +3402,7 @@ class PromoteLinkForm(Templated):
 
         if c.user_is_sponsor:
             try:
-                bids = bidding.Bid.lookup(thing_id=link._id)
+                bids = Bid.lookup(thing_id=link._id)
             except NotFound:
                 pass
             else:
@@ -3345,7 +3410,7 @@ class PromoteLinkForm(Templated):
                 bidders = Account._byID(set(bid.account_id for bid in bids),
                                         data=True, return_dict=True)
                 for bid in bids:
-                    status = bidding.Bid.STATUS.name[bid.status].lower()
+                    status = Bid.STATUS.name[bid.status].lower()
                     bidder = bidders[bid.account_id]
                     row = Storage(
                         status=status,
