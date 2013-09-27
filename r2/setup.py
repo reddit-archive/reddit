@@ -63,8 +63,6 @@ for root, directories, files in os.walk('.'):
         pyx_extensions.append(Extension(module_name, [path]))
 
 
-discount_path = "r2/lib/contrib/discount"
-
 setup(
     name="r2",
     version="",
