@@ -45,7 +45,7 @@
         div_class += " stickied"
 %>
 <div class="${div_class}">
-  <span class="rank" style="width:${thing.numcolmargin};">
+  <span class="rank">
     %if thing.num > 0:
       ${thing.num}
     %endif
