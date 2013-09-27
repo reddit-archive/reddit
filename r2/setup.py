@@ -98,6 +98,7 @@ setup(
     ],
     dependency_links=[
         "https://github.com/reddit/snudown/archive/v1.1.3.tar.gz#egg=snudown-1.1.3",
+        "https://s3.amazonaws.com/code.reddit.com/pycaptcha-0.4.tar.gz#egg=pycaptcha-0.4",
     ],
     packages=find_packages(exclude=["ez_setup"]),
     cmdclass=commands,
