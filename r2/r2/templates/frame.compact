@@ -48,7 +48,7 @@
           l = l[0] if l else None
      %>
     ${l}
-   <iframe border="0" class="toolbar-iframe" src="${thing.url}">
+   <iframe border="0" class="toolbar-iframe" src="${thing.url}" sandbox="allow-scripts allow-forms">
    </iframe>
   </body>
 </html>
