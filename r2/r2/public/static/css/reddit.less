@@ -3354,6 +3354,33 @@ button.button[disabled] {
     margin: 5px 10px 10px 3px;
 }
 
+#inner_toolbar {
+    #reddit_panel, #reddit_link {
+        position: absolute;
+        height: 100%;
+        border: none;
+    }
+
+    #reddit_panel {
+        width: 0;
+    }
+
+    #reddit_link {
+        width: 100%;
+    }
+
+    &.expanded {
+        #reddit_panel {
+            width: 400px;
+        }
+
+        #reddit_link {
+            left: 400px;
+            right: 0;
+        }
+    }
+}
+
 .min-body {
     height: 100%;
 }

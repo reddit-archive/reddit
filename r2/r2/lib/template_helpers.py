@@ -488,10 +488,6 @@ def choose_width(link, width):
         else:
             return 110
 
-def panel_size(state):
-    "the frame.cols of the reddit-toolbar's inner frame"
-    return '400px, 100%' if state =='expanded' else '0px, 100%x'
-
 # Appends to the list "attrs" a tuple of:
 # <priority (higher trumps lower), letter,
 #  css class, i18n'ed mouseover label, hyperlink (opt)>

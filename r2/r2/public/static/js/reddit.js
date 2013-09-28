@@ -973,11 +973,11 @@ var toolbar_p = function(expanded_size, collapsed_size) {
     };
     
     this.show_panel = function() {
-        parent.inner_toolbar.document.body.cols = expanded_size;
+        $('body', parent.inner_toolbar.document).addClass('expanded')
     };
         
     this.hide_panel = function() {
-        parent.inner_toolbar.document.body.cols = collapsed_size;
+        $('body', parent.inner_toolbar.document).removeClass('expanded')
     };
         
     this.resize_toolbar = function() {

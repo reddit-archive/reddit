@@ -20,19 +20,23 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
+<%namespace file="less.html" import="less_js, less_stylesheet"/>
+
 <%!
-    from r2.lib.template_helpers import add_sr, panel_size
+    from r2.lib.template_helpers import add_sr
 %>
 <html>
-  <script type="text/javascript">
-     if (window == window.top) {
-       window.location = "${add_sr('/tb/' + thing.link._id36)}"
-     }
-  </script>
-  <frameset cols="${panel_size('expanded' if thing.expanded else 'collapsed')}"
-           name="inner_toolbar" onload="window.frames[1].focus()">
-    <frame frameborder="0" src="${add_sr('/toolbar/comments/'+thing.link._id36)}"
-           name="reddit_panel" />
-    <frame frameborder="0" src="${thing.link.url}" name="reddit_link" />
-  </frameset>
+  <head>
+    <script type="text/javascript">
+       if (window == window.top) {
+         window.location = "${add_sr('/tb/' + thing.link._id36)}"
+       }
+    </script>
+    ${less_stylesheet(g.stylesheet)}
+    ${less_js()}
+  </head>
+  <body class="${'expanded' if thing.expanded else ''}" id="inner_toolbar" onload="window.frames[1].focus()">
+    <iframe frameborder="0" src="${add_sr('/toolbar/comments/'+thing.link._id36)}" id="reddit_panel"></iframe>
+    <iframe frameborder="0" src="${thing.link.url}" id="reddit_link"></iframe>
+  </body>
 </html>
