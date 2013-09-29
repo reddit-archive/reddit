@@ -2105,6 +2105,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         """
         if not thing: return
         if thing._deleted: return
+        if c.user._spam: return
         kw = {'target': thing}
         if thing._spam:
             kw['details'] = 'unspam'
