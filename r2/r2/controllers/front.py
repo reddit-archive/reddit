@@ -752,6 +752,14 @@ class FrontController(RedditController, OAuth2ResourceController):
         usertext = UserText(c.site, c.site.description)
         return Reddit(content=usertext).render()
 
+    @require_oauth2_scope("read")
+    def GET_sticky(self):
+        if c.site.sticky_fullname:
+            sticky = Link._by_fullname(c.site.sticky_fullname, data=True)
+            self.redirect(sticky.make_permalink_slow())
+        else:
+            abort(404)
+
     def GET_awards(self):
         """The awards page."""
         return BoringPage(_("awards"), content=UserAwards()).render()

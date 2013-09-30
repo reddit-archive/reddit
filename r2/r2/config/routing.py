@@ -141,6 +141,7 @@ def make_map():
           requirements=dict(controller="hot|new|rising|randomrising"))
 
     mc('/about/sidebar', controller='front', action='sidebar')
+    mc('/about/sticky', controller='front', action='sticky')
     mc('/about/flair', controller='front', action='flairlisting')
     mc('/about', controller='front', action='about')
     mc('/comments/gilded', controller='redirect', action='gilded_comments',
