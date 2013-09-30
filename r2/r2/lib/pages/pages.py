@@ -3366,9 +3366,14 @@ class PromoteLinkForm(Templated):
             mindate = make_offset_date(now, g.min_promote_future,
                                        business_days=True)
 
-        maxstart = now + datetime.timedelta(days=g.max_promote_future-1)
+        if c.user_is_sponsor:
+            max_days = 366
+        else:
+            max_days = g.max_promote_future
+
+        maxstart = now + datetime.timedelta(max_days-1)
+        maxend = maxstart + datetime.timedelta(days=1)
         self.maxstart = maxstart.strftime("%m/%d/%Y")
-        maxend = now + datetime.timedelta(days=g.max_promote_future)
         self.maxend = maxend.strftime("%m/%d/%Y")
 
         self.startdate = mindate.strftime("%m/%d/%Y")
