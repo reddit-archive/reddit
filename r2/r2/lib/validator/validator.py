@@ -20,6 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+import cgi
 import json
 
 from pylons import c, g, request, response
@@ -112,7 +113,11 @@ class Validator(object):
         a = []
         if self.param:
             for p in utils.tup(self.param):
-                if self.post and request.POST.get(p):
+                # cgi.FieldStorage is falsy even if it has a filled value
+                # property. :(
+                post_val = request.POST.get(p)
+                if self.post and (post_val or
+                                  isinstance(post_val, cgi.FieldStorage)):
                     val = request.POST[p]
                 elif self.get and request.GET.get(p):
                     val = request.GET[p]
@@ -552,6 +557,14 @@ class VLength(Validator):
             self.set_error(self.length_error, {'max_length': self.max_length}, code=400)
         else:
             return text
+
+class VUploadLength(VLength):
+    def run(self, upload, text2=''):
+        # upload is expected to be a FieldStorage object
+        if isinstance(upload, cgi.FieldStorage):
+            return VLength.run(self, upload.value, text2)
+        else:
+            self.set_error(self.empty_error, code=400)
 
 class VPrintable(VLength):
     def run(self, text, text2 = ''):

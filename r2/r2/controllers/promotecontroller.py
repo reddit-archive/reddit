@@ -87,6 +87,7 @@ from r2.lib.validator import (
     VSponsorAdminOrAdminSecret,
     VSubmitSR,
     VTitle,
+    VUploadLength,
     VUrl,
 )
 from r2.models import (
@@ -775,7 +776,7 @@ class PromoteController(ListingController):
 
     @validate(VSponsor("link_id"),
               link=VByName('link_id'),
-              file=VLength('file', 500 * 1024),
+              file=VUploadLength('file', 500*1024),
               img_type=VImageType('img_type'))
     def POST_link_thumb(self, link=None, file=None, img_type='jpg'):
         if link and (not promote.is_promoted(link) or
