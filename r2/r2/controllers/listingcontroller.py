@@ -258,9 +258,8 @@ class HotController(FixListing, ListingController):
             return res
 
     def make_single_ad(self):
-        srs = promote.srs_with_live_promos(c.user, c.site)
-        if srs:
-            srnames = [sr.name for sr in srs]
+        srnames = promote.srnames_with_live_promos(c.user, c.site)
+        if srnames:
             return SpotlightListing(show_promo=True, srnames=srnames,
                                     navigable=False).listing()
 
@@ -279,13 +278,14 @@ class HotController(FixListing, ListingController):
 
         show_promo = False
         srnames = []
-        if c.user.pref_show_sponsors or not c.user.gold:
-            srs = promote.srs_with_live_promos(c.user, c.site)
-            if srs:
-                if ((c.user_is_loggedin and random.random() > 0.5) or
-                    not c.user_is_loggedin):
-                    srnames = [sr.name for sr in srs]
-                    show_promo = True
+        can_show_promo = c.user.pref_show_sponsors or not c.user.gold
+        try_show_promo = ((c.user_is_loggedin and random.random() > 0.5) or
+                          not c.user_is_loggedin)
+
+        if can_show_promo and try_show_promo:
+            srnames = promote.srnames_with_live_promos(c.user, c.site)
+            if srnames:
+                show_promo = True
 
         random.shuffle(organic_fullnames)
         organic_fullnames = organic_fullnames[:10]

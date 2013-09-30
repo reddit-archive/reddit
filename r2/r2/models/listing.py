@@ -24,7 +24,7 @@ from account import *
 from link import *
 from vote import *
 from report import *
-from subreddit import DefaultSR, AllSR
+from subreddit import DefaultSR, AllSR, Frontpage
 from pylons import i18n, request, g
 
 from r2.lib.wrapped import Wrapped
@@ -148,7 +148,8 @@ class SpotlightListing(Listing):
         self.interestbar_prob = kw.get('interestbar_prob', 0.)
         self.show_promo = kw.get('show_promo', False)
         srnames = kw.get('srnames', [])
-        self.srnames = '+'.join(srnames)
+        self.srnames = '+'.join([srname if srname else Frontpage.name
+                                 for srname in srnames])
         self.navigable = kw.get('navigable', True)
         self.things = kw.get('organic_links', [])
         self.show_placeholder = isinstance(c.site, (DefaultSR, AllSR))

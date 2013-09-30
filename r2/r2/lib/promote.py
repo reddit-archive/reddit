@@ -42,11 +42,13 @@ from r2.lib import (
     inventory,
     hooks,
 )
+from r2.lib.db.operators import not_
 from r2.lib.db.queries import (
     set_promote_status,
     set_underdelivered_campaigns,
     unset_underdelivered_campaigns,
 )
+from r2.lib.cache import sgm
 from r2.lib.memoize import memoize
 from r2.lib.organic import keep_fresh_links
 from r2.lib.strings import strings
@@ -54,16 +56,13 @@ from r2.lib.template_helpers import get_domain
 from r2.lib.utils import UniqueIterator, tup, to_date, weighted_lottery
 from r2.models import (
     Account,
-    AdWeight,
     Bid,
     DefaultSR,
     FakeAccount,
     FakeSubreddit,
-    Frontpage,
     get_promote_srid,
     IDBuilder,
     Link,
-    LiveAdWeights,
     MultiReddit,
     NotFound,
     PromoCampaign,
@@ -536,9 +535,7 @@ def reject_promotion(link, reason=None):
     # while we're doing work here, it will correctly exclude it
     set_promote_status(link, PROMOTE_STATUS.rejected)
 
-    all_ads = get_live_promotions([LiveAdWeights.ALL_ADS])
-    links = set(x.link for x in all_ads[LiveAdWeights.ALL_ADS])
-    if link._fullname in links:
+    if is_promoted(link):
         PromotionLog.add(link, 'has live campaigns, terminating')
         queue_changed_promo(link, "rejected")
 
@@ -599,16 +596,16 @@ def get_scheduled(offset=0):
       Note: campaigns in error_campaigns will not be included in by_sr
 
     """
-    adweights = []
+    campaigns = []
     error_campaigns = []
     for l, campaign, weight in accepted_campaigns(offset=offset):
         try:
             if charged_or_not_needed(campaign):
-                adweight = AdWeight(l._fullname, weight, campaign._fullname)
-                adweights.append(adweight)
+                campaigns.append(campaign)
         except Exception, e: # could happen if campaign things have corrupt data
             error_campaigns.append((campaign._id, e))
-    return adweights, error_campaigns
+    return campaigns, error_campaigns
+
 
 def charge_pending(offset=1):
     for l, camp, weight in accepted_campaigns(offset=offset):
@@ -663,115 +660,38 @@ def scheduled_campaigns_by_link(l, date=None):
 
     return accepted
 
-def get_live_promotions(srids):
-    timer = g.stats.get_timer("promote.get_live")
-    timer.start()
-    weights = LiveAdWeights.get(srids)
-    timer.stop()
-    return weights
-
-
-def srids_from_site(user, site):
-    if not isinstance(site, FakeSubreddit):
-        srids = {site._id}
-    elif isinstance(site, MultiReddit):
-        srids = set(site.sr_ids)
-    elif user and not isinstance(user, FakeAccount):
-        srids = set(Subreddit.user_subreddits(user, ids=True) + [""])
-    else:
-        srids = set(Subreddit.user_subreddits(None, ids=True) + [""])
-    return srids
-
-
-def srs_with_live_promos(user, site):
-    srids = srids_from_site(user, site)
-    weights = get_live_promotions(srids)
-    srids = [srid for srid, adweights in weights.iteritems() if adweights]
-
-    if '' in srids:
-        srs = [Frontpage]
-        srids.remove('')
-    else:
-        srs = []
-
-    srs.extend(Subreddit._byID(srids, data=True, return_dict=False))
-    return srs
-
-
-def set_live_promotions(weights):
-    start = time.time()
-    # First, figure out which subreddits have had ads recently
-    today = promo_datetime_now()
-    yesterday = today - timedelta(days=1)
-    tomorrow = today + timedelta(days=1)
-    promo_weights = PromotionWeights.get_campaigns(yesterday, tomorrow)
-    subreddit_names = set(p.sr_name for p in promo_weights)
-    subreddits = Subreddit._by_name(subreddit_names).values()
-    # Set the default for those subreddits to no ads
-    all_weights = {sr._id: [] for sr in subreddits}
-
-    # Mix in the currently live ads
-    all_weights.update(weights)
-    if '' in all_weights:
-        all_weights[LiveAdWeights.FRONT_PAGE] = all_weights.pop('')
-
-    LiveAdWeights.set_all_from_weights(all_weights)
-    end = time.time()
-    g.log.info("promote.set_live_promotions completed in %s seconds",
-               end - start)
 
 # Gotcha: even if links are scheduled and authorized, they won't be added to 
 # current promotions until they're actually charged, so make sure to call
 # charge_pending() before make_daily_promotions()
 def make_daily_promotions(offset=0):
-    scheduled_adweights, error_campaigns = get_scheduled(offset)
-    current_adweights_byid = get_live_promotions([LiveAdWeights.ALL_ADS])
-    current_adweights = current_adweights_byid[LiveAdWeights.ALL_ADS]
-
-    link_names = [aw.link for aw in itertools.chain(scheduled_adweights,
-                                                    current_adweights)]
-    links = Link._by_fullname(link_names, data=True)
-
-    camp_names = [aw.campaign for aw in itertools.chain(scheduled_adweights,
-                                                        current_adweights)]
-    campaigns = PromoCampaign._by_fullname(camp_names, data=True)
+    campaigns, error_campaigns = get_scheduled(offset)
+    link_ids = {camp.link_id for camp in campaigns}
+    links = Link._byID(link_ids, data=True)
     srs = Subreddit._by_name([camp.sr_name for camp in campaigns.itervalues()
                               if camp.sr_name])
 
-    expired_links = ({aw.link for aw in current_adweights} -
-                     {aw.link for aw in scheduled_adweights})
-    for link_name in expired_links:
-        link = links[link_name]
-        if is_promoted(link):
-            set_promote_status(link, PROMOTE_STATUS.finished)
-            emailer.finished_promo(link)
+    # expire finished links
+    q = Link._query(Link.c.promote_status == PROMOTE_STATUS.promoted, data=True)
+    q = q._filter(not_(Link.c._id.in_(link_ids)))
+    for link in q:
+        set_promote_status(link, PROMOTE_STATUS.finished)
+        emailer.finished_promo(link)
 
-    by_srid = defaultdict(list)
-    for adweight in scheduled_adweights:
-        link = links[adweight.link]
-        campaign = campaigns[adweight.campaign]
-        if campaign.sr_name:
-            sr = srs[campaign.sr_name]
-            sr_id = sr._id
-            sr_over_18 = sr.over_18
-        else:
-            sr_id = ''
-            sr_over_18 = False
+    for camp in campaigns:
+        link = links[camp.link_id]
 
-        if sr_over_18:
+        # check for over_18 targets
+        if camp.sr_name and srs[camp.sr_name].over_18:
             link.over_18 = True
             link._commit()
 
+        # promote new links
         if is_accepted(link) and not is_promoted(link):
-            # update the query queue
             set_promote_status(link, PROMOTE_STATUS.promoted)
             emailer.live_promo(link)
 
-        by_srid[sr_id].append(adweight)
-
-    set_live_promotions(by_srid)
     _mark_promos_updated()
-
     finalize_completed_campaigns(daysago=offset+1)
     hooks.get_hook('promote.make_daily_promotions').call(offset=offset)
 
@@ -872,27 +792,74 @@ def refund_campaign(link, camp, billable_amount, billable_impressions):
 PromoTuple = namedtuple('PromoTuple', ['link', 'weight', 'campaign'])
 
 
-def get_promotion_list(srids):
-    weights = get_live_promotions(srids)
-    if not weights:
-        return []
-
-    promos = []
-    total = 0.
-    for sr_id, sr_weights in weights.iteritems():
-        if sr_id not in srids:
-            continue
-        for link, weight, campaign in sr_weights:
-            total += weight
-            promos.append((link, weight, campaign))
-
-    return [PromoTuple(link, weight / total, campaign)
-            for link, weight, campaign in promos]
+@memoize('all_live_promo_srnames', time=600)
+def all_live_promo_srnames():
+    now = promo_datetime_now()
+    pws = PromotionWeights.get_campaigns(now)
+    campaign_ids = {pw.promo_idx for pw in pws}
+    campaigns = PromoCampaign._byID(campaign_ids, data=True,
+                                    return_dict=False)
+    paid_campaigns = [camp for camp in campaigns
+                      if charged_or_not_needed(camp)]
+    link_ids = {camp.link_id for camp in paid_campaigns}
+    links = Link._byID(link_ids, data=True, return_dict=True)
+    live_campaigns = [camp for camp in paid_campaigns
+                      if is_promoted(links[camp.link_id])]
+    return {camp.sr_name for camp in live_campaigns}
 
 
-def lottery_promoted_links(srids, n=10):
+def srnames_from_site(user, site):
+    if not isinstance(site, FakeSubreddit):
+        srnames = {site.name}
+    elif isinstance(site, MultiReddit):
+        srnames = {sr.name for sr in site.srs}
+    elif user and not isinstance(user, FakeAccount):
+        srnames = {sr.name for sr in Subreddit.user_subreddits(user, ids=False)}
+        srnames.add('')
+    else:
+        srnames = {sr.name for sr in Subreddit.user_subreddits(None, ids=False)}
+        srnames.add('')
+    return srnames
+
+
+def srnames_with_live_promos(user, site):
+    site_srnames = srnames_from_site(user, site)
+    promo_srnames = all_live_promo_srnames()
+    return promo_srnames.intersection(site_srnames)
+
+
+def _get_live_promotions(sr_names):
+    now = promo_datetime_now()
+    pws = PromotionWeights.get_campaigns(now, sr_names=sr_names)
+    campaign_ids = {pw.promo_idx for pw in pws}
+    campaigns = PromoCampaign._byID(campaign_ids, data=True,
+                                    return_dict=False)
+    paid_campaigns = [camp for camp in campaigns
+                      if (charged_or_not_needed(camp) and
+                          camp.sr_name in sr_names)]
+    link_ids = {camp.link_id for camp in paid_campaigns}
+    links = Link._byID(link_ids, data=True, return_dict=True)
+    live_campaigns = [camp for camp in paid_campaigns
+                      if is_promoted(links[camp.link_id])]
+
+    ret = {sr_name: [] for sr_name in sr_names}
+    for camp in live_campaigns:
+        link_name = links[camp.link_id]._fullname
+        weight=(camp.bid / camp.ndays)
+        pt = PromoTuple(link=link_name, weight=weight, campaign=camp._fullname)
+        ret[camp.sr_name].append(pt)
+    return ret
+
+
+def get_live_promotions(sr_names):
+    promos_by_srname = sgm(g.cache, sr_names, miss_fn=_get_live_promotions,
+                           prefix='live_promotions', time=60)
+    return itertools.chain.from_iterable(promos_by_srname.itervalues())
+
+
+def lottery_promoted_links(sr_names, n=10):
     """Run weighted_lottery to order and choose a subset of promoted links."""
-    promo_tuples = get_promotion_list(srids)
+    promo_tuples = get_live_promotions(sr_names)
     weights = {p: p.weight for p in promo_tuples if p.weight}
     selected = []
     while weights and len(selected) < n:

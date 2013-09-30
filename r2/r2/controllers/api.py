@@ -3581,19 +3581,13 @@ class ApiController(RedditController, OAuth2ResourceController):
             return
 
         srnames = srnames.split('+')
-        if Frontpage.name in srnames:
-            srids = ['']
+        try:
             srnames.remove(Frontpage.name)
-        else:
-            srids = []
+            srnames.append('')
+        except ValueError:
+            pass
 
-        srs = Subreddit._by_name(srnames).values()
-        srids.extend([sr._id for sr in srs])
-
-        if not srids:
-            return
-
-        promo_tuples = promote.lottery_promoted_links(srids, n=10)
+        promo_tuples = promote.lottery_promoted_links(srnames, n=10)
         builder = CampaignBuilder(promo_tuples,
                                   wrap=default_thing_wrapper(),
                                   keep_fn=promote.is_promoted,

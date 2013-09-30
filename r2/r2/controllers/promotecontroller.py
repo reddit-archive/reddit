@@ -95,7 +95,6 @@ from r2.models import (
     Frontpage,
     get_promote_srid,
     Link,
-    LiveAdWeights,
     Message,
     NotFound,
     PromoCampaign,
@@ -148,21 +147,13 @@ class PromoteController(ListingController):
 
     @classmethod
     @memoize('live_by_subreddit', time=300)
-    def live_by_subreddit(cls, sr):
-        if sr == Frontpage:
-            sr_id = ''
-        else:
-            sr_id = sr._id
-        r = LiveAdWeights.get([sr_id])
-        return [i.link for i in r[sr_id]]
+    def _live_by_subreddit(cls, sr_names):
+        promotuples = promote.get_live_promotions(sr_names)
+        return [pt.link for pt in promotuples]
 
-    @classmethod
-    @memoize('subreddits_with_promos', time=3600)
-    def subreddits_with_promos(cls):
-        sr_ids = LiveAdWeights.get_live_subreddits()
-        srs = Subreddit._byID(sr_ids, return_dict=False)
-        sr_names = sorted([sr.name for sr in srs], key=lambda s: s.lower())
-        return sr_names
+    def live_by_subreddit(cls, sr):
+        sr_names = [''] if sr == Frontpage else [sr.name]
+        return cls._live_by_subreddit(sr_names)
 
     @classmethod
     @memoize('house_campaigns', time=60)
@@ -189,13 +180,19 @@ class PromoteController(ListingController):
                         type='lightdrop')]
 
         if self.sort == 'live_promos' and c.user_is_sponsor:
-            sr_names = self.subreddits_with_promos()
-            buttons = [NavButton(name, name) for name in sr_names]
-            frontbutton = NavButton('FRONTPAGE', Frontpage.name,
-                                    aliases=['/promoted/live_promos/%s' %
-                                             urllib.quote(Frontpage.name)])
-            buttons.insert(0, frontbutton)
-            buttons.insert(0, NavButton('all', ''))
+            srnames = promote.all_live_promo_srnames()
+            buttons = [NavButton('all', '')]
+            try:
+                srnames.remove('')
+                frontbutton = NavButton('FRONTPAGE', Frontpage.name,
+                                        aliases=['/promoted/live_promos/%s' %
+                                                 urllib.quote(Frontpage.name)])
+                buttons.append(frontbutton)
+            except KeyError:
+                pass
+
+            srnames = sorted(srnames, key=lambda name: name.lower())
+            buttons.extend([NavButton(name, name) for name in srnames])
             menus.append(NavMenu(buttons, base_path='/promoted/live_promos',
                                  title='subreddit', type='lightdrop'))
 
