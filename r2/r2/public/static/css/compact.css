@@ -438,7 +438,7 @@ body.toolbar { margin: 0px; padding: 0px; overflow: hidden; }
 
 .clearleft { clear: left; }
 
-.cover { position: absolute; left: 0px; top: 0px; width: 100%; background-color: gray; opacity: .3; z-index: 1000; }
+.cover { position: fixed; left: 0px; top: 0px; width: 100%; height: 100%; background-color: gray; opacity: .3; z-index: 1000; }
 
 .popup { position: absolute; top: 75px; left: 0; -webkit-border-radius: 30px; -moz-border-radius: 30px; -ms-border-radius: 30px; -o-border-radius: 30px; border-radius: 30px; background-color: white; text-align: left; z-index: 1001; padding: 10px; border-color: #B2B2B2 black black #B2B2B2; border-style: solid; border-width: 1px; margin-left: auto; margin-right: auto; max-width: 350px; }
 
