@@ -74,7 +74,7 @@ setup(
         "boto >= 2.0",
         "pytz",
         "pycrypto",
-        "Babel>=0.9.1",
+        "Babel>=1.0",
         "cython>=0.14",
         "SQLAlchemy==0.7.4",
         "BeautifulSoup",
