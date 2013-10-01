@@ -461,6 +461,22 @@ def update_gold_transaction(transaction_id, status):
     rp = gold_table.update(gold_table.c.trans_id == str(transaction_id),
                            values={gold_table.c.status: status}).execute()
 
+
+def transactions_by_user(user):
+    s = sa.select([gold_table], gold_table.c.account_id == str(user._id))
+    res = s.execute().fetchall()
+    return res
+
+
+def gold_payments_by_user(user):
+    transactions = transactions_by_user(user)
+
+    # filter out received gifts
+    transactions = [trans for trans in transactions
+                          if not trans.trans_id.startswith('X')]
+
+    return transactions
+
 def append_random_bottlecap_phrase(message):
     """Appends a random "bottlecap" phrase from the wiki page.
 
