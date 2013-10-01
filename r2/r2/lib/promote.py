@@ -334,8 +334,6 @@ def sponsor_wrapper(link):
     w.rowstyle = "promoted link"
     return w
 
-def campaign_lock(link):
-    return "edit_promo_campaign_lock_" + str(link._id)
 
 def get_transactions(link, campaigns):
     """Return Bids for specified campaigns on the link.
@@ -415,11 +413,6 @@ def edit_campaign(link, campaign, dates, bid, cpm, sr, priority):
             pass
         raise e
 
-
-def complimentary(username, value=True):
-    a = Account._by_name(username, True)
-    a.complimentary_promos = value
-    a._commit()
 
 def delete_campaign(link, campaign):
     PromotionWeights.delete_unfinished(link, campaign._id)
@@ -617,13 +610,6 @@ def get_scheduled(offset=0):
             error_campaigns.append((campaign._id, e))
     return adweights, error_campaigns
 
-def fuzz_impressions(imps, multiple=500):
-    """Return imps rounded down to nearest multiple."""
-    if imps > 0:
-        return int(multiple * math.floor(float(imps) / multiple))
-    else:
-        return 0
-
 def charge_pending(offset=1):
     for l, camp, weight in accepted_campaigns(offset=offset):
         user = Account._byID(l.author_id)
@@ -676,9 +662,6 @@ def scheduled_campaigns_by_link(l, date=None):
                           (campaign_id, date.strftime("%Y-%m-%d")))
 
     return accepted
-
-def promotion_key():
-    return "current_promotions:1"
 
 def get_live_promotions(srids):
     timer = g.stats.get_timer("promote.get_live")
