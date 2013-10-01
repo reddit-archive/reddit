@@ -45,7 +45,7 @@
   ${error_field("TOO_LONG", "prevstyle")}
   ${error_field("BAD_REVISION", "prevstyle")}
   <div class="sheets">
-    <div style="width: 100%" class="col">
+    <div class="col">
       <div>
         <textarea
            rows="20"
@@ -62,26 +62,8 @@
         </div>
       </div>
     </div>
-    <div style="display:none" class="col">
-      <div>
-        <textarea
-           rows="20"
-           cols="20"
-           id="default_stylesheet"
-           name="default_stylesheet"
-           readonly="readonly"
-           >
-        </textarea>
-      </div>
-    </div>
     <div class="clearleft"></div>
-    <div class="buttons"><span class="btn right">
-       ${toggle_button("default-css", 
-                       _("show the default stylesheet"), 
-                       _("hide the default stylesheet"),
-                       "showDefaultStylesheet",
-                       "hideDefaultStylesheet")}
-      </span>
+    <div class="buttons">
       <button class="btn" name="save" type="submit" 
              onclick="this.form.op.value='save'; return true;">
         ${_('save')}
@@ -174,34 +156,6 @@
         function too_big() {
             $(".IMAGE_ERROR").innerHTML = "image too big: there is a 500k cap";
             $(".img-status").innerHTML = "";
-        }
-        function showDefaultStylesheet(btn) {
-            var default_stylesheet = $('#default_stylesheet');
-            /* make sure to load the default stylesheet contents from the local domain so it doesn't get caught by cross-domain rules. */
-            var stylesheet_url = '${add_sr(os.path.join(c.site.static_path, g.static_names.get("reddit.css", "reddit.css")), nocname=True, sr_path=False)}';
-
-            if (!default_stylesheet.data('loaded')) {
-              default_stylesheet.text('loading...');
-              $.get(stylesheet_url, function(css) {
-                default_stylesheet.val(css);
-                default_stylesheet.data('loaded', true);
-              })
-            }
-
-            $("#stylesheet_contents").parents(".col")
-                .animate( { width: "50%" }, function() { 
-                        default_stylesheet.parents(".col")
-                            .css("width", "50%")
-                            .fadeIn();
-                    });
-        }
-        function hideDefaultStylesheet(btn) {
-            $("#default_stylesheet").parents(".col")
-                .fadeOut(function() {
-                        $(this).css("width", "50%");
-                        $("#stylesheet_contents").parents(".col")
-                            .animate( { width: "100%" });
-                    });
         }
 
         function paste_url(source) {
