@@ -1593,6 +1593,9 @@ class ProfilePage(Reddit):
         if c.user_is_admin:
             from admin_pages import AdminSidebar
             rb.push(AdminSidebar(self.user))
+        elif c.user_is_sponsor:
+            from admin_pages import SponsorSidebar
+            rb.push(SponsorSidebar(self.user))
         rb.push(ProfileBar(self.user))
 
         return rb

@@ -48,6 +48,12 @@ class AdminSidebar(Templated):
         self.user = user
 
 
+class SponsorSidebar(Templated):
+    def __init__(self, user):
+        Templated.__init__(self)
+        self.user = user
+
+
 class Details(Templated):
     def __init__(self, link, *a, **kw):
         Templated.__init__(self, *a, **kw)
