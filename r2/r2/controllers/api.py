@@ -3268,7 +3268,15 @@ class ApiController(RedditController, OAuth2ResourceController):
 
     @json_validate(query=VPrintable('query', max_length=50),
                    include_over_18=VBoolean('include_over_18', default=True))
+    @api_doc(api_section.subreddits, extensions=["json"])
     def POST_search_reddit_names(self, responder, query, include_over_18):
+        """List subreddit names that begin with a query string.
+
+        Subreddits whose names begin with `query` will be returned. If
+        `include_over_18` is false, subreddits with over-18 content
+        restrictions will be filtered from the results.
+
+        """
         names = []
         if query:
             names = search_reddits(query, include_over_18)
