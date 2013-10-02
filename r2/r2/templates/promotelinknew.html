@@ -32,6 +32,9 @@
 
     <div class="pretty-form" id="promo-form">
 
+      %if c.user_is_sponsor:
+       ${username_field()}
+      %endif
       ${title_field(None, editable=True)}
       ${kind_selector()}
       ${url_field(None, editable=True, enable_override=c.user_is_sponsor)}
@@ -55,3 +58,16 @@
     </div>
   </div>
 </div>
+
+<%def name="username_field()">
+  <%utils:line_field title="${_('create as user')}" id="username-field" css_class="rounded">
+    <input id="username" name="username" type="text" 
+           class="rounded">
+    ${error_field("NO_EMAIL_FOR_USER", "username", "div")}
+    ${error_field("NO_VERIFIED_EMAIL", "username", "div")}
+    ${error_field("USER_DOESNT_EXIST", "username", "div")}
+    <div class="infotext rounded">
+      <p>${_("Create a promotion on another user's account.")}</p>
+    </div>
+  </%utils:line_field>
+</%def>

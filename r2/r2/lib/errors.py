@@ -52,6 +52,7 @@ error_list = dict((
         ('NO_NAME', _('please enter a name')),
         ('NO_EMAIL', _('please enter an email address')),
         ('NO_EMAIL_FOR_USER', _('no email address for that user')),
+        ('NO_VERIFIED_EMAIL', _('no verified email address for that user')),
         ('NO_TO_ADDRESS', _('send it to whom?')),
         ('NO_SUBJECT', _('please enter a subject')),
         ('USER_DOESNT_EXIST', _("that user doesn't exist")),

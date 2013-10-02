@@ -393,6 +393,7 @@ class PromoteController(ListingController):
                               rate_ip=True,
                               prefix='create_promo_'),
                    VShamedDomain('url'),
+                   username=VLength('username', 100, empty_error=None),
                    l=VLink('link_id'),
                    title=VTitle('title'),
                    url=VUrl('url', allow_self=False, lookup=False),
@@ -406,10 +407,9 @@ class PromoteController(ListingController):
                    media_override=VBoolean("media-override"),
                    domain_override=VLength("domain", 100)
                    )
-    def POST_edit_promo(self, form, jquery, ip, l, title, url, selftext, kind,
-                        disable_comments,
-                        media_height, media_width, media_embed,
-                        media_override, domain_override):
+    def POST_edit_promo(self, form, jquery, ip, username, l, title, url,
+                        selftext, kind, disable_comments, media_height,
+                        media_width, media_embed, media_override, domain_override):
 
         should_ratelimit = False
         if not c.user_is_sponsor:
@@ -417,6 +417,27 @@ class PromoteController(ListingController):
 
         if not should_ratelimit:
             c.errors.remove((errors.RATELIMIT, 'ratelimit'))
+
+        # check for user override
+        if not l and c.user_is_sponsor and username:
+            try:
+                user = Account._by_name(username)
+            except NotFound:
+                c.errors.add(errors.USER_DOESNT_EXIST, field="username")
+                form.set_error(errors.USER_DOESNT_EXIST, "username")
+                return
+
+            if not user.email:
+                c.errors.add(errors.NO_EMAIL_FOR_USER, field="username")
+                form.set_error(errors.NO_EMAIL_FOR_USER, "username")
+                return
+
+            if not user.email_verified:
+                c.errors.add(errors.NO_VERIFIED_EMAIL, field="username")
+                form.set_error(errors.NO_VERIFIED_EMAIL, "username")
+                return
+        else:
+            user = c.user
 
         # check for shame banned domains
         if form.has_errors("url", errors.DOMAIN_BANNED):
@@ -446,7 +467,7 @@ class PromoteController(ListingController):
         if not l:
             l = promote.new_promotion(title, url if kind == 'link' else 'self',
                                       selftext if kind == 'self' else '',
-                                      c.user, ip)
+                                      user, ip)
 
         elif promote.is_promo(l):
             # changing link type is not allowed
