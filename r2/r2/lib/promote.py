@@ -501,10 +501,16 @@ def accept_promotion(link):
 
     # campaigns that should be live now must be updated
     now = promo_datetime_now(0)
-    if link._fullname in set(l.thing_name for l in
-                             PromotionWeights.get_campaigns(now)):
+    promotion_weights = PromotionWeights.get_campaigns(now)
+    live_campaigns = {pw.promo_idx for pw in promotion_weights
+                                   if pw.thing_name == link._fullname}
+    if live_campaigns:
+        campaigns = PromoCampaign._byID(live_campaigns, data=True,
+                                        return_dict=False)
         PromotionLog.add(link, 'Marked promotion for acceptance')
         charge_pending(0) # campaign must be charged before it will go live
+        for campaign in campaigns:
+            hooks.get_hook('campaign.edit').call(link=link, campaign=campaign)
         queue_changed_promo(link, "accepted")
 
     # campaigns that were charged and will go live in the future must be updated
