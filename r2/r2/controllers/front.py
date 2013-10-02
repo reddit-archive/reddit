@@ -413,7 +413,7 @@ class FrontController(RedditController, OAuth2ResourceController):
         if not isinstance(c.site, FakeSubreddit):
             c.site = Subreddit._byID(c.site._id, data=True, stale=False)
 
-        if c.site.stylesheet_is_static or c.site.stylesheet_url_http:
+        if c.site.stylesheet_url_http:
             url = Reddit.get_subreddit_stylesheet_url()
             if url:
                 redirect_to(url)

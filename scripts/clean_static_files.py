@@ -104,14 +104,6 @@ def get_generated_static_files():
             yield mangled + ".gzip"
 
 
-def get_live_subreddit_stylesheets():
-    """List all currently visible subreddit stylesheet files."""
-    subreddits = Subreddit._query(sort=desc("_date"))
-    for sr in fetch_things2(subreddits):
-        if sr.stylesheet_is_static:
-            yield sr.static_stylesheet_name
-
-
 def clean_static_files(config_file):
     bucket, config = read_static_file_config(config_file)
     ignored_prefixes = tuple(p.strip() for p in
@@ -121,7 +113,6 @@ def clean_static_files(config_file):
     reachable_files = itertools.chain(
         get_source_static_files(plugins),
         get_generated_static_files(),
-        get_live_subreddit_stylesheets(),
     )
 
     condemned_files = get_mature_files_on_s3(bucket)

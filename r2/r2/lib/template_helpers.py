@@ -42,25 +42,12 @@ from pylons import g, c, request
 from pylons.i18n import _, ungettext
 
 
-def static_domain(kind, secure):
-    if kind == 'sr_stylesheet':
-        if secure:
-            return g.static_secure_sr_stylesheet_domain
-        else:
-            return g.static_sr_stylesheet_domain
-    else:
-        if secure:
-            return g.static_secure_domain
-        else:
-            return g.static_domain
-
-
 static_text_extensions = {
     '.js': 'js',
     '.css': 'css',
     '.less': 'css'
 }
-def static(path, allow_gzip=True, kind='default'):
+def static(path, allow_gzip=True):
     """
     Simple static file maintainer which automatically paths and
     versions files being served out of static.
@@ -78,16 +65,15 @@ def static(path, allow_gzip=True, kind='default'):
 
     path_components = []
     actual_filename = None
-    suffix = ''
 
-    scheme = 'https' if c.secure else 'http'
-    domain = static_domain(kind, c.secure)
-    if domain:
-        if should_gzip:
-            if c.secure and g.static_secure_pre_gzipped:
-                suffix = '.gzip'
-            elif not c.secure and g.static_pre_gzipped:
-                suffix = '.gzip'
+    if not c.secure and g.static_domain:
+        scheme = "http"
+        domain = g.static_domain
+        suffix = ".gzip" if should_gzip and g.static_pre_gzipped else ""
+    elif c.secure and g.static_secure_domain:
+        scheme = "https"
+        domain = g.static_secure_domain
+        suffix = ".gzip" if should_gzip and g.static_secure_pre_gzipped else ""
     else:
         path_components.append(c.site.static_path)
 
@@ -101,6 +87,7 @@ def static(path, allow_gzip=True, kind='default'):
 
         scheme = None
         domain = None
+        suffix = ""
 
     path_components.append(dirname)
     if not actual_filename:

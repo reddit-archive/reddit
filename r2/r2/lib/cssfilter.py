@@ -179,41 +179,24 @@ class ValidationError(Exception):
         return "ValidationError%s: %s (%s)" % (line, self.message, obj)
 
 
-# local urls should be in the static directory
-local_urls = re.compile(r'\A/static/[a-z./-]+\Z')
 # substitutable urls will be css-valid labels surrounded by "%%"
 custom_img_urls = re.compile(r'%%([a-zA-Z0-9\-]+)%%')
-valid_url_schemes = ('http', 'https')
-def valid_url(prop, value, report, generate_https_urls, enforce_custom_images_only):
-    """
-    checks url(...) arguments in CSS, ensuring that the contents are
-    officially sanctioned.  Sanctioned urls include:
-     * anything in /static/
-     * image labels %%..%% for images uploaded on /about/stylesheet
-     * urls with domains in g.allowed_css_linked_domains
+def valid_url(prop, value, report, generate_https_urls):
+    """Validate a URL in the stylesheet.
+
+    The only valid URLs for use in a stylesheet are the custom image format
+    (%%example%%) which this function will translate to actual URLs.
+
     """
     try:
         url = value.getStringValue()
     except IndexError:
         g.log.error("Problem validating [%r]" % value)
         raise
-    # local urls are allowed
-    if local_urls.match(url):
-        if enforce_custom_images_only:
-            report.append(ValidationError(msgs["custom_images_only"], value))
-            return
 
-        t_url = None
-        while url != t_url:
-            t_url, url = url, filters.url_unescape(url)
-        # disallow path trickery
-        if "../" in url:
-            report.append(ValidationError(msgs['broken_url']
-                                          % dict(brokenurl = value.cssText),
-                                          value))
-    # custom urls are allowed, but need to be transformed into a real path
-    elif custom_img_urls.match(url):
-        name = custom_img_urls.match(url).group(1)
+    m = custom_img_urls.match(url)
+    if m:
+        name = m.group(1)
 
         # this relies on localcache to not be doing a lot of lookups
         images = ImagesByWikiPage.get_images(c.site, "config/stylesheet")
@@ -230,33 +213,14 @@ def valid_url(prop, value, report, generate_https_urls, enforce_custom_images_on
                                           % dict(brokenurl = value.cssText),
                                           value))
     else:
-        if enforce_custom_images_only:
-            report.append(ValidationError(msgs["custom_images_only"], value))
-            return
-
-        try:
-            u = urlparse(url)
-            valid_scheme = u.scheme and u.scheme in valid_url_schemes
-            valid_domain = u.netloc in g.allowed_css_linked_domains
-        except ValueError:
-            u = False
-
-        # allowed domains are ok
-        if not (u and valid_scheme and valid_domain):
-            report.append(ValidationError(msgs['broken_url']
-                                          % dict(brokenurl = value.cssText),
-                                          value))
-    #elif sanitize_url(url) != url:
-    #    report.append(ValidationError(msgs['broken_url']
-    #                                  % dict(brokenurl = value.cssText),
-    #                                  value))
+        report.append(ValidationError(msgs["custom_images_only"], value))
 
 
 def strip_browser_prefix(prop):
     t = prefix_regex.split(prop, maxsplit=1)
     return t[len(t) - 1]
 
-def valid_value(prop, value, report, generate_https_urls, enforce_custom_images_only):
+def valid_value(prop, value, report, generate_https_urls):
     prop_name = strip_browser_prefix(prop.name) # Remove browser-specific prefixes eg: -moz-border-radius becomes border-radius
     if not (value.valid and value.wellformed):
         if (value.wellformed
@@ -296,12 +260,11 @@ def valid_value(prop, value, report, generate_https_urls, enforce_custom_images_
             value,
             report,
             generate_https_urls,
-            enforce_custom_images_only,
         )
 
 error_message_extract_re = re.compile('.*\\[([0-9]+):[0-9]*:.*\\]\Z')
 only_whitespace          = re.compile('\A\s*\Z')
-def validate_css(string, generate_https_urls, enforce_custom_images_only):
+def validate_css(string, generate_https_urls):
     p = CSSParser(raiseExceptions = True)
 
     if not string or only_whitespace.match(string):
@@ -352,7 +315,6 @@ def validate_css(string, generate_https_urls, enforce_custom_images_only):
                             prop.cssValue.item(i),
                             report,
                             generate_https_urls,
-                            enforce_custom_images_only,
                         )
                     if not (prop.cssValue.valid and prop.cssValue.wellformed):
                         report.append(ValidationError(msgs['invalid_property_list']
@@ -364,7 +326,6 @@ def validate_css(string, generate_https_urls, enforce_custom_images_only):
                         prop.cssValue,
                         report,
                         generate_https_urls,
-                        enforce_custom_images_only,
                     )
 
                 # cssutils bug: because valid values might be marked

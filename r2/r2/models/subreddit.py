@@ -153,25 +153,6 @@ class BaseSite(object):
         return ModAction.get_actions(srs, mod=mod, action=action)
 
     @property
-    def stylesheet_is_static(self):
-        """Is the subreddit using the newer static file based stylesheets?"""
-        return g.static_stylesheet_bucket and len(self.stylesheet_hash) == 27
-
-    static_stylesheet_prefix = "subreddit-stylesheet/"
-
-    @property
-    def static_stylesheet_name(self):
-        return "".join((self.static_stylesheet_prefix,
-                        self.stylesheet_hash,
-                        ".css"))
-
-    @property
-    def legacy_static_stylesheet_url(self):
-        from r2.lib.template_helpers import static
-        assert self.stylesheet_is_static
-        return static(self.static_stylesheet_name, kind='sr_stylesheet')
-
-    @property
     def stylesheet_url(self):
         from r2.lib.template_helpers import get_domain
         return "//%s/stylesheet.css?v=%s" % (get_domain(cname=False,
@@ -498,33 +479,17 @@ class Subreddit(Thing, Printable, BaseSite):
         if g.css_killswitch or (verify and not self.can_change_stylesheet(c.user)):
             return (None, None)
 
-        # in the new world order, you can only use %%custom%% images so that we
-        # can manage https urls more easily. however, we'll only hold people to
-        # the new rules if they were already abiding by them.
-        is_empty = not self.stylesheet_hash and not self.stylesheet_url_http
-        is_already_secure = bool(self.stylesheet_url_https)
-        enforce_img_restriction = is_empty or is_already_secure
-
         # parse in regular old http mode
         parsed_http, report_http = cssfilter.validate_css(
             content,
             generate_https_urls=False,
-            enforce_custom_images_only=enforce_img_restriction,
         )
 
         # parse and resolve images with https-safe urls
         parsed_https, report_https = cssfilter.validate_css(
             content,
             generate_https_urls=True,
-            enforce_custom_images_only=True,
         )
-
-        # the above https parsing was optimistic. if the subreddit isn't
-        # subject to the new "custom images only" rule and their stylesheet
-        # doesn't validate with it turned on, we'll just ignore the error and
-        # silently throw out the https parsing.
-        if not enforce_img_restriction and report_https.errors:
-            parsed_https = ""
 
         # the two reports should be identical except in the already handled
         # case of using non-custom images, so we'll just return the http one.
@@ -548,12 +513,8 @@ class Subreddit(Thing, Printable, BaseSite):
         if minified_http or minified_https:
             if g.subreddit_stylesheets_static:
                 self.stylesheet_url_http = upload_stylesheet(minified_http)
-                if minified_https:
-                    self.stylesheet_url_https = s3_direct_https(
-                        upload_stylesheet(minified_https))
-                else:
-                    self.stylesheet_url_https = ""
-
+                self.stylesheet_url_https = s3_direct_https(
+                                             upload_stylesheet(minified_https))
                 self.stylesheet_hash = ""
                 self.stylesheet_contents = ""
                 self.stylesheet_contents_secure = ""

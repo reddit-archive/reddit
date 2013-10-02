@@ -260,8 +260,6 @@ class Reddit(Templated):
             else:
                 if c.site.stylesheet_url_http:
                     return c.site.stylesheet_url_http
-                elif c.site.stylesheet_is_static:
-                    return c.site.legacy_static_stylesheet_url
                 elif c.site.stylesheet_contents:
                     return c.site.stylesheet_url
 
