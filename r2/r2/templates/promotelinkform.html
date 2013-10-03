@@ -132,7 +132,7 @@ ${self.javascript_setup()}
               wrap="hard" class="rounded">${link.title if link else ''}</textarea>
     ${error_field("NO_TEXT", "title", "div")}
     ${error_field("TOO_LONG", "title", "div")}
-    <div class="infotext rounded">
+    <div class="help infotext rounded">
       <p>${_("A good title is important to the success of your campaign. reddit users are an intelligent, thoughtful group, and reward those who engage them.")}</p>
     </div>
   </%utils:line_field>
@@ -165,7 +165,7 @@ ${self.javascript_setup()}
     ${error_field("BAD_URL", "url", "div")}
     ${error_field("DOMAIN_BANNED", "url", "div")}
     ${error_field("ALREADY_SUB", "url", "div")}
-    <div class="infotext rounded">
+    <div class="help infotext rounded">
       <p>${_("Provide the URL of your ad. No redirects please!")}</p>
     </div>
 

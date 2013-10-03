@@ -4649,6 +4649,7 @@ ul.tabmenu.formtab {
 .campaign { 
     border: 1px solid #336699; 
     background-color: #EFF7FF;
+    width: 570px;
     padding: 5px;
     -webkit-box-shadow: inset 0px 1px 0px hsla(0,0%,100%,.8), 0px 1px 0px hsla(0,0%,100%,.6);
     -moz-box-shadow: inset 0px 1px 0px hsla(0,0%,100%,.8), 0px 1px 0px hsla(0,0%,100%,.6);
@@ -4666,27 +4667,19 @@ ul.tabmenu.formtab {
     border: none;
 }
 
-.existing-campaigns td.campaign-bid { 
-    background: none no-repeat scroll center right;
-    padding-right: 15px;
-
-    .bid-amount {
+.existing-campaigns  { 
+    td.campaign-bid .bid-amount {
         display: block;
     }
-}
 
-.existing-campaigns td.campaign-bid.paid { 
-    background-image: url(../green-check.png);  
+    td.campaign-bid.paid {
+        background: url(../green-check.png) no-repeat scroll center right;
+    }
 }
 
 .existing-campaigns tr.refund {
     color: red;
     font-weight: bold;
-}
-
-.existing-campaigns td.campaign-bid .info{ 
-    margin-right: 3px; 
-    margin-left: 3px; 
 }
 
 .prefright p.minimum-spend {
@@ -4706,9 +4699,9 @@ ul.tabmenu.formtab {
 }
 
 .existing-campaigns > table > tbody > tr > td { 
-    text-align: right;
+    text-align: center;
     border: 1px solid #369;
-    padding: 1px 5px;
+    padding: 5px;
 }
 .existing-campaigns > table > tbody > tr#edit-campaign-tr > td { 
     text-align: left;
@@ -5397,6 +5390,7 @@ div #campaign-field {
 
 .create-promotion .help p { 
     margin: 5px;
+    width: 580px;
 }
 
 .create-promotion .help a.help { 
@@ -5409,8 +5403,8 @@ div #campaign-field {
 
 .create-promo {
     float: left;
-    width: 570px;
     margin-right: 20px;
+    min-width: 620px;
 }
 
 .create-promo .infobar { 
@@ -5433,7 +5427,11 @@ div #campaign-field {
 }
 
 #promo-form {
-    .linefield, .usertext-edit {
+    .linefield {
+        width: 620px;
+    }
+
+    .usertext-edit {
         width: auto;
     }
 }
