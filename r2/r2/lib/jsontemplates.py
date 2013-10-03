@@ -247,6 +247,9 @@ class SubredditJsonTemplate(ThingJsonTemplate):
         user_is_contributor="is_contributor",
         user_is_moderator="is_moderator",
         user_is_subscriber="is_subscriber",
+        spam_links='spam_links',
+        spam_selfposts='spam_selfposts',
+        spam_comments='spam_comments',
     )
 
     # subreddit *attributes* (right side of the equals)
@@ -870,6 +873,9 @@ class SubredditSettingsTemplate(ThingJsonTemplate):
         wiki_edit_age='site.wiki_edit_age',
         wiki_edit_karma='site.wiki_edit_karma',
         wikimode='site.wikimode',
+        spam_links='site.spam_links',
+        spam_selfposts='site.spam_selfposts',
+        spam_comments='site.spam_comments',
     )
 
     def kind(self, wrapped):
