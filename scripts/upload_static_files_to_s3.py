@@ -35,6 +35,9 @@ mimetypes.encodings_map['.gzip'] = 'gzip'
 def upload(config_file):
     bucket, config = read_static_file_config(config_file)
 
+    # build a list of files already in the bucket
+    remote_files = {key.name : key.etag.strip('"') for key in bucket.list()}
+
     # upload local files not already in the bucket
     for root, dirs, files in os.walk(config["static_root"]):
         for file in files:
@@ -52,12 +55,12 @@ def upload(config_file):
             if encoding:
                 headers['Content-Encoding'] = encoding
 
-            existing_key = bucket.get_key(key_name)
             key = bucket.new_key(key_name)
             with open(absolute_path, 'rb') as f:
                 etag, base64_tag = key.compute_md5(f)
 
-                if existing_key and existing_key.etag.strip('"') == etag:
+                # don't upload the file if it already exists unmodified in the bucket
+                if remote_files.get(key_name, None) == etag:
                     continue
 
                 print "uploading", key_name, "to S3..."
