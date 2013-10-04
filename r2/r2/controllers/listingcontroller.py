@@ -589,6 +589,7 @@ class UserController(ListingController):
         titles = {'overview': _("overview for %(user)s"),
                   'comments': _("comments by %(user)s"),
                   'submitted': _("submitted by %(user)s"),
+                  'gilded': _("gilded comments by %(user)s"),
                   'liked': _("liked by %(user)s"),
                   'disliked': _("disliked by %(user)s"),
                   'saved': _("saved by %(user)s"),
@@ -619,6 +620,9 @@ class UserController(ListingController):
                     return False
                 if self.where == 'saved' and not item.saved:
                     return False
+            if self.where == 'gilded':
+                wouldkeep = item.gildings > 0
+
             return wouldkeep and (getattr(item, "promoted", None) is None and
                     (self.where == "deleted" or
                      not getattr(item, "deleted", False)))
@@ -639,6 +643,11 @@ class UserController(ListingController):
             sup.set_sup_header(self.vuser, 'submitted')
             self.check_modified(self.vuser, 'submitted')
             q = queries.get_submitted(self.vuser, self.sort, self.time)
+
+        elif self.where == 'gilded':
+            sup.set_sup_header(self.vuser, 'gilded')
+            self.check_modified(self.vuser, 'gilded')
+            q = queries.get_gilded_user_comments(self.vuser)
 
         elif self.where in ('liked', 'disliked'):
             sup.set_sup_header(self.vuser, self.where)

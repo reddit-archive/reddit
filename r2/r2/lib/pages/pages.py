@@ -1549,7 +1549,8 @@ class ProfilePage(Reddit):
         path = "/user/%s/" % self.user.name
         main_buttons = [NavButton(menu.overview, '/', aliases = ['/overview']),
                    NamedButton('comments'),
-                   NamedButton('submitted')]
+                   NamedButton('submitted'),
+                   NamedButton('gilded')]
 
         if votes_visible(self.user):
             main_buttons += [NamedButton('liked'),
