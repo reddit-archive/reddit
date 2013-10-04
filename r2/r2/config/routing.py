@@ -157,6 +157,7 @@ def make_map():
           location='about')
        connect('/comments', controller='comments', action='listing')
        connect('/comments/gilded', action='listing', controller='gilded')
+       connect('/gilded', action='listing', controller='gilded')
        connect('/search', controller='front', action='search')
 
     mc('/u/:username', controller='redirect', action='user_redirect')

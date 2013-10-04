@@ -570,6 +570,8 @@ class Reddit(Templated):
                             NamedButton('rising'),
                             NamedButton('controversial'),
                             NamedButton('top'),
+                            NamedButton('gilded',
+                                        aliases=['/comments/gilded']),
                             ]
 
             mod = False
