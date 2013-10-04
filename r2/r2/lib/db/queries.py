@@ -789,6 +789,9 @@ def get_all_gilded_comments():
 def get_gilded_comments(sr_id):
     return
 
+@cached_query(UserQueryCache, sort=[desc("date")], filter_fn=filter_thing)
+def get_gilded_user_comments(user_id):
+    return
 
 def add_queries(queries, insert_items=None, delete_items=None, foreground=False):
     """Adds multiple queries to the query queue. If insert_items or

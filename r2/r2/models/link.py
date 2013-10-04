@@ -893,6 +893,8 @@ class Comment(Thing, Printable):
             gilding = utils.Storage(thing=self, date=now)
             m.insert(queries.get_all_gilded_comments(), [gilding])
             m.insert(queries.get_gilded_comments(self.sr_id), [gilding])
+            m.insert(queries.get_gilded_user_comments(self.author_id),
+                     [gilding])
 
         hooks.get_hook('comment.gild').call(comment=self, gilder=user)
 
