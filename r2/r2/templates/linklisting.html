@@ -23,10 +23,10 @@
 ## a kooky hack to make ranks and voting arrows in the spotlight box line up
 ## without late rendering or blasting style attributes everywhere
 <style>
-  body > .content .rank {
+  body > .content .link .rank {
     width: ${len(str(thing.max_num)) * 1.1}ex
   }
-  body > .content .midcol {
+  body > .content .link .midcol {
     width: ${max(len(str(thing.max_score)), 2) + 1.1}ex
   }
 </style>
