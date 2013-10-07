@@ -384,6 +384,8 @@ body.post-under-6h-old .gilded-comment-icon { opacity: .55; }
 
 .tagline .admin { color: #F01; }
 
+.tagline .userattrs .cakeday { display: inline-block; text-indent: -9999px; width: 11px; height: 8px; background-image: url(../cake.png); /* SPRITE */ vertical-align: middle; }
+
 /*Loading spinner, yay CSS animation*/
 @-webkit-keyframes rotateThis { from { -webkit-transform: scale(0.75) rotate(0deg); }
   to { -webkit-transform: scale(0.75) rotate(360deg); } }
