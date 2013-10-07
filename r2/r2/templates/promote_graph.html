@@ -32,30 +32,6 @@ ${load_timeseries_js()}
 ${unsafe(js.use('sponsored'))}
 
 <h1>${_("Sponsored link calendar")}</h1>
-
-%if not thing.admin_view:
-<div class="instructions">
-  <p>Below is a calendar of your scheduled and completed promotions (if you have any, of course), along with some site-wide averages to use as a guide for setting up future promotions.  These values are:</p>
-  <dl>
-    <dt>Count:</dt>
-      <dd>Total number of sponsored links which either ran or are scheduled to run (site-wide).</dd>
-    <dt>CPM:</dt>
-      <dd>Cost per thousand impressions (site-wide).  Note that today's CPM is estimated.</dd>
-    <dt>CPC:</dt>
-      <dd>Cost per click, also site-wide and with the same caveat about today's value</dd>
-    <dt>your commit:</dt>
-      <dd>Total amount you have spent or have scheduled to spend on a given day</dd>
-  </dl>
-</div>
-
-%endif
-<%
-  if thing.admin_view:
-    form_path = "/promoted/admin/graph"
-  else:
-    form_path = "/promoted/graph"
-%>
-
 <div class="calendar-lead">
 <h2>${_("Viewing calendar for dates:")}</h2>
 
@@ -67,7 +43,7 @@ ${unsafe(js.use('sponsored'))}
 </div>
 %endif
 
-<form action="${form_path}" method="get">
+<form action="/promoted/admin/graph" method="get">
   <%pr:datepicker name="startdate" value="${thing.start_date.strftime('%m/%d/%Y')}"
     minDateSrc="date-min" initfuncname="init_startdate"
     min_date_offset="86400000">
@@ -117,35 +93,27 @@ ${unsafe(js.use('sponsored'))}
   %endif
   <tr>
     <th scope="row">
-      %if thing.admin_view:
-        ## TRANSLATORS: Advertising term; "ad impressions delivered / shown"
-        ${_("Impressions")}<br/>
-      %endif
+      ## TRANSLATORS: Advertising term; "ad impressions delivered / shown"
+      ${_("Impressions")}<br/>
       ## TRANSLATORS: Advertising term: "cost per mille"
       ${_("CPM")}
     </th>
     %for date in thing.dates:
       <td class="${"today" if date == thing.today else ""}">
-        %if thing.admin_view:
-          ${thing.delivered[date]}<br/>
-        %endif
+        ${thing.delivered[date]}<br/>
         ${thing.cpm[date]}
       </td>
     %endfor
   </tr>
   <tr>
     <th scope="row">
-      %if thing.admin_view:
-        ${_("Clicks")}<br/>
-      %endif
+      ${_("Clicks")}<br/>
       ## TRANSLATORS: Advertising term: "cost per click"
       ${_("CPC")}
     </th>
     %for date in thing.dates:
       <td class="${"today" if date == thing.today else ""}">
-        %if thing.admin_view:
-          ${thing.clicked[date]}<br/>
-        %endif
+        ${thing.clicked[date]}<br/>
         ${thing.cpc[date]}
       </td>
     %endfor

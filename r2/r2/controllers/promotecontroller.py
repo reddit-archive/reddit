@@ -308,21 +308,13 @@ class PromoteController(ListingController):
               dates=VDateRange(["startdate", "enddate"],
                                max_range=timedelta(days=28),
                                required=False))
-    def GET_graph(self, dates):
-        start, end, bad_dates = _check_dates(dates)
-        return PromotePage("graph",
-                           content=Promote_Graph(
-                                start, end, bad_dates=bad_dates)
-                           ).render()
-
     @validate(VSponsorAdmin(),
               dates=VDateRange(["startdate", "enddate"],
                                max_range=timedelta(days=28),
                                required=False))
     def GET_admingraph(self, dates):
         start, end, bad_dates = _check_dates(dates)
-        content = Promote_Graph(start, end, bad_dates=bad_dates,
-                                admin_view=True)
+        content = Promote_Graph(start, end, bad_dates=bad_dates)
         if c.render_style == 'csv':
             return content.as_csv()
         return PromotePage("admingraph", content=content).render()

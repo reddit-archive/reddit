@@ -3299,8 +3299,6 @@ class PromotePage(Reddit):
         else:
             buttons.append(NamedButton('my_current_promos', dest = ''))
 
-        buttons.append(NamedButton('graph'))
-
         if c.user_is_sponsor:
             buttons.append(NamedButton('admin_graph',
                                        dest='/admin/graph'))
@@ -3775,8 +3773,7 @@ class Promote_Graph(Templated):
 
         return promos
 
-    def __init__(self, start_date, end_date, bad_dates=None, admin_view=False):
-        self.admin_view = admin_view and c.user_is_sponsor
+    def __init__(self, start_date, end_date, bad_dates=None):
         self.now = promote.promo_datetime_now()
 
         start_date = to_date(start_date)
@@ -3789,14 +3786,11 @@ class Promote_Graph(Templated):
         # these will be cached queries
         market, promo_counter = self.get_market(None, start_date, end_before)
         my_market = market
-        if not self.admin_view:
-            my_market = self.get_market(c.user._id, start_date, end_before)[0]
 
         # determine the range of each link
         promote_blocks = []
         def block_maker(link, bid_day, starti, endi, campaign):
-            if ((self.admin_view or link.author_id == c.user._id)
-                and not promote.is_rejected(link)
+            if (not promote.is_rejected(link)
                 and not promote.is_unpaid(link)):
                 promote_blocks.append((link, starti, endi, campaign))
         self.promo_iter(start_date, end_before, block_maker)
@@ -3856,15 +3850,11 @@ class Promote_Graph(Templated):
 
         self.promo_traffic = dict(self.promo_traffic)
 
-        if self.admin_view:
-            predicted = inventory.get_predicted_by_date(None, start_date,
-                                                        end_before)
-            self.impression_inventory = predicted
-            # TODO: Real data
-            self.scheduled_impressions = dict.fromkeys(predicted, 0)
-        else:
-            self.scheduled_impressions = None
-            self.impression_inventory = None
+        predicted = inventory.get_predicted_by_date(None, start_date,
+                                                    end_before)
+        self.impression_inventory = predicted
+        # TODO: Real data
+        self.scheduled_impressions = dict.fromkeys(predicted, 0)
 
         self.cpc = {}
         self.cpm = {}
