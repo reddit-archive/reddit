@@ -22,8 +22,6 @@
 
 import re
 
-from r2.lib.utils import timeinterval_fromstr
-
 
 class ConfigValue(object):
     _bool_map = dict(true=True, false=False)
@@ -73,6 +71,11 @@ class ConfigValue(object):
 
     @staticmethod
     def timeinterval(v, key=None, data=None):
+        # this import is at function level because it relies on the cythonized
+        # modules being present which is a problem for plugin __init__s that
+        # use this module since they are imported in the early stages of the
+        # makefile
+        from r2.lib.utils import timeinterval_fromstr
         return timeinterval_fromstr(v)
 
     messages_re = re.compile(r'"([^"]+)"')
