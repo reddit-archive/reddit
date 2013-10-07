@@ -57,8 +57,13 @@ touch $FNAME
 # Get the oldest thing id from the table
 MINID=$(psql -F '\t' -A -t -d newreddit -U $USER -h $LINKDBHOST -p $DB_PORT -c "select thing_id from reddit_thing_link t WHERE  t.date > now() - interval '1 $INTERVAL' and t.date < now() ORDER BY thing_id LIMIT 1")
 
+function cleanup {
+  rm $FNAME $DNAME
+}
+
 if [ -z $MINID ]; then
     echo MINID is null. Replication is likely behind.
+    cleanup
     exit 1
 fi
 
@@ -98,4 +103,4 @@ cat $FNAME $DNAME | \
     mrsort | \
     f "write_permacache()"
 
-rm $FNAME $DNAME
+cleanup
