@@ -842,7 +842,7 @@ def refund_campaign(link, camp, billable_amount):
     refund_amount = camp.bid - billable_amount
     owner = Account._byID(camp.owner_id, data=True)
     try:
-        success = authorize.refund_transaction(user, camp.trans_id,
+        success = authorize.refund_transaction(owner, camp.trans_id,
                                                camp._id, refund_amount)
     except authorize.AuthorizeNetException as e:
         text = ('%s $%s refund failed' % (camp, refund_amount))
