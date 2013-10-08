@@ -144,8 +144,6 @@ def make_map():
     mc('/about/sticky', controller='front', action='sticky')
     mc('/about/flair', controller='front', action='flairlisting')
     mc('/about', controller='front', action='about')
-    mc('/comments/gilded', controller='redirect', action='gilded_comments',
-       conditions={'function': not_in_sr})
     for connect in (mc,) + multi_prefixes:
        connect('/about/message/:where', controller='message',
           action='listing')

@@ -1174,6 +1174,12 @@ class DefaultSR(_DefaultSR):
     def stylesheet_hash(self):
         return self._base.stylesheet_hash if self._base else ""
 
+    def get_gilded_comments(self):
+        from r2.lib.db.queries import get_gilded_comments
+        srs = Subreddit.user_subreddits(c.user)
+        queries = [get_gilded_comments(sr_id) for sr_id in srs]
+        return MergedCachedQuery(queries)
+
 
 class MultiReddit(FakeSubreddit):
     name = 'multi'
