@@ -24,7 +24,7 @@ from __future__ import with_statement
 
 from collections import defaultdict, OrderedDict, namedtuple
 from datetime import datetime, timedelta
-from decimal import Decimal, ROUND_UP
+from decimal import Decimal, ROUND_DOWN, ROUND_UP
 import itertools
 import json
 import math
@@ -971,7 +971,10 @@ def get_billable_amount(camp, impressions):
     else:
         # pre-CPM campaigns are charged in full regardless of impressions
         billable_amount = camp.bid
-    return billable_amount
+
+    billable_amount = Decimal(billable_amount).quantize(Decimal('.01'),
+                                                        rounding=ROUND_DOWN)
+    return float(billable_amount)
 
 
 def get_spent_amount(campaign):
