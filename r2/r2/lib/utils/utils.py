@@ -26,6 +26,7 @@ import traceback
 import ConfigParser
 import codecs
 
+from babel.dates import TIMEDELTA_UNITS
 from urllib import unquote_plus
 from urllib2 import urlopen, Request
 from urlparse import urlparse, urlunparse
@@ -1492,3 +1493,25 @@ def canonicalize_email(email):
     localpart = localpart.partition("+")[0]
 
     return localpart + "@" + domain
+
+
+def precise_format_timedelta(delta, locale, threshold=.85, decimals=2):
+    """Like babel.dates.format_datetime but with adjustable precision"""
+    seconds = delta.total_seconds()
+
+    for unit, secs_per_unit in TIMEDELTA_UNITS:
+        value = abs(seconds) / secs_per_unit
+        if value >= threshold:
+            plural_form = locale.plural_form(value)
+            pattern = None
+            for choice in (unit + ':medium', unit):
+                patterns = locale._data['unit_patterns'].get(choice)
+                if patterns is not None:
+                    pattern = patterns[plural_form]
+                    break
+            if pattern is None:
+                return u''
+            decimals = int(decimals)
+            format_string = "%." + str(decimals) + "f"
+            return pattern.replace('{0}', format_string % value)
+    return u''

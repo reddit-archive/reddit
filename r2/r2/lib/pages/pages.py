@@ -74,9 +74,9 @@ from r2.lib.memoize import memoize
 from r2.lib.utils import trunc_string as _truncate, to_date
 from r2.lib.filters import safemarkdown
 from r2.lib.utils import Storage
+from r2.lib.utils import precise_format_timedelta
 
 from babel.numbers import format_currency
-from babel.dates import format_timedelta
 from collections import defaultdict
 import csv
 import cStringIO
@@ -1745,7 +1745,8 @@ class ServerSecondsBar(Templated):
             self.message = ''
         else:
             delta = datetime.timedelta(seconds=seconds)
-            server_time = format_timedelta(delta, threshold=5, locale=c.locale)
+            server_time = precise_format_timedelta(delta, threshold=5,
+                                                   locale=c.locale)
 
             if user == c.user:
                 message = _("you have helped pay for %(time)s of reddit "
