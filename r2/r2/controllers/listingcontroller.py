@@ -686,7 +686,8 @@ class UserController(ListingController):
     @listing_api_doc(section=api_section.users, uri='/user/{username}/{where}',
                      uri_variants=['/user/{username}/' + where for where in [
                                        'overview', 'submitted', 'comments',
-                                       'liked', 'disliked', 'hidden', 'saved']])
+                                       'liked', 'disliked', 'hidden', 'saved',
+                                       'gilded']])
     def GET_listing(self, where, vuser, sort, time, **env):
         self.where = where
         self.sort = sort
