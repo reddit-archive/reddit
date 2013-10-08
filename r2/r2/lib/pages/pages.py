@@ -3481,7 +3481,7 @@ class RefundPage(Reddit):
         billable_impressions = promote.get_billable_impressions(campaign)
         billable_amount = promote.get_billable_amount(campaign,
                                                       billable_impressions)
-        refund_amount = campaign.bid - billable_amount
+        refund_amount = promote.get_refund_amount(campaign, billable_amount)
         self.billable_impressions = billable_impressions
         self.billable_amount = billable_amount
         self.refund_amount = refund_amount

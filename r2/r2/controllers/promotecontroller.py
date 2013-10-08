@@ -372,7 +372,7 @@ class PromoteController(ListingController):
         billable_impressions = promote.get_billable_impressions(campaign)
         billable_amount = promote.get_billable_amount(campaign,
                                                       billable_impressions)
-        refund_amount = campaign.bid - billable_amount
+        refund_amount = promote.get_refund_amount(campaign, billable_amount)
         if refund_amount > 0:
             promote.refund_campaign(link, campaign, billable_amount,
                                     billable_impressions)

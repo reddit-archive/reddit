@@ -24,6 +24,7 @@ from __future__ import with_statement
 
 from collections import defaultdict, OrderedDict, namedtuple
 from datetime import datetime, timedelta
+from decimal import Decimal, ROUND_UP
 import itertools
 import json
 import math
@@ -838,8 +839,20 @@ def finalize_completed_campaigns(daysago=1):
             set_underdelivered_campaigns(underdelivered_campaigns)
 
 
+def get_refund_amount(camp, billable):
+    existing_refund = getattr(camp, 'refund_amount', 0.)
+    charge = camp.bid - existing_refund
+    refund_amount = charge - billable
+    refund_amount = Decimal(refund_amount).quantize(Decimal('.01'),
+                                                    rounding=ROUND_UP)
+    return max(float(refund_amount), 0.)
+
+
 def refund_campaign(link, camp, billable_amount, billable_impressions):
-    refund_amount = camp.bid - billable_amount
+    refund_amount = get_refund_amount(camp, billable_amount)
+    if refund_amount <= 0:
+        return
+
     owner = Account._byID(camp.owner_id, data=True)
     try:
         success = authorize.refund_transaction(owner, camp.trans_id,
