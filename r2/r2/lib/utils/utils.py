@@ -225,7 +225,7 @@ def get_title(url):
 def extract_title(data):
     """Tries to extract the value of the title element from a string of HTML"""
     bs = BeautifulSoup(data, convertEntities=BeautifulSoup.HTML_ENTITIES)
-    if not bs:
+    if not bs or not bs.html.head:
         return
 
     title_bs = bs.html.head.title
