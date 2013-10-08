@@ -838,7 +838,7 @@ def finalize_completed_campaigns(daysago=1):
             set_underdelivered_campaigns(underdelivered_campaigns)
 
 
-def refund_campaign(link, camp, billable_amount):
+def refund_campaign(link, camp, billable_amount, billable_impressions):
     refund_amount = camp.bid - billable_amount
     owner = Account._byID(camp.owner_id, data=True)
     try:

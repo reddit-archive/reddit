@@ -374,7 +374,8 @@ class PromoteController(ListingController):
                                                       billable_impressions)
         refund_amount = campaign.bid - billable_amount
         if refund_amount > 0:
-            promote.refund_campaign(link, campaign, billable_amount)
+            promote.refund_campaign(link, campaign, billable_amount,
+                                    billable_impressions)
             form.set_html('.status', _('refund succeeded'))
         else:
             form.set_html('.status', _('refund not needed'))
