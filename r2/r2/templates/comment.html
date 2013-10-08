@@ -125,11 +125,13 @@ ${parent.collapsed()}
   %endif
 
   % if thing.gilded_message:
-  <span class="gilded-comment-icon" title="${thing.gilded_message}" data-count="${thing.gildings}">
-    % if thing.gildings > 1:
-      x${thing.gildings}
-    % endif
-  </span>
+  <a href="${thing.subreddit_path}gilded">
+    <span class="gilded-comment-icon" title="${thing.gilded_message}" data-count="${thing.gildings}">
+      % if thing.gildings > 1:
+        x${thing.gildings}
+      % endif
+    </span>
+  </a>
   % endif
 
   %if collapse:

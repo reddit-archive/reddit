@@ -4,7 +4,7 @@ r.gold = {
     init: function () {
         $('div.content').on(
             'click',
-            'a.give-gold, .gilded-comment-icon, .gold-payment .close-button',
+            'a.give-gold, .gold-payment .close-button',
             $.proxy(this, '_toggleCommentGoldForm')
         )
 
