@@ -570,9 +570,11 @@ class Reddit(Templated):
                             NamedButton('rising'),
                             NamedButton('controversial'),
                             NamedButton('top'),
-                            NamedButton('gilded',
-                                        aliases=['/comments/gilded']),
                             ]
+
+            if not isinstance(c.site, DomainSR):
+                main_buttons.append(NamedButton('gilded',
+                                                aliases=['/comments/gilded']))
 
             mod = False
             if c.user_is_loggedin:
