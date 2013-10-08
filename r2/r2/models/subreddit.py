@@ -990,6 +990,20 @@ class FriendsSR(FakeSubreddit):
                for friend in friends]
         return queries.MergedCachedResults(crs)
 
+    def get_gilded_comments(self):
+        from r2.lib.db.queries import get_gilded_user_comments
+
+        if not c.user_is_loggedin:
+            raise UserRequiredException
+
+        friends = self.get_important_friends(c.user._id)
+
+        if not friends:
+            return []
+
+        queries = [get_gilded_user_comments(user_id) for user_id in friends]
+        return MergedCachedQuery(queries)
+
 
 class AllSR(FakeSubreddit):
     name = 'all'

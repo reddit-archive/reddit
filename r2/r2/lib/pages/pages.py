@@ -563,7 +563,9 @@ class Reddit(Templated):
         displayed at the top of the Reddit."""
         if c.site == Friends:
             main_buttons = [NamedButton('new', dest='', aliases=['/hot']),
-                            NamedButton('comments')]
+                            NamedButton('comments'),
+                            NamedButton('gilded'),
+                            ]
         else:
             main_buttons = [NamedButton('hot', dest='', aliases=['/hot']),
                             NamedButton('new'),
