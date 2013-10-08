@@ -1173,6 +1173,12 @@ class DefaultSR(_DefaultSR):
     def stylesheet_hash(self):
         return self._base.stylesheet_hash if self._base else ""
 
+    def get_all_comments(self):
+        from r2.lib.db.queries import get_sr_comments, merge_results
+        srs = Subreddit.user_subreddits(c.user, ids=False)
+        results = [get_sr_comments(sr) for sr in srs]
+        return merge_results(*results)
+
     def get_gilded_comments(self):
         from r2.lib.db.queries import get_gilded_comments
         srs = Subreddit.user_subreddits(c.user)
