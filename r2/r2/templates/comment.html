@@ -47,7 +47,9 @@ ${parent.midcol(not thing.collapsed, cls = cls)}
 
 <%def name="ParentDiv()">
   ${parent.ParentDiv()}
-  <a name="${thing._id36}" ></a>
+  %if not thing.deleted:
+    <a name="${thing._id36}"></a>
+  %endif
   %if c.profilepage:
     %if thing.link: 
       %if thing.link.title:

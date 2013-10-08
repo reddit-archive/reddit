@@ -3723,8 +3723,13 @@ class UserText(CachedTemplate):
         if text is None:
             text = ''
 
+        fullname = ''
+        # Only pass fullname on things that are not deleted
+        if not getattr(item, 'deleted', False) and hasattr(item, '_fullname'):
+            fullname = item._fullname
+
         CachedTemplate.__init__(self,
-                                fullname = item._fullname if item else "",
+                                fullname = fullname,
                                 text = text,
                                 have_form = have_form,
                                 editable = editable,

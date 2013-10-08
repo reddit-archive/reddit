@@ -197,7 +197,8 @@ class _CommentBuilder(Builder):
             if parent:
                 if not hasattr(parent, 'child'):
                     parent.child = empty_listing()
-                parent.child.parent_name = parent._fullname
+                if not parent.deleted:
+                    parent.child.parent_name = parent._fullname
                 parent.child.things.append(cm)
             else:
                 final.append(cm)
@@ -221,7 +222,8 @@ class _CommentBuilder(Builder):
                     raise KeyError("%r not in cids but it wasn't ignored" % p_id)
 
             parent.child = empty_listing(morelink)
-            parent.child.parent_name = parent._fullname
+            if not parent.deleted:
+                parent.child.parent_name = parent._fullname
 
         if not self.load_more:
             return final
@@ -264,7 +266,8 @@ class _CommentBuilder(Builder):
                         parent.child.things.append(w_mc2)
                     else:
                         parent.child = empty_listing(w_mc2)
-                        parent.child.parent_name = parent._fullname
+                        if not parent.deleted:
+                            parent.child.parent_name = parent._fullname
 
             #add more children
             if cid_tree.has_key(to_add):

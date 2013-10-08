@@ -54,7 +54,14 @@ ${self.RenderPrintable()}
   %endif
 </%def>
 
-<%def name="thing_css_class(what)">thing id-${what._fullname}</%def>
+<%def name="thing_css_class(what)">
+  <%
+    cssclass = "thing"
+    if not getattr(what, 'deleted', False):
+      cssclass += " id-" + what._fullname
+  %>
+  ${cssclass}
+</%def>
 
 <%def name="thing_css_rowclass(what)">
   <%
@@ -83,7 +90,9 @@ ${self.RenderPrintable()}
 </%def>
 
 <%def name="thing_data_attributes(what)">
-    data-fullname="${what._fullname}"
+    % if not getattr(what, 'deleted', False):
+      data-fullname="${what._fullname}"
+    % endif
     % if hasattr(what, 'campaign'):
       data-cid="${what.campaign}"
     % endif

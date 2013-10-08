@@ -1014,11 +1014,17 @@ class Comment(Thing, Printable):
             if not hasattr(item, 'target'):
                 item.target = "_top" if cname else None
             if item.parent_id:
-                if item.parent_id in cids:
-                    item.parent_permalink = '#' + utils.to36(item.parent_id)
-                else:
+                if item.parent_id in parents:
                     parent = parents[item.parent_id]
-                    item.parent_permalink = parent.make_permalink(item.link, item.subreddit)
+                else:
+                    parent = cids[item.parent_id]
+                if not parent.deleted:
+                    if item.parent_id in cids:
+                        item.parent_permalink = '#' + utils.to36(item.parent_id)
+                    else:
+                        item.parent_permalink = parent.make_permalink(item.link, item.subreddit)
+                else:
+                    item.parent_permalink = None
             else:
                 item.parent_permalink = None
 
@@ -1044,6 +1050,8 @@ class Comment(Thing, Printable):
                             (item._spam and
                              item.author != user and
                              not item.show_spam)))
+
+            item.have_form = not item.deleted
 
             extra_css = ''
             if item.deleted:
@@ -1127,7 +1135,8 @@ class Comment(Thing, Printable):
                                      editable=item.is_author,
                                      nofollow=item.nofollow,
                                      target=item.target,
-                                     extra_css=extra_css)
+                                     extra_css=extra_css,
+                                     have_form=item.have_form)
 
             item.lastedited = CachedVariable("lastedited")
 
