@@ -895,6 +895,7 @@ class Comment(Thing, Printable):
             m.insert(queries.get_gilded_comments(self.sr_id), [gilding])
             m.insert(queries.get_gilded_user_comments(self.author_id),
                      [gilding])
+            m.insert(queries.get_user_gildings(user), [gilding])
 
         hooks.get_hook('comment.gild').call(comment=self, gilder=user)
 
