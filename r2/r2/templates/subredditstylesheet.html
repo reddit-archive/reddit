@@ -64,6 +64,9 @@
     </div>
     <div class="clearleft"></div>
     <div class="buttons">
+      % if thing.site.prev_stylesheet:
+      <span class="btn right"><a target="_blank" href="${add_sr("/wiki/revisions/config/stylesheet/")}">${_("see previous versions")}</a></span>
+      % endif
       <button class="btn" name="save" type="submit" 
              onclick="this.form.op.value='save'; return true;">
         ${_('save')}
