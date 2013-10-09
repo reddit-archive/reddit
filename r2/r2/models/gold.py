@@ -485,6 +485,15 @@ def gold_received_by_user(user):
     return transactions
 
 
+def days_to_pennies(days):
+    if days < 366:
+        months = days / 31
+        return months * g.gold_month_price.pennies
+    else:
+        years = days / 366
+        return years * g.gold_year_price.pennies
+
+
 def append_random_bottlecap_phrase(message):
     """Appends a random "bottlecap" phrase from the wiki page.
 

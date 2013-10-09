@@ -31,7 +31,7 @@ from r2.models import Flair, FlairTemplate, FlairTemplateBySubredditIndex
 from r2.models import USER_FLAIR, LINK_FLAIR
 from r2.models import GoldPartnerDealCode
 from r2.models.bidding import Bid
-from r2.models.gold import gold_payments_by_user, gold_received_by_user
+from r2.models.gold import gold_payments_by_user, gold_received_by_user, days_to_pennies
 from r2.models.promo import NO_TRANSACTION, PromotionLog, PromotedLinkRoadblock
 from r2.models.token import OAuth2Client, OAuth2AccessToken
 from r2.models import traffic
@@ -1775,7 +1775,8 @@ class ServerSecondsBar(Templated):
 
         for payment in gold_gifts:
             rate = self.get_rate(payment.date)
-            seconds += self.subtract_fees(payment.pennies) / rate
+            pennies = days_to_pennies(payment.days)
+            seconds += self.subtract_fees(pennies) / rate
         self.gift_message = self.make_message(seconds, self.my_gift_message,
                                               self.their_gift_message)
 
