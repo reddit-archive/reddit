@@ -93,6 +93,7 @@ class Account(Thing):
                      pref_highlight_new_comments = True,
                      pref_monitor_mentions=True,
                      pref_collapse_left_bar=False,
+                     pref_public_server_seconds=False,
                      mobile_compress = False,
                      mobile_thumbnail = True,
                      trusted_sponsor = False,

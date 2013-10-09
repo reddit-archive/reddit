@@ -342,6 +342,9 @@ def make_map():
     mc('/api/recommend/sr/:srnames', controller='api',
        action='subreddit_recommendations')
 
+    mc('/api/server_seconds_visibility', controller='api',
+       action='server_seconds_visibility')
+
     mc("/api/multi/mine", controller="multiapi", action="my_multis")
     mc("/api/multi/copy", controller="multiapi", action="multi_copy")
     mc("/api/multi/rename", controller="multiapi", action="multi_rename")

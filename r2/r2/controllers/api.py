@@ -3616,3 +3616,17 @@ class ApiController(RedditController, OAuth2ResourceController):
                                                   to_omit=to_omit.values())
         sr_data = [{'sr_name': sr.name} for sr in rec_srs]
         return json.dumps(sr_data)
+
+
+    @validatedForm(
+        VUser(),
+        VModhash(),
+        seconds_visibility=VOneOf(
+            "seconds_visibility",
+            ("public", "private"),
+            default="private",
+        ),
+    )
+    def POST_server_seconds_visibility(self, form, jquery, seconds_visibility):
+        c.user.pref_public_server_seconds = seconds_visibility == "public"
+        c.user._commit()

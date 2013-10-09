@@ -1607,7 +1607,8 @@ class ProfilePage(Reddit):
             from admin_pages import SponsorSidebar
             rb.push(SponsorSidebar(self.user))
 
-        if c.user == self.user or c.user.employee:
+        if (c.user == self.user or c.user.employee or
+            self.user.pref_public_server_seconds):
             seconds_bar = ServerSecondsBar(self.user)
             if seconds_bar.message:
                 rb.push(seconds_bar)
@@ -1721,6 +1722,9 @@ class ServerSecondsBar(Templated):
 
     def __init__(self, user):
         Templated.__init__(self)
+
+        self.is_public = user.pref_public_server_seconds
+        self.is_user = c.user == user
 
         seconds = 0.
         gold_payments = gold_payments_by_user(user)
