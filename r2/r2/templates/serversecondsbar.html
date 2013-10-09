@@ -20,16 +20,16 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%namespace file="utils.html" import="inline_radio_type"/>
+<%namespace file="utils.html" import="inline_radio_type, md"/>
 
 <div class="titlebox">
   <div class="server-seconds rounded">
     %if thing.message:
-      <p>${thing.message}</p>
+      ${md(thing.message)}
     %endif
 
     %if thing.gift_message:
-      <p>${thing.gift_message}</p>
+      ${md(thing.gift_message)}
     %endif
 
     %if thing.is_user:

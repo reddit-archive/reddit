@@ -1708,14 +1708,14 @@ class ServerSecondsBar(Templated):
         for datestr, v in g.live_config['pennies_per_server_second'].iteritems()
     }
 
-    my_message = _("you have helped pay for %(time)s of reddit server time.")
-    their_message = _("%(user)s has helped pay for %%(time)s of reddit server "
+    my_message = _("you have helped pay for *%(time)s* of reddit server time.")
+    their_message = _("%(user)s has helped pay for *%%(time)s* of reddit server "
                       "time.")
 
-    my_gift_message = _("gifts on your behalf have helped pay for %(time)s of "
+    my_gift_message = _("gifts on your behalf have helped pay for *%(time)s* of "
                         "reddit server time.")
     their_gift_message = _("gifts on behalf of %(user)s have helped pay for "
-                           "%%(time)s of reddit server time.")
+                           "*%%(time)s* of reddit server time.")
 
     @classmethod
     def get_rate(cls, dt):
