@@ -126,6 +126,7 @@ def make_map():
        where='overview')
     mc('/user/:username/:where', controller='user', action='listing',
        where='overview')
+    mc('/user/:username/:where/:show', controller='user', action='listing')
 
     multi_prefixes = (
        partial_connect(mc, path_prefix='/user/:username/m/:multipath'),

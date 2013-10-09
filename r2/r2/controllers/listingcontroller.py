@@ -583,6 +583,13 @@ class UserController(ListingController):
                                   title=_('filter by subreddit'),
                                   type='lightdrop')
                 res.append(sr_menu)
+        elif (self.where == 'gilded' and
+                (c.user == self.vuser or c.user_is_admin)):
+            path = '/user/%s/gilded/' % self.vuser.name
+            buttons = [NavButton(_("my posts"), dest='/'),
+                       NavButton(_("posts gilded by me"), dest='/given')]
+            res.append(NavMenu(buttons, base_path=path, type='flatlist'))
+
         return res
 
     def title(self):
@@ -595,6 +602,9 @@ class UserController(ListingController):
                   'saved': _("saved by %(user)s"),
                   'hidden': _("hidden by %(user)s"),
                   'promoted': _("promoted by %(user)s")}
+        if self.where == 'gilded' and self.show == 'given':
+            return _("comments gilded by %(user)s") % {'user': self.vuser.name}
+
         title = titles.get(self.where, _('profile for %(user)s')) \
             % dict(user = self.vuser.name, site = c.site.name)
         return title
@@ -647,7 +657,10 @@ class UserController(ListingController):
         elif self.where == 'gilded':
             sup.set_sup_header(self.vuser, 'gilded')
             self.check_modified(self.vuser, 'gilded')
-            q = queries.get_gilded_user_comments(self.vuser)
+            if self.show == 'given':
+                q = queries.get_user_gildings(self.vuser)
+            else:
+                q = queries.get_gilded_user_comments(self.vuser)
 
         elif self.where in ('liked', 'disliked'):
             sup.set_sup_header(self.vuser, self.where)
@@ -682,16 +695,18 @@ class UserController(ListingController):
     @require_oauth2_scope("history")
     @validate(vuser = VExistingUname('username'),
               sort = VMenu('sort', ProfileSortMenu, remember = False),
-              time = VMenu('t', TimeMenu, remember = False))
+              time = VMenu('t', TimeMenu, remember = False),
+              show=VOneOf('show', ('given',)))
     @listing_api_doc(section=api_section.users, uri='/user/{username}/{where}',
                      uri_variants=['/user/{username}/' + where for where in [
                                        'overview', 'submitted', 'comments',
                                        'liked', 'disliked', 'hidden', 'saved',
                                        'gilded']])
-    def GET_listing(self, where, vuser, sort, time, **env):
+    def GET_listing(self, where, vuser, sort, time, show, **env):
         self.where = where
         self.sort = sort
         self.time = time
+        self.show = show
 
         # the validator will ensure that vuser is a valid account
         if not vuser:
@@ -710,9 +725,10 @@ class UserController(ListingController):
         if where in ('liked', 'disliked') and not votes_visible(vuser):
             return self.abort403()
 
-        if (where in ('saved', 'hidden') and not
-            ((c.user_is_loggedin and c.user._id == vuser._id) or
-              c.user_is_admin)):
+        if ((where in ('saved', 'hidden') or 
+                (where == 'gilded' and show == 'given')) and
+                not (c.user_is_loggedin and c.user._id == vuser._id) and
+                not c.user_is_admin):
             return self.abort403()
 
         if where == 'saved':
