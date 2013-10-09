@@ -473,7 +473,7 @@ def gold_payments_by_user(user):
 
     # filter out received gifts
     transactions = [trans for trans in transactions
-                          if not trans.trans_id.startswith('X')]
+                          if not trans.trans_id.startswith(('X', 'M'))]
 
     return transactions
 
