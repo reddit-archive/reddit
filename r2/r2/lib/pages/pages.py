@@ -31,7 +31,7 @@ from r2.models import Flair, FlairTemplate, FlairTemplateBySubredditIndex
 from r2.models import USER_FLAIR, LINK_FLAIR
 from r2.models import GoldPartnerDealCode
 from r2.models.bidding import Bid
-from r2.models.gold import gold_payments_by_user
+from r2.models.gold import gold_payments_by_user, gold_received_by_user
 from r2.models.promo import NO_TRANSACTION, PromotionLog, PromotedLinkRoadblock
 from r2.models.token import OAuth2Client, OAuth2AccessToken
 from r2.models import traffic
@@ -1610,7 +1610,7 @@ class ProfilePage(Reddit):
         if (c.user == self.user or c.user.employee or
             self.user.pref_public_server_seconds):
             seconds_bar = ServerSecondsBar(self.user)
-            if seconds_bar.message:
+            if seconds_bar.message or seconds_bar.gift_message:
                 rb.push(seconds_bar)
 
         rb.push(ProfileBar(self.user))
@@ -1708,6 +1708,15 @@ class ServerSecondsBar(Templated):
         for datestr, v in g.live_config['pennies_per_server_second'].iteritems()
     }
 
+    my_message = _("you have helped pay for %(time)s of reddit server time.")
+    their_message = _("%(user)s has helped pay for %%(time)s of reddit server "
+                      "time.")
+
+    my_gift_message = _("gifts on your behalf have helped pay for %(time)s of "
+                        "reddit server time.")
+    their_gift_message = _("gifts on behalf of %(user)s have helped pay for "
+                           "%%(time)s of reddit server time.")
+
     @classmethod
     def get_rate(cls, dt):
         cutoff_dates = sorted(cls.pennies_per_server_second.keys())
@@ -1720,11 +1729,25 @@ class ServerSecondsBar(Templated):
         # for simplicity all payment processor fees are $0.30 + 2.9%
         return pennies * (1 - 0.029) - 30
 
+    def make_message(self, seconds, my_message, their_message):
+        if not seconds:
+            return ''
+
+        delta = datetime.timedelta(seconds=seconds)
+        server_time = precise_format_timedelta(delta, threshold=5,
+                                                locale=c.locale)
+        if c.user == self.user:
+            message = my_message
+        else:
+            message = their_message % {'user': self.user.name}
+        return message % {'time': server_time}
+
     def __init__(self, user):
         Templated.__init__(self)
 
         self.is_public = user.pref_public_server_seconds
         self.is_user = c.user == user
+        self.user = user
 
         seconds = 0.
         gold_payments = gold_payments_by_user(user)
@@ -1744,21 +1767,17 @@ class ServerSecondsBar(Templated):
         for payment in selfserve_payments:
             rate = self.get_rate(payment.date)
             seconds += self.subtract_fees(payment.charge_amount * 100) / rate
+        self.message = self.make_message(seconds, self.my_message,
+                                         self.their_message)
 
-        if not seconds:
-            self.message = ''
-        else:
-            delta = datetime.timedelta(seconds=seconds)
-            server_time = precise_format_timedelta(delta, threshold=5,
-                                                   locale=c.locale)
+        seconds = 0.
+        gold_gifts = gold_received_by_user(user)
 
-            if user == c.user:
-                message = _("you have helped pay for %(time)s of reddit "
-                            "server time.")
-            else:
-                message = _("%(user)s has helped pay for %%(time)s of reddit "
-                            "server time.") % {'user': user.name}
-            self.message = message % {'time': server_time}
+        for payment in gold_gifts:
+            rate = self.get_rate(payment.date)
+            seconds += self.subtract_fees(payment.pennies) / rate
+        self.gift_message = self.make_message(seconds, self.my_gift_message,
+                                              self.their_gift_message)
 
 
 class MenuArea(Templated):

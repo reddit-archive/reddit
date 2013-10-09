@@ -24,7 +24,14 @@
 
 <div class="titlebox">
   <div class="server-seconds rounded">
-    ${thing.message}
+    %if thing.message:
+      <p>${thing.message}</p>
+    %endif
+
+    %if thing.gift_message:
+      <p>${thing.gift_message}</p>
+    %endif
+
     %if thing.is_user:
     <div class="server-seconds-public bottom">
       <div class="title">${_("visible to:")}</div>

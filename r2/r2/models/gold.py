@@ -477,6 +477,14 @@ def gold_payments_by_user(user):
 
     return transactions
 
+
+def gold_received_by_user(user):
+    transactions = transactions_by_user(user)
+    transactions = [trans for trans in transactions
+                          if trans.trans_id.startswith('X')]
+    return transactions
+
+
 def append_random_bottlecap_phrase(message):
     """Appends a random "bottlecap" phrase from the wiki page.
 
