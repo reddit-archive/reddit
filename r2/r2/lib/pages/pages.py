@@ -1709,12 +1709,12 @@ class ServerSecondsBar(Templated):
     }
 
     my_message = _("you have helped pay for *%(time)s* of reddit server time.")
-    their_message = _("%(user)s has helped pay for *%%(time)s* of reddit server "
+    their_message = _("/u/%(user)s has helped pay for *%%(time)s* of reddit server "
                       "time.")
 
     my_gift_message = _("gifts on your behalf have helped pay for *%(time)s* of "
                         "reddit server time.")
-    their_gift_message = _("gifts on behalf of %(user)s have helped pay for "
+    their_gift_message = _("gifts on behalf of /u/%(user)s have helped pay for "
                            "*%%(time)s* of reddit server time.")
 
     @classmethod
