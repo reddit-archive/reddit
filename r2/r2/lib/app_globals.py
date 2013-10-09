@@ -23,6 +23,7 @@
 from datetime import datetime
 from urlparse import urlparse
 import ConfigParser
+import locale
 import json
 import logging
 import os
@@ -417,6 +418,8 @@ class Globals(object):
         if hasattr(signal, 'SIGUSR1'):
             # not all platforms have user signals
             signal.signal(signal.SIGUSR1, thread_dump)
+
+        locale.setlocale(locale.LC_ALL, self.locale)
 
         self.startup_timer.intermediate("configuration")
 

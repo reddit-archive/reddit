@@ -22,7 +22,6 @@
 
 import collections
 import json
-import locale
 import re
 import simplejson
 import socket
@@ -495,40 +494,23 @@ def get_browser_langs():
                 seen_langs.add(l)
     return browser_langs
 
-def set_host_lang():
-    # try to grab the language from the domain
-    host_lang = request.environ.get('reddit-prefer-lang')
-    if host_lang:
-        c.host_lang = host_lang
-
 def set_iface_lang():
-    locale.setlocale(locale.LC_ALL, g.locale)
-    lang = [g.lang]
-    # GET param wins
-    if c.host_lang:
-        lang = [c.host_lang]
-    else:
-        lang = [c.user.pref_lang]
+    host_lang = request.environ.get('reddit-prefer-lang')
+    lang = host_lang or c.user.pref_lang
 
-    if getattr(g, "lang_override") and lang[0] == "en":
-        lang.insert(0, g.lang_override)
+    if getattr(g, "lang_override") and lang == "en":
+        lang = g.lang_override
 
-    #choose the first language
-    c.lang = lang[0]
-
-    #then try to overwrite it if we have the translation for another
-    #one
-    for l in lang:
-        try:
-            set_lang(l, fallback_lang=g.lang)
-            c.lang = l
-            break
-        except LanguageError:
-            #we don't have a translation for that language
-            set_lang(g.lang, graceful_fail=True)
+    c.lang = lang
 
     try:
-        c.locale = babel.core.Locale.parse(c.lang, sep='-')
+        set_lang(lang, fallback_lang=g.lang)
+    except LanguageError:
+        lang = g.lang
+        set_lang(lang, graceful_fail=True)
+
+    try:
+        c.locale = babel.core.Locale.parse(lang, sep='-')
     except (babel.core.UnknownLocaleError, ValueError):
         c.locale = babel.core.Locale.parse(g.lang, sep='-')
 
@@ -1065,7 +1047,6 @@ class RedditController(MinimalController):
         set_multireddit()
 
         #set_browser_langs()
-        set_host_lang()
         set_iface_lang()
         set_content_lang()
         set_recent_clicks()
