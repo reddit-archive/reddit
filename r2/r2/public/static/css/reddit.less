@@ -6359,7 +6359,7 @@ body:not(.gold) .allminus-link {
     background-color: #EFF7FF;
     border: 1px solid #5F99CF;
     text-align: center;
-    padding: 10px;
+    padding: 6px;
 
     p {
         padding: 5px 0;
@@ -6368,9 +6368,19 @@ body:not(.gold) .allminus-link {
 
 .server-seconds-public {
     &.bottom {
-        margin-top: 10px;
+        border-top-style: dashed;
+        border-top-color: #ccc;
+        margin-top: 6px;
         padding-top: 10px;
         text-align: left;
+    }
+
+    * {
+        vertical-align: middle;
+    }
+
+    input[type=radio] {
+        margin-top: 0;
     }
 
     label {
