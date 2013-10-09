@@ -6366,22 +6366,24 @@ body:not(.gold) .allminus-link {
     }
 }
 
-.server-seconds-public label {
-    margin: 0 5px;
-    position: relative;
-    top: -2px;
-}
+.server-seconds-public {
+    &.bottom {
+        margin-top: 10px;
+        padding-top: 10px;
+        text-align: left;
+    }
 
-.server-seconds-public.bottom {
-    margin-top: 10px;
-    padding-top: 10px;
-    text-align: left;
-}
+    label {
+        margin: 0 5px;
+        position: relative;
+        top: -2px;
+    }
 
-.server-seconds-public .title {
-    float: left;
-    padding-left: 20px;
-    margin-right: 10px;
+    .title {
+        float: left;
+        padding-left: 20px;
+        margin-right: 10px;
+    }
 }
 
 .comment-visits-box .title {
