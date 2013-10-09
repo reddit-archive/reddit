@@ -183,7 +183,7 @@ r.ui.Bubble = Backbone.View.extend({
             offsetX = this.$parent.outerWidth(true) - this.$el.outerWidth(true)
             offsetY = this.$parent.outerHeight(true) + 5
             this.$el.css({
-                left: parentPos.left + offsetX,
+                left: Math.max(parentPos.left + offsetX, 0),
                 top: parentPos.top + offsetY - bodyOffset.top
             })
         } else if (this.$el.is('.anchor-right')) {
