@@ -1071,13 +1071,13 @@ class Comment(Thing, Printable):
                     link_author = DeletedUser()
                 item.link_author = WrappedUser(link_author)
 
-                item.subreddit_path = item.subreddit.path
-                if cname:
-                    item.subreddit_path = ("http://" +
-                         get_domain(cname=(site == item.subreddit),
-                                    subreddit=False))
-                    if site != item.subreddit:
-                        item.subreddit_path += item.subreddit.path
+            item.subreddit_path = item.subreddit.path
+            if cname:
+                item.subreddit_path = ("http://" +
+                     get_domain(cname=(site == item.subreddit),
+                                subreddit=False))
+                if site != item.subreddit:
+                    item.subreddit_path += item.subreddit.path
 
             item.full_comment_path = item.link.make_permalink(item.subreddit)
             item.full_comment_count = item.link.num_comments
