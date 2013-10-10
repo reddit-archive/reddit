@@ -1294,7 +1294,8 @@ class CommentPane(Templated):
                                   num, self.sort, self.num, c.lang,
                                   self.can_reply, c.render_style,
                                   c.user.pref_show_flair,
-                                  c.user.pref_show_link_flair]))
+                                  c.user.pref_show_link_flair,
+                                  self.max_depth]))
 
     def __init__(self, article, sort, comment, context, num, **kw):
         # keys: lang, num, can_reply, render_style
@@ -1309,6 +1310,8 @@ class CommentPane(Templated):
         self.sort = sort
         self.num = num
         self.article = article
+
+        self.max_depth = kw.get('max_depth')
 
         # don't cache on permalinks or contexts, and keep it to html
         try_cache = not comment and not context and (c.render_style == "html")
