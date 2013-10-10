@@ -498,7 +498,7 @@ def set_iface_lang():
     host_lang = request.environ.get('reddit-prefer-lang')
     lang = host_lang or c.user.pref_lang
 
-    if getattr(g, "lang_override") and lang == "en":
+    if getattr(g, "lang_override") and lang.startswith("en"):
         lang = g.lang_override
 
     c.lang = lang
