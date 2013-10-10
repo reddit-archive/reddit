@@ -43,6 +43,6 @@
     }
 
     var saves = ${unsafe(simplejson.dumps(list(thing.saves)))};
-    $.map(saves, show_saved);
+    $.map(saves, r.ui.setSavedFullname);
   })()
 </script>

@@ -160,6 +160,7 @@ class CommentButtons(PrintableButtons):
         show_givegold = thing.can_gild
 
         PrintableButtons.__init__(self, "commentbuttons", thing,
+                                  can_save=thing.can_save,
                                   is_author = is_author, 
                                   profilepage = c.profilepage,
                                   permalink = thing.permalink,

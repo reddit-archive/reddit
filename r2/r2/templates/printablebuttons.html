@@ -195,13 +195,12 @@
   </li>
   % endif
   %if thing.is_loggedin:
-    <li>
     %if thing.saved:
-       ${self.state_button("unsave", _("unsave"), "toggle_save(this)", _("save"))}
+      <li class="link-unsave-button save-button"><a href="#">${_("unsave")}</a></li>
     %else:
-       ${self.state_button("save", _("save"), "toggle_save(this)", _("unsave"))}
+      <li class="link-save-button save-button"><a href="#">${_("save")}</a></li>
     %endif
-    </li><li>
+    <li>
     %if thing.hidden:
       ${self.state_button("unhide", _("unhide"), \
         "change_state(this, 'unhide', hide_thing);", _("unhidden"))}
@@ -271,14 +270,16 @@
     <li class="first">
       ${self.bylink_button(_("permalink"), thing.permalink)}
     </li>
-    %if thing.saved:
-      <li class="comment-unsave-button">
-         ${self.state_button("unsave", _("unsave"), "toggle_save(this)", _("save"))}
-      </li>
-    %else:
-      <li class="comment-save-button">
-         ${self.state_button("save", _("save"), "toggle_save(this)", _("unsave"))}
-      </li>
+    %if thing.can_save:
+        %if thing.saved:
+          <li class="comment-unsave-button save-button">
+            <a href="javascript:void(0)">${_("unsave")}</a>
+          </li>
+        %else:
+          <li class="comment-save-button save-button">
+            <a href="javascript:void(0)">${_("save")}</a>
+          </li>
+        %endif
     %endif
     %if c.profilepage:
       <li>

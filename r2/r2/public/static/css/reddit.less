@@ -7617,11 +7617,6 @@ body.post-under-6h-old .gilded-icon {
     opacity: .55;
 }
 
-.buttons li.comment-save-button { display: none; }
-.buttons li.comment-unsave-button { display: inline; }
-
-body.gold .buttons li.comment-save-button { display: inline; }
-
 .gold-progress (@bar-height: 17px) {
     padding: (@bar-height / 2 - 1) 0;
 
@@ -8285,4 +8280,30 @@ body.with-listing-chooser {
     &.enabled {
         display: inline-block;
     }
+}
+
+.hover-bubble.save-selector  {
+    label {
+        display: block;
+        font-weight: bold;
+        margin-left: 5px;
+        font-size: 10px;
+    }
+    .savedcategory {
+        border: 1px solid #ccc;
+        padding: 1px 3px;
+        margin: 0 2px;
+    }
+    display: none;
+}
+
+.save-category {
+    &.hidden {
+        display: none;
+    }
+    margin-left: 2px;
+    background-color: #DDF;
+    padding: 2px 5px;
+    border-radius: 5px;
+    -moz-border-radius: 5px;
 }

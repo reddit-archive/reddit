@@ -1356,6 +1356,7 @@ class CommentPane(Templated):
                                   self.can_reply, c.render_style,
                                   c.user.pref_show_flair,
                                   c.user.pref_show_link_flair,
+                                  c.can_save,
                                   self.max_depth]))
 
     def __init__(self, article, sort, comment, context, num, **kw):
@@ -1387,6 +1388,7 @@ class CommentPane(Templated):
         if try_cache and c.user_is_loggedin:
             sr = article.subreddit_slow
             c.can_reply = self.can_reply = sr.can_comment(c.user)
+            c.can_save = True
             # don't cache if the current user can ban comments in the listing
             try_cache = not sr.can_ban(c.user)
             # don't cache for users with custom hide threshholds

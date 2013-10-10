@@ -222,6 +222,13 @@ ${parent.thing_data_attributes(what)} data-ups="${what.upvotes}" data-downs="${w
   %if thing.stickied:
     &#32;-&#32;<span class="stickied-tagline" title="selected by this subreddit's moderators">stickied post</span>
   %endif
+
+  %if getattr(thing, 'savedcategory', None) is not None:
+    ${plain_link(_('category: %s') % thing.savedcategory,
+                 '/user/%s/saved/%s' % (c.user.name, thing.savedcategory),
+                 _class='save-category' + ('' if thing.savedcategory else ' hidden')
+                )}
+  %endif
 </%def>
 
 <%def name="child()">

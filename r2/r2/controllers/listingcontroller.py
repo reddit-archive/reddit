@@ -20,6 +20,8 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+import urllib
+
 from oauth2 import require_oauth2_scope
 from reddit_base import RedditController, base_listing, paginated_listing
 
@@ -506,17 +508,33 @@ class UserController(ListingController):
             srs = Subreddit._by_name(srnames)
             srnames = [name for name, sr in srs.iteritems()
                             if sr.can_view(c.user)]
-            srnames = sorted(list(set(srnames)), key=lambda name: name.lower())
+            srnames = sorted(set(srnames), key=lambda name: name.lower())
             if len(srnames) > 1:
                 sr_buttons = [NavButton(_('all'), None, opt='sr',
                                         css_class='primary')]
                 for srname in srnames:
                     sr_buttons.append(NavButton(srname, srname, opt='sr'))
-                base_path = request.path
+                base_path = '/user/%s/saved' % self.vuser.name
+                if self.savedcategory:
+                    base_path += '/%s' % urllib.quote(self.savedcategory)
                 sr_menu = NavMenu(sr_buttons, base_path=base_path,
                                   title=_('filter by subreddit'),
                                   type='lightdrop')
                 res.append(sr_menu)
+            categories = LinkSavesByCategory.get_saved_categories(self.vuser)
+            categories += CommentSavesByCategory.get_saved_categories(self.vuser)
+            categories = sorted(set(categories))
+            if len(categories) >= 1:
+                cat_buttons = [NavButton(_('all'), '/', css_class='primary')]
+                for cat in categories:
+                    cat_buttons.append(NavButton(cat,
+                                                 urllib.quote(cat),
+                                                 use_params=True))
+                base_path = '/user/%s/saved/' % self.vuser.name
+                cat_menu = NavMenu(cat_buttons, base_path=base_path,
+                                   title=_('filter by category'),
+                                   type='lightdrop')
+                res.append(cat_menu)
         elif (self.where == 'gilded' and
                 (c.user == self.vuser or c.user_is_admin)):
             path = '/user/%s/gilded/' % self.vuser.name
@@ -612,16 +630,11 @@ class UserController(ListingController):
             q = queries.get_hidden(self.vuser)
 
         elif self.where == 'saved':
-            srname = request.GET.get('sr')
-            if srname and c.user.gold:
-                try:
-                    sr_id = Subreddit._by_name(srname)._id
-                except NotFound:
-                    sr_id = None
-            else:
-                sr_id = None
-            q = queries.get_saved(self.vuser, sr_id)
-
+            if not self.savedcategory and c.user.gold:
+                self.builder_cls = SavedBuilder
+            sr_id = self.savedsr._id if self.savedsr else None
+            q = queries.get_saved(self.vuser, sr_id,
+                                  category=self.savedcategory)
         elif c.user_is_sponsor and self.where == 'promoted':
             q = queries.get_promoted_links(self.vuser._id)
 
@@ -671,6 +684,19 @@ class UserController(ListingController):
 
         if where == 'saved':
             self.show_chooser = True
+            category = VSavedCategory('category').run(env.get('category'))
+            srname = request.GET.get('sr')
+            if srname and c.user.gold:
+                try:
+                    sr = Subreddit._by_name(srname)
+                except NotFound:
+                    sr = None
+            else:
+                sr = None
+            if category and not c.user.gold:
+                category = None
+            self.savedsr = sr
+            self.savedcategory = category
 
         check_cheating('user')
 

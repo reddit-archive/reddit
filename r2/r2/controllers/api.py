@@ -2423,11 +2423,29 @@ class ApiController(RedditController):
             ModAction.create(sr, c.user, 'distinguish', target=thing, **log_kw)
 
     @require_oauth2_scope("save")
+    @json_validate(VUser())
+    @api_doc(api_section.links_and_comments, extensions=["json"])
+    def GET_saved_categories(self, responder):
+        """Get a list of categories in which things are currently saved.
+
+        See also: [/api/save](#POST_api_save).
+
+        """
+        if not c.user.gold:
+            abort(403)
+        categories = LinkSavesByCategory.get_saved_categories(c.user)
+        categories += CommentSavesByCategory.get_saved_categories(c.user)
+        categories = sorted(set(categories), key=lambda name: name.lower())
+        categories = [dict(category=category) for category in categories]
+        return {'categories': categories}
+
+    @require_oauth2_scope("save")
     @noresponse(VUser(),
                 VModhash(),
+                category = VSavedCategory('category'),
                 thing = VByName('id'))
     @api_doc(api_section.links_and_comments)
-    def POST_save(self, thing):
+    def POST_save(self, thing, category):
         """Save a link or comment.
 
         Saved things are kept in the user's saved listing for later perusal.
@@ -2436,8 +2454,11 @@ class ApiController(RedditController):
 
         """
         if not thing: return
-        if isinstance(thing, Comment) and not c.user.gold: return
-        thing._save(c.user)
+        if category and not c.user.gold:
+            category = None
+        if ('BAD_SAVE_CATEGORY', 'category') in c.errors:
+            abort(403)
+        thing._save(c.user, category=category)
 
     @require_oauth2_scope("save")
     @noresponse(VUser(),

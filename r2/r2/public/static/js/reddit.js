@@ -215,20 +215,6 @@ function unsave_thing(elem) {
     $(elem).thing().removeClass("saved");
 }
 
-function toggle_save(elem) {
-    var form = $(elem).parents("form").first()
-    var next_text = form.find('[name="executed"]')
-    var text = next_text.val()
-    if ($(elem).thing().hasClass("saved")) {
-        change_state(elem, 'unsave', undefined, true)
-    } else {
-        change_state(elem, 'save', undefined, true)
-    }
-    $(elem).thing().toggleClass("saved")
-    next_text.val($(elem).text())
-    $(elem).text(text)
-}
-
 function click_thing(elem) {
     var t = $(elem);
     if (!t.hasClass("thing")) {
@@ -1221,17 +1207,6 @@ function show_unfriend(account_fullname) {
                 $(this).html("");
             }
         });
-}
-
-function show_saved(comment_fullname) {
-    var comment = $('.id-' + comment_fullname),
-        buttons = comment.find('.buttons').first(),
-        save = buttons.find('.comment-save-button')
-        form = '<li class="comment-unsave-button"><form action="/post/unsave" method="post" class="state-button unsave-button">'
-    form = form + '<input type="hidden" name="executed" value="unsaved"/><span>'
-    form = form + '<a href="javascript:void(0)" onclick="return change_state(this, \'unsave\', unsave_thing);">unsave</a></span></form></li>'
-    save.replaceWith(form)
-    comment.addClass('saved')
 }
 
 function search_feedback(elem, approval) {

@@ -541,6 +541,14 @@ def get_hidden(user):
     return get_hidden_links(user)
 
 @cached_query(UserQueryCache, sort=[desc('action_date')])
+def get_categorized_saved_links(user_id, sr_id, category):
+    return
+
+@cached_query(UserQueryCache, sort=[desc('action_date')])
+def get_categorized_saved_comments(user_id, sr_id, category):
+    return
+
+@cached_query(UserQueryCache, sort=[desc('action_date')])
 def get_saved_links(user_id, sr_id):
     return
 
@@ -548,9 +556,14 @@ def get_saved_links(user_id, sr_id):
 def get_saved_comments(user_id, sr_id):
     return
 
-def get_saved(user, sr_id=None):
+def get_saved(user, sr_id=None, category=None):
     sr_id = sr_id or 'none'
-    queries = [get_saved_links(user, sr_id), get_saved_comments(user, sr_id)]
+    if not category:
+        queries = [get_saved_links(user, sr_id),
+                   get_saved_comments(user, sr_id)]
+    else:
+        queries = [get_categorized_saved_links(user, sr_id, category),
+                   get_categorized_saved_comments(user, sr_id, category)]
     return MergedCachedQuery(queries)
 
 @cached_srrel_query

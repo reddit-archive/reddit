@@ -163,6 +163,7 @@ def js_config(extra_config=None):
         "static_root": static(''),
         "over_18": bool(c.over18),
         "vote_hash": c.vote_hash,
+        "gold": gold,
     }
 
     if extra_config:

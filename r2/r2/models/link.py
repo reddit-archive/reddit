@@ -175,8 +175,8 @@ class Link(Thing, Printable):
             admintools.spam(l, banner='banned user')
         return l
 
-    def _save(self, user):
-        LinkSavesByAccount._save(user, self)
+    def _save(self, user, category=None):
+        LinkSavesByAccount._save(user, self, category)
 
     def _unsave(self, user):
         LinkSavesByAccount._unsave(user, self)
@@ -833,8 +833,8 @@ class Comment(Thing, Printable):
 
         return (c, inbox_rel)
 
-    def _save(self, user):
-        CommentSavesByAccount._save(user, self)
+    def _save(self, user, category=None):
+        CommentSavesByAccount._save(user, self, category)
 
     def _unsave(self, user):
         CommentSavesByAccount._unsave(user, self)
@@ -1040,9 +1040,12 @@ class Comment(Thing, Printable):
                 if item.link.promoted or age.days < g.REPLY_AGE_LIMIT:
                     item.can_reply = True
 
+            item.can_save = c.can_save or False
+
             if user_is_loggedin:
                 item.user_gilded = (user, item) in user_gildings
                 item.saved = (user, item) in saved
+                item.can_save = True
             else:
                 item.user_gilded = False
                 item.saved = False
@@ -1573,7 +1576,7 @@ class _SaveHideByAccount(tdb_cassandra.DenormalizedRelation):
         return []
 
     @classmethod
-    def _savehide(cls, user, things):
+    def _savehide(cls, user, things, **kw):
         things = tup(things)
         now = datetime.now(g.tz)
         with CachedQueryMutator() as m:
@@ -1582,29 +1585,81 @@ class _SaveHideByAccount(tdb_cassandra.DenormalizedRelation):
                 # value, we don't want to write it. Report.new(link) needs to
                 # incr link.reported but will fail if the link is dirty.
                 thing.__setattr__('action_date', now, make_dirty=False)
-                for q in cls._cached_queries(user, thing):
+                for q in cls._cached_queries(user, thing, **kw):
                     m.insert(q, [thing])
-        cls.create(user, things)
+        cls.create(user, things, **kw)
 
     @classmethod
-    def _unsavehide(cls, user, things):
+    def destroy(cls, user, things, **kw):
+        things = tup(things)
+        cls._cf.remove(user._id36, (things._id36 for things in things))
+
+        for view in cls._views:
+            view.destroy(user, things, **kw)
+
+    @classmethod
+    def _unsavehide(cls, user, things, **kw):
         things = tup(things)
         with CachedQueryMutator() as m:
             for thing in things:
-                for q in cls._cached_queries(user, thing):
+                for q in cls._cached_queries(user, thing, **kw):
                     m.delete(q, [thing])
-        cls.destroy(user, things)
+        cls.destroy(user, things, **kw)
 
 
 class _ThingSavesByAccount(_SaveHideByAccount):
+    _read_consistency_level = tdb_cassandra.CL.QUORUM
+    _write_consistency_level = tdb_cassandra.CL.QUORUM
+
     @classmethod
-    def _save(cls, user, things):
-        cls._savehide(user, things)
+    def value_for(cls, thing1, thing2, category=None):
+        return category or ''
+    
+    @classmethod
+    def _remove_from_category_listings(cls, user, things, category):
+        things = tup(things)
+        oldcategories = cls.fast_query(user, things)
+        changedthings = []
+        for thing in things:
+            oldcategory = oldcategories.get((user, thing)) or None
+            if oldcategory != category:
+                changedthings.append(thing)
+        cls._unsavehide(user, changedthings, categories=oldcategories)
+
+    @classmethod
+    def _save(cls, user, things, category=None):
+        category = category.lower() if category else None
+        cls._remove_from_category_listings(user, things, category=category)
+        cls._savehide(user, things, category=category)
 
     @classmethod
     def _unsave(cls, user, things):
-        cls._unsavehide(user, things)
+        # Ensure we delete from existing category cached queries
+        categories = cls.fast_query(user, tup(things))
+        cls._unsavehide(user, things, categories=categories)
 
+    @classmethod
+    def _unsavehide(cls, user, things, categories=None):
+        things = tup(things)
+        with CachedQueryMutator() as m:
+            for thing in things:
+                category = categories.get((user, thing)) if categories else None
+                for q in cls._cached_queries(user, thing, category=category):
+                    m.delete(q, [thing])
+        cls.destroy(user, things, categories=categories)
+
+    @classmethod
+    def _cached_queries_category(cls, user, thing,
+                                 querycatfn, queryfn,
+                                 category=None, only_category=False):
+        from r2.lib.db import queries
+        cached_queries = []
+        if not only_category:
+            cached_queries = [queryfn(user, 'none'), queryfn(user, thing.sr_id)]
+        if category:
+            cached_queries.append(querycatfn(user, 'none', category))
+            cached_queries.append(querycatfn(user, thing.sr_id, category))
+        return cached_queries
 
 class LinkSavesByAccount(_ThingSavesByAccount):
     _use_db = True
@@ -1612,11 +1667,14 @@ class LinkSavesByAccount(_ThingSavesByAccount):
     _views = []
 
     @classmethod
-    def _cached_queries(cls, user, thing):
+    def _cached_queries(cls, user, thing, **kw):
         from r2.lib.db import queries
-        return [queries.get_saved_links(user, 'none'),
-                queries.get_saved_links(user, thing.sr_id)]
-
+        return cls._cached_queries_category(
+            user,
+            thing,
+            queries.get_categorized_saved_links,
+            queries.get_saved_links,
+            **kw)
 
 class CommentSavesByAccount(_ThingSavesByAccount):
     _use_db = True
@@ -1624,11 +1682,14 @@ class CommentSavesByAccount(_ThingSavesByAccount):
     _views = []
 
     @classmethod
-    def _cached_queries(cls, user, thing):
+    def _cached_queries(cls, user, thing, **kw):
         from r2.lib.db import queries
-        return [queries.get_saved_comments(user, 'none'),
-                queries.get_saved_comments(user, thing.sr_id)]
-
+        return cls._cached_queries_category(
+            user,
+            thing,
+            queries.get_categorized_saved_comments,
+            queries.get_saved_comments,
+            **kw)
 
 class _ThingHidesByAccount(_SaveHideByAccount):
     @classmethod
@@ -1675,19 +1736,23 @@ class _ThingSavesBySubreddit(tdb_cassandra.View):
         return {utils.to36(thing.sr_id): ''}
 
     @classmethod
-    def get_saved_subreddits(cls, user):
-        rowkey = user._id36
+    def get_saved_values(cls, user):
+        rowkey = cls._rowkey(user, None)
         try:
             columns = cls._cf.get(rowkey)
         except NotFoundException:
             return []
 
-        sr_id36s = columns.keys()
+        return columns.keys()
+
+    @classmethod
+    def get_saved_subreddits(cls, user):
+        sr_id36s = cls.get_saved_values(user)
         srs = Subreddit._byID36(sr_id36s, return_dict=False, data=True)
         return sorted([sr.name for sr in srs])
 
     @classmethod
-    def create(cls, user, things):
+    def create(cls, user, things, **kw):
         for thing in things:
             rowkey = cls._rowkey(user, thing)
             column = cls._column(user, thing)
@@ -1698,13 +1763,55 @@ class _ThingSavesBySubreddit(tdb_cassandra.View):
         return False
 
     @classmethod
-    def destroy(cls, user, things):
+    def destroy(cls, user, things, **kw):
         # See if thing's sr is present anymore
         sr_ids = set([thing.sr_id for thing in things])
         for sr_id in set(sr_ids):
             if cls._check_empty(user, sr_id):
                 cls._cf.remove(user._id36, [utils.to36(sr_id)])
 
+class _ThingSavesByCategory(_ThingSavesBySubreddit):
+    @classmethod
+    def create(cls, user, things, category=None):
+        if not category:
+            return
+        for thing in things:
+            rowkey = cls._rowkey(user, thing)
+            column = {category: None}
+            cls._set_values(rowkey, column)
+
+    @classmethod
+    def _get_query_fn():
+        raise NotImplementedError 
+
+    @classmethod
+    def _check_empty(cls, user, category):
+        from r2.lib.db import queries
+        q = cls._get_query_fn()(user, 'none', category)
+        q.fetch()
+        return not q.data
+
+    @classmethod
+    def get_saved_categories(cls, user):
+        return cls.get_saved_values(user)
+
+    @classmethod
+    def destroy(cls, user, things, categories=None):
+        if not categories:
+            return
+        for category in set(categories.values()):
+            if not category or not cls._check_empty(user, category):
+                continue
+            cls._cf.remove(user._id36, [category])
+
+@view_of(LinkSavesByAccount)
+class LinkSavesByCategory(_ThingSavesByCategory):
+    _use_db = True
+
+    @classmethod
+    def _get_query_fn(cls):
+        from r2.lib.db import queries
+        return queries.get_categorized_saved_links
 
 @view_of(LinkSavesByAccount)
 class LinkSavesBySubreddit(_ThingSavesBySubreddit):
@@ -1729,6 +1836,14 @@ class CommentSavesBySubreddit(_ThingSavesBySubreddit):
         q.fetch()
         return not q.data
 
+@view_of(CommentSavesByAccount)
+class CommentSavesByCategory(_ThingSavesByCategory):
+    _use_db = True
+
+    @classmethod
+    def _get_query_fn(cls):
+        from r2.lib.db import queries
+        return queries.get_categorized_saved_comments
 
 class Inbox(MultiRelation('inbox',
                           Relation(Account, Comment),
