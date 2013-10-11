@@ -3505,7 +3505,7 @@ class ApiController(RedditController, OAuth2ResourceController):
     @validatedMultipartForm(VUser(),
                             VModhash(),
                             client=VOAuth2ClientDeveloper(),
-                            icon_file=VLength(
+                            icon_file=VUploadLength(
                                 'file', max_length=1024*128,
                                 docs=dict(file="an icon (72x72)")))
     @api_doc(api_section.apps)
