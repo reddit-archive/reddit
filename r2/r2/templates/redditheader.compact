@@ -21,7 +21,7 @@
 ###############################################################################
 
 <%!
-   from r2.lib.template_helpers import static, s3_https_if_secure
+   from r2.lib.template_helpers import static, media_https_if_secure
    from r2.models.subreddit import DefaultSR
    from r2.lib import authentication
    
@@ -55,7 +55,7 @@
         if header_img == g.default_header_url:
             header_img = static(header_img)
         else:
-            header_img = s3_https_if_secure(header_img)
+            header_img = media_https_if_secure(header_img)
     %>
     ${img_link(c.site.name, header_img, '/', _id = "header-img-a", img_id = 'header-img', title = header_title, size = header_size)}
   </div>

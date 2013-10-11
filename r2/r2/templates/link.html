@@ -22,7 +22,7 @@
 
 <%!
    from r2.lib.template_helpers import get_domain
-   from r2.lib.template_helpers import s3_https_if_secure
+   from r2.lib.template_helpers import media_https_if_secure
    from r2.lib.pages.things import LinkButtons
    from r2.lib.pages import WrappedUser
    from r2.lib.strings import Score, strings
@@ -237,7 +237,7 @@ ${parent.thing_data_attributes(what)} data-ups="${what.upvotes}" data-downs="${w
             else:
                 size_str = ""
         %>
-        <img src="${s3_https_if_secure(thing.thumbnail)}" ${size_str} alt=""/>
+        <img src="${media_https_if_secure(thing.thumbnail)}" ${size_str} alt=""/>
     % endif
   </%call>
   %endif

@@ -34,11 +34,8 @@ from mako import filters
 
 import os
 import tempfile
-from r2.lib import s3cp
 
 from r2.lib.media import upload_media
-
-from r2.lib.template_helpers import s3_direct_https
 
 import re
 from urlparse import urlparse
@@ -205,7 +202,7 @@ def valid_url(prop, value, report, generate_https_urls):
             if not generate_https_urls:
                 url = images[name]
             else:
-                url = s3_direct_https(images[name])
+                url = g.media_provider.convert_to_https(images[name])
             value._setCssText("url(%s)"%url)
         else:
             # unknown image label -> error

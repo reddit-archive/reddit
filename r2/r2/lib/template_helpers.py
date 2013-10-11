@@ -26,7 +26,6 @@ from r2.lib.utils import UrlParser, timesince, is_subdomain
 
 from r2.lib import hooks
 from r2.lib.static import static_mtime
-from r2.lib.media import s3_direct_url
 from r2.lib import js
 
 import babel.numbers
@@ -110,18 +109,11 @@ def static(path, allow_gzip=True):
     ))
 
 
-def s3_https_if_secure(url):
-    # In the event that more media sources (other than s3) are added, this function should be corrected
+def media_https_if_secure(url):
     if not c.secure:
         return url
-    return s3_direct_https(url)
+    return g.media_provider.convert_to_https(url)
 
-
-def s3_direct_https(url):
-    replace = "https://"
-    if not url.startswith("http://%s" % s3_direct_url):
-         replace = "https://%s/" % s3_direct_url
-    return url.replace("http://", replace)
 
 def js_config(extra_config=None):
     config = {

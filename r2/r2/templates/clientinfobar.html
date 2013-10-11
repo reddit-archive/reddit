@@ -22,7 +22,7 @@
 
 <%!
    from r2.lib.filters import safemarkdown
-   from r2.lib.template_helpers import s3_https_if_secure, static
+   from r2.lib.template_helpers import media_https_if_secure, static
 %>
 <%namespace file="utils.html" import="img_link"/>
 <%def name="app_link(app)" buffered="True">
@@ -38,7 +38,7 @@
   icon_url = thing.client.icon_url or static('defaultapp.png')
 %>
 <div class="infobar ${thing.extra_class}">
-  ${img_link(thing.client.name, s3_https_if_secure(icon_url),
+  ${img_link(thing.client.name, media_https_if_secure(icon_url),
              thing.client.about_url, _class="icon")}
   <div>
     <p>

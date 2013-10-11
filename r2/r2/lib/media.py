@@ -25,7 +25,6 @@ import cStringIO
 import hashlib
 import json
 import math
-import mimetypes
 import os
 import re
 import subprocess
@@ -42,14 +41,13 @@ import requests
 
 from pylons import g
 
-from r2.lib import amqp, s3cp
+from r2.lib import amqp
 from r2.lib.memoize import memoize
 from r2.lib.nymph import optimize_png
 from r2.lib.utils import TimeoutFunction, TimeoutFunctionException, domain
 from r2.models.link import Link
 
 
-s3_direct_url = "s3.amazonaws.com"
 MEDIA_FILENAME_LENGTH = 12
 thumbnail_size = 70, 70
 
@@ -182,42 +180,18 @@ def thumbnail_url(link):
         if hasattr(link, "thumbnail_url"):
             return link.thumbnail_url
         else:
-            bucket = g.s3_old_thumb_bucket
-            baseurl = "http://%s" % (bucket)
-            if g.s3_media_direct:
-                baseurl = "http://%s/%s" % (s3_direct_url, bucket)
-            res = '%s/%s.png' % (baseurl,link._fullname)
-            if hasattr(link, "thumbnail_version"):
-                res += "?v=%s" % link.thumbnail_version
-            return res
+            return ''
     else:
         return ''
 
-def filename_to_s3_bucket(file_name):
-    num = ord(file_name[-1]) % len(g.s3_media_buckets)
-    return g.s3_media_buckets[num]
 
-def s3_upload_media(data, file_name, file_type, mime_type, never_expire,
-                    replace=False):
-    bucket = filename_to_s3_bucket(file_name)
-    s3cp.send_file(bucket, file_name+file_type, data, mime_type,
-                       never_expire=never_expire,
-                       replace=replace,
-                       reduced_redundancy=True)
-    if g.s3_media_direct:
-        return "http://%s/%s/%s%s" % (s3_direct_url, bucket, file_name, file_type)
-    else:
-        return "http://%s/%s%s" % (bucket, file_name, file_type)
-
-def get_filename_from_content(contents):
+def _filename_from_content(contents):
     sha = hashlib.sha1(contents).digest()
     return base64.urlsafe_b64encode(sha[0:MEDIA_FILENAME_LENGTH])
 
-def upload_media(image, never_expire=True, file_type='.jpg'):
-    """Given a link and an image, uploads the image to s3 into an image
-    based on the link's fullname"""
-    url = str()
-    mime_type = mimetypes.guess_type("file" + file_type)[0] # Requires a filename with the extension
+
+def upload_media(image, file_type='.jpg'):
+    """Upload an image to the media provider."""
     f = tempfile.NamedTemporaryFile(suffix=file_type, delete=False)
     try:
         img = image
@@ -240,30 +214,22 @@ def upload_media(image, never_expire=True, file_type='.jpg'):
                 img.save(f, quality=85) # Bug in the JPG encoder with the optimize flag, even if set to false
             else:
                 img.save(f, optimize=True)
-        
+
         if file_type == ".png":
             optimize_png(f.name, g.png_optimizer)
         elif file_type == ".jpg":
             optimize_jpeg(f.name, g.jpeg_optimizer)
         contents = open(f.name).read()
-        file_name = get_filename_from_content(contents)
-        if g.media_store == "s3":
-            url = s3_upload_media(contents, file_name=file_name, mime_type=mime_type, file_type=file_type, never_expire=True)
+        file_name = _filename_from_content(contents) + file_type
+        return g.media_provider.put(file_name, contents)
     finally:
         os.unlink(f.name)
-    return url
+    return ""
 
 
 def upload_stylesheet(content):
-    file_name = get_filename_from_content(content)
-
-    return s3_upload_media(
-        content,
-        file_name=file_name,
-        file_type=".css",
-        mime_type="text/css",
-        never_expire=True,
-    )
+    file_name = _filename_from_content(content) + ".css"
+    return g.media_provider.put(file_name, content)
 
 
 def _set_media(embedly_services, link, force=False):
@@ -304,10 +270,10 @@ def _set_media(embedly_services, link, force=False):
     link._commit()
 
 
-def force_thumbnail(link, image_data, never_expire=True, file_type=".jpg"):
+def force_thumbnail(link, image_data, file_type=".jpg"):
     image = str_to_image(image_data)
     image = _prepare_image(image)
-    thumb_url = upload_media(image, never_expire=never_expire, file_type=file_type)
+    thumb_url = upload_media(image, file_type=file_type)
 
     link.thumbnail_url = thumb_url
     link.thumbnail_size = image.size
@@ -315,20 +281,11 @@ def force_thumbnail(link, image_data, never_expire=True, file_type=".jpg"):
 
 
 def upload_icon(file_name, image_data, size):
-    assert g.media_store == 's3'
     image = str_to_image(image_data)
     image.format = 'PNG'
     image.thumbnail(size, Image.ANTIALIAS)
     icon_data = _image_to_str(image)
-    return s3_upload_media(icon_data,
-                           file_name=file_name,
-                           mime_type='image/png',
-                           file_type='.png',
-                           never_expire=True,
-                           replace=True)
-
-def can_upload_icon():
-    return g.media_store == 's3'
+    return g.media_provider.put(file_name + ".png", icon_data)
 
 
 def _make_custom_media_embed(media_object):

@@ -110,7 +110,6 @@ error_list = dict((
         ('NO_API', _('cannot perform this action via the API')),
         ('DOMAIN_BANNED', _('%(domain)s is not allowed on reddit: %(reason)s')),
         ('NO_OTP_SECRET', _('you must enable two-factor authentication')),
-        ('NOT_SUPPORTED', _('this feature is not supported')),
         ('BAD_IMAGE', _('image problem')),
         ('DEVELOPER_ALREADY_ADDED', _('already added')),
         ('TOO_MANY_DEVELOPERS', _('too many developers')),

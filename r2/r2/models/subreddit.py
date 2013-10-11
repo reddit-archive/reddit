@@ -497,7 +497,6 @@ class Subreddit(Thing, Printable, BaseSite):
 
     def change_css(self, content, parsed, prev=None, reason=None, author=None, force=False):
         from r2.models import ModAction
-        from r2.lib.template_helpers import s3_direct_https
         from r2.lib.media import upload_stylesheet
 
         author = author if author else c.user._id36
@@ -513,7 +512,7 @@ class Subreddit(Thing, Printable, BaseSite):
         if minified_http or minified_https:
             if g.subreddit_stylesheets_static:
                 self.stylesheet_url_http = upload_stylesheet(minified_http)
-                self.stylesheet_url_https = s3_direct_https(
+                self.stylesheet_url_https = g.media_provider.convert_to_https(
                                              upload_stylesheet(minified_https))
                 self.stylesheet_hash = ""
                 self.stylesheet_contents = ""
