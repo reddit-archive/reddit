@@ -27,6 +27,7 @@ import json
 
 from pycassa.types import CompositeType
 from pylons import g, c
+from pylons.i18n import _, N_
 
 from r2.lib import filters
 from r2.lib.cache import sgm
@@ -40,6 +41,60 @@ from r2.models.subreddit import Subreddit
 PROMOTE_STATUS = Enum("unpaid", "unseen", "accepted", "rejected",
                       "pending", "promoted", "finished")
 
+class PriorityLevel(object):
+    name = ''
+    _text = N_('')
+    _description = N_('')
+    value = 1   # Values are from 1 (highest) to 100 (lowest)
+    default = False
+    inventory_override = False
+    cpm = True  # Non-cpm is percentage, will fill unsold impressions
+
+    def __repr__(self):
+        return "<PriorityLevel %s: %s>" % (self.name, self.value)
+
+    @property
+    def text(self):
+        return _(self._text) if self._text else ''
+
+    @property
+    def description(self):
+        return _(self._description) if self._description else ''
+
+
+class HighPriority(PriorityLevel):
+    name = 'high'
+    _text = N_('highest')
+    value = 5
+
+
+class MediumPriority(PriorityLevel):
+    name = 'standard'
+    _text = N_('standard')
+    value = 10
+    default = True
+
+
+class RemnantPriority(PriorityLevel):
+    name = 'remnant'
+    _text = N_('remnant')
+    _description = N_('lower priority, impressions are not guaranteed')
+    value = 20
+    inventory_override = True
+
+
+class HousePriority(PriorityLevel):
+    name = 'house'
+    _text = N_('house')
+    _description = N_('non-CPM, displays in all unsold impressions')
+    value = 30
+    inventory_override = True
+    cpm = False
+
+
+HIGH, MEDIUM, REMNANT, HOUSE = HighPriority(), MediumPriority(), RemnantPriority(), HousePriority()
+PROMOTE_PRIORITIES = {p.name: p for p in (HIGH, MEDIUM, REMNANT, HOUSE)}
+PROMOTE_DEFAULT_PRIORITY = MEDIUM
 
 @memoize("get_promote_srid")
 def get_promote_srid(name = 'promos'):
@@ -64,6 +119,10 @@ def calc_impressions(bid, cpm_pennies):
 NO_TRANSACTION = 0
 
 class PromoCampaign(Thing):
+    _defaults = dict(
+        priority_name=PROMOTE_DEFAULT_PRIORITY.name,
+    )
+
     def __getattr__(self, attr):
         val = Thing.__getattr__(self, attr)
         if attr in ('start_date', 'end_date'):
@@ -72,8 +131,14 @@ class PromoCampaign(Thing):
                 val = val.replace(tzinfo=g.tz)
         return val
 
+    @classmethod
+    def get_priority_name(cls, priority):
+        if not priority in PROMOTE_PRIORITIES.values():
+            raise ValueError("%s is not a valid priority" % val)
+        return priority.name
+
     @classmethod 
-    def _new(cls, link, sr_name, bid, cpm, start_date,  end_date):
+    def _new(cls, link, sr_name, bid, cpm, start_date, end_date, priority):
         pc = PromoCampaign(link_id=link._id,
                            sr_name=sr_name,
                            bid=bid,
@@ -81,7 +146,8 @@ class PromoCampaign(Thing):
                            start_date=start_date,
                            end_date=end_date,
                            trans_id=NO_TRANSACTION,
-                           owner_id=link.author_id)
+                           owner_id=link.author_id,
+                           priority_name=cls.get_priority_name(priority))
         pc._commit()
         return pc
 
@@ -111,7 +177,13 @@ class PromoCampaign(Thing):
         # deal with pre-CPM PromoCampaigns
         if not hasattr(self, 'cpm'):
             return -1
+        elif not self.priority.cpm:
+            return -1
         return calc_impressions(self.bid, self.cpm)
+
+    @property
+    def priority(self):
+        return PROMOTE_PRIORITIES[self.priority_name]
 
     def is_freebie(self):
         return self.trans_id < 0
@@ -121,13 +193,14 @@ class PromoCampaign(Thing):
         return self.start_date < now and self.end_date > now
 
     def update(self, start_date, end_date, bid, cpm, sr_name, trans_id,
-               commit=True):
+               priority, commit=True):
         self.start_date = start_date
         self.end_date = end_date
         self.bid = bid
         self.cpm = cpm
         self.sr_name = sr_name
         self.trans_id = trans_id
+        self.priority_name = self.get_priority_name(priority)
         if commit:
             self._commit()
 

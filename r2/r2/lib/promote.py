@@ -186,15 +186,23 @@ def campaign_is_live(link, campaign_index):
 
 class RenderableCampaign():
     def __init__(self, campaign_id36, start_date, end_date, duration, bid,
-                 spent, cpm, sr, status):
+                 spent, cpm, sr, priority, status):
         self.campaign_id36 = campaign_id36
         self.start_date = start_date
         self.end_date = end_date
         self.duration = duration
-        self.bid = "%.2f" % bid
-        self.spent = "%.2f" % spent
+
+        if priority.cpm:
+            self.bid = "%.2f" % bid
+            self.spent = "%.2f" % spent
+        else:
+            self.bid = "N/A"
+            self.spent = "N/A"
+
         self.cpm = cpm
         self.sr = sr
+        self.priority_name = priority.name
+        self.inventory_override = priority.inventory_override
         self.status = status
 
     @classmethod
@@ -228,7 +236,8 @@ class RenderableCampaign():
                       'pay_url': pay_url(link, camp),
                       'view_live_url': view_live_url(link, sr),
                       'sponsor': user_is_sponsor,
-                      'live': live}
+                      'live': live,
+                      'non_cpm': not camp.priority.cpm}
 
             if transaction and transaction.is_void():
                 status['paid'] = False
@@ -240,7 +249,7 @@ class RenderableCampaign():
                     status['refund_url'] = refund_url(link, camp)
 
             rc = cls(campaign_id36, start_date, end_date, duration, bid, spent,
-                     cpm, sr, status)
+                     cpm, sr, camp.priority, status)
             r.append(rc)
         return r
 
@@ -353,22 +362,28 @@ def get_transactions(link, campaigns):
     bids_by_campaign = {c._id: bid_dict[(c._id, c.trans_id)] for c in campaigns}
     return bids_by_campaign
 
-def new_campaign(link, dates, bid, cpm, sr):
+def new_campaign(link, dates, bid, cpm, sr, priority):
     # empty string for sr_name means target to all
     sr_name = sr.name if sr else ""
-    campaign = PromoCampaign._new(link, sr_name, bid, cpm, dates[0], dates[1])
+    campaign = PromoCampaign._new(link, sr_name, bid, cpm, dates[0], dates[1],
+                                  priority)
     PromotionWeights.add(link, campaign._id, sr_name, dates[0], dates[1], bid)
     PromotionLog.add(link, 'campaign %s created' % campaign._id)
-    author = Account._byID(link.author_id, data=True)
-    if getattr(author, "complimentary_promos", False):
-        free_campaign(link, campaign, c.user)
+
+    if campaign.priority.cpm:
+        author = Account._byID(link.author_id, data=True)
+        if getattr(author, "complimentary_promos", False):
+            free_campaign(link, campaign, c.user)
+    else:
+        # non-cpm campaigns are never charged, so we need to fire the hook now
+        hooks.get_hook('promote.new_charge').call(link=link, campaign=campaign)
     return campaign
 
 
 def free_campaign(link, campaign, user):
     auth_campaign(link, campaign, user, -1)
 
-def edit_campaign(link, campaign, dates, bid, cpm, sr):
+def edit_campaign(link, campaign, dates, bid, cpm, sr, priority):
     sr_name = sr.name if sr else '' # empty string means target to all
     try:
         # if the bid amount changed, cancel any pending transactions
@@ -381,16 +396,17 @@ def edit_campaign(link, campaign, dates, bid, cpm, sr):
 
         # update values in the db
         campaign.update(dates[0], dates[1], bid, cpm, sr_name,
-                        campaign.trans_id, commit=True)
+                        campaign.trans_id, priority, commit=True)
 
-        # record the transaction
-        text = 'updated campaign %s. (bid: %0.2f)' % (campaign._id, bid)
-        PromotionLog.add(link, text)
+        if campaign.priority.cpm:
+            # record the transaction
+            text = 'updated campaign %s. (bid: %0.2f)' % (campaign._id, bid)
+            PromotionLog.add(link, text)
 
-        # make it a freebie, if applicable
-        author = Account._byID(link.author_id, True)
-        if getattr(author, "complimentary_promos", False):
-            free_campaign(link, campaign, c.user)
+            # make it a freebie, if applicable
+            author = Account._byID(link.author_id, True)
+            if getattr(author, "complimentary_promos", False):
+                free_campaign(link, campaign, c.user)
 
         hooks.get_hook('campaign.edit').call(link=link, campaign=campaign)
 
@@ -572,13 +588,21 @@ def accepted_campaigns(offset=0):
     campaigns = dict((camp._id, camp) for camp in campaign_query)
     for pw in promo_weights:
         campaign = campaigns.get(pw.promo_idx)
-        if not campaign or not campaign.trans_id:
+        if not campaign or (not campaign.trans_id and campaign.priority.cpm):
             continue
         link = accepted_links.get(campaign.link_id)
         if not link:
             continue
 
         yield (link, campaign, pw.weight)
+
+
+def charged_or_not_needed(campaign):
+    # True if a campaign has a charged transaction or doesn't need one
+    charged = authorize.is_charged_transaction(campaign.trans_id, campaign._id)
+    needs_charge = campaign.priority.cpm
+    return charged or not needs_charge
+
 
 def get_scheduled(offset=0):
     """
@@ -596,7 +620,7 @@ def get_scheduled(offset=0):
     error_campaigns = []
     for l, campaign, weight in accepted_campaigns(offset=offset):
         try:
-            if authorize.is_charged_transaction(campaign.trans_id, campaign._id):
+            if charged_or_not_needed(campaign):
                 adweight = AdWeight(l._fullname, weight, campaign._fullname)
                 adweights.append(adweight)
         except Exception, e: # could happen if campaign things have corrupt data
@@ -614,8 +638,7 @@ def charge_pending(offset=1):
     for l, camp, weight in accepted_campaigns(offset=offset):
         user = Account._byID(l.author_id)
         try:
-            if authorize.is_charged_transaction(camp.trans_id, camp._id):
-                # already charged
+            if charged_or_not_needed(camp):
                 continue
 
             charge_succeeded = authorize.charge_transaction(user, camp.trans_id,
@@ -641,7 +664,7 @@ def charge_pending(offset=1):
 def scheduled_campaigns_by_link(l, date=None):
     # A promotion/campaign is scheduled/live if it's in
     # PromotionWeights.get_campaigns(now) and
-    # authorize.is_charged_transaction()
+    # charged_or_not_needed
 
     date = date or promo_datetime_now()
 
@@ -656,7 +679,7 @@ def scheduled_campaigns_by_link(l, date=None):
     for campaign_id in campaigns:
         try:
             campaign = PromoCampaign._byID(campaign_id, data=True)
-            if authorize.is_charged_transaction(campaign.trans_id, campaign_id):
+            if charged_or_not_needed(campaign):
                 accepted.append(campaign_id)
         except NotFound:
             g.log.error("PromoCampaign %d scheduled to run on %s not found." %

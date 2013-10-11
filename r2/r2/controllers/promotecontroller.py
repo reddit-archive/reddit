@@ -78,6 +78,7 @@ from r2.lib.validator import (
     VLink,
     VModhash,
     VOneOf,
+    VPriority,
     VPromoCampaign,
     VRatelimit,
     VSelfText,
@@ -129,6 +130,9 @@ def _check_dates(dates):
 
 
 def campaign_has_oversold_error(form, campaign):
+    if campaign.priority.inventory_override:
+        return
+
     target = Subreddit._by_name(campaign.sr_name) if campaign.sr_name else None
     return has_oversold_error(form, campaign._id, campaign.start_date,
                               campaign.end_date, campaign.bid, campaign.cpm,
@@ -183,6 +187,17 @@ class PromoteController(ListingController):
         srs = Subreddit._byID(sr_ids, return_dict=False)
         sr_names = sorted([sr.name for sr in srs], key=lambda s: s.lower())
         return sr_names
+
+    @classmethod
+    @memoize('house_campaigns', time=60)
+    def get_house_campaigns(cls):
+        now = promote.promo_datetime_now()
+        pws = PromotionWeights.get_campaigns(now)
+        campaign_ids = {pw.promo_idx for pw in pws}
+        campaigns = PromoCampaign._byID(campaign_ids, data=True,
+                                        return_dict=False)
+        campaigns = [camp for camp in campaigns if not camp.priority.cpm]
+        return campaigns
 
     @property
     def menus(self):
@@ -240,6 +255,10 @@ class PromoteController(ListingController):
                 return [Link._fullname_from_id36(to36(id)) for id in link_ids]
             elif self.sort == 'reported':
                 return queries.get_reported_links(get_promote_srid())
+            elif self.sort == 'house':
+                campaigns = self.get_house_campaigns()
+                link_ids = {camp.link_id for camp in campaigns}
+                return [Link._fullname_from_id36(to36(id)) for id in link_ids]
             return queries.get_all_promoted_links()
         else:
             if self.sort == "future_promos":
@@ -558,9 +577,10 @@ class PromoteController(ListingController):
                             coerce=False, error=errors.BAD_BID),
                    sr=VSubmitSR('sr', promotion=True),
                    campaign_id36=nop("campaign_id36"),
-                   targeting=VLength("targeting", 10))
+                   targeting=VLength("targeting", 10),
+                   priority=VPriority("priority"))
     def POST_edit_campaign(self, form, jquery, link, campaign_id36,
-                          dates, bid, sr, targeting):
+                          dates, bid, sr, targeting, priority):
         if not link:
             return
 
@@ -601,29 +621,34 @@ class PromoteController(ListingController):
             form.has_errors('title', errors.TOO_MANY_CAMPAIGNS)
             return
 
-        if form.has_errors('bid', errors.BAD_BID):
-            return
-
+        campaign = None
         if campaign_id36:
-            # you cannot edit the bid of a live ad unless it's a freebie
             try:
                 campaign = PromoCampaign._byID36(campaign_id36)
-                if (bid != campaign.bid and
-                    campaign.start_date < datetime.now(g.tz) and
-                    not campaign.is_freebie()):
-                    c.errors.add(errors.BID_LIVE, field='bid')
-                    form.has_errors('bid', errors.BID_LIVE)
-                    return
             except NotFound:
                 pass
 
-        min_bid = 0 if c.user_is_sponsor else g.min_promote_bid
-        if bid is None or bid < min_bid:
-            c.errors.add(errors.BAD_BID, field='bid',
-                         msg_params={'min': min_bid,
-                                     'max': g.max_promote_bid})
-            form.has_errors('bid', errors.BAD_BID)
-            return
+        if priority.cpm:
+            if form.has_errors('bid', errors.BAD_BID):
+                return
+
+            # you cannot edit the bid of a live ad unless it's a freebie
+            if (campaign and bid != campaign.bid and
+                campaign.start_date < datetime.now(g.tz) and
+                not campaign.is_freebie()):
+                c.errors.add(errors.BID_LIVE, field='bid')
+                form.has_errors('bid', errors.BID_LIVE)
+                return
+
+            min_bid = 0 if c.user_is_sponsor else g.min_promote_bid
+            if bid is None or bid < min_bid:
+                c.errors.add(errors.BAD_BID, field='bid',
+                             msg_params={'min': min_bid,
+                                         'max': g.max_promote_bid})
+                form.has_errors('bid', errors.BAD_BID)
+                return
+        else:
+            bid = 0.   # Set bid to 0 as dummy value
 
         if targeting == 'one':
             if form.has_errors('sr', errors.SUBREDDIT_NOEXIST,
@@ -646,23 +671,24 @@ class PromoteController(ListingController):
             sr = None
 
         # Check inventory
-        campaign_id = campaign._id if campaign_id36 else None
-        if has_oversold_error(form, campaign_id, start, end, bid, cpm, sr):
+        campaign_id = campaign._id if campaign else None
+        if (not priority.inventory_override and
+            has_oversold_error(form, campaign_id, start, end, bid, cpm, sr)):
             return
 
-        if campaign_id36 is not None:
-            campaign = PromoCampaign._byID36(campaign_id36)
-            promote.edit_campaign(link, campaign, dates, bid, cpm, sr)
+        if campaign:
+            promote.edit_campaign(link, campaign, dates, bid, cpm, sr, priority)
             r = promote.get_renderable_campaigns(link, campaign)
             jquery.update_campaign(r.campaign_id36, r.start_date, r.end_date,
-                                   r.duration, r.bid, r.spent, r.cpm,
-                                   r.sr, r.status)
+                                   r.duration, r.bid, r.spent, r.cpm, r.sr,
+                                   r.priority_name, r.inventory_override,
+                                   r.status)
         else:
-            campaign = promote.new_campaign(link, dates, bid, cpm, sr)
+            campaign = promote.new_campaign(link, dates, bid, cpm, sr, priority)
             r = promote.get_renderable_campaigns(link, campaign)
             jquery.new_campaign(r.campaign_id36, r.start_date, r.end_date,
-                                r.duration, r.bid, r.spent, r.cpm,
-                                r.sr, r.status)
+                                r.duration, r.bid, r.spent, r.cpm, r.sr,
+                                r.priority_name, r.inventory_override, r.status)
 
     @validatedForm(VSponsor('link_id'),
                    VModhash(),

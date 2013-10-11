@@ -37,7 +37,12 @@ from r2.models.gold import (
     days_to_pennies,
     gold_revenue_on,
 )
-from r2.models.promo import NO_TRANSACTION, PromotionLog, PromotedLinkRoadblock
+from r2.models.promo import (
+    NO_TRANSACTION,
+    PROMOTE_PRIORITIES,
+    PromotedLinkRoadblock,
+    PromotionLog,
+)
 from r2.models.token import OAuth2Client, OAuth2AccessToken
 from r2.models import traffic
 from r2.models import ModAction
@@ -3425,6 +3430,7 @@ class PromotePage(Reddit):
                                        dest='/admin/graph'))
             buttons.append(NavButton('report', 'report'))
             buttons.append(NavButton('underdelivered', 'underdelivered'))
+            buttons.append(NavButton('house ads', 'house'))
             buttons.append(NavButton('reported links', 'reported'))
 
         menu  = NavMenu(buttons, base_path = '/promoted',
@@ -3509,6 +3515,9 @@ class PromoteLinkForm(Templated):
         self.promotion_log = PromotionLog.get(link)
 
         self.min_bid = 0 if c.user_is_sponsor else g.min_promote_bid
+
+        self.priorities = [(p.name, p.text, p.description, p.default, p.inventory_override, p.cpm)
+                           for p in sorted(PROMOTE_PRIORITIES.values(), key=lambda p: p.value)]
 
         # preload some inventory
         srnames = set()

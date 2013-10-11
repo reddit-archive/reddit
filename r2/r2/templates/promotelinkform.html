@@ -42,7 +42,7 @@ ${unsafe(js.use('sponsored'))}
 
 <%def name="javascript_setup()">
 <script type="text/javascript">
-  r.sponsored.init();
+  r.sponsored.init(${unsafe(simplejson.dumps(c.user_is_sponsor))});
   r.sponsored.setup(${unsafe(simplejson.dumps(thing.inventory))})
 </script>
 </%def>
@@ -344,6 +344,29 @@ ${self.javascript_setup()}
             </td>
           </tr>
 
+          <tr style="${'display:none' if not c.user_is_sponsor else ''}">
+            <th>${_("priority")}</th>
+            <td class="prefright">
+              %for value, text, description, default, inventory_override, cpm in thing.priorities:
+              <label>
+                <input id="${value}" class="nomargin" 
+                       type="radio"  value="${value}" name="priority"
+                       onclick="r.sponsored.priority_changed()"
+                       ${"checked='checked'" if default else ""}
+                       ${"default='default'" if default else ""}
+                       ${"override='override'" if inventory_override else ""}
+                       ${"cpm='cpm'" if cpm else ""}>
+                       %if description:
+                       <span>${"%s (%s)" % (text, description)}</span>
+                       %else:
+                       <span>${text}</span>
+                       %endif
+              </label>
+              <br />
+              %endfor
+            </td>
+          </tr>
+
           <tr>
             <th>${_("budget")}</th>
             <td class="prefright">
@@ -469,6 +492,7 @@ ${self.javascript_setup()}
             <th title="${start_title}">${_("start")}</th>
             <th title="${end_title}">${_("end")}</th>
             <th>${_("duration")}</th>
+            <th>${_("priority")}</th>
             <th>${_("total budget")}</th>
             <th>${_("spent")}</th>
             <th title="${targeting_title}">${_("targeting")}</th>
@@ -486,7 +510,8 @@ ${self.javascript_setup()}
               %for rc in sorted(thing.campaigns, key=lambda rc: rc.start_date):
                 $.new_campaign(${unsafe(','.join(simplejson.dumps(attr) for attr in
                     [rc.campaign_id36, rc.start_date, rc.end_date, rc.duration,
-                     rc.bid, rc.spent, rc.cpm, rc.sr, rc.status]))});
+                     rc.bid, rc.spent, rc.cpm, rc.sr, rc.priority_name,
+                     rc.inventory_override, rc.status]))});
               %endfor
               $.set_up_campaigns();
             });

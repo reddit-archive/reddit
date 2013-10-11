@@ -1683,6 +1683,15 @@ class VOneOf(Validator):
                                                   for s in self.options),
         }
 
+
+class VPriority(Validator):
+    def run(self, val):
+        if c.user_is_sponsor:
+            return PROMOTE_PRIORITIES.get(val, PROMOTE_DEFAULT_PRIORITY)
+        else:
+            return PROMOTE_DEFAULT_PRIORITY
+
+
 class VImageType(Validator):
     def run(self, img_type):
         if not img_type in ('png', 'jpg'):
