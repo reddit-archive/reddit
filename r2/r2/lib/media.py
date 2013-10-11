@@ -504,6 +504,10 @@ def _fetch_embedly_service_data():
 
 
 def _fetch_embedly_services():
+    if not g.embedly_api_key:
+        g.log.warning("No embedly_api_key configured. Will not use embed.ly.")
+        return []
+
     service_data = _fetch_embedly_service_data()
 
     services = []
