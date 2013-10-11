@@ -118,5 +118,6 @@ setup(
     gzip = r2.lib.gzipper:make_gzip_middleware
     [r2.provider.media]
     s3 = r2.lib.providers.media.s3:S3MediaProvider
+    filesystem = r2.lib.providers.media.filesystem:FileSystemMediaProvider
     """,
 )

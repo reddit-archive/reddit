@@ -157,6 +157,7 @@ postgresql-client
 rabbitmq-server
 cassandra
 haproxy
+nginx
 stunnel
 PACKAGES
 
@@ -277,6 +278,11 @@ set debug = true
 
 domain = $REDDIT_DOMAIN
 
+media_provider = filesystem
+media_fs_root = /srv/www/media
+media_fs_base_url_http = http://%(domain)s/media/
+media_fs_base_url_https = https://%(domain)s/media/
+
 [server:main]
 port = 8001
 DEVELOPMENT
@@ -297,6 +303,11 @@ set debug = false
 
 domain = $REDDIT_DOMAIN
 
+media_provider = filesystem
+media_fs_root = /srv/www/media
+media_fs_base_url_http = http://%(domain)s/media/
+media_fs_base_url_https = https://%(domain)s/media/
+
 [server:main]
 port = 8001
 PRODUCTION
@@ -308,6 +319,32 @@ sudo -u $REDDIT_OWNER make ini
 if [ ! -L run.ini ]; then
     sudo -u $REDDIT_OWNER ln -s development.ini run.ini
 fi
+
+###############################################################################
+# nginx
+###############################################################################
+
+mkdir -p /srv/www/media
+chown $REDDIT_USER:$REDDIT_GROUP /srv/www/media
+
+cat > /etc/nginx/sites-available/reddit-media <<MEDIA
+server {
+    listen 9000;
+
+    expires max;
+
+    location /media/ {
+        alias /srv/www/media/;
+    }
+}
+MEDIA
+
+# remove the default nginx site that may conflict with haproxy
+rm /etc/nginx/sites-enabled/default
+# put our config in place
+ln -s /etc/nginx/sites-available/reddit-media /etc/nginx/sites-enabled/
+
+service nginx restart
 
 ###############################################################################
 # haproxy
@@ -343,6 +380,10 @@ frontend frontend
     acl is-ssl dst_port 8080
     reqadd X-Forwarded-Proto:\ https if is-ssl
 
+    # send media stuff to the local nginx
+    acl is-media path_beg /media/
+    use_backend media if is-media
+
     default_backend dynamic
 
 backend dynamic
@@ -353,6 +394,15 @@ backend dynamic
     balance roundrobin
 
     server app01-8001 localhost:8001 maxconn 1
+
+backend media
+    mode http
+    timeout connect 4000
+    timeout server 30000
+    timeout queue 60000
+    balance roundrobin
+
+    server nginx localhost:9000 maxconn 20
 HAPROXY
 
 # this will start it even if currently stopped
