@@ -305,9 +305,9 @@ ${self.javascript_setup()}
           <tr>
             <th>${_("start")}</th>
             <td class="prefright">
-              <input type="hidden" id="date-min" name="date-min" value="${thing.startdate}">
-              <input type="hidden" id="date-start-max" name="date-start-max" value="${thing.maxstart}">
-              <input type="hidden" id="date-end-max" name="date-end-max" value="${thing.maxend}">
+              <input type="hidden" id="date-min" value="${thing.startdate}">
+              <input type="hidden" id="date-start-max" value="${thing.maxstart}">
+              <input type="hidden" id="date-end-max" value="${thing.maxend}">
               <%self:datepicker name="startdate", value="${thing.startdate}"
                                 minDateSrc="date-min" maxDateSrc="date-start-max"
                                 initfuncname="init_startdate">
