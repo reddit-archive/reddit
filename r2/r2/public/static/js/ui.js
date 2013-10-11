@@ -186,6 +186,12 @@ r.ui.Bubble = Backbone.View.extend({
                 left: Math.max(parentPos.left + offsetX, 0),
                 top: parentPos.top + offsetY - bodyOffset.top
             })
+        } else if (this.$el.is('.anchor-top-left')) {
+            offsetY = this.$parent.outerHeight(true) + 5
+            this.$el.css({
+                left: parentPos.left,
+                top: parentPos.top + offsetY - bodyOffset.top
+            })
         } else if (this.$el.is('.anchor-right')) {
             offsetX = 16
             offsetY = 0
@@ -265,7 +271,7 @@ r.ui.Bubble = Backbone.View.extend({
         }
 
         var animProp, animOffset
-        if (this.$el.is('.anchor-top') || this.$el.is('.anchor-top-centered')) {
+        if (this.$el.is('.anchor-top') || this.$el.is('.anchor-top-centered') || this.$el.is('.anchor-top-left')) {
             animProp = 'top'
             animOffset = '-=5'
         } else if (this.$el.is('.anchor-right')) {
