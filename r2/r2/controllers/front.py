@@ -1188,12 +1188,6 @@ class FrontController(RedditController, OAuth2ResourceController):
         content = AwardReceived(trophy=trophy, preexisting=preexisting)
         return BoringPage(_("award claim"), content=content).render()
 
-    def GET_gold_info(self):
-        return GoldInfoPage(_("gold"), show_sidebar=False).render()
-
-    def GET_gold_partners(self):
-        return GoldPartnersPage(_("gold partners"), show_sidebar=False).render()
-
 
 class FormsController(RedditController):
 

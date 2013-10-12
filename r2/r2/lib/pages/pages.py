@@ -29,7 +29,6 @@ from r2.models import Friends, All, Sub, NotFound, DomainSR, Random, Mod, Random
 from r2.models import Link, Printable, Trophy, PromoCampaign, PromotionWeights, Comment
 from r2.models import Flair, FlairTemplate, FlairTemplateBySubredditIndex
 from r2.models import USER_FLAIR, LINK_FLAIR
-from r2.models import GoldPartnerDealCode
 from r2.models.bidding import Bid
 from r2.models.gold import (
     gold_payments_by_user,
@@ -4269,26 +4268,6 @@ class InterestBar(Templated):
     def __init__(self, has_subscribed):
         self.has_subscribed = has_subscribed
         Templated.__init__(self)
-
-class GoldInfoPage(BoringPage):
-    def __init__(self, *args, **kwargs):
-        self.prices = {
-            "gold_month_price": g.gold_month_price,
-            "gold_year_price": g.gold_year_price,
-        }
-        BoringPage.__init__(self, *args, **kwargs)
-
-class GoldPartnersPage(BoringPage):
-    def __init__(self, *args, **kwargs):
-        self.prices = {
-            "gold_month_price": g.gold_month_price,
-            "gold_year_price": g.gold_year_price,
-        }
-        if c.user_is_loggedin:
-            self.existing_codes = GoldPartnerDealCode.get_codes_for_user(c.user)
-        else:
-            self.existing_codes = []
-        BoringPage.__init__(self, *args, **kwargs)
 
 class Goldvertisement(Templated):
     def __init__(self):

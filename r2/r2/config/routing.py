@@ -246,8 +246,6 @@ def make_map():
 
     mc('/gold', controller='forms', action="gold")
     mc('/gold/creditgild/:passthrough', controller='forms', action='creditgild')
-    mc('/gold/about', controller='front', action='gold_info')
-    mc('/gold/partners', controller='front', action='gold_partners')
     mc('/gold/thanks', controller='front', action='goldthanks')
 
     mc('/password', controller='forms', action="password")
