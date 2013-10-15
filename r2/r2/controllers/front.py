@@ -1219,7 +1219,7 @@ class FormsController(RedditController):
 
     @validate(VUser(),
               token=VOneTimeToken(EmailVerificationToken, "key"),
-              dest=VDestination(default="/prefs/update"))
+              dest=VDestination(default="/prefs/update?verified=true"))
     def GET_verify_email(self, token, dest):
         if token and token.user_id != c.user._fullname:
             # wrong user. log them out and try again.
@@ -1270,8 +1270,9 @@ class FormsController(RedditController):
 
     @prevent_framing_and_css()
     @validate(VUser(),
-              location=nop("location"))
-    def GET_prefs(self, location=''):
+              location=nop("location"),
+              verified=VBoolean("verified"))
+    def GET_prefs(self, location='', verified=False):
         """Preference page"""
         content = None
         infotext = None
@@ -1283,6 +1284,8 @@ class FormsController(RedditController):
             content.append(FriendList())
             content.append(EnemyList())
         elif location == 'update':
+            if verified:
+                infotext = strings.email_verified
             content = PrefUpdate()
         elif location == 'apps':
             content = PrefApps(my_apps=OAuth2Client._by_user(c.user),
