@@ -93,6 +93,7 @@
 
 %if thing.verify and not c.user.email_verified:
    <input type="hidden" name="verify" value="1"/>
+   <input type="hidden" name="dest" value="${thing.dest}">
    <button type="submit" class="btn">${_('send verification email')}</button>
 %else:
    <button type="submit" class="btn">${_('save')}</button>

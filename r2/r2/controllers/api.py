@@ -955,9 +955,10 @@ class ApiController(RedditController, OAuth2ResourceController):
                    VModhash(),
                    email = ValidEmails("email", num = 1),
                    password = VPassword(['newpass', 'verpass']),
-                   verify = VBoolean("verify"))
+                   verify = VBoolean("verify"),
+                   dest=VDestination())
     @api_doc(api_section.account)
-    def POST_update(self, form, jquery, email, password, verify):
+    def POST_update(self, form, jquery, email, password, verify, dest):
         """
         Update account email address and password.
 
@@ -986,7 +987,10 @@ class ApiController(RedditController, OAuth2ResourceController):
                 updated = True
             if verify:
                 # TODO: rate limit this?
-                emailer.verify_email(c.user)
+                if dest == '/':
+                    dest = None
+
+                emailer.verify_email(c.user, dest=dest)
                 form.set_html('.status',
                      _("you should be getting a verification email shortly."))
             else:

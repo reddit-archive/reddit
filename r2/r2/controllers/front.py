@@ -1214,7 +1214,7 @@ class FormsController(RedditController):
             content = PaneStack(
                 [InfoBar(message=infomsg),
                  PrefUpdate(email=True, verify=True,
-                            password=False)])
+                            password=False, dest=dest)])
         return BoringPage(_("verify email"), content=content).render()
 
     @validate(VUser(),

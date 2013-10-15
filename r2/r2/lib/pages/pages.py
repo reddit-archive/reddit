@@ -864,10 +864,11 @@ class PrefOTP(Templated):
 
 class PrefUpdate(Templated):
     """Preference form for updating email address and passwords"""
-    def __init__(self, email = True, password = True, verify = False):
+    def __init__(self, email=True, password=True, verify=False, dest=None):
         self.email = email
         self.password = password
         self.verify = verify
+        self.dest = dest
         Templated.__init__(self)
 
 class PrefApps(Templated):

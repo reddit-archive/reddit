@@ -62,7 +62,7 @@ def _gold_email(body, to_address, from_name, kind):
     Email.handler.add_to_queue(None, to_address, from_name, g.goldthanks_email,
                                kind, body = body)
 
-def verify_email(user):
+def verify_email(user, dest=None):
     """
     For verifying an email address
     """
@@ -73,6 +73,8 @@ def verify_email(user):
 
     token = EmailVerificationToken._new(user)
     emaillink = 'http://' + g.domain + '/verification/' + token._id
+    if dest:
+        emaillink += '?dest=%s' % dest
     g.log.debug("Generated email verification link: " + emaillink)
 
     _system_email(user.email,
