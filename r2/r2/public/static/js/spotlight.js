@@ -53,6 +53,10 @@ r.spotlight.requestPromo = function() {
     return $.ajax({
         type: "POST",
         url: '/api/request_promo',
+        timeout: 500,
+        error: function() {
+            $('.organic-listing').hide()
+        },
         data: {
             'srnames': this.srnames,
             'r': r.config.post_site
