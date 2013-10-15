@@ -141,27 +141,6 @@ def get_catalog(lang):
         return babel.messages.pofile.read_po(f)
 
 
-class extract_messages(babel.messages.frontend.extract_messages):
-    """Extract messages from all specified directories.
-
-    This is a work around for a bug in Babel which causes the --input-dirs
-    parameter to extract_messages to not work properly.
-
-    The bug has been fixed in babel, but no releases have been made since the
-    fix. This class will do the trick until that time and should be safe once
-    the fix is released.
-
-    http://babel.edgewall.org/ticket/232
-
-    """
-
-    def finalize_options(self):
-        if self.input_dirs:
-            self.input_dirs = self.input_dirs.split(",")
-
-        babel.messages.frontend.extract_messages.finalize_options(self)
-
-
 def validate_plural_forms(plural_forms_str):
     """Ensure the gettext plural forms expression supplied is valid."""
 

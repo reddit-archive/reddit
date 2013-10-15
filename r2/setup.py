@@ -42,14 +42,6 @@ commands = {}
 
 
 try:
-    import r2.lib.translation
-except ImportError:
-    pass
-else:
-    commands["extract_messages"] = r2.lib.translation.extract_messages
-
-
-try:
     from Cython.Build import cythonize
 except ImportError:
     print "Cannot find Cython. Skipping Cython build."
