@@ -53,7 +53,10 @@ r.spotlight.requestPromo = function() {
     return $.ajax({
         type: "POST",
         url: '/api/request_promo',
-        data: {'srnames': this.srnames}
+        data: {
+            'srnames': this.srnames,
+            'r': r.config.post_site
+        }
     }).pipe(function(promo) {
         if (promo) {
             $item = $(promo)
