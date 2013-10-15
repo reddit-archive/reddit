@@ -1016,6 +1016,8 @@ class VSrCanAlter(VByName):
             item = VByName.run(self, thing_name)
             if item.author_id == c.user._id:
                 return True
+            elif item.promoted and c.user_is_sponsor:
+                return True
             else:
                 # will throw a legitimate 500 if this isn't a link or
                 # comment, because this should only be used on links and

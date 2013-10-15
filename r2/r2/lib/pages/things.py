@@ -75,15 +75,12 @@ class LinkButtons(PrintableButtons):
         if c.user_is_admin and thing.promoted is None:
             show_report = False
 
-        if (thing.can_ban or is_author) and not thing.nsfw:
-            show_marknsfw = True
-        else:
-            show_marknsfw = False
-
-        if (thing.can_ban or is_author) and thing.nsfw and not thing.nsfw_str:
-            show_unmarknsfw = True
-        else:
-            show_unmarknsfw = False
+        show_marknsfw = show_unmarknsfw = False
+        if thing.can_ban or is_author or (thing.promoted and c.user_is_sponsor):
+            if not thing.nsfw:
+                show_marknsfw = True
+            elif thing.nsfw and not thing.nsfw_str:
+                show_unmarknsfw = True
 
         # do we show the delete button?
         show_delete = is_author and delete and not thing._deleted
