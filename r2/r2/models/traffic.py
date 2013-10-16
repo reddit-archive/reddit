@@ -193,17 +193,23 @@ def get_time_points(interval, start_time=None, stop_time=None):
 
     """
 
+    def truncate_datetime(dt):
+        dt = dt.replace(minute=0, second=0, microsecond=0)
+        if interval in ("day", "month"):
+            dt = dt.replace(hour=0)
+        if interval == "month":
+            dt = dt.replace(day=1)
+        return dt
+
     if start_time and stop_time:
         start_time, stop_time = sorted([start_time, stop_time])
+        # truncate stop_time to an actual traffic time point
+        stop_time = truncate_datetime(stop_time)
     else:
         # the stop time is the most recent slice-time; get this by truncating
         # the appropriate amount from the current time
         stop_time = datetime.datetime.utcnow()
-        stop_time = stop_time.replace(minute=0, second=0, microsecond=0)
-        if interval in ("day", "month"):
-            stop_time = stop_time.replace(hour=0)
-        if interval == "month":
-            stop_time = stop_time.replace(day=1)
+        stop_time = truncate_datetime(stop_time)
 
         # then the start time is easy to work out
         range = time_range_by_interval[interval]
