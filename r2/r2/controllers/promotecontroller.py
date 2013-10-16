@@ -669,6 +669,15 @@ class PromoteController(ListingController):
         if l and campaign:
             promote.delete_campaign(l, campaign)
 
+    @validatedForm(VSponsorAdmin(),
+                   VModhash(),
+                   link=VLink('link_id36'),
+                   campaign=VPromoCampaign("campaign_id36"))
+    def POST_terminate_campaign(self, form, jquery, link, campaign):
+        if link and campaign:
+            promote.terminate_campaign(link, campaign)
+            rc = RenderableCampaign.from_campaigns(link, campaign)
+            jquery.update_campaign(campaign._fullname, rc.render_html())
 
     @validatedForm(VSponsor('container'),
                    VModhash(),

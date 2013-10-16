@@ -128,6 +128,12 @@
           ${_("view live")}
         </button>
       %endif
+
+      %if thing.is_live and c.user_is_sponsor:
+        <button class="terminate fancybutton" onclick="terminate_campaign(${jquery_row})">
+          ${_("terminate")}
+        </button>
+      %endif
     %endif
   </td>
 </tr>

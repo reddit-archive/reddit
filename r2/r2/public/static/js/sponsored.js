@@ -555,3 +555,11 @@ function free_campaign($campaign_row) {
     $campaign_row.find(".free").fadeOut();
     return false; 
 }
+
+function terminate_campaign($campaign_row) {
+    var link_id36 = $("#campaign").find('*[name="link_id36"]').val(),
+        campaign_id36 = $campaign_row.data('campaign_id36')
+    $.request("terminate_campaign", {"campaign_id36": campaign_id36,
+                                     "link_id36": link_id36},
+              null, true, "json", false);
+}

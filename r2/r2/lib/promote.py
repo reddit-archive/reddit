@@ -305,6 +305,24 @@ def edit_campaign(link, campaign, dates, bid, cpm, sr, priority):
     hooks.get_hook('promote.edit_campaign').call(link=link, campaign=campaign)
 
 
+def terminate_campaign(link, campaign):
+    if not is_live_promo(link, campaign):
+        return
+
+    now = promo_datetime_now()
+    original_end = campaign.end_date
+    dates = [campaign.start_date, now]
+    sr = Subreddit._by_name(campaign.sr_name) if campaign.sr_name else None
+
+    # NOTE: this will delete PromotionWeights after and including now.date()
+    edit_campaign(link, campaign, dates, campaign.bid, campaign.cpm, sr,
+                  campaign.priority)
+
+    msg = 'terminated campaign %s (original end %s)' % (campaign._id,
+                                                        original_end.date())
+    PromotionLog.add(link, msg)
+
+
 def delete_campaign(link, campaign):
     PromotionWeights.delete_unfinished(link, campaign._id)
     void_campaign(link, campaign)
