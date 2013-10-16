@@ -31,6 +31,7 @@ from sqlalchemy import func
 from r2.lib.memoize import memoize
 from r2.lib.utils import to_date, tup
 from r2.models import (
+    Bid,
     PromoCampaign,
     PromotionWeights,
     NO_TRANSACTION,
@@ -104,6 +105,10 @@ def get_sold_pageviews(srs, start, end, ignore=None):
                 .filter(PromotionWeights.date.in_(dates)))
     campaign_ids = {pw.promo_idx for pw in q}
     campaigns = PromoCampaign._byID(campaign_ids, data=True, return_dict=False)
+    transaction_ids = {camp.trans_id for camp in campaigns
+                                     if camp.trans_id != NO_TRANSACTION}
+    transactions = Bid.query().filter(Bid.transaction.in_(transaction_ids))
+    transaction_by_id = {bid.transaction: bid for bid in transactions}
 
     ret = {sr.name: dict.fromkeys(dates, 0) for sr in srs}
     for camp in campaigns:
@@ -115,6 +120,10 @@ def get_sold_pageviews(srs, start, end, ignore=None):
 
         if camp.impressions <= 0:
             # pre-CPM campaign
+            continue
+
+        transaction = transaction_by_id[camp.trans_id]
+        if not (transaction.is_auth() or transaction.is_charged()):
             continue
 
         sr_name = camp.sr_name or DefaultSR.name
