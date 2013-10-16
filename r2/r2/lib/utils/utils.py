@@ -1052,7 +1052,7 @@ def to_date(d):
     return d
 
 def to_datetime(d):
-    if isinstance(d, date):
+    if type(d) == date:
         return datetime(d.year, d.month, d.day)
     return d
 
