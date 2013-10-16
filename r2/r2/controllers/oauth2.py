@@ -37,7 +37,7 @@ from r2.models.token import (
 from r2.lib.errors import ForbiddenError, errors
 from r2.lib.pages import OAuth2AuthorizationPage
 from r2.lib.require import RequirementException, require, require_split
-from r2.lib.utils import parse_http_basic
+from r2.lib.utils import constant_time_compare, parse_http_basic
 from r2.lib.validator import (
     nop,
     validate,
@@ -156,7 +156,7 @@ class OAuth2AccessController(MinimalController):
             client_id, client_secret = parse_http_basic(auth)
             client = OAuth2Client.get_token(client_id)
             require(client)
-            require(client.secret == client_secret)
+            require(constant_time_compare(client.secret, client_secret))
             return client
         except RequirementException:
             abort(401, headers=[("WWW-Authenticate", 'Basic realm="reddit"')])
