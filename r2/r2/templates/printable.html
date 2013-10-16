@@ -73,7 +73,7 @@ ${self.RenderPrintable()}
       rowclass = what.rowstyle + " reported"
     else:
       rowclass = what.rowstyle
-    if hasattr(what, "_deleted") and what._deleted:
+    if getattr(what, "deleted", False):
       rowclass += " deleted"
     if hasattr(what, "saved") and what.saved:
       rowclass += " saved"
