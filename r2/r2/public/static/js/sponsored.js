@@ -74,6 +74,10 @@ r.sponsored = {
             return {}
         }
 
+        if (!campaign_row.hasClass('paid')) {
+            return {}
+        }
+
         var existing_srname = campaign_row.find('*[name="targeting"]').val()
         if (srname != existing_srname) {
             return {}
