@@ -345,7 +345,7 @@ class WikiApiController(WikiController):
                 # object. TODO: change this to minimize subreddit get sizes.
                 if page.special:
                     setattr(c.site, ATTRIBUTE_BY_PAGE[page.name], content)
-                    setattr(c.site, "prev_" + ATTRIBUTE_BY_PAGE[page.name] + "_id", str(page.revision))
+                    setattr(c.site, "prev_" + ATTRIBUTE_BY_PAGE[page.name] + "_id", page.revision)
                     c.site._commit()
 
                 if page.special or c.is_wiki_mod:

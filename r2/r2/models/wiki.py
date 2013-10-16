@@ -350,7 +350,7 @@ class WikiPage(tdb_cassandra.Thing):
         self.content = content
         self.last_edit_by = author
         self.last_edit_date = wr.date
-        self.revision = wr._id
+        self.revision = str(wr._id)
         self._commit()
         return wr
     
