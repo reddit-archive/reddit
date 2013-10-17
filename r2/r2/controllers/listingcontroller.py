@@ -270,21 +270,7 @@ class HotController(FixListing, ListingController):
         The frontpage gets a Spotlight box that contains promoted and organic
         links from the user's subscribed subreddits and promoted links targeted
         to the frontpage. If the user has disabled ads promoted links will not
-        be shown.
-
-        The content of the Spotlight box is a bit tricky because a single
-        version of the frontpage is cached and displayed to all logged out
-        users. Because of the caching we must include many promoted links and
-        select one to display on the client side. Otherwise, each logged out
-        user would see the same promoted link and we would not get the desired
-        distribution of promoted link views. Most of the promoted links are
-        included as stubs to reduce the size of the page. When a promoted link
-        stub is selected by the lottery the full link is fetched and displayed.
-
-        There are only ~1000 cache resets per day so it is necessary to use
-        a large subset of the eligible promoted links when choosing stubs for
-        the Spotlight box. Using 100 stubs works great when there are fewer than
-        100 possible promoted links and allows room for growth.
+        be shown. Promoted links are requested from the adserver client-side.
 
         """
 
