@@ -232,7 +232,6 @@ class Globals(object):
             'gold_revenue_goal',
         ],
         ConfigValue.tuple: [
-            'sr_discovery_links',
             'fastlane_links',
             'listing_chooser_sample_multis',
         ],

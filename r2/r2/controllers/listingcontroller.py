@@ -277,11 +277,6 @@ class HotController(FixListing, ListingController):
         organic_fullnames = organic.organic_links(c.user)
         promoted_links = []
 
-        # If prefs allow it, mix in promoted links and sr discovery content
-        if ((c.user.pref_show_sponsors or not c.user.gold)
-            and g.live_config['sr_discovery_links']):
-            organic_fullnames.extend(g.live_config['sr_discovery_links'])
-
         show_promo = False
         srnames = []
         if c.user.pref_show_sponsors or not c.user.gold:

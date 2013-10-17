@@ -56,10 +56,6 @@ def visible_promo(article):
     is_author = (c.user_is_loggedin and
                  c.user._id == article.author_id)
 
-    # subreddit discovery links are visible even without a live campaign
-    if article._fullname in g.live_config['sr_discovery_links']:
-        return True
-
     # promos are visible only if comments are not disabled and the
     # user is either the author or the link is live/previously live.
     if is_promo:
