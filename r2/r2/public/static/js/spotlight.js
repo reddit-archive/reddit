@@ -53,7 +53,7 @@ r.spotlight.requestPromo = function() {
     return $.ajax({
         type: "POST",
         url: '/api/request_promo',
-        timeout: 500,
+        timeout: 1000,
         error: function() {
             $('.organic-listing').hide()
         },
