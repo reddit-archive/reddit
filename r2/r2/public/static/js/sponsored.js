@@ -679,6 +679,7 @@ function create_campaign() {
                 .find('input[name="sr"]').val('').prop("disabled", "disabled").end()
                 .find('input[name="targeting"][value="none"]').prop("checked", "checked").end()
                 .find('input[name="priority"][default="default"]').prop("checked", "checked").end()
+                .find('input[name="bid"]').val($("#bid").data("min_bid") * 5).end()
                 .find(".targeting").hide().end()
                 .find('input[name="cpm"]').val(base_cpm).end()
                 .fadeIn();
