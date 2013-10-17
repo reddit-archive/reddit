@@ -116,10 +116,8 @@
   <div class="${thing.css_class}">
 %endif
 
-  %if thing.fullname:
-    ##this is set for both editting selftext and creating new comments
-    <input type="hidden" name="thing_id" value="${thing.fullname}"/>
-  %endif
+  ##this is set for both editting selftext and creating new comments
+  <input type="hidden" name="thing_id" value="${thing.fullname}"/>
 
   %if not thing.creating:
     <div class="usertext-body">
