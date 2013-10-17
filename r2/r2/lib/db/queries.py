@@ -29,7 +29,7 @@ from r2.lib.utils import fetch_things2, tup, UniqueIterator, set_last_modified
 from r2.lib import utils
 from r2.lib import amqp, sup, filters
 from r2.lib.comment_tree import add_comments, update_comment_votes
-from r2.models.promo import PROMOTE_STATUS, get_promote_srid
+from r2.models.promo import PROMOTE_STATUS, get_promote_srid, PromotionLog
 from r2.models.query_cache import (
     cached_query,
     CachedQuery,
@@ -674,6 +674,9 @@ def set_promote_status(link, promote_status):
 
     link.promote_status = promote_status
     link._commit()
+
+    text = "set promote status to '%s'" % PROMOTE_STATUS.name[promote_status]
+    PromotionLog.add(link, text)
 
 
 def _promoted_link_query(user_id, status):
