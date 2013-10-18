@@ -105,24 +105,17 @@
   <button class="btn stripe-gold gold-button">${_('Credit Card')}</button>
 </%def>
 
-<%def name="stripe_form(display=False)">
+<%def name="base_stripe_form()">
   <script type="text/javascript" src="https://js.stripe.com/v1/"></script>
 
-  <form action="/api/stripecharge/gold" method="POST"
-        id="stripe-payment"
+  <div id="base-stripe-form"
         class="gold-checkout"
-        data-vendor="stripe"
-        ${not display and "style='display:none'" or ''}>
-    <hr>
+        data-vendor="stripe">
     <div class="stripe-note">
       <a class="icon" href="https://stripe.com/help/security">powered by stripe</a>
       <div>${_('Stripe is PCI compliant and your credit card information is sent directly to them.')}</div>
     </div>
     <table class="credit-card-input">
-      <tr>
-        <th><label>${_('amount')}</label></th>
-        <th class="credit-card-amount">${thing.price}</th>
-      </tr>
       <tr>
         <th><label>${_('name')}</label></th>
         <td><input type="text" autocomplete="off" class="card-name"></td>
@@ -183,12 +176,37 @@
     </table>
     <input type="hidden" name="stripePublicKey" value="${thing.stripe_key}">
     <input type="hidden" name="stripeToken" value="">
-    <input type="hidden" name="pennies" value="${thing.price.pennies}">
-    <input type="hidden" name="months" value="${thing.months}">
-    <input type="hidden" name="passthrough" value="${thing.passthrough}">
     <button class="btn gold-button stripe-submit">${_('Submit')}</button>
     <span class="status"></span>
-  </form>
+  </div>
+</%def>
+
+<%def name="stripe_form(display=False)">
+<div id="stripe-payment"
+     class="charge"
+     ${not display and "style='display:none'" or ''}>
+  <hr>
+  <table class="credit-card-input">
+    <tr> 
+      <th><label>${_('amount')}</label></th>
+      <th class="credit-card-amount">${thing.price}</th>
+    </tr>
+    %if thing.period:
+    <tr>
+      <th><label>${_('renewal interval')}</label></th>
+      <th class="credit-card-interval">${_(thing.period)}</th>
+    </tr>
+    %endif
+  </table>
+
+  <input type="hidden" name="pennies" value="${thing.price.pennies}">
+  <input type="hidden" name="months" value="${thing.months}">
+  <input type="hidden" name="period" value="${thing.period}">
+  <input type="hidden" name="passthrough" value="${thing.passthrough}">
+
+  <hr>
+  ${base_stripe_form()}
+</div>
 </%def>
 
 <%def name="coinbase_button()">

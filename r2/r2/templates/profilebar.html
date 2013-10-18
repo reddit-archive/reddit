@@ -136,6 +136,14 @@
             ${thing.gold_subscr_id}
           </div>
         %endif
+
+        %if getattr(thing, "stripe_customer_id", None):
+           <div>
+            <a href="/gold/subscription">
+              ${_("manage recurring subscription")}
+            </a>
+          </div>
+        %endif
       %endif
       %if thing.gold_creddit_message:
         <div class="gold-creddits-remaining">

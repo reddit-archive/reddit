@@ -40,9 +40,12 @@ from random import choice
 from time import time
 
 from r2.lib.db.tdb_cassandra import NotFound
+from r2.models import Account
 from r2.models.subreddit import Frontpage
 from r2.models.wiki import WikiPage
 from r2.lib.memoize import memoize
+
+import stripe
 
 gold_bonus_cutoff = datetime(2010,7,27,0,0,0,0,g.tz)
 gold_static_goal_cutoff = datetime(2013, 11, 7, tzinfo=g.display_tz)
@@ -307,3 +310,36 @@ def gold_goal_on(date):
 
     return round(goal, 0)
 
+
+def account_from_stripe_customer_id(stripe_customer_id):
+    q = Account._query(Account.c.stripe_customer_id == stripe_customer_id,
+                       Account.c._spam == (True, False), data=True)
+    return next(iter(q), None)
+
+
+@memoize("subscription-details", time=60)
+def _get_subscription_details(stripe_customer_id):
+    stripe.api_key = g.STRIPE_SECRET_KEY
+    customer = stripe.Customer.retrieve(stripe_customer_id)
+
+    if getattr(customer, 'deleted', False):
+        return {}
+
+    subscription = customer.subscription
+    card = customer.active_card
+    end = datetime.fromtimestamp(subscription.current_period_end).date()
+    last4 = card.last4
+    pennies = subscription.plan.amount
+
+    return {
+        'next_charge_date': end,
+        'credit_card_last4': last4,
+        'pennies': pennies,
+    }
+
+
+def get_subscription_details(user):
+    if not getattr(user, 'stripe_customer_id', None):
+        return
+
+    return _get_subscription_details(user.stripe_customer_id)

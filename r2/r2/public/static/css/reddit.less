@@ -6324,6 +6324,17 @@ body:not(.gold) .allminus-link {
     margin-top: 3px;
 }
 
+.gold-form {
+    .credit-card-input {
+        display: inline;
+    }
+
+    .stripe-submit {
+        display: block;
+        margin-top: 10px;
+    }
+}
+
 .gold-payment form {
     display: inline;
 }
@@ -7548,7 +7559,11 @@ body.gold .buttons li.comment-save-button { display: inline; }
     white-space:nowrap;
     font-size:smaller;
 }
-#stripe-payment .credit-card-amount { text-align: left; }
+#stripe-payment {
+    .credit-card-amount, .credit-card-interval {
+        text-align: left;
+    }
+}
 #stripe-payment th label { display:inline; }
 #stripe-payment td input {
     font-size:small;
@@ -7572,6 +7587,34 @@ body.gold .buttons li.comment-save-button { display: inline; }
     float: left;
     width: 250px;
     font-size: small;
+}
+
+.gold-subscription {
+    font-size: small;
+    padding: 2px;
+
+    div.buttons {
+        padding: 10px 0;
+    }
+
+    .cancel-button, .edit-button {
+        margin: 5px;
+        display: inline;
+    }
+
+    .status, .error {
+        font-size: small;
+        margin: 0;
+    }
+
+    .roundfield {
+        background-color: #fffdd7;
+        width: 400px;
+    }
+
+    #stripe-cancel {
+        display: inline;
+    }
 }
 
 .permissions {

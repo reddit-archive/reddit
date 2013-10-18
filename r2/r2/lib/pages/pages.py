@@ -36,6 +36,7 @@ from r2.models.gold import (
     days_to_pennies,
     gold_goal_on,
     gold_revenue_on,
+    get_subscription_details,
     TIMEZONE as GOLD_TIMEZONE,
 )
 from r2.models.promo import (
@@ -88,6 +89,7 @@ from r2.lib.utils import Storage
 from r2.lib.utils import precise_format_timedelta
 
 from babel.numbers import format_currency
+from babel.dates import format_date
 from collections import defaultdict
 import csv
 import cStringIO
@@ -1703,6 +1705,8 @@ class ProfileBar(Templated):
 
                 if hasattr(user, "gold_subscr_id"):
                     self.gold_subscr_id = user.gold_subscr_id
+                if hasattr(user, "stripe_customer_id"):
+                    self.stripe_customer_id = user.stripe_customer_id
 
             if ((user._id == c.user._id or c.user_is_admin) and
                 user.gold_creddits > 0):
@@ -2171,7 +2175,7 @@ class GoldPayment(Templated):
                 paypal_buttonid = g.PAYPAL_BUTTONID_AUTORENEW_BYYEAR
 
             quantity = None
-            stripe_key = None
+            stripe_key = g.STRIPE_PUBLIC_KEY
             coinbase_button_id = None
 
         elif goldtype == "onetime":
@@ -2249,6 +2253,42 @@ class GoldPayment(Templated):
                            stripe_key=stripe_key,
                            coinbase_button_id=coinbase_button_id)
 
+
+class GoldSubscription(Templated):
+    def __init__(self, user):
+        if user.stripe_customer_id:
+            details = get_subscription_details(user)
+        else:
+            details = None
+
+        if details:
+            self.has_stripe_subscription = True
+            date = details['next_charge_date']
+            next_charge_date = format_date(date, format="short",
+                                           locale=c.locale)
+            credit_card_last4 = details['credit_card_last4']
+            amount = format_currency(details['pennies']/100, 'USD',
+                                     locale=c.locale)
+            text = _("you have a credit card gold subscription. your card "
+                     "(ending in %(last4)s) will be charged %(amount)s on "
+                     "%(date)s.")
+            self.text = text % dict(last4=credit_card_last4,
+                                    amount=amount,
+                                    date=next_charge_date)
+            self.user_fullname = user._fullname
+        else:
+            self.has_stripe_subscription = False
+
+        paypal_subscr_id = getattr(user, 'gold_subscr_id', None)
+        if paypal_subscr_id:
+            self.has_paypal_subscription = True
+            self.paypal_subscr_id = paypal_subscr_id
+            self.paypal_url = "https://www.paypal.com/cgi-bin/webscr?cmd=_subscr-find&alias=%s" % g.goldthanks_email
+        else:
+            self.has_paypal_subscription = False
+
+        self.stripe_key = g.STRIPE_PUBLIC_KEY
+        Templated.__init__(self)
 
 class CreditGild(Templated):
     """Page for credit card payments for comment gilding."""

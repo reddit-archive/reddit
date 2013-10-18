@@ -12,7 +12,13 @@ r.gold = {
             $("#stripe-payment").show()
         })
 
-        $('.stripe-submit').on('click', this.makeStripeToken)
+        $('#stripe-payment.charge .stripe-submit').on('click', function() {
+            r.gold.tokenThenPost('stripecharge/gold')
+        })
+
+        $('#stripe-payment.modify .stripe-submit').on('click', function() {
+            r.gold.tokenThenPost('modify_subscription')
+        })
     },
 
     _toggleCommentGoldForm: function (e) {
@@ -114,7 +120,25 @@ r.gold = {
         comment.children('.entry').find('.give-gold').parent().remove()
     },
 
-    makeStripeToken: function () {
+    tokenThenPost: function (dest) {
+        var postOnSuccess = function (status_code, response) {
+            var form = $('#stripe-payment'),
+                submit = form.find('.stripe-submit'),
+                status = form.find('.status'),
+                token = form.find('[name="stripeToken"]')
+
+            if (response.error) {
+                submit.removeAttr('disabled')
+                status.html(response.error.message)
+            } else {
+                token.val(response.id)
+                post_form(form, dest)
+            }
+        }
+        r.gold.makeStripeToken(postOnSuccess)
+    },
+
+    makeStripeToken: function (responseHandler) {
         var form = $('#stripe-payment'),
             publicKey = form.find('[name="stripePublicKey"]').val(),
             submit = form.find('.stripe-submit'),
@@ -131,17 +155,6 @@ r.gold = {
             cardState = form.find('.card-address_state').val(),
             cardCountry = form.find('.card-address_country').val(),
             cardZip = form.find('.card-address_zip').val()
-
-        var stripeResponseHandler = function(statusCode, response) {
-            if (response.error) {
-                submit.removeAttr('disabled')
-                status.html(response.error.message)
-            } else {
-                token.val(response.id)
-                post_form(form, 'stripecharge/gold')
-            }
-        }
-
         Stripe.setPublishableKey(publicKey)
 
         if (!cardName) {
@@ -178,7 +191,7 @@ r.gold = {
                     address_state: cardState,
                     address_country: cardCountry,
                     address_zip: cardZip
-                }, stripeResponseHandler
+                }, responseHandler
             )
         }
         return false

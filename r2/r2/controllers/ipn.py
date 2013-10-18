@@ -39,15 +39,19 @@ from r2.lib.validator import (
     nop,
     textresponse,
     validatedForm,
+    VByName,
     VFloat,
     VInt,
     VLength,
+    VModhash,
+    VOneOf,
     VPrintable,
     VUser,
 )
 from r2.models import (
     Account,
     account_by_payingid,
+    account_from_stripe_customer_id,
     accountid_from_paypalsubscription,
     admintools,
     append_random_bottlecap_phrase,
@@ -63,6 +67,7 @@ from r2.models import (
     update_gold_transaction,
 )
 
+stripe.api_key = g.STRIPE_SECRET_KEY
 
 def generate_blob(data):
     passthrough = randstr(15)
@@ -602,7 +607,13 @@ class GoldPaymentController(RedditController):
             msg = _('Your reddit gold payment has failed, contact '
                     '%(gold_email)s for details') % {'gold_email':
                                                      g.goldthanks_email}
-            # probably want to update gold_table here
+        elif event_type == 'failed_subscription':
+            subject = _('reddit gold subscription payment failed')
+            msg = _('Your reddit gold subscription payment has failed. '
+                    'Please go to http://www.reddit.com/subscription to '
+                    'make sure your information is correct, or contact '
+                    '%(gold_email)s for details') % {'gold_email':
+                                                     g.goldthanks_email}
         elif event_type == 'refunded':
             if not (existing and existing.status == 'processed'):
                 return
@@ -622,6 +633,26 @@ class GoldPaymentController(RedditController):
                 return
             send_system_message(buyer, subject, msg)
 
+def handle_stripe_error(fn):
+    def wrapper(cls, form, *a, **kw):
+        try:
+            return fn(cls, form, *a, **kw)
+        except stripe.CardError as e:
+            form.set_html('.status', 
+                          _('error: %(error)s') % {'error': e.message})
+            form.find('.stripe-submit').removeAttr('disabled').end()
+        except stripe.InvalidRequestError as e:
+            form.set_html('.status', _('invalid request'))
+        except stripe.APIConnectionError as e:
+            form.set_html('.status', _('api error'))
+        except stripe.AuthenticationError as e:
+            form.set_html('.status', _('connection error'))
+        except stripe.StripeError as e:
+            form.set_html('.status', _('error'))
+            g.log.error('stripe error: %s' % e)
+    return wrapper
+
+
 class StripeController(GoldPaymentController):
     name = 'stripe'
     webhook_secret = g.STRIPE_WEBHOOK_SECRET
@@ -631,9 +662,22 @@ class StripeController(GoldPaymentController):
         'charge.refunded': 'refunded',
         'customer.created': 'noop',
         'customer.card.created': 'noop',
+        'customer.card.deleted': 'noop',
         'transfer.created': 'noop',
         'transfer.paid': 'noop',
         'balance.available': 'noop',
+        'invoice.created': 'noop',
+        'invoice.updated': 'noop',
+        'invoice.payment_succeeded': 'noop',
+        'invoice.payment_failed': 'failed_subscription',
+        'invoiceitem.deleted': 'noop',
+        'customer.subscription.created': 'noop',
+        'customer.deleted': 'noop',
+        'customer.updated': 'noop',
+        'customer.subscription.deleted': 'noop',
+        'customer.subscription.trial_will_end': 'noop',
+        'customer.subscription.updated': 'noop',
+        'dummy': 'noop',
     }
 
     @classmethod
@@ -641,6 +685,25 @@ class StripeController(GoldPaymentController):
         event_dict = json.loads(request.body)
         event = stripe.Event.construct_from(event_dict, g.STRIPE_SECRET_KEY)
         status = event.type
+
+        if status == 'invoice.created':
+            # sent 1 hr before a subscription is charged
+            invoice = event.data.object
+            customer_id = invoice.customer
+            account = account_from_stripe_customer_id(customer_id)
+            if not account or (account and account._banned):
+                # there's no associated account - delete the subscription
+                # to cancel the charge
+                g.log.error('no account for stripe invoice: %s', invoice)
+                customer = stripe.Customer.retrieve(customer_id)
+                customer.delete()
+        elif status == 'invoice.payment_failed':
+            invoice = event.data.object
+            customer_id = invoice.customer
+            buyer = account_from_stripe_customer_id(customer_id)
+            webhook = Webhook(subscr_id=customer_id, buyer=buyer)
+            return status, webhook
+
         event_type = cls.event_type_mappings.get(status)
         if not event_type:
             raise ValueError('Stripe: unrecognized status %s' % status)
@@ -649,26 +712,104 @@ class StripeController(GoldPaymentController):
 
         charge = event.data.object
         description = charge.description
+        invoice_id = charge.invoice
         transaction_id = 'S%s' % charge.id
         pennies = charge.amount
         months, days = months_and_days_from_pennies(pennies)
 
-        try:
-            passthrough, buyer_name = description.split('-', 1)
-        except ValueError:
-            g.log.error('stripe_error on charge: %s', charge)
-            raise
-        
-        webhook = Webhook(passthrough=passthrough,
-            transaction_id=transaction_id, pennies=pennies, months=months)
-        return status, webhook
+        if status == 'charge.failed' and invoice_id:
+            # we'll get an additional failure notification event of
+            # "invoice.payment_failed", don't double notify
+            return 'dummy', None
+        elif invoice_id:
+            # subscription charge - special handling
+            customer_id = charge.customer
+            buyer = account_from_stripe_customer_id(customer_id)
+            if not buyer:
+                raise ValueError('no buyer for stripe charge: %s' % charge.id)
+            webhook = Webhook(transaction_id=transaction_id,
+                              subscr_id=customer_id, pennies=pennies,
+                              months=months, goldtype='autorenew',
+                              buyer=buyer)
+            return status, webhook
+        else:
+            try:
+                passthrough, buyer_name = description.split('-', 1)
+            except ValueError:
+                g.log.error('stripe_error on charge: %s', charge)
+                raise
+            
+            webhook = Webhook(passthrough=passthrough,
+                transaction_id=transaction_id, pennies=pennies, months=months)
+            return status, webhook
+
+    @classmethod
+    @handle_stripe_error
+    def create_customer(cls, form, token, plan=None):
+        description = c.user.name
+        customer = stripe.Customer.create(card=token, description=description,
+                                          plan=plan)
+
+        if (customer['active_card']['address_line1_check'] == 'fail' or
+            customer['active_card']['address_zip_check'] == 'fail'):
+            form.set_html('.status',
+                          _('error: address verification failed'))
+            form.find('.stripe-submit').removeAttr('disabled').end()
+            return None
+        elif customer['active_card']['cvc_check'] == 'fail':
+            form.set_html('.status', _('error: cvc check failed'))
+            form.find('.stripe-submit').removeAttr('disabled').end()
+            return None
+        else:
+            return customer
+
+    @classmethod
+    @handle_stripe_error
+    def charge_customer(cls, form, customer, pennies, passthrough):
+        charge = stripe.Charge.create(
+            amount=pennies,
+            currency="usd",
+            customer=customer['id'],
+            description='%s-%s' % (passthrough, c.user.name)
+        )
+        return charge
+
+    @classmethod
+    @handle_stripe_error
+    def set_creditcard(cls, form, user, token):
+        if not getattr(user, 'stripe_customer_id', None):
+            return
+
+        customer = stripe.Customer.retrieve(user.stripe_customer_id)
+        customer.card = token
+        customer.save()
+        return customer
+
+    @classmethod
+    @handle_stripe_error
+    def cancel_subscription(user):
+        if not getattr(user, 'stripe_customer_id', None):
+            return
+
+        customer = stripe.Customer.retrieve(user.stripe_customer_id)
+        customer.delete()
+
+        user.stripe_customer_id = None
+        user._commit()
+        subject = _('your gold subscription has been cancelled')
+        message = _('if you have any questions please email %(email)s')
+        message %= {'email': g.goldthanks_email}
+        send_system_message(user, subject, message)
+        return customer
 
     @validatedForm(VUser(),
                    token=nop('stripeToken'),
                    passthrough=VPrintable("passthrough", max_length=50),
                    pennies=VInt('pennies'),
-                   months=VInt("months"))
-    def POST_goldcharge(self, form, jquery, token, passthrough, pennies, months):
+                   months=VInt("months"),
+                   period=VOneOf("period", ("monthly", "yearly")))
+    def POST_goldcharge(self, form, jquery, token, passthrough, pennies, months,
+                        period):
         """
         Submit charge to stripe.
 
@@ -687,58 +828,63 @@ class StripeController(GoldPaymentController):
             g.log.debug('POST_goldcharge: %s' % e.message)
             return
 
-        penny_months, days = months_and_days_from_pennies(pennies)
-        if not months or months != penny_months:
-            form.set_html('.status', _('stop trying to trick the form'))
+        if period:
+            plan_id = (g.STRIPE_MONTHLY_GOLD_PLAN if period == 'monthly'
+                       else g.STRIPE_YEARLY_GOLD_PLAN)
+        else:
+            plan_id = None
+            penny_months, days = months_and_days_from_pennies(pennies)
+            if not months or months != penny_months:
+                form.set_html('.status', _('stop trying to trick the form'))
+                return
+
+        customer = self.create_customer(form, token, plan=plan_id)
+        if not customer:
             return
 
-        stripe.api_key = g.STRIPE_SECRET_KEY
+        if period:
+            c.user.stripe_customer_id = customer.id
+            c.user._commit()
 
-        try:
-            customer = stripe.Customer.create(card=token)
-
-            if (customer['active_card']['address_line1_check'] == 'fail' or
-                customer['active_card']['address_zip_check'] == 'fail'):
-                form.set_html('.status',
-                              _('error: address verification failed'))
-                form.find('.stripe-submit').removeAttr('disabled').end()
-                return
-
-            if customer['active_card']['cvc_check'] == 'fail':
-                form.set_html('.status', _('error: cvc check failed'))
-                form.find('.stripe-submit').removeAttr('disabled').end()
-                return
-
-            charge = stripe.Charge.create(
-                amount=pennies,
-                currency="usd",
-                customer=customer['id'],
-                description='%s-%s' % (passthrough, c.user.name)
-            )
-        except stripe.CardError as e:
-            form.set_html('.status', 'error: %s' % e.message)
-            form.find('.stripe-submit').removeAttr('disabled').end()
-        except stripe.InvalidRequestError as e:
-            form.set_html('.status', _('invalid request'))
-        except stripe.APIConnectionError as e:
-            form.set_html('.status', _('api error'))
-        except stripe.AuthenticationError as e:
-            form.set_html('.status', _('connection error'))
-        except stripe.StripeError as e:
-            form.set_html('.status', _('error'))
-            g.log.error('stripe error: %s' % e)
+            status = _('subscription created')
+            subject = _('reddit gold subscription')
+            body = _('Your subscription is being processed and reddit gold '
+                     'will be delivered shortly.')
         else:
-            form.set_html('.status', _('payment submitted'))
+            charge = self.charge_customer(form, customer, pennies, passthrough)
+            if not charge:
+                return
 
-            # webhook usually sends near instantly, send a message in case
+            status = _('payment submitted')
             subject = _('reddit gold payment')
-            msg = _('Your payment is being processed and reddit gold will be '
-                    'delivered shortly.')
-            msg = append_random_bottlecap_phrase(msg)
+            body = _('Your payment is being processed and reddit gold '
+                     'will be delivered shortly.')
 
-            send_system_message(c.user, subject, msg,
-                                distinguished='gold-auto')
+        form.set_html('.status', status)
+        body = append_random_bottlecap_phrase(body)
+        send_system_message(c.user, subject, body, distinguished='gold-auto')
 
+    @validatedForm(VUser(),
+                   VModhash(),
+                   token=nop('stripeToken'))
+    def POST_modify_subscription(self, form, jquery, token):
+        customer = self.set_creditcard(form, c.user, token)
+        if not customer:
+            return
+
+        form.set_html('.status', _('your payment details have been updated'))
+
+    @validatedForm(VUser(),
+                   VModhash(),
+                   user=VByName('user'))
+    def POST_cancel_subscription(self, form, jquery, user):
+        if user != c.user and not c.user_is_admin:
+            abort(403, "Forbidden")
+        customer = self.cancel_subscription(user)
+        if not customer:
+            return
+
+        form.set_html(".status", _("your subscription has been cancelled"))
 
 class CoinbaseController(GoldPaymentController):
     name = 'coinbase'

@@ -1495,3 +1495,10 @@ class FormsController(RedditController):
                                                   giftmessage, passthrough,
                                                   comment)
                               ).render()
+
+    @validate(VUser())
+    def GET_subscription(self):
+        user = c.user
+        content = GoldSubscription(user)
+        return BoringPage(_("reddit gold subscription"), show_sidebar=False,
+                          content=content).render()

@@ -246,6 +246,7 @@ def make_map():
     mc('/gold', controller='forms', action="gold")
     mc('/gold/creditgild/:passthrough', controller='forms', action='creditgild')
     mc('/gold/thanks', controller='front', action='goldthanks')
+    mc('/gold/subscription', controller='forms', action='subscription')
 
     mc('/password', controller='forms', action="password")
     mc('/:action', controller='front',
@@ -311,6 +312,10 @@ def make_map():
     mc('/api/distinguish/:how', controller='api', action="distinguish")
     mc('/api/spendcreddits', controller='ipn', action="spendcreddits")
     mc('/api/stripecharge/gold', controller='stripe', action='goldcharge')
+    mc('/api/modify_subscription', controller='stripe',
+       action='modify_subscription')
+    mc('/api/cancel_subscription', controller='stripe',
+       action='cancel_subscription')
     mc('/api/stripewebhook/gold/:secret', controller='stripe',
        action='goldwebhook')
     mc('/api/coinbasewebhook/gold/:secret', controller='coinbase',
