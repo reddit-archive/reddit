@@ -488,10 +488,12 @@ class BrowseController(ListingController):
         self.sort = sort
         if sort == 'top':
             self.title_text = _('top scoring links')
-            self.extra_page_classes += ['top-page']
+            self.extra_page_classes = \
+                self.extra_page_classes + ['top-page']
         elif sort == 'controversial':
             self.title_text = _('most controversial links')
-            self.extra_page_classes += ['controversial-page']
+            self.extra_page_classes = \
+                self.extra_page_classes + ['controversial-page']
         else:
             # 'sort' is forced to top/controversial by routing.py,
             # but in case something has gone wrong...
