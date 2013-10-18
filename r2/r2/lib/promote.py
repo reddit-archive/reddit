@@ -862,7 +862,7 @@ def get_refund_amount(camp, billable):
     existing_refund = getattr(camp, 'refund_amount', 0.)
     charge = camp.bid - existing_refund
     refund_amount = charge - billable
-    refund_amount = Decimal(refund_amount).quantize(Decimal('.01'),
+    refund_amount = Decimal(str(refund_amount)).quantize(Decimal('.01'),
                                                     rounding=ROUND_UP)
     return max(float(refund_amount), 0.)
 
@@ -991,7 +991,7 @@ def get_billable_amount(camp, impressions):
         # pre-CPM campaigns are charged in full regardless of impressions
         billable_amount = camp.bid
 
-    billable_amount = Decimal(billable_amount).quantize(Decimal('.01'),
+    billable_amount = Decimal(str(billable_amount)).quantize(Decimal('.01'),
                                                         rounding=ROUND_DOWN)
     return float(billable_amount)
 
