@@ -54,9 +54,6 @@ r.spotlight.requestPromo = function() {
         type: "POST",
         url: '/api/request_promo',
         timeout: 1000,
-        error: function() {
-            $('.organic-listing').hide()
-        },
         data: {
             'srnames': this.srnames,
             'r': r.config.post_site
@@ -128,7 +125,9 @@ r.spotlight._advance = function(dir) {
     }, 200)
 
     this.lineup.pos = nextPos
-    $.when($next).done(_.bind(function($next) {
+
+    var $nextLoad = $.when($next)
+    $nextLoad.always(_.bind(function($next) {
         clearTimeout(showWorking)
 
         if (this.lineup.pos != nextPos) {
@@ -136,7 +135,7 @@ r.spotlight._advance = function(dir) {
             return
         }
 
-        if (!$next) {
+        if ($nextLoad.isRejected() || !$next) {
             if (this.lineup.length > 1) {
                 this._advance(dir || 1)
                 return
