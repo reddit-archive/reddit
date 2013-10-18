@@ -3737,53 +3737,44 @@ class Promotion_Summary(Templated):
     def __init__(self, ndays):
         end_date = promote.promo_datetime_now().date()
         start_date = promote.promo_datetime_now(offset = -ndays).date()
+
+        pws = PromotionWeights.get_campaigns(start_date,
+                                             end_date + datetime.timedelta(1))
+        campaign_ids = {pw.promo_idx for pw in pws}
+        campaigns = PromoCampaign._byID(campaign_ids, data=True,
+                                        return_dict=False)
+        link_ids = {camp.link_id for camp in campaigns}
+        link_names = {Link._fullname_from_id36(to36(id)) for id in link_ids}
+        wrapped_links = wrap_links(link_names)
+        wrapped_links_by_id = {link._id: link for link in wrapped_links}
+        account_ids = {camp.owner_id for camp in campaigns}
+        accounts_by_id = Account._byID(account_ids, data=True)
+
         links = set()
-        authors = {}
-        author_score = {}
-        self.total = 0
-        for link, camp_id, s, e in Promote_Graph.get_current_promos(start_date, end_date):
-            # fetch campaign or skip to next campaign if it's not found
-            try:
-                campaign = PromoCampaign._byID(camp_id, data=True)
-            except NotFound:
-                g.log.error("Missing campaign (link: %d, camp_id: %d) omitted "
-                            "from promotion summary" % (link._id, camp_id))
+        total = 0
+        for campaign in campaigns:
+            if not campaign.trans_id or campaign.trans_id <= 0:
                 continue
 
-            # get required attributes or skip to next campaign if any are missing.
-            try:
-                campaign_trans_id = campaign.trans_id
-                campaign_start_date = campaign.start_date
-                campaign_end_date = campaign.end_date
-                campaign_bid = campaign.bid
-            except AttributeError, e:
-                g.log.error("Corrupt PromoCampaign (link: %d, camp_id, %d) "
-                            "omitted from promotion summary. Error was: %r" %
-                            (link._id, camp_id, e))
+            link = wrapped_links_by_id[campaign.link_id]
+            if not promote.is_accepted(link):
                 continue
 
-            if campaign_trans_id > 0: # skip freebies and unauthorized
-                links.add(link)
-                link.bid = getattr(link, "bid", 0) + campaign_bid
-                link.ncampaigns = getattr(link, "ncampaigns", 0) + 1
+            link.bid = getattr(link, "bid", 0) + campaign.bid
+            link.ncampaigns = getattr(link, "ncampaigns", 0) + 1
+            links.add(link)
 
-                bid_per_day = campaign_bid / (campaign_end_date - campaign_start_date).days
-
-                sd = max(start_date, campaign_start_date.date())
-                ed = min(end_date, campaign_end_date.date())
-
-                self.total += bid_per_day * (ed - sd).days
-
-                authors.setdefault(link.author.name, []).append(link)
-                author_score[link.author.name] = author_score.get(link.author.name, 0) + link._score
+            bid_per_day = campaign.bid / campaign.ndays
+            sd = max(start_date, campaign.start_date.date())
+            ed = min(end_date, campaign.end_date.date())
+            total += bid_per_day * (ed - sd).days
 
         links = list(links)
         links.sort(key = lambda x: x._score, reverse = True)
-        author_score = list(sorted(((v, k) for k,v in author_score.iteritems()),
-                                   reverse = True))
 
         self.links = links
         self.ndays = ndays
+        self.total = total
         Templated.__init__(self)
 
     @classmethod
