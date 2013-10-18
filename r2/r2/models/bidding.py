@@ -416,7 +416,7 @@ class PromotionWeights(Sessionized, Base):
             item._delete()
 
     @classmethod
-    def get_campaigns(cls, start, end=None, author_id=None):
+    def get_campaigns(cls, start, end=None, author_id=None, sr_name=None):
         start = to_date(start)
         q = cls.query()
         if end:
@@ -427,7 +427,10 @@ class PromotionWeights(Sessionized, Base):
         
         if author_id:
             q = q.filter(cls.account_id == author_id)
-        
+
+        if sr_name:
+            q = q.filter(cls.sr_name == sr_name)
+
         return list(q)
 
     @classmethod
