@@ -21,7 +21,7 @@
 ###############################################################################
 
 
-from collections import OrderedDict
+from collections import defaultdict, OrderedDict
 from datetime import datetime, timedelta
 import re
 
@@ -95,11 +95,10 @@ def get_date_range(start, end):
     return dates
 
 
-def get_sold_pageviews(srs, start, end, ignore=None):
+def get_campaigns_by_date(srs, start, end):
     srs, is_single = tup(srs, ret_is_single=True)
     sr_names = ['' if isinstance(sr, DefaultSR) else sr.name for sr in srs]
     dates = set(get_date_range(start, end))
-    ignore = [] if ignore is None else ignore
     q = (PromotionWeights.query()
                 .filter(PromotionWeights.sr_name.in_(sr_names))
                 .filter(PromotionWeights.date.in_(dates)))
@@ -110,12 +109,9 @@ def get_sold_pageviews(srs, start, end, ignore=None):
     transactions = Bid.query().filter(Bid.transaction.in_(transaction_ids))
     transaction_by_id = {bid.transaction: bid for bid in transactions}
 
-    ret = {sr.name: dict.fromkeys(dates, 0) for sr in srs}
+    ret = {sr.name: defaultdict(list) for sr in srs}
     for camp in campaigns:
         if camp.trans_id == NO_TRANSACTION:
-            continue
-
-        if ignore and camp._id in ignore:
             continue
 
         if camp.impressions <= 0:
@@ -127,10 +123,31 @@ def get_sold_pageviews(srs, start, end, ignore=None):
             continue
 
         sr_name = camp.sr_name or DefaultSR.name
-        daily_impressions = camp.impressions / camp.ndays
         camp_dates = set(get_date_range(camp.start_date, camp.end_date))
         for date in camp_dates.intersection(dates):
-            ret[sr_name][date] += daily_impressions
+            ret[sr_name][date].append(camp)
+
+    if is_single:
+        return ret[srs[0].name]
+    else:
+        return ret
+
+
+def get_sold_pageviews(srs, start, end, ignore=None):
+    srs, is_single = tup(srs, ret_is_single=True)
+    campaigns_by_sr_by_date = get_campaigns_by_date(srs, start, end)
+    ignore = [] if ignore is None else ignore
+
+    ret = {}
+    for sr_name, campaigns_by_date in campaigns_by_sr_by_date.iteritems():
+        ret[sr_name] = defaultdict(int)
+        for date, campaigns in campaigns_by_date.iteritems():
+            for camp in campaigns:
+                if ignore and camp._id in ignore:
+                    continue
+
+                daily_impressions = camp.impressions / camp.ndays
+                ret[sr_name][date] += daily_impressions
 
     if is_single:
         return ret[srs[0].name]
