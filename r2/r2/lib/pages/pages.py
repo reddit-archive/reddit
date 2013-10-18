@@ -3427,6 +3427,7 @@ class PromotePage(Reddit):
             buttons.append(NamedButton('my_current_promos', dest = ''))
 
         if c.user_is_sponsor:
+            buttons.append(NavButton('inventory', 'inventory'))
             buttons.append(NavButton('report', 'report'))
             buttons.append(NavButton('underdelivered', 'underdelivered'))
             buttons.append(NavButton('house ads', 'house'))
@@ -3785,6 +3786,75 @@ class Promotion_Summary(Templated):
                                 "Self-serve promotion summary for last %d days"
                                 % ndays, p.render('email'))
 
+
+class PromoteInventory(Templated):
+    def __init__(self, start, end, sr):
+        Templated.__init__(self)
+        self.start = start
+        self.end = end
+        self.sr = sr
+        self.sr_name = '' if isinstance(sr, DefaultSR) else sr.name
+        self.setup()
+
+    def setup(self):
+        campaigns_by_date = inventory.get_campaigns_by_date(self.sr, self.start,
+                                                            self.end)
+        link_ids = {camp.link_id for camp
+                    in chain.from_iterable(campaigns_by_date.itervalues())}
+        links_by_id = Link._byID(link_ids, data=True)
+        dates = inventory.get_date_range(self.start, self.end)
+        imps_by_link_by_date = defaultdict(lambda: dict.fromkeys(dates, 0))
+        total_by_date = dict.fromkeys(dates, 0)
+        for date, campaigns in campaigns_by_date.iteritems():
+            for camp in campaigns:
+                link = links_by_id[camp.link_id]
+                daily_impressions = camp.impressions / camp.ndays
+                imps_by_link_by_date[link._id][date] += daily_impressions
+                total_by_date[date] += daily_impressions
+
+        account_ids = {link.author_id for link in links_by_id.itervalues()}
+        accounts_by_id = Account._byID(account_ids, data=True)
+
+        self.header = ['link'] + [date.strftime("%m/%d/%Y") for date in dates]
+        rows = []
+        for link_id, imps_by_date in imps_by_link_by_date.iteritems():
+            link = links_by_id[link_id]
+            author = accounts_by_id[link.author_id]
+            info = {
+                'author': author.name,
+                'edit_url': promote.promo_edit_url(link),
+            }
+            row = Storage(info=info, is_total=False)
+            row.columns = [format_number(imps_by_date[date]) for date in dates]
+            rows.append(row)
+        rows.sort(key=lambda row: row.info['author'].lower())
+
+        total_row = Storage(
+            info={'title': 'total'},
+            is_total=True,
+            columns=[format_number(total_by_date[date]) for date in dates],
+        )
+        rows.append(total_row)
+
+        predicted_by_date = inventory.get_predicted_pageviews(self.sr,
+                                            self.start, self.end)
+        predicted_row = Storage(
+            info={'title': 'predicted'},
+            is_total=True,
+            columns=[format_number(predicted_by_date[date]) for date in dates],
+        )
+        rows.append(predicted_row)
+
+        remaining_by_date = {date: predicted_by_date[date] - total_by_date[date]
+                             for date in dates}
+        remaining_row = Storage(
+            info={'title': 'remaining'},
+            is_total=True,
+            columns=[format_number(remaining_by_date[date]) for date in dates],
+        )
+        rows.append(remaining_row)
+
+        self.rows = rows
 
 class PromoteReport(Templated):
     def __init__(self, links, link_text, owner_name, bad_links, start, end):

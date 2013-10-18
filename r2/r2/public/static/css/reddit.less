@@ -5292,6 +5292,39 @@ dd { margin-left: 20px;  }
   }
 }
 
+.inventory-table {
+    font-size: smaller;
+    text-align: center;
+    margin-top: 20px;
+
+    th, td {
+        padding: 2px;
+    }
+
+    th {
+        border-bottom: 1px solid #000000;
+    }
+
+    td.title {
+        width: 120px;
+        text-align: left;
+    }
+
+    td:not(.title) {
+        border-left: 1px dashed #DDD;
+    }
+
+    tr:nth-child(even) {
+        background-color: #EFF7FF;
+    }
+
+    tr.total {
+        background-color: #FFC;
+        border-top: 1px solid #000000;
+        font-weight: bold;
+    }
+}
+
 /* title box */
 .titlebox {
     font-size: larger;

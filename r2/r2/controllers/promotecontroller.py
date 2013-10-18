@@ -39,6 +39,7 @@ from r2.lib.menus import NamedButton, NavButton, NavMenu
 from r2.lib.pages import (
     LinkInfoPage,
     PaymentForm,
+    PromoteInventory,
     PromotePage,
     PromoteLinkForm,
     PromoteLinkNew,
@@ -299,6 +300,29 @@ class PromoteController(ListingController):
         available_by_datestr = inventory.get_available_pageviews(sr, start, end,
                                                                  datestr=True)
         return {'inventory': available_by_datestr}
+
+    @validate(
+        VSponsorAdmin(),
+        start=VDate('startdate', reference_date=promote.promo_datetime_now),
+        end=VDate('enddate', reference_date=promote.promo_datetime_now),
+        sr_name=nop('sr_name'),
+    )
+    def GET_promote_inventory(self, start, end, sr_name):
+        if not start or not end:
+            start = promote.promo_datetime_now(offset=1).date()
+            end = promote.promo_datetime_now(offset=8).date()
+            c.errors.remove((errors.BAD_DATE, 'startdate'))
+            c.errors.remove((errors.BAD_DATE, 'enddate'))
+
+        sr = Frontpage
+        if sr_name:
+            try:
+                sr = Subreddit._by_name(sr_name)
+            except NotFound:
+                c.errors.add(errors.SUBREDDIT_NOEXIST, field='sr_name')
+
+        content = PromoteInventory(start, end, sr)
+        return PromotePage("promote_inventory", content=content).render()
 
     # ## POST controllers below
     @validatedForm(VSponsorAdmin(),

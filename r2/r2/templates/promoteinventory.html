@@ -1,0 +1,105 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be
+## consistent with Exhibit B.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is reddit.
+##
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is reddit Inc.
+##
+## All portions of the code written by reddit are Copyright (c) 2006-2013
+## reddit Inc. All Rights Reserved.
+###############################################################################
+
+<%!
+   from r2.lib import js
+%>
+
+<%namespace name="pr" file="promotelinkform.html" />
+<%namespace file="utils.html" import="plain_link, error_field" />
+
+${unsafe(js.use('sponsored'))}
+
+<h1>promoted link inventory for ${('/r/%s' % thing.sr_name) if thing.sr_name else 'the frontpage'}</h1>
+
+<div>
+    <form id="promote-inventory-form" action="/promoted/inventory" method="get">
+        <table class="preftable">
+            <tr>
+                <th>start</th>
+                <td class="prefright">
+                    <%pr:datepicker name="startdate" value="${thing.start.strftime('%m/%d/%Y')}"
+                      minDateSrc="date-min" initfuncname="init_startdate"
+                      min_date_offset="86400000">
+                        function(elem) { check_enddate(elem, $("#enddate")); return elem; }
+                    </%pr:datepicker>
+                </td>
+            </tr>
+
+            <tr>
+                <th>end</th>
+                <td class="prefright">
+                    <%pr:datepicker name="enddate" value="${thing.end.strftime('%m/%d/%Y')}"
+                      minDateSrc="startdate" initfuncname="init_enddate"
+                      min_date_offset="86400000">
+                        function(elem) { return elem; }
+                    </%pr:datepicker>
+                </td>
+            </tr>
+
+            <tr>
+                <th>subreddit</th>
+                <td class="prefright">
+                    <input name="sr_name" class="rounded styled-input" value="${thing.sr_name}">
+                    ${error_field("SUBREDDIT_NOEXIST", "sr_name", "div")}
+                </td>
+            </tr>
+        </table>
+        <button type="submit" name="submit">submit</button>
+    </form>
+</div>
+
+<table class="inventory-table">
+    <thead>
+        <tr>
+        %for text in thing.header:
+            <th>${text}</th>
+        %endfor
+        </tr>
+    </thead>
+
+    <tbody>
+        %for row in thing.rows:
+        <tr class="${'total' if row.is_total else ''}">
+            <td class="title">
+            %if not row.is_total:
+                <div class="author">${row.info['author']}</div>
+                <div class="view-link">
+                    ${plain_link("view link", row.info['edit_url'])}
+                </div>
+            %else:
+                <div class="author">${row.info['title']}</div>
+            %endif
+            </td>
+            %for column in row.columns:
+            <td>${column}</td>
+            %endfor
+        %endfor
+    </tbody>
+</table>
+
+<script type="text/javascript">
+    $(function() {
+      init_startdate();
+      init_enddate();
+    });
+</script>
