@@ -22,7 +22,6 @@
 from datetime import datetime, timedelta
 
 from babel.numbers import format_number
-import itertools
 import json
 import urllib
 
@@ -40,7 +39,6 @@ from r2.lib.menus import NamedButton, NavButton, NavMenu
 from r2.lib.pages import (
     LinkInfoPage,
     PaymentForm,
-    Promote_Graph,
     PromotePage,
     PromoteLinkForm,
     PromoteLinkNew,
@@ -105,27 +103,6 @@ from r2.models import (
     PromotedLinkRoadblock,
     Subreddit,
 )
-
-
-def _check_dates(dates):
-    params = ('startdate', 'enddate')
-    error_types = (errors.BAD_DATE,
-                   errors.DATE_TOO_EARLY,
-                   errors.DATE_TOO_LATE,
-                   errors.BAD_DATE_RANGE,
-                   errors.DATE_RANGE_TOO_LARGE)
-    for error_case in itertools.product(error_types, params):
-        if error_case in c.errors:
-            bad_dates = dates
-            start, end = None, None
-            break
-    else:
-        bad_dates = None
-        start, end = dates
-    if not start or not end:
-        start = promote.promo_datetime_now(offset=-7).date()
-        end = promote.promo_datetime_now(offset=6).date()
-    return start, end, bad_dates
 
 
 def campaign_has_oversold_error(form, campaign):
@@ -322,21 +299,6 @@ class PromoteController(ListingController):
         available_by_datestr = inventory.get_available_pageviews(sr, start, end,
                                                                  datestr=True)
         return {'inventory': available_by_datestr}
-
-    @validate(VSponsor(),
-              dates=VDateRange(["startdate", "enddate"],
-                               max_range=timedelta(days=28),
-                               required=False))
-    @validate(VSponsorAdmin(),
-              dates=VDateRange(["startdate", "enddate"],
-                               max_range=timedelta(days=28),
-                               required=False))
-    def GET_admingraph(self, dates):
-        start, end, bad_dates = _check_dates(dates)
-        content = Promote_Graph(start, end, bad_dates=bad_dates)
-        if c.render_style == 'csv':
-            return content.as_csv()
-        return PromotePage("admingraph", content=content).render()
 
     # ## POST controllers below
     @validatedForm(VSponsorAdmin(),

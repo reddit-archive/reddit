@@ -208,7 +208,6 @@ def make_map():
        controller='promote', action='pay')
     mc('/promoted/refund/:link/:campaign', controller='promote',
        action='refund')
-    mc('/promoted/admin/graph', controller='promote', action='admingraph')
 
     mc('/promoted/:action', controller='promote',
        requirements=dict(action="edit_promo|new_promo|roadblock"))
