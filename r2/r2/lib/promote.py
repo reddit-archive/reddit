@@ -117,10 +117,9 @@ def promotraffic_url(l): # new traffic url
     domain = get_domain(cname=False, subreddit=False)
     return "http://%s/promoted/traffic/headline/%s" % (domain, l._id36)
 
-def promo_edit_url(l=None, id36=""):
-    if l: id36 = l._id36
+def promo_edit_url(l):
     domain = get_domain(cname=False, subreddit=False)
-    return "http://%s/promoted/edit_promo/%s" % (domain, id36)
+    return "http://%s/promoted/edit_promo/%s" % (domain, l._id36)
 
 def pay_url(l, campaign):
     return "%spromoted/pay/%s/%s" % (g.payment_domain, l._id36, campaign._id36)

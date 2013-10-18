@@ -3539,62 +3539,6 @@ class PromoteLinkForm(Templated):
         message %= {'link': 'http://www.slideshare.net/reddit/how-to-use-reddits-selfserve-advertising-platform'}
         self.infobar = InfoBar(message=message)
 
-class PromoAdminTool(Reddit):
-    def __init__(self, query_type=None, launchdate=None, start=None, end=None, *a, **kw):
-        self.query_type = query_type
-        self.launch = launchdate if launchdate else datetime.datetime.now()
-        self.start = start if start else datetime.datetime.now()
-        self.end = end if end else self.start + datetime.timedelta(1)
-        # started_on shows promos that were scheduled to launch on start date
-        if query_type == "started_on" and self.start:
-            all_promos = self.get_promo_info(self.start,
-                    self.start + datetime.timedelta(1)) # exactly one day
-            promos = {}
-            start_date_string = self.start.strftime("%Y/%m/%d")
-            for camp_id, data in all_promos.iteritems():
-                if start_date_string == data["campaign_start"]:
-                    promos[camp_id] = data
-        # between shows any promo that was scheduled on at least one day in
-        # the range [start, end)
-        elif query_type == "between" and self.start and self.end:
-            promos = self.get_promo_info(self.start, self.end)
-        else:
-            promos = {}
-
-        for camp_id, promo in promos.iteritems():
-            link_id36 = promo["link_fullname"].split('_')[1]
-            promo["campaign_id"] = camp_id
-            promo["edit_link"] = promote.promo_edit_url(None, id36=link_id36)
-
-        self.promos = sorted(promos.values(),
-                             key=lambda x: (x['username'], x['campaign_start']))
-
-        Reddit.__init__(self, title="Promo Admin Tool", show_sidebar=False)
-
-
-    def get_promo_info(self, start_date, end_date):
-        promo_info = {}
-        scheduled = Promote_Graph.get_current_promos(start_date,
-                            end_date + datetime.timedelta(1))
-        campaign_ids = [x[1] for x in scheduled]
-        campaigns = PromoCampaign._byID(campaign_ids, data=True, return_dict=True)
-        account_ids = [pc.owner_id for pc in campaigns.itervalues()]
-        accounts = Account._byID(account_ids, data=True, return_dict=True)
-        for link, campaign_id, scheduled_start, scheduled_end in scheduled:
-            campaign = campaigns[campaign_id]
-            bid_per_day = float(campaign.bid) / campaign.ndays
-            account = accounts[campaign.owner_id]
-            promo_info[campaign._id] = {
-                'username': account.name,
-                'user_email': account.email,
-                'link_title': link.title,
-                'link_fullname': link._fullname,
-                'campaign_start': campaign.start_date.strftime("%Y/%m/%d"),
-                'campaign_end': campaign.end_date.strftime("%Y/%m/%d"),
-                'bid_per_day': bid_per_day,
-            }
-        return promo_info
-
 
 class RefundPage(Reddit):
     def __init__(self, link, campaign):

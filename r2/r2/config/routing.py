@@ -198,7 +198,6 @@ def make_map():
     mc('/framebuster/:what/:blah',
        controller='front', action='framebuster')
 
-    mc('/admin/promoted', controller='promote', action='admin')
     mc('/promoted/edit_promo/:link',
        controller='promote', action='edit_promo')
     mc('/promoted/edit_promo_cpm/:link',  # development only
