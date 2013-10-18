@@ -155,23 +155,42 @@ def get_sold_pageviews(srs, start, end, ignore=None):
         return ret
 
 
+def get_predicted_pageviews(srs, start, end):
+    srs, is_single = tup(srs, ret_is_single=True)
+    sr_names = [sr.name for sr in srs]
+
+    # prediction does not vary by date
+    daily_inventory = PromoMetrics.get(MIN_DAILY_CASS_KEY, sr_names=sr_names)
+    dates = get_date_range(start, end)
+    ret = {}
+    for sr in srs:
+        sr_daily_inventory = int(daily_inventory.get(sr.name, 0) * 1.00)
+        ret[sr.name] = dict.fromkeys(dates, sr_daily_inventory)
+
+    if is_single:
+        return ret[srs[0].name]
+    else:
+        return ret
+
+
 def get_available_pageviews(srs, start, end, datestr=False,
                             ignore=None):
     srs, is_single = tup(srs, ret_is_single=True)
-    sr_names = [sr.name for sr in srs]
-    daily_inventory = PromoMetrics.get(MIN_DAILY_CASS_KEY, sr_names=sr_names)
+    pageviews_by_sr_by_date = get_predicted_pageviews(srs, start, end)
     sold_by_sr_by_date = get_sold_pageviews(srs, start, end, ignore)
 
     datekey = lambda dt: dt.strftime('%m/%d/%Y') if datestr else dt
 
     ret = {}
+    dates = get_date_range(start, end)
     for sr in srs:
         sold_by_date = sold_by_sr_by_date[sr.name]
-        sr_ad_inventory = int(daily_inventory.get(sr.name, 0) * 1.00)
-        ret[sr.name] = {
-            datekey(date): max(0, sr_ad_inventory - sold)
-            for date, sold in sold_by_date.iteritems()
-        }
+        pageviews_by_date = pageviews_by_sr_by_date[sr.name]
+        ret[sr.name] = {}
+        for date in dates:
+            sold = sold_by_date[date]
+            pageviews = pageviews_by_date[date]
+            ret[sr.name][datekey(date)] = max(0, pageviews - sold)
 
     if is_single:
         return ret[srs[0].name]
