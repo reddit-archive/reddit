@@ -1219,15 +1219,7 @@ a.author { margin-right: 0.5em; }
     margin-bottom: 7px;
 
     &.loading {
-        height: @min-uncompressed-height;
-        &.compressed {
-            height: @min-compressed-height;
-        }
-        opacity: .5;
-
-        & .help, & .throbber {
-            display: none;
-        }
+        display: none;
     }
 
     .link {
@@ -1242,6 +1234,19 @@ a.author { margin-right: 0.5em; }
         padding-top: 7px;
         padding-bottom: 7px;
         min-height: @min-compressed-height - 14px;
+    }
+}
+
+body.front-page .organic-listing.loading {
+    display: block;
+    height: @min-uncompressed-height;
+    &.compressed {
+        height: @min-compressed-height;
+    }
+    opacity: .5;
+
+    & .help, & .throbber {
+        display: none;
     }
 }
 

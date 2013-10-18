@@ -376,6 +376,10 @@ class HotController(FixListing, ListingController):
             show_organic = c.user.pref_organic
             on_frontpage = isinstance(c.site, DefaultSR)
 
+            if on_frontpage:
+                self.extra_page_classes = \
+                    self.extra_page_classes + ['front-page']
+
             if self.requested_ad:
                 spotlight = self.make_requested_ad()
             elif on_frontpage and show_organic:
