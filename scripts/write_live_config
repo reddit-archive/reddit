@@ -110,7 +110,7 @@ def main():
     try:
         plugin_config = config.get("DEFAULT", "plugins")
         plugin_names = ConfigValue.tuple(plugin_config)
-        plugins = PluginLoader(plugin_names)
+        plugins = PluginLoader(plugin_names=plugin_names)
         live = extract_live_config(config, plugins)
     except ValueError as e:
         print >> sys.stderr, "%s: %s" % (progname, e)
