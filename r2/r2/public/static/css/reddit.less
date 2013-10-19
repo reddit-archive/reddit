@@ -1060,6 +1060,24 @@ a.author { margin-right: 0.5em; }
         }
     }
 
+    &.anchor-top-centered {
+        &:before, &:after {
+            left: 50%;
+            margin-left: -9px;
+            border: 9px solid transparent;
+        }
+
+        &:before {
+            top: -19px;
+            border-bottom-color: gray;
+        }
+
+        &:after {
+            top: -18px;
+            border-bottom-color: white;
+        }
+    }
+
     &.anchor-right {
         &:before, &:after {
             top: 8px;
