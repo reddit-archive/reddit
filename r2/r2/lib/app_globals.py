@@ -244,8 +244,6 @@ class Globals(object):
             'comment_tree_version_weights',
         ],
         ConfigValue.messages: [
-            'goldvertisement_blurbs',
-            'goldvertisement_has_gold_blurbs',
             'welcomebar_messages',
             'sidebar_message',
             'gold_sidebar_message',
