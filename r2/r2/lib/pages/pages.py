@@ -31,7 +31,12 @@ from r2.models import Flair, FlairTemplate, FlairTemplateBySubredditIndex
 from r2.models import USER_FLAIR, LINK_FLAIR
 from r2.models import GoldPartnerDealCode
 from r2.models.bidding import Bid
-from r2.models.gold import gold_payments_by_user, gold_received_by_user, days_to_pennies
+from r2.models.gold import (
+    gold_payments_by_user,
+    gold_received_by_user,
+    days_to_pennies,
+    gold_revenue_on,
+)
 from r2.models.promo import NO_TRANSACTION, PromotionLog, PromotedLinkRoadblock
 from r2.models.token import OAuth2Client, OAuth2AccessToken
 from r2.models import traffic
@@ -503,7 +508,7 @@ class Reddit(Templated):
 
         if no_ads_yet and show_adbox:
             ps.append(Ads())
-            if g.live_config["goldvertisement_blurbs"]:
+            if g.live_config["gold_revenue_goal"]:
                 ps.append(Goldvertisement())
 
         if c.user.pref_clickgadget and c.recent_clicks:
@@ -1732,6 +1737,14 @@ class ServerSecondsBar(Templated):
     def subtract_fees(cls, pennies):
         # for simplicity all payment processor fees are $0.30 + 2.9%
         return pennies * (1 - 0.029) - 30
+
+    @classmethod
+    def current_value_of_month(cls):
+        price = g.gold_month_price.pennies
+        after_fees = cls.subtract_fees(price)
+        current_rate = cls.get_rate(datetime.datetime.now(g.display_tz))
+        delta = datetime.timedelta(seconds=after_fees / current_rate)
+        return precise_format_timedelta(delta, threshold=5, locale=c.locale)
 
     def make_message(self, seconds, my_message, their_message):
         if not seconds:
@@ -4267,12 +4280,12 @@ class GoldPartnersPage(BoringPage):
 
 class Goldvertisement(Templated):
     def __init__(self):
+        today = datetime.datetime.now(g.display_tz).date()
+        revenue_today = gold_revenue_on(today)
+        revenue_goal = g.live_config["gold_revenue_goal"]
+        self.percent_filled = int((revenue_today / revenue_goal) * 100)
+        self.hours_paid = ServerSecondsBar.current_value_of_month()
         Templated.__init__(self)
-        if not c.user.gold:
-            blurbs = g.live_config["goldvertisement_blurbs"]
-        else:
-            blurbs = g.live_config["goldvertisement_has_gold_blurbs"]
-        self.blurb = random.choice(blurbs)
 
 class LinkCommentsSettings(Templated):
     def __init__(self, link):

@@ -229,6 +229,7 @@ class Globals(object):
         ConfigValue.float: [
             'spotlight_interest_sub_p',
             'spotlight_interest_nosub_p',
+            'gold_revenue_goal',
         ],
         ConfigValue.tuple: [
             'sr_discovery_links',

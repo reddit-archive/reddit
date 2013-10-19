@@ -20,10 +20,40 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%namespace file="utils.html" import="text_with_links, md"/>
+<%!
+  from babel.numbers import format_percent
+%>
 
 <div class="goldvertisement">
   <div class="inner">
-    ${md(thing.blurb)}
+    <h2>${_("daily reddit gold goal")}</h2>
+
+    <div class="progress">
+      <p>${format_percent(thing.percent_filled / 100.0, locale=c.locale)}</p>
+      <div class="bar">
+        <span style="width: ${min(100, thing.percent_filled)}%"></span>
+      </div>
+    </div>
+
+    <a href="/gold?goldtype=autorenew&amp;source=progressbar" target="_blank">${_("help support reddit")}</a>
+
+    <div class="gold-bubble hover-bubble help-bubble anchor-top-centered">
+      <p><span class="gold-branding">reddit gold</span>&#32;gives you extra features
+      and helps keep our servers running. We believe the more reddit can be
+      user-supported, the freer we will be to make reddit the best it can
+      be.</p>
+
+      <p class="buy-gold">Buy gold for yourself to gain access to&#32;<a
+        href="/gold/about" target="_blank">extra features</a>&#32;and&#32;<a
+        href="/r/goldbenefits" target="_blank">special benefits</a>. A month of gold pays for
+      &#32;<b>${thing.hours_paid}</b>&#32;of reddit server time!</p>
+
+      <p class="give-gold">Give gold to thank exemplary people and encourage them to post
+      more.</p>
+
+      <p class="aside">This daily goal updates every 10 minutes and is reset at
+      midnight&#32;<a target="_blank"
+        href="http://en.wikipedia.org/wiki/Mountain_Standard_Time">MST</a>.</p>
+    </div>
   </div>
 </div>

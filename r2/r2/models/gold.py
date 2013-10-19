@@ -33,6 +33,8 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.schema import Column
 from sqlalchemy.sql import and_
+from sqlalchemy.sql.expression import select
+from sqlalchemy.sql.functions import sum as sa_sum
 from sqlalchemy.types import DateTime, Integer, String
 
 from xml.dom.minidom import Document
@@ -48,6 +50,7 @@ from BeautifulSoup import BeautifulStoneSoup
 from r2.lib.db.tdb_cassandra import NotFound
 from r2.models.subreddit import Frontpage
 from r2.models.wiki import WikiPage
+from r2.lib.memoize import memoize
 
 gold_bonus_cutoff = datetime(2010,7,27,0,0,0,0,g.tz)
 
@@ -515,3 +518,13 @@ def append_random_bottlecap_phrase(message):
     if bottlecap:
         message += '\n\n> ' + bottlecap
     return message
+
+
+@memoize("gold-revenue", time=600)
+def gold_revenue_on(date):
+    NON_REVENUE_STATUSES = ("declined", "chargeback", "fudge")
+    query = (select([sa_sum(gold_table.c.pennies)])
+                .where(~ gold_table.c.status.in_(NON_REVENUE_STATUSES))
+                .where(func.date_trunc('day', gold_table.c.date) == date))
+    rows = ENGINE.execute(query)
+    return rows.fetchone()[0] or 0

@@ -7363,41 +7363,136 @@ body.post-under-6h-old .gilded-comment-icon {
 body.gold .buttons li.comment-save-button { display: inline; }
 
 .goldvertisement {
-    height: 50px;
-    border: 1px solid #c4b487;
+    @border-color: #c4b487;
+    @background-shadow: #dad0b3;
+
+    border: 1px solid @border-color;
     text-align: center;
     line-height: 1.3em;
-    box-shadow: 0 0 10px #dad0b3 inset;
-    color: #333;
+    box-shadow: 0 0 10px @background-shadow inset;
+    color: darken(@border-color, 40%);
+
+    .inner {
+        margin: 1px;
+        border: 1px solid #dbd1b5;
+        padding: 6px 8px;
+    }
+
+    li {
+        display: inline-block;
+        margin-right: 2em;
+    }
+
+    h2 {
+        margin: 0;
+        font-weight: normal;
+        color: inherit;
+    }
+
+    .progress {
+        @bar-height: 17px;
+        padding: 7px 0;
+
+        .bar {
+            border: 1px solid #dad0b3;
+            height: @bar-height;
+            overflow: auto;
+
+            border-radius: 10px;
+
+            span {
+                display: block;
+                height: 100%;
+                background: linear-gradient(to bottom, #fff8ba 0%, #eccf90 100%);
+                border-radius: (@bar-height/2);
+            }
+        }
+
+        p {
+            float: right;
+            font-weight: bold;
+            font-size: 15px;
+            color: #5a3f1a;
+            line-height: @bar-height + 2; // +2 to match border on bar
+            margin-left: 6px;
+        }
+    }
+
+    a {
+        display: inline-block;
+        margin: 0;
+        padding: 2px 4px;
+        border-radius: 3px;
+        background: lighten(@background-shadow, 20%);
+        border: 1px solid lighten(@border-color, 10%);
+        border-bottom-width: 2px;
+        color: darken(@border-color, 40%);
+
+        &:hover {
+            background: #fdf4c5;
+        }
+
+        &:active {
+            margin-top: 1px;
+            border-bottom-width: 1px;
+        }
+    }
 }
 
-.goldvertisement .inner {
-    margin: 1px;
-    border: 1px solid #dbd1b5;
-    height: 46px;
-    line-height: 44px;
-}
+.gold-bubble {
+    width: 290px;
+    border-radius: 4px;
+    font-size: 125%;
+    line-height: 1.13;
+    font-family: "Hoefler Text","Palatino Linotype","Book Antiqua",
+                  Palatino,georgia,garamond,FreeSerif,serif;
+    border-color: #907c47;
+    padding: 4px;
 
-.goldvertisement p {
-    display: inline-block;
-    vertical-align: middle;
-    margin: 0 4px;
-    line-height: 14px;
-}
+    &.anchor-top-centered:before {
+        border-bottom-color: #907c47;
+    }
 
-.goldvertisement strong {
-    font-size: 15px;
-}
+    p + p {
+        margin-top: 1em;
+    }
 
-.goldvertisement a {
-    color: #9a7d2e;
-    font-weight: bold;
-    text-decoration: underline;
-}
+    span.gold-branding {
+        display: inline-block;
+        vertical-align: bottom;
+        text-indent: -9999px;
+        background: transparent url(../gold/goldvertisement-logo.png) top left no-repeat;
+        width: 79px;
+        height: 18px;
+        margin-right: 1px;
+    }
 
-.goldvertisement i {
-    font-size: 11px;
-    font-variant: italic;
+    p.buy-gold {
+        background: transparent url(../gold/goldvertisement-gold.png) top left no-repeat;
+        margin-left: 13px;
+        padding-left: 67px;
+        min-height: 45px;
+
+        a {
+            color: #825b25;
+        }
+    }
+
+    p.give-gold {
+        background: transparent url(../gold/goldvertisement-gild.png) top left no-repeat;
+        margin-left: 23px;
+        padding-left: 57px;
+        min-height: 39px;
+    }
+
+    p.aside {
+        color: #777;
+        font-style: italic;
+
+        a {
+            color: inherit;
+        }
+    }
 }
 
 #stripe-payment th {
