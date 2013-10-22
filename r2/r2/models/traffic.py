@@ -523,7 +523,6 @@ class TargetedClickthroughsByCodename(Base):
         return total_by_codename(cls, codenames)
 
     @classmethod
-    @memoize_traffic(time=3600)
     def campaign_history(cls, codenames, start, stop):
         return campaign_history(cls, codenames, start, stop)
 
@@ -605,7 +604,6 @@ class TargetedImpressionsByCodename(Base):
         return total_by_codename(cls, codenames)
 
     @classmethod
-    @memoize_traffic(time=3600)
     def campaign_history(cls, codenames, start, stop):
         return campaign_history(cls, codenames, start, stop)
 
