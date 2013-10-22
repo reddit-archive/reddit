@@ -634,7 +634,10 @@ r.ui.SubredditSubmitText = Backbone.View.extend({
         var sr = this.$input.val()
         this.$sr.text(sr)
         this.$el.addClass('working')
-        this.cache.ajax(sr, {
+        if (this.req && this.req.abort) {
+            this.req.abort()
+        }
+        this.req = this.cache.ajax(sr, {
             url: '/r/' + sr + '/api/submit_text/.json',
             dataType: 'json'
         }).done(_.bind(this.settext, this, sr))
@@ -650,10 +653,12 @@ r.ui.SubredditSubmitText = Backbone.View.extend({
     },
 
     error: function() {
+        delete this.req
         this.hide()
     },
 
     settext: function(sr, data) {
+        delete this.req
         if (!data.submit_text || !data.submit_text.trim()) {
             this.hide()
         } else {
