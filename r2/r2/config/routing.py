@@ -126,7 +126,6 @@ def make_map():
        where='overview')
     mc('/user/:username/:where', controller='user', action='listing',
        where='overview')
-    mc('/user/:username/:where/:show', controller='user', action='listing')
 
     multi_prefixes = (
        partial_connect(mc, path_prefix='/user/:username/m/:multipath'),
@@ -141,6 +140,8 @@ def make_map():
        connect('/:controller', action='listing',
           requirements=dict(controller="hot|new|rising|randomrising"))
 
+    mc('/user/:username/:where/:show', controller='user', action='listing')
+    
     mc('/about/sidebar', controller='front', action='sidebar')
     mc('/about/sticky', controller='front', action='sticky')
     mc('/about/flair', controller='front', action='flairlisting')
