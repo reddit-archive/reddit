@@ -4271,14 +4271,22 @@ class InterestBar(Templated):
 
 class Goldvertisement(Templated):
     def __init__(self):
-        today = datetime.datetime.now(g.display_tz).date()
+        now = datetime.datetime.now(g.display_tz)
+        today = now.date()
+        tomorrow = today + datetime.timedelta(days=1)
+        end_time = datetime.datetime(tomorrow.year,
+                                     tomorrow.month,
+                                     tomorrow.day,
+                                     tzinfo=g.display_tz)
         revenue_today = gold_revenue_on(today)
         yesterday = today - datetime.timedelta(days=1)
         revenue_yesterday = gold_revenue_on(yesterday)
         revenue_goal = g.live_config["gold_revenue_goal"]
+
         self.percent_filled = int((revenue_today / revenue_goal) * 100)
         self.percent_filled_yesterday = int((revenue_yesterday / revenue_goal) * 100)
         self.hours_paid = ServerSecondsBar.current_value_of_month()
+        self.time_left_today = timeuntil(end_time, precision=60)
         Templated.__init__(self)
 
 class LinkCommentsSettings(Templated):
