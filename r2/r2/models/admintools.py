@@ -295,7 +295,7 @@ def update_gold_users(verbose=False):
         if days_left <= 3 and not g.hardcache.get(hc_key):
             if verbose:
                 print "%s expires soon: %s days" % (account.name, days_left)
-            if getattr(account, "gold_subscr_id", None):
+            if account.has_gold_subscription:
                 if verbose:
                     print "Not sending notice to %s (%s)" % (account.name,
                                                      account.gold_subscr_id)

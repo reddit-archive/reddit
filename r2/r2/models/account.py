@@ -612,6 +612,11 @@ class Account(Thing):
         return getattr(self, 'cpm_selfserve_pennies_override',
                        g.cpm_selfserve.pennies)
 
+    @property
+    def has_gold_subscription(self):
+        return bool(getattr(self, 'gold_subscr_id', None) or
+                    getattr(self, 'stripe_customer_id', None))
+
 
 class FakeAccount(Account):
     _nodb = True
