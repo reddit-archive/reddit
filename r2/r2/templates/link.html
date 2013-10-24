@@ -41,9 +41,12 @@
   </span>
 </%def>
 
-<%def name="make_link(name, css_class)">
-  <a class="${css_class} ${ c.user_is_loggedin and 'loggedin' or ''} ${thing.clicked and 'click' or ''}"
+<%def name="make_link(name, css_class, tabindex=0)">
+  <a class="${css_class} ${ c.user_is_loggedin and 'loggedin' or ''}"
      href="${thing.href_url}"
+     %if tabindex:
+       tabindex="${tabindex}"
+     %endif
      %if thing.nofollow:
        rel="nofollow"
      %endif
@@ -88,7 +91,7 @@
     %if c.site.link_flair_position == 'left':
       <%call expr="flair()" />
     %endif
-    <%call expr="make_link('title', 'title')">
+    <%call expr="make_link('title', 'title', tabindex=1)">
       ${thing.title}
     </%call>
     %if c.site.link_flair_position == 'right':
