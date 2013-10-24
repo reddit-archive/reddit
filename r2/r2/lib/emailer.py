@@ -271,7 +271,7 @@ def finished_promo(thing):
 
 
 def refunded_promo(thing):
-    return _promo_email(thing, Email.Kind.REFUNDED_CAMPAIGN)
+    return _promo_email(thing, Email.Kind.REFUNDED_PROMO)
 
 
 def send_html_email(to_addr, from_addr, subject, html, subtype="html"):
