@@ -943,23 +943,9 @@ a.author { margin-right: 0.5em; }
     overflow: hidden;
 }
 
-.thing .title:visited { color: #551a8b }
-.thing .title.click { color: #551a8b } 
+.thing .title:visited, .thing.visited .title { color: #551a8b }
 
-.thing .title.loggedin { color: blue }
-.thing .title.loggedin:visited { color: #551a8b }
-.thing .title.loggedin.click { color: #551a8b } 
-.thing .title.loggedin.click:visited { color: #551a8b }
-
-.stickied-link { font-weight: bold; color: @moderator-color; }
-.thing.stickied {
-    a.title { .stickied-link }
-    a.title:visited { .stickied-link }
-    a.title.loggedin { .stickied-link }
-    a.title.loggedin:visited { .stickied-link }
-    a.title.loggedin.click { .stickied-link }
-    a.title.loggedin.click:visited { .stickied-link }
-}
+.thing.stickied a.title, .thing.stickied a.title:visited, .thing.stickied a.title.visited { font-weight: bold; color: @moderator-color; }
 
 .sitetable { list-style-type: none; }
 .ajaxhook { position: absolute; top: -1000px; left: 0px; }

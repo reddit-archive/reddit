@@ -86,6 +86,7 @@ $(function() {
         r.analytics.init()
         r.ui.init()
         r.interestbar.init()
+        r.visited.init()
         r.apps.init()
         r.wiki.init()
         r.gold.init()

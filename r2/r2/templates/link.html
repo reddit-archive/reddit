@@ -160,7 +160,7 @@
 </%def>
 
 <%def name="thing_css_class(what)" buffered="True">
-${parent.thing_css_class(what)} ${"over18" if thing.over_18 else ""}
+${parent.thing_css_class(what)} ${"over18" if thing.over_18 else ""} ${thing.visited and 'visited' or ''}
 %if c.user.pref_show_link_flair and (thing.flair_text or thing.flair_css_class):
   <% css = thing.flair_css_class or '' %>
   linkflair ${' '.join('linkflair-' + c for c in css.split())}

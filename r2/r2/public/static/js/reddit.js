@@ -522,8 +522,6 @@ function updateEventHandlers(thing) {
     /* click on a title.. */
     $(thing).filter(".link")
         .find("a.title, a.comments").mousedown(function() {
-            /* mark as clicked */
-            $(this).addClass("click");
             /* set the click cookie. */
             add_thing_to_cookie(this, "recentclicks2");
         });
