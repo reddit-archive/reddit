@@ -2127,7 +2127,7 @@ class GoldThanks(Templated):
 
 class Gold(Templated):
     def __init__(self, goldtype, period, months, signed,
-                 recipient, recipient_name):
+                 recipient, recipient_name, can_subscribe=True):
 
         if c.user.employee:
             user_creddits = 50
@@ -2139,7 +2139,8 @@ class Gold(Templated):
                            recipient_name = recipient_name,
                            user_creddits = user_creddits,
                            bad_recipient =
-                           bool(recipient_name and not recipient))
+                           bool(recipient_name and not recipient),
+                           can_subscribe=can_subscribe)
 
 
 class GoldPayment(Templated):

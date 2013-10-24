@@ -1469,10 +1469,12 @@ class FormsController(RedditController):
             start_over = True
 
         if start_over:
+            can_subscribe = not c.user.has_gold_subscription
             return BoringPage(_("reddit gold"),
                               show_sidebar=False,
                               content=Gold(goldtype, period, months, signed,
-                                           recipient, recipient_name)).render()
+                                           recipient, recipient_name,
+                                           can_subscribe=can_subscribe)).render()
         else:
             payment_blob = dict(goldtype=goldtype,
                                 account_id=c.user._id,

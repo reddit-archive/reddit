@@ -86,8 +86,10 @@
 
   <form class="content">
     <%utils:round_field title="">
+    %if thing.can_subscribe:
     ${radio_type("goldtype", "autorenew", _("Buy for yourself, as an ongoing subscription"),
       "", thing.goldtype == "autorenew")}<br/>
+    %endif
     ${radio_type("goldtype", "onetime", _("Buy for yourself, as a one-time purchase"),
       "", thing.goldtype == "onetime")}<br/>
     ${radio_type("goldtype", "gift", _("Give reddit gold to someone else"),
