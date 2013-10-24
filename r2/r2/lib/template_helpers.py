@@ -116,9 +116,12 @@ def media_https_if_secure(url):
 
 
 def js_config(extra_config=None):
+    logged = c.user_is_loggedin and c.user.name
+    gold = bool(logged and c.user.gold)
+
     config = {
         # is the user logged in?
-        "logged": c.user_is_loggedin and c.user.name,
+        "logged": logged,
         # the subreddit's name (for posts)
         "post_site": c.site.name if not c.default_sr else "",
         # are we in an iframe?
@@ -127,6 +130,11 @@ def js_config(extra_config=None):
         "modhash": c.modhash or False,
         # the current rendering style
         "renderstyle": c.render_style,
+
+        # they're welcome to try to override this in the DOM because we just
+        # disable the features server-side if applicable
+        'store_visits': gold and c.user.pref_store_visits,
+
         # current domain
         "cur_domain": get_domain(cname=c.frameless_cname, subreddit=False, no_www=True),
         # where do ajax requests go?

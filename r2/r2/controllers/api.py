@@ -3632,3 +3632,12 @@ class ApiController(RedditController, OAuth2ResourceController):
     def POST_server_seconds_visibility(self, form, jquery, seconds_visibility):
         c.user.pref_public_server_seconds = seconds_visibility == "public"
         c.user._commit()
+
+    @noresponse(VGold(),
+                links = VByName('links', thing_cls=Link, multiple=True,
+                                limit=100))
+    def POST_store_visits(self, links):
+        if not c.user.pref_store_visits or not links:
+            return
+
+        LinkVisitsByAccount._visit(c.user, links)

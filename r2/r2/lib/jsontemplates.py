@@ -391,7 +391,7 @@ class LinkJsonTemplate(ThingJsonTemplate):
         author_flair_css_class="author_flair_css_class",
         author_flair_text="author_flair_text",
         banned_by="banned_by",
-        clicked="clicked",
+        visited="visited",
         distinguished="distinguished",
         domain="domain",
         downs="downvotes",

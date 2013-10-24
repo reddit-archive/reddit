@@ -207,13 +207,6 @@ class Link(Thing, Printable):
         return self._unsomething(user, self._saved, 'save')
 
     @classmethod
-    def _clicked(cls, user, link):
-        return cls._somethinged(Click, user, link, 'click')
-
-    def _click(self, user):
-        return self._something(Click, user, self._clicked, 'click')
-
-    @classmethod
     def _hidden(cls, user, link):
         return cls._somethinged(SaveHide, user, link, 'hide')
 
@@ -374,6 +367,9 @@ class Link(Thing, Printable):
         pref_newwindow = user.pref_newwindow
         cname = c.cname
         site = c.site
+        now = datetime.now(g.tz)
+
+        saved = hidden = visited = {}
 
         if user_is_admin:
             # Checking if a domain's banned isn't even cheap
@@ -388,13 +384,14 @@ class Link(Thing, Printable):
             try:
                 saved = LinkSavesByAccount.fast_query(user, wrapped)
                 hidden = LinkHidesByAccount.fast_query(user, wrapped)
-            except tdb_cassandra.TRANSIENT_EXCEPTIONS as e:
-                g.log.warning("Cassandra save/hide lookup failed: %r", e)
-                saved = hidden = {}
 
-            clicked = {}
-        else:
-            saved = hidden = clicked = {}
+                if user.gold and user.pref_store_visits:
+                    visited = LinkVisitsByAccount.fast_query(user, wrapped)
+
+            except tdb_cassandra.TRANSIENT_EXCEPTIONS as e:
+                # saved or hidden or may have been done properly, so go ahead
+                # with what we do have
+                g.log.warning("Cassandra save/hide/visited lookup failed: %r", e)
 
         for item in wrapped:
             show_media = False
@@ -460,10 +457,10 @@ class Link(Thing, Printable):
             if user_is_loggedin:
                 item.saved = (user, item) in saved
                 item.hidden = (user, item) in hidden
+                item.visited = (user, item) in visited
 
-                item.clicked = bool(clicked.get((user, item, 'click')))
             else:
-                item.saved = item.hidden = item.clicked = False
+                item.saved = item.hidden = item.visited = False
 
             item.num = None
             item.permalink = item.make_permalink(item.subreddit)
@@ -569,7 +566,7 @@ class Link(Thing, Printable):
 
             item.fresh = not any((item.likes != None,
                                   item.saved,
-                                  item.clicked,
+                                  item.visited,
                                   item.hidden,
                                   item._deleted,
                                   item._spam))
@@ -586,7 +583,8 @@ class Link(Thing, Printable):
                 item.author = DeletedUser()
                 item.as_deleted = True
 
-            item_age = datetime.now(g.tz) - item._date
+            item_age = now - item._date
+
             if item_age.days > g.VOTE_AGE_LIMIT and item.promoted is None:
                 item.votable = False
             else:
@@ -977,6 +975,7 @@ class Comment(Thing, Printable):
         focal_comment = c.focal_comment
         cname = c.cname
         site = c.site
+        now = datetime.now(g.tz)
 
         if user_is_loggedin:
             gilded = [comment for comment in wrapped if comment.gildings > 0]
@@ -1031,7 +1030,7 @@ class Comment(Thing, Printable):
 
             item.can_reply = False
             if c.can_reply or (item.sr_id in can_reply_srs):
-                age = datetime.now(g.tz) - item._date
+                age = now - item._date
                 if item.link.promoted or age.days < g.REPLY_AGE_LIMIT:
                     item.can_reply = True
 
@@ -1534,8 +1533,6 @@ class Message(Thing, Printable):
         return True
 
 class SaveHide(Relation(Account, Link)): pass
-class Click(Relation(Account, Link)): pass
-
 
 class GildedCommentsByAccount(tdb_cassandra.DenormalizedRelation):
     _use_db = True
@@ -1709,6 +1706,20 @@ class LinkHidesByAccount(_ThingHidesByAccount):
         from r2.lib.db import queries
         return [queries.get_hidden_links(user)]
 
+class LinkVisitsByAccount(_SaveHideByAccount):
+    _use_db = True
+    _last_modified_name = 'Visit'
+    _views = []
+    _ttl = timedelta(days=7)
+    _write_consistency_level = tdb_cassandra.CL.ONE
+
+    @classmethod
+    def _visit(cls, user, things):
+        cls._savehide(user, things)
+
+    @classmethod
+    def _unvisit(cls, user, things):
+        cls._unsavehide(user, things)
 
 class _ThingSavesBySubreddit(tdb_cassandra.View):
     @classmethod

@@ -99,6 +99,7 @@ class PostController(ApiController):
               pref_collapse_read_messages = VBoolean("collapse_read_messages"),
               pref_private_feeds = VBoolean("private_feeds"),
               pref_local_js = VBoolean('local_js'),
+              pref_store_visits = VBoolean('store_visits'),
               pref_show_adbox = VBoolean("show_adbox"),
               pref_show_sponsors = VBoolean("show_sponsors"),
               pref_show_sponsorships = VBoolean("show_sponsorships"),
