@@ -164,7 +164,7 @@ r.gold = {
             status.text(r._('missing zip code'))
         } else {
 
-            status.text('')
+            status.text(reddit.status_msg.submitting)
             submit.attr('disabled', 'disabled')
             Stripe.createToken({
                     name: cardName,
