@@ -39,6 +39,7 @@ from r2.models import *
 
 from r2.lib import amqp
 from r2.lib import recommender
+from r2.lib import hooks
 
 from r2.lib.utils import get_title, sanitize_url, timeuntil, set_last_modified
 from r2.lib.utils import query_string, timefromnow, randstr
@@ -2236,6 +2237,8 @@ class ApiController(RedditController, OAuth2ResourceController):
 
         thing.distinguished = how
         thing._commit()
+
+        hooks.get_hook("thing.distinguish").call(thing=thing)
 
         wrapper = default_thing_wrapper(expand_children = True)
         w = wrap_links(thing, wrapper)
