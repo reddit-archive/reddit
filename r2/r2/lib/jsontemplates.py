@@ -392,6 +392,7 @@ class LinkJsonTemplate(ThingJsonTemplate):
         author_flair_text="author_flair_text",
         banned_by="banned_by",
         visited="visited",
+        clicked="clicked",
         distinguished="distinguished",
         domain="domain",
         downs="downvotes",
@@ -436,6 +437,9 @@ class LinkJsonTemplate(ThingJsonTemplate):
                         "content": media_embed.content,
                     }
             return {}
+        elif attr == "clicked":
+            # this hasn't been used in years.
+            return False
         elif attr == "editted" and not isinstance(thing.editted, bool):
             return (time.mktime(thing.editted.astimezone(pytz.UTC).timetuple())
                     - time.timezone)
