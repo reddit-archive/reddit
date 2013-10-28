@@ -54,6 +54,17 @@
       <p class="aside">This daily goal updates every 10 minutes and is reset at
       midnight&#32;<a target="_blank"
         href="http://en.wikipedia.org/wiki/Mountain_Standard_Time">MST</a>.</p>
+
+      <div class="history">
+        <p>${_("Yesterday's reddit gold goal")}</p>
+
+        <div class="progress">
+          <p>${format_percent(thing.percent_filled_yesterday / 100.0, locale=c.locale)}</p>
+          <div class="bar">
+            <span style="width: ${min(100, thing.percent_filled_yesterday)}%"></span>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>

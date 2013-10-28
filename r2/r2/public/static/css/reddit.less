@@ -7425,6 +7425,37 @@ body.post-under-6h-old .gilded-comment-icon {
 
 body.gold .buttons li.comment-save-button { display: inline; }
 
+.gold-progress (@bar-height: 17px) {
+    padding: 7px 0;
+
+    .bar {
+        border: 1px solid #dad0b3;
+        height: @bar-height;
+        overflow: auto;
+
+        border-radius: 10px;
+
+        span {
+            display: block;
+            height: 100%;
+            background-color: #f3e287;
+            background-image: -webkit-linear-gradient(top, #fff8ba, #eccf90);
+            background-image: linear-gradient(to bottom, #fff8ba 0%, #eccf90 100%);
+            border-radius: (@bar-height/2);
+        }
+    }
+
+    p {
+        float: right;
+        font-weight: bold;
+        font-size: @bar-height - 2;
+        color: #5a3f1a;
+        line-height: @bar-height + 2; // +2 to match border on bar
+        margin-left: 6px;
+        margin-top: 0;
+    }
+}
+
 .goldvertisement {
     @border-color: #c4b487;
     @background-shadow: #dad0b3;
@@ -7453,34 +7484,7 @@ body.gold .buttons li.comment-save-button { display: inline; }
     }
 
     .progress {
-        @bar-height: 17px;
-        padding: 7px 0;
-
-        .bar {
-            border: 1px solid #dad0b3;
-            height: @bar-height;
-            overflow: auto;
-
-            border-radius: 10px;
-
-            span {
-                display: block;
-                height: 100%;
-                background-color: #f3e287;
-                background-image: -webkit-linear-gradient(top, #fff8ba, #eccf90);
-                background-image: linear-gradient(to bottom, #fff8ba 0%, #eccf90 100%);
-                border-radius: (@bar-height/2);
-            }
-        }
-
-        p {
-            float: right;
-            font-weight: bold;
-            font-size: 15px;
-            color: #5a3f1a;
-            line-height: @bar-height + 2; // +2 to match border on bar
-            margin-left: 6px;
-        }
+        .gold-progress
     }
 
     a {
@@ -7556,6 +7560,25 @@ body.gold .buttons li.comment-save-button { display: inline; }
 
         a {
             color: inherit;
+        }
+    }
+
+    div.history {
+        margin: 5px;
+        padding-top: 2px;
+        border-top: 1px solid #e2ddcf;
+        
+        p {
+            margin-bottom: 0;
+        }
+
+        .progress {
+            .gold-progress(12px);
+            opacity: 0.8;
+
+            p {
+                font-weight: normal;
+            }
         }
     }
 }
