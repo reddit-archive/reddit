@@ -179,6 +179,7 @@ class Reddit(Templated):
         self.space_compress = space_compress
         # instantiate a footer
         self.footer = RedditFooter() if footer else None
+        self.debug_footer = DebugFooter()
         self.supplied_page_classes = page_classes or []
 
         #put the sort menus at the top
@@ -661,6 +662,11 @@ class Reddit(Templated):
             classes.update(self.supplied_page_classes)
 
         return classes
+
+
+class DebugFooter(Templated):
+    pass
+
 
 class AccountActivityBox(Templated):
     def __init__(self):
