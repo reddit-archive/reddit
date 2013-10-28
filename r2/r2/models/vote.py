@@ -124,13 +124,17 @@ class VoteDetailsByThing(tdb_cassandra.View):
             raise ValueError
 
         try:
-            raw_details = details_cls._byID(thing._id36)._values()
+            raw_details = details_cls._byID(thing._id36)
+            return raw_details.decode_details()
         except tdb_cassandra.NotFound:
-            raw_details = {}
+            return []
+
+    def decode_details(self):
+        raw_details = self._values()
         details = []
         for key, value in raw_details.iteritems():
             data = Storage(json.loads(value))
-            data["_id"] = key + "_" + thing._id36
+            data["_id"] = key + "_" + self._id
             data["voter_id"] = key
             details.append(data)
         details.sort(key=lambda d: d["date"])
