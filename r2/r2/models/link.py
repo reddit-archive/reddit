@@ -1065,9 +1065,9 @@ class Comment(Thing, Printable):
                 extra_css += " border"
 
             if profilepage:
-                if not item.link._deleted or user_is_admin:
-                    link_author = authors[item.link.author_id]
-                else:
+                link_author = authors[item.link.author_id]
+                if ((item.link._deleted or link_author._deleted) and
+                        not user_is_admin):
                     link_author = DeletedUser()
                 item.link_author = WrappedUser(link_author)
 
