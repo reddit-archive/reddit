@@ -7430,7 +7430,7 @@ body.post-under-6h-old .gilded-comment-icon {
 body.gold .buttons li.comment-save-button { display: inline; }
 
 .gold-progress (@bar-height: 17px) {
-    padding: 7px 0;
+    padding: (@bar-height / 2 - 1) 0;
 
     .bar {
         border: 1px solid #dad0b3;
@@ -7568,7 +7568,7 @@ body.gold .buttons li.comment-save-button { display: inline; }
     }
 
     div.history {
-        margin: 5px;
+        margin: 5px 0;
         padding-top: 2px;
         border-top: 1px solid #e2ddcf;
         
@@ -7578,9 +7578,11 @@ body.gold .buttons li.comment-save-button { display: inline; }
 
         .progress {
             .gold-progress(12px);
+            margin: 0 7px;
             opacity: 0.8;
 
             p {
+                margin-right: 0;
                 font-weight: normal;
             }
         }
