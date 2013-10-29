@@ -641,8 +641,6 @@ class Reddit(Templated):
                     classes.add('subscriber')
                 if c.site.is_contributor(c.user):
                     classes.add('contributor')
-                if c.cname:
-                    classes.add('cname')
             if c.site.is_moderator(c.user):
                 classes.add('moderator')
             if c.user.gold:
