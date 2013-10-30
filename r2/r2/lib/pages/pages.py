@@ -1172,7 +1172,7 @@ class LinkInfoPage(Reddit):
 
     def __init__(self, link = None, comment = None,
                  link_title = '', subtitle = None, num_duplicates = None,
-                 *a, **kw):
+                 show_promote_button=False, *a, **kw):
 
         c.permalink_page = True
         expand_children = kw.get("expand_children", not bool(comment))
@@ -1220,6 +1220,7 @@ class LinkInfoPage(Reddit):
         else:
             self.num_duplicates = num_duplicates
 
+        self.show_promote_button = show_promote_button
         robots = "noindex,nofollow" if link._deleted else None
         Reddit.__init__(self, title = title, short_description=short_description, robots=robots, *a, **kw)
 
@@ -1239,6 +1240,9 @@ class LinkInfoPage(Reddit):
 
             if self.num_duplicates > 0:
                 buttons.append(info_button('duplicates', num=self.num_duplicates))
+
+        if self.show_promote_button:
+            buttons.append(NavButton(menu.promote, 'promoted', sr_path=False))
 
         toolbar = [NavMenu(buttons, base_path = "", type="tabmenu")]
 

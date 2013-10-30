@@ -1069,7 +1069,7 @@ class FrontController(RedditController, OAuth2ResourceController):
                                                    after)
         return LinkInfoPage(link=link,
                             page_classes=["promoted-traffic"],
-                            comment=None,
+                            comment=None, show_promote_button=True,
                             content=content).render()
 
     @validate(VEmployee())
