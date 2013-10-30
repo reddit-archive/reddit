@@ -389,11 +389,6 @@ class LocalizedModule(Module):
             return script_tag.format(src=static(url))
 
     @property
-    def dependencies(self):
-        return (super(LocalizedModule, self).dependencies
-               + [os.path.join(REDDIT_ROOT, "lib/strings.py")])
-
-    @property
     def outputs(self):
         for lang, unused in iter_langs():
             yield LocalizedModule.languagize_path(self.path, lang)
