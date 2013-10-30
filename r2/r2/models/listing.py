@@ -24,6 +24,7 @@ from account import *
 from link import *
 from vote import *
 from report import *
+from subreddit import DefaultSR, AllSR
 from pylons import i18n, request, g
 
 from r2.lib.wrapped import Wrapped
@@ -150,6 +151,7 @@ class SpotlightListing(Listing):
         self.srnames = '+'.join(srnames)
         self.navigable = kw.get('navigable', True)
         self.things = kw.get('organic_links', [])
+        self.show_placeholder = isinstance(c.site, (DefaultSR, AllSR))
 
     def get_items(self):
         from r2.lib.template_helpers import replace_render

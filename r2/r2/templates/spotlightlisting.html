@@ -21,7 +21,7 @@
 ###############################################################################
 
 <%namespace file="printablebuttons.html" import="ynbutton"/>
-<%namespace file="utils.html" import="tags, text_with_links"/>
+<%namespace file="utils.html" import="tags, text_with_links, classes"/>
 <%
    import json
    from r2.lib.template_helpers import static
@@ -32,7 +32,10 @@
    from babel.numbers import format_currency
 %>
 
-<div id="siteTable_organic" class="organic-listing loading${' compressed' if thing.compress_display else ''}">
+<div id="siteTable_organic" ${classes('organic-listing', 'loading',
+    'compressed' if thing.compress_display else None,
+    'show-placeholder' if thing.show_placeholder else None,
+  )}>
   %if thing.things:
     %for link in thing.things:
       ${unsafe(link.render(display=False))}
