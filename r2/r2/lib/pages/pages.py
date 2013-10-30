@@ -4455,6 +4455,10 @@ class ListingSuggestions(Templated):
         self.suggestion_type = None
         if c.default_sr:
             multis = c.user_is_loggedin and LabeledMulti.by_owner(c.user)
+
+            if multis and c.site in multis:
+                multis.remove(c.site)
+
             if multis:
                 self.suggestion_type = "multis"
                 if len(multis) <= 3:
