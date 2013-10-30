@@ -667,13 +667,11 @@ def require_https():
     if not c.secure:
         abort(ForbiddenError(errors.HTTPS_REQUIRED))
 
-def prevent_framing_and_css(allow_cname_frame=False):
+def disable_subreddit_css():
     def wrap(f):
         @wraps(f)
         def no_funny_business(*args, **kwargs):
             c.allow_styles = False
-            if not (allow_cname_frame and c.cname and not c.authorized_cname):
-                c.deny_frames = True
             return f(*args, **kwargs)
         return no_funny_business
     return wrap
@@ -818,8 +816,7 @@ class MinimalController(BaseController):
             response.headers['Cache-Control'] = 'no-cache'
             response.headers['Pragma'] = 'no-cache'
 
-        if c.deny_frames:
-            response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-Frame-Options"] = "SAMEORIGIN"
 
         # save the result of this page to the pagecache if possible.  we
         # mustn't cache things that rely on state not tracked by request_key

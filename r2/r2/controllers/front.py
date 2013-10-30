@@ -27,7 +27,7 @@ from r2.controllers.reddit_base import (
     pagecache_policy,
     PAGECACHE_POLICY,
     paginated_listing,
-    prevent_framing_and_css,
+    disable_subreddit_css,
     RedditController,
 )
 from r2 import config
@@ -127,7 +127,7 @@ class FrontController(RedditController, OAuth2ResourceController):
         else:
             return self.redirect(add_sr('/'))
 
-    @prevent_framing_and_css()
+    @disable_subreddit_css()
     @validate(VAdmin(),
               thing=VByName('article'),
               oldid36=nop('article'),
@@ -450,7 +450,7 @@ class FrontController(RedditController, OAuth2ResourceController):
     modname_splitter = re.compile('[ ,]+')
 
     @require_oauth2_scope("modlog")
-    @prevent_framing_and_css(allow_cname_frame=True)
+    @disable_subreddit_css()
     @paginated_listing(max_page_size=500, backend='cassandra')
     @validate(
         mod=nop('mod', docs={"mod": "(optional) a moderator filter"}),
@@ -679,7 +679,7 @@ class FrontController(RedditController, OAuth2ResourceController):
                           extension_handling=False).render()
 
     @base_listing
-    @prevent_framing_and_css(allow_cname_frame=True)
+    @disable_subreddit_css()
     @validate(VSrModerator(perms='posts'),
               location=nop('location'),
               only=VOneOf('only', ('links', 'comments')))
@@ -704,7 +704,7 @@ class FrontController(RedditController, OAuth2ResourceController):
                           extension_handling=extension_handling).render()
 
     @base_listing
-    @prevent_framing_and_css(allow_cname_frame=True)
+    @disable_subreddit_css()
     @validate(VSrModerator(perms='flair'),
               name=nop('name'))
     def GET_flairlisting(self, num, after, reverse, count, name):
@@ -719,7 +719,7 @@ class FrontController(RedditController, OAuth2ResourceController):
         pane = FlairPane(num, after, reverse, name, user)
         return EditReddit(content=pane, location='flair').render()
 
-    @prevent_framing_and_css(allow_cname_frame=True)
+    @disable_subreddit_css()
     @validate(location=nop('location'),
               created=VOneOf('created', ('true','false'),
                              default='false'))
@@ -1260,7 +1260,7 @@ class FormsController(RedditController):
         return BoringPage(_("reset password"),
                           content=ResetPassword(key=key, done=done)).render()
 
-    @prevent_framing_and_css()
+    @disable_subreddit_css()
     @validate(VUser(),
               location=nop("location"),
               verified=VBoolean("verified"))
@@ -1337,7 +1337,6 @@ class FormsController(RedditController):
         if not c.user.name in g.admins:
             return self.abort404()
 
-        c.deny_frames = True
         return AdminModeInterstitial(dest=dest).render()
 
     @validate(VAdmin(),

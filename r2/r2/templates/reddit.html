@@ -114,9 +114,6 @@
 <%def name="javascript()">
   <% from r2.lib import js %>
   ${unsafe(js.use('jquery', 'reddit-init'))}
-  % if c.deny_frames:
-    <script>if (window != top) top.location = window.location</script>
-  % endif
   <!--[if lt IE 9]>
     ${unsafe(js.use('html5shiv'))}
   <![endif]-->
