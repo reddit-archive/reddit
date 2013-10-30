@@ -495,6 +495,8 @@ def get_promo_traffic(thing, start, end):
 
     if imps and not clicks:
         clicks = [(imps[0][0], (0,))]
+    elif clicks and not imps:
+        imps = [(clicks[0][0], (0,))]
 
     history = traffic.zip_timeseries(imps, clicks, order="ascending")
     return history
