@@ -95,13 +95,17 @@ def get_date_range(start, end):
     return dates
 
 
-def get_campaigns_by_date(srs, start, end):
+def get_campaigns_by_date(srs, start, end, ignore=None):
     srs, is_single = tup(srs, ret_is_single=True)
     sr_names = ['' if isinstance(sr, DefaultSR) else sr.name for sr in srs]
     dates = set(get_date_range(start, end))
     q = (PromotionWeights.query()
                 .filter(PromotionWeights.sr_name.in_(sr_names))
                 .filter(PromotionWeights.date.in_(dates)))
+
+    if ignore:
+        q = q.filter(PromotionWeights.promo_idx != ignore._id)
+
     campaign_ids = {pw.promo_idx for pw in q}
     campaigns = PromoCampaign._byID(campaign_ids, data=True, return_dict=False)
     transaction_ids = {camp.trans_id for camp in campaigns
@@ -135,17 +139,13 @@ def get_campaigns_by_date(srs, start, end):
 
 def get_sold_pageviews(srs, start, end, ignore=None):
     srs, is_single = tup(srs, ret_is_single=True)
-    campaigns_by_sr_by_date = get_campaigns_by_date(srs, start, end)
-    ignore = [] if ignore is None else ignore
+    campaigns_by_sr_by_date = get_campaigns_by_date(srs, start, end, ignore)
 
     ret = {}
     for sr_name, campaigns_by_date in campaigns_by_sr_by_date.iteritems():
         ret[sr_name] = defaultdict(int)
         for date, campaigns in campaigns_by_date.iteritems():
             for camp in campaigns:
-                if ignore and camp._id in ignore:
-                    continue
-
                 daily_impressions = camp.impressions / camp.ndays
                 ret[sr_name][date] += daily_impressions
 
@@ -198,7 +198,7 @@ def get_available_pageviews(srs, start, end, datestr=False,
         return ret
 
 
-def get_oversold(sr, start, end, daily_request, ignore):
+def get_oversold(sr, start, end, daily_request, ignore=None):
     available_by_date = get_available_pageviews(sr, start, end, datestr=True,
                                                 ignore=ignore)
     oversold = {}

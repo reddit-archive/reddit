@@ -111,18 +111,17 @@ def campaign_has_oversold_error(form, campaign):
         return
 
     target = Subreddit._by_name(campaign.sr_name) if campaign.sr_name else None
-    return has_oversold_error(form, campaign._id, campaign.start_date,
+    return has_oversold_error(form, campaign, campaign.start_date,
                               campaign.end_date, campaign.bid, campaign.cpm,
                               target)
 
 
-def has_oversold_error(form, campaign_id, start, end, bid, cpm, target):
+def has_oversold_error(form, campaign, start, end, bid, cpm, target):
     ndays = (to_date(end) - to_date(start)).days
     total_request = calc_impressions(bid, cpm)
     daily_request = int(total_request / ndays)
-    ignore = [campaign_id] if campaign_id else []
     oversold = inventory.get_oversold(target or Frontpage, start, end,
-                                      daily_request, ignore)
+                                      daily_request, ignore=campaign)
 
     if oversold:
         min_daily = min(oversold.values())
@@ -656,9 +655,9 @@ class PromoteController(ListingController):
             sr = None
 
         # Check inventory
-        campaign_id = campaign._id if campaign else None
+        campaign = campaign if campaign_id36 else None
         if (not priority.inventory_override and
-            has_oversold_error(form, campaign_id, start, end, bid, cpm, sr)):
+            has_oversold_error(form, campaign, start, end, bid, cpm, sr)):
             return
 
         if campaign:
