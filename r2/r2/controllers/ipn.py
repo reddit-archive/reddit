@@ -640,7 +640,6 @@ def handle_stripe_error(fn):
         except stripe.CardError as e:
             form.set_html('.status', 
                           _('error: %(error)s') % {'error': e.message})
-            form.find('.stripe-submit').removeAttr('disabled').end()
         except stripe.InvalidRequestError as e:
             form.set_html('.status', _('invalid request'))
         except stripe.APIConnectionError as e:
@@ -650,6 +649,9 @@ def handle_stripe_error(fn):
         except stripe.StripeError as e:
             form.set_html('.status', _('error'))
             g.log.error('stripe error: %s' % e)
+        except:
+            raise
+        form.find('.stripe-submit').removeAttr('disabled').end()
     return wrapper
 
 
