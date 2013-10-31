@@ -595,13 +595,7 @@ class GoldPaymentController(RedditController):
                 g.log.info('POST_goldwebhook skipping %s' % webhook.transaction_id)
                 return
 
-            complete_gold_purchase(webhook.passthrough, webhook.transaction_id,
-                                   webhook.payer_email, webhook.payer_id,
-                                   webhook.subscr_id, webhook.pennies,
-                                   webhook.months, webhook.goldtype,
-                                   webhook.buyer, webhook.recipient,
-                                   webhook.signed, webhook.giftmessage,
-                                   webhook.comment)
+            self.complete_gold_purchase(webhook)
         elif event_type == 'failed':
             subject = _('reddit gold payment failed')
             msg = _('Your reddit gold payment has failed, contact '
@@ -632,6 +626,82 @@ class GoldPaymentController(RedditController):
             else:
                 return
             send_system_message(buyer, subject, msg)
+
+    @classmethod
+    def complete_gold_purchase(cls, webhook):
+        """After receiving a message from a payment processor, apply gold.
+
+        Shared endpoint for all payment processing systems. Validation of gold
+        purchase (sender, recipient, etc.) should happen before hitting this.
+
+        """
+
+        secret = webhook.passthrough
+        transaction_id = webhook.transaction_id
+        payer_email = webhook.payer_email
+        payer_id = webhook.payer_id
+        subscr_id = webhook.subscr_id
+        pennies = webhook.pennies
+        months = webhook.months
+        goldtype = webhook.goldtype
+        buyer = webhook.buyer
+        recipient = webhook.recipient
+        signed = webhook.signed
+        giftmessage = webhook.giftmessage
+        comment = webhook.comment
+
+        gold_recipient = recipient or buyer
+        with gold_lock(gold_recipient):
+            gold_recipient._sync_latest()
+            days = days_from_months(months)
+
+            if goldtype in ('onetime', 'autorenew'):
+                admintools.engolden(buyer, days)
+                if goldtype == 'onetime':
+                    subject = "thanks for buying reddit gold!"
+                    if g.lounge_reddit:
+                        message = strings.lounge_msg
+                    else:
+                        message = ":)"
+                else:
+                    subject = "your reddit gold has been renewed!"
+                    message = ("see the details of your subscription on "
+                               "[your userpage](/u/%s)" % buyer.name)
+
+            elif goldtype == 'creddits':
+                buyer._incr('gold_creddits', months)
+                subject = "thanks for buying creddits!"
+                message = ("To spend them, visit http://%s/gold or your "
+                           "favorite person's userpage." % (g.domain))
+
+            elif goldtype == 'gift':
+                send_gift(buyer, recipient, months, days, signed, giftmessage,
+                          comment)
+                subject = "thanks for giving reddit gold!"
+                message = "Your gift to %s has been delivered." % recipient.name
+
+            status = 'processed'
+            secret_pieces = [goldtype]
+            if goldtype == 'gift':
+                secret_pieces.append(recipient.name)
+            secret_pieces.append(secret or '')
+            secret = '-'.join(secret_pieces)
+
+            try:
+                create_claimed_gold(transaction_id, payer_email, payer_id,
+                                    pennies, days, secret, buyer._id,
+                                    c.start_time, subscr_id=subscr_id,
+                                    status=status)
+            except IntegrityError:
+                g.log.error('gold: got duplicate gold transaction')
+
+            try:
+                message = append_random_bottlecap_phrase(message)
+                send_system_message(buyer, subject, message,
+                                    distinguished='gold-auto')
+            except MessageError:
+                g.log.error('complete_gold_purchase: send_system_message error')
+
 
 def handle_stripe_error(fn):
     def wrapper(cls, form, *a, **kw):
@@ -1027,68 +1097,6 @@ def days_from_months(months):
     else:
         days = months * 31
     return days
-
-
-def complete_gold_purchase(secret, transaction_id, payer_email, payer_id,
-                           subscr_id, pennies, months, goldtype, buyer,
-                           recipient, signed, giftmessage, comment):
-    """After receiving a message from a payment processor, apply gold.
-
-    Shared endpoint for all payment processing systems. Validation of gold
-    purchase (sender, recipient, etc.) should happen before hitting this.
-
-    """
-
-    gold_recipient = recipient or buyer
-    with gold_lock(gold_recipient):
-        gold_recipient._sync_latest()
-        days = days_from_months(months)
-
-        if goldtype in ('onetime', 'autorenew'):
-            admintools.engolden(buyer, days)
-            if goldtype == 'onetime':
-                subject = "thanks for buying reddit gold!"
-                if g.lounge_reddit:
-                    message = strings.lounge_msg
-                else:
-                    message = ":)"
-            else:
-                subject = "your reddit gold has been renewed!"
-                message = ("see the details of your subscription on "
-                           "[your userpage](/u/%s)" % buyer.name)
-
-        elif goldtype == 'creddits':
-            buyer._incr('gold_creddits', months)
-            subject = "thanks for buying creddits!"
-            message = ("To spend them, visit http://%s/gold or your favorite "
-                       "person's userpage." % (g.domain))
-
-        elif goldtype == 'gift':
-            send_gift(buyer, recipient, months, days, signed, giftmessage,
-                      comment)
-            subject = "thanks for giving reddit gold!"
-            message = "Your gift to %s has been delivered." % recipient.name
-
-        status = 'processed'
-        secret_pieces = [goldtype]
-        if goldtype == 'gift':
-            secret_pieces.append(recipient.name)
-        secret_pieces.append(secret or '')
-        secret = '-'.join(secret_pieces)
-
-        try:
-            create_claimed_gold(transaction_id, payer_email, payer_id, pennies,
-                                days, secret, buyer._id, c.start_time,
-                                subscr_id=subscr_id, status=status)
-        except IntegrityError:
-            g.log.error('gold: got duplicate gold transaction')
-
-        try:
-            message = append_random_bottlecap_phrase(message)
-            send_system_message(buyer, subject, message,
-                                distinguished='gold-auto')
-        except MessageError:
-            g.log.error('complete_gold_purchase: could not send system message')
 
 
 def subtract_gold_days(user, days):
