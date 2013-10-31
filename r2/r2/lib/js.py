@@ -371,7 +371,7 @@ class LocalizedModule(Module):
         from r2.lib.template_helpers import static
 
         if g.uncompressedJS:
-            if c.lang == "en":
+            if c.lang == "en" or c.lang not in g.all_languages:
                 # in this case, the msgids *are* the translated strings and we
                 # can save ourselves the pricey step of lexing the js source
                 return Module.use(self)
