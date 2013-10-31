@@ -202,7 +202,8 @@ class RenderableCampaign():
         self.cpm = cpm
         self.sr = sr
         self.priority_name = priority.name
-        self.inventory_override = priority.inventory_override
+        self.inventory_override = ("override" if priority.inventory_override
+                                              else "")
         self.status = status
 
     @classmethod

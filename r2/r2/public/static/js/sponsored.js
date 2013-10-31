@@ -83,7 +83,7 @@ r.sponsored = {
             return {}
         }
 
-        var existingOverride = campaign_row.find('*[name="override"]').val()
+        var existingOverride = campaign_row.find('*[name="override"]').val() == "override"
         if (isOverride != existingOverride) {
             return {}
         }
