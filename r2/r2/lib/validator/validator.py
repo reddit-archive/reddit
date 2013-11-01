@@ -487,7 +487,7 @@ class VLimit(Validator):
 
     def run(self, limit):
         default = c.user.pref_numsites
-        if c.render_style in ("compact", api_type("compact")):
+        if not default or c.render_style in ("compact", api_type("compact")):
             default = self.default_limit  # TODO: ini param?
 
         if limit is None:
