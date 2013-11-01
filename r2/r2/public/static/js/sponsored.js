@@ -444,10 +444,10 @@ function cancel_edit(callback) {
 }
 
 function del_campaign($campaign_row) {
-    var link_id = $("#campaign").find('*[name="link_id"]').val(),
+    var link_id36 = $("#campaign").find('*[name="link_id36"]').val(),
         campaign_id36 = $campaign_row.data('campaign_id36')
     $.request("delete_campaign", {"campaign_id36": campaign_id36,
-                                  "link_id": link_id},
+                                  "link_id36": link_id36},
               null, true, "json", false);
     $campaign_row.children(":first").delete_table_row(check_number_of_campaigns);
 }
@@ -548,9 +548,9 @@ function create_campaign() {
 }
 
 function free_campaign($campaign_row) {
-    var link_id = $("#campaign").find('*[name="link_id"]').val(),
+    var link_id36 = $("#campaign").find('*[name="link_id36"]').val(),
         campaign_id36 = $campaign_row.data('campaign_id36')
-    $.request("freebie", {"campaign_id36": campaign_id36, "link_id": link_id},
+    $.request("freebie", {"campaign_id36": campaign_id36, "link_id36": link_id36},
               null, true, "json", false);
     $campaign_row.find(".free").fadeOut();
     return false; 

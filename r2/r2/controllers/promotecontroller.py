@@ -380,14 +380,14 @@ class PromoteController(ListingController):
         else:
             form.set_html('.status', _('refund not needed'))
 
-    @validatedForm(VSponsor('link_id'),
+    @validatedForm(VSponsor('link_id36'),
                    VModhash(),
                    VRatelimit(rate_user=True,
                               rate_ip=True,
                               prefix='create_promo_'),
                    VShamedDomain('url'),
                    username=VLength('username', 100, empty_error=None),
-                   l=VLink('link_id'),
+                   l=VLink('link_id36'),
                    title=VTitle('title'),
                    url=VUrl('url', allow_self=False, lookup=False),
                    selftext=VSelfText('text'),
@@ -542,7 +542,7 @@ class PromoteController(ListingController):
             PromotedLinkRoadblock.remove(sr, sd, ed)
             jquery.refresh()
 
-    @validatedForm(VSponsor('link_id'),
+    @validatedForm(VSponsor('link_id36'),
                    VModhash(),
                    dates=VDateRange(['startdate', 'enddate'],
                        earliest=timedelta(days=1),
@@ -550,7 +550,7 @@ class PromoteController(ListingController):
                        reference_date=promote.promo_datetime_now,
                        business_days=True,
                        sponsor_override=True),
-                   link=VLink('link_id'),
+                   link=VLink('link_id36'),
                    bid=VBid('bid', min=0, max=g.max_promote_bid,
                             coerce=False, error=errors.BAD_BID),
                    sr=VSubmitSR('sr', promotion=True),
@@ -661,9 +661,9 @@ class PromoteController(ListingController):
         rc = RenderableCampaign.from_campaigns(link, campaign)
         jquery.update_campaign(campaign._fullname, rc.render_html())
 
-    @validatedForm(VSponsor('link_id'),
+    @validatedForm(VSponsor('link_id36'),
                    VModhash(),
-                   l=VLink('link_id'),
+                   l=VLink('link_id36'),
                    campaign=VPromoCampaign("campaign_id36"))
     def POST_delete_campaign(self, form, jquery, l, campaign):
         if l and campaign:
@@ -786,8 +786,8 @@ class PromoteController(ListingController):
         """
         return "nothing to see here."
 
-    @validate(VSponsor("link_id"),
-              link=VByName('link_id'),
+    @validate(VSponsor("link_name"),
+              link=VByName('link_name'),
               file=VUploadLength('file', 500*1024),
               img_type=VImageType('img_type'))
     def POST_link_thumb(self, link=None, file=None, img_type='jpg'):

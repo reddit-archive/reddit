@@ -21,7 +21,6 @@
 ###############################################################################
 
 <%!
-  from r2.lib.utils import to36
   from r2.lib.media import thumbnail_url
   from r2.lib.template_helpers import static
   from r2.lib import promote
@@ -82,7 +81,7 @@ ${unsafe(js.use('sponsored'))}
     ${campaign_dashboard()}
 
     <div class="pretty-form" id="promo-form">
-      <input type="hidden" name="link_id" value="${to36(thing.link._id)}"/>
+      <input type="hidden" name="link_id36" value="${thing.link._id36}">
 
       <%
          trusted = c.user_is_sponsor or c.user.trusted_sponsor
@@ -202,7 +201,7 @@ ${self.javascript_setup()}
                            current_image="${getattr(link, 'thumbnail_url', '')}"
                            label="${_('upload header image:')}"
                            ask_type="True">
-        <input type="hidden" name="link_id" value="${link._fullname}" />
+        <input type="hidden" name="link_name" value="${link._fullname}" />
 
         ## overwrite the completed image function
         <script type="text/javascript">
@@ -294,7 +293,7 @@ ${self.javascript_setup()}
            class="campaign infotext rounded"
            method="post" action="/api/add_campaign">
 
-        <input type="hidden" name="link_id" value="${to36(thing.link._id)}"/>
+        <input type="hidden" name="link_id36" value="${thing.link._id36}">
 
         <%
             start_title = _("Date when your sponsored link will start running.  We start new campaigns at midnight UTC+5")
