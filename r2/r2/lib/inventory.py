@@ -43,6 +43,7 @@ from r2.models.subreddit import DefaultSR
 NDAYS_TO_QUERY = 14  # how much history to use in the estimate
 MIN_DAILY_CASS_KEY = 'min_daily_pageviews.GET_listing'
 PAGEVIEWS_REGEXP = re.compile('(.*)-GET_listing')
+INVENTORY_FACTOR = 1.00
 
 def get_predicted_by_date(sr_name, start, stop=None):
     """Return dict mapping datetime objects to predicted pageviews."""
@@ -164,7 +165,8 @@ def get_predicted_pageviews(srs, start, end):
     dates = get_date_range(start, end)
     ret = {}
     for sr in srs:
-        sr_daily_inventory = int(daily_inventory.get(sr.name, 0) * 1.00)
+        sr_daily_inventory = daily_inventory.get(sr.name, 0) * INVENTORY_FACTOR
+        sr_daily_inventory = int(sr_daily_inventory)
         ret[sr.name] = dict.fromkeys(dates, sr_daily_inventory)
 
     if is_single:
