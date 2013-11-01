@@ -5,7 +5,7 @@ r.analytics = {
     init: function() {
         // these guys are relying on the custom 'onshow' from jquery.reddit.js
         $(document).delegate(
-            '.promotedlink.promoted:not(.blob)',
+            '.organic-listing .promotedlink.promoted',
             'onshow',
             _.bind(function(ev) {
                 this.fetchTrackersOrFirePixel(ev.target)
