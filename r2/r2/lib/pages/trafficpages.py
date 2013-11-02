@@ -515,7 +515,8 @@ def is_early_campaign(campaign):
 
 def is_launched_campaign(campaign):
     now = datetime.datetime.now(g.tz).date()
-    return bool(campaign.trans_id) and campaign.start_date.date() <= now
+    return (promote.charged_or_not_needed(campaign) and
+            campaign.start_date.date() <= now)
 
 
 class PromotedLinkTraffic(Templated):
