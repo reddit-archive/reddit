@@ -293,12 +293,6 @@ def rm_traffic_viewer(thing, user):
 def traffic_viewers(thing):
     return sorted(getattr(thing, "promo_traffic_viewers", set()))
 
-def traffic_totals():
-    from r2.models import traffic
-    impressions = traffic.AdImpressionsByCodename.historical_totals("day")
-    clicks = traffic.ClickthroughsByCodename.historical_totals("day")
-    traffic_data = traffic.zip_timeseries(impressions, clicks)
-    return [(d.date(), v) for d, v in traffic_data]
 
 def new_promotion(title, url, selftext, user, ip):
     """
