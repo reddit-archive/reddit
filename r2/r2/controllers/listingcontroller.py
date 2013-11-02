@@ -248,7 +248,7 @@ class HotController(FixListing, ListingController):
                  c.user_is_loggedin and link.author_id == c.user._id)):
             self.abort403()
 
-        if not promote.is_live_on_sr(link, c.site.name):
+        if not promote.is_live_on_sr(link, c.site):
             self.abort403()
 
         res = wrap_links([link._fullname], wrapper=self.builder_wrapper,
