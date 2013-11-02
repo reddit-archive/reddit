@@ -156,15 +156,15 @@ class PromoteController(ListingController):
         return cls._live_by_subreddit(sr_names)
 
     @classmethod
-    @memoize('house_campaigns', time=60)
-    def get_house_campaigns(cls):
+    @memoize('house_link_names', time=60)
+    def get_house_link_names(cls):
         now = promote.promo_datetime_now()
         pws = PromotionWeights.get_campaigns(now)
         campaign_ids = {pw.promo_idx for pw in pws}
-        campaigns = PromoCampaign._byID(campaign_ids, data=True,
-                                        return_dict=False)
-        campaigns = [camp for camp in campaigns if not camp.priority.cpm]
-        return campaigns
+        q = PromoCampaign._query(PromoCampaign.c._id.in_(campaign_ids),
+                                 PromoCampaign.c.priority_name == 'house',
+                                 data=True)
+        return [Link._fullname_from_id36(to36(camp.link_id)) for camp in q]
 
     @property
     def menus(self):
@@ -229,9 +229,7 @@ class PromoteController(ListingController):
             elif self.sort == 'reported':
                 return queries.get_reported_links(get_promote_srid())
             elif self.sort == 'house':
-                campaigns = self.get_house_campaigns()
-                link_ids = {camp.link_id for camp in campaigns}
-                return [Link._fullname_from_id36(to36(id)) for id in link_ids]
+                return self.get_house_link_names()
             return queries.get_all_promoted_links()
         else:
             if self.sort == "future_promos":
