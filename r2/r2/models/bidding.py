@@ -433,54 +433,6 @@ class PromotionWeights(Sessionized, Base):
 
         return list(q)
 
-    @classmethod
-    def get_schedule(cls, start_date, end_date, author_id = None):
-        res = {}
-        for x in cls.get_campaigns(start_date, end_date, author_id):
-            res.setdefault((x.thing_name, x.promo_idx), []).append(x.date)
-
-        return [(k[0], k[1], min(v), max(v)) for k, v in res.iteritems()]
-
-    @classmethod
-    @memoize('promodates.bid_history', time = 10 * 60)
-    def bid_history(cls, start_date, end_date = None, account_id = None):
-        from r2.lib import promote
-        from r2.models import PromoCampaign
-        
-        if not end_date:
-            end_date = datetime.datetime.now(g.tz)
-        
-        start_date = to_date(start_date)
-        end_date   = to_date(end_date)
-        q = cls.query()
-        q = q.filter(and_(cls.date >= start_date, cls.date < end_date))
-        q = list(q)
-
-        links = Link._by_fullname([x.thing_name for x in q], data=True)
-
-        d = start_date
-        res = []
-        while d < end_date:
-            bid = 0
-            refund = 0
-            for i in q:
-                if d == i.date:
-                    l = links[i.thing_name]
-                    if (not promote.is_rejected(l) and 
-                        not promote.is_unpaid(l) and 
-                        not l._deleted):
-
-                        try:
-                            camp = PromoCampaign._byID(i.promo_idx, data=True)
-                            bid += i.bid
-                            refund += i.bid if camp.is_freebie() else 0
-                        except NotFound:
-                            g.log.error("Skipping missing PromoCampaign in "
-                                        "bidding.bid_history, campaign id: %d" 
-                                        % i.promo_idx)
-            res.append([d, bid, refund])
-            d += datetime.timedelta(1)
-        return res
 
 # do all the leg work of creating/connecting to tables
 if g.db_create_tables:
