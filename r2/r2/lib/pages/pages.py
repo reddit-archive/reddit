@@ -3759,7 +3759,8 @@ class Promotion_Summary(Templated):
             if not promote.is_accepted(link):
                 continue
 
-            link.bid = getattr(link, "bid", 0) + campaign.bid
+            link.bid = getattr(link, "bid", 0)
+            link.bid += (campaign.bid - getattr(campaign, 'refund_amount', 0))
             link.ncampaigns = getattr(link, "ncampaigns", 0) + 1
             links.add(link)
 
