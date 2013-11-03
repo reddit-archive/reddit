@@ -2166,7 +2166,6 @@ class GoldPayment(Templated):
                 paypal_buttonid = g.PAYPAL_BUTTONID_AUTORENEW_BYYEAR
 
             quantity = None
-            google_id = None
             stripe_key = None
             coinbase_button_id = None
 
@@ -2186,7 +2185,6 @@ class GoldPayment(Templated):
             summary = strings.gold_summary_onetime % dict(user=c.user.name,
                                      amount=Score.somethings(months, "month"))
 
-            google_id = g.GOOGLE_ID
             stripe_key = g.STRIPE_PUBLIC_KEY
 
         else:
@@ -2233,7 +2231,6 @@ class GoldPayment(Templated):
             else:
                 raise ValueError("wtf is %r" % goldtype)
 
-            google_id = g.GOOGLE_ID
             stripe_key = g.STRIPE_PUBLIC_KEY
 
         Templated.__init__(self, goldtype=goldtype, period=period,
@@ -2242,7 +2239,6 @@ class GoldPayment(Templated):
                            summary=summary, giftmessage=giftmessage,
                            pay_from_creddits=pay_from_creddits,
                            passthrough=passthrough,
-                           google_id=google_id,
                            comment=comment, clone_template=clone_template,
                            paypal_buttonid=paypal_buttonid,
                            stripe_key=stripe_key,

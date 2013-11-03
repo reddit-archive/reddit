@@ -53,11 +53,6 @@
     %else:
       <p>${_("Please select a payment method.")}</p>
 
-      %if thing.google_id and not thing.clone_template:
-        ## disable google wallet for gilding
-        ${self.google_button()}
-      %endif
-
       %if thing.paypal_buttonid:
         ${self.paypal_button()}
       %endif
@@ -75,10 +70,6 @@
       %endif
 
       <div class="throbber"></div>
-
-      %if not thing.google_id:
-        <div class="note">${_("Note: Google Checkout does not support ongoing subscriptions at this time.")}</div>
-      %endif
     %endif
     </div>
   </div>
@@ -93,34 +84,6 @@
     <button class="btn gold-button">${_("give")}</button>
     <span class="status"></span>
     <div class="throbber"></div>
-  </form>
-</%def>
-
-<%def name="google_button()">
-  <form action="https://checkout.google.com/api/checkout/v2/checkoutForm/Merchant/${thing.google_id}"
-        id="BB_BuyButtonForm" method="post" name="BB_BuyButtonForm"
-        class="gold-checkout google-checkout"
-        data-vendor="google-checkout"
-        target="${'_blank' if thing.clone_template else '_top'}">
-    <input name="item_name_1" type="hidden" value="creddits">
-    <input name="item_description_1" type="hidden"
-           %if thing.months != thing.quantity:
-             value="${thing.quantity} year(s) of reddit gold"
-           %else:
-             value="${thing.quantity} month(s) of reddit gold"
-           %endif
-           >
-    <input name="item_quantity_1" type="hidden"
-           value="${thing.quantity}">
-    <input name="item_price_1" type="hidden"
-           value="${thing.unit_price.decimal}">
-    <input type="hidden"
-           name="shopping-cart.items.item-1.merchant-private-item-data"
-           value="${thing.passthrough}" class="passthrough">
-    <input name="item_currency_1" type="hidden" value="USD">
-    <input name="_charset_" type="hidden" value="utf-8">
-    <input type="hidden" name="analyticsdata" value="">
-    <button class="btn gold-button">${_("Google Checkout")}</button>
   </form>
 </%def>
 
