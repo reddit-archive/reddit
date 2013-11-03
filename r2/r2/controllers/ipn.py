@@ -21,14 +21,9 @@
 ###############################################################################
 
 from datetime import datetime, timedelta
-from httplib import HTTPSConnection
-from urlparse import urlparse
-from xml.dom.minidom import Document
 
-import base64
 import json
 
-from BeautifulSoup import BeautifulStoneSoup
 from pylons import c, g, request
 from pylons.i18n import _
 from sqlalchemy.exc import IntegrityError
@@ -39,7 +34,7 @@ from r2.lib.errors import MessageError
 from r2.lib.filters import _force_unicode, _force_utf8
 from r2.lib.log import log_text
 from r2.lib.strings import strings
-from r2.lib.utils import randstr, tup
+from r2.lib.utils import randstr
 from r2.lib.validator import (
     nop,
     textresponse,
@@ -264,45 +259,6 @@ def send_gift(buyer, recipient, months, days, signed, giftmessage, comment_id):
     g.log.info("%s gifted %s to %s" % (buyer.name, amount, recipient.name))
     return comment
 
-def _google_ordernum_request(ordernums):
-    d = Document()
-    n = d.createElement("notification-history-request")
-    n.setAttribute("xmlns", "http://checkout.google.com/schema/2")
-    d.appendChild(n)
-
-    on = d.createElement("order-numbers")
-    n.appendChild(on)
-
-    for num in tup(ordernums):
-        gon = d.createElement('google-order-number')
-        gon.appendChild(d.createTextNode("%s" % num))
-        on.appendChild(gon)
-
-    return _google_checkout_post(g.GOOGLE_REPORT_URL, d.toxml("UTF-8"))
-
-def _google_charge_and_ship(ordernum):
-    d = Document()
-    n = d.createElement("charge-and-ship-order")
-    n.setAttribute("xmlns", "http://checkout.google.com/schema/2")
-    n.setAttribute("google-order-number", ordernum)
-
-    d.appendChild(n)
-
-    return _google_checkout_post(g.GOOGLE_REQUEST_URL, d.toxml("UTF-8"))
-
-
-def _google_checkout_post(url, params):
-    u = urlparse("%s%s" % (url, g.GOOGLE_ID))
-    conn = HTTPSConnection(u.hostname, u.port)
-    auth = base64.encodestring('%s:%s' % (g.GOOGLE_ID, g.GOOGLE_KEY))[:-1]
-    headers = {"Authorization": "Basic %s" % auth,
-               "Content-type": "text/xml; charset=\"UTF-8\""}
-
-    conn.request("POST", u.path, params, headers)
-    response = conn.getresponse().read()
-    conn.close()
-
-    return BeautifulStoneSoup(response)
 
 class IpnController(RedditController):
     # Used when buying gold with creddits
@@ -372,85 +328,6 @@ class IpnController(RedditController):
             gilding_message = make_comment_gold_message(comment,
                                                         user_gilded=True)
             jquery.gild_comment(comment_id, gilding_message, comment.gildings)
-
-    @textresponse(full_sn = VLength('serial-number', 100))
-    def POST_gcheckout(self, full_sn):
-        if full_sn:
-            short_sn = full_sn.split('-')[0]
-            g.log.error( "GOOGLE CHECKOUT: %s" % short_sn)
-            trans = _google_ordernum_request(short_sn)
-
-            # get the financial details
-            auth = trans.find("authorization-amount-notification")
-
-            custom = None
-            cart = trans.find("shopping-cart")
-            if cart:
-                private_item_data = cart.find("merchant-private-item-data")
-                if private_item_data:
-                    custom = str(private_item_data.contents[0])
-
-            if not auth:
-                # see if the payment was declinded
-                status = trans.findAll('financial-order-state')
-                if 'PAYMENT_DECLINED' in [x.contents[0] for x in status]:
-                    g.log.error("google declined transaction found: '%s'" %
-                                short_sn)
-                elif 'REVIEWING' not in [x.contents[0] for x in status]:
-                    g.log.error(("google transaction not found: " +
-                                 "'%s', status: %s")
-                                % (short_sn, [x.contents[0] for x in status]))
-                else:
-                    g.log.error(("google transaction status: " +
-                                 "'%s', status: %s")
-                                % (short_sn, [x.contents[0] for x in status]))
-                    if custom:
-                        payment_blob = validate_blob(custom)
-                        buyer = payment_blob['buyer']
-                        subject = _('Your gold order has been received')
-                        msg = _('Your order for reddit gold has been '
-                                'received, and will be delivered shortly. '
-                                'Please bear with us as Google Wallet '
-                                'payments can take up to an hour to '
-                                'complete.')
-                        msg = append_random_bottlecap_phrase(msg)
-
-                        try:
-                            send_system_message(buyer, subject, msg,
-                                                distinguished='gold-auto')
-                        except MessageError:
-                            g.log.error('gcheckout send_system_message failed')
-            elif auth.find("financial-order-state"
-                           ).contents[0] == "CHARGEABLE":
-                email = str(auth.find("email").contents[0])
-                payer_id = str(auth.find('buyer-id').contents[0])
-                if custom:
-                    days = None
-                    try:
-                        pennies = int(float(trans.find("order-total"
-                                                      ).contents[0])*100)
-                        months, days = months_and_days_from_pennies(pennies)
-                        if not months:
-                            raise ValueError("Bad pennies for %s" % short_sn)
-                        charged = trans.find("charge-amount-notification")
-                        if not charged:
-                            _google_charge_and_ship(short_sn)
-
-                        parameters = request.POST.copy()
-                        self.finish(parameters, "g%s" % short_sn,
-                                    email, payer_id, None,
-                                    custom, pennies, months, days)
-                    except ValueError, e:
-                        g.log.error(e)
-                else:
-                    raise ValueError("Got no custom blob for %s" % short_sn)
-
-            return (('<notification-acknowledgment ' +
-                     'xmlns="http://checkout.google.com/schema/2" ' +
-                     'serial-number="%s" />') % full_sn)
-        else:
-            g.log.error("GOOGLE CHCEKOUT: didn't work")
-            g.log.error(repr(list(request.POST.iteritems())))
 
     @textresponse(paypal_secret = VPrintable('secret', 50),
                   payment_status = VPrintable('payment_status', 20),
@@ -539,12 +416,12 @@ class IpnController(RedditController):
         buyer_id = payment_blob.get('account_id', None)
         if not buyer_id:
             dump_parameters(parameters)
-            raise ValueError("No buyer_id in IPN/GC with custom='%s'" % custom)
+            raise ValueError("No buyer_id in IPN with custom='%s'" % custom)
         try:
             buyer = Account._byID(buyer_id)
         except NotFound:
             dump_parameters(parameters)
-            raise ValueError("Invalid buyer_id %d in IPN/GC with custom='%s'"
+            raise ValueError("Invalid buyer_id %d in IPN with custom='%s'"
                              % (buyer_id, custom))
 
         if subscr_id:

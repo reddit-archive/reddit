@@ -507,7 +507,6 @@ if [ ! -f /etc/cron.d/reddit ]; then
 */2  * * * * root /sbin/start --quiet reddit-job-rising
 
 # disabled by default, uncomment if you need these jobs
-#*/2  * * * * root /sbin/start --quiet reddit-job-google_checkout
 #0    0 * * * root /sbin/start --quiet reddit-job-update_gold_users
 CRON
 fi

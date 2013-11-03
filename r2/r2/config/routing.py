@@ -310,8 +310,6 @@ def make_map():
 
     mc('/api', controller='redirect', action='redirect', dest='/dev/api')
     mc('/api/distinguish/:how', controller='api', action="distinguish")
-    # wherever this is, google has to agree.
-    mc('/api/gcheckout', controller='ipn', action='gcheckout')
     mc('/api/spendcreddits', controller='ipn', action="spendcreddits")
     mc('/api/stripecharge/gold', controller='stripe', action='goldcharge')
     mc('/api/stripewebhook/gold/:secret', controller='stripe',

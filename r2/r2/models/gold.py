@@ -34,15 +34,10 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.sql.expression import select
 from sqlalchemy.sql.functions import sum as sa_sum
 
-from xml.dom.minidom import Document
-from r2.lib.utils import tup, randstr
-from httplib import HTTPSConnection
+from r2.lib.utils import randstr
 import re
 from random import choice
-from urlparse import urlparse
 from time import time
-import socket, base64
-from BeautifulSoup import BeautifulStoneSoup
 
 from r2.lib.db.tdb_cassandra import NotFound
 from r2.models.subreddit import Frontpage
@@ -115,34 +110,6 @@ def create_unclaimed_gold (trans_id, payer_email, paying_id,
                 gold_table.c.subscr_id : subscr_id
                 },
             ).execute()
-
-# TODO: this should really live in emailer.py
-def notify_unclaimed_gold(txn_id, gold_secret, payer_email, source):
-    from r2.lib import emailer
-    url = "http://www.reddit.com/thanks/" + gold_secret
-
-    # No point in i18n, since we don't have access to the user's
-    # language info (or name) at this point
-    if gold_secret.startswith("cr_"):
-        body = """
-Thanks for buying reddit gold gift creddits! We have received your %s
-transaction, number %s.
-
-Your secret claim code is %s. To associate the
-creddits with your reddit account, just visit
-%s
-""" % (source, txn_id, gold_secret, url)
-    else:
-        body = """
-Thanks for subscribing to reddit gold! We have received your %s
-transaction, number %s.
-
-Your secret subscription code is %s. You can use it to associate this
-subscription with your reddit account -- just visit
-%s
-""" % (source, txn_id, gold_secret, url)
-
-    emailer.gold_email(body, payer_email, "reddit gold subscriptions")
 
 
 def create_claimed_gold (trans_id, payer_email, paying_id,
@@ -227,161 +194,6 @@ def check_by_email(email):
                            gold_table.c.account_id],
                           gold_table.c.payer_email == email)
     return s.execute().fetchall()
-
-# google checkout specific code:
-def new_google_transaction(trans_id):
-    # transid is in three parts: the actual ID, an identifier, and the status
-    key = trans_id.split('-')[0]
-    g.log.error("inserting %s" % key)
-    try:
-        gold_table.insert().execute(trans_id="g" + str(key),
-                                    subscr_id="",
-                                    status="uncharged",
-                                    payer_email="",
-                                    paying_id="",
-                                    pennies=0,
-                                    days=0,
-                                    secret=None,
-                                    date=datetime.now(g.tz))
-    except IntegrityError:
-        s = sa.select([gold_table.c.trans_id],
-                      sa.and_(gold_table.c.status == 'declined',
-                              gold_table.c.trans_id == "g" + str(key)))
-        res = s.execute().fetchall()
-        if res:
-            gold_table.update(gold_table.c.trans_id == "g" + str(key),
-                              values = { gold_table.c.status : 'uncharged' }
-                              ).execute()
-        else:
-            g.log.error("transaction id already exists in table: %s" % key)
-
-
-def _google_ordernum_request(ordernums):
-    d = Document()
-    n = d.createElement("notification-history-request")
-    n.setAttribute("xmlns", "http://checkout.google.com/schema/2")
-    d.appendChild(n)
-
-    on = d.createElement("order-numbers")
-    n.appendChild(on)
-
-    for num in tup(ordernums):
-        gon = d.createElement('google-order-number')
-        gon.appendChild(d.createTextNode("%s" % num))
-        on.appendChild(gon)
-
-    return _google_checkout_post(g.GOOGLE_REPORT_URL, d.toxml("UTF-8"))
-
-def _google_charge_and_ship(ordernum):
-    d = Document()
-    n = d.createElement("charge-and-ship-order")
-    n.setAttribute("xmlns", "http://checkout.google.com/schema/2")
-    n.setAttribute("google-order-number", ordernum)
-
-    d.appendChild(n)
-
-    return _google_checkout_post(g.GOOGLE_REQUEST_URL, d.toxml("UTF-8"))
-
-
-def _google_checkout_post(url, params):
-    u = urlparse("%s%s" % (url, g.GOOGLE_ID))
-    conn = HTTPSConnection(u.hostname, u.port)
-    auth = base64.encodestring('%s:%s' % (g.GOOGLE_ID, g.GOOGLE_KEY))[:-1]
-    headers = {"Authorization": "Basic %s" % auth,
-               "Content-type": "text/xml; charset=\"UTF-8\""}
-
-    conn.request("POST", u.path, params, headers)
-    response = conn.getresponse().read()
-    conn.close()
-
-    return BeautifulStoneSoup(response)
-
-
-def process_google_transaction(trans_id):
-    trans = _google_ordernum_request(trans_id)
-
-    # get the financial details
-    auth = trans.find("authorization-amount-notification")
-    
-    # creddits?
-    is_creddits = False
-    cart = trans.find("shopping-cart")
-    if cart:
-        for item in cart.findAll("item-name"):
-            if "creddit" in item.contents[0]:
-                is_creddits = True
-                break
-
-    if not auth:
-        # see if the payment was declinded
-        status = trans.findAll('financial-order-state')
-        if 'PAYMENT_DECLINED' in [x.contents[0] for x in status]:
-            g.log.error("google declined transaction found: '%s'" % trans_id)
-            rp = gold_table.update(
-                sa.and_(gold_table.c.status == 'uncharged',
-                        gold_table.c.trans_id == 'g' + str(trans_id)),
-                values = { gold_table.c.status : "declined" }).execute()
-        elif 'REVIEWING' not in [x.contents[0] for x in status]:
-            g.log.error("google transaction not found: '%s', status: %s"
-                        % (trans_id, [x.contents[0] for x in status]))
-    elif auth.find("financial-order-state").contents[0] == "CHARGEABLE":
-        email = str(auth.find("email").contents[0])
-        payer_id = str(auth.find('buyer-id').contents[0])
-        days = None
-        try:
-            pennies = int(float(auth.find("order-total").contents[0])*100)
-            if is_creddits:
-                secret = "cr_"
-                if pennies >= g.gold_year_price.pennies:
-                    days = 12 * 31 * int(pennies / g.gold_year_price.pennies)
-                else:
-                    days = 31 * int(pennies / g.gold_month_price.pennies)
-            elif pennies == g.gold_year_price.pennies:
-                secret = "ys_"
-                days = 366
-            elif pennies == g.gold_month_price.pennies:
-                secret = "m_"
-                days = 31
-            else:
-                g.log.error("Got %d pennies via Google?" % pennies)
-                rp = gold_table.update(
-                    sa.and_(gold_table.c.status == 'uncharged',
-                            gold_table.c.trans_id == 'g' + str(trans_id)),
-                    values = { gold_table.c.status : "strange",
-                               gold_table.c.pennies : pennies,
-                               gold_table.c.payer_email : email,
-                               gold_table.c.paying_id : payer_id
-                               }).execute()
-                return
-        except ValueError:
-            g.log.error("no amount in google checkout for transid %s"
-                     % trans_id)
-            return
-
-        secret += randstr(10)
-
-        # no point charging twice.  If we are in this func, the db doesn't
-        # know it was already charged so we still have to update and email
-        charged = trans.find("charge-amount-notification")
-        if not charged:
-            _google_charge_and_ship(trans_id)
-
-        create_unclaimed_gold("g" + str(trans_id),
-                              email, payer_id, pennies, days, str(secret),
-                              datetime.now(g.tz))
-
-        notify_unclaimed_gold(trans_id, secret, email, "Google")
-
-
-def process_uncharged():
-    s = sa.select([gold_table.c.trans_id],
-                 gold_table.c.status == 'uncharged')
-    res = s.execute().fetchall()
-
-    for trans_id, in res:
-        if trans_id.startswith('g'):
-            trans_id = trans_id[1:]
-            process_google_transaction(trans_id)
 
 
 def retrieve_gold_transaction(transaction_id):

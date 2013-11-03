@@ -13,7 +13,6 @@ r.analytics = {
         )
 
         $('.promotedlink.promoted:visible').trigger('onshow')
-        $('form.google-checkout').on('submit', this.fireGoogleCheckout)
         $('form.gold-checkout').one('submit', this.fireGoldCheckout)
     },
 
@@ -152,15 +151,6 @@ r.analytics = {
           // GA is loaded; form will submit via the _gaq.push'ed function
           event.preventDefault()
         }
-    },
-    
-    fireGoogleCheckout: function(event) {
-        var form = $(this)
-        form.parent().addClass('working')
-        _gaq.push(function(){
-          var pageTracker = _gaq._getAsyncTracker()
-          setUrchinInputCode(pageTracker)
-        })
     }
 }
 
