@@ -603,14 +603,14 @@ def promote_link(link, campaign):
         emailer.live_promo(link)
 
 
-def make_daily_promotions(offset=0):
+def make_daily_promotions():
     # charge campaigns so they can go live
     charge_pending(offset=0)
     charge_pending(offset=1)
 
     # promote links and record ids of promoted links
     link_ids = set()
-    for campaign, link in get_scheduled_promos(offset):
+    for campaign, link in get_scheduled_promos(offset=0):
         link_ids.add(link._id)
         promote_link(link, campaign)
 
@@ -622,8 +622,8 @@ def make_daily_promotions(offset=0):
         emailer.finished_promo(link)
 
     _mark_promos_updated()
-    finalize_completed_campaigns(daysago=offset+1)
-    hooks.get_hook('promote.make_daily_promotions').call(offset=offset)
+    finalize_completed_campaigns(daysago=1)
+    hooks.get_hook('promote.make_daily_promotions').call(offset=0)
 
 
 def finalize_completed_campaigns(daysago=1):
