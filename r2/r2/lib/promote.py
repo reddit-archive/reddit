@@ -723,14 +723,7 @@ def set_live_promotions(weights):
 # Gotcha: even if links are scheduled and authorized, they won't be added to 
 # current promotions until they're actually charged, so make sure to call
 # charge_pending() before make_daily_promotions()
-def make_daily_promotions(offset=0, test=False):
-    """
-    Arguments:
-      offset - number of days after today to get the schedule for
-      test - if True, new schedule will be generated but not launched
-    Raises Exception with list of campaigns that had errors if there were any
-    """
-
+def make_daily_promotions(offset=0):
     scheduled_adweights, error_campaigns = get_scheduled(offset)
     current_adweights_byid = get_live_promotions([LiveAdWeights.ALL_ADS])
     current_adweights = current_adweights_byid[LiveAdWeights.ALL_ADS]
@@ -750,12 +743,8 @@ def make_daily_promotions(offset=0, test=False):
     for link_name in expired_links:
         link = links[link_name]
         if is_promoted(link):
-            if test:
-                print "unpromote", link_name
-            else:
-                # update the query queue
-                set_promote_status(link, PROMOTE_STATUS.finished)
-                emailer.finished_promo(link)
+            set_promote_status(link, PROMOTE_STATUS.finished)
+            emailer.finished_promo(link)
 
     by_srid = defaultdict(list)
     for adweight in scheduled_adweights:
@@ -770,27 +759,18 @@ def make_daily_promotions(offset=0, test=False):
             sr_over_18 = False
 
         if sr_over_18:
-            if test:
-                print "over18", link._fullname
-            else:
-                link.over_18 = True
-                link._commit()
+            link.over_18 = True
+            link._commit()
 
         if is_accepted(link) and not is_promoted(link):
-            if test:
-                print "promote2", link._fullname
-            else:
-                # update the query queue
-                set_promote_status(link, PROMOTE_STATUS.promoted)
-                emailer.live_promo(link)
+            # update the query queue
+            set_promote_status(link, PROMOTE_STATUS.promoted)
+            emailer.live_promo(link)
 
         by_srid[sr_id].append(adweight)
 
-    if not test:
-        set_live_promotions(by_srid)
-        _mark_promos_updated()
-    else:
-        print by_srid
+    set_live_promotions(by_srid)
+    _mark_promos_updated()
 
     finalize_completed_campaigns(daysago=offset+1)
     hooks.get_hook('promote.make_daily_promotions').call(offset=offset)
