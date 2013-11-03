@@ -376,41 +376,30 @@ def free_campaign(link, campaign, user):
 
 def edit_campaign(link, campaign, dates, bid, cpm, sr, priority):
     sr_name = sr.name if sr else '' # empty string means target to all
-    try:
-        # if the bid amount changed, cancel any pending transactions
-        if campaign.bid != bid:
-            void_campaign(link, campaign)
 
-        # update the schedule
-        PromotionWeights.reschedule(link, campaign._id, sr_name,
-                                    dates[0], dates[1], bid)
+    # if the bid amount changed, cancel any pending transactions
+    if campaign.bid != bid:
+        void_campaign(link, campaign)
 
-        # update values in the db
-        campaign.update(dates[0], dates[1], bid, cpm, sr_name,
-                        campaign.trans_id, priority, commit=True)
+    # update the schedule
+    PromotionWeights.reschedule(link, campaign._id, sr_name,
+                                dates[0], dates[1], bid)
 
-        if campaign.priority.cpm:
-            # record the transaction
-            text = 'updated campaign %s. (bid: %0.2f)' % (campaign._id, bid)
-            PromotionLog.add(link, text)
+    # update values in the db
+    campaign.update(dates[0], dates[1], bid, cpm, sr_name,
+                    campaign.trans_id, priority, commit=True)
 
-            # make it a freebie, if applicable
-            author = Account._byID(link.author_id, True)
-            if getattr(author, "complimentary_promos", False):
-                free_campaign(link, campaign, c.user)
+    if campaign.priority.cpm:
+        # record the transaction
+        text = 'updated campaign %s. (bid: %0.2f)' % (campaign._id, bid)
+        PromotionLog.add(link, text)
 
-        hooks.get_hook('campaign.edit').call(link=link, campaign=campaign)
+        # make it a freebie, if applicable
+        author = Account._byID(link.author_id, True)
+        if getattr(author, "complimentary_promos", False):
+            free_campaign(link, campaign, c.user)
 
-    except Exception, e: # record error and rethrow 
-        g.log.error("Failed to update PromoCampaign %s on link %d. Error was: %r" %
-                    (campaign._id, link._id, e))
-        try: # wrapped in try/except so orig error won't be lost if commit fails
-            text = 'update FAILED. (campaign: %s, bid: %.2f)' % (campaign._id,
-                                                                 bid)
-            PromotionLog.add(link, text)
-        except:
-            pass
-        raise e
+    hooks.get_hook('campaign.edit').call(link=link, campaign=campaign)
 
 
 def delete_campaign(link, campaign):
@@ -585,53 +574,36 @@ def charged_or_not_needed(campaign):
 
 
 def get_scheduled(offset=0):
-    """
-    Arguments:
-      offset - number of days after today you want the schedule for
-    Returns:
-      {'adweights':[], 'error_campaigns':[]}
-      -adweights is a list of Adweight objects used in the schedule
-      -error_campaigns is a list of (campaign_id, error_msg) tuples if any 
-        exceptions were raised or an empty list if there were none
-      Note: campaigns in error_campaigns will not be included in by_sr
-
-    """
     campaigns = []
-    error_campaigns = []
     for l, campaign, weight in accepted_campaigns(offset=offset):
-        try:
-            if charged_or_not_needed(campaign):
-                campaigns.append(campaign)
-        except Exception, e: # could happen if campaign things have corrupt data
-            error_campaigns.append((campaign._id, e))
-    return campaigns, error_campaigns
+        if charged_or_not_needed(campaign):
+            campaigns.append(campaign)
+    return campaigns
 
 
 def charge_pending(offset=1):
     for l, camp, weight in accepted_campaigns(offset=offset):
         user = Account._byID(l.author_id)
-        try:
-            if charged_or_not_needed(camp):
-                continue
 
-            charge_succeeded = authorize.charge_transaction(user, camp.trans_id,
-                                                            camp._id)
+        if charged_or_not_needed(camp):
+            continue
 
-            if not charge_succeeded:
-                continue
+        charge_succeeded = authorize.charge_transaction(user, camp.trans_id,
+                                                        camp._id)
 
-            hooks.get_hook('promote.new_charge').call(link=l, campaign=camp)
+        if not charge_succeeded:
+            continue
 
-            if is_promoted(l):
-                emailer.queue_promo(l, camp.bid, camp.trans_id)
-            else:
-                set_promote_status(l, PROMOTE_STATUS.pending)
-                emailer.queue_promo(l, camp.bid, camp.trans_id)
-            text = ('auth charge for campaign %s, trans_id: %d' %
-                    (camp._id, camp.trans_id))
-            PromotionLog.add(l, text)
-        except:
-            print "Error on %s, campaign %s" % (l, camp._id)
+        hooks.get_hook('promote.new_charge').call(link=l, campaign=camp)
+
+        if is_promoted(l):
+            emailer.queue_promo(l, camp.bid, camp.trans_id)
+        else:
+            set_promote_status(l, PROMOTE_STATUS.pending)
+            emailer.queue_promo(l, camp.bid, camp.trans_id)
+        text = ('auth charge for campaign %s, trans_id: %d' %
+                (camp._id, camp.trans_id))
+        PromotionLog.add(l, text)
 
 
 def scheduled_campaigns_by_link(l, date=None):
@@ -650,13 +622,9 @@ def scheduled_campaigns_by_link(l, date=None):
     # Check authorize
     accepted = []
     for campaign_id in campaigns:
-        try:
-            campaign = PromoCampaign._byID(campaign_id, data=True)
-            if charged_or_not_needed(campaign):
-                accepted.append(campaign_id)
-        except NotFound:
-            g.log.error("PromoCampaign %d scheduled to run on %s not found." %
-                          (campaign_id, date.strftime("%Y-%m-%d")))
+        campaign = PromoCampaign._byID(campaign_id, data=True)
+        if charged_or_not_needed(campaign):
+            accepted.append(campaign_id)
 
     return accepted
 
@@ -665,7 +633,7 @@ def scheduled_campaigns_by_link(l, date=None):
 # current promotions until they're actually charged, so make sure to call
 # charge_pending() before make_daily_promotions()
 def make_daily_promotions(offset=0):
-    campaigns, error_campaigns = get_scheduled(offset)
+    campaigns = get_scheduled(offset)
     link_ids = {camp.link_id for camp in campaigns}
     links = Link._byID(link_ids, data=True)
     srs = Subreddit._by_name([camp.sr_name for camp in campaigns.itervalues()
@@ -694,12 +662,6 @@ def make_daily_promotions(offset=0):
     _mark_promos_updated()
     finalize_completed_campaigns(daysago=offset+1)
     hooks.get_hook('promote.make_daily_promotions').call(offset=offset)
-
-    # after launching as many campaigns as possible, raise an exception to 
-    #   report any error campaigns. (useful for triggering alerts in irc)
-    if error_campaigns:
-        raise Exception("Some scheduled campaigns could not be added to daily "
-                        "promotions: %r" % error_campaigns)
 
 
 def finalize_completed_campaigns(daysago=1):
