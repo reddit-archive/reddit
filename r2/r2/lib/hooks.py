@@ -43,6 +43,19 @@ class Hook(object):
         """
         return [handler(**kwargs) for handler in self.handlers]
 
+    def call_until_return(self, **kwargs):
+        """Call handlers until one returns a non-None value.
+
+        As with call, handlers are called in the same order they are
+        registered.  Only the return value of the first non-None handler is
+        returned.
+
+        """
+        for handler in self.handlers:
+            ret = handler(**kwargs)
+            if ret is not None:
+                return ret
+
 
 def get_hook(name):
     """Return the named hook `name` creating it if necessary."""

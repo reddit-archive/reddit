@@ -50,6 +50,7 @@ from r2.models.wiki import WikiPage
 from r2.lib.merge import ConflictException
 from r2.lib.cache import CL_ONE
 from r2.lib.contrib.rcssmin import cssmin
+from r2.lib import hooks
 from r2.models.query_cache import MergedCachedQuery
 import pycassa
 
@@ -423,6 +424,12 @@ class Subreddit(Thing, Printable, BaseSite):
     def can_comment(self, user):
         if c.user_is_admin:
             return True
+
+        override = hooks.get_hook("subreddit.can_comment").call_until_return(
+                                                            sr=self, user=user)
+
+        if override is not None:
+            return override
         elif self.is_banned(user):
             return False
         elif self.type == 'gold_restricted' and user.gold:

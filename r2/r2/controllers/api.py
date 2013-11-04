@@ -1355,6 +1355,9 @@ class ApiController(RedditController, OAuth2ResourceController):
             if not link.promoted and parent_age.days > g.REPLY_AGE_LIMIT:
                 c.errors.add(errors.TOO_OLD, field = "parent")
 
+            hooks.get_hook("comment.validate").call(sr=sr, link=link,
+                           parent_comment=parent_comment)
+
         #remove the ratelimit error if the user's karma is high
         if not should_ratelimit:
             c.errors.remove((errors.RATELIMIT, 'ratelimit'))
@@ -1549,6 +1552,8 @@ class ApiController(RedditController, OAuth2ResourceController):
 
         if not thing or thing._deleted:
             return
+
+        hooks.get_hook("vote.validate").call(thing=thing)
 
         if vote_info == 'rejected':
             reject_vote(thing)
