@@ -244,7 +244,7 @@
   					${utils.inline_radio_type('spam_links', 'low', _("low"),
   						checked=thing.site and thing.site.spam_links == 'low')}
   					${utils.inline_radio_type('spam_links', 'high', _("high"),
-  						checked=thing.site and thing.site.spam_links == 'high')}
+  						checked=not thing.site or thing.site.spam_links == 'high')}
   					${utils.inline_radio_type('spam_links', 'all', _("all"),
   						checked=thing.site and thing.site.spam_links == 'all')}
 	  			</td>
@@ -255,7 +255,7 @@
 	  				${utils.inline_radio_type('spam_selfposts', 'low', _("low"),
   						checked=thing.site and thing.site.spam_selfposts == 'low')}
   					${utils.inline_radio_type('spam_selfposts', 'high', _("high"),
-  						checked=thing.site and thing.site.spam_selfposts == 'high')}
+  						checked=not thing.site or thing.site.spam_selfposts == 'high')}
   					${utils.inline_radio_type('spam_selfposts', 'all', _("all"),
   						checked=thing.site and thing.site.spam_selfposts == 'all')}
 	  			</td>
@@ -264,7 +264,7 @@
 	  			<td>${_("comments")}:</td>
 	  			<td>
 	  				${utils.inline_radio_type('spam_comments', 'low', _("low"),
-  						checked=thing.site and thing.site.spam_comments == 'low')}
+  						checked=not thing.site or thing.site.spam_comments == 'low')}
   					${utils.inline_radio_type('spam_comments', 'high', _("high"),
   						checked=thing.site and thing.site.spam_comments == 'high')}
   					${utils.inline_radio_type('spam_comments', 'all', _("all"),
