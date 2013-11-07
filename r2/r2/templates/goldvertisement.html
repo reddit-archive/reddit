@@ -26,7 +26,11 @@
 
 <div class="goldvertisement">
   <div class="inner">
-    <h2>${_("daily reddit gold goal")}</h2>
+    <h2
+    % if hasattr(thing, "goal_today"):
+      title="Goal = $${'%0.2f' % thing.goal_today}"
+    % endif
+    >${_("daily reddit gold goal")}</h2>
 
     <div class="progress">
       <p>${format_percent(thing.percent_filled / 100.0, locale=c.locale)}</p>
@@ -57,7 +61,11 @@
       (${thing.time_left_today} from now).</p>
 
       <div class="history">
-        <p>${_("Yesterday's reddit gold goal")}</p>
+        <p
+        % if hasattr(thing, "goal_yesterday"):
+          title="Goal = $${'%0.2f' % thing.goal_yesterday}"
+        % endif
+        >${_("Yesterday's reddit gold goal")}</p>
 
         <div class="progress">
           <p>${format_percent(thing.percent_filled_yesterday / 100.0, locale=c.locale)}</p>

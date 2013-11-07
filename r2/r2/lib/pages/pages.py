@@ -4294,6 +4294,9 @@ class Goldvertisement(Templated):
                                              revenue_goal_yesterday) * 100)
         self.hours_paid = ServerSecondsBar.current_value_of_month()
         self.time_left_today = timeuntil(end_time, precision=60)
+        if c.user.employee:
+            self.goal_today = revenue_goal / 100.0
+            self.goal_yesterday = revenue_goal_yesterday / 100.0
         Templated.__init__(self)
 
 class LinkCommentsSettings(Templated):
