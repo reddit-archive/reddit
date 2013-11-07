@@ -114,6 +114,13 @@ r.analytics = {
         save_href(thumb)
         thumb.attr('href', click_url)
 
+        // also do the "comments" link for selftext promos
+        if ($el.hasClass('self')) {
+            var comments = $el.find('a.comments')
+            save_href(comments)
+            comments.attr('href', click_url)
+        }
+
         $el.data('trackerFired', true)
     },
 
