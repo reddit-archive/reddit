@@ -69,6 +69,6 @@ def sgm(cache, keys, miss_fn, str prefix='', int time=0, stale=False, found_fn=N
         calculated_to_cache = {}
         for k, v in calculated.iteritems():
             calculated_to_cache[str(k)] = v
-        cache.set_multi(calculated_to_cache, prefix=prefix)
+        cache.set_multi(calculated_to_cache, prefix=prefix, time=time)
 
     return ret
