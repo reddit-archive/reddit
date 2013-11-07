@@ -40,7 +40,7 @@ from r2.lib.db.operators import lower, or_, and_, desc
 from r2.lib.errors import UserRequiredException
 from r2.lib.memoize import memoize
 from r2.lib.permissions import ModeratorPermissionSet
-from r2.lib.utils import tup, interleave_lists, last_modified_multi, flatten
+from r2.lib.utils import tup, last_modified_multi
 from r2.lib.utils import timeago, summarize_markdown
 from r2.lib.cache import sgm
 from r2.lib.strings import strings, Score

@@ -913,12 +913,6 @@ def common_subdomain(domain1, domain2):
                 return d
     return ""
 
-def interleave_lists(*args):
-    max_len = max(len(x) for x in args)
-    for i in xrange(max_len):
-        for a in args:
-            if i < len(a):
-                yield a[i]
 
 def link_from_url(path, filter_spam = False, multiple = True):
     from pylons import c
