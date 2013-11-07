@@ -24,7 +24,7 @@ from r2.lib.db.tdb_sql import make_metadata, index_str, create_table
 
 from pylons import g, c
 from pylons.i18n import _
-from datetime import datetime
+from datetime import datetime, timedelta
 import sqlalchemy as sa
 from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.ext.declarative import declarative_base
@@ -48,6 +48,7 @@ from r2.models.wiki import WikiPage
 from r2.lib.memoize import memoize
 
 gold_bonus_cutoff = datetime(2010,7,27,0,0,0,0,g.tz)
+gold_static_goal_cutoff = datetime(2013, 11, 7, tzinfo=g.display_tz)
 
 ENGINE_NAME = 'authorize'
 
@@ -455,3 +456,31 @@ def gold_revenue_on(date):
                 .where(sa.func.date_trunc('day', gold_table.c.date) == date))
     rows = ENGINE.execute(query)
     return rows.fetchone()[0] or 0
+
+
+@memoize("gold-goal")
+def gold_goal_on(date):
+    """Returns the gold revenue goal (in pennies) for a given date."""
+    # handle the old static goal
+    if date <= gold_static_goal_cutoff.date():
+        return g.live_config["gold_revenue_goal"]
+
+    # fetch the revenues from the previous 7 days
+    previous_date = date - timedelta(days=1)
+    previous_revenues = []
+    while previous_date >= date - timedelta(days=7):
+        previous_revenues.append(gold_revenue_on(previous_date))
+        previous_date -= timedelta(days=1)
+
+    # throw out highest and lowest values and set goal to 110% of average
+    previous_revenues = sorted(previous_revenues)[1:-1]
+    average_revenue = sum(previous_revenues) / float(len(previous_revenues))
+    goal = average_revenue * 1.1
+
+    # don't let this be more than 20% different from the previous goal
+    previous_goal = gold_goal_on(date - timedelta(days=1))
+    goal = min(previous_goal * 1.2, goal)
+    goal = max(previous_goal * 0.8, goal)
+
+    return round(goal, 0)
+

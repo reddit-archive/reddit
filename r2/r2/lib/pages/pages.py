@@ -34,6 +34,7 @@ from r2.models.gold import (
     gold_payments_by_user,
     gold_received_by_user,
     days_to_pennies,
+    gold_goal_on,
     gold_revenue_on,
 )
 from r2.models.promo import (
@@ -4285,10 +4286,12 @@ class Goldvertisement(Templated):
         revenue_today = gold_revenue_on(today)
         yesterday = today - datetime.timedelta(days=1)
         revenue_yesterday = gold_revenue_on(yesterday)
-        revenue_goal = g.live_config["gold_revenue_goal"]
+        revenue_goal = gold_goal_on(today)
+        revenue_goal_yesterday = gold_goal_on(yesterday)
 
         self.percent_filled = int((revenue_today / revenue_goal) * 100)
-        self.percent_filled_yesterday = int((revenue_yesterday / revenue_goal) * 100)
+        self.percent_filled_yesterday = int((revenue_yesterday /
+                                             revenue_goal_yesterday) * 100)
         self.hours_paid = ServerSecondsBar.current_value_of_month()
         self.time_left_today = timeuntil(end_time, precision=60)
         Templated.__init__(self)
