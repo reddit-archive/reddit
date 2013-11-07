@@ -355,6 +355,26 @@ class CleanupMiddleware(object):
         return self.app(environ, custom_start_response)
 
 
+class SafetyMiddleware(object):
+    """Clean up any attempts at response splitting in headers."""
+
+    has_bad_characters = re.compile("[\r\n]")
+    sanitizer = re.compile("[\r\n]+[ \t]*")
+
+    def __init__(self, app):
+        self.app = app
+
+    def __call__(self, environ, start_response):
+        def safe_start_response(status, headers, exc_info=None):
+            sanitized = []
+            for name, value in headers:
+                if self.has_bad_characters.search(value):
+                    value = self.sanitizer.sub("", value)
+                sanitized.append((name, value))
+            return start_response(status, sanitized, exc_info)
+        return self.app(environ, safe_start_response)
+
+
 class RedditApp(PylonsApp):
     def __init__(self, *args, **kwargs):
         super(RedditApp, self).__init__(*args, **kwargs)
@@ -455,5 +475,7 @@ def make_app(global_conf, full_stack=True, **app_conf):
     if not g.config['uncompressedJS'] and g.config['debug']:
         static_fallback = StaticTestMiddleware(static_app, g.config['static_path'], g.config['static_domain'])
         app = Cascade([static_fallback, app])
+
+    app = SafetyMiddleware(app)
 
     return app
