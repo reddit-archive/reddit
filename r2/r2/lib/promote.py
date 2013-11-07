@@ -764,7 +764,10 @@ def get_live_promotions(sr_names):
 def lottery_promoted_links(sr_names, n=10):
     """Run weighted_lottery to order and choose a subset of promoted links."""
     promo_tuples = get_live_promotions(sr_names)
-    weights = {p: p.weight for p in promo_tuples if p.weight}
+
+    # house priority campaigns have weight of 0, use some small value
+    # so they'll show if there are no other campaigns
+    weights = {p: p.weight or 0.001 for p in promo_tuples}
     selected = []
     while weights and len(selected) < n:
         s = weighted_lottery(weights)
