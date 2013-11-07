@@ -1517,3 +1517,11 @@ def parse_ini_file(config_file):
     parser.optionxform = str  # ensure keys are case-sensitive as expected
     parser.readfp(config_file)
     return parser
+
+
+def fuzz_activity(count):
+    """Add some jitter to an activity metric to maintain privacy."""
+    # decay constant is e**(-x / 60)
+    decay = math.exp(float(-count) / 60)
+    jitter = round(5 * decay)
+    return count + random.randint(0, jitter)

@@ -40,7 +40,7 @@ from r2.lib.db.operators import lower, or_, and_, desc
 from r2.lib.errors import UserRequiredException
 from r2.lib.memoize import memoize
 from r2.lib.permissions import ModeratorPermissionSet
-from r2.lib.utils import tup, last_modified_multi
+from r2.lib.utils import tup, last_modified_multi, fuzz_activity
 from r2.lib.utils import timeago, summarize_markdown
 from r2.lib.cache import sgm
 from r2.lib.strings import strings, Score
@@ -53,8 +53,6 @@ from r2.lib.contrib.rcssmin import cssmin
 from r2.lib import hooks
 from r2.models.query_cache import MergedCachedQuery
 import pycassa
-
-import math
 
 from r2.lib.utils import set_last_modified
 from r2.models.wiki import WikiPage
@@ -403,10 +401,7 @@ class Subreddit(Thing, Printable, BaseSite):
             fuzzed = True
             cached_count = g.cache.get(key)
             if not cached_count:
-                # decay constant is e**(-x / 60)
-                decay = math.exp(float(-count) / 60)
-                jitter = round(5 * decay)
-                count = count + random.randint(0, jitter)
+                count = fuzz_activity(count)
                 g.cache.set(key, count, time=5*60)
             else:
                 count = cached_count
