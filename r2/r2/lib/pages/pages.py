@@ -3764,6 +3764,8 @@ class Promotion_Summary(Templated):
             link.ncampaigns = getattr(link, "ncampaigns", 0) + 1
             links.add(link)
 
+            # calculate portion of this campaign's budget to include, assuming
+            # even delivery
             bid_per_day = campaign.bid / campaign.ndays
             sd = max(start_date, campaign.start_date.date())
             ed = min(end_date, campaign.end_date.date())
