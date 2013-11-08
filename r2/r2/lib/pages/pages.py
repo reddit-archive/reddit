@@ -4163,7 +4163,7 @@ class PromoteReport(Templated):
         def keep_camp(camp):
             return not (camp.start_date.date() >= self.end.date() or
                         camp.end_date.date() <= self.start.date() or
-                        not camp.trans_id)
+                        not promote.charged_or_not_needed(camp))
 
         campaigns = [camp for camp in campaigns if keep_camp(camp)]
         fp_imps, sr_imps = self.get_imps(campaigns, self.start, self.end)
