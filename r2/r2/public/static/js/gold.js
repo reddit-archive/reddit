@@ -132,7 +132,7 @@ r.gold = {
             cardCountry = form.find('.card-address_country').val(),
             cardZip = form.find('.card-address_zip').val()
 
-        var stripeResponseHandler = function(status, response) {
+        var stripeResponseHandler = function(statusCode, response) {
             if (response.error) {
                 submit.removeAttr('disabled')
                 status.html(response.error.message)
