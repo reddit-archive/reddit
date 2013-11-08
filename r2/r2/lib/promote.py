@@ -30,7 +30,6 @@ import time
 from pylons import g, c
 from pylons.i18n import ungettext
 
-from r2.lib.wrapped import Wrapped
 from r2.lib import (
     amqp,
     authorize,
@@ -235,10 +234,6 @@ def get_renderable_campaigns(link, campaigns):
         r = r[0]
     return r
 
-def wrap_promoted(link):
-    if not isinstance(link, Wrapped):
-        link = Wrapped(link)
-    return link
 
 # These could be done with relationships, but that seeks overkill as
 # we never query based on user and only check per-thing
@@ -306,12 +301,6 @@ def new_promotion(title, url, selftext, user, ip):
     # notify of new promo
     emailer.new_promo(l)
     return l
-
-def sponsor_wrapper(link):
-    w = Wrapped(link)
-    w.render_class = PromotedLink
-    w.rowstyle = "promoted link"
-    return w
 
 
 def get_transactions(link, campaigns):

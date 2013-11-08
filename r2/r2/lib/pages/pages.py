@@ -3563,7 +3563,7 @@ class PromoteLinkForm(Templated):
 
         self.subreddit_selector = SubredditSelector()
 
-        self.link = promote.wrap_promoted(link)
+        self.link = link
         self.listing = listing
         campaigns = PromoCampaign._by_link(link._id)
         self.campaigns = promote.get_renderable_campaigns(link, campaigns)
@@ -3598,8 +3598,7 @@ class RefundPage(Reddit):
     def __init__(self, link, campaign):
         self.link = link
         self.campaign = campaign
-        self.listing = wrap_links(link, wrapper=promote.sponsor_wrapper,
-                                  skip=False)
+        self.listing = wrap_links(link, skip=False)
         billable_impressions = promote.get_billable_impressions(campaign)
         billable_amount = promote.get_billable_amount(campaign,
                                                       billable_impressions)
@@ -3783,7 +3782,7 @@ class MediaEmbedBody(CachedTemplate):
 
 class PaymentForm(Templated):
     def __init__(self, link, campaign, **kw):
-        self.link = promote.wrap_promoted(link)
+        self.link = link
         self.campaign = promote.get_renderable_campaigns(link, campaign)
         Templated.__init__(self, **kw)
 

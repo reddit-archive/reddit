@@ -272,7 +272,7 @@ class PromoteController(ListingController):
     def GET_edit_promo(self, link):
         if not link or link.promoted is None:
             return self.abort404()
-        rendered = wrap_links(link, wrapper=promote.sponsor_wrapper, skip=False)
+        rendered = wrap_links(link, skip=False)
         form = PromoteLinkForm(link, rendered)
         page = PromotePage('new_promo', content=form)
         return page.render()
