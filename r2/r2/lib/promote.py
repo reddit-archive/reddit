@@ -458,19 +458,28 @@ def accept_promotion(link):
     # if the link has campaigns running now charge them and promote the link
     now = promo_datetime_now()
     campaigns = list(PromoCampaign._by_link(link._id))
+    is_live = False
     for camp in campaigns:
         if is_accepted_promo(now, link, camp):
             charge_campaign(link, camp)
             if charged_or_not_needed(camp):
                 promote_link(link, camp)
+                is_live = True
+
+    if is_live:
+        all_live_promo_srnames(_update=True)
 
 
 def reject_promotion(link, reason=None):
+    was_live = is_promoted(link)
     update_promote_status(link, PROMOTE_STATUS.rejected)
 
     # Send a rejection email (unless the advertiser requested the reject)
     if not c.user or c.user._id != link.author_id:
         emailer.reject_promo(link, reason=reason)
+
+    if was_live:
+        all_live_promo_srnames(_update=True)
 
 
 def unapprove_promotion(link):
@@ -600,6 +609,9 @@ def make_daily_promotions():
     for link in q:
         update_promote_status(link, PROMOTE_STATUS.finished)
         emailer.finished_promo(link)
+
+    # update subreddits with promos
+    all_live_promo_srnames(_update=True)
 
     _mark_promos_updated()
     finalize_completed_campaigns(daysago=1)
