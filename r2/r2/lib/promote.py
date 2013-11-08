@@ -20,15 +20,11 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from __future__ import with_statement
-
-from collections import defaultdict, OrderedDict, namedtuple
+from collections import namedtuple
 from datetime import datetime, timedelta
 from decimal import Decimal, ROUND_DOWN, ROUND_UP
 import itertools
 import json
-import math
-import random
 import time
 
 from pylons import g, c
@@ -39,7 +35,6 @@ from r2.lib import (
     amqp,
     authorize,
     emailer,
-    inventory,
     hooks,
 )
 from r2.lib.db.operators import not_
@@ -50,10 +45,9 @@ from r2.lib.db.queries import (
 )
 from r2.lib.cache import sgm
 from r2.lib.memoize import memoize
-from r2.lib.organic import keep_fresh_links
 from r2.lib.strings import strings
 from r2.lib.template_helpers import get_domain
-from r2.lib.utils import UniqueIterator, tup, to_date, weighted_lottery
+from r2.lib.utils import tup, to_date, weighted_lottery
 from r2.models import (
     Account,
     Bid,
@@ -61,11 +55,9 @@ from r2.models import (
     FakeAccount,
     FakeSubreddit,
     get_promote_srid,
-    IDBuilder,
     Link,
     MultiReddit,
     NO_TRANSACTION,
-    NotFound,
     PromoCampaign,
     PROMOTE_STATUS,
     PromotedLink,
@@ -274,7 +266,6 @@ def rm_traffic_viewer(thing, user):
 
 def traffic_viewers(thing):
     return sorted(getattr(thing, "promo_traffic_viewers", set()))
-
 
 
 def update_promote_status(link, status):
