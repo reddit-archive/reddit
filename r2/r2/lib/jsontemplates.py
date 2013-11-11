@@ -247,9 +247,6 @@ class SubredditJsonTemplate(ThingJsonTemplate):
         user_is_contributor="is_contributor",
         user_is_moderator="is_moderator",
         user_is_subscriber="is_subscriber",
-        spam_links='spam_links',
-        spam_selfposts='spam_selfposts',
-        spam_comments='spam_comments',
     )
 
     # subreddit *attributes* (right side of the equals)
