@@ -1149,6 +1149,11 @@ class RedditController(MinimalController):
         MinimalController.post(self)
         self._embed_html_timing_data()
 
+        # allow logged-out JSON requests to be read cross-domain
+        if (request.method.upper() == "GET" and not c.user_is_loggedin and
+            c.render_style == "api"):
+            response.headers["Access-Control-Allow-Origin"] = "*"
+
     def _embed_html_timing_data(self):
         timings = g.stats.end_logging_timings()
 
