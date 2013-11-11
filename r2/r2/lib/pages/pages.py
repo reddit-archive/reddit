@@ -36,6 +36,7 @@ from r2.models.gold import (
     days_to_pennies,
     gold_goal_on,
     gold_revenue_on,
+    TIMEZONE as GOLD_TIMEZONE,
 )
 from r2.models.promo import (
     NO_TRANSACTION,
@@ -4276,13 +4277,13 @@ class InterestBar(Templated):
 
 class Goldvertisement(Templated):
     def __init__(self):
-        now = datetime.datetime.now(g.display_tz)
+        now = datetime.datetime.now(GOLD_TIMEZONE)
         today = now.date()
         tomorrow = today + datetime.timedelta(days=1)
         end_time = datetime.datetime(tomorrow.year,
                                      tomorrow.month,
                                      tomorrow.day,
-                                     tzinfo=g.display_tz)
+                                     tzinfo=GOLD_TIMEZONE)
         revenue_today = gold_revenue_on(today)
         yesterday = today - datetime.timedelta(days=1)
         revenue_yesterday = gold_revenue_on(yesterday)

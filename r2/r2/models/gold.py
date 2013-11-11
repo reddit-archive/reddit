@@ -22,6 +22,8 @@
 
 from r2.lib.db.tdb_sql import make_metadata, index_str, create_table
 
+import pytz
+
 from pylons import g, c
 from pylons.i18n import _
 from datetime import datetime, timedelta
@@ -54,6 +56,7 @@ ENGINE_NAME = 'authorize'
 
 ENGINE = g.dbm.get_engine(ENGINE_NAME)
 METADATA = make_metadata(ENGINE)
+TIMEZONE = pytz.timezone("America/Los_Angeles")
 
 Session = scoped_session(sessionmaker(bind=ENGINE))
 Base = declarative_base(bind=ENGINE)
@@ -448,14 +451,22 @@ def append_random_bottlecap_phrase(message):
     return message
 
 
+def gold_revenue_multi(dates):
+    NON_REVENUE_STATUSES = ("declined", "chargeback", "fudge")
+    date_expr = sa.func.date_trunc('day',
+                    sa.func.timezone(TIMEZONE.zone, gold_table.c.date))
+    query = (select([date_expr, sa_sum(gold_table.c.pennies)])
+                .where(~ gold_table.c.status.in_(NON_REVENUE_STATUSES))
+                .where(date_expr.in_(dates))
+                .group_by(date_expr)
+            )
+    return {truncated_time.date(): pennies
+                for truncated_time, pennies in ENGINE.execute(query)}
+
+
 @memoize("gold-revenue", time=600)
 def gold_revenue_on(date):
-    NON_REVENUE_STATUSES = ("declined", "chargeback", "fudge")
-    query = (select([sa_sum(gold_table.c.pennies)])
-                .where(~ gold_table.c.status.in_(NON_REVENUE_STATUSES))
-                .where(sa.func.date_trunc('day', gold_table.c.date) == date))
-    rows = ENGINE.execute(query)
-    return rows.fetchone()[0] or 0
+    return gold_revenue_multi([date]).get(date, 0)
 
 
 @memoize("gold-goal")
