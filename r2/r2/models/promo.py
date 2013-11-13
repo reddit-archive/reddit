@@ -119,6 +119,7 @@ NO_TRANSACTION = 0
 class PromoCampaign(Thing):
     _defaults = dict(
         priority_name=PROMOTE_DEFAULT_PRIORITY.name,
+        trans_id=NO_TRANSACTION,
     )
 
     def __getattr__(self, attr):
