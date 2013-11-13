@@ -350,7 +350,7 @@ def validate_css(string, generate_https_urls):
 def find_preview_comments(sr):
     from r2.lib.db.queries import get_sr_comments, get_all_comments
 
-    comments = get_sr_comments(c.site)
+    comments = get_sr_comments(sr)
     comments = list(comments)
     if not comments:
         comments = get_all_comments()
@@ -362,7 +362,7 @@ def find_preview_links(sr):
     from r2.lib.normalized_hot import get_hot
 
     # try to find a link to use, otherwise give up and return
-    links = get_hot([c.site])
+    links = get_hot([sr])
     if not links:
         links = get_hot(Subreddit.default_subreddits(ids=False))
 
