@@ -359,12 +359,12 @@ def find_preview_comments(sr):
     return Thing._by_fullname(comments[:25], data=True, return_dict=False)
 
 def find_preview_links(sr):
-    from r2.lib.normalized_hot import get_hot
+    from r2.lib.normalized_hot import normalized_hot
 
     # try to find a link to use, otherwise give up and return
-    links = get_hot([sr])
+    links = normalized_hot([sr._id])
     if not links:
-        links = get_hot(Subreddit.default_subreddits(ids=False))
+        links = normalized_hot(Subreddit.default_subreddits())
 
     if links:
         links = links[:25]

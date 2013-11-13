@@ -28,7 +28,6 @@ r2/r2/public/static/*.gzip
 r2/r2/public/static/js/lib/*.gzip
 
 # cython
-r2/r2/lib/_normalized_hot.c
 r2/r2/lib/mr_tools/_mr_tools.c
 r2/r2/lib/db/_sorts.c
 r2/r2/lib/sgm.c

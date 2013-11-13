@@ -32,7 +32,7 @@ from r2.lib.menus import TimeMenu, SortMenu, RecSortMenu, ProfileSortMenu
 from r2.lib.menus import ControversyTimeMenu
 from r2.lib.rising import get_rising
 from r2.lib.wrapped import Wrapped
-from r2.lib.normalized_hot import normalized_hot, get_hot
+from r2.lib.normalized_hot import normalized_hot
 from r2.lib.db.thing import Query, Merge, Relations
 from r2.lib.db import queries
 from r2.lib.strings import Score

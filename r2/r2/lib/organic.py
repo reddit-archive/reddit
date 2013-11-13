@@ -21,7 +21,7 @@
 ###############################################################################
 
 from r2.models import *
-from r2.lib.normalized_hot import get_hot
+from r2.lib.normalized_hot import normalized_hot
 from r2.lib import count
 from r2.lib.utils import UniqueIterator, timeago
 
@@ -59,8 +59,8 @@ def cached_organic_links(*sr_ids):
 
     #potentially add an up and coming link
     if random.choice((True, False)) and sr_ids:
-        sr = Subreddit._byID(random.choice(sr_ids))
-        fnames = get_hot([sr])
+        sr_id = random.choice(sr_ids)
+        fnames = normalized_hot([sr_id])
         if fnames:
             if len(fnames) == 1:
                 new_item = fnames[0]

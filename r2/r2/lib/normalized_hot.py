@@ -26,12 +26,9 @@ from datetime import datetime, timedelta
 
 from pylons import g
 
-from r2.lib import _normalized_hot
 from r2.lib.cache import sgm
 from r2.lib.db.queries import _get_links, CachedResults
 from r2.lib.db.sorts import epoch_seconds
-
-from r2.lib._normalized_hot import get_hot # pull this into our namespace
 
 
 MAX_PER_SUBREDDIT = 150
