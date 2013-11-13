@@ -20,6 +20,8 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+from sqlalchemy.orm.exc import MultipleResultsFound
+
 from pylons import g
 
 from r2.lib.db.thing import NotFound
@@ -185,7 +187,14 @@ def void_transaction(user, trans_id, campaign, test=None):
 @export
 def is_charged_transaction(trans_id, campaign):
     if not trans_id: return False # trans_id == 0 means no bid
-    bid =  Bid.one(transaction=trans_id, campaign=campaign)
+    try:
+        bid = Bid.one(transaction=trans_id, campaign=campaign)
+    except NotFound:
+        return False
+    except MultipleResultsFound:
+        g.log.error('Multiple bids for trans_id %s' % trans_id)
+        return False
+
     return bid.is_charged()
 
 
