@@ -804,6 +804,15 @@ class SubredditInfoBar(CachedTemplate):
 
         CachedTemplate.__init__(self)
 
+    @property
+    def creator_text(self):
+        if self.sr.author:
+            if self.sr.is_moderator(self.sr.author) or self.sr.author._deleted:
+                return WrappedUser(self.sr.author).render()
+            else:
+                return self.sr.author.name
+        return None
+
     def nav(self):
         buttons = [NavButton(plurals.moderators, 'moderators')]
         if self.type != 'public':
