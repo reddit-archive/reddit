@@ -38,5 +38,9 @@ def l(li):
         return list(li)
 
 def normalized_hot(sr_ids, obey_age_limit=True):
+    timer = g.stats.get_timer("normalized_hot")
+    timer.start()
     sr_ids = l(sorted(sr_ids))
-    return normalized_hot_cached(sr_ids, obey_age_limit) if sr_ids else ()
+    ret = normalized_hot_cached(sr_ids, obey_age_limit) if sr_ids else ()
+    timer.stop()
+    return ret
