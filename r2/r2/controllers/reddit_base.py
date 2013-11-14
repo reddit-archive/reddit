@@ -392,9 +392,12 @@ def set_subreddit():
     #if we didn't find a subreddit, check for a domain listing
     if not sr_name and isinstance(c.site, DefaultSR) and domain:
         # Redirect IDN to their IDNA name if necessary
-        idna = _force_unicode(domain).encode("idna")
-        if idna != domain:
-            redirect_to("/domain/%s%s" % (idna, request.environ["PATH_INFO"]))
+        try:
+            idna = _force_unicode(domain).encode("idna")
+            if idna != domain:
+                redirect_to("/domain/%s%s" % (idna, request.environ["PATH_INFO"]))
+        except UnicodeError:
+            domain = ''  # Ensure valid_ascii_domain fails
         if not c.error_page and not valid_ascii_domain.match(domain):
             abort(404)
         c.site = DomainSR(domain)
