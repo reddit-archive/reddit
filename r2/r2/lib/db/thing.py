@@ -484,6 +484,8 @@ class DataThing(object):
                     type_dict = thing_types
                 elif real_type[0] == 'r':
                     type_dict = rel_types
+                else:
+                    raise NotFound
                 real_type = type_dict[int(real_type[1:], 36)]
                 thing_id = int(thing_id, 36)
                 lookup[fullname] = (real_type, thing_id)
