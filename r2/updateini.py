@@ -21,10 +21,11 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from ConfigParser import RawConfigParser as Parser
 from ConfigParser import MissingSectionHeaderError
 from StringIO import StringIO
 import sys
+
+from r2.lib.utils import parse_ini_file
 
 HEADER = '''
 # YOU DO NOT NEED TO EDIT THIS FILE
@@ -36,15 +37,8 @@ HEADER = '''
 '''
 
 def main(source_ini, update_ini):
-    parser = Parser()
-    # By default, the parser is case insensitve and rewrites config
-    # keys to lowercase. reddit is case sensitive, however
-    # See: http://docs.python.org/library/configparser.html#ConfigParser.RawConfigParser.optionxform
-    parser.optionxform = str
-    # parser.read() will "fail" silently if the file is
-    # not found; use open() and parser.readfp() to fail
-    # on missing (or unreadable, etc.) file
-    parser.readfp(open(source_ini))
+    with open(source_ini) as source:
+        parser = parse_ini_file(source)
     with open(update_ini) as f:
         updates = f.read()
     try:

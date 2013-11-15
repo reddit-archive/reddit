@@ -1428,9 +1428,8 @@ def weighted_lottery(weights, _random=random.random):
 
 
 def read_static_file_config(config_file):
-    parser = ConfigParser.RawConfigParser()
-    with open(config_file, "r") as cf:
-        parser.readfp(cf)
+    with open(config_file) as f:
+        parser = parse_ini_file(f)
     config = dict(parser.items("static_files"))
 
     s3 = boto.connect_s3(config["aws_access_key_id"],
@@ -1515,3 +1514,12 @@ def precise_format_timedelta(delta, locale, threshold=.85, decimals=2):
             format_string = "%." + str(decimals) + "f"
             return pattern.replace('{0}', format_string % value)
     return u''
+
+
+def parse_ini_file(config_file):
+    """Given an open file, read and parse it like an ini file."""
+
+    parser = ConfigParser.RawConfigParser()
+    parser.optionxform = str  # ensure keys are case-sensitive as expected
+    parser.readfp(config_file)
+    return parser

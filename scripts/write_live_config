@@ -36,6 +36,7 @@ from r2.lib.zookeeper import connect_to_zookeeper
 from r2.lib.app_globals import extract_live_config, LIVE_CONFIG_NODE
 from r2.lib.configparse import ConfigValue
 from r2.lib.plugin import PluginLoader
+from r2.lib.utils import parse_ini_file
 
 
 USERNAME = "live-config"
@@ -99,10 +100,9 @@ def main():
         print >> sys.stderr, "USAGE: %s INI" % progname
         return 1
 
-    config = ConfigParser.RawConfigParser()
     try:
-        with open(ini_file_name, "r") as ini_file:
-            config.readfp(ini_file)
+        with open(ini_file_name) as ini_file:
+            config = parse_ini_file(ini_file)
     except (IOError, ConfigParser.Error), e:
         print >> sys.stderr, "%s: %s: %s" % (progname, ini_file_name, e)
         return 1
