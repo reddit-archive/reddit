@@ -2268,7 +2268,7 @@ class GoldSubscription(Templated):
             next_charge_date = format_date(date, format="short",
                                            locale=c.locale)
             credit_card_last4 = details['credit_card_last4']
-            amount = format_currency(details['pennies']/100, 'USD',
+            amount = format_currency(float(details['pennies']) / 100, 'USD',
                                      locale=c.locale)
             text = _("you have a credit card gold subscription. your card "
                      "(ending in %(last4)s) will be charged %(amount)s on "
