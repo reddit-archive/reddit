@@ -707,7 +707,7 @@ class CassandraCache(CacheUtils):
                 if val != NoneResult:
                     ret[key] = self.cf.insert('%s%s' % (prefix, key),
                                               {'value': pickle.dumps(val)},
-                                              ttl = time)
+                                              ttl = time or None)
 
         self._warm(keys.keys())
 
