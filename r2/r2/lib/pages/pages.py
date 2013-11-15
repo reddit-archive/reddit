@@ -2257,7 +2257,7 @@ class GoldPayment(Templated):
 
 class GoldSubscription(Templated):
     def __init__(self, user):
-        if user.stripe_customer_id:
+        if hasattr(user, 'stripe_customer_id'):
             details = get_subscription_details(user)
         else:
             details = None
