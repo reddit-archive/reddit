@@ -833,8 +833,8 @@ class SideBox(CachedTemplate):
     """
     def __init__(self, title, link=None, css_class='', subtitles = [],
                  show_cover = False, nocname=False, sr_path = False,
-                 disabled=False, show_icon=True):
-        CachedTemplate.__init__(self, link = link, target = '_top',
+                 disabled=False, show_icon=True, target='_top'):
+        CachedTemplate.__init__(self, link = link, target = target,
                            title = title, css_class = css_class,
                            sr_path = sr_path, subtitles = subtitles,
                            show_cover = show_cover, nocname=nocname,
