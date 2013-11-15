@@ -22,6 +22,8 @@
 
 from datetime import datetime
 from urlparse import urlparse
+
+import base64
 import ConfigParser
 import locale
 import json
@@ -64,7 +66,9 @@ from r2.lib.stats import Stats, CacheStats, StatsCollectingConnectionPool
 from r2.lib.translation import get_active_langs, I18N_PATH
 from r2.lib.utils import config_gold_price, thread_dump
 
+
 LIVE_CONFIG_NODE = "/config/live"
+SECRETS_NODE = "/config/secrets"
 
 
 def extract_live_config(config, plugins):
@@ -82,6 +86,24 @@ def extract_live_config(config, plugins):
         parsed.add_spec(plugin.live_config)
 
     return parsed
+
+
+def _decode_secrets(secrets):
+    return {key: base64.b64decode(value) for key, value in secrets.iteritems()}
+
+
+def extract_secrets(config):
+    # similarly to the live_config one above, if we just did
+    # .options("secrets") we'd get back all the junk from DEFAULT too. bleh.
+    secrets = config._sections["secrets"].copy()
+    del secrets["__name__"]  # magic value used by ConfigParser
+    return _decode_secrets(secrets)
+
+
+def fetch_secrets(zk_client):
+    node_data = zk_client.get(SECRETS_NODE)[0]
+    secrets = json.loads(node_data)
+    return _decode_secrets(secrets)
 
 
 class Globals(object):
@@ -434,14 +456,17 @@ class Globals(object):
             self.zookeeper = connect_to_zookeeper(zk_hosts, (zk_username,
                                                              zk_password))
             self.live_config = LiveConfig(self.zookeeper, LIVE_CONFIG_NODE)
+            self.secrets = fetch_secrets(self.zookeeper)
             self.throttles = LiveList(self.zookeeper, "/throttles",
                                       map_fn=ipaddress.ip_network,
                                       reduce_fn=ipaddress.collapse_addresses)
         else:
             self.zookeeper = None
             parser = ConfigParser.RawConfigParser()
+            parser.optionxform = str
             parser.read([self.config["__file__"]])
             self.live_config = extract_live_config(parser, self.plugins)
+            self.secrets = extract_secrets(parser)
             self.throttles = tuple()  # immutable since it's not real
 
         self.startup_timer.intermediate("zookeeper")

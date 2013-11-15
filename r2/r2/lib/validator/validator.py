@@ -879,7 +879,8 @@ def make_or_admin_secret_cls(base_cls):
         def run(self, secret=None):
             '''If validation succeeds, return True if the secret was used,
             False otherwise'''
-            if secret and constant_time_compare(secret, g.ADMINSECRET):
+            if secret and constant_time_compare(secret,
+                                                g.secrets["ADMINSECRET"]):
                 return True
             super(VOrAdminSecret, self).run()
             return False
