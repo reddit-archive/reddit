@@ -1415,6 +1415,7 @@ class FormsController(RedditController):
             stripe_key=g.STRIPE_PUBLIC_KEY,
             passthrough=passthrough,
             comment=comment,
+            period=None,
         )
 
         return BoringPage(_("reddit gold"),
