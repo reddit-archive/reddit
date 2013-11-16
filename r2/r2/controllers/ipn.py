@@ -859,7 +859,7 @@ class StripeController(GoldPaymentController):
 
     @classmethod
     @handle_stripe_error
-    def cancel_subscription(user):
+    def cancel_subscription(cls, user):
         if not getattr(user, 'stripe_customer_id', None):
             return
 
