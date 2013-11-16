@@ -684,7 +684,7 @@ class GoldPaymentController(RedditController):
             secret_pieces = [goldtype]
             if goldtype == 'gift':
                 secret_pieces.append(recipient.name)
-            secret_pieces.append(secret or '')
+            secret_pieces.append(secret or transaction_id)
             secret = '-'.join(secret_pieces)
 
             try:
