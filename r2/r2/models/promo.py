@@ -94,6 +94,28 @@ HIGH, MEDIUM, REMNANT, HOUSE = HighPriority(), MediumPriority(), RemnantPriority
 PROMOTE_PRIORITIES = {p.name: p for p in (HIGH, MEDIUM, REMNANT, HOUSE)}
 PROMOTE_DEFAULT_PRIORITY = MEDIUM
 
+
+class Location(object):
+    DELIMITER = '-'
+    def __init__(self, country, region=None, metro=None):
+        self.country = country or None
+        self.region = region or None
+        self.metro = metro or None
+
+    def __repr__(self):
+        return '<%s (%s/%s/%s)>' % (self.__class__.__name__, self.country,
+                                    self.region, self.metro)
+
+    def to_code(self):
+        fields = [self.country, self.region, self.metro]
+        return self.DELIMITER.join(i or '' for i in fields)
+
+    @classmethod
+    def from_code(cls, code):
+        country, region, metro = [i or None for i in code.split(cls.DELIMITER)]
+        return cls(country, region, metro)
+
+
 @memoize("get_promote_srid")
 def get_promote_srid(name = 'promos'):
     try:
@@ -120,6 +142,7 @@ class PromoCampaign(Thing):
     _defaults = dict(
         priority_name=PROMOTE_DEFAULT_PRIORITY.name,
         trans_id=NO_TRANSACTION,
+        location_code=None,
     )
 
     def __getattr__(self, attr):
@@ -137,7 +160,9 @@ class PromoCampaign(Thing):
         return priority.name
 
     @classmethod 
-    def _new(cls, link, sr_name, bid, cpm, start_date, end_date, priority):
+    def _new(cls, link, sr_name, bid, cpm, start_date, end_date, priority,
+             location):
+        location_code = location.to_code() if location else None
         pc = PromoCampaign(link_id=link._id,
                            sr_name=sr_name,
                            bid=bid,
@@ -146,7 +171,8 @@ class PromoCampaign(Thing):
                            end_date=end_date,
                            trans_id=NO_TRANSACTION,
                            owner_id=link.author_id,
-                           priority_name=cls.get_priority_name(priority))
+                           priority_name=cls.get_priority_name(priority),
+                           location_code=location_code)
         pc._commit()
         return pc
 
@@ -184,6 +210,13 @@ class PromoCampaign(Thing):
     def priority(self):
         return PROMOTE_PRIORITIES[self.priority_name]
 
+    @property
+    def location(self):
+        if self.location_code is not None:
+            return Location.from_code(self.location_code)
+        else:
+            return None
+
     def is_freebie(self):
         return self.trans_id < 0
 
@@ -192,7 +225,7 @@ class PromoCampaign(Thing):
         return self.start_date < now and self.end_date > now
 
     def update(self, start_date, end_date, bid, cpm, sr_name, trans_id,
-               priority, commit=True):
+               priority, location, commit=True):
         self.start_date = start_date
         self.end_date = end_date
         self.bid = bid
@@ -200,6 +233,7 @@ class PromoCampaign(Thing):
         self.sr_name = sr_name
         self.trans_id = trans_id
         self.priority_name = self.get_priority_name(priority)
+        self.location_code = location.to_code() if location else None
         if commit:
             self._commit()
 
