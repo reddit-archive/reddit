@@ -312,7 +312,7 @@ def gold_goal_on(date):
 
 
 def account_from_stripe_customer_id(stripe_customer_id):
-    q = Account._query(Account.c.stripe_customer_id == stripe_customer_id,
+    q = Account._query(Account.c.gold_subscr_id == stripe_customer_id,
                        Account.c._spam == (True, False), data=True)
     return next(iter(q), None)
 
@@ -339,7 +339,7 @@ def _get_subscription_details(stripe_customer_id):
 
 
 def get_subscription_details(user):
-    if not getattr(user, 'stripe_customer_id', None):
+    if not getattr(user, 'gold_subscr_id', None):
         return
 
-    return _get_subscription_details(user.stripe_customer_id)
+    return _get_subscription_details(user.gold_subscr_id)

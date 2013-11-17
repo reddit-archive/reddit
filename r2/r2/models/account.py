@@ -614,8 +614,17 @@ class Account(Thing):
 
     @property
     def has_gold_subscription(self):
-        return bool(getattr(self, 'gold_subscr_id', None) or
-                    getattr(self, 'stripe_customer_id', None))
+        return bool(getattr(self, 'gold_subscr_id', None))
+
+    @property
+    def has_paypal_subscription(self):
+        return (self.has_gold_subscription and
+                not self.gold_subscr_id.startswith('cus_'))
+
+    @property
+    def has_stripe_subscription(self):
+        return (self.has_gold_subscription and
+                self.gold_subscr_id.startswith('cus_'))
 
 
 class FakeAccount(Account):

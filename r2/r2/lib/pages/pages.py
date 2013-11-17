@@ -1703,10 +1703,10 @@ class ProfileBar(Templated):
                         self.gold_remaining = timeuntil(self.gold_expiration,
                                                         precision)
 
-                if hasattr(user, "gold_subscr_id"):
-                    self.gold_subscr_id = user.gold_subscr_id
-                if hasattr(user, "stripe_customer_id"):
-                    self.stripe_customer_id = user.stripe_customer_id
+                if user.has_paypal_subscription:
+                    self.paypal_subscr_id = user.gold_subscr_id
+                if user.has_stripe_subscription:
+                    self.stripe_customer_id = user.gold_subscr_id
 
             if ((user._id == c.user._id or c.user_is_admin) and
                 user.gold_creddits > 0):
@@ -2257,7 +2257,7 @@ class GoldPayment(Templated):
 
 class GoldSubscription(Templated):
     def __init__(self, user):
-        if hasattr(user, 'stripe_customer_id'):
+        if user.has_stripe_subscription:
             details = get_subscription_details(user)
         else:
             details = None

@@ -849,10 +849,10 @@ class StripeController(GoldPaymentController):
     @classmethod
     @handle_stripe_error
     def set_creditcard(cls, form, user, token):
-        if not getattr(user, 'stripe_customer_id', None):
+        if not user.has_stripe_subscription:
             return
 
-        customer = stripe.Customer.retrieve(user.stripe_customer_id)
+        customer = stripe.Customer.retrieve(user.gold_subscr_id)
         customer.card = token
         customer.save()
         return customer
@@ -860,13 +860,13 @@ class StripeController(GoldPaymentController):
     @classmethod
     @handle_stripe_error
     def cancel_subscription(cls, user):
-        if not getattr(user, 'stripe_customer_id', None):
+        if not user.has_stripe_subscription:
             return
 
-        customer = stripe.Customer.retrieve(user.stripe_customer_id)
+        customer = stripe.Customer.retrieve(user.gold_subscr_id)
         customer.delete()
 
-        user.stripe_customer_id = None
+        user.gold_subscr_id = None
         user._commit()
         subject = _('your gold subscription has been cancelled')
         message = _('if you have any questions please email %(email)s')
@@ -915,7 +915,7 @@ class StripeController(GoldPaymentController):
             return
 
         if period:
-            c.user.stripe_customer_id = customer.id
+            c.user.gold_subscr_id = customer.id
             c.user._commit()
 
             status = _('subscription created')
