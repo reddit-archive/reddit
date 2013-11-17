@@ -759,11 +759,15 @@ class StripeController(GoldPaymentController):
         status = event.type
 
         if status == 'invoice.created':
-            # sent 1 hr before a subscription is charged
+            # sent 1 hr before a subscription is charged or immediately for
+            # a new subscription
             invoice = event.data.object
             customer_id = invoice.customer
             account = account_from_stripe_customer_id(customer_id)
-            if not account or (account and account._banned):
+            # if the charge hasn't been attempted (meaning this is 1 hr before
+            # the charge) check that the account can receive the gold
+            if (not invoice.attempted and
+                (not account or (account and account._banned))):
                 # there's no associated account - delete the subscription
                 # to cancel the charge
                 g.log.error('no account for stripe invoice: %s', invoice)
