@@ -796,6 +796,12 @@ class StripeController(GoldPaymentController):
             # we'll get an additional failure notification event of
             # "invoice.payment_failed", don't double notify
             return 'dummy', None
+        elif status == 'charge.failed' and not description:
+            # create_customer can POST successfully but fail to create a
+            # customer because the card is declined. This will trigger a
+            # 'charge.failed' notification but without description so we can't
+            # do anything with it
+            return 'dummy', None
         elif invoice_id:
             # subscription charge - special handling
             customer_id = charge.customer
