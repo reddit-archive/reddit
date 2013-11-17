@@ -767,8 +767,11 @@ class StripeController(GoldPaymentController):
                 # there's no associated account - delete the subscription
                 # to cancel the charge
                 g.log.error('no account for stripe invoice: %s', invoice)
-                customer = stripe.Customer.retrieve(customer_id)
-                customer.delete()
+                try:
+                    customer = stripe.Customer.retrieve(customer_id)
+                    customer.delete()
+                except stripe.InvalidRequestError:
+                    pass
         elif status == 'invoice.payment_failed':
             invoice = event.data.object
             customer_id = invoice.customer
