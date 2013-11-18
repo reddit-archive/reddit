@@ -955,7 +955,7 @@ def get_total_run(thing):
     earliest = None
     latest = None
     for campaign in campaigns:
-        if not campaign.trans_id:
+        if not charged_or_not_needed(campaign):
             continue
 
         if not earliest or campaign.start_date < earliest:
