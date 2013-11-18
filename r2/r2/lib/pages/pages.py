@@ -3998,7 +3998,7 @@ class PromoteReport(Templated):
             campaign_start = campaign.start_date - promote.timezone_offset
             campaign_end = campaign.end_date - promote.timezone_offset
             date = date.replace(tzinfo=g.tz)
-            if date < campaign_start or date > campaign_end:
+            if not (campaign_start <= date < campaign_end):
                 continue
             if sr == '':
                 fp_hits[codename] += pageviews
