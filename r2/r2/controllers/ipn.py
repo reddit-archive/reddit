@@ -887,7 +887,7 @@ class StripeController(GoldPaymentController):
 
     @classmethod
     @handle_stripe_error
-    def cancel_subscription(cls, user):
+    def cancel_subscription(cls, form, user):
         if not user.has_stripe_subscription:
             return
 
@@ -988,7 +988,7 @@ class StripeController(GoldPaymentController):
     def POST_cancel_subscription(self, form, jquery, user):
         if user != c.user and not c.user_is_admin:
             abort(403, "Forbidden")
-        customer = self.cancel_subscription(user)
+        customer = self.cancel_subscription(form, user)
         if not customer:
             return
 
