@@ -820,6 +820,8 @@ class StripeController(GoldPaymentController):
                 # db replication lag may cause the account lookup to fail
                 if charge_date < timeago('1 hour'):
                     raise ValueError('no buyer for charge: %s' % charge.id)
+                else:
+                    self.abort404()
             webhook = Webhook(transaction_id=transaction_id,
                               subscr_id=customer_id, pennies=pennies,
                               months=months, goldtype='autorenew',
