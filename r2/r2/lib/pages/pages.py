@@ -2280,10 +2280,9 @@ class GoldSubscription(Templated):
         else:
             self.has_stripe_subscription = False
 
-        paypal_subscr_id = getattr(user, 'gold_subscr_id', None)
-        if paypal_subscr_id:
+        if user.has_paypal_subscription:
             self.has_paypal_subscription = True
-            self.paypal_subscr_id = paypal_subscr_id
+            self.paypal_subscr_id = user.gold_subscr_id
             self.paypal_url = "https://www.paypal.com/cgi-bin/webscr?cmd=_subscr-find&alias=%s" % g.goldthanks_email
         else:
             self.has_paypal_subscription = False
