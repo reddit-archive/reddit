@@ -840,10 +840,9 @@ class StripeController(GoldPaymentController):
 
     @classmethod
     @handle_stripe_error
-    def create_customer(cls, form, token, plan=None):
+    def create_customer(cls, form, token):
         description = c.user.name
-        customer = stripe.Customer.create(card=token, description=description,
-                                          plan=plan)
+        customer = stripe.Customer.create(card=token, description=description)
 
         if (customer['active_card']['address_line1_check'] == 'fail' or
             customer['active_card']['address_zip_check'] == 'fail'):
@@ -879,6 +878,12 @@ class StripeController(GoldPaymentController):
         customer.card = token
         customer.save()
         return customer
+
+    @classmethod
+    @handle_stripe_error
+    def set_subscription(cls, form, customer, plan_id):
+        subscription = customer.update_subscription(plan=plan_id)
+        return subscription
 
     @classmethod
     @handle_stripe_error
@@ -937,11 +942,15 @@ class StripeController(GoldPaymentController):
                 form.set_html('.status', _('stop trying to trick the form'))
                 return
 
-        customer = self.create_customer(form, token, plan=plan_id)
+        customer = self.create_customer(form, token)
         if not customer:
             return
 
         if period:
+            subscription = self.set_subscription(form, customer, plan_id)
+            if not subscription:
+                return
+
             c.user.gold_subscr_id = customer.id
             c.user._commit()
 
