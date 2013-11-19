@@ -1447,6 +1447,8 @@ class FormsController(RedditController):
         if goldtype == "autorenew":
             if period is None:
                 start_over = True
+            elif c.user.has_gold_subscription:
+                return self.redirect("/gold/subscription")
         elif goldtype in ("onetime", "creddits"):
             if months is None or months < 1:
                 start_over = True
