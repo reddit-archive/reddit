@@ -34,7 +34,7 @@ from r2.lib.errors import MessageError
 from r2.lib.filters import _force_unicode, _force_utf8
 from r2.lib.log import log_text
 from r2.lib.strings import strings
-from r2.lib.utils import randstr
+from r2.lib.utils import randstr, timeago
 from r2.lib.validator import (
     nop,
     textresponse,
@@ -811,7 +811,12 @@ class StripeController(GoldPaymentController):
             customer_id = charge.customer
             buyer = account_from_stripe_customer_id(customer_id)
             if not buyer:
-                raise ValueError('no buyer for stripe charge: %s' % charge.id)
+                charge_date = datetime.fromtimestamp(charge.created, tz=g.tz)
+
+                # don't raise exception if charge date is within the past hour
+                # db replication lag may cause the account lookup to fail
+                if charge_date < timeago('1 hour'):
+                    raise ValueError('no buyer for charge: %s' % charge.id)
             webhook = Webhook(transaction_id=transaction_id,
                               subscr_id=customer_id, pennies=pennies,
                               months=months, goldtype='autorenew',
