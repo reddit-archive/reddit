@@ -916,6 +916,10 @@ class StripeController(GoldPaymentController):
         if period:
             plan_id = (g.STRIPE_MONTHLY_GOLD_PLAN if period == 'monthly'
                        else g.STRIPE_YEARLY_GOLD_PLAN)
+            if c.user.has_gold_subscription:
+                form.set_html('.status',
+                              _('your account already has a gold subscription'))
+                return
         else:
             plan_id = None
             penny_months, days = months_and_days_from_pennies(pennies)
