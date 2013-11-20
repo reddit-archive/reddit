@@ -30,6 +30,7 @@ from sqlalchemy.exc import IntegrityError
 import stripe
 
 from r2.controllers.reddit_base import RedditController
+from r2.lib.base import abort
 from r2.lib.errors import MessageError
 from r2.lib.filters import _force_unicode, _force_utf8
 from r2.lib.log import log_text
@@ -821,7 +822,7 @@ class StripeController(GoldPaymentController):
                 if charge_date < timeago('1 hour'):
                     raise ValueError('no buyer for charge: %s' % charge.id)
                 else:
-                    self.abort404()
+                    abort(404, "not found")
             webhook = Webhook(transaction_id=transaction_id,
                               subscr_id=customer_id, pennies=pennies,
                               months=months, goldtype='autorenew',
@@ -987,7 +988,7 @@ class StripeController(GoldPaymentController):
                    user=VByName('user'))
     def POST_cancel_subscription(self, form, jquery, user):
         if user != c.user and not c.user_is_admin:
-            abort(403, "Forbidden")
+            self.abort403()
         customer = self.cancel_subscription(form, user)
         if not customer:
             return
