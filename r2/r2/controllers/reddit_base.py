@@ -1154,6 +1154,11 @@ class RedditController(MinimalController):
             c.render_style == "api"):
             response.headers["Access-Control-Allow-Origin"] = "*"
 
+            request_origin = request.headers.get('Origin')
+            if request_origin and request_origin != g.origin:
+                g.stats.simple_event('cors.api_request')
+                g.stats.count_string('origins', request_origin)
+
     def _embed_html_timing_data(self):
         timings = g.stats.end_logging_timings()
 
