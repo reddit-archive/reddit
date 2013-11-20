@@ -162,9 +162,8 @@ $.request = function(op, parameters, worker_in, block, type,
     /* 
        Uniquitous reddit AJAX poster.  Automatically addes
        handleResponse(action) worker to deal with the API result.  The
-       current subreddit (reddit.post_site), the user's modhash
-       (reddit.modhash) and whether or not we are in a frame
-       (reddit.cnameframe) are also automatically sent across.
+       current subreddit (reddit.post_site) and the user's modhash
+       (reddit.modhash) are also automatically sent across.
      */
     var action = op;
     var worker = worker_in;
@@ -176,7 +175,7 @@ $.request = function(op, parameters, worker_in, block, type,
         return
     }
 
-    if (window != window.top && !reddit.cnameframe && !reddit.external_frame) {
+    if (window != window.top && !reddit.external_frame) {
         return
     }
 
@@ -206,10 +205,6 @@ $.request = function(op, parameters, worker_in, block, type,
     /* set the subreddit name if there is one */
     if (reddit.post_site) 
         parameters.r = reddit.post_site;
-
-    /* flag whether or not we are on a cname */
-    if (reddit.cnameframe) 
-        parameters.cnameframe = 1;
 
     /* add the modhash if the user is logged in */
     if (reddit.logged) 

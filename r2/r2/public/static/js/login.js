@@ -1,11 +1,5 @@
 r.login = {
     post: function(form, action) {
-        if (r.config.cnameframe && !r.config.https_endpoint) {
-            form.$el.unbind()
-            form.$el.submit()
-            return
-        }
-
         var username = $('input[name="user"]', form.$el).val(),
             endpoint = r.config.https_endpoint || ('http://'+r.config.ajax_domain),
             apiTarget = endpoint+'/api/'+action+'/'+username

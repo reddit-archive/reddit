@@ -124,8 +124,6 @@ def js_config(extra_config=None):
         "logged": logged,
         # the subreddit's name (for posts)
         "post_site": c.site.name if not c.default_sr else "",
-        # are we in an iframe?
-        "cnameframe": bool(c.cname and not c.authorized_cname),
         # the user's voting hash
         "modhash": c.modhash or False,
         # the current rendering style

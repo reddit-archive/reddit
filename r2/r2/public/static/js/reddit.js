@@ -559,15 +559,10 @@ function last_click() {
 }
 
 function login(elem) {
-    if(cnameframe)
-        return true;
-
     return post_user(this, "login");
 };
 
 function register(elem) {
-    if(cnameframe)
-        return true;
     return post_user(this, "register");
 };
 
