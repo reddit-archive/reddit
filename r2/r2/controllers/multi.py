@@ -355,6 +355,7 @@ class MultiApiController(RedditController, OAuth2ResourceController):
     @require_oauth2_scope("read")
     @validate(
         VUser(),
+        VModhash(),
         multi=VMultiByPath("multipath", require_edit=True),
         data=VValidatedJSON('model', multi_description_json_spec),
     )
