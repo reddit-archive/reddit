@@ -3303,6 +3303,9 @@ class ApiController(RedditController, OAuth2ResourceController):
                    remember=VBoolean("remember"),
                    dest=VDestination())
     def POST_adminon(self, form, jquery, remember, dest):
+        if c.user.name not in g.admins:
+            self.abort403()
+
         if form.has_errors('password', errors.WRONG_PASSWORD):
             return
 
