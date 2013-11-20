@@ -631,7 +631,7 @@ class FrontController(RedditController, OAuth2ResourceController):
         elif is_moderator_with_perms('access') and location == 'banned':
             pane = BannedList(editable=is_moderator_with_perms('access'))
         elif is_moderator_with_perms('wiki') and location == 'wikibanned':
-            pane = WikiBannedList(editable=is_moderator_with_perms('access'))
+            pane = WikiBannedList(editable=is_moderator_with_perms('wiki'))
         elif (is_moderator_with_perms('wiki')
               and location == 'wikicontributors'):
             pane = WikiMayContributeList(

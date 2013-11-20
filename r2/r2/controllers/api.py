@@ -866,6 +866,7 @@ class ApiController(RedditController, OAuth2ResourceController):
             notify_user_added(type, c.user, friend, container)
 
     @validatedForm(VGold(),
+                   VModhash(),
                    friend = VExistingUname('name'),
                    note = VLength('note', 300))
     def POST_friendnote(self, form, jquery, friend, note):
@@ -874,10 +875,18 @@ class ApiController(RedditController, OAuth2ResourceController):
         c.user.add_friend_note(friend, note)
         form.set_html('.status', _("saved"))
 
-    @validatedForm(type = VOneOf('type', ('bannednote', 'wikibannednote')),
+    @validatedForm(VModhash(),
+                   type = VOneOf('type', ('bannednote', 'wikibannednote')),
                    user = VExistingUname('name'),
                    note = VLength('note', 300))
     def POST_relnote(self, form, jquery, type, user, note):
+        perm = 'wiki' if type.startswith('wiki') else 'access'
+        if (not c.user_is_admin
+            and (not c.site.is_moderator_with_perms(c.user, perm))):
+            if c.user._spam:
+                return
+            else:
+                abort(403, 'forbidden')
         if form.has_errors("note", errors.TOO_LONG):
             return
         c.site.add_rel_note(type[:-4], user, note)
