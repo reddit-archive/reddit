@@ -1245,17 +1245,18 @@ class FormsController(RedditController):
         to verify their identity before allowing them to update their
         password."""
 
-        #if another user is logged-in, log them out
-        if c.user_is_loggedin:
-            self.logout()
-            return self.redirect(request.path)
-
         done = False
         if not key and request.referer:
             referer_path = request.referer.split(g.domain)[-1]
             done = referer_path.startswith(request.fullpath)
         elif not token:
             return self.redirect("/password?expired=true")
+        else:
+            #if another user is logged-in, log them out
+            if c.user_is_loggedin:
+                self.logout()
+                return self.redirect(request.path)
+
         return BoringPage(_("reset password"),
                           content=ResetPassword(key=key, done=done)).render()
 
