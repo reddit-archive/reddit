@@ -134,7 +134,7 @@ Thank you for your business!  You can track your promotion's traffic here:
 
     ${promote.promo_traffic_url(thing.link)}
 
-Note that there is a delay on tracking, so at first you make not see any data,
+Note that there is a delay on tracking, so at first you may not see any data,
 and completed traffic will be a few hours behind. All traffic should be
 considered preliminary until 24 hours after the ad has ended.
 
