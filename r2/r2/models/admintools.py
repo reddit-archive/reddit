@@ -228,8 +228,8 @@ def cancel_subscription(subscr_id):
                    (account.name, subscr_id))
 
 def all_gold_users():
-    q = Account._query(Account.c.gold == True, data=True,
-                       sort="_id")
+    q = Account._query(Account.c.gold == True, Account.c._spam == (True, False),
+                       data=True, sort="_id")
     return fetch_things2(q)
 
 def accountid_from_paypalsubscription(subscr_id):
