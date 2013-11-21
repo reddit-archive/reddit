@@ -4064,8 +4064,8 @@ class PromoteReport(Templated):
         self.campaign_report = sorted(campaign_report, key=lambda r: r['link'])
 
 class InnerToolbarFrame(Templated):
-    def __init__(self, link, expanded = False):
-        Templated.__init__(self, link = link, expanded = expanded)
+    def __init__(self, link, url, expanded=False):
+        Templated.__init__(self, link=link, url=url, expanded=expanded)
 
 class RawString(Templated):
    def __init__(self, s):

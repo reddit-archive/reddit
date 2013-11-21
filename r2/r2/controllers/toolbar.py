@@ -62,6 +62,16 @@ def demangle_url(path):
 
     return path
 
+def match_current_reddit_subdomain(url):
+    # due to X-Frame-Options: SAMEORIGIN headers, we can't frame mismatched
+    # reddit subdomains
+    parsed = UrlParser(url)
+    if parsed.is_reddit_url():
+        parsed.hostname = request.host
+        return parsed.unparse()
+    else:
+        return url
+
 def force_html():
     """Because we can take URIs like /s/http://.../foo.png, and we can
        guarantee that the toolbar will never be used with a non-HTML
@@ -120,10 +130,12 @@ class ToolbarController(RedditController):
         else:
             thumbnail = None
 
-        res = Frame(title = link.title,
-                    url = link.url,
-                    thumbnail = thumbnail,
-                    fullname = link._fullname)
+        res = Frame(
+            title=link.title,
+            url=match_current_reddit_subdomain(link.url),
+            thumbnail=thumbnail,
+            fullname=link._fullname,
+        )
         return spaceCompress(res.render())
 
     def GET_s(self, rest):
@@ -170,7 +182,10 @@ class ToolbarController(RedditController):
             return self.redirect(add_sr("/tb/" + link._id36))
 
         title = utils.domain(path)
-        res = Frame(title = title, url = path)
+        res = Frame(
+            title=title,
+            url=match_current_reddit_subdomain(path),
+        )
 
         # we don't want clients to think that this URL is actually a
         # valid URL for search-indexing or the like
@@ -241,7 +256,11 @@ class ToolbarController(RedditController):
         if not link:
             return self.abort404()
 
-        res = InnerToolbarFrame(link = link, expanded = auto_expand_panel(link))
+        res = InnerToolbarFrame(
+            link=link,
+            url=match_current_reddit_subdomain(link.url),
+            expanded=auto_expand_panel(link),
+        )
         return spaceCompress(res.render())
 
     @validate(link = VLink('linkoid'))
