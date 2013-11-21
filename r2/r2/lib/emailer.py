@@ -99,7 +99,8 @@ def password_email(user):
         raise ValueError("Somebody's beating the hell out of the password reset box")
 
     token = PasswordResetToken._new(user)
-    passlink = 'http://' + g.domain + '/resetpassword/' + token._id
+    base = g.https_endpoint or g.origin
+    passlink = base + '/resetpassword/' + token._id
     g.log.info("Generated password reset link: " + passlink)
     _system_email(user.email,
                   PasswordReset(user=user,
