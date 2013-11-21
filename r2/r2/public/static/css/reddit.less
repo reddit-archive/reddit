@@ -3482,7 +3482,7 @@ body.contact-us-page {
 }
 
 #inner_toolbar {
-    #reddit_panel, #reddit_link {
+    #reddit_panel, #reddit_link_container, #reddit_link {
         position: absolute;
         height: 100%;
         border: none;
@@ -3492,7 +3492,7 @@ body.contact-us-page {
         width: 0;
     }
 
-    #reddit_link {
+    #reddit_link_container, #reddit_link {
         width: 100%;
     }
 
@@ -3501,9 +3501,10 @@ body.contact-us-page {
             width: 400px;
         }
 
-        #reddit_link {
+        #reddit_link_container {
             left: 400px;
             right: 0;
+            width: auto;
         }
     }
 }

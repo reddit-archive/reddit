@@ -37,6 +37,8 @@
   </head>
   <body class="${'expanded' if thing.expanded else ''}" id="inner_toolbar" onload="window.frames[1].focus()">
     <iframe frameborder="0" src="${add_sr('/toolbar/comments/'+thing.link._id36)}" id="reddit_panel" name="reddit_panel"></iframe>
-    <iframe frameborder="0" src="${thing.url}" id="reddit_link" name="reddit_link" sandbox="allow-scripts allow-forms allow-same-origin"></iframe>
+    <div id="reddit_link_container">
+      <iframe frameborder="0" src="${thing.url}" id="reddit_link" name="reddit_link" sandbox="allow-scripts allow-forms allow-same-origin"></iframe>
+    </div>
   </body>
 </html>
