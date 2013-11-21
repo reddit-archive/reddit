@@ -266,7 +266,7 @@ r.sponsored = {
     },
 
     hide_cpm: function() {
-        var priceRow = $('#cpm').parent('td').parent('tr'),
+        var priceRow = $('.price-info').parent('td').parent('tr'),
             budgetRow = $('#bid').parent('td').parent('tr'),
             impressionsRow = $('#impressions').parent('td').parent('tr')
         priceRow.hide("slow")
@@ -275,7 +275,7 @@ r.sponsored = {
     },
 
     show_cpm: function() {
-        var priceRow = $('#cpm').parent('td').parent('tr'),
+        var priceRow = $('.price-info').parent('td').parent('tr'),
             budgetRow = $('#bid').parent('td').parent('tr'),
             impressionsRow = $('#impressions').parent('td').parent('tr')
         priceRow.show("slow")
@@ -468,7 +468,7 @@ function edit_campaign($campaign_row) {
         editRow.children('td:first').attr("colspan", 8).append(campaign)
         $campaign_row.fadeOut(function() {
             /* fill inputs from data in campaign row */
-            _.each(['startdate', 'enddate', 'bid', 'cpm', 'campaign_id36', 'campaign_name'],
+            _.each(['startdate', 'enddate', 'bid', 'campaign_id36', 'campaign_name'],
                 function(input) {
                     var val = $campaign_row.data(input),
                         $input = campaign.find('*[name="' + input + '"]')
@@ -526,8 +526,7 @@ function create_campaign() {
         return;
     }
     cancel_edit(function() {;
-            var base_cpm = $("#bid").data("base_cpm"),
-                minBid = $("#bid").data("min_bid")
+            var minBid = $("#bid").data("min_bid")
 
             init_startdate();
             init_enddate();
@@ -541,7 +540,6 @@ function create_campaign() {
                 .find('input[name="priority"][data-default="true"]').prop("checked", "checked").end()
                 .find('input[name="bid"]').val(minBid * 5).end()
                 .find(".targeting").hide().end()
-                .find('input[name="cpm"]').val(base_cpm).end()
                 .fadeIn();
             r.sponsored.fill_campaign_editor();
         });
