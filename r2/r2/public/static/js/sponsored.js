@@ -30,7 +30,7 @@ r.sponsored = {
     get_check_inventory: function(srname, dates) {
         var fetch = _.some(dates, function(date) {
             var datestr = $.datepicker.formatDate('mm/dd/yy', date)
-            if (!(this.inventory[srname] && this.inventory[srname][datestr])) {
+            if (!(this.inventory[srname] && _.has(this.inventory[srname], datestr))) {
                 r.debug('need to fetch ' + datestr + ' for ' + srname)
                 return true
             }
