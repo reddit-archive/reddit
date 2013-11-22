@@ -858,6 +858,14 @@ class MessageController(ListingController):
             elif c.user.pref_threaded_messages:
                 skip = (c.render_style == "html")
 
+            if (message_cls is UserMessageBuilder and parent and parent.sr_id
+                and not parent.from_sr):
+                # Make sure we use the subreddit message builder for modmail,
+                # because the per-user cache will be wrong if more than two
+                # parties are involved in the thread.
+                root = Subreddit._byID(parent.sr_id)
+                message_cls = SrMessageBuilder
+
             return message_cls(root,
                                wrap = self.builder_wrapper,
                                parent = parent,
