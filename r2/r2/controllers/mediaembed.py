@@ -49,6 +49,8 @@ class MediaembedController(MinimalController):
             media_embed = get_media_embed(media_object)
             content = media_embed.content
 
+        c.allow_framing = True
+
         return MediaEmbedBody(body = content).render()
 
 
