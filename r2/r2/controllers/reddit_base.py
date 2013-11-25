@@ -787,7 +787,13 @@ class MinimalController(BaseController):
         c.can_use_pagecache = self.can_use_pagecache()
 
         if request.method.upper() == 'GET' and c.can_use_pagecache:
-            r = g.pagecache.get(self.request_key())
+            request_key = self.request_key()
+            try:
+                r = g.pagecache.get(request_key)
+            except MemcachedError as e:
+                g.log.warning("pagecache error: %s", e)
+                return
+
             if r:
                 r, c.cookies = r
                 response.headers = r.headers
