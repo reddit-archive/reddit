@@ -60,6 +60,7 @@ from r2.models import (
     Comment,
     create_claimed_gold,
     create_gift_gold,
+    get_discounted_price,
     make_comment_gold_message,
     NotFound,
     retrieve_gold_transaction,
@@ -206,13 +207,20 @@ def existing_subscription(subscr_id, paying_id, custom):
 
     return account
 
-def months_and_days_from_pennies(pennies):
-    if pennies >= g.gold_year_price.pennies:
-        years = pennies / g.gold_year_price.pennies
+def months_and_days_from_pennies(pennies, discount=False):
+    if discount:
+        year_pennies = get_discounted_price(g.gold_year_price).pennies
+        month_pennies = get_discounted_price(g.gold_month_price).pennies
+    else:
+        year_pennies = g.gold_year_price.pennies
+        month_pennies = g.gold_month_price.pennies
+
+    if pennies >= year_pennies:
+        years = pennies / year_pennies
         months = 12 * years
         days  = 366 * years
     else:
-        months = pennies / g.gold_month_price.pennies
+        months = pennies / month_pennies
         days   = 31 * months
     return (months, days)
 
@@ -1010,7 +1018,7 @@ class CoinbaseController(GoldPaymentController):
         transaction_id = 'C%s' % order['id']
         status = order['status']    # new/completed/cancelled
         pennies = int(order['total_native']['cents'])
-        months, days = months_and_days_from_pennies(pennies)
+        months, days = months_and_days_from_pennies(pennies, discount=True)
         passthrough = order['custom']
         webhook = Webhook(passthrough=passthrough,
             transaction_id=transaction_id, pennies=pennies, months=months)

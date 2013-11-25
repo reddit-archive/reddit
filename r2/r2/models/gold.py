@@ -36,7 +36,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.sql.expression import select
 from sqlalchemy.sql.functions import sum as sa_sum
 
-from r2.lib.utils import randstr
+from r2.lib.utils import GoldPrice, randstr
 import re
 from random import choice
 from time import time
@@ -370,3 +370,9 @@ def get_subscription_details(user):
         return
 
     return _get_subscription_details(user.gold_subscr_id)
+
+
+def get_discounted_price(gold_price):
+    discount = float(getattr(g, 'BTC_DISCOUNT', '0'))
+    price = (gold_price.pennies * (1 - discount)) / 100.
+    return GoldPrice("%.2f" % price)
