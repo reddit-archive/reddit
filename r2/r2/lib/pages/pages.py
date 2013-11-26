@@ -4209,8 +4209,8 @@ class Goldvertisement(Templated):
         revenue_today = gold_revenue_on(today)
         yesterday = today - datetime.timedelta(days=1)
         revenue_yesterday = gold_revenue_on(yesterday)
-        revenue_goal = gold_goal_on(today)
-        revenue_goal_yesterday = gold_goal_on(yesterday)
+        revenue_goal = float(gold_goal_on(today))
+        revenue_goal_yesterday = float(gold_goal_on(yesterday))
 
         self.percent_filled = int((revenue_today / revenue_goal) * 100)
         self.percent_filled_yesterday = int((revenue_yesterday /
