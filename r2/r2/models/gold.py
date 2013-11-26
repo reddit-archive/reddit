@@ -109,7 +109,7 @@ class GoldRevenueGoalByDate(object):
 
     @classmethod
     def set(cls, date, goal):
-        cls._cf.insert(cls.ROWKEY, {cls._colkey(date): goal})
+        cls._cf.insert(cls.ROWKEY, {cls._colkey(date): int(goal)})
 
     @classmethod
     def get(cls, date):
