@@ -33,6 +33,7 @@ import traceback
 import urllib
 import urllib2
 import urlparse
+import gzip
 
 import BeautifulSoup
 import Image
@@ -124,6 +125,7 @@ def _initialize_request(url, referer):
         return
 
     req = urllib2.Request(url)
+    req.add_header('Accept-Encoding', 'gzip')
     if g.useragent:
         req.add_header('User-Agent', g.useragent)
     if referer:
@@ -136,7 +138,13 @@ def _fetch_url(url, referer=None):
     if not request:
         return None, None
     response = urllib2.urlopen(request)
-    return response.headers.get("Content-Type"), response.read()
+    response_data = response.read()
+    content_encoding = response.info().get("Content-Encoding")
+    if content_encoding and content_encoding.lower() in ["gzip", "x-gzip"]:
+        buf = cStringIO.StringIO(response_data)
+        f = gzip.GzipFile(fileobj=buf)
+        response_data = f.read()
+    return response.headers.get("Content-Type"), response_data
 
 
 @memoize('media.fetch_size', time=3600)
