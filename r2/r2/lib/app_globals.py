@@ -420,6 +420,9 @@ class Globals(object):
         csslog = logging.getLogger("cssutils")
         cssutils.log.setLog(csslog)
 
+        # set locations
+        self.locations = {}
+
         if not self.media_domain:
             self.media_domain = self.domain
         if self.media_domain == self.domain:
