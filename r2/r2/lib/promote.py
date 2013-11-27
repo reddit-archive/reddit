@@ -240,11 +240,11 @@ def get_transactions(link, campaigns):
     bids_by_campaign = {c._id: bid_dict[(c._id, c.trans_id)] for c in campaigns}
     return bids_by_campaign
 
-def new_campaign(link, dates, bid, cpm, sr, priority):
+def new_campaign(link, dates, bid, cpm, sr, priority, location):
     # empty string for sr_name means target to all
     sr_name = sr.name if sr else ""
     campaign = PromoCampaign._new(link, sr_name, bid, cpm, dates[0], dates[1],
-                                  priority)
+                                  priority, location)
     PromotionWeights.add(link, campaign._id, sr_name, dates[0], dates[1], bid)
     PromotionLog.add(link, 'campaign %s created' % campaign._id)
 
@@ -260,7 +260,7 @@ def new_campaign(link, dates, bid, cpm, sr, priority):
 def free_campaign(link, campaign, user):
     auth_campaign(link, campaign, user, -1)
 
-def edit_campaign(link, campaign, dates, bid, cpm, sr, priority):
+def edit_campaign(link, campaign, dates, bid, cpm, sr, priority, location):
     sr_name = sr.name if sr else '' # empty string means target to all
 
     changed = {}
@@ -293,7 +293,7 @@ def edit_campaign(link, campaign, dates, bid, cpm, sr, priority):
 
     # update values in the db
     campaign.update(dates[0], dates[1], bid, cpm, sr_name,
-                    campaign.trans_id, priority, commit=True)
+                    campaign.trans_id, priority, location, commit=True)
 
     if campaign.priority.cpm:
         # make it a freebie, if applicable

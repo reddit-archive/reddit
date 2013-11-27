@@ -13,6 +13,11 @@ r.sponsored = {
         }
     },
 
+    setup_geotargeting: function(regions, metros) {
+        this.regions = regions
+        this.metros = metros
+    },
+
     get_dates: function(startdate, enddate) {
         var start = $.datepicker.parseDate('mm/dd/yy', startdate),
             end = $.datepicker.parseDate('mm/dd/yy', enddate),
@@ -27,11 +32,23 @@ r.sponsored = {
         return dates
     },
 
-    get_check_inventory: function(srname, dates) {
+    get_inventory_key: function(srname, geotarget) {
+        var inventoryKey = srname
+        if (geotarget.country != "") {
+            inventoryKey += "/" + geotarget.country
+        }
+        if (geotarget.metro != "") {
+            inventoryKey += "/" + geotarget.metro
+        }
+        return inventoryKey
+    },
+
+    get_check_inventory: function(srname, geotarget, dates) {
+        var inventoryKey = this.get_inventory_key(srname, geotarget)
         var fetch = _.some(dates, function(date) {
             var datestr = $.datepicker.formatDate('mm/dd/yy', date)
-            if (!(this.inventory[srname] && _.has(this.inventory[srname], datestr))) {
-                r.debug('need to fetch ' + datestr + ' for ' + srname)
+            if (!(this.inventory[inventoryKey] && _.has(this.inventory[inventoryKey], datestr))) {
+                r.debug('need to fetch ' + datestr + ' for ' + inventoryKey)
                 return true
             }
         }, this)
@@ -46,17 +63,20 @@ r.sponsored = {
                 url: '/api/check_inventory.json',
                 data: {
                     sr: srname,
+                    country: geotarget.country,
+                    region: geotarget.region,
+                    metro: geotarget.metro,
                     startdate: $.datepicker.formatDate('mm/dd/yy', dates[0]),
                     enddate: $.datepicker.formatDate('mm/dd/yy', end)
                 },
                 success: function(data) {
-                    if (!r.sponsored.inventory[srname]) {
-                        r.sponsored.inventory[srname] = {}
+                    if (!r.sponsored.inventory[inventoryKey]) {
+                        r.sponsored.inventory[inventoryKey] = {}
                     }
 
                     for (var datestr in data.inventory) {
-                        if (!r.sponsored.inventory[srname][datestr]) {
-                            r.sponsored.inventory[srname][datestr] = data.inventory[datestr]
+                        if (!r.sponsored.inventory[inventoryKey][datestr]) {
+                            r.sponsored.inventory[inventoryKey][datestr] = data.inventory[datestr]
                         }
                     }
                 }
@@ -66,7 +86,7 @@ r.sponsored = {
         }
     },
 
-    get_booked_inventory: function($form, srname, isOverride) {
+    get_booked_inventory: function($form, srname, geotarget, isOverride) {
         var campaign_name = $form.find('input[name="campaign_name"]').val()
         if (!campaign_name) {
             return {}
@@ -83,6 +103,16 @@ r.sponsored = {
 
         var existing_srname = $campaign_row.data("targeting")
         if (srname != existing_srname) {
+            return {}
+        }
+
+        var existing_country = $campaign_row.data("country")
+        if (geotarget.country != existing_country) {
+            return {}
+        }
+
+        var existing_metro = $campaign_row.data("metro")
+        if (geotarget.metro != existing_metro) {
             return {}
         }
 
@@ -120,8 +150,13 @@ r.sponsored = {
             targeted = $form.find('#targeting').is(':checked'),
             target = $form.find('*[name="sr"]').val(),
             srname = targeted ? target : '',
+            country = $('#country').val() || "",
+            region = $('#region').val() || "",
+            metro = $('#metro').val() || "",
+            geotarget = {'country': country, 'region': region, 'metro': metro},
             dates = r.sponsored.get_dates(startdate, enddate),
-            booked = this.get_booked_inventory($form, srname, isOverride)
+            booked = this.get_booked_inventory($form, srname, geotarget, isOverride),
+            inventoryKey = this.get_inventory_key(srname, geotarget)
 
         // bail out in state where targeting is selected but srname
         // has not been entered yet
@@ -130,21 +165,21 @@ r.sponsored = {
             return
         }
 
-        $.when(r.sponsored.get_check_inventory(srname, dates)).done(
+        $.when(r.sponsored.get_check_inventory(srname, geotarget, dates)).done(
             function() {
                 if (isOverride) {
                     // do a simple sum of available inventory for override
                     var available = _.reduce(_.map(dates, function(date){
                         var datestr = $.datepicker.formatDate('mm/dd/yy', date),
                             daily_booked = booked[datestr] || 0
-                        return r.sponsored.inventory[srname][datestr] + daily_booked
+                        return r.sponsored.inventory[inventoryKey][datestr] + daily_booked
                     }), function(memo, num){ return memo + num; }, 0)
                 } else {
                     // calculate conservative inventory estimate
                     var minDaily = _.min(_.map(dates, function(date) {
                         var datestr = $.datepicker.formatDate('mm/dd/yy', date),
                             daily_booked = booked[datestr] || 0
-                        return r.sponsored.inventory[srname][datestr] + daily_booked
+                        return r.sponsored.inventory[inventoryKey][datestr] + daily_booked
                     }))
                     var available = minDaily * ndays
                 }
@@ -206,7 +241,15 @@ r.sponsored = {
     },
 
     get_cpm: function($form) {
-        return parseInt($form.find('*[name="cpm"]').val())
+        var baseCpm = parseInt($("#bid").data("base_cpm")),
+            geotargetCpm = parseInt($("#bid").data("geotarget_cpm")),
+            isGeotarget = $('#country').val() != ''
+
+        if (isGeotarget) {
+            return geotargetCpm
+        } else {
+            return baseCpm
+        }
     },
 
     on_date_change: function() {
@@ -294,6 +337,59 @@ r.sponsored = {
     },
 
     priority_changed: function() {
+        this.fill_campaign_editor()
+    },
+
+    update_regions: function() {
+        var $country = $('#country'),
+            $region = $('#region'),
+            $metro = $('#metro')
+
+        $region.find('option').remove().end().hide()
+        $metro.find('option').remove().end().hide()
+        $metro.prop('disabled', true)
+
+        if (_.has(this.regions, $country.val())) {
+            _.each(this.regions[$country.val()], function(item) {
+                var code = item[0],
+                    name = item[1],
+                    selected = item[2]
+
+                $('<option/>', {value: code, selected: selected}).text(name).appendTo($region)
+            })
+            $region.show()
+        }
+    },
+
+    update_metros: function() {
+        var $region = $('#region'),
+            $metro = $('#metro')
+
+        $metro.find('option').remove().end().hide()
+        if (_.has(this.metros, $region.val())) {
+            _.each(this.metros[$region.val()], function(item) {
+                var code = item[0],
+                    name = item[1],
+                    selected = item[2]
+
+                $('<option/>', {value: code, selected: selected}).text(name).appendTo($metro)
+            })
+            $metro.prop('disabled', false)
+            $metro.show()
+        }
+    },
+
+    country_changed: function() {
+        this.update_regions()
+        this.fill_campaign_editor()
+    },
+
+    region_changed: function() {
+        this.update_metros()
+        this.fill_campaign_editor()
+    },
+
+    metro_changed: function() {
         this.fill_campaign_editor()
     },
 
@@ -497,6 +593,21 @@ function edit_campaign($campaign_row) {
                     .find(".targeting").hide();
             }
 
+            /* set geotargeting */
+            var country = $campaign_row.data("country"),
+                region = $campaign_row.data("region"),
+                metro = $campaign_row.data("metro")
+            campaign.find("#country").val(country)
+            r.sponsored.update_regions()
+            if (region != "") {
+                campaign.find("#region").val(region)
+                r.sponsored.update_metros()
+
+                if (metro != "") {
+                    campaign.find("#metro").val(metro)
+                }
+            }
+
             /* attach the dates to the date widgets */
             init_startdate();
             init_enddate();
@@ -540,6 +651,9 @@ function create_campaign() {
                 .find('input[name="priority"][data-default="true"]').prop("checked", "checked").end()
                 .find('input[name="bid"]').val(minBid * 5).end()
                 .find(".targeting").hide().end()
+                .find('select[name="country"]').val('all').end()
+                .find('select[name="region"]').hide().end()
+                .find('select[name="metro"]').hide().end()
                 .fadeIn();
             r.sponsored.fill_campaign_editor();
         });

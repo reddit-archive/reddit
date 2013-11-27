@@ -75,6 +75,7 @@ from r2.lib.validator import (
     VInt,
     VLength,
     VLink,
+    VLocation,
     VModhash,
     VOneOf,
     VPriority,
@@ -113,15 +114,16 @@ def campaign_has_oversold_error(form, campaign):
     target = Subreddit._by_name(campaign.sr_name) if campaign.sr_name else None
     return has_oversold_error(form, campaign, campaign.start_date,
                               campaign.end_date, campaign.bid, campaign.cpm,
-                              target)
+                              target, campaign.location)
 
 
-def has_oversold_error(form, campaign, start, end, bid, cpm, target):
+def has_oversold_error(form, campaign, start, end, bid, cpm, target, location):
     ndays = (to_date(end) - to_date(start)).days
     total_request = calc_impressions(bid, cpm)
     daily_request = int(total_request / ndays)
     oversold = inventory.get_oversold(target or Frontpage, start, end,
-                                      daily_request, ignore=campaign)
+                                      daily_request, ignore=campaign,
+                                      location=location)
 
     if oversold:
         min_daily = min(oversold.values())
@@ -296,13 +298,18 @@ class PromoteController(ListingController):
         return self.redirect(promote.promo_edit_url(link))
 
     @json_validate(sr=VSubmitSR('sr', promotion=True),
+                   location=VLocation(),
                    start=VDate('startdate'),
                    end=VDate('enddate'))
-    def GET_check_inventory(self, responder, sr, start, end):
+    def GET_check_inventory(self, responder, sr, location, start, end):
         sr = sr or Frontpage
-        available_by_datestr = inventory.get_available_pageviews(sr, start, end,
-                                                                 datestr=True)
-        return {'inventory': available_by_datestr}
+        if not location or not location.country:
+            available = inventory.get_available_pageviews(sr, start, end,
+                                                          datestr=True)
+        else:
+            available = inventory.get_available_pageviews_geotargeted(sr,
+                            location, start, end, datestr=True)
+        return {'inventory': available}
 
     @validate(
         VSponsorAdmin(),
@@ -564,9 +571,10 @@ class PromoteController(ListingController):
                    sr=VSubmitSR('sr', promotion=True),
                    campaign_id36=nop("campaign_id36"),
                    targeting=VLength("targeting", 10),
-                   priority=VPriority("priority"))
+                   priority=VPriority("priority"),
+                   location=VLocation())
     def POST_edit_campaign(self, form, jquery, link, campaign_id36,
-                          dates, bid, sr, targeting, priority):
+                          dates, bid, sr, targeting, priority, location):
         if not link:
             return
 
@@ -574,6 +582,8 @@ class PromoteController(ListingController):
 
         author = Account._byID(link.author_id, data=True)
         cpm = author.cpm_selfserve_pennies
+        if location:
+            cpm += g.cpm_selfserve_geotarget.pennies
 
         if (start and end and not promote.is_accepted(link) and
             not c.user_is_sponsor):
@@ -658,14 +668,18 @@ class PromoteController(ListingController):
 
         # Check inventory
         campaign = campaign if campaign_id36 else None
-        if (not priority.inventory_override and
-            has_oversold_error(form, campaign, start, end, bid, cpm, sr)):
-            return
+        if not priority.inventory_override:
+            oversold = has_oversold_error(form, campaign, start, end, bid, cpm,
+                                          sr, location)
+            if oversold:
+                return
 
         if campaign:
-            promote.edit_campaign(link, campaign, dates, bid, cpm, sr, priority)
+            promote.edit_campaign(link, campaign, dates, bid, cpm, sr, priority,
+                                  location)
         else:
-            campaign = promote.new_campaign(link, dates, bid, cpm, sr, priority)
+            campaign = promote.new_campaign(link, dates, bid, cpm, sr, priority,
+                                            location)
         rc = RenderableCampaign.from_campaigns(link, campaign)
         jquery.update_campaign(campaign._fullname, rc.render_html())
 

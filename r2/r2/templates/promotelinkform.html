@@ -43,8 +43,9 @@ ${unsafe(js.use('sponsored'))}
 <script type="text/javascript">
   r.sponsored.init();
   r.sponsored.setup(${unsafe(simplejson.dumps(thing.inventory))},
-                    ${simplejson.dumps(not thing.campaigns)})
-
+                    ${simplejson.dumps(not thing.campaigns)});
+  r.sponsored.setup_geotargeting(${unsafe(simplejson.dumps(thing.regions))},
+                                 ${unsafe(simplejson.dumps(thing.metros))});
 </script>
 </%def>
 
@@ -337,6 +338,28 @@ ${self.javascript_setup()}
           </tr>
 
           <tr>
+            <th>${_("geotargeting")}</th>
+            <td class="prefright">
+              <select class="geotarget-select" id="country" name="country"
+                      title=${_("country")}
+                      onchange="r.sponsored.country_changed()">
+                %for code, name, selected in thing.countries:
+                <option ${"selected='selected'" if selected else ""} value=${code}>
+                  ${name}
+                </option>
+                %endfor
+              </select>
+              <select class="geotarget-select" id="region" name="region"
+                      title=${_("region")} style="display:none"
+                      onchange="r.sponsored.region_changed()"></select>
+              <select class="geotarget-select" id="metro" name="metro"
+                      title=${_("metro")} style="display:none"
+                      onchange="r.sponsored.metro_changed()"></select>
+              ${error_field("INVALID_LOCATION", ("country", "region", "metro"), "div")}
+            </td>
+          </tr>
+
+          <tr>
             <th>${_("price")}</th>
             <td class="prefright">
               <span class="price-info"></span>
@@ -378,7 +401,8 @@ ${self.javascript_setup()}
                       onkeyup="r.sponsored.on_bid_change()"
                       value="${format_decimal(5 * thing.min_bid, format='.00', locale=c.locale)}"
                       data-min_bid="${thing.min_bid}"
-                      data-base_cpm="${thing.author.cpm_selfserve_pennies}"/>
+                      data-base_cpm="${thing.author.cpm_selfserve_pennies}"
+                      data-geotarget_cpm="${thing.author.cpm_selfserve_pennies + g.cpm_selfserve_geotarget.pennies}"/>
               <div class="minimum-spend">
                 ${_('%(minimum)s minimum') % dict(minimum=format_currency(thing.min_bid, 'USD', locale=c.locale))}
               </div>
@@ -486,6 +510,7 @@ ${self.javascript_setup()}
             <th>${_("total budget")}</th>
             <th>${_("spent")}</th>
             <th title="${targeting_title}">${_("targeting")}</th>
+            <th>${_("geotargeting")}</th>
             <th style="align:right">
               <button class="new-campaign fancybutton" 
                       ${'disabled="disabled"' if len(thing.campaigns) >= g.MAX_CAMPAIGNS_PER_LINK else ''}

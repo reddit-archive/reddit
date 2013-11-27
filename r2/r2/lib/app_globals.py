@@ -240,6 +240,7 @@ class Globals(object):
             'gold_month_price',
             'gold_year_price',
             'cpm_selfserve',
+            'cpm_selfserve_geotarget',
         ],
     }
 

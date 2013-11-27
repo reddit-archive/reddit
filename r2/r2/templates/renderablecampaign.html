@@ -33,6 +33,9 @@
     data-enddate="${thing.campaign.end_date.strftime('%m/%d/%Y')}"
     data-bid="${'%.2f' % thing.campaign.bid}"
     data-targeting="${thing.campaign.sr_name}"
+    data-country="${thing.country}"
+    data-region="${thing.region}"
+    data-metro="${thing.metro}"
     data-cpm="${getattr(thing.campaign, 'cpm', g.cpm_selfserve.pennies)}"
     data-campaign_id36="${thing.campaign._id36}"
     data-campaign_name="${thing.campaign._fullname}"
@@ -105,6 +108,10 @@
 
   <td class="campaign-target">
     ${'/r/%s' % thing.campaign.sr_name if thing.campaign.sr_name else _('frontpage')}
+  </td>
+
+  <td class="campaign-geotarget">
+    ${thing.geotarget}
   </td>
 
   <td class="campaign-buttons">

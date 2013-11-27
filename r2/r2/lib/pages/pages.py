@@ -3571,6 +3571,39 @@ class PromoteLinkForm(Templated):
         self.priorities = [(p.name, p.text, p.description, p.default, p.inventory_override, p.cpm)
                            for p in sorted(PROMOTE_PRIORITIES.values(), key=lambda p: p.value)]
 
+        # geotargeting
+        def location_sort(location_tuple):
+            code, name, default = location_tuple
+            if code == '':
+                return -2
+            elif code == 'US':
+                return -1
+            else:
+                return name
+
+        countries = [(code, country['name'], False) for code, country
+                                                    in g.locations.iteritems()]
+        countries.append(('', _('none'), True))
+
+        self.countries = sorted(countries, key=location_sort)
+        self.regions = {}
+        self.metros = {}
+        for code, country in g.locations.iteritems():
+            if 'regions' in country and country['regions']:
+                self.regions[code] = [('', _('all'), True)]
+
+                for region_code, region in country['regions'].iteritems():
+                    if region['metros']:
+                        region_tuple = (region_code, region['name'], False)
+                        self.regions[code].append(region_tuple)
+                        self.metros[region_code] = []
+
+                        for metro_code, metro in region['metros'].iteritems():
+                            metro_tuple = (metro_code, metro['name'], False)
+                            self.metros[region_code].append(metro_tuple)
+                        self.metros[region_code].sort(key=location_sort)
+                self.regions[code].sort(key=location_sort)
+
         # preload some inventory
         srnames = set()
         for title, names in self.subreddit_selector.subreddit_names:
@@ -3608,6 +3641,23 @@ class RenderableCampaign(Templated):
         self.pay_url = promote.pay_url(link, campaign)
         self.view_live_url = promote.view_live_url(link, campaign.sr_name)
         self.refund_url = promote.refund_url(link, campaign)
+
+        if campaign.location:
+            country = campaign.location.country or ''
+            region = campaign.location.region or ''
+            metro = campaign.location.metro or ''
+            pieces = [country, region]
+            if metro:
+                metro_str = (g.locations[country]['regions'][region]
+                             ['metros'][metro]['name'])
+                pieces.append(metro_str)
+            pieces = filter(lambda i: i, pieces)
+            self.geotarget = '/'.join(pieces)
+            self.country, self.region, self.metro = country, region, metro
+        else:
+            self.geotarget = ''
+            self.country, self.region, self.metro = '', '', ''
+
         Templated.__init__(self)
 
     @classmethod
