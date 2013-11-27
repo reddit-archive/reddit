@@ -132,6 +132,7 @@ error_list = dict((
         ('JSON_INVALID', _('unexpected JSON structure')),
         ('JSON_MISSING_KEY', _('JSON missing key: "%(key)s"')),
         ('NO_CHANGE_KIND', _("can't change post type")),
+        ('INVALID_LOCATION', _("invalid location")),
     ))
 
 errors = Storage([(e, e) for e in error_list.keys()])

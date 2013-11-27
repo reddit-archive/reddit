@@ -37,6 +37,7 @@ from r2.lib.jsonresponse import JQueryResponse, JsonResponse
 from r2.lib.log import log_text
 from r2.lib.permissions import ModeratorPermissionSet
 from r2.models import *
+from r2.models.promo import Location
 from r2.lib.authorize import Address, CreditCard
 from r2.lib.utils import constant_time_compare
 from r2.lib.require import require, require_split, RequirementException
@@ -1707,6 +1708,25 @@ class VPriority(Validator):
             return PROMOTE_PRIORITIES.get(val, PROMOTE_DEFAULT_PRIORITY)
         else:
             return PROMOTE_DEFAULT_PRIORITY
+
+
+class VLocation(Validator):
+    default_param = ("country", "region", "metro")
+
+    def run(self, country, region, metro):
+        if not (country or region or metro):
+            return None
+
+        if not (country and not (region or metro) or
+                (country and region and metro)):
+            # can target just country or country, region, and metro
+            self.set_error(errors.INVALID_LOCATION, code=400)
+        elif (country not in g.locations or
+              region and region not in g.locations[country]['regions'] or
+              metro and metro not in g.locations[country]['regions'][region]['metros']):
+            self.set_error(errors.INVALID_LOCATION, code=400)
+        else:
+            return Location(country, region, metro)
 
 
 class VImageType(Validator):
