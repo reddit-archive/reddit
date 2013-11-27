@@ -119,7 +119,11 @@ def get_campaigns_by_date(srs, start, end, ignore=None):
     else:
         transaction_by_id = {}
 
-    ret = {sr.name: defaultdict(list) for sr in srs}
+    ret = {sr.name: dict.fromkeys(dates) for sr in srs}
+    for srname, date_dict in ret.iteritems():
+        for date in date_dict:
+            ret[srname][date] = []
+
     for camp in campaigns:
         if camp.trans_id == NO_TRANSACTION:
             continue
