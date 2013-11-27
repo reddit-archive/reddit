@@ -20,6 +20,8 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+from itertools import product
+
 from r2.lib.db import tdb_cassandra
 from r2.lib.utils import tup
 from r2.models.subreddit import DefaultSR
@@ -66,3 +68,54 @@ class PromoMetrics(tdb_cassandra.View):
             values_by_sr[fp] = values_by_sr.get(fp, 0) + values_by_sr['']
             del(values_by_sr[''])
         cls._set_values(metric_name, values_by_sr)
+
+
+class LocationPromoMetrics(tdb_cassandra.View):
+    _use_db = True
+    _write_consistency_level = tdb_cassandra.CL.QUORUM
+    _read_consistency_level = tdb_cassandra.CL.ONE
+    _extra_schema_creation_args = {
+        "default_validation_class": tdb_cassandra.IntegerType(),
+    }
+
+    @classmethod
+    def _rowkey(cls, location):
+        fields = [location.country, location.region, location.metro]
+        return '-'.join(map(lambda field: field or '', fields))
+
+    @classmethod
+    def _column_name(cls, sr):
+        return sr.name
+
+    @classmethod
+    def get(cls, srs, locations):
+        srs, srs_is_single = tup(srs, ret_is_single=True)
+        locations, locations_is_single = tup(locations, ret_is_single=True)
+        is_single = srs_is_single and locations_is_single
+
+        rowkeys = {location: cls._rowkey(location) for location in locations}
+        columns = {sr: cls._column_name(sr) for sr in srs}
+        rcl = cls._read_consistency_level
+        metrics = cls._cf.multiget(rowkeys.values(), columns.values(),
+                                   read_consistency_level=rcl)
+        ret = {}
+
+        for sr, location in product(srs, locations):
+            rowkey = rowkeys[location]
+            column = columns[sr]
+            impressions = metrics.get(rowkey, {}).get(column, 0)
+            ret[(sr, location)] = impressions
+
+        if is_single:
+            return ret.values()[0]
+        else:
+            return ret
+
+    @classmethod
+    def set(cls, metrics):
+        wcl = cls._write_consistency_level
+        with cls._cf.batch(write_consistency_level=wcl) as b:
+            for location, sr, impressions in metrics:
+                rowkey = cls._rowkey(location)
+                column = {cls._column_name(sr): impressions}
+                b.insert(rowkey, column)
