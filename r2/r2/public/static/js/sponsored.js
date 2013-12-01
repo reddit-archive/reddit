@@ -468,7 +468,7 @@ function edit_campaign($campaign_row) {
         editRow.children('td:first').attr("colspan", 8).append(campaign)
         $campaign_row.fadeOut(function() {
             /* fill inputs from data in campaign row */
-            $.map(['startdate', 'enddate', 'bid', 'cpm', 'campaign_id36', 'campaign_name'],
+            _.each(['startdate', 'enddate', 'bid', 'cpm', 'campaign_id36', 'campaign_name'],
                 function(input) {
                     var val = $campaign_row.data(input),
                         $input = campaign.find('*[name="' + input + '"]')
