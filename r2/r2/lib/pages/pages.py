@@ -516,12 +516,6 @@ class Reddit(Templated):
                                          more_text = more_text))
 
         if no_ads_yet and show_adbox:
-            ps.append(SideBox(
-                title=_("Join our Secret Santa tradition"),
-                css_class="hohoho",
-                link="http://redditgifts.com/page/secret-santa/?source=rhp",
-                target="_blank",
-            ))
             ps.append(Ads())
             if g.live_config["gold_revenue_goal"]:
                 ps.append(Goldvertisement())
