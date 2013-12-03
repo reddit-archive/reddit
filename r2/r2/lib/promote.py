@@ -708,7 +708,7 @@ def refund_campaign(link, camp, billable_amount, billable_impressions):
 PromoTuple = namedtuple('PromoTuple', ['link', 'weight', 'campaign'])
 
 
-@memoize('all_live_promo_srnames', time=600)
+@memoize('all_live_promo_srnames')
 def all_live_promo_srnames():
     now = promo_datetime_now()
     return {camp.sr_name for camp, link in get_promos(now)
