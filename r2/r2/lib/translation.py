@@ -41,6 +41,10 @@ except ImportError:
 else:
     I18N_PATH = os.path.dirname(reddit_i18n.__file__)
 
+# Different from the default lang (as defined in the ini file)
+# Source language is what is in the source code
+SOURCE_LANG = 'en'
+
 
 def _get_translator(lang, graceful_fail=False, **kwargs):
     """Utility method to get a valid translator object from a language name"""
@@ -91,7 +95,9 @@ def load_data(lang_path, domain=None, extension='data'):
 
 def iter_langs(base_path=I18N_PATH):
     if base_path:
-        for lang in os.listdir(base_path):
+        # sorted() so that get_active_langs can check completion
+        # data on "base" languages of a dialect
+        for lang in sorted(os.listdir(base_path)):
             full_path = os.path.join(base_path, lang, 'LC_MESSAGES')
             if os.path.isdir(full_path):
                 yield lang, full_path
@@ -100,12 +106,23 @@ def iter_langs(base_path=I18N_PATH):
 def get_active_langs(path=I18N_PATH, default_lang='en'):
     trans = []
     trans_name = {}
+    completions = {}
     for lang, lang_path in iter_langs(path):
         data = load_data(lang_path)
         name = [data['name'], '']
         if data['_is_enabled'] and lang != default_lang:
             trans.append(lang)
             completion = float(data['num_completed']) / float(data['num_total'])
+            completions[lang] = completion
+            # This relies on iter_langs hitting the base_lang first
+            base_lang, is_dialect, dialect = lang.partition("-")
+            if is_dialect:
+                if base_lang == SOURCE_LANG:
+                    # Source language has to be 100% complete
+                    base_completion = 1.0
+                else:
+                    base_completion = completions.get(base_lang, 0)
+                completion = max(completion, base_completion)
             if completion < .5:
                 name[1] = ' (*)'
         trans_name[lang] = name
