@@ -1,4 +1,10 @@
-r.recommend = {}
+r.recommend = {
+    init: function() {
+        $('.explore-item').each(function(idx, el) {
+            new r.recommend.ExploreItem({el: el})
+        })
+    }
+}
 
 r.recommend.Recommendation = Backbone.Model.extend()
 
@@ -124,5 +130,42 @@ r.recommend.RecommendationsView = Backbone.View.extend({
 
     showMore: function(ev) {
         this.collection.fetchNewRecs()
+    }
+})
+
+r.recommend.ExploreItem = Backbone.View.extend({
+    events: {
+        'click .explore-feedback-dismiss': 'dismissSubreddit',
+        'click a': 'recordClick'
+    },  
+
+    dismissSubreddit: function(ev) {
+        var listing = $(ev.target).closest('.explore-item')
+        var sr_name = listing.data('sr_name')
+        var src = listing.data('src')
+        r.ajax({
+            type: 'POST',
+            url: '/api/recommend/feedback',
+            data: { type: 'dis',
+                    srnames: sr_name,
+                    src: src,
+                    page: 'explore' }
+        })
+        this.$('.explore-feedback-dismiss').css({'font-weight':'bold'})
+        $(this.el).fadeOut('fast')
+    },
+
+    recordClick: function(ev) {
+        var listing = $(ev.target).closest('.explore-item')
+        var sr_name = listing.data('sr_name')
+        var src = listing.data('src')
+        r.ajax({
+            type: 'POST',
+            url: '/api/recommend/feedback',
+            data: { type: 'clk',
+                    srnames: sr_name,
+                    src: src,
+                    page: 'explore' }
+        })
     }
 })

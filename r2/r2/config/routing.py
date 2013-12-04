@@ -144,6 +144,9 @@ def make_map():
 
     mc('/user/:username/:where/:show', controller='user', action='listing')
     
+    mc('/explore', controller='front', action='explore')
+    mc('/api/recommend/feedback', controller='api', action='rec_feedback')
+
     mc('/about/sidebar', controller='front', action='sidebar')
     mc('/about/sticky', controller='front', action='sticky')
     mc('/about/flair', controller='front', action='flairlisting')

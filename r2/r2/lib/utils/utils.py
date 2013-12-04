@@ -25,6 +25,7 @@ import base64
 import traceback
 import ConfigParser
 import codecs
+import itertools
 
 from babel.dates import TIMEDELTA_UNITS
 from urllib import unquote_plus
@@ -1518,10 +1519,23 @@ def parse_ini_file(config_file):
     parser.readfp(config_file)
     return parser
 
-
 def fuzz_activity(count):
     """Add some jitter to an activity metric to maintain privacy."""
     # decay constant is e**(-x / 60)
     decay = math.exp(float(-count) / 60)
     jitter = round(5 * decay)
     return count + random.randint(0, jitter)
+
+# http://docs.python.org/2/library/itertools.html#recipes
+def roundrobin(*iterables):
+    "roundrobin('ABC', 'D', 'EF') --> A D E B F C"
+    # Recipe credited to George Sakkis
+    pending = len(iterables)
+    nexts = itertools.cycle(iter(it).next for it in iterables)
+    while pending:
+        try:
+            for next in nexts:
+                yield next()
+        except StopIteration:
+            pending -= 1
+            nexts = itertools.cycle(itertools.islice(nexts, pending))

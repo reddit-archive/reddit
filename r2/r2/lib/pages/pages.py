@@ -4195,6 +4195,7 @@ class ListingChooser(Templated):
         self.sections = defaultdict(list)
         self.add_item("global", _("subscribed"), site=Frontpage,
                       description=_("your front page"))
+        self.add_item("global", _("explore"), path="/explore")
         self.add_item("other", _("everything"), site=All,
                       description=_("from all subreddits"))
         if c.show_mod_mail:
@@ -4286,9 +4287,12 @@ class PolicyPage(BoringPage):
 
 
 class SubscribeButton(Templated):
-    def __init__(self, sr):
+    def __init__(self, sr, bubble_class=None):
         Templated.__init__(self)
         self.sr = sr
+        self.data_attrs = {"sr_name": sr.name}
+        if bubble_class:
+            self.data_attrs["bubble_class"] = bubble_class
 
 
 class SubredditSelector(Templated):
@@ -4344,4 +4348,42 @@ class ListingSuggestions(Templated):
             else:
                 self.suggestion_type = "random"
 
+        Templated.__init__(self)
+
+
+class ExploreItem(Templated):
+    """For managing recommended content."""
+
+    def __init__(self, item_type, rec_src, sr, link, comment=None):
+        """Constructor.
+
+        item_type - string that helps templates know how to render this item.
+        rec_src - code that lets us track where the rec originally came from,
+            useful for comparing performance of data sources or algorithms
+        sr and link are required
+        comment is optional
+        
+        See r2.lib.recommender for valid values of item_type and rec_src.
+
+        """
+        self.sr = sr
+        self.link = link
+        self.comment = comment
+        self.type = item_type
+        self.src = rec_src
+        Templated.__init__(self)
+
+
+class ExploreItemListing(Templated):
+    def __init__(self, recs):
+        self.things = []
+        if recs:
+            links, srs = zip(*[(rec.link, rec.sr) for rec in recs])
+            wrapped_links = {l._id: l for l in wrap_links(links).things}
+            wrapped_srs = {sr._id: sr for sr in wrap_things(*srs)}
+            for rec in recs:
+                if rec.link._id in wrapped_links:
+                    rec.link = wrapped_links[rec.link._id]
+                    rec.sr = wrapped_srs[rec.sr._id]
+                    self.things.append(rec)
         Templated.__init__(self)

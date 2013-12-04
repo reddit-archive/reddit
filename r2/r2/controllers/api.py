@@ -78,6 +78,7 @@ from r2.controllers.ipn import generate_blob
 from r2.lib.lock import TimeoutExpired
 
 from r2.models import wiki
+from r2.models.recommend import AccountSRFeedback
 from r2.lib.merge import ConflictException
 
 import csv
@@ -3621,6 +3622,16 @@ class ApiController(RedditController, OAuth2ResourceController):
                                                   to_omit=to_omit.values())
         sr_data = [{'sr_name': sr.name} for sr in rec_srs]
         return json.dumps(sr_data)
+
+
+    @validatedForm(VUser(),
+                   VModhash(),
+                   action=VOneOf("type", recommend.FEEDBACK_ACTIONS),
+                   srs=VSRByNames("srnames"))
+    def POST_rec_feedback(self, form, jquery, action, srs):
+        if form.has_errors("type", errors.INVALID_OPTION):
+            return self.abort404()
+        AccountSRFeedback.record_feedback(c.user, srs.values(), action)
 
 
     @validatedForm(

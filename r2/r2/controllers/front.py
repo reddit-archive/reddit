@@ -33,6 +33,7 @@ from r2.controllers.reddit_base import (
 from r2 import config
 from r2.models import *
 from r2.config.extensions import is_api
+from r2.lib import recommender
 from r2.lib.pages import *
 from r2.lib.pages.things import wrap_links
 from r2.lib.pages import trafficpages
@@ -154,6 +155,16 @@ class FrontController(RedditController, OAuth2ResourceController):
             kw['reverse'] = False
         return DetailsPage(thing=thing, expand_children=False, **kw).render()
 
+    @validate(VUser())
+    def GET_explore(self):
+        recs = recommender.get_recommended_content_for_user(c.user,
+                                                            record_views=True)
+        content = ExploreItemListing(recs)
+        return BoringPage(_("explore"),
+                          show_sidebar=True,
+                          show_chooser=True,
+                          content=content).render()
+ 
     @validate(article=VLink('article'))
     def GET_shirt(self, article):
         if not can_view_link_comments(article):

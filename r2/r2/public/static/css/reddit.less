@@ -987,6 +987,193 @@ a.author { margin-right: 0.5em; }
 
 .thing.stickied a.title, .thing.stickied a.title:visited, .thing.stickied a.title.visited { font-weight: bold; color: @moderator-color; }
 
+body.with-listing-chooser.explore-page #header .pagename {
+    position: static;
+}
+
+.explore-header {
+    margin-bottom: 7px;
+    padding: 5px 0;
+    font-weight: bold;
+
+    .explore-title {
+      font-size: 1.3em;
+    }
+    .explore-discuss-link {
+      float: right;
+      margin: 0.3em 10px 0 0;
+    }
+}
+
+.explore-item {
+    margin-bottom: 1em;
+
+    .explore-label {
+        border-radius: 2px;
+        display: inline-block;
+        margin: 0 5px 1px 0;
+        padding: 1px 2px 2px;
+    }
+
+    .explore-label-type, .explore-label-link {
+        padding: 0 5px;
+    }
+
+    .explore-sr-details {
+        color: #777;
+        display: inline-block;
+        font-size: x-small;
+        font-weight: normal;
+        margin-left: 3px;
+    }
+
+    .explore-feedback {
+        display: inline-block;
+        .fancy-toggle-button .add, .fancy-toggle-button .remove {
+            background-color: transparent;
+            background-image: none;
+            border: none;
+            color: #aaa;
+            border: 1px solid #ccc;
+            border-radius: 2px;
+            margin-left: 10px;
+            padding-top: 0;
+
+            .option {
+                line-height: 7px;
+            }
+
+            &:hover {
+                color: white;
+                border: 1px solid #444;
+            }
+        }
+        .fancy-toggle-button .add {
+            &:hover {
+                background-image: url(../bg-button-add.png); /* SPRITE stretch-x */
+            }
+        }
+        .fancy-toggle-button .remove {
+            &:hover {
+                background-image: url(../bg-button-remove.png); /* SPRITE stretch-x */
+            }
+        }
+        .subscribe-button {
+            display: inline-block;
+            margin: 0 4px 0 0;
+        }
+    }
+
+    .explore-feedback-dismiss {
+        cursor: pointer;
+        display: inline-block;
+        text-indent: -9999px;
+        width: 9px;
+        height: 9px;
+        background-image: url(../close-small.png);  /* SPRITE */
+        background-repeat: no-repeat;
+        opacity: .3;
+        margin-left: 4px;
+        vertical-align: middle;
+        border: 3px solid transparent;
+        &:hover {
+            opacity: 1;
+        }
+    }
+
+    .link {
+        .title {
+            font-size: small;
+        }
+        .domain {
+            font-size: x-small;
+        }
+        .tagline, .buttons {
+            font-size: smaller;
+        }
+    }
+
+    .explore-sr {
+        display: inline-block;
+        font-size: 1.1em;
+        font-weight: bold;
+        margin-bottom: 3px;
+        padding: 2px 4px;
+        line-height: 13px;
+        height: 18px;
+    }
+
+    .midcol {
+        display: none;
+    }
+
+    .rank {
+        display: none;
+    }
+}
+
+.explore-comment {
+    .explore-label {
+        background-color: #cee3f8;
+        border: solid thin #5f99cf;
+    }
+    .tagline, .buttons, .thumbnail, .expando-button {
+        display: none;
+    }
+    .comment {
+        border-left: solid 2px #eee;
+        color: #888;
+        margin: -3px 0 3px 5px;
+        max-height: 100px;
+        overflow-x: hidden;
+        overflow-y: hidden;
+        position: relative;
+        .md {
+            font-size: x-small;
+            padding-bottom: 2px;
+            p {
+                margin: 5px;
+            }
+        }
+    }
+    /* make long comment boxes fade to white instead of cutting off mid-line */
+    .comment-fade {
+        background: -moz-linear-gradient(bottom, rgba(255,255,255,1) 0%, rgba(255,255,255,0) 100%);
+        background: -webkit-gradient(linear, left bottom, left top, color-stop(0%,rgba(255,255,255,1)), color-stop(100%,rgba(255,255,255,0)));
+        bottom: 0;
+        border: none;
+        height: 10px;
+        position: absolute;
+        width: 100%;
+    }
+    .comment-link {
+        color: #888;
+        display: inline-block;
+        font-size: 0.8em;
+        font-weight: bold;
+        padding: 0 0 8px 5px;
+    }
+}
+
+.explore-hot .explore-label {
+    background-color: #fff088;
+    border: solid thin #c4b487;
+}
+
+.explore-rising .explore-label {
+    background-color: #d6fbcb;
+    border: solid thin #485;
+}
+
+.explore-discovery .explore-label {
+    background-color: #dedede;
+    border: solid thin #aaa;
+}
+
+.explore-subscribe-bubble {
+    margin-left: 22px;
+}
+
 .sitetable { list-style-type: none; }
 .ajaxhook { position: absolute; top: -1000px; left: 0px; }
 
@@ -1121,20 +1308,34 @@ a.author { margin-right: 0.5em; }
         }
     }
 
-    &.anchor-right {
+    &.anchor-right, &.anchor-left {
         &:before, &:after {
             top: 8px;
             border: 9px solid transparent;
         }
 
-        &:before {
-            right: -19px;
-            border-left-color: gray;
+        &.anchor-right {
+            &:before {
+                right: -19px;
+                border-left-color: gray;
+            }
+
+            &:after {
+                right: -18px;
+                border-left-color: white;
+            }
         }
 
-        &:after {
-            right: -18px;
-            border-left-color: white;
+        &.anchor-left {
+            &:before {
+                left: -19px;
+                border-right-color: gray;
+            }
+
+            &:after {
+                left: -18px;
+                border-right-color: white;
+            }
         }
     }
 }

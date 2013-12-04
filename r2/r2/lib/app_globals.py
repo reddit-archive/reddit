@@ -256,6 +256,7 @@ class Globals(object):
         ConfigValue.tuple: [
             'fastlane_links',
             'listing_chooser_sample_multis',
+            'discovery_srs',
         ],
         ConfigValue.str: [
             'listing_chooser_gold_multi',

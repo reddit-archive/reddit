@@ -91,6 +91,7 @@ $(function() {
         r.wiki.init()
         r.gold.init()
         r.multi.init()
+        r.recommend.init()
     } catch (err) {
         r.sendError('Error during base.js init', err)
     }
