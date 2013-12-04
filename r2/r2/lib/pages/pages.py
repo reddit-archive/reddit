@@ -35,7 +35,8 @@ from r2.models.gold import (
     gold_received_by_user,
     days_to_pennies,
     gold_goal_on,
-    gold_revenue_on,
+    gold_revenue_steady,
+    gold_revenue_volatile,
     get_subscription_details,
     TIMEZONE as GOLD_TIMEZONE,
 )
@@ -4200,9 +4201,9 @@ class Goldvertisement(Templated):
                                      tomorrow.month,
                                      tomorrow.day,
                                      tzinfo=GOLD_TIMEZONE)
-        revenue_today = gold_revenue_on(today)
+        revenue_today = gold_revenue_volatile(today)
         yesterday = today - datetime.timedelta(days=1)
-        revenue_yesterday = gold_revenue_on(yesterday)
+        revenue_yesterday = gold_revenue_steady(yesterday)
         revenue_goal = float(gold_goal_on(today))
         revenue_goal_yesterday = float(gold_goal_on(yesterday))
 

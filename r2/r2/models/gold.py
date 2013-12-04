@@ -322,8 +322,13 @@ def gold_revenue_multi(dates):
                 for truncated_time, pennies in ENGINE.execute(query)}
 
 
-@memoize("gold-revenue", time=600)
-def gold_revenue_on(date):
+@memoize("gold-revenue-volatile", time=600)
+def gold_revenue_volatile(date):
+    return gold_revenue_multi([date]).get(date, 0)
+
+
+@memoize("gold-revenue-steady")
+def gold_revenue_steady(date):
     return gold_revenue_multi([date]).get(date, 0)
 
 
