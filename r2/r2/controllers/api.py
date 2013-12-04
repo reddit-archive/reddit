@@ -3686,7 +3686,7 @@ class ApiController(RedditController, OAuth2ResourceController):
 
     @validate(srs=VSRByNames("srnames"),
               to_omit=VSRByNames("omit", required=False))
-    @api_doc(api_section.subreddits)
+    @api_doc(api_section.subreddits, uri='/api/recommend/sr/{srnames}')
     def GET_subreddit_recommendations(self, srs, to_omit):
         """Return subreddits recommended for the given subreddit(s).
 
