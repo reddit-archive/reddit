@@ -163,6 +163,7 @@ class FrontController(RedditController, OAuth2ResourceController):
         return BoringPage(_("explore"),
                           show_sidebar=True,
                           show_chooser=True,
+                          page_classes=['explore-page'],
                           content=content).render()
  
     @validate(article=VLink('article'))
