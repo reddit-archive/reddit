@@ -519,7 +519,13 @@ class ByIDController(ListingController):
     @require_oauth2_scope("read")
     @validate(links=VByName("names", thing_cls=Link,
                             ignore_missing=True, multiple=True))
+    @api_doc(api_section.listings, uri='/by_id/{names}')
     def GET_listing(self, links, **env):
+        """Get a listing of links by fullname.
+
+        `names` is a list of fullnames for links separated by commas or spaces.
+
+        """
         if not links:
             return self.abort404()
         self.names = [l._fullname for l in links]
