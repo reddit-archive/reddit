@@ -286,11 +286,7 @@ def new_promotion(title, url, selftext, user, ip):
 
     l._commit()
 
-    # set the status of the link, populating the query queue
-    if c.user_is_sponsor or user.trusted_sponsor:
-        update_promote_status(l, PROMOTE_STATUS.accepted)
-    else:
-        update_promote_status(l, PROMOTE_STATUS.unpaid)
+    update_promote_status(l, PROMOTE_STATUS.unpaid)
 
     # the user has posted a promotion, so enable the promote menu unless
     # they have already opted out
