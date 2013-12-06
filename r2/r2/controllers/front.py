@@ -219,18 +219,36 @@ class FrontController(RedditController, OAuth2ResourceController):
         return self.redirect(request.fullpath + query_string(dict(sort=sort)))
 
     @require_oauth2_scope("read")
-    @validate(article=VLink('article'),
-              comment=VCommentID('comment'),
+    @validate(article=VLink('article',
+                  docs={"article": "ID36 of a link"}),
+              comment=VCommentID('comment',
+                  docs={"comment": "(optional) ID36 of a comment"}),
               context=VInt('context', min=0, max=8),
               sort=VMenu('controller', CommentSortMenu),
-              limit=VInt('limit'),
-              depth=VInt('depth'))
+              limit=VInt('limit',
+                  docs={"limit": "(optional) an integer"}),
+              depth=VInt('depth',
+                  docs={"depth": "(optional) an integer"}),
+             )
     @api_doc(api_section.listings,
              uri='/comments/{article}',
              uses_site=True,
              extensions=['json', 'xml'])
     def GET_comments(self, article, comment, context, sort, limit, depth):
-        """Comment page for a given 'article'."""
+        """Get the comment tree for a given Link `article`.
+
+        If supplied, `comment` is the ID36 of a comment in the comment tree for
+        `article`. This comment will be the (highlighted) focal point of the
+        returned view and `context` will be the number of parents shown.
+
+        `depth` is the maximum depth of subtrees in the thread.
+
+        `limit` is the maximum number of comments to return.
+
+        See also: [/api/morechildren](#POST_api_morechildren) and
+        [/api/comment](#POST_api_comment).
+
+        """
         if comment and comment.link_id != article._id:
             return self.abort404()
 
