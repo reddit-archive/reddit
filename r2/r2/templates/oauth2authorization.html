@@ -46,10 +46,12 @@
              % dict(app=app_link(thing.client)))}
   </h1>
   <div class="access">
-    <h2>${unsafe(_("Allow %(app)s to:") % dict(app=app_name))}</h2>
-    ${scope_details(thing.scope, expiration=thing.expiration)}
+    <div class="access-permissions">
+        <h2>${unsafe(_("Allow %(app)s to:") % dict(app=app_name))}</h2>
+        ${scope_details(thing.scope, expiration=thing.expiration)}
+    </div>
     <p class="notice">
-      ${unsafe(
+        ${unsafe(
             _("%(app)s will not be able to access your reddit password.")
             % dict(app=app_name))}
     </p>
@@ -61,9 +63,9 @@
       <input type="hidden" name="duration" value="${thing.duration}" />
       <input type="hidden" name="uh" value="${c.modhash}"/>
       <div>
-        <input type="submit" class="fancybutton allow" name="authorize"
+        <input type="submit" class="fancybutton newbutton allow" name="authorize"
                value="${_("Allow")}" />
-        <input type="submit" class="fancybutton decline"
+        <input type="submit" class="fancybutton newbutton decline red"
                value="${_("Decline")}" />
       </div>
     </form>

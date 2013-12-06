@@ -174,10 +174,11 @@ class Reddit(Templated):
     def __init__(self, space_compress=None, nav_menus=None, loginbox=True,
                  infotext='', content=None, short_description='', title='',
                  robots=None, show_sidebar=True, show_chooser=False,
-                 footer=True, srbar=True, page_classes=None,
+                 footer=True, srbar=True, page_classes=None, short_title=None,
                  show_wiki_actions=False, extra_js_config=None, **context):
         Templated.__init__(self, **context)
         self.title = title
+        self.short_title = short_title
         self.short_description = short_description
         self.robots = robots
         self.infotext = infotext
@@ -1020,7 +1021,7 @@ class LoginPage(BoringPage):
         if self.dest:
             u = UrlParser(self.dest)
             # Display a preview message for OAuth2 client authorizations
-            if u.path == '/api/v1/authorize':
+            if u.path in ['/api/v1/authorize', '/api/v1/authorize.compact']:
                 client_id = u.query_dict.get("client_id")
                 self.client = client_id and OAuth2Client.get_token(client_id)
                 if self.client:
@@ -1104,7 +1105,8 @@ class OAuth2AuthorizationPage(BoringPage):
                                       duration=duration,
                                       expiration=expiration)
         BoringPage.__init__(self, _("request for permission"),
-                show_sidebar=False, content=content)
+                            show_sidebar=False, content=content,
+                            short_title=_("permission"))
 
 class OAuth2Authorization(Templated):
     pass
