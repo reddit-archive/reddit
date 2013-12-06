@@ -752,8 +752,16 @@ class FrontController(RedditController, OAuth2ResourceController):
     @validate(location=nop('location'),
               created=VOneOf('created', ('true','false'),
                              default='false'))
+    @api_doc(api_section.subreddits, uri="/r/{subreddit}/about/edit",
+             extensions=["json"])
     def GET_editreddit(self, location, created):
-        """Edit reddit form."""
+        """Get the current settings of a subreddit.
+
+        In the API, this returns the current settings of the subreddit as used
+        by [/api/site_admin](#POST_api_site_admin).  On the HTML site, it will
+        display a form for editing the subreddit.
+
+        """
         c.profilepage = True
         if isinstance(c.site, FakeSubreddit):
             return self.abort404()
@@ -845,10 +853,10 @@ class FrontController(RedditController, OAuth2ResourceController):
 
 
     @base_listing
-    @validate(query=nop('q'))
+    @validate(query=nop('q', docs={"q": "a search query"}))
     @api_doc(api_section.subreddits, uri='/subreddits/search', extensions=['json', 'xml'])
     def GET_search_reddits(self, query, reverse, after, count, num):
-        """Search reddits by title and description."""
+        """Search subreddits by title and description."""
         q = SubredditSearchQuery(query)
 
         results, etime, spane = self._search(q, num=num, reverse=reverse,

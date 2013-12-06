@@ -1023,8 +1023,16 @@ class RedditsController(ListingController):
 
     @listing_api_doc(section=api_section.subreddits,
                      uri='/subreddits/{where}',
-                     uri_variants=['/subreddits/popular', '/subreddits/new', '/subreddits/banned'])
+                     uri_variants=['/subreddits/popular', '/subreddits/new'])
     def GET_listing(self, where, **env):
+        """Get all subreddits.
+
+        The `where` parameter chooses the order in which the subreddits are
+        displayed.  `popular` sorts on the activity of the subreddit and the
+        position of the subreddits can shift around. `new` sorts the subreddits
+        based on their creation date, newest first.
+
+        """
         self.where = where
         return ListingController.GET_listing(self, **env)
 
@@ -1098,6 +1106,19 @@ class MyredditsController(ListingController, OAuth2ResourceController):
                      uri='/subreddits/mine/{where}',
                      uri_variants=['/subreddits/mine/subscriber', '/subreddits/mine/contributor', '/subreddits/mine/moderator'])
     def GET_listing(self, where='subscriber', **env):
+        """Get subreddits the user has a relationship with.
+
+        The `where` parameter chooses which subreddits are returned as follows:
+
+        * `subscriber` - subreddits the user is subscribed to
+        * `contributor` - subreddits the user is an approved submitter in
+        * `moderator` - subreddits the user is a moderator of
+
+        See also: [/api/subscribe](#POST_api_subscribe),
+        [/api/friend](#POST_api_friend), and
+        [/api/accept_moderator_invite](#POST_api_accept_moderator_invite).
+
+        """
         self.where = where
         return ListingController.GET_listing(self, **env)
 

@@ -365,6 +365,11 @@ class VLang(Validator):
     def run(self, lang):
         return VLang.validate_lang(lang)
 
+    def param_docs(self):
+        return {
+            self.param: "a valid IETF language tag (underscore separated)",
+        }
+
 class VRequired(Validator):
     def __init__(self, param, error, *a, **kw):
         Validator.__init__(self, param, *a, **kw)
@@ -559,6 +564,12 @@ class VLength(Validator):
         else:
             return text
 
+    def param_docs(self):
+        return {
+            self.param:
+                "a string no longer than %d characters" % self.max_length,
+        }
+
 class VUploadLength(VLength):
     def run(self, upload, text2=''):
         # upload is expected to be a FieldStorage object
@@ -566,6 +577,13 @@ class VUploadLength(VLength):
             return VLength.run(self, upload.value, text2)
         else:
             self.set_error(self.empty_error, code=400)
+
+    def param_docs(self):
+        kibibytes = self.max_length / 1024
+        return {
+            self.param:
+                "file upload with maximum size of %d KiB" % kibibytes,
+        }
 
 class VPrintable(VLength):
     def run(self, text, text2 = ''):
@@ -1158,6 +1176,11 @@ class VSubscribeSR(VByName):
 
         return sr
 
+    def param_docs(self):
+        return {
+            self.param[0]: "name of a subreddit",
+        }
+
 MIN_PASSWORD_LENGTH = 3
 
 class VPassword(Validator):
@@ -1495,6 +1518,11 @@ class VCssName(Validator):
                 self.set_error(errors.BAD_CSS_NAME)
         return ''
 
+    def param_docs(self):
+        return {
+            self.param: "a valid subreddit image name",
+        }
+
 
 class VMenu(Validator):
 
@@ -1715,6 +1743,11 @@ class VImageType(Validator):
             return 'png'
         return img_type
 
+    def param_docs(self):
+        return {
+            self.param: "one of `png` or `jpg` (default: `png`)",
+        }
+
 
 class ValidEmails(Validator):
     """Validates a list of email addresses passed in as a string and
@@ -1836,6 +1869,10 @@ class VCnameDomain(Validator):
                 return str(domain).lower()
             except UnicodeEncodeError:
                 self.set_error(errors.BAD_CNAME)
+
+    def param_docs(self):
+        # cnames are dead; don't advertise this.
+        return {}
 
 
 # NOTE: make sure *never* to have res check these are present

@@ -252,8 +252,16 @@ class ApiController(RedditController, OAuth2ResourceController):
             queries.new_message(m, inbox_rel)
 
     @json_validate()
-    @api_doc(api_section.subreddits)
+    @api_doc(api_section.subreddits, uses_site=True, extensions=["json"])
     def GET_submit_text(self, responder):
+        """Get the submission text for the subreddit.
+
+        This text is set by the subreddit moderators and intended to be
+        displayed on the submission form.
+
+        See also: [/api/site_admin](#POST_api_site_admin).
+
+        """
         if c.site.over_18 and not c.over18:
             submit_text = None
             submit_text_html = None
@@ -903,7 +911,8 @@ class ApiController(RedditController, OAuth2ResourceController):
         The authenticated user must have been invited to moderate the subreddit
         by one of its current moderators.
 
-        See also: [/api/friend](#POST_api_friend).
+        See also: [/api/friend](#POST_api_friend) and
+        [/subreddits/mine](#GET_subreddits_mine_{where}).
 
         """
 
@@ -1578,12 +1587,26 @@ class ApiController(RedditController, OAuth2ResourceController):
     @validatedForm(VUser(),
                    VModhash(),
                    # nop is safe: handled after auth checks below
-                   stylesheet_contents = nop('stylesheet_contents'),
-                   prevstyle = VLength('prevstyle', max_length=36),
+                   stylesheet_contents=nop('stylesheet_contents',
+                       docs={"stylesheet_contents":
+                             "the new stylesheet content"}),
+                   prevstyle=VLength('prevstyle', max_length=36,
+                                     docs={"prevstyle":
+                                           "(optional) a revision ID"}),
                    op = VOneOf('op',['save','preview']))
     @api_doc(api_section.subreddits, uses_site=True)
     def POST_subreddit_stylesheet(self, form, jquery,
                                   stylesheet_contents = '', prevstyle='', op='save'):
+        """Update a subreddit's stylesheet.
+
+        `op` should be `save` to update the contents of the stylesheet.
+
+        If `prevstyle` is specified, it should be the revision ID the submitted
+        version is a modification of. Wiki-style edit conflict resolution will
+        be done when this is specified, otherwise the content will be blindly
+        overwritten.
+
+        """
         
         if form.has_errors("prevstyle", errors.TOO_LONG):
             return
@@ -1681,10 +1704,16 @@ class ApiController(RedditController, OAuth2ResourceController):
                    name = VCssName('img_name'))
     @api_doc(api_section.subreddits, uses_site=True)
     def POST_delete_sr_img(self, form, jquery, name):
-        """
-        Called upon requested delete on /about/stylesheet.
-        Updates the site's image list, and causes the <li> which wraps
-        the image to be hidden.
+        """Remove an image from the subreddit's custom image set.
+
+        The image will no longer count against the subreddit's image limit.
+        However, the actual image data may still be accessible for an
+        unspecified amount of time. If the image is currently referenced by the
+        subreddit's stylesheet, that stylesheet will no longer validate and
+        won't be editable until the image reference is removed.
+
+        See also: [/api/upload_sr_img](#POST_api_upload_sr_img).
+
         """
         # just in case we need to kill this feature from XSS
         if g.css_killswitch:
@@ -1702,8 +1731,12 @@ class ApiController(RedditController, OAuth2ResourceController):
                    VModhash())
     @api_doc(api_section.subreddits, uses_site=True)
     def POST_delete_sr_header(self, form, jquery):
-        """
-        Called when the user request that the header on a sr be reset.
+        """Remove the subreddit's custom header image.
+
+        The sitewide-default header image will be shown again after this call.
+
+        See also: [/api/upload_sr_img](#POST_api_upload_sr_img).
+
         """
         # just in case we need to kill this feature from XSS
         if g.css_killswitch:
@@ -1740,24 +1773,32 @@ class ApiController(RedditController, OAuth2ResourceController):
               file = VUploadLength('file', max_length=1024*500),
               name = VCssName("name"),
               img_type = VImageType('img_type'),
-              form_id = VLength('formid', max_length = 100), 
+              form_id = VLength('formid', max_length = 100,
+                                docs={"formid": "(optional) can be ignored"}),
               header = VInt('header', max=1, min=0))
     @api_doc(api_section.subreddits, uses_site=True)
     def POST_upload_sr_img(self, file, header, name, form_id, img_type):
-        """
-        Called on /about/stylesheet when an image needs to be replaced
-        or uploaded, as well as on /about/edit for updating the
-        header.  Unlike every other POST in this controller, this
-        method does not get called with Ajax but rather is from the
-        original form POSTing to a hidden iFrame.  Unfortunately, this
-        means the response needs to generate an page with a script tag
-        to fire the requisite updates to the parent document, and,
-        more importantly, that we can't use our normal toolkit for
-        passing those responses back.
+        """Add or replace a subreddit image or custom header logo.
 
-        The result of this function is a rendered UploadedImage()
-        object in charge of firing the completedUploadImage() call in
-        JS.
+        If the `header` value is `0`, an image for use in the subreddit
+        stylesheet is uploaded with the name specified in `name`. If the value
+        of `header` is `1` then the image uploaded will be the subreddit's new
+        logo and `name` will be ignored.
+
+        The `img_type` field specifies whether to store the uploaded image as a
+        PNG or JPEG.
+
+        Subreddits have a limited number of images that can be in use at any
+        given time. If no image with the specified name already exists, one of
+        the slots will be consumed.
+
+        If an image with the specified name already exists, it will be
+        replaced.  This does not affect the stylesheet immediately, but will
+        take effect the next time the stylesheet is saved.
+
+        See also: [/api/delete_sr_img](#POST_api_delete_sr_img) and
+        [/api/delete_sr_header](#POST_api_delete_sr_header).
+
         """
 
         # default error list (default values will reset the errors in
@@ -1846,6 +1887,31 @@ class ApiController(RedditController, OAuth2ResourceController):
                    )
     @api_doc(api_section.subreddits)
     def POST_site_admin(self, form, jquery, name, ip, sr, **kw):
+        """Create or configure a subreddit.
+
+        If `sr` is specified, the request will attempt to modify the specified
+        subreddit. If not, a subreddit with name `name` will be created.
+
+        This endpoint expects *all* values to be supplied on every request.  If
+        modifying a subset of options, it may be useful to get the current
+        settings from [/about/edit.json](#GET_r_{subreddit}_about_edit.json)
+        first.
+
+        The fields `prev_public_description_id`, `prev_description_id` and
+        `prev_submit_text_id` are optional. If specified, they should be the
+        wiki revision IDs of the last-seen versions of these pieces of text to
+        allow for wiki-style edit conflict resolution.
+
+        For backwards compatibility, `description` is the sidebar text and
+        `public_description` is the publicly visible subreddit description.
+
+        Most of the parameters for this endpoint are identical to options
+        visible in the user interface and their meanings are best explained
+        there.
+
+        See also: [/about/edit.json](#GET_r_{subreddit}_about_edit.json).
+
+        """
         def apply_wikid_field(sr, form, pagename, value, prev, field, error):
             id_field_name = 'prev_%s_id' % field
             try:
@@ -2677,6 +2743,15 @@ class ApiController(RedditController, OAuth2ResourceController):
                 sr = VSubscribeSR('sr', 'sr_name'))
     @api_doc(api_section.subreddits)
     def POST_subscribe(self, action, sr):
+        """Subscribe to or unsubscribe from a subreddit.
+
+        To subscribe, `action` should be `sub`. To unsubscribe, `action` should
+        be `unsub`. The user must have access to the subreddit to be able to
+        subscribe to it.
+
+        See also: [/subreddits/mine/](#GET_subreddits_mine_{where}).
+
+        """
         # only users who can make edits are allowed to subscribe.
         # Anyone can leave.
         if sr and (action != 'sub' or sr.can_comment(c.user)):
@@ -3382,6 +3457,7 @@ class ApiController(RedditController, OAuth2ResourceController):
     @json_validate(query=VLength("query", max_length=50))
     @api_doc(api_section.subreddits, extensions=["json"])
     def GET_subreddits_by_topic(self, responder, query):
+        """Return a list of subreddits that are relevant to a search query."""
         if not g.CLOUDSEARCH_SEARCH_API:
             return []
 
