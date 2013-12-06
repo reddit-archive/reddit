@@ -599,7 +599,9 @@ def paginated_listing(default_page_size=25, max_page_size=100, backend='sql'):
                   before=VByName('before', backend=backend),
                   count=VCount('count'),
                   target=VTarget("target"),
-                  show=VLength('show', 3, empty_error=None))
+                  show=VLength('show', 3, empty_error=None,
+                               docs={"show": "(optional) the string `all`"}),
+        )
         @wraps(fn)
         def new_fn(self, before, **env):
             if c.render_style == "htmllite":
@@ -618,8 +620,14 @@ def paginated_listing(default_page_size=25, max_page_size=100, backend='sql'):
                 kw['reverse'] = True
 
             return fn(self, **kw)
+
+        if hasattr(fn, "_api_doc"):
+            fn._api_doc["notes"] = paginated_listing.doc_note
+
         return new_fn
     return decorator
+
+paginated_listing.doc_note = "*This endpoint is [a listing](#listings).*"
 
 #TODO i want to get rid of this function. once the listings in front.py are
 #moved into listingcontroller, we shouldn't have a need for this

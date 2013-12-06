@@ -21,7 +21,7 @@
 ###############################################################################
 
 from oauth2 import OAuth2ResourceController, require_oauth2_scope
-from reddit_base import RedditController, base_listing
+from reddit_base import RedditController, base_listing, paginated_listing
 
 from r2.models import *
 from r2.models.query_cache import CachedQuery, MergedCachedQuery
@@ -202,6 +202,7 @@ listing_api_doc = partial(
     api_doc,
     section=api_section.listings,
     extends=ListingController.GET_listing,
+    notes=paginated_listing.doc_note,
     extensions=["json", "xml"],
 )
 

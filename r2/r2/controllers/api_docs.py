@@ -141,6 +141,14 @@ class ApidocsController(RedditController):
                     docs['parameters'] = {}
                 docs.update(api_doc)
 
+                # append a message to the docstring if supplied
+                notes = docs.get("notes")
+                if notes:
+                    if docs["doc"]:
+                        docs["doc"] += "\n\n" + notes
+                    else:
+                        docs["doc"] = notes
+
                 uri = docs.get('uri') or '/'.join((url_prefix, action))
                 if 'extensions' in docs:
                     # if only one extension was specified, add it to the URI.

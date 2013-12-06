@@ -478,6 +478,11 @@ class VCount(Validator):
         except ValueError:
             return 0
 
+    def param_docs(self):
+        return {
+            self.param: "a positive integer (default: 0)",
+        }
+
 
 class VLimit(Validator):
     def __init__(self, param, default=25, max_limit=100, **kw):
@@ -1451,6 +1456,21 @@ class VInt(VNumber):
     def cast(self, val):
         return int(val)
 
+    def param_docs(self):
+        if self.min is not None and self.max is not None:
+            description = "an integer between %d and %d" % (self.min, self.max)
+        elif self.min is not None:
+            description = "an integer greater than %d" % self.min
+        elif self.max is not None:
+            description = "an integer less than %d" % self.max
+        else:
+            description = "an integer"
+
+        if self.num_default is not None:
+            description += " (default: %d)" % self.num_default
+
+        return {self.param: description}
+
 class VFloat(VNumber):
     def cast(self, val):
         return float(val)
@@ -2045,6 +2065,10 @@ class VTarget(Validator):
     def run(self, name):
         if name and self.target_re.match(name):
             return name
+
+    def param_docs(self):
+        # this is just for htmllite and of no interest to api consumers
+        return {}
 
 class VFlairAccount(VRequired):
     def __init__(self, item, *a, **kw):
