@@ -63,7 +63,7 @@ def get_recommendations(srs,
     - srs is one Subreddit object or a list of Subreddits
     - count is total number of results to return
     - source is a prefix telling which set of recommendations to use
-    - to_omit is one Subreddit object or a list of Subreddits that should not
+    - to_omit is a single or list of subreddit id36s that should not be
         be included. (Useful for omitting recs that were already rejected.)
     - match_set=True will return recs that are similar to each other, useful
         for matching the "theme" of the original set

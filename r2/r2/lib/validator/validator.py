@@ -718,9 +718,7 @@ class VSRByNames(Validator):
             return Subreddit._by_name(sr_names)
         elif self.required:
             self.set_error(errors.BAD_SR_NAME, code=400)
-            return
-        else:
-            return {}
+        return {}
 
     def param_docs(self):
         return {

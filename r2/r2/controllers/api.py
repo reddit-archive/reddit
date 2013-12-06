@@ -3694,8 +3694,9 @@ class ApiController(RedditController, OAuth2ResourceController):
         that appear in the optional `omit` param.
 
         """
+        omit_id36s = [sr._id36 for sr in to_omit.values()]
         rec_srs = recommender.get_recommendations(srs.values(),
-                                                  to_omit=to_omit.values())
+                                                  to_omit=omit_id36s)
         sr_data = [{'sr_name': sr.name} for sr in rec_srs]
         return json.dumps(sr_data)
 
