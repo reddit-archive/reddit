@@ -167,26 +167,27 @@ fetched.
 
     <h3 id="modhashes">modhashes</h3>
 
-    <p>A modhash is a token that the reddit API requires to help prevent&#32;<a
-      href="http://en.wikipedia.org/wiki/CSRF">CSRF</a>. Modhashes can be
-    obtained via the&#32;<a href="#GET_api_me.json">/api/me.json</a>&#32;call
-    or in the&#32;<code>Listing</code>&#32;structures of several other API
-    calls.</p>
+    <%text filter="safemarkdown">
+A modhash is a token that the reddit API requires to hel prevent
+[CSRF](http://en.wikipedia.org/wiki/CSRF). Modhashes can be obtained via the
+[/api/me.json](#GET_api_me.json) call or in response data of listing endpoints.
 
-    <p>The preferred way to send a modhash is to include an
-    &#32;<code>X-Modhash</code>&#32;custom HTTP header with your requests.</p>
+The preferred way to send a modhash is to include an `X-Modhash` custom HTTP
+header with your requests.
 
-    <p>Modhashes are not required when authenticated with OAuth.</p>
+Modhashes are not required when authenticated with OAuth.
+    </%text>
 
     <h3 id="fullnames">fullnames</h3>
 
-    <p>A fullname is a combination of a thing's type
-    (e.g.&#32;<code>Link</code>) and its unique ID which forms a compact
-    encoding of a globally unique ID on reddit.</p>
+    <%text filter="safemarkdown">
+A fullname is a combination of a thing's type (e.g. `Link`) and its unique ID
+which forms a compact encoding of a globally unique ID on reddit.
 
-    <p>Fullnames start with the type prefix for the object's type, followed by
-    the thing's unique ID in&#32;<a href="http://en.wikipedia.org/wiki/Base36">base
-      36</a>. For example,&#32;<code>t3_15bfi0</code>.</p>
+Fullnames start with the type prefix for the object's type, followed by the
+thing's unique ID in [base 36](http://en.wikipedia.org/wiki/Base36).  For
+example, `t3_15bfi0`.
+    </%text>
 
     <table class="parameters">
       <caption>type prefixes</caption>
