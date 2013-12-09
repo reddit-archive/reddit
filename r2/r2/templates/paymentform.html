@@ -28,13 +28,12 @@
         class="pretty-form"
         onsubmit="return post_form(this, 'update_pay')">
     <p>
-      The duration of this link is ${thing.duration} 
-      (from ${thing.start_date} to ${thing.end_date}).
+      ${_("The duration of this link is %(duration)s (from %(start)s to %(end)s).") % dict(duration=thing.duration, start=thing.start_date, end=thing.end_date)}
     </p>
     <p id="bid-field">
       <input type="hidden" name="campaign" value="${thing.campaign_id36}" />
       <input type="hidden" name="link" value="${thing.link._fullname}" />
-      ${unsafe(_("Your current budget is %(budget)s") % dict(budget=thing.budget))}
+      ${_("Your current budget is %(budget)s") % dict(budget=thing.budget)}
       ${error_field("OVERSOLD_DETAIL", "bid", "div")}
   </p>
   %if thing.profiles:
