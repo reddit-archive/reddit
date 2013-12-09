@@ -232,7 +232,7 @@ def upload_stylesheet(content):
     return g.media_provider.put(file_name, content)
 
 
-def _set_media(embedly_services, link, force=False):
+def _set_media(link, force=False):
     if link.is_self:
         return
     if not force and link.promoted:
@@ -240,7 +240,7 @@ def _set_media(embedly_services, link, force=False):
     elif not force and (link.has_thumbnail or link.media_object):
         return
 
-    scraper = Scraper.for_url(embedly_services, link.url)
+    scraper = Scraper.for_url(link.url)
     thumbnail, media_object, secure_media_object = scraper.scrape()
 
     if media_object:
@@ -335,7 +335,8 @@ def _make_thumbnail_from_url(thumbnail_url, referer):
 
 class Scraper(object):
     @classmethod
-    def for_url(cls, embedly_services, url):
+    def for_url(cls, url):
+        embedly_services = _fetch_embedly_services()
         for service_re, service_secure in embedly_services:
             if service_re.match(url):
                 return _EmbedlyScraper(url, service_secure)
@@ -520,15 +521,13 @@ def _fetch_embedly_services():
 
 
 def run():
-    embedly_services = _fetch_embedly_services()
-
     @g.stats.amqp_processor('scraper_q')
     def process_link(msg):
         fname = msg.body
         link = Link._by_fullname(msg.body, data=True)
 
         try:
-            TimeoutFunction(_set_media, 30)(embedly_services, link)
+            TimeoutFunction(_set_media, 30)(link)
         except TimeoutFunctionException:
             print "Timed out on %s" % fname
         except KeyboardInterrupt:
