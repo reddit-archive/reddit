@@ -228,7 +228,7 @@
                          _("reject"), _("cancel"), \
                          "reject_promo", "cancel_reject_promo")}
        </li>
-      %if thing.promote_status in (PROMOTE_STATUS.unseen, PROMOTE_STATUS.rejected):
+      %if thing.promote_status in (PROMOTE_STATUS.unpaid, PROMOTE_STATUS.unseen, PROMOTE_STATUS.rejected):
         <li>
           ${ynbutton(_("accept"), _("accepted"), "promote")}
         </li>
