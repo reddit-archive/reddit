@@ -1154,17 +1154,15 @@ class FrontController(RedditController, OAuth2ResourceController):
                             default="claimed-gold"))
     def GET_goldthanks(self, vendor):
         vendor_url = None
-        if g.lounge_reddit:
-            lounge_md = strings.lounge_msg
-        else:
-            lounge_md = None
+        lounge_md = None
 
         if vendor == "claimed-gold":
             claim_msg = _("claimed! enjoy your reddit gold membership.")
+            if g.lounge_reddit:
+                lounge_md = strings.lounge_msg
         elif vendor == "claimed-creddits":
             claim_msg = _("your gold creddits have been claimed! now go to "
                           "someone's userpage and give them a present!")
-            lounge_md = None
         elif vendor == "paypal":
             claim_msg = _("thanks for buying reddit gold! your transaction "
                           "has been completed and emailed to you. you can "
@@ -1176,7 +1174,6 @@ class FrontController(RedditController, OAuth2ResourceController):
                           "being processed. if you have any questions please "
                           "email us at %(gold_email)s")
             claim_msg = claim_msg % {'gold_email': g.goldthanks_email}
-            lounge_md = None
         else:
             abort(404)
 
