@@ -3975,8 +3975,8 @@ class PromoteReport(Templated):
             p = request.GET.copy()
             self.csv_url = '%s.csv?%s' % (request.path, urlencode(p))
         else:
-            self.link_report = None
-            self.campaign_report = None
+            self.link_report = []
+            self.campaign_report = []
             self.csv_url = None
 
         Templated.__init__(self, link_text=link_text, owner_name=owner_name,
