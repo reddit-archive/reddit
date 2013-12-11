@@ -321,7 +321,7 @@ class PromoteController(ListingController):
 
     # ## POST controllers below
     @validatedForm(VSponsorAdmin(),
-                   link=VLink("link_id"),
+                   link=VLink("link_id36"),
                    campaign=VPromoCampaign("campaign_id36"))
     def POST_freebie(self, form, jquery, link, campaign):
         if campaign_has_oversold_error(form, campaign):
