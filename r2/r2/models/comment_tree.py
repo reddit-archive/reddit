@@ -189,24 +189,11 @@ class CommentTreeStorageV2(CommentTreeStorageBase):
 
     @classmethod
     def get_row(cls, key):
-        row = []
-        size = 0
-        column_start = ''
-        while True:
-            batch = cls._cf.get(key, column_count=cls.COLUMN_READ_BATCH_SIZE,
-                                column_start=column_start)
-            row.extend(batch.iteritems())
-            num_fetched = len(row) - size
-            size = len(row)
-            if num_fetched < cls.COLUMN_READ_BATCH_SIZE:
-                break
-            depth, pid, cid = row[-1][0]
-            column_start = (depth, pid if pid is not None else -1, cid + 1)
-        return row
+        return cls._cf.xget(key, buffer_size=cls.COLUMN_READ_BATCH_SIZE)
 
     @classmethod
     def _from_row(cls, row):
-        # row is a dict of {(depth, parent_id, comment_id): subtree_size}
+        # row is an iterable of ((depth, parent_id, comment_id), subtree_size)
         cids = []
         tree = {}
         depth = {}
