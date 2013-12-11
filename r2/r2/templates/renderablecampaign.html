@@ -77,11 +77,13 @@
             ${_("pay")}
           </button>
         %endif
-      %elif not (thing.is_complete or thing.is_live):
+      %elif not thing.free and not (thing.is_complete or thing.is_live):
         <button class="pay fancybutton" onclick="$.redirect('${thing.pay_url}')">
           ${_("change")}
         </button>
-      %elif thing.free:
+      %endif
+
+      %if thing.free:
         <span class='info'>${_("freebie")}</span>
       %endif
     %endif
