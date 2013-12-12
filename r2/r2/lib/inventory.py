@@ -111,8 +111,12 @@ def get_campaigns_by_date(srs, start, end, ignore=None):
     campaigns = PromoCampaign._byID(campaign_ids, data=True, return_dict=False)
     transaction_ids = {camp.trans_id for camp in campaigns
                                      if camp.trans_id != NO_TRANSACTION}
-    transactions = Bid.query().filter(Bid.transaction.in_(transaction_ids))
-    transaction_by_id = {bid.transaction: bid for bid in transactions}
+
+    if transaction_ids:
+        transactions = Bid.query().filter(Bid.transaction.in_(transaction_ids))
+        transaction_by_id = {bid.transaction: bid for bid in transactions}
+    else:
+        transaction_by_id = {}
 
     ret = {sr.name: defaultdict(list) for sr in srs}
     for camp in campaigns:
