@@ -337,7 +337,7 @@ ${self.javascript_setup()}
             </td>
           </tr>
 
-          <tr>
+          <tr style="${'display:none' if not c.user_is_sponsor else ''}">
             <th>${_("geotargeting")}</th>
             <td class="prefright">
               <select class="geotarget-select" id="country" name="country"
@@ -510,7 +510,9 @@ ${self.javascript_setup()}
             <th>${_("total budget")}</th>
             <th>${_("spent")}</th>
             <th title="${targeting_title}">${_("targeting")}</th>
-            <th>${_("geotargeting")}</th>
+            <th style="${'display:none' if not c.user_is_sponsor else ''}">
+              ${_("geotargeting")}
+            </th>
             <th style="align:right">
               <button class="new-campaign fancybutton" 
                       ${'disabled="disabled"' if len(thing.campaigns) >= g.MAX_CAMPAIGNS_PER_LINK else ''}

@@ -110,7 +110,8 @@
     ${'/r/%s' % thing.campaign.sr_name if thing.campaign.sr_name else _('frontpage')}
   </td>
 
-  <td class="campaign-geotarget">
+  <td class="campaign-geotarget"
+      style="${'display:none' if not c.user_is_sponsor else ''}">
     ${thing.geotarget}
   </td>
 

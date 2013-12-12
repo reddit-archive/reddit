@@ -1714,6 +1714,9 @@ class VLocation(Validator):
     default_param = ("country", "region", "metro")
 
     def run(self, country, region, metro):
+        if not c.user_is_sponsor:
+            return None
+
         if not (country or region or metro):
             return None
 
