@@ -262,7 +262,7 @@ def extract_title(data):
     return title.encode('utf-8').strip()
 
 VALID_SCHEMES = ('http', 'https', 'ftp', 'mailto')
-valid_dns = re.compile('\A[-a-zA-Z0-9]+\Z')
+valid_dns = re.compile('\A[-a-zA-Z0-9_]+\Z')
 def sanitize_url(url, require_scheme=False, valid_schemes=VALID_SCHEMES):
     """Validates that the url is of the form
 
