@@ -69,7 +69,8 @@ r.ui.TOCScroller = Backbone.View.extend({
     },
 
     _tocFor: function($heading) {
-        return this.$toc.find('.' + $heading.attr('id')).children('a')
+        // heading ids can have periods in them, so we'll use getElementsByClassName :(
+        return $(this.$toc[0].getElementsByClassName($heading.attr('id'))).children('a')
     },
 
     _updateProgress: function() {
