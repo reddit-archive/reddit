@@ -81,7 +81,7 @@ gold_table = sa.Table('reddit_gold', METADATA,
 indices = [index_str(gold_table, 'status', 'status'),
            index_str(gold_table, 'date', 'date'),
            index_str(gold_table, 'account_id', 'account_id'),
-           index_str(gold_table, 'secret', 'secret', unique = True),
+           index_str(gold_table, 'secret', 'secret'),
            index_str(gold_table, 'payer_email', 'payer_email'),
            index_str(gold_table, 'subscr_id', 'subscr_id')]
 create_table(gold_table, indices)
