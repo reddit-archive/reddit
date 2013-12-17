@@ -542,6 +542,7 @@ def live_campaigns_by_link(link, sr=None):
 
 def promote_link(link, campaign):
     if (not link.over_18 and
+        not link.over_18_override and
         campaign.sr_name and Subreddit._by_name(campaign.sr_name).over_18):
         link.over_18 = True
         link._commit()

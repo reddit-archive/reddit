@@ -67,6 +67,7 @@ class Link(Thing, Printable):
         'num_comments', 'reported', 'comment_tree_id')
     _defaults = dict(is_self=False,
                      over_18=False,
+                     over_18_override=False,
                      nsfw_str=False,
                      reported=0, num_comments=0,
                      moderator_banned=False,
