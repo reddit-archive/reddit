@@ -298,6 +298,12 @@ def void_campaign(link, campaign):
     if bid_record:
         a = Account._byID(link.author_id)
         authorize.void_transaction(a, bid_record.transaction, campaign._id)
+        campaign.trans_id = NO_TRANSACTION
+        campaign._commit()
+        text = ('voided transaction for %s: (trans_id: %d)'
+                % (campaign, bid_record.transaction))
+        PromotionLog.add(link, text)
+
 
 def auth_campaign(link, campaign, user, pay_id):
     """
