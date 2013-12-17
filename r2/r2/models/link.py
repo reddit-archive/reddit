@@ -787,7 +787,12 @@ class Comment(Thing, Printable):
                     ip=ip,
                     **kw)
 
-        c._spam = author._spam
+        # whitelist promoters commenting on their own promoted links
+        from r2.lib import promote
+        if promote.is_promo(link) and link.author_id == author._id:
+            c._spam = False
+        else:
+            c._spam = author._spam
 
         if author._spam:
             g.stats.simple_event('spam.autoremove.comment')
