@@ -1148,13 +1148,16 @@ class ApiController(RedditController, OAuth2ResourceController):
         See also: [/api/marknsfw](#POST_api_marknsfw).
 
         """
+
+        if promote.is_promo(thing):
+            if c.user_is_sponsor:
+                # set the override attribute so this link won't be automatically
+                # reset as nsfw by promote.make_daily_promotions
+                thing.over_18_override = True
+            else:
+                abort(403,'forbidden')
+
         thing.over_18 = False
-
-        if c.user_is_sponsor and promote.is_promo(thing):
-            # set the override attribute so this link won't be automatically
-            # reset as nsfw by promote.make_daily_promotions
-            thing.over_18_override = True
-
         thing._commit()
 
         if c.user._id != thing.author_id:
