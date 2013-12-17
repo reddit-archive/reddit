@@ -201,6 +201,14 @@ class PromoteController(ListingController):
 
     def keep_fn(self):
         def keep(item):
+            if self.sort == "future_promos":
+                # this sort is used to review links that need to be approved
+                # skip links that don't have any paid campaigns
+                campaigns = list(PromoCampaign._by_link(item._id))
+                if not any(promote.authed_or_not_needed(camp)
+                           for camp in campaigns):
+                    return False
+
             if item.promoted and not item._deleted:
                 return True
             else:
