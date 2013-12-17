@@ -423,7 +423,7 @@ body.post-under-6h-old .gilded-comment-icon { opacity: .55; }
 
 #login_login > div > ul li label, #login_reg > div > ul li label { display: block; font-size: 17px; font-weight: bold; }
 
-#login_login input[type="text"], #login_login input[type="password"], #login_reg input[type="text"], #login_reg input[type="password"] { width: 100%; margin: 0 0 5px; -webkit-border-radius: 5px; -moz-border-radius: 5px; -ms-border-radius: 5px; -o-border-radius: 5px; border-radius: 5px; border: 1px solid #757575; /*It was the coins fault!*/ font-size: 17px; padding: 5px; -webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing: border-box; }
+#login_login input[type="text"], #login_login input[type="password"], #login_reg input[type="text"], #login_reg input[type="email"], #login_reg input[type="password"] { width: 100%; margin: 0 0 5px; -webkit-border-radius: 5px; -moz-border-radius: 5px; -ms-border-radius: 5px; -o-border-radius: 5px; border-radius: 5px; border: 1px solid #757575; /*It was the coins fault!*/ font-size: 17px; padding: 5px; -webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing: border-box; }
 
 #login_login > div > ul li input[type="checkbox"] + label, #login_reg > div > ul li input[type="checkbox"] + label { display: inline; }
 
