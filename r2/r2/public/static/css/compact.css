@@ -587,6 +587,15 @@ a.author { margin-right: 0.5em; }
 
 .linkflair { font-weight: normal; max-width: 10em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+.commentspacer {
+    clear: both;
+}
+
+.showreplies {
+    padding: 0;
+    margin-left: 40px;
+}
+
 .notice-taken, .notice-available {
     display: none;
     line-height: 16px;

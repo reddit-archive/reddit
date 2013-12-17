@@ -98,8 +98,15 @@
             %endif
         </div>
   </div>
-  <div style="clear: both"></div>
-  <div class="child">
-    ${thing.childlisting}
-  </div>
+  <div class="commentspacer"></div>
+  %if thing.link.contest_mode and hasattr(thing, "child") and not thing.parent_id:
+    <button class="showreplies newbutton"
+        onclick="$(this).hide();$(this).parent().find('.noncollapsed').show();return false;">
+        ${_("show replies")}
+    </button>
+    <div class="child noncollapsed" style="display:none">
+  %else:
+    <div class="child">
+  %endif
+  ${thing.childlisting}</div>
 </div>
