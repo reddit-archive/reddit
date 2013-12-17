@@ -260,6 +260,26 @@ def free_campaign(link, campaign, user):
 def edit_campaign(link, campaign, dates, bid, cpm, sr, priority):
     sr_name = sr.name if sr else '' # empty string means target to all
 
+    changed = {}
+    if bid != campaign.bid:
+        changed['bid'] = ("$%0.2f" % campaign.bid, "$%0.2f" % bid)
+    if dates[0] != campaign.start_date or dates[1] != campaign.end_date:
+        original = '%s to %s' % (campaign.start_date, campaign.end_date)
+        edited = '%s to %s' % (dates[0], dates[1])
+        changed['dates'] = (original, edited)
+    if cpm != campaign.cpm:
+        changed['cpm'] = (campaign.cpm, cpm)
+    if sr_name != campaign.sr_name:
+        format_sr_name = (lambda sr_name: '/r/%s' % sr_name if sr_name
+                                                            else '<frontpage>')
+        changed['sr_name'] = map(format_sr_name, (campaign.sr_name, sr_name))
+    if priority != campaign.priority:
+        changed['priority'] = (campaign.priority.name, priority.name)
+
+    change_strs = map(lambda t: '%s: %s -> %s' % (t[0], t[1][0], t[1][1]),
+                      changed.iteritems())
+    change_text = ', '.join(change_strs)
+
     # if the bid amount changed, cancel any pending transactions
     if campaign.bid != bid:
         void_campaign(link, campaign)
@@ -273,14 +293,14 @@ def edit_campaign(link, campaign, dates, bid, cpm, sr, priority):
                     campaign.trans_id, priority, commit=True)
 
     if campaign.priority.cpm:
-        # record the transaction
-        text = 'updated campaign %s. (bid: %0.2f)' % (campaign._id, bid)
-        PromotionLog.add(link, text)
-
         # make it a freebie, if applicable
         author = Account._byID(link.author_id, True)
         if getattr(author, "complimentary_promos", False):
             free_campaign(link, campaign, c.user)
+
+    # record the changes
+    if change_text:
+        PromotionLog.add(link, 'edited %s: %s' % (campaign, change_text))
 
     hooks.get_hook('promote.edit_campaign').call(link=link, campaign=campaign)
 
