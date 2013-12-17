@@ -268,13 +268,17 @@ class WikiPage(tdb_cassandra.Thing):
     
     @classmethod
     def get_pages(cls, sr, after=None, filter_check=None):
-        NUM_AT_A_TIME = 1000
-        pages = WikiPagesBySR.query([sr._id36], after=after, count=NUM_AT_A_TIME)
-        pages = list(pages)
-        if len(pages) >= NUM_AT_A_TIME:
-            return pages + cls.get_pages(sr, after=pages[-1])
-        pages = filter(filter_check, pages)
-        return pages
+        NUM_AT_A_TIME = num = 1000
+        pages = []
+        while num >= NUM_AT_A_TIME:
+            wikipages = WikiPagesBySR.query([sr._id36],
+                                            after=after,
+                                            count=NUM_AT_A_TIME)
+            wikipages = list(wikipages)
+            num = len(wikipages)
+            pages += wikipages
+            after = wikipages[-1] if num else None
+        return filter(filter_check, pages)
     
     @classmethod
     def get_listing(cls, sr, filter_check=None):
