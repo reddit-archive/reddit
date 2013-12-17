@@ -612,7 +612,7 @@ class PromoteController(ListingController):
 
             # you cannot edit the bid of a live ad unless it's a freebie
             if (campaign and bid != campaign.bid and
-                campaign.start_date < datetime.now(g.tz) and
+                promote.is_live_promo(link, campaign) and
                 not campaign.is_freebie()):
                 c.errors.add(errors.BID_LIVE, field='bid')
                 form.has_errors('bid', errors.BID_LIVE)
