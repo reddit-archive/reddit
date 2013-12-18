@@ -492,7 +492,7 @@ class PromoteController(ListingController):
                     changed = not trusted
 
             # only trips if the title and url are changed by a non-sponsor
-            if changed and not promote.is_unpaid(l):
+            if changed:
                 promote.unapprove_promotion(l)
 
             # selftext can be changed at any time

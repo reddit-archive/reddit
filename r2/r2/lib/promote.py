@@ -150,6 +150,9 @@ def is_rejected(link):
 def is_promoted(link):
     return is_promo(link) and link.promote_status == PROMOTE_STATUS.promoted
 
+def is_finished(link):
+    return is_promo(link) and link.promote_status == PROMOTE_STATUS.finished
+
 def is_live_on_sr(link, sr):
     return bool(live_campaigns_by_link(link, sr=sr))
 
@@ -371,7 +374,12 @@ def auth_campaign(link, campaign, user, pay_id):
             PromotionLog.add(link, 'FREEBIE (campaign: %s)' % campaign._id)
 
         if trans_id:
-            new_status = max(PROMOTE_STATUS.unseen, link.promote_status)
+            if is_finished(link):
+                # When a finished promo gets a new paid campaign it doesn't
+                # need to go through approval again and is marked accepted
+                new_status = PROMOTE_STATUS.accepted
+            else:
+                new_status = max(PROMOTE_STATUS.unseen, link.promote_status)
         else:
             new_status = max(PROMOTE_STATUS.unpaid, link.promote_status)
         update_promote_status(link, new_status)
@@ -442,7 +450,15 @@ def reject_promotion(link, reason=None):
 
 
 def unapprove_promotion(link):
-    update_promote_status(link, PROMOTE_STATUS.unseen)
+    if is_unpaid(link):
+        return
+    elif is_finished(link):
+        # when a finished promo is edited it is bumped down to unpaid so if it
+        # eventually gets a paid campaign it can get upgraded to unseen and
+        # reviewed
+        update_promote_status(link, PROMOTE_STATUS.unpaid)
+    else:
+        update_promote_status(link, PROMOTE_STATUS.unseen)
 
 
 def authed_or_not_needed(campaign):
