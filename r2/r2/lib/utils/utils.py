@@ -966,7 +966,7 @@ def url_links_builder(url, exclude=None, num=None, after=None, reverse=None,
         url = add_sr(url, force_hostname=True)
 
     try:
-        links = tup(Link._by_url(url, None))
+        links = Link._by_url(url, None)
     except NotFound:
         links = []
 

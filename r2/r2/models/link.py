@@ -115,13 +115,10 @@ class Link(Thing, Printable):
 
         links = Link._byID36(link_id36s, data=True, return_dict=False)
         links = [l for l in links if not l._deleted]
+        if sr:
+            links = [link for link in links if link.sr_id == sr._id]
 
-        if links and sr:
-            for link in links:
-                if sr._id == link.sr_id:
-                    # n.b. returns the first one if there are multiple
-                    return link
-        elif links:
+        if links:
             return links
 
         raise NotFound('Link "%s"' % url)

@@ -25,7 +25,6 @@ from r2.lib.pages import (ButtonLite, ButtonDemoPanel, WidgetDemoPanel,
                           Bookmarklets, BoringPage)
 from r2.lib.pages.things import wrap_links
 from r2.models import *
-from r2.lib.utils import tup
 from r2.lib.validator import *
 from pylons import c, request, response
 from pylons.i18n import _
@@ -39,7 +38,7 @@ class ButtonsController(RedditController):
             else:
                 sr = None if isinstance(c.site, FakeSubreddit) else c.site
                 try:
-                    links = tup(Link._by_url(url, sr))
+                    links = Link._by_url(url, sr)
                 except NotFound:
                     pass
 
