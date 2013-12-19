@@ -721,6 +721,9 @@ def valid_login(name, password):
         return False
 
     if not a._loaded: a._load()
+
+    hooks.get_hook("account.spotcheck").call(account=a)
+
     if a._banned:
         return False
     return valid_password(a, password)

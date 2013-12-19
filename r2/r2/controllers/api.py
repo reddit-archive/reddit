@@ -578,6 +578,10 @@ class ApiController(RedditController, OAuth2ResourceController):
 
             amqp.add_item('new_account', user._fullname)
 
+            reject = hooks.get_hook("account.spotcheck").call(account=user)
+            if any(reject):
+                return
+
             c.user = user
             self._login(responder, user, rem)
 
