@@ -397,7 +397,7 @@ class PromoteController(ListingController):
                    username=VLength('username', 100, empty_error=None),
                    l=VLink('link_id36'),
                    title=VTitle('title'),
-                   url=VUrl('url', allow_self=False, lookup=False),
+                   url=VUrl('url', allow_self=False),
                    selftext=VSelfText('text'),
                    kind=VOneOf('kind', ['link', 'self']),
                    ip=ValidIP(),

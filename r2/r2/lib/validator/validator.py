@@ -1290,26 +1290,16 @@ class VSanitizedUrl(Validator):
     def param_docs(self):
         return {self.param: "a valid URL"}
 
+
 class VUrl(VRequired):
-    def __init__(self, item, allow_self = True, lookup = True, *a, **kw):
+    def __init__(self, item, allow_self=True, *a, **kw):
         self.allow_self = allow_self
-        self.lookup = lookup
         VRequired.__init__(self, item, errors.NO_URL, *a, **kw)
 
-    def run(self, url, sr = None, resubmit=False):
-        if sr is None and not isinstance(c.site, FakeSubreddit):
-            sr = c.site
-        elif sr:
-            try:
-                sr = Subreddit._by_name(str(sr))
-            except (NotFound, UnicodeEncodeError):
-                self.set_error(errors.SUBREDDIT_NOEXIST)
-                sr = None
-        else:
-            sr = None
-
+    def run(self, url):
         if not url:
             return self.error(errors.NO_URL)
+
         url = utils.sanitize_url(url)
         if not url:
             return self.error(errors.BAD_URL)
@@ -1317,30 +1307,14 @@ class VUrl(VRequired):
         if url == 'self':
             if self.allow_self:
                 return url
-        elif not self.lookup or resubmit:
+            else:
+                self.error(errors.BAD_URL)
+        else:
             return url
-        elif url:
-            try:
-                l = Link._by_url(url, sr)
-                self.error(errors.ALREADY_SUB)
-                return utils.tup(l)
-            except NotFound:
-                return url
-        return self.error(errors.BAD_URL)
 
     def param_docs(self):
-        if isinstance(self.param, (list, tuple)):
-            param_names = self.param
-        else:
-            param_names = [self.param]
-        params = {}
-        try:
-            params[param_names[0]] = 'a valid URL'
-            params[param_names[1]] = 'a subreddit'
-            params[param_names[2]] = 'boolean value'
-        except IndexError:
-            pass
-        return params
+        return {self.param: "a valid URL"}
+
 
 class VShamedDomain(Validator):
     def run(self, url):

@@ -43,7 +43,7 @@ from r2.lib import hooks
 
 from r2.lib.utils import get_title, sanitize_url, timeuntil, set_last_modified
 from r2.lib.utils import query_string, timefromnow, randstr
-from r2.lib.utils import timeago, tup, filter_links
+from r2.lib.utils import timeago, tup
 from r2.lib.pages import (EnemyList, FriendList, ContributorList, ModList,
                           BannedList, WikiBannedList, WikiMayContributeList,
                           BoringPage, FormPage, CssError, UploadedImage,
@@ -51,7 +51,11 @@ from r2.lib.pages import (EnemyList, FriendList, ContributorList, ModList,
 from r2.lib.pages import FlairList, FlairCsv, FlairTemplateEditor, \
     FlairSelector
 from r2.lib.pages import PrefApps
-from r2.lib.pages.things import wrap_links, default_thing_wrapper
+from r2.lib.pages.things import (
+    default_thing_wrapper,
+    hot_links_by_url_listing,
+    wrap_links,
+)
 from r2.models.last_modified import LastModified
 
 from r2.lib.menus import CommentSortMenu
@@ -142,11 +146,11 @@ class ApiController(RedditController, OAuth2ResourceController):
 
     @pagecache_policy(PAGECACHE_POLICY.NEVER)
     @require_oauth2_scope("read")
-    @validate(link1 = VUrl(['url']),
-              link2 = VByName('id'),
+    @validate(url=VUrl('url'),
+              link=VByName('id'),
               count = VLimit('limit'))
     @api_doc(api_section.links_and_comments, uses_site=True)
-    def GET_info(self, link1, link2, count):
+    def GET_info(self, url, link, count):
         """Get a link by fullname or a list of links by URL.
 
         If `id` is provided, the link with the given fullname will be returned.
@@ -162,14 +166,11 @@ class ApiController(RedditController, OAuth2ResourceController):
 
         c.update_last_visit = False
 
-        links = []
-        if link2:
-            links = filter_links(tup(link2), filter_spam = False)
-        elif link1 and ('ALREADY_SUB', 'url')  in c.errors:
-            links = filter_links(tup(link1), filter_spam = False)
-
-        listing = wrap_links(filter(None, links or []), num = count)
-        return BoringPage(_("API"), content = listing).render()
+        if link or not url:
+            listing = wrap_links(link or [], num=count)
+        else:
+            listing = hot_links_by_url_listing(url, sr=c.site, num=count)
+        return BoringPage(_("API"), content=listing).render()
 
 
     @json_validate()
@@ -283,7 +284,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                    VShamedDomain('url'),
                    ip = ValidIP(),
                    sr = VSubmitSR('sr', 'kind'),
-                   url = VUrl(['url', 'sr', 'resubmit']),
+                   url = VUrl('url'),
                    title = VTitle('title'),
                    save = VBoolean('save'),
                    sendreplies = VBoolean('sendreplies'),
@@ -293,10 +294,11 @@ class ApiController(RedditController, OAuth2ResourceController):
                                  default='comments'),
                    extension=VLength("extension", 20, docs={"extension":
                        "extension used for redirects"}),
+                   resubmit=VBoolean('resubmit'),
                   )
     @api_doc(api_section.links_and_comments)
     def POST_submit(self, form, jquery, url, selftext, kind, title,
-                    save, sr, ip, then, extension, sendreplies):
+                    save, sr, ip, then, extension, sendreplies, resubmit):
         """Submit a link to a subreddit.
 
         Submit will create a link or self-post in the subreddit `sr` with the
@@ -317,8 +319,7 @@ class ApiController(RedditController, OAuth2ResourceController):
 
         from r2.models.admintools import is_banned_domain
 
-        if isinstance(url, (unicode, str)):
-            #backwards compatability
+        if url:
             if url.lower() == 'self':
                 url = kind = 'self'
 
@@ -370,14 +371,19 @@ class ApiController(RedditController, OAuth2ResourceController):
                 pass
             elif form.has_errors("url", errors.DOMAIN_BANNED):
                 g.stats.simple_event('spam.shame.link')
-            elif form.has_errors("url", errors.ALREADY_SUB):
-                check_domain = False
-                u = url[0].already_submitted_link
-                if extension:
-                    u = UrlParser(u)
-                    u.set_extension(extension)
-                    u = u.unparse()
-                form.redirect(u)
+            elif not resubmit:
+                listing = hot_links_by_url_listing(url, sr=sr, num=1)
+                links = listing.things
+                if links:
+                    c.errors.add(errors.ALREADY_SUB, field='url')
+                    form.has_errors('url', errors.ALREADY_SUB)
+                    check_domain = False
+                    u = links[0].already_submitted_link
+                    if extension:
+                        u = UrlParser(u)
+                        u.set_extension(extension)
+                        u = u.unparse()
+                    form.redirect(u)
             # check for title, otherwise look it up and return it
             elif form.has_errors("title", errors.NO_TEXT):
                 pass
@@ -2616,8 +2622,8 @@ class ApiController(RedditController, OAuth2ResourceController):
 
     @validate(uh = nop('uh'), # VModHash() will raise, check manually
               action = VOneOf('what', ('like', 'dislike', 'save')),
-              links = VUrl(['u']))
-    def GET_bookmarklet(self, action, uh, links):
+              url=VUrl('u'))
+    def GET_bookmarklet(self, action, uh, url):
         '''Controller for the functionality of the bookmarklets (not
         the distribution page)'''
 
@@ -2630,14 +2636,18 @@ class ApiController(RedditController, OAuth2ResourceController):
         elif not c.user.valid_hash(uh) or not action:
             return self.redirect("/static/css_update.png")
         # unlike most cases, if not already submitted, error.
-        elif errors.ALREADY_SUB in c.errors:
-            # preserve the subreddit if not Default
+        elif url:
             sr = c.site if not isinstance(c.site, FakeSubreddit) else None
+            try:
+                links_for_url = Link._by_url(url, sr)
+            except NotFound:
+                links_for_url = []
 
             # check permissions on those links to make sure votes will count
-            Subreddit.load_subreddits(links, return_dict = False)
+            Subreddit.load_subreddits(links_for_url, return_dict = False)
             user = c.user if c.user_is_loggedin else None
-            links = [l for l in links if l.subreddit_slow.can_view(user)]
+            links = [link for link in links_for_url
+                          if link.subreddit_slow.can_view(user)]
 
             if links:
                 if action in ['like', 'dislike']:
