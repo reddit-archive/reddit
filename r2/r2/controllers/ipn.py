@@ -60,6 +60,7 @@ from r2.models import (
     Comment,
     create_claimed_gold,
     create_gift_gold,
+    create_gold_code,
     get_discounted_price,
     make_comment_gold_message,
     NotFound,
@@ -274,6 +275,33 @@ def send_gift(buyer, recipient, months, days, signed, giftmessage, comment_id):
     return comment
 
 
+def send_gold_code(buyer, months, days,
+                   trans_id=None, payer_email='', pennies=0):
+    code = create_gold_code(trans_id, payer_email,
+                            buyer._id, pennies, days, c.start_time)
+    # format the code so it's easier to read (XXXXX-XXXXX)
+    split_at = len(code) / 2
+    code = code[:split_at] + '-' + code[split_at:]
+
+    if months == 1:
+        amount = "a month"
+    else:
+        amount = "%d months" % months
+
+    subject = _('Your gold gift code has been generated!')
+    message = _('Here is your gift code for %(amount)s of reddit gold:\n\n'
+                '**%(code)s**\n\nThe recipient (or you!) can enter it at '
+                'http://www.reddit.com/gold or go directly to '
+                'http://www.reddit.com/thanks/%(code)s to claim it.'
+              ) % {'amount': amount, 'code': code}
+    message = append_random_bottlecap_phrase(message)
+
+    send_system_message(buyer, subject, message, distinguished='gold-auto')
+
+    g.log.info("%s bought a gold code for %s" % (buyer.name, amount))
+    return code
+
+
 class IpnController(RedditController):
     # Used when buying gold with creddits
     @validatedForm(VUser(),
@@ -290,13 +318,9 @@ class IpnController(RedditController):
             raise ValueError("/spendcreddits got no passthrough?")
 
         blob_key, payment_blob = get_blob(passthrough)
-        if payment_blob["goldtype"] != "gift":
+        if payment_blob["goldtype"] not in ("gift", "code"):
             raise ValueError("/spendcreddits payment_blob %s has goldtype %s" %
                              (passthrough, payment_blob["goldtype"]))
-
-        signed = payment_blob["signed"]
-        giftmessage = _force_unicode(payment_blob["giftmessage"])
-        recipient_name = payment_blob["recipient"]
 
         if payment_blob["account_id"] != c.user._id:
             fmt = ("/spendcreddits payment_blob %s has userid %d " +
@@ -305,15 +329,20 @@ class IpnController(RedditController):
                              payment_blob["account_id"],
                              c.user._id)
 
-        try:
-            recipient = Account._by_name(recipient_name)
-        except NotFound:
-            raise ValueError("Invalid username %s in spendcreddits, buyer = %s"
-                             % (recipient_name, c.user.name))
+        if payment_blob["goldtype"] == "gift":
+            signed = payment_blob["signed"]
+            giftmessage = _force_unicode(payment_blob["giftmessage"])
+            recipient_name = payment_blob["recipient"]
 
-        if recipient._deleted:
-            form.set_html(".status", _("that user has deleted their account"))
-            return
+            try:
+                recipient = Account._by_name(recipient_name)
+            except NotFound:
+                raise ValueError("Invalid username %s in spendcreddits, buyer = %s"
+                                 % (recipient_name, c.user.name))
+
+            if recipient._deleted:
+                form.set_html(".status", _("that user has deleted their account"))
+                return
 
         if not c.user.employee:
             if months > c.user.gold_creddits:
@@ -324,19 +353,32 @@ class IpnController(RedditController):
             c.user.gold_creddit_escrow += months
             c.user._commit()
 
-        comment_id = payment_blob.get("comment")
-        comment = send_gift(c.user, recipient, months, days, signed,
-                            giftmessage, comment_id)
+        if payment_blob["goldtype"] == "gift":
+            comment_id = payment_blob.get("comment")
+            comment = send_gift(c.user, recipient, months, days, signed,
+                                giftmessage, comment_id)
+            form.set_html(".status", _("the gold has been delivered!"))
+        else:
+            try:
+                send_gold_code(c.user, months, days)
+            except MessageError:
+                form.set_html(".status",
+                              _("there was an error creating a gift code. "
+                                "please try again later, or contact %(email)s "
+                                "for assistance.")
+                              % {'email': g.goldthanks_email})
+                return
+            comment = None
+            form.set_html(".status",
+                          _("the gift code has been messaged to you!"))
 
         if not c.user.employee:
             c.user.gold_creddit_escrow -= months
             c.user._commit()
+        form.find("button").hide()
 
         payment_blob["status"] = "processed"
         g.hardcache.set(blob_key, payment_blob, 86400 * 30)
-
-        form.set_html(".status", _("the gold has been delivered!"))
-        form.find("button").hide()
 
         if comment:
             gilding_message = make_comment_gold_message(comment,
@@ -489,26 +531,31 @@ class IpnController(RedditController):
             message += "\n\n" + strings.gold_benefits_msg + "\n\n"
             message += _("Thank you again for your support, and have fun "
                          "spreading gold!")
+        elif payment_blob['goldtype'] == 'code':
+            pass
         else:
             dump_parameters(parameters)
             raise ValueError("Got status '%s' in IPN/GC" % payment_blob['status'])
 
-        # Reuse the old "secret" column as a place to record the goldtype
-        # and "custom", just in case we need to debug it later or something
-        secret = payment_blob['goldtype'] + "-" + custom
-
-        if instagift:
-            status="instagift"
+        if payment_blob['goldtype'] == 'code':
+            send_gold_code(buyer, months, days, txn_id, payer_email, pennies)
         else:
-            status="processed"
+            # Reuse the old "secret" column as a place to record the goldtype
+            # and "custom", just in case we need to debug it later or something
+            secret = payment_blob['goldtype'] + "-" + custom
 
-        create_claimed_gold(txn_id, payer_email, paying_id, pennies, days,
-                            secret, buyer_id, c.start_time,
-                            subscr_id, status=status)
+            if instagift:
+                status="instagift"
+            else:
+                status="processed"
 
-        message = append_random_bottlecap_phrase(message)
+            create_claimed_gold(txn_id, payer_email, paying_id, pennies, days,
+                                secret, buyer_id, c.start_time,
+                                subscr_id, status=status)
 
-        send_system_message(buyer, subject, message, distinguished='gold-auto')
+            message = append_random_bottlecap_phrase(message)
+
+            send_system_message(buyer, subject, message, distinguished='gold-auto')
 
         payment_blob["status"] = "processed"
         g.hardcache.set(blob_key, payment_blob, 86400 * 30)
@@ -664,7 +711,12 @@ class GoldPaymentController(RedditController):
             gold_recipient._sync_latest()
             days = days_from_months(months)
 
-            if goldtype in ('onetime', 'autorenew'):
+            if goldtype == 'code':
+                send_gold_code(buyer, months, days, transaction_id,
+                               payer_email, pennies)
+                # the rest of the function isn't needed for a code purchase
+                return
+            elif goldtype in ('onetime', 'autorenew'):
                 admintools.engolden(buyer, days)
                 if goldtype == 'onetime':
                     subject = "thanks for buying reddit gold!"

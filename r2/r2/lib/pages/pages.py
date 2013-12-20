@@ -2233,15 +2233,29 @@ class GoldPayment(Templated):
 
         else:
             if months < 12:
-                paypal_buttonid = g.PAYPAL_BUTTONID_CREDDITS_BYMONTH
+                if goldtype == "code":
+                    paypal_buttonid = g.PAYPAL_BUTTONID_GIFTCODE_BYMONTH
+                else:
+                    paypal_buttonid = g.PAYPAL_BUTTONID_CREDDITS_BYMONTH
                 quantity = months
                 coinbase_name = 'COINBASE_BUTTONID_ONETIME_%sMO' % quantity
                 coinbase_button_id = getattr(g, coinbase_name, None)
             else:
-                paypal_buttonid = g.PAYPAL_BUTTONID_CREDDITS_BYYEAR
+                if goldtype == "code":
+                    paypal_buttonid = g.PAYPAL_BUTTONID_GIFTCODE_BYYEAR
+                else:
+                    paypal_buttonid = g.PAYPAL_BUTTONID_CREDDITS_BYYEAR
                 quantity = months / 12
                 coinbase_name = 'COINBASE_BUTTONID_ONETIME_%sYR' % quantity
                 coinbase_button_id = getattr(g, coinbase_name, None)
+
+            if goldtype in ("gift", "code"):
+                if months <= user_creddits:
+                    pay_from_creddits = True
+                elif months >= 12:
+                    # If you're not paying with creddits, you have to either
+                    # buy by month or spend a multiple of 12 months
+                    months = quantity * 12
 
             if goldtype == "creddits":
                 summary = strings.gold_summary_creddits % dict(
@@ -2256,13 +2270,6 @@ class GoldPayment(Templated):
                 else:
                     format = strings.gold_summary_anonymous_gift
 
-                if months <= user_creddits:
-                    pay_from_creddits = True
-                elif months >= 12:
-                    # If you're not paying with creddits, you have to either
-                    # buy by month or spend a multiple of 12 months
-                    months = quantity * 12
-
                 if not clone_template:
                     summary = format % dict(
                         amount=Score.somethings(months, "month"),
@@ -2272,6 +2279,9 @@ class GoldPayment(Templated):
                 else:
                     # leave the replacements to javascript
                     summary = format
+            elif goldtype == "code":
+                summary = strings.gold_summary_gift_code % dict(
+                          amount=Score.somethings(months, "month"))
             else:
                 raise ValueError("wtf is %r" % goldtype)
 

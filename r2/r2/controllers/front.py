@@ -1478,7 +1478,8 @@ class FormsController(RedditController):
 
     @validate(VUser(),
               goldtype=VOneOf("goldtype",
-                              ("autorenew", "onetime", "creddits", "gift")),
+                              ("autorenew", "onetime", "creddits", "gift",
+                               "code")),
               period=VOneOf("period", ("monthly", "yearly")),
               months=VInt("months"),
               # variables below are just for gifts
@@ -1503,7 +1504,7 @@ class FormsController(RedditController):
                 start_over = True
             elif c.user.has_gold_subscription:
                 return self.redirect("/gold/subscription")
-        elif goldtype in ("onetime", "creddits"):
+        elif goldtype in ("onetime", "creddits", "code"):
             if months is None or months < 1:
                 start_over = True
         elif goldtype == "gift":

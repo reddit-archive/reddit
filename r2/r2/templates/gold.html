@@ -79,6 +79,27 @@
   <br/>
 </%def>
 
+<%def name="gold_gift_amount_options()">
+  <div class="spacer">
+    ${_('How much gold do you wish to bestow?')}
+    %if thing.user_creddits > 0:
+      <select name="months" class="gold-dropdown">
+        %for i in range(1, thing.user_creddits + 1):
+           <option value="${i}">
+             ${unsafe(Score.somethings(i, "month"))}
+           </option>
+        %endfor
+      </select>
+      <br/>
+      <span class="note">
+        ${_("Note: If you want to give more than %(number)d, you'll need to buy more creddits.") % dict(number=thing.user_creddits)}
+      </span>
+    %else:
+      ${gold_dropdown("months")}
+    %endif
+  </div>
+</%def>
+
 <div class="gold-form">
   <h1 class="goldgift">
     ${_("reddit gold")} (<a href="/gold/about">help</a>)
@@ -97,6 +118,10 @@
     ${radio_type("goldtype", "creddits", _('Buy reddit gold "creddits"'),
       unsafe("<a href='/wiki/creddits'>details</a>"),
       thing.goldtype == "creddits")}<br/>
+    ${radio_type("goldtype", "code", _('Buy a reddit gold "gift code"'),
+      "", thing.goldtype == "code")}<br>
+    ${radio_type("goldtype", "redeem", _("Redeem a reddit gold gift code"),
+      "", thing.goldtype == "redeem")}<br>
     </%utils:round_field>
   </form>
 
@@ -120,23 +145,8 @@
   </%self:goldsec>
 
   <%self:goldsec goldtype="gift">
-    <%utils:round_field title="${_('How much gold do you wish to bestow?')}">
-      %if thing.user_creddits > 0:
-        <select name="months" class="gold-dropdown">
-          %for i in range(1, thing.user_creddits + 1):
-             <option value="${i}">
-               ${unsafe(Score.somethings(i, "month"))}
-             </option>
-          %endfor
-        </select>
-        <br/>
-        <span class="note">
-          ${_("Note: If you want to give more than %(number)d, you'll need to buy more creddits.") % dict(number=thing.user_creddits)}
-        </span>
-      %else:
-        ${gold_dropdown("months")}
-      %endif
-
+    <%utils:round_field title="">
+      ${gold_gift_amount_options()}
       <div class="spacer">
         ${_("To whom are you giving said gold?")}
         <input type="text" name="recipient" value="${thing.recipient_name}" />
@@ -179,5 +189,26 @@
       <span class="status"></span>
     </%utils:round_field>
   </%self:goldsec>
+
+  <%self:goldsec goldtype="code">
+    <%utils:round_field title="">
+      ${gold_gift_amount_options()}
+      <button type="submit" class="btn gold-button">${_("buy")}</button>
+      <span class="status"></span>
+    </%utils:round_field>
+  </%self:goldsec>
+
+  <form id="thanks" action="/api/claimgold" method="post"
+      class="content gold-subsection redeem"
+      onsubmit="return post_form(this, 'claimgold');">
+    <input type="hidden" name="goldtype" value="redeem">
+    <%utils:round_field title="${_('Please enter the gold code to redeem below:')}">
+      <input type="text" name="code" value="" />
+      <button type="submit" class="btn gold-button">${_("redeem")}</button>
+      ${error_field("NO_TEXT", "code", "span")}
+      ${error_field("INVALID_CODE", "code", "span")}
+      ${error_field("CLAIMED_CODE", "code", "span")}
+    </%utils:round_field>
+  </form>
 
 </div>

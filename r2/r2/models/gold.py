@@ -184,6 +184,33 @@ def create_gift_gold (giver_id, recipient_id, days, date, signed):
                                 account_id=recipient_id,
                                 date=date)
 
+
+def create_gold_code(trans_id, payer_email, paying_id, pennies, days, date):
+    if not trans_id:
+        trans_id = "GC%d%s" % (int(time()), randstr(2))
+
+    valid_chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    # keep picking new codes until we find an unused one
+    while True:
+        code = randstr(10, alphabet=valid_chars)
+
+        s = sa.select([gold_table],
+                      sa.and_(gold_table.c.secret == code.lower(),
+                              gold_table.c.status == 'unclaimed'))
+        res = s.execute().fetchall()
+        if not res:
+            gold_table.insert().execute(
+                trans_id=trans_id,
+                status='unclaimed',
+                payer_email=payer_email,
+                paying_id=paying_id,
+                pennies=pennies,
+                days=days,
+                secret=code.lower(),
+                date=date)
+            return code
+
+                
 def account_by_payingid(paying_id):
     s = sa.select([sa.distinct(gold_table.c.account_id)],
                   gold_table.c.paying_id == paying_id)
@@ -206,6 +233,7 @@ def claim_gold(secret, account_id):
     # The donation email has the code at the end of the sentence,
     # so they might get sloppy and catch the period or some whitespace.
     secret = secret.strip(". ")
+    secret = secret.replace("-", "").lower()
 
     rp = gold_table.update(sa.and_(gold_table.c.status == 'unclaimed',
                                    gold_table.c.secret == secret),
