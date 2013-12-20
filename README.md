@@ -1,6 +1,8 @@
+# reddit
+
 <img src="https://secure.gravatar.com/avatar/c638493729c2f009988c9e5bd9b5e116?s=200" align="right">
 
-# reddit
+Greetings!
 
 This is the primary codebase that powers [reddit.com](http://www.reddit.com).
 
