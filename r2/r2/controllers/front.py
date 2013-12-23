@@ -35,11 +35,11 @@ from r2.models import *
 from r2.config.extensions import is_api
 from r2.lib import recommender
 from r2.lib.pages import *
-from r2.lib.pages.things import wrap_links
+from r2.lib.pages.things import hot_links_by_url_listing
 from r2.lib.pages import trafficpages
 from r2.lib.menus import *
 from r2.lib.utils import to36, sanitize_url, check_cheating, title_to_url
-from r2.lib.utils import query_string, UrlParser, link_from_url, url_links_builder
+from r2.lib.utils import query_string, UrlParser, url_links_builder
 from r2.lib.template_helpers import get_domain
 from r2.lib.filters import unsafe, _force_unicode, _force_utf8
 from r2.lib.emailer import Email
@@ -990,14 +990,16 @@ class FrontController(RedditController, OAuth2ResourceController):
         resubmit = request.GET.get('resubmit')
         if url and not resubmit:
             # check to see if the url has already been submitted
-            links = link_from_url(url)
+            listing = hot_links_by_url_listing(url, sr=c.site)
+            links = listing.things
+
             if links and len(links) == 1:
                 return self.redirect(links[0].already_submitted_link)
             elif links:
                 infotext = (strings.multiple_submitted
                             % links[0].resubmit_link())
                 res = BoringPage(_("seen it"),
-                                 content=wrap_links(links),
+                                 content=listing,
                                  infotext=infotext).render()
                 return res
 

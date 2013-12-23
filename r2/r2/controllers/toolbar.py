@@ -23,7 +23,7 @@
 from reddit_base import RedditController
 from r2.lib.pages import *
 from r2.models import *
-from r2.lib.pages.things import wrap_links
+from r2.lib.pages.things import hot_links_by_url_listing, wrap_links
 from r2.lib.menus import CommentSortMenu
 from r2.lib.filters import spaceCompress, safemarkdown
 from r2.lib.memoize import memoize
@@ -152,7 +152,8 @@ class ToolbarController(RedditController):
         if is_shamed_domain(path)[0]:
             self.abort404()
 
-        link = utils.link_from_url(path, multiple = False)
+        listing = hot_links_by_url_listing(path, sr=c.site, num=1)
+        link = listing.things[0] if listing.things else None
 
         if c.cname and not c.authorized_cname:
             # In this case, we make some bad guesses caused by the
@@ -229,25 +230,24 @@ class ToolbarController(RedditController):
               url = nop('url'))
     def GET_toolbar(self, link, url):
         """The visible toolbar, with voting buttons and all"""
-        if not link:
-            link = utils.link_from_url(url, multiple = False)
-
         if link:
-            link = list(wrap_links(link, wrapper = FrameToolbar))
-        if link:
-            res = link[0]
+            listing = wrap_links(link, wrapper=FrameToolbar, skip=True, num=1)
         elif url:
-            url = demangle_url(url)
-            if not url:  # also check for validity
-                return self.abort404()
-
-            res = FrameToolbar(link = None,
-                               title = None,
-                               url = url,
-                               expanded = False)
+            listing = hot_links_by_url_listing(url, sr=c.site, num=1, skip=True)
         else:
             return self.abort404()
-        return spaceCompress(res.render())
+
+        url = demangle_url(url)
+        res = None
+        if listing.things:
+            res = listing.things[0]
+        elif url:
+            res = FrameToolbar(link=None, title=None, url=url, expanded=False)
+
+        if res:
+            return spaceCompress(res.render())
+        else:
+            return self.abort404()
 
     @validate(link = VByName('id'))
     def GET_inner(self, link):

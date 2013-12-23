@@ -20,6 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+from r2.lib.db.thing import NotFound
 from r2.lib.menus import Styled
 from r2.lib.wrapped import Wrapped
 from r2.models import LinkListing, Link, PromotedLink
@@ -233,6 +234,17 @@ def wrap_links(links, wrapper = default_thing_wrapper(),
     b = IDBuilder(links, num = num, wrap = wrapper, **kw)
     l = listing_cls(b, nextprev = nextprev, show_nums = show_nums)
     return l.listing()
+
+
+def hot_links_by_url_listing(url, sr=None, num=None, **kw):
+    try:
+        links_for_url = Link._by_url(url, sr)
+    except NotFound:
+        links_for_url = []
+
+    links_for_url.sort(key=lambda link: link._hot, reverse=True)
+    listing = wrap_links(links_for_url, num=num, **kw)
+    return listing
 
 
 def wrap_things(*things):
