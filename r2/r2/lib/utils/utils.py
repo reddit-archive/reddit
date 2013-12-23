@@ -450,7 +450,7 @@ class UrlParser(object):
             q = query_string(q).lstrip('?')
 
         # make sure the port is not doubly specified
-        if self.port and ":" in self.hostname:
+        if getattr(self, 'port', None) and ":" in self.hostname:
             self.hostname = self.hostname.split(':')[0]
 
         # if there is a netloc, there had better be a scheme
@@ -552,7 +552,7 @@ class UrlParser(object):
 
             # update the domain (preserving the port)
             self.hostname = subreddit.domain
-            self.port = self.port or port
+            self.port = getattr(self, 'port', None) or port
 
             # and remove any cnameframe GET parameters
             if self.query_dict.has_key(self.cname_get):
