@@ -206,15 +206,13 @@ listing_api_doc = partial(
     extensions=["json", "xml"],
 )
 
-class HotController(ListingController):
-    where = 'hot'
-    extra_page_classes = ListingController.extra_page_classes + ['hot-page']
-    show_chooser = True
-    next_suggestions_cls = ListingSuggestions
 
-    def make_requested_ad(self):
+class ListingWithPromos(ListingController):
+    show_organic = False
+
+    def make_requested_ad(self, requested_ad):
         try:
-            link = Link._by_fullname(self.requested_ad, data=True)
+            link = Link._by_fullname(requested_ad, data=True)
         except NotFound:
             self.abort404()
 
@@ -285,6 +283,39 @@ class HotController(ListingController):
                              max_score = self.listing_obj.max_score).listing()
         return s
 
+    def content(self):
+        # only send a spotlight listing for HTML rendering
+        if c.render_style == "html":
+            spotlight = None
+            show_sponsors = not (not c.user.pref_show_sponsors and c.user.gold)
+            show_organic = self.show_organic and c.user.pref_organic
+            on_frontpage = isinstance(c.site, DefaultSR)
+            requested_ad = request.GET.get('ad')
+
+            if on_frontpage:
+                self.extra_page_classes = \
+                    self.extra_page_classes + ['front-page']
+
+            if requested_ad:
+                spotlight = self.make_requested_ad(requested_ad)
+            elif on_frontpage and show_organic:
+                spotlight = self.make_spotlight()
+            elif show_sponsors:
+                spotlight = self.make_single_ad()
+
+            if spotlight:
+                return PaneStack([spotlight, self.listing_obj],
+                                 css_class='spacer')
+        return self.listing_obj
+
+
+class HotController(ListingWithPromos):
+    where = 'hot'
+    extra_page_classes = ListingController.extra_page_classes + ['hot-page']
+    show_chooser = True
+    next_suggestions_cls = ListingSuggestions
+    show_organic = True
+
     def query(self):
         if isinstance(c.site, DefaultSR):
             if c.user_is_loggedin:
@@ -320,41 +351,16 @@ class HotController(ListingController):
             # no sticky or sticky hidden
             return c.site.get_links('hot', 'all')
 
-    def content(self):
-        # only send a spotlight listing for HTML rendering
-        if c.render_style == "html":
-            spotlight = None
-            show_sponsors = not (not c.user.pref_show_sponsors and c.user.gold)
-            show_organic = c.user.pref_organic
-            on_frontpage = isinstance(c.site, DefaultSR)
-
-            if on_frontpage:
-                self.extra_page_classes = \
-                    self.extra_page_classes + ['front-page']
-
-            if self.requested_ad:
-                spotlight = self.make_requested_ad()
-            elif on_frontpage and show_organic:
-                spotlight = self.make_spotlight()
-            elif show_sponsors:
-                spotlight = self.make_single_ad()
-
-            if spotlight:
-                return PaneStack([spotlight, self.listing_obj],
-                                 css_class='spacer')
-        return self.listing_obj
-
     def title(self):
         return c.site.title
 
     @require_oauth2_scope("read")
     @listing_api_doc(uri='/hot', uses_site=True)
     def GET_listing(self, **env):
-        self.requested_ad = request.GET.get('ad')
         self.infotext = request.GET.get('deleted') and strings.user_deleted
         return ListingController.GET_listing(self, **env)
 
-class NewController(ListingController):
+class NewController(ListingWithPromos):
     where = 'new'
     title_text = _('newest submissions')
     extra_page_classes = ListingController.extra_page_classes + ['new-page']
@@ -406,7 +412,7 @@ class RisingController(NewController):
     def query(self):
         return get_rising(c.site)
 
-class BrowseController(ListingController):
+class BrowseController(ListingWithPromos):
     where = 'browse'
     show_chooser = True
     next_suggestions_cls = ListingSuggestions
@@ -458,7 +464,7 @@ class BrowseController(ListingController):
         return ListingController.GET_listing(self, **env)
 
 
-class RandomrisingController(ListingController):
+class RandomrisingController(ListingWithPromos):
     where = 'randomrising'
     title_text = _('you\'re really bored now, eh?')
     next_suggestions_cls = ListingSuggestions
