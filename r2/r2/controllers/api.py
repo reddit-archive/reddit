@@ -3720,6 +3720,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         listing = LinkListing(builder, nextprev=False).listing()
         if listing.things:
             w = listing.things[0]
+            w.num = ""
             return spaceCompress(w.render())
 
     @json_validate(
