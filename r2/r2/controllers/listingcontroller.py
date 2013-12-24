@@ -206,33 +206,7 @@ listing_api_doc = partial(
     extensions=["json", "xml"],
 )
 
-class FixListing(object):
-    """When sorting by hotness, computing a listing when the before/after
-    link has a hottness of 0 is very slow. This class avoids drawing
-    next/prev links when that will happen."""
-    fix_listing = True
-
-    def listing(self):
-        listing = ListingController.listing(self)
-
-        if not self.fix_listing:
-            return listing
-
-        #404 existing bad pages
-        if self.after and self.after._hot == 0:
-            self.abort404()
-
-        #don't draw next/prev links for
-        if listing.things:
-            if listing.things[-1]._hot == 0:
-                listing.next = None
-
-            if listing.things[0]._hot == 0:
-                listing.prev = None
-
-        return listing
-
-class HotController(FixListing, ListingController):
+class HotController(ListingController):
     where = 'hot'
     extra_page_classes = ListingController.extra_page_classes + ['hot-page']
     show_chooser = True
@@ -312,10 +286,6 @@ class HotController(FixListing, ListingController):
         return s
 
     def query(self):
-        #no need to worry when working from the cache
-        # TODO: just remove this then since we're always using the query cache
-        self.fix_listing = False
-
         if isinstance(c.site, DefaultSR):
             if c.user_is_loggedin:
                 srlimit = Subreddit.DEFAULT_LIMIT
