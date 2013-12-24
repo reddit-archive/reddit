@@ -1529,6 +1529,32 @@ class ModSR(ModContribSR):
     def is_moderator(self, user):
         return FakeSRMember(ModeratorPermissionSet)
 
+
+class ModMinus(ModSR):
+    def __init__(self, exclude_srs):
+        ModSR.__init__(self)
+        self.exclude_srs = exclude_srs
+        self.exclude_sr_ids = [sr._id for sr in exclude_srs]
+
+    @property
+    def sr_ids(self):
+        sr_ids = super(ModMinus, self).sr_ids
+        return [sr_id for sr_id in sr_ids if not sr_id in self.exclude_sr_ids]
+
+    @property
+    def name(self):
+        exclude_text = ', '.join(sr.name for sr in self.exclude_srs)
+        return 'subreddits you moderate except ' + exclude_text
+
+    @property
+    def title(self):
+        return self.name
+
+    @property
+    def path(self):
+        return '/r/mod-' + '-'.join(sr.name for sr in self.srs)
+
+
 class ContribSR(ModContribSR):
     name  = "contrib"
     title = "communities you're approved on"

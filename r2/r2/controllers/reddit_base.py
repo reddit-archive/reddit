@@ -93,6 +93,8 @@ from r2.models import (
     Frontpage,
     LabeledMulti,
     Link,
+    Mod,
+    ModMinus,
     MultiReddit,
     NotFound,
     Random,
@@ -371,14 +373,24 @@ def set_subreddit():
                 c.site = MultiReddit(multi_path, srs)
     elif '-' in sr_name:
         sr_names = sr_name.split('-')
-        if not sr_names[0].lower() == All.name.lower():
-            redirect_to("/subreddits/search?q=%s" % sr_name)
-        srs = Subreddit._by_name(sr_names[1:], stale=can_stale).values()
-        srs = [sr for sr in srs if not isinstance(sr, FakeSubreddit)]
-        if not srs:
-            c.site = All
+        base_sr_name, exclude_sr_names = sr_names[0], sr_names[1:]
+        srs = Subreddit._by_name(sr_names, stale=can_stale)
+        base_sr = srs.pop(base_sr_name)
+        exclude_srs = [sr for sr in srs.itervalues()
+                          if not isinstance(sr, FakeSubreddit)]
+
+        if base_sr == All:
+            if exclude_srs:
+                c.site = AllMinus(exclude_srs)
+            else:
+                c.site = All
+        elif base_sr == Mod:
+            if exclude_srs:
+                c.site = ModMinus(exclude_srs)
+            else:
+                c.site = Mod
         else:
-            c.site = AllMinus(srs)
+            redirect_to("/subreddits/search?q=%s" % sr_name)
     else:
         try:
             c.site = Subreddit._by_name(sr_name, stale=can_stale)
