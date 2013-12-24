@@ -195,7 +195,7 @@ def is_charged_transaction(trans_id, campaign):
         g.log.error('Multiple bids for trans_id %s' % trans_id)
         return False
 
-    return bid.is_charged()
+    return bid.is_charged() or bid.is_refund()
 
 
 @export
