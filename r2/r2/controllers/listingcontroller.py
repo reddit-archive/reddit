@@ -809,7 +809,11 @@ class MessageController(ListingController):
             wouldkeep = item.keep_item(item)
 
             # TODO: Consider a flag to disable this (and see above plus builder.py)
-            if (item._deleted or item._spam) and not c.user_is_admin:
+            if item._deleted and not c.user_is_admin:
+                return False
+            if (item._spam and
+                    item.author_id != c.user._id and
+                    not c.user_is_admin):
                 return False
             if item.author_id in c.user.enemies:
                 return False
