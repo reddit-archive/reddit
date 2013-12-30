@@ -171,6 +171,8 @@ def get_recommended_content(prefs, src):
     for r in all_recs:
         if r.sr.over_18 or r.link.over_18 or Link._nsfw.findall(r.link.title):
             continue
+        if r.sr.type == 'private':  # could happen in rising items
+            continue
         if r.sr._id not in seen_srs:
             recs.append(r)
             seen_srs.add(r.sr._id)
