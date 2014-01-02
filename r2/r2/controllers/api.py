@@ -2186,6 +2186,16 @@ class ApiController(RedditController, OAuth2ResourceController):
                         banner=c.user.name,
                         train_spam=train_spam)
 
+        modified_thing = None
+        if isinstance(thing, Link):
+            modified_thing = thing
+        elif isinstance(thing, Comment):
+            modified_thing = Link._byID(thing.link_id)
+
+        if modified_thing:
+            set_last_modified(modified_thing, 'comments')
+            LastModified.touch(modified_thing._fullname, 'Comments')
+
         if isinstance(thing, (Link, Comment)):
             sr = thing.subreddit_slow
             action = 'remove' + thing.__class__.__name__.lower()
