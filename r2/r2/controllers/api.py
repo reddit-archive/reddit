@@ -1171,6 +1171,17 @@ class ApiController(RedditController, OAuth2ResourceController):
         # flag search indexer that something has changed
         changed(thing)
 
+    @noresponse(VUser(),
+                VModhash(),
+                VSrCanAlter('id'),
+                thing=VByName('id'))
+    def POST_rescrape(self, thing):
+        """Re-queues the link in the media scraper."""
+        if not isinstance(thing, Link):
+            return
+
+        amqp.add_item("scraper_q", thing._fullname)
+
     @require_oauth2_scope("modposts")
     @validatedForm(VUser(),
                    VModhash(),

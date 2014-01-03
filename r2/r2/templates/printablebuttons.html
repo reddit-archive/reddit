@@ -71,6 +71,9 @@
       </form>
     </li>
   %endif
+  %if thing.show_rescrape:
+    <li>${ynbutton(_("retry thumb"), _("retrying"), "rescrape")}</li>
+  %endif
 </%def>
 
 <%def name="distinguish_setter(name, value=None)">

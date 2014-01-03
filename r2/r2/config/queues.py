@@ -73,7 +73,7 @@ class MessageQueue(object):
 
 def declare_queues(g):
     queues = Queues({
-        "scraper_q": MessageQueue(),
+        "scraper_q": MessageQueue(bind_to_self=True),
         "newcomments_q": MessageQueue(),
         "commentstree_q": MessageQueue(bind_to_self=True),
         "commentstree_fastlane_q": MessageQueue(bind_to_self=True),

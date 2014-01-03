@@ -36,7 +36,7 @@ class PrintableButtons(Styled):
                  show_delete = False, show_report = True,
                  show_distinguish = False, show_marknsfw = False,
                  show_unmarknsfw = False, is_link=False,
-                 show_flair = False, **kw):
+                 show_flair = False, show_rescrape=False, **kw):
         show_ignore = thing.show_reports
         approval_checkmark = getattr(thing, "approval_checkmark", None)
         show_approve = (thing.show_spam or show_ignore or
@@ -57,6 +57,7 @@ class PrintableButtons(Styled):
                         show_marknsfw = show_marknsfw,
                         show_unmarknsfw = show_unmarknsfw,
                         show_flair = show_flair,
+                        show_rescrape=show_rescrape,
                         **kw)
         
 class BanButtons(PrintableButtons):
@@ -76,11 +77,16 @@ class LinkButtons(PrintableButtons):
             show_report = False
 
         show_marknsfw = show_unmarknsfw = False
+        show_rescrape = False
         if thing.can_ban or is_author or (thing.promoted and c.user_is_sponsor):
             if not thing.nsfw:
                 show_marknsfw = True
             elif thing.nsfw and not thing.nsfw_str:
                 show_unmarknsfw = True
+
+            if (not thing.is_self and
+                    not (thing.has_thumbnail or thing.media_object)):
+                show_rescrape = True
 
         # do we show the delete button?
         show_delete = is_author and delete and not thing._deleted
@@ -125,6 +131,7 @@ class LinkButtons(PrintableButtons):
                                   show_marknsfw = show_marknsfw,
                                   show_unmarknsfw = show_unmarknsfw,
                                   show_flair = thing.can_flair,
+                                  show_rescrape=show_rescrape,
                                   show_comments = comments,
                                   # promotion
                                   promoted = thing.promoted,
