@@ -308,7 +308,7 @@ class FrontController(RedditController):
 
         if not c.user.pref_num_comments:
             num = g.num_comments
-        elif c.user.gold:
+        elif c.user_is_loggedin and (c.user.gold or sr.is_moderator(c.user)):
             num = min(c.user.pref_num_comments, g.max_comments_gold)
         else:
             num = min(c.user.pref_num_comments, g.max_comments)
@@ -329,7 +329,7 @@ class FrontController(RedditController):
         if limit and limit > 0:
             num = limit
 
-        if c.user_is_loggedin and c.user.gold:
+        if c.user_is_loggedin and (c.user.gold or sr.is_moderator(c.user)):
             if num > g.max_comments_gold:
                 displayPane.append(InfoBar(message =
                                            strings.over_comment_limit_gold
@@ -405,8 +405,9 @@ class FrontController(RedditController):
                 self._add_show_comments_link(subtitle_buttons, article, num,
                                              g.max_comments, gold=False)
 
-            if (c.user_is_loggedin and c.user.gold
-                and article.num_comments > g.max_comments):
+            if (c.user_is_loggedin and
+                    (c.user.gold or sr.is_moderator(c.user)) and
+                    article.num_comments > g.max_comments):
                 self._add_show_comments_link(subtitle_buttons, article, num,
                                              g.max_comments_gold, gold=True)
 
