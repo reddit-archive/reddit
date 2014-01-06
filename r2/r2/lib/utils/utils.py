@@ -54,16 +54,10 @@ from r2.lib.utils._utils import *
 
 iters = (list, tuple, set)
 
-def randstr(len, reallyrandom = False):
-    """If reallyrandom = False, generates a random alphanumeric string
-    (base-36 compatible) of length len.  If reallyrandom, add
-    uppercase and punctuation (which we'll call 'base-93' for the sake
-    of argument) and suitable for use as salt."""
-    alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789'
-    if reallyrandom:
-        alphabet += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ!#$%&\()*+,-./:;<=>?@[\\]^_{|}~'
-    return ''.join(random.choice(alphabet)
-                   for i in range(len))
+def randstr(length,
+            alphabet='abcdefghijklmnopqrstuvwxyz0123456789'):
+    """Return a string made up of random chars from alphabet."""
+    return ''.join(random.choice(alphabet) for _ in xrange(length))
 
 class Storage(dict):
     """
