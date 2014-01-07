@@ -160,6 +160,8 @@ cassandra
 haproxy
 nginx
 stunnel
+gunicorn
+sutro
 PACKAGES
 
 ###############################################################################
@@ -364,7 +366,7 @@ DEFAULT
 # configure haproxy
 cat > /etc/haproxy/haproxy.cfg <<HAPROXY
 global
-    maxconn 100
+    maxconn 350
 
 frontend frontend
     mode http
@@ -372,7 +374,7 @@ frontend frontend
     bind 0.0.0.0:80
     bind 127.0.0.1:8080
 
-    timeout client 10000
+    timeout client 24h
     option forwardfor except 127.0.0.1
     option httpclose
 
@@ -381,13 +383,17 @@ frontend frontend
     acl is-ssl dst_port 8080
     reqadd X-Forwarded-Proto:\ https if is-ssl
 
+    # send websockets to sutro
+    acl is-websocket hdr(Upgrade) -i WebSocket
+    use_backend sutro if is-websocket
+
     # send media stuff to the local nginx
     acl is-media path_beg /media/
     use_backend media if is-media
 
-    default_backend dynamic
+    default_backend reddit
 
-backend dynamic
+backend reddit
     mode http
     timeout connect 4000
     timeout server 30000
@@ -395,6 +401,14 @@ backend dynamic
     balance roundrobin
 
     server app01-8001 localhost:8001 maxconn 1
+
+backend sutro
+    mode http
+    timeout connect 4s
+    timeout server 24h
+    balance roundrobin
+
+    server sutro localhost:8002 maxconn 250
 
 backend media
     mode http
@@ -452,6 +466,81 @@ STUNNELCONF
 sed -i s/ENABLED=0/ENABLED=1/ /etc/default/stunnel4
 
 service stunnel4 restart
+
+###############################################################################
+# sutro (websocket server)
+###############################################################################
+
+if [ ! -f /etc/sutro.ini ]; then
+    cat > /etc/sutro.ini <<SUTRO
+[app:main]
+paste.app_factory = sutro.app:make_app
+
+amqp.host = localhost
+amqp.port = 5672
+amqp.vhost = /
+amqp.username = reddit
+amqp.password = reddit
+
+web.allowed_origins = $REDDIT_DOMAIN
+web.mac_secret = YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5
+web.ping_interval = 300
+
+stats.host =
+stats.port = 0
+
+[server:main]
+use = egg:gunicorn#main
+worker_class = sutro.socketserver.SutroWorker
+workers = 1
+worker_connections = 250
+host = 127.0.0.1
+port = 8002
+graceful_timeout = 5
+forward_allow_ips = 127.0.0.1
+
+[loggers]
+keys = root
+
+[handlers]
+keys = syslog
+
+[formatters]
+keys = generic
+
+[logger_root]
+level = INFO
+handlers = syslog
+
+[handler_syslog]
+class = handlers.SysLogHandler
+args = ("/dev/log", "local7")
+formatter = generic
+level = NOTSET
+
+[formatter_generic]
+format = [%(name)s] %(message)s
+SUTRO
+fi
+
+if [ ! -f /etc/init/sutro.conf ]; then
+    cat > /etc/init/sutro.conf << UPSTART_SUTRO
+description "sutro websocket server"
+
+stop on runlevel [!2345]
+start on runlevel [2345]
+
+respawn
+respawn limit 10 5
+kill timeout 15
+
+limit nofile 65535 65535
+
+exec gunicorn_paster /etc/sutro.ini
+UPSTART_SUTRO
+fi
+
+start sutro
 
 ###############################################################################
 # Upstart Environment
