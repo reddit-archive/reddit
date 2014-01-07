@@ -115,6 +115,7 @@ apt-get update
 
 # install prerequisites
 cat <<PACKAGES | xargs apt-get install $APTITUDE_OPTIONS
+netcat-openbsd
 git-core
 
 python-dev
@@ -159,7 +160,6 @@ cassandra
 haproxy
 nginx
 stunnel
-netcat-openbsd
 PACKAGES
 
 ###############################################################################
