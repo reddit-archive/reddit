@@ -145,7 +145,7 @@ class ApiController(RedditController, OAuth2ResourceController):
     @validate(link1 = VUrl(['url']),
               link2 = VByName('id'),
               count = VLimit('limit'))
-    @api_doc(api_section.links_and_comments)
+    @api_doc(api_section.links_and_comments, uses_site=True)
     def GET_info(self, link1, link2, count):
         """Get a link by fullname or a list of links by URL.
 
@@ -154,6 +154,9 @@ class ApiController(RedditController, OAuth2ResourceController):
         returned.
 
         If both `url` and `id` are provided, `id` will take precedence.
+
+        If a subreddit is provided, only links in that subreddit will be
+        returned.
 
         """
 
