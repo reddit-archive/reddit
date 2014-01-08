@@ -2761,8 +2761,13 @@ class ApiController(RedditController, OAuth2ResourceController):
         g.log.warning("%s did a password reset for %s via %s",
                       request.ip, user.name, token._id)
 
-        self._login(jquery, user)
-        jquery.redirect('/')
+        # if the token is for the current user, their cookies will be
+        # invalidated and they'll have to log in again.
+        if not c.user_is_loggedin or c.user._fullname == token.user_id:
+            jquery.redirect('/login')
+
+        form.set_html(".status", _("password updated"))
+
 
 
     @noresponse(VUser())

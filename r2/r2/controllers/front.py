@@ -1288,11 +1288,6 @@ class FormsController(RedditController):
             done = referer_path.startswith(request.fullpath)
         elif not token:
             return self.redirect("/password?expired=true")
-        else:
-            #if another user is logged-in, log them out
-            if c.user_is_loggedin:
-                self.logout()
-                return self.redirect(request.path)
 
         token_user = Account._by_fullname(token.user_id, data=True)
 
