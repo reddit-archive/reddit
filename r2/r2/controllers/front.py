@@ -1294,8 +1294,16 @@ class FormsController(RedditController):
                 self.logout()
                 return self.redirect(request.path)
 
-        return BoringPage(_("reset password"),
-                          content=ResetPassword(key=key, done=done)).render()
+        token_user = Account._by_fullname(token.user_id, data=True)
+
+        return BoringPage(
+            _("reset password"),
+            content=ResetPassword(
+                key=key,
+                done=done,
+                username=token_user.name,
+            )
+        ).render()
 
     @disable_subreddit_css()
     @validate(VUser(),
