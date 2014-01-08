@@ -1065,6 +1065,8 @@ class RedditController(MinimalController):
             if not isinstance(c.site, FakeSubreddit) and not g.disallow_db_writes:
                 c.user.update_sr_activity(c.site)
 
+        c.request_timer.intermediate("base-auth")
+
         c.over18 = over18()
         set_obey_over18()
 
