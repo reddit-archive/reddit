@@ -1851,7 +1851,7 @@ class ModeratorInbox(Relation(Subreddit, Message)):
                       if perms.get('mail', False))
         moderators = Account._byID(mod_ids, data=True, return_dict=False)
         for m in moderators:
-            if obj.author_id != m._id and not getattr(m, 'modmsgtime', None):
+            if obj.author_id != m._id and not m.modmsgtime:
                 m.modmsgtime = obj._date
                 m._commit()
 

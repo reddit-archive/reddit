@@ -943,7 +943,7 @@ class MessagePage(Reddit):
                                                     "/message/selfreply"],
                                 sr_path = False),
                     NamedButton('sent', sr_path = False)]
-        if c.show_mod_mail:
+        if c.user_is_loggedin and c.user.is_moderator_somewhere:
             buttons.append(ModeratorMailButton(menu.modmail, "moderator",
                                                sr_path = False))
         if not c.default_sr:
@@ -1976,7 +1976,7 @@ class SubredditTopBar(CachedTemplate):
                 reddits.append(RandomSubscription)
             if c.user.friends:
                 reddits.append(Friends)
-            if c.show_mod_mail:
+            if c.user.is_moderator_somewhere:
                 reddits.append(Mod)
         return NavMenu([SubredditButton(sr, css_class=css_classes.get(sr))
                         for sr in reddits],
@@ -4297,7 +4297,7 @@ class ListingChooser(Templated):
         self.add_item("global", _("explore"), path="/explore")
         self.add_item("other", _("everything"), site=All,
                       description=_("from all subreddits"))
-        if c.show_mod_mail:
+        if c.user_is_loggedin and c.user.is_moderator_somewhere:
             self.add_item("other", _("moderating"), site=Mod,
                           description=_("subreddits you mod"))
 

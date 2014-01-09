@@ -72,7 +72,7 @@
            mail_path = '/message/inbox/'
       %>
       ${plain_link('', mail_path, _sr_path=False, _class=mail_img_class, _id='mail')}
-      %if c.show_mod_mail:
+      %if c.user_is_loggedin and c.user.is_moderator_somewhere:
         <%
             mail_path = '/message/moderator/'
             if c.have_mod_messages:

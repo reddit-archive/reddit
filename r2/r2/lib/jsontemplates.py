@@ -348,10 +348,9 @@ class IdentityJsonTemplate(ThingJsonTemplate):
     )
 
     def thing_attr(self, thing, attr):
-        from r2.models import Subreddit
         if attr == "is_mod":
             t = thing.lookups[0] if isinstance(thing, Wrapped) else thing
-            return bool(Subreddit.reverse_moderator_ids(t))
+            return t.is_moderator_somewhere
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
 class AccountJsonTemplate(IdentityJsonTemplate):

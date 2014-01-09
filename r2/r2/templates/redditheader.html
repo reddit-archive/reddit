@@ -97,7 +97,7 @@
                  title = mail_img_title, _sr_path = False,
                  _id = "mail", _class=mail_img_class)}
       ${separator("|")}
-      %if c.show_mod_mail:
+      %if c.user_is_loggedin and c.user.is_moderator_somewhere:
          <%
             if c.have_mod_messages:
               mail_img_class = 'havemail'
