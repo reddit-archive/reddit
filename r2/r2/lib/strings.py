@@ -126,6 +126,7 @@ string_dict = dict(
     verify_email_submit = _("you'll be able to submit more frequently once you verify your email address"),
     email_verified =  _("your email address has been verfied"),
     email_verify_failed = _("Verification failed.  Please try that again"),
+    email_verify_wrong_user = _("The email verification link you've followed is for a different user. Please log out and switch to that user or try again below."),
     search_failed = _("Our search machines are under too much load to handle your request right now. :( Sorry for the inconvenience. Try again in a little bit -- but please don't mash reload; that only makes the problem worse."),
     invalid_search_query = _("I couldn't understand your query, so I simplified it and searched for \"%(clean_query)s\" instead."),
     completely_invalid_search_query = _("I couldn't understand your search query. Please try again."),

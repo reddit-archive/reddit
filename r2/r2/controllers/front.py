@@ -1249,10 +1249,9 @@ class FormsController(RedditController):
               token=VOneTimeToken(EmailVerificationToken, "key"),
               dest=VDestination(default="/prefs/update?verified=true"))
     def GET_verify_email(self, token, dest):
+        fail_msg = None
         if token and token.user_id != c.user._fullname:
-            # wrong user. log them out and try again.
-            self.logout()
-            return self.redirect(request.fullpath)
+            fail_msg = strings.email_verify_wrong_user
         elif c.user.email_verified:
             # they've already verified.
             if token:
@@ -1266,14 +1265,14 @@ class FormsController(RedditController):
             c.user._commit()
             Award.give_if_needed("verified_email", c.user)
             return self.redirect(dest)
-        else:
-            # failure. let 'em know.
-            content = PaneStack(
-                [InfoBar(message=strings.email_verify_failed),
-                 PrefUpdate(email=True,
-                            verify=True,
-                            password=False)])
-            return BoringPage(_("verify email"), content=content).render()
+
+        # failure. let 'em know.
+        content = PaneStack(
+            [InfoBar(message=fail_msg or strings.email_verify_failed),
+             PrefUpdate(email=True,
+                        verify=True,
+                        password=False)])
+        return BoringPage(_("verify email"), content=content).render()
 
     @validate(token=VOneTimeToken(PasswordResetToken, "key"),
               key=nop("key"))
