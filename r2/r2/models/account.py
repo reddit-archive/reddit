@@ -119,6 +119,7 @@ class Account(Thing):
                      cake_expiration=None,
                      otp_secret=None,
                      state=0,
+                     modmsgtime=None,
                      )
 
     def __eq__(self, other):
@@ -312,6 +313,14 @@ class Account(Thing):
     @property
     def enemies(self):
         return self.enemy_ids()
+
+    @property
+    def is_moderator_somewhere(self):
+        # modmsgtime can be:
+        #   - a date: the user is a mod somewhere and has unread modmail
+        #   - False: the user is a mod somewhere and has no unread modmail
+        #   - None: (the default) the user is not a mod anywhere
+        return self.modmsgtime is not None
 
     # Used on the goldmember version of /prefs/friends
     @memoize('account.friend_rels')

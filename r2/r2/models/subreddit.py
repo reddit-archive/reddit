@@ -327,6 +327,20 @@ class Subreddit(Thing, Printable, BaseSite):
         else:
             return None
 
+    def add_moderator(self, user, **kwargs):
+        if not user.modmsgtime:
+            user.modmsgtime = False
+            user._commit()
+        super(Subreddit, self).add_moderator(user, **kwargs)
+
+    def remove_moderator(self, user, **kwargs):
+        super(Subreddit, self).remove_moderator(user, **kwargs)
+
+        is_mod_somewhere = bool(Subreddit.reverse_moderator_ids(user))
+        if not is_mod_somewhere:
+            user.modmsgtime = None
+            user._commit()
+
     @property
     def moderators(self):
         return self.moderator_ids()
