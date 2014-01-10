@@ -848,6 +848,10 @@ class MinimalController(BaseController):
         if not c.allow_framing and not c.used_cache:
             response.headers["X-Frame-Options"] = "SAMEORIGIN"
 
+        # set some headers related to client security
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['X-XSS-Protection'] = '1; mode=block'
+
         # save the result of this page to the pagecache if possible.  we
         # mustn't cache things that rely on state not tracked by request_key
         # such as If-Modified-Since headers for 304s or requesting IP for 429s.
