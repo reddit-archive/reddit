@@ -3872,9 +3872,10 @@ class UserText(CachedTemplate):
             text = ''
 
         fullname = ''
-        # Only pass fullname on things that are not deleted
-        if not getattr(item, 'deleted', False) and hasattr(item, '_fullname'):
-            fullname = item._fullname
+        # Do not pass fullname on deleted things, unless we're admin
+        if hasattr(item, '_fullname'):
+            if not getattr(item, 'deleted', False) or c.user_is_admin:
+                fullname = item._fullname
 
         CachedTemplate.__init__(self,
                                 fullname = fullname,
