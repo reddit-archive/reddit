@@ -176,27 +176,36 @@ class CachedResults(object):
            under certain criteria, see can_insert."""
         self._insert_tuples([self.make_item_tuple(item) for item in tup(items)])
 
-    def _insert_tuples(self, t):
+    def _insert_tuples(self, tuples):
         def _mutate(data):
             data = data or []
+            item_tuples = tuples or []
 
-            # short-circuit if we already know that no item to be
-            # added qualifies to be stored. Since we know that this is
-            # sorted descending by datum[1:], we can just check the
-            # last item and see if we're smaller than it is
-            if (len(data) >= precompute_limit
-                and all(x[1:] < data[-1][1:]
-                        for x in t)):
+            existing_fnames = {item[0] for item in data}
+            new_fnames = {item[0] for item in item_tuples}
+
+            mutated_length = len(existing_fnames.union(new_fnames))
+            would_truncate = mutated_length >= precompute_limit
+            if would_truncate:
+                # only insert items that are already stored or new items
+                # that are large enough that they won't be immediately truncated
+                # out of storage
+                # item structure is (name, sortval1[, sortval2, ...])
+                smallest = data[-1]
+                item_tuples = [item for item in item_tuples
+                                    if (item[0] in existing_fnames or
+                                        item[1:] >= smallest[1:])]
+
+            if not item_tuples:
                 return data
 
-            # insert the new items, remove the duplicates (keeping the
+            # insert the items, remove the duplicates (keeping the
             # one being inserted over the stored value if applicable),
             # and sort the result
-            newfnames = set(x[0] for x in t)
-            data = filter(lambda x: x[0] not in newfnames, data)
-            data.extend(t)
+            data = filter(lambda x: x[0] not in new_fnames, data)
+            data.extend(item_tuples)
             data.sort(reverse=True, key=lambda x: x[1:])
-            if len(t) + len(data) > precompute_limit:
+            if len(data) > precompute_limit:
                 data = data[:precompute_limit]
             return data
 
