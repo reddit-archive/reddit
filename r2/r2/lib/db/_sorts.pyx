@@ -53,7 +53,7 @@ cpdef double _hot(long ups, long downs, double date):
     else:
         sign = 0
     seconds = date - 1134028003
-    return round(order + sign * seconds / 45000, 7)
+    return round(sign * order + seconds / 45000, 7)
 
 cpdef double controversy(long ups, long downs):
     """The controversy sort."""
