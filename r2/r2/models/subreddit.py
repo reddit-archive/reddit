@@ -1566,7 +1566,7 @@ class ModMinus(ModSR):
 
     @property
     def path(self):
-        return '/r/mod-' + '-'.join(sr.name for sr in self.srs)
+        return '/r/mod-' + '-'.join(sr.name for sr in self.exclude_srs)
 
 
 class ContribSR(ModContribSR):
