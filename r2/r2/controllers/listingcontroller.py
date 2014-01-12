@@ -566,7 +566,7 @@ class UserController(ListingController):
             srs = Subreddit._by_name(srnames)
             srnames = [name for name, sr in srs.iteritems()
                             if sr.can_view(c.user)]
-            srnames = sorted(list(set(srnames)))
+            srnames = sorted(list(set(srnames)), key=lambda name: name.lower())
             if len(srnames) > 1:
                 sr_buttons = [NavButton(_('all'), None, opt='sr',
                                         css_class='primary')]
