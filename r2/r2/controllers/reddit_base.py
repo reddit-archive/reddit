@@ -375,7 +375,7 @@ def set_subreddit():
         sr_names = sr_name.split('-')
         base_sr_name, exclude_sr_names = sr_names[0], sr_names[1:]
         srs = Subreddit._by_name(sr_names, stale=can_stale)
-        base_sr = srs.pop(base_sr_name)
+        base_sr = srs.pop(base_sr_name, None)
         exclude_srs = [sr for sr in srs.itervalues()
                           if not isinstance(sr, FakeSubreddit)]
 
