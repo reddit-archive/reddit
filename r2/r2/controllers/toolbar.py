@@ -230,6 +230,9 @@ class ToolbarController(RedditController):
               url = nop('url'))
     def GET_toolbar(self, link, url):
         """The visible toolbar, with voting buttons and all"""
+        if url:
+            url = demangle_url(url)
+
         if link:
             listing = wrap_links(link, wrapper=FrameToolbar, skip=True, num=1)
         elif url:
@@ -237,7 +240,6 @@ class ToolbarController(RedditController):
         else:
             return self.abort404()
 
-        url = demangle_url(url)
         res = None
         if listing.things:
             res = listing.things[0]
