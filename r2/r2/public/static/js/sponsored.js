@@ -614,8 +614,8 @@ function edit_campaign($campaign_row) {
 
             campaign.find('button[name="save"]').show().end()
                 .find('button[name="create"]').hide().end();
-            r.sponsored.fill_campaign_editor();
             campaign.fadeIn();
+            r.sponsored.fill_campaign_editor();
         })
     })
 }
