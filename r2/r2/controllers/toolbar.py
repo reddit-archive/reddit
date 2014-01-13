@@ -234,15 +234,19 @@ class ToolbarController(RedditController):
             url = demangle_url(url)
 
         if link:
-            listing = wrap_links(link, wrapper=FrameToolbar, skip=True, num=1)
+            wrapped = wrap_links(link, wrapper=FrameToolbar, num=1)
         elif url:
             listing = hot_links_by_url_listing(url, sr=c.site, num=1, skip=True)
+            if listing.things:
+                wrapped = listing.things[0]
+            else:
+                wrapped = None
         else:
             return self.abort404()
 
         res = None
-        if listing.things:
-            res = listing.things[0]
+        if wrapped:
+            res = wrapped
         elif url:
             res = FrameToolbar(link=None, title=None, url=url, expanded=False)
 
