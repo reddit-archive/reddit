@@ -57,7 +57,7 @@ ${self.RenderPrintable()}
 <%def name="thing_css_class(what)">
   <%
     cssclass = "thing"
-    if not getattr(what, 'deleted', False):
+    if not getattr(what, 'deleted', False) or getattr(what, 'can_ban', False):
       cssclass += " id-" + what._fullname
   %>
   ${cssclass}
