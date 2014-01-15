@@ -1137,6 +1137,7 @@ class FriendsSR(FakeSubreddit):
 class AllSR(FakeSubreddit):
     name = 'all'
     title = 'all subreddits'
+    path = '/r/all'
 
     def keep_for_rising(self, sr_id):
         return True
@@ -1166,31 +1167,71 @@ class AllSR(FakeSubreddit):
 
 
 class AllMinus(AllSR):
+    analytics_name = "all"
     name = _("%s (filtered)") % "all"
 
     def __init__(self, srs):
         AllSR.__init__(self)
-        self.srs = srs
-        self.sr_ids = [sr._id for sr in srs]
+        self.exclude_srs = srs
+        self.exclude_sr_ids = [sr._id for sr in srs]
 
     def keep_for_rising(self, sr_id):
-        return sr_id not in self.sr_ids
+        return sr_id not in self.exclude_sr_ids
 
     @property
     def title(self):
-        return 'all subreddits except ' + ', '.join(sr.name for sr in self.srs)
+        sr_names = ', '.join(sr.name for sr in self.exclude_srs)
+        return 'all subreddits except ' + sr_names
 
     @property
     def path(self):
-        return '/r/all-' + '-'.join(sr.name for sr in self.srs)
+        return '/r/all-' + '-'.join(sr.name for sr in self.exclude_srs)
 
     def get_links(self, sort, time):
         from r2.models import Link
         from r2.lib.db.operators import not_
         q = AllSR.get_links(self, sort, time)
-        if c.user.gold:
-            q._filter(not_(Link.c.sr_id.in_(self.sr_ids)))
+        if c.user.gold and self.exclude_sr_ids:
+            q._filter(not_(Link.c.sr_id.in_(self.exclude_sr_ids)))
         return q
+
+
+class Filtered(object):
+    unfiltered_path = None
+
+    @property
+    def path(self):
+        return '/me/f/%s' % self.filtername
+
+    @property
+    def title(self):
+        return self.name
+
+    @property
+    def name(self):
+        return _("%s (filtered)") % self.filtername
+
+    @property
+    def multi_path(self):
+        return ('/user/%s/f/%s' % (c.user.name, self.filtername)).lower()
+
+    def _get_filtered_subreddits(self):
+        try:
+            multi = LabeledMulti._byID(self.multi_path)
+        except tdb_cassandra.NotFound:
+            multi = None
+        filtered_srs = multi.srs if multi else []
+        return sorted(filtered_srs, key=lambda sr: sr.name)
+
+
+class AllFiltered(Filtered, AllMinus):
+    unfiltered_path = '/r/all'
+    filtername = 'all'
+
+    def __init__(self):
+        filters = self._get_filtered_subreddits() if c.user.gold else []
+        AllMinus.__init__(self, filters)
+
 
 class _DefaultSR(FakeSubreddit):
     #notice the space before reddit.com
@@ -1534,21 +1575,26 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         return sr_columns
 
     @property
+    def kind(self):
+        return self._id.split('/')[3]
+
+    @property
     def sr_props(self):
         return self.columns_to_sr_props(self.sr_columns)
 
     @property
     def path(self):
         if isinstance(self.owner, Account):
-            return '/user/%(username)s/m/%(multiname)s' % {
+            return '/user/%(username)s/%(kind)s/%(multiname)s' % {
                 'username': self.owner.name,
+                'kind': self.kind,
                 'multiname': self.name,
             }
 
     @property
     def user_path(self):
         if self.owner == c.user:
-            return '/me/m/%s' % self.name
+            return '/me/%s/%s' % (self.kind, self.name)
         else:
             return self.path
 
@@ -1581,8 +1627,10 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         return user == self.owner
 
     @classmethod
-    def by_owner(cls, owner):
-        return list(LabeledMultiByOwner.query([owner._fullname]))
+    def by_owner(cls, owner, kinds=None):
+        kinds = ('m',) if not kinds else kinds
+        multis = LabeledMultiByOwner.query([owner._fullname])
+        return [multi for multi in multis if multi.kind in kinds]
 
     @classmethod
     def create(cls, path, owner):
@@ -1711,6 +1759,8 @@ class ModSR(ModContribSR):
 
 
 class ModMinus(ModSR):
+    analytics_name = "mod"
+
     def __init__(self, exclude_srs):
         ModSR.__init__(self)
         self.exclude_srs = exclude_srs
@@ -1733,6 +1783,14 @@ class ModMinus(ModSR):
     @property
     def path(self):
         return '/r/mod-' + '-'.join(sr.name for sr in self.exclude_srs)
+
+
+class ModFiltered(Filtered, ModMinus):
+    unfiltered_path = '/r/mod'
+    filtername = 'mod'
+
+    def __init__(self):
+        ModMinus.__init__(self, self._get_filtered_subreddits())
 
 
 class ContribSR(ModContribSR):

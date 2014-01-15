@@ -136,6 +136,7 @@ def make_map():
     multi_prefixes = (
        partial_connect(mc, path_prefix='/user/:username/m/:multipath'),
        partial_connect(mc, path_prefix='/me/m/:multipath', my_multi=True),
+       partial_connect(mc, path_prefix='/me/f/:filtername'),
     )
 
     for connect in multi_prefixes:
@@ -371,6 +372,8 @@ def make_map():
     mc("/api/multi/*multipath/r/:srname", controller="multiapi", action="multi_subreddit")
     mc("/api/multi/*multipath/description", controller="multiapi", action="multi_description")
     mc("/api/multi/*multipath", controller="multiapi", action="multi")
+    mc("/api/filter/*multipath/r/:srname", controller="multiapi", action="multi_subreddit")
+    mc("/api/filter/*multipath", controller="multiapi", action="multi")
 
     mc("/api/v1/:action", controller="oauth2frontend",
        requirements=dict(action="authorize"))

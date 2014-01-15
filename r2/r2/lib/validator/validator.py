@@ -2606,6 +2606,10 @@ multi_name_rx = re.compile(r"\A[A-Za-z0-9][A-Za-z0-9_]{1,20}\Z")
 multi_name_chars_rx = re.compile(r"[^A-Za-z0-9_]")
 
 class VMultiPath(Validator):
+    def __init__(self, param, kinds=None, **kw):
+        Validator.__init__(self, param, **kw)
+        self.kinds = tup(kinds or ('f', 'm'))
+
     @classmethod
     def normalize(self, path):
         if path[0] != '/':
@@ -2618,8 +2622,8 @@ class VMultiPath(Validator):
             require(path)
             path = self.normalize(path)
             require(path.startswith('/user/'))
-            user, username, m, name = require_split(path, 5, sep='/')[1:]
-            require(m == 'm')
+            user, username, kind, name = require_split(path, 5, sep='/')[1:]
+            require(kind in self.kinds)
             username = chkuser(username)
             require(username)
         except RequirementException:
@@ -2657,10 +2661,11 @@ class VMultiPath(Validator):
 
 
 class VMultiByPath(Validator):
-    def __init__(self, param, require_view=True, require_edit=False):
+    def __init__(self, param, require_view=True, require_edit=False, kinds=None):
         Validator.__init__(self, param)
         self.require_view = require_view
         self.require_edit = require_edit
+        self.kinds = tup(kinds or ('f', 'm'))
 
     def run(self, path):
         path = VMultiPath.normalize(path)
@@ -2668,7 +2673,8 @@ class VMultiByPath(Validator):
             multi = LabeledMulti._byID(path)
         except tdb_cassandra.NotFound:
             return self.set_error('MULTI_NOT_FOUND', code=404)
-
+        if not multi or multi.kind not in self.kinds:
+            return self.set_error('MULTI_NOT_FOUND', code=404)
         if not multi or (self.require_view and not multi.can_view(c.user)):
             return self.set_error('MULTI_NOT_FOUND', code=404)
         if self.require_edit and not multi.can_edit(c.user):

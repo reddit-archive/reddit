@@ -5781,7 +5781,7 @@ dd { margin-left: 20px;  }
     }
 }
 
-.multi-details {
+.multi-details, .filtered-details {
     h1 {
         margin-bottom: 0;
     }
@@ -5952,6 +5952,28 @@ dd { margin-left: 20px;  }
 
     .bottom {
         margin-top: 1em;
+    }
+}
+
+.modsr-link {
+    display: block;
+    margin-top: 5px;
+    margin-left: 15px;
+    font-weight: bold;
+}
+
+.filtered-details {
+    .unfilter {
+        font-weight: bold;
+        display: inline-block;
+        margin-top: 1em;
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+
+    .add-sr {
+        margin-top: 5px;
     }
 }
 

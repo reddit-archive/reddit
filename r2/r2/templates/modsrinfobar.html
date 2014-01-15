@@ -16,34 +16,20 @@
 ## The Original Developer is the Initial Developer.  The Initial Developer of
 ## the Original Code is reddit Inc.
 ##
-## All portions of the code written by reddit are Copyright (c) 2006-2014
+## All portions of the code written by reddit are Copyright (c) 2006-2012
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%namespace file="utils.html" import="plain_link, classes, _md"/>
+<%namespace file="utils.html" import="plain_link, _md"/>
 
-<div ${classes("titlebox", "rounded", thing.css_class)}>
-  <h1 class="hover redditname special">
-    ${plain_link(thing.sr.name, thing.sr.path, _sr_path=False, _class="hover")}
+<div class="titlebox rounded">
+  <h1 class="hover redditname">
+    ${plain_link(c.site.name, c.site.path, _sr_path=False, _class="hover")}
   </h1>
 
   <div class="usertext">
-    ${_md(thing.description, wrap=True)}
+    ${_md("/r/mod shows only subreddits you moderate.")}
   </div>
-</div>
 
-%if thing.allminus_url:
-  <div class="giftgold allminus-link">
-    <a href="${thing.allminus_url}">${_("Exclude your subscribed subreddits")}</a>
-  </div>
-%endif
-
-<div class="giftgold allminus-link">
-    <a href="/me/f/all">${_("Exclude custom subreddits")}</a>
+  ${plain_link(_("filter out subreddits"), "/me/f/mod", _class="modsr-link", _sr_path=False)}
 </div>
-
-%if not thing.gilding_listing:
-<div class="gilded-link">
-  <a href="/r/all/gilded">${_("See gilded comments and submissions")}</a>
-</div>
-%endif

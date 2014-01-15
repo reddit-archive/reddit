@@ -26,6 +26,7 @@ from r2.lib.wrapped import Wrapped, Templated, CachedTemplate
 from r2.models import Account, DefaultSR, make_feedurl
 from r2.models import FakeSubreddit, Subreddit, SubSR, AllMinus, AllSR
 from r2.models import Friends, All, Sub, NotFound, DomainSR, Random, Mod, RandomNSFW, RandomSubscription, MultiReddit, ModSR, Frontpage, LabeledMulti
+from r2.models import Filtered
 from r2.models import Link, Printable, Trophy, PromoCampaign, Comment
 from r2.models import Flair, FlairTemplate, FlairTemplateBySubredditIndex
 from r2.models import USER_FLAIR, LINK_FLAIR
@@ -455,6 +456,14 @@ class Reddit(Templated):
         if c.user.pref_show_sponsorships or not c.user.gold:
             ps.append(SponsorshipBox())
 
+        if (isinstance(c.site, Filtered) and not
+            (isinstance(c.site, AllSR) and not c.user.gold)):
+            ps.append(FilteredInfoBar())
+        elif isinstance(c.site, AllSR):
+            ps.append(AllInfoBar(c.site, c.user))
+        elif isinstance(c.site, ModSR):
+            ps.append(ModSRInfoBar())
+
         if isinstance(c.site, (MultiReddit, ModSR)):
             srs = Subreddit._byID(c.site.sr_ids, data=True,
                                   return_dict=False)
@@ -473,10 +482,6 @@ class Reddit(Templated):
                 else:
                     box = SubscriptionBox(srs)
                 ps.append(SideContentBox(_('these subreddits'), [box]))
-
-
-        if isinstance(c.site, AllSR):
-            ps.append(AllInfoBar(c.site, c.user))
 
         user_banned = c.user_is_loggedin and c.site.is_banned(c.user)
 
@@ -2171,6 +2176,18 @@ class SubscriptionBox(Templated):
         return wrap_links(self.srs)
 
 
+class ModSRInfoBar(Templated):
+    pass
+
+
+class FilteredInfoBar(Templated):
+    def __init__(self):
+        self.css_class = None
+        if c.site.filtername == "all":
+            self.css_class = "gold-accent"
+        Templated.__init__(self)
+
+
 class AllInfoBar(Templated):
     def __init__(self, site, user):
         self.sr = site
@@ -2178,7 +2195,7 @@ class AllInfoBar(Templated):
         self.css_class = None
         if isinstance(site, AllMinus) and c.user.gold:
             self.description = (strings.r_all_minus_description + "\n\n" +
-                                " ".join("/r/" + sr.name for sr in site.srs))
+                " ".join("/r/" + sr.name for sr in site.exclude_srs))
             self.css_class = "gold-accent"
         else:
             self.description = strings.r_all_description
@@ -4325,8 +4342,14 @@ class ListingChooser(Templated):
         self.add_item("global", _("subscribed"), site=Frontpage,
                       description=_("your front page"))
         self.add_item("global", _("explore"), path="/explore")
-        self.add_item("other", _("everything"), site=All,
-                      description=_("from all subreddits"))
+        if c.user_is_loggedin and c.user.gold:
+            self.add_item("other", _("everything"),
+                          path="/me/f/all",
+                          extra_class="gold-perks",
+                          description=_("from all subreddits"))
+        else:
+            self.add_item("other", _("everything"), site=All,
+                          description=_("from all subreddits"))
         if c.user_is_loggedin and c.user.is_moderator_somewhere:
             self.add_item("other", _("moderating"), site=Mod,
                           description=_("subreddits you mod"))

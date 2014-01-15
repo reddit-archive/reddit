@@ -86,6 +86,7 @@ from r2.lib.validator import (
 from r2.models import (
     Account,
     All,
+    AllFiltered,
     AllMinus,
     DefaultSR,
     DomainSR,
@@ -97,6 +98,7 @@ from r2.models import (
     LabeledMulti,
     Link,
     Mod,
+    ModFiltered,
     ModMinus,
     MultiReddit,
     NotFound,
@@ -432,7 +434,7 @@ def set_subreddit():
     if isinstance(c.site, FakeSubreddit):
         c.default_sr = True
 
-
+_FILTER_SRS = {"mod": ModFiltered, "all": AllFiltered}
 def set_multireddit():
     routes_dict = request.environ["pylons.routes_dict"]
     if "multipath" in routes_dict:
@@ -460,6 +462,14 @@ def set_multireddit():
                 c.site = LabeledMulti._byID(multi_id)
             except tdb_cassandra.NotFound:
                 abort(404)
+    elif "filtername" in routes_dict:
+        if not c.user_is_loggedin:
+            abort(404)
+        filtername = routes_dict["filtername"].lower()
+        filtersr = _FILTER_SRS.get(filtername)
+        if not filtersr:
+            abort(404)
+        c.site = filtersr()
 
 
 def set_content_type():

@@ -15,6 +15,10 @@ r.multi = {
                 model: multi,
                 el: detailsEl
             }).render()
+            var subredditList = new r.multi.SubredditList({
+                model: multi,
+                el: detailsEl
+            })
 
             if (location.hash == '#created') {
                 detailsView.focusAdd()
@@ -208,7 +212,7 @@ r.multi.GlobalMultiCache = Backbone.Collection.extend({
     touch: function(path) {
         var multi = this.get(path)
         if (!multi) {
-            multi = new r.multi.MultiReddit({
+            multi = new this.model({
                 path: path
             })
             this.add(multi)
@@ -217,7 +221,7 @@ r.multi.GlobalMultiCache = Backbone.Collection.extend({
     },
 
     reify: function(response) {
-        var data = r.multi.MultiReddit.prototype.parse(response),
+        var data = this.model.prototype.parse(response),
             multi = this.touch(data.path)
 
         multi.set(data)
@@ -262,24 +266,15 @@ r.multi.MultiSubredditItem = Backbone.View.extend({
     }
 })
 
-r.multi.MultiDetails = Backbone.View.extend({
+r.multi.SubredditList = Backbone.View.extend({
     events: {
-        'submit .add-sr': 'addSubreddit',
-        'change [name="visibility"]': 'setVisibility',
-        'click .show-copy': 'showCopyMulti',
-        'click .show-rename': 'showRenameMulti',
-        'click .edit-description': 'editDescription',
-        'submit .description': 'saveDescription',
-        'confirm .delete': 'deleteMulti'
+        'submit .add-sr': 'addSubreddit'
     },
 
     initialize: function() {
-        this.listenTo(this.model, 'change', this.render)
-        this.listenTo(this.model.description, 'change', this.render)
         this.listenTo(this.model.subreddits, 'add', this.addOne)
         this.listenTo(this.model.subreddits, 'remove', this.removeOne)
         this.listenTo(this.model.subreddits, 'sort', this.resort)
-        this.listenTo(this.model.subreddits, 'add remove reset', this.render)
         new r.ui.ConfirmButton({el: this.$('button.delete')})
 
         this.listenTo(this.model.subreddits, 'add remove', function() {
@@ -290,15 +285,81 @@ r.multi.MultiDetails = Backbone.View.extend({
             r.ui.showWorkingDeferred(this.$el, xhr)
         }, this)
 
+        this.itemView = this.options.itemView || r.multi.MultiSubredditItem
+        this.itemViews = {}
         this.bubbleGroup = {}
+        this.$('.subreddits').empty()
+        this.model.subreddits.each(this.addOne, this)
+    },
+    
+    addOne: function(sr) {
+        var view = new this.itemView({
+            model: sr,
+            multi: this.model,
+            bubbleGroup: this.bubbleGroup
+        })
+        this.itemViews[sr.id] = view
+        this.$('.subreddits').append(view.render().$el)
+    },
+
+    resort: function() {
+        this.model.subreddits.each(function(sr) {
+            this.itemViews[sr.id].$el.appendTo(this.$('.subreddits'))
+        }, this)
+    },
+
+    removeOne: function(sr) {
+        this.itemViews[sr.id].remove()
+        delete this.itemViews[sr.id]
+    },
+
+    addSubreddit: function(ev) {
+        ev.preventDefault()
+
+        var nameEl = this.$('.add-sr .sr-name'),
+            srNames = nameEl.val()
+        srNames = _.compact(srNames.split(/[\/+,\-\s]+(?:r\/)?/))
+        if (!srNames.length) {
+            return
+        }
+
+        nameEl.val('')
+        this.$('.add-error').css('visibility', 'hidden')
+        this.model.addSubreddit(srNames, {
+            wait: true,
+            success: _.bind(function() {
+                this.$('.add-error').hide()
+            }, this),
+            error: _.bind(function(model, xhr) {
+                var resp = JSON.parse(xhr.responseText)
+                this.$('.add-error')
+                    .text(resp.explanation)
+                    .css('visibility', 'visible')
+                    .show()
+            }, this)
+        })
+    }
+})
+
+r.multi.MultiDetails = Backbone.View.extend({
+    events: {
+        'change [name="visibility"]': 'setVisibility',
+        'click .show-copy': 'showCopyMulti',
+        'click .show-rename': 'showRenameMulti',
+        'click .edit-description': 'editDescription',
+        'submit .description': 'saveDescription',
+        'confirm .delete': 'deleteMulti'
+    },
+
+    initialize: function() {
+        this.listenTo(this.model, 'change', this.render)
+        this.listenTo(this.model.subreddits, 'add remove reset', this.render)
+        this.listenTo(this.model.description, 'change', this.render)
+
         this.addBubble = new r.multi.MultiAddNoticeBubble({
             parent: this.$('.add-sr .sr-name'),
             trackHover: false
         })
-
-        this.itemViews = {}
-        this.$('.subreddits').empty()
-        this.model.subreddits.each(this.addOne, this)
     },
 
     // create child model and view to manage recommendations
@@ -349,54 +410,6 @@ r.multi.MultiDetails = Backbone.View.extend({
         this.$('.count').text(this.model.subreddits.length)
 
         return this
-    },
-
-    addOne: function(sr) {
-        var view = new r.multi.MultiSubredditItem({
-            model: sr,
-            multi: this.model,
-            bubbleGroup: this.bubbleGroup
-        })
-        this.itemViews[sr.id] = view
-        this.$('.subreddits').append(view.render().$el)
-    },
-
-    resort: function() {
-        this.model.subreddits.each(function(sr) {
-            this.itemViews[sr.id].$el.appendTo(this.$('.subreddits'))
-        }, this)
-    },
-
-    removeOne: function(sr) {
-        this.itemViews[sr.id].remove()
-        delete this.itemViews[sr.id]
-    },
-
-    addSubreddit: function(ev) {
-        ev.preventDefault()
-
-        var nameEl = this.$('.add-sr .sr-name'),
-            srNames = nameEl.val()
-        srNames = _.compact(srNames.split(/[\/+,\s]+(?:r\/)?/))
-        if (!srNames.length) {
-            return
-        }
-
-        nameEl.val('')
-        this.$('.add-error').css('visibility', 'hidden')
-        this.model.addSubreddit(srNames, {
-            wait: true,
-            success: _.bind(function() {
-                this.$('.add-error').hide()
-            }, this),
-            error: _.bind(function(model, xhr) {
-                var resp = JSON.parse(xhr.responseText)
-                this.$('.add-error')
-                    .text(resp.explanation)
-                    .css('visibility', 'visible')
-                    .show()
-            }, this)
-        })
     },
 
     setVisibility: function() {
