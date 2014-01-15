@@ -25,6 +25,11 @@
 _HOOKS = {}
 
 
+def all_hooks():
+    """Return all registered hooks."""
+    return _HOOKS
+
+
 class Hook(object):
     """A single hook that can be listened for."""
     def __init__(self):
