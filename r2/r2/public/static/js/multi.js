@@ -515,7 +515,7 @@ r.multi.SubscribeButton = Backbone.View.extend({
 })
 
 r.multi.MultiSubscribeBubble = r.ui.Bubble.extend({
-    className: 'multi-selector hover-bubble',
+    className: 'multi-selector hover-bubble anchor-right',
     template: _.template('<div class="title"><strong><%- title %></strong><a class="sr" href="/r/<%- sr_name %>">/r/<%- sr_name %></a></div><div class="throbber"></div>'),
     itemTemplate: _.template('<label><input class="add-to-multi" type="checkbox" data-path="<%- path %>" <%- checked %>><%- name %><a href="<%- path %>" target="_blank" title="<%- open_multi %>">&rsaquo;</a></label>'),
     itemCreateTemplate: _.template('<label><form class="create-multi"><input type="text" class="multi-name" placeholder="<%- create_msg %>"><div class="error create-multi-error"></div></form></label>'),
