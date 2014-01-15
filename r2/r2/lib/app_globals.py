@@ -519,7 +519,7 @@ class Globals(object):
             noreply=True,
             no_block=True,
             num_clients=num_mc_clients,
-            min_compress_len=1400,
+            min_compress_len=480,
         )
 
         # pagecaches hold fully rendered pages
