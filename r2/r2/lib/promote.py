@@ -314,7 +314,7 @@ def terminate_campaign(link, campaign):
 
     # NOTE: this will delete PromotionWeights after and including now.date()
     edit_campaign(link, campaign, dates, campaign.bid, campaign.cpm, sr,
-                  campaign.priority)
+                  campaign.priority, campaign.location)
 
     msg = 'terminated campaign %s (original end %s)' % (campaign._id,
                                                         original_end.date())
