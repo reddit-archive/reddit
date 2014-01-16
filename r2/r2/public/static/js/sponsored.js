@@ -653,7 +653,7 @@ function create_campaign() {
                 .find('input[name="priority"][data-default="true"]').prop("checked", "checked").end()
                 .find('input[name="bid"]').val(minBid * 5).end()
                 .find(".targeting").hide().end()
-                .find('select[name="country"]').val('all').end()
+                .find('select[name="country"]').val('').end()
                 .find('select[name="region"]').hide().end()
                 .find('select[name="metro"]').hide().end()
                 .fadeIn();
