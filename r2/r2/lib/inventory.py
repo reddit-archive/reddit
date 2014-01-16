@@ -205,22 +205,6 @@ def get_predicted_geotargeted(sr, location, start, end):
     return ret
 
 
-def locations_overlap(location1, location2):
-    if (not location1 or not location2 or
-        not location1.country or not location2.country):
-        # overlap if either location is no location
-        return True
-    elif ((location1.country == location2.country) and
-          (not location1.metro or not location2.metro)):
-        # overlap if locations share the same country and either one has no
-        # metro
-        return True
-    elif location1.metro == location2.metro:
-        # locations are the same
-        return True
-    return False
-
-
 def get_available_pageviews_geotargeted(sr, location, start, end, datestr=False, 
                                         ignore=None):
     """
@@ -262,7 +246,7 @@ def get_available_pageviews_geotargeted(sr, location, start, end, datestr=False,
         for camp in campaigns:
             daily_impressions = camp.impressions / camp.ndays
             for location in predicted_by_location:
-                if locations_overlap(location, camp.location):
+                if not location or location.contains(camp.location):
                     sold_by_location[location] += daily_impressions
 
         # calculate available impressions for each location

@@ -115,6 +115,31 @@ class Location(object):
         country, region, metro = [i or None for i in code.split(cls.DELIMITER)]
         return cls(country, region, metro)
 
+    def contains(self, other):
+        if not self.country:
+            # self is set of all countries, it includes all possible
+            # values of other.country
+            return True
+        elif not other or not other.country:
+            # self is more specific than other
+            return False
+        else:
+            # both self and other specify a country
+            if self.country != other.country:
+                # countries don't match
+                return False
+            else:
+                # countries match
+                if not self.metro:
+                    # self.metro is set of all metros within country, it
+                    # includes all possible values of other.metro
+                    return True
+                elif not other.metro:
+                    # self is more specific than other
+                    return False
+                else:
+                    return self.metro == other.metro
+
 
 @memoize("get_promote_srid")
 def get_promote_srid(name = 'promos'):
