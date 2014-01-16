@@ -192,14 +192,6 @@ r.ui.Bubble = Backbone.View.extend({
                 left: parentPos.left,
                 top: parentPos.top + offsetY - bodyOffset.top
             })
-        } else if (this.$el.is('.anchor-right')) {
-            offsetX = 16
-            offsetY = 0
-            parentPos.right = $(window).width() - parentPos.left
-            this.$el.css({
-                right: parentPos.right + offsetX,
-                top: parentPos.top + offsetY - bodyOffset.top
-            })
         } else if (this.$el.is('.anchor-right-fixed')) {
             offsetX = 32
             offsetY = 0
@@ -216,6 +208,14 @@ r.ui.Bubble = Backbone.View.extend({
             offsetY = 0
             this.$el.css({
                 left: parentPos.left + offsetX,
+                top: parentPos.top + offsetY - bodyOffset.top
+            })
+        }  else { // anchor-right
+            offsetX = 16
+            offsetY = 0
+            parentPos.right = $(window).width() - parentPos.left
+            this.$el.css({
+                right: parentPos.right + offsetX,
                 top: parentPos.top + offsetY - bodyOffset.top
             })
         }
@@ -281,15 +281,15 @@ r.ui.Bubble = Backbone.View.extend({
         if (this.$el.is('.anchor-top') || this.$el.is('.anchor-top-centered') || this.$el.is('.anchor-top-left')) {
             animProp = 'top'
             animOffset = '-=5'
-        } else if (this.$el.is('.anchor-right')) {
-            animProp = 'right'
-            animOffset = '-=5'
         } else if (this.$el.is('.anchor-right-fixed')) {
             animProp = 'right'
             animOffset = '-=5'
         } else if (this.$el.is('.anchor-left')) {
             animProp = 'left'
             animOffset = '+=5'
+        } else { // anchor-right
+            animProp = 'right'
+            animOffset = '-=5'
         }
         var curOffset = this.$el.css(animProp)
 
