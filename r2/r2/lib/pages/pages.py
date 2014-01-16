@@ -3321,7 +3321,7 @@ class PromotePage(Reddit):
     extension_handling = False
     searchbox          = False
 
-    def __init__(self, title, nav_menus = None, *a, **kw):
+    def __init__(self, nav_menus = None, *a, **kw):
         buttons = [NamedButton('new_promo')]
         if c.user_is_sponsor:
             buttons.append(NamedButton('roadblock'))
@@ -3345,7 +3345,7 @@ class PromotePage(Reddit):
             nav_menus = [menu]
 
         kw['show_sidebar'] = False
-        Reddit.__init__(self, title, nav_menus = nav_menus, *a, **kw)
+        Reddit.__init__(self, nav_menus = nav_menus, *a, **kw)
 
 class PromoteLinkNew(Templated): pass
 

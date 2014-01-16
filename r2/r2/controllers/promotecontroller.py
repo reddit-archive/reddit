@@ -26,7 +26,7 @@ import json
 import urllib
 
 from pylons import c, g, request
-from pylons.i18n import _
+from pylons.i18n import _, N_
 
 from r2.controllers.api import ApiController
 from r2.controllers.listingcontroller import ListingController
@@ -145,7 +145,8 @@ def has_oversold_error(form, campaign, start, end, bid, cpm, target, location):
 class PromoteController(RedditController):
     @validate(VSponsor())
     def GET_new_promo(self):
-        return PromotePage('content', content=PromoteLinkNew()).render()
+        return PromotePage(title=_("create sponsored link"),
+                           content=PromoteLinkNew()).render()
 
     @validate(VSponsor('link'),
               link=VLink('link'))
@@ -154,7 +155,8 @@ class PromoteController(RedditController):
             return self.abort404()
         rendered = wrap_links(link, skip=False)
         form = PromoteLinkForm(link, rendered)
-        page = PromotePage('new_promo', content=form)
+        page = Reddit(title=_("edit sponsored link"), content=form,
+                      show_sidebar=False, extension_handling=False)
         return page.render()
 
     # admin only because the route might change
@@ -178,7 +180,8 @@ class PromoteController(RedditController):
 
     @validate(VSponsorAdmin())
     def GET_roadblock(self):
-        return PromotePage('content', content=Roadblocks()).render()
+        return PromotePage(title=_("manage roadblocks"),
+                           content=Roadblocks()).render()
 
     @validate(VSponsor("link"),
               link=VLink("link"),
@@ -241,7 +244,8 @@ class PromoteController(RedditController):
         if c.render_style == 'csv':
             return content.as_csv()
         else:
-            return PromotePage('report', content=content).render()
+            return PromotePage(title=_("sponsored link report"),
+                               content=content).render()
 
     @validate(
         VSponsorAdmin(),
@@ -264,12 +268,27 @@ class PromoteController(RedditController):
                 c.errors.add(errors.SUBREDDIT_NOEXIST, field='sr_name')
 
         content = PromoteInventory(start, end, sr)
-        return PromotePage("promote_inventory", content=content).render()
+        return PromotePage(title=_("sponsored link inventory"),
+                           content=content).render()
 
 
 class PromoteListingController(ListingController):
     where = 'promoted'
     render_cls = PromotePage
+    titles = {
+        'future_promos': N_('unapproved promoted links'),
+        'pending_promos': N_('accepted promoted links'),
+        'unpaid_promos': N_('unpaid promoted links'),
+        'rejected_promos': N_('rejected promoted links'),
+        'live_promos': N_('live promoted links'),
+        'underdelivered': N_('underdelivered promoted links'),
+        'reported': N_('reported promoted links'),
+        'house': N_('house promoted links'),
+        'all': N_('all promoted links'),
+    }
+
+    def title(self):
+        return _(self.titles[self.sort])
 
     @property
     def title_text(self):
