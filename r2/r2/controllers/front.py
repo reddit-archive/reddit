@@ -1320,7 +1320,7 @@ class FormsController(RedditController):
                 infotext = strings.email_verified
             content = PrefUpdate()
         elif location == 'apps':
-            content = PrefApps(my_apps=OAuth2Client._by_user(c.user),
+            content = PrefApps(my_apps=OAuth2Client._by_user_grouped(c.user),
                                developed_apps=OAuth2Client._by_developer(c.user))
         elif location == 'feeds' and c.user.pref_private_feeds:
             content = PrefFeeds()

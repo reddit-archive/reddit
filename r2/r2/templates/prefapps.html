@@ -241,26 +241,26 @@
   </div>
 </%def>
 
-<%def name="authorized_app(app, scope, expiration)">
-  <div id="authorized-app-${app._id}" class="authorized-app rounded">
-    ${icon(app)}
+<%def name="authorized_app(app_data)">
+  <div id="authorized-app-${app_data['client']._id}" class="authorized-app rounded">
+    ${icon(app_data['client'])}
     <div class="app-details">
       <h2>
-      %if app.about_url:
-        <a href="${app.about_url}">${app.name}</a>
+      %if app_data['client'].about_url:
+        <a href="${app_data['client'].about_url}">${app_data['client'].name}</a>
       %else:
-        ${app.name}
+        ${app_data['client'].name}
       %endif
       </h2>
-      ${scope_details(scope, compact=True, expiration=expiration)}
+      ${scope_details(app_data['scope'], compact=True)}
     </div>
-    <div class="app-description">${app.description}</div>
-    ${developers(app)}
+    <div class="app-description">${app_data['client'].description}</div>
+    ${developers(app_data['client'])}
     ${ynbutton(_("revoke access"),
                _("revoked"),
                "revokeapp",
                callback="r.apps.revoked",
-               hidden_data=dict(client_id=app._id),
+               hidden_data=dict(client_id=app_data['client']._id),
                _class="revoke-app-button")}
   </div>
 </%def>
@@ -268,8 +268,8 @@
 %if thing.my_apps:
   <h1>${_("authorized applications")}</h1>
 
-  %for app, scope, expiration in thing.my_apps:
-    ${authorized_app(app, scope, expiration)}
+  %for app_data in thing.my_apps.values():
+    ${authorized_app(app_data)}
   %endfor
 %endif
 

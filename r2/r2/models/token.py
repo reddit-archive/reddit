@@ -189,9 +189,13 @@ class OAuth2Scope:
         },
     }
 
-    def __init__(self, scope_str=None):
+    def __init__(self, scope_str=None, subreddits=None, scopes=None):
         if scope_str:
             self._parse_scope_str(scope_str)
+        elif subreddits is not None or scopes is not None:
+            self.subreddit_only = bool(subreddits)
+            self.subreddits = subreddits
+            self.scopes = scopes
         else:
             self.subreddit_only = False
             self.subreddits = set()
@@ -219,6 +223,15 @@ class OAuth2Scope:
 
     def details(self):
         return [(scope, self.scope_info[scope]) for scope in self.scopes]
+
+    def combine(self, other):
+        if not self.subreddit_only or not other.subreddit_only:
+            subreddits = set()
+        else:
+            subreddits = self.subreddits | other.subreddits
+        scopes = self.scopes | other.scopes
+        new_scope = self.__class__(subreddits=subreddits, scopes=scopes)
+        return new_scope
 
 
 class OAuth2Client(Token):
@@ -345,6 +358,25 @@ class OAuth2Client(Token):
                  token.date + datetime.timedelta(seconds=token._ttl)
                      if token._ttl else None)
                 for token in tokens]
+
+    @classmethod
+    def _by_user_grouped(cls, account):
+        token_tuples = cls._by_user(account)
+        clients = {}
+        for client, scope, expiration in token_tuples:
+            if client._id in clients:
+                client_data = clients[client._id]
+                client_data['scope'] = client_data['scope'].combine(scope)
+            else:
+                client_data = {'scope': scope, 'access_tokens': 0,
+                               'refresh_tokens': 0, 'client': client}
+                clients[client._id] = client_data
+            if expiration:
+                client_data['access_tokens'] += 1
+            else:
+                client_data['refresh_tokens'] += 1
+
+        return clients
 
     def revoke(self, account):
         """Revoke all of the outstanding OAuth2AccessTokens associated with this client and user Account."""
