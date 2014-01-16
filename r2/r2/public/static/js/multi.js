@@ -505,9 +505,8 @@ r.multi.SubscribeButton = Backbone.View.extend({
 
         var bubbleClass = this.$el.data('bubble_class')
         if (bubbleClass) {
+            this.bubble.$el.removeClass('anchor-right')
             this.bubble.$el.addClass(bubbleClass)
-        } else {
-            this.bubble.$el.addClass('anchor-right')
         }
 
         this.bubble.queueShow()
