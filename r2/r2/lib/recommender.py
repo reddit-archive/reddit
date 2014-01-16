@@ -56,7 +56,8 @@ def get_recommendations(srs,
                         count=10,
                         source=SRC_MULTIREDDITS,
                         to_omit=None,
-                        match_set=True):
+                        match_set=True,
+                        over18=False):
     """Return subreddits recommended if you like the given subreddits.
 
     Args:
@@ -67,6 +68,8 @@ def get_recommendations(srs,
         be included. (Useful for omitting recs that were already rejected.)
     - match_set=True will return recs that are similar to each other, useful
         for matching the "theme" of the original set
+    - over18 content is filtered unless over18=True or one of the original srs
+        is over18
 
     """
     srs = tup(srs)
@@ -84,7 +87,7 @@ def get_recommendations(srs,
     filtered = [sr for sr in rec_srs if sr.type != 'private']
 
     # don't recommend adult srs unless one of the originals was over_18
-    if not any(sr.over_18 for sr in srs):
+    if not over18 and not any(sr.over_18 for sr in srs):
         filtered = [sr for sr in filtered if not sr.over_18]
 
     return filtered[:count]
@@ -92,17 +95,22 @@ def get_recommendations(srs,
 
 def get_recommended_content_for_user(account,
                                      record_views=False,
-                                     src=SRC_EXPLORE):
+                                     src=SRC_EXPLORE,
+                                     settings=None):
     """Wrapper around get_recommended_content() that fills in user info.
 
     If record_views == True, the srs will be noted in the user's preferences
     to keep from showing them again too soon.
 
+    settings is an ExploreSettings object that controls what types of content
+    will be included.
+
     Returns a list of ExploreItems.
 
     """
     prefs = AccountSRPrefs.for_user(account)
-    recs = get_recommended_content(prefs, src)
+    settings = settings or ExploreSettings()
+    recs = get_recommended_content(prefs, src, settings)
     if record_views:
         # mark as seen so they won't be shown again too soon
         sr_data = {r.sr: r.src for r in recs}
@@ -110,7 +118,7 @@ def get_recommended_content_for_user(account,
     return recs
 
 
-def get_recommended_content(prefs, src):
+def get_recommended_content(prefs, src, settings):
     """Get a mix of content from subreddits recommended for someone with
     the given preferences (likes and dislikes.)
 
@@ -123,6 +131,7 @@ def get_recommended_content(prefs, src):
     num_discovery = 2  # how many discovery-related subreddits to mix in
     num_rising = 4  # how many rising links to mix in
     num_items = 20  # total items to return
+    rising_items = discovery_items = comment_items = hot_items = []
 
     # make a list of srs that shouldn't be recommended
     default_srid36s = [to36(srid) for srid in Subreddit.default_subreddits()]
@@ -130,7 +139,7 @@ def get_recommended_content(prefs, src):
                                           prefs.recent_views,
                                           default_srid36s))
     # pick random subset of the user's liked srs
-    liked_srid36s = random_sample(prefs.likes, num_liked)
+    liked_srid36s = random_sample(prefs.likes, num_liked) if settings.personalized else []
     # pick random subset of discovery srs
     candidates = set(get_discovery_srid36s()).difference(prefs.dislikes)
     discovery_srid36s = random_sample(candidates, num_discovery)
@@ -139,26 +148,30 @@ def get_recommended_content(prefs, src):
     srs = Subreddit._byID36(to_fetch)
     liked_srs = [srs[sr_id36] for sr_id36 in liked_srid36s]
     discovery_srs = [srs[sr_id36] for sr_id36 in discovery_srid36s]
-    # generate recs from srs we know the user likes
-    recommended_srs = get_recommendations(liked_srs,
-                                          count=num_recs,
-                                          to_omit=omit_srid36s,
-                                          source=src,
-                                          match_set=False)
-    random.shuffle(recommended_srs)
-    # split list of recommended srs in half
-    midpoint = len(recommended_srs) / 2
-    srs_slice1 = recommended_srs[:midpoint]
-    srs_slice2 = recommended_srs[midpoint:]
-    # get hot links plus top comments from one half
-    comment_items = get_comment_items(srs_slice1, src)
-    # just get hot links from the other half
-    hot_items = get_hot_items(srs_slice2, TYPE_HOT, src)
-    # get links from subreddits dedicated to discovery
-    discovery_items = get_hot_items(discovery_srs, TYPE_DISCOVERY, 'disc')
-    # grab some (non-personalized) rising items
-    omit_sr_ids = set(int(id36, 36) for id36 in omit_srid36s)
-    rising_items = get_rising_items(omit_sr_ids, count=num_rising)
+    if settings.personalized:
+        # generate recs from srs we know the user likes
+        recommended_srs = get_recommendations(liked_srs,
+                                              count=num_recs,
+                                              to_omit=omit_srid36s,
+                                              source=src,
+                                              match_set=False,
+                                              over18=settings.over18)
+        random.shuffle(recommended_srs)
+        # split list of recommended srs in half
+        midpoint = len(recommended_srs) / 2
+        srs_slice1 = recommended_srs[:midpoint]
+        srs_slice2 = recommended_srs[midpoint:]
+        # get hot links plus top comments from one half
+        comment_items = get_comment_items(srs_slice1, src)
+        # just get hot links from the other half
+        hot_items = get_hot_items(srs_slice2, TYPE_HOT, src)
+    if settings.discovery:
+        # get links from subreddits dedicated to discovery
+        discovery_items = get_hot_items(discovery_srs, TYPE_DISCOVERY, 'disc')
+    if settings.rising:
+        # grab some (non-personalized) rising items
+        omit_sr_ids = set(int(id36, 36) for id36 in omit_srid36s)
+        rising_items = get_rising_items(omit_sr_ids, count=num_rising)
     # combine all items and randomize order to get a mix of types
     all_recs = list(chain(rising_items,
                           comment_items,
@@ -169,7 +182,7 @@ def get_recommended_content(prefs, src):
     seen_srs = set()
     recs = []
     for r in all_recs:
-        if r.sr.over_18 or r.link.over_18 or Link._nsfw.findall(r.link.title):
+        if not settings.over18 and r.is_over18():
             continue
         if r.sr.type == 'private':  # could happen in rising items
             continue
@@ -241,6 +254,19 @@ def random_sample(items, count):
     """Safe random sample that won't choke if len(items) < count."""
     sample_size = min(count, len(items))
     return random.sample(items, sample_size)
+
+
+class ExploreSettings(object):
+    """Controls what kinds of content will be included."""
+    def __init__(self,
+                 personalized=True,
+                 discovery=True,
+                 rising=True,
+                 over18=False):
+        self.personalized = personalized
+        self.discovery = discovery
+        self.rising = rising
+        self.over18 = over18
 
 
 class SRRecommendation(tdb_cassandra.View):

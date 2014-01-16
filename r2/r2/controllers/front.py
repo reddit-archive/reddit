@@ -155,11 +155,23 @@ class FrontController(RedditController, OAuth2ResourceController):
             kw['reverse'] = False
         return DetailsPage(thing=thing, expand_children=False, **kw).render()
 
-    @validate(VUser())
-    def GET_explore(self):
+    @validate(VUser(),
+              personalized=VBoolean('pers', default=False),
+              discovery=VBoolean('disc', default=False),
+              rising=VBoolean('ris', default=False),
+              over18=VBoolean('over18', default=False))
+    def GET_explore(self, personalized, discovery, rising, over18):
+        # default when no params are given is to show everything
+        if not any([personalized, discovery, rising]):
+            personalized = discovery = rising = True
+        settings = recommender.ExploreSettings(personalized=personalized,
+                                               discovery=discovery,
+                                               rising=rising,
+                                               over18=over18)
         recs = recommender.get_recommended_content_for_user(c.user,
-                                                            record_views=True)
-        content = ExploreItemListing(recs)
+                                                            record_views=True,
+                                                            settings=settings)
+        content = ExploreItemListing(recs, settings)
         return BoringPage(_("explore"),
                           show_sidebar=True,
                           show_chooser=True,

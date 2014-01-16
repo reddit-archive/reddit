@@ -4474,10 +4474,16 @@ class ExploreItem(Templated):
         self.src = rec_src
         Templated.__init__(self)
 
+    def is_over18(self):
+        return (self.sr.over_18 or
+                self.link.over_18 or
+                Link._nsfw.findall(self.link.title))
+
 
 class ExploreItemListing(Templated):
-    def __init__(self, recs):
+    def __init__(self, recs, settings):
         self.things = []
+        self.settings = settings
         if recs:
             links, srs = zip(*[(rec.link, rec.sr) for rec in recs])
             wrapped_links = {l._id: l for l in wrap_links(links).things}

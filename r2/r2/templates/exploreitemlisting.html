@@ -25,22 +25,41 @@
    _id = ("_%s" % thing.parent_name) if hasattr(thing, 'parent_name') else ''
    cls = "exploreitemlisting"
  %>
-<div id="siteTable${_id}" class="sitetable ${cls}">
 
-  %if thing.things:
-      <div class="explore-header">
-        <span class="explore-title">${_("Our robots thought you might like...")}</span>
-        <span class="explore-discuss-link">
-          <a href="/r/exploretalk">${_("feedback/suggestions")}</a>
+<div id="siteTable${_id}" class="sitetable ${cls}">
+  <div class="explore-header">
+    <span class="explore-discuss-link">
+      <a href="/r/exploretalk">${_("feedback/suggestions")}</a>
+    </span>
+    <span id="explore-settings">
+      <form>
+        <span>
+          <input type="checkbox" name="pers" value=1 ${"checked" if thing.settings.personalized else ""}>
+            ${_("personalized")}
+          </input>
+          <input type="checkbox" name="disc" value=1 ${"checked" if thing.settings.discovery else ""}>
+            ${_("discovery")}
+          </input>
+          <input type="checkbox" name="ris" value=1 ${"checked" if thing.settings.rising else ""}>
+            ${_("rising")}
+          </input>
+          <input type="checkbox" name="over18" value=1 ${"checked" if thing.settings.over18 else ""}>
+            ${_("nsfw")}
+          </input>
         </span>
-      </div>
- 
+        <button type="submit">
+          ${_("apply")}
+        </button>
+      </form>
+    </span>
+  </div>
+  %if thing.things:
       %for a in thing.things:
         ${a}
       %endfor
       <div class="nav-buttons">
         <span class="nextprev">${_("view more:")}&#32;
-          ${plain_link(unsafe(_("reload suggestions") + " &rsaquo;"), "/explore", _sr_path=False, nocname=True)}
+          ${plain_link(unsafe(_("reload suggestions") + " &rsaquo;"), request.url, _sr_path=False, nocname=True)}
         </span>
       </div>
   %else:
