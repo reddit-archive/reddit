@@ -28,6 +28,7 @@ import urllib
 from pylons import c, g, request
 from pylons.i18n import _
 
+from r2.controllers.api import ApiController
 from r2.controllers.listingcontroller import ListingController
 from r2.lib import cssfilter, inventory, promote
 from r2.lib.authorize import get_account_info, edit_profile, PROFILE_LIMIT
@@ -296,19 +297,82 @@ class PromoteController(ListingController):
         link = Link._byID(campaign.link_id)
         return self.redirect(promote.promo_edit_url(link))
 
-    @json_validate(sr=VSubmitSR('sr', promotion=True),
-                   location=VLocation(),
-                   start=VDate('startdate'),
-                   end=VDate('enddate'))
-    def GET_check_inventory(self, responder, sr, location, start, end):
-        sr = sr or Frontpage
-        if not location or not location.country:
-            available = inventory.get_available_pageviews(sr, start, end,
-                                                          datestr=True)
+    @validate(VSponsorAdmin(),
+              link=VLink("link"),
+              campaign=VPromoCampaign("campaign"))
+    def GET_refund(self, link, campaign):
+        if campaign.link_id != link._id:
+            return self.abort404()
+
+        content = RefundPage(link, campaign)
+        return Reddit("refund", content=content, show_sidebar=False).render()
+
+    @validate(VSponsorAdmin())
+    def GET_roadblock(self):
+        return PromotePage('content', content=Roadblocks()).render()
+
+    @validate(VSponsor("link"),
+              link=VLink("link"),
+              campaign=VPromoCampaign("campaign"))
+    def GET_pay(self, link, campaign):
+        # no need for admins to play in the credit card area
+        if c.user_is_loggedin and c.user._id != link.author_id:
+            return self.abort404()
+
+        if not campaign.link_id == link._id:
+            return self.abort404()
+        if g.authorizenetapi:
+            data = get_account_info(c.user)
+            content = PaymentForm(link, campaign,
+                                  customer_id=data.customerProfileId,
+                                  profiles=data.paymentProfiles,
+                                  max_profiles=PROFILE_LIMIT)
         else:
-            available = inventory.get_available_pageviews_geotargeted(sr,
-                            location, start, end, datestr=True)
-        return {'inventory': available}
+            content = None
+        res = LinkInfoPage(link=link,
+                            content=content,
+                            show_sidebar=False)
+        return res.render()
+
+    @validate(VSponsorAdminOrAdminSecret('secret'),
+              start=VDate('startdate'),
+              end=VDate('enddate'),
+              link_text=nop('link_text'),
+              owner=VAccountByName('owner'))
+    def GET_report(self, start, end, link_text=None, owner=None):
+        now = datetime.now(g.tz).replace(hour=0, minute=0, second=0,
+                                         microsecond=0)
+        end = end or now - timedelta(days=1)
+        start = start or end - timedelta(days=7)
+
+        links = []
+        bad_links = []
+        owner_name = owner.name if owner else ''
+
+        if owner:
+            promo_weights = PromotionWeights.get_campaigns(start, end,
+                                                           author_id=owner._id)
+            campaign_ids = [pw.promo_idx for pw in promo_weights]
+            campaigns = PromoCampaign._byID(campaign_ids, data=True)
+            link_ids = {camp.link_id for camp in campaigns.itervalues()}
+            links.extend(Link._byID(link_ids, data=True, return_dict=False))
+
+        if link_text is not None:
+            id36s = link_text.replace(',', ' ').split()
+            try:
+                links_from_text = Link._byID36(id36s, data=True)
+            except NotFound:
+                links_from_text = {}
+
+            bad_links = [id36 for id36 in id36s if id36 not in links_from_text]
+            links.extend(links_from_text.values())
+
+        content = PromoteReport(links, link_text, owner_name, bad_links, start,
+                                end)
+        if c.render_style == 'csv':
+            return content.as_csv()
+        else:
+            return PromotePage('report', content=content).render()
 
     @validate(
         VSponsorAdmin(),
@@ -333,7 +397,22 @@ class PromoteController(ListingController):
         content = PromoteInventory(start, end, sr)
         return PromotePage("promote_inventory", content=content).render()
 
-    # ## POST controllers below
+
+class PromoteApiController(ApiController):
+    @json_validate(sr=VSubmitSR('sr', promotion=True),
+                   location=VLocation(),
+                   start=VDate('startdate'),
+                   end=VDate('enddate'))
+    def GET_check_inventory(self, responder, sr, location, start, end):
+        sr = sr or Frontpage
+        if not location or not location.country:
+            available = inventory.get_available_pageviews(sr, start, end,
+                                                          datestr=True)
+        else:
+            available = inventory.get_available_pageviews_geotargeted(sr,
+                            location, start, end, datestr=True)
+        return {'inventory': available}
+
     @validatedForm(VSponsorAdmin(),
                    VModhash(),
                    link=VLink("link_id36"),
@@ -372,16 +451,6 @@ class PromoteController(ListingController):
     def POST_unpromote(self, thing, reason):
         if promote.is_promo(thing):
             promote.reject_promotion(thing, reason=reason)
-
-    @validate(VSponsorAdmin(),
-              link=VLink("link"),
-              campaign=VPromoCampaign("campaign"))
-    def GET_refund(self, link, campaign):
-        if campaign.link_id != link._id:
-            return self.abort404()
-
-        content = RefundPage(link, campaign)
-        return Reddit("refund", content=content, show_sidebar=False).render()
 
     @validatedForm(VSponsorAdmin(),
                    VModhash(),
@@ -529,10 +598,6 @@ class PromoteController(ListingController):
             l._commit()
 
         form.redirect(promote.promo_edit_url(l))
-
-    @validate(VSponsorAdmin())
-    def GET_roadblock(self):
-        return PromotePage('content', content=Roadblocks()).render()
 
     @validatedForm(VSponsorAdmin(),
                    VModhash(),
@@ -740,29 +805,6 @@ class PromoteController(ListingController):
                               reason or
                               _("failed to authenticate card.  sorry."))
 
-    @validate(VSponsor("link"),
-              link=VLink("link"),
-              campaign=VPromoCampaign("campaign"))
-    def GET_pay(self, link, campaign):
-        # no need for admins to play in the credit card area
-        if c.user_is_loggedin and c.user._id != link.author_id:
-            return self.abort404()
-
-        if not campaign.link_id == link._id:
-            return self.abort404()
-        if g.authorizenetapi:
-            data = get_account_info(c.user)
-            content = PaymentForm(link, campaign,
-                                  customer_id=data.customerProfileId,
-                                  profiles=data.paymentProfiles,
-                                  max_profiles=PROFILE_LIMIT)
-        else:
-            content = None
-        res = LinkInfoPage(link=link,
-                            content=content,
-                            show_sidebar=False)
-        return res.render()
-
     @validate(VSponsor("link_name"),
               VModhash(),
               link=VByName('link_name'),
@@ -786,43 +828,3 @@ class PromoteController(ListingController):
                 return UploadedImage(_('saved'), thumbnail_url(link), "",
                                      errors=errors,
                                      form_id="image-upload").render()
-
-    @validate(VSponsorAdminOrAdminSecret('secret'),
-              start=VDate('startdate'),
-              end=VDate('enddate'),
-              link_text=nop('link_text'),
-              owner=VAccountByName('owner'))
-    def GET_report(self, start, end, link_text=None, owner=None):
-        now = datetime.now(g.tz).replace(hour=0, minute=0, second=0,
-                                         microsecond=0)
-        end = end or now - timedelta(days=1)
-        start = start or end - timedelta(days=7)
-
-        links = []
-        bad_links = []
-        owner_name = owner.name if owner else ''
-
-        if owner:
-            promo_weights = PromotionWeights.get_campaigns(start, end,
-                                                           author_id=owner._id)
-            campaign_ids = [pw.promo_idx for pw in promo_weights]
-            campaigns = PromoCampaign._byID(campaign_ids, data=True)
-            link_ids = {camp.link_id for camp in campaigns.itervalues()}
-            links.extend(Link._byID(link_ids, data=True, return_dict=False))
-
-        if link_text is not None:
-            id36s = link_text.replace(',', ' ').split()
-            try:
-                links_from_text = Link._byID36(id36s, data=True)
-            except NotFound:
-                links_from_text = {}
-
-            bad_links = [id36 for id36 in id36s if id36 not in links_from_text]
-            links.extend(links_from_text.values())
-
-        content = PromoteReport(links, link_text, owner_name, bad_links, start,
-                                end)
-        if c.render_style == 'csv':
-            return content.as_csv()
-        else:
-            return PromotePage('report', content=content).render()

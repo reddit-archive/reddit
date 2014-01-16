@@ -336,7 +336,7 @@ def make_map():
     mc('/api/gadget/click/:ids', controller='api', action='gadget',
        type='click')
     mc('/api/gadget/:type', controller='api', action='gadget')
-    mc('/api/:action', controller='promote',
+    mc('/api/:action', controller='promoteapi',
        requirements=dict(action=("promote|unpromote|edit_promo|link_thumb|"
                                  "freebie|promote_note|update_pay|"
                                  "edit_campaign|delete_campaign|"
