@@ -210,8 +210,6 @@ def make_map():
 
     mc('/promoted/edit_promo/:link',
        controller='promote', action='edit_promo')
-    mc('/promoted/edit_promo_cpm/:link',  # development only
-       controller='promote', action='edit_promo_cpm')
     mc('/promoted/edit_promo/pc/:campaign', controller='promote',  # admin only
        action='edit_promo_campaign')
     mc('/promoted/pay/:link/:campaign',
@@ -340,8 +338,8 @@ def make_map():
     mc('/api/gadget/:type', controller='api', action='gadget')
     mc('/api/:action', controller='promote',
        requirements=dict(action=("promote|unpromote|edit_promo|link_thumb|"
-                                 "freebie|promote_note|update_pay|refund|"
-                                 "edit_campaign|delete_campaign|meta_promo|"
+                                 "freebie|promote_note|update_pay|"
+                                 "edit_campaign|delete_campaign|"
                                  "add_roadblock|rm_roadblock|check_inventory|"
                                  "refund_campaign|terminate_campaign")))
     mc('/api/:action', controller='apiminimal',
