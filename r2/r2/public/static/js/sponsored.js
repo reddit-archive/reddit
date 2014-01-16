@@ -347,6 +347,7 @@ r.sponsored = {
 
         $region.find('option').remove().end().hide()
         $metro.find('option').remove().end().hide()
+        $region.prop('disabled', true)
         $metro.prop('disabled', true)
 
         if (_.has(this.regions, $country.val())) {
@@ -357,6 +358,7 @@ r.sponsored = {
 
                 $('<option/>', {value: code, selected: selected}).text(name).appendTo($region)
             })
+            $region.prop('disabled', false)
             $region.show()
         }
     },
