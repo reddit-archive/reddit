@@ -31,7 +31,6 @@ from pylons import g, c
 from pylons.i18n import ungettext
 
 from r2.lib import (
-    amqp,
     authorize,
     emailer,
     hooks,
@@ -66,10 +65,6 @@ from r2.models import (
     traffic,
 )
 from r2.models.keyvalue import NamedGlobals
-
-
-UPDATE_QUEUE = 'update_promos_q'
-QUEUE_ALL = 'all'
 
 PROMO_HEALTH_KEY = 'promotions_last_updated'
 
@@ -827,37 +822,16 @@ def get_spent_amount(campaign):
     return spent
 
 
-def Run(offset=0, verbose=True):
+def Run(verbose=True):
     """reddit-job-update_promos: Intended to be run hourly to pull in
     scheduled changes to ads
-    
+
     """
 
     if verbose:
-        print "promote.py:Run() - amqp.add_item()"
-    amqp.add_item(UPDATE_QUEUE, json.dumps(QUEUE_ALL),
-                  delivery_mode=amqp.DELIVERY_TRANSIENT)
-    amqp.worker.join()
+        print "promote.py:Run() - make_daily_promotions()"
+
+    make_daily_promotions()
+
     if verbose:
         print "promote.py:Run() - finished"
-
-
-def run_changed(drain=False, limit=100, sleep_time=10, verbose=True):
-    """reddit-consumer-update_promos: amqp consumer of update_promos_q
-    
-    Handles asynch accepting/rejecting of ads that are scheduled to be live
-    right now
-    
-    """
-    @g.stats.amqp_processor(UPDATE_QUEUE)
-    def _run(msgs, chan):
-        items = [json.loads(msg.body) for msg in msgs]
-        if QUEUE_ALL in items:
-            # QUEUE_ALL is just an indicator to run make_daily_promotions.
-            # There's no promotion log to update in this case.
-            print "Received %s QUEUE_ALL message(s)" % items.count(QUEUE_ALL)
-            items = [i for i in items if i != QUEUE_ALL]
-            make_daily_promotions()
-
-    amqp.handle_items(UPDATE_QUEUE, _run, limit=limit, drain=drain,
-                      sleep_time=sleep_time, verbose=verbose)
