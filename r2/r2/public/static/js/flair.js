@@ -37,6 +37,13 @@ $(function() {
         return false;
     }
 
+    function getFlairAttrs($el) {
+        if ($el.data('name')) {
+            return {name: $el.data('name')}
+        }
+        return {link: $el.thing_id()}
+    }
+
     function selectFlairInSelector(e) {
         $(".flairselector li").removeClass("selected");
         $(this).addClass("selected");
@@ -75,8 +82,9 @@ $(function() {
     }
 
     function postFlairSelection(e) {
-        $(this).parent().parent().siblings("input").val(this.id);
-        post_form(this.parentNode.parentNode.parentNode, "selectflair");
+        $(this).find(".status").html(reddit.status_msg.submitting).show()
+        var $btn = $(this.parentNode.parentNode).find('.flairselectbtn')
+        simple_post_form(this, "selectflair", getFlairAttrs($btn));
         return false;
     }
 
@@ -177,12 +185,8 @@ $(function() {
                  ($(button).position().left + $(button).width() - 18) + "px")
             .css("top", $(button).position().top + "px");
 
-        var params = {};
-        $(selector).siblings("form").find("input").each(
-            function(idx, inp) {
-                params[inp.name] = inp.value;
-            });
-        $.request("flairselector", params, handleResponse, true, "html");
+        var attrs = getFlairAttrs($(this))
+        $.request("flairselector",  attrs, handleResponse, true, "html");
         return false;
     }
 
