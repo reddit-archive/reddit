@@ -252,7 +252,10 @@
         ${app_data['client'].name}
       %endif
       </h2>
-      ${scope_details(app_data['scope'], compact=True)}
+      ## `sorted` should put global permissions first (keyed off `None`)
+      %for sr in sorted(app_data['scopes']):
+        ${scope_details(app_data['scopes'][sr], compact=True)}<br>
+      %endfor
     </div>
     <div class="app-description">${app_data['client'].description}</div>
     ${developers(app_data['client'])}
