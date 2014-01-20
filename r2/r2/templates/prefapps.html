@@ -196,11 +196,17 @@
 <%def name="scope_details(scope, compact=False, expiration=None)">
   <div class="app-permissions">
     <ul>
-      %if not compact and scope.subreddit_only:
-        <li>
-          ${_("Only in the subreddits:")}&#32;
-          ${sr_list(scope.subreddits)}.
-        </li>
+      %if scope.subreddit_only:
+        %if compact:
+	  ${_("Only in:")}&#32;
+	  ${sr_list(scope.subreddits)}
+	  <br>
+	%else:
+          <li>
+            ${_("Only in the subreddits:")}&#32;
+            ${sr_list(scope.subreddits)}.
+          </li>
+	%endif
       %endif
       %for name, scope_info in scope.details():
         <li>
@@ -224,18 +230,11 @@
         </li>
       %endif
     </ul>
-    %if compact and (scope.subreddit_only or expiration):
+    %if compact and expiration:
       <div class="app-permissions-details">
-      %if scope.subreddit_only:
-        ${_("Only in:")}&#32;
-        ${sr_list(scope.subreddits)}
-        <br>
-      %endif
-      %if expiration:
         ${_("Expires in:")}&#32;
         ${timeuntil(expiration)}
         <br>
-      %endif
       </div>
     %endif
   </div>
