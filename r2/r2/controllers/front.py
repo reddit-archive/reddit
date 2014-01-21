@@ -990,6 +990,7 @@ class FrontController(RedditController, OAuth2ResourceController):
         resubmit = request.GET.get('resubmit')
         if url and not resubmit:
             # check to see if the url has already been submitted
+            url = sanitize_url(url)
             listing = hot_links_by_url_listing(url, sr=c.site)
             links = listing.things
 
