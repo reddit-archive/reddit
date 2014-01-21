@@ -365,9 +365,8 @@ class Reddit(Templated):
                               _id="moderation_tools",
                               collapsible=True)
 
-    def sr_moderators(self, limit = 10):
-        accounts = Account._byID([uid
-                                  for uid in c.site.moderators[:limit]],
+    def sr_moderators(self):
+        accounts = Account._byID(c.site.moderators,
                                  data=True, return_dict=False)
         return [WrappedUser(a) for a in accounts if not a._deleted]
 
@@ -500,10 +499,12 @@ class Reddit(Templated):
         if not isinstance(c.site, FakeSubreddit) and not c.cname:
             moderators = self.sr_moderators()
             if moderators:
-                total = len(c.site.moderators)
                 more_text = mod_href = ""
-                if total > len(moderators):
-                    more_text = "...and %d more" % (total - len(moderators))
+                sidebar_list_length = 10
+                num_not_shown = len(moderators) - sidebar_list_length
+
+                if num_not_shown > 0:
+                    more_text = _("...and %d more") % (num_not_shown)
                     mod_href = "http://%s/about/moderators" % get_domain()
 
                 if '/r/%s' % c.site.name == g.admin_message_acct:
@@ -512,7 +513,8 @@ class Reddit(Templated):
                     label = _('message the moderators')
                 helplink = ("/message/compose?to=%%2Fr%%2F%s" % c.site.name,
                             label)
-                ps.append(SideContentBox(_('moderators'), moderators,
+                ps.append(SideContentBox(_('moderators'),
+                                         moderators[:sidebar_list_length],
                                          helplink = helplink,
                                          more_href = mod_href,
                                          more_text = more_text))
