@@ -1284,14 +1284,19 @@ class ApiController(RedditController, OAuth2ResourceController):
         if not thing:
             return
 
+        try:
+            sr = Subreddit._byID(thing.sr_id) if thing.sr_id else None
+        except NotFound:
+            sr = None
         # Users may only block someone who has
         # actively harassed them (i.e., comment/link reply
         # or PM). Check that 'thing' is in the user's inbox somewhere
-        inbox_cls = Inbox.rel(Account, thing.__class__)
-        rels = inbox_cls._fast_query(c.user, thing,
-                                     ("inbox", "selfreply", "mention"))
-        if not filter(None, rels.values()):
-            return
+        if not (sr and sr.is_moderator_with_perms(c.user, 'mail')):
+            inbox_cls = Inbox.rel(Account, thing.__class__)
+            rels = inbox_cls._fast_query(c.user, thing,
+                                        ("inbox", "selfreply", "mention"))
+            if not filter(None, rels.values()):
+                return
 
         block_acct = Account._byID(thing.author_id)
         if block_acct.name in g.admins:
