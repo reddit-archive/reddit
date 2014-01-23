@@ -203,7 +203,6 @@ class Globals(object):
             'sponsors',
             'employees',
             'automatic_reddits',
-            'allowed_css_linked_domains',
             'authorized_cnames',
             'hardcache_categories',
             'case_sensitive_domains',
@@ -222,7 +221,6 @@ class Globals(object):
             'wiki_page_privacy_policy',
             'wiki_page_user_agreement',
             'wiki_page_gold_bottlecaps',
-            'adserver_click_domain',
         ],
 
         ConfigValue.choice: {
@@ -246,7 +244,6 @@ class Globals(object):
 
     live_config_spec = {
         ConfigValue.bool: [
-            'frontpage_dart',
             'frontend_logging',
         ],
         ConfigValue.float: [
