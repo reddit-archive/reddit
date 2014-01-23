@@ -720,7 +720,9 @@ class UserController(ListingController):
              extensions=['json'])
     def GET_about(self, vuser):
         """Return information about the user, including karma and gold status."""
-        if not is_api() or not vuser:
+        if (not is_api() or
+                not vuser or
+                (vuser._spam and vuser != c.user)):
             return self.abort404()
         return Reddit(content = Wrapped(vuser)).render()
 
