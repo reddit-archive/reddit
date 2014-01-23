@@ -172,21 +172,11 @@ class Link(Thing, Printable):
             admintools.spam(l, banner='banned user')
         return l
 
-    @classmethod
-    def _saved(cls, user, link):
-        saved = LinkSavesByAccount.fast_query(user, [link])
-        return (user, link) in saved
-
     def _save(self, user):
         LinkSavesByAccount._save(user, self)
 
     def _unsave(self, user):
         LinkSavesByAccount._unsave(user, self)
-
-    @classmethod
-    def _hidden(cls, user, link):
-        hidden = LinkSavesByAccount.fast_query(user, [link])
-        return (user, link) in hidden
 
     def _hide(self, user):
         LinkHidesByAccount._hide(user, self)
