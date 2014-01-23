@@ -350,11 +350,12 @@ class CommentTreeStorageV1(CommentTreeStorageBase):
     def add_comments(cls, tree, comments):
         with cls.mutation_context(tree.link):
             CommentTreeStorageBase.add_comments(tree, comments)
+            # for read safety write parents first
+            g.permacache.set(cls._parent_comments_key(tree.link_id),
+                             tree.parents)
             g.permacache.set(cls._comments_key(tree.link_id),
                              (tree.cids, tree.tree, tree.depth,
                              tree.num_children))
-            g.permacache.set(cls._parent_comments_key(tree.link_id),
-                             tree.parents)
 
 
 class CommentTree:
