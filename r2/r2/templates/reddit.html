@@ -45,14 +45,14 @@
 
 <%def name="global_stylesheets()">
   %if c.lang_rtl:
-    <link rel="stylesheet" href="${static(g.stylesheet_rtl)}"
+    <link rel="stylesheet" href="${static("reddit-rtl.less")}"
           type="text/css" />
     %if c.site.stylesheet_rtl:
       <link rel="stylesheet" href="${static(c.site.stylesheet_rtl)}"
             type="text/css" />
     %endif
   %else:
-    ${less_stylesheet(g.stylesheet)}
+    ${less_stylesheet("reddit.less")}
     %if c.site.stylesheet:
     <link rel="stylesheet" href="${static(c.site.stylesheet)}"
           type="text/css" >
