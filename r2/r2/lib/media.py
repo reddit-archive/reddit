@@ -175,11 +175,9 @@ def _fetch_image_size(url, referer):
             response.close()
 
 
-def optimize_jpeg(filename, optimizer):
-    if optimizer:
-        with open(os.path.devnull, 'w') as devnull:
-            subprocess.check_call((optimizer, filename),
-                                  stdout=devnull)
+def optimize_jpeg(filename):
+    with open(os.path.devnull, 'w') as devnull:
+        subprocess.check_call(("/usr/bin/jpegoptim", filename), stdout=devnull)
 
 
 def thumbnail_url(link):
@@ -224,9 +222,9 @@ def upload_media(image, file_type='.jpg'):
                 img.save(f, optimize=True)
 
         if file_type == ".png":
-            optimize_png(f.name, g.png_optimizer)
+            optimize_png(f.name)
         elif file_type == ".jpg":
-            optimize_jpeg(f.name, g.jpeg_optimizer)
+            optimize_jpeg(f.name)
         contents = open(f.name).read()
         file_name = _filename_from_content(contents) + file_type
         return g.media_provider.put(file_name, contents)
