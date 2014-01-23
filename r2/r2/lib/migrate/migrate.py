@@ -254,27 +254,6 @@ def port_cassavotes():
 
             cv._commit(write_consistency_level=CL.ONE)
 
-def port_cassasaves(after_id=None, estimate=12489897):
-    from r2.models import SaveHide, CassandraSave
-    from r2.lib.db.operators import desc
-    from r2.lib.db.tdb_cassandra import CL
-    from r2.lib.utils import fetch_things2, to36, progress
-
-    q = SaveHide._query(
-        SaveHide.c._name == 'save',
-        sort=desc('_date'),
-        data=False,
-        eager_load=False)
-
-    if after_id is not None:
-        q._after(SaveHide._byID(after_id))
-
-    for sh in progress(fetch_things2(q), estimate=estimate):
-
-        csh = CassandraSave(thing1_id = to36(sh._thing1_id),
-                            thing2_id = to36(sh._thing2_id),
-                            date = sh._date)
-        csh._commit(write_consistency_level = CL.ONE)
 
 def port_cassaurls(after_id=None, estimate=15231317):
     from r2.models import Link, LinksByUrl
@@ -319,22 +298,6 @@ def port_deleted_links(after_id=None):
             for link in chunk:
                 query = get_deleted_links(link.author_id)
                 m.insert(query, [link])
-
-def port_cassahides():
-    from r2.models import SaveHide, CassandraHide
-    from r2.lib.db.tdb_cassandra import CL
-    from r2.lib.db.operators import desc
-    from r2.lib.utils import fetch_things2, timeago, progress
-
-    q = SaveHide._query(SaveHide.c._date > timeago('1 week'),
-                        SaveHide.c._name == 'hide',
-                        sort=desc('_date'))
-    q = fetch_things2(q)
-    q = progress(q, estimate=1953374)
-
-    for sh in q:
-        CassandraHide._hide(sh._thing1, sh._thing2,
-                            write_consistency_level=CL.ONE)
 
 def convert_query_cache_to_json():
     import cPickle

@@ -173,48 +173,26 @@ class Link(Thing, Printable):
         return l
 
     @classmethod
-    def _somethinged(cls, rel, user, link, name):
-        return rel._fast_query(tup(user), tup(link), name=name,
-                               thing_data=True, timestamp_optimize=True)
-
-    def _something(self, rel, user, somethinged, name):
-        try:
-            saved = rel(user, self, name=name)
-            saved._commit()
-        except CreationError, e:
-            return somethinged(user, self)[(user, self, name)]
-
-        return saved
-
-    def _unsomething(self, user, somethinged, name):
-        saved = somethinged(user, self)[(user, self, name)]
-        if saved:
-            saved._delete()
-            return saved
-
-    @classmethod
     def _saved(cls, user, link):
-        return cls._somethinged(SaveHide, user, link, 'save')
+        saved = LinkSavesByAccount.fast_query(user, [link])
+        return (user, link) in saved
 
     def _save(self, user):
         LinkSavesByAccount._save(user, self)
-        return self._something(SaveHide, user, self._saved, 'save')
 
     def _unsave(self, user):
         LinkSavesByAccount._unsave(user, self)
-        return self._unsomething(user, self._saved, 'save')
 
     @classmethod
     def _hidden(cls, user, link):
-        return cls._somethinged(SaveHide, user, link, 'hide')
+        hidden = LinkSavesByAccount.fast_query(user, [link])
+        return (user, link) in hidden
 
     def _hide(self, user):
         LinkHidesByAccount._hide(user, self)
-        return self._something(SaveHide, user, self._hidden, 'hide')
 
     def _unhide(self, user):
         LinkHidesByAccount._unhide(user, self)
-        return self._unsomething(user, self._hidden, 'hide')
 
     def link_domain(self):
         if self.is_self:
@@ -1535,7 +1513,6 @@ class Message(Thing, Printable):
     def keep_item(self, wrapped):
         return True
 
-class SaveHide(Relation(Account, Link)): pass
 
 class GildedCommentsByAccount(tdb_cassandra.DenormalizedRelation):
     _use_db = True
