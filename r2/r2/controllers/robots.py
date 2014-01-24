@@ -19,10 +19,11 @@
 # All portions of the code written by reddit are Copyright (c) 2006-2014 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
-from pylons import response
+from pylons import request, response, g
 
 from r2.controllers.reddit_base import MinimalController
 from r2.lib.pages import Robots
+from r2.lib import utils
 
 
 class RobotsController(MinimalController):
@@ -35,7 +36,13 @@ class RobotsController(MinimalController):
     def post(self):
         pass
 
+    def on_crawlable_domain(self):
+        return utils.domain(request.host) == g.domain
+
     def GET_robots(self):
         response.content_type = "text/plain"
-        return Robots().render(style='txt')
+        if self.on_crawlable_domain():
+            return Robots().render(style='txt')
+        else:
+            return "User-Agent: *\nDisallow: *\n"
 
