@@ -362,7 +362,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         if not should_ratelimit:
             c.errors.remove((errors.RATELIMIT, 'ratelimit'))
 
-        banmsg = None
+        ban = None
 
         if kind == 'link':
             check_domain = True
@@ -393,7 +393,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                 g.log.warning("%s is trying to submit url=None (title: %r)"
                               % (request.ip, title))
             elif check_domain:
-                banmsg = is_banned_domain(url)
+                ban = is_banned_domain(url)
         else:
             form.has_errors('text', errors.TOO_LONG)
 
@@ -442,9 +442,11 @@ class ApiController(RedditController, OAuth2ResourceController):
         l = Link._submit(cleaned_title, url if kind == 'link' else 'self',
                          c.user, sr, ip, spam=c.user._spam, sendreplies=sendreplies)
 
-        if banmsg:
+        if ban:
             g.stats.simple_event('spam.domainban.link_url')
-            admintools.spam(l, banner = "domain (%s)" % banmsg)
+            admintools.spam(l, banner = "domain (%s)" % ban.banmsg)
+            hooks.get_hook('banned_domain.submit').call(item=l, url=url,
+                                                        ban=ban)
 
         if kind == 'self':
             l.url = l.make_permalink_slow()
