@@ -203,7 +203,6 @@ class Globals(object):
             'sponsors',
             'employees',
             'automatic_reddits',
-            'authorized_cnames',
             'hardcache_categories',
             'case_sensitive_domains',
             'reserved_subdomains',
@@ -375,7 +374,6 @@ class Globals(object):
         self.origin = "http://" + origin_prefix + self.domain
 
         self.trusted_domains = set([self.domain])
-        self.trusted_domains.update(self.authorized_cnames)
         if self.https_endpoint:
             https_url = urlparse(self.https_endpoint)
             self.trusted_domains.add(https_url.hostname)

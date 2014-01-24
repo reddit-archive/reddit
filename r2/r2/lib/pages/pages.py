@@ -2640,11 +2640,7 @@ class Bookmarklets(Templated):
     """The bookmarklets page."""
     def __init__(self, buttons=None):
         if buttons is None:
-            buttons = ["submit", "serendipity!"]
-            # only include the toolbar link if we're not on an
-            # unathorised cname. See toolbar.py:GET_s for discussion
-            if not (c.cname and c.site.domain not in g.authorized_cnames):
-                buttons.insert(0, "reddit toolbar")
+            buttons = ["reddit toolbar", "submit", "serendipity!"]
         Templated.__init__(self, buttons = buttons)
 
 
