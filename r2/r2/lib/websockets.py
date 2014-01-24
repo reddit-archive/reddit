@@ -36,14 +36,19 @@ from r2.lib import amqp
 _WEBSOCKET_EXCHANGE = "sutro"
 
 
-def send_broadcast(namespace, message):
+def send_broadcast(namespace, type, payload):
     """Broadcast an object to all WebSocket listeners in a namespace.
 
-    The message will be encoded as a JSON object before being sent to the
-    client.
+    The message type is used to differentiate between different kinds of
+    payloads that may be sent. The payload will be encoded as a JSON object
+    before being sent to the client.
 
     """
-    amqp.add_item(routing_key=namespace, body=json.dumps(message),
+    frame = {
+        "type": type,
+        "payload": payload,
+    }
+    amqp.add_item(routing_key=namespace, body=json.dumps(frame),
                   exchange=_WEBSOCKET_EXCHANGE)
 
 
