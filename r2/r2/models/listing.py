@@ -26,6 +26,7 @@ from vote import *
 from report import *
 from subreddit import DefaultSR, AllSR, Frontpage
 from pylons import i18n, request, g
+from pylons.i18n import _
 
 from r2.lib.wrapped import Wrapped
 from r2.lib import utils
@@ -106,6 +107,156 @@ class TableListing(Listing): pass
 class ModActionListing(TableListing): pass
 
 class WikiRevisionListing(TableListing): pass
+
+class UserListing(TableListing):
+    type = ''
+    _class = ''
+    title = ''
+    form_title = ''
+    destination = 'friend'
+    has_add_form = True
+    headers = None
+
+    def __init__(self,
+                 builder,
+                 show_jump_to=False,
+                 show_not_found=False,
+                 jump_to_value=None,
+                 addable=True, **kw):
+        self.addable = addable
+        self.show_not_found = show_not_found
+        self.show_jump_to = show_jump_to
+        self.jump_to_value = jump_to_value
+        TableListing.__init__(self, builder, **kw)
+
+    @property
+    def container_name(self):
+        return c.site._fullname
+
+class FriendListing(UserListing):
+    type = 'friend'
+
+    @property
+    def _class(self):
+        return '' if not c.user.gold else 'gold-accent rounded'
+
+    @property
+    def headers(self):
+        if c.user.gold:
+            return (_('user'), '', _('note'), _('friendship'), '')
+
+    @property
+    def form_title(self):
+        return _('add a friend')
+
+    @property
+    def container_name(self):
+        return c.user._fullname
+
+
+class EnemyListing(UserListing):
+    type = 'enemy'
+    has_add_form = False
+
+    @property
+    def title(self):
+        return _('blocked users')
+
+    @property
+    def container_name(self):
+        return c.user._fullname
+
+class BannedListing(UserListing):
+    type = 'banned'
+
+    @property
+    def form_title(self):
+        return _("ban users")
+
+    @property
+    def title(self):
+        return _("users banned from"
+                 " /r/%(subreddit)s") % dict(subreddit=c.site.name)
+
+class WikiBannedListing(BannedListing):
+    type = 'wikibanned'
+
+    @property
+    def form_title(self):
+        return _("ban wiki contibutors")
+
+    @property
+    def title(self):
+        return _("wiki contibutors banned from"
+                 " /r/%(subreddit)s") % dict(subreddit=c.site.name)
+
+class ContributorListing(UserListing):
+    type = 'contributor'
+
+    @property
+    def title(self):
+        return _("approved submitters for"
+                 " /r/%(subreddit)s") % dict(subreddit=c.site.name)
+
+    @property
+    def form_title(self):
+        return _("add approved submitter")
+
+class WikiMayContributeListing(ContributorListing):
+    type = 'wikicontributor'
+
+    @property
+    def title(self):
+        return _("approved wiki contributors"
+                 " for /r/%(subreddit)s") % dict(subreddit=c.site.name)
+
+    @property
+    def form_title(self):
+        return _("add approved wiki contributor")
+
+class InvitedModListing(UserListing):
+    type = 'moderator_invite'
+    form_title = _('invite moderator')
+    remove_self_title = _('you are a moderator of this subreddit. %(action)s')
+
+    def sort_moderators(self, items):
+        items = [(item, item.rel.get_permissions()) for item in items]
+        for item, permissions in items:
+            if permissions is None or permissions.is_superuser():
+                yield item
+        for item, permissions in items:
+            if permissions is not None and not permissions.is_superuser():
+                yield item
+
+    def get_items(self, **kw):
+        things, prev, next, bcount, acount = UserListing.get_items(self, **kw)
+        things = list(self.sort_moderators(things))
+        return things, prev, next, bcount, acount
+
+    @property
+    def title(self):
+        return _("invited moderators for"
+                 " %(subreddit)s") % dict(subreddit=c.site.name)
+
+class ModListing(InvitedModListing):
+    type = 'moderator'
+    form_title = _('force add moderator')
+
+    @property
+    def has_add_form(self):
+        return c.user_is_admin
+
+    @property
+    def can_remove_self(self):
+        return c.user_is_loggedin and c.site.is_moderator(c.user)
+
+    @property
+    def has_invite(self):
+        return c.user_is_loggedin and c.site.is_moderator_invite(c.user)
+
+    @property
+    def title(self):
+        return _("moderators of /r/%(subreddit)s") % dict(subreddit=c.site.name)
 
 class LinkListing(Listing):
     def __init__(self, *a, **kw):

@@ -651,42 +651,14 @@ class FrontController(RedditController):
         return pane
 
     def _edit_normal_reddit(self, location, created):
-        # moderator is either reddit's moderator or an admin
-        moderator_rel = c.user_is_loggedin and c.site.get_moderator(c.user)
-        is_moderator = c.user_is_admin or moderator_rel
-        is_unlimited_moderator = c.user_is_admin or (
-            moderator_rel and moderator_rel.is_superuser())
-        is_moderator_with_perms = lambda *perms: (
-            c.user_is_admin
-            or moderator_rel and all(moderator_rel.has_permission(perm)
-                                     for perm in perms))
-
-        if is_moderator_with_perms('config') and location == 'edit':
+        if (location == 'edit' and
+            (c.user_is_admin or c.site.is_moderator_with_perms(c.user, 'config'))):
             pane = PaneStack()
             if created == 'true':
                 pane.append(InfoBar(message=strings.sr_created))
             c.allow_styles = True
             c.site = Subreddit._byID(c.site._id, data=True, stale=False)
             pane.append(CreateSubreddit(site=c.site))
-        elif location == 'moderators':
-            pane = ModList(editable=is_unlimited_moderator)
-        elif is_moderator_with_perms('access') and location == 'banned':
-            pane = BannedList(editable=is_moderator_with_perms('access'))
-        elif is_moderator_with_perms('wiki') and location == 'wikibanned':
-            pane = WikiBannedList(editable=is_moderator_with_perms('wiki'))
-        elif (is_moderator_with_perms('wiki')
-              and location == 'wikicontributors'):
-            pane = WikiMayContributeList(
-                editable=is_moderator_with_perms('wiki'))
-        elif (location == 'contributors' and
-              # On public reddits, only moderators can see the whitelist.
-              # On private reddits, all contributors can see each other.
-              (c.site.type != 'public' or
-               (c.user_is_loggedin and
-                (c.site.is_moderator_with_perms(c.user, 'access')
-                 or c.user_is_admin)))):
-                pane = ContributorList(
-                    editable=is_moderator_with_perms('access'))
         elif (location == 'stylesheet'
               and c.site.can_change_stylesheet(c.user)
               and not g.css_killswitch):
@@ -706,17 +678,14 @@ class FrontController(RedditController):
                           c.site.stylesheet_contents)
             pane = SubredditStylesheetSource(stylesheet_contents=stylesheet)
         elif location == 'traffic' and (c.site.public_traffic or
-                                        (is_moderator or c.user.employee)):
+                                        (c.site.is_moderator(c.user) or c.user.employee)):
             pane = trafficpages.SubredditTraffic()
         elif (location == "about") and is_api():
             return self.redirect(add_sr('about.json'), code=301)
         else:
             return self.abort404()
 
-        is_wiki_action = location in ['wikibanned', 'wikicontributors']
-
         return EditReddit(content=pane,
-                          show_wiki_actions=is_wiki_action,
                           location=location,
                           extension_handling=False).render()
 
@@ -1324,11 +1293,6 @@ class FormsController(RedditController):
         infotext = None
         if not location or location == 'options':
             content = PrefOptions(done=request.GET.get('done'))
-        elif location == 'friends':
-            content = PaneStack()
-            infotext = strings.friends % Friends.path
-            content.append(FriendList())
-            content.append(EnemyList())
         elif location == 'update':
             if verified:
                 infotext = strings.email_verified

@@ -160,6 +160,9 @@ def make_map():
        connect('/about/:location', controller='front',
           action='spamlisting',
           requirements=dict(location='reports|spam|modqueue|unmoderated'))
+       connect('/about/:where', controller='userlistlisting',
+          requirements=dict(where='contributors|banned|wikibanned|wikicontributors|moderators'),
+          action='listing')
        connect('/about/:location', controller='front', action='editreddit',
           location='about')
        connect('/comments', controller='comments', action='listing')
@@ -175,6 +178,8 @@ def make_map():
     mc('/t/:timereddit/*rest', controller='redirect',
        action='timereddit_redirect')
 
+    mc('/prefs/:where', controller='userlistlisting',
+        action='listing', requirements=dict(where='blocked|friends'))
     mc('/prefs/:location', controller='forms', action='prefs',
        location='options')
 

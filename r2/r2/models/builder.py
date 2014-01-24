@@ -737,3 +737,12 @@ class UserMessageBuilder(MessageBuilder):
             return conversation(self.user, self.parent)
         return user_messages(self.user)
 
+class UserListBuilder(QueryBuilder):
+    def thing_lookup(self, rels):
+        accounts = Account._byID([rel._thing2_id for rel in rels], data=True)
+        for rel in rels:
+            rel._thing2 = accounts.get(rel._thing2_id)
+        return rels
+
+    def wrap_items(self, rels):
+        return [self.wrap(rel) for rel in rels]

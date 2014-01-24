@@ -688,6 +688,15 @@ class ListingJsonTemplate(ThingJsonTemplate):
     def kind(self, wrapped):
         return "Listing"
 
+class UserListingJsonTemplate(ListingJsonTemplate):
+    def raw_data(self, thing):
+        if not thing.nextprev:
+            return {"children": self.rendered_data(thing)}
+        return ListingJsonTemplate.raw_data(self, thing)
+
+    def kind(self, wrapped):
+        return "Listing" if wrapped.nextprev else "UserList"
+
 class UserListJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = dict(
         children="users",
@@ -722,7 +731,7 @@ class UserTableItemJsonTemplate(ThingJsonTemplate):
             (c.user.gold and thing.type == "friend")):
             d["note"] = getattr(thing.rel, 'note', '')
         if thing.type == "moderator":
-            permissions = thing.rel.permissions.iteritems()
+            permissions = thing.permissions.items()
             d["mod_permissions"] = [perm for perm, has in permissions if has]
         return d
 

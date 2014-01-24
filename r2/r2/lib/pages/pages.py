@@ -866,10 +866,10 @@ class PrefsPage(Reddit):
 
     extension_handling = False
 
-    def __init__(self, show_sidebar = False, *a, **kw):
+    def __init__(self, show_sidebar = False, title=None, *a, **kw):
+        title = title or "%s (%s)" % (_("preferences"), c.site.name.strip(' '))
         Reddit.__init__(self, show_sidebar = show_sidebar,
-                        title = "%s (%s)" %(_("preferences"),
-                                            c.site.name.strip(' ')),
+                        title=title,
                         *a, **kw)
 
     def build_toolbars(self):
@@ -880,6 +880,7 @@ class PrefsPage(Reddit):
             buttons.append(NamedButton('feeds'))
 
         buttons.extend([NamedButton('friends'),
+                        NamedButton('blocked'),
                         NamedButton('update')])
 
         if c.user_is_loggedin and c.user.name in g.admins:
@@ -2908,26 +2909,116 @@ class WrappedUser(CachedTemplate):
                                 fullname = user._fullname,
                                 user_deleted = user._deleted)
 
-# Classes for dealing with friend/moderator/contributor/banned lists
-
-
 class UserTableItem(Templated):
-    """A single row in a UserList of type 'type' and of name
-    'container_name' for a given user.  The provided list of 'cells'
-    will determine what order the different columns are rendered in."""
-    def __init__(self, user, type, cellnames, container_name, editable,
-                 remove_action, rel=None):
+    type = ''
+    remove_action = 'unfriend'
+    cells = ('user', 'sendmessage', 'remove')
+
+    @property
+    def executed_message(self):
+        return _("added")
+
+    def __init__(self, user, editable=True, **kw):
         self.user = user
-        self.type = type
-        self.cells = cellnames
-        self.rel = rel
-        self.container_name = container_name
-        self.editable       = editable
-        self.remove_action  = remove_action
-        Templated.__init__(self)
+        self.editable = editable
+        Templated.__init__(self, **kw)
 
     def __repr__(self):
         return '<UserTableItem "%s">' % self.user.name
+
+class TrafficTableItem(UserTableItem):
+    type = "traffic_viewer"
+    remove_action = "rm_traffic_viewer"
+
+    @property
+    def container_name(self):
+        return self.link._fullname
+
+class RelTableItem(UserTableItem):
+    def __init__(self, rel, **kw):
+        self._id = rel._id
+        self.rel = rel
+        UserTableItem.__init__(self, rel._thing2, **kw)
+
+    @property
+    def container_name(self):
+        return c.site._fullname
+
+class FriendTableItem(RelTableItem):
+    type = 'friend'
+
+    @property
+    def cells(self):
+        if c.user.gold:
+            return ('user', 'sendmessage', 'note', 'age', 'remove')
+        return ('user', 'sendmessage', 'remove')
+
+    @property
+    def container_name(self):
+        return c.user._fullname
+
+class EnemyTableItem(RelTableItem):
+    type = 'enemy'
+    cells = ('user', 'remove')
+
+    @property
+    def container_name(self):
+        return c.user._fullname
+
+class BannedTableItem(RelTableItem):
+    type = 'banned'
+    cells = ('user', 'sendmessage', 'remove', 'note')
+
+    @property
+    def executed_message(self):
+        return _("banned")
+
+class WikiBannedTableItem(BannedTableItem):
+    type = 'wikibanned'
+
+class ContributorTableItem(RelTableItem):
+    type = 'contributor'
+
+class WikiMayContributeTableItem(RelTableItem):
+    type = 'wikicontributor'
+
+class InvitedModTableItem(RelTableItem):
+    type = 'moderator_invite'
+    cells = ('user', 'permissions', 'permissionsctl')
+
+    @property
+    def executed_message(self):
+        return _("invited")
+
+    def is_editable(self, user):
+        if not c.user_is_loggedin:
+            return False
+        elif c.user_is_admin:
+            return True
+        return c.site.is_unlimited_moderator(c.user)
+
+    def __init__(self, rel, editable=True, **kw):
+        if editable:
+            self.cells += ('remove',)
+        editable = self.is_editable(rel._thing2)
+        self.permissions = ModeratorPermissions(rel._thing2, self.type,
+                                                rel.get_permissions(),
+                                                editable=editable)
+        RelTableItem.__init__(self, rel, editable=editable, **kw)
+
+class ModTableItem(InvitedModTableItem):
+    type = 'moderator'
+
+    @property
+    def executed_message(self):
+        return _("added")
+
+    def is_editable(self, user):
+        if not c.user_is_loggedin:
+            return False
+        elif c.user_is_admin:
+            return True
+        return c.user != user and c.site.can_demod(c.user, user)
 
 class FlairPane(Templated):
     def __init__(self, num, after, reverse, name, user):
@@ -3205,11 +3296,7 @@ class UserList(Templated):
         Templated.__init__(self)
 
     def user_row(self, row_type, user, editable=True):
-        """Convenience method for constructing a UserTableItem
-        instance of the user with type, container_name, etc. of this
-        UserList instance"""
-        return UserTableItem(user, row_type, self.cells, self.container_name,
-                             editable, self.remove_action)
+        raise NotImplementedError
 
     def _user_rows(self, row_type, uids, editable_fn=None):
         """Generates a UserTableItem wrapped list of the Account
@@ -3241,216 +3328,6 @@ class UserList(Templated):
 
     def executed_message(self, row_type):
         return _("added")
-
-
-class FriendList(UserList):
-    """Friend list on /pref/friends"""
-    type = 'friend'
-
-    def __init__(self, editable = True):
-        if c.user.gold:
-            self.friend_rels = c.user.friend_rels()
-            self.cells = ('user', 'sendmessage', 'note', 'age', 'remove')
-            self._class = "gold-accent rounded"
-            self.table_headers = (_('user'), '', _('note'), _('friendship'), '')
-
-        UserList.__init__(self)
-
-    @property
-    def form_title(self):
-        return _('add a friend')
-
-    @property
-    def table_title(self):
-        return _('your friends')
-
-    def user_ids(self):
-        return c.user.friends
-
-    def user_row(self, row_type, user, editable=True):
-        if not getattr(self, "friend_rels", None):
-            return UserList.user_row(self, row_type, user, editable)
-        else:
-            rel = self.friend_rels[user._id]
-            return UserTableItem(user, row_type, self.cells, self.container_name,
-                                 editable, self.remove_action, rel)
-
-    @property
-    def container_name(self):
-        return c.user._fullname
-
-
-class EnemyList(UserList):
-    """Blacklist on /pref/friends"""
-    type = 'enemy'
-    cells = ('user', 'remove')
-
-    def __init__(self, editable=True, addable=False):
-        UserList.__init__(self, editable, addable)
-
-    @property
-    def table_title(self):
-        return _('blocked users')
-
-    def user_ids(self):
-        return c.user.enemies
-
-    @property
-    def container_name(self):
-        return c.user._fullname
-
-
-class ContributorList(UserList):
-    """Contributor list on a restricted/private reddit."""
-    type = 'contributor'
-
-    @property
-    def form_title(self):
-        return _("add approved submitter")
-
-    @property
-    def table_title(self):
-        return _("approved submitters for %(reddit)s") % dict(reddit = c.site.name)
-
-    def user_ids(self):
-        if c.site.hide_subscribers:
-            return [] # /r/lounge has too many subscribers to load without timing out,
-                      # and besides, some people might not want this list to be so
-                      # easily accessible.
-        else:
-            return c.site.contributors
-
-class ModList(UserList):
-    """Moderator list for a reddit."""
-    type = 'moderator'
-    invite_type = 'moderator_invite'
-    invite_action = 'accept_moderator_invite'
-    form_title = _('add moderator')
-    invite_form_title = _('invite moderator')
-    remove_self_title = _('you are a moderator of this subreddit. %(action)s')
-
-    def __init__(self, editable=True):
-        super(ModList, self).__init__(editable=editable)
-        self.perms_by_type = {
-            self.type: c.site.moderators_with_perms(),
-            self.invite_type: c.site.moderator_invites_with_perms(),
-        }
-        self.cells = ('user', 'permissions', 'permissionsctl')
-        if editable:
-            self.cells += ('remove',)
-
-    @property
-    def table_title(self):
-        return _("moderators of /r/%(reddit)s") % {"reddit": c.site.name}
-
-    def executed_message(self, row_type):
-        if row_type == "moderator_invite":
-            return _("invited")
-        else:
-            return _("added")
-
-    @property
-    def can_force_add(self):
-        return c.user_is_admin
-
-    @property
-    def can_remove_self(self):
-        return c.user_is_loggedin and c.site.is_moderator(c.user)
-
-    @property
-    def has_invite(self):
-        return c.user_is_loggedin and c.site.is_moderator_invite(c.user)
-
-    def moderator_editable(self, user, row_type):
-        if not c.user_is_loggedin:
-            return False
-        elif c.user_is_admin:
-            return True
-        elif row_type == self.type:
-            return c.user != user and c.site.can_demod(c.user, user)
-        elif row_type == self.invite_type:
-            return c.site.is_unlimited_moderator(c.user)
-        else:
-            return False
-
-    def user_row(self, row_type, user, editable=True):
-        perms = ModeratorPermissions(
-            user, row_type, self.perms_by_type[row_type].get(user._id),
-            editable=editable)
-        return UserTableItem(user, row_type, self.cells, self.container_name,
-                             editable, self.remove_action, rel=perms)
-
-    @property
-    def user_rows(self):
-        return self._user_rows(
-            self.type, self.user_ids(),
-            lambda u: self.moderator_editable(u, self.type))
-
-    @property
-    def invited_user_rows(self):
-        return self._user_rows(
-            self.invite_type, self.invited_user_ids(),
-            lambda u: self.moderator_editable(u, self.invite_type))
-
-    def _sort_user_ids(self, row_type):
-        for user_id, perms in self.perms_by_type[row_type].iteritems():
-            if perms is None:
-                yield user_id
-        for user_id, perms in self.perms_by_type[row_type].iteritems():
-            if perms is not None:
-                yield user_id
-
-    def user_ids(self):
-        return list(self._sort_user_ids(self.type))
-
-    def invited_user_ids(self):
-        return list(self._sort_user_ids(self.invite_type))
-
-class BannedList(UserList):
-    """List of users banned from a given reddit"""
-    type = 'banned'
-
-    def __init__(self, *k, **kw):
-        UserList.__init__(self, *k, **kw)
-        rels = getattr(c.site, 'each_%s' % self.type)
-        self.rels = OrderedDict((rel._thing2_id, rel) for rel in rels(data=True))
-        self.cells += ('note',)
-
-    def user_row(self, row_type, user, editable=True):
-        rel = self.rels.get(user._id, None)
-        return UserTableItem(user, row_type, self.cells, self.container_name,
-                             editable, self.remove_action, rel)
-
-    @property
-    def form_title(self):
-        return _('ban users')
-
-    @property
-    def table_title(self):
-        return  _('banned users')
-
-    def user_ids(self):
-        return self.rels.keys()
-
-class WikiBannedList(BannedList):
-    """List of users banned from editing a given wiki"""
-    type = 'wikibanned'
-
-class WikiMayContributeList(UserList):
-    """List of users allowed to contribute to a given wiki"""
-    type = 'wikicontributor'
-
-    @property
-    def form_title(self):
-        return _('add a wiki contributor')
-
-    @property
-    def table_title(self):
-        return _('wiki page contributors')
-
-    def user_ids(self):
-        return c.site.wikicontributor
-
 
 class DetailsPage(LinkInfoPage):
     extension_handling= False
@@ -4336,6 +4213,9 @@ class ModeratorPermissions(Templated):
         self.permissions = permissions
         Templated.__init__(self, permissions_type=permissions_type,
                            editable=editable, embedded=embedded)
+
+    def items(self):
+        return self.permissions.iteritems()
 
 class ListingChooser(Templated):
     def __init__(self):

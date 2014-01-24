@@ -1,0 +1,138 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be
+## consistent with Exhibit B.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is reddit.
+##
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is reddit Inc.
+##
+## All portions of the code written by reddit are Copyright (c) 2006-2013
+## reddit Inc. All Rights Reserved.
+###############################################################################
+
+<%!
+   from r2.models import Sub
+ %>
+<%namespace file="utils.html" import="error_field, plain_link" />
+
+<%def name="add_form(title, dest, add_type, container_name, verb=None)">
+  <% from r2.models import ModeratorPermissionSet %>
+  <% from r2.lib.pages import ModeratorPermissions %>
+  <form action="/post/${dest}"
+        method="post" class="pretty-form medium-text friend-add"
+        onsubmit="return post_form(this, '${dest}')"
+        id="${add_type}">
+    <h1>${title}</h1>
+
+    <input type="hidden" name="action" value="add">
+    <input type="hidden" name="container" value="${container_name}">
+    <input type="hidden" name="type" value="${add_type}">
+    %if add_type in ("banned", "wikibanned"):
+        <label for="name">${_('who to ban?')} &nbsp;</label>
+        <input type="text" onfocus="$(this).parent('form').addClass('edited')" class="friend-name" name="name" id="name">
+        <span class="ban-reason">
+            <label for="note">${_('why the ban?')}</label>
+            <input type="text" maxlength="300" name="note" id="note">
+            <span>${_('(will not be visible to user)')}</span>
+        </span>
+    %else:
+        <input type="text" name="name" id="name">
+    %endif
+    %if add_type == "moderator_invite":
+      ${ModeratorPermissions(None, 'moderator_invite',
+                             ModeratorPermissionSet(all=True),
+                             editable=True, embedded=True)}
+      &#32;
+      <span class="permissions-edit">
+        (<a href="javascript:void(0)">${_('change')}</a>)
+      </span>
+    %endif
+    <button class="btn" type="submit">${verb or _("add")}</button>
+    <span class="status"></span>
+    ${error_field("USER_DOESNT_EXIST", "name")}
+    %if caller:
+      ${caller.body()}
+    %endif
+  </form>
+</%def>
+
+<%def name="listing()">
+  <div class="${thing.type}-table"
+    style="${'display:none' if not thing.things and not thing.show_not_found else ''}">
+    <h1>
+      ${thing.title}
+    </h1>
+
+    <table>
+      %if thing.headers:
+        <tr>
+        %for header in thing.headers:
+            <th>${header}</th>
+        %endfor
+        </tr>
+        %endif
+        %if thing.things:
+            %for item in thing.things:
+                ${item}
+            %endfor
+        %else:
+        <tr class="notfound"><td>${_('No items found') if thing.show_not_found else ''}</td></tr>
+      %endif
+    </table>
+  </div>
+
+%if thing.nextprev and (thing.prev or thing.next):
+  <p class="nextprev"> ${_("view more:")}&#32;
+  %if thing.prev:
+    ${plain_link(_("first"), thing.first, _sr_path = (c.site != Sub), rel="nofollow first")} 
+    <span class="separator"></span>
+    ${plain_link(unsafe("&lsaquo; " + _("prev")), thing.prev, _sr_path = (c.site != Sub), rel="nofollow prev")}
+  %endif
+  %if thing.prev and thing.next:
+    <span class="separator"></span>
+  %endif
+  %if thing.next:
+  ${plain_link(unsafe(_("next") + " &rsaquo;"), thing.next,  _sr_path = (c.site != Sub), rel="nofollow next")}
+  %endif
+  </p>
+%endif
+
+</%def>
+
+<div class="${thing._class} usertable">
+  %if thing.addable and thing.has_add_form:
+    ${add_form(thing.form_title, thing.destination, thing.type, thing.container_name)}
+  %endif
+
+  %if thing.show_jump_to:
+    <h1>${_('jump to')}</h1>
+    <form class="pretty-form medium-text">
+        <label for="user">${_('username')}&nbsp;</label>
+        <input type="text" id="user" name="user"
+        %if thing.jump_to_value:
+            value="${thing.jump_to_value}"
+        %endif
+        >
+        <button type="submit">${_('go')}</button>
+    </form>
+  %endif
+
+${listing()}
+
+%if thing.jump_to_value:
+    <p class="nextprev">
+        ${plain_link(_("show all"), request.path, rel="nofollow")}
+    </p>
+%endif
+
+</div>

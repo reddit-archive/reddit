@@ -21,12 +21,12 @@
 ###############################################################################
 
 <%namespace file="printablebuttons.html" import="ynbutton" />
-<%namespace file="userlist.html" import="add_form,  userlist"/>
+<%namespace file="userlisting.html" import="add_form, listing"/>
 <%namespace file="utils.html" import="error_field"/>
 
 <div class="${thing._class} usertable">
   %if thing.can_remove_self:
-      ${ynbutton(op=thing.remove_action,
+      ${ynbutton(op='unfriend',
                  title=_("leave"),
                  executed=_("you are no longer a moderator"),
                  question=_("stop being a moderator?"),
@@ -40,7 +40,7 @@
   %endif
 
   %if thing.has_invite:
-    ${ynbutton(op=thing.invite_action,
+    ${ynbutton(op='accept_moderator_invite',
                title=_("accept"),
                executed=_("you are now a moderator. welcome to the team!"),
                question=_("become a moderator of %s?" % ("/r/" + c.site.name)),
@@ -49,16 +49,10 @@
                _class=thing.type + ' accept-invite')}
   %endif
 
-  %if thing.can_force_add:
-    ${add_form(thing.form_title, thing.destination, thing.type, thing.container_name)}
-  %endif
-  %if thing.addable:
-    <%call expr="add_form(thing.invite_form_title, thing.destination, thing.invite_type, thing.container_name, verb=_('invite'))">
+  %if thing.addable and thing.has_add_form:
+    <%call expr="add_form(thing.form_title, thing.destination, thing.type, thing.container_name, verb=_('add'))">
       ${error_field("ALREADY_MODERATOR", "name")}
     </%call>
   %endif
-  %if thing.editable:
-    ${userlist(_("pending invitations"), thing.invite_type, thing.invited_user_rows, thing.table_headers)}
-  %endif
-  ${userlist(thing.table_title, thing.type, thing.user_rows, thing.table_headers)}
+  ${listing()}
 </div>

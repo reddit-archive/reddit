@@ -44,13 +44,21 @@ from r2.lib import hooks
 from r2.lib.utils import get_title, sanitize_url, timeuntil, set_last_modified
 from r2.lib.utils import query_string, timefromnow, randstr
 from r2.lib.utils import timeago, tup
-from r2.lib.pages import (EnemyList, FriendList, ContributorList, ModList,
-                          BannedList, WikiBannedList, WikiMayContributeList,
-                          BoringPage, FormPage, CssError, UploadedImage,
+from r2.lib.pages import (BoringPage, FormPage, CssError, UploadedImage,
                           ClickGadget, UrlParser, WrappedUser)
 from r2.lib.pages import FlairList, FlairCsv, FlairTemplateEditor, \
     FlairSelector
 from r2.lib.pages import PrefApps
+from r2.lib.pages import (
+    BannedTableItem,
+    ContributorTableItem,
+    FriendTableItem,
+    InvitedModTableItem,
+    ModTableItem,
+    WikiBannedTableItem,
+    WikiMayContributeTableItem,
+)
+
 from r2.lib.pages.things import (
     default_thing_wrapper,
     hot_links_by_url_listing,
@@ -866,22 +874,28 @@ class ApiController(RedditController):
         if type in ('banned', 'wikibanned'):
             container.add_rel_note(type, friend, note)
 
-        cls = dict(friend=FriendList,
-                   moderator=ModList,
-                   moderator_invite=ModList,
-                   contributor=ContributorList,
-                   wikicontributor=WikiMayContributeList,
-                   banned=BannedList, wikibanned=WikiBannedList).get(type)
-        userlist = cls()
+        row_cls = dict(friend=FriendTableItem,
+                       moderator=ModTableItem,
+                       moderator_invite=InvitedModTableItem,
+                       contributor=ContributorTableItem,
+                       wikicontributor=WikiMayContributeTableItem,
+                       banned=BannedTableItem,
+                       wikibanned=WikiBannedTableItem).get(type)
+
         form.set_inputs(name = "")
         if note:
             form.set_inputs(note = "")
         form.removeClass("edited")
-        form.set_html(".status:first", userlist.executed_message(type))
-        if new and cls:
-            user_row = userlist.user_row(type, friend)
-            jquery("." + type + "-table").show(
-                ).find("table").insert_table_rows(user_row)
+
+        if new and row_cls:
+            new._thing2 = friend
+            user_row = row_cls(new)
+            form.set_html(".status:first", user_row.executed_message)
+            rev_types = ["moderator", "moderator_invite", "friend"]
+            index = 0 if user_row.type not in rev_types else -1
+            table = jquery("." + type + "-table").show().find("table")
+            table.insert_table_rows(user_row, index=index)
+            table.find(".notfound").hide()
 
         if new:
             notify_user_added(type, c.user, friend, container)

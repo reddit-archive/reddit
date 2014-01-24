@@ -29,7 +29,7 @@ from r2.config.extensions import is_api
 from r2.lib.pages import *
 from r2.lib.pages.things import wrap_links
 from r2.lib.menus import TimeMenu, SortMenu, RecSortMenu, ProfileSortMenu
-from r2.lib.menus import ControversyTimeMenu
+from r2.lib.menus import ControversyTimeMenu, menu
 from r2.lib.rising import get_rising
 from r2.lib.wrapped import Wrapped
 from r2.lib.normalized_hot import normalized_hot
@@ -115,6 +115,7 @@ class ListingController(RedditController):
                                show_chooser=self.show_chooser,
                                nav_menus=self.menus,
                                title=self.title(),
+                               infotext=self.infotext,
                                robots=getattr(self, "robots", None),
                                **self.render_params).render()
 
@@ -1129,6 +1130,209 @@ class CommentsController(ListingController):
         c.profilepage = True
         return ListingController.GET_listing(self, **env)
 
+class UserListListingController(ListingController):
+    builder_cls = UserListBuilder
+    allow_stylesheets = False
+    skip = False
+
+    @property
+    def infotext(self):
+        if self.where == 'friends':
+            return strings.friends % Friends.path
+        elif self.where == 'blocked':
+            return _("To block a user click 'block user'  below a message"
+                     " from a user you wish to block from messaging you.")
+
+    @property
+    def render_params(self):
+        params = {}
+        is_wiki_action = self.where in ["wikibanned", "wikicontributors"]
+        params["show_wiki_actions"] = is_wiki_action
+        return params
+
+    @property
+    def render_cls(self):
+        if self.where in ["friends", "blocked"]:
+            return PrefsPage
+        return Reddit
+
+    def moderator_wrap(self, rel, invited=False):
+        rel._permission_class = ModeratorPermissionSet
+        cls = ModTableItem if not invited else InvitedModTableItem
+        return cls(rel, editable=self.editable)
+
+    @property
+    def builder_wrapper(self):
+        if self.where == 'banned':
+            cls = BannedTableItem
+        elif self.where == 'moderators':
+            return self.moderator_wrap
+        elif self.where == 'wikibanned':
+            cls = WikiBannedTableItem
+        elif self.where == 'contributors':
+            cls = ContributorTableItem
+        elif self.where == 'wikicontributors':
+            cls = WikiMayContributeTableItem
+        elif self.where == 'friends':
+            cls = FriendTableItem
+        elif self.where == 'blocked':
+            cls = EnemyTableItem
+        return lambda rel : cls(rel, editable=self.editable)
+
+    def title(self):
+        return menu[self.where]
+
+    def rel(self):
+        if self.where in ['friends', 'blocked']:
+            return Friend
+        return SRMember
+
+    def name(self):
+        return self._names.get(self.where)
+
+    _names = {
+              'friends': 'friend',
+              'blocked': 'enemy',
+              'moderators': 'moderator',
+              'contributors': 'contributor',
+              'banned': 'banned',
+              'wikibanned': 'wikibanned',
+              'wikicontributors': 'wikicontributor',
+             }
+
+    def query(self):
+        rel = self.rel()
+        if self.where in ["friends", "blocked"]:
+            thing1_id = c.user._id
+        else:
+            thing1_id = c.site._id
+        reversed_types = ["friends", "moderators", "blocked"]
+        sort = desc if self.where not in reversed_types else asc
+        q = rel._query(rel.c._thing1_id == thing1_id,
+                       rel.c._name == self.name(),
+                       sort=sort('_date'),
+                       data=True)
+        if self.jump_to_val:
+            thing2_id = self.user._id if self.user else None
+            q._filter(rel.c._thing2_id == thing2_id)
+        return q
+
+    def listing(self):
+        listing = self.listing_cls(self.builder_obj,
+                                   addable=self.editable,
+                                   show_jump_to=self.show_jump_to,
+                                   jump_to_value=self.jump_to_val,
+                                   show_not_found=self.show_not_found,
+                                   nextprev=self.paginated,
+                                   has_add_form=self.editable)
+        return listing.listing()
+
+    def invited_mod_listing(self):
+        query = SRMember._query(SRMember.c._name == 'moderator_invite',
+                                SRMember.c._thing1_id == c.site._id,
+                                sort=asc('_date'), data=True)
+        wrapper = lambda rel: self.moderator_wrap(rel, invited=True)
+        b = self.builder_cls(query,
+                             keep_fn=self.keep_fn(),
+                             wrap=wrapper,
+                             skip=False,
+                             num=0)
+        return InvitedModListing(b, nextprev=False).listing()
+
+    def content(self):
+        is_api = c.render_style in extensions.API_TYPES
+        if self.where == 'moderators' and self.editable and not is_api:
+            # Do not stack the invited mod list in api mode
+            # to allow for api compatibility with older api users.
+            content = PaneStack()
+            content.append(self.listing_obj)
+            content.append(self.invited_mod_listing())
+        elif self.where == 'friends' and is_api:
+            content = PaneStack()
+            content.append(self.listing_obj)
+            empty_builder = IDBuilder([])
+            # Append an empty UserList on the api for backwards
+            # compatibility with the old blocked list.
+            content.append(UserListing(empty_builder, nextprev=False).listing())
+        else:
+            content = self.listing_obj
+        return content
+
+    @require_oauth2_scope("read")
+    @validate(user=VAccountByName('user'))
+    @base_listing
+    def GET_listing(self, where, user=None, **kw):
+        allow_on_fake_sr = ["blocked", "friends"]
+        if isinstance(c.site, FakeSubreddit) and not where in allow_on_fake_sr:
+            return self.abort404()
+
+        self.where = where
+
+        has_mod_access = ((c.user_is_loggedin and
+                           c.site.is_moderator_with_perms(c.user, 'access'))
+                          or c.user_is_admin)
+
+        if not c.user_is_loggedin and where not in ['contributors', 'moderators']:
+            abort(403)
+
+        self.listing_cls = None
+        self.editable = True
+        self.paginated = True
+        self.jump_to_val = request.GET.get('user')
+        self.show_not_found = bool(self.jump_to_val)
+
+        if where == 'contributors':
+            # On public reddits, only moderators may see the whitelist.
+            if c.site.type == 'public' and not has_mod_access:
+                abort(403)
+            # Used for subreddits like /r/lounge
+            if c.site.hide_subscribers:
+                abort(403)
+            self.listing_cls = ContributorListing
+            self.editable = has_mod_access
+
+        elif where == 'banned':
+            if not has_mod_access:
+                abort(403)
+            self.listing_cls = BannedListing
+
+        elif where == 'wikibanned':
+            if not c.site.is_moderator_with_perms(c.user, 'wiki'):
+                abort(403)
+            self.listing_cls = WikiBannedListing
+
+        elif where == 'wikicontributors':
+            if not c.site.is_moderator_with_perms(c.user, 'wiki'):
+                abort(403)
+            self.listing_cls = WikiMayContributeListing
+
+        elif where == 'moderators':
+            self.editable = ((c.user_is_loggedin and
+                              c.site.is_unlimited_moderator(c.user)) or
+                             c.user_is_admin)
+            self.listing_cls = ModListing
+            self.paginated = False
+
+        elif where == 'friends':
+            self.listing_cls = FriendListing
+            self.paginated = False
+
+        elif where == 'blocked':
+            self.listing_cls = EnemyListing
+            self.paginated = False
+            self.show_not_found = True
+
+        if not self.listing_cls:
+            abort(404)
+
+        self.user = user
+        self.show_jump_to = self.paginated
+
+        if not self.paginated:
+            kw['num'] = 0
+
+        check_cheating('site')
+        return self.build_listing(**kw)
 
 class GildedController(ListingController):
     title_text = _("gilded comments")
