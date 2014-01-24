@@ -57,9 +57,7 @@
            title="${thing.site_description or thing.site_name}"/>
     </a>
 
-    %if thing._fullname:
-      ${withlink()}
-    %endif
+    ${withlink()}
   </div>
 
   <div class="right-side">
@@ -90,7 +88,7 @@
       <a href="http://${get_domain(cname = thing.cname)}/user/${thing.user_name}"
          title="${_('visit your userpage')}"
          class="clickable" target="_top">${thing.user_name}</a>
-    %elif thing._fullname:
+    %else:
       <a href="${thing.loginurl}" target="_top" class="clickable">
         ${_("login / register")}
       </a>
@@ -119,7 +117,6 @@
   </div>
 
   <div class="middle-side clickable">
-    %if thing._fullname:
     <a
        title="${_('click to visit the main page for this submission')}"
        class="title clickable"
@@ -132,10 +129,6 @@
            <span class="domain">&#32;(${thing.domain})</span>
          %endif
     </a>
-    %else:
-      ${plain_link(_('click to submit this link to reddit'), thing.submit_url,
-                      target="_top", _class="submit")}
-    %endif
     <div class="url" style="display: none;">
       <form onsubmit="return toolbar.gourl(this, '${add_sr('/s/')}')">
         <input type="text" value="${thing.url}" />
@@ -221,7 +214,7 @@
      class="comments comments-button">${thing.comment_label}</a>
 </span>
 
-%if thing._fullname and thing.expanded:
+%if thing.expanded:
   <script type="text/javascript">
     $(function() {
       toolbar.comments_pushed($('.comments-button'));

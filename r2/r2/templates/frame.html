@@ -30,12 +30,10 @@
 <html>
   <head>
     <title>${thing.title}</title>
-    %if thing.url:
-      <!-- quick hack to guess at proper favicons. this doesn't work
-           if they are using their own <link> to specify the favicon
-           instead of just having /favicon.ico exist. -->
-      <link rel="icon" href="http://${domain(thing.url)}/favicon.ico" type="image/x-icon">
-    %endif
+    <!-- quick hack to guess at proper favicons. this doesn't work
+         if they are using their own <link> to specify the favicon
+         instead of just having /favicon.ico exist. -->
+    <link rel="icon" href="http://${domain(thing.url)}/favicon.ico" type="image/x-icon">
     <link rel="image_src" type="image/png"
           %if thing.thumbnail:
              href="${thing.thumbnail}"
@@ -45,43 +43,11 @@
     />
 
   </head>
-  <frameset framespacing="0" frameborder="0" border="0" rows="20px, 100%"
-    %if not thing.fullname:
-     onload="window.frames[1].focus();"
-    %endif
-## When thing.fullname is present, innertoolbarframe.html will take care of
-## the focus.
-    >
-
-    %if thing.fullname:
-      <frame frameborder="0" border="0" scrolling="no" name="reddit_top"
-       noresize="1" src="${add_sr('/toolbar/toolbar?id=' + thing.fullname)}"
-      />
-     <frame frameborder="0" border="0"
-            src="${add_sr('/toolbar/inner?id='+thing.fullname)}" name="inner_toolbar" />
-    %else:
-      <frame frameborder="0" border="0" scrolling="no" name="reddit_top"
-       src="${add_sr('/toolbar/toolbar' +
-                     query_string(dict(url = thing.url,
-                                       title = _force_unicode(thing.title))))}"
-      />
-      <frame frameborder="0" border="0"
-             src="${thing.url}" name="inner_toolbar" />
-    %endif
+  <frameset framespacing="0" frameborder="0" border="0" rows="20px, 100%">
+    <frame frameborder="0" border="0" scrolling="no" name="reddit_top"
+       noresize="1" src="${add_sr('/toolbar/toolbar?id=' + thing.fullname)}" />
+    <frame frameborder="0" border="0"
+       src="${add_sr('/toolbar/inner?id='+thing.fullname)}" name="inner_toolbar" />
   </frameset>
 
-   <!-- Internet Explorer has a "feature" called "friendly error
-        messages" that defaults to being turned on, where it detects
-        certain remote error conditions (among them, 404s) such that
-        the response (presumably an error descriptor page) is less
-        than some size (512 bytes for 404s). If that happens, it
-        replaces the remote error message with a more "friendly"
-        description of the error, which obscures the server's error
-        message. Historically, this is because Apache's and IIS's
-        error messages are famously non-helpful, and were less than
-        that minimum size. This unnecessarily verbose comment serves
-        only to cause this page (whose status code may be a 404, set
-        in toolbar.py:GET_s) to go over that minimum size, so that we
-        can force our content to be shown to IE users with "friendly
-        error messages", even on braindead browsers. -->
 </html>

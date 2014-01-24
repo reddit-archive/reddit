@@ -23,35 +23,31 @@
 <%namespace file="printable.html" import="thing_css_class, score" />
 <%namespace file="utils.html" import="plain_link" />
 
-    %if thing._fullname:
-    <div class="frame-toolbar ${thing_css_class(thing)}">
-      <span class="arrows">
-        <%def name="arrow(direction, style, message)">
-          <a class="arrow group_button button ${direction + style}"
-             title="${_('vote %(direction)s') % dict(direction=direction)}"
-           %if thing.user_is_loggedin:
-             href="javascript:void(0);"
-             onclick="$(this).vote(r.config.vote_hash, null, event)"
-           %else:
-             href="${thing.loginurl}"
-             target="_top"
-             onclick="return toolbar.login_msg()"
-           %endif
-             ><span class="img">&nbsp;</span>
-            ${message}
-          </a>
-        </%def>
-        ${arrow("up",   thing.upstyle,   _("like"))}
-        ${arrow("down", thing.downstyle, _("dislike"))}
-      </span>
-      <span class="commentcount">
-      ${plain_link(thing.comment_label, thing.permalink, _class=thing.commentcls, target="_top")}
-      </span>
-      <a class="close" onclick="$('.thing').fadeOut(function(){$.redirect($('iframe').attr('src'));});return false;" href="#">x</a>
-      <span class="entry ${'likes' if thing.likes else 'dislikes' if thing.likes is False else 'unvoted'}">
-        ${score(thing, thing.likes, tag='b')}
-      </span>
-    </div>
-    %else:
-      submit (this isn't finished yet)
-    %endif
+  <div class="frame-toolbar ${thing_css_class(thing)}">
+    <span class="arrows">
+      <%def name="arrow(direction, style, message)">
+        <a class="arrow group_button button ${direction + style}"
+           title="${_('vote %(direction)s') % dict(direction=direction)}"
+         %if thing.user_is_loggedin:
+           href="javascript:void(0);"
+           onclick="$(this).vote(r.config.vote_hash, null, event)"
+         %else:
+           href="${thing.loginurl}"
+           target="_top"
+           onclick="return toolbar.login_msg()"
+         %endif
+           ><span class="img">&nbsp;</span>
+          ${message}
+        </a>
+      </%def>
+      ${arrow("up",   thing.upstyle,   _("like"))}
+      ${arrow("down", thing.downstyle, _("dislike"))}
+    </span>
+    <span class="commentcount">
+    ${plain_link(thing.comment_label, thing.permalink, _class=thing.commentcls, target="_top")}
+    </span>
+    <a class="close" onclick="$('.thing').fadeOut(function(){$.redirect($('iframe').attr('src'));});return false;" href="#">x</a>
+    <span class="entry ${'likes' if thing.likes else 'dislikes' if thing.likes is False else 'unvoted'}">
+      ${score(thing, thing.likes, tag='b')}
+    </span>
+  </div>

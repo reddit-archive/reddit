@@ -19,6 +19,7 @@
 # All portions of the code written by reddit are Copyright (c) 2006-2013 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
+from mako.filters import url_escape
 
 from reddit_base import RedditController
 from r2.lib.pages import *
@@ -179,19 +180,11 @@ class ToolbarController(RedditController):
 
         if link:
             # we were able to find it, let's send them to the
-            # link-id-based URL so that their URL is reusable
+            # toolbar (if enabled) or comments (if not)
             return self.redirect(add_sr("/tb/" + link._id36))
-
-        title = utils.domain(path)
-        res = Frame(
-            title=title,
-            url=match_current_reddit_subdomain(path),
-        )
-
-        # we don't want clients to think that this URL is actually a
-        # valid URL for search-indexing or the like
-        request.environ['usable_error_content'] = spaceCompress(res.render())
-        abort(404)
+        else:
+            # It hasn't been submitted yet. Give them a chance to
+            return self.redirect(add_sr("/submit?url=" + url_escape(path)))
 
     @validate(link = VLink('id'))
     def GET_comments(self, link):
@@ -235,25 +228,10 @@ class ToolbarController(RedditController):
 
         if link:
             wrapped = wrap_links(link, wrapper=FrameToolbar, num=1)
-        elif url:
-            listing = hot_links_by_url_listing(url, sr=c.site, num=1, skip=True)
-            if listing.things:
-                wrapped = listing.things[0]
-            else:
-                wrapped = None
         else:
             return self.abort404()
 
-        res = None
-        if wrapped:
-            res = wrapped
-        elif url:
-            res = FrameToolbar(link=None, title=None, url=url, expanded=False)
-
-        if res:
-            return spaceCompress(res.render())
-        else:
-            return self.abort404()
+        return spaceCompress(wrapped.render())
 
     @validate(link = VByName('id'))
     def GET_inner(self, link):
