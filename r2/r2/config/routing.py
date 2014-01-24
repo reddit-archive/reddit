@@ -53,6 +53,8 @@ def make_map():
 
     mc('/admin/', controller='awards')
 
+    mc('/robots.txt', controller='robots', action='robots')
+
     mc('/login', controller='forms', action='login')
     mc('/register', controller='forms', action='register')
     mc('/logout', controller='forms', action='logout')

@@ -82,6 +82,7 @@ def load_controllers():
     from oauth2 import OAuth2FrontendController
     from oauth2 import OAuth2AccessController
     from redirect import RedirectController
+    from robots import RobotsController
     from ipn import IpnController
     from ipn import StripeController
     from ipn import CoinbaseController
