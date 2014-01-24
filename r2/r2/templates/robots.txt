@@ -23,10 +23,6 @@
 User-agent: 008
 Disallow: /
 
-# MSNBot
-User-Agent: msnbot
-Crawl-Delay: 20
-
 User-Agent: bender
 Disallow: /my_shiny_metal_ass
 
