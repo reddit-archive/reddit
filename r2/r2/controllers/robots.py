@@ -44,5 +44,5 @@ class RobotsController(MinimalController):
         if self.on_crawlable_domain():
             return Robots().render(style='txt')
         else:
-            return "User-Agent: *\nDisallow: *\n"
+            return "User-Agent: *\nDisallow: /\n"
 
