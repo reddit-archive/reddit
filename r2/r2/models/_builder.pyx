@@ -55,7 +55,6 @@ class _CommentBuilder(Builder):
         candidates.sort(key=sorter.get, reverse=self.rev_sort)
 
     def get_items(self, num):
-        from r2.lib.lock import TimeoutExpired
         cdef list cid
         cdef dict cid_tree
         cdef dict depth
