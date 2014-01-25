@@ -62,19 +62,7 @@ class _CommentBuilder(Builder):
         cids, cid_tree, depth, num_children, parents, sorter = r
         timer.intermediate("load_storage")
 
-        cdef dict debug_dict = dict(
-            link = self.link,
-            comment = self.comment,
-            context = self.context,
-            load_more = self.load_more,
-            max_depth = self.max_depth,
-            continue_this_thread = self.continue_this_thread,
-            sort = self.sort,
-            rev_sort = self.rev_sort,
-            lcs_rv = repr(r))
-
         if self.comment and not self.comment._id in depth:
-            debug_dict["defocus_hack"] = "yes"
             g.log.error("Hack - self.comment (%d) not in depth. Defocusing..."
                         % self.comment._id)
             self.comment = None
@@ -91,7 +79,6 @@ class _CommentBuilder(Builder):
 
         # more comments links:
         if self.children:
-            debug_dict["was_instance"] = "yes"
             for cm in self.children:
                 # deleted comments will be removed from the cids list
                 if cm._id in cids:
@@ -106,7 +93,6 @@ class _CommentBuilder(Builder):
 
         # permalinks:
         elif self.comment:
-            debug_dict["was_permalink"] = "yes"
             # we are going to mess around with the cid_tree's contents
             # so better copy it
             cid_tree = cid_tree.copy()
@@ -130,7 +116,6 @@ class _CommentBuilder(Builder):
                 offset_depth = depth[top]
         #else start with the root comments
         else:
-            debug_dict["was_root"] = "yes"
             candidates.extend(cid_tree.get(None, ()))
 
         timer.intermediate("pick_candidates")
@@ -148,7 +133,6 @@ class _CommentBuilder(Builder):
                 return []
         candidates.sort(key = sorter.get, reverse = self.rev_sort)
 
-        debug_dict["candidates_Before"] = repr(candidates)
         while num_have < num and candidates:
             to_add = candidates.pop(0)
             if to_add not in cids:
@@ -173,7 +157,7 @@ class _CommentBuilder(Builder):
                     w = Wrapped(MoreRecursion(self.link, 0, p_id))
                     w.children.append(to_add)
                     extra[p_id] = w
-        debug_dict["candidates_after"] = repr(candidates)
+
         timer.intermediate("pick_comments")
 
         # items is a list of things we actually care about so load them
@@ -186,8 +170,6 @@ class _CommentBuilder(Builder):
         cids = {}
         for cm in wrapped:
             cids[cm._id] = cm
-
-        debug_dict["cids"] = [utils.to36(i) for i in sorted(cids.keys())]
 
         cdef list final = []
         #make tree
@@ -210,10 +192,6 @@ class _CommentBuilder(Builder):
             else:
                 final.append(cm)
 
-        debug_dict["final"] = [cm._id36 for cm in final]
-        debug_dict["depth"] = depth
-        debug_dict["extra"] = extra
-
         for p_id, morelink in extra.iteritems():
             try:
                 parent = cids[p_id]
@@ -223,8 +201,6 @@ class _CommentBuilder(Builder):
                 else:
                     if g.memcache.get("debug-comment-tree"):
                         g.memcache.delete("debug-comment-tree")
-                        for k in sorted(debug_dict.keys()):
-                            g.log.info("tree debug: %s = %r" % (k,debug_dict[k]))
                         g.log.info("tree debug: p_id = %r" % p_id)
                     raise KeyError("%r not in cids but it wasn't ignored" % p_id)
 
