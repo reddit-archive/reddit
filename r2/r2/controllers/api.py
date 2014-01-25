@@ -2596,7 +2596,7 @@ class ApiController(RedditController, OAuth2ResourceController):
 
             if children:
                 builder = CommentBuilder(link, CommentSortMenu.operator(sort),
-                                         children)
+                                         children=children)
                 listing = Listing(builder, nextprev = False)
                 items = listing.get_items(num=CHILD_FETCH_COUNT)
                 def _children(cur_items):

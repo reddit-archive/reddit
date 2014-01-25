@@ -1376,7 +1376,8 @@ class CommentPane(Templated):
                          Account._defaults["pref_min_comment_score"])
 
         def renderer():
-            builder = CommentBuilder(article, sort, comment, context, **kw)
+            builder = CommentBuilder(article, sort, comment=comment,
+                                     context=context, **kw)
             listing = NestedListing(builder, num = num,
                                     parent_name = article._fullname)
             return listing.listing()

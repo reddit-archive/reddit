@@ -30,12 +30,13 @@ from r2.lib.db import operators
 from r2.lib import utils
 
 class _CommentBuilder(Builder):
-    def __init__(self, link, sort, comment = None, context = None,
+    def __init__(self, link, sort, comment=None, children=None, context=None,
                  load_more=True, continue_this_thread=True,
                  max_depth = MAX_RECURSION, **kw):
         Builder.__init__(self, **kw)
         self.link = link
         self.comment = comment
+        self.children = children
         self.context = context
         self.load_more = load_more
         self.max_depth = max_depth
@@ -72,8 +73,7 @@ class _CommentBuilder(Builder):
             rev_sort = self.rev_sort,
             lcs_rv = repr(r))
 
-        if (not isinstance(self.comment, utils.iters)
-            and self.comment and not self.comment._id in depth):
+        if self.comment and not self.comment._id in depth:
             debug_dict["defocus_hack"] = "yes"
             g.log.error("Hack - self.comment (%d) not in depth. Defocusing..."
                         % self.comment._id)
@@ -90,9 +90,9 @@ class _CommentBuilder(Builder):
         cdef int offset_depth = 0
 
         # more comments links:
-        if isinstance(self.comment, utils.iters):
+        if self.children:
             debug_dict["was_instance"] = "yes"
-            for cm in self.comment:
+            for cm in self.children:
                 # deleted comments will be removed from the cids list
                 if cm._id in cids:
                     dont_collapse.append(cm._id)
