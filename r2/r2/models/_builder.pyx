@@ -128,7 +128,6 @@ class _CommentBuilder(Builder):
         #find the comments
         self.update_candidates(sorter, candidates)
         if not candidates:
-            g.log.error("empty candidate list: %r" % request.fullpath)
             timer.stop()
             return []
 
