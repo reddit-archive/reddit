@@ -37,7 +37,7 @@ class _CommentBuilder(Builder):
         self.link = link
         self.comment = comment
         self.children = children
-        self.context = context
+        self.context = context or 0
         self.load_more = load_more
         self.max_depth = max_depth
 
@@ -77,45 +77,45 @@ class _CommentBuilder(Builder):
         cdef list candidates = []
         cdef int offset_depth = 0
 
-        # more comments links:
         if self.children:
-            for cm in self.children:
-                # deleted comments will be removed from the cids list
-                if cm._id in cids:
-                    dont_collapse.append(cm._id)
-                    candidates.append(cm._id)
-            # if nothing but deleted comments, the candidate list might be empty
+            # requested specific child comments
+            for child in self.children:
+                if child._id in cids:
+                    candidates.append(child._id)
+                    dont_collapse.append(child._id)
+
             if candidates:
                 pid = parents[candidates[0]]
                 if pid is not None:
                     ignored_parent_ids.append(pid)
                     start_depth = depth[pid]
 
-        # permalinks:
         elif self.comment:
-            # we are going to mess around with the cid_tree's contents
-            # so better copy it
-            cid_tree = cid_tree.copy()
-            top = self.comment._id
-            dont_collapse.append(top)
-            #add parents for context
-            pid = parents[top]
-            while self.context > 0 and pid is not None:
-                self.context -= 1
-                pid = parents[top]
-                cid_tree[pid] = [top]
-                num_children[pid] = num_children[top] + 1
-                dont_collapse.append(pid)
-                # top will be appended to candidates, so stop updating
-                # it if hit the top of the thread
-                if pid is not None:
-                    top = pid
-            candidates.append(top)
-            # the reference depth is that of the focal element
-            if top is not None:
-                offset_depth = depth[top]
-        #else start with the root comments
+            # requested the tree from a specific comment
+
+            # construct path back to top level from this comment, a maximum of
+            # `context` levels
+            comment = self.comment._id
+            path = []
+            while comment and len(path) <= self.context:
+                path.append(comment)
+                comment = parents[comment]
+
+            dont_collapse.extend(path)
+
+            # rewrite cid_tree and num_children so the parents lead only to the
+            # requested comment
+            for comment in path:
+                parent = parents[comment]
+                cid_tree[parent] = [comment]
+                num_children[parent] = num_children[comment] + 1
+
+            # start building comment tree from earliest comment
+            candidates.append(path[-1])
+            offset_depth = depth.get(path[-1], 0)
+
         else:
+            # full tree requested, start with the top level comments
             candidates.extend(cid_tree.get(None, ()))
 
         timer.intermediate("pick_candidates")
