@@ -163,14 +163,7 @@ class _CommentBuilder(Builder):
         # items is a list of things we actually care about so load them
         items = Comment._byID(items, data = True, return_dict = False, stale=self.stale)
         cdef list wrapped = self.wrap_items(items)
-
-
-        # break here
-        # -----
-        cids = {}
-        for cm in wrapped:
-            cids[cm._id] = cm
-
+        cdef dict wrapped_by_id = {comment._id: comment for comment in wrapped}
         cdef list final = []
         #make tree
 
@@ -182,7 +175,7 @@ class _CommentBuilder(Builder):
             cm.num_children = num_children[cm._id]
             if cm.collapsed and cm._id in dont_collapse:
                 cm.collapsed = False
-            parent = cids.get(cm.parent_id)
+            parent = wrapped_by_id.get(cm.parent_id)
             if parent:
                 if not hasattr(parent, 'child'):
                     parent.child = empty_listing()
@@ -194,15 +187,15 @@ class _CommentBuilder(Builder):
 
         for p_id, morelink in extra.iteritems():
             try:
-                parent = cids[p_id]
+                parent = wrapped_by_id[p_id]
             except KeyError:
                 if p_id in ignored_parent_ids:
-                    raise KeyError("%r not in cids because it was ignored" % p_id)
+                    raise KeyError("%r not in wrapped_by_id because it was ignored" % p_id)
                 else:
                     if g.memcache.get("debug-comment-tree"):
                         g.memcache.delete("debug-comment-tree")
                         g.log.info("tree debug: p_id = %r" % p_id)
-                    raise KeyError("%r not in cids but it wasn't ignored" % p_id)
+                    raise KeyError("%r not in wrapped_by_id but it wasn't ignored" % p_id)
 
             parent.child = empty_listing(morelink)
             if not parent.deleted:
@@ -230,7 +223,7 @@ class _CommentBuilder(Builder):
             #find the parent actually being displayed
             #direct_child is whether the comment is 'top-level'
             parentfinder_iteration_count = 0
-            while p_id and not cids.has_key(p_id):
+            while p_id and not wrapped_by_id.has_key(p_id):
                 if parentfinder_iteration_count > MAX_ITERATIONS:
                     raise Exception("bad comment tree in link %s" %
                                     self.link._id36)
@@ -247,7 +240,7 @@ class _CommentBuilder(Builder):
                 if p_id is None:
                     final.append(w_mc2)
                 else:
-                    parent = cids[p_id]
+                    parent = wrapped_by_id[p_id]
                     if hasattr(parent, 'child'):
                         parent.child.things.append(w_mc2)
                     else:
