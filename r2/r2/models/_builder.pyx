@@ -46,7 +46,13 @@ class _CommentBuilder(Builder):
         self.continue_this_thread = continue_this_thread
 
         self.sort = sort
-        self.rev_sort = True if isinstance(sort, operators.desc) else False
+        self.rev_sort = not isinstance(sort, operators.desc)
+
+    def update_candidates(self, sorter, candidates, to_add=None):
+        """Add items to candidates and then filter and sort."""
+        candidates.extend(to_add or [])
+        candidates = [cid for cid in candidates if cid in sorter]
+        candidates.sort(key=sorter.get, reverse=self.rev_sort)
 
     def get_items(self, num):
         from r2.lib.lock import TimeoutExpired
@@ -121,30 +127,26 @@ class _CommentBuilder(Builder):
         timer.intermediate("pick_candidates")
 
         #find the comments
-        cdef int num_have = 0
-        if candidates:
-            candidates = [x for x in candidates if sorter.get(x) is not None]
-            # complain if we removed a candidate and now have nothing
-            # to return to the user
-            if not candidates:
-                g.log.error("_builder.pyx: empty candidate list: %r" %
-                            request.fullpath)
-                timer.stop()
-                return []
-        candidates.sort(key = sorter.get, reverse = self.rev_sort)
+        self.update_candidates(sorter, candidates)
+        if not candidates:
+            g.log.error("empty candidate list: %r" % request.fullpath)
+            timer.stop()
+            return []
 
+        cdef int num_have = 0
         while num_have < num and candidates:
-            to_add = candidates.pop(0)
+            to_add = candidates.pop()
             if to_add not in cids:
                 continue
+
             if (depth[to_add] - offset_depth) < self.max_depth + start_depth:
-                #add children
-                if cid_tree.has_key(to_add):
-                    candidates.extend([x for x in cid_tree[to_add]
-                                       if sorter.get(x) is not None])
-                    candidates.sort(key = sorter.get, reverse = self.rev_sort)
+                # add children
+                if to_add in cid_tree:
+                    children = cid_tree[to_add]
+                    self.update_candidates(sorter, candidates, to_add=children)
                 items.append(to_add)
                 num_have += 1
+
             elif self.continue_this_thread:
                 #add the recursion limit
                 p_id = parents[to_add]
@@ -223,7 +225,7 @@ class _CommentBuilder(Builder):
                 raise Exception("bad comment tree for link %s" %
                                 self.link._id36)
 
-            to_add = candidates.pop(0)
+            to_add = candidates.pop()
             direct_child = True
             #ignore top-level comments for now
             p_id = parents[to_add]
@@ -256,8 +258,9 @@ class _CommentBuilder(Builder):
                             parent.child.parent_name = parent._fullname
 
             #add more children
-            if cid_tree.has_key(to_add):
-                candidates.extend(cid_tree[to_add])
+            if to_add in cid_tree:
+                children = cid_tree[to_add]
+                self.update_candidates(sorter, candidates, to_add=children)
 
             if direct_child:
                 mc2.children.append(to_add)
