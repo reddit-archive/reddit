@@ -329,7 +329,16 @@ class CommentTreeStorageV1(CommentTreeStorageBase):
         r = g.permacache.get(key)
         if not r:
             return None
-        cids, cid_tree, depth, num_children = r
+
+        try:
+            cids, cid_tree, depth, num_children = r
+        except ValueError:
+            # We got the new version that doesn't include num_children. Make
+            # a dummy num_children, which will be safe because it's not getting
+            # used anywhere.
+            cids, cid_tree, depth = r
+            num_children = {}
+
         parents = g.permacache.get(p_key)
         if parents is None:
             parents = {}
