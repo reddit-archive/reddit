@@ -159,7 +159,6 @@ def link_comments_and_sort(link, sort):
     cids = cache.cids
     tree = cache.tree
     depth = cache.depth
-    num_children = cache.num_children
     parents = cache.parents
 
     # load the sorter
@@ -201,8 +200,7 @@ def link_comments_and_sort(link, sort):
 
     timer.stop()
 
-    return (cache.cids, cache.tree, cache.depth, cache.num_children,
-            cache.parents, sorter)
+    return (cache.cids, cache.tree, cache.depth, cache.parents, sorter)
 
 def get_comment_tree(link, _update=False, timer=None):
     if timer is None:

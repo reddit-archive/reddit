@@ -64,7 +64,7 @@ class _CommentBuilder(Builder):
         timer = g.stats.get_timer("CommentBuilder.get_items")
         timer.start()
         r = link_comments_and_sort(self.link, self.sort.col)
-        cids, cid_tree, depth, num_children, parents, sorter = r
+        cids, cid_tree, depth, parents, sorter = r
         timer.intermediate("load_storage")
 
         if self.comment and not self.comment._id in depth:
@@ -108,12 +108,10 @@ class _CommentBuilder(Builder):
 
             dont_collapse.extend(path)
 
-            # rewrite cid_tree and num_children so the parents lead only to the
-            # requested comment
+            # rewrite cid_tree so the parents lead only to the requested comment
             for comment in path:
                 parent = parents[comment]
                 cid_tree[parent] = [comment]
-                num_children[parent] = num_children[comment] + 1
 
             # start building comment tree from earliest comment
             candidates.append(path[-1])
@@ -165,7 +163,9 @@ class _CommentBuilder(Builder):
         cdef list wrapped = self.wrap_items(items)
         cdef dict wrapped_by_id = {comment._id: comment for comment in wrapped}
         cdef list final = []
-        #make tree
+
+        # retrieve num_children for the wrapped comments
+        cdef dict num_children = get_num_children(wrapped_by_id.keys(), cid_tree)
 
         for cm in wrapped:
             # don't show spam with no children
@@ -264,6 +264,46 @@ class _CommentBuilder(Builder):
 
         timer.stop("build_morechildren")
         return final
+
+
+cdef dict get_num_children(list comments, dict tree):
+    """Count the number of children for each comment."""
+
+    cdef dict num_children = {}
+    cdef list stack = []
+    cdef list children = []
+    cdef list missing = []
+    cdef long current
+    cdef long child
+
+    for comment in sorted(comments):
+        stack.append(comment)
+
+    while stack:
+        current = stack[-1]
+
+        if current in num_children:
+            stack.pop()
+            continue
+
+        children = tree.get(current, [])
+
+        for child in children:
+            if child not in num_children and not tree.get(child, None):
+                num_children[child] = 0
+
+        missing = [child for child in children if not child in num_children]
+
+        if not missing:
+            num_children[current] = 0
+            stack.pop()
+            for child in children:
+                num_children[current] += 1 + num_children[child]
+        else:
+            stack.extend(missing)
+
+    return num_children
+
 
 class _MessageBuilder(Builder):
     def __init__(self, parent = None, focal = None,
