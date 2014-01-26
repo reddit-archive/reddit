@@ -383,8 +383,12 @@ def rendered_link(links, media, compress, stickied=False):
     delattr(c.user, 'pref_media') 
     return links.render(style = "html")
 
-def rendered_comment(comments):
-    return wrap_links(comments, num = 1).render(style = "html")
+def rendered_comment(comments, gilded=False):
+    wrapped = wrap_links(comments, num=1)
+    if gilded:
+        for w in wrapped:
+            w.gilded_message = "this comment was fake-gilded"
+    return wrapped.render(style="html")
 
 class BadImage(Exception):
     def __init__(self, error = None):

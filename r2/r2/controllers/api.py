@@ -1736,6 +1736,9 @@ class ApiController(RedditController, OAuth2ResourceController):
                 jquery('#preview_comment').html(
                     cssfilter.rendered_comment(comments))
 
+                jquery('#preview_comment_gilded').html(
+                    cssfilter.rendered_comment(comments, gilded=True))
+
     @require_oauth2_scope("modconfig")
     @validatedForm(VSrModerator(perms='config'),
                    VModhash(),
