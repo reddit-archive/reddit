@@ -73,12 +73,8 @@ class _CommentBuilder(Builder):
                         % self.comment._id)
             self.comment = None
 
-        cdef list items = []
         cdef dict more_recursions = {}
         cdef list dont_collapse = []
-
-        cdef int start_depth = 0
-
         cdef list candidates = []
         cdef int offset_depth = 0
 
@@ -88,11 +84,6 @@ class _CommentBuilder(Builder):
                                   if child._id in cids]
             self.update_candidates(candidates, sorter, children)
             dont_collapse.extend(comment for sort_val, comment in candidates)
-
-            if candidates:
-                parent = parents[candidates[0][1]]
-                if parent:
-                    start_depth = depth[parent]
 
         elif self.comment:
             # requested the tree from a specific comment
@@ -114,6 +105,9 @@ class _CommentBuilder(Builder):
 
             # start building comment tree from earliest comment
             self.update_candidates(candidates, sorter, path[-1])
+
+            # set offset_depth because we may not be at the top level and can
+            # show deeper levels
             offset_depth = depth.get(path[-1], 0)
 
         else:
@@ -123,65 +117,71 @@ class _CommentBuilder(Builder):
 
         timer.intermediate("pick_candidates")
 
-        #find the comments
         if not candidates:
             timer.stop()
             return []
 
-        cdef int num_have = 0
-        while num_have < num and candidates:
-            sort_val, to_add = heapq.heappop(candidates)
-            if to_add not in cids:
+        # choose which comments to show
+        cdef list items = []
+        while len(items) < num and candidates:
+            sort_val, comment_id = heapq.heappop(candidates)
+            if comment_id not in cids:
                 continue
 
-            if (depth[to_add] - offset_depth) < self.max_depth + start_depth:
-                # add children
-                if to_add in cid_tree:
-                    children = cid_tree[to_add]
-                    self.update_candidates(candidates, sorter, children)
-                items.append(to_add)
-                num_have += 1
+            comment_depth = depth[comment_id] - offset_depth
+            if comment_depth < self.max_depth:
+                items.append(comment_id)
 
-            elif self.continue_this_thread and parents.get(to_add) is not None:
+                # add children
+                if comment_id in cid_tree:
+                    children = cid_tree[comment_id]
+                    self.update_candidates(candidates, sorter, children)
+
+            elif (self.continue_this_thread and
+                  parents.get(comment_id) is not None):
                 # the comment is too deep to add, so add a MoreRecursion for
                 # its parent
-                parent_id = parents[to_add]
+                parent_id = parents[comment_id]
                 if parent_id not in more_recursions:
                     w = Wrapped(MoreRecursion(self.link, depth=0,
                                               parent_id=parent_id))
                 else:
                     w = more_recursions[parent_id]
-                w.children.append(to_add)
+                w.children.append(comment_id)
                 more_recursions[parent_id] = w
 
         timer.intermediate("pick_comments")
-
-        # items is a list of things we actually care about so load them
-        items = Comment._byID(items, data = True, return_dict = False, stale=self.stale)
-        cdef list wrapped = self.wrap_items(items)
+        cdef list comments = Comment._byID(items, data=True, return_dict=False,
+                                           stale=self.stale)
+        cdef list wrapped = self.wrap_items(comments)
         cdef dict wrapped_by_id = {comment._id: comment for comment in wrapped}
         cdef list final = []
 
         # retrieve num_children for the wrapped comments
         cdef dict num_children = get_num_children(wrapped_by_id.keys(), cid_tree)
 
-        for cm in wrapped:
-            # don't show spam with no children
-            if (cm.deleted and not cid_tree.has_key(cm._id)
+        for comment in wrapped:
+            # skip deleted comments with no children
+            if (comment.deleted and not cid_tree.has_key(comment._id)
                 and not c.user_is_admin):
                 continue
-            cm.num_children = num_children[cm._id]
-            if cm.collapsed and cm._id in dont_collapse:
-                cm.collapsed = False
-            parent = wrapped_by_id.get(cm.parent_id)
+
+            comment.num_children = num_children[comment._id]
+
+            if comment.collapsed and comment._id in dont_collapse:
+                comment.collapsed = False
+
+            # add the comment as a child of its parent or to the top level of
+            # the tree if it has no parent
+            parent = wrapped_by_id.get(comment.parent_id)
             if parent:
                 if not hasattr(parent, 'child'):
                     parent.child = empty_listing()
                 if not parent.deleted:
                     parent.child.parent_name = parent._fullname
-                parent.child.things.append(cm)
+                parent.child.things.append(comment)
             else:
-                final.append(cm)
+                final.append(comment)
 
         for parent_id, more_recursion in more_recursions.iteritems():
             if parent_id not in wrapped_by_id:
