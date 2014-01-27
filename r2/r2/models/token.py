@@ -148,6 +148,13 @@ class OAuth2Scope:
             "name": _("Subreddit Traffic"),
             "description": _("Access traffic stats in subreddits I moderate."),
         },
+        "modwiki": {
+            "id": "modwiki",
+            "name": _("Moderate Wiki"),
+            "description": _(
+                "Change editors and visibility of wiki pages"
+                " in subreddits I moderate."),
+        },
         "mysubreddits": {
             "id": "mysubreddits",
             "name": _("My Subreddits"),
@@ -186,6 +193,11 @@ class OAuth2Scope:
             "name": _("Vote"),
             "description":
                 _("Submit and change my votes on comments and submissions."),
+        },
+        "wikiedit": {
+            "id": "wiki",
+            "name": _("Wiki"),
+            "description": _("Edit wiki pages."),
         },
     }
 

@@ -23,6 +23,7 @@
 from pylons import request, g, c
 from pylons.controllers.util import redirect_to
 from reddit_base import RedditController
+from r2.controllers.oauth2 import require_oauth2_scope
 from r2.lib.utils import url_links_builder
 from reddit_base import paginated_listing
 from r2.models.wiki import (WikiPage, WikiRevision, ContentLengthError,
@@ -311,6 +312,7 @@ class WikiController(RedditController):
 
 
 class WikiApiController(WikiController):
+    @require_oauth2_scope("wikiedit")
     @validate(VModhash(),
               pageandprevious=VWikiPageRevise(('page', 'previous'), restricted=True),
               content=nop(('content')),
@@ -368,6 +370,7 @@ class WikiApiController(WikiController):
             self.handle_error(409, 'EDIT_CONFLICT', newcontent=e.new, newrevision=page.revision, diffcontent=e.htmldiff)
         return json.dumps({})
 
+    @require_oauth2_scope("modwiki")
     @validate(VModhash(),
               VWikiModerator(),
               page=VWikiPage('page'),
@@ -387,6 +390,7 @@ class WikiApiController(WikiController):
             self.handle_error(400, 'INVALID_ACTION')
         return json.dumps({})
 
+    @require_oauth2_scope("modwiki")
     @validate(VModhash(),
               VWikiModerator(),
               pv=VWikiPageAndVersion(('page', 'revision')))
@@ -397,6 +401,7 @@ class WikiApiController(WikiController):
             self.handle_error(400, 'INVALID_REVISION')
         return json.dumps({'status': revision.toggle_hide()})
 
+    @require_oauth2_scope("modwiki")
     @validate(VModhash(),
               VWikiModerator(),
               pv=VWikiPageAndVersion(('page', 'revision')))
