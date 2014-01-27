@@ -25,7 +25,7 @@ from random import shuffle
 
 from builder import Builder, MAX_RECURSION, empty_listing
 from r2.lib.wrapped import Wrapped
-from r2.lib.comment_tree import link_comments_and_sort, tree_sort_fn, MAX_ITERATIONS
+from r2.lib.comment_tree import link_comments_and_sort, tree_sort_fn
 from r2.models.link import *
 from r2.lib.db import operators
 from r2.lib import utils
@@ -158,7 +158,11 @@ class _CommentBuilder(Builder):
         cdef list final = []
 
         # retrieve num_children for the wrapped comments
-        cdef dict num_children = get_num_children(wrapped_by_id.keys(), cid_tree)
+        visible_comments = wrapped_by_id.keys()
+        top_level_candidates = [comment for sort_val, comment in candidates
+                                        if depth.get(comment, 0) == 0]
+        needs_num_children = visible_comments + top_level_candidates
+        cdef dict num_children = get_num_children(needs_num_children, cid_tree)
 
         for comment in wrapped:
             # skip deleted comments with no children
@@ -198,57 +202,46 @@ class _CommentBuilder(Builder):
             timer.stop()
             return final
 
-        #put the remaining comments into the tree (the show more comments link)
-        cdef dict more_comments = {}
-        cdef int iteration_count = 0
-        cdef int parentfinder_iteration_count
-        while candidates:
-            if iteration_count > MAX_ITERATIONS:
-                raise Exception("bad comment tree for link %s" %
-                                self.link._id36)
+        # build MoreChildren for visible comments
+        visible_comments = wrapped_by_id.keys()
+        for visible_id in visible_comments:
+            if visible_id in more_recursions:
+                # don't add a MoreChildren if we already have a MoreRecursion
+                continue
 
-            sort_val, to_add = heapq.heappop(candidates)
-            direct_child = True
-            #ignore top-level comments for now
-            p_id = parents[to_add]
-            #find the parent actually being displayed
-            #direct_child is whether the comment is 'top-level'
-            parentfinder_iteration_count = 0
-            while p_id and not wrapped_by_id.has_key(p_id):
-                if parentfinder_iteration_count > MAX_ITERATIONS:
-                    raise Exception("bad comment tree in link %s" %
-                                    self.link._id36)
-                p_id = parents[p_id]
-                direct_child = False
-                parentfinder_iteration_count += 1
+            children = cid_tree.get(visible_id, ())
+            missing_children = [child for child in children
+                                      if child not in visible_comments]
+            if missing_children:
+                visible_children = (child for child in children
+                                          if child in visible_comments)
+                visible_count = sum(1 + num_children[child]
+                                    for child in visible_children)
+                missing_count = num_children[visible_id] - visible_count
+                missing_depth = depth.get(visible_id, 0) + 1 - offset_depth
+                mc = MoreChildren(self.link, depth=missing_depth,
+                                  parent_id=visible_id)
+                mc.children.extend(missing_children)
+                w = Wrapped(mc)
+                w.count = missing_count
 
-            mc2 = more_comments.get(p_id)
-            if not mc2:
-                mc2 = MoreChildren(self.link, depth.get(to_add,0) - offset_depth,
-                                   parent_id = p_id)
-                more_comments[p_id] = mc2
-                w_mc2 = Wrapped(mc2)
-                if p_id is None:
-                    final.append(w_mc2)
+                # attach the MoreChildren
+                parent = wrapped_by_id[visible_id]
+                if hasattr(parent, 'child'):
+                    parent.child.things.append(w)
                 else:
-                    parent = wrapped_by_id[p_id]
-                    if hasattr(parent, 'child'):
-                        parent.child.things.append(w_mc2)
-                    else:
-                        parent.child = empty_listing(w_mc2)
-                        if not parent.deleted:
-                            parent.child.parent_name = parent._fullname
+                    parent.child = empty_listing(w)
+                    if not parent.deleted:
+                        parent.child.parent_name = parent._fullname
 
-            #add more children
-            if to_add in cid_tree:
-                children = cid_tree[to_add]
-                self.update_candidates(candidates, sorter, to_add=children)
-
-            if direct_child:
-                mc2.children.append(to_add)
-
-            mc2.count += 1
-            iteration_count += 1
+        # build MoreChildren for missing root level comments
+        if top_level_candidates:
+            mc = MoreChildren(self.link, depth=0, parent_id=None)
+            mc.children.extend(top_level_candidates)
+            w = Wrapped(mc)
+            w.count = sum(1 + num_children[comment]
+                          for comment in top_level_candidates)
+            final.append(w)
 
         if isinstance(self.sort, operators.shuffled):
             shuffle(final)
