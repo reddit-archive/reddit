@@ -19,22 +19,22 @@
 # All portions of the code written by reddit are Copyright (c) 2006-2013 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
+import re
+import string
+
 from mako.filters import url_escape
+from pylons import c
 
 from reddit_base import RedditController
-from r2.lib.pages import *
-from r2.models import *
-from r2.lib.pages.things import hot_links_by_url_listing, wrap_links
-from r2.lib.menus import CommentSortMenu
-from r2.lib.filters import spaceCompress, safemarkdown
-from r2.lib.memoize import memoize
-from r2.lib.template_helpers import add_sr
 from r2.lib import utils
+from r2.lib.filters import spaceCompress, safemarkdown
+from r2.lib.menus import CommentSortMenu
+from r2.lib.pages import *
+from r2.lib.pages.things import hot_links_by_url_listing, wrap_links
+from r2.lib.template_helpers import add_sr
 from r2.lib.validator import *
-from pylons import c
+from r2.models import *
 from r2.models.admintools import is_shamed_domain
-
-import string
 
 # strips /r/foo/, /s/, or both
 strip_sr          = re.compile('\A/r/[a-zA-Z0-9_-]+')
