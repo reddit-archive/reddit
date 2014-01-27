@@ -1647,6 +1647,14 @@ class ProfilePage(Reddit):
             ])
             rb.push(scb)
 
+        mod_sr_ids = Subreddit.reverse_moderator_ids(self.user)
+        all_mod_srs = Subreddit._byID(mod_sr_ids, data=True,
+                                      return_dict=False)
+        mod_srs = [sr for sr in all_mod_srs if sr.can_view(c.user)]
+        if mod_srs:
+            rb.push(SideContentBox(title=_("moderator of"),
+                                   content=[SidebarModList(mod_srs)]))
+
         if c.user_is_admin:
             from admin_pages import AdminSidebar
             rb.push(AdminSidebar(self.user))
@@ -1690,6 +1698,14 @@ class SidebarMultiList(Templated):
         Templated.__init__(self)
         multis.sort(key=lambda multi: multi.name.lower())
         self.multis = multis
+
+
+class SidebarModList(Templated):
+    def __init__(self, subreddits):
+        Templated.__init__(self)
+        # primary sort is desc. subscribers, secondary is name
+        self.subreddits = sorted(subreddits,
+                                 key=lambda sr: (-sr._ups, sr.name.lower()))
 
 
 class ProfileBar(Templated):
