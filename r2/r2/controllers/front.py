@@ -104,6 +104,7 @@ class FrontController(RedditController, OAuth2ResourceController):
             # redirect should be smarter and handle extensions, etc.
             return self.redirect(new_url, code=301)
 
+    @require_oauth2_scope("read")
     @api_doc(api_section.listings, uses_site=True)
     def GET_random(self):
         """The Serendipity button"""
