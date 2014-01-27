@@ -22,7 +22,6 @@
 import re
 import string
 
-from mako.filters import url_escape
 from pylons import c
 
 from reddit_base import RedditController
@@ -185,7 +184,8 @@ class ToolbarController(RedditController):
             return self.redirect(add_sr("/tb/" + link._id36))
         else:
             # It hasn't been submitted yet. Give them a chance to
-            return self.redirect(add_sr("/submit?url=" + url_escape(path)))
+            qs = utils.query_string({"url": path})
+            return self.redirect(add_sr("/submit?" + qs))
 
     @validate(link = VLink('id'))
     def GET_comments(self, link):
