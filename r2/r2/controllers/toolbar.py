@@ -139,7 +139,8 @@ class ToolbarController(RedditController):
         )
         return spaceCompress(res.render())
 
-    def GET_s(self, rest):
+    @validate(urloid=nop('urloid'))
+    def GET_s(self, urloid):
         """/s/http://..., show a given URL with the toolbar. if it's
            submitted, redirect to /tb/$id36"""
         force_html()
@@ -252,24 +253,4 @@ class ToolbarController(RedditController):
         if not link:
             return self.abort404()
         return self.redirect(add_sr("/tb/" + link._id36))
-
-    slash_fixer = re.compile('(/s/https?:)/+')
-    @validate(urloid = nop('urloid'))
-    def GET_urloid(self, urloid):
-        # they got here from "/http://..."
-        path = demangle_url(request.fullpath)
-
-        if not path:
-            # malformed URL
-            self.abort404()
-
-        redir_path = add_sr("/s/" + path)
-        force_html()
-
-        # Redirect to http://reddit.com/s/http://google.com
-        # rather than http://reddit.com/s/http:/google.com
-        redir_path = self.slash_fixer.sub(r'\1///', redir_path, 1)
-        #                               ^^^
-        # 3=2 when it comes to self.redirect()
-        return self.redirect(redir_path)
 

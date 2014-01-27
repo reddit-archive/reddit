@@ -295,7 +295,7 @@ def make_map():
 
     mc('/c/:comment_id', controller='front', action='comment_by_id')
 
-    mc('/s/*rest', controller='toolbar', action='s')
+    mc('/s/*urloid', controller='toolbar', action='s')
     # additional toolbar-related rules just above the catchall
 
     mc('/d/:what', controller='api', action='bookmarklet')
@@ -413,7 +413,7 @@ def make_map():
     # the less-guessy versions at /s/ and /tb/
     mc('/:linkoid', controller='toolbar', action='linkoid',
        requirements=dict(linkoid='[0-9a-z]{1,6}'))
-    mc('/:urloid', controller='toolbar', action='urloid',
+    mc('/:urloid', controller='toolbar', action='s',
        requirements=dict(urloid=r'(\w+\.\w{2,}|https?).*'))
 
     mc("/*url", controller='front', action='catchall')
