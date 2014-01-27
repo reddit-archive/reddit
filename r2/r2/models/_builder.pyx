@@ -74,9 +74,8 @@ class _CommentBuilder(Builder):
             self.comment = None
 
         cdef list items = []
-        cdef dict extra = {}
+        cdef dict more_recursions = {}
         cdef list dont_collapse = []
-        cdef list ignored_parent_ids = []
 
         cdef int start_depth = 0
 
@@ -93,7 +92,6 @@ class _CommentBuilder(Builder):
             if candidates:
                 parent = parents[candidates[0][1]]
                 if parent:
-                    ignored_parent_ids.append(parent)
                     start_depth = depth[parent]
 
         elif self.comment:
@@ -144,18 +142,17 @@ class _CommentBuilder(Builder):
                 items.append(to_add)
                 num_have += 1
 
-            elif self.continue_this_thread:
-                #add the recursion limit
-                p_id = parents[to_add]
-                if p_id is None:
-                    fmt = ("tree problem: Wanted to add 'continue this " +
-                           "thread' for %s, which has depth %d, but we " +
-                           "don't know the parent")
-                    g.log.info(fmt % (to_add, depth[to_add]))
+            elif self.continue_this_thread and parents.get(to_add) is not None:
+                # the comment is too deep to add, so add a MoreRecursion for
+                # its parent
+                parent_id = parents[to_add]
+                if parent_id not in more_recursions:
+                    w = Wrapped(MoreRecursion(self.link, depth=0,
+                                              parent_id=parent_id))
                 else:
-                    w = Wrapped(MoreRecursion(self.link, 0, p_id))
-                    w.children.append(to_add)
-                    extra[p_id] = w
+                    w = more_recursions[parent_id]
+                w.children.append(to_add)
+                more_recursions[parent_id] = w
 
         timer.intermediate("pick_comments")
 
@@ -186,19 +183,12 @@ class _CommentBuilder(Builder):
             else:
                 final.append(cm)
 
-        for p_id, morelink in extra.iteritems():
-            try:
-                parent = wrapped_by_id[p_id]
-            except KeyError:
-                if p_id in ignored_parent_ids:
-                    raise KeyError("%r not in wrapped_by_id because it was ignored" % p_id)
-                else:
-                    if g.memcache.get("debug-comment-tree"):
-                        g.memcache.delete("debug-comment-tree")
-                        g.log.info("tree debug: p_id = %r" % p_id)
-                    raise KeyError("%r not in wrapped_by_id but it wasn't ignored" % p_id)
+        for parent_id, more_recursion in more_recursions.iteritems():
+            if parent_id not in wrapped_by_id:
+                continue
 
-            parent.child = empty_listing(morelink)
+            parent = wrapped_by_id[parent_id]
+            parent.child = empty_listing(more_recursion)
             if not parent.deleted:
                 parent.child.parent_name = parent._fullname
 
