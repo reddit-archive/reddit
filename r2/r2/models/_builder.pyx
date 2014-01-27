@@ -20,6 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+import heapq
 from random import shuffle
 
 from builder import Builder, MAX_RECURSION, empty_listing
@@ -46,13 +47,13 @@ class _CommentBuilder(Builder):
         self.continue_this_thread = continue_this_thread
 
         self.sort = sort
-        self.rev_sort = not isinstance(sort, operators.desc)
+        self.rev_sort = isinstance(sort, operators.desc)
 
-    def update_candidates(self, sorter, candidates, to_add=None):
-        """Add items to candidates and then filter and sort."""
-        candidates.extend(to_add or [])
-        candidates = [cid for cid in candidates if cid in sorter]
-        candidates.sort(key=sorter.get, reverse=self.rev_sort)
+    def update_candidates(self, candidates, sorter, to_add=None):
+        for comment in (comment for comment in utils.tup(to_add)
+                                if comment in sorter):
+            sort_val = -sorter[comment] if self.rev_sort else sorter[comment]
+            heapq.heappush(candidates, (sort_val, comment))
 
     def get_items(self, num):
         cdef list cid
@@ -84,16 +85,16 @@ class _CommentBuilder(Builder):
 
         if self.children:
             # requested specific child comments
-            for child in self.children:
-                if child._id in cids:
-                    candidates.append(child._id)
-                    dont_collapse.append(child._id)
+            children = [child._id for child in self.children
+                                  if child._id in cids]
+            self.update_candidates(candidates, sorter, children)
+            dont_collapse.extend(comment for sort_val, comment in candidates)
 
             if candidates:
-                pid = parents[candidates[0]]
-                if pid is not None:
-                    ignored_parent_ids.append(pid)
-                    start_depth = depth[pid]
+                parent = parents[candidates[0][1]]
+                if parent:
+                    ignored_parent_ids.append(parent)
+                    start_depth = depth[parent]
 
         elif self.comment:
             # requested the tree from a specific comment
@@ -114,24 +115,24 @@ class _CommentBuilder(Builder):
                 cid_tree[parent] = [comment]
 
             # start building comment tree from earliest comment
-            candidates.append(path[-1])
+            self.update_candidates(candidates, sorter, path[-1])
             offset_depth = depth.get(path[-1], 0)
 
         else:
             # full tree requested, start with the top level comments
-            candidates.extend(cid_tree.get(None, ()))
+            top_level_comments = cid_tree.get(None, ())
+            self.update_candidates(candidates, sorter, top_level_comments)
 
         timer.intermediate("pick_candidates")
 
         #find the comments
-        self.update_candidates(sorter, candidates)
         if not candidates:
             timer.stop()
             return []
 
         cdef int num_have = 0
         while num_have < num and candidates:
-            to_add = candidates.pop()
+            sort_val, to_add = heapq.heappop(candidates)
             if to_add not in cids:
                 continue
 
@@ -139,7 +140,7 @@ class _CommentBuilder(Builder):
                 # add children
                 if to_add in cid_tree:
                     children = cid_tree[to_add]
-                    self.update_candidates(sorter, candidates, to_add=children)
+                    self.update_candidates(candidates, sorter, children)
                 items.append(to_add)
                 num_have += 1
 
@@ -216,7 +217,7 @@ class _CommentBuilder(Builder):
                 raise Exception("bad comment tree for link %s" %
                                 self.link._id36)
 
-            to_add = candidates.pop()
+            sort_val, to_add = heapq.heappop(candidates)
             direct_child = True
             #ignore top-level comments for now
             p_id = parents[to_add]
@@ -251,7 +252,7 @@ class _CommentBuilder(Builder):
             #add more children
             if to_add in cid_tree:
                 children = cid_tree[to_add]
-                self.update_candidates(sorter, candidates, to_add=children)
+                self.update_candidates(candidates, sorter, to_add=children)
 
             if direct_child:
                 mc2.children.append(to_add)
