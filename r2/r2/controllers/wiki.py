@@ -23,7 +23,7 @@
 from pylons import request, g, c
 from pylons.controllers.util import redirect_to
 from reddit_base import RedditController
-from r2.controllers.oauth2 import require_oauth2_scope
+from r2.controllers.oauth2 import OAuth2ResourceController, require_oauth2_scope
 from r2.lib.utils import url_links_builder
 from reddit_base import paginated_listing
 from r2.models.wiki import (WikiPage, WikiRevision, ContentLengthError,
@@ -94,9 +94,10 @@ RENDERERS_BY_PAGE = {"config/sidebar": "reddit",
                      "config/description": "reddit",
                      "config/stylesheet": "stylesheet"}
 
-class WikiController(RedditController):
+class WikiController(RedditController, OAuth2ResourceController):
     allow_stylesheets = True
 
+    @require_oauth2_scope("wikiread")
     @api_doc(api_section.wiki, uri='/wiki/{page}', uses_site=True)
     @validate(pv=VWikiPageAndVersion(('page', 'v', 'v2'),
                                      required=False,
@@ -158,6 +159,7 @@ class WikiController(RedditController):
                             edit_date=edit_date, page=page.name,
                             renderer=renderer).render()
 
+    @require_oauth2_scope("wikiread")
     @api_doc(api_section.wiki, uri='/revisions/{page}', uses_site=True)
     @paginated_listing(max_page_size=100, backend='cassandra')
     @validate(page=VWikiPage(('page'), restricted=False))
@@ -207,6 +209,7 @@ class WikiController(RedditController):
         return WikiEdit(content, previous, alert=message, page=wp.name,
                         may_revise=True).render()
 
+    @require_oauth2_scope("wikiread")
     @api_doc(api_section.wiki, uri='/revisions/{page}', uses_site=True)
     @paginated_listing(max_page_size=100, backend='cassandra')
     def GET_wiki_recent(self, num, after, reverse, count):
@@ -220,6 +223,7 @@ class WikiController(RedditController):
         listing = WikiRevisionListing(builder).listing()
         return WikiRecent(listing).render()
 
+    @require_oauth2_scope("wikiread")
     @api_doc(api_section.wiki, uri='/pages', uses_site=True)
     def GET_wiki_listing(self):
         def check_hidden(page):
@@ -230,6 +234,7 @@ class WikiController(RedditController):
     def GET_wiki_redirect(self, page='index'):
         return redirect_to(str("%s/%s" % (c.wiki_base_url, page)), _code=301)
 
+    @require_oauth2_scope("wikiread")
     @api_doc(api_section.wiki, uri='/discussions/{page}', uses_site=True)
     @base_listing
     @validate(page=VWikiPage('page', restricted=True))
@@ -241,6 +246,7 @@ class WikiController(RedditController):
         return WikiDiscussions(listing, page=page.name,
                                may_revise=this_may_revise(page)).render()
 
+    @require_oauth2_scope("modwiki")
     @api_doc(api_section.wiki, uri='/settings/{page}', uses_site=True)
     @validate(page=VWikiPage('page', restricted=True, modonly=True))
     def GET_wiki_settings(self, page):
@@ -254,6 +260,7 @@ class WikiController(RedditController):
                             restricted=restricted,
                             may_revise=True).render()
 
+    @require_oauth2_scope("modwiki")
     @api_doc(api_section.wiki, uri='/settings/{page}', uses_site=True)
     @validate(VModhash(),
               page=VWikiPage('page', restricted=True, modonly=True),
@@ -289,6 +296,7 @@ class WikiController(RedditController):
         abort(reddit_http_error(code, reason, **data))
 
     def pre(self):
+        self.check_for_bearer_token()
         RedditController.pre(self)
         if g.disable_wiki and not c.user_is_admin:
             self.handle_error(403, 'WIKI_DOWN')

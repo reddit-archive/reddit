@@ -196,8 +196,13 @@ class OAuth2Scope:
         },
         "wikiedit": {
             "id": "wiki",
-            "name": _("Wiki"),
-            "description": _("Edit wiki pages."),
+            "name": _("Wiki Editing"),
+            "description": _("Edit wiki pages on my behalf"),
+        },
+        "wikiread": {
+            "id": "wikiread",
+            "name": _("Read Wiki Pages"),
+            "description": _("Read wiki pages through my account"),
         },
     }
 
