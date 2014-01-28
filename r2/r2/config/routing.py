@@ -273,7 +273,6 @@ def make_map():
     mc('/wiki/discussions/*page', controller='wiki', action='wiki_discussions')
     mc('/wiki/pages', controller='wiki', action='wiki_listing')
 
-    mc('/api/wiki/create', controller='wikiapi', action='wiki_create')
     mc('/api/wiki/edit', controller='wikiapi', action='wiki_edit')
     mc('/api/wiki/hide', controller='wikiapi', action='wiki_revision_hide')
     mc('/api/wiki/revert', controller='wikiapi', action='wiki_revision_revert')
