@@ -160,7 +160,7 @@ class WikiController(RedditController, OAuth2ResourceController):
                             renderer=renderer).render()
 
     @require_oauth2_scope("wikiread")
-    @api_doc(api_section.wiki, uri='/revisions/{page}', uses_site=True)
+    @api_doc(api_section.wiki, uri='/wiki/revisions/{page}', uses_site=True)
     @paginated_listing(max_page_size=100, backend='cassandra')
     @validate(page=VWikiPage(('page'), restricted=False))
     def GET_wiki_revisions(self, num, after, reverse, count, page):
@@ -210,7 +210,7 @@ class WikiController(RedditController, OAuth2ResourceController):
                         may_revise=True).render()
 
     @require_oauth2_scope("wikiread")
-    @api_doc(api_section.wiki, uri='/revisions/{page}', uses_site=True)
+    @api_doc(api_section.wiki, uri='/wiki/revisions/{page}', uses_site=True)
     @paginated_listing(max_page_size=100, backend='cassandra')
     def GET_wiki_recent(self, num, after, reverse, count):
         revisions = WikiRevision.get_recent(c.site)
@@ -224,7 +224,7 @@ class WikiController(RedditController, OAuth2ResourceController):
         return WikiRecent(listing).render()
 
     @require_oauth2_scope("wikiread")
-    @api_doc(api_section.wiki, uri='/pages', uses_site=True)
+    @api_doc(api_section.wiki, uri='/wiki/pages', uses_site=True)
     def GET_wiki_listing(self):
         def check_hidden(page):
             return page.listed and this_may_view(page)
@@ -235,7 +235,7 @@ class WikiController(RedditController, OAuth2ResourceController):
         return redirect_to(str("%s/%s" % (c.wiki_base_url, page)), _code=301)
 
     @require_oauth2_scope("wikiread")
-    @api_doc(api_section.wiki, uri='/discussions/{page}', uses_site=True)
+    @api_doc(api_section.wiki, uri='/wiki/discussions/{page}', uses_site=True)
     @base_listing
     @validate(page=VWikiPage('page', restricted=True))
     def GET_wiki_discussions(self, page, num, after, reverse, count):
@@ -247,7 +247,7 @@ class WikiController(RedditController, OAuth2ResourceController):
                                may_revise=this_may_revise(page)).render()
 
     @require_oauth2_scope("modwiki")
-    @api_doc(api_section.wiki, uri='/settings/{page}', uses_site=True)
+    @api_doc(api_section.wiki, uri='/wiki/settings/{page}', uses_site=True)
     @validate(page=VWikiPage('page', restricted=True, modonly=True))
     def GET_wiki_settings(self, page):
         settings = {'permlevel': page._get('permlevel', 0),
@@ -261,7 +261,7 @@ class WikiController(RedditController, OAuth2ResourceController):
                             may_revise=True).render()
 
     @require_oauth2_scope("modwiki")
-    @api_doc(api_section.wiki, uri='/settings/{page}', uses_site=True)
+    @api_doc(api_section.wiki, uri='/wiki/settings/{page}', uses_site=True)
     @validate(VModhash(),
               page=VWikiPage('page', restricted=True, modonly=True),
               permlevel=VInt('permlevel'),
