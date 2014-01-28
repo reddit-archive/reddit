@@ -2538,6 +2538,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                 item.child = None
         jquery.things(parent._fullname).parent().replace_things(a, False, True)
 
+    @require_oauth2_scope("read")
     @validatedForm(link = VByName('link_id'),
                    sort = VMenu('where', CommentSortMenu),
                    children = VCommentIDs('children'),
