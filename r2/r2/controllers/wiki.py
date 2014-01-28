@@ -97,6 +97,7 @@ RENDERERS_BY_PAGE = {"config/sidebar": "reddit",
 class WikiController(RedditController):
     allow_stylesheets = True
 
+    @api_doc(api_section.wiki, uri='/wiki/{page}', uses_site=True)
     @validate(pv=VWikiPageAndVersion(('page', 'v', 'v2'),
                                      required=False,
                                      restricted=False,
@@ -157,6 +158,7 @@ class WikiController(RedditController):
                             edit_date=edit_date, page=page.name,
                             renderer=renderer).render()
 
+    @api_doc(api_section.wiki, uri='/revisions/{page}', uses_site=True)
     @paginated_listing(max_page_size=100, backend='cassandra')
     @validate(page=VWikiPage(('page'), restricted=False))
     def GET_wiki_revisions(self, num, after, reverse, count, page):
@@ -205,6 +207,7 @@ class WikiController(RedditController):
         return WikiEdit(content, previous, alert=message, page=wp.name,
                         may_revise=True).render()
 
+    @api_doc(api_section.wiki, uri='/revisions/{page}', uses_site=True)
     @paginated_listing(max_page_size=100, backend='cassandra')
     def GET_wiki_recent(self, num, after, reverse, count):
         revisions = WikiRevision.get_recent(c.site)
@@ -217,6 +220,7 @@ class WikiController(RedditController):
         listing = WikiRevisionListing(builder).listing()
         return WikiRecent(listing).render()
 
+    @api_doc(api_section.wiki, uri='/pages', uses_site=True)
     def GET_wiki_listing(self):
         def check_hidden(page):
             return page.listed and this_may_view(page)
@@ -226,6 +230,7 @@ class WikiController(RedditController):
     def GET_wiki_redirect(self, page='index'):
         return redirect_to(str("%s/%s" % (c.wiki_base_url, page)), _code=301)
 
+    @api_doc(api_section.wiki, uri='/discussions/{page}', uses_site=True)
     @base_listing
     @validate(page=VWikiPage('page', restricted=True))
     def GET_wiki_discussions(self, page, num, after, reverse, count):
@@ -236,6 +241,7 @@ class WikiController(RedditController):
         return WikiDiscussions(listing, page=page.name,
                                may_revise=this_may_revise(page)).render()
 
+    @api_doc(api_section.wiki, uri='/settings/{page}', uses_site=True)
     @validate(page=VWikiPage('page', restricted=True, modonly=True))
     def GET_wiki_settings(self, page):
         settings = {'permlevel': page._get('permlevel', 0),
@@ -248,6 +254,7 @@ class WikiController(RedditController):
                             restricted=restricted,
                             may_revise=True).render()
 
+    @api_doc(api_section.wiki, uri='/settings/{page}', uses_site=True)
     @validate(VModhash(),
               page=VWikiPage('page', restricted=True, modonly=True),
               permlevel=VInt('permlevel'),

@@ -186,7 +186,7 @@ class ApidocsController(RedditController):
         from r2.controllers.apiv1 import APIv1Controller
         from r2.controllers.captcha import CaptchaController
         from r2.controllers.front import FrontController
-        from r2.controllers.wiki import WikiApiController
+        from r2.controllers.wiki import WikiApiController, WikiController
         from r2.controllers.multi import MultiApiController
         from r2.controllers import listingcontroller
 
@@ -195,9 +195,10 @@ class ApidocsController(RedditController):
             (ApiController, '/api'),
             (ApiminimalController, '/api'),
             (WikiApiController, '/api/wiki'),
+            (WikiController, '/wiki'),
             (MultiApiController, '/api/multi'),
             (CaptchaController, ''),
-            (FrontController, '')
+            (FrontController, ''),
         ]
         for name, value in vars(listingcontroller).iteritems():
             if name.endswith('Controller'):
