@@ -500,10 +500,18 @@ class UrlParser(object):
         g.domain, or a subdomain of the provided subreddit's cname.
         """
         from pylons import g
-        return (not self.hostname or
-                is_subdomain(self.hostname, g.domain) or
-                (subreddit and subreddit.domain and
-                 is_subdomain(self.hostname, subreddit.domain)))
+        subdomain = (
+            not self.hostname or
+            is_subdomain(self.hostname, g.domain) or
+            (subreddit and subreddit.domain and
+                is_subdomain(self.hostname, subreddit.domain))
+        )
+        if not subdomain or not self.hostname or not g.offsite_subdomains:
+            return subdomain
+        return not any(
+            self.hostname.startswith(subdomain + '.')
+            for subdomain in g.offsite_subdomains
+        )
 
     def path_add_subreddit(self, subreddit):
         """

@@ -206,6 +206,7 @@ class Globals(object):
             'hardcache_categories',
             'case_sensitive_domains',
             'reserved_subdomains',
+            'offsite_subdomains',
             'TRAFFIC_LOG_HOSTS',
             'exempt_login_user_agents',
             'timed_templates',
