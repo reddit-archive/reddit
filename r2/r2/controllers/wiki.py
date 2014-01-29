@@ -106,6 +106,12 @@ class WikiController(RedditController, OAuth2ResourceController):
               page_name=VWikiPageName('page',
                                       error_on_name_normalized=True))
     def GET_wiki_page(self, pv, page_name):
+        """Return the content of a wiki page
+
+        If `v` is given, show the wiki page as it was at that version
+        If both `v` and `v2` are given, show a diff of the two
+
+        """
         message = None
 
         if c.errors.get(('PAGE_NAME_NORMALIZED', 'page')):
@@ -164,6 +170,7 @@ class WikiController(RedditController, OAuth2ResourceController):
     @paginated_listing(max_page_size=100, backend='cassandra')
     @validate(page=VWikiPage(('page'), restricted=False))
     def GET_wiki_revisions(self, num, after, reverse, count, page):
+        """Retrieve a list of revisions of this wiki `page`"""
         revisions = page.get_revisions()
         wikiuser = c.user if c.user_is_loggedin else None
         builder = WikiRevisionBuilder(revisions, user=wikiuser, sr=c.site,
@@ -210,9 +217,10 @@ class WikiController(RedditController, OAuth2ResourceController):
                         may_revise=True).render()
 
     @require_oauth2_scope("wikiread")
-    @api_doc(api_section.wiki, uri='/wiki/revisions/{page}', uses_site=True)
+    @api_doc(api_section.wiki, uri='/wiki/revisions', uses_site=True)
     @paginated_listing(max_page_size=100, backend='cassandra')
     def GET_wiki_recent(self, num, after, reverse, count):
+        """Retrieve a list of recently changed wiki pages in this subreddit"""
         revisions = WikiRevision.get_recent(c.site)
         wikiuser = c.user if c.user_is_loggedin else None
         builder = WikiRecentRevisionBuilder(revisions,  num=num, count=count,
@@ -226,6 +234,7 @@ class WikiController(RedditController, OAuth2ResourceController):
     @require_oauth2_scope("wikiread")
     @api_doc(api_section.wiki, uri='/wiki/pages', uses_site=True)
     def GET_wiki_listing(self):
+        """Retrieve a list of wiki pages in this subreddit"""
         def check_hidden(page):
             return page.listed and this_may_view(page)
         pages, linear_pages = WikiPage.get_listing(c.site, filter_check=check_hidden)
@@ -239,6 +248,7 @@ class WikiController(RedditController, OAuth2ResourceController):
     @base_listing
     @validate(page=VWikiPage('page', restricted=True))
     def GET_wiki_discussions(self, page, num, after, reverse, count):
+        """Retrieve a list of discussions about this wiki `page`"""
         page_url = add_sr("%s/%s" % (c.wiki_base_url, page.name))
         builder = url_links_builder(page_url, num=num, after=after,
                                     reverse=reverse, count=count)
@@ -250,6 +260,7 @@ class WikiController(RedditController, OAuth2ResourceController):
     @api_doc(api_section.wiki, uri='/wiki/settings/{page}', uses_site=True)
     @validate(page=VWikiPage('page', restricted=True, modonly=True))
     def GET_wiki_settings(self, page):
+        """Retrieve the current permission settings for `page`"""
         settings = {'permlevel': page._get('permlevel', 0),
                     'listed': page.listed}
         mayedit = page.get_editor_accounts()
@@ -267,6 +278,7 @@ class WikiController(RedditController, OAuth2ResourceController):
               permlevel=VInt('permlevel'),
               listed=VBoolean('listed'))
     def POST_wiki_settings(self, page, permlevel, listed):
+        """Update the permissions and visibility of wiki `page`"""
         oldpermlevel = page.permlevel
         try:
             page.change_permlevel(permlevel)
@@ -335,6 +347,7 @@ class WikiApiController(WikiController):
               reason=VPrintable('reason', 256, empty_error=None))
     @api_doc(api_section.wiki, uri='/api/wiki/edit', uses_site=True)
     def POST_wiki_edit(self, pageandprevious, content, page_name, reason):
+        """Edit a wiki `page`"""
         page, previous = pageandprevious
 
         if not page:
@@ -395,6 +408,7 @@ class WikiApiController(WikiController):
              uses_site=True,
              uri_variants=['/api/wiki/alloweditor/%s' % act for act in ('del', 'add')])
     def POST_wiki_allow_editor(self, act, page, user):
+        """Allow/deny `username` to edit this wiki `page`"""
         if not user:
             self.handle_error(404, 'UNKNOWN_USER')
         elif act == 'del':
@@ -411,6 +425,7 @@ class WikiApiController(WikiController):
               pv=VWikiPageAndVersion(('page', 'revision')))
     @api_doc(api_section.wiki, uri='/api/wiki/hide', uses_site=True)
     def POST_wiki_revision_hide(self, pv):
+        """Toggle the public visibility of a wiki page revision"""
         page, revision = pv
         if not revision:
             self.handle_error(400, 'INVALID_REVISION')
@@ -422,6 +437,7 @@ class WikiApiController(WikiController):
               pv=VWikiPageAndVersion(('page', 'revision')))
     @api_doc(api_section.wiki, uri='/api/wiki/revert', uses_site=True)
     def POST_wiki_revision_revert(self, pv):
+        """Revert a wiki `page` to `revision`"""
         page, revision = pv
         if not revision:
             self.handle_error(400, 'INVALID_REVISION')
@@ -450,3 +466,4 @@ class WikiApiController(WikiController):
         WikiController.pre(self)
         c.render_style = 'api'
         set_extension(request.environ, 'json')
+
