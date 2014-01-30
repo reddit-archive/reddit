@@ -28,7 +28,7 @@ from r2.lib.cache import sgm
 from r2.models.comment_tree import CommentTree
 from r2.models.link import Comment, Link
 
-MAX_ITERATIONS = 50000
+MAX_ITERATIONS = 100000
 
 def comments_key(link_id):
     return 'comments_' + str(link_id)
