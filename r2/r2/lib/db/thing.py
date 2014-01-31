@@ -20,22 +20,20 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from __future__ import with_statement
-
-import new, sys
 import hashlib
-from datetime import datetime
-from copy import copy, deepcopy
+import new
+import sys
 
-import operators
-import tdb_sql as tdb
-import sorts
-from .. utils import iters, Results, tup, to36, Storage, timefromnow
-from .. utils import iters, Results, tup, to36, Storage, thing_utils, timefromnow
-from r2.lib.cache import sgm
-from r2.lib.log import log_text
-from r2.lib import stats, hooks
+from copy import copy, deepcopy
+from datetime import datetime
+
 from pylons import g
+
+from r2.lib import hooks
+from r2.lib.cache import sgm
+from r2.lib.db import tdb_sql as tdb, sorts, operators
+from r2.lib.log import log_text
+from r2.lib.utils import Results, tup, to36
 
 
 class NotFound(Exception): pass
