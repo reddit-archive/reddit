@@ -32,7 +32,6 @@ import tdb_sql as tdb
 import sorts
 from .. utils import iters, Results, tup, to36, Storage, timefromnow
 from .. utils import iters, Results, tup, to36, Storage, thing_utils, timefromnow
-from r2.config import cache
 from r2.lib.cache import sgm
 from r2.lib.log import log_text
 from r2.lib import stats, hooks
@@ -196,17 +195,17 @@ class DataThing(object):
 
     def _other_self(self):
         """Load from the cached version of myself. Skip the local cache."""
-        l = cache.get(self._cache_key(), allow_local = False)
+        l = g.cache.get(self._cache_key(), allow_local = False)
         if l and l._id != self._id:
             g.log.error("thing.py: Doppleganger on read: got %s for %s",
                         (l, self))
-            cache.delete(self._cache_key())
+            g.cache.delete(self._cache_key())
             return 
         return l
 
     def _cache_myself(self):
         ck = self._cache_key()
-        cache.set(ck, self)
+        g.cache.set(ck, self)
 
     def _sync_latest(self):
         """Load myself from the cache to and re-apply the .dirties
@@ -323,7 +322,7 @@ class DataThing(object):
         prefix = thing_prefix(cls.__name__)
 
         #write the data to the cache
-        cache.set_multi(to_save, prefix=prefix)
+        g.cache.set_multi(to_save, prefix=prefix)
 
     def _load(self):
         self._load_multi(self)
@@ -389,11 +388,11 @@ class DataThing(object):
             raise NotFound('huge thing_id in %r' % ids)
 
         def count_found(ret, still_need):
-            cache.stats.cache_report(
+            g.cache.stats.cache_report(
                 hits=len(ret), misses=len(still_need),
                 cache_name='sgm.%s' % cls.__name__)
 
-        if not cache.stats:
+        if not g.cache.stats:
             count_found = None
 
         def items_db(ids):
@@ -403,7 +402,7 @@ class DataThing(object):
 
             return items
 
-        bases = sgm(cache, ids, items_db, prefix, stale=stale,
+        bases = sgm(g.cache, ids, items_db, prefix, stale=stale,
                     found_fn=count_found)
 
         # Check to see if we found everything we asked for
@@ -796,7 +795,7 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
             if denorm1: self._thing1._commit(denorm1[0])
             if denorm2: self._thing2._commit(denorm2[0])
             #set fast query cache
-            cache.set(thing_prefix(self.__class__.__name__)
+            g.cache.set(thing_prefix(self.__class__.__name__)
                       + str((self._thing1_id, self._thing2_id, self._name)),
                       self._id)
 
@@ -806,9 +805,9 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
             #clear cache
             prefix = thing_prefix(self.__class__.__name__)
             #TODO - there should be just one cache key for a rel?
-            cache.delete(prefix + str(self._id))
+            g.cache.delete(prefix + str(self._id))
             #update fast query cache
-            cache.set(prefix + str((self._thing1_id,
+            g.cache.set(prefix + str((self._thing1_id,
                                     self._thing2_id,
                                     self._name)), None)
             #temporarily set this property so the rest of this request
@@ -870,7 +869,7 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
 
                 return rel_ids
 
-            res = sgm(cache, pairs, items_db, prefix)
+            res = sgm(g.cache, pairs, items_db, prefix)
 
             #convert the keys back into objects
 
@@ -1019,7 +1018,7 @@ class Query(object):
 
         names = lst = []
 
-        names = cache.get(self._iden()) if self._read_cache else None
+        names = g.cache.get(self._iden()) if self._read_cache else None
         if names is None and not self._write_cache:
             # it wasn't in the cache, and we're not going to
             # replace it, so just hit the db
@@ -1031,11 +1030,11 @@ class Query(object):
             with g.make_lock("thing_query", "lock_%s" % self._iden()):
                 # see if it was set while we were waiting for our
                 # lock
-                names = cache.get(self._iden(), allow_local = False) \
+                names = g.cache.get(self._iden(), allow_local = False) \
                                   if self._read_cache else None
                 if names is None:
                     lst = _retrieve()
-                    cache.set(self._iden(),
+                    g.cache.set(self._iden(),
                               [ x._fullname for x in lst ],
                               self._cache_time)
 

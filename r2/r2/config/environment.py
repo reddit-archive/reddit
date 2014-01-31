@@ -63,7 +63,6 @@ def load_environment(global_conf={}, app_conf={}, setup_globals=True):
     if setup_globals:
         g.setup()
         g.plugins.declare_queues(g.queues)
-        r2.config.cache = g.cache
     g.plugins.load_plugins()
     config['r2.plugins'] = g.plugins
     g.startup_timer.intermediate("plugins")

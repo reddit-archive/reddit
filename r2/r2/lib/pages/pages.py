@@ -52,7 +52,6 @@ from r2.models import ModAction
 from r2.models import Thing
 from r2.models.wiki import WikiPage, ImagesByWikiPage
 from r2.lib.db import tdb_cassandra
-from r2.config import cache
 from r2.config.extensions import is_api
 from r2.lib.menus import CommentSortMenu
 from pylons.i18n import _, ungettext

@@ -35,7 +35,7 @@ from r2.lib.utils import (
 from account import Account, DeletedUser
 from subreddit import DefaultSR, DomainSR, Subreddit
 from printable import Printable
-from r2.config import cache, extensions
+from r2.config import extensions
 from r2.lib.memoize import memoize
 from r2.lib.filters import _force_utf8, _force_unicode
 from r2.lib import hooks, utils
