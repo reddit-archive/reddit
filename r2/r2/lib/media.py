@@ -42,7 +42,7 @@ import requests
 
 from pylons import g
 
-from r2.lib import amqp
+from r2.lib import amqp, hooks
 from r2.lib.memoize import memoize
 from r2.lib.nymph import optimize_png
 from r2.lib.utils import TimeoutFunction, TimeoutFunctionException, domain
@@ -307,13 +307,16 @@ def get_media_embed(media_object):
     if not isinstance(media_object, dict):
         return
 
+    embed_hook = hooks.get_hook("scraper.media_embed")
+    media_embed = embed_hook.call_until_return(media_object=media_object)
+    if media_embed:
+        return media_embed
+
     if media_object.get("type") == "custom":
         return _make_custom_media_embed(media_object)
 
-    if "oembed" not in media_object:
-        return
-
-    return _EmbedlyScraper.media_embed(media_object)
+    if "oembed" in media_object:
+        return _EmbedlyScraper.media_embed(media_object)
 
 
 class MediaEmbed(object):
@@ -342,10 +345,15 @@ def _make_thumbnail_from_url(thumbnail_url, referer):
 class Scraper(object):
     @classmethod
     def for_url(cls, url):
+        scraper = hooks.get_hook("scraper.factory").call_until_return(url=url)
+        if scraper:
+            return scraper
+
         embedly_services = _fetch_embedly_services()
         for service_re, service_secure in embedly_services:
             if service_re.match(url):
                 return _EmbedlyScraper(url, service_secure)
+
         return _ThumbnailOnlyScraper(url)
 
     def scrape(self):
