@@ -198,6 +198,7 @@ class Globals(object):
             'rendercaches',
             'pagecaches',
             'memoizecaches',
+            'srmembercaches',
             'cassandra_seeds',
             'admins',
             'sponsors',
@@ -489,6 +490,13 @@ class Globals(object):
             num_clients=num_mc_clients,
         )
 
+        # a pool just for srmember rels
+        srmembercaches = CMemcache(
+            self.srmembercaches,
+            min_compress_len=50 * 1024,
+            num_clients=num_mc_clients,
+        )
+
         # a smaller pool of caches used only for distributed locks.
         # TODO: move this to ZooKeeper
         self.lock_cache = CMemcache(self.lockcaches,
@@ -595,6 +603,17 @@ class Globals(object):
             self.memoizecache = MemcacheChain(
                 (localcache_cls(), memoizecaches))
         cache_chains.update(memoizecache=self.memoizecache)
+
+        if stalecaches:
+            self.srmembercache = StaleCacheChain(
+                localcache_cls(),
+                stalecaches,
+                srmembercaches,
+            )
+        else:
+            self.srmembercache = MemcacheChain(
+                (localcache_cls(), srmembercaches))
+        cache_chains.update(srmembercache=self.srmembercache)
 
         self.rendercache = MemcacheChain((
             localcache_cls(),

@@ -42,7 +42,7 @@ from r2.lib.memoize import memoize
 from r2.lib.permissions import ModeratorPermissionSet
 from r2.lib.utils import tup, last_modified_multi, fuzz_activity
 from r2.lib.utils import timeago, summarize_markdown
-from r2.lib.cache import sgm
+from r2.lib.cache import sgm, TransitionalCache
 from r2.lib.strings import strings, Score
 from r2.lib.filters import _force_unicode
 from r2.lib.db import tdb_cassandra
@@ -1635,6 +1635,11 @@ Subreddit._specials.update(dict(friends = Friends,
 class SRMember(Relation(Subreddit, Account)):
     _defaults = dict(encoded_permissions=None)
     _permission_class = None
+    _cache = TransitionalCache(
+        original_cache=g.cache,
+        replacement_cache=g.srmembercache,
+        read_original=True,
+    )
 
     def has_permission(self, perm):
         """Returns whether this member has explicitly been granted a permission.
