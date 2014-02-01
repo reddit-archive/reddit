@@ -300,6 +300,76 @@ class LocalCache(dict, CacheUtils):
     def __repr__(self):
         return "<LocalCache(%d)>" % (len(self),)
 
+
+class TransitionalCache(CacheUtils):
+    """A cache "chain" for moving keys to a new cluster live.
+
+    `original_cache` is the cache chain previously in use (this'll frequently
+    be `g.cache` since it's the catch-all for most things) and
+    `replacement_cache` is the new place for the keys using this chain to live.
+
+    To use this cache chain, do three separate deployments as follows:
+
+        * start dual-writing to the new pool by putting this chain in place
+          with `read_original=True`.
+        * cut reads over to the new pool after it is sufficiently heated up by
+          deploying `read_original=False`.
+        * remove this cache chain entirely and replace it with
+          `replacement_cache`.
+
+    This ensures that at any point, all apps regardless of their position in
+    the push order will have a consistent view of the data in the cache pool as
+    much as is possible.
+
+    """
+
+    def __init__(self, original_cache, replacement_cache, read_original):
+        self.original = original_cache
+        self.replacement = replacement_cache
+        self.read_original = read_original
+
+    @property
+    def stats(self):
+        if self.read_original:
+            return self.original.stats
+        else:
+            return self.replacement.stats
+
+    def make_get_fn(fn_name):
+        def transitional_cache_get_fn(self, *args, **kwargs):
+            if self.read_original:
+                return getattr(self.original, fn_name)(*args, **kwargs)
+            else:
+                return getattr(self.replacement, fn_name)(*args, **kwargs)
+        return transitional_cache_get_fn
+
+    get = make_get_fn("get")
+    get_multi = make_get_fn("get_multi")
+    simple_get_multi = make_get_fn("simple_get_multi")
+
+    def make_set_fn(fn_name):
+        def transitional_cache_set_fn(self, *args, **kwargs):
+            getattr(self.original, fn_name)(*args, **kwargs)
+            getattr(self.replacement, fn_name)(*args, **kwargs)
+        return transitional_cache_set_fn
+
+    add = make_set_fn("add")
+    set = make_set_fn("set")
+    append = make_set_fn("append")
+    prepend = make_set_fn("prepend")
+    replace = make_set_fn("replace")
+    set_multi = make_set_fn("set_multi")
+    add = make_set_fn("add")
+    add_multi = make_set_fn("add_multi")
+    incr = make_set_fn("incr")
+    incr_multi = make_set_fn("incr_multi")
+    decr = make_set_fn("decr")
+    delete = make_set_fn("delete")
+    delete_multi = make_set_fn("delete_multi")
+    flush_all = make_set_fn("flush_all")
+    reset = make_set_fn("reset")
+
+
 class CacheChain(CacheUtils, local):
     def __init__(self, caches, cache_negative_results=False):
         self.caches = caches

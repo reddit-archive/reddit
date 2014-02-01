@@ -80,6 +80,7 @@ class DataThing(object):
     c = operators.Slots()
     __safe__ = False
     _asked_for_data = False
+    _cache = g.cache
 
     def __init__(self):
         safe_set_attr = SafeSetAttr(self)
@@ -193,17 +194,17 @@ class DataThing(object):
 
     def _other_self(self):
         """Load from the cached version of myself. Skip the local cache."""
-        l = g.cache.get(self._cache_key(), allow_local = False)
+        l = self._cache.get(self._cache_key(), allow_local = False)
         if l and l._id != self._id:
             g.log.error("thing.py: Doppleganger on read: got %s for %s",
                         (l, self))
-            g.cache.delete(self._cache_key())
+            self._cache.delete(self._cache_key())
             return 
         return l
 
     def _cache_myself(self):
         ck = self._cache_key()
-        g.cache.set(ck, self)
+        self._cache.set(ck, self)
 
     def _sync_latest(self):
         """Load myself from the cache to and re-apply the .dirties
@@ -320,7 +321,7 @@ class DataThing(object):
         prefix = thing_prefix(cls.__name__)
 
         #write the data to the cache
-        g.cache.set_multi(to_save, prefix=prefix)
+        cls._cache.set_multi(to_save, prefix=prefix)
 
     def _load(self):
         self._load_multi(self)
@@ -386,11 +387,11 @@ class DataThing(object):
             raise NotFound('huge thing_id in %r' % ids)
 
         def count_found(ret, still_need):
-            g.cache.stats.cache_report(
+            cls._cache.stats.cache_report(
                 hits=len(ret), misses=len(still_need),
                 cache_name='sgm.%s' % cls.__name__)
 
-        if not g.cache.stats:
+        if not cls._cache.stats:
             count_found = None
 
         def items_db(ids):
@@ -400,7 +401,7 @@ class DataThing(object):
 
             return items
 
-        bases = sgm(g.cache, ids, items_db, prefix, stale=stale,
+        bases = sgm(cls._cache, ids, items_db, prefix, stale=stale,
                     found_fn=count_found)
 
         # Check to see if we found everything we asked for
@@ -793,7 +794,7 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
             if denorm1: self._thing1._commit(denorm1[0])
             if denorm2: self._thing2._commit(denorm2[0])
             #set fast query cache
-            g.cache.set(thing_prefix(self.__class__.__name__)
+            self._cache.set(thing_prefix(self.__class__.__name__)
                       + str((self._thing1_id, self._thing2_id, self._name)),
                       self._id)
 
@@ -803,9 +804,9 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
             #clear cache
             prefix = thing_prefix(self.__class__.__name__)
             #TODO - there should be just one cache key for a rel?
-            g.cache.delete(prefix + str(self._id))
+            self._cache.delete(prefix + str(self._id))
             #update fast query cache
-            g.cache.set(prefix + str((self._thing1_id,
+            self._cache.set(prefix + str((self._thing1_id,
                                     self._thing2_id,
                                     self._name)), None)
             #temporarily set this property so the rest of this request
@@ -867,7 +868,7 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
 
                 return rel_ids
 
-            res = sgm(g.cache, pairs, items_db, prefix)
+            res = sgm(cls._cache, pairs, items_db, prefix)
 
             #convert the keys back into objects
 
