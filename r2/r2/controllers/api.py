@@ -3096,7 +3096,10 @@ class ApiController(RedditController, OAuth2ResourceController):
 
     @require_oauth2_scope("modflair")
     @paginated_listing(max_page_size=1000)
-    @validate(user = VFlairAccount('name'))
+    @validate(
+        VSrModerator(perms='flair'),
+        user=VFlairAccount('name'),
+    )
     @api_doc(api_section.flair, uses_site=True)
     def GET_flairlist(self, num, after, reverse, count, user):
         flair = FlairList(num, after, reverse, '', user)
