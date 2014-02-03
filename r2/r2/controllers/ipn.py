@@ -467,7 +467,11 @@ class IpnController(RedditController):
                payer_email, paying_id, subscr_id,
                custom, pennies, months, days):
 
-        blob_key, payment_blob = get_blob(custom)
+        try:
+            blob_key, payment_blob = get_blob(custom)
+        except ValueError:
+            g.log.error("whoops, %s was locked" % custom)
+            return
 
         buyer_id = payment_blob.get('account_id', None)
         if not buyer_id:
