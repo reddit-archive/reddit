@@ -470,7 +470,7 @@ class IpnController(RedditController):
         try:
             blob_key, payment_blob = get_blob(custom)
         except ValueError:
-            g.log.error("whoops, %s was locked" % custom)
+            g.log.error("whoops, %s was locked", custom)
             return
 
         buyer_id = payment_blob.get('account_id', None)
@@ -559,7 +559,11 @@ class IpnController(RedditController):
 
             message = append_random_bottlecap_phrase(message)
 
-            send_system_message(buyer, subject, message, distinguished='gold-auto')
+            try:
+                send_system_message(buyer, subject, message,
+                                    distinguished='gold-auto')
+            except MessageError:
+                g.log.error('finish: could not send system message')
 
         payment_blob["status"] = "processed"
         g.hardcache.set(blob_key, payment_blob, 86400 * 30)
@@ -685,7 +689,11 @@ class GoldPaymentController(RedditController):
                 buyer = webhook.buyer
             else:
                 return
-            send_system_message(buyer, subject, msg)
+
+            try:
+                send_system_message(buyer, subject, msg)
+            except MessageError:
+                g.log.error('process_webhook: send_system_message error')
 
     @classmethod
     def complete_gold_purchase(cls, webhook):
