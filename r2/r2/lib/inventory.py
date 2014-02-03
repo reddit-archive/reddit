@@ -72,7 +72,7 @@ def _min_daily_pageviews_by_sr(ndays=NDAYS_TO_QUERY, end_date=None):
     if not end_date:
         last_modified = traffic.get_traffic_last_modified()
         end_date = last_modified - timedelta(days=1)
-    stop = end_date.date()
+    stop = end_date
     start = stop - timedelta(ndays)
     time_points = traffic.get_time_points('day', start, stop)
     cls = traffic.PageviewsBySubredditAndPath
