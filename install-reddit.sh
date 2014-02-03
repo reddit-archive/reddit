@@ -248,11 +248,11 @@ rabbitmqctl set_permissions -p / reddit ".*" ".*" ".*"
 cd $REDDIT_HOME/reddit/r2
 sudo -u $REDDIT_OWNER make pyx # generate the .c files from .pyx
 sudo -u $REDDIT_OWNER python setup.py build
-python setup.py develop
+python setup.py develop --no-deps
 
 cd $REDDIT_HOME/reddit-i18n/
 sudo -u $REDDIT_OWNER python setup.py build
-python setup.py develop
+python setup.py develop --no-deps
 sudo -u $REDDIT_OWNER make
 
 # this builds static files and should be run *after* languages are installed
