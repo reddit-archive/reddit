@@ -45,7 +45,7 @@
 
 <%def name="global_stylesheets()">
   %if c.lang_rtl:
-    <link rel="stylesheet" href="${static("reddit-rtl.less")}"
+    <link rel="stylesheet" href="${static("reddit-rtl.css")}"
           type="text/css" />
     %if c.site.stylesheet_rtl:
       <link rel="stylesheet" href="${static(c.site.stylesheet_rtl)}"
