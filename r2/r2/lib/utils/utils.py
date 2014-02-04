@@ -47,7 +47,7 @@ from pylons.i18n import ungettext, _
 from r2.lib.filters import _force_unicode, _force_utf8
 from mako.filters import url_escape
 from r2.lib.contrib import ipaddress
-from r2.lib.require import require, require_split
+from r2.lib.require import require, require_split, RequirementException
 import snudown
 
 from r2.lib.utils._utils import *
