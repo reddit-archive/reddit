@@ -55,8 +55,11 @@ class _CommentBuilder(Builder):
         cdef dict parents
         cdef dict sorter
 
+        timer = g.stats.get_timer("CommentBuilder.get_items")
+        timer.start()
         r = link_comments_and_sort(self.link, self.sort.col)
         cids, cid_tree, depth, num_children, parents, sorter = r
+        timer.intermediate("load_storage")
 
         cdef dict debug_dict = dict(
             link = self.link,
@@ -130,6 +133,8 @@ class _CommentBuilder(Builder):
             debug_dict["was_root"] = "yes"
             candidates.extend(cid_tree.get(None, ()))
 
+        timer.intermediate("pick_candidates")
+
         #find the comments
         cdef int num_have = 0
         if candidates:
@@ -139,6 +144,7 @@ class _CommentBuilder(Builder):
             if not candidates:
                 g.log.error("_builder.pyx: empty candidate list: %r" %
                             request.fullpath)
+                timer.stop()
                 return []
         candidates.sort(key = sorter.get, reverse = self.rev_sort)
 
@@ -168,6 +174,7 @@ class _CommentBuilder(Builder):
                     w.children.append(to_add)
                     extra[p_id] = w
         debug_dict["candidates_after"] = repr(candidates)
+        timer.intermediate("pick_comments")
 
         # items is a list of things we actually care about so load them
         items = Comment._byID(items, data = True, return_dict = False, stale=self.stale)
@@ -225,7 +232,10 @@ class _CommentBuilder(Builder):
             if not parent.deleted:
                 parent.child.parent_name = parent._fullname
 
+        timer.intermediate("build_comments")
+
         if not self.load_more:
+            timer.stop()
             return final
 
         #put the remaining comments into the tree (the show more comments link)
@@ -282,6 +292,7 @@ class _CommentBuilder(Builder):
         if isinstance(self.sort, operators.shuffled):
             shuffle(final)
 
+        timer.stop("build_morechildren")
         return final
 
 class _MessageBuilder(Builder):
