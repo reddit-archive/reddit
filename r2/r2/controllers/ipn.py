@@ -443,9 +443,12 @@ class IpnController(RedditController):
         existing = existing_subscription(subscr_id, paying_id, custom)
         if existing:
             if existing != "deleted account":
-                create_claimed_gold ("P" + txn_id, payer_email, paying_id,
-                                     pennies, days, None, existing._id,
-                                     c.start_time, subscr_id)
+                try:
+                    create_claimed_gold ("P" + txn_id, payer_email, paying_id,
+                                         pennies, days, None, existing._id,
+                                         c.start_time, subscr_id)
+                except IntegrityError:
+                    return "Ok"
                 admintools.engolden(existing, days)
 
                 g.log.info("Just applied IPN renewal for %s, %d days" %
