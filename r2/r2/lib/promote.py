@@ -316,6 +316,9 @@ def terminate_campaign(link, campaign):
     edit_campaign(link, campaign, dates, campaign.bid, campaign.cpm, sr,
                   campaign.priority, campaign.location)
 
+    update_promote_status(link, PROMOTE_STATUS.finished)
+    all_live_promo_srnames(_update=True)
+
     msg = 'terminated campaign %s (original end %s)' % (campaign._id,
                                                         original_end.date())
     PromotionLog.add(link, msg)
