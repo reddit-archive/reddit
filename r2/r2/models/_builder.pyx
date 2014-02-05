@@ -147,7 +147,6 @@ class _CommentBuilder(Builder):
                                               parent_id=parent_id))
                 else:
                     w = more_recursions[parent_id]
-                w.children.append(comment_id)
                 more_recursions[parent_id] = w
 
         timer.intermediate("pick_comments")
