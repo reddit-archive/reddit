@@ -565,7 +565,7 @@ class PromoteController(ListingController):
     @validatedForm(VSponsor('link_id36'),
                    VModhash(),
                    dates=VDateRange(['startdate', 'enddate'],
-                       earliest=timedelta(days=1),
+                       earliest=timedelta(days=g.min_promote_future),
                        latest=timedelta(days=g.max_promote_future),
                        reference_date=promote.promo_datetime_now,
                        business_days=True,
@@ -589,21 +589,6 @@ class PromoteController(ListingController):
         cpm = author.cpm_selfserve_pennies
         if location:
             cpm += g.cpm_selfserve_geotarget.pennies
-
-        if (start and end and not promote.is_accepted(link) and
-            not c.user_is_sponsor):
-            # if the ad is not approved already, ensure the start date
-            # is at least 2 days in the future
-            start = start.date()
-            end = end.date()
-            now = promote.promo_datetime_now()
-            future = make_offset_date(now, g.min_promote_future,
-                                      business_days=True)
-            if start < future.date():
-                day = promote.promo_datetime_now(offset=g.min_promote_future)
-                day = day.strftime("%m/%d/%Y")
-                c.errors.add(errors.DATE_TOO_EARLY, msg_params=dict(day=day),
-                             field="startdate")
 
         if (form.has_errors('startdate', errors.BAD_DATE,
                             errors.DATE_TOO_EARLY, errors.DATE_TOO_LATE) or
