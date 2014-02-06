@@ -39,7 +39,7 @@ from r2.lib.permissions import ModeratorPermissionSet
 from r2.models import *
 from r2.models.promo import Location
 from r2.lib.authorize import Address, CreditCard
-from r2.lib.utils import constant_time_compare
+from r2.lib.utils import constant_time_compare, make_offset_date
 from r2.lib.require import require, require_split, RequirementException
 
 from r2.lib.errors import errors, RedditError, UserRequiredException
@@ -1936,8 +1936,13 @@ class VDate(Validator):
 
     def run(self, date):
         now = self.reference_date()
-        earliest = now + self.earliest if self.earliest is not None else None
-        latest = now + self.latest if self.latest is not None else None
+        earliest = latest = None
+        if self.earliest:
+            earliest = make_offset_date(now, self.earliest.days,
+                                        business_days=self.business_days)
+        if self.latest:
+            latest = make_offset_date(now, self.latest.days,
+                                      business_days=self.business_days)
         override = c.user_is_sponsor and self.override
         try:
             date = datetime.strptime(date, self.format)
