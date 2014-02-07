@@ -2777,26 +2777,6 @@ class ApiController(RedditController, OAuth2ResourceController):
 
         form.set_html(".status", _("password updated"))
 
-
-
-    @noresponse(VUser())
-    def POST_noframe(self):
-        """
-        removes the reddit toolbar if that currently the user's preference
-        """
-        c.user.pref_frame = False
-        c.user._commit()
-
-
-    @noresponse(VUser())
-    def POST_frame(self):
-        """
-        undoes POST_noframe
-        """
-        c.user.pref_frame = True
-        c.user._commit()
-
-
     @require_oauth2_scope("subscribe")
     @noresponse(VUser(),
                 VModhash(),
