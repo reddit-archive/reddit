@@ -905,6 +905,12 @@ def make_or_admin_secret_cls(base_cls):
                                                 g.secrets["ADMINSECRET"]):
                 return True
             super(VOrAdminSecret, self).run()
+
+            # import here so that we don't close around VModhash
+            # before r2admin can override
+            from r2.lib.validator import VModhash
+            VModhash(fatal=True).run(request.POST.get("uh"))
+
             return False
     return VOrAdminSecret
 
