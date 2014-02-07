@@ -336,6 +336,7 @@ class PromoteController(ListingController):
 
     # ## POST controllers below
     @validatedForm(VSponsorAdmin(),
+                   VModhash(),
                    link=VLink("link_id36"),
                    campaign=VPromoCampaign("campaign_id36"))
     def POST_freebie(self, form, jquery, link, campaign):
@@ -348,6 +349,7 @@ class PromoteController(ListingController):
             form.redirect(promote.promo_edit_url(link))
 
     @validatedForm(VSponsorAdmin(),
+                   VModhash(),
                    link=VByName("link"),
                    note=nop("note"))
     def POST_promote_note(self, form, jquery, link, note):
@@ -358,12 +360,14 @@ class PromoteController(ListingController):
 
 
     @noresponse(VSponsorAdmin(),
+                VModhash(),
                 thing=VByName('id'))
     def POST_promote(self, thing):
         if promote.is_promo(thing):
             promote.accept_promotion(thing)
 
     @noresponse(VSponsorAdmin(),
+                VModhash(),
                 thing=VByName('id'),
                 reason=nop("reason"))
     def POST_unpromote(self, thing, reason):
@@ -381,6 +385,7 @@ class PromoteController(ListingController):
         return Reddit("refund", content=content, show_sidebar=False).render()
 
     @validatedForm(VSponsorAdmin(),
+                   VModhash(),
                    link=VLink('link'),
                    campaign=VPromoCampaign('campaign'))
     def POST_refund_campaign(self, form, jquery, link, campaign):
@@ -742,6 +747,7 @@ class PromoteController(ListingController):
 
 
     @validatedForm(VSponsor('link'),
+                   VModhash(),
                    link=VByName("link"),
                    campaign=VPromoCampaign("campaign"),
                    customer_id=VInt("customer_id", min=0),
@@ -818,6 +824,7 @@ class PromoteController(ListingController):
         return "nothing to see here."
 
     @validate(VSponsor("link_name"),
+              VModhash(),
               link=VByName('link_name'),
               file=VUploadLength('file', 500*1024),
               img_type=VImageType('img_type'))
