@@ -1086,19 +1086,23 @@ class Comment(Thing, Printable):
             hide_period = ('{0} minutes'
                           .format(item.subreddit.comment_score_hide_mins))
 
-            if ((item._date > timeago(hide_period) or
-                 item.link.contest_mode) and
-                 not (c.user_is_admin or
-                      c.user_is_loggedin and
-                        item.subreddit.is_moderator(c.user))):
+            if item.link.contest_mode:
+                item.score_hidden = True
+            elif item._date > timeago(hide_period):
+                item.score_hidden = not item.is_author
+            else:
+                item.score_hidden = False
+
+            if item.score_hidden and c.user_is_loggedin:
+                if c.user_is_admin or item.subreddit.is_moderator(c.user):
+                    item.score_hidden = False
+
+            if item.score_hidden:
                 item.upvotes = 1
                 item.downvotes = 0
                 item.score = 1
-                item.score_hidden = True
                 item.voting_score = [1, 1, 1]
                 item.render_css_class += " score-hidden"
-            else:
-                item.score_hidden = False
 
             #will seem less horrible when add_props is in pages.py
             from r2.lib.pages import UserText
