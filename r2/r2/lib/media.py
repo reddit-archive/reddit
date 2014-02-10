@@ -271,8 +271,8 @@ def _set_media(link, force=False):
         link.thumbnail_url = upload_media(thumbnail)
         link.thumbnail_size = thumbnail.size
 
-    link.media_object = media_object
-    link.secure_media_object = secure_media_object
+    link.set_media_object(media_object)
+    link.set_secure_media_object(secure_media_object)
     link._commit()
 
 
@@ -442,20 +442,6 @@ class _EmbedlyScraper(Scraper):
         self.url = url
         self.can_embed_securely = can_embed_securely
 
-    @classmethod
-    def _utf8_encode(cls, input):
-        """UTF-8 encodes any strings in an object (from json.loads)"""
-        if isinstance(input, dict):
-            return {cls._utf8_encode(key): cls._utf8_encode(value)
-                    for key, value in input.iteritems()}
-        elif isinstance(input, list):
-            return [cls._utf8_encode(item)
-                    for item in input]
-        elif isinstance(input, unicode):
-            return input.encode('utf-8')
-        else:
-            return input
-
     def _fetch_from_embedly(self, secure):
         params = urllib.urlencode({
             "url": self.url,
@@ -465,7 +451,7 @@ class _EmbedlyScraper(Scraper):
             "secure": "true" if secure else "false",
         })
         content = requests.get(self.EMBEDLY_API_URL + "?" + params).content
-        return json.loads(content, object_hook=self._utf8_encode)
+        return json.loads(content)
 
     def _make_media_object(self, oembed):
         if oembed.get("type") in ("video", "rich"):

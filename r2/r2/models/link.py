@@ -630,6 +630,33 @@ class Link(Thing, Printable):
         # If available, that should be used instead of calling this
         return Account._byID(self.author_id, data=True, return_dict=False)
 
+    @classmethod
+    def _utf8_encode(cls, value):
+        """
+        Returns a deep copy of the parameter, UTF-8-encoding any strings
+        encountered.
+        """
+        if isinstance(value, dict):
+            return {cls._utf8_encode(key): cls._utf8_encode(value)
+                    for key, value in value.iteritems()}
+        elif isinstance(value, list):
+            return [cls._utf8_encode(item)
+                    for item in value]
+        elif isinstance(value, unicode):
+            return value.encode('utf-8')
+        else:
+            return value
+
+    # There's an issue where pickling fails for collections with string values
+    # that have unicode codepoints between 128 and 256.  Encoding the strings
+    # as UTF-8 before storing them works around this.
+    def set_media_object(self, value):
+        self.media_object = Link._utf8_encode(value)
+
+    def set_secure_media_object(self, value):
+        self.secure_media_object = Link._utf8_encode(value)
+
+
 class LinksByUrl(tdb_cassandra.View):
     _use_db = True
     _connection_pool = 'main'
