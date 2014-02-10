@@ -595,6 +595,7 @@ if [ ! -f /etc/cron.d/reddit ]; then
 *    * * * * root /sbin/start --quiet reddit-job-email
 */2  * * * * root /sbin/start --quiet reddit-job-broken_things
 */2  * * * * root /sbin/start --quiet reddit-job-rising
+0    * * * * root /sbin/start --quiet reddit-job-trylater
 
 # jobs that recalculate time-limited listings (e.g. top this year)
 PGPASSWORD=password
