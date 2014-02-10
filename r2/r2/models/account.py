@@ -32,6 +32,7 @@ from r2.lib.cache        import sgm
 from r2.lib import filters, hooks
 from r2.lib.log import log_text
 from r2.models.last_modified import LastModified
+from r2.models.trylater import TryLater
 
 from pylons import c, g, request
 from pylons.i18n import _
@@ -46,6 +47,7 @@ import itertools
 from pycassa.system_manager import ASCII_TYPE
 
 
+trylater_hooks = hooks.HookRegistrar()
 COOKIE_TIMESTAMP_FORMAT = '%Y-%m-%dT%H:%M:%S'
 
 
@@ -391,6 +393,10 @@ class Account(Thing):
                           eager_load=True)
         for f in q:
             f._thing1.remove_enemy(f._thing2)
+
+        # wipe out stored password data after a recovery period
+        TryLater.schedule("account_deletion", self._id36,
+                          delay=timedelta(days=90))
 
         # Remove OAuth2Client developer permissions.  This will delete any
         # clients for which this account is the sole developer.
@@ -857,3 +863,15 @@ class AccountsActiveBySR(tdb_cassandra.View):
     @memoize('accounts_active', time=60)
     def get_count_cached(cls, sr_id):
         return cls._cf.get_count(sr_id)
+
+
+@trylater_hooks.on("trylater.account_deletion")
+def on_account_deletion(mature_items):
+    for account_id36 in mature_items.itervalues():
+        account = Account._byID36(account_id36, data=True)
+
+        if not account._deleted:
+            continue
+
+        account.password = ""
+        account._commit()
