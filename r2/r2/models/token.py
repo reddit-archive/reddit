@@ -206,6 +206,9 @@ class OAuth2Scope:
         },
     }
 
+    # Special scope, granted implicitly to clients with app_type == "script"
+    FULL_ACCESS = "*"
+
     def __init__(self, scope_str=None, subreddits=None, scopes=None):
         if scope_str:
             self._parse_scope_str(scope_str)
@@ -235,11 +238,22 @@ class OAuth2Scope:
             sr_part = ''
         return sr_part + ','.join(sorted(self.scopes))
 
+    def has_access(self, subreddit, required_scopes):
+        if self.FULL_ACCESS in self.scopes:
+            return True
+        if self.subreddit_only and subreddit not in self.subreddits:
+            return False
+        return (self.scopes >= required_scopes)
+
     def is_valid(self):
         return all(scope in self.scope_info for scope in self.scopes)
 
     def details(self):
-        return [(scope, self.scope_info[scope]) for scope in self.scopes]
+        if self.FULL_ACCESS in self.scopes:
+            scopes = self.scope_info.keys()
+        else:
+            scopes = self.scopes
+        return [(scope, self.scope_info[scope]) for scope in scopes]
 
     @classmethod
     def merge_scopes(cls, scopes):
