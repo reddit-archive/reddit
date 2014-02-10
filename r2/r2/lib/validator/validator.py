@@ -908,8 +908,9 @@ def make_or_admin_secret_cls(base_cls):
 
             # import here so that we don't close around VModhash
             # before r2admin can override
-            from r2.lib.validator import VModhash
-            VModhash(fatal=True).run(request.POST.get("uh"))
+            if request.method.upper() != "GET":
+                from r2.lib.validator import VModhash
+                VModhash(fatal=True).run(request.POST.get("uh"))
 
             return False
     return VOrAdminSecret
