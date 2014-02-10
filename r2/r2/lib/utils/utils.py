@@ -249,9 +249,9 @@ def extract_title(data):
 
     return title.encode('utf-8').strip()
 
-valid_schemes = ('http', 'https', 'ftp', 'mailto')
+VALID_SCHEMES = ('http', 'https', 'ftp', 'mailto')
 valid_dns = re.compile('\A[-a-zA-Z0-9]+\Z')
-def sanitize_url(url, require_scheme = False):
+def sanitize_url(url, require_scheme=False, valid_schemes=VALID_SCHEMES):
     """Validates that the url is of the form
 
     scheme://domain/path/to/content#anchor?cruft
@@ -262,7 +262,7 @@ def sanitize_url(url, require_scheme = False):
     otherwise validates"""
 
     if not url:
-        return
+        return None
 
     url = url.strip()
     if url.lower() == 'self':
@@ -275,30 +275,34 @@ def sanitize_url(url, require_scheme = False):
             url = 'http://' + url
             u = urlparse(url)
     except ValueError:
-        return
+        return None
 
-    if u.scheme and u.scheme in valid_schemes:
-        # if there is a scheme and no hostname, it is a bad url.
-        if not u.hostname:
-            return
-        if u.username is not None or u.password is not None:
-            return
+    if not u.scheme:
+        return None
+    if valid_schemes is not None and u.scheme not in valid_schemes:
+        return None
 
-        try:
-            idna_hostname = u.hostname.encode('idna')
-        except TypeError as e:
-            g.log.warning("Bad hostname given [%r]: %s", u.hostname, e)
-            raise
-        except UnicodeError:
-            return
+    # if there is a scheme and no hostname, it is a bad url.
+    if not u.hostname:
+        return None
+    if u.username is not None or u.password is not None:
+        return None
 
-        for label in idna_hostname.split('.'):
-            if not re.match(valid_dns, label):
-                return
+    try:
+        idna_hostname = u.hostname.encode('idna')
+    except TypeError as e:
+        g.log.warning("Bad hostname given [%r]: %s", u.hostname, e)
+        raise
+    except UnicodeError:
+        return None
 
-        if idna_hostname != u.hostname:
-            url = urlunparse((u[0], idna_hostname, u[2], u[3], u[4], u[5]))
-        return url
+    for label in idna_hostname.split('.'):
+        if not re.match(valid_dns, label):
+            return None
+
+    if idna_hostname != u.hostname:
+        url = urlunparse((u[0], idna_hostname, u[2], u[3], u[4], u[5]))
+    return url
 
 def trunc_string(text, length):
     return text[0:length]+'...' if len(text)>length else text

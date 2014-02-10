@@ -278,6 +278,7 @@ class OAuth2Client(Token):
                      icon_url="",
                      secret="",
                      redirect_uri="",
+                     app_type="web",
                     )
     _use_db = True
     _connection_pool = "main"

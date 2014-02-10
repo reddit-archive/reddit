@@ -1299,15 +1299,19 @@ class VSanitizedUrl(Validator):
 
 
 class VUrl(VRequired):
-    def __init__(self, item, allow_self=True, *a, **kw):
+    def __init__(self, item, allow_self=True, require_scheme=False,
+                 valid_schemes=utils.VALID_SCHEMES, *a, **kw):
         self.allow_self = allow_self
+        self.require_scheme = require_scheme
+        self.valid_schemes = valid_schemes
         VRequired.__init__(self, item, errors.NO_URL, *a, **kw)
 
     def run(self, url):
         if not url:
             return self.error(errors.NO_URL)
 
-        url = utils.sanitize_url(url)
+        url = utils.sanitize_url(url, require_scheme=self.require_scheme,
+                                 valid_schemes=self.valid_schemes)
         if not url:
             return self.error(errors.BAD_URL)
 
@@ -1321,6 +1325,19 @@ class VUrl(VRequired):
 
     def param_docs(self):
         return {self.param: "a valid URL"}
+
+
+class VRedirectUri(VUrl):
+    def __init__(self, item, valid_schemes=None, *a, **kw):
+        VUrl.__init__(self, item, allow_self=False, require_scheme=True,
+                      valid_schemes=valid_schemes, *a, **kw)
+
+    def param_docs(self):
+        doc = "a valid URI"
+        if self.valid_schemes:
+            doc += " with one of the following schemes: "
+            doc += ", ".join(self.valid_schemes)
+        return {self.param: doc}
 
 
 class VShamedDomain(Validator):

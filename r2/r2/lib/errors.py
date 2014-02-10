@@ -33,6 +33,7 @@ error_list = dict((
         ('VERIFIED_USER_REQUIRED', _("you need to set a valid email address to do that.")),
         ('NO_URL', _('a url is required')),
         ('BAD_URL', _('you should check that url')),
+        ('INVALID_SCHEME', _('URI scheme must be one of: %(schemes)s')),
         ('BAD_CAPTCHA', _('care to try these again?')),
         ('BAD_USERNAME', _('invalid user name')),
         ('USERNAME_TAKEN', _('that username is already taken')),

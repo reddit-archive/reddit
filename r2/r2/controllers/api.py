@@ -88,6 +88,7 @@ from r2.lib.merge import ConflictException
 import csv
 from collections import defaultdict
 from datetime import datetime, timedelta
+from urlparse import urlparse
 import hashlib
 import re
 import urllib
@@ -3540,12 +3541,25 @@ class ApiController(RedditController, OAuth2ResourceController):
                                   docs=dict(name="a name for the app")),
                    about_url=VSanitizedUrl('about_url'),
                    icon_url=VSanitizedUrl('icon_url'),
-                   redirect_uri=VSanitizedUrl('redirect_uri'))
+                   redirect_uri=VRedirectUri('redirect_uri'),
+                   app_type=VOneOf('app_type', ('web', 'installed', 'script')))
     @api_doc(api_section.apps)
-    def POST_updateapp(self, form, jquery, name, about_url, icon_url, redirect_uri):
+    def POST_updateapp(self, form, jquery, name, about_url, icon_url,
+                       redirect_uri, app_type):
         if (form.has_errors('name', errors.NO_TEXT) |
-            form.has_errors('redirect_uri', errors.BAD_URL, errors.NO_URL)):
+            form.has_errors('redirect_uri', errors.BAD_URL) |
+            form.has_errors('redirect_uri', errors.NO_URL) |
+            form.has_errors('app_type', errors.INVALID_OPTION)):
             return
+
+        # Web apps should be redirecting to web
+        if app_type == 'web':
+            parsed = urlparse(redirect_uri)
+            if parsed.scheme not in ('http', 'https'):
+                c.errors.add(errors.INVALID_SCHEME, field='redirect_uri',
+                        msg_params={"schemes": "http, https"})
+                form.has_errors('redirect_uri', errors.INVALID_SCHEME)
+                return
 
         description = request.POST.get('description', '')
 
@@ -3553,6 +3567,10 @@ class ApiController(RedditController, OAuth2ResourceController):
         if client_id:
             # client_id was specified, updating existing OAuth2Client
             client = OAuth2Client.get_token(client_id)
+            if app_type != client.app_type:
+                # App type cannot be changed after creation
+                abort(400, "invalid request")
+                return
             if not client:
                 form.set_html('.status', _('invalid client id'))
                 return
@@ -3577,7 +3595,8 @@ class ApiController(RedditController, OAuth2ResourceController):
             client = OAuth2Client._new(name=name,
                                        description=description,
                                        about_url=about_url or '',
-                                       redirect_uri=redirect_uri)
+                                       redirect_uri=redirect_uri,
+                                       app_type=app_type)
             client._commit()
             client.add_developer(c.user)
             form.set_html('.status', _('application created'))

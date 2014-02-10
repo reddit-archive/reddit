@@ -56,6 +56,18 @@
   %endif
 </%def>
 
+<%def name="app_type_selector(selection='web')">
+${utils.radio_type('app_type', "web", _("web app"),
+                   _("A web based application"),
+                   selection == "web")}
+${utils.radio_type('app_type', "installed", _("installed app"),
+                   _("An app intended for installation, such as on a mobile phone"),
+                   selection == "installed")}
+${utils.radio_type('app_type', "script", _("script"),
+                   _("Script for personal use. Will only have access to the developers accounts"),
+                   selection == "script")}
+</%def>
+
 <%def name="editable_developer(app, dev)">
   <li id="app-dev-${app._id}-${dev._id}">
     ${dev.name}&#32;
@@ -83,6 +95,15 @@
         ${app.name}
       %endif
       </h2>
+      <h3>
+        %if app.app_type == 'web':
+          ${_("web app")}
+        %elif app.app_type == 'installed':
+          ${_("installed app")}
+        %elif app.app_type == 'script':
+          ${_("personal use script")}
+        %endif
+      </h3>
       <h3>${app._id}</h3>
     </div>
     <div class="app-description">${app.description}</div>
@@ -105,6 +126,7 @@
          onsubmit="${"return post_form(this, 'updateapp', function(x) {return '%s'})" % _("updating...")}">
           <input type="hidden" name="uh" value="${c.modhash}" />
           <input type="hidden" name="client_id" value="${app._id}" />
+          <input type="hidden" name="app_type" value="${app.app_type}" />
           <table class="preftable">
             <tr>
               <th>${_("secret")}</th>
@@ -113,7 +135,7 @@
             <tr>
               <th>${_("name")}</th>
               <td class="prefright">
-                <input name="name" value="${app.name}">
+                <input class="text" name="name" value="${app.name}">
                 ${error_field("NO_TEXT", "name")}
               </td>
             </tr>
@@ -126,17 +148,18 @@
             <tr>
               <th>${_("about url")}</th>
               <td class="prefright">
-                <input name="about_url" value="${app.about_url}">
+                <input class="text" name="about_url" value="${app.about_url}">
                 ${error_field("BAD_URL", "about_url")}
               </td>
             </tr>
             <tr>
               <th>${_("redirect uri")}</th>
               <td class="prefright">
-                <input name="redirect_uri"
-                 value="${app.redirect_uri}">
+                <input class="text" name="redirect_uri"
+                 value="${app.redirect_uri if app.redirect_uri else ''}">
                 ${error_field("NO_URL", "redirect_uri")}
                 ${error_field("BAD_URL", "redirect_uri")}
+                ${error_field("INVALID_SCHEME", "redirect_uri")}
               </td>
             </tr>
           </table>
@@ -160,7 +183,7 @@
                onsubmit="${"return post_form(this, 'adddeveloper', function(x) {return '%s'})" % _("adding...")}">
                 <input type="hidden" name="uh" value="${c.modhash}" />
                 <input type="hidden" name="client_id" value="${app._id}" />
-                ${_('add developer')}: <input name="name">
+                ${_('add developer')}: <input class="text" name="name">
                 <br>
                 ${error_field('TOO_MANY_DEVELOPERS', '')}
                 ${error_field('OAUTH2_INVALID_CLIENT', 'client_id')}
@@ -302,10 +325,11 @@
       <tr>
         <th>${_("name")}</th>
         <td class="prefright">
-          <input name="name">
+          <input class="text" name="name">
           ${error_field("NO_TEXT", "name")}
         </td>
       </tr>
+      ${app_type_selector()}
       <tr>
         <th>${_("description")}</th>
         <td class="prefright">
@@ -315,16 +339,17 @@
       <tr>
         <th>${_("about url")}</th>
         <td class="prefright">
-          <input name="about_url">
+          <input class="text" name="about_url">
           ${error_field("BAD_URL", "about_url")}
         </td>
       </tr>
       <tr>
         <th>${_("redirect uri")}</th>
         <td class="prefright">
-          <input name="redirect_uri">
+          <input class="text" name="redirect_uri">
           ${error_field("NO_URL", "redirect_uri")}
           ${error_field("BAD_URL", "redirect_uri")}
+          ${error_field("INVALID_SCHEME", "redirect_uri")}
         </td>
       </tr>
     </table>
