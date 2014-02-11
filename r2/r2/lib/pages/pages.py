@@ -3647,9 +3647,10 @@ class PromoteLinkForm(Templated):
         sr_inventory[''] = sr_inventory[Frontpage.name]
         del sr_inventory[Frontpage.name]
         self.inventory = sr_inventory
-        message = _("reddit ads are now sold on a CPM basis. "
-                    "[Here's how it works](%(link)s)")
-        message %= {'link': 'http://www.slideshare.net/reddit/how-to-use-reddits-selfserve-advertising-platform'}
+        message = _("Need some ideas on how to showcase your brand? "
+                    "[Here's a slideshow](%(link)s) on ways brands used "
+                    "reddit ads last year.")
+        message %= {'link': 'http://www.slideshare.net/MikeCole1/brands-that-were-awesome-on-reddit-2013-30801823'}
         self.infobar = InfoBar(message=message)
 
 
