@@ -37,7 +37,8 @@ class PrintableButtons(Styled):
                  show_delete = False, show_report = True,
                  show_distinguish = False, show_marknsfw = False,
                  show_unmarknsfw = False, is_link=False,
-                 show_flair = False, show_rescrape=False, **kw):
+                 show_flair=False, show_rescrape=False,
+                 show_givegold=False, **kw):
         show_ignore = thing.show_reports
         approval_checkmark = getattr(thing, "approval_checkmark", None)
         show_approve = (thing.show_spam or show_ignore or
@@ -59,6 +60,7 @@ class PrintableButtons(Styled):
                         show_unmarknsfw = show_unmarknsfw,
                         show_flair = show_flair,
                         show_rescrape=show_rescrape,
+                        show_givegold=show_givegold,
                         **kw)
         
 class BanButtons(PrintableButtons):
@@ -88,6 +90,7 @@ class LinkButtons(PrintableButtons):
             if (not thing.is_self and
                     not (thing.has_thumbnail or thing.media_object)):
                 show_rescrape = True
+        show_givegold = thing.can_gild and (c.permalink_page or c.profilepage)
 
         # do we show the delete button?
         show_delete = is_author and delete and not thing._deleted
@@ -133,6 +136,7 @@ class LinkButtons(PrintableButtons):
                                   show_unmarknsfw = show_unmarknsfw,
                                   show_flair = thing.can_flair,
                                   show_rescrape=show_rescrape,
+                                  show_givegold=show_givegold,
                                   show_comments = comments,
                                   # promotion
                                   promoted = thing.promoted,
@@ -148,27 +152,12 @@ class CommentButtons(PrintableButtons):
         # do we show the delete button?
         show_delete = is_author and delete and not thing._deleted
 
-        can_gild = (
-            # you can't gild your own comment
-            not is_author
-            # no point in showing the button for things you've already gilded
-            and not thing.user_gilded
-            # this is a way of checking if the user is logged in that works
-            # both within CommentPane instances and without.  e.g. CommentPane
-            # explicitly sets user_is_loggedin = False but can_reply is
-            # correct.  while on user overviews, you can't reply but will get
-            # the correct value for user_is_loggedin
-            and (c.user_is_loggedin or thing.can_reply)
-            # ick, if the author deleted their account we shouldn't waste gold
-            and not thing.author._deleted
-            # some subreddits can have gilding disabled
-            and thing.subreddit.allow_comment_gilding
-        )
-
         show_distinguish = (is_author and
                             (thing.can_ban or  # Moderator distinguish
                              c.user.employee or  # Admin distinguish
                              c.user_special_distinguish))
+
+        show_givegold = thing.can_gild
 
         PrintableButtons.__init__(self, "commentbuttons", thing,
                                   is_author = is_author, 
@@ -182,10 +171,11 @@ class CommentButtons(PrintableButtons):
                                   deleted = thing.deleted,
                                   parent_permalink = thing.parent_permalink, 
                                   can_reply = thing.can_reply,
-                                  can_gild=can_gild,
                                   show_report = show_report,
                                   show_distinguish = show_distinguish,
-                                  show_delete = show_delete)
+                                  show_delete = show_delete,
+                                  show_givegold=show_givegold,
+        )
 
 class MessageButtons(PrintableButtons):
     def __init__(self, thing, delete = False, report = True):

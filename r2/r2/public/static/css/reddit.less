@@ -6018,7 +6018,7 @@ dd { margin-left: 20px;  }
 .icon-menu .reddit-contributors:before,
 .icon-menu .reddit-modqueue:before,
 .giftgold a:before,
-.gilded-comments-link a:before,
+.gilded-link a:before,
 .infobar.gold:before,
 .gold-form h1.goldgift:before,
 .users-online:before,
@@ -6350,17 +6350,17 @@ body:not(.gold) .allminus-link {
     font-size: 1.15em;
 }
 
-.gilded-comments-link {
+.gilded-link {
     margin-top: 1em;
 }
 
-.gilded-comments-link a {
+.gilded-link a {
     color: #9a7d2e;
     font-weight: bold;
     font-size: 1.15em;
 }
 
-.gilded-comments-link a:before {
+.gilded-link a:before {
     height: 14px;
     width: 14px;
     margin: 0 6px 0 1px;
@@ -6544,7 +6544,7 @@ body:not(.gold) .allminus-link {
     position: absolute;
 }
 
-.gold-form.cloneable {
+.gold-form.cloneable-link, .gold-form.cloneable-comment {
     display: none;
 }
 
@@ -6572,8 +6572,8 @@ body:not(.gold) .allminus-link {
     margin: 5px 0;
 }
 
-.comment .gold-form {
-    margin: 0 0 10px 4px;
+.thing .gold-form {
+    margin: 10px 0 10px 4px;
     min-height: 0;
 }
 
@@ -7588,7 +7588,7 @@ table.diff {font-size: small;}
 .diff_chg {background-color:yellow}
 .diff_sub {background-color:lightcoral}
 
-.gilded-comment-icon {
+.gilded-icon {
     position: relative;
     display: inline-block;
     margin: 0 0 -15px 8px;
@@ -7598,7 +7598,7 @@ table.diff {font-size: small;}
     vertical-align: middle;
 }
 
-.gilded-comment-icon:before {
+.gilded-icon:before {
     display: inline-block;
     content: '';
     background-image: url(../gold-coin.png);  /* SPRITE */
@@ -7609,11 +7609,11 @@ table.diff {font-size: small;}
     vertical-align: -3px;
 }
 
-.user-gilded > .entry .gilded-comment-icon:before {
+.user-gilded > .entry .gilded-icon:before {
     width: 23px;
 }
 
-body.post-under-6h-old .gilded-comment-icon {
+body.post-under-6h-old .gilded-icon {
     opacity: .55;
 }
 

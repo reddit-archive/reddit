@@ -122,6 +122,17 @@
   %endif
 </%def>
 
+<%def name="give_gold()">
+  % if thing.show_givegold:
+    <li>
+    <a href="/gold?goldtype=gift&months=1&thing=${thing.thing._fullname}"
+        title="${_("give reddit gold in appreciation of this post.")}"
+        class="give-gold login-required"
+        >${_("give gold")}</a>
+    </li>
+  % endif
+</%def>
+
 <%def name="ignore_reports_toggle(thing)">
   <%
     label = _("ignore reports")
@@ -202,6 +213,7 @@
   %endif
 
   ${self.distinguish()}
+  ${self.give_gold()}
   ${self.banbuttons()}
   %if thing.promoted is not None:
     %if thing.user_is_sponsor or thing.is_author:
@@ -295,14 +307,7 @@
     %endif
     ${self.banbuttons()}
     ${self.distinguish()}
-    % if thing.can_gild:
-      <li>
-      <a href="/gold?goldtype=gift&months=1&comment=${thing.thing._fullname}"
-          title="${_("give reddit gold in appreciation of this comment.")}"
-          class="give-gold login-required"
-          >${_("give gold")}</a>
-      </li>
-    % endif
+    ${self.give_gold()}
     %if not thing.profilepage and thing.can_reply:
       <li>
         ${self.simple_button(_("reply {verb}"), "reply")}

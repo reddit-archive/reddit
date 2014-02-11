@@ -409,6 +409,7 @@ class LinkJsonTemplate(ThingJsonTemplate):
         domain="domain",
         downs="downvotes",
         edited="editted",
+        gilded="gildings",
         hidden="hidden",
         is_self="is_self",
         likes="likes",

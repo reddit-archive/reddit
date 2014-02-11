@@ -70,7 +70,7 @@
      ## thing.timesince is a cache stub
      ${unsafe(_("%(timeago)s ago") % dict(timeago=thing.timesince))}
      % if thing.gilded_message:
-       <span class="gilded-comment-icon" title="${thing.gilded_message}" data-count="${thing.gildings}">
+       <span class="gilded-icon" title="${thing.gilded_message}" data-count="${thing.gildings}">
          % if thing.gildings > 1:
            x${thing.gildings}
          % endif

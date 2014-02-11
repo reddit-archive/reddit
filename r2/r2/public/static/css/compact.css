@@ -303,14 +303,14 @@ body[orient="landscape"] > #topbar > h1 { margin-left: -125px; width: 250px; }
 
 .comment.collapsed .tagline { margin-left: 20px; font-style: italcs; color: #AAA; }
 
-/** comment gilding */
-.gilded-comment-icon { position: relative; display: inline-block; margin: 0 0 -15px 8px; top: -8px; color: #99895F; font-size: .9em; vertical-align: middle; }
+/** gilding */
+.gilded-icon { position: relative; display: inline-block; margin: 0 0 -15px 8px; top: -8px; color: #99895F; font-size: .9em; vertical-align: middle; }
 
-.gilded-comment-icon:before { display: inline-block; content: ''; background-image: url(../gold-coin.png); /* SPRITE */ background-repeat: no-repeat; height: 14px; width: 13px; margin-right: 2px; vertical-align: -3px; }
+.gilded-icon:before { display: inline-block; content: ''; background-image: url(../gold-coin.png); /* SPRITE */ background-repeat: no-repeat; height: 14px; width: 13px; margin-right: 2px; vertical-align: -3px; }
 
-.user-gilded > .entry .gilded-comment-icon:before { width: 23px; }
+.user-gilded > .entry .gilded-icon:before { width: 23px; }
 
-body.post-under-6h-old .gilded-comment-icon { opacity: .55; }
+body.post-under-6h-old .gilded-icon { opacity: .55; }
 
 /** messages and inbox */
 .message { background: white; position: relative; border: 1px solid #d9d9d9; margin: 10px; -webkit-border-radius: 8px; -moz-border-radius: 8px; -ms-border-radius: 8px; -o-border-radius: 8px; border-radius: 8px; padding: 5px; }

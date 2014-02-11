@@ -520,8 +520,8 @@ class UserController(ListingController):
         elif (self.where == 'gilded' and
                 (c.user == self.vuser or c.user_is_admin)):
             path = '/user/%s/gilded/' % self.vuser.name
-            buttons = [NavButton(_("my posts"), dest='/'),
-                       NavButton(_("posts gilded by me"), dest='/given')]
+            buttons = [NavButton(_("gildings received"), dest='/'),
+                       NavButton(_("gildings given"), dest='/given')]
             res.append(NavMenu(buttons, base_path=path, type='flatlist'))
 
         return res
@@ -530,14 +530,14 @@ class UserController(ListingController):
         titles = {'overview': _("overview for %(user)s"),
                   'comments': _("comments by %(user)s"),
                   'submitted': _("submitted by %(user)s"),
-                  'gilded': _("gilded comments by %(user)s"),
+                  'gilded': _("gilded by %(user)s"),
                   'liked': _("liked by %(user)s"),
                   'disliked': _("disliked by %(user)s"),
                   'saved': _("saved by %(user)s"),
                   'hidden': _("hidden by %(user)s"),
                   'promoted': _("promoted by %(user)s")}
         if self.where == 'gilded' and self.show == 'given':
-            return _("comments gilded by %(user)s") % {'user': self.vuser.name}
+            return _("gildings given by %(user)s") % {'user': self.vuser.name}
 
         title = titles.get(self.where, _('profile for %(user)s')) \
             % dict(user = self.vuser.name, site = c.site.name)
@@ -598,7 +598,7 @@ class UserController(ListingController):
             if self.show == 'given':
                 q = queries.get_user_gildings(self.vuser)
             else:
-                q = queries.get_gilded_user_comments(self.vuser)
+                q = queries.get_gilded_user(self.vuser)
 
         elif self.where in ('liked', 'disliked'):
             sup.set_sup_header(self.vuser, self.where)
@@ -1306,7 +1306,7 @@ class UserListListingController(ListingController):
         return self.build_listing(**kw)
 
 class GildedController(ListingController):
-    title_text = _("gilded comments")
+    title_text = _("gilded")
 
     def keep_fn(self):
         def keep(item):
@@ -1315,7 +1315,7 @@ class GildedController(ListingController):
 
     def query(self):
         try:
-            return c.site.get_gilded_comments()
+            return c.site.get_gilded()
         except NotImplementedError:
             abort(404)
 

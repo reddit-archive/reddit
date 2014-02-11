@@ -25,9 +25,16 @@
 <%
    from r2.lib.filters import unsafe, safemarkdown
    from r2.lib.template_helpers import static
+
+   clone_class = ''
+   if thing.clone_template:
+     if thing.thing_type == 'comment':
+       clone_class = 'cloneable-comment'
+     else:
+       clone_class = 'cloneable-link'
 %>
 
-<div class="gold-form gold-payment ${'cloneable' if thing.clone_template else ''}">
+<div class="gold-form gold-payment ${clone_class}">
   <div class="roundfield">
     % if thing.clone_template:
       <button class="close-button">${_('close')}</button>
@@ -35,9 +42,9 @@
     <img src="${static('reddit_gold-70.png')}" class="gold-logo">
     <div class="roundfield-content">
       ${unsafe(safemarkdown(thing.summary, wrap=False))}
-      %if thing.comment and not thing.clone_template:
+      %if thing.thing and not thing.clone_template:
         <div class="giftmessage">
-          ${unsafe(safemarkdown(thing.comment.body))}
+          ${unsafe(safemarkdown(thing.description))}
         </div>
       %endif
 

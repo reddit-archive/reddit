@@ -1422,17 +1422,27 @@ class FormsController(RedditController):
         if not payment_blob['goldtype'] == 'gift':
             self.abort404()
 
-        comment = payment_blob['comment']
-        if (not comment or
-            comment._deleted or
-            not comment.subreddit_slow.can_view(c.user)):
+        recipient = payment_blob['recipient']
+        thing = payment_blob.get('thing')
+        if not thing:
+            thing = payment_blob['comment']
+        if (not thing or
+            thing._deleted or
+            not thing.subreddit_slow.can_view(c.user)):
             self.abort404()
 
-        recipient = payment_blob['recipient']
-        summary = strings.gold_summary_comment_page
+        if isinstance(thing, Comment):
+            summary = strings.gold_summary_gilding_page_comment
+        else:
+            summary = strings.gold_summary_gilding_page_link
         summary = summary % {'recipient': recipient.name}
         months = 1
         price = g.gold_month_price * months
+
+        if isinstance(thing, Comment):
+            desc = thing.body
+        else:
+            desc = thing.markdown_link_slow()
 
         content = CreditGild(
             summary=summary,
@@ -1440,7 +1450,7 @@ class FormsController(RedditController):
             months=months,
             stripe_key=g.STRIPE_PUBLIC_KEY,
             passthrough=passthrough,
-            comment=comment,
+            description=desc,
             period=None,
         )
 
@@ -1457,17 +1467,18 @@ class FormsController(RedditController):
               # variables below are just for gifts
               signed=VBoolean("signed"),
               recipient_name=VPrintable("recipient", max_length=50),
-              comment=VByName("comment", thing_cls=Comment),
+              thing=VByName("thing"),
               giftmessage=VLength("giftmessage", 10000))
     def GET_gold(self, goldtype, period, months,
-                 signed, recipient_name, giftmessage, comment):
+                 signed, recipient_name, giftmessage, thing):
 
-        if comment:
-            comment_sr = Subreddit._byID(comment.sr_id, data=True)
-            if (comment._deleted or comment._spam or
-                    not comment_sr.can_view(c.user) or
-                    not comment_sr.allow_comment_gilding):
-                comment = None
+        if thing:
+            thing_sr = Subreddit._byID(thing.sr_id, data=True)
+            if (thing._deleted or
+                    thing._spam or
+                    not thing_sr.can_view(c.user) or
+                    not thing_sr.allow_gilding):
+                thing = None
 
         start_over = False
         recipient = None
@@ -1483,10 +1494,10 @@ class FormsController(RedditController):
             if months is None or months < 1:
                 start_over = True
 
-            if comment:
-                recipient = Account._byID(comment.author_id, data=True)
+            if thing:
+                recipient = Account._byID(thing.author_id, data=True)
                 if recipient._deleted:
-                    comment = None
+                    thing = None
                     recipient = None
                     start_over = True
             else:
@@ -1515,8 +1526,8 @@ class FormsController(RedditController):
                 payment_blob["signed"] = signed
                 payment_blob["recipient"] = recipient.name
                 payment_blob["giftmessage"] = _force_utf8(giftmessage)
-                if comment:
-                    payment_blob["comment"] = comment._fullname
+                if thing:
+                    payment_blob["thing"] = thing._fullname
 
             passthrough = generate_blob(payment_blob)
 
@@ -1525,7 +1536,7 @@ class FormsController(RedditController):
                               content=GoldPayment(goldtype, period, months,
                                                   signed, recipient,
                                                   giftmessage, passthrough,
-                                                  comment)
+                                                  thing)
                               ).render()
 
     @validate(VUser())

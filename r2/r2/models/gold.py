@@ -22,12 +22,15 @@
 
 from r2.lib.db.tdb_sql import make_metadata, index_str, create_table
 
+import json
 import pytz
+import uuid
 
 from pycassa import NotFoundException
 from pycassa.system_manager import INT_TYPE, UTF8_TYPE
+from pycassa.util import convert_uuid_to_time
 from pylons import g, c
-from pylons.i18n import _
+from pylons.i18n import _, ungettext
 from datetime import datetime
 import sqlalchemy as sa
 from sqlalchemy.exc import IntegrityError, OperationalError
@@ -42,7 +45,7 @@ from random import choice
 from time import time
 
 from r2.lib.db import tdb_cassandra
-from r2.lib.db.tdb_cassandra import NotFound
+from r2.lib.db.tdb_cassandra import NotFound, view_of
 from r2.models import Account
 from r2.models.subreddit import Frontpage
 from r2.models.wiki import WikiPage
@@ -125,6 +128,107 @@ class GoldRevenueGoalByDate(object):
             return col.values()[0]
         except NotFoundException:
             return None
+
+
+class GildedCommentsByAccount(tdb_cassandra.DenormalizedRelation):
+    _use_db = True
+    _last_modified_name = 'Gilding'
+    _views = []
+
+    @classmethod
+    def value_for(cls, thing1, thing2):
+        return ''
+
+    @classmethod
+    def gild(cls, user, thing):
+        cls.create(user, [thing])
+
+
+class GildedLinksByAccount(tdb_cassandra.DenormalizedRelation):
+    _use_db = True
+    _last_modified_name = 'Gilding'
+    _views = []
+
+    @classmethod
+    def value_for(cls, thing1, thing2):
+        return ''
+
+    @classmethod
+    def gild(cls, user, thing):
+        cls.create(user, [thing])
+
+
+@view_of(GildedCommentsByAccount)
+@view_of(GildedLinksByAccount)
+class GildingsByThing(tdb_cassandra.View):
+    _use_db = True
+    _extra_schema_creation_args = {
+        "key_validation_class": tdb_cassandra.UTF8_TYPE,
+        "column_name_class": tdb_cassandra.UTF8_TYPE,
+    }
+
+    @classmethod
+    def get_gilder_ids(cls, thing):
+        columns = cls.get_time_sorted_columns(thing._fullname)
+        return [int(account_id, 36) for account_id in columns.iterkeys()]
+
+    @classmethod
+    def create(cls, user, things):
+        for thing in things:
+            cls._set_values(thing._fullname, {user._id36: ""})
+
+    @classmethod
+    def delete(cls, user, things):
+        # gildings cannot be undone
+        raise NotImplementedError()
+
+
+@view_of(GildedCommentsByAccount)
+@view_of(GildedLinksByAccount)
+class GildingsByDay(tdb_cassandra.View):
+    _use_db = True
+    _compare_with = tdb_cassandra.TIME_UUID_TYPE
+    _extra_schema_creation_args = {
+        "key_validation_class": tdb_cassandra.ASCII_TYPE,
+        "column_name_class": tdb_cassandra.TIME_UUID_TYPE,
+        "default_validation_class": tdb_cassandra.UTF8_TYPE,
+    }
+
+    @staticmethod
+    def _rowkey(date):
+        return date.strftime("%Y-%m-%d")
+
+    @classmethod
+    def get_gildings(cls, date):
+        key = cls._rowkey(date)
+        columns = cls.get_time_sorted_columns(key)
+        gildings = []
+        for name, json_blob in columns.iteritems():
+            timestamp = convert_uuid_to_time(name)
+            date = datetime.utcfromtimestamp(timestamp).replace(tzinfo=g.tz)
+
+            gilding = json.loads(json_blob)
+            gilding["date"] = date
+            gilding["user"] = int(gilding["user"], 36)
+            gildings.append(gilding)
+        return gildings
+
+    @classmethod
+    def create(cls, user, things):
+        key = cls._rowkey(datetime.now(g.tz))
+
+        columns = {}
+        for thing in things:
+            columns[uuid.uuid1()] = json.dumps({
+                "user": user._id36,
+                "thing": thing._fullname,
+            })
+        cls._set_values(key, columns)
+
+    @classmethod
+    def delete(cls, user, things):
+        # gildings cannot be undone
+        raise NotImplementedError()
 
 
 def create_unclaimed_gold (trans_id, payer_email, paying_id,
@@ -404,3 +508,73 @@ def get_discounted_price(gold_price):
     discount = float(getattr(g, 'BTC_DISCOUNT', '0'))
     price = (gold_price.pennies * (1 - discount)) / 100.
     return GoldPrice("%.2f" % price)
+
+
+def make_gold_message(thing, user_gilded):
+    from r2.models import Comment
+
+    if thing.gildings == 0 or thing._spam or thing._deleted:
+        return None
+
+    author = Account._byID(thing.author_id, data=True)
+    if not author._deleted:
+        author_name = author.name
+    else:
+        author_name = _("[deleted]")
+
+    if c.user_is_loggedin and thing.author_id == c.user._id:
+        if isinstance(thing, Comment):
+            gilded_message = ungettext(
+                "a redditor gifted you a month of reddit gold for this "
+                "comment.",
+                "redditors have gifted you %(months)d months of reddit gold "
+                "for this comment.",
+                thing.gildings
+            )
+        else:
+            gilded_message = ungettext(
+                "a redditor gifted you a month of reddit gold for this "
+                "submission.",
+                "redditors have gifted you %(months)d months of reddit gold "
+                "for this submission.",
+                thing.gildings
+            )
+    elif user_gilded:
+        if isinstance(thing, Comment):
+            gilded_message = ungettext(
+                "you have gifted reddit gold to %(recipient)s for this "
+                "comment.",
+                "you and other redditors have gifted %(months)d months of "
+                "reddit gold to %(recipient)s for this comment.",
+                thing.gildings
+            )
+        else:
+            gilded_message = ungettext(
+                "you have gifted reddit gold to %(recipient)s for this "
+                "submission.",
+                "you and other redditors have gifted %(months)d months of "
+                "reddit gold to %(recipient)s for this submission.",
+                thing.gildings
+            )
+    else:
+        if isinstance(thing, Comment):
+            gilded_message = ungettext(
+                "a redditor has gifted reddit gold to %(recipient)s for this "
+                "comment.",
+                "redditors have gifted %(months)d months of reddit gold to "
+                "%(recipient)s for this comment.",
+                thing.gildings
+            )
+        else:
+            gilded_message = ungettext(
+                "a redditor has gifted reddit gold to %(recipient)s for this "
+                "submission.",
+                "redditors have gifted %(months)d months of reddit gold to "
+                "%(recipient)s for this submission.",
+                thing.gildings
+            )
+
+    return gilded_message % dict(
+        recipient=author_name,
+        months=thing.gildings,
+    )

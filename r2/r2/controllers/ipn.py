@@ -62,7 +62,8 @@ from r2.models import (
     create_gift_gold,
     create_gold_code,
     get_discounted_price,
-    make_comment_gold_message,
+    Link,
+    make_gold_message,
     NotFound,
     retrieve_gold_transaction,
     send_system_message,
@@ -225,14 +226,15 @@ def months_and_days_from_pennies(pennies, discount=False):
         days   = 31 * months
     return (months, days)
 
-def send_gift(buyer, recipient, months, days, signed, giftmessage, comment_id):
+def send_gift(buyer, recipient, months, days, signed, giftmessage,
+              thing_fullname):
     admintools.engolden(recipient, days)
 
-    if comment_id:
-        comment = Thing._by_fullname(comment_id, data=True)
-        comment._gild(buyer)
+    if thing_fullname:
+        thing = Thing._by_fullname(thing_fullname, data=True)
+        thing._gild(buyer)
     else:
-        comment = None
+        thing = None
 
     if signed:
         sender = buyer.name
@@ -248,17 +250,20 @@ def send_gift(buyer, recipient, months, days, signed, giftmessage, comment_id):
     else:
         amount = "%d months" % months
 
-    if not comment:
+    if not thing:
         subject = _('Let there be gold! %s just sent you reddit gold!') % sender
         message = strings.youve_got_gold % dict(sender=md_sender, amount=amount)
 
         if giftmessage and giftmessage.strip():
             message += "\n\n" + strings.giftgold_note + giftmessage + '\n\n----'
     else:
-        subject = _('Your comment has been gilded!')
-        message = strings.youve_got_comment_gold % dict(
-            url=comment.make_permalink_slow(),
-        )
+        url = thing.make_permalink_slow()
+        if isinstance(thing, Comment):
+            subject = _('Your comment has been gilded!')
+            message = strings.youve_been_gilded_comment % {'url': url}
+        else:
+            subject = _('Your submission has been gilded!')
+            message = strings.youve_been_gilded_link % {'url': url}
 
     message += '\n\n' + strings.gold_benefits_msg
     if g.lounge_reddit:
@@ -272,7 +277,7 @@ def send_gift(buyer, recipient, months, days, signed, giftmessage, comment_id):
         g.log.error('send_gift: could not send system message')
 
     g.log.info("%s gifted %s to %s" % (buyer.name, amount, recipient.name))
-    return comment
+    return thing
 
 
 def send_gold_code(buyer, months, days,
@@ -354,9 +359,9 @@ class IpnController(RedditController):
             c.user._commit()
 
         if payment_blob["goldtype"] == "gift":
-            comment_id = payment_blob.get("comment")
-            comment = send_gift(c.user, recipient, months, days, signed,
-                                giftmessage, comment_id)
+            thing_fullname = payment_blob.get("thing")
+            thing = send_gift(c.user, recipient, months, days, signed,
+                              giftmessage, thing_fullname)
             form.set_html(".status", _("the gold has been delivered!"))
         else:
             try:
@@ -368,7 +373,7 @@ class IpnController(RedditController):
                                 "for assistance.")
                               % {'email': g.goldthanks_email})
                 return
-            comment = None
+            thing = None
             form.set_html(".status",
                           _("the gift code has been messaged to you!"))
 
@@ -380,10 +385,9 @@ class IpnController(RedditController):
         payment_blob["status"] = "processed"
         g.hardcache.set(blob_key, payment_blob, 86400 * 30)
 
-        if comment:
-            gilding_message = make_comment_gold_message(comment,
-                                                        user_gilded=True)
-            jquery.gild_comment(comment_id, gilding_message, comment.gildings)
+        if thing:
+            gilding_message = make_gold_message(thing, user_gilded=True)
+            jquery.gild_thing(thing_fullname, gilding_message, thing.gildings)
 
     @textresponse(paypal_secret = VPrintable('secret', 50),
                   payment_status = VPrintable('payment_status', 20),
@@ -527,8 +531,9 @@ class IpnController(RedditController):
                                  % (recipient_name, custom))
             signed = payment_blob.get("signed", False)
             giftmessage = _force_unicode(payment_blob.get("giftmessage", ""))
-            comment_id = payment_blob.get("comment")
-            send_gift(buyer, recipient, months, days, signed, giftmessage, comment_id)
+            thing_fullname = payment_blob.get("thing")
+            send_gift(buyer, recipient, months, days, signed, giftmessage,
+                      thing_fullname)
             instagift = True
             subject = _("Thanks for giving the gift of reddit gold!")
             message = _("Your classy gift to %s has been delivered.\n\n"
@@ -576,7 +581,7 @@ class Webhook(object):
     def __init__(self, passthrough=None, transaction_id=None, subscr_id=None,
                  pennies=None, months=None, payer_email='', payer_id='',
                  goldtype=None, buyer=None, recipient=None, signed=False,
-                 giftmessage=None, comment=None):
+                 giftmessage=None, thing=None):
         self.passthrough = passthrough
         self.transaction_id = transaction_id
         self.subscr_id = subscr_id
@@ -589,7 +594,7 @@ class Webhook(object):
         self.recipient = recipient
         self.signed = signed
         self.giftmessage = giftmessage
-        self.comment = comment
+        self.thing = thing
 
     def load_blob(self):
         payment_blob = validate_blob(self.passthrough)
@@ -598,8 +603,8 @@ class Webhook(object):
         self.recipient = payment_blob.get('recipient')
         self.signed = payment_blob.get('signed', False)
         self.giftmessage = payment_blob.get('giftmessage')
-        comment = payment_blob.get('comment')
-        self.comment = comment._fullname if comment else None
+        thing = payment_blob.get('thing')
+        self.thing = thing._fullname if thing else None
 
     def __repr__(self):
         return '<%s: transaction %s>' % (self.__class__.__name__, self.transaction_id)
@@ -720,7 +725,7 @@ class GoldPaymentController(RedditController):
         recipient = webhook.recipient
         signed = webhook.signed
         giftmessage = webhook.giftmessage
-        comment = webhook.comment
+        thing = webhook.thing
 
         gold_recipient = recipient or buyer
         with gold_lock(gold_recipient):
@@ -753,7 +758,7 @@ class GoldPaymentController(RedditController):
 
             elif goldtype == 'gift':
                 send_gift(buyer, recipient, months, days, signed, giftmessage,
-                          comment)
+                          thing)
                 subject = "thanks for giving reddit gold!"
                 message = "Your gift to %s has been delivered." % recipient.name
 
@@ -1183,12 +1188,12 @@ def validate_blob(custom):
             ret['recipient'] = recipient
         except NotFound:
             raise GoldException('bad recipient')
-        comment_fullname = payment_blob.get('comment', None)
-        if comment_fullname:
+        thing_fullname = payment_blob.get('thing', None)
+        if thing_fullname:
             try:
-                ret['comment'] = Comment._by_fullname(comment_fullname)
+                ret['thing'] = Thing._by_fullname(thing_fullname)
             except NotFound:
-                raise GoldException('bad comment')
+                raise GoldException('bad thing')
         ret['signed'] = payment_blob.get('signed', False)
         giftmessage = payment_blob.get('giftmessage')
         giftmessage = _force_unicode(giftmessage) if giftmessage else None

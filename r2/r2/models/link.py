@@ -45,26 +45,28 @@ from r2.lib.strings import strings, Score
 from r2.lib.db import tdb_cassandra
 from r2.lib.db.tdb_cassandra import NotFoundException, view_of
 from r2.lib.utils import sanitize_url
+from r2.models.gold import (
+    GildedCommentsByAccount,
+    GildedLinksByAccount,
+    make_gold_message,
+)
 from r2.models.subreddit import MultiReddit
 from r2.models.query_cache import CachedQueryMutator
 from r2.models.promo import PROMOTE_STATUS, get_promote_srid
 
 from pylons import c, g, request
-from pylons.i18n import ungettext, _
+from pylons.i18n import _
 from datetime import datetime, timedelta
 from hashlib import md5
-from pycassa.util import convert_uuid_to_time
 
 import random, re
-import json
-import uuid
 
 class LinkExists(Exception): pass
 
 # defining types
 class Link(Thing, Printable):
     _data_int_props = Thing._data_int_props + (
-        'num_comments', 'reported', 'comment_tree_id')
+        'num_comments', 'reported', 'comment_tree_id', 'gildings')
     _defaults = dict(is_self=False,
                      over_18=False,
                      over_18_override=False,
@@ -87,6 +89,7 @@ class Link(Thing, Printable):
                      contest_mode=False,
                      skip_commentstree_q="",
                      ignore_reports=False,
+                     gildings=0,
                      )
     _essentials = ('sr_id', 'author_id')
     _nsfw = re.compile(r"\bnsfw\b", re.I)
@@ -299,6 +302,28 @@ class Link(Thing, Printable):
         return self.make_permalink(self.subreddit_slow,
                                    force_domain=force_domain)
 
+    def markdown_link_slow(self):
+        return "[%s](%s)" % (self.title.decode('utf-8'),
+                             self.make_permalink_slow())
+
+    def _gild(self, user):
+        now = datetime.now(g.tz)
+
+        self._incr("gildings")
+
+        GildedLinksByAccount.gild(user, self)
+
+        from r2.lib.db import queries
+        with CachedQueryMutator() as m:
+            gilding = utils.Storage(thing=self, date=now)
+            m.insert(queries.get_all_gilded_links(), [gilding])
+            m.insert(queries.get_gilded_links(self.sr_id), [gilding])
+            m.insert(queries.get_gilded_user_links(self.author_id),
+                     [gilding])
+            m.insert(queries.get_user_gildings(user), [gilding])
+
+        hooks.get_hook('link.gild').call(link=self, gilder=user)
+
     @staticmethod
     def _should_expunge_selftext(link):
         verdict = getattr(link, "verdict", "")
@@ -347,6 +372,13 @@ class Link(Thing, Printable):
                               for ban in bans_for_domain_parts(urls)}
 
         if user_is_loggedin:
+            gilded = [thing for thing in wrapped if thing.gildings > 0]
+            try:
+                user_gildings = GildedLinksByAccount.fast_query(user, gilded)
+            except tdb_cassandra.TRANSIENT_EXCEPTIONS as e:
+                g.log.warning("Cassandra gilding lookup failed: %r", e)
+                user_gildings = {}
+
             try:
                 saved = LinkSavesByAccount.fast_query(user, wrapped)
                 hidden = LinkHidesByAccount.fast_query(user, wrapped)
@@ -421,12 +453,28 @@ class Link(Thing, Printable):
             item.urlprefix = ''
 
             if user_is_loggedin:
+                item.user_gilded = (user, item) in user_gildings
                 item.saved = (user, item) in saved
                 item.hidden = (user, item) in hidden
                 item.visited = (user, item) in visited
 
             else:
+                item.user_gilded = False
                 item.saved = item.hidden = item.visited = False
+
+            item.gilded_message = make_gold_message(item, item.user_gilded)
+            item.can_gild = (
+                c.user_is_loggedin and
+                # you can't gild your own submission
+                not (item.author and
+                     item.author._id == user._id) and
+                # no point in showing the button for things you've already gilded
+                not item.user_gilded and
+                # ick, if the author deleted their account we shouldn't waste gold
+                not item.author._deleted and
+                # some subreddits can have gilding disabled
+                item.subreddit.allow_gilding
+            )
 
             item.num = None
             item.permalink = item.make_permalink(item.subreddit)
@@ -700,45 +748,6 @@ class PromotedLink(Link):
         Printable.add_props(user, wrapped)
 
 
-def make_comment_gold_message(comment, user_gilded):
-    if comment.gildings == 0 or comment._spam or comment._deleted:
-        return None
-
-    author = Account._byID(comment.author_id, data=True)
-    if not author._deleted:
-        author_name = author.name
-    else:
-        author_name = _("[deleted]")
-
-    if c.user_is_loggedin and comment.author_id == c.user._id:
-        gilded_message = ungettext(
-            "a redditor gifted you a month of reddit gold for this comment.",
-            "redditors have gifted you %(months)d months of reddit gold for "
-            "this comment.",
-            comment.gildings
-        )
-    elif user_gilded:
-        gilded_message = ungettext(
-            "you have gifted reddit gold to %(recipient)s for this comment.",
-            "you and other redditors have gifted %(months)d months of "
-            "reddit gold to %(recipient)s for this comment.",
-            comment.gildings
-        )
-    else:
-        gilded_message = ungettext(
-            "a redditor has gifted reddit gold to %(recipient)s for this "
-            "comment.",
-            "redditors have gifted %(months)d months of reddit gold to "
-            "%(recipient)s for this comment.",
-            comment.gildings
-        )
-
-    return gilded_message % dict(
-        recipient=author_name,
-        months=comment.gildings,
-    )
-
-
 class Comment(Thing, Printable):
     _data_int_props = Thing._data_int_props + ('reported', 'gildings')
     _defaults = dict(reported=0,
@@ -882,7 +891,7 @@ class Comment(Thing, Printable):
 
         self._incr("gildings")
 
-        GildedCommentsByAccount.gild_comment(user, self)
+        GildedCommentsByAccount.gild(user, self)
 
         from r2.lib.db import queries
         with CachedQueryMutator() as m:
@@ -976,10 +985,9 @@ class Comment(Thing, Printable):
         now = datetime.now(g.tz)
 
         if user_is_loggedin:
-            gilded = [comment for comment in wrapped if comment.gildings > 0]
+            gilded = [thing for thing in wrapped if thing.gildings > 0]
             try:
-                user_gildings = GildedCommentsByAccount.fast_query(user,
-                                                                   gilded)
+                user_gildings = GildedCommentsByAccount.fast_query(user, gilded)
             except tdb_cassandra.TRANSIENT_EXCEPTIONS as e:
                 g.log.warning("Cassandra gilding lookup failed: %r", e)
                 user_gildings = {}
@@ -1038,8 +1046,26 @@ class Comment(Thing, Printable):
             else:
                 item.user_gilded = False
                 item.saved = False
-            item.gilded_message = make_comment_gold_message(item,
-                                                            item.user_gilded)
+            item.gilded_message = make_gold_message(item, item.user_gilded)
+
+            item.can_gild = (
+                # this is a way of checking if the user is logged in that works
+                # both within CommentPane instances and without.  e.g. CommentPane
+                # explicitly sets user_is_loggedin = False but can_reply is
+                # correct.  while on user overviews, you can't reply but will get
+                # the correct value for user_is_loggedin
+                (c.user_is_loggedin or getattr(item, "can_reply", True)) and
+                # you can't gild your own comment
+                not (c.user_is_loggedin and
+                     item.author and
+                     item.author._id == user._id) and
+                # no point in showing the button for things you've already gilded
+                not item.user_gilded and
+                # ick, if the author deleted their account we shouldn't waste gold
+                not item.author._deleted and
+                # some subreddits can have gilding disabled
+                item.subreddit.allow_gilding
+            )
 
             # not deleted on profile pages,
             # deleted if spam and not author or admin
@@ -1535,91 +1561,6 @@ class Message(Thing, Printable):
 
     def keep_item(self, wrapped):
         return True
-
-
-class GildedCommentsByAccount(tdb_cassandra.DenormalizedRelation):
-    _use_db = True
-    _last_modified_name = 'Gilding'
-    _views = []
-
-    @classmethod
-    def value_for(cls, thing1, thing2):
-        return ''
-
-    @classmethod
-    def gild_comment(cls, user, comment):
-        cls.create(user, [comment])
-
-
-@view_of(GildedCommentsByAccount)
-class GildingsByThing(tdb_cassandra.View):
-    _use_db = True
-    _extra_schema_creation_args = {
-        "key_validation_class": tdb_cassandra.UTF8_TYPE,
-        "column_name_class": tdb_cassandra.UTF8_TYPE,
-    }
-
-    @classmethod
-    def get_gilder_ids(cls, thing):
-        columns = cls.get_time_sorted_columns(thing._fullname)
-        return [int(account_id, 36) for account_id in columns.iterkeys()]
-
-    @classmethod
-    def create(cls, user, things):
-        for thing in things:
-            cls._set_values(thing._fullname, {user._id36: ""})
-
-    @classmethod
-    def delete(cls, user, things):
-        # gildings cannot be undone
-        raise NotImplementedError()
-
-
-@view_of(GildedCommentsByAccount)
-class GildingsByDay(tdb_cassandra.View):
-    _use_db = True
-    _compare_with = tdb_cassandra.TIME_UUID_TYPE
-    _extra_schema_creation_args = {
-        "key_validation_class": tdb_cassandra.ASCII_TYPE,
-        "column_name_class": tdb_cassandra.TIME_UUID_TYPE,
-        "default_validation_class": tdb_cassandra.UTF8_TYPE,
-    }
-
-    @staticmethod
-    def _rowkey(date):
-        return date.strftime("%Y-%m-%d")
-
-    @classmethod
-    def get_gildings(cls, date):
-        key = cls._rowkey(date)
-        columns = cls.get_time_sorted_columns(key)
-        gildings = []
-        for name, json_blob in columns.iteritems():
-            timestamp = convert_uuid_to_time(name)
-            date = datetime.utcfromtimestamp(timestamp).replace(tzinfo=g.tz)
-
-            gilding = json.loads(json_blob)
-            gilding["date"] = date
-            gilding["user"] = int(gilding["user"], 36)
-            gildings.append(gilding)
-        return gildings
-
-    @classmethod
-    def create(cls, user, things):
-        key = cls._rowkey(datetime.now(g.tz))
-
-        columns = {}
-        for thing in things:
-            columns[uuid.uuid1()] = json.dumps({
-                "user": user._id36,
-                "thing": thing._fullname,
-            })
-        cls._set_values(key, columns)
-
-    @classmethod
-    def delete(cls, user, things):
-        # gildings cannot be undone
-        raise NotImplementedError()
 
 
 class _SaveHideByAccount(tdb_cassandra.DenormalizedRelation):

@@ -42,12 +42,12 @@
 	clear: both;
 }
 
-.gilded-comment-icon {
+.gilded-icon {
     background: url(gold-coin.png) no-repeat;
     padding-left: 15px;
     height: 14px;
 }
 
-.user-gilded > .entry .gilded-comment-icon {
+.user-gilded > .entry .gilded-icon {
     padding-left: 25px;
 }

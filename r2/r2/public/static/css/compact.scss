@@ -887,8 +887,8 @@ padding: 5px;
 }
 
 
-/** comment gilding */
-.gilded-comment-icon {
+/** gilding */
+.gilded-icon {
     position: relative;
     display: inline-block;
     margin: 0 0 -15px 8px;
@@ -898,7 +898,7 @@ padding: 5px;
     vertical-align: middle;
 }
 
-.gilded-comment-icon:before {
+.gilded-icon:before {
     display: inline-block;
     content: '';
     background-image: url(../gold-coin.png);  /* SPRITE */
@@ -909,11 +909,11 @@ padding: 5px;
     vertical-align: -3px;
 }
 
-.user-gilded > .entry .gilded-comment-icon:before {
+.user-gilded > .entry .gilded-icon:before {
     width: 23px;
 }
 
-body.post-under-6h-old .gilded-comment-icon {
+body.post-under-6h-old .gilded-icon {
     opacity: .55;
 }
 

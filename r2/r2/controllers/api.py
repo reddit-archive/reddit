@@ -3764,21 +3764,21 @@ class ApiController(RedditController):
 
     @json_validate(VUser(),
                    VModhash(),
-                   comment=VByName("comment", thing_cls=Comment))
-    def POST_generate_payment_blob(self, responder, comment):
-        if not comment:
+                   thing=VByName("thing"))
+    def POST_generate_payment_blob(self, responder, thing):
+        if not thing:
             abort(400, "Bad Request")
 
-        if comment._deleted:
+        if thing._deleted:
             abort(403, "Forbidden")
 
-        comment_sr = Subreddit._byID(comment.sr_id, data=True)
-        if (not comment_sr.can_view(c.user) or
-            not comment_sr.allow_comment_gilding):
+        thing_sr = Subreddit._byID(thing.sr_id, data=True)
+        if (not thing_sr.can_view(c.user) or
+            not thing_sr.allow_gilding):
             abort(403, "Forbidden")
 
         try:
-            recipient = Account._byID(comment.author_id, data=True)
+            recipient = Account._byID(thing.author_id, data=True)
         except NotFound:
             self.abort404()
 
@@ -3793,7 +3793,7 @@ class ApiController(RedditController):
             signed=False,
             recipient=recipient.name,
             giftmessage=None,
-            comment=comment._fullname,
+            thing=thing._fullname,
         ))
 
     @validate(srnames=VPrintable("srnames", max_length=2100))

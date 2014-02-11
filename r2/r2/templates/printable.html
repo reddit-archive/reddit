@@ -54,6 +54,18 @@ ${self.RenderPrintable()}
   %endif
 </%def>
 
+<%def name="gildings()">
+  % if thing.gilded_message:
+  <a href="${thing.subreddit_path}gilded">
+    <span class="gilded-icon" title="${thing.gilded_message}" data-count="${thing.gildings}">
+      % if thing.gildings > 1:
+        x${thing.gildings}
+      % endif
+    </span>
+  </a>
+  % endif
+</%def>
+
 <%def name="thing_css_class(what)">
   <%
     cssclass = "thing"

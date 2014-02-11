@@ -247,17 +247,30 @@ class Reddit(Templated):
             and not is_api() and not self.show_wiki_actions):
             # insert some form templates for js to use
             # TODO: move these to client side templates
-            gold = GoldPayment("gift",
-                               "monthly",
-                               months=1,
-                               signed=False,
-                               recipient="",
-                               giftmessage=None,
-                               passthrough=None,
-                               comment=None,
-                               clone_template=True,
-                              )
-            self._content = PaneStack([ShareLink(), content, gold])
+            gold_link = GoldPayment("gift",
+                                    "monthly",
+                                    months=1,
+                                    signed=False,
+                                    recipient="",
+                                    giftmessage=None,
+                                    passthrough=None,
+                                    thing=None,
+                                    clone_template=True,
+                                    thing_type="link",
+                                   )
+            gold_comment = GoldPayment("gift",
+                                       "monthly",
+                                       months=1,
+                                       signed=False,
+                                       recipient="",
+                                       giftmessage=None,
+                                       passthrough=None,
+                                       thing=None,
+                                       clone_template=True,
+                                       thing_type="comment",
+                                      )
+            self._content = PaneStack([ShareLink(), content,
+                                       gold_comment, gold_link])
         else:
             self._content = content
 
@@ -2184,9 +2197,10 @@ class Gold(Templated):
 
 class GoldPayment(Templated):
     def __init__(self, goldtype, period, months, signed,
-                 recipient, giftmessage, passthrough, comment,
-                 clone_template=False):
+                 recipient, giftmessage, passthrough, thing,
+                 clone_template=False, thing_type=None):
         pay_from_creddits = False
+        desc = None
 
         if period == "monthly" or 1 <= months < 12:
             unit_price = g.gold_month_price
@@ -2267,9 +2281,17 @@ class GoldPayment(Templated):
                           amount=Score.somethings(months, "month"))
             elif goldtype == "gift":
                 if clone_template:
-                    format = strings.gold_summary_comment_gift
-                elif comment:
-                    format = strings.gold_summary_comment_page
+                    if thing_type == "comment":
+                        format = strings.gold_summary_gilding_comment
+                    elif thing_type == "link":
+                        format = strings.gold_summary_gilding_link
+                elif thing:
+                    if isinstance(thing, Comment):
+                        format = strings.gold_summary_gilding_page_comment
+                        desc = thing.body
+                    else:
+                        format = strings.gold_summary_gilding_page_link
+                        desc = thing.markdown_link_slow()
                 elif signed:
                     format = strings.gold_summary_signed_gift
                 else:
@@ -2298,7 +2320,8 @@ class GoldPayment(Templated):
                            summary=summary, giftmessage=giftmessage,
                            pay_from_creddits=pay_from_creddits,
                            passthrough=passthrough,
-                           comment=comment, clone_template=clone_template,
+                           thing=thing, clone_template=clone_template,
+                           description=desc, thing_type=thing_type,
                            paypal_buttonid=paypal_buttonid,
                            stripe_key=stripe_key,
                            coinbase_button_id=coinbase_button_id)
@@ -2340,7 +2363,7 @@ class GoldSubscription(Templated):
         Templated.__init__(self)
 
 class CreditGild(Templated):
-    """Page for credit card payments for comment gilding."""
+    """Page for credit card payments for gilding."""
     pass
 
 
