@@ -1455,8 +1455,13 @@ class FormsController(RedditController):
         if not payment_blob['goldtype'] == 'gift':
             self.abort404()
 
-        recipient = payment_blob['recipient']
         comment = payment_blob['comment']
+        if (not comment or
+            comment._deleted or
+            not comment.subreddit_slow.can_view(c.user)):
+            self.abort404()
+
+        recipient = payment_blob['recipient']
         summary = strings.gold_summary_comment_page
         summary = summary % {'recipient': recipient.name}
         months = 1
