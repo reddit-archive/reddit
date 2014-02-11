@@ -21,12 +21,13 @@
 ###############################################################################
 
 import datetime
+import functools
 from os import urandom
 from base64 import urlsafe_b64encode
 
 from pycassa.system_manager import ASCII_TYPE, DATE_TYPE, UTF8_TYPE
 
-from pylons import g
+from pylons import g, c
 from pylons.i18n import _
 
 from r2.lib.db import tdb_cassandra
@@ -221,6 +222,9 @@ class OAuth2Scope:
     # Special scope, granted implicitly to clients with app_type == "script"
     FULL_ACCESS = "*"
 
+    class InsufficientScopeError(StandardError):
+        pass
+
     def __init__(self, scope_str=None, subreddits=None, scopes=None):
         if scope_str:
             self._parse_scope_str(scope_str)
@@ -291,6 +295,31 @@ class OAuth2Scope:
                         new_scope.subreddit_only = True
                     merged[sr] = new_scope
         return merged
+
+
+def extra_oauth2_scope(*scopes):
+    """Wrap a function so that it only returns data if user has all `scopes`
+
+    When not in an OAuth2 context, function returns normally.
+    In an OAuth2 context, the function will not be run unless the user
+    has granted all scopes required of this function. Instead, the function
+    will raise an OAuth2Scope.InsufficientScopeError.
+
+    """
+    def extra_oauth2_wrapper(fn):
+        @functools.wraps(fn)
+        def wrapper_fn(*a, **kw):
+            if not c.oauth_user:
+                # Not in an OAuth2 context, run function normally
+                return fn(*a, **kw)
+            elif c.oauth_scope.has_access(c.site.name, set(scopes)):
+                # In an OAuth2 context, and have scope for this function
+                return fn(*a, **kw)
+            else:
+                # In an OAuth2 context, but don't have scope
+                raise OAuth2Scope.InsufficientScopeError(scopes)
+        return wrapper_fn
+    return extra_oauth2_wrapper
 
 
 class OAuth2Client(Token):

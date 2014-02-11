@@ -326,6 +326,7 @@ class OAuth2ResourceController(MinimalController):
                 required = set(oauth2_perms['allowed_scopes'])
                 if not grant.has_access(c.site.name, required):
                     self._auth_error(403, "insufficient_scope")
+                c.oauth_scope = grant
             else:
                 self._auth_error(400, "invalid_request")
 
