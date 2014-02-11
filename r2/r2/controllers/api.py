@@ -3694,8 +3694,12 @@ class ApiController(RedditController, OAuth2ResourceController):
         if not comment:
             abort(400, "Bad Request")
 
+        if comment._deleted:
+            abort(403, "Forbidden")
+
         comment_sr = Subreddit._byID(comment.sr_id, data=True)
-        if not comment_sr.allow_comment_gilding:
+        if (not comment_sr.can_view(c.user) or
+            not comment_sr.allow_comment_gilding):
             abort(403, "Forbidden")
 
         try:
