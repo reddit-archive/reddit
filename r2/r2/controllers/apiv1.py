@@ -26,6 +26,9 @@ from r2.controllers.oauth2 import OAuth2ResourceController, require_oauth2_scope
 from r2.lib.jsontemplates import IdentityJsonTemplate
 
 class APIv1Controller(OAuth2ResourceController):
+   def pre(self):
+       self.check_for_bearer_token()
+
    def try_pagecache(self):
       pass
 
