@@ -26,15 +26,15 @@ from r2.controllers.oauth2 import OAuth2ResourceController, require_oauth2_scope
 from r2.lib.jsontemplates import IdentityJsonTemplate
 
 class APIv1Controller(OAuth2ResourceController):
-   def pre(self):
-       self.check_for_bearer_token()
+    def pre(self):
+        self.check_for_bearer_token()
 
-   def try_pagecache(self):
-      pass
+    def try_pagecache(self):
+        pass
 
-   @require_oauth2_scope("identity")
-   @api_doc(api_section.account)
-   def GET_me(self):
-      """Returns the identity of the user currently authenticated via OAuth."""
-      resp = IdentityJsonTemplate().data(c.oauth_user)
-      return self.api_wrapper(resp)
+    @require_oauth2_scope("identity")
+    @api_doc(api_section.account)
+    def GET_me(self):
+        """Returns the identity of the user currently authenticated via OAuth."""
+        resp = IdentityJsonTemplate().data(c.oauth_user)
+        return self.api_wrapper(resp)
