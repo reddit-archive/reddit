@@ -715,6 +715,7 @@ class UserController(ListingController):
 
         return ListingController.GET_listing(self, **env)
 
+    @require_oauth2_scope("read")
     @validate(vuser = VExistingUname('username'))
     @api_doc(section=api_section.users, uri='/user/{username}/about',
              extensions=['json'])
