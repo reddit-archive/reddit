@@ -1286,6 +1286,8 @@ class ApiController(RedditController):
         elif isinstance(thing, Comment):
             pass
 
+        hooks.get_hook("thing.report").call(thing=thing)
+
         sr = getattr(thing, 'subreddit_slow', None)
         if (c.user._spam or
                 c.user.ignorereports or
