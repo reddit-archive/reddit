@@ -3276,59 +3276,6 @@ class FlairSelector(CachedTemplate):
         return templates, matching_template
 
 
-class UserList(Templated):
-    """base class for generating a list of users"""
-    form_title     = ''
-    table_title    = ''
-    table_headers  = None
-    type           = ''
-    container_name = ''
-    cells          = ('user', 'sendmessage', 'remove')
-    _class         = ""
-    destination    = "friend"
-    remove_action  = "unfriend"
-
-    def __init__(self, editable=True, addable=None):
-        self.editable = editable
-        if addable is None:
-            addable = editable
-        self.addable = addable
-        Templated.__init__(self)
-
-    def user_row(self, row_type, user, editable=True):
-        raise NotImplementedError
-
-    def _user_rows(self, row_type, uids, editable_fn=None):
-        """Generates a UserTableItem wrapped list of the Account
-        objects which should be present in this UserList."""
-
-        if uids:
-            users = Account._byID(uids, True, return_dict = False)
-            rows = []
-            for u in users:
-                if not u._deleted:
-                    editable = editable_fn(u) if editable_fn else self.editable
-                    rows.append(self.user_row(row_type, u, editable))
-            return rows
-        else:
-            return []
-
-    @property
-    def user_rows(self):
-        return self._user_rows(self.type, self.user_ids())
-
-    def user_ids(self):
-        """virtual method for fetching the list of ids of the Accounts
-        to be listing in this UserList instance"""
-        raise NotImplementedError
-
-    @property
-    def container_name(self):
-        return c.site._fullname
-
-    def executed_message(self, row_type):
-        return _("added")
-
 class DetailsPage(LinkInfoPage):
     extension_handling= False
 
