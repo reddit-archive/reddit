@@ -256,6 +256,7 @@ class ApiController(RedditController, OAuth2ResourceController):
 
             queries.new_message(m, inbox_rel)
 
+    @require_oauth2_scope("submit")
     @json_validate()
     @api_doc(api_section.subreddits, uses_site=True, extensions=["json"])
     def GET_submit_text(self, responder):
