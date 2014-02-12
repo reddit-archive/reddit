@@ -1202,6 +1202,11 @@ class ApiController(RedditController):
         if not isinstance(thing, Link):
             return
 
+        # KLUDGE: changing the cache entry to a placeholder for this URL will
+        # cause the media scraper to force a rescrape.  This will be fixed
+        # when parameters can be passed to the scraper queue.
+        media_cache.MediaByURL.add_placeholder(thing.url, autoplay=False)
+
         amqp.add_item("scraper_q", thing._fullname)
 
     @require_oauth2_scope("modposts")
