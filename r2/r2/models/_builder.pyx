@@ -245,7 +245,8 @@ class _CommentBuilder(Builder):
         if isinstance(self.sort, operators.shuffled):
             shuffle(final)
 
-        timer.stop("build_morechildren")
+        timer.intermediate("build_morechildren")
+        timer.stop()
         return final
 
 
