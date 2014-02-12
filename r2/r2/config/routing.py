@@ -341,7 +341,6 @@ def make_map():
     mc('/api/:action', controller='promote',
        requirements=dict(action=("promote|unpromote|edit_promo|link_thumb|"
                                  "freebie|promote_note|update_pay|refund|"
-                                 "traffic_viewer|rm_traffic_viewer|"
                                  "edit_campaign|delete_campaign|meta_promo|"
                                  "add_roadblock|rm_roadblock|check_inventory|"
                                  "refund_campaign|terminate_campaign")))

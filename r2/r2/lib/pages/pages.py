@@ -2926,14 +2926,6 @@ class UserTableItem(Templated):
     def __repr__(self):
         return '<UserTableItem "%s">' % self.user.name
 
-class TrafficTableItem(UserTableItem):
-    type = "traffic_viewer"
-    remove_action = "rm_traffic_viewer"
-
-    @property
-    def container_name(self):
-        return self.link._fullname
-
 class RelTableItem(UserTableItem):
     def __init__(self, rel, **kw):
         self._id = rel._id

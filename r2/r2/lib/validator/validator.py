@@ -993,11 +993,6 @@ class VEmployee(VVerifiedUser):
         VVerifiedUser.run(self)
 
 
-class VTrafficViewer(VSponsor):
-    def user_test(self, thing):
-        return (VSponsor.user_test(self, thing) or
-                promote.is_traffic_viewer(thing, c.user))
-
 class VSrModerator(Validator):
     def __init__(self, fatal=True, perms=(), *a, **kw):
         # If True, abort rather than setting an error

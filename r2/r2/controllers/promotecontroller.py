@@ -50,7 +50,6 @@ from r2.lib.pages import (
     Roadblocks,
     UploadedImage,
 )
-from r2.lib.pages.trafficpages import TrafficViewerList
 from r2.lib.pages.things import wrap_links
 from r2.lib.system_messages import user_added_messages
 from r2.lib.utils import make_offset_date, to_date, to36
@@ -690,46 +689,6 @@ class PromoteController(ListingController):
             promote.terminate_campaign(link, campaign)
             rc = RenderableCampaign.from_campaigns(link, campaign)
             jquery.update_campaign(campaign._fullname, rc.render_html())
-
-    @validatedForm(VSponsor('container'),
-                   VModhash(),
-                   user=VExistingUname('name'),
-                   thing=VByName('container'))
-    def POST_traffic_viewer(self, form, jquery, user, thing):
-        """
-        Adds a user to the list of users allowed to view a promoted
-        link's traffic page.
-        """
-        if not form.has_errors("name",
-                               errors.USER_DOESNT_EXIST, errors.NO_USER):
-            form.set_inputs(name="")
-            form.set_html(".status:first", _("added"))
-            if promote.add_traffic_viewer(thing, user):
-                user_row = TrafficViewerList(thing).user_row('traffic_viewer', user)
-                jquery(".traffic_viewer-table").show(
-                    ).find("table").insert_table_rows(user_row)
-
-                # send the user a message
-                msg = user_added_messages['traffic']['pm']['msg']
-                subj = user_added_messages['traffic']['pm']['subject']
-                if msg and subj:
-                    d = dict(url=thing.make_permalink_slow(),
-                             traffic_url=promote.promo_traffic_url(thing),
-                             title=thing.title)
-                    msg = msg % d
-                    item, inbox_rel = Message._new(c.user, user,
-                                                   subj, msg, request.ip)
-                    queries.new_message(item, inbox_rel)
-
-
-    @validatedForm(VSponsor('container'),
-                   VModhash(),
-                   iuser=VByName('id'),
-                   thing=VByName('container'))
-    def POST_rm_traffic_viewer(self, form, jquery, iuser, thing):
-        if thing and iuser:
-            promote.rm_traffic_viewer(thing, iuser)
-
 
     @validatedForm(VSponsor('link'),
                    VModhash(),

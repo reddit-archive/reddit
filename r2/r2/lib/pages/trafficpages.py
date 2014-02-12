@@ -36,8 +36,7 @@ from r2.lib import promote
 from r2.lib.db.sorts import epoch_seconds
 from r2.lib.menus import menu
 from r2.lib.menus import NavButton, NamedButton, PageNameNav, NavMenu
-from r2.lib.pages.pages import Reddit, TimeSeriesChart, UserList, TabbedPane
-from r2.lib.pages import TrafficTableItem
+from r2.lib.pages.pages import Reddit, TimeSeriesChart, TabbedPane
 from r2.lib.promote import cost_per_mille, cost_per_click
 from r2.lib.template_helpers import format_number
 from r2.lib.utils import Storage, to_date, timedelta_by_name
@@ -535,8 +534,6 @@ class PromotedLinkTraffic(Templated):
                                                            else 'all campaigns')
 
         editable = c.user_is_sponsor or c.user._id == thing.author_id
-        self.viewer_list = TrafficViewerList(thing, editable)
-
         self.traffic_last_modified = traffic.get_traffic_last_modified()
         self.traffic_lag = (datetime.datetime.utcnow() -
                             self.traffic_last_modified)
@@ -737,36 +734,6 @@ class PromotedLinkTraffic(Templated):
             writer.writerow((date,) + values)
 
         return out.getvalue()
-
-
-class TrafficViewerList(UserList):
-    """Traffic share list on /traffic/*"""
-
-    destination = "traffic_viewer"
-    remove_action = "rm_traffic_viewer"
-    type = "traffic_viewer"
-
-    def __init__(self, link, editable=True):
-        self.link = link
-        UserList.__init__(self, editable=editable)
-
-    @property
-    def form_title(self):
-        return _("share traffic")
-
-    @property
-    def table_title(self):
-        return _("current viewers")
-
-    def user_ids(self):
-        return promote.traffic_viewers(self.link)
-
-    @property
-    def container_name(self):
-        return self.link._fullname
-
-    def user_row(self, row_type, user, editable=True):
-        return TrafficTableItem(user)
 
 
 class SubredditTrafficReport(Templated):

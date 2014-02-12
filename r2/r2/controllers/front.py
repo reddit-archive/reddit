@@ -1080,7 +1080,7 @@ class FrontController(RedditController):
 
 
     @require_oauth2_scope("modtraffic")
-    @validate(VTrafficViewer('link'),
+    @validate(VSponsor('link'),
               link=VLink('link'),
               campaign=VPromoCampaign('campaign'),
               before=VDate('before', format='%Y%m%d%H'),
