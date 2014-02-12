@@ -3165,6 +3165,9 @@ class FlairSelector(CachedTemplate):
                            matching_template=matching_template,
                            target_name=target_name)
 
+    def render(self, *a, **kw):
+        return responsive(CachedTemplate.render(self, *a, **kw), True)
+
     def _get_templates(self, site, flair_type, text, css_class):
         ids = FlairTemplateBySubredditIndex.get_template_ids(
             site._id, flair_type)

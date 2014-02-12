@@ -819,6 +819,63 @@ class FlairCsvJsonTemplate(JsonTemplate):
     def render(self, thing, *a, **kw):
         return ObjectTemplate([l.__dict__ for l in thing.results_by_line])
 
+
+class FlairSelectorJsonTemplate(JsonTemplate):
+    def _template_dict(self, flair):
+        return {"flair_template_id": flair.flair_template_id,
+                "flair_position": flair.flair_position,
+                "flair_text": flair.flair_text,
+                "flair_css_class": flair.flair_css_class,
+                "flair_text_editable": flair.flair_text_editable}
+
+    def render(self, thing, *a, **kw):
+        """Render a list of flair choices into JSON
+
+        Sample output:
+        {
+            "choices": [
+                {
+                    "flair_css_class": "flair-444",
+                    "flair_position": "right",
+                    "flair_template_id": "5668d204-9388-11e3-8109-080027a38559",
+                    "flair_text": "444",
+                    "flair_text_editable": true
+                },
+                {
+                    "flair_css_class": "flair-nouser",
+                    "flair_position": "right",
+                    "flair_template_id": "58e34d7a-9388-11e3-ab01-080027a38559",
+                    "flair_text": "nouser",
+                    "flair_text_editable": true
+                },
+                {
+                    "flair_css_class": "flair-bar",
+                    "flair_position": "right",
+                    "flair_template_id": "fb01cc04-9391-11e3-b1d6-080027a38559",
+                    "flair_text": "foooooo",
+                    "flair_text_editable": true
+                }
+            ],
+            "current": {
+                "flair_css_class": "444",
+                "flair_position": "right",
+                "flair_template_id": "5668d204-9388-11e3-8109-080027a38559",
+                "flair_text": "444"
+            }
+        }
+
+        """
+        choices = [self._template_dict(choice) for choice in thing.choices]
+
+        current_flair = {
+            "flair_text": thing.text,
+            "flair_css_class": thing.css_class,
+            "flair_position": thing.position,
+            "flair_template_id": thing.matching_template,
+        }
+        return ObjectTemplate({"current": current_flair, "choices": choices})
+
+
 class StylesheetTemplate(ThingJsonTemplate):
     _data_attrs_ = dict(
         images='_images',

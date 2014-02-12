@@ -105,6 +105,12 @@ class OAuth2Scope:
             "name": _("Edit Posts"),
             "description": _("Edit and delete my comments and submissions."),
         },
+        "flair": {
+            "id": "flair",
+            "name": _("Manage My Flair"),
+            "description": _("Select my subreddit flair. "
+                             "Change link flair on my submissions."),
+        },
         "history": {
             "id": "history",
             "name": _("History"),

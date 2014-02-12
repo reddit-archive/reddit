@@ -69,6 +69,7 @@ api('wikipagesettings', WikiSettingsJsonTemplate)
 
 api('flairlist', FlairListJsonTemplate)
 api('flaircsv', FlairCsvJsonTemplate)
+api('flairselector', FlairSelectorJsonTemplate)
 
 api('subredditstylesheet', StylesheetTemplate)
 api('subredditstylesheetsource', StylesheetTemplate)
