@@ -1245,6 +1245,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         sr._commit()
         jquery.refresh()
 
+    @require_oauth2_scope("report")
     @noresponse(VUser(), VModhash(),
                 thing = VByName('id'))
     @api_doc(api_section.links_and_comments)
@@ -2491,6 +2492,7 @@ class ApiController(RedditController, OAuth2ResourceController):
     def POST_read_message(self, things):
         self.unread_handler(things, False)
 
+    @require_oauth2_scope("report")
     @noresponse(VUser(),
                 VModhash(),
                 thing = VByName('id', thing_cls=Link))
@@ -2506,6 +2508,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         if not thing: return
         thing._hide(c.user)
 
+    @require_oauth2_scope("report")
     @noresponse(VUser(),
                 VModhash(),
                 thing = VByName('id'))

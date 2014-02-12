@@ -173,6 +173,12 @@ class OAuth2Scope:
             "name": _("Read Content"),
             "description": _("Access posts and comments through my account."),
         },
+        "report": {
+            "id": "report",
+            "name": _("Report content"),
+            "description": _("Report content for rules violations. "
+                             "Hide & show individual submissions."),
+        },
         "save": {
             "id": "save",
             "name": _("Save Content"),
