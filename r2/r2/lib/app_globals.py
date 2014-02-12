@@ -509,7 +509,7 @@ class Globals(object):
         # a pool just for srmember rels
         srmembercaches = CMemcache(
             self.srmembercaches,
-            min_compress_len=50 * 1024,
+            min_compress_len=96,
             num_clients=num_mc_clients,
         )
 
