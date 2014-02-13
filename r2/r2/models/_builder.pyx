@@ -56,12 +56,6 @@ class _CommentBuilder(Builder):
             heapq.heappush(candidates, (sort_val, comment))
 
     def get_items(self, num):
-        cdef list cid
-        cdef dict cid_tree
-        cdef dict depth
-        cdef dict parents
-        cdef dict sorter
-
         timer = g.stats.get_timer("CommentBuilder.get_items")
         timer.start()
         r = link_comments_and_sort(self.link, self.sort.col)
@@ -73,10 +67,10 @@ class _CommentBuilder(Builder):
                         % self.comment._id)
             self.comment = None
 
-        cdef dict more_recursions = {}
-        cdef list dont_collapse = []
-        cdef list candidates = []
-        cdef int offset_depth = 0
+        more_recursions = {}
+        dont_collapse = []
+        candidates = []
+        offset_depth = 0
 
         if self.children:
             # requested specific child comments
@@ -122,7 +116,7 @@ class _CommentBuilder(Builder):
             return []
 
         # choose which comments to show
-        cdef list items = []
+        items = []
         while len(items) < num and candidates:
             sort_val, comment_id = heapq.heappop(candidates)
             if comment_id not in cids:
@@ -150,18 +144,18 @@ class _CommentBuilder(Builder):
                 more_recursions[parent_id] = w
 
         timer.intermediate("pick_comments")
-        cdef list comments = Comment._byID(items, data=True, return_dict=False,
-                                           stale=self.stale)
-        cdef list wrapped = self.wrap_items(comments)
-        cdef dict wrapped_by_id = {comment._id: comment for comment in wrapped}
-        cdef list final = []
+        comments = Comment._byID(items, data=True, return_dict=False,
+                                 stale=self.stale)
+        wrapped = self.wrap_items(comments)
+        wrapped_by_id = {comment._id: comment for comment in wrapped}
+        final = []
 
         # retrieve num_children for the wrapped comments
         visible_comments = wrapped_by_id.keys()
         top_level_candidates = [comment for sort_val, comment in candidates
                                         if depth.get(comment, 0) == 0]
         needs_num_children = visible_comments + top_level_candidates
-        cdef dict num_children = get_num_children(needs_num_children, cid_tree)
+        num_children = get_num_children(needs_num_children, cid_tree)
 
         for comment in wrapped:
             # skip deleted comments with no children
@@ -250,15 +244,11 @@ class _CommentBuilder(Builder):
         return final
 
 
-cdef dict get_num_children(list comments, dict tree):
+def get_num_children(comments, tree):
     """Count the number of children for each comment."""
 
-    cdef dict num_children = {}
-    cdef list stack = []
-    cdef list children = []
-    cdef list missing = []
-    cdef long current
-    cdef long child
+    num_children = {}
+    stack = []
 
     for comment in sorted(comments):
         stack.append(comment)
