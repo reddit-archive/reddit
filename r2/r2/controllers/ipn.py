@@ -1191,7 +1191,7 @@ def validate_blob(custom):
         giftmessage = payment_blob.get('giftmessage')
         giftmessage = _force_unicode(giftmessage) if giftmessage else None
         ret['giftmessage'] = giftmessage
-    elif goldtype not in ('onetime', 'autorenew', 'creddits'):
+    elif goldtype not in ('onetime', 'autorenew', 'creddits', 'code'):
         raise GoldException('bad goldtype')
 
     return ret
