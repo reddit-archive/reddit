@@ -3209,7 +3209,18 @@ class ApiController(RedditController, OAuth2ResourceController):
     @validate(VUser(),
               user = VFlairAccount('name'),
               link = VFlairLink('link'))
+    @api_doc(api_section.flair, uses_site=True)
     def POST_flairselector(self, user, link):
+        """Return information about a users's flair options.
+
+        If `link` is given, return link flair options.
+        Otherwise, return user flair options for this subreddit.
+
+        The logged in user's flair is also returned.
+        Subreddit moderators may give a user by `name` to instead
+        retrieve that user's flair.
+
+        """
         if link:
             if hasattr(c.site, '_id') and c.site._id == link.sr_id:
                 site = c.site
