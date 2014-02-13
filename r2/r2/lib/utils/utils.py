@@ -922,9 +922,9 @@ def common_subdomain(domain1, domain2):
 
 
 def url_links_builder(url, exclude=None, num=None, after=None, reverse=None,
-                      count=None):
+                      count=None, public_srs_only=False):
     from r2.lib.template_helpers import add_sr
-    from r2.models import IDBuilder, Link, NotFound
+    from r2.models import IDBuilder, Link, NotFound, Subreddit
     from operator import attrgetter
 
     if url.startswith('/'):
@@ -937,6 +937,12 @@ def url_links_builder(url, exclude=None, num=None, after=None, reverse=None,
 
     links = [ link for link in links
                    if link._fullname != exclude ]
+
+    if public_srs_only and not c.user_is_admin:
+        subreddits = Subreddit._byID([link.sr_id for link in links], data=True)
+        links = [link for link in links
+                 if subreddits[link.sr_id].type != "private"]
+
     links.sort(key=attrgetter('num_comments'), reverse=True)
 
     # don't show removed links in duplicates unless admin or mod
