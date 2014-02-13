@@ -293,7 +293,7 @@ class OAuth2AccessController(MinimalController):
 
         access_token = OAuth2AccessToken._new(
                 client._id,
-                user._id,
+                user._id36,
                 scope
         )
         resp = self._make_token_dict(access_token)
