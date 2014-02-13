@@ -75,7 +75,7 @@ MINID=$(run_query "SELECT thing_id
                    WHERE
                       date > now() - interval '1 $INTERVAL' AND
                       date < now()
-                   ORDER BY thing_id
+                   ORDER BY date
                    LIMIT 1")
 if [ -z $MINID ]; then
     echo \$MINID is empty. Replication is likely behind.
