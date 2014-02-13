@@ -366,24 +366,10 @@ class NewController(ListingWithPromos):
 
     def keep_fn(self):
         def keep(item):
-            """Avoid showing links that are too young, to give time
-            for things like the spam filter and thumbnail fetcher to
-            act on them before releasing them into the wild"""
-            wouldkeep = item.keep_item(item)
             if item.promoted is not None:
                 return False
-            elif c.user_is_loggedin and (c.user_is_admin or
-                                         item.subreddit.is_moderator(c.user)):
-                # let admins and moderators see them regardless
-                return wouldkeep
-            elif wouldkeep and c.user_is_loggedin and c.user._id == item.author_id:
-                # also let the author of the link see them
-                return True
             else:
-                # otherwise, fall back to the regular logic (don't
-                # show hidden links, etc)
-                return wouldkeep
-
+                return item.keep_item(item)
         return keep
 
     def query(self):
