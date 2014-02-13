@@ -20,16 +20,15 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from account import *
-from link import *
-from vote import *
-from report import *
-from listing import Listing
-from pylons import g
-from pylons.i18n import _
-
-import subreddit
+from collections import defaultdict
+from copy import deepcopy
 import datetime
+import heapq
+from random import shuffle
+import time
+
+from pylons import c, g, request
+from pylons.i18n import _
 
 from r2.lib.comment_tree import (
     conversation,
@@ -40,23 +39,27 @@ from r2.lib.comment_tree import (
     tree_sort_fn,
     user_messages,
 )
-
 from r2.lib.wrapped import Wrapped
-from r2.lib import utils
 from r2.lib.db import operators, tdb_cassandra
 from r2.lib.filters import _force_unicode
-from copy import deepcopy
-from r2.lib.utils import Storage
+from r2.lib.utils import Storage, timesince, tup
 from r2.lib.utils.comment_tree_utils import get_num_children
 
-from r2.models import wiki
+from r2.models import (
+    Account,
+    Comment,
+    Link,
+    Message,
+    MoreChildren,
+    MoreMessages,
+    MoreRecursion,
+    Subreddit,
+    Thing,
+    wiki,
+)
+from r2.models.admintools import compute_votes, ip_span
+from r2.models.listing import Listing
 
-from collections import defaultdict
-import heapq
-from random import shuffle
-import time
-
-from admintools import compute_votes, admintools, ip_span, is_banned_domain
 
 EXTRA_FACTOR = 1.5
 MAX_RECURSION = 10
@@ -706,7 +709,7 @@ class CommentBuilder(Builder):
         self.rev_sort = isinstance(sort, operators.desc)
 
     def update_candidates(self, candidates, sorter, to_add=None):
-        for comment in (comment for comment in utils.tup(to_add)
+        for comment in (comment for comment in tup(to_add)
                                 if comment in sorter):
             sort_val = -sorter[comment] if self.rev_sort else sorter[comment]
             heapq.heappush(candidates, (sort_val, comment))
