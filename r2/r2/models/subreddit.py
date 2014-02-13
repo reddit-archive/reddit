@@ -619,7 +619,7 @@ class Subreddit(Thing, Printable, BaseSite):
             # dict( {Subreddit,Account,name} -> Relationship )
             SRMember._fast_query(subreddits.values(), (c.user,),
                                  ('contributor', 'moderator'),
-                                 data=True, eager_load=True, thing_data=True)
+                                 data=True)
 
         return subreddits if return_dict else subreddits.values()
 
