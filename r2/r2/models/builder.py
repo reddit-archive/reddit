@@ -348,11 +348,7 @@ class QueryBuilder(Builder):
         self.start_count = kw.get('count', 0) or 0
         self.after = kw.get('after')
         self.reverse = kw.get('reverse')
-
-        self.prewrap_fn = None
-        if hasattr(query, 'prewrap_fn'):
-            self.prewrap_fn = query.prewrap_fn
-        #self.prewrap_fn = kw.get('prewrap_fn')
+        self.prewrap_fn = getattr(query, 'prewrap_fn', None)
 
     def __repr__(self):
         return "<%s(%r)>" % (self.__class__.__name__, self.query)
