@@ -383,7 +383,6 @@ class AccountJsonTemplate(IdentityJsonTemplate):
         has_mail="has_mail",
         has_mod_mail="has_mod_mail",
         is_friend="is_friend",
-        is_mod="is_mod",
     )
 
     def thing_attr(self, thing, attr):
