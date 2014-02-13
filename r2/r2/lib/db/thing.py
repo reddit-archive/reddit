@@ -815,7 +815,7 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
 
         @classmethod
         def _fast_query(cls, thing1s, thing2s, name, data=True, eager_load=True,
-                        thing_data=False, timestamp_optimize = False):
+                        thing_data=False):
             """looks up all the relationships between thing1_ids and
                thing2_ids and caches them"""
             prefix = thing_prefix(cls.__name__)
@@ -1312,7 +1312,7 @@ def MultiRelation(name, *relations):
 
         @classmethod
         def _fast_query(cls, sub, obj, name, data=True, eager_load=True,
-                        thing_data=False, timestamp_optimize = False):
+                        thing_data=False):
             #divide into types
             def type_dict(items):
                 types = {}
@@ -1330,8 +1330,7 @@ def MultiRelation(name, *relations):
                 if sub_dict.has_key(t1) and obj_dict.has_key(t2):
                     res.update(rel._fast_query(sub_dict[t1], obj_dict[t2], name,
                                                data = data, eager_load=eager_load,
-                                               thing_data = thing_data,
-                                               timestamp_optimize = timestamp_optimize))
+                                               thing_data = thing_data))
 
             return res
 
