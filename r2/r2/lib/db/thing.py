@@ -834,7 +834,7 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
                         for y in thing2_ids
                         for n in name)
 
-            def items_db(pairs):
+            def lookup_rel_ids(pairs):
                 rel_ids = {}
 
                 t1_ids = set()
@@ -848,10 +848,7 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
                 if t1_ids and t2_ids and names:
                     q = cls._query(cls.c._thing1_id == t1_ids,
                                    cls.c._thing2_id == t2_ids,
-                                   cls.c._name == names,
-                                   eager_load = eager_load,
-                                   thing_data = thing_data,
-                                   data = data)
+                                   cls.c._name == names)
                 else:
                     q = []
 
@@ -864,22 +861,27 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
 
                 return rel_ids
 
-            res = sgm(cls._cache, pairs, items_db, prefix)
+            # get the relation ids from the cache or query the db
+            res = sgm(cls._cache, pairs, lookup_rel_ids, prefix)
 
-            #convert the keys back into objects
+            # get the relation objects
+            id_to_pair = {rel_id: (thing1_dict[thing1_id],
+                                   thing2_dict[thing2_id],
+                                   name)
+                               for (thing1_id, thing2_id, name), rel_id
+                               in res.iteritems()
+                               if rel_id is not None}
+            rel_ids = id_to_pair.keys()
+            rels = cls._byID_rel(rel_ids, data=data, eager_load=eager_load,
+                                 thing_data=thing_data)
 
-            # populate up the local-cache in batch
-            cls._byID(filter(None, res.values()), data=data)
-
-            # now we can assume the rels will be in the cache and just
-            # call _byID lots
             res_obj = {}
-            for k, rid in res.iteritems():
-                obj_key = (thing1_dict[k[0]], thing2_dict[k[1]], k[2])
-                res_obj[obj_key] = cls._byID(rid, data=data) if rid else None
-                
+            for rel_id, rel in rels.iteritems():
+                pair = id_to_pair[rel_id]
+                res_obj[pair] = rel
+
             return res_obj
-            
+
         @classmethod
         def _gay(cls):
             return cls._type1 == cls._type2
