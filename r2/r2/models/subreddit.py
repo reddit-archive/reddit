@@ -1605,7 +1605,8 @@ class DomainSR(FakeSubreddit):
         FakeSubreddit.__init__(self)
         self.domain = domain
         self.name = domain 
-        self.title = domain + ' ' + _('on reddit.com')
+        self.title = _("%(domain)s on %(reddit.com)s") % {
+            "domain": domain, "reddit.com": g.domain}
         idn = domain.decode('idna')
         if idn != domain:
             self.idn = idn
