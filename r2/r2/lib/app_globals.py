@@ -424,7 +424,7 @@ class Globals(object):
         if not self.media_domain:
             self.media_domain = self.domain
         if self.media_domain == self.domain:
-            print ("Warning: g.media_domain == g.domain. " +
+            print >> sys.stderr, ("Warning: g.media_domain == g.domain. " +
                    "This may give untrusted content access to user cookies")
 
         for arg in sys.argv:
