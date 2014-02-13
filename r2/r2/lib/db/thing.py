@@ -856,10 +856,6 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
                     q = []
 
                 for rel in q:
-                    #TODO an alternative for multiple
-                    #relations with the same keys
-                    #l = rel_ids.setdefault((rel._thing1_id, rel._thing2_id), [])
-                    #l.append(rel._id)
                     rel_ids[(rel._thing1_id, rel._thing2_id, rel._name)] = rel._id
 
                 for p in pairs:
