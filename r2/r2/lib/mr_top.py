@@ -20,70 +20,6 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-"""
-Generate the data for the listings for the time-based Subreddit
-queries. The format is eventually that of the CachedResults objects
-used by r2.lib.db.queries (with some intermediate steps), so changes
-there may warrant changes here
-"""
-
-# to run:
-"""
-export LINKDBHOST=prec01
-export USER=ri
-export INI=production.ini
-cd ~/reddit/r2
-time psql -F"\t" -A -t -d newreddit -U $USER -h $LINKDBHOST \
-     -c "\\copy (select t.thing_id, 'thing', 'link',
-                        t.ups, t.downs, t.deleted, t.spam, extract(epoch from t.date)
-                   from reddit_thing_link t
-                  where not t.spam and not t.deleted
-                     and t.date > now() - interval '1 year'
-                  )
-                  to 'reddit_thing_link.dump'"
-time psql -F"\t" -A -t -d newreddit -U $USER -h $LINKDBHOST \
-     -c "\\copy (select d.thing_id, 'data', 'link',
-                        d.key, d.value
-                   from reddit_data_link d, reddit_thing_link t
-                  where t.thing_id = d.thing_id
-                    and not t.spam and not t.deleted
-                    and (d.key = 'url' or d.key = 'sr_id')
-                    and t.date > now() - interval '1 year'
-                  )
-                  to 'reddit_data_link.dump'"
-cat reddit_data_link.dump reddit_thing_link.dump | sort -T. -S200m | paster --plugin=r2 run $INI r2/lib/mr_top.py -c "join_links()" > links.joined
-cat links.joined | paster --plugin=r2 run $INI r2/lib/mr_top.py -c "time_listings()" | sort -T. -S200m | paster --plugin=r2 run $INI r2/lib/mr_top.py -c "write_permacache()"
-"""
-## """
-## psql -F"\t" -A -t -d newreddit -U ri -h $LINKDBHOST \
-##     -c "\\copy (select t.thing_id,
-##                        'link',
-##                        t.ups,
-##                        t.downs,
-##                        t.deleted,
-##                        t.spam,
-##                        extract(epoch from t.date),
-##                        d.value
-##                   from reddit_thing_link t,
-##                        reddit_data_link d
-##                  where t.thing_id = d.thing_id
-##                    and not t.spam and not t.deleted
-##                    and d.key = 'sr_id'
-##                    and t.date > now() - interval '1 year'
-##                ) to 'links.year.joined'"
-## cat links.year.joined | paster --plugin=r2 run production.ini r2/lib/mr_top.py -c "time_listings()" \
-##  | sort -T. -S200mW \
-##  | paster --plugin=r2 run production.ini r2/lib/mr_top.py -c "write_permacache()"
-## """
-
-# that can be run with s/year/hour/g and
-# s/time_listings/time_listings(('hour',))/ for a much faster version
-# that just does the hour listings. Usually these jobs dump the thing
-# and data tables separately and join them with mr_tools.join_things,
-# but some quick profiling shows that getting postgres to do the
-# joining is ever-so-slightly-faster, so we have the above dump make
-# it in the same format the join_things would normally produce
-
 # Known bug: if a given listing hasn't had a submission in the
 # allotted time (e.g. the year listing in a subreddit that hasn't had
 # a submission in the last year), we won't write out an empty
@@ -91,7 +27,7 @@ cat links.joined | paster --plugin=r2 run $INI r2/lib/mr_top.py -c "time_listing
 
 import sys
 
-from r2.models import Account, Subreddit, Link
+from r2.models import Link, Comment
 from r2.lib.db.sorts import epoch_seconds, score, controversy
 from r2.lib.db import queries
 from r2.lib import mr_tools
@@ -99,94 +35,83 @@ from r2.lib.utils import timeago, UrlParser
 from r2.lib.jsontemplates import make_fullname # what a strange place
                                                # for this function
 
-def join_links():
-    mr_tools.join_things(('url', 'sr_id'))
+thingcls_by_name = {
+    "link": Link,
+    "comment": Comment,
+}
 
 
-def time_listings(times = ('year','month','week','day','hour')):
-    oldests = dict((t, epoch_seconds(timeago('1 %s' % t)))
-                   for t in times)
+def join_things():
+    mr_tools.join_things(('url', 'sr_id', 'author_id'))
 
-    @mr_tools.dataspec_m_thing(("url", str),('sr_id', int),)
-    def process(link):
-        assert link.thing_type == 'link'
 
-        timestamp = link.timestamp
-        fname = make_fullname(Link, link.thing_id)
+def time_listings(intervals):
+    cutoff_by_interval = {interval: epoch_seconds(timeago("1 %s" % interval))
+                          for interval in intervals}
 
-        if not link.spam and not link.deleted:
-            sr_id = link.sr_id
-            if link.url:
-                domains = UrlParser(link.url).domain_permutations()
-            else:
-                domains = []
-            ups, downs = link.ups, link.downs
+    @mr_tools.dataspec_m_thing(
+        ("url", str),
+        ("sr_id", int),
+        ("author_id", int),
+    )
+    def process(thing):
+        if thing.deleted:
+            return
 
-            for tkey, oldest in oldests.iteritems():
-                if timestamp > oldest:
-                    sc = score(ups, downs)
-                    contr = controversy(ups, downs)
-                    yield ('sr-top-%s-%d' % (tkey, sr_id),
-                           sc, timestamp, fname)
-                    yield ('sr-controversial-%s-%d' % (tkey, sr_id),
-                           contr, timestamp, fname)
-                    for domain in domains:
-                        yield ('domain/top/%s/%s' % (tkey, domain),
-                               sc, timestamp, fname)
-                        yield ('domain/controversial/%s/%s' % (tkey, domain),
-                               contr, timestamp, fname)
+        thing_cls = thingcls_by_name[thing.thing_type]
+        fname = make_fullname(thing_cls, thing.thing_id)
+        thing_score = score(thing.ups, thing.downs)
+        thing_controversy = controversy(thing.ups, thing.downs)
+
+        for interval, cutoff in cutoff_by_interval.iteritems():
+            if thing.timestamp < cutoff:
+                continue
+
+            yield ("user/%s/top/%s/%d" % (thing.thing_type, interval, thing.author_id),
+                   thing_score, thing.timestamp, fname)
+            yield ("user/%s/controversial/%s/%d" % (thing.thing_type, interval, thing.author_id),
+                   thing_controversy, thing.timestamp, fname)
+
+            if thing.spam:
+                continue
+
+            if thing.thing_type == "link":
+                yield ("sr/link/top/%s/%d" % (interval, thing.sr_id),
+                       thing_score, thing.timestamp, fname)
+                yield ("sr/link/controversial/%s/%d" % (interval, thing.sr_id),
+                       thing_controversy, thing.timestamp, fname)
+
+                if thing.url:
+                    for domain in UrlParser(thing.url).domain_permutations():
+                        yield ("domain/link/top/%s/%s" % (interval, domain),
+                               thing_score, thing.timestamp, fname)
+                        yield ("domain/link/controversial/%s/%s" % (interval, domain),
+                               thing_controversy, thing.timestamp, fname)
 
     mr_tools.mr_map(process)
 
+
 def store_keys(key, maxes):
-    # we're building queries using queries.py, but we could make the
-    # queries ourselves if we wanted to avoid the individual lookups
-    # for accounts and subreddits.
+    category, thing_cls, sort, time, id = key.split("/")
 
-    # Note that we're only generating the 'sr-' type queries here, but
-    # we're also able to process the other listings generated by the
-    # old migrate.mr_permacache for convenience
+    query = None
+    if category == "user":
+        if thing_cls == "link":
+            query = queries._get_submitted(int(id), sort, time)
+        elif thing_cls == "comment":
+            query = queries._get_comments(int(id), sort, time)
+    elif category == "sr":
+        if thing_cls == "link":
+            query = queries._get_links(int(id), sort, time)
+    elif category == "domain":
+        if thing_cls == "link":
+            query = queries.get_domain_links(id, sort, time)
+    assert query
 
-    userrel_fns = dict(liked = queries.get_liked,
-                       disliked = queries.get_disliked,
-                       saved = queries.get_saved,
-                       hidden = queries.get_hidden)
+    item_tuples = [tuple([item[-1]] + [float(x) for x in item[:-1]])
+                   for item in maxes]
+    query._replace(item_tuples)
 
-    if key.startswith('user-'):
-        acc_str, keytype, account_id = key.split('-')
-        account_id = int(account_id)
-        fn = queries._get_submitted if keytype == 'submitted' else queries._get_comments
-        q = fn(account_id, 'new', 'all')
-        q._replace([(fname, float(timestamp))
-                    for (timestamp, fname)
-                    in maxes])
-
-    elif key.startswith('sr-'):
-        sr_str, sort, time, sr_id = key.split('-')
-        sr_id = int(sr_id)
-
-        if sort == 'controversy':
-            # I screwed this up in the mapper and it's too late to fix
-            # it
-            sort = 'controversial'
-
-        q = queries._get_links(sr_id, sort, time)
-        q._replace([tuple([item[-1]] + map(float, item[:-1]))
-                    for item in maxes])
-    elif key.startswith('domain/'):
-        d_str, sort, time, domain = key.split('/')
-        q = queries.get_domain_links(domain, sort, time)
-        q._replace([tuple([item[-1]] + map(float, item[:-1]))
-                    for item in maxes])
-
-
-    elif key.split('-')[0] in userrel_fns:
-        key_type, account_id = key.split('-')
-        account_id = int(account_id)
-        fn = userrel_fns[key_type]
-        q = fn(Account._byID(account_id))
-        q._replace([tuple([item[-1]] + map(float, item[:-1]))
-                    for item in maxes])
 
 def write_permacache(fd = sys.stdin):
     mr_tools.mr_reduce_max_per_key(lambda x: map(float, x[:-1]), num=1000,
