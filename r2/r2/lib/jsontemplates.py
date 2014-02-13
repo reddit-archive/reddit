@@ -28,6 +28,7 @@ from mako.template import Template
 from r2.config.extensions import get_api_subtype
 from r2.lib.filters import spaceCompress, safemarkdown
 from r2.models.subreddit import SubSR
+from r2.models.token import OAuth2Scope, extra_oauth2_scope
 import time, pytz
 from pylons import c, g
 from pylons.i18n import _
@@ -347,11 +348,35 @@ class IdentityJsonTemplate(ThingJsonTemplate):
         over_18="pref_over_18",
     )
 
+    @extra_oauth2_scope("privatemessages")
+    def add_message_data(self, data, thing):
+        data['has_mail'] = self.thing_attr(thing, 'has_mail')
+        data['has_mod_mail'] = self.thing_attr(thing, 'has_mod_mail')
+
+    def raw_data(self, thing):
+        data = ThingJsonTemplate.raw_data(self, thing)
+        try:
+            self.add_message_data(data, thing)
+        except OAuth2Scope.InsufficientScopeError:
+            # No access to privatemessages, but the rest of
+            # the identity information is sufficient.
+            pass
+        return data
+
     def thing_attr(self, thing, attr):
         if attr == "is_mod":
             t = thing.lookups[0] if isinstance(thing, Wrapped) else thing
             return t.is_moderator_somewhere
+        if attr == "has_mail":
+            if c.user_is_loggedin and thing._id == c.user._id:
+                return bool(c.have_messages)
+            return None
+        if attr == "has_mod_mail":
+            if c.user_is_loggedin and thing._id == c.user._id:
+                return bool(c.have_mod_messages)
+            return None
         return ThingJsonTemplate.thing_attr(self, thing, attr)
+
 
 class AccountJsonTemplate(IdentityJsonTemplate):
     _data_attrs_ = IdentityJsonTemplate.data_attrs(
@@ -362,14 +387,6 @@ class AccountJsonTemplate(IdentityJsonTemplate):
     )
 
     def thing_attr(self, thing, attr):
-        if attr == "has_mail":
-            if c.user_is_loggedin and thing._id == c.user._id:
-                return bool(c.have_messages)
-            return None
-        if attr == "has_mod_mail":
-            if c.user_is_loggedin and thing._id == c.user._id:
-                return bool(c.have_mod_messages)
-            return None
         if attr == "is_friend":
             return c.user_is_loggedin and thing._id in c.user.friends
         return IdentityJsonTemplate.thing_attr(self, thing, attr)
