@@ -28,6 +28,7 @@ from r2.lib.cache import sgm
 from r2.models.comment_tree import CommentTree
 from r2.models.link import Comment, Link
 
+MESSAGE_TREE_SIZE_LIMIT = 15000
 
 def comments_key(link_id):
     return 'comments_' + str(link_id)
@@ -271,6 +272,13 @@ def _add_message_nolock(key, message):
             if new_tree:
                 trees.append(new_tree[0])
         trees.sort(key = tree_sort_fn, reverse = True)
+
+    # If we have too many messages in the tree, drop the oldest
+    # conversation to avoid the permacache size limit
+    tree_size = len(trees) + sum(len(convo[1]) for convo in trees)
+
+    if tree_size > MESSAGE_TREE_SIZE_LIMIT:
+        del trees[-1]
 
     # done!
     g.permacache.set(key, trees)
