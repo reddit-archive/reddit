@@ -793,7 +793,9 @@ class CommentBuilder(Builder):
 
         comments = Comment._byID(items, data=True, return_dict=False,
                                  stale=self.stale)
+        timer.intermediate("lookup_comments")
         wrapped = self.wrap_items(comments)
+        timer.intermediate("wrap_comments")
         wrapped_by_id = {comment._id: comment for comment in wrapped}
         final = []
 
