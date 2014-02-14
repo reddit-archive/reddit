@@ -1494,8 +1494,8 @@ class FormsController(RedditController):
 
         if comment:
             comment_sr = Subreddit._byID(comment.sr_id, data=True)
-            if (comment._deleted or
-                    comment._spam or
+            if (comment._deleted or comment._spam or
+                    not comment_sr.can_view(c.user) or
                     not comment_sr.allow_comment_gilding):
                 comment = None
 
