@@ -85,6 +85,9 @@ class FrontController(RedditController):
             new_id = max_link_id - int(article._id)
             return self.redirect('/info/' + to36(new_id) + '/' + rest)
         if type == 'old':
+            if not article.subreddit_slow.can_view(c.user):
+                self.abort403()
+
             new_url = "/%s/%s/%s" % \
                       (dest, article._id36,
                        quote_plus(title_to_url(article.title).encode('utf-8')))
