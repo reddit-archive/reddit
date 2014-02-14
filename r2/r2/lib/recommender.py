@@ -229,10 +229,9 @@ def get_comment_items(srs, src, count=4):
                                  operators.desc('_confidence'),
                                  comment=None,
                                  context=None,
+                                 num=1,
                                  load_more=False)
-        listing = NestedListing(builder,
-                                num=1,
-                                parent_name=link._fullname).listing()
+        listing = NestedListing(builder, parent_name=link._fullname).listing()
         top_comments.extend(listing.things)
     srs = Subreddit._byID([com.sr_id for com in top_comments])
     links = Link._byID([com.link_id for com in top_comments])

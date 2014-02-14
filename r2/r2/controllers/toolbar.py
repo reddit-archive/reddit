@@ -203,10 +203,9 @@ class ToolbarController(RedditController):
         wrapper = make_wrapper(render_class = StarkComment,
                                target = "_top")
         b = TopCommentBuilder(link, CommentSortMenu.operator('confidence'),
-                              wrap = wrapper)
+                              num=10, wrap=wrapper)
 
-        listing = NestedListing(b, num = 10, # TODO: add config var
-                                parent_name = link._fullname)
+        listing = NestedListing(b, parent_name=link._fullname)
 
         raw_bar = strings.comments_panel_text % dict(
             fd_link=link.permalink)

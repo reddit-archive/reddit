@@ -1382,9 +1382,8 @@ class CommentPane(Templated):
 
         def renderer():
             builder = CommentBuilder(article, sort, comment=comment,
-                                     context=context, **kw)
-            listing = NestedListing(builder, num = num,
-                                    parent_name = article._fullname)
+                                     context=context, num=num, **kw)
+            listing = NestedListing(builder, parent_name=article._fullname)
             return listing.listing()
 
         # disable the cache if the user is the author of anything in the

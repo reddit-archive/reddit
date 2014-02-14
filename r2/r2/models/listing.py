@@ -275,7 +275,7 @@ class NestedListing(Listing):
         ##TODO use the local builder with the render cache. this may
         ##require separating the builder's get_items and tree-building
         ##functionality
-        wrapped_items = self.get_items(num = self.num)
+        wrapped_items = self.get_items()
 
         self.things = wrapped_items
 

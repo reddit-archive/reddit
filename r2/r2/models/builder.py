@@ -688,7 +688,7 @@ def make_wrapper(parent_wrapper = Wrapped, **params):
 class CommentBuilder(Builder):
     def __init__(self, link, sort, comment=None, children=None, context=None,
                  load_more=True, continue_this_thread=True,
-                 max_depth = MAX_RECURSION, **kw):
+                 max_depth=MAX_RECURSION, num=None, **kw):
         Builder.__init__(self, **kw)
         self.link = link
         self.comment = comment
@@ -696,6 +696,7 @@ class CommentBuilder(Builder):
         self.context = context or 0
         self.load_more = load_more
         self.max_depth = max_depth
+        self.num = num
 
         # This is almost always True, except in the toolbar comments panel,
         # where we never want to see "continue this thread" links
@@ -710,7 +711,7 @@ class CommentBuilder(Builder):
             sort_val = -sorter[comment] if self.rev_sort else sorter[comment]
             heapq.heappush(candidates, (sort_val, comment))
 
-    def get_items(self, num):
+    def get_items(self):
         timer = g.stats.get_timer("CommentBuilder.get_items")
         timer.start()
         r = link_comments_and_sort(self.link, self.sort.col)
@@ -772,7 +773,7 @@ class CommentBuilder(Builder):
 
         # choose which comments to show
         items = []
-        while len(items) < num and candidates:
+        while (self.num is None or len(items) < self.num) and candidates:
             sort_val, comment_id = heapq.heappop(candidates)
             if comment_id not in cids:
                 continue
@@ -1072,14 +1073,14 @@ class MultiredditMessageBuilder(MessageBuilder):
 class TopCommentBuilder(CommentBuilder):
     """A comment builder to fetch only the top-level, non-spam,
        non-deleted comments"""
-    def __init__(self, link, sort, wrap = Wrapped):
+    def __init__(self, link, sort, num=None, wrap=Wrapped):
         CommentBuilder.__init__(self, link, sort,
                                 load_more = False,
                                 continue_this_thread = False,
-                                max_depth = 1, wrap = wrap)
+                                max_depth=1, wrap=wrap, num=num)
 
-    def get_items(self, num = 10):
-        final = CommentBuilder.get_items(self, num = num)
+    def get_items(self):
+        final = CommentBuilder.get_items(self)
         return [ cm for cm in final if not cm.deleted ]
 
 class SrMessageBuilder(MessageBuilder):
