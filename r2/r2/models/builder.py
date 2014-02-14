@@ -47,6 +47,7 @@ from r2.lib.db import operators, tdb_cassandra
 from r2.lib.filters import _force_unicode
 from copy import deepcopy
 from r2.lib.utils import Storage
+from r2.lib.utils.comment_tree_utils import get_num_children
 
 from r2.models import wiki
 
@@ -905,41 +906,6 @@ class CommentBuilder(Builder):
             if hasattr(i, 'child'):
                 for j in self.item_iter(i.child.things):
                     yield j
-
-
-def get_num_children(comments, tree):
-    """Count the number of children for each comment."""
-
-    num_children = {}
-    stack = []
-
-    for comment in sorted(comments):
-        stack.append(comment)
-
-    while stack:
-        current = stack[-1]
-
-        if current in num_children:
-            stack.pop()
-            continue
-
-        children = tree.get(current, [])
-
-        for child in children:
-            if child not in num_children and not tree.get(child, None):
-                num_children[child] = 0
-
-        missing = [child for child in children if not child in num_children]
-
-        if not missing:
-            num_children[current] = 0
-            stack.pop()
-            for child in children:
-                num_children[current] += 1 + num_children[child]
-        else:
-            stack.extend(missing)
-
-    return num_children
 
 
 class MessageBuilder(Builder):
