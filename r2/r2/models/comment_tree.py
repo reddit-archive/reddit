@@ -58,7 +58,6 @@ class CommentTreeStorageBase(object):
     def add_comments(cls, tree, comments):
         cids = tree.cids
         depth = tree.depth
-        num_children = tree.num_children
 
         #dfs to find the list of parents for the new comment
         def find_parents(cid):
@@ -93,16 +92,9 @@ class CommentTreeStorageBase(object):
             #add to depth
             depth[cid] = depth[p_id] + 1 if p_id else 0
 
-            #update children
-            if cls._maintain_num_children:
-                num_children[cid] = 0
-
             #if this comment had a parent, find the parent's parents
             if p_id:
                 new_parents[cid] = p_id
-                if cls._maintain_num_children:
-                    for p_id in find_parents(cid):
-                        num_children[p_id] += 1
 
         # update our cache of children -> parents as well:
         if not tree.parents:
@@ -126,8 +118,6 @@ class CommentTreeStorageBase(object):
                 tree.cids.remove(comment._id)
             if comment._id in tree.depth:
                 del tree.depth[comment._id]
-            if comment._id in tree.num_children:
-                del tree.num_children[comment._id]
 
 
 class CommentTreeStorageV2(CommentTreeStorageBase):
