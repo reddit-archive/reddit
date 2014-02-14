@@ -799,18 +799,19 @@ class CommentBuilder(Builder):
                 more_recursions[parent_id] = w
 
         timer.intermediate("pick_comments")
+
+        # retrieve num_children for the visible comments
+        top_level_candidates = [comment for sort_val, comment in candidates
+                                        if depth.get(comment, 0) == 0]
+        needs_num_children = items + top_level_candidates
+        num_children = get_num_children(needs_num_children, cid_tree)
+        timer.intermediate("calc_num_children")
+
         comments = Comment._byID(items, data=True, return_dict=False,
                                  stale=self.stale)
         wrapped = self.wrap_items(comments)
         wrapped_by_id = {comment._id: comment for comment in wrapped}
         final = []
-
-        # retrieve num_children for the wrapped comments
-        visible_comments = wrapped_by_id.keys()
-        top_level_candidates = [comment for sort_val, comment in candidates
-                                        if depth.get(comment, 0) == 0]
-        needs_num_children = visible_comments + top_level_candidates
-        num_children = get_num_children(needs_num_children, cid_tree)
 
         for comment in wrapped:
             # skip deleted comments with no children
