@@ -65,7 +65,8 @@ EXTRA_FACTOR = 1.5
 MAX_RECURSION = 10
 
 class Builder(object):
-    def __init__(self, wrap=Wrapped, keep_fn=None, stale=True, spam_listing=False):
+    def __init__(self, wrap=Wrapped, keep_fn=None, stale=True,
+                 spam_listing=False):
         self.stale = stale
         self.wrap = wrap
         self.keep_fn = keep_fn
@@ -80,27 +81,18 @@ class Builder(object):
     def wrap_items(self, items):
         from r2.lib.db import queries
         from r2.lib.template_helpers import add_attr
-        user = c.user if c.user_is_loggedin else None
 
-        #get authors
-        #TODO pull the author stuff into add_props for links and
-        #comments and messages?
+        user = c.user if c.user_is_loggedin else None
         aids = set(l.author_id for l in items if hasattr(l, 'author_id')
                    and l.author_id is not None)
 
-        authors = {}
-        cakes = {}
-        friend_rels = None
-        if aids:
-            authors = Account._byID(aids, data=True, stale=self.stale) if aids else {}
-            now = datetime.datetime.now(g.tz)
-            cakes = {a._id for a in authors.itervalues()
-                     if a.cake_expiration and a.cake_expiration >= now}
-            if user and user.gold:
-                friend_rels = user.friend_rels()
+        authors = Account._byID(aids, data=True, stale=self.stale)
+        now = datetime.datetime.now(g.tz)
+        cakes = {a._id for a in authors.itervalues()
+                       if a.cake_expiration and a.cake_expiration >= now}
+        friend_rels = user.friend_rels() if user and user.gold else {}
 
         subreddits = Subreddit.load_subreddits(items, stale=self.stale)
-
         can_ban_set = set()
         can_flair_set = set()
         can_own_flair_set = set()
@@ -119,7 +111,6 @@ class Builder(object):
         except tdb_cassandra.TRANSIENT_EXCEPTIONS as e:
             g.log.warning("Cassandra vote lookup failed: %r", e)
             likes = {}
-        uid = user._id if user else None
 
         types = {}
         wrapped = []
@@ -128,9 +119,8 @@ class Builder(object):
         modlabel = {}
         for s in subreddits.values():
             modlink[s._id] = '/r/%s/about/moderators' % s.name
-            modlabel[s._id] = (_('moderator of /r/%(reddit)s, speaking officially') %
-                        dict(reddit = s.name) )
-
+            modlabel[s._id] = (_('moderator of /r/%(reddit)s, '
+                                 'speaking officially') % {'reddit': s.name})
 
         for item in items:
             w = self.wrap(item)
@@ -140,8 +130,6 @@ class Builder(object):
             w.fullname = item._fullname
             types.setdefault(w.render_class, []).append(w)
 
-            #TODO pull the author stuff into add_props for links and
-            #comments and messages?
             w.author = None
             w.friend = False
 
@@ -271,7 +259,8 @@ class Builder(object):
                         w.use_big_modbuttons = False
 
                 elif (getattr(item, 'reported', 0) > 0
-                      and (not getattr(item, 'ignore_reports', False) or c.user_is_admin)):
+                      and (not getattr(item, 'ignore_reports', False) or
+                           c.user_is_admin)):
                     w.show_reports = True
                     w.use_big_modbuttons = True
 
@@ -314,7 +303,7 @@ class Builder(object):
     def get_items(self):
         raise NotImplementedError
 
-    def item_iter(self, *a):
+    def item_iter(self, a):
         """Iterates over the items returned by get_items"""
         raise NotImplementedError
 
@@ -341,7 +330,8 @@ class Builder(object):
 class QueryBuilder(Builder):
     def __init__(self, query, wrap=Wrapped, keep_fn=None, skip=False,
                  spam_listing=False, **kw):
-        Builder.__init__(self, wrap=wrap, keep_fn=keep_fn, spam_listing=spam_listing)
+        Builder.__init__(self, wrap=wrap, keep_fn=keep_fn,
+                         spam_listing=spam_listing)
         self.query = query
         self.skip = skip
         self.num = kw.get('num')
@@ -401,22 +391,19 @@ class QueryBuilder(Builder):
         first_item = None
         last_item = None
         have_next = True
+        loopcount = 0
 
-        #logloop
-        self.loopcount = 0
-        
         while not done:
             done, new_items = self.fetch_more(last_item, num_have)
 
             #log loop
-            self.loopcount += 1
-            if self.loopcount == 20:
-                g.log.debug('BREAKING: %s' % self)
+            loopcount += 1
+            if loopcount == 20:
                 done = True
 
             #no results, we're done
             if not new_items:
-                break;
+                break
 
             #if fewer results than we wanted, we're done
             elif self.num and len(new_items) < self.num - num_have:
@@ -444,7 +431,8 @@ class QueryBuilder(Builder):
             while new_items and (not self.num or num_have < self.num):
                 i = new_items.pop(0)
 
-                if not (self.must_skip(i) or self.skip and not self.keep_item(i)):
+                if not (self.must_skip(i) or
+                        self.skip and not self.keep_item(i)):
                     items.append(i)
                     num_have += 1
                     count = count - 1 if self.reverse else count + 1
@@ -585,12 +573,10 @@ class SimpleBuilder(IDBuilder):
             self.names = items
 
     def get_items(self):
-        items, prev, next, bcount, acount = IDBuilder.get_items(self)
-        if prev:
-            prev = prev._id
-        if next:
-            next = next._id
-        return (items, prev, next, bcount, acount)
+        items, prev_item, next_item, bcount, acount = IDBuilder.get_items(self)
+        prev_item_id = prev_item._id if prev_item else None
+        next_item_id = next_item._id if next_item else None
+        return (items, prev_item_id, next_item_id, bcount, acount)
 
 
 class SearchBuilder(IDBuilder):
@@ -598,6 +584,7 @@ class SearchBuilder(IDBuilder):
                  skip_deleted_authors=True, **kw):
         IDBuilder.__init__(self, query, wrap, keep_fn, skip, **kw)
         self.skip_deleted_authors = skip_deleted_authors
+
     def init_query(self):
         self.skip = True
 
@@ -613,11 +600,10 @@ class SearchBuilder(IDBuilder):
                                      after,
                                      self.reverse)
 
-    def keep_item(self,item):
+    def keep_item(self, item):
         # doesn't use the default keep_item because we want to keep
         # things that were voted on, even if they've chosen to hide
         # them in normal listings
-        # TODO: Consider a flag to disable this (and see listingcontroller.py)
         if item._spam or item._deleted:
             return False
         # If checking (wrapped) links, filter out banned subreddits
@@ -659,10 +645,11 @@ class WikiRevisionBuilder(QueryBuilder):
 
 class WikiRecentRevisionBuilder(WikiRevisionBuilder):
     show_extended = False
-    
+
     def must_skip(self, item):
-        return (datetime.datetime.now(g.tz) - item.date).days >= wiki.WIKI_RECENT_DAYS
-        
+        item_age = datetime.datetime.now(g.tz) - item.date
+        return item_age.days >= wiki.WIKI_RECENT_DAYS
+
 
 def empty_listing(*things):
     parent_name = None
@@ -697,11 +684,7 @@ class CommentBuilder(Builder):
         self.load_more = load_more
         self.max_depth = max_depth
         self.num = num
-
-        # This is almost always True, except in the toolbar comments panel,
-        # where we never want to see "continue this thread" links
         self.continue_this_thread = continue_this_thread
-
         self.sort = sort
         self.rev_sort = isinstance(sort, operators.desc)
 
@@ -932,10 +915,10 @@ class MessageBuilder(Builder):
         return tree_sort_fn(x) < self.after._id
 
     def _viewable_message(self, m):
-        if (c.user_is_admin
-            or getattr(m, "author_id", 0) == c.user._id
-            or getattr(m, "to_id", 0)     == c.user._id):
-                return True
+        if (c.user_is_admin or
+                getattr(m, "author_id", 0) == c.user._id or
+                getattr(m, "to_id", 0) == c.user._id):
+            return True
 
         # m is wrapped at this time, so it should have an SR
         subreddit = getattr(m, "subreddit", None)
@@ -944,11 +927,10 @@ class MessageBuilder(Builder):
 
         return False
 
-
     def get_items(self):
         tree = self.get_tree()
 
-        prev = next = None
+        prev_item = next_item = None
         if not self.parent:
             if self.num is not None:
                 if self.after:
@@ -956,28 +938,28 @@ class MessageBuilder(Builder):
                         tree = filter(
                             self._tree_filter_reverse,
                             tree)
-                        next = self.after._id
+                        next_item = self.after._id
                         if len(tree) > self.num:
                             first = tree[-(self.num+1)]
-                            prev = first[1][-1] if first[1] else first[0]
+                            prev_item = first[1][-1] if first[1] else first[0]
                             tree = tree[-self.num:]
                     else:
-                        prev = self.after._id
+                        prev_item = self.after._id
                         tree = filter(
                             self._tree_filter,
                             tree)
                 if len(tree) > self.num:
                     tree = tree[:self.num]
                     last = tree[-1]
-                    next = last[1][-1] if last[1] else last[0]
+                    next_item = last[1][-1] if last[1] else last[0]
 
         # generate the set of ids to look up and look them up
         message_ids = []
         for root, thread in tree:
             message_ids.append(root)
             message_ids.extend(thread)
-        if prev:
-            message_ids.append(prev)
+        if prev_item:
+            message_ids.append(prev_item)
 
         messages = Message._byID(message_ids, data = True, return_dict = False)
         wrapped = {}
@@ -988,10 +970,10 @@ class MessageBuilder(Builder):
                 continue
             wrapped[m._id] = m
 
-        if prev:
-            prev = wrapped[prev]
-        if next:
-            next = wrapped[next]
+        if prev_item:
+            prev_item = wrapped[prev_item]
+        if next_item:
+            next_item = wrapped[next_item]
 
         final = []
         for parent, children in tree:
@@ -1001,7 +983,8 @@ class MessageBuilder(Builder):
             if children:
                 # if no parent is specified, check if any of the messages are
                 # uncollapsed, and truncate the thread
-                children = [wrapped[child] for child in children if child in wrapped]
+                children = [wrapped[child] for child in children
+                                           if child in wrapped]
                 parent.child = empty_listing()
                 # if the parent is new, uncollapsed, or focal we don't
                 # want it to become a moremessages wrapper.
@@ -1039,7 +1022,7 @@ class MessageBuilder(Builder):
                 parent.collapsed = parent.is_collapsed
             final.append(parent)
 
-        return (final, prev, next, len(final), len(final))
+        return (final, prev_item, next_item, len(final), len(final))
 
     def item_iter(self, a):
         for i in a[0]:
