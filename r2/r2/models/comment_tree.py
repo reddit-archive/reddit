@@ -33,8 +33,6 @@ from pylons import g
 
 
 class CommentTreeStorageBase(object):
-    _maintain_num_children = True
-
     class NoOpContext:
         def __enter__(self):
             pass
@@ -58,20 +56,6 @@ class CommentTreeStorageBase(object):
     def add_comments(cls, tree, comments):
         cids = tree.cids
         depth = tree.depth
-
-        #dfs to find the list of parents for the new comment
-        def find_parents(cid):
-            # initialize stack with copy of top-level cids
-            stack = tree.tree[None][:]
-            parents = []
-            while stack:
-                cur = stack.pop()
-                if cur == cid:
-                    return parents
-                elif cur in tree.tree:
-                    #make cur the end of the parents list
-                    parents = parents[:depth[cur]] + [cur]
-                    stack.extend(tree.tree[cur])
 
         new_parents = {}
         for comment in comments:
@@ -188,7 +172,6 @@ class CommentTreeStorageV2(CommentTreeStorageBase):
         tree = {}
         depth = {}
         parents = {}
-        num_children = {}
         for (d, pid, cid), val in row:
             if cid == -1:
                 continue
@@ -198,9 +181,7 @@ class CommentTreeStorageV2(CommentTreeStorageBase):
             tree.setdefault(pid, []).append(cid)
             depth[cid] = d
             parents[cid] = pid
-            num_children[cid] = val - 1
-        return dict(cids=cids, tree=tree, depth=depth,
-                    num_children=num_children, parents=parents)
+        return dict(cids=cids, tree=tree, depth=depth, parents=parents)
 
     @classmethod
     @tdb_cassandra.will_write
@@ -331,19 +312,15 @@ class CommentTreeStorageV1(CommentTreeStorageBase):
             return None
 
         try:
-            cids, cid_tree, depth, num_children = r
-        except ValueError:
-            # We got the new version that doesn't include num_children. Make
-            # a dummy num_children, which will be safe because it's not getting
-            # used anywhere.
             cids, cid_tree, depth = r
-            num_children = {}
+        except ValueError:
+            # We got the old version that includes num_children
+            cids, cid_tree, depth, num_children = r
 
         parents = g.permacache.get(p_key)
         if parents is None:
             parents = {}
-        return dict(cids=cids, tree=cid_tree, depth=depth,
-                    num_children=num_children, parents=parents)
+        return dict(cids=cids, tree=cid_tree, depth=depth, parents=parents)
 
     @classmethod
     def add_comments(cls, tree, comments):
@@ -353,8 +330,7 @@ class CommentTreeStorageV1(CommentTreeStorageBase):
             g.permacache.set(cls._parent_comments_key(tree.link_id),
                              tree.parents)
             g.permacache.set(cls._comments_key(tree.link_id),
-                             (tree.cids, tree.tree, tree.depth,
-                             tree.num_children))
+                             (tree.cids, tree.tree, tree.depth))
 
 
 class CommentTree:
@@ -372,9 +348,6 @@ class CommentTree:
       - depth: dict of int to int; each entry in cids has a key in this dict,
           and the corresponding value is that comment's depth in the tree
           (with a value of 0 for top-level comments)
-      - num_children: dict of int to int; each entry in cids has a key in this
-          dict, and the corresponding value is the count of that comment's
-          descendents in the tree
       - parents: dict of int to int; each entry in cids has a key in this dict,
           and the corresponding value is the ID of that comment's parent (or
           None in the case of top-level comments)
@@ -432,8 +405,7 @@ class CommentTree:
         comments = sorted(q, key=lambda c: c.parent_id)
 
         # build tree from scratch (for V2 results in double-counting in cass)
-        tree = cls(link, cids=[], tree={}, depth={}, num_children={},
-                   parents={})
+        tree = cls(link, cids=[], tree={}, depth={}, parents={})
         impl = cls.IMPLEMENTATIONS[link.comment_tree_version]
         impl.rebuild(tree, comments)
 
