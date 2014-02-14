@@ -55,7 +55,7 @@ from r2.lib import sup
 import r2.lib.db.thing as thing
 from r2.lib.errors import errors
 from listingcontroller import ListingController
-from oauth2 import OAuth2ResourceController, require_oauth2_scope
+from oauth2 import require_oauth2_scope
 from api_docs import api_doc, api_section
 from pylons import c, request, response
 from r2.models.token import EmailVerificationToken
@@ -68,13 +68,9 @@ import re, socket
 import time as time_module
 from urllib import quote_plus
 
-class FrontController(RedditController, OAuth2ResourceController):
+class FrontController(RedditController):
 
     allow_stylesheets = True
-
-    def pre(self):
-        self.check_for_bearer_token()
-        RedditController.pre(self)
 
     @validate(article=VLink('article'),
               comment=VCommentID('comment'))

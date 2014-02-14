@@ -75,7 +75,7 @@ from r2.lib.filters import safemarkdown
 from r2.lib.media import str_to_image
 from r2.controllers.api_docs import api_doc, api_section
 from r2.lib.search import SearchQuery
-from r2.controllers.oauth2 import OAuth2ResourceController, require_oauth2_scope
+from r2.controllers.oauth2 import require_oauth2_scope
 from r2.lib.template_helpers import add_sr, get_domain
 from r2.lib.system_messages import notify_user_added
 from r2.controllers.ipn import generate_blob
@@ -132,15 +132,10 @@ class ApiminimalController(MinimalController):
         form._send_data(iden = iden) 
 
 
-class ApiController(RedditController, OAuth2ResourceController):
+class ApiController(RedditController):
     """
     Controller which deals with almost all AJAX site interaction.  
     """
-
-    def pre(self):
-        self.check_for_bearer_token()
-        RedditController.pre(self)
-
     @validatedForm()
     def ajax_login_redirect(self, form, jquery, dest):
         form.redirect("/login" + query_string(dict(dest=dest)))

@@ -26,10 +26,7 @@ from pylons.i18n import _
 from r2.config.extensions import set_extension
 from r2.controllers.api_docs import api_doc, api_section
 from r2.controllers.reddit_base import RedditController, abort_with_error
-from r2.controllers.oauth2 import (
-    OAuth2ResourceController,
-    require_oauth2_scope,
-)
+from r2.controllers.oauth2 import require_oauth2_scope
 from r2.models.account import Account
 from r2.models.subreddit import (
     FakeSubreddit,
@@ -75,12 +72,11 @@ multi_description_json_spec = VValidatedJSON.Object({
 })
 
 
-class MultiApiController(RedditController, OAuth2ResourceController):
+class MultiApiController(RedditController):
     on_validation_error = staticmethod(abort_with_error)
 
     def pre(self):
         set_extension(request.environ, "json")
-        self.check_for_bearer_token()
         RedditController.pre(self)
 
     @require_oauth2_scope("read")

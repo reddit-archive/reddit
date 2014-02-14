@@ -90,6 +90,9 @@ class ErrorController(RedditController):
     This behaviour can be altered by changing the parameters to the
     ErrorDocuments middleware in your config/middleware.py file.
     """
+    def check_for_bearer_token(self):
+        pass
+
     allowed_render_styles = ('html', 'xml', 'js', 'embed', '', "compact", 'api')
     # List of admins to blame (skip the first admin, "reddit")
     # If list is empty, just blame "an admin"

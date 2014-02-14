@@ -23,7 +23,7 @@
 from pylons import request, g, c
 from pylons.controllers.util import redirect_to
 from reddit_base import RedditController
-from r2.controllers.oauth2 import OAuth2ResourceController, require_oauth2_scope
+from r2.controllers.oauth2 import require_oauth2_scope
 from r2.lib.utils import url_links_builder
 from reddit_base import paginated_listing
 from r2.models.wiki import (WikiPage, WikiRevision, ContentLengthError,
@@ -94,7 +94,7 @@ RENDERERS_BY_PAGE = {"config/sidebar": "reddit",
                      "config/description": "reddit",
                      "config/stylesheet": "stylesheet"}
 
-class WikiController(RedditController, OAuth2ResourceController):
+class WikiController(RedditController):
     allow_stylesheets = True
 
     @require_oauth2_scope("wikiread")
@@ -308,7 +308,6 @@ class WikiController(RedditController, OAuth2ResourceController):
         abort(reddit_http_error(code, reason, **data))
 
     def pre(self):
-        self.check_for_bearer_token()
         RedditController.pre(self)
         if g.disable_wiki and not c.user_is_admin:
             self.handle_error(403, 'WIKI_DOWN')

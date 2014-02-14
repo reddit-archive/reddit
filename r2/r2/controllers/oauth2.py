@@ -52,6 +52,9 @@ from r2.lib.validator import (
 )
 
 class OAuth2FrontendController(RedditController):
+    def check_for_bearer_token(self):
+        pass
+
     def pre(self):
         RedditController.pre(self)
         require_https()
@@ -299,56 +302,6 @@ class OAuth2AccessController(MinimalController):
         resp = self._make_token_dict(access_token)
         return self.api_wrapper(resp)
 
-
-class OAuth2ResourceController(MinimalController):
-    def pre(self):
-        set_extension(request.environ, "json")
-        MinimalController.pre(self)
-        require_https()
-
-        try:
-            access_token = OAuth2AccessToken.get_token(self._get_bearer_token())
-            require(access_token)
-            require(access_token.check_valid())
-            c.oauth2_access_token = access_token
-            account = Account._byID36(access_token.user_id, data=True)
-            require(account)
-            require(not account._deleted)
-            c.oauth_user = account
-        except RequirementException:
-            self._auth_error(401, "invalid_token")
-
-        handler = self._get_action_handler()
-        if handler:
-            oauth2_perms = getattr(handler, "oauth2_perms", None)
-            if oauth2_perms:
-                grant = OAuth2Scope(access_token.scope)
-                required = set(oauth2_perms['allowed_scopes'])
-                if not grant.has_access(c.site.name, required):
-                    self._auth_error(403, "insufficient_scope")
-                c.oauth_scope = grant
-            else:
-                self._auth_error(400, "invalid_request")
-
-    def check_for_bearer_token(self):
-        if self._get_bearer_token(strict=False):
-            OAuth2ResourceController.pre(self)
-            if c.oauth_user:
-                c.user = c.oauth_user
-                c.user_is_loggedin = True
-
-    def _auth_error(self, code, error):
-        abort(code, headers=[("WWW-Authenticate", 'Bearer realm="reddit", error="%s"' % error)])
-
-    def _get_bearer_token(self, strict=True):
-        auth = request.headers.get("Authorization")
-        try:
-            auth_scheme, bearer_token = require_split(auth, 2)
-            require(auth_scheme.lower() == "bearer")
-            return bearer_token
-        except RequirementException:
-            if strict:
-                self._auth_error(400, "invalid_request")
 
 def require_oauth2_scope(*scopes):
     def oauth2_scope_wrap(fn):

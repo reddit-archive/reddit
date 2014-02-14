@@ -22,11 +22,13 @@
 
 from pylons import c
 from r2.controllers.api_docs import api_doc, api_section
-from r2.controllers.oauth2 import OAuth2ResourceController, require_oauth2_scope
+from r2.controllers.oauth2 import require_oauth2_scope
+from r2.controllers.reddit_base import OAuth2ResourceController
 from r2.lib.jsontemplates import IdentityJsonTemplate
 
 class APIv1Controller(OAuth2ResourceController):
     def pre(self):
+        OAuth2ResourceController.pre(self)
         self.check_for_bearer_token()
 
     def try_pagecache(self):

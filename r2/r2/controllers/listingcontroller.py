@@ -20,7 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from oauth2 import OAuth2ResourceController, require_oauth2_scope
+from oauth2 import require_oauth2_scope
 from reddit_base import RedditController, base_listing, paginated_listing
 
 from r2.models import *
@@ -53,7 +53,7 @@ from pylons.controllers.util import redirect_to
 import random
 from functools import partial
 
-class ListingController(RedditController, OAuth2ResourceController):
+class ListingController(RedditController):
     """Generalized controller for pages with lists of links."""
 
     # toggle skipping of links based on the users' save/hide/vote preferences
@@ -88,10 +88,6 @@ class ListingController(RedditController, OAuth2ResourceController):
     #extra parameters to send to the render_cls constructor
     render_params = {}
     extra_page_classes = ['listing-page']
-
-    def pre(self):
-        self.check_for_bearer_token()
-        RedditController.pre(self)
 
     @property
     def menus(self):
@@ -1025,12 +1021,8 @@ class RedditsController(ListingController):
         self.where = where
         return ListingController.GET_listing(self, **env)
 
-class MyredditsController(ListingController, OAuth2ResourceController):
+class MyredditsController(ListingController):
     render_cls = MySubredditsPage
-
-    def pre(self):
-        self.check_for_bearer_token()
-        ListingController.pre(self)
 
     @property
     def menus(self):

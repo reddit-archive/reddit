@@ -43,7 +43,7 @@ from pylons.controllers.util import redirect_to
 from pylons.i18n import _
 from pylons.i18n.translation import LanguageError
 
-from r2.config.extensions import is_api
+from r2.config.extensions import is_api, set_extension
 from r2.lib import filters, pages, utils, hooks
 from r2.lib.authentication import authenticate_user
 from r2.lib.base import BaseController, abort
@@ -56,6 +56,7 @@ from r2.lib.errors import (
     reddit_http_error,
 )
 from r2.lib.filters import _force_utf8, _force_unicode
+from r2.lib.require import RequirementException, require, require_split
 from r2.lib.strings import strings
 from r2.lib.template_helpers import add_sr, JSPreload
 from r2.lib.tracking import encrypt, decrypt
@@ -83,6 +84,7 @@ from r2.lib.validator import (
     VTarget,
 )
 from r2.models import (
+    Account,
     All,
     AllMinus,
     DefaultSR,
@@ -97,6 +99,8 @@ from r2.models import (
     ModMinus,
     MultiReddit,
     NotFound,
+    OAuth2AccessToken,
+    OAuth2Scope,
     Random,
     RandomNSFW,
     RandomSubscription,
@@ -687,6 +691,12 @@ def require_https():
     if not c.secure:
         abort(ForbiddenError(errors.HTTPS_REQUIRED))
 
+
+def require_domain(required_domain):
+    if not is_subdomain(request.host, required_domain):
+        abort(ForbiddenError(errors.WRONG_DOMAIN))
+
+
 def disable_subreddit_css():
     def wrap(f):
         @wraps(f)
@@ -968,7 +978,63 @@ class MinimalController(BaseController):
         return request.method.upper() != "POST"
 
 
-class RedditController(MinimalController):
+class OAuth2ResourceController(MinimalController):
+    def authenticate_with_token(self):
+        set_extension(request.environ, "json")
+        set_content_type()
+        require_https()
+        require_domain(g.oauth_domain)
+
+        try:
+            access_token = OAuth2AccessToken.get_token(self._get_bearer_token())
+            require(access_token)
+            require(access_token.check_valid())
+            c.oauth2_access_token = access_token
+            account = Account._byID36(access_token.user_id, data=True)
+            require(account)
+            require(not account._deleted)
+            c.oauth_user = account
+        except RequirementException:
+            self._auth_error(401, "invalid_token")
+
+        handler = self._get_action_handler()
+        if handler:
+            oauth2_perms = getattr(handler, "oauth2_perms", None)
+            if oauth2_perms or True:
+                grant = OAuth2Scope(access_token.scope)
+                required = set(oauth2_perms['allowed_scopes'])
+                if not grant.has_access(c.site.name, required):
+                    self._auth_error(403, "insufficient_scope")
+                c.oauth_scope = grant
+            else:
+                self._auth_error(400, "invalid_request")
+
+    def check_for_bearer_token(self):
+        if self._get_bearer_token(strict=False):
+            self.authenticate_with_token()
+            if c.oauth_user:
+                c.user = c.oauth_user
+                c.user_is_loggedin = True
+
+    def _auth_error(self, code, error):
+        abort(code, headers=[("WWW-Authenticate", 'Bearer realm="reddit", error="%s"' % error)])
+
+    def _get_bearer_token(self, strict=True):
+        auth = request.headers.get("Authorization")
+        if not auth:
+            return None
+        try:
+            auth_scheme, bearer_token = require_split(auth, 2)
+            require(auth_scheme.lower() == "bearer")
+            return bearer_token
+        except RequirementException:
+            if strict:
+                self._auth_error(400, "invalid_request")
+            else:
+                return None
+
+
+class RedditController(OAuth2ResourceController):
 
     @staticmethod
     def login(user, rem=False):
@@ -1038,6 +1104,8 @@ class RedditController(MinimalController):
         # the user could have been logged in via one of the feeds 
         maybe_admin = False
         is_otpcookie_valid = False
+
+        self.check_for_bearer_token()
 
         # no logins for RSS feed unless valid_feed has already been called
         if not c.user:

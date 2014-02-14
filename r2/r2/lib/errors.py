@@ -30,6 +30,7 @@ from copy import copy
 error_list = dict((
         ('USER_REQUIRED', _("please login to do that")),
         ('HTTPS_REQUIRED', _("this page must be accessed using https")),
+        ('WRONG_DOMAIN', _("you can't do that on this domain")),
         ('VERIFIED_USER_REQUIRED', _("you need to set a valid email address to do that.")),
         ('NO_URL', _('a url is required')),
         ('BAD_URL', _('you should check that url')),
