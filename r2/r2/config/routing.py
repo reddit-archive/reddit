@@ -375,7 +375,8 @@ def make_map():
 
     mc('/captcha/:iden', controller='captcha', action='captchaimg')
 
-    mc('/mediaembed/:link', controller="mediaembed", action="mediaembed")
+    mc('/mediaembed/:link/:credentials',
+       controller="mediaembed", action="mediaembed", credentials=None)
 
     mc('/code', controller='redirect', action='redirect',
        dest='http://github.com/reddit/')

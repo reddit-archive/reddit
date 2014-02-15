@@ -92,6 +92,8 @@ from babel.numbers import format_currency
 from babel.dates import format_date
 from collections import defaultdict
 import csv
+import hmac
+import hashlib
 import cStringIO
 import pytz
 import sys, random, datetime, calendar, simplejson, re, time
@@ -3796,11 +3798,14 @@ def make_link_child(item):
                 media_embed = None
 
             if media_embed:
+                should_authenticate = (item.subreddit.type == "private")
                 media_embed =  MediaEmbed(media_domain = g.media_domain,
                                           height = media_embed.height + 10,
                                           width = media_embed.width + 10,
                                           scrolling = media_embed.scrolling,
-                                          id36 = item._id36)
+                                          id36 = item._id36,
+                                          authenticated=should_authenticate,
+                                        )
             else:
                 g.log.debug("media_object without media_embed %s" % item)
 
@@ -3836,7 +3841,16 @@ class MediaChild(LinkChild):
 
 class MediaEmbed(Templated):
     """The actual rendered iframe for a media child"""
-    pass
+
+    def __init__(self, *args, **kwargs):
+        authenticated = kwargs.pop("authenticated", False)
+        if authenticated:
+            mac = hmac.new(g.secrets["media_embed"], kwargs["id36"],
+                           hashlib.sha1)
+            self.credentials = "/" + mac.hexdigest()
+        else:
+            self.credentials = ""
+        Templated.__init__(self, *args, **kwargs)
 
 
 class SelfTextChild(LinkChild):

@@ -23,7 +23,7 @@
 <%!
   from r2.lib.utils import randstr
 %>
-<iframe src="//${thing.media_domain}/mediaembed/${thing.id36}"
+<iframe src="//${thing.media_domain}/mediaembed/${thing.id36}${thing.credentials}"
         id="media-embed-${thing.id36}-${randstr(3)}" class="media-embed"
         width="${thing.width}" height="${thing.height}" border="0"
         frameBorder="0" scrolling="${'auto' if thing.scrolling else 'no'}"
