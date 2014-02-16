@@ -85,7 +85,7 @@ string_dict = dict(
 
     sr_messages = dict(
         empty =  _('you have not subscribed to any subreddits.'),
-        subscriber =  _('below are the subreddits you have subscribed to'),
+        subscriber =  _('below are the subreddits you have subscribed to.'),
         contributor =  _('below are the subreddits that you are an approved submitter on.'),
         moderator = _('below are the subreddits that you have moderator access to.')
         ),
