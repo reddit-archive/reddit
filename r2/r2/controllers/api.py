@@ -3906,3 +3906,21 @@ class ApiController(RedditController):
             return
 
         LinkVisitsByAccount._visit(c.user, links)
+
+    @validatedForm(
+        VAdmin(),
+        VModhash(),
+        system=VLength('system', 1024),
+        subject=VLength('subject', 1024),
+        note=VLength('note', 10000),
+        author=VLength('author', 1024),
+    )
+    def POST_add_admin_note(self, form, jquery, system, subject, note, author):
+        if form.has_errors(('system', 'subject', 'note', 'author'),
+                           errors.TOO_LONG):
+            return
+
+        if note:
+            from r2.models.admin_notes import AdminNotesBySystem
+            AdminNotesBySystem.add(system, subject, note, author)
+        form.refresh()

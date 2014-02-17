@@ -21,6 +21,7 @@
 ###############################################################################
 
 from pylons         import c, g
+from pylons.i18n import N_
 from r2.lib.wrapped import Templated
 from pages   import Reddit
 from r2.lib.menus import (
@@ -30,6 +31,7 @@ from r2.lib.menus import (
     NavMenu,
     OffsiteButton,
 )
+from r2.lib.utils import timesince
 
 def admin_menu(**kwargs):
     buttons = [
@@ -79,6 +81,23 @@ class AdminLinkMenu(NavMenu):
     def __init__(self, link):
         NavMenu.__init__(self, [], title='admin', type="tabdrop")
 
+
+class AdminNotesSidebar(Templated):
+    EMPTY_MESSAGE = {
+        "domain": N_("No notes for this domain"),
+    }
+    
+    def __init__(self, system, subject):
+        from r2.models.admin_notes import AdminNotesBySystem
+
+        self.system = system
+        self.subject = subject
+        self.author = c.user.name
+        self.notes = AdminNotesBySystem.in_display_order(system, subject)
+        # Convert timestamps for easier reading/translation
+        for note in self.notes:
+            note["timesince"] = timesince(note["when"])
+        Templated.__init__(self)
 
 try:
     from r2admin.lib.pages import *

@@ -410,6 +410,11 @@ class Reddit(Templated):
         if not c.user_is_loggedin and self.loginbox and not g.read_only_mode:
             ps.append(LoginFormWide())
 
+        if isinstance(c.site, DomainSR) and c.user_is_admin:
+            from r2.lib.pages.admin_pages import AdminNotesSidebar
+            notebar = AdminNotesSidebar('domain', c.site.domain)
+            ps.append(notebar)
+
         if c.user.pref_show_sponsorships or not c.user.gold:
             ps.append(SponsorshipBox())
 
