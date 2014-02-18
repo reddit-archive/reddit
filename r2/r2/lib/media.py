@@ -383,7 +383,7 @@ class _ThumbnailOnlyScraper(Scraper):
         content_type, content = _fetch_url(self.url)
 
         # if it's an image. it's pretty easy to guess what we should thumbnail.
-        if "image" in content_type:
+        if content_type and "image" in content_type and content:
             return self.url
 
         if content_type and "html" in content_type and content:
