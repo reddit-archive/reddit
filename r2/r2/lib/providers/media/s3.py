@@ -124,7 +124,13 @@ class S3MediaProvider(MediaProvider):
         # send the key
         bucket = self._get_bucket(bucket_name, validate=False)
         key = bucket.new_key(name)
-        key.set_contents_from_string(
+
+        if isinstance(contents, basestring):
+            set_fn = key.set_contents_from_string
+        else:
+            set_fn = key.set_contents_from_file
+
+        set_fn(
             contents,
             headers={
                 "Content-Type": mime_type,

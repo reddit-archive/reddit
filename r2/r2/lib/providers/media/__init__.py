@@ -43,7 +43,8 @@ class MediaProvider(object):
 
         `name` must be a local filename including an extension.
 
-        `contents` is a byte string of the contents of the file.
+        `contents` is a byte string of the contents of the file or a file-like
+                   object the contents of which will be read.
 
         The return value should be an absolute URL with the `http` scheme but
         should also work if accessed with `https`.

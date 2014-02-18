@@ -21,6 +21,7 @@
 ###############################################################################
 
 import os
+import shutil
 import urlparse
 
 from pylons import app_globals as g
@@ -65,7 +66,10 @@ class FileSystemMediaProvider(MediaProvider):
         assert os.path.dirname(name) == ""
         path = os.path.join(g.media_fs_root, name)
         with open(path, "w") as f:
-            f.write(contents)
+            if isinstance(contents, basestring):
+                f.write(contents)
+            else:
+                shutil.copyfileobj(contents, f)
         return urlparse.urljoin(g.media_fs_base_url_http, name)
         
     def purge(self, url):
