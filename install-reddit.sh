@@ -139,6 +139,11 @@ python-kazoo
 python-stripe
 python-tinycss2
 
+python-flask
+geoip-bin
+geoip-database
+python-geoip
+
 nodejs
 node-less
 gettext
@@ -546,6 +551,28 @@ UPSTART_SUTRO
 fi
 
 start sutro
+
+###############################################################################
+# geoip service
+###############################################################################
+if [ ! -f /etc/gunicorn.d/geoip.conf ]; then
+    cat > /etc/gunicorn.d/geoip.conf <<GEOIP
+CONFIG = {
+    "mode": "wsgi",
+    "working_dir": "$REDDIT_HOME/reddit/scripts",
+    "user": "$REDDIT_USER",
+    "group": "$REDDIT_USER",
+    "args": (
+        "--bind=127.0.0.1:5000",
+        "--workers=1",
+         "--limit-request-line=8190",
+         "geoip_service:application",
+    ),
+}
+GEOIP
+fi
+
+service gunicorn start
 
 ###############################################################################
 # Job Environment
