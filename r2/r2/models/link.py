@@ -1280,6 +1280,8 @@ class Message(Thing, Printable):
 
         m._commit()
 
+        MessagesByAccount.add_message(author, m)
+
         if sr_id and not sr:
             sr = Subreddit._byID(sr_id)
 
@@ -1867,3 +1869,17 @@ class LinksByAccount(tdb_cassandra.DenormalizedRelation):
     @classmethod
     def add_link(cls, account, link):
         cls.create(account, [link])
+
+
+class MessagesByAccount(tdb_cassandra.DenormalizedRelation):
+    _use_db = True
+    _write_last_modified = False
+    _views = []
+
+    @classmethod
+    def value_for(cls, thing1, thing2):
+        return ''
+
+    @classmethod
+    def add_message(cls, account, message):
+        cls.create(account, [message])
