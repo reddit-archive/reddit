@@ -1077,6 +1077,7 @@ class CoinbaseController(GoldPaymentController):
     event_type_mappings = {
         'completed': 'succeeded',
         'cancelled': 'cancelled',
+        'mispaid': 'noop',
     }
 
     @classmethod
