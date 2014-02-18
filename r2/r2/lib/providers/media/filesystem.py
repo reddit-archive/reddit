@@ -62,7 +62,7 @@ class FileSystemMediaProvider(MediaProvider):
         )
         return True
 
-    def put(self, category, name, contents):
+    def put(self, category, name, contents, headers=None):
         assert os.path.dirname(name) == ""
         path = os.path.join(g.media_fs_root, name)
         with open(path, "w") as f:

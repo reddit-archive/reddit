@@ -38,13 +38,16 @@ class MediaProvider(object):
         """
         raise NotImplementedError
 
-    def put(self, category, name, contents):
+    def put(self, category, name, contents, headers=None):
         """Put a media object on the media server and return its HTTP URL.
 
         `name` must be a local filename including an extension.
 
         `contents` is a byte string of the contents of the file or a file-like
                    object the contents of which will be read.
+
+        `headers` an optional dict of additional headers to attach to the media
+                  object. the provider MAY ignore these.
 
         The return value should be an absolute URL with the `http` scheme but
         should also work if accessed with `https`.

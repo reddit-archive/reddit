@@ -111,7 +111,7 @@ class S3MediaProvider(MediaProvider):
 
         return True
 
-    def put(self, category, name, contents):
+    def put(self, category, name, contents, headers=None):
         buckets = getattr(g, self.buckets[category])
         # choose a bucket based on the filename
         name_without_extension = os.path.splitext(name)[0]
@@ -120,6 +120,14 @@ class S3MediaProvider(MediaProvider):
 
         # guess the mime type
         mime_type, encoding = mimetypes.guess_type(name)
+
+        # build up the headers
+        s3_headers = {
+            "Content-Type": mime_type,
+            "Expires": _NEVER,
+        }
+        if headers:
+            s3_headers.update(headers)
 
         # send the key
         bucket = self._get_bucket(bucket_name, validate=False)
@@ -132,10 +140,7 @@ class S3MediaProvider(MediaProvider):
 
         set_fn(
             contents,
-            headers={
-                "Content-Type": mime_type,
-                "Expires": _NEVER,
-            },
+            headers=s3_headers,
             policy="public-read",
             reduced_redundancy=True,
             replace=True,
