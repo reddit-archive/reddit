@@ -863,6 +863,7 @@ class FrontController(RedditController):
 
 
     @base_listing
+    @require_oauth2_scope("read")
     @validate(query=nop('q', docs={"q": "a search query"}))
     @api_doc(api_section.subreddits, uri='/subreddits/search', extensions=['json', 'xml'])
     def GET_search_reddits(self, query, reverse, after, count, num):
