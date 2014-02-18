@@ -1274,7 +1274,7 @@ class LinkInfoPage(Reddit):
             self.num_duplicates = num_duplicates
 
         self.show_promote_button = show_promote_button
-        robots = "noindex,nofollow" if link._deleted else None
+        robots = "noindex,nofollow" if link._deleted or link._spam else None
         Reddit.__init__(self, title = title, short_description=short_description, robots=robots, *a, **kw)
 
     def build_toolbars(self):
