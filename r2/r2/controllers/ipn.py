@@ -670,11 +670,12 @@ class GoldPaymentController(RedditController):
                                                      g.goldthanks_email}
         elif event_type == 'failed_subscription':
             subject = _('reddit gold subscription payment failed')
-            msg = _('Your reddit gold subscription payment has failed. '
-                    'Please go to http://www.reddit.com/subscription to '
-                    'make sure your information is correct, or contact '
-                    '%(gold_email)s for details') % {'gold_email':
-                                                     g.goldthanks_email}
+            msg = _('Your reddit gold subscription payment has failed. Please '
+                    'go to [your gold subscription page](%(gold_subscription)s) '
+                    'to make sure your information is correct, or contact '
+                    '%(gold_email)s for details')
+            msg %= {'gold_subscription': '/gold/subscription',
+                    'gold_email': g.goldthanks_email}
         elif event_type == 'refunded':
             if not (existing and existing.status == 'processed'):
                 return
