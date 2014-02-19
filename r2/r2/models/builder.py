@@ -744,5 +744,8 @@ class UserListBuilder(QueryBuilder):
             rel._thing2 = accounts.get(rel._thing2_id)
         return rels
 
+    def must_skip(self, item):
+        return item.user._deleted
+
     def wrap_items(self, rels):
         return [self.wrap(rel) for rel in rels]
