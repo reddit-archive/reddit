@@ -570,15 +570,20 @@ def set_colors():
         c.bordercolor = request.GET.get('bordercolor')
 
 
+def _get_ratelimit_timeslice(slice_seconds):
+    slice_start, secs_since = divmod(time.time(), slice_seconds)
+    slice_start = time.gmtime(int(slice_start * slice_seconds))
+    secs_to_next = slice_seconds - int(secs_since)
+    return slice_start, secs_to_next
+
+
 def ratelimit_agent(agent, limit=10, slice_size=10):
     slice_size = min(slice_size, 60)
-    slice, remainder = map(int, divmod(time.time(), slice_size))
-    time_slice = time.gmtime(slice * slice_size)
+    time_slice, retry_after = _get_ratelimit_timeslice(slice_size)
     key = "rate_agent_" + agent + time.strftime("_%S", time_slice)
-
     g.cache.add(key, 0, time=slice_size + 1)
     if g.cache.incr(key) > limit:
-        request.environ['retry_after'] = slice_size - remainder
+        request.environ['retry_after'] = retry_after
         abort(429)
 
 appengine_re = re.compile(r'AppEngine-Google; \(\+http://code.google.com/appengine; appid: (?:dev|s)~([a-z0-9-]{6,30})\)\Z')
@@ -733,6 +738,7 @@ def abort_with_error(error):
 class MinimalController(BaseController):
 
     allow_stylesheets = False
+    defer_ratelimiting = False
 
     def request_key(self):
         # note that this references the cookie at request time, not
@@ -757,6 +763,65 @@ class MinimalController(BaseController):
 
     def cached_response(self):
         return ""
+
+    def run_sitewide_ratelimits(self):
+        """Ratelimit users and add ratelimit headers to the response.
+
+        Headers added are:
+        X-Ratelimit-Used: Number of requests used in this period
+        X-Ratelimit-Remaining: Number of requests left to use
+        X-Ratelimit-Reset: Approximate number of seconds to end of period
+
+        This function only has an effect if one of
+        g.RL_SITEWIDE_ENABLED or g.RL_OAUTH_SITEWIDE_ENABLED
+        are set to 'true' in the app configuration
+
+        If the ratelimit is exceeded, a 429 response will be sent,
+        unless the app configuration has g.ENFORCE_RATELIMIT off.
+        Headers will be sent even on aborted requests.
+
+        """
+        if c.cdn_cacheable or not is_api():
+            # No ratelimiting or headers for:
+            # * Web requests (HTML)
+            # * CDN requests (logged out via www.reddit.com)
+            return
+        elif c.oauth_user and g.RL_OAUTH_SITEWIDE_ENABLED:
+            max_reqs = g.RL_OAUTH_MAX_REQS
+            period = g.RL_OAUTH_RESET_SECONDS
+            # Convert client_id to ascii str for use as memcache key
+            client_id = c.oauth2_access_token.client_id.encode("ascii")
+            # OAuth2 ratelimits are per user-app combination
+            key = 'siterl-oauth-' + c.user._id36 + ":" + client_id
+        elif g.RL_SITEWIDE_ENABLED:
+            max_reqs = g.RL_MAX_REQS
+            period = g.RL_RESET_SECONDS
+            # API (non-oauth) limits are per-ip
+            key = 'siterl-api-' + request.ip
+        else:
+            # Not in a context where sitewide ratelimits are on
+            return
+
+        period_start, retry_after = _get_ratelimit_timeslice(period)
+        key += time.strftime("-%H%M%S", period_start)
+
+        g.ratelimitcache.add(key, 0, time=retry_after + 1)
+
+        # Increment the key to track the current request
+        recent_reqs = g.ratelimitcache.incr(key)
+        reqs_remaining = max(0, max_reqs - recent_reqs)
+
+        c.ratelimit_headers = {
+            "X-Ratelimit-Used": str(recent_reqs),
+            "X-Ratelimit-Reset": str(retry_after),
+            "X-Ratelimit-Remaining": str(reqs_remaining),
+        }
+
+        if reqs_remaining <= 0 and g.ENFORCE_RATELIMIT:
+            # For non-abort situations, the headers will be added in post(),
+            # to avoid including them in a pagecache
+            response.headers.update(c.ratelimit_headers)
+            abort(429)
 
     def pre(self):
         action = request.environ["pylons.routes_dict"].get("action")
@@ -785,6 +850,9 @@ class MinimalController(BaseController):
         c.allow_loggedin_cache = False
         c.allow_framing = False
 
+        c.cdn_cacheable = (request.via_cdn and
+                           g.login_cookie not in request.cookies)
+
         # the domain has to be set before Cookies get initialized
         set_subreddit()
         c.errors = ErrorSet()
@@ -798,6 +866,10 @@ class MinimalController(BaseController):
         c.update_last_visit = None
 
         g.stats.count_string('user_agents', request.user_agent)
+
+        if not self.defer_ratelimiting:
+            self.run_sitewide_ratelimits()
+            c.request_timer.intermediate("minimal-ratelimits")
 
         hooks.get_hook("reddit.request.minimal_begin").call()
 
@@ -891,6 +963,9 @@ class MinimalController(BaseController):
                 pagecache_state = "disallowed"
             response.headers["X-Reddit-Pagecache"] = pagecache_state
 
+        if c.ratelimit_headers:
+            response.headers.update(c.ratelimit_headers)
+
         # send cookies
         for k, v in c.cookies.iteritems():
             if v.dirty:
@@ -979,6 +1054,8 @@ class MinimalController(BaseController):
 
 
 class OAuth2ResourceController(MinimalController):
+    defer_ratelimiting = True
+
     def authenticate_with_token(self):
         set_extension(request.environ, "json")
         set_content_type()
@@ -1149,6 +1226,9 @@ class RedditController(OAuth2ResourceController):
                 c.user.update_sr_activity(c.site)
 
         c.request_timer.intermediate("base-auth")
+
+        self.run_sitewide_ratelimits()
+        c.request_timer.intermediate("base-ratelimits")
 
         c.over18 = over18()
         set_obey_over18()

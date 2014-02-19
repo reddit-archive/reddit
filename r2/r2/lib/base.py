@@ -90,12 +90,14 @@ class BaseController(WSGIController):
         forwarded_for = environ.get('HTTP_X_FORWARDED_FOR', ())
         remote_addr = environ.get('REMOTE_ADDR')
 
+        request.via_cdn = False
         if (g.secrets["true_ip"]
             and true_client_ip
             and ip_hash
             and hashlib.md5(true_client_ip + g.secrets["true_ip"]).hexdigest() \
             == ip_hash.lower()):
             request.ip = true_client_ip
+            request.via_cdn = True
         elif g.trust_local_proxies and forwarded_for and is_local_address(remote_addr):
             request.ip = forwarded_for.split(',')[-1]
         else:

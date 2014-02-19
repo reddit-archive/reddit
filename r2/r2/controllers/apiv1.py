@@ -30,6 +30,7 @@ class APIv1Controller(OAuth2ResourceController):
     def pre(self):
         OAuth2ResourceController.pre(self)
         self.check_for_bearer_token()
+        self.run_sitewide_ratelimits()
 
     def try_pagecache(self):
         pass

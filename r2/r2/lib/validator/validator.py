@@ -1605,7 +1605,7 @@ class VRatelimit(Validator):
                   seconds = None):
         to_set = {}
         if seconds is None:
-            seconds = g.RATELIMIT*60
+            seconds = g.RL_RESET_SECONDS
         expire_time = datetime.now(g.tz) + timedelta(seconds = seconds)
         if rate_user and c.user_is_loggedin:
             to_set['user' + str(c.user._id36)] = expire_time
@@ -1632,7 +1632,7 @@ class VDelay(Validator):
     @classmethod
     def record_violation(self, category, seconds = None, growfast=False):
         if seconds is None:
-            seconds = g.RATELIMIT*60
+            seconds = g.RL_RESET_SECONDS
 
         key = "VDelay-%s-%s" % (category, request.ip)
         prev_violations = g.memcache.get(key)
