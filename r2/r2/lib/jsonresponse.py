@@ -211,7 +211,7 @@ class JQueryResponse(JsonResponse):
 
     def insert_table_rows(self, rows, index = -1):
         new = self.__getattr__("insert_table_rows")
-        return new([row.render() for row in tup(rows)], index)
+        return new([row.render(style='html') for row in tup(rows)], index)
 
 
     # convenience methods:

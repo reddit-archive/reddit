@@ -552,27 +552,22 @@ $.fn.insert_table_rows = function(rows, index) {
      * the first parent of the current selection that is a table.*/
     var tables = ((this.is("table")) ? this.filter("table") : 
                   this.parents("table:first"));
-    
-    $.map(tables.get(), 
+    $.map(tables.get(),
           function(table) {
-              $.map(rows, function(thing) {
+              $.map(rows, function(row) {
                       var i = index;
-                      if(i < 0) 
+                      if(i < 0)
                           i = Math.max(table.rows.length + i + 1, 0);
                       i = Math.min(i, table.rows.length);
-                      /* create a new row and set its id and class*/
-                      var row = table.insertRow(i);
-                      $(row).hide().attr("id", thing.id)
-                          .addClass(thing.css_class);
-                      /* insert cells */
-                      $.map(thing.cells, function(cell) {
-                              $(row.insertCell(row.cells.length))
-                                  .html($.unsafe(cell))
-                                  .trigger("insert-cell");
-                          });
-                      $(row).trigger("insert-row");
-                      /* reveal! */
-                      $(row).fadeIn();
+
+                      var $newRow = $(table.insertRow(i)),
+                          $toInsert = $($.unsafe(row))
+
+                      $toInsert.hide()
+                      $newRow.replaceWith($toInsert)
+                      $toInsert.trigger("insert-row")
+                      $toInsert.css('display', 'table-row')
+                      $toInsert.fadeIn()
                   });
           });
     return this;
