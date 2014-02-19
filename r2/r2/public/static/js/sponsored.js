@@ -605,17 +605,14 @@ function del_campaign($campaign_row) {
 
 function edit_campaign($campaign_row) {
     cancel_edit(function() {
-        var campaign = detach_campaign_form()
+        var campaign = detach_campaign_form(),
+            campaignTable = $(".existing-campaigns table").get(0),
+            editRowIndex = $campaign_row.get(0).rowIndex + 1
+            $editRow = $(campaignTable.insertRow(editRowIndex)),
+            $editCell = $("<td>").attr("colspan", 8).append(campaign)
 
-        $(".existing-campaigns table")
-            .insert_table_rows([{
-                "id": "edit-campaign-tr",
-                "css_class": "",
-                "cells": [""]
-            }], $campaign_row.get(0).rowIndex + 1)
-
-        var editRow = $("#edit-campaign-tr")
-        editRow.children('td:first').attr("colspan", 8).append(campaign)
+        $editRow.attr("id", "edit-campaign-tr")
+        $editRow.append($editCell)
         $campaign_row.fadeOut(function() {
             /* fill inputs from data in campaign row */
             _.each(['startdate', 'enddate', 'bid', 'campaign_id36', 'campaign_name'],
