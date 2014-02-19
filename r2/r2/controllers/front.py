@@ -652,6 +652,7 @@ class FrontController(RedditController):
 
     def _edit_normal_reddit(self, location, created):
         if (location == 'edit' and
+            c.user_is_loggedin and
             (c.user_is_admin or c.site.is_moderator_with_perms(c.user, 'config'))):
             pane = PaneStack()
             if created == 'true':
@@ -677,8 +678,10 @@ class FrontController(RedditController):
             stylesheet = (c.site.stylesheet_contents_user or
                           c.site.stylesheet_contents)
             pane = SubredditStylesheetSource(stylesheet_contents=stylesheet)
-        elif location == 'traffic' and (c.site.public_traffic or
-                                        (c.site.is_moderator(c.user) or c.user.employee)):
+        elif (location == 'traffic' and
+              (c.site.public_traffic or
+               (c.user_is_loggedin and
+                (c.site.is_moderator(c.user) or c.user.employee)))):
             pane = trafficpages.SubredditTraffic()
         elif (location == "about") and is_api():
             return self.redirect(add_sr('about.json'), code=301)
