@@ -2723,13 +2723,19 @@ class ApiController(RedditController):
                                errors.NO_TEXT):
             form.redirect("/gold/thanks?v=%s" % status)
 
-    @validatedForm(user = VUserWithEmail('name'))
+    @validatedForm(
+        VRatelimit(rate_ip=True, prefix="rate_password_"),
+        user=VUserWithEmail('name'),
+    )
     def POST_password(self, form, jquery, user):
         if form.has_errors('name', errors.USER_DOESNT_EXIST):
             return
         elif form.has_errors('name', errors.NO_EMAIL_FOR_USER):
             return
+        elif form.has_errors('ratelimit', errors.RATELIMIT):
+            return
         else:
+            VRatelimit.ratelimit(rate_ip=True, prefix="rate_password_")
             if emailer.password_email(user):
                 form.set_html(".status",
                       _("an email will be sent to that account's address shortly"))
