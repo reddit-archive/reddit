@@ -79,9 +79,3 @@ api('createsubreddit', SubredditSettingsTemplate)
 api('modaction', ModActionTemplate)
 
 api('trophy', TrophyJsonTemplate)
-
-tpm.add_handler('usertableitem', 'api-html', UserItemHTMLJsonTemplate())
-tpm.add_handler('reltableitem', 'api-html', UserItemHTMLJsonTemplate())
-tpm.add_handler('bannedtableitem', 'api-html', UserItemHTMLJsonTemplate())
-tpm.add_handler('invitedmodtableitem', 'api-html', UserItemHTMLJsonTemplate())
-tpm.add_handler('friendtableitem', 'api-html', UserItemHTMLJsonTemplate())

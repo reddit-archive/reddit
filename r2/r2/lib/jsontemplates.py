@@ -76,37 +76,6 @@ class TakedownJsonTemplate(JsonTemplate):
     def render(self, thing = None, *a, **kw):
         return thing.explanation
 
-class TableRowTemplate(JsonTemplate):
-    def cells(self, thing):
-        raise NotImplementedError
-    
-    def css_id(self, thing):
-        return ""
-
-    def css_class(self, thing):
-        return ""
-
-    def render(self, thing = None, *a, **kw):
-        return ObjectTemplate(dict(id = self.css_id(thing),
-                                   css_class = self.css_class(thing),
-                                   cells = self.cells(thing)))
-
-class UserItemHTMLJsonTemplate(TableRowTemplate):
-    def cells(self, thing):
-        cells = []
-        for cell in thing.cells:
-            thing.name = cell
-            r = thing.part_render('cell_type', style = "html")
-            cells.append(spaceCompress(r))
-        return cells
-
-    def css_id(self, thing):
-        return thing.user._fullname
-
-    def css_class(self, thing):
-        return "thing"
-
-
 class ThingJsonTemplate(JsonTemplate):
     _data_attrs_ = dict(
         created="created",
