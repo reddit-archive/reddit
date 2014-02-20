@@ -220,6 +220,7 @@ def default_thing_wrapper(**params):
                 w.rowstyle = 'promoted link'
             elif style == 'htmllite':
                 w.score_fmt = Score.points
+            w.should_incr_counts = style != 'htmllite'
         return w
     params['parent_wrapper'] = _default_thing_wrapper
     return make_wrapper(**params)
