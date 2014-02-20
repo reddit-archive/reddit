@@ -32,32 +32,22 @@ CACHE_KEY = "rising"
 
 
 def calc_rising():
-    sr_count = count.get_link_counts()
-    link_count = dict((k, v[0]) for k,v in sr_count.iteritems())
-    link_names = Link._by_fullname(sr_count.keys(), data=True)
+    link_counts = count.get_link_counts()
 
-    #max is half the average of the top 10 counts
-    counts = link_count.values()
-    counts.sort(reverse=True)
-    maxcount = sum(counts[:10]) / 20
+    links = Link._by_fullname(link_counts.keys(), data=True)
 
-    #prune the list
-    rising = [(n, link_names[n].sr_id)
-              for n in link_names.keys() if link_count[n] < maxcount]
+    def score(link):
+        count = link_counts[link._fullname][0]
+        return float(link._ups) / max(count, 1)
 
-    cur_time = datetime.now(g.tz)
+    # build the rising list, excluding items having 1 or less upvotes
+    rising = []
+    for link in links.values():
+        if link._ups > 1:
+            rising.append((link._fullname, score(link), link.sr_id))
 
-    def score(pair):
-        name = pair[0]
-        link = link_names[name]
-        hours = (cur_time - link._date).seconds / 3600 + 1
-        return float(link._ups) / (max(link_count[name], 1) * hours)
-
-    def r(x):
-        return 1 if x > 0 else -1 if x < 0 else 0
-
-    rising.sort(lambda x, y: r(score(y) - score(x)))
-    return rising
+    # return rising sorted by score
+    return sorted(rising, key=lambda x: x[1], reverse=True)
 
 
 def set_rising():
@@ -70,4 +60,4 @@ def get_all_rising():
 
 def get_rising(sr):
     rising = get_all_rising()
-    return [link for link, sr_id in rising if sr.keep_for_rising(sr_id)]
+    return [link for link, score, sr_id in rising if sr.keep_for_rising(sr_id)]

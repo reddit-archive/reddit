@@ -208,8 +208,8 @@ def get_hot_items(srs, item_type, src):
 def get_rising_items(omit_sr_ids, count=4):
     """Get links that are rising right now."""
     all_rising = rising.get_all_rising()
-    candidate_sr_ids = {sr_id for link, sr_id in all_rising}.difference(omit_sr_ids)
-    link_fullnames = [link for link, sr_id in all_rising if sr_id in candidate_sr_ids]
+    candidate_sr_ids = {sr_id for link, score, sr_id in all_rising}.difference(omit_sr_ids)
+    link_fullnames = [link for link, score, sr_id in all_rising if sr_id in candidate_sr_ids]
     link_fullnames_to_show = random_sample(link_fullnames, count)
     rising_links = Link._by_fullname(link_fullnames_to_show,
                                      return_dict=False,
