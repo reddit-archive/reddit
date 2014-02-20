@@ -21,11 +21,7 @@
 ###############################################################################
 
 <%namespace file="printablebuttons.html" import="ynbutton" />
-<%namespace file="utils.html" import="plain_link"/>
-
-<%!
-   from r2.lib.utils import timesince
-%>
+<%namespace file="utils.html" import="plain_link, timestamp"/>
 
 <tr>
   %for cell in thing.cells:
@@ -74,9 +70,7 @@
       <span class="status"></span>
     </form>
   %elif thing.name == "age":
-      <span title="${thing.rel._date.strftime('%Y-%m-%d %H:%M:%S')}">
-        ${timesince(thing.rel._date)}
-      </span>
+      ${unsafe(_("%(when)s&#32;ago") % dict(when=timestamp(thing.rel._date)))}
   %elif thing.name == "permissions":
       ${thing.permissions}
   %elif thing.name == "permissionsctl":
