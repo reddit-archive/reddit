@@ -903,6 +903,7 @@ class MessageController(ListingController):
                 q = queries.get_unread_subreddit_messages(c.site)
         elif self.where in ('moderator', 'multi'):
             if c.have_mod_messages and self.mark != 'false':
+                c.have_mod_messages = False
                 c.user.modmsgtime = False
                 c.user._commit()
             # the query is handled by the builder on the moderator page
@@ -912,6 +913,7 @@ class MessageController(ListingController):
         if self.where != 'sent':
             #reset the inbox
             if c.have_messages and self.mark != 'false':
+                c.have_messages = False
                 c.user.msgtime = False
                 c.user._commit()
 
