@@ -84,7 +84,7 @@ def get_recommendations(srs,
 
     # always check for private subreddits at runtime since type might change
     rec_srs = Subreddit._byID36(rec_id36s, return_dict=False)
-    filtered = [sr for sr in rec_srs if sr.type != 'private']
+    filtered = [sr for sr in rec_srs if is_visible(sr)]
 
     # don't recommend adult srs unless one of the originals was over_18
     if not over18 and not any(sr.over_18 for sr in srs):
@@ -184,7 +184,7 @@ def get_recommended_content(prefs, src, settings):
     for r in all_recs:
         if not settings.over18 and r.is_over18():
             continue
-        if r.sr.type == 'private':  # could happen in rising items
+        if not is_visible(r.sr):  # could happen in rising items
             continue
         if r.sr._id not in seen_srs:
             recs.append(r)
@@ -254,6 +254,11 @@ def random_sample(items, count):
     """Safe random sample that won't choke if len(items) < count."""
     sample_size = min(count, len(items))
     return random.sample(items, sample_size)
+
+
+def is_visible(sr):
+    """True if sr is visible to regular users, false if private or banned."""
+    return sr.type != 'private' and not sr._spam
 
 
 class ExploreSettings(object):
