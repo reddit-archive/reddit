@@ -30,7 +30,7 @@ from r2.lib.pages import *
 from r2.lib.pages.things import wrap_links
 from r2.lib.menus import TimeMenu, SortMenu, RecSortMenu, ProfileSortMenu
 from r2.lib.menus import ControversyTimeMenu, menu
-from r2.lib.rising import get_rising
+from r2.lib.rising import get_rising, normalized_rising
 from r2.lib.wrapped import Wrapped
 from r2.lib.normalized_hot import normalized_hot
 from r2.lib.db.thing import Query, Merge, Relations
@@ -393,6 +393,12 @@ class RisingController(NewController):
     extra_page_classes = ListingController.extra_page_classes + ['rising-page']
 
     def query(self):
+        if isinstance(c.site, DefaultSR):
+            sr_ids = Subreddit.user_subreddits(c.user)
+            return normalized_rising(sr_ids)
+        elif isinstance(c.site, MultiReddit):
+            return normalized_rising(c.site.kept_sr_ids)
+
         return get_rising(c.site)
 
 class BrowseController(ListingWithPromos):

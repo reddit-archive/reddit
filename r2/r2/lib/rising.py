@@ -21,10 +21,12 @@
 ###############################################################################
 
 from datetime import datetime
+import heapq
 
 from pylons import g
 
 from r2.lib import count
+from r2.lib.cache import sgm
 from r2.models.link import Link
 
 
@@ -61,3 +63,34 @@ def get_all_rising():
 def get_rising(sr):
     rising = get_all_rising()
     return [link for link, score, sr_id in rising if sr.keep_for_rising(sr_id)]
+
+
+def get_rising_tuples(sr_ids):
+    rising = get_all_rising()
+
+    tuples_by_srid = {sr_id: [] for sr_id in sr_ids}
+    top_rising = {}
+
+    for link, score, sr_id in rising:
+        if sr_id not in sr_ids:
+            continue
+
+        if sr_id not in top_rising:
+            top_rising[sr_id] = score
+
+        norm_score = score / top_rising[sr_id]
+        tuples_by_srid[sr_id].append((-norm_score, -score, link))
+
+    return tuples_by_srid
+
+
+def normalized_rising(sr_ids):
+    if not sr_ids:
+        return []
+
+    tuples_by_srid = sgm(g.cache, sr_ids, miss_fn=get_rising_tuples,
+                         prefix='normalized_rising', time=g.page_cache_time)
+
+    merged = heapq.merge(*tuples_by_srid.values())
+
+    return [link_name for norm_score, score, link_name in merged]
