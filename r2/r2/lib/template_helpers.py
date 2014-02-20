@@ -115,6 +115,13 @@ def media_https_if_secure(url):
     return g.media_provider.convert_to_https(url)
 
 
+def header_url(url):
+    if url == g.default_header_url:
+        return static(url)
+    else:
+        return media_https_if_secure(url)
+
+
 def js_config(extra_config=None):
     logged = c.user_is_loggedin and c.user.name
     gold = bool(logged and c.user.gold)

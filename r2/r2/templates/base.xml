@@ -23,7 +23,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <%!
    from r2.models.subreddit import DefaultSR
-   from r2.lib.template_helpers import get_domain, add_sr
+   from r2.lib.template_helpers import get_domain, add_sr, header_url
 %>
 <rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" 
     xmlns:media="http://search.yahoo.com/mrss/"
@@ -35,7 +35,7 @@
     <image>
       <%
         if g.css_killswitch or not c.site.header:
-            header_img = DefaultSR().header
+            header_img = header_url(DefaultSR().header)
         else:
             header_img = c.site.header
         if not header_img.startswith("http:"):
