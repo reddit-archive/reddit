@@ -37,7 +37,7 @@
         if g.css_killswitch or not c.site.header:
             header_img = header_url(DefaultSR().header)
         else:
-            header_img = c.site.header
+            header_img = header_url(c.site.header)
         if not header_img.startswith("http:"):
             header_img = add_sr(header_img, sr_path=False, force_hostname=True)
       %>
