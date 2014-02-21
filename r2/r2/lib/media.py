@@ -47,6 +47,15 @@ from r2.lib.memoize import memoize
 from r2.lib.nymph import optimize_png
 from r2.lib.utils import TimeoutFunction, TimeoutFunctionException, domain
 from r2.models.link import Link
+from r2.models.media_cache import (
+    ERROR_MEDIA,
+    Media,
+    MediaByURL,
+)
+from urllib2 import (
+    HTTPError,
+    URLError,
+)
 
 
 MEDIA_FILENAME_LENGTH = 12
@@ -238,7 +247,59 @@ def upload_stylesheet(content):
     return g.media_provider.put(file_name, content)
 
 
-def _set_media(link, force=False):
+def _scrape_media(url, autoplay=False, force=False, use_cache=False,
+                  max_cache_age=None):
+    media = None
+
+    # Use media from the cache (if available)
+    if not force and use_cache:
+        mediaByURL = MediaByURL.get(url, autoplay=bool(autoplay),
+                                    max_cache_age=max_cache_age)
+        if mediaByURL:
+            media = mediaByURL.media
+
+    # Otherwise, scrape it
+    if not media:
+        media_object = secure_media_object = None
+        thumbnail_image = thumbnail_url = thumbnail_size = None
+
+        scraper = Scraper.for_url(url, autoplay=autoplay)
+        try:
+            thumbnail_image, media_object, secure_media_object = (
+                scraper.scrape())
+        except (HTTPError, URLError) as e:
+            if use_cache:
+                MediaByURL.add_error(url, str(e),
+                                     autoplay=bool(autoplay))
+            return None
+
+        # the scraper should be able to make a media embed out of the
+        # media object it just gave us. if not, null out the media object
+        # to protect downstream code
+        if media_object and not scraper.media_embed(media_object):
+            print "%s made a bad media obj for url %s" % (scraper, url)
+            media_object = None
+
+        if (secure_media_object and
+            not scraper.media_embed(secure_media_object)):
+            print "%s made a bad secure media obj for url %s" % (scraper, url)
+            secure_media_object = None
+
+        if thumbnail_image:
+            thumbnail_size = thumbnail_image.size
+            thumbnail_url = upload_media(thumbnail_image)
+
+        media = Media(media_object, secure_media_object,
+                      thumbnail_url, thumbnail_size)
+
+    # Store the media in the cache (if requested), possibly extending the ttl
+    if use_cache and media is not ERROR_MEDIA:
+        MediaByURL.add(url, media, autoplay=bool(autoplay))
+
+    return media
+
+
+def _set_media(link, force=False, **kwargs):
     if link.is_self:
         return
     if not force and link.promoted:
@@ -246,34 +307,16 @@ def _set_media(link, force=False):
     elif not force and (link.has_thumbnail or link.media_object):
         return
 
-    scraper = Scraper.for_url(link.url)
-    thumbnail, media_object, secure_media_object = scraper.scrape()
+    media = _scrape_media(link.url, force=force, **kwargs)
 
-    if media_object:
-        # the scraper should be able to make a media embed out of the
-        # media object it just gave us. if not, null out the media object
-        # to protect downstream code
-        res = scraper.media_embed(media_object)
+    if media and not link.promoted:
+        link.thumbnail_url = media.thumbnail_url
+        link.thumbnail_size = media.thumbnail_size
 
-        if not res:
-            print "%s made a bad media obj for link %s" % (scraper, link._id36)
-            media_object = None
+        link.set_media_object(media.media_object)
+        link.set_secure_media_object(media.secure_media_object)
 
-    if secure_media_object:
-        res = scraper.media_embed(secure_media_object)
-
-        if not res:
-            print "%s made a bad secure media obj for link %s" % (scraper,
-                                                                  link._id36)
-            secure_media_object = None
-
-    if thumbnail:
-        link.thumbnail_url = upload_media(thumbnail)
-        link.thumbnail_size = thumbnail.size
-
-    link.set_media_object(media_object)
-    link.set_secure_media_object(secure_media_object)
-    link._commit()
+        link._commit()
 
 
 def force_thumbnail(link, image_data, file_type=".jpg"):
@@ -344,7 +387,7 @@ def _make_thumbnail_from_url(thumbnail_url, referer):
 
 class Scraper(object):
     @classmethod
-    def for_url(cls, url):
+    def for_url(cls, url, autoplay=False):
         scraper = hooks.get_hook("scraper.factory").call_until_return(url=url)
         if scraper:
             return scraper
@@ -352,7 +395,7 @@ class Scraper(object):
         embedly_services = _fetch_embedly_services()
         for service_re, service_secure in embedly_services:
             if service_re.match(url):
-                return _EmbedlyScraper(url, service_secure)
+                return _EmbedlyScraper(url, service_secure, autoplay=autoplay)
 
         return _ThumbnailOnlyScraper(url)
 
@@ -438,18 +481,25 @@ class _ThumbnailOnlyScraper(Scraper):
 class _EmbedlyScraper(Scraper):
     EMBEDLY_API_URL = "https://api.embed.ly/1/oembed"
 
-    def __init__(self, url, can_embed_securely):
+    def __init__(self, url, can_embed_securely, autoplay=False):
         self.url = url
         self.can_embed_securely = can_embed_securely
+        self.embedly_params = {}
+
+        if autoplay:
+            self.embedly_params["autoplay"] = "true"
 
     def _fetch_from_embedly(self, secure):
-        params = urllib.urlencode({
+        param_dict = {
             "url": self.url,
             "format": "json",
             "maxwidth": 600,
             "key": g.embedly_api_key,
             "secure": "true" if secure else "false",
-        })
+        }
+
+        param_dict.update(self.embedly_params)
+        params = urllib.urlencode(param_dict)
         content = requests.get(self.EMBEDLY_API_URL + "?" + params).content
         return json.loads(content)
 
@@ -527,7 +577,7 @@ def run():
         link = Link._by_fullname(msg.body, data=True)
 
         try:
-            TimeoutFunction(_set_media, 30)(link)
+            TimeoutFunction(_set_media, 30)(link, use_cache=True)
         except TimeoutFunctionException:
             print "Timed out on %s" % fname
         except KeyboardInterrupt:
