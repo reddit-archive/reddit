@@ -967,12 +967,12 @@ class TimeoutFunction:
     def handle_timeout(self, signum, frame):
         raise TimeoutFunctionException()
 
-    def __call__(self, *args):
+    def __call__(self, *args, **kwargs):
         # can only be called from the main thread
         old = signal.signal(signal.SIGALRM, self.handle_timeout)
         signal.alarm(self.timeout)
         try:
-            result = self.function(*args)
+            result = self.function(*args, **kwargs)
         finally:
             signal.alarm(0)
             signal.signal(signal.SIGALRM, old)
