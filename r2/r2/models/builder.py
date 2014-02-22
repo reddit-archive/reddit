@@ -308,11 +308,20 @@ class Builder(object):
         """whether or not to skip any item regardless of whether the builder
         was contructed with skip=true"""
         user = c.user if c.user_is_loggedin else None
+
         if hasattr(item, "promoted") and item.promoted is not None:
             return False
+
+        # can_view_slow only exists for Messages, but checking was_comment
+        # is also necessary because items may also be comments that are being
+        # viewed from the inbox page where their render class is overridden.
+        # This check needs to be done before looking at whether they can view
+        # the subreddit, or modmail to/from private subreddits that the user
+        # doesn't have access to will be skipped.
+        if hasattr(item, 'can_view_slow') and not item.was_comment:
+            return not item.can_view_slow()
+
         if hasattr(item, 'subreddit') and not item.subreddit.can_view(user):
-            return True
-        if hasattr(item, 'can_view_slow') and not item.can_view_slow():
             return True
 
 class QueryBuilder(Builder):
