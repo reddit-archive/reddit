@@ -540,6 +540,11 @@ class CommentJsonTemplate(ThingJsonTemplate):
         if c.profilepage:
             d['link_title'] = thing.link.title
             d['link_author'] = thing.link_author.name
+            if thing.link.is_self:
+                d['link_url'] = thing.link.make_permalink(thing.subreddit,
+                                                          force_domain=True)
+            else:
+                d['link_url'] = thing.link.url
         return d
 
     def rendered_data(self, wrapped):
