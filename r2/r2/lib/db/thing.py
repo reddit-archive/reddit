@@ -865,19 +865,15 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
             res = sgm(cls._cache, pairs, lookup_rel_ids, prefix)
 
             # get the relation objects
-            id_to_pair = {rel_id: (thing1_dict[thing1_id],
-                                   thing2_dict[thing2_id],
-                                   name)
-                               for (thing1_id, thing2_id, name), rel_id
-                               in res.iteritems()
-                               if rel_id is not None}
-            rel_ids = id_to_pair.keys()
+            rel_ids = {rel_id for rel_id in res.itervalues()
+                              if rel_id is not None}
             rels = cls._byID_rel(rel_ids, data=data, eager_load=eager_load,
                                  thing_data=thing_data)
 
             res_obj = {}
-            for rel_id, rel in rels.iteritems():
-                pair = id_to_pair[rel_id]
+            for (thing1_id, thing2_id, name), rel_id in res.iteritems():
+                pair = (thing1_dict[thing1_id], thing2_dict[thing2_id], name)
+                rel = rels[rel_id] if rel_id is not None else None
                 res_obj[pair] = rel
 
             return res_obj
