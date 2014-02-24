@@ -17,7 +17,15 @@ Unfortunately, things will sometimes break on the operations side of the site.
 look like a bug, but they are not.  If you're not sure, make a post in
 [/r/bugs](http://www.reddit.com/r/bugs).
 
-3. Please adhere to our [coding
+3. **DO NOT PUBLICLY REPORT SECURITY BUGS**.
+If you have found a bug that can in some way compromise the security of the
+site or its users, please exercise [responsible
+disclosure](http://www.reddit.com/wiki/whitehat) and e-mail
+security@reddit.com. We will respond to you as soon as possible. Please note
+that e-mails which do not pertain to security vulnerabilities in reddit's code
+will be ignored.
+
+4. Please adhere to our [coding
 standards](https://github.com/reddit/reddit/wiki#change-reddit).
 
 After you submit your issue or request, we'll take a look and it and get back
