@@ -314,19 +314,10 @@ class HotController(ListingWithPromos):
     show_organic = True
 
     def query(self):
+
         if isinstance(c.site, DefaultSR):
-            if c.user_is_loggedin:
-                srlimit = Subreddit.DEFAULT_LIMIT
-                over18 = c.user.has_subscribed and c.over18
-            else:
-                srlimit = g.num_default_reddits
-                over18 = False
-
-            sr_ids = Subreddit.user_subreddits(c.user,
-                                               limit=srlimit,
-                                               over18=over18)
+            sr_ids = Subreddit.user_subreddits(c.user)
             return normalized_hot(sr_ids)
-
         elif isinstance(c.site, MultiReddit):
             return normalized_hot(c.site.kept_sr_ids, obey_age_limit=False)
         else:
