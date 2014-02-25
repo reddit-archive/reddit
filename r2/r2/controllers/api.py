@@ -2137,8 +2137,9 @@ class ApiController(RedditController):
             form.find('#example_domain').hide()
         elif (form.has_errors(('type', 'link_type', 'wikimode'),
                               errors.INVALID_OPTION) or
-              form.has_errors('public_description', errors.TOO_LONG) or
-              form.has_errors('description', errors.TOO_LONG)):
+              form.has_errors(('public_description',
+                               'submit_text',
+                               'description'), errors.TOO_LONG)):
             pass
         elif sr and (form.has_errors(('prev_public_description_id', 
                                       'prev_description_id'), errors.TOO_LONG)):
