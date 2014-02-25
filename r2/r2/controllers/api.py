@@ -1454,6 +1454,17 @@ class ApiController(RedditController):
                 # newcomments_q, so if they refresh immediately they
                 # won't see their comment
 
+            #update the queries
+            if is_message:
+                queries.new_message(item, inbox_rel)
+            else:
+                queries.new_comment(item, inbox_rel)
+
+            #set the ratelimiter
+            if should_ratelimit:
+                VRatelimit.ratelimit(rate_user=True, rate_ip = True,
+                                     prefix = "rate_comment_")
+
             # clean up the submission form and remove it from the DOM (if reply)
             t = commentform.find("textarea")
             t.attr('rows', 3).html("").val("")
@@ -1467,17 +1478,6 @@ class ApiController(RedditController):
 
             # remove any null listings that may be present
             jquery("#noresults").hide()
-
-            #update the queries
-            if is_message:
-                queries.new_message(item, inbox_rel)
-            else:
-                queries.new_comment(item, inbox_rel)
-
-            #set the ratelimiter
-            if should_ratelimit:
-                VRatelimit.ratelimit(rate_user=True, rate_ip = True,
-                                     prefix = "rate_comment_")
 
     @validatedForm(VUser(),
                    VModhash(),
