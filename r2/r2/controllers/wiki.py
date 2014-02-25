@@ -21,7 +21,6 @@
 ###############################################################################
 
 from pylons import request, g, c
-from pylons.controllers.util import redirect_to
 from reddit_base import RedditController
 from r2.controllers.oauth2 import require_oauth2_scope
 from r2.lib.utils import url_links_builder
@@ -242,7 +241,7 @@ class WikiController(RedditController):
         return WikiListing(pages, linear_pages).render()
 
     def GET_wiki_redirect(self, page='index'):
-        return redirect_to(str("%s/%s" % (c.wiki_base_url, page)), _code=301)
+        return self.redirect(str("%s/%s" % (c.wiki_base_url, page)), code=301)
 
     @require_oauth2_scope("wikiread")
     @api_doc(api_section.wiki, uri='/wiki/discussions/{page}', uses_site=True)

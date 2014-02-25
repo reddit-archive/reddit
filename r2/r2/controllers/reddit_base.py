@@ -40,7 +40,6 @@ import pylibmc
 
 from mako.filters import url_escape
 from pylons import c, g, request, response
-from pylons.controllers.util import redirect_to
 from pylons.i18n import _
 from pylons.i18n.translation import LanguageError
 
@@ -356,7 +355,8 @@ def set_subreddit():
             domain = g.domain
             if g.domain_prefix:
                 domain = ".".join((g.domain_prefix, domain))
-            redirect_to('http://%s%s' % (domain, sr.path), _code=301)
+            path = 'http://%s%s' % (domain, sr.path)
+            abort(301, location=BaseController.format_output_url(path))
     elif sr_name == 'r':
         #reddits
         c.site = Sub
@@ -395,14 +395,16 @@ def set_subreddit():
             else:
                 c.site = Mod
         else:
-            redirect_to("/subreddits/search?q=%s" % sr_name)
+            path = "/subreddits/search?q=%s" % sr_name
+            abort(302, location=BaseController.format_output_url(path))
     else:
         try:
             c.site = Subreddit._by_name(sr_name, stale=can_stale)
         except NotFound:
             sr_name = chksrname(sr_name)
             if sr_name:
-                redirect_to("/subreddits/search?q=%s" % sr_name)
+                path = "/subreddits/search?q=%s" % sr_name
+                abort(302, location=BaseController.format_output_url(path))
             elif not c.error_page and not request.path.startswith("/api/login/") :
                 abort(404)
 
@@ -412,7 +414,9 @@ def set_subreddit():
         try:
             idna = _force_unicode(domain).encode("idna")
             if idna != domain:
-                redirect_to("/domain/%s%s" % (idna, request.environ["PATH_INFO"]))
+                path_info = request.environ["PATH_INFO"]
+                path = "/domain/%s%s" % (idna, path_info)
+                abort(302, location=BaseController.format_output_url(path))
         except UnicodeError:
             domain = ''  # Ensure valid_ascii_domain fails
         if not c.error_page and not valid_ascii_domain.match(domain):
@@ -440,7 +444,8 @@ def set_multireddit():
                     # trim off multi id
                     url_parts = request.path_qs.split("/")[5:]
                     url_parts.insert(0, "/me/m/%s" % multipath)
-                    abort(302, location="/".join(url_parts))
+                    path = "/".join(url_parts)
+                    abort(302, location=BaseController.format_output_url(path))
 
             multi_id = "/user/%s/m/%s" % (username, multipath)
 
@@ -879,6 +884,7 @@ class MinimalController(BaseController):
         c.cdn_cacheable = (request.via_cdn and
                            g.login_cookie not in request.cookies)
 
+        c.extension = request.environ.get('extension')
         # the domain has to be set before Cookies get initialized
         set_subreddit()
         c.errors = ErrorSet()
@@ -1274,16 +1280,21 @@ class RedditController(OAuth2ResourceController):
         # random reddit trickery -- have to do this after the content lang is set
         if c.site == Random:
             c.site = Subreddit.random_reddit(user=c.user)
-            redirect_to("/" + c.site.path.strip('/') + request.path_qs)
+            site_path = c.site.path.strip('/')
+            path = "/" + site_path + request.path_qs
+            abort(302, location=self.format_output_url(path))
         elif c.site == RandomSubscription:
-            if c.user.gold:
-                c.site = Subreddit.random_subscription(c.user)
-                redirect_to('/' + c.site.path.strip('/') + request.path_qs)
-            else:
-                redirect_to('/gold/about')
+            if not c.user.gold:
+                abort(302, location=self.format_output_url('/gold/about'))
+            c.site = Subreddit.random_subscription(c.user)
+            site_path = c.site.path.strip('/')
+            path = '/' + site_path + request.path_qs
+            abort(302, location=self.format_output_url(path))
         elif c.site == RandomNSFW:
             c.site = Subreddit.random_reddit(over18=True, user=c.user)
-            redirect_to("/" + c.site.path.strip('/') + request.path_qs)
+            site_path = c.site.path.strip('/')
+            path = '/' + site_path + request.path_qs
+            abort(302, location=self.format_output_url(path))
 
         if not request.path.startswith("/api/login/"):
             # is the subreddit banned?

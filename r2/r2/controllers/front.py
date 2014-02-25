@@ -21,7 +21,6 @@
 ###############################################################################
 
 from pylons.i18n import _, ungettext
-from pylons.controllers.util import redirect_to
 from r2.controllers.reddit_base import (
     base_listing,
     pagecache_policy,
@@ -449,7 +448,7 @@ class FrontController(RedditController):
         if c.site.stylesheet_url_http:
             url = Reddit.get_subreddit_stylesheet_url()
             if url:
-                redirect_to(url)
+                return self.redirect(url)
             else:
                 self.abort404()
 

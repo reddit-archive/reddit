@@ -19,16 +19,20 @@
 # All portions of the code written by reddit are Copyright (c) 2006-2013 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
-from pylons import request
-from pylons.controllers.util import abort, redirect_to
+from pylons import request, c
+from pylons.controllers.util import abort
 
 from r2.lib.base import BaseController
 from r2.lib.validator import chkuser, chksrname
 
 
 class RedirectController(BaseController):
+    def pre(self, *k, **kw):
+        BaseController.pre(self, *k, **kw)
+        c.extension = request.environ.get('extension')
+
     def GET_redirect(self, dest):
-        return redirect_to(str(dest))
+        return self.redirect(str(dest))
 
     def GET_user_redirect(self, username, rest=None):
         user = chkuser(username)
@@ -39,7 +43,7 @@ class RedirectController(BaseController):
             url += "/" + rest
         if request.query_string:
             url += "?" + request.query_string
-        return redirect_to(str(url), _code=301)
+        return self.redirect(str(url), code=301)
 
     def GET_timereddit_redirect(self, timereddit, rest=None):
         tr_name = chksrname(timereddit)
@@ -49,4 +53,4 @@ class RedirectController(BaseController):
             rest = str(rest)
         else:
             rest = ''
-        return redirect_to("/r/t:%s/%s" % (tr_name, rest), _code=301)
+        return self.redirect("/r/t:%s/%s" % (tr_name, rest), code=301)

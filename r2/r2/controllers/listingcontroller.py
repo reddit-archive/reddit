@@ -50,7 +50,6 @@ import socket
 from api_docs import api_doc, api_section
 
 from pylons.i18n import _
-from pylons.controllers.util import redirect_to
 
 import random
 from functools import partial
@@ -789,7 +788,7 @@ class UserController(ListingController):
         query_string = request.environ.get('QUERY_STRING')
         if query_string:
             dest += "?" + query_string
-        return redirect_to(dest)
+        return self.redirect(dest)
 
 class MessageController(ListingController):
     show_nums = False
