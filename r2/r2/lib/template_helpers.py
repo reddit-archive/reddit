@@ -278,6 +278,12 @@ def replace_render(listing, item, render_func):
             replacements['numcomments'] = com_label
             replacements['commentcls'] = com_cls
 
+        if hasattr(item, "num_children"):
+            label = ungettext("child", "children", item.num_children)
+            numchildren_text = strings.number_label % {'num': item.num_children,
+                                                       'thing': label}
+            replacements['numchildren_text'] = numchildren_text
+
         replacements['display'] =  "" if display else "style='display:none'"
 
         if hasattr(item, "render_score"):

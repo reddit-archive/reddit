@@ -896,7 +896,7 @@ class Comment(Thing, Printable):
     def keep_item(self, wrapped):
         return True
 
-    cache_ignore = set(["subreddit", "link", "to"]
+    cache_ignore = set(["subreddit", "link", "to", "num_children"]
                        ).union(Printable.cache_ignore)
     @staticmethod
     def wrapped_cache_key(wrapped, style):
@@ -1163,6 +1163,7 @@ class Comment(Thing, Printable):
 
             #will get updated in builder
             item.num_children = 0
+            item.numchildren_text = CachedVariable("numchildren_text")
             item.score_fmt = Score.points
             item.permalink = item.make_permalink(item.link, item.subreddit)
 

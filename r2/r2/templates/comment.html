@@ -120,8 +120,7 @@ ${parent.collapsed()}
   %if collapse:
     &nbsp;<a href="#" class="expand"
        onclick="return showcomment(this)">
-       (${thing.num_children} 
-        ${ungettext("child", "children", thing.num_children)})
+       (${thing.numchildren_text})
     </a>
   %endif
   ${self.approval_checkmark()}
