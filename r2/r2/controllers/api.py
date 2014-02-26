@@ -844,9 +844,18 @@ class ApiController(RedditController):
         else:
             permissions = None
 
-        if type == "moderator_invite" and container.is_moderator(friend):
+        if (type in ("banned", "moderator_invite") and
+                container.is_moderator(friend)):
             c.errors.add(errors.ALREADY_MODERATOR, field="name")
             form.set_error(errors.ALREADY_MODERATOR, "name")
+            return
+
+        # don't allow increasing privileges of banned users
+        unbanned_types = ("moderator", "moderator_invite",
+                          "contributor", "wikicontributor")
+        if type in unbanned_types and container.is_banned(friend):
+            c.errors.add(errors.BANNED_FROM_SUBREDDIT, field="name")
+            form.set_error(errors.BANNED_FROM_SUBREDDIT, "name")
             return
 
         if type == "moderator":

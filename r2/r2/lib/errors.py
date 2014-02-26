@@ -135,6 +135,7 @@ error_list = dict((
         ('JSON_MISSING_KEY', _('JSON missing key: "%(key)s"')),
         ('NO_CHANGE_KIND', _("can't change post type")),
         ('INVALID_LOCATION', _("invalid location")),
+        ('BANNED_FROM_SUBREDDIT', _('that user is banned from the subreddit')),
     ))
 
 errors = Storage([(e, e) for e in error_list.keys()])

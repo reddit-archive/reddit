@@ -60,6 +60,8 @@
     <button class="btn" type="submit">${verb or _("add")}</button>
     <span class="status"></span>
     ${error_field("USER_DOESNT_EXIST", "name")}
+    ${error_field("ALREADY_MODERATOR", "name")}
+    ${error_field("BANNED_FROM_SUBREDDIT", "name")}
     %if caller:
       ${caller.body()}
     %endif
