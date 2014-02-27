@@ -317,9 +317,11 @@ class Stats:
         if counter:
             counter.increment(parts[-1], delta=delta)
 
-    def event_count(self, event_name, name):
+    def event_count(self, event_name, name, sample_rate=None):
+        if sample_rate is None:
+            sample_rate = 1.0
         counter = self.get_counter('event.%s' % event_name)
-        if counter:
+        if counter and random.random() < sample_rate:
             counter.increment(name)
             counter.increment('total')
 
