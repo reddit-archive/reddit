@@ -634,7 +634,7 @@ class Globals(object):
 
         self.ratelimitcache = MemcacheChain(
                 (localcache_cls(), ratelimitcaches))
-        cache_chains.update(ratelimitcaches=self.ratelimitcache)
+        cache_chains.update(ratelimitcache=self.ratelimitcache)
 
         self.rendercache = MemcacheChain((
             localcache_cls(),
