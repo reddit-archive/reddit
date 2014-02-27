@@ -9,7 +9,7 @@ r.WebSocket = function (url) {
 }
 _.extend(r.WebSocket.prototype, Backbone.Events, {
     _backoffTime: 2000,
-    _maximumRetries: 8,
+    _maximumRetries: 9,
 
     _connect: function () {
         r.debug('websocket: connecting')
