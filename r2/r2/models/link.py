@@ -640,6 +640,9 @@ class Link(Thing, Printable):
                     taglinetext = _("submitted %(when)s ago by %(author)s")
             item.taglinetext = taglinetext
 
+            if item.is_author:
+                item.should_incr_counts = False
+
             if user_is_admin:
                 # Link notes
                 url = getattr(item, 'url')
