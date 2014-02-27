@@ -1,16 +1,18 @@
 r.WebSocket = function (url) {
     this._url = url
     this._connectionAttempts = 0
-
-    var websocketsAvailable = 'WebSocket' in window
-    if (websocketsAvailable) {
-        this._connect()
-    }
 }
 _.extend(r.WebSocket.prototype, Backbone.Events, {
     _backoffTime: 2000,
     _maximumRetries: 9,
     _retryJitterAmount: 3000,
+
+    start: function () {
+        var websocketsAvailable = 'WebSocket' in window
+        if (websocketsAvailable) {
+            this._connect()
+        }
+    },
 
     _connect: function () {
         r.debug('websocket: connecting')
