@@ -36,6 +36,7 @@ from urllib import quote, unquote
 from urlparse import urlparse
 
 import babel.core
+import pylibmc
 
 from mako.filters import url_escape
 from pylons import c, g, request, response
@@ -807,8 +808,15 @@ class MinimalController(BaseController):
 
         g.ratelimitcache.add(key, 0, time=retry_after + 1)
 
-        # Increment the key to track the current request
-        recent_reqs = g.ratelimitcache.incr(key)
+        try:
+            # Increment the key to track the current request
+            recent_reqs = g.ratelimitcache.incr(key)
+        except pylibmc.NotFound:
+            # Previous round of ratelimiting fell out in the
+            # time between calling `add` and calling `incr`.
+            g.ratelimitcache.add(key, 1, time=retry_after + 1)
+            recent_reqs = 1
+
         reqs_remaining = max(0, max_reqs - recent_reqs)
 
         c.ratelimit_headers = {
