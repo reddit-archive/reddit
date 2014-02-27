@@ -782,12 +782,12 @@ class MinimalController(BaseController):
         Headers will be sent even on aborted requests.
 
         """
-        if c.cdn_cacheable or not is_api():
-            # No ratelimiting or headers for:
-            # * Web requests (HTML)
-            # * CDN requests (logged out via www.reddit.com)
-            return
+        if c.cdn_cacheable:
+            type_ = "cdn"
+        elif not is_api():
+            type_ = "web"
         elif c.oauth_user and g.RL_OAUTH_SITEWIDE_ENABLED:
+            type_ = "oauth"
             max_reqs = g.RL_OAUTH_MAX_REQS
             period = g.RL_OAUTH_RESET_SECONDS
             # Convert client_id to ascii str for use as memcache key
@@ -795,12 +795,19 @@ class MinimalController(BaseController):
             # OAuth2 ratelimits are per user-app combination
             key = 'siterl-oauth-' + c.user._id36 + ":" + client_id
         elif g.RL_SITEWIDE_ENABLED:
+            type_ = "api"
             max_reqs = g.RL_MAX_REQS
             period = g.RL_RESET_SECONDS
             # API (non-oauth) limits are per-ip
             key = 'siterl-api-' + request.ip
         else:
-            # Not in a context where sitewide ratelimits are on
+            type_ = "none"
+
+        g.stats.event_count("ratelimit.type", type_, sample_rate=0.01)
+        if type_ in ("cdn", "web", "none"):
+            # No ratelimiting or headers for:
+            # * Web requests (HTML)
+            # * CDN requests (logged out via www.reddit.com)
             return
 
         period_start, retry_after = _get_ratelimit_timeslice(period)
@@ -825,11 +832,18 @@ class MinimalController(BaseController):
             "X-Ratelimit-Remaining": str(reqs_remaining),
         }
 
-        if reqs_remaining <= 0 and g.ENFORCE_RATELIMIT:
-            # For non-abort situations, the headers will be added in post(),
-            # to avoid including them in a pagecache
-            response.headers.update(c.ratelimit_headers)
-            abort(429)
+        if reqs_remaining <= 0:
+            if recent_reqs > (2 * max_reqs):
+                g.stats.event_count("ratelimit.exceeded", "hyperbolic")
+            else:
+                g.stats.event_count("ratelimit.exceeded", "over")
+            if g.ENFORCE_RATELIMIT:
+                # For non-abort situations, the headers will be added in post(),
+                # to avoid including them in a pagecache
+                response.headers.update(c.ratelimit_headers)
+                abort(429)
+        elif reqs_remaining < (0.1 * max_reqs):
+            g.stats.event_count("ratelimit.exceeded", "close")
 
     def pre(self):
         action = request.environ["pylons.routes_dict"].get("action")
