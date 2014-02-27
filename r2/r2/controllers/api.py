@@ -2627,9 +2627,10 @@ class ApiController(RedditController):
 
             if children:
                 builder = CommentBuilder(link, CommentSortMenu.operator(sort),
-                                         children=children)
+                                         children=children,
+                                         num=CHILD_FETCH_COUNT)
                 listing = Listing(builder, nextprev = False)
-                items = listing.get_items(num=CHILD_FETCH_COUNT)
+                items = listing.get_items()
                 def _children(cur_items):
                     items = []
                     for cm in cur_items:
