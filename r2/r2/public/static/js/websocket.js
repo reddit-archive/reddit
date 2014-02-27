@@ -10,6 +10,7 @@ r.WebSocket = function (url) {
 _.extend(r.WebSocket.prototype, Backbone.Events, {
     _backoffTime: 2000,
     _maximumRetries: 9,
+    _retryJitterAmount: 3000,
 
     _connect: function () {
         r.debug('websocket: connecting')
@@ -37,7 +38,9 @@ _.extend(r.WebSocket.prototype, Backbone.Events, {
 
     _onClose: function (ev) {
         if (this._connectionAttempts < this._maximumRetries) {
-            var delay = this._backoffTime * Math.pow(2, this._connectionAttempts)
+            var baseDelay = this._backoffTime * Math.pow(2, this._connectionAttempts),
+                jitter = (Math.random() * this._retryJitterAmount) - (this._retryJitterAmount / 2),
+                delay = Math.round(baseDelay + jitter)
             r.debug('websocket: connection lost, reconnecting in ' + delay + 'ms')
             this.trigger('reconnecting', delay)
             setTimeout(_.bind(this._connect, this), delay)
