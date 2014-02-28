@@ -23,6 +23,7 @@
 import datetime
 import hashlib
 from email.MIMEText import MIMEText
+from email.errors import HeaderParseError
 
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql.base import PGInet
@@ -397,11 +398,19 @@ class Email(object):
             self.sent = True
 
     def to_MIMEText(self):
-        def utf8(s):
+        def utf8(s, reject_newlines=True):
+            if reject_newlines and '\n' in s:
+                raise HeaderParseError(
+                    'header value contains unexpected newline: {!r}'.format(s))
             return s.encode('utf8') if isinstance(s, unicode) else s
-        fr = '"%s" <%s>' % (self.from_name(), self.fr_addr)
+
+        fr = '"%s" <%s>' % (
+            self.from_name().replace('"', ''),
+            self.fr_addr.replace('>', ''),
+        )
+
         if not fr.startswith('-') and not self.to_addr.startswith('-'): # security
-            msg = MIMEText(utf8(self.body))
+            msg = MIMEText(utf8(self.body, reject_newlines=False))
             msg.set_charset('utf8')
             msg['To']      = utf8(self.to_addr)
             msg['From']    = utf8(fr)
