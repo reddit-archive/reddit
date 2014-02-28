@@ -40,9 +40,6 @@
   <input type="hidden" name="op"  value="" />
 
   <h2>${_("stylesheet")}</h2>
-  <input type="hidden" name="prevstyle" value="${thing.site.prev_stylesheet}"/>
-  ${error_field("TOO_LONG", "prevstyle")}
-  ${error_field("BAD_REVISION", "prevstyle")}
   <div class="sheets">
     <div class="col">
       <div>
@@ -54,11 +51,6 @@
            >
           ${keep_space(thing.stylesheet_contents) or ''}
         </textarea>
-        <div id="conflict_box" style="display: none">
-            <div id="conflict_diff"></div>
-            <h2 class="error">${_('Your edit will not be saved!')}</h2>
-            <textarea rows="20" cols="20" name="conflict_old"></textarea>
-        </div>
         <div>
             <label for="reason">${_('reason for revision')}</label>
             <input type="text" name="reason" maxlength="256">

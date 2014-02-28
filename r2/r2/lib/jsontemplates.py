@@ -970,7 +970,6 @@ class FlairSelectorJsonTemplate(JsonTemplate):
 class StylesheetTemplate(ThingJsonTemplate):
     _data_attrs_ = dict(
         images='_images',
-        prevstyle='prev_stylesheet',
         stylesheet='stylesheet_contents',
         subreddit_id='_fullname',
     )
@@ -992,8 +991,6 @@ class StylesheetTemplate(ThingJsonTemplate):
             return self.images()
         elif attr == '_fullname':
             return c.site._fullname
-        elif attr == 'prev_stylesheet':
-            return c.site.prev_stylesheet
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
 class SubredditSettingsTemplate(ThingJsonTemplate):
@@ -1009,9 +1006,6 @@ class SubredditSettingsTemplate(ThingJsonTemplate):
         header_hover_text='site.header_title',
         language='site.lang',
         over_18='site.over_18',
-        prev_description_id='site.prev_description_id',
-        prev_public_description_id='site.prev_public_description_id',
-        prev_submit_text_id='site.prev_submit_text_id',
         public_description='site.public_description',
         public_traffic='site.public_traffic',
         show_media='site.show_media',

@@ -1771,9 +1771,6 @@ class ApiController(RedditController):
                    stylesheet_contents=nop('stylesheet_contents',
                        docs={"stylesheet_contents":
                              "the new stylesheet content"}),
-                   prevstyle=VLength('prevstyle', max_length=36,
-                                     docs={"prevstyle":
-                                           "(optional) a revision ID"}),
                    reason=VPrintable('reason', 256, empty_error=None),
                    op = VOneOf('op',['save','preview']))
     @api_doc(api_section.subreddits, uses_site=True)
@@ -1784,22 +1781,9 @@ class ApiController(RedditController):
 
         `op` should be `save` to update the contents of the stylesheet.
 
-        If `prevstyle` is specified, it should be the revision ID the submitted
-        version is a modification of. Wiki-style edit conflict resolution will
-        be done when this is specified, otherwise the content will be blindly
-        overwritten.
-
         """
         
-        if form.has_errors("prevstyle", errors.TOO_LONG):
-            return
         css_errors, parsed = c.site.parse_css(stylesheet_contents)
-
-        # Use the raw POST value as we need to tell the difference between
-        # None/Undefined and an empty string.  The validators use a default
-        # value with both of those cases and would need to be changed. 
-        # In order to avoid breaking functionality, this was done instead.
-        prevstyle = request.POST.get('prevstyle')
 
         if g.css_killswitch:
             return abort(403, 'forbidden')
@@ -1814,40 +1798,16 @@ class ApiController(RedditController):
             return
         else:
             form.find('.errors').hide()
-            form.find('#conflict_box').hide()
             form.set_html(".errors ul", '')
 
         if op == 'save':
-            try:
-                wr = c.site.change_css(
-                    stylesheet_contents,
-                    parsed,
-                    prevstyle,
-                    reason=reason,
-                )
-                form.find('.conflict_box').hide()
-                form.find('.errors').hide()
-                form.set_html(".status", _('saved'))
-                form.set_html(".errors ul", "")
-                if wr:
-                    description = wiki.modactions.get('config/stylesheet')
-                    form.set_inputs(prevstyle=str(wr._id))
-                    ModAction.create(c.site, c.user, 'wikirevise', description)
-            except ConflictException as e:
-                c.errors.add(errors.CONFLICT, field="stylesheet_contents")
-                form.has_errors("stylesheet_contents", errors.CONFLICT)
-                form.set_html(".status", _('conflict error'))
-                form.set_html(".errors ul", _('There was a conflict while editing the stylesheet'))
-                form.find('#conflict_box').show()
-                form.set_inputs(conflict_old=e.your,
-                                prevstyle=e.new_id, stylesheet_contents=e.new)
-                form.set_html('#conflict_diff', e.htmldiff)
-                form.find('.errors').show()
-                return
-            except (tdb_cassandra.NotFound, wiki.WikiBadRevision):
-                c.errors.add(errors.BAD_REVISION, field="prevstyle")
-                form.has_errors("prevstyle", errors.BAD_REVISION)
-                return
+            wr = c.site.change_css(stylesheet_contents, parsed, reason=reason)
+            form.find('.errors').hide()
+            form.set_html(".status", _('saved'))
+            form.set_html(".errors ul", "")
+            if wr:
+                description = wiki.modactions.get('config/stylesheet')
+                ModAction.create(c.site, c.user, 'wikirevise', description)
 
         parsed_http, parsed_https = parsed
         if c.secure:
@@ -2052,11 +2012,8 @@ class ApiController(RedditController):
                    header_title = VLength("header-title", max_length = 500),
                    domain = VCnameDomain("domain"),
                    submit_text = VMarkdown("submit_text", max_length=1024),
-                   prev_submit_text_id = VLength('prev_submit_text_id', max_length=36),
                    public_description = VMarkdown("public_description", max_length = 500),
-                   prev_public_description_id = VLength('prev_public_description_id', max_length = 36),
                    description = VMarkdown("description", max_length = 5120),
-                   prev_description_id = VLength('prev_description_id', max_length = 36),
                    lang = VLang("lang"),
                    over_18 = VBoolean('over_18'),
                    allow_top = VBoolean('allow_top'),
@@ -2091,11 +2048,6 @@ class ApiController(RedditController):
         settings from [/about/edit.json](#GET_r_{subreddit}_about_edit.json)
         first.
 
-        The fields `prev_public_description_id`, `prev_description_id` and
-        `prev_submit_text_id` are optional. If specified, they should be the
-        wiki revision IDs of the last-seen versions of these pieces of text to
-        allow for wiki-style edit conflict resolution.
-
         For backwards compatibility, `description` is the sidebar text and
         `public_description` is the publicly visible subreddit description.
 
@@ -2106,35 +2058,16 @@ class ApiController(RedditController):
         See also: [/about/edit.json](#GET_r_{subreddit}_about_edit.json).
 
         """
-        def apply_wikid_field(sr, form, pagename, value, prev, field, error):
-            id_field_name = 'prev_%s_id' % field
+        def apply_wikid_field(sr, form, pagename, value, field):
             try:
                 wikipage = wiki.WikiPage.get(sr, pagename)
             except tdb_cassandra.NotFound:
                 wikipage = wiki.WikiPage.create(sr, pagename)
-            try:
-                wr = wikipage.revise(value, previous=prev, author=c.user._id36)
-                setattr(sr, field, value)
-                if not wr:
-                    return True
-                setattr(sr, id_field_name, wikipage.revision)
-                ModAction.create(sr, c.user, 'wikirevise', details=wiki.modactions.get(pagename))
-                return True
-            except ConflictException as e:
-                c.errors.add(errors.CONFLICT, field=field)
-                form.has_errors(field, errors.CONFLICT)
-                form.parent().set_html('.status', error)
-                form.find('#%s_conflict_box' % field).show()
-                form.set_inputs(**{
-                    id_field_name: str(e.new_id),
-                    '%s_conflict_old' % field: e.your,
-                    field: e.new,
-                })
-                form.set_html('#%s_conflict_diff' % field, e.htmldiff)
-            except (tdb_cassandra.NotFound, wiki.WikiBadRevision):
-                c.errors.add(errors.BAD_REVISION, field=id_field_name)
-                form.has_errors(id_field_name, errors.BAD_REVISION)
-            return False
+            wr = wikipage.revise(value, author=c.user._id36)
+            setattr(sr, field, value)
+            if wr:
+                ModAction.create(sr, c.user, 'wikirevise',
+                                 details=wiki.modactions.get(pagename))
 
         # the status button is outside the form -- have to reset by hand
         form.parent().set_html('.status', "")
@@ -2156,44 +2089,31 @@ class ApiController(RedditController):
         description = kw.pop('description')
         submit_text = kw.pop('submit_text')
 
-        # Use the raw POST value as we need to tell the difference between
-        # None/Undefined and an empty string.  The validators use a default
-        # value with both of those cases and would need to be changed. 
-        # In order to avoid breaking functionality, this was done instead.
-        prev_desc = request.POST.get('prev_description_id')
-        prev_pubdesc = request.POST.get('prev_public_description_id')
-        prev_submit_text = request.POST.get('prev_submit_text_id')
-
         def update_wiki_text(sr):
             error = False
-            if not apply_wikid_field(sr,
-                                     form,
-                                     'config/sidebar',
-                                     description,
-                                     prev_desc,
-                                     'description',
-                                     _("Sidebar was not saved")):
-                error = True
+            apply_wikid_field(
+                sr,
+                form,
+                'config/sidebar',
+                description,
+                'description',
+            )
 
-            if not apply_wikid_field(sr,
-                                     form,
-                                     'config/submit_text',
-                                     submit_text,
-                                     prev_submit_text,
-                                     'submit_text',
-                                     _("Submission text was not saved")):
-                error = True
+            apply_wikid_field(
+                sr,
+                form,
+                'config/submit_text',
+                submit_text,
+                'submit_text',
+            )
 
-            if not apply_wikid_field(sr,
-                                     form,
-                                     'config/description',
-                                     public_description,
-                                     prev_pubdesc,
-                                     'public_description',
-                                     _("Description was not saved")):
-                error = True
-            return not error
-
+            apply_wikid_field(
+                sr,
+                form,
+                'config/description',
+                public_description,
+                'public_description',
+            )
         
         #if a user is banned, return rate-limit errors
         if c.user._spam:
@@ -2227,9 +2147,6 @@ class ApiController(RedditController):
               form.has_errors(('public_description',
                                'submit_text',
                                'description'), errors.TOO_LONG)):
-            pass
-        elif sr and (form.has_errors(('prev_public_description_id', 
-                                      'prev_description_id'), errors.TOO_LONG)):
             pass
         elif (form.has_errors(('wiki_edit_karma', 'wiki_edit_age'), 
                               errors.BAD_NUMBER)):
@@ -2265,7 +2182,7 @@ class ApiController(RedditController):
             #assume sr existed, or was just built
             old_domain = sr.domain
 
-            success = update_wiki_text(sr)
+            update_wiki_text(sr)
 
             if not sr.domain:
                 del kw['css_on_cname']
@@ -2283,8 +2200,7 @@ class ApiController(RedditController):
 
             # flag search indexer that something has changed
             changed(sr)
-            if success:
-                form.parent().set_html('.status', _("saved"))
+            form.parent().set_html('.status', _("saved"))
 
         if form.has_error():
             return

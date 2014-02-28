@@ -388,7 +388,6 @@ class WikiApiController(WikiController):
                 # object. TODO: change this to minimize subreddit get sizes.
                 if page.special:
                     setattr(c.site, ATTRIBUTE_BY_PAGE[page.name], content)
-                    setattr(c.site, "prev_" + ATTRIBUTE_BY_PAGE[page.name] + "_id", page.revision)
                     c.site._commit()
 
                 if page.special or c.is_wiki_mod:
@@ -472,7 +471,6 @@ class WikiApiController(WikiController):
                 # object. TODO: change this to minimize subreddit get sizes.
                 if page.special:
                     setattr(c.site, ATTRIBUTE_BY_PAGE[page.name], content)
-                    setattr(c.site, "prev_" + ATTRIBUTE_BY_PAGE[page.name] + "_id", page.revision)
                     c.site._commit()
             except ContentLengthError as e:
                 self.handle_error(403, 'CONTENT_LENGTH_ERROR', max_length=e.max_length)
