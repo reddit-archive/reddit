@@ -22,3 +22,6 @@ r.i18n = {
 r._ = _.bind(r.i18n.jed.gettext, r.i18n.jed)
 r.P_ = _.bind(r.i18n.jed.ngettext, r.i18n.jed)
 r.N_ = _.identity
+r.NP_ = function (singular, plural) {
+    return [singular, plural]
+}

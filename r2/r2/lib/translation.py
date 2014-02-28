@@ -166,6 +166,7 @@ def extract_javascript_msgids(source):
             "_": None,
             "P_": (1, 2),
             "N_": None,
+            "NP_": (1, 2),
         },
         comment_tags={},
         options={},
