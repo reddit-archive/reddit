@@ -1790,7 +1790,7 @@ class ApiController(RedditController):
         """
         # just in case we need to kill this feature from XSS
         if g.css_killswitch:
-            return self.abort(403,'forbidden')
+            return abort(403, 'forbidden')
 
         if form.has_errors("img_name", errors.BAD_CSS_NAME):
             return
@@ -1813,7 +1813,7 @@ class ApiController(RedditController):
         """
         # just in case we need to kill this feature from XSS
         if g.css_killswitch:
-            return self.abort(403,'forbidden')
+            return abort(403, 'forbidden')
         if c.site.header:
             c.site.header = None
             c.site.header_size = None
@@ -2554,7 +2554,7 @@ class ApiController(RedditController):
                    parent = VByName('parent_id'))
     def POST_moremessages(self, form, jquery, parent):
         if not parent.can_view_slow():
-            return self.abort(403,'forbidden')
+            return abort(403, 'forbidden')
 
         if parent.sr_id:
             builder = SrMessageBuilder(parent.subreddit_slow,

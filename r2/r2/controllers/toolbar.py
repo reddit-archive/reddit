@@ -197,7 +197,7 @@ class ToolbarController(RedditController):
         links = list(wrap_links(link))
         if not links:
             # they aren't allowed to see this link
-            return self.abort(403, 'forbidden')
+            return abort(403, 'forbidden')
         link = links[0]
 
         wrapper = make_wrapper(render_class = StarkComment,
