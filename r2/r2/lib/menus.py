@@ -162,7 +162,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      reported     = _("reported"),
                      voting       = _("voting"),
 
-                     promote        = _('self-serve advertising'),
+                     promote        = _('advertising'),
                      new_promo      = _('create promotion'),
                      my_current_promos = _('my promoted links'),
                      current_promos = _('all promoted links'),
