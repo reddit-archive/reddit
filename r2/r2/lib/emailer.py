@@ -21,6 +21,7 @@
 ###############################################################################
 
 from email.MIMEText import MIMEText
+from email.errors import HeaderParseError
 import datetime
 import traceback, sys, smtplib
 
@@ -177,7 +178,7 @@ def send_queued_mail(test = False):
                 email.set_sent(rejected = False)
         # exception happens only for local recipient that doesn't exist
         except (smtplib.SMTPRecipientsRefused, smtplib.SMTPSenderRefused,
-                UnicodeDecodeError, AttributeError):
+                UnicodeDecodeError, AttributeError, HeaderParseError):
             # handle error and print, but don't stall the rest of the queue
             print "Handled error sending mail (traceback to follow)"
             traceback.print_exc(file = sys.stdout)
