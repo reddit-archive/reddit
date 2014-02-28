@@ -1534,6 +1534,8 @@ class ApiController(RedditController):
             pass
         elif shareform.has_errors("ratelimit", errors.RATELIMIT):
             pass
+        elif not sr.can_view(c.user):
+            return abort(403, 'forbidden')
         else:
             emails, users = emails
             c.user.add_share_emails(emails)
