@@ -28,6 +28,7 @@
   from r2.lib.strings import strings
   from r2.models import Account
   from r2.lib import js
+  from r2.lib.filters import safemarkdown
   import simplejson
 
   from babel.numbers import format_currency, format_decimal
@@ -281,11 +282,11 @@ ${self.javascript_setup()}
 
       <div class="help">
         <div class="infotext rounded" id="campaign-help">
-          <p>
-            ${_("This dashboard allows you to easily place ads on reddit. "
-                "You can target a specific community or simply run on the main "
-                "page.")}
-          </p>
+            ${unsafe(safemarkdown(_("This dashboard allows you to easily place "
+                "ads on reddit. You can target a specific community or simply "
+                "run on the main page.")))}
+            ${unsafe(safemarkdown(_("**Have any questions? "
+                "[Check out the FAQ](http://www.reddit.com/wiki/selfserve)**")))}
         </div>
         <div class="clear"></div>
       </div>
