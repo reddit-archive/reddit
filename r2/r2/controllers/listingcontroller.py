@@ -553,17 +553,13 @@ class UserController(ListingController):
         return title
 
     def keep_fn(self):
-        # keep promotions off of profile pages.
         def keep(item):
             if self.where == 'promoted':
                 return bool(getattr(item, "promoted", None))
 
-            wouldkeep = True
-            # TODO: Consider a flag to disable this (and see below plus builder.py)
             if item._deleted and not c.user_is_admin:
                 return False
-            if self.time != 'all':
-                wouldkeep = (item._date > utils.timeago('1 %s' % str(self.time)))
+
             if c.user == self.vuser:
                 if not item.likes and self.where == 'liked':
                     return False
@@ -571,12 +567,22 @@ class UserController(ListingController):
                     return False
                 if self.where == 'saved' and not item.saved:
                     return False
-            if self.where == 'gilded':
-                wouldkeep = item.gildings > 0
 
-            return wouldkeep and (getattr(item, "promoted", None) is None and
-                    (self.where == "deleted" or
-                     not getattr(item, "deleted", False)))
+            if (self.time != 'all' and
+                item._date <= utils.timeago('1 %s' % str(self.time))):
+                return False
+
+            if self.where == 'gilded' and item.gildings <= 0:
+                return False
+
+            if self.where == 'deleted' and not getattr(item, 'deleted', False):
+                return False
+
+            is_promoted = getattr(item, "promoted", None) is not None
+            if self.where != 'saved' and is_promoted:
+                return False
+
+            return True
         return keep
 
     def query(self):
