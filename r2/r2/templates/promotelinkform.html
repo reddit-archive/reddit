@@ -530,6 +530,17 @@ ${self.javascript_setup()}
           ${_("You don't have any campaigns for this link yet.  You should add one.")}
         </p>
       </div>
+
+      %if thing.summary:
+      <div class="help">
+        <div class="infotext rounded">
+          <p>
+            ${thing.summary}
+          </p>
+        </div>
+      </div>
+      %endif
+
       <span class="freebie error"></span>
     </%utils:line_field>
   </div>
