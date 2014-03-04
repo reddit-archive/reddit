@@ -500,6 +500,7 @@ class ByIDController(ListingController):
 class UserController(ListingController):
     render_cls = ProfilePage
     show_nums = False
+    skip = True
 
     @property
     def menus(self):
@@ -551,8 +552,6 @@ class UserController(ListingController):
             % dict(user = self.vuser.name, site = c.site.name)
         return title
 
-    # TODO: this might not be the place to do this
-    skip = True
     def keep_fn(self):
         # keep promotions off of profile pages.
         def keep(item):
