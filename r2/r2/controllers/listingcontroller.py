@@ -497,23 +497,6 @@ class ByIDController(ListingController):
         return ListingController.GET_listing(self, **env)
 
 
-#class RecommendedController(ListingController):
-#    where = 'recommended'
-#    title_text = _('recommended for you')
-#
-#    @property
-#    def menus(self):
-#        return [RecSortMenu(default = self.sort)]
-#
-#    def query(self):
-#        return get_recommended(c.user._id, sort = self.sort)
-#
-#    @validate(VUser(),
-#              sort = VMenu("controller", RecSortMenu))
-#    def GET_listing(self, sort, **env):
-#        self.sort = sort
-#        return ListingController.GET_listing(self, **env)
-
 class UserController(ListingController):
     render_cls = ProfilePage
     show_nums = False
