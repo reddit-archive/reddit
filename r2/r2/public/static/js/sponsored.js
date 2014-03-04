@@ -6,11 +6,12 @@ r.sponsored = {
         this.inventory = {}
     },
 
-    setup: function(inventory_by_sr, isEmpty) {
+    setup: function(inventory_by_sr, isEmpty, userIsSponsor) {
         this.inventory = inventory_by_sr
         if (isEmpty) {
             this.fill_campaign_editor()
         }
+        this.userIsSponsor = userIsSponsor
     },
 
     setup_geotargeting: function(regions, metros) {
@@ -243,7 +244,7 @@ r.sponsored = {
     get_cpm: function($form) {
         var baseCpm = parseInt($("#bid").data("base_cpm")),
             geotargetCpm = parseInt($("#bid").data("geotarget_cpm")),
-            isGeotarget = $('#country').val() != ''
+            isGeotarget = $('#country').val() != '' && $('#country').attr('disabled') != 'disabled'
 
         if (isGeotarget) {
             return geotargetCpm
@@ -328,11 +329,27 @@ r.sponsored = {
 
     targeting_on: function() {
         $('.targeting').find('*[name="sr"]').prop("disabled", "").end().slideDown();
+
+        if (!this.userIsSponsor) {
+            var $geotargetRow = $('.geotarget-select').parents('tr')
+            $geotargetRow.find('select').attr('disabled', 'disabled')
+            $geotargetRow.find('.geotargeting-selects').hide()
+            $('.geotargeting-disabled').show()
+        }
+
         this.fill_campaign_editor()
     },
 
     targeting_off: function() {
         $('.targeting').find('*[name="sr"]').prop("disabled", "disabled").end().slideUp();
+
+        if (!this.userIsSponsor) {
+            var $geotargetRow = $('.geotarget-select').parents('tr')
+            $geotargetRow.find('select').removeAttr('disabled')
+            $geotargetRow.find('.geotargeting-selects').show()
+            $('.geotargeting-disabled').hide()
+        }
+
         this.fill_campaign_editor()
     },
 

@@ -689,6 +689,11 @@ class PromoteApiController(ApiController):
 
         author = Account._byID(link.author_id, data=True)
         cpm = author.cpm_selfserve_pennies
+
+        if location and sr and not c.user_is_sponsor:
+            # only sponsors can geotarget on subreddits
+            location = None
+
         if location:
             cpm += g.cpm_selfserve_geotarget.pennies
 

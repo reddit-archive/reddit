@@ -44,7 +44,8 @@ ${unsafe(js.use('sponsored'))}
 <script type="text/javascript">
   r.sponsored.init();
   r.sponsored.setup(${unsafe(simplejson.dumps(thing.inventory))},
-                    ${simplejson.dumps(not thing.campaigns)});
+                    ${simplejson.dumps(not thing.campaigns)},
+                    ${simplejson.dumps(c.user_is_sponsor)});
   r.sponsored.setup_geotargeting(${unsafe(simplejson.dumps(thing.regions))},
                                  ${unsafe(simplejson.dumps(thing.metros))});
 </script>
@@ -340,28 +341,6 @@ ${self.javascript_setup()}
             </td>
           </tr>
 
-          <tr style="${'display:none' if not c.user_is_sponsor else ''}">
-            <th>${_("geotargeting")}</th>
-            <td class="prefright">
-              <select class="geotarget-select" id="country" name="country"
-                      title=${_("country")}
-                      onchange="r.sponsored.country_changed()">
-                %for code, name, selected in thing.countries:
-                <option ${"selected='selected'" if selected else ""} value=${code}>
-                  ${name}
-                </option>
-                %endfor
-              </select>
-              <select class="geotarget-select" id="region" name="region"
-                      title=${_("region")} style="display:none"
-                      onchange="r.sponsored.region_changed()"></select>
-              <select class="geotarget-select" id="metro" name="metro"
-                      title=${_("metro")} style="display:none"
-                      onchange="r.sponsored.metro_changed()"></select>
-              ${error_field("INVALID_LOCATION", ("country", "region", "metro"), "div")}
-            </td>
-          </tr>
-
           <tr>
             <th>${_("price")}</th>
             <td class="prefright">
@@ -443,24 +422,41 @@ ${self.javascript_setup()}
                        onclick="r.sponsored.targeting_on()">
                 ${_("targeted (targets a subreddit and its subscribers)")}
               </label>
+
+              <div class="targeting" style="display:none">
+                ${error_field("OVERSOLD", "sr", "div")}
+                ${thing.subreddit_selector}
+              </div>
+            </td>
+          </tr>
+
+          <tr>
+            <th>${_("geotargeting")}</th>
+            <td class="prefright">
+              <div class="geotargeting-disabled error" style="display:none">
+                ${_("geotargeting is only available when targeting the frontpage")}
+              </div>
+              <div class="geotargeting-selects">
+                <select class="geotarget-select" id="country" name="country"
+                        title=${_("country")}
+                        onchange="r.sponsored.country_changed()">
+                  %for code, name, selected in thing.countries:
+                  <option ${"selected='selected'" if selected else ""} value=${code}>
+                    ${name}
+                  </option>
+                  %endfor
+                </select>
+                <select class="geotarget-select" id="region" name="region"
+                        title=${_("region")} style="display:none"
+                        onchange="r.sponsored.region_changed()"></select>
+                <select class="geotarget-select" id="metro" name="metro"
+                        title=${_("metro")} style="display:none"
+                        onchange="r.sponsored.metro_changed()"></select>
+                ${error_field("INVALID_LOCATION", ("country", "region", "metro"), "div")}
+              </div>
             </td>
           </tr>
         </table>
-
-        <script type="text/javascript">
-          $(function() {
-              init_startdate();
-              init_enddate();
-              $("#campaign").find("button[name=create]").show().end()
-                    .find("button[name=save]").hide().end();
-            })
-        </script>
-
-        <div class="targeting" style="display:none">
-          ${error_field("OVERSOLD", "sr", "div")}
-          ${thing.subreddit_selector}
-        </div>
-
 
         <div class="buttons">
           <input type="hidden" name="campaign_id36" value="">
@@ -509,9 +505,7 @@ ${self.javascript_setup()}
             <th>${_("total budget")}</th>
             <th>${_("spent")}</th>
             <th title="${targeting_title}">${_("targeting")}</th>
-            <th style="${'display:none' if not c.user_is_sponsor else ''}">
-              ${_("geotargeting")}
-            </th>
+            <th>${_("geotargeting")}</th>
             <th style="align:right">
               <button class="new-campaign fancybutton" 
                       ${'disabled="disabled"' if len(thing.campaigns) >= g.MAX_CAMPAIGNS_PER_LINK else ''}
