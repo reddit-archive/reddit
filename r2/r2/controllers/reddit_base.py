@@ -782,6 +782,9 @@ class MinimalController(BaseController):
         Headers will be sent even on aborted requests.
 
         """
+        if c.error_page:
+            # ErrorController is re-running pre, don't double ratelimit
+            return
         if c.cdn_cacheable:
             type_ = "cdn"
         elif not is_api():
