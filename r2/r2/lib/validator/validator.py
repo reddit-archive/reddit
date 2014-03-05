@@ -1083,6 +1083,9 @@ class VSubmitParent(VByName):
         fullname = fullname or fullname2
         if fullname:
             parent = VByName.run(self, fullname)
+            if not isinstance(parent, (Comment, Link, Message)):
+                abort(403, "forbidden")
+
             if parent:
                 if c.user_is_loggedin and parent.author_id in c.user.enemies:
                     self.set_error(errors.USER_BLOCKED)
