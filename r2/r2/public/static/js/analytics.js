@@ -5,7 +5,7 @@ r.analytics = {
     init: function() {
         // these guys are relying on the custom 'onshow' from jquery.reddit.js
         $(document).delegate(
-            '.organic-listing .promotedlink.promoted, .comments-page .promotedlink.promoted',
+            '.organic-listing .promotedlink.promoted, .comments-page .promotedlink.promoted, .linklisting .promotedlink.promoted',
             'onshow',
             _.bind(function(ev) {
                 this.fetchTrackersOrFirePixel(ev.target)
@@ -72,19 +72,26 @@ r.analytics = {
         if ($el.data('trackerFired'))
             return
 
-        var pixel = new Image()
-        pixel.src = r.config.adtracker_url + '?' + $.param({
-            'id': trackingName,
-            'hash': hash,
-            'r': Math.round(Math.random() * 2147483647) // cachebuster
-        })
+        // fire the impression pixel only if this is an organic listing or
+        // comments page
+        var inOrganicListing = $el.parent().hasClass('organic-listing'),
+            onCommentsPage = $('body').hasClass('comments-page')
 
-        var adServerPixel = new Image(),
-            adServerImpPixel = $el.data('adserverImpPixel'),
-            adServerClickUrl = $el.data('adserverClickUrl')
+        if (inOrganicListing || onCommentsPage) {
+            var pixel = new Image()
+            pixel.src = r.config.adtracker_url + '?' + $.param({
+                'id': trackingName,
+                'hash': hash,
+                'r': Math.round(Math.random() * 2147483647) // cachebuster
+            })
 
-        if (adServerImpPixel) {
-            adServerPixel.src = adServerImpPixel
+            var adServerPixel = new Image(),
+                adServerImpPixel = $el.data('adserverImpPixel'),
+                adServerClickUrl = $el.data('adserverClickUrl')
+
+            if (adServerImpPixel) {
+                adServerPixel.src = adServerImpPixel
+            }
         }
 
         // If IE7/8 thinks the text of a link looks like an email address

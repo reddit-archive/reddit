@@ -151,6 +151,9 @@ class BaseSite(object):
         from r2.models import ModAction
         return ModAction.get_actions(srs, mod=mod, action=action)
 
+    def get_live_promos(self):
+        raise NotImplementedError
+
     @property
     def stylesheet_url(self):
         from r2.lib.template_helpers import get_domain
@@ -891,6 +894,11 @@ class Subreddit(Thing, Printable, BaseSite):
         rel.note = note
         rel._commit()
 
+    def get_live_promos(self):
+        from r2.lib import promote
+        return promote.get_live_promotions([self.name])
+
+
 class FakeSubreddit(BaseSite):
     _defaults = dict(Subreddit._defaults,
         link_flair_position='right',
@@ -1196,6 +1204,13 @@ class DefaultSR(_DefaultSR):
         from r2.lib.db.queries import get_gilded
         return get_gilded(Subreddit.user_subreddits(c.user))
 
+    def get_live_promos(self):
+        from r2.lib import promote
+        srs = Subreddit.user_subreddits(c.user, ids=False)
+        # '' is for promos targeted to the frontpage
+        sr_names = [''] + [sr.name for sr in srs]
+        return promote.get_live_promotions(sr_names)
+
 
 class MultiReddit(FakeSubreddit):
     name = 'multi'
@@ -1264,6 +1279,12 @@ class MultiReddit(FakeSubreddit):
     def get_gilded(self):
         from r2.lib.db.queries import get_gilded
         return get_gilded(self.kept_sr_ids)
+
+    def get_live_promos(self):
+        from r2.lib import promote
+        srs = Subreddit._byID(self.kept_sr_ids, return_dict=False)
+        sr_names = [sr.name for sr in srs]
+        return promote.get_live_promotions(sr_names)
 
 
 class TooManySubredditsError(Exception):

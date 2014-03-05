@@ -446,6 +446,30 @@ class BrowseController(ListingWithPromos):
         return ListingController.GET_listing(self, **env)
 
 
+class AdsController(ListingController):
+    builder_cls = CampaignBuilder
+    title_text = _('promoted links')
+
+    @property
+    def infotext(self):
+        infotext = _("want to advertise? [click here!](%(link)s)")
+        if c.user.pref_show_promote or c.user_is_sponsor:
+            return infotext % {'link': '/promoted'}
+        else:
+            return infotext % {'link': '/ad_inq'}
+
+    def keep_fn(self):
+        def keep(item):
+            return item.promoted and not item._deleted
+        return keep
+
+    def query(self):
+        try:
+            return c.site.get_live_promos()
+        except NotImplementedError:
+            self.abort404()
+
+
 class RandomrisingController(ListingWithPromos):
     where = 'randomrising'
     title_text = _('you\'re really bored now, eh?')
