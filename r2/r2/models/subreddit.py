@@ -948,13 +948,12 @@ class FriendsSR(FakeSubreddit):
         friends = Account._byID(a.friends[-max_lookup:], return_dict = False,
                                 data = True)
 
-        # if we don't have a last visit for your friends, we don't
-        # care about them
-        last_visits = last_modified_multi(friends, "submitted")
-        friends = [x for x in friends if x in last_visits]
+        # only include friends that have ever interacted with the site
+        last_activity = last_modified_multi(friends, "overview")
+        friends = [x for x in friends if x in last_activity]
 
         # sort friends by most recent interactions
-        friends.sort(key = lambda x: last_visits[x], reverse = True)
+        friends.sort(key = lambda x: last_activity[x], reverse = True)
         return [x._id for x in friends[:limit]]
 
     def get_links(self, sort, time):
