@@ -162,6 +162,7 @@ def js_config(extra_config=None):
         "uitracker_url": g.uitracker_url,
         "static_root": static(''),
         "over_18": bool(c.over18),
+        "new_window": bool(c.user.pref_newwindow),
         "vote_hash": c.vote_hash,
         "gold": gold,
     }
