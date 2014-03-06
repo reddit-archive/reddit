@@ -208,6 +208,14 @@ def make_map():
     mc('/framebuster/:what/:blah',
        controller='front', action='framebuster')
 
+    mc('/promoted/report', controller='promote', action='report')
+    mc('/promoted/live_promos/:sr', controller='promotelisting', action='listing')
+    mc('/promoted/:sort', controller='promotelisting', action="listing",
+       requirements=dict(sort="future_promos|pending_promos|unpaid_promos|"
+                              "rejected_promos|live_promos|underdelivered|"
+                              "reported|house|all"))
+    mc('/promoted/', controller='promotelisting', action="listing")
+
     mc('/promoted/edit_promo/:link',
        controller='promote', action='edit_promo')
     mc('/promoted/edit_promo/pc/:campaign', controller='promote',  # admin only
@@ -217,14 +225,8 @@ def make_map():
     mc('/promoted/refund/:link/:campaign', controller='promote',
        action='refund')
     mc('/promoted/inventory', controller='promote', action='promote_inventory')
-
     mc('/promoted/:action', controller='promote',
        requirements=dict(action="edit_promo|new_promo|roadblock"))
-    mc('/promoted/report', controller='promote', action='report')
-    mc('/promoted/:sort/:sr', controller='promote', action='listing',
-       requirements=dict(sort='live_promos'))
-    mc('/promoted/:sort', controller='promote', action="listing")
-    mc('/promoted/', controller='promoted', action="listing", sort="")
 
     mc('/health', controller='health', action='health')
     mc('/health/ads', controller='health', action='promohealth')

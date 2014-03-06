@@ -68,6 +68,7 @@ def load_controllers():
     from errorlog import ErrorlogController
     from promotecontroller import PromoteController
     from promotecontroller import PromoteApiController
+    from promotecontroller import PromoteListingController
     from mediaembed import MediaembedController
     from mediaembed import AdController
     from policies import PoliciesController
