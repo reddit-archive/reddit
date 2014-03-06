@@ -1202,6 +1202,24 @@ class ApiController(RedditController):
         # flag search indexer that something has changed
         changed(thing)
 
+    @require_oauth2_scope("edit")
+    @noresponse(VUser(),
+                VModhash(),
+                thing=VByNameIfAuthor('id'),
+                state=VBoolean('state'))
+    @api_doc(api_section.links_and_comments)
+    def POST_sendreplies(self, thing, state):
+        """Enable or disable inbox replies for a link.
+
+        `state` is a boolean that indicates whether you are enabling or
+        disabling inbox replies - true to enable, false to disable.
+
+        """
+        if not isinstance(thing, Link):
+            return
+        thing.sendreplies = state
+        thing._commit()
+
     @noresponse(VUser(),
                 VModhash(),
                 VSrCanAlter('id'),
