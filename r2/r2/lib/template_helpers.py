@@ -227,13 +227,13 @@ def comment_label(num_comments=None):
     if not num_comments:
         # generates "comment" the imperative verb
         com_label = _("comment {verb}")
-        com_cls = 'comments empty'
+        com_cls = 'comments empty may-blank'
     else:
         # generates "XX comments" as a noun
         com_label = ungettext("comment", "comments", num_comments)
         com_label = strings.number_label % dict(num=num_comments,
                                                 thing=com_label)
-        com_cls = 'comments'
+        com_cls = 'comments may-blank'
     return com_label, com_cls
 
 def replace_render(listing, item, render_func):

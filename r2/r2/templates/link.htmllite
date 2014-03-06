@@ -62,7 +62,7 @@
     %if c.site.link_flair_position == 'left' and thing.flair_text:
       ${flair()}
     %endif
-    <a class="reddit-link-title"
+    <a class="reddit-link-title may-blank"
       ${optionalstyle("text-decoration:none;color:#336699;font-size:small;")}
        %if thing.is_self:
          href="${permalink}"
@@ -74,8 +74,6 @@
        %endif
        %if c.link_target:
          target="${c.link_target}"
-       %elif c.user.pref_newwindow:
-         target="_blank"
        %elif c.cname:
          target="_top"
        %endif
@@ -113,7 +111,7 @@
       </span>
       &#32;|&#32;
       %endif
-      <a class="reddit-comment-link"
+      <a class="reddit-comment-link may-blank"
          ${optionalstyle("color:gray")}
          %if c.link_target:
            target="${c.link_target}"

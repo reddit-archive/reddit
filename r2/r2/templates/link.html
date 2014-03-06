@@ -42,7 +42,7 @@
 </%def>
 
 <%def name="make_link(name, css_class, tabindex=0)">
-  <a class="${css_class} ${ c.user_is_loggedin and 'loggedin' or ''}"
+  <a class="${css_class} may-blank ${ c.user_is_loggedin and 'loggedin' or ''}"
      href="${thing.href_url}"
      %if tabindex:
        tabindex="${tabindex}"
@@ -50,9 +50,7 @@
      %if thing.nofollow:
        rel="nofollow"
      %endif
-     %if thing.newwindow:
-       target="_blank"
-     %elif c.cname:
+     %if c.cname:
        target="_top"
      %endif
      %if thing.mousedown_url:
@@ -173,8 +171,7 @@ ${parent.thing_data_attributes(what)} data-ups="${what.upvotes}" data-downs="${w
 
 <%def name="subreddit()" buffered="True">
   ${plain_link(thing.subreddit.name, thing.subreddit_path, sr_path = False,
-               cname = False, _class = "subreddit hover",
-               target='_blank' if thing.newwindow else '')}
+               cname = False, _class = "subreddit hover may-blank")}
 </%def>
 
 <%def name="midcol(display=True, cls = '')">

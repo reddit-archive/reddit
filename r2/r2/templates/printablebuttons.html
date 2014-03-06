@@ -179,8 +179,7 @@
     <li class="first">
     ${self.comment_button("comment", thing.comment_label, thing.permalink,
                           _sr_path = (thing.promoted is None), 
-                          a_class = thing.commentcls, 
-                          newwindow = thing.new_window)}
+                          a_class = thing.commentcls)}
     </li>
   %endif
   %if thing.editable:
@@ -290,8 +289,7 @@
                             _("full comments") + " (%d)" % thing.full_comment_count, 
                             thing.full_comment_path,
                             _sr_path = True, 
-                            a_class = None, 
-                            newwindow = thing.new_window)}
+                            a_class = "may-blank")}
       </li>
     %endif
     %if not thing.profilepage:
@@ -490,11 +488,10 @@
 
 ### originally in commentbutton
 <%def name="comment_button(name, link_text, link,\
-            _sr_path = True, a_class='', title='', newwindow = False)">
+            _sr_path = True, a_class='', title='')">
   ${plain_link(link_text, link, 
                _sr_path = _sr_path,
-               _class=a_class, title=title, 
-               target='_blank' if newwindow else '_parent')}
+               _class=a_class, title=title)}
 </%def>
 
 <%def name="bylink_button(title, link)">
