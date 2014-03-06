@@ -763,12 +763,6 @@ class PromoteController(ListingController):
                             show_sidebar=False)
         return res.render()
 
-    def GET_link_thumb(self, *a, **kw):
-        """
-        See GET_upload_sr_image for rationale
-        """
-        return "nothing to see here."
-
     @validate(VSponsor("link_name"),
               VModhash(),
               link=VByName('link_name'),
