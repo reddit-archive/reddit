@@ -93,6 +93,10 @@ def cost_per_click(spend, clicks):
         return 0
 
 
+def promo_keep_fn(item):
+    return is_promoted(item) and not item.hidden
+
+
 # attrs
 
 def promo_traffic_url(l): # old traffic url

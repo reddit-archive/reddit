@@ -3832,7 +3832,7 @@ class ApiController(RedditController):
         promo_tuples = promote.lottery_promoted_links(srnames, n=10)
         builder = CampaignBuilder(promo_tuples,
                                   wrap=default_thing_wrapper(),
-                                  keep_fn=promote.is_promoted,
+                                  keep_fn=promote.promo_keep_fn,
                                   num=1,
                                   skip=True)
         listing = LinkListing(builder, nextprev=False).listing()
