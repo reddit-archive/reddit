@@ -120,10 +120,10 @@
   <input type="hidden" name="thing_id" value="${thing.fullname}"/>
 
   %if not thing.creating:
-    <div class="usertext-body">
+    <div class="usertext-body may-blank-within">
       % if not thing.expunged:
       ${unsafe(safemarkdown(thing.text, nofollow = thing.nofollow,
-                                        target = '_blank' if c.user.pref_newwindow else thing.target))}
+                                        target = thing.target))}
       % else:
       <em>${_("[removed]")}</em>&#32;
       % endif
