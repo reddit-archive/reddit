@@ -355,7 +355,6 @@ class Link(Thing, Printable):
         user_is_loggedin = c.user_is_loggedin
         pref_media = user.pref_media
         pref_frame = user.pref_frame
-        pref_newwindow = user.pref_newwindow
         cname = c.cname
         site = c.site
         now = datetime.now(g.tz)
@@ -534,7 +533,6 @@ class Link(Thing, Printable):
 
             # store user preferences locally for caching
             item.pref_frame = pref_frame
-            item.newwindow = pref_newwindow
             # is this link a member of a different (non-c.site) subreddit?
             item.different_sr = (isinstance(site, FakeSubreddit) or
                                  site.name != item.subreddit.name)

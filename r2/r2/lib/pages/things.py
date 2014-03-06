@@ -119,7 +119,6 @@ class LinkButtons(PrintableButtons):
         PrintableButtons.__init__(self, 'linkbuttons', thing, 
                                   # user existence and preferences
                                   is_loggedin = c.user_is_loggedin,
-                                  new_window = c.user.pref_newwindow,
                                   # comment link params
                                   comment_label = thing.comment_label,
                                   commentcls = thing.commentcls,
@@ -166,7 +165,6 @@ class CommentButtons(PrintableButtons):
                                   permalink = thing.permalink,
                                   saved = thing.saved,
                                   ignore_reports = thing.ignore_reports,
-                                  new_window = c.user.pref_newwindow,
                                   full_comment_path = thing.full_comment_path,
                                   full_comment_count = thing.full_comment_count,
                                   deleted = thing.deleted,
