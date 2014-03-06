@@ -589,11 +589,6 @@ class Globals(object):
         self.startup_timer.intermediate("cassandra")
 
         ################# POSTGRES
-        event.listens_for(engine.Engine, 'before_cursor_execute')(
-            self.stats.pg_before_cursor_execute)
-        event.listens_for(engine.Engine, 'after_cursor_execute')(
-            self.stats.pg_after_cursor_execute)
-
         self.dbm = self.load_db_params()
         self.startup_timer.intermediate("postgres")
 
