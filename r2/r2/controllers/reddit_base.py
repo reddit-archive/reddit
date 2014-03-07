@@ -828,7 +828,9 @@ class MinimalController(BaseController):
         if action:
             if not self._get_action_handler():
                 action = 'invalid'
-            c.request_timer = g.stats.get_timer(request_timer_name(action))
+            controller = request.environ["pylons.routes_dict"]["controller"]
+            key = "{}.{}".format(controller, action)
+            c.request_timer = g.stats.get_timer(request_timer_name(key))
         else:
             c.request_timer = SimpleSillyStub()
 
