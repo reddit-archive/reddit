@@ -159,8 +159,6 @@ class CommentTreeStorageV3(CommentTreeStorageBase):
         depth = {}
         parents = {}
         for (d, pid, cid), val in row:
-            if cid == -1:
-                continue
             if pid == cls.NO_PARENT:
                 pid = None
 
