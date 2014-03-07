@@ -132,6 +132,9 @@ class CommentTreeStorageV3(CommentTreeStorageBase):
     COLUMN_READ_BATCH_SIZE = tdb_cassandra.max_column_count
     COLUMN_WRITE_BATCH_SIZE = 1000
 
+    # special value for parent_id when the comment has no parent
+    NO_PARENT = -1
+
     @staticmethod
     def _key(link):
         return utils.to36(link._id)
@@ -158,8 +161,9 @@ class CommentTreeStorageV3(CommentTreeStorageBase):
         for (d, pid, cid), val in row:
             if cid == -1:
                 continue
-            if pid == -1:
+            if pid == cls.NO_PARENT:
                 pid = None
+
             cids.append(cid)
             tree.setdefault(pid, []).append(cid)
             depth[cid] = d
@@ -181,7 +185,7 @@ class CommentTreeStorageV3(CommentTreeStorageBase):
         CommentTreeStorageBase.add_comments(tree, comments)
         updates = {}
         for comment in comments:
-            parent_id = comment.parent_id or -1
+            parent_id = comment.parent_id or cls.NO_PARENT
             depth = tree.depth.get(parent_id, -1) + 1
             updates[(depth, parent_id, comment._id)] = ''
 
