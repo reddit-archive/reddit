@@ -178,8 +178,8 @@
   %if thing.show_comments:
     <li class="first">
     ${self.comment_button("comment", thing.comment_label, thing.permalink,
-                          _sr_path = (thing.promoted is None), 
-                          a_class = thing.commentcls)}
+                          _sr_path=(thing.promoted is None),
+                          a_class=thing.commentcls)}
     </li>
   %endif
   %if thing.editable:
@@ -288,8 +288,8 @@
       ${self.comment_button("comment",
                             _("full comments") + " (%d)" % thing.full_comment_count, 
                             thing.full_comment_path,
-                            _sr_path = True, 
-                            a_class = "may-blank")}
+                            _sr_path=True,
+                            a_class="may-blank")}
       </li>
     %endif
     %if not thing.profilepage:
