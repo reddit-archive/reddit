@@ -2883,29 +2883,33 @@ class ApiController(RedditController):
         See also: [/subreddits/mine/](#GET_subreddits_mine_{where}).
 
         """
-        # only users who can make edits are allowed to subscribe.
-        # Anyone can leave.
-        if sr and (action != 'sub' or sr.can_comment(c.user)):
-            self._subscribe(sr, action == 'sub')
 
-    @classmethod
-    def _subscribe(cls, sr, sub):
+        if not sr:
+            return abort(404, 'not found')
+        elif action == "sub" and not sr.can_comment(c.user):
+            return abort(403, 'permission denied')
+
         try:
             Subreddit.subscribe_defaults(c.user)
 
-            if sub:
+            if action == "sub":
                 if sr.add_subscriber(c.user):
                     sr._incr('_ups', 1)
+                else:
+                    # tried to subscribe but user was already subscribed
+                    pass
             else:
                 if sr.remove_subscriber(c.user):
                     sr._incr('_ups', -1)
+                else:
+                    # tried to unsubscribe but user was not subscribed
+                    return abort(404, 'not found')
             changed(sr, True)
         except CreationError:
             # This only seems to happen when someone is pounding on the
             # subscribe button or the DBs are really lagged; either way,
             # some other proc has already handled this subscribe request.
             return
-
 
     @validatedForm(VAdmin(),
                    VModhash(),
