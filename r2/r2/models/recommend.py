@@ -127,3 +127,51 @@ class AccountSRFeedback(tdb_cassandra.DenormalizedRelation):
     @classmethod
     def record_views(cls, account, srs):
         cls.record_feedback(account, srs, VIEW)
+
+
+class ExploreSettings(tdb_cassandra.Thing):
+    """Column family for storing users' view prefs for the /explore page."""
+    _use_db = True
+    _bool_props = ('personalized', 'discovery', 'rising', 'nsfw')
+
+    @classmethod
+    def for_user(cls, account):
+        """Return user's prefs or default prefs if user has none."""
+        try:
+            return cls._byID(account._id36)
+        except tdb_cassandra.NotFound:
+            return DefaultExploreSettings()
+
+    @classmethod
+    def record_settings(cls,
+                        user,
+                        personalized=False,
+                        discovery=False,
+                        rising=False,
+                        nsfw=False):
+        """Update or create settings for user."""
+        try:
+            settings = cls._byID(user._id36)
+        except tdb_cassandra.NotFound:
+            settings = ExploreSettings(
+                _id=user._id36,
+                personalized=personalized,
+                discovery=discovery,
+                rising=rising,
+                nsfw=nsfw,
+            )
+        else:
+            settings.personalized = personalized
+            settings.discovery = discovery
+            settings.rising = rising
+            settings.nsfw = nsfw
+        settings._commit()
+
+
+class DefaultExploreSettings(object):
+    """Default values to use when no settings have been saved for the user."""
+    def __init__(self):
+        self.personalized = True
+        self.discovery = True
+        self.rising = True
+        self.nsfw = False

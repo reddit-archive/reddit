@@ -32,7 +32,8 @@
       <a href="/r/exploretalk">${_("feedback/suggestions")}</a>
     </span>
     <span id="explore-settings">
-      <form>
+      <form method="POST" action="/post/explore_settings">
+        <input type="hidden" name="uh" value="${c.user.modhash()}">
         <span>
           <input type="checkbox" name="pers" value=1 ${"checked" if thing.settings.personalized else ""}>
             ${_("personalized")}
@@ -43,7 +44,7 @@
           <input type="checkbox" name="ris" value=1 ${"checked" if thing.settings.rising else ""}>
             ${_("rising")}
           </input>
-          <input type="checkbox" name="over18" value=1 ${"checked" if thing.settings.over18 else ""}>
+          <input type="checkbox" name="nsfw" value=1 ${"checked" if thing.settings.nsfw else ""}>
             ${_("nsfw")}
           </input>
         </span>

@@ -318,7 +318,7 @@ def make_map():
        requirements=dict(action="login|reg"))
     mc('/post/:action', controller='post',
        requirements=dict(action="options|over18|unlogged_options|optout"
-                         "|optin|login|reg"))
+                         "|optin|login|reg|explore_settings"))
 
     mc('/api', controller='redirect', action='redirect', dest='/dev/api')
     mc('/api/distinguish/:how', controller='api', action="distinguish")

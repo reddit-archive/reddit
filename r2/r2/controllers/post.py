@@ -26,7 +26,9 @@ from api import ApiController
 from r2.lib.utils import Storage, query_string, UrlParser
 from r2.lib.emailer import opt_in, opt_out
 from r2.lib.validator import *
+from r2.models.recommend import ExploreSettings
 from pylons import request, c, g
+from pylons.controllers.util import redirect_to
 from pylons.i18n import _
 from r2.models import *
 import hashlib
@@ -204,3 +206,26 @@ class PostController(ApiController):
     def GET_login(self, *a, **kw):
         return self.redirect('/login' + query_string(dict(dest="/")))
 
+    @validatedForm(
+        VUser(),
+        VModhash(),
+        personalized=VBoolean('pers', default=False),
+        discovery=VBoolean('disc', default=False),
+        rising=VBoolean('ris', default=False),
+        nsfw=VBoolean('nsfw', default=False),
+    )
+    def POST_explore_settings(self,
+                              form,
+                              jquery,
+                              personalized,
+                              discovery,
+                              rising,
+                              nsfw):
+        ExploreSettings.record_settings(
+            c.user,
+            personalized=personalized,
+            discovery=discovery,
+            rising=rising,
+            nsfw=nsfw,
+        )
+        return redirect_to(controller='front', action='explore')

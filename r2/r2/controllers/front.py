@@ -32,6 +32,7 @@ from r2.controllers.reddit_base import (
 )
 from r2 import config
 from r2.models import *
+from r2.models.recommend import ExploreSettings
 from r2.config.extensions import is_api
 from r2.lib import recommender
 from r2.lib.pages import *
@@ -155,22 +156,12 @@ class FrontController(RedditController):
             kw['reverse'] = False
         return DetailsPage(thing=thing, expand_children=False, **kw).render()
 
-    @validate(VUser(),
-              personalized=VBoolean('pers', default=False),
-              discovery=VBoolean('disc', default=False),
-              rising=VBoolean('ris', default=False),
-              over18=VBoolean('over18', default=False))
-    def GET_explore(self, personalized, discovery, rising, over18):
-        # default when no params are given is to show everything
-        if not any([personalized, discovery, rising]):
-            personalized = discovery = rising = True
-        settings = recommender.ExploreSettings(personalized=personalized,
-                                               discovery=discovery,
-                                               rising=rising,
-                                               over18=over18)
+    @validate(VUser())
+    def GET_explore(self):
+        settings = ExploreSettings.for_user(c.user)
         recs = recommender.get_recommended_content_for_user(c.user,
-                                                            record_views=True,
-                                                            settings=settings)
+                                                            settings,
+                                                            record_views=True)
         content = ExploreItemListing(recs, settings)
         return BoringPage(_("explore"),
                           show_sidebar=True,
