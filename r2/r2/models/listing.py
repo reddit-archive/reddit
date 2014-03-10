@@ -116,6 +116,7 @@ class UserListing(TableListing):
     destination = 'friend'
     has_add_form = True
     headers = None
+    permissions_form = None
 
     def __init__(self,
                  builder,
@@ -218,6 +219,18 @@ class InvitedModListing(UserListing):
     type = 'moderator_invite'
     form_title = _('invite moderator')
     remove_self_title = _('you are a moderator of this subreddit. %(action)s')
+
+    @property
+    def permissions_form(self):
+        from r2.lib.permissions import ModeratorPermissionSet
+        from r2.lib.pages import ModeratorPermissions
+        return ModeratorPermissions(
+            user=None,
+            permissions_type=self.type,
+            permissions=ModeratorPermissionSet(all=True),
+            editable=True,
+            embedded=True,
+        )
 
     def sort_moderators(self, items):
         items = [(item, item.rel.get_permissions()) for item in items]

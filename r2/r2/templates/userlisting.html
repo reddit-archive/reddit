@@ -25,9 +25,7 @@
  %>
 <%namespace file="utils.html" import="error_field, plain_link" />
 
-<%def name="add_form(title, dest, add_type, container_name, verb=None)">
-  <% from r2.models import ModeratorPermissionSet %>
-  <% from r2.lib.pages import ModeratorPermissions %>
+<%def name="add_form(title, dest, add_type, container_name, verb=None, permissions_form=None)">
   <form action="/post/${dest}"
         method="post" class="pretty-form medium-text friend-add"
         onsubmit="return post_form(this, '${dest}')"
@@ -48,10 +46,8 @@
     %else:
         <input type="text" name="name" id="name">
     %endif
-    %if add_type == "moderator_invite":
-      ${ModeratorPermissions(None, 'moderator_invite',
-                             ModeratorPermissionSet(all=True),
-                             editable=True, embedded=True)}
+    %if permissions_form:
+      ${permissions_form}
       &#32;
       <span class="permissions-edit">
         (<a href="javascript:void(0)">${_('change')}</a>)
@@ -113,7 +109,7 @@
 
 <div class="${thing._class} usertable">
   %if thing.addable and thing.has_add_form:
-    ${add_form(thing.form_title, thing.destination, thing.type, thing.container_name)}
+    ${add_form(thing.form_title, thing.destination, thing.type, thing.container_name, permissions_form=thing.permissions_form)}
   %endif
 
   %if thing.show_jump_to:

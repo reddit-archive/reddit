@@ -20,7 +20,8 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from pylons.i18n import _
+from pylons.i18n import N_
+
 
 class PermissionSet(dict):
     ALL = 'all'
@@ -72,29 +73,29 @@ class PermissionSet(dict):
 class ModeratorPermissionSet(PermissionSet):
     info = dict(
         access=dict(
-            title=_('access'),
-            description=_('manage the lists of contributors and banned users'),
+            title=N_('access'),
+            description=N_('manage the lists of contributors and banned users'),
         ),
         config=dict(
-            title=_('config'),
-            description=_('edit settings, sidebar, css, and images'),
+            title=N_('config'),
+            description=N_('edit settings, sidebar, css, and images'),
         ),
         flair=dict(
-            title=_('flair'),
-            description=_('manage user flair, link flair, and flair templates'),
+            title=N_('flair'),
+            description=N_('manage user flair, link flair, and flair templates'),
         ),
         mail=dict(
-            title=_('mail'),
-            description=_('read and reply to moderator mail'),
+            title=N_('mail'),
+            description=N_('read and reply to moderator mail'),
         ),
         posts=dict(
-            title=_('posts'),
-            description=_(
+            title=N_('posts'),
+            description=N_(
                 'use the approve, remove, spam, distinguish, and nsfw buttons'),
         ),
         wiki=dict(
-            title=_('wiki'),
-            description=_('manage the wiki and access to the wiki'),
+            title=N_('wiki'),
+            description=N_('manage the wiki and access to the wiki'),
         ),
     )
 

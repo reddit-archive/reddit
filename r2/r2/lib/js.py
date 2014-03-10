@@ -21,6 +21,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+import inspect
 import sys
 import os.path
 from subprocess import Popen, PIPE
@@ -34,6 +35,7 @@ from r2.lib.translation import (
     validate_plural_forms,
 )
 from r2.lib.plugin import PluginLoader
+from r2.lib.permissions import ModeratorPermissionSet
 
 
 try:
@@ -224,8 +226,8 @@ class DataSource(Source):
 class PermissionsDataSource(DataSource):
     """DataSource for PermissionEditor configuration data."""
 
-    def __init__(self):
-        pass
+    def __init__(self, permission_sets):
+        self.permission_sets = permission_sets
 
     @classmethod
     def _make_marked_json(cls, obj):
@@ -247,17 +249,17 @@ class PermissionsDataSource(DataSource):
             raise ValueError, "unsupported type"
 
     def get_source(self):
-        from r2.lib.permissions import ModeratorPermissionSet
-        permissions = self._make_marked_json({
-            "moderator": ModeratorPermissionSet.info,
-            "moderator_invite": ModeratorPermissionSet.info,
-        })
-        return "r.permissions = %s" % permissions
+        permission_set_info = {k: v.info for k, v in
+                               self.permission_sets.iteritems()}
+        permissions = self._make_marked_json(permission_set_info)
+        return "r.permissions = _.extend(r.permissions || {}, %s)" % permissions
 
     @property
     def dependencies(self):
-        return (super(PermissionsDataSource, self).dependencies +
-                [os.path.join(REDDIT_ROOT, "lib/permissions.py")])
+        dependencies = set(super(PermissionsDataSource, self).dependencies)
+        for permission_set in self.permission_sets.itervalues():
+            dependencies.add(inspect.getsourcefile(permission_set))
+        return list(dependencies)
 
 
 class TemplateFileSource(DataSource, FileSource):
@@ -459,7 +461,10 @@ module["reddit"] = LocalizedModule("reddit.js",
     "multi.js",
     "recommender.js",
     "saved.js",
-    PermissionsDataSource(),
+    PermissionsDataSource({
+        "moderator": ModeratorPermissionSet,
+        "moderator_invite": ModeratorPermissionSet,
+    }),
     wrap=catch_errors,
 )
 
