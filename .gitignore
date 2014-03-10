@@ -33,4 +33,3 @@ r2/r2/lib/db/_sorts.c
 r2/r2/lib/sgm.c
 r2/r2/lib/utils/_utils.c
 r2/r2/lib/wrapped.c
-r2/r2/models/_builder.c
