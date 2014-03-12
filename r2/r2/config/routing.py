@@ -211,7 +211,8 @@ def make_map():
        controller='front', action='framebuster')
 
     mc('/promoted/report', controller='promote', action='report')
-    mc('/promoted/live_promos/:sr', controller='promotelisting', action='listing')
+    mc('/promoted/live_promos/:sr', controller='promotelisting',
+       sort='live_promos', action='listing')
     mc('/promoted/:sort', controller='promotelisting', action="listing",
        requirements=dict(sort="future_promos|pending_promos|unpaid_promos|"
                               "rejected_promos|live_promos|underdelivered|"
