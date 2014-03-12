@@ -66,7 +66,7 @@ class PermissionSet(dict):
 
     def __getitem__(self, key):
         if self.info and self.is_superuser():
-            return key in self.info
+            return key == self.ALL or key in self.info
         return super(PermissionSet, self).get(key, False)
 
 
