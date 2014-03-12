@@ -640,9 +640,10 @@ class PromotedLinkTraffic(Templated):
 
         # Check date of latest traffic (campaigns can end early).
         history = get_promo_traffic(thing, start, end)
-        end = max(date for date, data in history)
-        end = end.replace(tzinfo=g.tz)  # get_promo_traffic returns tz naive
-                                        # datetimes but is actually g.tz
+        if history:
+            end = max(date for date, data in history)
+            end = end.replace(tzinfo=g.tz)  # get_promo_traffic returns tz naive
+                                            # datetimes but is actually g.tz
 
         if self.period:
             display_start = self.after
