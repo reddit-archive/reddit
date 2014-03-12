@@ -639,7 +639,7 @@ class PromotedLinkTraffic(Templated):
         start, end = promote.get_traffic_dates(thing)
 
         # Check date of latest traffic (campaigns can end early).
-        history = get_promo_traffic(thing, start, end)
+        history = list(get_promo_traffic(thing, start, end))
         if history:
             end = max(date for date, data in history)
             end = end.replace(tzinfo=g.tz)  # get_promo_traffic returns tz naive
