@@ -24,7 +24,7 @@ r.saved.SaveDialog = r.ui.Bubble.extend({
         "click": "clicked",
         "submit": "save",
         "mouseout": "mouseout",
-        "mouseover": "queueShow",
+        "mouseover": "cancelTimeout",
         "change select": "change"
     },
 
