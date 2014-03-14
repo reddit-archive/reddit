@@ -1666,6 +1666,13 @@ class ProfilePage(Reddit):
             ])
             rb.push(scb)
 
+        if c.user_is_admin:
+            from admin_pages import AdminSidebar
+            rb.push(AdminSidebar(self.user))
+        elif c.user_is_sponsor:
+            from admin_pages import SponsorSidebar
+            rb.push(SponsorSidebar(self.user))
+
         mod_sr_ids = Subreddit.reverse_moderator_ids(self.user)
         all_mod_srs = Subreddit._byID(mod_sr_ids, data=True,
                                       return_dict=False)
@@ -1673,13 +1680,6 @@ class ProfilePage(Reddit):
         if mod_srs:
             rb.push(SideContentBox(title=_("moderator of"),
                                    content=[SidebarModList(mod_srs)]))
-
-        if c.user_is_admin:
-            from admin_pages import AdminSidebar
-            rb.push(AdminSidebar(self.user))
-        elif c.user_is_sponsor:
-            from admin_pages import SponsorSidebar
-            rb.push(SponsorSidebar(self.user))
 
         if (c.user == self.user or c.user.employee or
             self.user.pref_public_server_seconds):
