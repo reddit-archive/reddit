@@ -23,10 +23,10 @@
 from collections import Counter, OrderedDict
 
 from r2.lib.wrapped import Wrapped, Templated, CachedTemplate
-from r2.models import Account, FakeAccount, DefaultSR, make_feedurl
+from r2.models import Account, DefaultSR, make_feedurl
 from r2.models import FakeSubreddit, Subreddit, SubSR, AllMinus, AllSR
 from r2.models import Friends, All, Sub, NotFound, DomainSR, Random, Mod, RandomNSFW, RandomSubscription, MultiReddit, ModSR, Frontpage, LabeledMulti
-from r2.models import Link, Printable, Trophy, PromoCampaign, PromotionWeights, Comment
+from r2.models import Link, Printable, Trophy, PromoCampaign, Comment
 from r2.models import Flair, FlairTemplate, FlairTemplateBySubredditIndex
 from r2.models import USER_FLAIR, LINK_FLAIR
 from r2.models.bidding import Bid
@@ -3800,63 +3800,6 @@ class PaymentForm(Templated):
         self.budget = format_currency(float(campaign.bid), 'USD',
                                       locale=c.locale)
         Templated.__init__(self, **kw)
-
-class Promotion_Summary(Templated):
-    def __init__(self, ndays):
-        end_date = promote.promo_datetime_now().date()
-        start_date = promote.promo_datetime_now(offset = -ndays).date()
-
-        pws = PromotionWeights.get_campaigns(start_date,
-                                             end_date + datetime.timedelta(1))
-        campaign_ids = {pw.promo_idx for pw in pws}
-        campaigns = PromoCampaign._byID(campaign_ids, data=True,
-                                        return_dict=False)
-        link_ids = {camp.link_id for camp in campaigns}
-        link_names = {Link._fullname_from_id36(to36(id)) for id in link_ids}
-        wrapped_links = wrap_links(link_names)
-        wrapped_links_by_id = {link._id: link for link in wrapped_links}
-        account_ids = {camp.owner_id for camp in campaigns}
-        accounts_by_id = Account._byID(account_ids, data=True)
-
-        links = set()
-        total = 0
-        for campaign in campaigns:
-            if not campaign.trans_id or campaign.trans_id <= 0:
-                continue
-
-            link = wrapped_links_by_id[campaign.link_id]
-            if not promote.is_accepted(link):
-                continue
-
-            link.bid = getattr(link, "bid", 0)
-            link.bid += (campaign.bid - getattr(campaign, 'refund_amount', 0))
-            link.ncampaigns = getattr(link, "ncampaigns", 0) + 1
-            links.add(link)
-
-            # calculate portion of this campaign's budget to include, assuming
-            # even delivery
-            bid_per_day = campaign.bid / campaign.ndays
-            sd = max(start_date, campaign.start_date.date())
-            ed = min(end_date, campaign.end_date.date())
-            total += bid_per_day * (ed - sd).days
-
-        links = list(links)
-        links.sort(key = lambda x: x._score, reverse = True)
-
-        self.links = links
-        self.ndays = ndays
-        self.total = total
-        Templated.__init__(self)
-
-    @classmethod
-    def send_summary_email(cls, to_addr, ndays):
-        from r2.lib import emailer
-        c.site = DefaultSR()
-        c.user = FakeAccount()
-        p = cls(ndays)
-        emailer.send_html_email(to_addr, g.feedback_email,
-                                "Self-serve promotion summary for last %d days"
-                                % ndays, p.render('email'))
 
 
 class PromoteInventory(Templated):
