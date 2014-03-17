@@ -821,16 +821,22 @@ class MinimalController(BaseController):
         period_start, retry_after = _get_ratelimit_timeslice(period)
         key += time.strftime("-%H%M%S", period_start)
 
-        g.ratelimitcache.add(key, 0, time=retry_after + 1)
-
         try:
-            # Increment the key to track the current request
-            recent_reqs = g.ratelimitcache.incr(key)
-        except pylibmc.NotFound:
-            # Previous round of ratelimiting fell out in the
-            # time between calling `add` and calling `incr`.
-            g.ratelimitcache.add(key, 1, time=retry_after + 1)
-            recent_reqs = 1
+            g.ratelimitcache.add(key, 0, time=retry_after + 1)
+
+            try:
+                # Increment the key to track the current request
+                recent_reqs = g.ratelimitcache.incr(key)
+            except pylibmc.NotFound:
+                # Previous round of ratelimiting fell out in the
+                # time between calling `add` and calling `incr`.
+                g.ratelimitcache.add(key, 1, time=retry_after + 1)
+                recent_reqs = 1
+        except pylibmc.Error as e:
+            # Ratelimiting is non-critical; if the caches are
+            # having issues, just skip adding the headers
+            g.log.info("ratelimitcache error: %s", e)
+            return
 
         reqs_remaining = max(0, max_reqs - recent_reqs)
 
