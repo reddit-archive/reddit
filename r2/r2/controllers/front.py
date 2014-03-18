@@ -1080,6 +1080,9 @@ class FrontController(RedditController):
               before=VDate('before', format='%Y%m%d%H'),
               after=VDate('after', format='%Y%m%d%H'))
     def GET_traffic(self, link, campaign, before, after):
+        if link and campaign and link._id != campaign.link_id:
+            return self.abort404()
+
         if c.render_style == 'csv':
             return trafficpages.PromotedLinkTraffic.as_csv(campaign or link)
 
