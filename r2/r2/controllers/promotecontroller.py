@@ -36,6 +36,7 @@ from r2.lib import cssfilter, inventory, promote
 from r2.lib.authorize import get_account_info, edit_profile, PROFILE_LIMIT
 from r2.lib.db import queries
 from r2.lib.errors import errors
+from r2.lib.filters import websafe
 from r2.lib.media import force_thumbnail, thumbnail_url
 from r2.lib.memoize import memoize
 from r2.lib.menus import NamedButton, NavButton, NavMenu
@@ -461,7 +462,7 @@ class PromoteApiController(ApiController):
         if promote.is_promo(link):
             text = PromotionLog.add(link, note)
             form.find(".notes").children(":last").after(
-                "<p>" + text + "</p>")
+                "<p>" + websafe(text) + "</p>")
 
 
     @noresponse(VSponsorAdmin(),
