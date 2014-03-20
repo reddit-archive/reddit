@@ -165,7 +165,7 @@ sutro
 PACKAGES
 
 # paper over stack size issues with cassandra
-sed -i /-Xss128k/-Xss228k/ /etc/cassandra/cassandra-env.sh
+sed -i s/-Xss128k/-Xss228k/ /etc/cassandra/cassandra-env.sh
 
 ###############################################################################
 # Wait for all the services to be up
