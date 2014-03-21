@@ -20,6 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+import re
 import urllib
 
 from oauth2 import require_oauth2_scope
@@ -43,6 +44,7 @@ import r2.lib.search as search
 from r2.lib.template_helpers import add_sr
 from r2.lib.utils import iters, check_cheating, timeago
 from r2.lib import sup
+from r2.lib.memoize import memoize
 from r2.lib.validator import *
 from r2.lib.butler import extract_user_mentions
 import socket
@@ -302,6 +304,8 @@ class ListingWithPromos(ListingController):
             elif show_sponsors:
                 spotlight = self.make_single_ad()
 
+            self.spotlight = spotlight
+
             if spotlight:
                 return PaneStack([spotlight, self.listing_obj],
                                  css_class='spacer')
@@ -340,6 +344,41 @@ class HotController(ListingWithPromos):
             
             # no sticky or sticky hidden
             return c.site.get_links('hot', 'all')
+
+    subreddit_re = re.compile(r'/r/(\w+)')
+
+    @classmethod
+    @memoize('trending_subreddits', time=5*60)
+    def trending_subreddits(cls):
+        subreddit = Subreddit._by_name(g.config['trending_sr'])
+        q = subreddit.get_links('new', 'all')
+        ids = list(q)
+        builder = IDBuilder(ids, skip=True, num=1)
+        posts = builder.get_items()[0]
+        if not posts:
+            return None
+        post = posts[0]
+        subreddits = cls.subreddit_re.findall(post.title)
+
+        return {
+            'subreddits': subreddits,
+            'comment_url': post.permalink,
+            'comment_count': post.num_comments,
+        }
+
+    def content(self):
+        content = super(HotController, self).content()
+        if (c.render_style == "html" and isinstance(c.site, DefaultSR) and
+                not self.listing_obj.prev):
+            trending_info = self.trending_subreddits()
+            if trending_info:
+                return PaneStack(filter(None, [
+                    self.spotlight,
+                    TrendingSubredditsBar(**trending_info),
+                    self.listing_obj,
+                ]), css_class='spacer')
+        return content
+
 
     def title(self):
         return c.site.title

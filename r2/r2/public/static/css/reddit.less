@@ -8324,3 +8324,57 @@ body.with-listing-chooser {
         font-style: italic;
     }
 }
+
+.trending-subreddits {
+    // required so that ex units are in sync with .midcol
+    font-size: small;
+    margin-top: -4px;
+    line-height: 1.75em;
+
+    // the combined padding/margins of .link and .midcol
+    margin-left: 17px;
+    body.compressed-display & {
+        margin-left: 15px;
+        padding-left: 15px;
+    }
+
+    strong, ul, a {
+        font-size: x-small;
+    }
+
+    strong {
+        color: #29541c;
+
+        &:before {
+            height: 14px;
+            width: 14px;
+            display: inline-block;
+            content: " ";
+            margin-right: 5px;
+            background-image: url(../trending.png); /* SPRITE */
+            vertical-align: middle;
+        }
+    }
+
+    ul {
+        display: inline;
+    }
+
+    li {
+        display: inline-block;
+        margin-left: 0.5em;
+    }
+
+    li:first-child {
+        margin-left: 0;
+    }
+
+    ul, .comments {
+        margin-left: 1em;
+    }
+
+    .comments {
+        color: #888;
+        font-weight: bold;
+    }
+}

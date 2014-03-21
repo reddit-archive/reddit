@@ -20,17 +20,12 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-## a kooky hack to make ranks and voting arrows in the spotlight box line up
-## without late rendering or blasting style attributes everywhere
-<style>
-  body > .content .link .rank {
-    width: ${thing.rank_width}ex
-  }
-  body > .content .link .midcol {
-    width: ${thing.midcol_width}ex
-  }
-  .content .trending-subreddits {
-    padding-left: ${thing.midcol_width}ex
-  }
-</style>
-<%include file="listing.html"/>
+<div class="trending-subreddits">
+  <strong>${_('trending subreddits')}</strong>
+  <ul>
+  %for subreddit in thing.subreddits:
+    <li><a href="/r/${subreddit}" target="_blank">/r/${subreddit}</a></li>
+  %endfor
+  </ul>
+  <a href="${thing.comment_url}" class="${thing.comment_label_cls}">${thing.comment_label}</a>
+</div>
