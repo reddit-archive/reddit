@@ -130,7 +130,7 @@ def fetch_trackers():
     jsonp_callback = request.args['callback']
     ids = request.args.getlist('ids[]')
 
-    if len(ids) > 32:
+    if len(ids) > 100:
         abort(400)
 
     hashed = {}
