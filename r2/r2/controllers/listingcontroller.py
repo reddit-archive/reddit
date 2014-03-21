@@ -584,7 +584,7 @@ class UserController(ListingController):
             if self.where == 'gilded' and item.gildings <= 0:
                 return False
 
-            if self.where == 'deleted' and not getattr(item, 'deleted', False):
+            if self.where == 'deleted' and not item._deleted:
                 return False
 
             is_promoted = getattr(item, "promoted", None) is not None
