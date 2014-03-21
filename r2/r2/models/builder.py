@@ -518,15 +518,35 @@ class CampaignBuilder(IDBuilder):
     """Build on a list of PromoTuples."""
 
     def __init__(self, query, wrap=Wrapped, keep_fn=None, prewrap_fn=None,
-                 skip=False, num=None):
+                 skip=False, num=None, after=None, reverse=False, count=0):
         Builder.__init__(self, wrap=wrap, keep_fn=keep_fn)
         self.query = query
         self.skip = skip
         self.num = num
-        self.start_count = 0
-        self.after = None
-        self.reverse = False
+        self.start_count = count
+        self.after = after
+        self.reverse = reverse
         self.prewrap_fn = prewrap_fn
+
+    @staticmethod
+    def _get_after(promo_tuples, after, reverse):
+        promo_tuples = list(promo_tuples)
+
+        if not after:
+            return promo_tuples
+
+        if reverse:
+            promo_tuples.reverse()
+
+        fullname_to_index = {pt.link: i for i, pt in enumerate(promo_tuples)}
+        try:
+            i = fullname_to_index[after]
+        except KeyError:
+            promo_tuples = ()
+        else:
+            promo_tuples = promo_tuples[i + 1:]
+
+        return promo_tuples
 
     def thing_lookup(self, tuples):
         links = Link._by_fullname([t.link for t in tuples], data=True,
@@ -534,6 +554,7 @@ class CampaignBuilder(IDBuilder):
 
         return [Storage({'thing': links[t.link],
                          '_id': links[t.link]._id,
+                         '_fullname': links[t.link]._fullname,
                          'weight': t.weight,
                          'campaign': t.campaign}) for t in tuples]
 
