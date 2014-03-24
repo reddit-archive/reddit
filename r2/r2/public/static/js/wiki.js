@@ -25,12 +25,41 @@ r.wiki = {
 
     init: function() {
         $('body').delegate('.wiki-page .revision_hide', 'click', this.toggleHide)
+        $('body').delegate('.wiki-page .revision_delete', 'click', this.toggleDelete)
         $('body').delegate('.wiki-page .toggle-source', 'click', this.toggleSource)
     },
 
     toggleSource: function(event) {
         event.preventDefault()
         $('.wiki-page .source').toggle('slow')
+    },
+
+    toggleDelete: function(event) {
+        event.preventDefault()
+        var $this = $(this),
+            url = r.wiki.baseApiUrl() + '/delete',
+            $this_parent = $this.parents('.revision'),
+            deleted = $this_parent.hasClass('deleted')
+        $this_parent.toggleClass('deleted')
+        r.wiki.request({
+            url: url,
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                revision: $this.data('revision'),
+                deleted: !deleted
+            },
+            error: function() {
+                $this_parent.toggleClass('deleted')
+            },
+            success: function(data) {
+                if (!data.status) {
+                    $this_parent.removeClass('deleted')
+                } else {
+                    $this_parent.addClass('deleted')
+                }
+            }
+        })
     },
 
     toggleHide: function(event) {

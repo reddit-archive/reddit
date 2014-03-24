@@ -639,7 +639,10 @@ class WikiRevisionBuilder(QueryBuilder):
             cls.add_props(user, types[cls])
 
         return wrapped
-    
+
+    def must_skip(self, item):
+        return item.admin_deleted and not c.user_is_admin
+
     def keep_item(self, item):
         from r2.lib.validator.wiki import may_view
         return ((not item.is_hidden) and
@@ -649,6 +652,8 @@ class WikiRecentRevisionBuilder(WikiRevisionBuilder):
     show_extended = False
 
     def must_skip(self, item):
+        if WikiRevisionBuilder.must_skip(self, item):
+            return True
         item_age = datetime.datetime.now(g.tz) - item.date
         return item_age.days >= wiki.WIKI_RECENT_DAYS
 

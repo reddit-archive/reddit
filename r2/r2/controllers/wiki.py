@@ -38,6 +38,7 @@ from r2.lib.template_helpers import join_urls
 from r2.lib.validator import (
     nop,
     validate,
+    VAdmin,
     VBoolean,
     VExistingUname,
     VInt,
@@ -417,6 +418,22 @@ class WikiApiController(WikiController):
         else:
             self.handle_error(400, 'INVALID_ACTION')
         return json.dumps({})
+
+    @validate(
+        VModhash(),
+        VAdmin(),
+        pv=VWikiPageAndVersion(('page', 'revision')),
+        deleted=VBoolean('deleted'),
+    )
+    def POST_wiki_revision_delete(self, pv, deleted):
+        page, revision = pv
+        if not revision:
+            self.handle_error(400, 'INVALID_REVISION')
+        if deleted and page.revision == str(revision._id):
+            self.handle_error(400, 'REVISION_IS_CURRENT')
+        revision.admin_deleted = deleted
+        revision._commit()
+        return json.dumps({'status': revision.admin_deleted})
 
     @require_oauth2_scope("modwiki")
     @validate(VModhash(),

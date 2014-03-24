@@ -264,6 +264,9 @@ class VWikiPage(VWikiPageName):
             return
         try:
             r = WikiRevision.get(version, pageid)
+            if r.admin_deleted and not c.user_is_admin:
+                self.set_error('INVALID_REVISION', code=404)
+                raise AbortWikiError
             if not self.allow_hidden_revision and (r.is_hidden and not c.is_wiki_mod):
                 self.set_error('HIDDEN_REVISION', code=403)
                 raise AbortWikiError

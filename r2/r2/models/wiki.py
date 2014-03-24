@@ -90,7 +90,8 @@ class WikiRevision(tdb_cassandra.UuidThing, Printable):
     _connection_pool = 'main'
     
     _str_props = ('pageid', 'content', 'author', 'reason')
-    _bool_props = ('hidden')
+    _bool_props = ('hidden', 'admin_deleted')
+    _defaults = {'admin_deleted': False}
 
     cache_ignore = set(list(_str_props)).union(Printable.cache_ignore).union(['wikipage'])
     
