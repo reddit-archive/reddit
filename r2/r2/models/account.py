@@ -624,8 +624,11 @@ class Account(Thing):
 
     @property
     def cpm_selfserve_pennies(self):
-        return getattr(self, 'cpm_selfserve_pennies_override',
-                       g.cpm_selfserve.pennies)
+        override_price = getattr(self, 'cpm_selfserve_pennies_override', None)
+        if override_price is not None:
+            return override_price
+        else:
+            return g.cpm_selfserve.pennies
 
     @property
     def has_gold_subscription(self):
