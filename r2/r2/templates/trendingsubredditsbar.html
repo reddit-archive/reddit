@@ -23,8 +23,8 @@
 <div class="trending-subreddits">
   <strong>${_('trending subreddits')}</strong>
   <ul>
-  %for subreddit in thing.subreddits:
-    <li><a href="/r/${subreddit}" target="_blank">/r/${subreddit}</a></li>
+  %for subreddit_name in thing.subreddit_names:
+    <li><a href="/r/${subreddit_name}" target="_blank">/r/${subreddit_name}</a></li>
   %endfor
   </ul>
   <a href="${thing.comment_url}" class="${thing.comment_label_cls}">${thing.comment_label}</a>

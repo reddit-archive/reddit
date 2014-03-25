@@ -4380,9 +4380,9 @@ class ExploreItemListing(Templated):
 
 
 class TrendingSubredditsBar(Templated):
-    def __init__(self, subreddits, comment_url, comment_count):
+    def __init__(self, subreddit_names, comment_url, comment_count):
         Templated.__init__(self)
-        self.subreddits = subreddits
+        self.subreddit_names = subreddit_names
         self.comment_url = comment_url
         self.comment_count = comment_count
         self.comment_label, self.comment_label_cls = \

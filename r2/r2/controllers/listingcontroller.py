@@ -20,7 +20,6 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-import re
 import urllib
 
 from oauth2 import require_oauth2_scope
@@ -39,11 +38,10 @@ from r2.lib.normalized_hot import normalized_hot
 from r2.lib.db.thing import Query, Merge, Relations
 from r2.lib.db import queries
 from r2.lib.strings import Score
-from r2.lib import organic
 import r2.lib.search as search
 from r2.lib.template_helpers import add_sr
 from r2.lib.utils import iters, check_cheating, timeago
-from r2.lib import sup
+from r2.lib import organic, sup, trending
 from r2.lib.memoize import memoize
 from r2.lib.validator import *
 from r2.lib.butler import extract_user_mentions
@@ -345,32 +343,25 @@ class HotController(ListingWithPromos):
             # no sticky or sticky hidden
             return c.site.get_links('hot', 'all')
 
-    subreddit_re = re.compile(r'/r/(\w+)')
-
     @classmethod
-    @memoize('trending_subreddits', time=5*60)
-    def trending_subreddits(cls):
-        subreddit = Subreddit._by_name(g.config['trending_sr'])
-        q = subreddit.get_links('new', 'all')
-        ids = list(q)
-        builder = IDBuilder(ids, skip=True, num=1)
-        posts = builder.get_items()[0]
-        if not posts:
-            return None
-        post = posts[0]
-        subreddits = cls.subreddit_re.findall(post.title)
+    def trending_info(cls):
+        trending_data = trending.get_trending_subreddits()
 
+        if not trending_data:
+            return None
+
+        link = Link._byID(trending_data['link_id'], data=True, stale=True)
         return {
-            'subreddits': subreddits,
-            'comment_url': post.permalink,
-            'comment_count': post.num_comments,
+            'subreddit_names': trending_data['subreddit_names'],
+            'comment_url': trending_data['permalink'],
+            'comment_count': link.num_comments,
         }
 
     def content(self):
         content = super(HotController, self).content()
         if (c.render_style == "html" and isinstance(c.site, DefaultSR) and
                 not self.listing_obj.prev):
-            trending_info = self.trending_subreddits()
+            trending_info = self.trending_info()
             if trending_info:
                 return PaneStack(filter(None, [
                     self.spotlight,
