@@ -59,13 +59,17 @@
             <h2 class="error">${_('Your edit will not be saved!')}</h2>
             <textarea rows="20" cols="20" name="conflict_old"></textarea>
         </div>
+        <div>
+            <label for="reason">${_('reason for revision')}</label>
+            <input type="text" name="reason" maxlength="256">
+            % if thing.site.prev_stylesheet:
+                <span class="btn right"><a target="_blank" href="${add_sr("/wiki/revisions/config/stylesheet/")}">${_("see previous versions")}</a></span>
+            % endif
+        </div>
       </div>
     </div>
     <div class="clearleft"></div>
     <div class="buttons">
-      % if thing.site.prev_stylesheet:
-      <span class="btn right"><a target="_blank" href="${add_sr("/wiki/revisions/config/stylesheet/")}">${_("see previous versions")}</a></span>
-      % endif
       <button class="btn" name="save" type="submit" 
              onclick="this.form.op.value='save'; return true;">
         ${_('save')}

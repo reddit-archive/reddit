@@ -1684,10 +1684,12 @@ class ApiController(RedditController):
                    prevstyle=VLength('prevstyle', max_length=36,
                                      docs={"prevstyle":
                                            "(optional) a revision ID"}),
+                   reason=VPrintable('reason', 256, empty_error=None),
                    op = VOneOf('op',['save','preview']))
     @api_doc(api_section.subreddits, uses_site=True)
     def POST_subreddit_stylesheet(self, form, jquery,
-                                  stylesheet_contents = '', prevstyle='', op='save'):
+                                  stylesheet_contents = '', prevstyle='',
+                                  op='save', reason=None):
         """Update a subreddit's stylesheet.
 
         `op` should be `save` to update the contents of the stylesheet.
@@ -1727,7 +1729,12 @@ class ApiController(RedditController):
 
         if op == 'save':
             try:
-                wr = c.site.change_css(stylesheet_contents, parsed, prevstyle)
+                wr = c.site.change_css(
+                    stylesheet_contents,
+                    parsed,
+                    prevstyle,
+                    reason=reason,
+                )
                 form.find('.conflict_box').hide()
                 form.find('.errors').hide()
                 form.set_html(".status", _('saved'))
