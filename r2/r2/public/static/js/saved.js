@@ -1,6 +1,8 @@
 r.saved = {}
 
 r.saved.SaveCategories = Backbone.Collection.extend({
+    model: Backbone.Model.extend({idAttribute: 'category'}),
+
     url: '/api/saved_categories.json',
 
     fetchOnce: function() {
@@ -8,6 +10,10 @@ r.saved.SaveCategories = Backbone.Collection.extend({
             this._fetched = this.fetch()
         }
         return this._fetched
+    },
+
+    comparator: function(item) {
+        return item.get('category')
     },
 
     parse: function(response) {
@@ -74,6 +80,10 @@ r.saved.SaveDialog = r.ui.Bubble.extend({
             $category.hide()
         }
         r.saved.SaveButton.setSaved(this.$parent)
+        if (this.category) {
+            r.saved.categories.add({category: this.category})
+            r.saved.categories.sort()
+        }
         this.hide()
     },
 
