@@ -44,7 +44,6 @@ r.saved.SaveDialog = r.ui.Bubble.extend({
         r.ui.Bubble.prototype.initialize.apply(this)
         r.saved.categories.fetchOnce().then(_.bind(this.show, this))
         $('body').on('click.savedialog', _.bind(this.hideNow, this))
-        this.listenTo(r.saved.categories, 'sync', this.show)
     },
 
     hideNow: function() {
