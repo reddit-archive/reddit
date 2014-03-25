@@ -82,6 +82,9 @@ r.saved.SaveDialog = r.ui.Bubble.extend({
         e.preventDefault()
         this.category = this.$el.find('.savedcategory').val()
         this.$el.find('select, .savedcategory').attr('disabled', true)
+        if (!this.category) {
+            return this.success()
+        }
         this.$el.addClass('working')
         r.ajax({
             type: 'POST',
@@ -100,7 +103,7 @@ r.saved.SaveDialog = r.ui.Bubble.extend({
 
     show: function() {
         r.ui.Bubble.prototype.show.apply(this)
-        this.$el.find('input[type=submit]').focus()
+        this.$el.find('.savedcategory').focus()
     },
 
     render: function() {
@@ -134,10 +137,9 @@ r.saved.SaveButton = {
     },
 
     save: function($el) {
+        this.request($el, 'save', this.setSaved)
         if (r.config.gold) {
             new r.saved.SaveDialog({parent: $el, group: r.saved.SaveButton})
-        } else {
-            this.request($el, 'save', this.setSaved)
         }
     },
 
