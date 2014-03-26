@@ -710,38 +710,29 @@ class Subreddit(Thing, Printable, BaseSite):
                 else Subreddit._byID(sr_ids, data=True, return_dict=False, stale=stale))
 
     @classmethod
-    def default_subreddits(cls, ids=True, limit=g.num_default_reddits,
-                           stale=True):
+    def default_subreddits(cls, ids=True, stale=True):
         """
-        Generates a list of the subreddits any user with the current
-        set of language preferences and no subscriptions would see.
-
-        An optional kw argument 'limit' is defaulted to g.num_default_reddits
+        Return the subreddits a user with no subscriptions would see.
         """
         langs = c.content_langs if c.content_langs else g.site_lang
 
-        # we'll let these be unordered for now
-        auto_srs = []
         if g.automatic_reddits:
-            auto_srs = map(lambda sr: sr._id,
-                           Subreddit._by_name(g.automatic_reddits, stale=stale).values())
+            auto_srs = cls._by_name(g.automatic_reddits, stale=stale).values()
+            auto_srids = {sr._id for sr in auto_srs}
+        else:
+            auto_srids = set()
 
-        srs = cls.top_lang_srs(langs, limit + len(auto_srs),
-                               filter_allow_top=True,
-                               over18=False, ids=True,
-                               stale=stale)
+        limit = g.num_default_reddits + len(auto_srids)
+        srids = cls.top_lang_srs(langs, limit=limit, filter_allow_top=True,
+                                 over18=False, ids=True, stale=stale)
 
-        rv = []
-        for sr in srs:
-            if len(rv) >= limit:
-                break
-            if sr in auto_srs:
-                continue
-            rv.append(sr)
+        # we fetched extras in case automatic_reddits were included, remove
+        # automatic_reddits and prune the list
+        srids = [srid for srid in srids if not srid in auto_srids]
+        srids = srids[:g.num_default_reddits]
+        srids = list(set(srids) | auto_srids)
 
-        rv = auto_srs + rv
-
-        return rv if ids else Subreddit._byID(rv, data=True, return_dict=False, stale=stale)
+        return srids if ids else Subreddit._byID(srids, data=True, return_dict=False, stale=stale)
 
     @classmethod
     @memoize('random_reddits', time = 1800)
@@ -831,8 +822,7 @@ class Subreddit(Thing, Printable, BaseSite):
                                                       return_dict=False,
                                                       stale=stale)
         else:
-            return cls.default_subreddits(ids=ids, limit=g.num_default_reddits,
-                                          stale=stale)
+            return cls.default_subreddits(ids=ids, stale=stale)
 
 
     # Used to pull all of the SRs a given user moderates or is a contributor
