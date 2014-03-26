@@ -769,8 +769,13 @@ class Subreddit(Thing, Printable, BaseSite):
     def default_subreddits(cls, ids=True, stale=True):
         """
         Return the subreddits a user with no subscriptions would see.
+
+        Uses either the request location or the current set of language
+        preferences.
+
         """
         langs = c.content_langs if c.content_langs else g.site_lang
+        location = get_request_location()
 
         if g.automatic_reddits:
             auto_srs = cls._by_name(g.automatic_reddits, stale=stale).values()
@@ -778,17 +783,26 @@ class Subreddit(Thing, Printable, BaseSite):
         else:
             auto_srids = set()
 
-        limit = g.num_default_reddits + len(auto_srids)
-        srids = cls.top_lang_srs(langs, limit=limit, filter_allow_top=True,
-                                 over18=False, ids=True, stale=stale)
+        srids = LocalizedDefaultSubreddits.get_srids(location)
 
-        # we fetched extras in case automatic_reddits were included, remove
-        # automatic_reddits and prune the list
-        srids = [srid for srid in srids if not srid in auto_srids]
-        srids = srids[:g.num_default_reddits]
+        if not srids:
+            limit = g.num_default_reddits + len(auto_srids)
+            srids = cls.top_lang_srs(langs, limit=limit, filter_allow_top=True,
+                                     over18=False, ids=True)
+
+            # we fetched extras in case automatic_reddits were included, remove
+            # automatic_reddits and prune the list
+            srids = [srid for srid in srids if not srid in auto_srids]
+            srids = srids[:g.num_default_reddits]
+
         srids = list(set(srids) | auto_srids)
 
-        return srids if ids else Subreddit._byID(srids, data=True, return_dict=False, stale=stale)
+        if ids:
+            return srids
+        else:
+            srs = Subreddit._byID(srids, data=True, return_dict=False,
+                                  stale=stale)
+            return srs
 
     @classmethod
     @memoize('random_reddits', time = 1800)
@@ -1361,6 +1375,48 @@ class MultiReddit(FakeSubreddit):
 
 class TooManySubredditsError(Exception):
     pass
+
+
+class LocalizedDefaultSubreddits(tdb_cassandra.View):
+    """Mapping of location to subreddit ids"""
+    _use_db = True
+    _compare_with = tdb_cassandra.ASCII_TYPE
+    _read_consistency_level = tdb_cassandra.CL.QUORUM
+    _write_consistency_level = tdb_cassandra.CL.QUORUM
+    _extra_schema_creation_args = {
+        "key_validation_class": tdb_cassandra.ASCII_TYPE,
+        "default_validation_class": tdb_cassandra.ASCII_TYPE,
+    }
+
+    @classmethod
+    def _rowkey(cls, location):
+        return str(location)
+
+    @classmethod
+    def set_srs(cls, location, srs):
+        rowkey = cls._rowkey(location)
+        columns = {sr._id36: '' for sr in srs}
+        cls._set_values(rowkey, columns)
+        id36s = columns.keys()
+        g.cache.set(rowkey, id36s)
+
+    @classmethod
+    def get_srids(cls, location):
+        if not location:
+            return []
+
+        rowkey = cls._rowkey(location)
+        id36s = g.cache.get(rowkey)
+
+        if id36s is None:
+            try:
+                columns = cls._cf.get(rowkey)
+            except tdb_cassandra.NotFoundException:
+                columns = {}
+            id36s = columns.keys()
+            g.cache.set(rowkey, id36s)
+        srids = [int(id36, 36) for id36 in id36s]
+        return srids
 
 
 class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
