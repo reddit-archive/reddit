@@ -710,7 +710,7 @@ class Subreddit(Thing, Printable, BaseSite):
                 else Subreddit._byID(sr_ids, data=True, return_dict=False, stale=stale))
 
     @classmethod
-    def default_subreddits(cls, ids = True, over18 = False, limit = g.num_default_reddits,
+    def default_subreddits(cls, ids=True, limit=g.num_default_reddits,
                            stale=True):
         """
         Generates a list of the subreddits any user with the current
@@ -727,8 +727,8 @@ class Subreddit(Thing, Printable, BaseSite):
                            Subreddit._by_name(g.automatic_reddits, stale=stale).values())
 
         srs = cls.top_lang_srs(langs, limit + len(auto_srs),
-                               filter_allow_top = True,
-                               over18 = over18, ids = True,
+                               filter_allow_top=True,
+                               over18=False, ids=True,
                                stale=stale)
 
         rv = []
@@ -787,7 +787,7 @@ class Subreddit(Thing, Printable, BaseSite):
                                over18_only = over18,
                                ids=True)
         if user:
-            excludes = cls.user_subreddits(user, over18=over18, limit=None)
+            excludes = cls.user_subreddits(user, limit=None)
             srs = list(set(srs) - set(excludes))
         return (Subreddit._byID(random.choice(srs))
                 if srs else Subreddit._by_name(g.default_sr))
@@ -799,8 +799,7 @@ class Subreddit(Thing, Printable, BaseSite):
                 if srs else Subreddit._by_name(g.default_sr))
 
     @classmethod
-    def user_subreddits(cls, user, ids=True, over18=False, limit=DEFAULT_LIMIT,
-                        stale=False):
+    def user_subreddits(cls, user, ids=True, limit=DEFAULT_LIMIT, stale=False):
         """
         subreddits that appear in a user's listings. If the user has
         subscribed, returns the stored set of subscriptions.
@@ -832,8 +831,7 @@ class Subreddit(Thing, Printable, BaseSite):
                                                       return_dict=False,
                                                       stale=stale)
         else:
-            return cls.default_subreddits(ids = ids, over18=over18,
-                                          limit=g.num_default_reddits,
+            return cls.default_subreddits(ids=ids, limit=g.num_default_reddits,
                                           stale=stale)
 
 
