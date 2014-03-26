@@ -387,7 +387,7 @@ def _make_thumbnail_from_url(thumbnail_url, referer):
 
 class Scraper(object):
     @classmethod
-    def for_url(cls, url, autoplay=False):
+    def for_url(cls, url, autoplay=False, maxwidth=600):
         scraper = hooks.get_hook("scraper.factory").call_until_return(url=url)
         if scraper:
             return scraper
@@ -395,7 +395,10 @@ class Scraper(object):
         embedly_services = _fetch_embedly_services()
         for service_re, service_secure in embedly_services:
             if service_re.match(url):
-                return _EmbedlyScraper(url, service_secure, autoplay=autoplay)
+                return _EmbedlyScraper(url,
+                                       service_secure,
+                                       autoplay=autoplay,
+                                       maxwidth=maxwidth)
 
         return _ThumbnailOnlyScraper(url)
 
@@ -481,9 +484,10 @@ class _ThumbnailOnlyScraper(Scraper):
 class _EmbedlyScraper(Scraper):
     EMBEDLY_API_URL = "https://api.embed.ly/1/oembed"
 
-    def __init__(self, url, can_embed_securely, autoplay=False):
+    def __init__(self, url, can_embed_securely, autoplay=False, maxwidth=600):
         self.url = url
         self.can_embed_securely = can_embed_securely
+        self.maxwidth = int(maxwidth)
         self.embedly_params = {}
 
         if autoplay:
@@ -493,7 +497,7 @@ class _EmbedlyScraper(Scraper):
         param_dict = {
             "url": self.url,
             "format": "json",
-            "maxwidth": 600,
+            "maxwidth": self.maxwidth,
             "key": g.embedly_api_key,
             "secure": "true" if secure else "false",
         }
