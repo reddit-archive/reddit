@@ -78,7 +78,7 @@ def can_comment_link(article):
 class Validator(object):
     default_param = None
     def __init__(self, param=None, default=None, post=True, get=True, url=True,
-                 docs=None):
+                 body=False, docs=None):
         if param:
             self.param = param
         else:
@@ -86,6 +86,7 @@ class Validator(object):
 
         self.default = default
         self.post, self.get, self.url, self.docs = post, get, url, docs
+        self.body = body
         self.has_errors = False
 
     def set_error(self, error, msg_params={}, field=False, code=None):
@@ -120,6 +121,8 @@ class Validator(object):
                     val = request.GET[p]
                 elif self.url and url.get(p):
                     val = url[p]
+                elif self.body:
+                    val = request.body
                 else:
                     val = self.default
                 a.append(val)
@@ -370,6 +373,17 @@ class VLang(Validator):
         return {
             self.param: "a valid IETF language tag (underscore separated)",
         }
+
+
+class VContentLang(VLang):
+    def run(self, lang):
+        if lang == "all":
+            return lang
+        try:
+            return VLang.validate_lang(lang, strict=True)
+        except ValueError:
+            self.set_error(errors.INVALID_LANG)
+
 
 class VRequired(Validator):
     def __init__(self, param, error, *a, **kw):
@@ -1436,6 +1450,9 @@ class VUserWithEmail(VExistingUname):
 
 class VBoolean(Validator):
     def run(self, val):
+        if val is True or val is False:
+            # val is already a bool object, no processing needed
+            return val
         lv = str(val).lower()
         if lv == 'off' or lv == '' or lv[0] in ("f", "n"):
             return False
@@ -2436,7 +2453,7 @@ class VValidatedJSON(VJSON):
         def __init__(self, spec):
             self.spec = spec
 
-        def run(self, data):
+        def run(self, data, ignore_missing=False):
             if not isinstance(data, dict):
                 raise RedditError('JSON_INVALID', code=400)
 
@@ -2445,6 +2462,8 @@ class VValidatedJSON(VJSON):
                 try:
                     validated_data[key] = validator.run(data[key])
                 except KeyError:
+                    if ignore_missing:
+                        continue
                     raise RedditError('JSON_MISSING_KEY', code=400,
                                       msg_params={'key': key})
             return validated_data
@@ -2470,6 +2489,10 @@ class VValidatedJSON(VJSON):
             spec_lines.append('}')
             return '\n'.join(spec_lines)
 
+    class PartialObject(Object):
+        def run(self, data):
+            super_ = super(VValidatedJSON.PartialObject, self)
+            return super_.run(data, ignore_missing=True)
 
     def __init__(self, param, spec, **kw):
         VJSON.__init__(self, param, **kw)

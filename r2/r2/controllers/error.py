@@ -208,7 +208,11 @@ class ErrorController(RedditController):
         except Exception as e:
             return handle_awful_failure("ErrorController.GET_document: %r" % e)
 
-    POST_document = PUT_document = DELETE_document = GET_document
+    POST_document = GET_document
+    PUT_document = GET_document
+    PATCH_document = GET_document
+    DELETE_document = GET_document
+
 
 def handle_awful_failure(fail_text):
     """

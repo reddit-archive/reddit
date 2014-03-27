@@ -19,7 +19,6 @@
 # All portions of the code written by reddit are Copyright (c) 2006-2013 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
-
 from r2.lib.pages import *
 from reddit_base import cross_domain
 from api import ApiController
@@ -49,7 +48,6 @@ class PostController(ApiController):
             if request.POST.get('lang-' + lang):
                 langs.append(str(lang))
         return format_content_lang_pref(langs)
-
 
     @validate(pref_lang = VLang('lang'),
               all_langs = VOneOf('all-langs', ('all', 'some'), default='all'))

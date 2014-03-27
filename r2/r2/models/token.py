@@ -101,6 +101,13 @@ class ConsumableToken(Token):
 
 class OAuth2Scope:
     scope_info = {
+        "account": {
+            "id": "account",
+            "name": _("Update account information"),
+            "description": _("Update preferences and related account "
+                "information. Will not have access to your email or "
+                "password."),
+        },
         "edit": {
             "id": "edit",
             "name": _("Edit Posts"),

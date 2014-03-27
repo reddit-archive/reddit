@@ -724,12 +724,12 @@ def flatten_response(content):
     return "".join(_force_utf8(x) for x in tup(content) if x)
 
 
-def abort_with_error(error):
-    if not error.code:
+def abort_with_error(error, code=None):
+    if not code and not error.code:
         raise ValueError('Error %r missing status code' % error)
 
     abort(reddit_http_error(
-        code=error.code,
+        code=code or error.code,
         error_name=error.name,
         explanation=error.message,
         fields=error.fields,

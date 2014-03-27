@@ -19,14 +19,18 @@
 # All portions of the code written by reddit are Copyright (c) 2006-2013 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
+import json
 
 from pylons import c
 from r2.controllers.api_docs import api_doc, api_section
 from r2.controllers.oauth2 import require_oauth2_scope
-from r2.controllers.reddit_base import OAuth2ResourceController
+from r2.controllers.reddit_base import (
+    abort_with_error,
+    OAuth2ResourceController,
+)
+from r2.lib.base import abort
 from r2.lib.jsontemplates import IdentityJsonTemplate, PrefsJsonTemplate
 from r2.lib.validator import (
-    nop,
     validate,
     VContentLang,
     VList,
@@ -44,7 +48,7 @@ PREFS_JSON_SPEC = VValidatedJSON.PartialObject({
 })
 
 PREFS_JSON_SPEC.spec["content_langs"] = VValidatedJSON.ArrayOf(
-        VContentLang("content_langs")
+    VContentLang("content_langs")
 )
 
 
@@ -81,3 +85,21 @@ class APIv1Controller(OAuth2ResourceController):
         """Return the preference settings of the logged in user"""
         resp = PrefsJsonTemplate(fields).data(c.oauth_user)
         return self.api_wrapper(resp)
+
+    PREFS_JSON_VALIDATOR = VValidatedJSON("json", PREFS_JSON_SPEC,
+                                          body=True)
+
+    @require_oauth2_scope("account")
+    @api_doc(api_section.account, json_model=PREFS_JSON_VALIDATOR)
+    @validate(validated_prefs=PREFS_JSON_VALIDATOR)
+    def PATCH_prefs(self, validated_prefs):
+        user_prefs = c.user.preferences()
+        for short_name, new_value in validated_prefs.iteritems():
+            pref_name = "pref_" + short_name
+            if pref_name == "pref_content_langs":
+                new_value = vprefs.format_content_lang_pref(new_value)
+            user_prefs[pref_name] = new_value
+        vprefs.filter_prefs(user_prefs, c.user)
+        vprefs.set_prefs(c.user, user_prefs)
+        c.user._commit()
+        return self.api_wrapper(PrefsJsonTemplate().data(c.user))

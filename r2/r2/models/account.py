@@ -123,7 +123,11 @@ class Account(Thing):
                      state=0,
                      modmsgtime=None,
                      )
-    _preference_attrs = (k for k in _defaults.keys() if k.startswith("pref_"))
+    _preference_attrs = tuple(k for k in _defaults.keys()
+                              if k.startswith("pref_"))
+
+    def preferences(self):
+        return {pref: getattr(self, pref) for pref in self._preference_attrs}
 
     def __eq__(self, other):
         if type(self) != type(other):
