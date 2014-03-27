@@ -23,9 +23,16 @@
 from r2.lib.pages import *
 from reddit_base import cross_domain
 from api import ApiController
+from r2.lib.errors import BadRequestError, errors
 from r2.lib.utils import Storage, query_string, UrlParser
 from r2.lib.emailer import opt_in, opt_out
 from r2.lib.validator import *
+from r2.lib.validator.preferences import (
+    filter_prefs,
+    format_content_lang_pref,
+    PREFS_VALIDATORS,
+    set_prefs,
+)
 from r2.models.recommend import ExploreSettings
 from pylons import request, c, g
 from pylons.controllers.util import redirect_to
@@ -34,105 +41,36 @@ from r2.models import *
 import hashlib
 
 class PostController(ApiController):
-    def set_options(self, all_langs, pref_lang, **kw):
-        if c.errors.errors:
-            print "fucker"
-            return
-
-        if all_langs == 'all':
-            langs = 'all'
-        elif all_langs == 'some':
-            langs = []
-            for lang in g.all_languages:
-                if request.POST.get('lang-' + lang):
-                    langs.append(str(lang)) #unicode
-            if langs:
-                langs.sort()
-                langs = tuple(langs)
-            else:
-                langs = 'all'
-
-        for k, v in kw.iteritems():
-            #startswith is important because kw has all sorts of
-            #request info in it
-            if k.startswith('pref_'):
-                setattr(c.user, k, v)
-
-        c.user.pref_content_langs = langs
-        c.user.pref_lang = pref_lang
-        c.user._commit()
+    def _langs_from_post(self, all_or_some):
+        if all_or_some == 'all':
+            return 'all'
+        langs = []
+        for lang in g.all_languages:
+            if request.POST.get('lang-' + lang):
+                langs.append(str(lang))
+        return format_content_lang_pref(langs)
 
 
     @validate(pref_lang = VLang('lang'),
               all_langs = VOneOf('all-langs', ('all', 'some'), default='all'))
     def POST_unlogged_options(self, all_langs, pref_lang):
-        self.set_options( all_langs, pref_lang)
+        content_langs = self._langs_from_post(all_langs)
+        prefs = {"pref_content_lang": content_langs, "pref_lang": pref_lang}
+        set_prefs(c.user, prefs)
+        c.user._commit()
         return self.redirect(request.referer)
 
-    @validate(VUser(),
-              VModhash(),
-              pref_frame = VBoolean('frame'),
-              pref_clickgadget = VBoolean('clickgadget'),
-              pref_organic = VBoolean('organic'),
-              pref_newwindow = VBoolean('newwindow'),
-              pref_public_votes = VBoolean('public_votes'),
-              pref_hide_from_robots = VBoolean('hide_from_robots'),
-              pref_hide_ups = VBoolean('hide_ups'),
-              pref_hide_downs = VBoolean('hide_downs'),
-              pref_over_18 = VBoolean('over_18'),
-              pref_research = VBoolean('research'),
-              pref_numsites = VInt('numsites', 1, 100),
-              pref_lang = VLang('lang'),
-              pref_media = VOneOf('media', ('on', 'off', 'subreddit')),
-              pref_compress = VBoolean('compress'),
-              pref_domain_details = VBoolean('domain_details'),
-              pref_min_link_score = VInt('min_link_score', -100, 100),
-              pref_min_comment_score = VInt('min_comment_score', -100, 100),
-              pref_num_comments = VInt('num_comments', 1, g.max_comments,
-                                       default = g.num_comments),
-              pref_show_stylesheets = VBoolean('show_stylesheets'),
-              pref_show_flair = VBoolean('show_flair'),
-              pref_show_link_flair = VBoolean('show_link_flair'),
-              pref_no_profanity = VBoolean('no_profanity'),
-              pref_label_nsfw = VBoolean('label_nsfw'),
-              pref_show_promote = VBoolean('show_promote'),
-              pref_mark_messages_read = VBoolean("mark_messages_read"),
-              pref_threaded_messages = VBoolean("threaded_messages"),
-              pref_collapse_read_messages = VBoolean("collapse_read_messages"),
-              pref_private_feeds = VBoolean("private_feeds"),
-              pref_local_js = VBoolean('local_js'),
-              pref_store_visits = VBoolean('store_visits'),
-              pref_show_adbox = VBoolean("show_adbox"),
-              pref_show_sponsors = VBoolean("show_sponsors"),
-              pref_show_sponsorships = VBoolean("show_sponsorships"),
-              pref_highlight_new_comments = VBoolean("highlight_new_comments"),
-              pref_monitor_mentions=VBoolean("monitor_mentions"),
-              all_langs = VOneOf('all-langs', ('all', 'some'), default='all'))
-    def POST_options(self, all_langs, pref_lang, **kw):
-        #temporary. eventually we'll change pref_clickgadget to an
-        #integer preference
-        kw['pref_clickgadget'] = kw['pref_clickgadget'] and 5 or 0
-        if c.user.pref_show_promote is None:
-            kw['pref_show_promote'] = None
-        elif not kw.get('pref_show_promote'):
-            kw['pref_show_promote'] = False
-
-        if not kw.get("pref_over_18") or not c.user.pref_over_18:
-            kw['pref_no_profanity'] = True
-
-        if kw.get("pref_no_profanity") or c.user.pref_no_profanity:
-            kw['pref_label_nsfw'] = True
-
-        # default all the gold options to on if they don't have gold
-        if not c.user.gold:
-            for pref in ('pref_show_adbox',
-                         'pref_show_sponsors',
-                         'pref_show_sponsorships',
-                         'pref_highlight_new_comments',
-                         'pref_monitor_mentions'):
-                kw[pref] = True
-
-        self.set_options(all_langs, pref_lang, **kw)
+    @validate(VUser(), VModhash(),
+              all_langs=VOneOf('all-langs', ('all', 'some'), default='all'),
+              **PREFS_VALIDATORS)
+    def POST_options(self, all_langs, **prefs):
+        pref_content_langs = self._langs_from_post(all_langs)
+        prefs['pref_content_langs'] = pref_content_langs
+        filter_prefs(prefs, c.user)
+        if c.errors.errors:
+            return abort(BadRequestError(errors.INVALID_PREF))
+        set_prefs(c.user, prefs)
+        c.user._commit()
         u = UrlParser(c.site.path + "prefs")
         u.update_query(done = 'true')
         if c.cname:
