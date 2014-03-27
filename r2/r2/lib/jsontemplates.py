@@ -27,6 +27,7 @@ from wrapped import Wrapped, StringTemplate, CacheStub, CachedVariable, Template
 from mako.template import Template
 from r2.config.extensions import get_api_subtype
 from r2.lib.filters import spaceCompress, safemarkdown
+from r2.models import Account
 from r2.models.subreddit import SubSR
 from r2.models.token import OAuth2Scope, extra_oauth2_scope
 import time, pytz
@@ -391,6 +392,28 @@ class AccountJsonTemplate(IdentityJsonTemplate):
         elif attr == "modhash":
             return c.modhash
         return IdentityJsonTemplate.thing_attr(self, thing, attr)
+
+
+
+class PrefsJsonTemplate(ThingJsonTemplate):
+    _data_attrs_ = dict((k[len("pref_"):], k) for k in
+            Account._preference_attrs)
+
+    def __init__(self, fields=None):
+        if fields is not None:
+            _data_attrs_ = {}
+            for field in fields:
+                if field not in self._data_attrs_:
+                    raise KeyError(field)
+                _data_attrs_[field] = self._data_attrs_[field]
+            self._data_attrs_ = _data_attrs_
+
+    def thing_attr(self, thing, attr):
+        if attr == "pref_clickgadget":
+            return bool(thing.pref_clickgadget)
+        elif attr == "pref_content_langs":
+            return tup(thing.pref_content_langs)
+        return ThingJsonTemplate.thing_attr(self, thing, attr)
 
 
 class LinkJsonTemplate(ThingJsonTemplate):

@@ -1744,6 +1744,32 @@ class VOneOf(Validator):
         }
 
 
+class VList(Validator):
+    def __init__(self, param, separator=",", choices=None,
+                 error=errors.INVALID_OPTION, *a, **kw):
+        Validator.__init__(self, param, *a, **kw)
+        self.separator = separator
+        self.choices = choices
+        self.error = error
+
+    def run(self, items):
+        if not items:
+            return None
+        all_values = items.split(self.separator)
+        if self.choices is None:
+            return all_values
+
+        values = []
+        for val in all_values:
+            if val in self.choices:
+                values.append(val)
+            else:
+                msg_params = {"choice": val}
+                self.set_error(self.error, msg_params=msg_params,
+                               code=400)
+        return values
+
+
 class VPriority(Validator):
     def run(self, val):
         if c.user_is_sponsor:
