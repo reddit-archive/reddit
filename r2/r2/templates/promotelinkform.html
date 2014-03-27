@@ -408,6 +408,9 @@ ${self.javascript_setup()}
               <div class="minimum-spend">
                 ${_('%(minimum)s minimum') % dict(minimum=format_currency(thing.min_bid, 'USD', locale=c.locale))}
               </div>
+              <div class="budget-change-warning error">
+                ${_('if you modify the budget of this paid campaign you will need to reauthorize payment by clicking the "pay" button')}
+              </div>
             </td>
           </tr>
 

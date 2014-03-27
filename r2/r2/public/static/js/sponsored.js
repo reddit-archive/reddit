@@ -397,7 +397,19 @@ r.sponsored = {
 
     check_bid: function($form) {
         var bid = this.get_bid($form),
-            minimum_bid = $("#bid").data("min_bid");
+            minimum_bid = $("#bid").data("min_bid"),
+            campaignName = $form.find('*[name=campaign_name]').val()
+
+        $('.budget-change-warning').hide()
+        if (campaignName != '') {
+            var $campaignRow = $('.' + campaignName),
+                campaignIsPaid = $campaignRow.data('paid'),
+                campaignBid = $campaignRow.data('bid')
+
+            if (campaignIsPaid && bid != campaignBid) {
+                $('.budget-change-warning').show()
+            }
+        }
 
         $(".minimum-spend").removeClass("error");
         if (bid < minimum_bid) {
