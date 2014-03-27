@@ -178,6 +178,27 @@ We're working to improve the systems to predict our pageview inventory so this
 doesn't happen again. You have been refunded the unspent portion of your budget.
 If you have any questions or concerns please reply to this email.
 
+%elif thing.kind == Email.Kind.VOID_PAYMENT:
+This email is to inform you that your pending payment of $${"%.2f" % thing.campaign.bid} for a self-serve ad on reddit.com has been voided and you will not be charged.
+
+%if thing.reason == 'changed_bid':
+The payment was voided because you changed the campaign's budget. Before the campaign can go live you'll need to authorize the new payment amount:
+
+${promote.pay_url(thing.link, thing.campaign)}
+%elif thing.reason == 'changed_payment':
+The payment was voided because you changed to a different form of payment.
+
+You can edit your ad at the following url:
+
+${edit_url}
+%elif thing.reason == 'deleted_campaign':
+The payment was voided because you deleted the campaign.
+
+You can edit your ad at the following url:
+
+${edit_url}
+%endif
+
 %endif
 
 Thank you,

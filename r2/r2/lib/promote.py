@@ -257,7 +257,7 @@ def edit_campaign(link, campaign, dates, bid, cpm, sr, priority, location):
 
     # if the bid amount changed, cancel any pending transactions
     if campaign.bid != bid:
-        void_campaign(link, campaign)
+        void_campaign(link, campaign, reason='changed_bid')
 
     # update the schedule
     PromotionWeights.reschedule(link, campaign._id, sr_name,
@@ -307,12 +307,13 @@ def terminate_campaign(link, campaign):
 
 def delete_campaign(link, campaign):
     PromotionWeights.delete_unfinished(link, campaign._id)
-    void_campaign(link, campaign)
+    void_campaign(link, campaign, reason='deleted_campaign')
     campaign.delete()
     PromotionLog.add(link, 'deleted campaign %s' % campaign._id)
     hooks.get_hook('promote.delete_campaign').call(link=link, campaign=campaign)
 
-def void_campaign(link, campaign):
+
+def void_campaign(link, campaign, reason):
     transactions = get_transactions(link, [campaign])
     bid_record = transactions.get(campaign._id)
     if bid_record:
@@ -323,6 +324,11 @@ def void_campaign(link, campaign):
         text = ('voided transaction for %s: (trans_id: %d)'
                 % (campaign, bid_record.transaction))
         PromotionLog.add(link, text)
+
+        if bid_record.transaction > 0:
+            # notify the user that the transaction was voided if it was not
+            # a freebie
+            emailer.void_payment(link, campaign, reason)
 
 
 def auth_campaign(link, campaign, user, pay_id):
@@ -339,7 +345,7 @@ def auth_campaign(link, campaign, user, pay_id):
 
     Returns: (True, "") if successful or (False, error_msg) if not. 
     """
-    void_campaign(link, campaign)
+    void_campaign(link, campaign, reason='changed_payment')
     test = 1 if g.debug else None
     trans_id, reason = authorize.auth_transaction(campaign.bid, user, pay_id,
                                                   link, campaign._id, test=test)

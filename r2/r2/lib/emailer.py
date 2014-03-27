@@ -276,6 +276,11 @@ def refunded_promo(thing):
     return _promo_email(thing, Email.Kind.REFUNDED_PROMO)
 
 
+def void_payment(thing, campaign, reason):
+    return _promo_email(thing, Email.Kind.VOID_PAYMENT, campaign=campaign,
+                        reason=reason)
+
+
 def send_html_email(to_addr, from_addr, subject, html, subtype="html"):
     from r2.lib.filters import _force_utf8
     msg = MIMEText(_force_utf8(html), subtype)

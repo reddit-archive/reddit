@@ -305,6 +305,7 @@ class Email(object):
                 "PASSWORD_CHANGE",
                 "EMAIL_CHANGE",
                 "REFUNDED_PROMO",
+                "VOID_PAYMENT",
                 )
 
     subjects = {
@@ -326,7 +327,8 @@ class Email(object):
         Kind.GOLDMAIL : _("[reddit] reddit gold activation link"),
         Kind.PASSWORD_CHANGE : _("[reddit] your password has been changed"),
         Kind.EMAIL_CHANGE : _("[reddit] your email address has been changed"),
-        Kind.REFUNDED_PROMO: _("[reddit] your campaign didn't get enough impressions")
+        Kind.REFUNDED_PROMO: _("[reddit] your campaign didn't get enough impressions"),
+        Kind.VOID_PAYMENT: _("[reddit] your payment has been voided"),
         }
 
     def __init__(self, user, thing, email, from_name, date, ip, banned_ip,
