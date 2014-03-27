@@ -254,8 +254,9 @@ example, `t3_15bfi0`.
               <%
                 params = docs.get('parameters')
                 base_params = extends.get('parameters') if extends else None
+                json_model = docs.get('json_model')
               %>
-              %if params or base_params:
+              %if params or base_params or json_model:
                 <table class="parameters">
                 %if params:
                   %for param in sorted(params):
@@ -274,6 +275,12 @@ example, `t3_15bfi0`.
                       </tr>
                     %endif
                   %endfor
+                %endif
+                %if json_model:
+                  <tr class="json-model">
+                    <th>${_("This endpoint expects JSON data using this model")}</th>
+                    <td>${unsafe(safemarkdown(json_model.docs_model(), wrap=False))}</td>
+                  </tr>
                 %endif
                 </table>
               %endif

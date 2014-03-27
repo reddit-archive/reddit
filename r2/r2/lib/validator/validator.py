@@ -2440,7 +2440,11 @@ class VValidatedJSON(VJSON):
         def spec_docs(self):
             spec_lines = []
             spec_lines.append('[')
-            for line in self.spec.spec_docs().split('\n'):
+            if hasattr(self.spec, 'spec_docs'):
+                array_docs = self.spec.spec_docs()
+            else:
+                array_docs = self.spec.param_docs()[self.spec.param]
+            for line in array_docs.split('\n'):
                 spec_lines.append('  ' + line)
             spec_lines[-1] += ','
             spec_lines.append('  ...')
@@ -2507,16 +2511,18 @@ class VValidatedJSON(VJSON):
         # into a global (c.errors) and then checked by @validate.
         return self.spec.run(data)
 
-    def param_docs(self):
+    def docs_model(self):
         spec_md = self.spec.spec_docs()
 
         # indent for code formatting
         spec_md = '\n'.join(
             '    ' + line for line in spec_md.split('\n')
         )
+        return spec_md
 
+    def param_docs(self):
         return {
-            self.param: 'json data:\n\n' + spec_md,
+            self.param: 'json data:\n\n' + self.docs_model(),
         }
 
 

@@ -121,6 +121,7 @@ class ApidocsController(RedditController):
         - `extensions`: URI extensions the API method supports
         - `parameters`: Dictionary of possible parameter names and descriptions.
         - `extends`: API method from which to inherit documentation
+        - `json_model`: The JSON model used instead of normal POST parameters
         """
 
         api_docs = defaultdict(lambda: defaultdict(dict))
@@ -129,7 +130,7 @@ class ApidocsController(RedditController):
             if not action:
                 continue
 
-            valid_methods = ('GET', 'POST', 'PUT', 'DELETE')
+            valid_methods = ('GET', 'POST', 'PUT', 'DELETE', 'PATCH')
             api_doc = getattr(func, '_api_doc', None)
             if api_doc and 'section' in api_doc and method in valid_methods:
                 docs = {}
