@@ -161,13 +161,23 @@ class ApidocsController(RedditController):
                 if api_doc['uses_site']:
                     docs["in-subreddit"] = True
 
-                oauth_perms = getattr(func, 'oauth2_perms', {})
-                docs['oauth_scopes'] = oauth_perms.get('allowed_scopes', [])
+                oauth_perms = getattr(func, 'oauth2_perms', None)
+                if oauth_perms is None:
+                    # Endpoint is not available over OAuth
+                    docs['oauth_scopes'] = None
+                elif not oauth_perms['allowed_scopes']:
+                    # Endpoint is available over OAuth, but doesn't
+                    # require any specific scope
+                    docs['oauth_scopes'] = [None]
+                else:
+                    # Endpoint is available over OAuth when token
+                    # has all given scopes
+                    docs['oauth_scopes'] = oauth_perms['allowed_scopes']
 
                 # add every variant to the index -- the templates will filter
                 # out variants in the long-form documentation
                 if oauth_only:
-                    if not docs['oauth_scopes']:
+                    if oauth_perms is None:
                         continue
                     for scope in docs['oauth_scopes']:
                         for variant in chain([uri],
@@ -215,7 +225,7 @@ class ApidocsController(RedditController):
                 api_docs[section].update(contents)
                 for variant, method_dict in contents.iteritems():
                     for method, docs in method_dict.iteritems():
-                        for scope in docs['oauth_scopes']:
+                        for scope in docs['oauth_scopes'] or []:
                             oauth_index[scope].add((section, variant, method))
 
         return BoringPage(

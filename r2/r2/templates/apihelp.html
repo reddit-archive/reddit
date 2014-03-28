@@ -237,7 +237,7 @@ example, `t3_15bfi0`.
               %if docs['oauth_scopes']:
                 <span class="oauth-scope-list">
                   %for scope in docs['oauth_scopes']:
-                    <span class="oauth-scope">${scope}</span>
+                    <span class="oauth-scope">${scope or "any"}</span>
                   %endfor
                 </span>
               %endif

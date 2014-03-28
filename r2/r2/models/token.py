@@ -101,6 +101,12 @@ class ConsumableToken(Token):
 
 class OAuth2Scope:
     scope_info = {
+        None: {
+            "id": None,
+            "name": _("Any Scope"),
+            "description": _("Endpoint is accessible with any combination "
+                "of other OAuth 2 scopes."),
+        },
         "account": {
             "id": "account",
             "name": _("Update account information"),

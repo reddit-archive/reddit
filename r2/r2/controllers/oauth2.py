@@ -317,3 +317,8 @@ def require_oauth2_scope(*scopes):
         fn.oauth2_perms = {"allowed_scopes": scopes}
         return fn
     return oauth2_scope_wrap
+
+
+def allow_oauth2_access(fn):
+    fn.oauth2_perms = {"allowed_scopes": []}
+    return fn
