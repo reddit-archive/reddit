@@ -649,19 +649,42 @@ class Subreddit(Thing, Printable, BaseSite):
 
     @classmethod
     def add_props(cls, user, wrapped):
-        names = ('subscriber', 'moderator', 'contributor')
-        rels = (SRMember._fast_query(wrapped, [user], names) if c.user_is_loggedin else {})
-        defaults = Subreddit.default_subreddits()
+        subscriber_srids = set()
+        moderator_srids = set()
+        contributor_srids = set()
+        srmembers_to_fetch = []
+
+        if not user or not c.user_is_loggedin or not user.has_subscribed:
+            # NOTE: add_props is called with user = c.user, so
+            # default_subreddits (which uses c.user rather than taking user as
+            # an argument) will act as expected
+            default_srids = Subreddit.default_subreddits()
+            subscriber_srids.update(default_srids)
+        else:
+            srmembers_to_fetch.append('subscriber')
+
+        if user and c.user_is_loggedin:
+            srmembers_to_fetch.extend(['moderator', 'contributor'])
+
+        if srmembers_to_fetch:
+            rels = SRMember._fast_query(wrapped, [user], srmembers_to_fetch)
+            for (item, i_user, rel_name), rel in rels.iteritems():
+                if not rel:
+                    continue
+                elif rel_name == 'subscriber':
+                    subscriber_srids.add(item._id)
+                elif rel_name == 'moderator':
+                    moderator_srids.add(item._id)
+                elif rel_name == 'contributor':
+                    contributor_srids.add(item._id)
+
         target = "_top" if c.cname else None
         for item in wrapped:
-            if not user or not user.has_subscribed:
-                item.subscriber = item._id in defaults
-            else:
-                item.subscriber = bool(rels.get((item, user, 'subscriber')))
-            item.moderator = bool(rels.get((item, user, 'moderator')))
-            item.contributor = bool(item.type != 'public' and
+            item.subscriber = item._id in subscriber_srids
+            item.moderator = item._id in moderator_srids
+            item.contributor = (item.type != 'public' and
                                     (item.moderator or
-                                     rels.get((item, user, 'contributor'))))
+                                     item._id in contributor_srids))
 
             if item.hide_subscribers and not c.user_is_admin:
                 item._ups = 0
