@@ -73,7 +73,7 @@ class APIv1Controller(OAuth2ResourceController):
         return self.api_wrapper(resp)
 
     @require_oauth2_scope("identity")
-    @api_doc(api_section.account)
+    @api_doc(api_section.account, uri='/api/v1/me/prefs')
     @validate(
         fields=VList(
             "fields",
@@ -90,7 +90,8 @@ class APIv1Controller(OAuth2ResourceController):
                                           body=True)
 
     @require_oauth2_scope("account")
-    @api_doc(api_section.account, json_model=PREFS_JSON_VALIDATOR)
+    @api_doc(api_section.account, json_model=PREFS_JSON_VALIDATOR,
+             uri='/api/v1/me/prefs')
     @validate(validated_prefs=PREFS_JSON_VALIDATOR)
     def PATCH_prefs(self, validated_prefs):
         user_prefs = c.user.preferences()

@@ -252,9 +252,13 @@ example, `t3_15bfi0`.
             <div class="info">
               ${unsafe(safemarkdown(docs.get('doc')))}
               <%
-                params = docs.get('parameters')
-                base_params = extends.get('parameters') if extends else None
                 json_model = docs.get('json_model')
+                if json_model:
+                  params = None
+                  base_params = None
+                else:
+                  params = docs.get('parameters')
+                  base_params = extends.get('parameters') if extends else None
               %>
               %if params or base_params or json_model:
                 <table class="parameters">
@@ -278,7 +282,7 @@ example, `t3_15bfi0`.
                 %endif
                 %if json_model:
                   <tr class="json-model">
-                    <th>${_("This endpoint expects JSON data using this model")}</th>
+                    <th>${_("This endpoint expects JSON data of this format")}</th>
                     <td>${unsafe(safemarkdown(json_model.docs_model(), wrap=False))}</td>
                   </tr>
                 %endif

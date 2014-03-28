@@ -1786,6 +1786,21 @@ class VList(Validator):
                                code=400)
         return values
 
+    # Not i18n'able, but param_docs are not currently i18n'ed
+    NICE_SEP = {",": "comma"}
+    def param_docs(self):
+        if self.choices:
+            msg = ("A %(separator)s-separated list of items from "
+                   "this set:\n\n%(choices)s")
+            choices = "`" + "`  \n`".join(self.choices) + "`"
+        else:
+            msg = "A %(separator)s-separated list of items"
+            choices = None
+
+        sep = self.NICE_SEP.get(self.separator, self.separator)
+        docs = msg % {"separator": sep, "choices": choices}
+        return {self.param: docs}
+
 
 class VPriority(Validator):
     def run(self, val):
