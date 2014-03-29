@@ -423,13 +423,14 @@ ${unsafe(txt)}
   %if g.googleanalytics and thing.site_tracking:
   <script type="text/javascript">
 
+    var user_type = '${"guest" if not c.user_is_loggedin else "goldloggedin" if c.user.gold else "loggedin"}';
     var _gaq = _gaq || [];
     _gaq.push(
         ['_setAccount', '${g.googleanalytics}'],
         ['_setDomainName', '${g.domain}'],
         ['_setCustomVar', 1, 'site', '${tracking.get_site()}', 3],
         ['_setCustomVar', 2, 'srpath', '${tracking.get_srpath()}', 3],
-        ['_setCustomVar', 3, 'usertype', '${"loggedin" if c.user_is_loggedin else "guest"}', 2],
+        ['_setCustomVar', 3, 'usertype', user_type, 2],
         ['_setCustomVar', 4, 'uitype', '${uitype}', 3],
         ['_trackPageview']
     );
