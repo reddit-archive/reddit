@@ -292,6 +292,21 @@ if [ ! -L run.ini ]; then
 fi
 
 ###############################################################################
+# some useful helper scripts
+###############################################################################
+cat > /usr/local/bin/reddit-run <<REDDITRUN
+#!/bin/bash
+exec paster --plugin=r2 run $REDDIT_HOME/src/reddit/r2/run.ini "\$@"
+REDDITRUN
+
+cat > /usr/local/bin/reddit-shell <<REDDITSHELL
+#!/bin/bash
+exec paster --plugin=r2 shell $REDDIT_HOME/src/reddit/r2/run.ini
+REDDITSHELL
+
+chmod 755 /usr/local/bin/reddit-run /usr/local/bin/reddit-shell
+
+###############################################################################
 # nginx
 ###############################################################################
 
@@ -612,7 +627,7 @@ steps:
 * To populate the database with test data, run:
 
     cd $REDDIT_HOME/src/reddit/r2
-    paster run run.ini r2/models/populatedb.py -c 'populate()'
+    reddit-run r2/models/populatedb.py -c 'populate()'
 
 * Manually run reddit-job-update_reddits immediately after populating the db
   or adding your own subreddits.
