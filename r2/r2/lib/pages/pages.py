@@ -181,7 +181,9 @@ class Reddit(Templated):
                  infotext='', content=None, short_description='', title='',
                  robots=None, show_sidebar=True, show_chooser=False,
                  footer=True, srbar=True, page_classes=None, short_title=None,
-                 show_wiki_actions=False, extra_js_config=None, **context):
+                 show_wiki_actions=False, extra_js_config=None,
+                 meta_thumbnail=None,
+                 **context):
         Templated.__init__(self, **context)
         self.title = title
         self.short_title = short_title
@@ -193,6 +195,7 @@ class Reddit(Templated):
         self.loginbox = True
         self.show_sidebar = show_sidebar
         self.space_compress = space_compress
+        self.meta_thumbnail = meta_thumbnail
         # instantiate a footer
         self.footer = RedditFooter() if footer else None
         self.debug_footer = DebugFooter()
@@ -1249,6 +1252,8 @@ class LinkInfoPage(Reddit):
                 title = strings.permalink_title % params
                 short_description = _truncate(comment.body.strip(), MAX_DESCRIPTION_LENGTH) if comment.body else None
 
+        if self.link.has_thumbnail and self.link.thumbnail:
+            kw['meta_thumbnail'] = self.link.thumbnail
 
         self.subtitle = subtitle
 
