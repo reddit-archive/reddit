@@ -22,40 +22,39 @@
 ###############################################################################
 
 ###############################################################################
-# The reddit installer
-# --------------------
-# This script installs a reddit stack suitable for development. DO NOT run
-# this on a system that you use for other purposes as it may accidentally
-# an important file.
+# reddit dev environment installer
+# --------------------------------
+# This script installs a reddit stack suitable for development. DO NOT run this
+# on a system that you use for other purposes as it might delete important
+# files, truncate your databases, and otherwise do mean things to you.
 #
-# You can run this script as is, in which case a user "reddit" will be created
-# and the code will be placed in its home directory. The various reddit-code
-# components of the stack will run as this user.
+# By default, this script will install the reddit code in the current user's
+# home directory and all of its dependencies (including libraries and database
+# servers) at the system level. The installed reddit will expect to be visited
+# on the domain "reddit.local" unless specified otherwise.  Configuring name
+# resolution for the domain is expected to be done outside the installed
+# environment (e.g. in your host machine's /etc/hosts file) and is not
+# something this script handles.
 #
-# To change aspects of the install, modify the variables in the "Configuration"
-# section below.
+# Several configuration options (listed in the "Configuration" section below)
+# are overridable with environment variables. e.g.
+#
+#    sudo REDDIT_DOMAIN=example.com ./install-reddit.sh
+#
 ###############################################################################
 set -e
 
 ###############################################################################
 # Configuration
 ###############################################################################
+# which user to install the code for; defaults to the user invoking this script
+REDDIT_USER=${REDDIT_USER:-$SUDO_USER}
 
-# which user should run the reddit code
-REDDIT_USER=reddit
+# the group to run reddit code as; must exist already
+REDDIT_GROUP=${REDDIT_GROUP:-nogroup}
 
-# the group to run reddit code as
-REDDIT_GROUP=nogroup
-
-# the root directory in which to install the reddit code
-REDDIT_HOME=/home/$REDDIT_USER
-
-# which user should own the installed reddit files
-# NOTE: if you change this option, you should move the mako template
-# cache directory by changing the "cache_dir" option in the [app:main]
-# section of the update files as $REDDIT_HOME will most likely
-# not be writable by the reddit user.
-REDDIT_OWNER=reddit
+# the root directory to base the install in. must exist already
+REDDIT_HOME=${REDDIT_HOME:-/home/$REDDIT_USER}
 
 # the domain that you will connect to your reddit install with.
 # MUST contain a . in it somewhere as browsers won't do cookies for dotless
@@ -70,7 +69,7 @@ if [[ $EUID -ne 0 ]]; then
     exit 1
 fi
 
-# seriously! these checks aren't here for no reason. the packages from the
+# seriously! these checks are here for a reason. the packages from the
 # reddit ppa aren't built for anything but precise (12.04) right now, so
 # if you try and use this install script on another release you're gonna
 # have a bad time.
@@ -85,13 +84,8 @@ fi
 ###############################################################################
 set -x
 
-# create the user if non-existent
-if ! id $REDDIT_USER &> /dev/null; then
-    adduser --system $REDDIT_USER
-fi
-
 # aptitude configuration
-APTITUDE_OPTIONS="-y" # limit bandwidth: -o Acquire::http::Dl-Limit=100"
+APTITUDE_OPTIONS="-y"
 export DEBIAN_FRONTEND=noninteractive
 
 # run an aptitude update to make sure python-software-properties
@@ -170,7 +164,7 @@ sed -i s/-Xss128k/-Xss228k/ /etc/cassandra/cassandra-env.sh
 ###############################################################################
 # Wait for all the services to be up
 ###############################################################################
-# cassandra no longer auto-starts
+# cassandra doesn't auto-start after install
 service cassandra start
 
 # check each port for connectivity
@@ -188,19 +182,17 @@ done
 ###############################################################################
 # Install the reddit source repositories
 ###############################################################################
-if [ ! -d $REDDIT_HOME ]; then
-    mkdir -p $REDDIT_HOME
-    chown $REDDIT_OWNER $REDDIT_HOME
+if [ ! -d $REDDIT_HOME/src ]; then
+    mkdir -p $REDDIT_HOME/src
+    chown $REDDIT_USER $REDDIT_HOME/src
 fi
 
-cd $REDDIT_HOME
-
-if [ ! -d $REDDIT_HOME/reddit ]; then
-    sudo -u $REDDIT_OWNER git clone https://github.com/reddit/reddit.git
+if [ ! -d $REDDIT_HOME/src/reddit ]; then
+    sudo -u $REDDIT_USER git clone https://github.com/reddit/reddit.git src/reddit
 fi
 
-if [ ! -d $REDDIT_HOME/reddit-i18n ]; then
-    sudo -u $REDDIT_OWNER git clone https://github.com/reddit/reddit-i18n.git
+if [ ! -d $REDDIT_HOME/src/i18n ]; then
+    sudo -u $REDDIT_USER git clone https://github.com/reddit/reddit-i18n.git src/i18n
 fi
 
 ###############################################################################
@@ -228,7 +220,7 @@ CREATE USER reddit WITH PASSWORD 'password';
 PGSCRIPT
 fi
 
-sudo -u postgres psql reddit < $REDDIT_HOME/reddit/sql/functions.sql
+sudo -u postgres psql reddit < $REDDIT_HOME/src/reddit/sql/functions.sql
 
 ###############################################################################
 # Configure RabbitMQ
@@ -248,22 +240,22 @@ rabbitmqctl set_permissions -p / reddit ".*" ".*" ".*"
 ###############################################################################
 # Install and configure the reddit code
 ###############################################################################
-cd $REDDIT_HOME/reddit/r2
-sudo -u $REDDIT_OWNER make pyx # generate the .c files from .pyx
-sudo -u $REDDIT_OWNER python setup.py build
+cd $REDDIT_HOME/src/reddit/r2
+sudo -u $REDDIT_USER make pyx # generate the .c files from .pyx
+sudo -u $REDDIT_USER python setup.py build
 python setup.py develop --no-deps
 
-cd $REDDIT_HOME/reddit-i18n/
-sudo -u $REDDIT_OWNER python setup.py build
+cd $REDDIT_HOME/src/i18n/
+sudo -u $REDDIT_USER python setup.py build
 python setup.py develop --no-deps
-sudo -u $REDDIT_OWNER make
+sudo -u $REDDIT_USER make
 
 # this builds static files and should be run *after* languages are installed
 # so that the proper language-specific static files can be generated.
-cd $REDDIT_HOME/reddit/r2
-sudo -u $REDDIT_OWNER make
+cd $REDDIT_HOME/src/reddit/r2
+sudo -u $REDDIT_USER make
 
-cd $REDDIT_HOME/reddit/r2
+cd $REDDIT_HOME/src/reddit/r2
 
 if [ ! -f development.update ]; then
     cat > development.update <<DEVELOPMENT
@@ -280,8 +272,6 @@ disable_require_admin_otp = true
 
 page_cache_time = 0
 
-set debug = true
-
 domain = $REDDIT_DOMAIN
 
 media_provider = filesystem
@@ -292,38 +282,13 @@ media_fs_base_url_https = https://%(domain)s/media/
 [server:main]
 port = 8001
 DEVELOPMENT
-    chown $REDDIT_OWNER development.update
+    chown $REDDIT_USER development.update
 fi
 
-if [ ! -f production.update ]; then
-    cat > production.update <<PRODUCTION
-# after editing this file, run "make ini" to
-# generate a new production.ini
-
-[DEFAULT]
-debug = false
-reload_templates = false
-uncompressedJS = false
-
-set debug = false
-
-domain = $REDDIT_DOMAIN
-
-media_provider = filesystem
-media_fs_root = /srv/www/media
-media_fs_base_url_http = http://%(domain)s/media/
-media_fs_base_url_https = https://%(domain)s/media/
-
-[server:main]
-port = 8001
-PRODUCTION
-    chown $REDDIT_OWNER production.update
-fi
-
-sudo -u $REDDIT_OWNER make ini
+sudo -u $REDDIT_USER make ini
 
 if [ ! -L run.ini ]; then
-    sudo -u $REDDIT_OWNER ln -s development.ini run.ini
+    sudo -u $REDDIT_USER ln -s development.ini run.ini
 fi
 
 ###############################################################################
@@ -549,17 +514,17 @@ start sutro
 # Upstart Environment
 ###############################################################################
 CONSUMER_CONFIG_ROOT=$REDDIT_HOME/consumer-count.d
-cp $REDDIT_HOME/reddit/upstart/* /etc/init/
+cp $REDDIT_HOME/src/reddit/upstart/* /etc/init/
 
 if [ ! -f /etc/default/reddit ]; then
     cat > /etc/default/reddit <<DEFAULT
-export REDDIT_ROOT=$REDDIT_HOME/reddit/r2
-export REDDIT_INI=$REDDIT_HOME/reddit/r2/run.ini
+export REDDIT_ROOT=$REDDIT_HOME/src/reddit/r2
+export REDDIT_INI=$REDDIT_HOME/src/reddit/r2/run.ini
 export REDDIT_USER=$REDDIT_USER
 export REDDIT_GROUP=$REDDIT_GROUP
 export REDDIT_CONSUMER_CONFIG=$CONSUMER_CONFIG_ROOT
-alias wrap-job=$REDDIT_HOME/reddit/scripts/wrap-job
-alias manage-consumers=$REDDIT_HOME/reddit/scripts/manage-consumers
+alias wrap-job=$REDDIT_HOME/src/reddit/scripts/wrap-job
+alias manage-consumers=$REDDIT_HOME/src/reddit/scripts/manage-consumers
 DEFAULT
 fi
 
@@ -582,7 +547,7 @@ set_consumer_count newcomments_q 1
 set_consumer_count vote_link_q 1
 set_consumer_count vote_comment_q 1
 
-chown -R $REDDIT_OWNER:$REDDIT_GROUP $CONSUMER_CONFIG_ROOT/
+chown -R $REDDIT_USER:$REDDIT_GROUP $CONSUMER_CONFIG_ROOT/
 
 initctl emit reddit-start
 
@@ -595,17 +560,17 @@ if [ ! -f /etc/cron.d/reddit ]; then
 30  16 * * * root /sbin/start --quiet reddit-job-update_reddits
 0    * * * * root /sbin/start --quiet reddit-job-update_promos
 */5  * * * * root /sbin/start --quiet reddit-job-clean_up_hardcache
-*    * * * * root /sbin/start --quiet reddit-job-email
 */2  * * * * root /sbin/start --quiet reddit-job-broken_things
 */2  * * * * root /sbin/start --quiet reddit-job-rising
 0    * * * * root /sbin/start --quiet reddit-job-trylater
 
 # jobs that recalculate time-limited listings (e.g. top this year)
 PGPASSWORD=password
-*/15 * * * * $REDDIT_USER $REDDIT_HOME/reddit/scripts/compute_time_listings link year '("hour", "day", "week", "month", "year")'
-*/15 * * * * $REDDIT_USER $REDDIT_HOME/reddit/scripts/compute_time_listings comment year '("hour", "day", "week", "month", "year")'
+*/15 * * * * $REDDIT_USER $REDDIT_HOME/src/reddit/scripts/compute_time_listings link year '("hour", "day", "week", "month", "year")'
+*/15 * * * * $REDDIT_USER $REDDIT_HOME/src/reddit/scripts/compute_time_listings comment year '("hour", "day", "week", "month", "year")'
 
 # disabled by default, uncomment if you need these jobs
+#*    * * * * root /sbin/start --quiet reddit-job-email
 #0    0 * * * root /sbin/start --quiet reddit-job-update_gold_users
 CRON
 fi
@@ -646,7 +611,7 @@ steps:
 
 * To populate the database with test data, run:
 
-    cd $REDDIT_HOME/reddit/r2
+    cd $REDDIT_HOME/src/reddit/r2
     paster run run.ini r2/models/populatedb.py -c 'populate()'
 
 * Manually run reddit-job-update_reddits immediately after populating the db
