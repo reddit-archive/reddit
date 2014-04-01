@@ -1374,12 +1374,11 @@ class Message(Thing, Printable):
             elif sr_id and m.first_message:
                 first = Message._byID(m.first_message, True)
                 orig = Account._byID(first.author_id, True)
-                # Only orangered if the origin account does not have
+                # Only inbox if the origin account does not have
                 # modmail access.
-                if orig._id != author._id:
-                    orangered = not sr.is_moderator_with_perms(orig, 'mail')
-                    inbox_rel.append(Inbox._add(orig, m, 'inbox',
-                                                orangered=orangered))
+                if (orig._id != author._id and
+                        not sr.is_moderator_with_perms(orig, 'mail')):
+                    inbox_rel.append(Inbox._add(orig, m, 'inbox'))
         return (m, inbox_rel)
 
     @property
