@@ -158,12 +158,12 @@ r.saved.SaveButton = {
 
     setUnsaved: function($el) {
         var $category = $el.parents('.thing').find('.save-category').hide()
-        $el.text('save')
+        $el.text(r._('save'))
         $el.thing().removeClass('saved')
     },
 
     setSaved: function($el) {
-        $el.text('unsave')
+        $el.text(r._('unsave'))
         $el.thing().addClass('saved')
     }
 }
