@@ -187,13 +187,28 @@ if [ ! -d $REDDIT_HOME/src ]; then
     chown $REDDIT_USER $REDDIT_HOME/src
 fi
 
-if [ ! -d $REDDIT_HOME/src/reddit ]; then
-    sudo -u $REDDIT_USER git clone https://github.com/reddit/reddit.git src/reddit
-fi
+function clone_reddit_repo {
+    local destination=$REDDIT_HOME/src/${1}
+    local repository_url=https://github.com/${2}.git
 
-if [ ! -d $REDDIT_HOME/src/i18n ]; then
-    sudo -u $REDDIT_USER git clone https://github.com/reddit/reddit-i18n.git src/i18n
-fi
+    if [ ! -d $destination ]; then
+        sudo -u $REDDIT_USER git clone $repository_url $destination
+    fi
+
+    if [ -d $destination/upstart ]; then
+        cp $destination/upstart/* /etc/init/
+    fi
+}
+
+function clone_reddit_plugin_repo {
+    clone_reddit_repo $1 reddit/reddit-plugin-$1
+}
+
+clone_reddit_repo reddit reddit/reddit
+clone_reddit_repo i18n reddit/reddit-i18n
+clone_reddit_plugin_repo about
+clone_reddit_plugin_repo liveupdate
+clone_reddit_plugin_repo meatspace
 
 ###############################################################################
 # Configure Cassandra
@@ -240,22 +255,27 @@ rabbitmqctl set_permissions -p / reddit ".*" ".*" ".*"
 ###############################################################################
 # Install and configure the reddit code
 ###############################################################################
-cd $REDDIT_HOME/src/reddit/r2
-sudo -u $REDDIT_USER make pyx # generate the .c files from .pyx
-sudo -u $REDDIT_USER python setup.py build
-python setup.py develop --no-deps
+function install_reddit_repo {
+    cd $REDDIT_HOME/src/$1
+    sudo -u $REDDIT_USER python setup.py build
+    python setup.py develop --no-deps
+}
 
+install_reddit_repo reddit/r2
+install_reddit_repo i18n
+install_reddit_repo about
+install_reddit_repo liveupdate
+install_reddit_repo meatspace
+
+# generate binary translation files from source
 cd $REDDIT_HOME/src/i18n/
-sudo -u $REDDIT_USER python setup.py build
-python setup.py develop --no-deps
 sudo -u $REDDIT_USER make
 
 # this builds static files and should be run *after* languages are installed
-# so that the proper language-specific static files can be generated.
+# so that the proper language-specific static files can be generated and after
+# plugins are installed so all the static files are available.
 cd $REDDIT_HOME/src/reddit/r2
 sudo -u $REDDIT_USER make
-
-cd $REDDIT_HOME/src/reddit/r2
 
 if [ ! -f development.update ]; then
     cat > development.update <<DEVELOPMENT
@@ -273,6 +293,8 @@ disable_require_admin_otp = true
 page_cache_time = 0
 
 domain = $REDDIT_DOMAIN
+
+plugins = about, liveupdate, meatspace
 
 media_provider = filesystem
 media_fs_root = /srv/www/media
@@ -526,10 +548,9 @@ fi
 start sutro
 
 ###############################################################################
-# Upstart Environment
+# Job Environment
 ###############################################################################
 CONSUMER_CONFIG_ROOT=$REDDIT_HOME/consumer-count.d
-cp $REDDIT_HOME/src/reddit/upstart/* /etc/init/
 
 if [ ! -f /etc/default/reddit ]; then
     cat > /etc/default/reddit <<DEFAULT
@@ -578,6 +599,9 @@ if [ ! -f /etc/cron.d/reddit ]; then
 */2  * * * * root /sbin/start --quiet reddit-job-broken_things
 */2  * * * * root /sbin/start --quiet reddit-job-rising
 0    * * * * root /sbin/start --quiet reddit-job-trylater
+
+# liveupdate
+*    * * * * root /sbin/start --quiet reddit-job-liveupdate_activity
 
 # jobs that recalculate time-limited listings (e.g. top this year)
 PGPASSWORD=password
