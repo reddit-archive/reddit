@@ -24,6 +24,7 @@
 <%namespace file="utils.html" import="md" />
 
 <div class="raisedbox spacer">
+    ${_(thing.SYSTEMS[thing.system])}: ${thing.subject}
     <form id="adminnotes-form" method="post" action="/api/add_admin_note"
         onsubmit="return post_form(this, 'add_admin_note')">
         <input type="hidden" name="system" value="${thing.system}">

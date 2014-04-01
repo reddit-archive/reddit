@@ -85,8 +85,14 @@ class AdminLinkMenu(NavMenu):
 class AdminNotesSidebar(Templated):
     EMPTY_MESSAGE = {
         "domain": N_("No notes for this domain"),
+        "ip": N_("No notes for this IP address"),
     }
-    
+
+    SYSTEMS = {
+        "domain": N_("domain"),
+        "ip": N_("IP address"),
+    }
+
     def __init__(self, system, subject):
         from r2.models.admin_notes import AdminNotesBySystem
 
