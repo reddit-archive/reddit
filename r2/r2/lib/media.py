@@ -247,13 +247,17 @@ def upload_stylesheet(content):
     return g.media_provider.put(file_name, content)
 
 
-def _scrape_media(url, autoplay=False, force=False, use_cache=False,
-                  max_cache_age=None):
+def _scrape_media(url, autoplay=False, maxwidth=600, force=False,
+                  use_cache=False, max_cache_age=None):
     media = None
+    autoplay = bool(autoplay)
+    maxwidth = int(maxwidth)
 
     # Use media from the cache (if available)
     if not force and use_cache:
-        mediaByURL = MediaByURL.get(url, autoplay=bool(autoplay),
+        mediaByURL = MediaByURL.get(url,
+                                    autoplay=autoplay,
+                                    maxwidth=maxwidth,
                                     max_cache_age=max_cache_age)
         if mediaByURL:
             media = mediaByURL.media
@@ -270,7 +274,8 @@ def _scrape_media(url, autoplay=False, force=False, use_cache=False,
         except (HTTPError, URLError) as e:
             if use_cache:
                 MediaByURL.add_error(url, str(e),
-                                     autoplay=bool(autoplay))
+                                     autoplay=autoplay,
+                                     maxwidth=maxwidth)
             return None
 
         # the scraper should be able to make a media embed out of the
@@ -294,7 +299,10 @@ def _scrape_media(url, autoplay=False, force=False, use_cache=False,
 
     # Store the media in the cache (if requested), possibly extending the ttl
     if use_cache and media is not ERROR_MEDIA:
-        MediaByURL.add(url, media, autoplay=bool(autoplay))
+        MediaByURL.add(url,
+                       media,
+                       autoplay=autoplay,
+                       maxwidth=maxwidth)
 
     return media
 
