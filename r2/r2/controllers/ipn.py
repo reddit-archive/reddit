@@ -135,6 +135,10 @@ def check_payment_status(payment_status):
         log_text("canceled_reversal",
                  "Just got notice of a PayPal 'canceled reversal'.", "info")
         return ("Ok", psl)
+    elif psl == 'failed':
+        return ("Ok", psl)
+    elif psl == 'denied':
+        return ("Ok", psl)
     elif psl == '':
         return (None, psl)
     else:
