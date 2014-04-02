@@ -647,11 +647,12 @@ class WikiRevisionBuilder(QueryBuilder):
         QueryBuilder.__init__(self, *k, **kw)
     
     def wrap_items(self, items):
+        from r2.lib.validator.wiki import this_may_revise
         types = {}
         wrapped = []
         for item in items:
             w = self.wrap(item)
-            w.show_extended = self.show_extended
+            w.show_extended = self.show_extended and this_may_revise()
             types.setdefault(w.render_class, []).append(w)
             wrapped.append(w)
         

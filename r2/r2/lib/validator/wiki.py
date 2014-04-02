@@ -59,8 +59,9 @@ def this_may_view(page):
 
 def may_revise(sr, user, page=None):    
     if sr.is_moderator_with_perms(user, 'wiki'):
-        # Mods may always contribute
-        return True
+        # Mods may always contribute to non-config pages
+        if not page or not page.special:
+            return True
     
     if page and page.restricted and not page.special:
         # People may not contribute to restricted pages
@@ -86,7 +87,11 @@ def may_revise(sr, user, page=None):
     if page and page.has_editor(user._id36):
         # If the user is an editor on the page, they may edit
         return True
-    
+
+    if (page and page.special and
+            sr.is_moderator_with_perms(user, 'config')):
+        return True
+
     if page and page.special:
         # If this is a special page
         # (and the user is not a mod or page editor)
@@ -186,7 +191,13 @@ page_match_regex = re.compile(r'^[\w_\-/]+\Z')
 
 class VWikiModerator(VSrModerator):
     def __init__(self, fatal=False, *a, **kw):
-        VSrModerator.__init__(self, fatal=fatal, *a, **kw)
+        VSrModerator.__init__(self, param='page', fatal=fatal, *a, **kw)
+
+    def run(self, page):
+        self.perms = ['wiki']
+        if page and WikiPage.is_special(page):
+            self.perms += ['config']
+        VSrModerator.run(self)
 
 class VWikiPageName(Validator):
     def __init__(self, param, error_on_name_normalized=False, *a, **kw):

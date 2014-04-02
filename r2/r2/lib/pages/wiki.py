@@ -106,7 +106,7 @@ class WikiBasePage(Reddit):
                 pageactions += [('edit', _("edit"), True)]
             pageactions += [('revisions/%s' % page, _("history"), False)]
             pageactions += [('discussions', _("talk"), True)]
-            if c.is_wiki_mod:
+            if c.is_wiki_mod and may_revise:
                 pageactions += [('settings', _("settings"), True)]
 
         action = context.get('wikiaction', (page, 'wiki'))
