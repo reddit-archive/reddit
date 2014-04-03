@@ -40,7 +40,8 @@ def make_htmldiff(a, b, adesc, bdesc):
     return diffcontent.make_table(a.splitlines(),
                                   b.splitlines(),
                                   fromdesc=adesc,
-                                  todesc=bdesc)
+                                  todesc=bdesc,
+                                  context=3)
 
 def threewaymerge(original, a, b):
     temp_dir = g.diff3_temp_location if g.diff3_temp_location else None
