@@ -73,7 +73,6 @@ class APIv1Controller(OAuth2ResourceController):
         return self.api_wrapper(resp)
 
     @require_oauth2_scope("identity")
-    @api_doc(api_section.account, uri='/api/v1/me/prefs')
     @validate(
         fields=VList(
             "fields",
@@ -81,6 +80,7 @@ class APIv1Controller(OAuth2ResourceController):
             error=errors.errors.NON_PREFERENCE,
         ),
     )
+    @api_doc(api_section.account, uri='/api/v1/me/prefs')
     def GET_prefs(self, fields):
         """Return the preference settings of the logged in user"""
         resp = PrefsJsonTemplate(fields).data(c.oauth_user)
@@ -90,9 +90,9 @@ class APIv1Controller(OAuth2ResourceController):
                                           body=True)
 
     @require_oauth2_scope("account")
+    @validate(validated_prefs=PREFS_JSON_VALIDATOR)
     @api_doc(api_section.account, json_model=PREFS_JSON_VALIDATOR,
              uri='/api/v1/me/prefs')
-    @validate(validated_prefs=PREFS_JSON_VALIDATOR)
     def PATCH_prefs(self, validated_prefs):
         user_prefs = c.user.preferences()
         for short_name, new_value in validated_prefs.iteritems():
