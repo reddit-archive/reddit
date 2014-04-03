@@ -1031,3 +1031,36 @@ class PolicyViewJsonTemplate(ThingJsonTemplate):
 
     def kind(self, wrapped):
         return "Policy"
+
+class TrophyJsonTemplate(ThingJsonTemplate):
+    _data_attrs_ = dict(
+        award_id="award._id36",
+        description="description",
+        name="award.title",
+        id="_id36",
+        icon_40="icon_40",
+        icon_70="icon_70",
+        url="trophy_url",
+    )
+
+    def thing_attr(self, thing, attr):
+        if attr == "icon_40":
+            return "https:" + thing._thing2.imgurl % 40
+        elif attr == "icon_70":
+            return "https:" + thing._thing2.imgurl % 70
+        rel_attr, splitter, attr = attr.partition(".")
+        if attr:
+            return ThingJsonTemplate.thing_attr(self, thing._thing2, attr)
+        else:
+            return ThingJsonTemplate.thing_attr(self, thing, rel_attr)
+
+    def kind(self, thing):
+        return ThingJsonTemplate.kind(self, thing._thing2)
+
+class TrophyListJsonTemplate(ThingJsonTemplate):
+    def data(self, trophies):
+        trophies = [Wrapped(t).render() for t in trophies]
+        return dict(trophies=trophies)
+
+    def kind(self, wrapped):
+        return "TrophyList"

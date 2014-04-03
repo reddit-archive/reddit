@@ -73,4 +73,6 @@ api('createsubreddit', SubredditSettingsTemplate)
 
 api('modaction', ModActionTemplate)
 
+api('trophy', TrophyJsonTemplate)
+
 tpm.add_handler('usertableitem', 'api-html', UserItemHTMLJsonTemplate())

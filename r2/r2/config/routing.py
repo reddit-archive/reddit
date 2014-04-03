@@ -372,6 +372,8 @@ def make_map():
        requirements=dict(action="authorize"))
     mc("/api/v1/:action", controller="oauth2access",
        requirements=dict(action="access_token"))
+    mc("/api/v1/user/:username/trophies",
+       controller="apiv1", action="usertrophies")
     mc("/api/v1/:action", controller="apiv1")
     mc("/api/v1/me/:action", controller="apiv1")
 

@@ -29,14 +29,19 @@ from r2.controllers.reddit_base import (
     OAuth2ResourceController,
 )
 from r2.lib.base import abort
-from r2.lib.jsontemplates import IdentityJsonTemplate, PrefsJsonTemplate
+from r2.lib.jsontemplates import (
+    IdentityJsonTemplate,
+    PrefsJsonTemplate,
+    TrophyListJsonTemplate,
+)
 from r2.lib.validator import (
     validate,
+    VAccountByName,
     VContentLang,
     VList,
     VValidatedJSON,
 )
-from r2.models import Account
+from r2.models import Account, Trophy
 import r2.lib.errors as errors
 import r2.lib.validator.preferences as vprefs
 
@@ -85,6 +90,37 @@ class APIv1Controller(OAuth2ResourceController):
         """Return the preference settings of the logged in user"""
         resp = PrefsJsonTemplate(fields).data(c.oauth_user)
         return self.api_wrapper(resp)
+
+    def _get_usertrophies(self, user):
+        trophies = Trophy.by_account(user)
+        def visible_trophy(trophy):
+            return trophy._thing2.awardtype != 'invisible'
+        trophies = filter(visible_trophy, trophies)
+        resp = TrophyListJsonTemplate().render(trophies)
+        return self.api_wrapper(resp.finalize())
+
+    @require_oauth2_scope("read")
+    @validate(
+        user=VAccountByName('username'),
+    )
+    @api_doc(
+        section=api_section.users,
+        uri='/api/v1/user/{username}/trophies',
+        extensions=['json'],
+    )
+    def GET_usertrophies(self, user):
+        """Return a list of trophies for the a given user."""
+        return self._get_usertrophies(user)
+
+    @require_oauth2_scope("identity")
+    @api_doc(
+        section=api_section.account,
+        uri='/api/v1/me/trophies',
+        extensions=['json'],
+    )
+    def GET_trophies(self):
+        """Return a list of trophies for the current user."""
+        return self._get_usertrophies(c.oauth_user)
 
     PREFS_JSON_VALIDATOR = VValidatedJSON("json", PREFS_JSON_SPEC,
                                           body=True)
