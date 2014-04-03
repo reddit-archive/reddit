@@ -1097,7 +1097,8 @@ class OAuth2ResourceController(MinimalController):
             account = Account._byID36(access_token.user_id, data=True)
             require(account)
             require(not account._deleted)
-            c.oauth_user = account
+            c.user = c.oauth_user = account
+            c.user_is_loggedin = True
         except RequirementException:
             self._auth_error(401, "invalid_token")
 
@@ -1116,9 +1117,6 @@ class OAuth2ResourceController(MinimalController):
     def check_for_bearer_token(self):
         if self._get_bearer_token(strict=False):
             self.authenticate_with_token()
-            if c.oauth_user:
-                c.user = c.oauth_user
-                c.user_is_loggedin = True
 
     def _auth_error(self, code, error):
         abort(code, headers=[("WWW-Authenticate", 'Bearer realm="reddit", error="%s"' % error)])
