@@ -314,11 +314,11 @@ class OAuth2AccessController(MinimalController):
 
 def require_oauth2_scope(*scopes):
     def oauth2_scope_wrap(fn):
-        fn.oauth2_perms = {"allowed_scopes": scopes}
+        fn.oauth2_perms = {"required_scopes": scopes, "oauth2_allowed": True}
         return fn
     return oauth2_scope_wrap
 
 
 def allow_oauth2_access(fn):
-    fn.oauth2_perms = {"allowed_scopes": []}
+    fn.oauth2_perms = {"required_scopes": [], "oauth2_allowed": True}
     return fn

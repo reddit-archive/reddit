@@ -1104,10 +1104,10 @@ class OAuth2ResourceController(MinimalController):
 
         handler = self._get_action_handler()
         if handler:
-            oauth2_perms = getattr(handler, "oauth2_perms", None)
-            if oauth2_perms:
+            oauth2_perms = getattr(handler, "oauth2_perms", {})
+            if oauth2_perms.get("oauth2_allowed", False):
                 grant = OAuth2Scope(access_token.scope)
-                required = set(oauth2_perms['allowed_scopes'])
+                required = set(oauth2_perms['required_scopes'])
                 if not grant.has_access(c.site.name, required):
                     self._auth_error(403, "insufficient_scope")
                 c.oauth_scope = grant
