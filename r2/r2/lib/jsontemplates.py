@@ -1032,6 +1032,18 @@ class PolicyViewJsonTemplate(ThingJsonTemplate):
     def kind(self, wrapped):
         return "Policy"
 
+class KarmaListJsonTemplate(ThingJsonTemplate):
+    def data(self, karmas):
+        karmas = [{
+            'sr': label,
+            'link_karma': lc,
+            'comment_karma': cc,
+        } for label, title, lc, cc in karmas]
+        return karmas
+
+    def kind(self, wrapped):
+        return "KarmaList"
+
 class TrophyJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = dict(
         award_id="award._id36",

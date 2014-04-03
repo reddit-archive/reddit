@@ -197,7 +197,7 @@ class Account(Thing):
         karma = self.link_karma
         return max(karma, 1) if karma > -1000 else karma
 
-    def all_karmas(self):
+    def all_karmas(self, include_old=True):
         """returns a list of tuples in the form (name, hover-text, link_karma,
         comment_karma)"""
         link_suffix = '_link_karma'
@@ -218,7 +218,7 @@ class Account(Thing):
 
         old_link_karma = self._t.get('link_karma', 0)
         old_comment_karma = self._t.get('comment_karma', 0)
-        if old_link_karma or old_comment_karma:
+        if include_old and (old_link_karma or old_comment_karma):
             karmas.append((_('ancient history'),
                            _('really obscure karma from before it was cool to track per-subreddit'),
                            old_link_karma, old_comment_karma))

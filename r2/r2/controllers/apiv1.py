@@ -33,6 +33,7 @@ from r2.lib.jsontemplates import (
     IdentityJsonTemplate,
     PrefsJsonTemplate,
     TrophyListJsonTemplate,
+    KarmaListJsonTemplate,
 )
 from r2.lib.validator import (
     validate,
@@ -121,6 +122,18 @@ class APIv1Controller(OAuth2ResourceController):
     def GET_trophies(self):
         """Return a list of trophies for the current user."""
         return self._get_usertrophies(c.oauth_user)
+
+    @require_oauth2_scope("mysubreddits")
+    @api_doc(
+        section=api_section.account,
+        uri='/api/v1/me/karma',
+        extensions=['json'],
+    )
+    def GET_karma(self):
+        """Return a breakdown of subreddit karma."""
+        karmas = c.oauth_user.all_karmas(include_old=False)
+        resp = KarmaListJsonTemplate().render(karmas)
+        return self.api_wrapper(resp.finalize())
 
     PREFS_JSON_VALIDATOR = VValidatedJSON("json", PREFS_JSON_SPEC,
                                           body=True)
