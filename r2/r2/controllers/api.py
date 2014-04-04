@@ -2964,6 +2964,22 @@ class ApiController(RedditController):
             form.set_html(".status", "some other award has that codename")
             pass
 
+        url_ok = True
+
+        if not imgurl.startswith("//"):
+            url_ok = False
+            form.set_html(".status", "the url must be protocol-relative")
+
+        try:
+            imgurl % 1
+        except TypeError:
+            url_ok = False
+            form.set_html(".status", "the url must have a %d for size")
+
+        if not url_ok:
+            c.errors.add(errors.BAD_URL, field="imgurl")
+            form.has_errors("imgurl", errors.BAD_URL)
+
         if form.has_error():
             return
 
