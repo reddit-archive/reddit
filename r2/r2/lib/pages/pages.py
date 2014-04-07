@@ -1156,14 +1156,13 @@ class SearchPage(BoringPage):
     extra_page_classes = ['search-page']
 
     def __init__(self, pagename, prev_search, elapsed_time,
-                 num_results, search_params={},
+                 search_params={},
                  simple=False, restrict_sr=False, site=None,
                  syntax=None, converted_data=None, facets={}, sort=None,
                  recent=None,
                  *a, **kw):
         self.searchbar = SearchBar(prev_search=prev_search,
                                    elapsed_time=elapsed_time,
-                                   num_results=num_results,
                                    search_params=search_params,
                                    show_feedback=True, site=site,
                                    simple=simple, restrict_sr=restrict_sr,
@@ -1554,14 +1553,13 @@ class SubredditsPage(Reddit):
     self.searchbar"""
     searchbox    = False
     submit_box   = False
-    def __init__(self, prev_search = '', num_results = 0, elapsed_time = 0,
+    def __init__(self, prev_search = '', elapsed_time = 0,
                  title = '', loginbox = True, infotext = None, show_interestbar=False,
                  search_params = {}, *a, **kw):
         Reddit.__init__(self, title = title, loginbox = loginbox, infotext = infotext,
                         *a, **kw)
         self.searchbar = SearchBar(prev_search = prev_search,
                                    elapsed_time = elapsed_time,
-                                   num_results = num_results,
                                    header = _('search subreddits by name'),
                                    search_params = {},
                                    simple=True,
@@ -2482,9 +2480,11 @@ class SearchForm(Templated):
 
 class SearchBar(Templated):
     """More detailed search box for /search and /subreddits pages.
-    Displays the previous search as well as info of the elapsed_time
-    and num_results if any."""
-    def __init__(self, header=None, num_results=0, prev_search='',
+
+    Displays the previous search as well
+
+    """
+    def __init__(self, header=None, prev_search='',
                  elapsed_time=0, search_params={}, show_feedback=False,
                  simple=False, restrict_sr=False, site=None, syntax=None,
                  subreddit_search=False, converted_data=None, facets={},
@@ -2496,12 +2496,6 @@ class SearchBar(Templated):
         self.prev_search  = prev_search
         self.elapsed_time = elapsed_time
         self.show_feedback = show_feedback
-
-        # All results are approximate unless there are fewer than 10.
-        if num_results > 10:
-            self.num_results = (num_results / 10) * 10
-        else:
-            self.num_results = num_results
 
         Templated.__init__(self, search_params=search_params,
                            simple=simple, restrict_sr=restrict_sr,

@@ -33,17 +33,4 @@
     ${SearchForm(prev_search = thing.prev_search,
                  search_params = thing.search_params)}
   </div>
-
-  %if thing.prev_search and thing.elapsed_time > 0:
-    <div class="summary">
-      <%
-         label = _("about %(num)d results in %(second)s.")
-         seconds = strings.float_label % \
-              dict(num=thing.elapsed_time,
-                   thing=ungettext('second', 'seconds', 2))
-       %>
-      ${label % dict(num=thing.num_results, second=seconds)}
-    </div>
-    <div class="clearleft"></div>
-  %endif
 </div>

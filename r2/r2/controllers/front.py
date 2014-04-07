@@ -843,7 +843,6 @@ class FrontController(RedditController):
         res = SubredditsPage(content=spane,
                              prev_search=query,
                              elapsed_time=etime,
-                             num_results=results.hits,
                              # update if we ever add sorts
                              search_params={},
                              title=_("search results"),
@@ -908,7 +907,7 @@ class FrontController(RedditController):
                 else:
                     cleanup_message = strings.completely_invalid_search_query
 
-            res = SearchPage(_('search results'), query, etime, results.hits,
+            res = SearchPage(_('search results'), query, etime,
                              content=spane,
                              nav_menus=[SearchSortMenu(default=sort),
                                         TimeMenu(default=recent)],
