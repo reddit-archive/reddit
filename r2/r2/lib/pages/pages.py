@@ -3505,7 +3505,7 @@ class PromoteLinkForm(Templated):
         message = _("Need some ideas on how to showcase your brand? "
                     "[Here's a slideshow](%(link)s) on ways brands used "
                     "reddit ads last year.")
-        message %= {'link': 'http://www.slideshare.net/MikeCole1/brands-that-were-awesome-on-reddit-2013-30801823'}
+        message %= {'link': 'http://www.slideshare.net/reddit/redditthing'}
         self.infobar = InfoBar(message=message)
 
         if campaigns:
