@@ -855,12 +855,6 @@ class Subreddit(Thing, Printable, BaseSite):
         lookup = getattr(cls, 'reverse_%s_ids' % query_param)
         return lookup(user)
 
-    def is_subscriber_defaults(self, user):
-        if user.has_subscribed:
-            return self.is_subscriber(user)
-        else:
-            return self in self.default_subreddits(ids = False)
-
     @classmethod
     def subscribe_defaults(cls, user):
         if not user.has_subscribed:
