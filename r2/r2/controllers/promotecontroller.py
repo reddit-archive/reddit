@@ -668,8 +668,7 @@ class PromoteApiController(ApiController):
                        business_days=True,
                        sponsor_override=True),
                    link=VLink('link_id36'),
-                   bid=VBid('bid', min=0, max=g.max_promote_bid,
-                            coerce=False, error=errors.BAD_BID),
+                   bid=VFloat('bid', coerce=False),
                    sr=VSubmitSR('sr', promotion=True),
                    campaign_id36=nop("campaign_id36"),
                    targeting=VLength("targeting", 10),
@@ -715,7 +714,14 @@ class PromoteApiController(ApiController):
             return abort(404, 'not found')
 
         if priority.cpm:
-            if form.has_errors('bid', errors.BAD_BID):
+            min_bid = 0 if c.user_is_sponsor else g.min_promote_bid
+            max_bid = None if c.user_is_sponsor else g.max_promote_bid
+
+            if bid is None or bid < min_bid or (max_bid and bid > max_bid):
+                c.errors.add(errors.BAD_BID, field='bid',
+                             msg_params={'min': min_bid,
+                                         'max': max_bid or g.max_promote_bid})
+                form.has_errors('bid', errors.BAD_BID)
                 return
 
             # you cannot edit the bid of a live ad unless it's a freebie
@@ -726,13 +732,6 @@ class PromoteApiController(ApiController):
                 form.has_errors('bid', errors.BID_LIVE)
                 return
 
-            min_bid = 0 if c.user_is_sponsor else g.min_promote_bid
-            if bid is None or bid < min_bid:
-                c.errors.add(errors.BAD_BID, field='bid',
-                             msg_params={'min': min_bid,
-                                         'max': g.max_promote_bid})
-                form.has_errors('bid', errors.BAD_BID)
-                return
         else:
             bid = 0.   # Set bid to 0 as dummy value
 
