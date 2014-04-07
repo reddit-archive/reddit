@@ -67,7 +67,6 @@ from r2.lib.validator import (
     validatedForm,
     ValidCard,
     ValidIP,
-    VBid,
     VBoolean,
     VByName,
     VDate,

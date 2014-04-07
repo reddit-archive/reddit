@@ -1530,10 +1530,6 @@ class VFloat(VNumber):
     def cast(self, val):
         return float(val)
 
-class VBid(VFloat):
-    def _set_error(self):
-        self.set_error(self.error, msg_params=dict(min=self.min, max=self.max))
-
 class VCssName(Validator):
     """
     returns a name iff it consists of alphanumeric characters and
