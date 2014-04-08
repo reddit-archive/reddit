@@ -107,7 +107,6 @@ class APIv1Controller(OAuth2ResourceController):
     @api_doc(
         section=api_section.users,
         uri='/api/v1/user/{username}/trophies',
-        extensions=['json'],
     )
     def GET_usertrophies(self, user):
         """Return a list of trophies for the a given user."""
@@ -117,7 +116,6 @@ class APIv1Controller(OAuth2ResourceController):
     @api_doc(
         section=api_section.account,
         uri='/api/v1/me/trophies',
-        extensions=['json'],
     )
     def GET_trophies(self):
         """Return a list of trophies for the current user."""
@@ -127,7 +125,6 @@ class APIv1Controller(OAuth2ResourceController):
     @api_doc(
         section=api_section.account,
         uri='/api/v1/me/karma',
-        extensions=['json'],
     )
     def GET_karma(self):
         """Return a breakdown of subreddit karma."""
