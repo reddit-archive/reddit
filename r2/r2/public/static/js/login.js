@@ -209,6 +209,7 @@ r.ui.RegisterForm = function() {
     this.$submit = this.$el.find('.submit button')
 }
 r.ui.RegisterForm.prototype = $.extend(new r.ui.Form(), {
+    maxName: 0,
     usernameChanged: function() {
         var name = this.$user.val()
         if (name == this._priorName) {
@@ -218,12 +219,20 @@ r.ui.RegisterForm.prototype = $.extend(new r.ui.Form(), {
         }
 
         this.$el.find('.error.field-user').hide()
+        this.$el.removeClass('name-checking name-available name-taken')
+
+        this.maxName = Math.max(this.maxName, name.length)
+        if (name && this.maxName >= 3) {
+            this.$el.addClass('name-checking')
+            this.checkUsernameDebounced()
+        }
+
         this.$submit.attr('disabled', false)
-        this.checkUsernameDebounced(name)
-        this.$el.toggleClass('name-checking', !!name)
     },
 
-    checkUsername: function(name) {
+    checkUsername: function() {
+        var name = this.$user.val()
+
         if (name) {
             $.ajax({
                 url: '/api/username_available.json',
@@ -241,9 +250,7 @@ r.ui.RegisterForm.prototype = $.extend(new r.ui.Form(), {
             this.showErrors(result.json.errors)
             this.$submit.attr('disabled', true)
         } else {
-            this.$el
-                .removeClass('name-available name-taken')
-                .addClass(result ? 'name-available' : 'name-taken')
+            this.$el.addClass(result ? 'name-available' : 'name-taken')
             this.$submit.attr('disabled', result == false)
         }
     },

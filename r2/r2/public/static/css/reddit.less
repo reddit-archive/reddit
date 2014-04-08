@@ -2701,6 +2701,16 @@ li.searchfacet {
 }
 
 .user-form .error {
+    display: inline-block;
+    margin-top: 2px;
+    line-height: 16px;
+    color: inherit;
+    font-size: inherit;
+}
+
+/* Form-level errors. */
+.user-form .error.field-ratelimit,
+.user-form .error.field-vdelay {
     display: block;
 }
 
@@ -2726,6 +2736,7 @@ li.searchfacet {
     border: 1px solid #A0A0A0;
     margin-top: 2px; 
     margin-bottom: 2px; 
+    margin-right: 10px;
     padding: 1px;
 }
 
@@ -2750,7 +2761,7 @@ li.searchfacet {
 }
 
 .register-form.name-taken .notice-taken, .register-form.name-available .notice-available {
-    display: block;
+    display: inline-block;
     margin-top: 2px;
 }
 
@@ -2760,12 +2771,10 @@ li.searchfacet {
 }
 
 .register-form.name-checking {
-    .notice-taken, .notice-available {
-        opacity: .5;
-    }
-
     .name-entry .throbber {
         display: inline-block;
+        margin-left: -1px;
+        margin-top: 2px;
     }
 }
 
@@ -6112,7 +6121,8 @@ dd { margin-left: 20px;  }
 .users-online:before,
 .notice-taken:before,
 .notice-available:before,
-.info-notice:before {
+.info-notice:before,
+.user-form .error:before {
     height: 16px;
     width: 16px;
     display: block;
@@ -6199,7 +6209,8 @@ dd { margin-left: 20px;  }
     margin-right: 3px;
 }
 
-.notice-taken:before {
+.notice-taken:before,
+.user-form .error:before {
     background-image: url(../icon-circle-exclamation.png);  /* SPRITE */
 }
 

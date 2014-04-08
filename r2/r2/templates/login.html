@@ -111,8 +111,6 @@
           <% iden = hasattr(thing, "captcha") and thing.captcha.iden or '' %>
           ${captchagen(iden, tabulate=True, label=False, size=30, tabindex=tabindex)}
           %endif
-          ${error_field("RATELIMIT", "ratelimit")}
-          ${error_field("RATELIMIT", "vdelay")}
         </li>
       %endif
       <li>
@@ -135,6 +133,10 @@
         </button>
         <span class="throbber"></span>
         <span class="status"></span>
+        %if register:
+          ${error_field("RATELIMIT", "ratelimit")}
+          ${error_field("RATELIMIT", "vdelay")}
+        %endif
       </p>
     </div>
   </form>
