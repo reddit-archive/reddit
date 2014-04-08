@@ -86,11 +86,13 @@ class AdminNotesSidebar(Templated):
     EMPTY_MESSAGE = {
         "domain": N_("No notes for this domain"),
         "ip": N_("No notes for this IP address"),
+        "subreddit": N_("No notes for this subreddit"),
     }
 
     SYSTEMS = {
         "domain": N_("domain"),
         "ip": N_("IP address"),
+        "subreddit": N_("subreddit"),
     }
 
     def __init__(self, system, subject):
