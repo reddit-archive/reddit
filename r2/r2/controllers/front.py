@@ -340,6 +340,12 @@ class FrontController(RedditController):
                 age = c.start_time - article._date
                 if article.promoted or age.days < g.REPLY_AGE_LIMIT:
                     display = True
+
+            if article.promoted:
+                geotargeted, city_target = promote.is_geotargeted_promo(article)
+                if geotargeted:
+                    displayPane.append(GeotargetNotice(city_target=city_target))
+
             displayPane.append(UserText(item=article, creating=True,
                                         post_form='comment',
                                         display=display,

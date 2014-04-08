@@ -475,6 +475,24 @@ def is_live_promo(link, campaign):
     return is_promoted(link) and is_scheduled_promo(now, link, campaign)
 
 
+def _is_geotargeted_promo(link):
+    campaigns = live_campaigns_by_link(link)
+    geotargeted = filter(lambda camp: camp.location, campaigns)
+    city_target = any(camp.location.metro for camp in geotargeted)
+    return bool(geotargeted), city_target
+
+
+def is_geotargeted_promo(link):
+    key = 'geotargeted_promo_%s' % link._id
+    from_cache = g.cache.get(key)
+    if not from_cache:
+        ret = _is_geotargeted_promo(link)
+        g.cache.set(key, ret, time=60)
+        return ret
+    else:
+        return from_cache
+
+
 def get_promos(date, sr_names=None, link=None):
     pws = PromotionWeights.get_campaigns(date, sr_names=sr_names, link=link)
     campaign_ids = {pw.promo_idx for pw in pws}

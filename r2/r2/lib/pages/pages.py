@@ -4392,3 +4392,19 @@ class TrendingSubredditsBar(Templated):
         self.comment_count = comment_count
         self.comment_label, self.comment_label_cls = \
             comment_label(comment_count)
+
+
+class GeotargetNotice(Templated):
+    def __init__(self, city_target=False):
+        self.targeting_level = "city" if city_target else "country"
+        if city_target:
+            text = _("this promoted link uses city level targeting and may "
+                     "have been shown to you because of your location. "
+                     "([learn more](%(link)s))")
+        else:
+            text = _("this promoted link uses country level targeting and may "
+                     "have been shown to you because of your location. "
+                     "([learn more](%(link)s))")
+        more_link = "/wiki/targetingbycountrycity"
+        self.text = text % {"link": more_link}
+        Templated.__init__(self)
