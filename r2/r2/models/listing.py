@@ -277,6 +277,13 @@ class LinkListing(Listing):
 
         self.show_nums = kw.get('show_nums', False)
 
+    def listing(self, *args, **kwargs):
+        wrapped = Listing.listing(self, *args, **kwargs)
+        self.rank_width = len(str(self.max_num)) * 1.1
+        self.midcol_width = max(len(str(self.max_score)), 2) + 1.1
+        return wrapped
+
+
 class NestedListing(Listing):
     def __init__(self, *a, **kw):
         Listing.__init__(self, *a, **kw)

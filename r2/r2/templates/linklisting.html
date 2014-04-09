@@ -24,10 +24,10 @@
 ## without late rendering or blasting style attributes everywhere
 <style>
   body > .content .link .rank {
-    width: ${len(str(thing.max_num)) * 1.1}ex
+    width: ${thing.rank_width}ex
   }
   body > .content .link .midcol {
-    width: ${max(len(str(thing.max_score)), 2) + 1.1}ex
+    width: ${thing.midcol_width}ex
   }
 </style>
 <%include file="listing.html"/>
