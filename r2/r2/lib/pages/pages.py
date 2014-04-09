@@ -2042,10 +2042,8 @@ class SubredditTopBar(CachedTemplate):
                        type='flatlist', separator = '-',
                        css_class = 'sr-bar')
 
-    def popular_reddits(self, exclude=[]):
-        exclusions = set(exclude)
-        buttons = [SubredditButton(sr)
-                   for sr in self.pop_reddits if sr not in exclusions]
+    def popular_reddits(self):
+        buttons = [SubredditButton(sr) for sr in self.pop_reddits]
 
         return NavMenu(buttons,
                        type='flatlist', separator = '-',
@@ -2080,10 +2078,6 @@ class SubredditTopBar(CachedTemplate):
             menus.append(self.popular_reddits())
         else:
             menus.append(self.subscribed_reddits())
-            sep = '<span class="separator">&nbsp;&ndash;&nbsp;</span>'
-            menus.append(RawString(sep))
-
-            menus.append(self.popular_reddits(exclude=self.my_reddits))
 
         return menus
 
