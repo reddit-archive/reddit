@@ -1437,7 +1437,7 @@ body.with-listing-chooser.explore-page #header .pagename {
         min-height: @min-uncompressed-height - 10px;
     }
 
-    &.compressed .link {
+    body.compressed-display & .link {
         padding-top: 7px;
         padding-bottom: 7px;
         min-height: @min-compressed-height - 14px;
@@ -1447,7 +1447,7 @@ body.with-listing-chooser.explore-page #header .pagename {
 .organic-listing.show-placeholder.loading {
     display: block;
     height: @min-uncompressed-height;
-    &.compressed {
+    body.compressed-display & {
         height: @min-compressed-height;
     }
     opacity: .5;

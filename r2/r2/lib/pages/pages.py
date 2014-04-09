@@ -701,6 +701,9 @@ class Reddit(Templated):
             if c.user.pref_collapse_left_bar:
                 classes.add('listing-chooser-collapsed')
 
+        if c.user_is_loggedin and c.user.pref_compress:
+            classes.add('compressed-display')
+
         if self.extra_page_classes:
             classes.update(self.extra_page_classes)
         if self.supplied_page_classes:

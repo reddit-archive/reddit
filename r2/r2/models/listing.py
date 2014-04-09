@@ -314,7 +314,6 @@ class SpotlightListing(Listing):
         self.show_nums  = True
         self._parent_max_num   = kw.get('max_num', 0)
         self._parent_max_score = kw.get('max_score', 0)
-        self.compress_display = c.user_is_loggedin and c.user.pref_compress
         self.interestbar = kw.get('interestbar')
         self.interestbar_prob = kw.get('interestbar_prob', 0.)
         self.show_promo = kw.get('show_promo', False)
