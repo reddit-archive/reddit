@@ -170,7 +170,7 @@ ${parent.thing_data_attributes(what)} data-ups="${what.upvotes}" data-downs="${w
 </%def>
 
 <%def name="subreddit()" buffered="True">
-  ${plain_link(thing.subreddit.name, thing.subreddit_path, sr_path = False,
+  ${plain_link('/r/' + thing.subreddit.name, thing.subreddit_path, sr_path = False,
                cname = False, _class = "subreddit hover may-blank")}
 </%def>
 
