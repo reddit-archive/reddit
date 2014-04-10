@@ -1,6 +1,10 @@
 r.WebSocket = function (url) {
     this._url = url
     this._connectionAttempts = 0
+
+    this.on({
+        'message:refresh': this._onRefresh,
+    }, this)
 }
 _.extend(r.WebSocket.prototype, Backbone.Events, {
     _backoffTime: 2000,
@@ -36,6 +40,12 @@ _.extend(r.WebSocket.prototype, Backbone.Events, {
         var parsed = JSON.parse(ev.data)
         r.debug('websocket: received "' + parsed.type + '" message')
         this.trigger('message message:' + parsed.type, parsed.payload)
+    },
+
+    _onRefresh: function () {
+        // delay a random amount to reduce thundering herd
+        var delay = Math.random() * 300 * 1000
+        setTimeout(function () { location.reload() }, delay)
     },
 
     _onClose: function (ev) {
