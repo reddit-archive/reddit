@@ -144,6 +144,14 @@
       <p>${checkbox(_("show me new links on the front page"), "organic")}</p>
 %endif
 
+      <p>
+        ${checkbox(_("show trending subreddits on the front page"), "show_trending")}
+        &#32;
+        <span class="little gray">
+          ${_("(a list of popular and notable subreddits to check out)")}
+        </span>
+      </p>
+
       <p>${checkbox(_("show me links I've recently viewed"), "clickgadget")}</p>
       <p>${checkbox(_("compress the link display"), "compress")}</p>
       <p>${checkbox(_("show additional details in the domain text when available"), "domain_details")}

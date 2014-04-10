@@ -345,6 +345,9 @@ class HotController(ListingWithPromos):
 
     @classmethod
     def trending_info(cls):
+        if not c.user.pref_show_trending:
+            return None
+
         trending_data = trending.get_trending_subreddits()
 
         if not trending_data:

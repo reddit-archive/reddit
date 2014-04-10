@@ -66,6 +66,7 @@ PREFS_VALIDATORS = dict(
     pref_show_adbox=VBoolean("show_adbox"),
     pref_show_sponsors=VBoolean("show_sponsors"),
     pref_show_sponsorships=VBoolean("show_sponsorships"),
+    pref_show_trending=VBoolean("show_trending"),
     pref_highlight_new_comments=VBoolean("highlight_new_comments"),
     pref_monitor_mentions=VBoolean("monitor_mentions"),
 )

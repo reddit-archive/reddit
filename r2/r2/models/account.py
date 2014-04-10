@@ -93,6 +93,7 @@ class Account(Thing):
                      pref_show_adbox = True,
                      pref_show_sponsors = True, # sponsored links
                      pref_show_sponsorships = True,
+                     pref_show_trending=True,
                      pref_highlight_new_comments = True,
                      pref_monitor_mentions=True,
                      pref_collapse_left_bar=False,
