@@ -251,8 +251,8 @@ class AuthorizeNetRequest(SimpleXMLObject):
 
     @property
     def merchantAuthentication(self):
-        return Auth(name=g.authorizenetname,
-                    transactionKey=g.authorizenetkey)
+        return Auth(name=g.secrets['authorizenetname'],
+                    transactionKey=g.secrets['authorizenetkey'])
 
     def _wrapper(self, content):
         return ('<?xml version="1.0" encoding="utf-8"?>' +
