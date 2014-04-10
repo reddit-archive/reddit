@@ -1083,7 +1083,7 @@ class StripeController(GoldPaymentController):
 
 class CoinbaseController(GoldPaymentController):
     name = 'coinbase'
-    webhook_secret = g.COINBASE_WEBHOOK_SECRET
+    webhook_secret = g.secrets['coinbase_webhook']
     event_type_mappings = {
         'completed': 'succeeded',
         'cancelled': 'cancelled',
