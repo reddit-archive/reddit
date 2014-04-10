@@ -43,8 +43,12 @@ def update_trending_subreddits():
                    "not set. Not updating.", g.config['trending_sr'])
         return
 
-    iq = iter(trending_sr.get_links('new', 'all'))
-    link = Thing._by_fullname(next(iq), data=True)
+    link = _get_newest_link(trending_sr)
+    if not link:
+        g.log.info("Unable to find active link in subreddit %r. Not updating.",
+                   g.config['trending_sr'])
+        return
+
     subreddit_names = _SUBREDDIT_RE.findall(link.title)
     trending_data = {
         'subreddit_names': subreddit_names,
@@ -53,3 +57,12 @@ def update_trending_subreddits():
     }
     NamedGlobals.set(TRENDING_SUBREDDITS_KEY, trending_data)
     g.log.debug("Trending subreddit data set to %r", trending_data)
+
+
+def _get_newest_link(sr):
+    for fullname in sr.get_links('new', 'all'):
+        link = Thing._by_fullname(fullname, data=True)
+        if not link._spam and not link._deleted:
+            return link
+
+    return None
