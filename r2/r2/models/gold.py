@@ -478,7 +478,7 @@ def account_from_stripe_customer_id(stripe_customer_id):
 
 @memoize("subscription-details", time=60)
 def _get_subscription_details(stripe_customer_id):
-    stripe.api_key = g.STRIPE_SECRET_KEY
+    stripe.api_key = g.secrets['stripe_secret_key']
     customer = stripe.Customer.retrieve(stripe_customer_id)
 
     if getattr(customer, 'deleted', False):

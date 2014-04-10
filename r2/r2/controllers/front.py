@@ -1441,7 +1441,7 @@ class FormsController(RedditController):
             summary=summary,
             price=price,
             months=months,
-            stripe_key=g.STRIPE_PUBLIC_KEY,
+            stripe_key=g.secrets['stripe_public_key'],
             passthrough=passthrough,
             description=desc,
             period=None,

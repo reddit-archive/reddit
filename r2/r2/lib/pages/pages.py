@@ -2256,7 +2256,7 @@ class GoldPayment(Templated):
                 paypal_buttonid = g.PAYPAL_BUTTONID_AUTORENEW_BYYEAR
 
             quantity = None
-            stripe_key = g.STRIPE_PUBLIC_KEY
+            stripe_key = g.secrets['stripe_public_key']
             coinbase_button_id = None
 
         elif goldtype == "onetime":
@@ -2275,7 +2275,7 @@ class GoldPayment(Templated):
             summary = strings.gold_summary_onetime % dict(user=c.user.name,
                                      amount=Score.somethings(months, "month"))
 
-            stripe_key = g.STRIPE_PUBLIC_KEY
+            stripe_key = g.secrets['stripe_public_key']
 
         else:
             if months < 12:
@@ -2339,7 +2339,7 @@ class GoldPayment(Templated):
             else:
                 raise ValueError("wtf is %r" % goldtype)
 
-            stripe_key = g.STRIPE_PUBLIC_KEY
+            stripe_key = g.secrets['stripe_public_key']
 
         Templated.__init__(self, goldtype=goldtype, period=period,
                            months=months, quantity=quantity,
@@ -2386,7 +2386,7 @@ class GoldSubscription(Templated):
         else:
             self.has_paypal_subscription = False
 
-        self.stripe_key = g.STRIPE_PUBLIC_KEY
+        self.stripe_key = g.secrets['stripe_public_key']
         Templated.__init__(self)
 
 class CreditGild(Templated):

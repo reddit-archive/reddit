@@ -71,7 +71,7 @@ from r2.models import (
     update_gold_transaction,
 )
 
-stripe.api_key = g.STRIPE_SECRET_KEY
+stripe.api_key = g.secrets['stripe_secret_key']
 
 def generate_blob(data):
     passthrough = randstr(15)
@@ -813,7 +813,7 @@ def handle_stripe_error(fn):
 
 class StripeController(GoldPaymentController):
     name = 'stripe'
-    webhook_secret = g.STRIPE_WEBHOOK_SECRET
+    webhook_secret = g.secrets['stripe_webhook']
     event_type_mappings = {
         'charge.succeeded': 'succeeded',
         'charge.failed': 'failed',
@@ -844,7 +844,8 @@ class StripeController(GoldPaymentController):
     @classmethod
     def process_response(cls):
         event_dict = json.loads(request.body)
-        event = stripe.Event.construct_from(event_dict, g.STRIPE_SECRET_KEY)
+        stripe_secret = g.secrets['stripe_secret_key']
+        event = stripe.Event.construct_from(event_dict, stripe_secret)
         status = event.type
 
         if status == 'invoice.created':
