@@ -1125,7 +1125,7 @@ class RedditGiftsController(GoldPaymentController):
     """
 
     name = 'redditgifts'
-    webhook_secret = g.RG_SECRET
+    webhook_secret = g.secrets['redditgifts_webhook']
     event_type_mappings = {'succeeded': 'succeeded'}
 
     def process_response(self):
