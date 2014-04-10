@@ -407,7 +407,7 @@ class IpnController(RedditController):
         parameters = request.POST.copy()
 
         # Make sure it's really PayPal
-        if paypal_secret != g.PAYPAL_SECRET:
+        if paypal_secret != g.secrets['paypal_webhook']:
             log_text("invalid IPN secret",
                      "%s guessed the wrong IPN secret" % request.ip,
                      "warning")
