@@ -299,7 +299,7 @@ function subscribe(reddit_name) {
             }
             $.things(reddit_name).find(".entry").addClass("likes");
             $.request("subscribe", {sr: reddit_name, action: "sub"});
-            r.analytics.fireUITrackingPixel("sub", reddit_name)
+            r.analytics.fireUITrackingPixel("sub", reddit_name, {"has_subd": r.config.has_subscribed})
         }
     };
 };

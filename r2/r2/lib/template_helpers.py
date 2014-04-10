@@ -165,6 +165,7 @@ def js_config(extra_config=None):
         "new_window": bool(c.user.pref_newwindow),
         "vote_hash": c.vote_hash,
         "gold": gold,
+        "has_subscribed": logged and c.user.has_subscribed,
     }
 
     if extra_config:
