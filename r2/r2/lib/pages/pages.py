@@ -3982,6 +3982,11 @@ class PromoteReport(Templated):
         codenames = campaigns_by_name.keys()
         start = (start - promote.timezone_offset).replace(tzinfo=None)
         end = (end - promote.timezone_offset).replace(tzinfo=None)
+
+        # start and end are dates so we need to subtract an hour from end to
+        # only include 24 hours per day
+        end -= datetime.timedelta(hours=1)
+
         hits = traffic_cls.campaign_history(codenames, start, end)
         sr_hits = defaultdict(int)
         fp_hits = defaultdict(int)
