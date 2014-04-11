@@ -541,9 +541,6 @@ def set_iface_lang():
     except (babel.core.UnknownLocaleError, ValueError):
         c.locale = babel.core.Locale.parse(g.lang, sep='-')
 
-    #TODO: add exceptions here for rtl languages
-    if c.lang in ('ar', 'he', 'fa'):
-        c.lang_rtl = True
 
 def set_content_lang():
     if c.user.pref_content_langs != 'all':

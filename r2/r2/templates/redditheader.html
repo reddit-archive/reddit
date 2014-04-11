@@ -33,7 +33,7 @@
 <div id="header" role="banner">
   <a tabindex="1" href="#content" id="jumpToContent">${_('jump to content')}</a>
   ${thing.srtopbar}
-  <div id="header-bottom-${'right' if c.lang_rtl else 'left'}">
+  <div id="header-bottom-left">
     <%
         header_title = c.site.header_title
         d = DefaultSR()
@@ -62,7 +62,7 @@
     %endfor
   </div>
 
-  <div id="header-bottom-${'left' if c.lang_rtl else 'right'}">
+  <div id="header-bottom-right">
     %if not c.user_is_loggedin:
       %if thing.enable_login_cover and not g.read_only_mode:
       <span class="user">

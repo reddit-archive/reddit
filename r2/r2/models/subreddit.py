@@ -170,7 +170,6 @@ class Subreddit(Thing, Printable, BaseSite):
     # attribute, even on a cname. So c.site.static_path should always be
     # the same as g.static_path.
     _defaults = dict(BaseSite._defaults,
-        stylesheet_rtl=None,
         stylesheet_contents='',
         stylesheet_contents_secure='',
         stylesheet_modified=None,

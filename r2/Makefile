@@ -138,9 +138,8 @@ LESS_OUTPUTS := $(addprefix $(STATIC_BUILD_DIR)/, $(patsubst %.less,%.css, $(LES
 MINIFIED_OTHER_STYLESHEETS := $(addprefix $(STATIC_BUILD_DIR)/, $(OTHER_STYLESHEETS))
 
 PROCESSED_STYLESHEETS := $(PROCESSED_SPRITED_STYLESHEETS) $(MINIFIED_OTHER_STYLESHEETS) $(LESS_OUTPUTS)
-RTL_STYLESHEETS := $(PROCESSED_STYLESHEETS:.css=-rtl.css)
 
-CSS_OUTPUTS = $(PROCESSED_STYLESHEETS) $(RTL_STYLESHEETS) $(SPRITES)
+CSS_OUTPUTS = $(PROCESSED_STYLESHEETS) $(SPRITES)
 
 .PHONY: clean_css
 
@@ -173,14 +172,6 @@ $(STATIC_BUILD_DIR)/sprite-%.png $(STATIC_BUILD_DIR)/%.css: $(CSS_SOURCE_DIR)/%.
 	# see above
 	rm -f $(STATIC_BUILD_DIR)/sprite-$*.png $(STATIC_BUILD_DIR)/$*.css
 	$(PYTHON) r2/lib/nymph.py $< $(STATIC_BUILD_DIR)/sprite-$*.png | $(CSS_COMPRESS) > $(STATIC_BUILD_DIR)/$*.css
-
-$(RTL_STYLESHEETS): %-rtl.css : %.css
-	# see above
-	rm -f $@
-	$(SED) -e "s/left/>####</g" \
-	   -e "s/right/left/g" \
-	   -e "s/>####</right/g" \
-	   -e "s/\(margin\|padding\):\s*\([^; ]\+\)\s\+\([^; ]\+\)\s\+\([^; ]\+\)\s\+\([^; ]\+\)/\1:\2 \5 \4 \3/g" $< > $@
 
 clean_css:
 	rm -f $(CSS_OUTPUTS)
