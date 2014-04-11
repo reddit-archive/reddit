@@ -201,7 +201,7 @@ listing_api_doc = partial(
     api_doc,
     section=api_section.listings,
     extends=ListingController.GET_listing,
-    notes=paginated_listing.doc_note,
+    notes=[paginated_listing.doc_note],
     extensions=["json", "xml"],
 )
 

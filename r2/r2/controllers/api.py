@@ -3926,10 +3926,12 @@ class ApiController(RedditController):
         c.user.pref_public_server_seconds = seconds_visibility == "public"
         c.user._commit()
 
+    @require_oauth2_scope("save")
     @noresponse(VGold(),
                 VModhash(),
                 links = VByName('links', thing_cls=Link, multiple=True,
                                 limit=100))
+    @api_doc(api_section.links_and_comments)
     def POST_store_visits(self, links):
         if not c.user.pref_store_visits or not links:
             return

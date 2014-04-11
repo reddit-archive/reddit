@@ -76,6 +76,7 @@ def can_comment_link(article):
             visible_promo(article))
 
 class Validator(object):
+    notes = None
     default_param = None
     def __init__(self, param=None, default=None, post=True, get=True, url=True,
                  body=False, docs=None):
@@ -166,14 +167,18 @@ def _make_validated_kw(fn, simple_vals, param_vals, env):
 def set_api_docs(fn, simple_vals, param_vals, extra_vals=None):
     doc = fn._api_doc = getattr(fn, '_api_doc', {})
     param_info = doc.get('parameters', {})
+    notes = doc.get('notes', [])
     for validator in chain(simple_vals, param_vals.itervalues()):
         param_docs = validator.param_docs()
         if validator.docs:
             param_docs.update(validator.docs)
         param_info.update(param_docs)
+        if validator.notes:
+            notes.append(validator.notes)
     if extra_vals:
         param_info.update(extra_vals)
     doc['parameters'] = param_info
+    doc['notes'] = notes
 
 
 def validate(*simple_vals, **param_vals):
@@ -854,9 +859,15 @@ class VByName(Validator):
 
     def param_docs(self):
         thingtype = (self.thing_cls or Thing).__name__.lower()
-        return {
-            self.param: "[fullname](#fullnames) of a %s" % thingtype,
-        }
+        if self.multiple:
+            return {
+                self.param: ("A comma-separated list of %s [fullnames]"
+                             "(#fullnames)" % thingtype)
+            }
+        else:
+            return {
+                self.param: "[fullname](#fullnames) of a %s" % thingtype,
+            }
 
 class VByNameIfAuthor(VByName):
     def run(self, fullname):
@@ -958,6 +969,7 @@ class VVerifiedUser(VUser):
             raise VerifiedUserRequiredException
 
 class VGold(VUser):
+    notes = "*Requires a subscription to [reddit gold](/gold/about)*"
     def run(self):
         VUser.run(self)
         if not c.user.gold:

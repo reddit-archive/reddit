@@ -641,7 +641,9 @@ def paginated_listing(default_page_size=25, max_page_size=100, backend='sql'):
             return fn(self, **kw)
 
         if hasattr(fn, "_api_doc"):
-            fn._api_doc["notes"] = paginated_listing.doc_note
+            notes = fn._api_doc["notes"] or []
+            notes.append(paginated_listing.doc_note)
+            fn._api_doc["notes"] = notes
 
         return new_fn
     return decorator

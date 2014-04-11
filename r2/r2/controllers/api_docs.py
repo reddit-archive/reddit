@@ -145,6 +145,7 @@ class ApidocsController(RedditController):
                 # append a message to the docstring if supplied
                 notes = docs.get("notes")
                 if notes:
+                    notes = "\n".join(notes)
                     if docs["doc"]:
                         docs["doc"] += "\n\n" + notes
                     else:
