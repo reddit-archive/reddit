@@ -724,6 +724,7 @@ class FrontController(RedditController):
         pane = FlairPane(num, after, reverse, name, user)
         return EditReddit(content=pane, location='flair').render()
 
+    @require_oauth2_scope("modconfig")
     @disable_subreddit_css()
     @validate(location=nop('location'),
               created=VOneOf('created', ('true','false'),

@@ -1060,6 +1060,7 @@ class RedditsController(ListingController):
 
         return reddits
 
+    @require_oauth2_scope("read")
     @listing_api_doc(section=api_section.subreddits,
                      uri='/subreddits/{where}',
                      uri_variants=['/subreddits/popular', '/subreddits/new'])

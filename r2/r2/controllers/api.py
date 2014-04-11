@@ -3528,6 +3528,7 @@ class ApiController(RedditController):
         c.user.pref_frame_commentspanel = False
         c.user._commit()
 
+    @require_oauth2_scope("read")
     @json_validate(query=VPrintable('query', max_length=50),
                    include_over_18=VBoolean('include_over_18', default=True))
     @api_doc(api_section.subreddits, extensions=["json"])
@@ -3630,6 +3631,7 @@ class ApiController(RedditController):
         c.user._commit()
         form.redirect("/prefs/otp")
 
+    @require_oauth2_scope("read")
     @json_validate(query=VLength("query", max_length=50))
     @api_doc(api_section.subreddits, extensions=["json"])
     def GET_subreddits_by_topic(self, responder, query):
@@ -3883,6 +3885,7 @@ class ApiController(RedditController):
         c.user.pref_collapse_left_bar = collapsed
         c.user._commit()
 
+    @require_oauth2_scope("read")
     @validate(srs=VSRByNames("srnames"),
               to_omit=VSRByNames("omit", required=False))
     @api_doc(api_section.subreddits, uri='/api/recommend/sr/{srnames}')
