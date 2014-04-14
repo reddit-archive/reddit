@@ -243,11 +243,22 @@ r.sponsored = {
 
     get_cpm: function($form) {
         var baseCpm = parseInt($("#bid").data("base_cpm")),
-            geotargetCpm = parseInt($("#bid").data("geotarget_cpm")),
-            isGeotarget = $('#country').val() != '' && $('#country').attr('disabled') != 'disabled'
+            geotargetCountryCpm = parseInt($("#bid").data("geotarget_country_cpm")),
+            geotargetMetroCpm = parseInt($("#bid").data("geotarget_metro_cpm")),
+            isCountryGeotarget = $('#country').val() != '' && $('#country').attr('disabled') != 'disabled',
+            isMetroGeotarget = $('#metro').val() !== null && $('#metro').attr('disabled') != 'disabled'
 
-        if (isGeotarget) {
-            return geotargetCpm
+        /*
+           NOTE: checking for country and metro geotargeting use different
+           conditions because the country select has an option "none" with value
+           of "", while the metro select will be disabled when not selected,
+           giving it a value of null
+        */
+
+        if (isMetroGeotarget) {
+            return baseCpm + geotargetMetroCpm
+        } else if (isCountryGeotarget) {
+            return baseCpm + geotargetCountryCpm
         } else {
             return baseCpm
         }
