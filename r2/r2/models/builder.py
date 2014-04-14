@@ -883,11 +883,17 @@ class CommentBuilder(Builder):
                                     for child in visible_children)
                 missing_count = num_children[visible_id] - visible_count
                 missing_depth = depth.get(visible_id, 0) + 1 - offset_depth
-                mc = MoreChildren(self.link, depth=missing_depth,
-                                  parent_id=visible_id)
-                mc.children.extend(missing_children)
-                w = Wrapped(mc)
-                w.count = missing_count
+
+                if missing_depth < self.max_depth:
+                    mc = MoreChildren(self.link, depth=missing_depth,
+                                      parent_id=visible_id)
+                    mc.children.extend(missing_children)
+                    w = Wrapped(mc)
+                    w.count = missing_count
+                else:
+                    mr = MoreRecursion(self.link, depth=missing_depth,
+                                       parent_id=visible_id)
+                    w = Wrapped(mr)
 
                 # attach the MoreChildren
                 parent = wrapped_by_id[visible_id]
