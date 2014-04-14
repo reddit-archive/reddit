@@ -108,31 +108,36 @@
 
     %if thing.can_subscribe:
       ${radio_type("goldtype", "autorenew", _("Buy for yourself, as an ongoing subscription"),
-        "", thing.goldtype == "autorenew")}<br/>
+        "", thing.goldtype == "autorenew")}
+        <label for="goldtype_autorenew"><p class="goldtype-note">${_("Purchase a reddit gold membership for yourself that will automatically renew on a monthly or yearly basis.")}</p></label>
     %endif
 
     %if c.user_is_loggedin:
       ${radio_type("goldtype", "onetime", _("Buy for yourself, as a one-time purchase"),
-        "", thing.goldtype == "onetime")}<br/>
+        "", thing.goldtype == "onetime")}
+        <label for="goldtype_onetime"><p class="goldtype-note">${_("Purchase a reddit gold membership for yourself that lasts a specific amount of time, and will not automatically renew when it expires.")}</p></label>
     %endif
 
     %if c.user_is_loggedin:
       ${radio_type("goldtype", "gift", _("Give reddit gold to someone else"),
-        "", thing.goldtype == "gift")}<br/>
+        "", thing.goldtype == "gift")}
+        <label for="goldtype_gift"><p class="goldtype-note">${_("Purchase a reddit gold membership for another reddit user (whose username you know). This membership will not automatically renew when it expires.")}</p></label>
     %endif
 
     %if c.user_is_loggedin:
       ${radio_type("goldtype", "creddits", _('Buy reddit gold "creddits"'),
-        unsafe("<a href='/wiki/creddits'>details</a>"),
-        thing.goldtype == "creddits")}<br/>
+        "", thing.goldtype == "creddits")}
+        <label for="goldtype_creddits"><p class="goldtype-note">${_("Each creddit acts as a \"voucher\" for one month of reddit gold membership. They're convenient if you give gold to others often (or can also be used on yourself).")}</p></label>
     %endif
 
     ${radio_type("goldtype", "code", _('Buy a reddit gold "gift code"'),
-      "", thing.goldtype == "code")}<br>
+      "", thing.goldtype == "code")}
+    <label for="goldtype_code"><p class="goldtype-note">${_("Purchase a gift code that can be redeemed for a specific-length reddit gold membership. Give it to a friend (even if you don't know their username), or use it yourself.")}</p></label>
 
     %if c.user_is_loggedin:
       ${radio_type("goldtype", "redeem", _("Redeem a reddit gold gift code"),
-        "", thing.goldtype == "redeem")}<br>
+        "", thing.goldtype == "redeem")}
+      <label for="goldtype_redeem"><p class="goldtype-note">${_("If you have a reddit gold gift code, redeem it here to apply the membership to your account.")}</p></label>
     %endif
 
     </%utils:round_field>
