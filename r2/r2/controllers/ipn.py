@@ -31,9 +31,11 @@ import stripe
 
 from r2.controllers.reddit_base import RedditController
 from r2.lib.base import abort
+from r2.lib.emailer import _system_email
 from r2.lib.errors import MessageError
 from r2.lib.filters import _force_unicode, _force_utf8
 from r2.lib.log import log_text
+from r2.lib.pages import GoldGiftCodeEmail
 from r2.lib.strings import strings
 from r2.lib.utils import randstr, timeago
 from r2.lib.validator import (
@@ -58,6 +60,7 @@ from r2.models import (
     append_random_bottlecap_phrase,
     cancel_subscription,
     Comment,
+    Email,
     create_claimed_gold,
     create_gift_gold,
     create_gold_code,
@@ -285,9 +288,15 @@ def send_gift(buyer, recipient, months, days, signed, giftmessage,
 
 
 def send_gold_code(buyer, months, days,
-                   trans_id=None, payer_email='', pennies=0):
+                   trans_id=None, payer_email='', pennies=0, buyer_email=None):
+    if buyer:
+        paying_id = buyer._id
+        buyer_name = buyer.name
+    else:
+        paying_id = buyer_email
+        buyer_name = buyer_email
     code = create_gold_code(trans_id, payer_email,
-                            buyer._id, pennies, days, c.start_time)
+                            paying_id, pennies, days, c.start_time)
     # format the code so it's easier to read (XXXXX-XXXXX)
     split_at = len(code) / 2
     code = code[:split_at] + '-' + code[split_at:]
@@ -299,15 +308,21 @@ def send_gold_code(buyer, months, days,
 
     subject = _('Your gold gift code has been generated!')
     message = _('Here is your gift code for %(amount)s of reddit gold:\n\n'
-                '**%(code)s**\n\nThe recipient (or you!) can enter it at '
+                '%(code)s\n\nThe recipient (or you!) can enter it at '
                 'http://www.reddit.com/gold or go directly to '
                 'http://www.reddit.com/thanks/%(code)s to claim it.'
               ) % {'amount': amount, 'code': code}
-    message = append_random_bottlecap_phrase(message)
 
-    send_system_message(buyer, subject, message, distinguished='gold-auto')
-
-    g.log.info("%s bought a gold code for %s" % (buyer.name, amount))
+    if buyer:
+        # bought by a logged-in user, send a reddit PM
+        message = append_random_bottlecap_phrase(message)
+        send_system_message(buyer, subject, message, distinguished='gold-auto')
+    else:
+        # bought by a logged-out user, send an email
+        contents = GoldGiftCodeEmail(message=message).render(style='email')
+        _system_email(buyer_email, contents, Email.Kind.GOLD_GIFT_CODE)
+                      
+    g.log.info("%s bought a gold code for %s", buyer_name, amount)
     return code
 
 
@@ -484,16 +499,22 @@ class IpnController(RedditController):
             g.log.error("whoops, %s was locked", custom)
             return
 
+        buyer = None
+        buyer_email = None
         buyer_id = payment_blob.get('account_id', None)
-        if not buyer_id:
-            dump_parameters(parameters)
-            raise ValueError("No buyer_id in IPN with custom='%s'" % custom)
-        try:
-            buyer = Account._byID(buyer_id)
-        except NotFound:
-            dump_parameters(parameters)
-            raise ValueError("Invalid buyer_id %d in IPN with custom='%s'"
-                             % (buyer_id, custom))
+        if buyer_id:
+            try:
+                buyer = Account._byID(buyer_id, data=True)
+            except NotFound:
+                dump_parameters(parameters)
+                raise ValueError("Invalid buyer_id %d in IPN with custom='%s'"
+                                 % (buyer_id, custom))
+        else:
+            buyer_email = payment_blob.get('email')
+            if not buyer_email:
+                dump_parameters(parameters)
+                error = "No buyer_id or email in IPN with custom='%s'" % custom
+                raise ValueError(error)
 
         if subscr_id:
             buyer.gold_subscr_id = subscr_id
@@ -554,7 +575,8 @@ class IpnController(RedditController):
             raise ValueError("Got status '%s' in IPN/GC" % payment_blob['status'])
 
         if payment_blob['goldtype'] == 'code':
-            send_gold_code(buyer, months, days, txn_id, payer_email, pennies)
+            send_gold_code(buyer, months, days, txn_id, payer_email,
+                           pennies, buyer_email)
         else:
             # Reuse the old "secret" column as a place to record the goldtype
             # and "custom", just in case we need to debug it later or something
@@ -585,7 +607,7 @@ class Webhook(object):
     def __init__(self, passthrough=None, transaction_id=None, subscr_id=None,
                  pennies=None, months=None, payer_email='', payer_id='',
                  goldtype=None, buyer=None, recipient=None, signed=False,
-                 giftmessage=None, thing=None):
+                 giftmessage=None, thing=None, buyer_email=None):
         self.passthrough = passthrough
         self.transaction_id = transaction_id
         self.subscr_id = subscr_id
@@ -595,6 +617,7 @@ class Webhook(object):
         self.payer_id = payer_id
         self.goldtype = goldtype
         self.buyer = buyer
+        self.buyer_email = buyer_email
         self.recipient = recipient
         self.signed = signed
         self.giftmessage = giftmessage
@@ -603,7 +626,8 @@ class Webhook(object):
     def load_blob(self):
         payment_blob = validate_blob(self.passthrough)
         self.goldtype = payment_blob['goldtype']
-        self.buyer = payment_blob['buyer']
+        self.buyer = payment_blob.get('buyer')
+        self.buyer_email = payment_blob.get('email')
         self.recipient = payment_blob.get('recipient')
         self.signed = payment_blob.get('signed', False)
         self.giftmessage = payment_blob.get('giftmessage')
@@ -667,7 +691,8 @@ class GoldPaymentController(RedditController):
                 # should update gold_table when a cancellation happens
                 reverse_gold_purchase(webhook.transaction_id)
         elif event_type == 'succeeded':
-            if existing and existing.status == 'processed':
+            if (existing and
+                    existing.status in ('processed', 'unclaimed', 'claimed')):
                 g.log.info('POST_goldwebhook skipping %s' % webhook.transaction_id)
                 return
 
@@ -726,22 +751,26 @@ class GoldPaymentController(RedditController):
         months = webhook.months
         goldtype = webhook.goldtype
         buyer = webhook.buyer
+        buyer_email = webhook.buyer_email
         recipient = webhook.recipient
         signed = webhook.signed
         giftmessage = webhook.giftmessage
         thing = webhook.thing
 
+        days = days_from_months(months)
+
+        # locking isn't necessary for code purchases
+        if goldtype == 'code':
+            send_gold_code(buyer, months, days, transaction_id,
+                           payer_email, pennies, buyer_email)
+            # the rest of the function isn't needed for a code purchase
+            return
+
         gold_recipient = recipient or buyer
         with gold_lock(gold_recipient):
             gold_recipient._sync_latest()
-            days = days_from_months(months)
 
-            if goldtype == 'code':
-                send_gold_code(buyer, months, days, transaction_id,
-                               payer_email, pennies)
-                # the rest of the function isn't needed for a code purchase
-                return
-            elif goldtype in ('onetime', 'autorenew'):
+            if goldtype in ('onetime', 'autorenew'):
                 admintools.engolden(buyer, days)
                 if goldtype == 'onetime':
                     subject = "thanks for buying reddit gold!"
@@ -927,8 +956,7 @@ class StripeController(GoldPaymentController):
 
     @classmethod
     @handle_stripe_error
-    def create_customer(cls, form, token):
-        description = c.user.name
+    def create_customer(cls, form, token, description):
         customer = stripe.Customer.create(card=token, description=description)
 
         if (customer['active_card']['address_line1_check'] == 'fail' or
@@ -946,12 +974,13 @@ class StripeController(GoldPaymentController):
 
     @classmethod
     @handle_stripe_error
-    def charge_customer(cls, form, customer, pennies, passthrough):
+    def charge_customer(cls, form, customer, pennies, passthrough,
+                        description):
         charge = stripe.Charge.create(
             amount=pennies,
             currency="usd",
             customer=customer['id'],
-            description='%s-%s' % (passthrough, c.user.name)
+            description='%s-%s' % (passthrough, description),
         )
         return charge
 
@@ -989,8 +1018,7 @@ class StripeController(GoldPaymentController):
         send_system_message(user, subject, message)
         return customer
 
-    @validatedForm(VUser(),
-                   token=nop('stripeToken'),
+    @validatedForm(token=nop('stripeToken'),
                    passthrough=VPrintable("passthrough", max_length=50),
                    pennies=VInt('pennies'),
                    months=VInt("months"),
@@ -1029,7 +1057,11 @@ class StripeController(GoldPaymentController):
                 form.set_html('.status', _('stop trying to trick the form'))
                 return
 
-        customer = self.create_customer(form, token)
+        if c.user_is_loggedin:
+            description = c.user.name
+        else:
+            description = payment_blob["email"]
+        customer = self.create_customer(form, token, description)
         if not customer:
             return
 
@@ -1046,7 +1078,8 @@ class StripeController(GoldPaymentController):
             body = _('Your subscription is being processed and reddit gold '
                      'will be delivered shortly.')
         else:
-            charge = self.charge_customer(form, customer, pennies, passthrough)
+            charge = self.charge_customer(form, customer, pennies,
+                                          passthrough, description)
             if not charge:
                 return
 
@@ -1056,8 +1089,9 @@ class StripeController(GoldPaymentController):
                      'will be delivered shortly.')
 
         form.set_html('.status', status)
-        body = append_random_bottlecap_phrase(body)
-        send_system_message(c.user, subject, body, distinguished='gold-auto')
+        if c.user_is_loggedin:
+            body = append_random_bottlecap_phrase(body)
+            send_system_message(c.user, subject, body, distinguished='gold-auto')
 
     @validatedForm(VUser(),
                    VModhash(),
@@ -1168,18 +1202,19 @@ def validate_blob(custom):
     if not payment_blob:
         raise GoldException('no payment_blob')
 
-    if not ('account_id' in payment_blob and
-            'account_name' in payment_blob):
-        raise GoldException('no account_id')
+    if 'account_id' in payment_blob and 'account_name' in payment_blob:
+        try:
+            buyer = Account._byID(payment_blob['account_id'], data=True)
+            ret['buyer'] = buyer
+        except NotFound:
+            raise GoldException('bad account_id')
 
-    try:
-        buyer = Account._byID(payment_blob['account_id'], data=True)
-        ret['buyer'] = buyer
-    except NotFound:
-        raise GoldException('bad account_id')
-
-    if not buyer.name.lower() == payment_blob['account_name'].lower():
-        raise GoldException('buyer mismatch')
+        if not buyer.name.lower() == payment_blob['account_name'].lower():
+            raise GoldException('buyer mismatch')
+    elif 'email' in payment_blob:
+        ret['email'] = payment_blob['email']
+    else:
+        raise GoldException('no account_id or email')
 
     goldtype = payment_blob['goldtype']
     ret['goldtype'] = goldtype

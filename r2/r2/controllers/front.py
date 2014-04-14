@@ -1457,8 +1457,7 @@ class FormsController(RedditController):
                           show_sidebar=False,
                           content=content).render()
 
-    @validate(VUser(),
-              goldtype=VOneOf("goldtype",
+    @validate(goldtype=VOneOf("goldtype",
                               ("autorenew", "onetime", "creddits", "gift",
                                "code")),
               period=VOneOf("period", ("monthly", "yearly")),
@@ -1467,9 +1466,10 @@ class FormsController(RedditController):
               signed=VBoolean("signed"),
               recipient_name=VPrintable("recipient", max_length=50),
               thing=VByName("thing"),
-              giftmessage=VLength("giftmessage", 10000))
+              giftmessage=VLength("giftmessage", 10000),
+              email=ValidEmails("email", num=1))
     def GET_gold(self, goldtype, period, months,
-                 signed, recipient_name, giftmessage, thing):
+                 signed, recipient_name, giftmessage, thing, email):
 
         if thing:
             thing_sr = Subreddit._byID(thing.sr_id, data=True)
@@ -1481,7 +1481,14 @@ class FormsController(RedditController):
 
         start_over = False
         recipient = None
-        if goldtype == "autorenew":
+        if not c.user_is_loggedin:
+            if goldtype != "code":
+                start_over = True
+            elif months is None or months < 1:
+                start_over = True
+            elif not email:
+                start_over = True
+        elif goldtype == "autorenew":
             if period is None:
                 start_over = True
             elif c.user.has_gold_subscription:
@@ -1509,7 +1516,11 @@ class FormsController(RedditController):
             start_over = True
 
         if start_over:
-            can_subscribe = not c.user.has_gold_subscription
+            can_subscribe = (c.user_is_loggedin and
+                             not c.user.has_gold_subscription)
+            if not can_subscribe and goldtype == "autorenew":
+                goldtype = "creddits"
+                
             return BoringPage(_("reddit gold"),
                               show_sidebar=False,
                               content=Gold(goldtype, period, months, signed,
@@ -1517,9 +1528,12 @@ class FormsController(RedditController):
                                            can_subscribe=can_subscribe)).render()
         else:
             payment_blob = dict(goldtype=goldtype,
-                                account_id=c.user._id,
-                                account_name=c.user.name,
                                 status="initialized")
+            if c.user_is_loggedin:
+                payment_blob["account_id"] = c.user._id
+                payment_blob["account_name"] = c.user.name
+            else:
+                payment_blob["email"] = email
 
             if goldtype == "gift":
                 payment_blob["signed"] = signed
