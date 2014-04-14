@@ -687,17 +687,17 @@ class PromoteApiController(ApiController):
 
         start, end = dates or (None, None)
 
-        author = Account._byID(link.author_id, data=True)
-        cpm = author.cpm_selfserve_pennies
-
         if location and sr and not c.user_is_sponsor:
             # only sponsors can geotarget on subreddits
             location = None
 
         if location and location.metro:
-            cpm += g.cpm_selfserve_geotarget_metro.pennies
+            cpm = g.cpm_selfserve_geotarget_metro.pennies
         elif location:
-            cpm += g.cpm_selfserve_geotarget_country.pennies
+            cpm = g.cpm_selfserve_geotarget_country.pennies
+        else:
+            author = Account._byID(link.author_id, data=True)
+            cpm = author.cpm_selfserve_pennies
 
         if (form.has_errors('startdate', errors.BAD_DATE,
                             errors.DATE_TOO_EARLY, errors.DATE_TOO_LATE) or

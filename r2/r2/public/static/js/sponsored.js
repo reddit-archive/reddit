@@ -256,9 +256,9 @@ r.sponsored = {
         */
 
         if (isMetroGeotarget) {
-            return baseCpm + geotargetMetroCpm
+            return geotargetMetroCpm
         } else if (isCountryGeotarget) {
-            return baseCpm + geotargetCountryCpm
+            return geotargetCountryCpm
         } else {
             return baseCpm
         }
