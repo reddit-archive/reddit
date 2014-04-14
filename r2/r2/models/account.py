@@ -273,6 +273,11 @@ class Account(Thing):
         return not g.disable_captcha and self.link_karma < 1
 
     def modhash(self, rand=None, test=False):
+        if c.oauth_user:
+            # OAuth clients should never receive a modhash of any kind
+            # as they could use it in a CSRF attack to bypass their
+            # permitted OAuth scopes.
+            return None
         return modhash(self, rand = rand, test = test)
     
     def valid_hash(self, hash):
