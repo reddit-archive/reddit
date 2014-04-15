@@ -1450,7 +1450,6 @@ class Message(Thing, Printable):
             else:
                 item.recipient = (item.to_id == c.user._id)
 
-            # new-ness is stored on the relation
             if item.author_id == c.user._id:
                 item.new = False
             elif item._fullname in unread:
