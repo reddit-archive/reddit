@@ -31,6 +31,7 @@ import urlparse
 from pylons import g
 
 from r2.lib import amqp
+from r2.lib.filters import websafe_json
 
 
 _WEBSOCKET_EXCHANGE = "sutro"
@@ -48,7 +49,7 @@ def send_broadcast(namespace, type, payload):
         "type": type,
         "payload": payload,
     }
-    amqp.add_item(routing_key=namespace, body=json.dumps(frame),
+    amqp.add_item(routing_key=namespace, body=websafe_json(json.dumps(frame)),
                   exchange=_WEBSOCKET_EXCHANGE)
 
 
