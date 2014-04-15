@@ -1855,6 +1855,14 @@ a.star { text-decoration: none; color: #ff8b60 }
     text-align: right;
 }
 
+.rank-spacer {
+    font-size: medium;
+}
+
+.midcol-spacer {
+    font-size: small;
+}
+
 .link.compressed { margin-bottom: 5px; }
 .link.compressed .rank { margin-top: 10px; }
 .link.compressed .title { margin: -2px 0 3px }
@@ -8337,8 +8345,6 @@ body.with-listing-chooser {
 }
 
 .trending-subreddits {
-    // required so that ex units are in sync with .midcol
-    font-size: small;
     margin-top: -4px;
     line-height: 1.75em;
 
@@ -8349,8 +8355,16 @@ body.with-listing-chooser {
         padding-left: 15px;
     }
 
-    strong, ul, a {
-        font-size: x-small;
+    // hax to align trending subreddits list with links/thumbnails
+    // this uses the overflow:hidden trick to create a block formatting context
+    // to shift the left edge of the trending subreddits list over
+    .rank-spacer, .midcol-spacer {
+        float: left;
+        height: 1px;
+    }
+
+    .trending-subreddits-content {
+        overflow: hidden;
     }
 
     strong {
