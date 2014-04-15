@@ -1440,7 +1440,6 @@ class ApiController(RedditController):
             should_ratelimit = False
         else:
             is_message = False
-            is_comment = True
             if isinstance(parent, Link):
                 link = parent
                 parent_comment = None
