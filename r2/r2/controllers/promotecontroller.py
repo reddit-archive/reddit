@@ -314,7 +314,9 @@ class PromoteListingController(ListingController):
         q = PromoCampaign._query(PromoCampaign.c._id.in_(campaign_ids),
                                  PromoCampaign.c.priority_name == 'house',
                                  data=True)
-        return [Link._fullname_from_id36(to36(camp.link_id)) for camp in q]
+        link_names = {Link._fullname_from_id36(to36(camp.link_id))
+                      for camp in q}
+        return sorted(link_names, reverse=True)
 
     @property
     def menus(self):
