@@ -30,7 +30,7 @@ from r2.models.gold import append_random_bottlecap_phrase
 from r2.models.token import AwardClaimToken
 
 from _pylibmc import MemcachedError
-from pylons import g
+from pylons import g, config
 from pylons.i18n import _
 
 from datetime import datetime, timedelta
@@ -441,7 +441,5 @@ def send_system_message(user, subject, body, system_user=None,
         raise MessageError('reddit_inbox')
 
 
-try:
+if config['r2.import_private']:
     from r2admin.models.admintools import *
-except ImportError:
-    pass

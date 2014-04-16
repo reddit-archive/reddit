@@ -55,7 +55,7 @@ from r2.lib.db import tdb_cassandra, queries
 from r2.config.extensions import is_api
 from r2.lib.menus import CommentSortMenu
 from pylons.i18n import _, ungettext
-from pylons import c, request, g
+from pylons import c, request, g, config
 from pylons.controllers.util import abort
 
 from r2.lib import media, inventory
@@ -110,9 +110,9 @@ from urllib import quote, urlencode
 
 # the ip tracking code is currently deeply tied with spam prevention stuff
 # this will be open sourced as soon as it can be decoupled
-try:
+if config['r2.import_private']:
     from r2admin.lib.ip_events import ips_by_account_id
-except ImportError:
+else:
     def ips_by_account_id(account_id):
         return []
 

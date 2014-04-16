@@ -20,9 +20,9 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+from pylons import config
+
 from validator import *
 
-try:
+if config['r2.import_private']:
     from r2admin.lib.validator import *
-except ImportError:
-    pass

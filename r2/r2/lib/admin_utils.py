@@ -39,7 +39,5 @@ def vote_hash():
     return ''
 
 
-try:
-   from r2admin.lib.admin_utils import *
-except ImportError:
-    pass
+if config['r2.import_private']:
+    from r2admin.lib.admin_utils import *

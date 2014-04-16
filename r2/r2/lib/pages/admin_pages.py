@@ -20,7 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from pylons         import c, g
+from pylons import c, g, config
 from pylons.i18n import N_
 from r2.lib.wrapped import Templated
 from pages   import Reddit
@@ -107,7 +107,6 @@ class AdminNotesSidebar(Templated):
             note["timesince"] = timesince(note["when"])
         Templated.__init__(self)
 
-try:
+
+if config['r2.import_private']:
     from r2admin.lib.pages import *
-except ImportError:
-    pass

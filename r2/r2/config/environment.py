@@ -59,6 +59,9 @@ def load_environment(global_conf={}, app_conf={}, setup_globals=True):
     # when accessing non-existent attributes on c, return "" instead of dying
     config['pylons.strict_c'] = False
 
+    config['r2.import_private'] = \
+        ConfigValue.bool(global_conf['import_private'])
+
     g = config['pylons.g'] = Globals(global_conf, app_conf, paths)
     if setup_globals:
         g.setup()
