@@ -412,6 +412,11 @@ class PromoteListingController(ListingController):
         if not c.user_is_loggedin or not c.user.email_verified:
             # never reached--see MinimalController.on_validation_error
             return self.redirect("/ad_inq")
+
+        if (sort in ('underdelivered', 'reported', 'house') and
+            not c.user_is_sponsor):
+            self.abort403()
+
         self.sort = sort
         self.sr = None
         if sr and sr == Frontpage.name:
