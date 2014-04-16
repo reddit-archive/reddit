@@ -40,7 +40,8 @@ from r2.lib.db import queries
 from r2.lib.strings import Score
 import r2.lib.search as search
 from r2.lib.template_helpers import add_sr
-from r2.lib.utils import iters, check_cheating, timeago
+from r2.lib.admin_utils import check_cheating
+from r2.lib.utils import iters, timeago
 from r2.lib import organic, sup, trending
 from r2.lib.memoize import memoize
 from r2.lib.validator import *

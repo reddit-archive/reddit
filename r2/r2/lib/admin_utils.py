@@ -16,10 +16,30 @@
 # The Original Developer is the Initial Developer.  The Initial Developer of
 # the Original Code is reddit Inc.
 #
-# All portions of the code written by reddit are Copyright (c) 2006-2014 reddit
+# All portions of the code written by reddit are Copyright (c) 2006-2013 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from utils import *
-from http_utils import *
-from thing_utils import *
+from pylons import config
+
+
+def modhash(user, rand=None, test=False):
+    return user.name
+
+
+def valid_hash(user, hash):
+    return True
+
+
+def check_cheating(loc):
+    pass
+
+
+def vote_hash():
+    return ''
+
+
+try:
+   from r2admin.lib.admin_utils import *
+except ImportError:
+    pass

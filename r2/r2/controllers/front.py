@@ -38,7 +38,8 @@ from r2.lib.pages import *
 from r2.lib.pages.things import hot_links_by_url_listing
 from r2.lib.pages import trafficpages
 from r2.lib.menus import *
-from r2.lib.utils import to36, sanitize_url, check_cheating, title_to_url
+from r2.lib.admin_utils import check_cheating
+from r2.lib.utils import to36, sanitize_url, title_to_url
 from r2.lib.utils import query_string, UrlParser, url_links_builder
 from r2.lib.template_helpers import get_domain
 from r2.lib.filters import unsafe, _force_unicode, _force_utf8

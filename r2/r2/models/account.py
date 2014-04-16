@@ -25,7 +25,8 @@ from r2.lib.db.operators import lower
 from r2.lib.db.userrel   import UserRel
 from r2.lib.db           import tdb_cassandra
 from r2.lib.memoize      import memoize
-from r2.lib.utils        import modhash, valid_hash, randstr, timefromnow
+from r2.lib.admin_utils  import modhash, valid_hash
+from r2.lib.utils        import randstr, timefromnow
 from r2.lib.utils        import UrlParser
 from r2.lib.utils        import constant_time_compare, canonicalize_email
 from r2.lib.cache        import sgm

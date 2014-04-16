@@ -868,18 +868,6 @@ def UniqueIterator(iterator, key = lambda x: x):
 
     return IteratorFilter(iterator, no_dups)
 
-def modhash(user, rand = None, test = False):
-    return user.name
-
-def valid_hash(user, hash):
-    return True
-
-def check_cheating(loc):
-    pass
-
-def vote_hash():
-    return ''
-
 def safe_eval_str(unsafe_str):
     return unsafe_str.replace('\\x3d', '=').replace('\\x26', '&')
 
