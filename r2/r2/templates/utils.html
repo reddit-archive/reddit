@@ -546,18 +546,29 @@ ${unsafe(txt)}
 	</label>
 </%def>
 
-<%def name="timestamp(date, since=None)">
+<%def name="timestamp(date, since=None, live=False, include_tense=False)">
   ## todo: use pubdate attribute once things are <article> tags.
   ## note: comment and link templates will pass a CachedVariable stub as since.
-  <time title="${long_datetime(date)}" datetime="${html_datetime(date)}">
+  <% now = date.now(g.tz) %>
+
+  <time title="${long_datetime(date)}" datetime="${html_datetime(date)}" 
+    %if live:
+      class="live-timestamp"
+    %endif
+  >
     ${unsafe(since or timesince(date))}
+    %if include_tense and date < now:
+      ${_("ago")}
+    %elif date > now:
+      ${_("from now")}
+    %endif
   </time>
 </%def>
 
-<%def name="thing_timestamp(thing, since=None)">
+<%def name="thing_timestamp(thing, since=None, live=False, include_tense=False)">
   ## todo: use pubdate attribute once things are <article> tags.
   ## note: comment and link templates will pass a CachedVariable stub as since.
-  ${timestamp(thing._date, since=since)}
+  ${timestamp(thing._date, since=since, live=live, include_tense=include_tense)}
 </%def>
 
 <%def name="percentage(slice, total)">

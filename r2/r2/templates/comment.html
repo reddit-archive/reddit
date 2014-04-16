@@ -120,7 +120,7 @@ ${parent.collapsed()}
         ${unsafe(self.score(thing, likes = thing.likes))}&#32;
       %endif
     %endif
-    ${thing_timestamp(thing, thing.timesince)}&#32;${_("ago")}
+    ${thing_timestamp(thing, thing.timesince, live=True, include_tense=True)}
     ${edited(thing, thing.lastedited)}
   %endif
 

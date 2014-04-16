@@ -454,8 +454,8 @@ $.fn.replace_things = function(things, keep_children, reveal, stubs) {
      * case of a comment tree, flags whether or not the new thing has
      * the thread present) while "reveal" determines whether or not to
      * animate the transition from old to new. */
-    var self = this;
-    return $.map(things, function(thing) {
+    var self = this,
+        map = $.map(things, function(thing) {
             var data = thing.data;
             var existing = $(self).things(data.id);
             if(stubs) 
@@ -508,13 +508,15 @@ $.fn.replace_things = function(things, keep_children, reveal, stubs) {
             $(document).trigger('new_thing', new_thing)
             return new_thing;
         });
-    
+
+    $(document).trigger('new_things_inserted')
+    return map
 };
 
 
 $.insert_things = function(things, append) {
     /* Insert new things into a listing.*/
-    return $.map(things, function(thing) {
+    var map = $.map(things, function(thing) {
             var data = thing.data;
             var s = $.listing(data.parent);
             if(append)
@@ -525,7 +527,9 @@ $.insert_things = function(things, append) {
             thing_init_func(s.hide().show());
             $(document).trigger('new_thing', s)
             return s;
-        });
+        })
+    $(document).trigger('new_things_inserted')
+    return map
 };
 
 $.fn.delete_table_row = function(callback) {

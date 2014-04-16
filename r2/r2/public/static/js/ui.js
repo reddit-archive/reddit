@@ -42,6 +42,34 @@ r.ui.init = function() {
     }
 
     r.ui.PermissionEditor.init()
+
+    r.ui.initLiveTimestamps()
+}
+
+r.ui.TimeTextScrollListener = r.ScrollUpdater.extend({
+    initialize: function() {
+        this.timeText = new r.TimeText(this.selector)
+    },
+    selector: '.live-timestamp:visible',
+    endUpdate: function($els) {
+        this.timeText.updateCache($els)
+    }
+})
+
+r.ui.initLiveTimestamps = function() {
+    // We only want a global timestamp scroll listener to instantiate on
+    // pages with `thing`s. Since we don't have a router yet, we'll scope
+    // the element to `.sitetable`s, which will contain it. This is kind of a
+    // dirty hack and should be obsoleted by a router + view system.
+    if ($('.sitetable').length) {
+      var listener = new r.ui.TimeTextScrollListener({ el: '.sitetable' })
+      listener.start()
+
+      // Every time we add a new `thing`, we'll need to re-grab our element caches.
+      $(document).on('new_things_inserted', function() {
+          listener.restart()
+      })
+    }
 }
 
 r.ui.showWorkingDeferred = function(el, deferred) {

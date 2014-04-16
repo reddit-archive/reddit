@@ -49,7 +49,7 @@
         <tr>
             <td>${ip}</td>
             <td>${location.get('country_name', '')}</td>
-            <td>${timestamp(last_visit)}&#32;${_('ago')}</td>
+            <td>${timestamp(last_visit, live=True, include_tense=True)}</td>
         </tr>
         % endfor
     </tbody>

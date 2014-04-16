@@ -44,7 +44,7 @@
         %endif
     
     <td style="white-space: nowrap;">
-        ${timestamp(thing.date)}&nbsp;ago
+        ${timestamp(thing.date, live=True, include_tense=True)}
     </td>
     
     %if not thing.show_extended:

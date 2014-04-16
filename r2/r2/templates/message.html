@@ -64,7 +64,7 @@ ${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if
        subreddit=subreddit)
 
    taglinetext = thing.taglinetext.replace(' ', '&#32;') % dict(
-     when=capture(thing_timestamp, thing, thing.timesince),
+     when=capture(thing_timestamp, thing, thing.timesince, include_tense=True),
      author=u"<b>%s</b>" % author,
      dest=u"<b>%s</b>" % thing.dest)
   %>

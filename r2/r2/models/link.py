@@ -618,26 +618,26 @@ class Link(Thing, Printable):
                 if item.score_fmt == Score.points:
                     taglinetext = ("<span>" +
                                    _("%(score)s submitted %(when)s "
-                                     "ago%(lastedited)s") +
+                                     "%(lastedited)s") +
                                    "</span>")
                     taglinetext += author_text
                 elif item.different_sr:
-                    taglinetext = _("submitted %(when)s ago%(lastedited)s "
+                    taglinetext = _("submitted %(when)s %(lastedited)s "
                                     "by %(author)s to %(reddit)s")
                 else:
-                    taglinetext = _("submitted %(when)s ago%(lastedited)s "
+                    taglinetext = _("submitted %(when)s %(lastedited)s "
                                     "by %(author)s")
             else:
                 if item.score_fmt == Score.points:
                     taglinetext = ("<span>" +
-                                   _("%(score)s submitted %(when)s ago") +
+                                   _("%(score)s submitted %(when)s") +
                                    "</span>")
                     taglinetext += author_text
                 elif item.different_sr:
-                    taglinetext = _("submitted %(when)s ago by %(author)s "
+                    taglinetext = _("submitted %(when)s by %(author)s "
                                     "to %(reddit)s")
                 else:
-                    taglinetext = _("submitted %(when)s ago by %(author)s")
+                    taglinetext = _("submitted %(when)s by %(author)s")
             item.taglinetext = taglinetext
 
             if item.is_author:
@@ -1518,13 +1518,13 @@ class Message(Thing, Printable):
                     item.body = _('[unblock user to see this message]')
             taglinetext = ''
             if item.hide_author:
-                taglinetext = _("subreddit message %(author)s sent %(when)s ago")
+                taglinetext = _("subreddit message %(author)s sent %(when)s")
             elif item.author_id == c.user._id:
-                taglinetext = _("to %(dest)s sent %(when)s ago")
+                taglinetext = _("to %(dest)s sent %(when)s")
             elif item.to_id == c.user._id or item.to_id is None:
-                taglinetext = _("from %(author)s sent %(when)s ago")
+                taglinetext = _("from %(author)s sent %(when)s")
             else:
-                taglinetext = _("to %(dest)s from %(author)s sent %(when)s ago")
+                taglinetext = _("to %(dest)s from %(author)s sent %(when)s")
             item.taglinetext = taglinetext
             if item.to:
                 if item.to._deleted:
