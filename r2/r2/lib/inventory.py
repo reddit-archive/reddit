@@ -32,10 +32,12 @@ from r2.lib.memoize import memoize
 from r2.lib.utils import to_date, tup
 from r2.models import (
     Bid,
+    FakeSubreddit,
     Location,
+    NO_TRANSACTION,
     PromoCampaign,
     PromotionWeights,
-    NO_TRANSACTION,
+    Subreddit,
     traffic,
 )
 from r2.models.promo_metrics import LocationPromoMetrics, PromoMetrics
@@ -45,6 +47,7 @@ NDAYS_TO_QUERY = 14  # how much history to use in the estimate
 MIN_DAILY_CASS_KEY = 'min_daily_pageviews.GET_listing'
 PAGEVIEWS_REGEXP = re.compile('(.*)-GET_listing')
 INVENTORY_FACTOR = 1.00
+DEFAULT_INVENTORY_FACTOR = 5.00
 
 def get_predicted_by_date(sr_name, start, stop=None):
     """Return dict mapping datetime objects to predicted pageviews."""
@@ -169,12 +172,23 @@ def get_predicted_pageviews(srs, start, end):
     srs, is_single = tup(srs, ret_is_single=True)
     sr_names = [sr.name for sr in srs]
 
+    # default subreddits require a different inventory factor
+    content_langs = [g.site_lang]
+    default_srids = Subreddit.top_lang_srs(content_langs,
+                                           limit=g.num_default_reddits,
+                                           filter_allow_top=True, over18=False,
+                                           ids=True)
+
     # prediction does not vary by date
     daily_inventory = PromoMetrics.get(MIN_DAILY_CASS_KEY, sr_names=sr_names)
     dates = get_date_range(start, end)
     ret = {}
     for sr in srs:
-        sr_daily_inventory = daily_inventory.get(sr.name, 0) * INVENTORY_FACTOR
+        if not isinstance(sr, FakeSubreddit) and sr._id in default_srids:
+            factor = DEFAULT_INVENTORY_FACTOR
+        else:
+            factor = INVENTORY_FACTOR
+        sr_daily_inventory = daily_inventory.get(sr.name, 0) * factor
         sr_daily_inventory = int(sr_daily_inventory)
         ret[sr.name] = dict.fromkeys(dates, sr_daily_inventory)
 
