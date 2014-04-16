@@ -23,80 +23,97 @@
 <%namespace file="utils.html" import="error_field"/>
 <%namespace name="utils" file="utils.html"/>
 
-<h1>
-%if thing.email and thing.password:
-  ${_("update your email or password")}
-%elif thing.email:
+
+%if thing.email:
+<form action="/post/update_email" method="post" 
+      onsubmit="return post_form(this, 'update_email')" id="pref-update-email">
+
+  <h1>
   %if thing.verify:
     ${_("verify your email")}
   %else:
     ${_("update your email")}
   %endif
-%else:
-  ${_("update your password")}
+  </h1>
+
+  <div class="spacer">
+    <%utils:round_field title="${_('current password')}" description="${_('(required)')}">
+      <input type="password" name="curpass">
+      ${error_field("WRONG_PASSWORD", "curpass")}
+    </%utils:round_field>
+  </div>
+
+  <%
+     if not c.user.email:
+       description = _("not set")
+       v_link = None
+     elif c.user.email_verified:
+       description = _("verified")
+       v_link = None
+     elif c.user.email_verified is False:
+       description = _("verification pending")
+       v_link = _("click to resend")
+     else:
+       description = _("unverified")
+       v_link = _("click to verify")
+
+     if v_link and not thing.verify:
+       description = "(%s;&#32;<a href='/verify'>%s</a>)" % (description, v_link)
+       description = unsafe(description)
+     else:
+       description = "(%s)" % description
+  %>
+
+  <div class="spacer">
+    <%utils:round_field title="${_('email')}" description="${description}">
+      <input type="text" name="email" value="${getattr(c.user, 'email', '')}">
+      ${error_field("BAD_EMAILS", "email")}
+    </%utils:round_field>
+  </div>
+
+  %if thing.verify and not c.user.email_verified:
+     <input type="hidden" name="verify" value="1"/>
+     <input type="hidden" name="dest" value="${thing.dest}">
+     <button type="submit" class="btn">${_('send verification email')}</button>
+  %else:
+     <button type="submit" class="btn">${_('save')}</button>
+  %endif
+  <span class="status error"></span>
+</form>
 %endif
-</h1>
 
-<form action="/post/update" method="post" 
-      onsubmit="return post_form(this, 'update')" id="pref-update">
-
-<%
-   if not c.user.email:
-     description = _("not set")
-     v_link = None
-   elif c.user.email_verified:
-     description = _("verified")
-     v_link = None
-   elif c.user.email_verified is False:
-     description = _("verification pending")
-     v_link = _("click to resend")
-   else:
-     description = _("unverified")
-     v_link = _("click to verify")
-
-   if v_link and not thing.verify:
-     description = "(%s;&#32;<a href='/verify'>%s</a>)" % (description, v_link)
-     description = unsafe(description)
-   else:
-     description = "(%s)" % description
-%>
-
-<div class="spacer">
-  <%utils:round_field title="${_('current password')}" description="${_('(required)')}">
-    <input type="password" name="curpass" />
-    ${error_field("WRONG_PASSWORD", "curpass")}
-  </%utils:round_field>
-</div>  
-
-<div class="spacer">
-  <%utils:round_field title="${_('email')}" description="${description}">
-    <input type="text" name="email" value="${getattr(c.user, 'email', '')}"/>
-    ${error_field("BAD_EMAILS", "email")}
-  </%utils:round_field>
-</div>
+%if thing.email and thing.password:
+<br>
+%endif
 
 %if thing.password:
-<div class="spacer">
-  <%utils:round_field title="${_('new password')}">
-    <input type="password" name="newpass" />
-    ${error_field("BAD_PASSWORD", "newpass")}
-  </%utils:round_field>
-</div>  
+<form action="/post/update_password" method="post" 
+      onsubmit="return post_form(this, 'update_password')" id="pref-update-password">
 
-<div class="spacer">
-  <%utils:round_field title="${_('verify password')}">
-    <input type="password" name="verpass" />
-    ${error_field("BAD_PASSWORD_MATCH", "verpass")}
-  </%utils:round_field>
-</div>  
-%endif
+  <h1>${_("update your password")}</h1>
 
-%if thing.verify and not c.user.email_verified:
-   <input type="hidden" name="verify" value="1"/>
-   <input type="hidden" name="dest" value="${thing.dest}">
-   <button type="submit" class="btn">${_('send verification email')}</button>
-%else:
-   <button type="submit" class="btn">${_('save')}</button>
-%endif
-<span class="status error"></span>
+  <div class="spacer">
+    <%utils:round_field title="${_('current password')}" description="${_('(required)')}">
+      <input type="password" name="curpass">
+      ${error_field("WRONG_PASSWORD", "curpass")}
+    </%utils:round_field>
+  </div>
+
+  <div class="spacer">
+    <%utils:round_field title="${_('new password')}">
+      <input type="password" name="newpass">
+      ${error_field("BAD_PASSWORD", "newpass")}
+    </%utils:round_field>
+  </div>
+
+  <div class="spacer">
+    <%utils:round_field title="${_('verify password')}">
+      <input type="password" name="verpass">
+      ${error_field("BAD_PASSWORD_MATCH", "verpass")}
+    </%utils:round_field>
+  </div>
+
+  <button type="submit" class="btn">${_('save')}</button>
+  <span class="status error"></span>
 </form>
+%endif

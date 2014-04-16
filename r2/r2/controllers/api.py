@@ -1002,42 +1002,35 @@ class ApiController(RedditController):
         # invalidated.  drop a new cookie.
         self.login(c.user)
 
-    @validatedForm(VUser('curpass', default = ''),
-                   VModhash(),
-                   email = ValidEmails("email", num = 1),
-                   password = VPassword(['newpass', 'verpass']),
-                   verify = VBoolean("verify"),
-                   dest=VDestination())
+    @validatedForm(
+        VUser('curpass', default=''),
+        VModhash(),
+        email=ValidEmails("email", num=1),
+        verify=VBoolean("verify"),
+        dest=VDestination(),
+    )
     @api_doc(api_section.account)
-    def POST_update(self, form, jquery, email, password, verify, dest):
-        """
-        Update account email address and password.
+    def POST_update_email(self, form, jquery, email, verify, dest):
+        """Update account email address.
 
-        Called by /prefs/update on the site. For frontend form verification
-        purposes, `newpass` and `verpass` must be equal for a password change
-        to succeed.
+        Called by /prefs/update on the site.
+
         """
-        # password is required to proceed
+
         if form.has_errors("curpass", errors.WRONG_PASSWORD):
             return
-        
-        # check if the email is valid.  If one is given and it is
-        # different from the current address (or there is not one
-        # currently) apply it
-        updated = False
-        if (not form.has_errors("email", errors.BAD_EMAILS) and
-            email):
-            if (not hasattr(c.user,'email') or c.user.email != email):
+
+        if not form.has_errors("email", errors.BAD_EMAILS) and email:
+            if (not hasattr(c.user, 'email') or c.user.email != email):
                 if c.user.email_verified:
                     emailer.email_change_email(c.user)
+
                 c.user.email = email
-                # unverified email for now
                 c.user.email_verified = None
                 c.user._commit()
                 Award.take_away("verified_email", c.user)
-                updated = True
+
             if verify:
-                # TODO: rate limit this?
                 if dest == '/':
                     dest = None
 
@@ -1055,23 +1048,37 @@ class ApiController(RedditController):
             c.user.email_verified = None
             c.user._commit()
             Award.take_away("verified_email", c.user)
-            updated = True
             form.set_html('.status', _('your email has been updated'))
 
-        # change password
+    @validatedForm(
+        VUser('curpass', default=''),
+        VModhash(),
+        password=VPassword(['newpass', 'verpass']),
+    )
+    @api_doc(api_section.account)
+    def POST_update_password(self, form, jquery, password):
+        """Update account password.
+
+        Called by /prefs/update on the site. For frontend form verification
+        purposes, `newpass` and `verpass` must be equal for a password change
+        to succeed.
+
+        """
+
+        if form.has_errors("curpass", errors.WRONG_PASSWORD):
+            return
+
         if (password and
             not (form.has_errors("newpass", errors.BAD_PASSWORD) or
                  form.has_errors("verpass", errors.BAD_PASSWORD_MATCH))):
             change_password(c.user, password)
+
             if c.user.email_verified:
                 emailer.password_change_email(c.user)
-            if updated:
-                form.set_html(".status",
-                              _('your email and password have been updated'))
-            else:
-                form.set_html('.status', 
-                              _('your password has been updated'))
-            form.set_inputs(curpass = "", newpass = "", verpass = "")
+
+            form.set_html('.status', _('your password has been updated'))
+            form.set_inputs(curpass="", newpass="", verpass="")
+
             # the password has changed, so the user's cookie has been
             # invalidated.  drop a new cookie.
             self.login(c.user)
