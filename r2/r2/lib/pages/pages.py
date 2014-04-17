@@ -1708,8 +1708,11 @@ class ProfilePage(Reddit):
             rb.push(scb)
 
         if c.user_is_admin:
+            from r2.lib.pages.admin_pages import AdminNotesSidebar
             from admin_pages import AdminSidebar
+
             rb.push(AdminSidebar(self.user))
+            rb.push(AdminNotesSidebar('user', self.user.name))
         elif c.user_is_sponsor:
             from admin_pages import SponsorSidebar
             rb.push(SponsorSidebar(self.user))

@@ -87,12 +87,14 @@ class AdminNotesSidebar(Templated):
         "domain": N_("No notes for this domain"),
         "ip": N_("No notes for this IP address"),
         "subreddit": N_("No notes for this subreddit"),
+        "user": N_("No notes for this user"),
     }
 
     SYSTEMS = {
         "domain": N_("domain"),
         "ip": N_("IP address"),
         "subreddit": N_("subreddit"),
+        "user": N_("user"),
     }
 
     def __init__(self, system, subject):
