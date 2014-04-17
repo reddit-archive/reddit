@@ -21,10 +21,12 @@
 ###############################################################################
 
 <%!
-from babel.numbers import format_currency
+import math
+from babel.numbers import format_currency, format_number
 from pylons import g, c
 from r2.lib.pages import Feedback
 from r2.lib.template_helpers import static
+from decimal import Decimal
 %>
 <link rel="stylesheet" type="text/css" href="${static('selfserve_ads/style.css', allow_gzip=False)}"/>
 <script src="${static('js/lib/jquery.cycle.min.js', allow_gzip=False)}" type="text/javascript"></script>
@@ -39,44 +41,49 @@ from r2.lib.template_helpers import static
                 <img src="${static('selfserve_ads/col1.png')}" width="220px" height="128px" alt="" class="image"/>
 
                 <h2>Reach your audience</h2>
-                <ul>
-                    <li>Get your message to millions of viewers</li>
-                    <li>Target viewers on what THEY are interested in, not what their demographic is</li>
-                    <li>Use text, images, and video in your ads</li>
-                </ul>
+                <p>Amplify your message to reddit’s 113 MM users through &#32;<a href="/promoted/new_promo/">promoted posts</a>, and reach your audience by targeting subreddits (communities of reddit users) that are relevant to your campaign. </p>
+                
+                <a href="/wiki/selfserve#wiki_how_do_i_find_the_best_subreddits_for_my_campaign_targeting">Tips for finding the best subreddit city-targeting</a>
             </div>
         </div>
         <div class="center-col-1 column">
             <div class="col-trigger">
                 <img src="${static('selfserve_ads/col2.png')}" width="220px" height="128px" alt="" class="image"/>
 
-                <h2>Control your budget</h2>
-                <ul>
-                    <li>With a CPM starting at ${format_currency(g.cpm_selfserve.decimal, 'USD', locale=c.locale)}, enjoy above-the-fold exposure at a price that won't break your budget</li>
-                    <li>Campaigns start at ${format_currency(g.min_promote_bid, 'USD', locale=c.locale)}, and you can build out a plan to as many subreddits as you wish</li>
-                </ul>
+                <h2>Manage your budget</h2>
+                <%
+                formatted_min_promote_bid = format_currency(g.min_promote_bid, 'USD', locale=c.locale)
+                min_pageviews = Decimal(g.min_promote_bid) / g.cpm_selfserve.decimal * 1000
+                rounded_min_pageviews = math.floor(min_pageviews / 1000) * 1000
+                formatted_min_pageviews = format_number(rounded_min_pageviews, locale=c.locale)
+                %>
+                <p>reddit ads start at ${formatted_min_promote_bid} per campaign, at a ${format_currency(g.cpm_selfserve.decimal, 'USD', locale=c.locale)} CPM rate. In other words, for as little as ${formatted_min_promote_bid} your ad appears 
+                %if min_pageviews != rounded_min_pageviews:
+                    more than
+                %endif
+                ${formatted_min_pageviews} times in any reddit page you like. You control how many more times you’d like your ad to appear on reddit. </p>
+                
+                <a href="/wiki/selfserve#wiki_how_much_does_it_cost">More on managing your budget</a>
             </div>
         </div>
         <div class="center-col-2 column">
             <div class="col-trigger">
                 <img src="${static('selfserve_ads/col3.png')}" width="220px" height="128px" alt="" class="image"/>
 
-                <h2>Interact with customers</h2>
-                <ul>
-                    <li>reddit ads have comments, view what people think in real-time</li>
-                    <li>Up and Down vote system, see how much people enjoy your link, in one metric</li>
-                </ul>
+                <h2>Connect with customers</h2>
+                <p>Sponsored posts include a &ldquo;comments&rdquo; section, allowing advertisers to chat with redditors that have questions and comments about their ads in real-time. Add value to your ad by answering questions your target consumer has about your campaign!</p>
+
+                <a href="wiki/selfserve#wiki_what_are_the_best_practices_for_reddit_advertising">Best practices recommendations for reddit advertising</a>
             </div>
         </div>
         <div class="right-col column">
             <div class="col-trigger">
                 <img src="${static('selfserve_ads/col4.png')}" width="220px" height="128px" alt="" class="image"/>
 
-                <h2>Track your stats</h2>
-                <ul>
-                    <li>View graphs of your impressions and clicks</li>
-                    <li>All stats available for download</li>
-                </ul>
+                <h2>Track your success</h2>
+                <p>reddit creates a custom traffic page for every sponsored ad created, demonstrating hourly delivery stats &amp; graphs for you to best measure the success of your campaign. This delivery reporting can be downloaded to a csv file for your records.</p>
+
+                <a href="/wiki/selfserve#wiki_how_is_my_ad_performing">Tracking how your ad is performing</a>
             </div>
         </div>
 
@@ -86,11 +93,10 @@ from r2.lib.template_helpers import static
                 <a href="/promoted/new_promo" class="create-ad-button button">Create an ad</a>
                 <a href="/promoted" class="manage-ads">manage existing ads</a>
             </div>
-            <div class="bottom-box-title">Start advertising today!</div>
             <p>
-                Have questions? Read the&#32;<a href="/wiki/selfserve">FAQ</a>, or send us an&#32; <a href="mailto:selfservicesupport@reddit.com?subject=Questions about reddit advertising">email</a>.
+                For questions about our advertising platform, check out the platform’s&#32;<a href="/wiki/selfserve">FAQ</a>, or&#32; <a href="mailto:selfservicesupport@reddit.com?subject=Questions about reddit advertising">email customer support</a>.
             <br/>
-            Interested in a bigger campaign?&#32;<a href="mailto:marketing@reddit.com?subject=campaign%20inquiry">Talk to our sales team</a>.
+            For large-scale advertising opportunities, &#32;<a href="mailto:marketing@reddit.com?subject=campaign%20inquiry">email our sales team!</a>.
             </p>
             <div style="clear:both;"></div>
         </div>

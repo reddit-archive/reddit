@@ -1128,7 +1128,7 @@ class FrontController(RedditController):
                           content=ContactUs(), page_classes=["contact-us-page"]
                           ).render()
 
-    def GET_ad_inq(self):
+    def GET_advertising(self):
         return FormPage('advertise',
                         content = SelfServeBlurb(),
                         loginbox = False).render()
