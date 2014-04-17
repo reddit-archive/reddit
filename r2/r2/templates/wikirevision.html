@@ -65,7 +65,7 @@
         ${thing._get('reason')}
     </td>
    
-    %if thing.show_extended and c.is_wiki_mod:
+    %if thing.show_extended:
         <td>
             <a href="#" class="revision_hide" data-revision="${thing._id}">hide</a>
         </td>

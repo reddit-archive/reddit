@@ -176,7 +176,8 @@ class WikiController(RedditController):
         builder = WikiRevisionBuilder(revisions, user=wikiuser, sr=c.site,
                                       num=num, reverse=reverse, count=count,
                                       after=after, skip=not c.is_wiki_mod,
-                                      wrap=default_thing_wrapper())
+                                      wrap=default_thing_wrapper(),
+                                      page=page)
         listing = WikiRevisionListing(builder).listing()
         return WikiRevisions(listing, page=page.name, may_revise=this_may_revise(page)).render()
 

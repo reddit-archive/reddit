@@ -641,18 +641,21 @@ class SearchBuilder(IDBuilder):
 class WikiRevisionBuilder(QueryBuilder):
     show_extended = True
     
-    def __init__(self, *k, **kw):
+    def __init__(self, revisions, page=None, **kw):
         self.user = kw.pop('user', None)
         self.sr = kw.pop('sr', None)
-        QueryBuilder.__init__(self, *k, **kw)
+        self.page = page
+        QueryBuilder.__init__(self, revisions, **kw)
     
     def wrap_items(self, items):
         from r2.lib.validator.wiki import this_may_revise
         types = {}
         wrapped = []
+        extended = self.show_extended and c.is_wiki_mod
+        extended = extended and this_may_revise(self.page)
         for item in items:
             w = self.wrap(item)
-            w.show_extended = self.show_extended and this_may_revise()
+            w.show_extended = extended
             types.setdefault(w.render_class, []).append(w)
             wrapped.append(w)
         
