@@ -31,6 +31,22 @@ r.utils = {
         return list
     },
 
+    structuredMap: function(obj, func) {
+        if (_.isArray(obj)) {
+            return _.map(obj, function(value) {
+                return r.utils.structuredMap(value, func)
+            })
+        } else if (_.isObject(obj)) {
+            var mapped = {}
+            _.each(obj, function(value, key) {
+                mapped[func(key, 'key')] = r.utils.structuredMap(value, func)
+            })
+            return mapped
+        } else {
+            return func(obj, 'value')
+        }
+    },
+
     querySelectorFromEl: function(targetEl, selector) {
         return $(targetEl).parents().andSelf()
             .filter(selector || '*')

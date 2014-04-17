@@ -214,8 +214,9 @@ class DataSource(Source):
         return self.wrap.format(content=json_data) + "\n"
 
     def use(self):
-        from r2.lib.filters import SC_OFF, SC_ON
-        return (SC_OFF + inline_script_tag.format(content=self.get_source()) +
+        from r2.lib.filters import SC_OFF, SC_ON, websafe_json
+        escaped_json = websafe_json(self.get_source())
+        return (SC_OFF + inline_script_tag.format(content=escaped_json) +
                 SC_ON + "\n")
 
     @property

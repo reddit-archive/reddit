@@ -8,7 +8,14 @@ r.preload = {
     },
 
     set: function(data) {
-        _.extend(this.data, data)
+        var unescapedData = r.utils.structuredMap(data, function(val) {
+            if (_.isString(val)) {
+                return _.unescape(val)
+            } else {
+                return val
+            }
+        })
+        _.extend(this.data, unescapedData)
     },
 
     read: function(url) {
