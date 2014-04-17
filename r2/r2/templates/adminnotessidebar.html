@@ -30,9 +30,9 @@
         <input type="hidden" name="system" value="${thing.system}">
         <input type="hidden" name="subject" value="${thing.subject}">
         <input type="hidden" name="author" value="${thing.author}">
-        <textarea name="note" rows=4 cols=20></textarea>
+        <textarea name="note" rows=4></textarea>
         ${error_field("TOO_LONG", "notes", "span")}
-        <input type="submit" class="notes=button" value="Add a new Note">
+        <input type="submit" class="notes-button" value="Add a new Note">
     </form>
     %if thing.notes:
         ${_("Past notes")}:
