@@ -43,13 +43,13 @@ def connect_to_zookeeper(hostlist, credentials):
 
     client = KazooClient(hostlist,
                          timeout=5,
-                         max_retries=3)
+                         max_retries=3,
+                         auth_data=[("digest", ":".join(credentials))])
 
     # convenient helper function for making credentials
     client.make_acl = functools.partial(make_digest_acl, *credentials)
 
     client.start()
-    client.add_auth("digest", ":".join(credentials))
     return client
 
 
