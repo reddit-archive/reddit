@@ -3,7 +3,7 @@ Thanks for wanting to help make reddit better!
 Before you submit an issue or pull request, please keep in mind a couple of
 considerations:
 
-1. **Don't use github issues for feature requests**.
+1. **Don't use GitHub issues for feature requests**.
 If you have a feature request, please submit it to
 [/r/ideasfortheadmins](http://www.reddit.com/r/ideasfortheadmins) instead.
 Please note that while we do subscribe to /r/ideasfortheadmins, the presence
