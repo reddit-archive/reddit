@@ -1575,20 +1575,25 @@ body.with-listing-chooser.explore-page #header .pagename {
 
 .geotarget-notice {
     margin: 5px 10px;
-    height: 16px;
-    background-repeat: no-repeat;
-    text-indent: 20px;
 
     .md p {
         font-size: smaller;
-        margin: 0;
+        margin: 1px 0 0;
     }
 
-    &.city {
+    div:before {
+        content: "";
+        float: left;
+        height: 16px;
+        width: 20px;
+        background-repeat: no-repeat;
+    }
+
+    &.city div:before {
         background-image: url(../map.png); /* SPRITE */
     }
 
-    &.country {
+    &.country div:before {
         background-image: url(../world.png); /* SPRITE */
     }
 }
