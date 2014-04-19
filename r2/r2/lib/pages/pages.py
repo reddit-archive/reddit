@@ -3570,13 +3570,14 @@ class RenderableCampaign(Templated):
             country = campaign.location.country or ''
             region = campaign.location.region or ''
             metro = campaign.location.metro or ''
-            pieces = [country, region]
+
             if metro:
                 metro_str = (g.locations[country]['regions'][region]
                              ['metros'][metro]['name'])
-                pieces.append(metro_str)
-            pieces = filter(lambda i: i, pieces)
-            self.geotarget = '/'.join(pieces)
+                self.geotarget = '/'.join([country, region, metro_str])
+            else:
+                self.geotarget = g.locations[country]['name']
+
             self.country, self.region, self.metro = country, region, metro
         else:
             self.geotarget = ''
