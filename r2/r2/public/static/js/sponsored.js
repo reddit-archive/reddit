@@ -10,6 +10,10 @@ r.sponsored = {
         this.inventory = inventory_by_sr
         if (isEmpty) {
             this.fill_campaign_editor()
+            init_startdate()
+            init_enddate()
+            $("#campaign").find("button[name=create]").show().end()
+                .find("button[name=save]").hide().end()
         }
         this.userIsSponsor = userIsSponsor
     },
