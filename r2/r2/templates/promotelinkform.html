@@ -432,10 +432,10 @@ ${self.javascript_setup()}
           </tr>
 
           <tr>
-            <th>${_("geotargeting")}</th>
+            <th>${_("location")}</th>
             <td class="prefright">
               <div class="geotargeting-disabled error" style="display:none">
-                ${_("geotargeting is only available when targeting the frontpage")}
+                ${_("location targeting is only available when targeting the frontpage")}
               </div>
               <div class="geotargeting-selects">
                 <select class="geotarget-select" id="country" name="country"
@@ -506,7 +506,7 @@ ${self.javascript_setup()}
             <th>${_("total budget")}</th>
             <th>${_("spent")}</th>
             <th title="${targeting_title}">${_("targeting")}</th>
-            <th>${_("geotargeting")}</th>
+            <th>${_("location")}</th>
             <th style="align:right">
               <button class="new-campaign fancybutton" 
                       ${'disabled="disabled"' if len(thing.campaigns) >= g.MAX_CAMPAIGNS_PER_LINK else ''}

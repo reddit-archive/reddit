@@ -3574,13 +3574,13 @@ class RenderableCampaign(Templated):
             if metro:
                 metro_str = (g.locations[country]['regions'][region]
                              ['metros'][metro]['name'])
-                self.geotarget = '/'.join([country, region, metro_str])
+                self.location_str = '/'.join([country, region, metro_str])
             else:
-                self.geotarget = g.locations[country]['name']
+                self.location_str = g.locations[country]['name']
 
             self.country, self.region, self.metro = country, region, metro
         else:
-            self.geotarget = ''
+            self.location_str = ''
             self.country, self.region, self.metro = '', '', ''
 
         Templated.__init__(self)
