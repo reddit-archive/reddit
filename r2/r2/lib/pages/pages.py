@@ -51,7 +51,7 @@ from r2.models import traffic
 from r2.models import ModAction
 from r2.models import Thing
 from r2.models.wiki import WikiPage, ImagesByWikiPage
-from r2.lib.db import tdb_cassandra
+from r2.lib.db import tdb_cassandra, queries
 from r2.config.extensions import is_api
 from r2.lib.menus import CommentSortMenu
 from pylons.i18n import _, ungettext
@@ -75,6 +75,7 @@ from r2.lib.filters import (
 from r2.lib.menus import NavButton, NamedButton, NavMenu, PageNameNav, JsButton
 from r2.lib.menus import SubredditButton, SubredditMenu, ModeratorMailButton
 from r2.lib.menus import OffsiteButton, menu, JsNavMenu
+from r2.lib.normalized_hot import normalized_hot
 from r2.lib.strings import plurals, rand_strings, strings, Score
 from r2.lib.utils import title_to_url, query_string, UrlParser, vote_hash
 from r2.lib.utils import url_links_builder, make_offset_date, median, to36
@@ -2169,6 +2170,49 @@ class SubredditStylesheet(Templated):
 
         Templated.__init__(self, site = site, images=images,
                          stylesheet_contents = stylesheet_contents)
+
+    @staticmethod
+    def find_preview_comments(sr):
+        comments = queries.get_sr_comments(sr)
+        comments = list(comments)
+        if not comments:
+            comments = queries.get_all_comments()
+            comments = list(comments)
+
+        return Thing._by_fullname(comments[:25], data=True, return_dict=False)
+
+    @staticmethod
+    def find_preview_links(sr):
+        # try to find a link to use, otherwise give up and return
+        links = normalized_hot([sr._id])
+        if not links:
+            links = normalized_hot(Subreddit.default_subreddits())
+
+        if links:
+            links = links[:25]
+            links = Link._by_fullname(links, data=True, return_dict=False)
+
+        return links
+
+    @staticmethod
+    def rendered_link(links, media, compress, stickied=False):
+        with c.user.safe_set_attr:
+            c.user.pref_compress = compress
+            c.user.pref_media = media
+        links = wrap_links(links, show_nums=True, num=1)
+        for wrapped in links:
+            wrapped.stickied = stickied
+        delattr(c.user, "pref_compress")
+        delattr(c.user, "pref_media")
+        return links.render(style="html")
+
+    @staticmethod
+    def rendered_comment(comments, gilded=False):
+        wrapped = wrap_links(comments, num=1)
+        if gilded:
+            for w in wrapped:
+                w.gilded_message = "this comment was fake-gilded"
+        return wrapped.render(style="html")
 
 class SubredditStylesheetSource(Templated):
     """A view of the unminified source of a subreddit's stylesheet."""

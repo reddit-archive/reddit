@@ -26,7 +26,6 @@ from r2.models import *
 from r2.models.wiki import ImagesByWikiPage
 from r2.lib.utils import sanitize_url, strip_www, randstr
 from r2.lib.strings import string_dict
-from r2.lib.pages.things import wrap_links
 
 from pylons import g, c
 from pylons.i18n import _
@@ -344,46 +343,3 @@ def validate_css(string, generate_https_urls):
                                           rule))
 
     return parsed.cssText if parsed else "", report
-
-def find_preview_comments(sr):
-    from r2.lib.db.queries import get_sr_comments, get_all_comments
-
-    comments = get_sr_comments(sr)
-    comments = list(comments)
-    if not comments:
-        comments = get_all_comments()
-        comments = list(comments)
-
-    return Thing._by_fullname(comments[:25], data=True, return_dict=False)
-
-def find_preview_links(sr):
-    from r2.lib.normalized_hot import normalized_hot
-
-    # try to find a link to use, otherwise give up and return
-    links = normalized_hot([sr._id])
-    if not links:
-        links = normalized_hot(Subreddit.default_subreddits())
-
-    if links:
-        links = links[:25]
-        links = Link._by_fullname(links, data=True, return_dict=False)
-
-    return links
-
-def rendered_link(links, media, compress, stickied=False):
-    with c.user.safe_set_attr:
-        c.user.pref_compress = compress
-        c.user.pref_media    = media
-    links = wrap_links(links, show_nums = True, num = 1)
-    for wrapped in links:
-        wrapped.stickied = stickied
-    delattr(c.user, 'pref_compress')
-    delattr(c.user, 'pref_media') 
-    return links.render(style = "html")
-
-def rendered_comment(comments, gilded=False):
-    wrapped = wrap_links(comments, num=1)
-    if gilded:
-        for w in wrapped:
-            w.gilded_message = "this comment was fake-gilded"
-    return wrapped.render(style="html")

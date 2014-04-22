@@ -55,6 +55,7 @@ from r2.lib.pages import (
     FriendTableItem,
     InvitedModTableItem,
     ModTableItem,
+    SubredditStylesheet,
     WikiBannedTableItem,
     WikiMayContributeTableItem,
 )
@@ -76,7 +77,7 @@ from r2.lib import media
 from r2.lib.db import tdb_cassandra
 from r2.lib import promote
 from r2.lib.comment_tree import delete_comment
-from r2.lib import tracking,  cssfilter, emailer
+from r2.lib import tracking, emailer
 from r2.lib.subreddit_search import search_reddits
 from r2.lib.log import log_text
 from r2.lib.filters import safemarkdown
@@ -1773,36 +1774,37 @@ class ApiController(RedditController):
         if op == 'preview':
             # try to find a link to use, otherwise give up and
             # return
-            links = cssfilter.find_preview_links(c.site)
+            links = SubredditStylesheet.find_preview_links(c.site)
             if links:
 
                 jquery('#preview-table').show()
     
                 # do a regular link
                 jquery('#preview_link_normal').html(
-                    cssfilter.rendered_link(links, media = 'off',
-                                            compress=False))
+                    SubredditStylesheet.rendered_link(
+                        links, media='off', compress=False))
                 # now do one with media
                 jquery('#preview_link_media').html(
-                    cssfilter.rendered_link(links, media = 'on',
-                                            compress=False))
+                    SubredditStylesheet.rendered_link(
+                        links, media='on', compress=False))
                 # do a compressed link
                 jquery('#preview_link_compressed').html(
-                    cssfilter.rendered_link(links, media = 'off',
-                                            compress=True))
+                    SubredditStylesheet.rendered_link(
+                        links, media='off', compress=True))
                 # do a stickied link
                 jquery('#preview_link_stickied').html(
-                    cssfilter.rendered_link(links, media='off',
-                                            compress=False, stickied=True))
+                    SubredditStylesheet.rendered_link(
+                        links, media='off', compress=False, stickied=True))
     
             # and do a comment
-            comments = cssfilter.find_preview_comments(c.site)
+            comments = SubredditStylesheet.find_preview_comments(c.site)
             if comments:
                 jquery('#preview_comment').html(
-                    cssfilter.rendered_comment(comments))
+                    SubredditStylesheet.rendered_comment(comments))
 
                 jquery('#preview_comment_gilded').html(
-                    cssfilter.rendered_comment(comments, gilded=True))
+                    SubredditStylesheet.rendered_comment(
+                        comments, gilded=True))
 
     @require_oauth2_scope("modconfig")
     @validatedForm(VSrModerator(perms='config'),
