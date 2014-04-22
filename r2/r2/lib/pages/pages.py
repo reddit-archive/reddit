@@ -2222,8 +2222,12 @@ class SubredditStylesheetSource(Templated):
 class CssError(Templated):
     """Rendered error returned to the stylesheet editing page via ajax"""
     def __init__(self, error):
-        # error is an instance of cssutils.py:ValidationError
+        # error is an instance of cssfilter.py:ValidationError
         Templated.__init__(self, error = error)
+
+    @property
+    def message(self):
+        return _(self.error.message_key) % self.error.message_params
 
 class UploadedImage(Templated):
     "The page rendered in the iframe during an upload of a header image"

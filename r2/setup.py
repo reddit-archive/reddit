@@ -70,7 +70,6 @@ setup(
         "cython>=0.14",
         "SQLAlchemy==0.7.4",
         "BeautifulSoup",
-        "cssutils==0.9.5.1",
         "chardet",
         "psycopg2",
         "pycassa>=1.7.0",
@@ -85,6 +84,7 @@ setup(
         "kazoo",
         "stripe",
         "requests",
+        "tinycss2",
     ],
     dependency_links=[
         "https://github.com/reddit/snudown/archive/v1.1.3.tar.gz#egg=snudown-1.1.3",

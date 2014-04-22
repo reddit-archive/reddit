@@ -69,7 +69,7 @@ from r2.lib.template_helpers import add_sr
 from r2.lib.db import tdb_cassandra
 from r2.models.listing import WikiRevisionListing
 from r2.lib.pages.things import default_thing_wrapper
-from r2.lib.pages import BoringPage
+from r2.lib.pages import BoringPage, CssError
 from reddit_base import base_listing
 from r2.models import IDBuilder, LinkListing, DefaultSR
 from r2.lib.merge import ConflictException, make_htmldiff
@@ -371,11 +371,11 @@ class WikiApiController(WikiController):
         previous = previous._id if previous else request.POST.get('previous')
         try:
             if page.name == 'config/stylesheet':
-                report, parsed = c.site.parse_css(content, verify=False)
-                if report is None:  # g.css_killswitch
+                css_errors, parsed = c.site.parse_css(content, verify=False)
+                if g.css_killswitch:
                     self.handle_error(403, 'STYLESHEET_EDIT_DENIED')
-                if report.errors:
-                    error_items = [x.message for x in sorted(report.errors)]
+                if css_errors:
+                    error_items = [CssError(x).message for x in css_errors]
                     self.handle_error(415, 'SPECIAL_ERRORS', special_errors=error_items)
                 c.site.change_css(content, parsed, previous, reason=reason)
             else:
@@ -460,8 +460,8 @@ class WikiApiController(WikiController):
         content = revision.content
         reason = 'reverted back %s' % timesince(revision.date)
         if page.name == 'config/stylesheet':
-            report, parsed = c.site.parse_css(content)
-            if report.errors:
+            css_errors, parsed = c.site.parse_css(content)
+            if css_errors:
                 self.handle_error(403, 'INVALID_CSS')
             c.site.change_css(content, parsed, prev=None, reason=reason, force=True)
         else:

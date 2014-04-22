@@ -1709,19 +1709,19 @@ class ApiController(RedditController):
         
         if form.has_errors("prevstyle", errors.TOO_LONG):
             return
-        report, parsed = c.site.parse_css(stylesheet_contents)
+        css_errors, parsed = c.site.parse_css(stylesheet_contents)
 
         # Use the raw POST value as we need to tell the difference between
         # None/Undefined and an empty string.  The validators use a default
         # value with both of those cases and would need to be changed. 
         # In order to avoid breaking functionality, this was done instead.
         prevstyle = request.POST.get('prevstyle')
-        if not report:
+
+        if g.css_killswitch:
             return abort(403, 'forbidden')
-        
-        if report.errors:
-            error_items = [ CssError(x).render(style='html')
-                            for x in sorted(report.errors) ]
+
+        if css_errors:
+            error_items = [CssError(x).render(style='html') for x in css_errors]
             form.set_html(".status", _('validation errors'))
             form.set_html(".errors ul", ''.join(error_items))
             form.find('.errors').show()

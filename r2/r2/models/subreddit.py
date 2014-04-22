@@ -46,10 +46,10 @@ from r2.lib.cache import sgm, TransitionalCache
 from r2.lib.strings import strings, Score
 from r2.lib.filters import _force_unicode
 from r2.lib.db import tdb_cassandra
-from r2.models.wiki import WikiPage
+from r2.models.wiki import WikiPage, ImagesByWikiPage
+
 from r2.lib.merge import ConflictException
 from r2.lib.cache import CL_ONE
-from r2.lib.contrib.rcssmin import cssmin
 from r2.lib import hooks
 from r2.models.query_cache import MergedCachedQuery
 import pycassa
@@ -499,21 +499,26 @@ class Subreddit(Thing, Printable, BaseSite):
         if g.css_killswitch or (verify and not self.can_change_stylesheet(c.user)):
             return (None, None)
 
+        if not content:
+            return ([], ("", ""))
+
         # parse in regular old http mode
-        parsed_http, report_http = cssfilter.validate_css(
+        http_images = ImagesByWikiPage.get_images(self, "config/stylesheet")
+        parsed_http, errors_http = cssfilter.validate_css(
             content,
-            generate_https_urls=False,
+            http_images,
         )
 
         # parse and resolve images with https-safe urls
-        parsed_https, report_https = cssfilter.validate_css(
+        https_images = {name: g.media_provider.convert_to_https(url)
+                        for name, url in http_images.iteritems()}
+        parsed_https, errors_https = cssfilter.validate_css(
             content,
-            generate_https_urls=True,
+            https_images,
         )
 
-        # the two reports should be identical except in the already handled
-        # case of using non-custom images, so we'll just return the http one.
-        return (report_http, (parsed_http, parsed_https))
+        # the two reports should be identical so we'll just return the http one
+        return (errors_http, (parsed_http, parsed_https))
 
     def change_css(self, content, parsed, prev=None, reason=None, author=None, force=False):
         from r2.models import ModAction
@@ -528,7 +533,7 @@ class Subreddit(Thing, Printable, BaseSite):
             wiki = WikiPage.create(self, 'config/stylesheet')
         wr = wiki.revise(content, previous=prev, author=author, reason=reason, force=force)
 
-        minified_http, minified_https = map(cssmin, parsed)
+        minified_http, minified_https = parsed
         if minified_http or minified_https:
             if g.subreddit_stylesheets_static:
                 self.stylesheet_url_http = upload_stylesheet(minified_http)

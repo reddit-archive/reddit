@@ -37,7 +37,6 @@ import sys
 
 from sqlalchemy import engine, event
 
-import cssutils
 import pkg_resources
 import pytz
 
@@ -422,10 +421,6 @@ class Globals(object):
         except IOError:
             pool = "reddit-app"
         self.log = logging.LoggerAdapter(log, {"pool": pool})
-
-        # make cssutils use the real logging system
-        csslog = logging.getLogger("cssutils")
-        cssutils.log.setLog(csslog)
 
         # set locations
         self.locations = {}

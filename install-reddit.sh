@@ -123,7 +123,6 @@ python-babel
 cython
 python-sqlalchemy
 python-beautifulsoup
-python-cssutils
 python-chardet
 python-psycopg2
 python-pycassa
@@ -138,6 +137,7 @@ python-lxml
 python-zope.interface
 python-kazoo
 python-stripe
+python-tinycss2
 
 nodejs
 node-less
