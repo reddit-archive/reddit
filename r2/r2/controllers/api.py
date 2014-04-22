@@ -1535,8 +1535,7 @@ class ApiController(RedditController):
                     not sr.should_ratelimit(c.user, 'comment')):
                 should_ratelimit = False
 
-            parent_age = c.start_time - parent._date
-            if not link.promoted and parent_age.days > g.REPLY_AGE_LIMIT:
+            if link._age > sr.archive_age:
                 c.errors.add(errors.TOO_OLD, field = "parent")
 
             hooks.get_hook("comment.validate").call(sr=sr, link=link,
@@ -1748,9 +1747,7 @@ class ApiController(RedditController):
             reject_vote(thing)
             store = False
 
-        thing_age = c.start_time - thing._date
-        if thing_age.days > g.VOTE_AGE_LIMIT:
-            g.log.debug("ignoring vote on old thing %s" % thing._fullname)
+        if thing._age > thing.subreddit_slow.archive_age:
             store = False
 
         if getattr(c.user, "suspicious", False):

@@ -357,7 +357,6 @@ class Link(Thing, Printable):
         pref_frame = user.pref_frame
         cname = c.cname
         site = c.site
-        now = datetime.now(g.tz)
 
         saved = hidden = visited = {}
 
@@ -592,12 +591,7 @@ class Link(Thing, Printable):
                 item.author = DeletedUser()
                 item.as_deleted = True
 
-            item_age = now - item._date
-
-            if item_age.days > g.VOTE_AGE_LIMIT and item.promoted is None:
-                item.votable = False
-            else:
-                item.votable = True
+            item.votable = item._age < item.subreddit.archive_age
 
             item.expunged = False
             if item.is_self:
@@ -980,7 +974,6 @@ class Comment(Thing, Printable):
         focal_comment = c.focal_comment
         cname = c.cname
         site = c.site
-        now = datetime.now(g.tz)
 
         if user_is_loggedin:
             gilded = [thing for thing in wrapped if thing.gildings > 0]
@@ -1034,8 +1027,7 @@ class Comment(Thing, Printable):
 
             item.can_reply = False
             if c.can_reply or (item.sr_id in can_reply_srs):
-                age = now - item._date
-                if item.link.promoted or age.days < g.REPLY_AGE_LIMIT:
+                if item.link._age < item.subreddit.archive_age:
                     item.can_reply = True
 
             item.can_save = c.can_save or False
@@ -1132,11 +1124,7 @@ class Comment(Thing, Printable):
             item.is_author = (user == item.author)
             item.is_focal = (focal_comment == item._id36)
 
-            item_age = c.start_time - item._date
-            if item_age.days > g.VOTE_AGE_LIMIT:
-                item.votable = False
-            else:
-                item.votable = True
+            item.votable = item._age < item.subreddit.archive_age
 
             hide_period = ('{0} minutes'
                           .format(item.subreddit.comment_score_hide_mins))

@@ -71,9 +71,9 @@ class Report(MultiRelation('report',
             author = Account._byID(thing.author_id, data=True)
             author._incr('reported')
 
-        item_age = datetime.now(g.tz) - thing._date
         ignore_reports = getattr(thing, 'ignore_reports', False)
-        if item_age.days < g.REPORT_AGE_LIMIT and not ignore_reports:
+        if (not ignore_reports and
+                thing._age < thing.subreddit_slow.archive_age):
             # update the reports queue if it exists
             queries.new_report(thing, r)
 

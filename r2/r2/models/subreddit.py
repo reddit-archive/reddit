@@ -210,6 +210,7 @@ class Subreddit(Thing, Printable, BaseSite):
         spam_links='high',
         spam_selfposts='high',
         spam_comments='low',
+        archive_age=g.ARCHIVE_AGE,
     )
     _essentials = ('type', 'name', 'lang')
     _data_int_props = Thing._data_int_props + ('mod_actions', 'reported',

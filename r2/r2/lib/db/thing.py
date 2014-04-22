@@ -579,6 +579,10 @@ class Thing(DataThing):
                 self._thing_id = thing_id
 
     @property
+    def _age(self):
+        return datetime.now(g.tz) - self._date
+
+    @property
     def _hot(self):
         return sorts.hot(self._ups, self._downs, self._date)
 

@@ -120,9 +120,6 @@ class Globals(object):
             'MIN_DOWN_KARMA',
             'MIN_RATE_LIMIT_KARMA',
             'MIN_RATE_LIMIT_COMMENT_KARMA',
-            'VOTE_AGE_LIMIT',
-            'REPLY_AGE_LIMIT',
-            'REPORT_AGE_LIMIT',
             'HOT_PAGE_AGE',
             'QUOTA_THRESHOLD',
             'ADMIN_COOKIE_TTL',
@@ -241,6 +238,10 @@ class Globals(object):
                  'QUORUM': CL_QUORUM
              },
         },
+
+        ConfigValue.timeinterval: [
+            'ARCHIVE_AGE',
+        ],
 
         config_gold_price: [
             'gold_month_price',

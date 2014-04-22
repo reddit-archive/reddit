@@ -335,10 +335,8 @@ class FrontController(RedditController):
         if c.user_is_loggedin and can_comment_link(article) and not is_api():
             #no comment box for permalinks
             display = False
-            if not comment:
-                age = c.start_time - article._date
-                if article.promoted or age.days < g.REPLY_AGE_LIMIT:
-                    display = True
+            if not comment and article._age < sr.archive_age:
+                display = True
 
             if article.promoted:
                 geotargeted, city_target = promote.is_geotargeted_promo(article)
