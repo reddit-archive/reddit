@@ -32,7 +32,7 @@ from r2.controllers.api import ApiController
 from r2.controllers.listingcontroller import ListingController
 from r2.controllers.reddit_base import RedditController
 
-from r2.lib import cssfilter, inventory, promote
+from r2.lib import inventory, promote
 from r2.lib.authorize import get_account_info, edit_profile, PROFILE_LIMIT
 from r2.lib.db import queries
 from r2.lib.errors import errors
@@ -867,12 +867,10 @@ class PromoteApiController(ApiController):
         if link and (not promote.is_promoted(link) or
                      c.user_is_sponsor or c.user.trusted_sponsor):
             errors = dict(BAD_CSS_NAME="", IMAGE_ERROR="")
-            try:
-                # thumnails for promoted links can change and therefore expire
-                force_thumbnail(link, file, file_type=".%s" % img_type)
-            except cssfilter.BadImage:
-                # if the image doesn't clean up nicely, abort
-                errors["IMAGE_ERROR"] = _("bad image")
+
+            # thumnails for promoted links can change and therefore expire
+            force_thumbnail(link, file, file_type=".%s" % img_type)
+
             if any(errors.values()):
                 return UploadedImage("", "", "upload", errors=errors,
                                      form_id="image-upload").render()

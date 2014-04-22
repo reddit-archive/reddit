@@ -35,8 +35,6 @@ from mako import filters
 import os
 import tempfile
 
-from r2.lib.media import upload_media
-
 import re
 from urlparse import urlparse
 
@@ -389,14 +387,3 @@ def rendered_comment(comments, gilded=False):
         for w in wrapped:
             w.gilded_message = "this comment was fake-gilded"
     return wrapped.render(style="html")
-
-class BadImage(Exception):
-    def __init__(self, error = None):
-        self.error = error
-
-def save_sr_image(sr, data, suffix = '.png'):
-    try:
-        return upload_media(data, file_type = suffix)
-    except Exception as e:
-        raise BadImage(e)
-

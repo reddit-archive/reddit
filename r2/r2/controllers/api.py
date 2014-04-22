@@ -1930,10 +1930,12 @@ class ApiController(RedditController):
             return UploadedImage("", "", "", errors=errors, form_id=form_id).render()
         else:
             try:
-                new_url = cssfilter.save_sr_image(c.site, file, suffix ='.' + img_type)
-            except cssfilter.BadImage:
+                new_url = media.upload_media(file, file_type="." + img_type)
+            except Exception as e:
+                g.log.warning("error uploading subreddit image: %s", e)
                 errors['IMAGE_ERROR'] = _("Invalid image or general image error")
                 return UploadedImage("", "", "", errors=errors, form_id=form_id).render()
+
             size = str_to_image(file).size
             if header:
                 c.site.header = new_url
