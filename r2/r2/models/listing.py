@@ -232,20 +232,6 @@ class InvitedModListing(UserListing):
             embedded=True,
         )
 
-    def sort_moderators(self, items):
-        items = [(item, item.rel.get_permissions()) for item in items]
-        for item, permissions in items:
-            if permissions is None or permissions.is_superuser():
-                yield item
-        for item, permissions in items:
-            if permissions is not None and not permissions.is_superuser():
-                yield item
-
-    def get_items(self, **kw):
-        things, prev, next, bcount, acount = UserListing.get_items(self, **kw)
-        things = list(self.sort_moderators(things))
-        return things, prev, next, bcount, acount
-
     @property
     def title(self):
         return _("invited moderators for"
