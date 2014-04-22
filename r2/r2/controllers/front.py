@@ -1129,7 +1129,7 @@ class FrontController(RedditController):
                           ).render()
 
     def GET_advertising(self):
-        return FormPage('advertise',
+        return AdvertisingPage('advertise',
                         content = SelfServeBlurb(),
                         loginbox = False).render()
 

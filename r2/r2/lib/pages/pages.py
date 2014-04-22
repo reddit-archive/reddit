@@ -1050,6 +1050,8 @@ class FormPage(BoringPage):
         BoringPage.__init__(self, pagename,  show_sidebar = show_sidebar,
                             *a, **kw)
 
+class AdvertisingPage(FormPage):
+    extra_stylesheets  = ['selfserve.less']
 
 class LoginPage(BoringPage):
     enable_login_cover = False
