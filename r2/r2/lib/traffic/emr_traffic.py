@@ -28,9 +28,16 @@ from time import time, sleep
 from boto.emr.step import InstallPigStep, PigStep
 from boto.emr.bootstrap_action import BootstrapAction
 
-from r2.lib.emr_helpers import (EmrJob, get_compatible_jobflows,
-    get_step_state, EmrException, update_jobflows_cached,
-    LIVE_STATES, COMPLETED, PENDING, NOTFOUND)
+from r2.lib.emr_helpers import (
+    EmrException,
+    EmrJob,
+    get_compatible_jobflows,
+    get_step_state,
+    LIVE_STATES,
+    COMPLETED,
+    PENDING,
+    NOTFOUND,
+)
 
 
 class TrafficBase(EmrJob):
@@ -145,8 +152,8 @@ def _wait_for_step(emr_connection, step, jobflowid, sleeptime):
     """Poll EMR and wait for a step to finish."""
     sleep(180)
     start = time()
-    update_jobflows_cached(emr_connection)
-    step_state = get_step_state(emr_connection, jobflowid, step.name)
+    step_state = get_step_state(emr_connection, jobflowid, step.name,
+                                update=True)
     while step_state in LIVE_STATES + [PENDING]:
         sleep(sleeptime)
         step_state = get_step_state(emr_connection, jobflowid, step.name)

@@ -21,92 +21,15 @@
 ###############################################################################
 
 from copy import copy
-import datetime
 
 from pylons import g
 
 from r2.lib.memoize import memoize
-from r2.lib.utils import storage
 
 LIVE_STATES = ['RUNNING', 'STARTING', 'WAITING', 'BOOTSTRAPPING']
 COMPLETED = 'COMPLETED'
 PENDING = 'PENDING'
 NOTFOUND = 'NOTFOUND'
-
-
-@memoize('emr_describe_jobflows', time=30, timeout=60)
-def describe_jobflows_cached(emr_connection):
-    """Return a list of jobflows on this connection.
-
-    It's good to cache this information because hitting AWS too often can
-    result in rate limiting, and it's not particularly detrimental to have
-    slightly out of date information in most cases. Non-running jobflows and
-    information we don't need are discarded to reduce the size of cached data.
-
-    """
-
-    jobflows = emr_connection.describe_jobflows()
-
-    r_jobflows = []
-    for jf in jobflows:
-        # skip old not live jobflows
-        d = jf.steps[-1].creationdatetime.split('T')[0]
-        last_step_start = datetime.datetime.strptime(d, '%Y-%m-%d').date()
-        now = datetime.datetime.now().date()
-        if (jf.state not in LIVE_STATES and
-            now - last_step_start > datetime.timedelta(2)):
-            continue
-
-        # keep only fields we need
-        r_jf = storage(name=jf.name,
-                       jobflowid=jf.jobflowid,
-                       state=jf.state)
-        r_bootstrapactions = []
-        for i in jf.bootstrapactions:
-            s = storage(name=i.name,
-                        path=i.path,
-                        args=[a.value for a in i.args])
-            r_bootstrapactions.append(s)
-        r_jf['bootstrapactions'] = r_bootstrapactions
-        r_steps = []
-        for i in jf.steps:
-            s = storage(name=i.name,
-                        state=i.state,
-                        jar=i.jar,
-                        args=[a.value for a in i.args])
-            r_steps.append(s)
-        r_jf['steps'] = r_steps
-        r_instancegroups = []
-        for i in jf.instancegroups:
-            s = storage(name=i.name,
-                        instancegroupid=i.instancegroupid,
-                        instancerequestcount=i.instancerequestcount)
-            r_instancegroups.append(s)
-        r_jf['instancegroups'] = r_instancegroups
-        r_jobflows.append(r_jf)
-    return r_jobflows
-
-
-def update_jobflows_cached(emr_connection):
-    r = describe_jobflows_cached(emr_connection, _update=True)
-
-
-def describe_jobflows_by_state(emr_connection, states, _update=False):
-    g.reset_caches()
-    jobflows = describe_jobflows_cached(emr_connection, _update=_update)
-    return [jf for jf in jobflows if jf.state in states]
-
-
-def describe_jobflows(emr_connection, _update=False):
-    g.reset_caches()
-    jobflows = describe_jobflows_cached(emr_connection, _update=_update)
-    return jobflows
-
-
-def describe_jobflow(emr_connection, jobflow_id, _update=False):
-    r = describe_jobflows_by_ids(emr_connection, [jobflow_id], _update=_update)
-    if r:
-        return r[0]
 
 
 def get_compatible_jobflows(emr_connection, bootstrap_actions=None,
@@ -122,38 +45,58 @@ def get_compatible_jobflows(emr_connection, bootstrap_actions=None,
     bootstrap_actions = bootstrap_actions or []
     setup_steps = setup_steps or []
 
-    # update list of running jobflows--ensure we don't pick a recently dead one
-    update_jobflows_cached(emr_connection)
-
-    jobflows = describe_jobflows_by_state(emr_connection, LIVE_STATES,
-                                          _update=True)
+    jobflows = emr_connection.describe_jobflows(states=LIVE_STATES)
     if not jobflows:
         return []
 
-    required_bootstrap_actions = set((i.name, i.path, tuple(sorted(i.args())))
-                                     for i in bootstrap_actions)
-    required_setup_steps = set((i.name, i.jar(), tuple(sorted(i.args())))
-                               for i in setup_steps)
+    # format of step objects returned from describe_jobflows differs from those
+    # created locally, so they must be compared carefully
+    def args_tuple_emr(step):
+        return tuple(sorted(arg.value for arg in step.args))
+
+    def args_tuple_local(step):
+        return tuple(sorted(step.args()))
+
+    required_bootstrap_actions = {(step.name, step.path, args_tuple_local(step))
+                                  for step in bootstrap_actions}
+    required_setup_steps = {(step.name, step.jar(), args_tuple_local(step))
+                            for step in setup_steps}
 
     if not required_bootstrap_actions and not required_setup_steps:
         return jobflows
 
     running = []
     for jf in jobflows:
-        extant_bootstrap_actions = set((i.name, i.path, tuple(sorted(i.args)))
-                                       for i in jf.bootstrapactions)
+        extant_bootstrap_actions = {(step.name, step.path, args_tuple_emr(step))
+                                    for step in jf.bootstrapactions}
         if not (required_bootstrap_actions <= extant_bootstrap_actions):
             continue
 
-        extant_setup_steps = set((i.name, i.jar, tuple(sorted(i.args)))
-                                 for i in jf.steps)
+        extant_setup_steps = {(step.name, step.jar, args_tuple_emr(step))
+                              for step in jf.steps}
         if not (required_setup_steps <= extant_setup_steps):
             continue
         running.append(jf)
     return running
 
 
-def get_step_state(emr_connection, jobflowid, step_name):
+@memoize('get_step_states', time=60, timeout=60)
+def get_step_states(emr_connection, jobflowid):
+    """Return the names and states of all steps in the jobflow.
+
+    Memoized to prevent ratelimiting.
+
+    """
+
+    jobflow = emr_connection.describe_jobflow(jobflowid)
+
+    if jobflow:
+        return [(step.name, step.state) for step in jobflow.steps]
+    else:
+        return []
+
+
+def get_step_state(emr_connection, jobflowid, step_name, update=False):
     """Return the state of a step.
 
     If jobflowid/step_name combination is not unique this will return the state
@@ -161,21 +104,20 @@ def get_step_state(emr_connection, jobflowid, step_name):
 
     """
 
-    jobflow = describe_jobflow(emr_connection, jobflowid)
-    if not jobflow:
-        return NOTFOUND
+    g.reset_caches()
+    steps = get_step_states(emr_connection, jobflowid, _update=update)
 
-    for step in reversed(jobflow.steps):
-        if step.name == step_name:
-            return step.state
+    for name, state in reversed(steps):
+        if name == step_name:
+            return state
     else:
         return NOTFOUND
 
 
 def get_jobflow_by_name(emr_connection, jobflow_name):
     """Return the most recent jobflow with specified name."""
-    jobflows = describe_jobflows_by_state(emr_connection, LIVE_STATES,
-                                          _update=True)
+    jobflows = emr_connection.describe_jobflows(states=LIVE_STATES)
+
     for jobflow in jobflows:
         if jobflow.name == jobflow_name:
             return jobflow
@@ -255,7 +197,7 @@ class EmrJob(object):
     @property
     def jobflow_state(self):
         if self.jobflowid:
-            return describe_jobflow(self.conn, self.jobflowid).state
+            return self.conn.describe_jobflow(self.jobflowid).state
         else:
             return NOTFOUND
 
