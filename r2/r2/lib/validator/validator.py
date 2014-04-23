@@ -1822,6 +1822,11 @@ class VLocation(Validator):
     default_param = ("country", "region", "metro")
 
     def run(self, country, region, metro):
+        # some browsers are sending "null" rather than omitting the input when
+        # the select is disabled
+        country, region, metro = map(lambda val: None if val == "null" else val,
+                                     [country, region, metro])
+
         if not (country or region or metro):
             return None
 
