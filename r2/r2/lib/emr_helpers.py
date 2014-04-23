@@ -91,12 +91,6 @@ def update_jobflows_cached(emr_connection):
     r = describe_jobflows_cached(emr_connection, _update=True)
 
 
-def describe_jobflows_by_ids(emr_connection, jobflow_ids, _update=False):
-    g.reset_caches()
-    jobflows = describe_jobflows_cached(emr_connection, _update=_update)
-    return [jf for jf in jobflows if jf.jobflowid in jobflow_ids]
-
-
 def describe_jobflows_by_state(emr_connection, states, _update=False):
     g.reset_caches()
     jobflows = describe_jobflows_cached(emr_connection, _update=_update)
