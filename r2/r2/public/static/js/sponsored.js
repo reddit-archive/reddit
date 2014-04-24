@@ -539,6 +539,7 @@ function check_enddate(startdate, enddate) {
             if (tableWasEmpty) {
                 $('.existing-campaigns p.error').hide()
                 $('.existing-campaigns table').fadeIn()
+                $('#campaign .buttons button[name=cancel]').removeClass('hidden')
             }
         })
     }

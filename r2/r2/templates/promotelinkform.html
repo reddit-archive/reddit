@@ -464,7 +464,7 @@ ${self.javascript_setup()}
           <input type="hidden" name="campaign_name" value="">
           <span class="status error"></span>
           <button name="cancel"
-                  onclick="return cancel_edit()" class="fancybutton">
+                  onclick="return cancel_edit()" class="fancybutton ${'hidden' if not thing.campaigns else ''}">
             ${_("cancel")}
           </button>
 
