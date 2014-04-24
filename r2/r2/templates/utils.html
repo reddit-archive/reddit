@@ -549,13 +549,12 @@ ${unsafe(txt)}
 <%def name="timestamp(date, since=None, live=False, include_tense=False)">
   ## todo: use pubdate attribute once things are <article> tags.
   ## note: comment and link templates will pass a CachedVariable stub as since.
-  <% now = date.now(g.tz) %>
+  <%
+    now = date.now(g.tz)
+    timestamp_class = unsafe(' class="live-timestamp"') if live else ''
+  %>
 
-  <time title="${long_datetime(date)}" datetime="${html_datetime(date)}" 
-    %if live:
-      class="live-timestamp"
-    %endif
-  >
+  <time title="${long_datetime(date)}" datetime="${html_datetime(date)}"${timestamp_class}>
     ${unsafe(since or timesince(date))}
     %if include_tense and date < now:
       ${_("ago")}
