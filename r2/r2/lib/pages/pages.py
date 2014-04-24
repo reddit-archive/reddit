@@ -3684,9 +3684,14 @@ def make_link_child(item):
 
     if media_object:
         media_embed = None
+        expand = False
+
         if isinstance(media_object, basestring):
             media_embed = media_object
         else:
+            expand = (media_object.get('type') in g.autoexpand_media_types and
+                      getattr(item, 'expand_children', False))
+
             try:
                 media_embed = media.get_media_embed(media_object)
             except TypeError:
@@ -3706,7 +3711,10 @@ def make_link_child(item):
                 g.log.debug("media_object without media_embed %s" % item)
 
         if media_embed:
-            link_child = MediaChild(item, media_embed, load = True)
+            link_child = MediaChild(item,
+                                    media_embed,
+                                    load=True,
+                                    expand=expand)
 
     # if the item is_self, add a selftext child
     elif item.is_self:
