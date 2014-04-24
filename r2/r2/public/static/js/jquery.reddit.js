@@ -681,6 +681,10 @@ $.apply_stylesheet = function(cssText) {
          * that has the old stylesheet, and delete it. Then we add a
          * <style> with the new one */
         $("head").children('*[title="' + sheet_title + '"]').remove();
+
+        /* Hack to trigger a reflow so webkit browsers reset animations */
+        document.body.offsetHeight;
+
         var stylesheet = $('<style type="text/css" media="screen"></style>')
             .attr('title', sheet_title)
             .text(cssText)
