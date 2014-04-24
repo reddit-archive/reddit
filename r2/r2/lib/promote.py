@@ -398,6 +398,13 @@ def promo_datetime_now(offset=None):
     return now
 
 
+def get_max_startdate():
+    # authorization hold happens now but expires after 30 days. charge
+    # happens 1 day before the campaign launches. the latest a campaign
+    # can start is 30 days from now (it will get charged in 29 days).
+    return promo_datetime_now() + timedelta(days=30)
+
+
 def accept_promotion(link):
     update_promote_status(link, PROMOTE_STATUS.accepted)
 

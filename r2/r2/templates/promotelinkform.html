@@ -298,10 +298,10 @@ ${self.javascript_setup()}
           <tr>
             <th>${_("start")}</th>
             <td class="prefright">
-              <input type="hidden" id="date-min" value="${thing.startdate}">
-              <input type="hidden" id="date-start-max" value="${thing.maxstart}">
-              <input type="hidden" id="date-end-max" value="${thing.maxend}">
-              <%self:datepicker name="startdate", value="${thing.startdate}"
+              <input type="hidden" id="date-min" value="${thing.min_start}">
+              <input type="hidden" id="date-start-max" value="${thing.max_start}">
+              <input type="hidden" id="date-end-max" value="${thing.max_end}">
+              <%self:datepicker name="startdate", value="${thing.default_start}"
                                 minDateSrc="date-min" maxDateSrc="date-start-max"
                                 initfuncname="init_startdate">
                 function(elem) {
@@ -314,7 +314,7 @@ ${self.javascript_setup()}
           <tr>
             <th>${_("end")}</th>
             <td class="prefright">
-              <%self:datepicker name="enddate", value="${thing.enddate}"
+              <%self:datepicker name="enddate", value="${thing.default_end}"
                                 minDateSrc="startdate" maxDateSrc="date-end-max"
                                 initfuncname="init_enddate" min_date_offset="86400000">
                 function(elem) { r.sponsored.on_date_change(); }

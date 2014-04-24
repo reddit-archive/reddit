@@ -21,6 +21,7 @@
 ###############################################################################
 from datetime import datetime, timedelta
 
+from babel.dates import format_date
 from babel.numbers import format_number
 import json
 import urllib
@@ -705,6 +706,16 @@ class PromoteApiController(ApiController):
                             errors.DATE_TOO_LATE, errors.BAD_DATE_RANGE)):
             return
 
+        # check that start is not so late that authorization hold will expire
+        if not c.user_is_sponsor:
+            max_start = promote.get_max_startdate()
+            if start > max_start:
+                c.errors.add(errors.DATE_TOO_LATE,
+                             msg_params={'day': max_start.strftime("%m/%d/%Y")},
+                             field='startdate')
+                form.has_errors('startdate', errors.DATE_TOO_LATE)
+                return
+
         # Limit the number of PromoCampaigns a Link can have
         # Note that the front end should prevent the user from getting
         # this far
@@ -826,6 +837,15 @@ class PromoteApiController(ApiController):
 
         # Check inventory
         if campaign_has_oversold_error(form, campaign):
+            return
+
+        # check that start is not so late that authorization hold will expire
+        max_start = promote.get_max_startdate()
+        if campaign.start_date > max_start:
+            msg = _("please change campaign start date to %(date)s or earlier")
+            date = format_date(max_start, format="short", locale=c.locale)
+            msg %= {'date': date}
+            form.set_html(".status", msg)
             return
 
         address_modified = not pay_id or edit

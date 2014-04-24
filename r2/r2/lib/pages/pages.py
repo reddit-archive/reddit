@@ -3484,26 +3484,29 @@ class PromoteLinkForm(Templated):
         now = promote.promo_datetime_now()
 
         if c.user_is_sponsor:
-            mindate = now
+            min_start = now
         elif promote.is_accepted(link):
-            mindate = make_offset_date(now, 1, business_days=True)
+            min_start = make_offset_date(now, 1, business_days=True)
         else:
-            mindate = make_offset_date(now, g.min_promote_future,
-                                       business_days=True)
+            min_start = make_offset_date(now, g.min_promote_future,
+                                         business_days=True)
 
         if c.user_is_sponsor:
-            max_days = 366
+            max_end = now + datetime.timedelta(days=366)
         else:
-            max_days = g.max_promote_future
+            max_end = now + datetime.timedelta(days=g.max_promote_future)
 
-        maxstart = now + datetime.timedelta(max_days-1)
-        maxend = maxstart + datetime.timedelta(days=1)
-        self.maxstart = maxstart.strftime("%m/%d/%Y")
-        self.maxend = maxend.strftime("%m/%d/%Y")
+        if c.user_is_sponsor:
+            max_start = max_end - datetime.timedelta(days=1)
+        else:
+            max_start = promote.get_max_startdate()
 
-        self.startdate = mindate.strftime("%m/%d/%Y")
-        enddate = mindate + datetime.timedelta(days=2)
-        self.enddate = enddate.strftime("%m/%d/%Y")
+        self.max_start = max_start.strftime("%m/%d/%Y")
+        self.max_end = max_end.strftime("%m/%d/%Y")
+
+        self.min_start = self.default_start = min_start.strftime("%m/%d/%Y")
+        default_end = min_start + datetime.timedelta(days=2)
+        self.default_end = default_end.strftime("%m/%d/%Y")
 
         self.subreddit_selector = SubredditSelector()
 
@@ -3557,8 +3560,8 @@ class PromoteLinkForm(Templated):
             srnames.update(names)
         srs = Subreddit._by_name(srnames)
         srs[''] = Frontpage
-        inv_start = mindate
-        inv_end = mindate + datetime.timedelta(days=14)
+        inv_start = min_start
+        inv_end = min_start + datetime.timedelta(days=14)
         sr_inventory = inventory.get_available_pageviews(
             srs.values(), inv_start, inv_end, datestr=True)
 
