@@ -4675,6 +4675,10 @@ ul.tabmenu.formtab {
     width: 100%; 
 }
 
+.linefield .markhelp table {
+    background: #FFFFFF;
+}
+
 #kind-selector label {
     padding-right: 20px;
 }
@@ -5433,11 +5437,14 @@ div #campaign-field {
     color: orangered;
 }
 
+.create-promotion .infobar {
+    margin: 5px;
+}
 
 .create-promo {
     float: left;
-    margin-right: 20px;
-    min-width: 620px;
+    margin: 5px 20px 0 5px;
+    width: 620px;
 }
 
 .create-promo .infobar { 
@@ -5456,12 +5463,17 @@ div #campaign-field {
 
 .create-promo textarea,
 .create-promo input[type=text] {
-    width: 98%;
+    width: 100%;
+    .box-sizing(border-box);
+}
+
+.create-promo .campaign {
+    width: auto;
 }
 
 #promo-form {
     .linefield {
-        width: 620px;
+        width: auto;
     }
 
     .usertext-edit {
@@ -5482,10 +5494,17 @@ div #campaign-field {
     }
 }
 
+.existing-campaigns th button.new-campaign {
+    margin: 3px 0;
+}
+
 .create-promo .hidden { display: none; }
 button.new-campaign:disabled { color: gray; }
 
-.bidding-history { padding-top: 10px; }
+.bidding-history { 
+    padding-top: 5px; 
+    margin-right: 5px;
+}
 .bidding-history .linefield {
     width: auto; 
     overflow: hidden; 
