@@ -201,20 +201,20 @@ def is_charged_transaction(trans_id, campaign):
 @export
 def charge_transaction(user, trans_id, campaign, test=None):
     bid =  Bid.one(transaction=trans_id, campaign=campaign)
-    if not bid.is_charged():
-        bid.charged()
-        if trans_id < 0:
-            # freebies are automatically authorized
-            return True
-        elif bid.account_id == user._id:
-            res = _make_transaction(ProfileTransPriorAuthCapture,
-                                    bid.bid, user,
-                                    bid.pay_id, trans_id=trans_id,
-                                    test=test)
-            return bool(res)
+    if bid.is_charged():
+        return True
 
-    # already charged
-    return True
+    if trans_id < 0:
+        success = True
+    else:
+        success, res = _make_transaction(ProfileTransPriorAuthCapture,
+                                         bid.bid, user,
+                                         bid.pay_id, trans_id=trans_id,
+                                         test=test)
+
+    if success:
+        bid.charged()
+    return success
 
 
 @export
