@@ -30,7 +30,7 @@ from pylons.i18n import _
 from pylons.controllers.util import redirect_to
 from pylons import c, g, request
 
-from r2.models.wiki import WikiPage, WikiRevision
+from r2.models.wiki import WikiPage, WikiRevision, WikiBadRevision
 from r2.lib.validator import (
     Validator,
     VSrModerator,
@@ -271,7 +271,7 @@ class VWikiPage(VWikiPageName):
                 self.set_error('HIDDEN_REVISION', code=403)
                 raise AbortWikiError
             return r
-        except (tdb_cassandra.NotFound, ValueError):
+        except (tdb_cassandra.NotFound, WikiBadRevision):
             self.set_error('INVALID_REVISION', code=404)
             raise AbortWikiError
 

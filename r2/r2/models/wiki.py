@@ -78,6 +78,9 @@ class ContentLengthError(Exception):
 class WikiPageExists(Exception):
     pass
 
+class WikiBadRevision(Exception):
+    pass
+
 class WikiPageEditors(tdb_cassandra.View):
     _use_db = True
     _value_type = 'str'
@@ -129,7 +132,7 @@ class WikiRevision(tdb_cassandra.UuidThing, Printable):
     def get(cls, revid, pageid):
         wr = cls._byID(revid)
         if wr.pageid != pageid:
-            raise ValueError('Revision is not for the expected page')
+            raise WikiBadRevision('Revision is not for the expected page')
         return wr
     
     def toggle_hide(self):

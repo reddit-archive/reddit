@@ -27,7 +27,7 @@ from BeautifulSoup import BeautifulSoup, Tag
 from r2.lib.base import abort
 from r2.controllers.reddit_base import RedditController
 from r2.models.subreddit import Frontpage
-from r2.models.wiki import WikiPage, WikiRevision
+from r2.models.wiki import WikiPage, WikiRevision, WikiBadRevision
 from r2.lib.db import tdb_cassandra
 from r2.lib.filters import unsafe, wikimarkdown, generate_table_of_contents
 from r2.lib.validator import validate, nop
@@ -70,7 +70,7 @@ class PoliciesController(RedditController):
         if requested_rev:
             try:
                 display_rev = WikiRevision.get(requested_rev, wp._id)
-            except (tdb_cassandra.NotFound, ValueError):
+            except (tdb_cassandra.NotFound, WikiBadRevision):
                 abort(404)
         else:
             display_rev = revs[0]

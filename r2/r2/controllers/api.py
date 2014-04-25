@@ -1759,7 +1759,7 @@ class ApiController(RedditController):
                 form.set_html('#conflict_diff', e.htmldiff)
                 form.find('.errors').show()
                 return
-            except (tdb_cassandra.NotFound, ValueError):
+            except (tdb_cassandra.NotFound, wiki.WikiBadRevision):
                 c.errors.add(errors.BAD_REVISION, field="prevstyle")
                 form.has_errors("prevstyle", errors.BAD_REVISION)
                 return
