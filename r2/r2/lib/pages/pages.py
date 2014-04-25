@@ -3631,21 +3631,12 @@ class RenderableCampaign(Templated):
         self.refund_url = promote.refund_url(link, campaign)
 
         if campaign.location:
-            country = campaign.location.country or ''
-            region = campaign.location.region or ''
-            metro = campaign.location.metro or ''
-
-            if metro:
-                metro_str = (g.locations[country]['regions'][region]
-                             ['metros'][metro]['name'])
-                self.location_str = '/'.join([country, region, metro_str])
-            else:
-                self.location_str = g.locations[country]['name']
-
-            self.country, self.region, self.metro = country, region, metro
+            self.country = campaign.location.country or ''
+            self.region = campaign.location.region or ''
+            self.metro = campaign.location.metro or ''
         else:
-            self.location_str = ''
             self.country, self.region, self.metro = '', '', ''
+        self.location_str = campaign.location_str
 
         Templated.__init__(self)
 

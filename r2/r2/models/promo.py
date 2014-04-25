@@ -242,6 +242,19 @@ class PromoCampaign(Thing):
         else:
             return None
 
+    @property
+    def location_str(self):
+        if not self.location:
+            return ''
+        elif self.location.metro:
+            country = self.location.country
+            region = self.location.region
+            metro_str = (g.locations[country]['regions'][region]
+                         ['metros'][self.location.metro]['name'])
+            return '/'.join([country, region, metro_str])
+        else:
+            return g.locations[self.location.country]['name']
+
     def is_freebie(self):
         return self.trans_id < 0
 
