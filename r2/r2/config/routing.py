@@ -183,7 +183,7 @@ def make_map():
        action='timereddit_redirect')
 
     mc('/prefs/:where', controller='userlistlisting',
-        action='listing', requirements=dict(where='blocked|friends'))
+        action='user_prefs', requirements=dict(where='blocked|friends'))
     mc('/prefs/:location', controller='forms', action='prefs',
        location='options')
 

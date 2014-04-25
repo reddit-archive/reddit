@@ -1314,11 +1314,45 @@ class UserListListingController(ListingController):
         return content
 
     @require_oauth2_scope("read")
+    @base_listing
+    @listing_api_doc(section=api_section.account,
+                     uri='/prefs/{where}',
+                     uri_variants=['/prefs/' + where for where in [
+                        'blocked', 'friends']])
+    def GET_user_prefs(self, where, **kw):
+        self.where = where
+
+        self.listing_cls = None
+        self.editable = True
+        self.paginated = False
+        self.jump_to_val = None
+        self.show_not_found = False
+        self.show_jump_to = False
+
+        if where == 'friends':
+            self.listing_cls = FriendListing
+        elif where == 'blocked':
+            self.listing_cls = EnemyListing
+            self.show_not_found = True
+        else:
+            abort(404)
+
+        kw['num'] = 0
+        check_cheating('site')
+        return self.build_listing(**kw)
+
+
+    @require_oauth2_scope("read")
     @validate(user=VAccountByName('user'))
     @base_listing
+    @listing_api_doc(section=api_section.subreddits,
+                     uses_site=True,
+                     uri='/about/{where}',
+                     uri_variants=['/about/' + where for where in [
+                        'banned', 'wikibanned', 'contributors',
+                        'wikicontributors', 'moderators']])
     def GET_listing(self, where, user=None, **kw):
-        allow_on_fake_sr = ["blocked", "friends"]
-        if isinstance(c.site, FakeSubreddit) and not where in allow_on_fake_sr:
+        if isinstance(c.site, FakeSubreddit):
             return self.abort404()
 
         self.where = where
@@ -1367,15 +1401,6 @@ class UserListListingController(ListingController):
                              c.user_is_admin)
             self.listing_cls = ModListing
             self.paginated = False
-
-        elif where == 'friends':
-            self.listing_cls = FriendListing
-            self.paginated = False
-
-        elif where == 'blocked':
-            self.listing_cls = EnemyListing
-            self.paginated = False
-            self.show_not_found = True
 
         if not self.listing_cls:
             abort(404)
