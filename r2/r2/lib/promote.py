@@ -432,6 +432,8 @@ def accept_promotion(link):
 def reject_promotion(link, reason=None):
     was_live = is_promoted(link)
     update_promote_status(link, PROMOTE_STATUS.rejected)
+    if reason:
+        PromotionLog.add(link, "rejected: %s" % reason)
 
     # Send a rejection email (unless the advertiser requested the reject)
     if not c.user or c.user._id != link.author_id:
