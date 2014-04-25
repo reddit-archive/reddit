@@ -4770,6 +4770,16 @@ ul.tabmenu.formtab {
     padding: 2px 4px;
 }
 
+.existing-campaigns {
+    td.campaign-target,
+    td.campaign-location {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100px;
+    }
+}
+
+
 .campaign .bid-info { font-size: x-small; }
 .campaign .bid-info.error { color: red; }
 .campaign .buttons { float:right; }
@@ -5444,7 +5454,7 @@ div #campaign-field {
 .create-promo {
     float: left;
     margin: 5px 20px 0 5px;
-    width: 620px;
+    width: 650px;
 }
 
 .create-promo .infobar { 
@@ -5494,8 +5504,15 @@ div #campaign-field {
     }
 }
 
-.existing-campaigns th button.new-campaign {
-    margin: 3px 0;
+.existing-campaigns {
+    th button.new-campaign {
+        margin: 3px 0;
+        white-space: nowrap;
+    }
+
+    .campaign {
+        border: 0;
+    }
 }
 
 .create-promo .hidden { display: none; }

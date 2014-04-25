@@ -106,11 +106,14 @@
     %endif
   </td>
 
-  <td class="campaign-target">
-    ${'/r/%s' % thing.campaign.sr_name if thing.campaign.sr_name else _('frontpage')}
+  <%
+  campaign_target = '/r/%s' % thing.campaign.sr_name if thing.campaign.sr_name else _('frontpage')
+  %>
+  <td class="campaign-target" title="${campaign_target}">
+    ${campaign_target}
   </td>
 
-  <td class="campaign-location">
+  <td class="campaign-location" title="${thing.location_str}">
     ${thing.location_str}
   </td>
 
