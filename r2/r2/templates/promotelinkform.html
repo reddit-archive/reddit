@@ -280,18 +280,6 @@ ${self.javascript_setup()}
 <%def name="campaign_dashboard()">
   <div class="pretty-form">
     <%utils:line_field title="${_('campaign dashboard')}" id="campaign-field" css_class="rounded">
-
-      <div class="help">
-        <div class="infotext rounded" id="campaign-help">
-            ${unsafe(safemarkdown(_("This dashboard allows you to easily place "
-                "ads on reddit. You can target a specific community or simply "
-                "run on the main page.")))}
-            ${unsafe(safemarkdown(_("**Have any questions? "
-                "[Check out the FAQ](http://www.reddit.com/wiki/selfserve)**")))}
-        </div>
-        <div class="clear"></div>
-      </div>
-
       <div id="campaign"
            style="${'display:none' if thing.campaigns else ''}"
            class="campaign infotext rounded"

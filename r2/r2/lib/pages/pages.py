@@ -3517,10 +3517,15 @@ class PromoteLinkForm(Templated):
         sr_inventory[''] = sr_inventory[Frontpage.name]
         del sr_inventory[Frontpage.name]
         self.inventory = sr_inventory
-        message = _("Need some ideas on how to showcase your brand? "
+        message = _("This dashboard allows you to easily place ads on reddit. "
+                    "Have any questions? [Check out the FAQ](%(faq)s).\n\n"
+                    "Need some ideas on how to showcase your brand? "
                     "[Here's a slideshow](%(link)s) on ways brands used "
                     "reddit ads last year.")
-        message %= {'link': 'http://www.slideshare.net/reddit/redditthing'}
+        message %= {
+            'link': 'http://www.slideshare.net/reddit/redditthing',
+            'faq': 'http://www.reddit.com/wiki/selfserve'
+        }
         self.infobar = InfoBar(message=message)
 
         if campaigns:
