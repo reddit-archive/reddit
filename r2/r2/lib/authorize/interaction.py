@@ -94,11 +94,16 @@ def get_account_info(user, recursed=False):
 @export
 def edit_profile(user, address, creditcard, pay_id=None):
     if pay_id:
-        return UpdateCustomerPaymentProfileRequest(
-            user, pay_id, address, creditcard).make_request()
+        request = UpdateCustomerPaymentProfileRequest(user, pay_id, address,
+                                                      creditcard)
     else:
-        return CreateCustomerPaymentProfileRequest(
-            user, address, creditcard).make_request()
+        request = CreateCustomerPaymentProfileRequest(user, address, creditcard)
+
+    try:
+        pay_id = request.make_request()
+        return pay_id
+    except AuthorizeNetException:
+        return None
 
 
 def _make_transaction(trans_cls, amount, user, pay_id,
