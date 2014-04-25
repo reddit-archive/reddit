@@ -832,6 +832,9 @@ class PromoteApiController(ApiController):
                                            "cardCode"]))
     def POST_update_pay(self, form, jquery, link, campaign, customer_id, pay_id,
                         edit, address, creditcard):
+        if not g.authorizenetapi:
+            return
+
         if not link or not campaign or link._id != campaign.link_id:
             return abort(404, 'not found')
 
@@ -849,34 +852,28 @@ class PromoteApiController(ApiController):
             return
 
         address_modified = not pay_id or edit
-        form_has_errors = False
         if address_modified:
-            if (form.has_errors(["firstName", "lastName", "company", "address",
-                                 "city", "state", "zip",
-                                 "country", "phoneNumber"],
-                                errors.BAD_ADDRESS) or
-                form.has_errors(["cardNumber", "expirationDate", "cardCode"],
-                                errors.BAD_CARD)):
-                form_has_errors = True
-            elif g.authorizenetapi:
-                pay_id = edit_profile(c.user, address, creditcard, pay_id)
-            else:
-                pay_id = 1
-        # if link is in use or finished, don't make a change
-        if pay_id and not form_has_errors:
-            # valid bid and created or existing bid id.
-            # check if already a transaction
-            if g.authorizenetapi:
-                success, reason = promote.auth_campaign(link, campaign, c.user,
-                                                        pay_id)
-            else:
-                success = True
+            address_fields = ["firstName", "lastName", "company", "address",
+                              "city", "state", "zip", "country", "phoneNumber"]
+            card_fields = ["cardNumber", "expirationDate", "cardCode"]
+
+            if (form.has_errors(address_fields, errors.BAD_ADDRESS) or
+                    form.has_errors(card_fields, errors.BAD_CARD)):
+                return
+
+            pay_id = edit_profile(c.user, address, creditcard, pay_id)
+
+        reason = None
+        if pay_id:
+            success, reason = promote.auth_campaign(link, campaign, c.user,
+                                                    pay_id)
+
             if success:
                 form.redirect(promote.promo_edit_url(link))
-            else:
-                form.set_html(".status",
-                              reason or
-                              _("failed to authenticate card.  sorry."))
+                return
+
+        msg = reason or _("failed to authenticate card. sorry.")
+        form.set_html(".status", msg)
 
     @validate(VSponsor("link_name"),
               VModhash(),
