@@ -24,8 +24,8 @@
    import json
    from r2.models import FakeSubreddit
    from r2.lib.filters import spaceCompress, unsafe, safemarkdown
-   from r2.lib.template_helpers import add_sr, js_config, static, html_datetime
-   from r2.lib.utils import cols, long_datetime, timesince
+   from r2.lib.template_helpers import add_sr, js_config, static, html_datetime, simplified_timesince
+   from r2.lib.utils import cols, long_datetime
    from r2.lib import tracking
    from datetime import datetime
 %>
@@ -550,17 +550,10 @@ ${unsafe(txt)}
   ## todo: use pubdate attribute once things are <article> tags.
   ## note: comment and link templates will pass a CachedVariable stub as since.
   <%
-    now = date.now(g.tz)
     timestamp_class = unsafe(' class="live-timestamp"') if live else ''
   %>
-
   <time title="${long_datetime(date)}" datetime="${html_datetime(date)}"${timestamp_class}>
-    ${unsafe(since or timesince(date))}
-    %if include_tense and date < now:
-      ${_("ago")}
-    %elif date > now:
-      ${_("from now")}
-    %endif
+    ${unsafe(since or simplified_timesince(date, include_tense))}
   </time>
 </%def>
 
@@ -594,7 +587,7 @@ ${unsafe(txt)}
 
 <%def name="edited(thing, lastedited=None)">
   %if isinstance(thing.editted, datetime):
-    <time class="edited-timestamp" title="${_('last edited')} ${unsafe(lastedited or timesince(thing.editted))} ${_('ago')}" datetime="${html_datetime(thing.editted)}">*</time>
+    <time class="edited-timestamp" title="${_('last edited')} ${unsafe(lastedited or simplified_timesince(thing.editted))}}" datetime="${html_datetime(thing.editted)}">*</time>
   %elif thing.editted:
     <em>*</em>
   %endif

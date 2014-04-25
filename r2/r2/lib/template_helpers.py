@@ -22,7 +22,7 @@
 
 from r2.models import *
 from filters import unsafe, websafe, _force_unicode, _force_utf8
-from r2.lib.utils import UrlParser, timesince, is_subdomain
+from r2.lib.utils import UrlParser, timeago, timesince, is_subdomain
 
 from r2.lib import hooks
 from r2.lib.static import static_mtime
@@ -281,16 +281,16 @@ def replace_render(listing, item, render_func):
             if hasattr(item, "promoted") and item.promoted is not None:
                 from r2.lib import promote
                 # promoted links are special in their date handling
-                replacements['timesince'] = timesince(item._date -
-                                                      promote.timezone_offset)
+                replacements['timesince'] = \
+                    simplified_timesince(item._date - promote.timezone_offset)
             else:
-                replacements['timesince'] = timesince(item._date)
+                replacements['timesince'] = simplified_timesince(item._date)
 
             replacements['time_period'] = calc_time_period(item._date)
 
         # compute the last edited time here so we don't end up caching it
         if hasattr(item, "editted") and not isinstance(item.editted, bool):
-            replacements['lastedited'] = timesince(item.editted)
+            replacements['lastedited'] = simplified_timesince(item.editted)
 
         # Set in front.py:GET_comments()
         replacements['previous_visits_hex'] = c.previous_visits_hex
@@ -558,3 +558,14 @@ def html_datetime(date):
 
 def js_timestamp(date):
     return '%d' % (calendar.timegm(date.timetuple()) * 1000)
+
+
+def simplified_timesince(date, include_tense=True):
+    if date > timeago("1 minute"):
+        return _("just now")
+
+    since = []
+    since.append(timesince(date))
+    if include_tense:
+        since.append(_("ago"))
+    return " ".join(since)
