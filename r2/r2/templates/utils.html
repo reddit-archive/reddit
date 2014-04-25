@@ -587,7 +587,7 @@ ${unsafe(txt)}
 
 <%def name="edited(thing, lastedited=None)">
   %if isinstance(thing.editted, datetime):
-    <time class="edited-timestamp" title="${_('last edited')} ${unsafe(lastedited or simplified_timesince(thing.editted))}}" datetime="${html_datetime(thing.editted)}">*</time>
+    <time class="edited-timestamp" title="${_('last edited')} ${unsafe(lastedited or simplified_timesince(thing.editted))}" datetime="${html_datetime(thing.editted)}">*</time>
   %elif thing.editted:
     <em>*</em>
   %endif
