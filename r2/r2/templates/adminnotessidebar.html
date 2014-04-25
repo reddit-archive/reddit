@@ -22,6 +22,7 @@
 
 <%namespace file="utils.html" import="error_field"/>
 <%namespace file="utils.html" import="md" />
+<%namespace file="utils.html" import="timestamp" />
 
 <div class="raisedbox spacer">
     ${_(thing.SYSTEMS[thing.system])}: ${thing.subject}
@@ -43,10 +44,10 @@
                 ${md(note["note"])}
                 </div>
                 <div class="adminnote-info tagline">
-                ${_("by %(author)s, %(when)s ago") % dict(
+                ${_("by %(author)s") % dict(
                     author=note["author"],
-                    when=note["timesince"],
-                )}
+                )}&nbsp;
+                ${timestamp(note["when"], include_tense=True)}
                 </div>
             </li>
             %endfor
