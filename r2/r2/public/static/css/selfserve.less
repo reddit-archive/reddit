@@ -159,27 +159,40 @@
 }
 
 #testimonial-parent {
-	.testimonial-title {
-		font-weight: bold;
-		font-size: 1.7em;
-		margin-bottom: 1em;
+	.testimonial-col {
+		width: 460px;
+		margin-right: 20px;
+		float: left;
 	}
+
+	.testimonial-title {
+		font-size: 1.5em;
+		margin-bottom: 1em;
+		border-bottom: 2px solid #D4D4D4;
+		margin: 20px 20px 20px 0;
+	}
+
 	.testimonial {
-		font-style: italic;
-		font-size: 2em;
+		font-size: 1.2em;
 		font-family: Georgia, Times New Roman, Times, serif;
-		text-align: center;
+		text-align: justify;
+		line-height: 1.4em;
+		margin: 0 10px 2.8em;
 
 		q {
+			position: relative;
+			color: #4A4A4A;
+
 		    &::before {
 		        content: "\201c"; //Pretty quote
+		        position: absolute;
+		        right: 100%;
 		    }
 		    &::after {
 		        content: "\201d"; //Pretty quote
 		    }
 		}
 		cite {
-			font-size: .8em;
 			display: block;
 			text-align: right;
 		}
