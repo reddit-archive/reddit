@@ -1095,8 +1095,8 @@ class FrontController(RedditController):
                                                    after)
         return LinkInfoPage(link=link,
                             page_classes=["promoted-traffic"],
-                            comment=None, show_promote_button=True,
-                            content=content).render()
+                            show_sidebar=False, comment=None,
+                            show_promote_button=True, content=content).render()
 
     @validate(VEmployee())
     def GET_site_traffic(self):
