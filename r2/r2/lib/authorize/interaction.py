@@ -135,7 +135,7 @@ def _make_transaction(trans_cls, amount, user, pay_id,
 
 
 @export
-def auth_transaction(amount, user, payid, thing, campaign, test=None):
+def auth_transaction(amount, user, payid, thing, campaign):
     # use negative pay_ids to identify freebies, coupons, or anything
     # that doesn't require a CC.
     if payid < 0:
@@ -155,26 +155,22 @@ def auth_transaction(amount, user, payid, thing, campaign, test=None):
         order = Order(invoiceNumber="T%dC%d" % (thing._id, campaign))
         success, res = _make_transaction(ProfileTransAuthOnly,
                                          amount, user, payid,
-                                         order=order, test=test)
+                                         order=order)
         if success:
-            if test:
-                return auth_transaction(amount, user, -1, thing, campaign,
-                                        test = test)
-            else:
-                Bid._new(res.trans_id, user, payid, thing._id, amount, campaign)
-                return res.trans_id, ""
-        elif res is None:
-            # we are in test mode!
-            return auth_transaction(amount, user, -1, thing, test=test)
-        # duplicate transaction, which is bad, but not horrible.  Log
-        # the transaction id, creating a new bid if necessary. 
-        elif res.trans_id and (res.response_code, res.response_reason_code) == (3,11):
+            Bid._new(res.trans_id, user, payid, thing._id, amount, campaign)
+            return res.trans_id, ""
+
+        elif (res.trans_id and
+              (res.response_code, res.response_reason_code) == (3, 11)):
+            # duplicate transaction, which is bad, but not horrible.  Log
+            # the transaction id, creating a new bid if necessary.
             g.log.error("Authorize.net duplicate trans %d on campaign %d" % 
                         (res.trans_id, campaign))
             try:
                 Bid.one(res.trans_id, campaign=campaign)
             except NotFound:
                 Bid._new(res.trans_id, user, payid, thing._id, amount, campaign)
+
         return res.trans_id, res.response_reason_text
 
 

@@ -346,9 +346,8 @@ def auth_campaign(link, campaign, user, pay_id):
     Returns: (True, "") if successful or (False, error_msg) if not. 
     """
     void_campaign(link, campaign, reason='changed_payment')
-    test = 1 if g.debug else None
     trans_id, reason = authorize.auth_transaction(campaign.bid, user, pay_id,
-                                                  link, campaign._id, test=test)
+                                                  link, campaign._id)
 
     if trans_id and not reason:
         text = ('updated payment and/or bid for campaign %s: '
@@ -373,7 +372,6 @@ def auth_campaign(link, campaign, user, pay_id):
             emailer.promo_bid(link, campaign.bid, campaign.start_date)
 
     else:
-        # something bad happend.
         text = ("updated payment and/or bid for campaign %s: FAILED ('%s')"
                 % (campaign._id, reason))
         PromotionLog.add(link, text)
