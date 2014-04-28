@@ -35,6 +35,7 @@ from r2.controllers.reddit_base import RedditController
 
 from r2.lib import inventory, promote
 from r2.lib.authorize import get_account_info, edit_profile, PROFILE_LIMIT
+from r2.lib.base import abort
 from r2.lib.db import queries
 from r2.lib.errors import errors
 from r2.lib.filters import websafe
@@ -440,9 +441,11 @@ class PromoteApiController(ApiController):
         if not location or not location.country:
             available = inventory.get_available_pageviews(sr, start, end,
                                                           datestr=True)
-        else:
+        elif sr == Frontpage or c.user_is_sponsor:
             available = inventory.get_available_pageviews_geotargeted(sr,
                             location, start, end, datestr=True)
+        else:
+            return abort(403, 'forbidden')
         return {'inventory': available}
 
     @validatedForm(VSponsorAdmin(),
