@@ -237,7 +237,8 @@ def accountid_from_paypalsubscription(subscr_id):
         return None
 
     q = Account._query(Account.c.gold_subscr_id == subscr_id,
-                       Account.c._spam == (True, False), data=False)
+                       Account.c._spam == (True, False),
+                       Account.c._deleted == (True, False), data=False)
     l = list(q)
     if l:
         return l[0]._id

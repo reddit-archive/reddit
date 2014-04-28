@@ -196,8 +196,8 @@ def existing_subscription(subscr_id, paying_id, custom):
         account = Account._byID(account_id, data=True)
 
         if account._deleted:
-            g.log.info("Just got IPN renewal for deleted account #%d"
-                       % account_id)
+            g.log.info("IPN renewal for deleted account %d (%s)", account_id,
+                       subscr_id)
             return "deleted account"
 
         if should_set_subscriber:
