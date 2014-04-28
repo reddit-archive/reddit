@@ -684,7 +684,7 @@ function create_campaign() {
         return;
     }
     cancel_edit(function() {;
-            var minBid = $("#bid").data("min_bid")
+            var defaultBid = $("#bid").data("default_bid")
 
             init_startdate();
             init_enddate();
@@ -696,7 +696,7 @@ function create_campaign() {
                 .find('input[name="sr"]').val('').prop("disabled", "disabled").end()
                 .find('input[name="targeting"][value="none"]').prop("checked", "checked").end()
                 .find('input[name="priority"][data-default="true"]').prop("checked", "checked").end()
-                .find('input[name="bid"]').val(minBid * 5).end()
+                .find('input[name="bid"]').val(defaultBid).end()
                 .find(".targeting").hide().end()
                 .find('select[name="country"]').val('').end()
                 .find('select[name="region"]').hide().end()
