@@ -2047,7 +2047,7 @@ class ApiController(RedditController):
                     field: e.new,
                 })
                 form.set_html('#%s_conflict_diff' % field, e.htmldiff)
-            except (tdb_cassandra.NotFound, ValueError):
+            except (tdb_cassandra.NotFound, wiki.WikiBadRevision):
                 c.errors.add(errors.BAD_REVISION, field=id_field_name)
                 form.has_errors(id_field_name, errors.BAD_REVISION)
             return False
