@@ -171,7 +171,7 @@ r.sponsored = {
             return
         }
 
-        $.when(r.sponsored.get_check_inventory(srname, geotarget, dates)).done(
+        $.when(r.sponsored.get_check_inventory(srname, geotarget, dates)).then(
             function() {
                 if (isOverride) {
                     // do a simple sum of available inventory for override
@@ -227,6 +227,13 @@ r.sponsored = {
                     $(".available-info").text(r._("%(num)s available (maximum budget is $%(max)s)").format({num: r.utils.prettyNumber(available), max: maxbid}))
                     $(".OVERSOLD_DETAIL").hide()
                 }
+            },
+            function () {
+                var message = r._("sorry, there was an error retrieving available" +
+                                  " impressions. please try again later.")
+                $(".available-info").addClass('error').text(message)
+                $(".OVERSOLD_DETAIL").hide()
+                r.sponsored.disable_form($("#campaign"))
             }
         )
     },
