@@ -316,9 +316,11 @@ ERROR_MESSAGES = {
     "UNEXPECTED_TOKEN": N_('unexpected token "%(token)s"'),
     "BACKSLASH": N_("backslashes are not allowed"),
     "CONTROL_CHARACTER": N_("control characters are not allowed"),
+    "TOO_BIG": N_("the stylesheet is too big. maximum size: %(size)d KiB"),
 }
 
 
+MAX_SIZE_KIB = 100
 SUBREDDIT_IMAGE_URL_PLACEHOLDER = re.compile(r"\A%%([a-zA-Z0-9\-]+)%%\Z")
 
 
@@ -479,6 +481,9 @@ class StylesheetValidator(object):
                     break
 
     def parse_and_validate(self, stylesheet_source):
+        if len(stylesheet_source) > (MAX_SIZE_KIB * 1024):
+            return "", [ValidationError(0, "TOO_BIG", {"size": MAX_SIZE_KIB})]
+
         nodes = tinycss2.parse_stylesheet(stylesheet_source)
 
         source_lines = stylesheet_source.splitlines()
