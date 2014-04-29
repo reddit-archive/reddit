@@ -1313,6 +1313,7 @@ class UserListListingController(ListingController):
         return content
 
     @require_oauth2_scope("read")
+    @validate(VUser())
     @base_listing
     @listing_api_doc(section=api_section.account,
                      uri='/prefs/{where}',
