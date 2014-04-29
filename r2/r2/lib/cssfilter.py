@@ -295,6 +295,7 @@ SAFE_FUNCTIONS = {
     "scalez",
     "skewx",
     "skewy",
+    "steps",
     "translate",
     "translate3d",
     "translatex",
