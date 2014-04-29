@@ -313,8 +313,8 @@ class LimitUploadSize(object):
                 return ['<html><body>bad request</body></html>']
 
             if cl_int > self.max_size:
-                from r2.lib.strings import string_dict
-                error_msg = string_dict['css_validator_messages']['max_size'] % dict(max_size = self.max_size/1024)
+                error_msg = "too big. keep it under %d KiB" % (
+                    self.max_size / 1024)
                 start_response("413 Too Big", [])
                 return ["<html>"
                         "<head>"
