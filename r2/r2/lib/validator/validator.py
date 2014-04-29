@@ -1323,7 +1323,7 @@ class VThrottledLogin(VLogin):
             return False
 
         user = VLogin.run(self, username, password)
-        if login_throttle(username, wrong_password=not user):
+        if not user:
             VDelay.record_violation("login", seconds=1, growfast=True)
             c.errors.add(errors.WRONG_PASSWORD, field=self.param[1])
         else:
