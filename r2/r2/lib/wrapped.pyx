@@ -274,7 +274,7 @@ class Templated(object):
         # insert a stub for cachable non-primary templates
         if self.cachable:
             res = CacheStub(self, style)
-            cache_key = self.cache_key(attr, style)
+            cache_key = self.cache_key(style)
             # in the tracker, we need to store:
             #  The render cache key (res.name)
             #  The memcached cache key(cache_key)
@@ -439,10 +439,8 @@ class Uncachable(Exception): pass
 
 _easy_cache_cls = set([bool, int, long, float, unicode, str, types.NoneType,
                       datetime])
-def make_cachable(v, *a):
-    """
-    Given an arbitrary object, 
-    """
+
+def make_cachable(v, style):
     if v.__class__ in _easy_cache_cls or isinstance(v, type):
         try:
             return unicode(v)
@@ -451,17 +449,17 @@ def make_cachable(v, *a):
                 return unicode(v, "utf8")
             except (TypeError, UnicodeDecodeError):
                 return repr(v)
-    elif isinstance(v, (types.MethodType, CachedVariable) ):
+    elif isinstance(v, (types.MethodType, CachedVariable)):
        return
     elif isinstance(v, (tuple, list, set)):
-        return repr([make_cachable(x, *a) for x in v])
+        return repr([make_cachable(x, style) for x in v])
     elif isinstance(v, dict):
         ret = {}
         for k in sorted(v.iterkeys()):
-            ret[k] = make_cachable(v[k], *a)
+            ret[k] = make_cachable(v[k], style)
         return repr(ret)
     elif hasattr(v, "cache_key"):
-        return v.cache_key(*a)
+        return v.cache_key(style)
     else:
         raise Uncachable, "%s, %s" % (v, type(v))
 
@@ -479,7 +477,7 @@ class CachedTemplate(Templated):
                 ret.append((k, self.__dict__[k]))
         return ret
 
-    def cache_key(self, attr, style, *a):
+    def cache_key(self, style):
         from pylons import c, request
 
         # if template debugging is on, there will be no hash and we
@@ -505,17 +503,12 @@ class CachedTemplate(Templated):
         if c.secure:
             keys.append(request.host)
 
-        keys = [make_cachable(x, *a) for x in keys]
+        keys = [make_cachable(x, style) for x in keys]
 
         # add all parameters sent into __init__, using their current value
-        auto_keys = [(k,  make_cachable(v, attr, style, *a))
+        auto_keys = [(k,  make_cachable(v, style))
                      for k, v in self.cachable_attrs()]
-        
-        # lastly, add anything else that was passed in.
         keys.append(repr(auto_keys))
-        for x in a:
-            keys.append(make_cachable(x))
-        
         return "<%s:[%s]>" % (self.__class__.__name__, u''.join(keys))
 
 
@@ -524,7 +517,7 @@ class Wrapped(CachedTemplate):
     cachable = False
     cache_ignore = set(['lookups'])
     
-    def cache_key(self, attr, style):
+    def cache_key(self, style):
         if self.cachable:
             for i, l in enumerate(self.lookups):
                 if hasattr(l, "wrapped_cache_key"):
@@ -533,7 +526,7 @@ class Wrapped(CachedTemplate):
                     setattr(self, "lookup%d_cache_key" % i,
                             ''.join(map(repr,
                                         l.wrapped_cache_key(self, style))))
-        return CachedTemplate.cache_key(self, attr, style)
+        return CachedTemplate.cache_key(self, style)
 
     def __init__(self, *lookups, **context):
         self.lookups = lookups
