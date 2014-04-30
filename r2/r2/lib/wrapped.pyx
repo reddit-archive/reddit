@@ -417,13 +417,6 @@ class Templated(object):
         res = self._render(style, **kw)
         return unsafe(res) if isinstance(res, str) else res
 
-    def call(self, name, *args, **kwargs):
-        from pylons import g
-        from r2.lib.filters import spaceCompress
-        res = self.template().get_def(name).render(*args, **kwargs)
-        if not g.template_debug:
-            res = spaceCompress(res)
-        return res
 
 class Uncachable(Exception): pass
 
