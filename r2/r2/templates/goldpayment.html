@@ -76,7 +76,9 @@
         ${self.stripe_form()}
       %endif
 
-      <div class="note">${unsafe(safemarkdown(_("Give gold often? Consider [buying creddits to use](/gold?goldtype=creddits), they're 40% cheaper if purchased in a set of 12."), wrap=False))}</div>
+      %if thing.clone_template:
+        <div class="note">${unsafe(safemarkdown(_("Give gold often? Consider [buying creddits to use](/gold?goldtype=creddits), they're 40% cheaper if purchased in a set of 12."), wrap=False))}</div>
+      %endif
       <div class="throbber"></div>
     %endif
     </div>
