@@ -541,14 +541,6 @@ class DeleteCustomerShippingAddressRequest(GetCustomerShippingAddressRequest):
         GetCustomerShippingAddressRequest.process_error(self, res)
 
 
-# TODO
-#class UpdateCustomerProfileRequest(AuthorizeNetRequest):
-#    _keys = (AuthorizeNetRequest._keys + ["profile"])
-#    
-#    def __init__(self, user):
-#        profile = Profile(user, None, None)
-#        AuthorizeNetRequest.__init__(self, profile = profile)
-
 class UpdateCustomerPaymentProfileRequest(CreateCustomerPaymentProfileRequest):
     """
     For updating the user's payment profile
