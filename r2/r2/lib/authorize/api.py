@@ -31,7 +31,6 @@ http://developer.authorize.net/api/cim/
 """
 
 import re
-import socket
 from httplib import HTTPSConnection
 from urlparse import urlparse
 
@@ -261,16 +260,13 @@ class AuthorizeNetRequest(SimpleXMLObject):
 
     def make_request(self):
         u = urlparse(g.authorizenetapi)
-        try:
-            conn = HTTPSConnection(u.hostname, u.port)
-            conn.request("POST", u.path, self.toXML().encode('utf-8'),
-                         {"Content-type": "text/xml"})
-            res = conn.getresponse()
-            res = self.handle_response(res.read())
-            conn.close()
-            return res
-        except socket.error:
-            return False
+        conn = HTTPSConnection(u.hostname, u.port)
+        conn.request("POST", u.path, self.toXML().encode('utf-8'),
+                     {"Content-type": "text/xml"})
+        res = conn.getresponse()
+        res = self.handle_response(res.read())
+        conn.close()
+        return res
 
     def is_error_code(self, res, code):
         return (res.message.code and res.message.code.contents and
