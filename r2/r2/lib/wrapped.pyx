@@ -195,7 +195,7 @@ class Templated(object):
     def render_class_name(self):
         return self.render_class.__name__
 
-    def render_nocache(self, attr, style):
+    def render_nocache(self, style):
         """
         No-frills (or caching) rendering of the template.  The
         template is returned as a subclass of StringTemplate and
@@ -221,9 +221,6 @@ class Templated(object):
             # store the global render style (since child templates)
             render_style = c.render_style
             c.render_style = style
-            # are we doing a partial render?
-            if attr:
-                template = template.get_def(attr)
             # render the template
             res = template.render(thing = self)
             if timer: timer.intermediate('render')
@@ -237,10 +234,9 @@ class Templated(object):
             # timings for not found templates will not be sent.
             self._notfound(style)
 
-    def _render(self, attr, style, **kwargs):
+    def _render(self, style, **kwargs):
         """
-        Renders the current template with the current style, possibly
-        doing a part_render if attr is not None.
+        Renders the current template with the current style.
 
         if this is the first template to be rendered, it is will track
         cachable templates, insert stubs for them in the output,
@@ -278,13 +274,12 @@ class Templated(object):
             # in the tracker, we need to store:
             #  The render cache key (res.name)
             #  The memcached cache key(cache_key)
-            #  who I am (self) and what am I doing (attr, style) with what
+            #  who I am (self) and what am I doing (style) with what
             #  (kwargs)
-            c.render_tracker[res.name] = (cache_key, (self,
-                                                      (attr, style, kwargs)))
+            c.render_tracker[res.name] = (cache_key, (self, (style, kwargs)))
         else:
             # either a primary template or not cachable, so render it
-            res = self.render_nocache(attr, style)
+            res = self.render_nocache(style)
         timer.intermediate('self-render')
 
         # if this is the primary template, let the caching games begin
@@ -316,12 +311,12 @@ class Templated(object):
                 # render items that didn't make it into the cached list
                 for key, (cache_key, others) in current.iteritems():
                     # unbundle the remaining args
-                    item, (attr, style, kw) = others
+                    item, (style, kw) = others
                     if cache_key not in cached:
                         # this had to be rendered, so cache it later
                         to_cache.add(cache_key)
                         # render the item and apply the stored kw args
-                        r = item.render_nocache(attr, style)
+                        r = item.render_nocache(style)
                     else:
                         r = cached[cache_key]
                     # store the unevaluated templates in
@@ -419,13 +414,8 @@ class Templated(object):
 
     def render(self, style = None, **kw):
         from r2.lib.filters import unsafe
-        res = self._render(None, style, **kw)
+        res = self._render(style, **kw)
         return unsafe(res) if isinstance(res, str) else res
-        
-    def part_render(self, attr, **kw):
-        style = kw.get('style')
-        if style: del kw['style']
-        return self._render(attr, style, **kw)
 
     def call(self, name, *args, **kwargs):
         from pylons import g
@@ -599,9 +589,8 @@ class Styled(CachedTemplate):
         self.style = style
         CachedTemplate.__init__(self, **kw)
 
-    def render(self, **kw):
-        """Using the canonical template file, only renders the <%def>
-        in the template whose name is given by self.style"""
-        return CachedTemplate.part_render(self, self.style, **kw)
-            
-
+    def template(self, style='html'):
+        base_template = CachedTemplate.template(self, style)
+        if base_template:
+            template = base_template.get_def(self.style)
+            return template
