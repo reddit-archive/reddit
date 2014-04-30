@@ -656,6 +656,7 @@ class WikiRevisionBuilder(QueryBuilder):
         for item in items:
             w = self.wrap(item)
             w.show_extended = extended
+            w.show_compare = self.show_extended
             types.setdefault(w.render_class, []).append(w)
             wrapped.append(w)
         
