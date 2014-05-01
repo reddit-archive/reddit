@@ -265,6 +265,7 @@ SAFE_FUNCTIONS = {
     "attr",
     "calc",
     "counter",
+    "counters",
     "hsl",
     "hsla",
     "lang",
