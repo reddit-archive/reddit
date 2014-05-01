@@ -492,7 +492,6 @@ class CachedTemplate(Templated):
         # them.
         keys = [c.user_is_loggedin, c.user_is_admin, c.domain_prefix,
                 style, c.secure, c.cname, c.lang, c.site.path,
-                getattr(c.user, "gold", False),
                 template_hash]
 
         # if viewing a single subreddit, take flair settings into account.
