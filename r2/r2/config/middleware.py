@@ -178,11 +178,11 @@ class DomainMiddleware(object):
 
         sr_redirect = None
         for subdomain in subdomains[:]:
-            if subdomain in g.reserved_subdomains:
-                continue
 
             extension = extension_subdomains.get(subdomain)
-            if extension:
+            if subdomain in g.reserved_subdomains:
+                environ['reddit-domain-prefix'] = subdomain
+            elif extension:
                 environ['reddit-domain-extension'] = extension
             elif self.lang_re.match(subdomain):
                 environ['reddit-prefer-lang'] = subdomain
