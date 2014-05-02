@@ -85,14 +85,12 @@ def populate(num_srs = 10, num_users = 1000, num_links = 100, num_comments = 20,
             comments.append(c)
             for i in range(int(random.betavariate(2, 8) * 10)):
                 another_user = random.choice(accounts)
-                v = Vote.vote(another_user, c, True, '127.0.0.1')
-                queries.new_vote(v)
+                queries.queue_vote(another_user, c, True, '127.0.0.1')
 
         like = random.randint(50,100)
         for i in range(int(random.betavariate(2, 8) * 5 * num_votes)):
            user = random.choice(accounts)
-           v = Vote.vote(user, l, random.randint(0, 100) <= like, '127.0.0.1')
-           queries.new_vote(v)
+           queries.queue_vote(user, l, random.randint(0, 100) <= like, '127.0.0.1')
 
     queries.worker.join()
 
