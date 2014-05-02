@@ -2167,9 +2167,7 @@ class ValidAddress(Validator):
                            phoneNumber = phoneNumber or "")
 
 class ValidCard(Validator):
-    valid_ccn  = re.compile(r"\d{13,16}")
     valid_date = re.compile(r"\d\d\d\d-\d\d")
-    valid_ccv  = re.compile(r"\d{3,4}")
     def set_error(self, msg, field):
         Validator.set_error(self, errors.BAD_CARD,
                             dict(message=msg), field = field)
@@ -2177,7 +2175,8 @@ class ValidCard(Validator):
     def run(self, cardNumber, expirationDate, cardCode):
         has_errors = False
 
-        if not self.valid_ccn.match(cardNumber or ""):
+        cardNumber = cardNumber or ""
+        if not (cardNumber.isdigit() and 13 <= len(cardNumber) <= 16):
             self.set_error(_("credit card numbers should be 13 to 16 digits"),
                            "cardNumber")
             has_errors = True
@@ -2197,7 +2196,8 @@ class ValidCard(Validator):
                 self.set_error(_("expiration date must be in the future"), "expirationDate")
                 has_errors = True
 
-        if not self.valid_ccv.match(cardCode or ""):
+        cardCode = cardCode or ""
+        if not (cardCode.isdigit() and 3 <= len(cardCode) <= 4):
             self.set_error(_("card verification codes should be 3 or 4 digits"),
                            "cardCode")
             has_errors = True
