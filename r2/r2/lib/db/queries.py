@@ -975,9 +975,6 @@ def new_comment(comment, inbox_rels):
             amqp.add_item('new_comment', comment._fullname)
             add_to_commentstree_q(comment)
 
-            if not g.amqp_host:
-                add_comments([comment])
-
         job_dict = { job_key: comment }
         add_queries(job, **job_dict)
 
@@ -1513,31 +1510,28 @@ def queue_vote(user, thing, dir, ip, vote_info=None,
     g.cache.set(key, '1' if dir is True else '0' if dir is None else '-1')
     # queue the vote to be stored unless told not to
     if store:
-        if g.amqp_host:
-            if isinstance(thing, Link):
-                if thing._id36 in g.live_config["fastlane_links"]:
-                    qname = vote_fastlane_q
-                else:
-                    if g.shard_link_vote_queues:
-                        qname = "vote_link_%s_q" % str(thing.sr_id)[-1]
-                    else:
-                        qname = vote_link_q
-
-            elif isinstance(thing, Comment):
-                if utils.to36(thing.link_id) in g.live_config["fastlane_links"]:
-                    qname = vote_fastlane_q
-                else:
-                    qname = vote_comment_q
+        if isinstance(thing, Link):
+            if thing._id36 in g.live_config["fastlane_links"]:
+                qname = vote_fastlane_q
             else:
-                log.warning("%s tried to vote on %r. that's not a link or comment!",
-                            user, thing)
-                return
+                if g.shard_link_vote_queues:
+                    qname = "vote_link_%s_q" % str(thing.sr_id)[-1]
+                else:
+                    qname = vote_link_q
 
-            amqp.add_item(qname,
-                          pickle.dumps((user._id, thing._fullname,
-                                        dir, ip, vote_info, cheater)))
+        elif isinstance(thing, Comment):
+            if utils.to36(thing.link_id) in g.live_config["fastlane_links"]:
+                qname = vote_fastlane_q
+            else:
+                qname = vote_comment_q
         else:
-            handle_vote(user, thing, dir, ip, vote_info)
+            log.warning("%s tried to vote on %r. that's not a link or comment!",
+                        user, thing)
+            return
+
+        amqp.add_item(qname,
+                      pickle.dumps((user._id, thing._fullname,
+                                    dir, ip, vote_info, cheater)))
 
 def prequeued_vote_key(user, item):
     return 'registered_vote_%s_%s' % (user._id, item._fullname)
