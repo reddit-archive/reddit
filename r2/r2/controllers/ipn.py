@@ -1123,6 +1123,7 @@ class CoinbaseController(GoldPaymentController):
         'completed': 'succeeded',
         'cancelled': 'cancelled',
         'mispaid': 'noop',
+        'expired': 'noop',
     }
 
     @classmethod
