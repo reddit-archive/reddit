@@ -1785,9 +1785,6 @@ class ApiController(RedditController):
         if thing._age > thing.subreddit_slow.archive_age:
             store = False
 
-        if getattr(c.user, "suspicious", False):
-            g.log.info("%s cast a %d vote on %s", c.user.name, dir, thing._fullname)
-
         dir = (True if dir > 0
                else False if dir < 0
                else None)
