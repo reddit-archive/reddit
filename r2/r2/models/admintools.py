@@ -328,9 +328,6 @@ def update_gold_users(verbose=False):
 def admin_ratelimit(user):
     return True
 
-def is_banned_IP(ip):
-    return False
-
 def is_banned_domain(dom):
     return None
 

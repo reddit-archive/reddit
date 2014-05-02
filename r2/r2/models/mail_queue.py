@@ -233,7 +233,7 @@ class EmailHandler(object):
 
 
     def from_queue(self, max_date, batch_limit = 50, kind = None):
-        from r2.models import is_banned_IP, Account, Thing
+        from r2.models import Account, Thing
         keep_trying = True
         min_id = None
         s = self.queue_table
@@ -264,10 +264,6 @@ class EmailHandler(object):
             things = Thing._by_fullname(tids, data = True,
                                         return_dict = True) if tids else {}
 
-            # make sure no IPs have been banned in the mean time
-            ips = set(x[6] for x in res)
-            ips = dict((ip, is_banned_IP(ip)) for ip in ips)
-
             # get the lower bound date for next iteration
             min_id = max(x[8] for x in res)
 
@@ -277,7 +273,7 @@ class EmailHandler(object):
             for (addr, acct, fname, fulln, body, kind, ip, date, uid,
                  msg_hash, fr_addr, reply_to) in res:
                 yield (accts.get(acct), things.get(fulln), addr,
-                       fname, date, ip, ips[ip], kind, msg_hash, body,
+                       fname, date, ip, kind, msg_hash, body,
                        fr_addr, reply_to)
 
     def clear_queue(self, max_date, kind = None):
@@ -333,7 +329,7 @@ class Email(object):
         Kind.GOLD_GIFT_CODE: _("[reddit] your reddit gold gift code"),
         }
 
-    def __init__(self, user, thing, email, from_name, date, ip, banned_ip,
+    def __init__(self, user, thing, email, from_name, date, ip,
                  kind, msg_hash, body = '', from_addr = '',
                  reply_to = ''):
         self.user = user
@@ -343,7 +339,6 @@ class Email(object):
         self._from_name = from_name
         self.date = date
         self.ip = ip
-        self.banned_ip = banned_ip
         self.kind = kind
         self.sent = False
         self.body = body
@@ -375,7 +370,6 @@ class Email(object):
     def should_queue(self):
         return (not self.user  or not self.user._spam) and \
                (not self.thing or not self.thing._spam) and \
-               not self.banned_ip and \
                (self.kind == self.Kind.OPTOUT or
                 not has_opted_out(self.to_addr))
 

@@ -2025,14 +2025,6 @@ class VCnameDomain(Validator):
         return {}
 
 
-# NOTE: make sure *never* to have res check these are present
-# otherwise, the response could contain reference to these errors...!
-class ValidIP(Validator):
-    def run(self):
-        if is_banned_IP(request.ip):
-            self.set_error(errors.BANNED_IP)
-        return request.ip
-
 class VDate(Validator):
     """
     Date checker that accepts string inputs.

@@ -242,12 +242,11 @@ class ApiController(RedditController):
     @validatedForm(VCaptcha(),
                    VUser(),
                    VModhash(),
-                   ip = ValidIP(),
                    to = VMessageRecipient('to'),
                    subject = VLength('subject', 100, empty_error=errors.NO_SUBJECT),
                    body = VMarkdown(['text', 'message']))
     @api_doc(api_section.messages)
-    def POST_compose(self, form, jquery, to, subject, body, ip):
+    def POST_compose(self, form, jquery, to, subject, body):
         """
         Handles message composition under /message/compose.
         """
@@ -259,7 +258,7 @@ class ApiController(RedditController):
                 form.has_errors("text", errors.NO_TEXT, errors.TOO_LONG) or
                 form.has_errors("captcha", errors.BAD_CAPTCHA)):
 
-            m, inbox_rel = Message._new(c.user, to, subject, body, ip)
+            m, inbox_rel = Message._new(c.user, to, subject, body, request.ip)
             form.set_html(".status", _("your message has been delivered"))
             form.set_inputs(to = "", subject = "", text = "", captcha="")
 
@@ -293,7 +292,6 @@ class ApiController(RedditController):
                    VRatelimit(rate_user = True, rate_ip = True,
                               prefix = "rate_submit_"),
                    VShamedDomain('url'),
-                   ip = ValidIP(),
                    sr = VSubmitSR('sr', 'kind'),
                    url = VUrl('url'),
                    title = VTitle('title'),
@@ -309,7 +307,7 @@ class ApiController(RedditController):
                   )
     @api_doc(api_section.links_and_comments)
     def POST_submit(self, form, jquery, url, selftext, kind, title,
-                    save, sr, ip, then, extension, sendreplies, resubmit):
+                    save, sr, then, extension, sendreplies, resubmit):
         """Submit a link to a subreddit.
 
         Submit will create a link or self-post in the subreddit `sr` with the
@@ -450,7 +448,8 @@ class ApiController(RedditController):
 
         # well, nothing left to do but submit it
         l = Link._submit(cleaned_title, url if kind == 'link' else 'self',
-                         c.user, sr, ip, spam=c.user._spam, sendreplies=sendreplies)
+                         c.user, sr, request.ip, spam=c.user._spam,
+                         sendreplies=sendreplies)
 
         if ban:
             g.stats.simple_event('spam.domainban.link_url')
@@ -466,7 +465,7 @@ class ApiController(RedditController):
             l._commit()
             l.set_url_cache()
 
-        queries.queue_vote(c.user, l, True, ip, cheater=c.cheater)
+        queries.queue_vote(c.user, l, True, request.ip, cheater=c.cheater)
         if save:
             l._save(c.user)
 
@@ -773,7 +772,6 @@ class ApiController(RedditController):
 
     @validatedForm(VUser(),
                    VModhash(),
-                   ip = ValidIP(),
                    friend = VExistingUname('name'),
                    container = nop('container'),
                    type = VOneOf('type', ('friend',) + _sr_friend_types),
@@ -784,7 +782,7 @@ class ApiController(RedditController):
                                            empty_error=None),
     )
     @api_doc(api_section.users)
-    def POST_friend(self, form, jquery, ip, friend,
+    def POST_friend(self, form, jquery, friend,
                     container, type, type_and_permissions, note, duration,
                     ban_message):
         """
@@ -973,10 +971,9 @@ class ApiController(RedditController):
         form.set_html('.status', _("saved"))
 
     @validatedForm(VUser(),
-                   VModhash(),
-                   ip=ValidIP())
+                   VModhash())
     @api_doc(api_section.moderation, uses_site=True)
-    def POST_accept_moderator_invite(self, form, jquery, ip):
+    def POST_accept_moderator_invite(self, form, jquery):
         """Accept an invite to moderate the specified subreddit.
 
         The authenticated user must have been invited to moderate the subreddit
@@ -1524,11 +1521,10 @@ class ApiController(RedditController):
                    VModhash(),
                    VRatelimit(rate_user = True, rate_ip = True,
                               prefix = "rate_comment_"),
-                   ip = ValidIP(),
                    parent = VSubmitParent(['thing_id', 'parent']),
                    comment = VMarkdown(['text', 'comment']))
     @api_doc(api_section.links_and_comments)
-    def POST_comment(self, commentform, jquery, parent, comment, ip):
+    def POST_comment(self, commentform, jquery, parent, comment):
         """Submit a new comment or reply to a message.
 
         `parent` is the fullname of the thing being replied to. Its value
@@ -1599,12 +1595,14 @@ class ApiController(RedditController):
                 if not subject.startswith(re):
                     subject = re + subject
                 item, inbox_rel = Message._new(c.user, to, subject,
-                                               comment, ip, parent = parent)
+                                               comment, request.ip,
+                                               parent=parent)
                 item.parent_id = parent._id
             else:
                 item, inbox_rel = Comment._new(c.user, link, parent_comment,
-                                               comment, ip)
-                queries.queue_vote(c.user, item, True, ip, cheater=c.cheater)
+                                               comment, request.ip)
+                queries.queue_vote(c.user, item, True, request.ip,
+                                   cheater=c.cheater)
 
                 # adding to comments-tree is done as part of
                 # newcomments_q, so if they refresh immediately they
@@ -1645,9 +1643,9 @@ class ApiController(RedditController):
                    reply_to = ValidEmails("replyto", num = 1), 
                    message = VLength("message", max_length = 1000), 
                    thing = VByName('parent'),
-                   ip = ValidIP())
+                   )
     def POST_share(self, shareform, jquery, emails, thing, share_from, reply_to,
-                   message, ip):
+                   message):
         if not thing:
             abort(404, 'not found')
 
@@ -1729,7 +1727,7 @@ class ApiController(RedditController):
             for target in users:
                 
                 m, inbox_rel = Message._new(c.user, target, subject,
-                                            message, ip)
+                                            message, request.ip)
                 # Queue up this PM
                 amqp.add_item('new_message', m._fullname)
 
@@ -1745,12 +1743,11 @@ class ApiController(RedditController):
     @noresponse(VUser(),
                 VModhash(),
                 vote_info=VVotehash('vh'),
-                ip = ValidIP(),
                 dir=VInt('dir', min=-1, max=1, docs={"dir":
                     "vote direction. one of (1, 0, -1)"}),
                 thing = VByName('id'))
     @api_doc(api_section.links_and_comments)
-    def POST_vote(self, dir, thing, ip, vote_info):
+    def POST_vote(self, dir, thing, vote_info):
         """Cast a vote on a thing.
 
         `id` should be the fullname of the Link or Comment to vote on.
@@ -1766,7 +1763,6 @@ class ApiController(RedditController):
 
         """
 
-        ip = request.ip
         user = c.user
         store = True
 
@@ -1789,7 +1785,7 @@ class ApiController(RedditController):
                else False if dir < 0
                else None)
 
-        queries.queue_vote(user, thing, dir, ip, vote_info=vote_info,
+        queries.queue_vote(user, thing, dir, request.ip, vote_info=vote_info,
                            store=store,
                            cheater=c.cheater)
 
@@ -2062,11 +2058,10 @@ class ApiController(RedditController):
                    wikimode = VOneOf('wikimode', ('disabled', 'modonly', 'anyone')),
                    wiki_edit_karma = VInt("wiki_edit_karma", coerce=False, num_default=0, min=0),
                    wiki_edit_age = VInt("wiki_edit_age", coerce=False, num_default=0, min=0),
-                   ip = ValidIP(),
                    css_on_cname = VBoolean("css_on_cname"),
                    )
     @api_doc(api_section.subreddits)
-    def POST_site_admin(self, form, jquery, name, ip, sr, **kw):
+    def POST_site_admin(self, form, jquery, name, sr, **kw):
         """Create or configure a subreddit.
 
         If `sr` is specified, the request will attempt to modify the specified
@@ -2185,8 +2180,8 @@ class ApiController(RedditController):
         #creating a new reddit
         elif not sr:
             #sending kw is ok because it was sanitized above
-            sr = Subreddit._new(name = name, author_id = c.user._id, ip = ip,
-                                **kw)
+            sr = Subreddit._new(name = name, author_id = c.user._id,
+                                ip=request.ip, **kw)
 
             update_wiki_text(sr)
             sr._commit()

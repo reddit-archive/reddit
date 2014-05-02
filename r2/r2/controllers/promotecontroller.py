@@ -68,7 +68,6 @@ from r2.lib.validator import (
     validate,
     validatedForm,
     ValidCard,
-    ValidIP,
     VBoolean,
     VByName,
     VDate,
@@ -521,7 +520,6 @@ class PromoteApiController(ApiController):
                    url=VUrl('url', allow_self=False),
                    selftext=VSelfText('text'),
                    kind=VOneOf('kind', ['link', 'self']),
-                   ip=ValidIP(),
                    disable_comments=VBoolean("disable_comments"),
                    sendreplies=VBoolean("sendreplies"),
                    media_width=VInt("media-width", min=0),
@@ -530,7 +528,7 @@ class PromoteApiController(ApiController):
                    media_override=VBoolean("media-override"),
                    domain_override=VLength("domain", 100)
                    )
-    def POST_edit_promo(self, form, jquery, ip, username, l, title, url,
+    def POST_edit_promo(self, form, jquery, username, l, title, url,
                         selftext, kind, disable_comments, sendreplies, media_height,
                         media_width, media_embed, media_override, domain_override):
 
@@ -590,7 +588,7 @@ class PromoteApiController(ApiController):
         if not l:
             l = promote.new_promotion(title, url if kind == 'link' else 'self',
                                       selftext if kind == 'self' else '',
-                                      user, ip)
+                                      user, request.ip)
 
         elif promote.is_promo(l):
             # changing link type is not allowed
