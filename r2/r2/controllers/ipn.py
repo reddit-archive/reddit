@@ -37,7 +37,7 @@ from r2.lib.filters import _force_unicode, _force_utf8
 from r2.lib.log import log_text
 from r2.lib.pages import GoldGiftCodeEmail
 from r2.lib.strings import strings
-from r2.lib.utils import randstr, timeago
+from r2.lib.utils import constant_time_compare, randstr, timeago
 from r2.lib.validator import (
     nop,
     textresponse,
@@ -422,7 +422,8 @@ class IpnController(RedditController):
         parameters = request.POST.copy()
 
         # Make sure it's really PayPal
-        if paypal_secret != g.secrets['paypal_webhook']:
+        if not constant_time_compare(paypal_secret,
+                                     g.secrets['paypal_webhook']):
             log_text("invalid IPN secret",
                      "%s guessed the wrong IPN secret" % request.ip,
                      "warning")
@@ -658,7 +659,7 @@ class GoldPaymentController(RedditController):
         self.process_webhook(event_type, webhook)
 
     def validate_secret(self, secret):
-        if secret != self.webhook_secret:
+        if not constant_time_compare(secret, self.webhook_secret):
             g.log.error('%s: invalid webhook secret from %s' % (self.name,
                                                                 request.ip))
             self.abort403() 
