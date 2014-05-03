@@ -79,7 +79,6 @@ class DataThing(object):
     _essentials = ()
     c = operators.Slots()
     __safe__ = False
-    _asked_for_data = False
     _cache = g.cache
 
     def __init__(self):
@@ -90,8 +89,6 @@ class DataThing(object):
             self._t = {}
             self._created = False
             self._loaded = True
-            self._asked_for_data = True # You just created it; of course
-                                        # you're allowed to touch its data
 
     #TODO some protection here?
     def __setattr__(self, attr, val, make_dirty=True):
@@ -121,13 +118,6 @@ class DataThing(object):
         self.__dict__ = state
 
     def __getattr__(self, attr):
-        if not (attr.startswith('_')
-                or self._asked_for_data
-                or getattr(self, "_nodb", False)):
-            msg = ("getattr(%r) called on %r, " +
-                   "but you didn't say data=True") % (attr, self)
-            raise ValueError(msg)
-
         try:
             if hasattr(self, '_t'):
                 rv = self._t[attr]
@@ -319,7 +309,6 @@ class DataThing(object):
             for attr in essentials:
                 if attr not in i._t:
                     print "Warning: %s is missing %s" % (i._fullname, attr)
-            i._asked_for_data = True
             to_save[i._id] = i
 
         prefix = thing_prefix(cls.__name__)
@@ -426,7 +415,6 @@ class DataThing(object):
         if data:
             need = []
             for v in bases.itervalues():
-                v._asked_for_data = True
                 if not v._loaded:
                     need.append(v)
             if need:
