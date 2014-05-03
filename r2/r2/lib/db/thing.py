@@ -119,69 +119,67 @@ class DataThing(object):
 
     def __getattr__(self, attr):
         try:
-            if hasattr(self, '_t'):
-                rv = self._t[attr]
-                return rv
-            else:
-                raise AttributeError, attr
+            return self._t[attr]
         except KeyError:
             try:
-                return getattr(self, '_defaults')[attr]
+                return self._defaults[attr]
             except KeyError:
-                try:
-                    _id = object.__getattribute__(self, "_id")
-                except AttributeError:
-                    _id = "???"
-                try:
-                    cl = object.__getattribute__(self, "__class__").__name__
-                except AttributeError:
-                    cl = "???"
+                # attr didn't exist--continue on to error recovery below
+                pass
 
-                if self._loaded:
-                    nl = "it IS loaded"
-                else:
-                    nl = "it is NOT loaded"
+        try:
+            _id = object.__getattribute__(self, "_id")
+        except AttributeError:
+            _id = "???"
 
-                # The %d format is nicer since it has no "L" at the
-                # end, but if we can't do that, fall back on %r.
-                try:
-                    id_str = "%d" % _id
-                except TypeError:
-                    id_str = "%r" % _id
+        try:
+            cl = object.__getattribute__(self, "__class__").__name__
+        except AttributeError:
+            cl = "???"
 
-                descr = '%s(%s).%s' % (cl, id_str, attr)
+        if self._loaded:
+            nl = "it IS loaded"
+        else:
+            nl = "it is NOT loaded"
 
-                try:
-                    essentials = object.__getattribute__(self, "_essentials")
-                except AttributeError:
-                    print "%s has no _essentials" % descr
-                    essentials = ()
+        try:
+            id_str = "%d" % _id
+        except TypeError:
+            id_str = "%r" % _id
 
-                if isinstance(essentials, str):
-                    print "Some dumbass forgot a comma."
-                    essentials = essentials,
+        descr = '%s(%s).%s' % (cl, id_str, attr)
 
-                deleted = object.__getattribute__(self, "_deleted")
+        try:
+            essentials = object.__getattribute__(self, "_essentials")
+        except AttributeError:
+            print "%s has no _essentials" % descr
+            essentials = ()
 
-                if deleted:
-                    nl += " and IS deleted."
-                else:
-                    nl += " and is NOT deleted."
+        if isinstance(essentials, str):
+            print "Some dumbass forgot a comma."
+            essentials = essentials,
 
-                if attr in essentials and not deleted:
-                    log_text ("essentials-bandaid-reload",
-                          "%s not found; %s Forcing reload." % (descr, nl),
-                          "warning")
-                    self._load()
+        deleted = object.__getattribute__(self, "_deleted")
 
-                    try:
-                        return self._t[attr]
-                    except KeyError:
-                        log_text ("essentials-bandaid-failed",
-                              "Reload of %s didn't help. I recommend deletion."
-                              % descr, "error")
+        if deleted:
+            nl += " and IS deleted."
+        else:
+            nl += " and is NOT deleted."
 
-                raise AttributeError, '%s not found; %s' % (descr, nl)
+        if attr in essentials and not deleted:
+            log_text ("essentials-bandaid-reload",
+                  "%s not found; %s Forcing reload." % (descr, nl),
+                  "warning")
+            self._load()
+
+            try:
+                return self._t[attr]
+            except KeyError:
+                log_text ("essentials-bandaid-failed",
+                      "Reload of %s didn't help. I recommend deletion."
+                      % descr, "error")
+
+        raise AttributeError, '%s not found; %s' % (descr, nl)
 
     def _cache_key(self):
         return thing_prefix(self.__class__.__name__, self._id)
@@ -646,10 +644,6 @@ class Thing(DataThing):
             rules.append(cls.c._spam == False)
 
         return Things(cls, *rules, **kw)
-
-    def __getattr__(self, attr):
-        return DataThing.__getattr__(self, attr)
-
 
 
 class RelationMeta(type):
