@@ -112,11 +112,15 @@ class DataThing(object):
         if make_dirty and val != old_val:
             self._dirties[attr] = (old_val, val)
 
-    def __getattr__(self, attr):
-        #makes pickling work for some reason
-        if attr.startswith('__'):
-            raise AttributeError, attr
+    def __setstate__(self, state):
+        # pylibmc's automatic unpicking will call __setstate__ if it exists.
+        # if we don't implement __setstate__ the check for existence will fail
+        # in an atypical (and not properly handled) way because we override
+        # __getattr__. the implementation provided here is identical to what
+        # would happen in the default unimplemented case.
+        self.__dict__ = state
 
+    def __getattr__(self, attr):
         if not (attr.startswith('_')
                 or self._asked_for_data
                 or getattr(self, "_nodb", False)):
