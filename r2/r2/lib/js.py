@@ -60,9 +60,11 @@ class ClosureError(Exception): pass
 
 
 class ClosureCompiler(object):
-    def __init__(self, jarpath, args=None):
+    def __init__(self, jarpath):
         self.jarpath = jarpath
-        self.args = args or []
+        self.args = [
+            "--jscomp_off=internetExplorerChecks",
+        ]
 
     def _run(self, data, out=PIPE, args=None, expected_code=0):
         args = args or []
