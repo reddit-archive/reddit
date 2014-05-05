@@ -649,7 +649,7 @@ def finalize_completed_campaigns(daysago=1):
             PromotionLog.add(link, text)
             camp.refund_amount = 0.
             camp._commit()
-        else:
+        elif charged_or_not_needed(camp):
             underdelivered_campaigns.append(camp)
 
         if underdelivered_campaigns:
