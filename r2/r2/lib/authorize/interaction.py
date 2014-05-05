@@ -45,7 +45,9 @@ from r2.lib.authorize.api import (
     UpdateCustomerPaymentProfileRequest,
 )
 
-__all__ = []
+__all__ = ['TRANSACTION_NOT_FOUND']
+
+TRANSACTION_NOT_FOUND = 16
 
 # useful test data:
 test_card = dict(AMEX       = ("370000000000002"  , 1234),
@@ -201,21 +203,27 @@ def is_charged_transaction(trans_id, campaign):
 
 @export
 def charge_transaction(user, trans_id, campaign, test=None):
-    bid =  Bid.one(transaction=trans_id, campaign=campaign)
+    bid = Bid.one(transaction=trans_id, campaign=campaign)
     if bid.is_charged():
         return True
 
     if trans_id < 0:
         success = True
+        response_reason_code = None
     else:
         success, res = _make_transaction(ProfileTransPriorAuthCapture,
                                          bid.bid, user,
                                          bid.pay_id, trans_id=trans_id,
                                          test=test)
+        response_reason_code = res.get("response_reason_code")
 
     if success:
         bid.charged()
-    return success
+    elif response_reason_code == TRANSACTION_NOT_FOUND:
+        # authorization hold has expired
+        bid.void()
+
+    return success, response_reason_code
 
 
 @export

@@ -529,10 +529,18 @@ def charge_campaign(link, campaign):
         return
 
     user = Account._byID(link.author_id)
-    charge_succeeded = authorize.charge_transaction(user, campaign.trans_id,
-                                                    campaign._id)
+    success, reason = authorize.charge_transaction(user, campaign.trans_id,
+                                                   campaign._id)
 
-    if not charge_succeeded:
+    if not success:
+        if reason == authorize.TRANSACTION_NOT_FOUND:
+            # authorization hold has expired
+            original_trans_id = campaign.trans_id
+            campaign.trans_id = NO_TRANSACTION
+            campaign._commit()
+            text = ('voided expired transaction for %s: (trans_id: %d)'
+                    % (campaign, original_trans_id))
+            PromotionLog.add(link, text)
         return
 
     hooks.get_hook('promote.edit_campaign').call(link=link, campaign=campaign)
