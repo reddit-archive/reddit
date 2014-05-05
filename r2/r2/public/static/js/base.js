@@ -17,6 +17,10 @@ r.ajax = function(request) {
     if (request.type == 'GET' && _.isEmpty(request.data)) {
         var preloaded = r.preload.read(url)
         if (preloaded != null) {
+            if (request.dataFilter) {
+                preloaded = request.dataFilter(preloaded, 'json')
+            }
+
             request.success(preloaded)
 
             var deferred = new jQuery.Deferred
@@ -34,6 +38,32 @@ r.ajax = function(request) {
     }
 
     return $.ajax(request)
+}
+
+r.sync = function(method, model, options) {
+  var wrappedDataFilter = options.dataFilter
+  options.dataFilter = function(data, type) {
+    var filteredData
+
+    if (type === 'json') {
+      filteredData = r.utils.structuredMap(data, function(val) {
+        if (_.isString(val)) {
+          return _.unescape(val)
+        } else {
+          return val
+        }
+      })
+    } else {
+      filteredData = data
+    }
+
+    if (wrappedDataFilter) {
+      return wrappedDataFilter(filteredData)
+    } else {
+      return filteredData
+    }
+  }
+  return r.backboneSync.call(Backbone, method, model, options)
 }
 
 store.safeGet = function(key, errorValue) {
@@ -76,6 +106,11 @@ store.safeSet = function(key, val) {
 r.setupBackbone = function() {
     Backbone.emulateJSON = true
     Backbone.ajax = r.ajax
+
+    if (!r.backboneSync) {
+        r.backboneSync = Backbone.sync
+        Backbone.sync = r.sync
+    }
 }
 
 $(function() {

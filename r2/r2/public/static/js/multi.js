@@ -342,7 +342,7 @@ r.multi.MultiDetails = Backbone.View.extend({
 
         if (this.model.description.has('body_html')) {
             this.$('.description .usertext-body').html(
-                _.unescape(this.model.description.get('body_html'))
+                this.model.description.get('body_html')
             )
         }
 
