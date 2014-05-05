@@ -14,7 +14,7 @@ r.setup = function(config) {
 r.ajax = function(request) {
     var url = request.url
 
-    if (request.type == 'GET') {
+    if (request.type == 'GET' && _.isEmpty(request.data)) {
         var preloaded = r.preload.read(url)
         if (preloaded != null) {
             request.success(preloaded)
