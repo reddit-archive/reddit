@@ -49,7 +49,7 @@ def send_broadcast(namespace, type, payload):
         "type": type,
         "payload": payload,
     }
-    amqp.add_item(routing_key=namespace, body=websafe_json(json.dumps(frame)),
+    amqp.add_item(routing_key=namespace, body=json.dumps(frame),
                   exchange=_WEBSOCKET_EXCHANGE)
 
 
