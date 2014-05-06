@@ -295,7 +295,7 @@ def _validatedForm(self, self_method, responder, simple_vals, param_vals,
     val = self_method(self, form, responder, *a, **kw)
 
     # add data to the output on some errors
-    for validator in simple_vals:
+    for validator in chain(simple_vals, param_vals.values()):
         if (isinstance(validator, VCaptcha) and
             (form.has_errors('captcha', errors.BAD_CAPTCHA) or
              (form.has_error() and c.user.needs_captcha()))):
@@ -303,7 +303,9 @@ def _validatedForm(self, self_method, responder, simple_vals, param_vals,
         elif (isinstance(validator, VRatelimit) and
               form.has_errors('ratelimit', errors.RATELIMIT)):
             form.ratelimit(validator.seconds)
-
+        elif (isinstance(validator, VThrottledLogin) and
+                form.has_errors('vdelay', errors.RATELIMIT)):
+            form.ratelimit(validator.vdelay.seconds)
     if val:
         return val
     else:
@@ -1664,6 +1666,7 @@ class VRatelimit(Validator):
 class VDelay(Validator):
     def __init__(self, category, *a, **kw):
         self.category = category
+        self.seconds = None
         Validator.__init__(self, *a, **kw)
 
     def run (self):
@@ -1673,7 +1676,9 @@ class VDelay(Validator):
         prev_violations = g.cache.get(key)
         if prev_violations:
             time = utils.timeuntil(prev_violations["expire_time"])
-            if prev_violations["expire_time"] > datetime.now(g.tz):
+            remaining = prev_violations["expire_time"] - datetime.now(g.tz)
+            self.seconds = remaining.total_seconds()
+            if self.seconds > 0:
                 self.set_error(errors.RATELIMIT, {'time': time},
                                field='vdelay')
 
