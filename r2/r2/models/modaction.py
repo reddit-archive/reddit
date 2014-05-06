@@ -143,7 +143,7 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
                      'submit_text_label': _('submit text post button label'),
                      'comment_score_hide_mins': _('comment score hide period'),
                      'over_18': _('toggle viewers must be over 18'),
-                     'allow_top': _('toggle allow in default set'),
+                     'allow_top': _('toggle allow in default/trending lists'),
                      'show_media': _('toggle show thumbnail images of content'),
                      'public_traffic': _('toggle public traffic stats page'),
                      'exclude_banned_modqueue': _('toggle exclude banned users\' posts from modqueue'),
