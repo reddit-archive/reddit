@@ -32,7 +32,6 @@ from pylons import g
 from r2.lib import hooks
 from r2.lib.cache import sgm
 from r2.lib.db import tdb_sql as tdb, sorts, operators
-from r2.lib.log import log_text
 from r2.lib.utils import Results, tup, to36
 
 
@@ -158,17 +157,13 @@ class DataThing(object):
             nl += " and is NOT deleted."
 
         if attr in essentials and not deleted:
-            log_text ("essentials-bandaid-reload",
-                  "%s not found; %s Forcing reload." % (descr, nl),
-                  "warning")
+            g.log.error("%s not found; %s forcing reload.", descr, nl)
             self._load()
 
             try:
                 return self._t[attr]
             except KeyError:
-                log_text ("essentials-bandaid-failed",
-                      "Reload of %s didn't help. I recommend deletion."
-                      % descr, "error")
+                g.log.error("reload of %s didn't help.", descr)
 
         raise AttributeError, '%s not found; %s' % (descr, nl)
 
