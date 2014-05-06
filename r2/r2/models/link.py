@@ -261,13 +261,15 @@ class Link(Thing, Printable):
         elif style == "compact":
             s.append(c.permalink_page)
         s.append(getattr(wrapped, 'media_object', {}))
-        s.append(wrapped.flair_text)
-        s.append(wrapped.flair_css_class)
         s.append(wrapped.ignore_reports)
 
-        # if browsing a single subreddit, incorporate link flair position
-        # in the key so 'flair' buttons show up appropriately for mods
-        if hasattr(c.site, '_id'):
+        # add link flair to the key if the user and site have enabled it and it
+        # exists
+        if (c.user.pref_show_link_flair and
+                c.site.link_flair_position and
+                (wrapped.flair_text or wrapped.flair_css_class)):
+            s.append(wrapped.flair_text)
+            s.append(wrapped.flair_css_class)
             s.append(c.site.link_flair_position)
 
         return s

@@ -486,14 +486,6 @@ class CachedTemplate(Templated):
                 style, c.secure, c.cname, c.lang, c.site.path,
                 self.template_hash(style)]
 
-        # if viewing a single subreddit, take flair settings into account.
-        if c.user and hasattr(c.site, '_id'):
-            keys.extend([
-                c.site.flair_enabled, c.site.flair_position,
-                c.site.link_flair_position,
-                c.user.flair_enabled_in_sr(c.site._id),
-                c.user.pref_show_flair, c.user.pref_show_link_flair])
-
         if c.secure:
             keys.append(request.host)
 

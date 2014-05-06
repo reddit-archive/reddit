@@ -81,6 +81,13 @@ class Printable(object):
     def wrapped_cache_key(wrapped, style):
         s = [wrapped._fullname, wrapped._spam, wrapped.reported]
 
+        # Printables can contain embedded WrappedUsers, which need to consider
+        # the site and user's flair settings. Add something to the key
+        # indicating there might be flair--we haven't built the WrappedUser yet
+        # so we can't check to see if there's actually flair.
+        if c.site.flair_enabled and c.user.pref_show_flair:
+            s.append('user_flair_enabled')
+
         if style == 'htmllite':
             s.extend([c.bgcolor, c.bordercolor, 
                       request.GET.has_key('style'),
