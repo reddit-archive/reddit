@@ -149,16 +149,7 @@ class DataThing(object):
 
         descr = '%s(%s).%s' % (cl, id_str, attr)
 
-        try:
-            essentials = object.__getattribute__(self, "_essentials")
-        except AttributeError:
-            print "%s has no _essentials" % descr
-            essentials = ()
-
-        if isinstance(essentials, str):
-            print "Some dumbass forgot a comma."
-            essentials = essentials,
-
+        essentials = object.__getattribute__(self, "_essentials")
         deleted = object.__getattribute__(self, "_deleted")
 
         if deleted:
