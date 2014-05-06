@@ -725,6 +725,9 @@ class ApiController(RedditController):
         if type == "friend" and c.user.gold:
             c.user.friend_rels_cache(_update=True)
 
+        if type in ('banned', 'wikibanned'):
+            container.unschedule_unban(victim, type)
+
     @validatedForm(VSrModerator(), VModhash(),
                    target=VExistingUname('name'),
                    type_and_permissions=VPermissions('type', 'permissions'))
@@ -774,10 +777,12 @@ class ApiController(RedditController):
                    container = nop('container'),
                    type = VOneOf('type', ('friend',) + _sr_friend_types),
                    type_and_permissions = VPermissions('type', 'permissions'),
-                   note = VLength('note', 300))
+                   note = VLength('note', 300),
+                   duration = VInt('duration', min=1, max=999),
+    )
     @api_doc(api_section.users)
     def POST_friend(self, form, jquery, ip, friend,
-                    container, type, type_and_permissions, note):
+                    container, type, type_and_permissions, note, duration):
         """
         Complement to POST_unfriend: handles friending as well as
         privilege changes on subreddits.
@@ -885,9 +890,22 @@ class ApiController(RedditController):
             # the right one and update its data.
             c.user.friend_rels_cache(_update=True)
             c.user.add_friend_note(friend, note or '')
-        
+
+        tempinfo = None
         if type in ('banned', 'wikibanned'):
             container.add_rel_note(type, friend, note)
+            if duration:
+                container.unschedule_unban(friend, type)
+                tempinfo = container.schedule_unban(
+                    type,
+                    friend,
+                    c.user,
+                    duration,
+                )
+            elif not new:
+                # Preexisting ban and no duration specified means turn the
+                # temporary ban into a permanent one.
+                container.unschedule_unban(friend, type)
 
         row_cls = dict(friend=FriendTableItem,
                        moderator=ModTableItem,
@@ -905,6 +923,8 @@ class ApiController(RedditController):
         if new and row_cls:
             new._thing2 = friend
             user_row = row_cls(new)
+            if tempinfo:
+                BannedListing.populate_from_tempbans(user_row, tempinfo)
             form.set_html(".status:first", user_row.executed_message)
             rev_types = ["moderator", "moderator_invite", "friend"]
             index = 0 if user_row.type not in rev_types else -1

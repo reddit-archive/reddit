@@ -34,6 +34,8 @@ def register_core_hooks():
     # function to ensure that they are available when trylater runs.
     from r2.models.account import trylater_hooks
     trylater_hooks.register_all()
+    from r2.models import subreddit
+    subreddit.trylater_hooks.register_all()
 
 
 ## Entry point

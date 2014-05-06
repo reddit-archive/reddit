@@ -29,7 +29,8 @@ import hashlib
 import itertools
 import json
 
-from pylons import c, g
+from pycassa.util import convert_uuid_to_time
+from pylons import c, g, request
 from pylons.i18n import _
 
 from r2.lib.db.thing import Thing, Relation, NotFound
@@ -47,7 +48,7 @@ from r2.lib.strings import strings, Score
 from r2.lib.filters import _force_unicode
 from r2.lib.db import tdb_cassandra
 from r2.models.wiki import WikiPage, ImagesByWikiPage
-
+from r2.models.trylater import TryLater, TryLaterBySubject
 from r2.lib.merge import ConflictException
 from r2.lib.cache import CL_ONE
 from r2.lib import hooks
@@ -58,6 +59,8 @@ from r2.lib.utils import set_last_modified
 from r2.models.wiki import WikiPage
 import os.path
 import random
+
+trylater_hooks = hooks.HookRegistrar()
 
 
 def get_links_sr_ids(sr_ids, sort, time):
@@ -922,6 +925,21 @@ class Subreddit(Thing, Printable, BaseSite):
         from r2.lib import promote
         return promote.get_live_promotions([self.name])
 
+    def schedule_unban(self, kind, victim, banner, duration):
+        return SubredditTempBan.schedule(
+            self,
+            kind,
+            victim,
+            banner,
+            datetime.timedelta(days=duration),
+        )
+
+    def unschedule_unban(self, victim, type):
+        SubredditTempBan.unschedule(self.name, victim.name, type)
+
+    def get_tempbans(self, type=None, names=None):
+        return SubredditTempBan.search(self.name, type, names)
+
 
 class FakeSubreddit(BaseSite):
     _defaults = dict(Subreddit._defaults,
@@ -1747,3 +1765,86 @@ class SubredditPopularityByLanguage(tdb_cassandra.View):
     _value_type = 'pickle'
     _connection_pool = 'main'
     _read_consistency_level = CL_ONE
+
+
+class SubredditTempBan(object):
+    def __init__(self, sr, kind, victim, banner, duration):
+        self.sr = sr._id36
+        self._srname = sr.name
+        self.who = victim._id36
+        self._whoname = victim.name
+        self.type = kind
+        self.banner = banner._id36
+        self.duration = duration
+
+    @classmethod
+    def schedule(cls, sr, kind, victim, banner, duration):
+        info = {
+            'sr': sr._id36,
+            'who': victim._id36,
+            'type': kind,
+            'banner': banner._id36,
+        }
+        result = TryLaterBySubject.schedule(
+            cls.cancel_rowkey(sr.name, kind),
+            cls.cancel_colkey(victim.name),
+            json.dumps(info),
+            duration,
+            trylater_rowkey=cls.schedule_rowkey(),
+        )
+        return {victim.name: result.keys()[0]}
+
+    @classmethod
+    def cancel_colkey(cls, name):
+        return name
+
+    @classmethod
+    def cancel_rowkey(cls, name, type):
+        return "srunban:%s:%s" % (name, type)
+
+    @classmethod
+    def schedule_rowkey(cls):
+        return "srunban"
+
+    @classmethod
+    def search(cls, srname, bantype, subjects):
+        results = TryLaterBySubject.search(cls.cancel_rowkey(srname, bantype),
+                                           subjects)
+
+        def convert_uuid_to_datetime(uu):
+            return datetime.datetime.fromtimestamp(convert_uuid_to_time(uu),
+                                                   g.tz)
+        return {
+            name: convert_uuid_to_datetime(uu)
+                for name, uu in results.iteritems()
+        }
+
+    @classmethod
+    def unschedule(cls, srname, victim_name, bantype):
+        TryLaterBySubject.unschedule(
+            cls.cancel_rowkey(srname, bantype),
+            cls.cancel_colkey(victim_name),
+            cls.schedule_rowkey(),
+        )
+
+
+@trylater_hooks.on('trylater.srunban')
+def on_subreddit_unban(mature_items):
+    from r2.models.modaction import ModAction
+    for blob in mature_items.itervalues():
+        baninfo = json.loads(blob)
+        container = Subreddit._byID36(baninfo['sr'], data=True)
+        victim = Account._byID36(baninfo['who'], data=True)
+        banner = Account._byID36(baninfo['banner'], data=True)
+        kind = baninfo['type']
+        remove_function = getattr(container, 'remove_' + kind)
+        new = remove_function(victim)
+        g.log.info("Unbanned %s from %s", victim.name, container.name)
+
+        if new:
+            action = dict(
+                banned='unbanuser',
+                wikibanned='wikiunbanned',
+            ).get(kind, None)
+            ModAction.create(container, banner, action, target=victim,
+                             description="was temporary")

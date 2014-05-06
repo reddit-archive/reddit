@@ -79,5 +79,11 @@
         (<a href="javascript:void(0)">${_('change')}</a>)
       </span>
     %endif
+  %elif thing.name == "temp" and hasattr(thing, "tempban"):
+    ${_('%(time)s days left') % dict(time=thing.tempban)}
+    ${ynbutton(_('make permanent'), _("made permanent"), "friend",
+        hidden_data = dict(type=thing.type,
+                           name=thing.user.name,
+                           container=thing.container_name))}
   %endif
 </%def>

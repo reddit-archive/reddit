@@ -35,6 +35,7 @@ from pycassa.system_manager import (SystemManager, UTF8_TYPE,
                                     COUNTER_COLUMN_TYPE, TIME_UUID_TYPE,
                                     ASCII_TYPE)
 from pycassa.types import DateType, LongType, IntegerType
+from pycassa.util import convert_uuid_to_time
 from r2.lib.utils import tup, Storage
 from r2.lib import cache
 from uuid import uuid1, UUID
@@ -524,6 +525,8 @@ class ThingBase(object):
     def _deserialize_date(cls, val):
         if isinstance(val, datetime):
             date = val
+        elif isinstance(val, UUID):
+            return convert_uuid_to_time(val)
         elif len(val) == 8: # cassandra uses 8-byte integer format for this
             date = date_serializer.unpack(val)
         else: # it's probably the old-style stringified seconds since epoch

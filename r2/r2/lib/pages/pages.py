@@ -54,6 +54,7 @@ from r2.models.wiki import WikiPage, ImagesByWikiPage
 from r2.lib.db import tdb_cassandra, queries
 from r2.config.extensions import is_api
 from r2.lib.menus import CommentSortMenu
+
 from pylons.i18n import _, ungettext
 from pylons import c, request, g, config
 from pylons.controllers.util import abort
@@ -3080,7 +3081,7 @@ class EnemyTableItem(RelTableItem):
 
 class BannedTableItem(RelTableItem):
     type = 'banned'
-    cells = ('user', 'age', 'sendmessage', 'remove', 'note')
+    cells = ('user', 'age', 'sendmessage', 'remove', 'note', 'temp')
 
     @property
     def executed_message(self):

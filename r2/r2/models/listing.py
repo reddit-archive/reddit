@@ -25,6 +25,7 @@ from link import *
 from vote import *
 from report import *
 from subreddit import DefaultSR, AllSR, Frontpage
+
 from pylons import i18n, request, g
 from pylons.i18n import _
 
@@ -170,6 +171,15 @@ class EnemyListing(UserListing):
 class BannedListing(UserListing):
     type = 'banned'
 
+    @classmethod
+    def populate_from_tempbans(cls, item, tempbans=None):
+        if not tempbans:
+            return
+        time = tempbans.get(item.user.name)
+        if time:
+            delay = time - datetime.now(g.tz)
+            item.tempban = max(delay.days, 0)
+
     @property
     def form_title(self):
         return _("ban users")
@@ -178,6 +188,16 @@ class BannedListing(UserListing):
     def title(self):
         return _("users banned from"
                  " /r/%(subreddit)s") % dict(subreddit=c.site.name)
+
+    def get_items(self, *a, **kw):
+        items = UserListing.get_items(self, *a, **kw)
+        wrapped_items = items[0]
+        names = [item.user.name for item in wrapped_items]
+        tempbans = c.site.get_tempbans(self.type, names)
+        for wrapped in wrapped_items:
+            BannedListing.populate_from_tempbans(wrapped, tempbans)
+        return items
+
 
 class WikiBannedListing(BannedListing):
     type = 'wikibanned'

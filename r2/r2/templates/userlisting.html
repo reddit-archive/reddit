@@ -38,10 +38,15 @@
     %if add_type in ("banned", "wikibanned"):
         <label for="name">${_('who to ban?')} &nbsp;</label>
         <input type="text" onfocus="$(this).parent('form').addClass('edited')" class="friend-name" name="name" id="name">
-        <span class="ban-reason">
+        <span class="ban-details">
             <label for="note">${_('why the ban?')}</label>
             <input type="text" maxlength="300" name="note" id="note">
             <span>${_('(will not be visible to user)')}</span>
+        </span>
+        <span class="ban-details">
+            <label for="duration">${_('how long?')}</label>
+            <input type="number" min="1" max="999" name="duration" id="duration">
+            <span>${_('days (leave blank for permanent)')}</span>
         </span>
     %else:
         <input type="text" name="name" id="name">
