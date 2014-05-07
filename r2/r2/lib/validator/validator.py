@@ -1678,7 +1678,7 @@ class VDelay(Validator):
             time = utils.timeuntil(prev_violations["expire_time"])
             remaining = prev_violations["expire_time"] - datetime.now(g.tz)
             self.seconds = remaining.total_seconds()
-            if self.seconds > 0:
+            if self.seconds >= 3:
                 self.set_error(errors.RATELIMIT, {'time': time},
                                field='vdelay')
 
