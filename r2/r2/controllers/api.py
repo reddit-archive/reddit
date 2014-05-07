@@ -1528,10 +1528,13 @@ class ApiController(RedditController):
             else:
                 link = Link._byID(parent.link_id, data = True)
                 parent_comment = parent
+
             sr = parent.subreddit_slow
-            if ((link.is_self and link.author_id == c.user._id)
-                or not sr.should_ratelimit(c.user, 'comment')):
+            is_author = link.author_id == c.user._id
+            if (is_author and (link.is_self or promote.is_promo(link)) or
+                    not sr.should_ratelimit(c.user, 'comment')):
                 should_ratelimit = False
+
             parent_age = c.start_time - parent._date
             if not link.promoted and parent_age.days > g.REPLY_AGE_LIMIT:
                 c.errors.add(errors.TOO_OLD, field = "parent")
