@@ -58,7 +58,7 @@ PREFS_JSON_SPEC.spec["content_langs"] = VValidatedJSON.ArrayOf(
 )
 
 
-class APIv1Controller(OAuth2ResourceController):
+class APIv1UserController(OAuth2ResourceController):
     def pre(self):
         OAuth2ResourceController.pre(self)
         self.authenticate_with_token()

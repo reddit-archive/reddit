@@ -375,9 +375,9 @@ def make_map():
     mc("/api/v1/:action", controller="oauth2access",
        requirements=dict(action="access_token"))
     mc("/api/v1/user/:username/trophies",
-       controller="apiv1", action="usertrophies")
-    mc("/api/v1/:action", controller="apiv1")
-    mc("/api/v1/me/:action", controller="apiv1")
+       controller="apiv1user", action="usertrophies")
+    mc("/api/v1/:action", controller="apiv1user")
+    mc("/api/v1/me/:action", controller="apiv1user")
 
     mc('/dev', controller='redirect', action='redirect', dest='/dev/api')
     mc('/dev/api', controller='apidocs', action='docs')
