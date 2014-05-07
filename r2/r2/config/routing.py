@@ -182,6 +182,7 @@ def make_map():
     mc('/t/:timereddit/*rest', controller='redirect',
        action='timereddit_redirect')
 
+    # /prefs/friends is also aliased to /api/v1/me/friends
     mc('/prefs/:where', controller='userlistlisting',
         action='user_prefs', requirements=dict(where='blocked|friends'))
     mc('/prefs/:location', controller='forms', action='prefs',
@@ -377,6 +378,9 @@ def make_map():
     mc("/api/v1/user/:username/trophies",
        controller="apiv1user", action="usertrophies")
     mc("/api/v1/:action", controller="apiv1user")
+    # Same controller/action as /prefs/friends
+    mc("/api/v1/me/:where", controller="userlistlisting",
+        action="user_prefs", requirements=dict(where="friends"))
     mc("/api/v1/me/:action", controller="apiv1user")
 
     mc('/dev', controller='redirect', action='redirect', dest='/dev/api')
