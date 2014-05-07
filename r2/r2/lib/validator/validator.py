@@ -1680,7 +1680,7 @@ class VDelay(Validator):
             self.seconds = remaining.total_seconds()
             if self.seconds >= 3:
                 self.set_error(errors.RATELIMIT, {'time': time},
-                               field='vdelay')
+                               field='vdelay', code=429)
 
     @classmethod
     def record_violation(self, category, seconds = None, growfast=False):
