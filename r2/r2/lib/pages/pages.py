@@ -1081,9 +1081,6 @@ class FormPage(BoringPage):
         BoringPage.__init__(self, pagename,  show_sidebar = show_sidebar,
                             *a, **kw)
 
-class AdvertisingPage(FormPage):
-    extra_stylesheets  = ['selfserve.less']
-
 class LoginPage(BoringPage):
     enable_login_cover = False
     short_title = "login"
@@ -2752,9 +2749,6 @@ class ButtonLite(Button):
 
 class ButtonDemoPanel(Templated):
     """The page for showing the different styles of embedable voting buttons"""
-    pass
-
-class SelfServeBlurb(Templated):
     pass
 
 class ContactUs(Templated):

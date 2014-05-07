@@ -118,9 +118,6 @@ def make_map():
     mc('/feedback', controller='redirect', action='redirect',
        dest='/contact')
     mc('/contact', controller='front', action='contact_us')
-    mc('/ad_inq', controller='redirect', action='redirect',
-       dest='/advertising')
-    mc('/advertising', controller='front', action='advertising')
 
     mc('/admin/awards', controller='awards')
     mc('/admin/awards/:awardcn/:action', controller='awards',
