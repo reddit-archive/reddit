@@ -718,6 +718,7 @@ class Subreddit(Thing, Printable, BaseSite):
 
         An optional kw argument 'limit' is defaulted to g.num_default_reddits
         """
+        langs = c.content_langs if c.content_langs else g.site_lang
 
         # we'll let these be unordered for now
         auto_srs = []
@@ -725,7 +726,7 @@ class Subreddit(Thing, Printable, BaseSite):
             auto_srs = map(lambda sr: sr._id,
                            Subreddit._by_name(g.automatic_reddits, stale=stale).values())
 
-        srs = cls.top_lang_srs(c.content_langs, limit + len(auto_srs),
+        srs = cls.top_lang_srs(langs, limit + len(auto_srs),
                                filter_allow_top = True,
                                over18 = over18, ids = True,
                                stale=stale)
