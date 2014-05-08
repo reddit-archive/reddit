@@ -57,7 +57,13 @@ cpdef double _hot(long ups, long downs, double date):
 
 cpdef double controversy(long ups, long downs):
     """The controversy sort."""
-    return float(ups + downs) / max(abs(score(ups, downs)), 1)
+    if downs == 0 or ups == 0:
+        return 0
+
+    magnitude = ups + downs
+    balance = float(downs) / ups if ups > downs else float(ups) / downs
+
+    return magnitude ** balance
 
 cpdef double _confidence(int ups, int downs):
     """The confidence sort.
