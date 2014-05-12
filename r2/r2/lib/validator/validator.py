@@ -794,6 +794,24 @@ class VAccountByName(VRequired):
             except NotFound: pass
         return self.error()
 
+    def param_docs(self):
+        return {self.param: "A valid, existing reddit username"}
+
+
+class VFriendOfMine(VAccountByName):
+    def run(self, name):
+        # Must be logged in
+        VUser().run()
+        maybe_friend = VAccountByName.run(self, name)
+        if maybe_friend:
+            friend_rel = Account.get_friend(c.user, maybe_friend)
+            if friend_rel:
+                return friend_rel
+            else:
+                self.error(errors.NOT_FRIEND)
+        return None
+
+
 def fullname_regex(thing_cls = None, multiple = False):
     pattern = "[%s%s]" % (Relation._type_prefix, Thing._type_prefix)
     if thing_cls:

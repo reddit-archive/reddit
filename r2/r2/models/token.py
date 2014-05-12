@@ -212,7 +212,8 @@ class OAuth2Scope:
         "subscribe": {
             "id": "subscribe",
             "name": _("Edit My Subscriptions"),
-            "description": _("Manage my subreddit subscriptions."),
+            "description": _('Manage my subreddit subscriptions. Manage '
+                '"friends" - users whose content I follow.'),
         },
         "vote": {
             "id": "vote",

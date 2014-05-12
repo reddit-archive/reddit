@@ -19,26 +19,27 @@
 # All portions of the code written by reddit are Copyright (c) 2006-2014 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
-import json
-
-from pylons import c
+from pylons import c, response
 from r2.controllers.api_docs import api_doc, api_section
 from r2.controllers.oauth2 import require_oauth2_scope
 from r2.controllers.reddit_base import (
     abort_with_error,
     OAuth2ResourceController,
 )
-from r2.lib.base import abort
 from r2.lib.jsontemplates import (
+    FriendTableItemJsonTemplate,
     IdentityJsonTemplate,
+    KarmaListJsonTemplate,
     PrefsJsonTemplate,
     TrophyListJsonTemplate,
-    KarmaListJsonTemplate,
 )
+from r2.lib.pages import FriendTableItem
 from r2.lib.validator import (
     validate,
     VAccountByName,
     VContentLang,
+    VFriendOfMine,
+    VLength,
     VList,
     VValidatedJSON,
 )
@@ -150,3 +151,75 @@ class APIv1UserController(OAuth2ResourceController):
         vprefs.set_prefs(c.user, user_prefs)
         c.user._commit()
         return self.api_wrapper(PrefsJsonTemplate().data(c.user))
+
+    FRIEND_JSON_SPEC = VValidatedJSON.PartialObject({
+        "name": VAccountByName("name"),
+        "note": VLength("note", 300),
+    })
+    FRIEND_JSON_VALIDATOR = VValidatedJSON("json", spec=FRIEND_JSON_SPEC,
+                                           body=True)
+    @require_oauth2_scope('subscribe')
+    @validate(
+        friend=VAccountByName('username'),
+        notes_json=FRIEND_JSON_VALIDATOR,
+    )
+    @api_doc(api_section.users, json_model=FRIEND_JSON_VALIDATOR,
+             uri='/api/v1/me/friends/{username}')
+    def PUT_friends(self, friend, notes_json):
+        """Create or update a "friend" relationship.
+
+        This operation is idempotent. It can be used to add a new
+        friend, or update an existing friend (e.g., add/change the
+        note on that friend)
+
+        """
+        err = None
+        if 'name' in notes_json and notes_json['name'] != friend:
+            # The 'name' in the JSON is optional, but if present, must
+            # match the username from the URL
+            err = errors.RedditError('BAD_USERNAME', fields='name')
+        if 'note' in notes_json and not c.user.gold:
+            err = errors.RedditError('GOLD_REQUIRED', fields='note')
+        if err:
+            self.on_validation_error(err)
+
+        # See if the target is already an existing friend.
+        # If not, create the friend relationship.
+        friend_rel = Account.get_friend(c.user, friend)
+        rel_exists = bool(friend_rel)
+        if not friend_rel:
+            friend_rel = c.user.add_friend(friend)
+            response.status = 201
+
+        if 'note' in notes_json:
+            note = notes_json['note'] or ''
+            if not rel_exists:
+                # If this is a newly created friend relationship,
+                # the cache needs to be updated before a note can
+                # be applied
+                c.user.friend_rels_cache(_update=True)
+            c.user.add_friend_note(friend, note)
+        rel_view = FriendTableItem(friend_rel)
+        return self.api_wrapper(FriendTableItemJsonTemplate().data(rel_view))
+
+    @require_oauth2_scope('mysubreddits')
+    @validate(
+        friend_rel=VFriendOfMine('username'),
+    )
+    @api_doc(api_section.users, uri='/api/v1/me/friends/{username}')
+    def GET_friends(self, friend_rel):
+        """Get information about a specific 'friend', such as notes."""
+        rel_view = FriendTableItem(friend_rel)
+        return self.api_wrapper(FriendTableItemJsonTemplate().data(rel_view))
+
+    @require_oauth2_scope('subscribe')
+    @validate(
+        friend_rel=VFriendOfMine('username'),
+    )
+    @api_doc(api_section.users, uri='/api/v1/me/friends/{username}')
+    def DELETE_friends(self, friend_rel):
+        """Stop being friends with a user."""
+        c.user.remove_friend(friend_rel._thing2)
+        if c.user.gold:
+            c.user.friend_rels_cache(_update=True)
+        response.status = 204

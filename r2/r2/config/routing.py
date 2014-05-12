@@ -382,6 +382,7 @@ def make_map():
     mc("/api/v1/me/:where", controller="userlistlisting",
         action="user_prefs", requirements=dict(where="friends"))
     mc("/api/v1/me/:action", controller="apiv1user")
+    mc("/api/v1/me/:action/:username", controller="apiv1user")
 
     mc('/dev', controller='redirect', action='redirect', dest='/dev/api')
     mc('/dev/api', controller='apidocs', action='docs')

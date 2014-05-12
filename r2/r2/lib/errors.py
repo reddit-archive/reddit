@@ -44,6 +44,7 @@ error_list = dict((
         ('TOO_MANY_THING_IDS', _('you provided too many ids')),
         ('NOT_AUTHOR', _("you can't do that")),
         ('NOT_USER', _("you are not logged in as that user")),
+        ('NOT_FRIEND', _("you are not friends with that user")),
         ('LOGGED_IN', _("you are already logged in")),
         ('DELETED_LINK', _('the link you are commenting on has been deleted')),
         ('DELETED_COMMENT', _('that comment has been deleted')),
@@ -138,6 +139,7 @@ error_list = dict((
         ('NO_CHANGE_KIND', _("can't change post type")),
         ('INVALID_LOCATION', _("invalid location")),
         ('BANNED_FROM_SUBREDDIT', _('that user is banned from the subreddit')),
+        ('GOLD_REQUIRED', _('you must have an active reddit gold subscription to do that')),
     ))
 
 errors = Storage([(e, e) for e in error_list.keys()])
