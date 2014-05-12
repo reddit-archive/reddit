@@ -347,7 +347,10 @@ class IdentityJsonTemplate(ThingJsonTemplate):
         link_karma="safe_karma",
         name="name",
     )
-    _private_data_attrs = dict(over_18="pref_over_18")
+    _private_data_attrs = dict(
+        over_18="pref_over_18",
+        gold_creddits="gold_creddits",
+    )
 
     def raw_data(self, thing):
         attrs = self._data_attrs_.copy()
