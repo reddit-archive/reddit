@@ -3,6 +3,29 @@ r.logging = {}
 r.logging.pageAgeLimit = 5*60  // seconds
 r.logging.sendThrottle = 8  // seconds
 
+r.logging.exceptionMessageTemplate = _.template('Client Error: "<%= errorType %>" thrown at ' +
+                                        'L<%= line %>:<%= character %> ' +
+                                        'in <%= file %> Message: "<%= message %>"')
+
+r.logging.defaultExceptionValues = {
+  message: 'UNKNOWN MESSAGE',
+  file: 'UNKNOWN FILE',
+  line: '?',
+  character: '?',
+  errorType: 'UNKNOWN ERROR TYPE',
+}
+
+r.logging.sendException = function(exception) {
+  if (!exception) {
+    throw 'No exception object was passed in.'
+  }
+
+  _.defaults(exception, r.logging.defaultExceptionValues)
+  var errorMessage = r.logging.exceptionMessageTemplate(exception)
+
+  r.logging.sendError(errorMessage, { tag: 'unknown' })
+}
+
 r.logging.init = function() {
     _.each(['debug', 'log', 'warn', 'error'], function(name) {
         // suppress debug messages unless config.debug is set
@@ -19,13 +42,22 @@ r.logging.serverLogger = {
     _queuedLogs: [],
 
     queueLog: function(logData) {
+        // Just in case we get an error before config is initialized. Can happen while parsing files.
+        if (!r.config) {
+          return
+        }
+
+        if (!r.warn) {
+          r.warn = function(){}
+        }
+
         if (this.logCount >= 3) {
             r.warn('Not sending debug log; already sent', this.logCount)
             return
         }
 
-        // don't send messages for pages older than 5 minutes to prevent CDN cached
-        // pages from slamming us if we need to turn off logs
+        // don't send messages for pages older than 5 minutes to prevent CDN 
+        // cached pages from slamming us if we need to turn off logs
         var pageAge = (new Date / 1000) - r.config.server_time
         if (Math.abs(pageAge) > r.logging.pageAgeLimit) {
             r.warn('Not sending debug log; page too old:', pageAge)
@@ -68,6 +100,23 @@ r.logging.serverLogger = {
 }
 
 r.logging.sendError = function() {
-    r.error.apply(r, arguments)
-    r.logging.serverLogger.queueLog({msg: _.toArray(arguments).join(' ')})
+    var args = _.toArray(arguments)
+    var lastArg = _.last(args)
+    var options = {}
+
+    if (_.isObject(lastArg)) {
+      options = lastArg
+      args.pop()
+    }
+
+    var log = _.defaults({
+      msg: args.join(' ')
+    }, options)
+
+    if (r.error) {
+      r.error.apply(r, arguments)
+    }
+
+    r.logging.serverLogger.queueLog(log)
 }
+

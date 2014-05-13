@@ -41,13 +41,20 @@ class WebLogController(RedditController):
         VRatelimit(rate_user=False, rate_ip=True, prefix='rate_weblog_'),
         level=VOneOf('level', ('error',)),
         logs=VValidatedJSON('logs',
-            VValidatedJSON.ArrayOf(VValidatedJSON.Object({
+            VValidatedJSON.ArrayOf(VValidatedJSON.PartialObject({
                 'msg': VPrintable('msg', max_length=256),
                 'url': VPrintable('url', max_length=256),
+                'tag': VPrintable('tag', max_length=32),
             }))
         ),
     )
     def POST_message(self, level, logs):
+        # Whitelist tags to keep the frontend from creating too many keys in statsd
+        valid_frontend_log_tags = {
+            'unknown',
+            'jquery-migrate-bad-html',
+        }
+
         # prevent simple CSRF by requiring a custom header
         if not request.headers.get('X-Loggit'):
             abort(403)
@@ -56,6 +63,16 @@ class WebLogController(RedditController):
 
         # only accept a maximum of 3 entries per request
         for log in logs[:3]:
+            if 'msg' not in log or 'url' not in log:
+                continue
+
+            tag = 'unknown'
+
+            if log.get('tag') in valid_frontend_log_tags:
+                tag = log['tag']
+
+            g.stats.simple_event('frontend.error.' + tag)
+
             g.log.warning('[web frontend] %s: %s | U: %s FP: %s UA: %s',
                           level, log['msg'], uid, log['url'],
                           request.user_agent)
