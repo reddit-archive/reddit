@@ -1877,10 +1877,10 @@ class Inbox(MultiRelation('inbox',
         if to:
             inbox = inbox_rel._query(inbox_rel.c._thing2_id == thing_ids,
                                      inbox_rel.c._thing1_id == to._id,
-                                     eager_load=True, data=True)
+                                     data=True)
         else:
             inbox = inbox_rel._query(inbox_rel.c._thing2_id == thing_ids,
-                                     eager_load=True, data=True)
+                                     data=True)
         res = []
         for i in inbox:
             if i.new != unread:
@@ -1916,8 +1916,7 @@ class ModeratorInbox(Relation(Subreddit, Message)):
     def set_unread(cls, things, unread):
         things = tup(things)
         thing_ids = [x._id for x in things]
-        inbox = cls._query(cls.c._thing2_id == thing_ids, eager_load=True,
-                           data=True)
+        inbox = cls._query(cls.c._thing2_id == thing_ids, data=True)
         res = []
         for i in inbox:
             if i.new != unread:
