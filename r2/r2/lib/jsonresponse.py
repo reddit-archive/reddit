@@ -232,7 +232,9 @@ class JQueryResponse(JsonResponse):
 
     def set_inputs(self, **kw):
         for k, v in kw.iteritems():
-            self.get_input(k).set(value = v).end()
+            # Using 'val' instead of setting the 'value' attribute allows this
+            # To work for non-textbox inputs, like textareas
+            self.get_input(k).val(v).end()
         return self
 
     def focus_input(self, name):

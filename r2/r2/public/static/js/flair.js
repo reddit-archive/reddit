@@ -10,25 +10,19 @@ $(function() {
         }
     }
 
-    function onDelete(action) {
-        return post_form(this.parentNode, action);
-    }
-
-    function makeOnDelete(action) {
-        return function() { return onDelete.call(this, action); };
+    function onDelete(e) {
+        e.preventDefault()
+        return post_form(this.parentNode, e.data.action);
     }
 
     function onFocus() {
         showSaveButton(this);
     }
 
-    function onSubmit(action) {
+    function onSubmit(e) {
+        e.preventDefault()
         $(this).removeClass("edited");
-        return post_form(this, action);
-    }
-
-    function makeOnSubmit(action) {
-        return function() { return onSubmit.call(this, action); };
+        return post_form(this, e.data.action);
     }
 
     function toggleFlairSelector() {
@@ -191,20 +185,32 @@ $(function() {
     }
 
     // Attach event handlers to the various flair forms that may be on page.
+
+    $("#tabbedpane-grant .flair-entry").on("submit", {
+        action: "flair",
+      }, onSubmit)
+
+    $("#tabbedpane-grant .flairdeletebtn").on("click", {
+        action: "deleteflair",
+      }, onDelete)
+
+
+    $("#tabbedpane-templates .flair-entry, " +
+        "#tabbedpane-link_templates .flair-entry").on("submit", {
+          action: "flairtemplate",
+      }, onSubmit)
+
+    $("form.clearflairtemplates").on("submit", {
+        action: "clearflairtemplates"
+      }, onSubmit)
+
     $(".flairlist")
-        .delegate(".flairtemplate form", "submit",
-                  makeOnSubmit('flairtemplate'))
-        .delegate("form.clearflairtemplates", "submit",
-                  makeOnSubmit('clearflairtemplates'))
-        .delegate(".flairgrant .usertable form", "submit",
-                  makeOnSubmit('flair'))
-        .delegate(".flaircell input", "focus", onFocus)
-        .delegate(".flaircell input", "keyup", onEdit)
-        .delegate(".flaircell input", "change", onEdit)
-        .delegate(".flairtemplate .flairdeletebtn", "click",
-                  makeOnDelete("deleteflairtemplate"))
-        .delegate(".flairgrant .flairdeletebtn", "click",
-                  makeOnDelete("deleteflair"));
+        .on("focus", ".flaircell input", onFocus)
+        .on("keyup", ".flaircell input", onEdit)
+        .on("change", ".flaircell input", onEdit)
+        .on("click", ".flairtemplate .flairdeletebtn", {
+            action: "deleteflairtemplate",
+          }, onDelete)
 
     // Event handlers for sidebar flair prefs.
     $(".flairtoggle").submit(function() {

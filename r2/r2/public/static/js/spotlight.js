@@ -135,7 +135,7 @@ r.spotlight._advance = function(dir) {
             return
         }
 
-        if ($nextLoad.isRejected() || !$next) {
+        if ($nextLoad.state() == "rejected" || !$next) {
             if (this.lineup.length > 1) {
                 this._advance(dir || 1)
                 return

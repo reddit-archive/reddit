@@ -400,7 +400,7 @@ class LocalizedModule(Module):
 
 
 class JQuery(Module):
-    version = "1.7.2"
+    version = "1.11.0"
 
     def __init__(self, cdn_url="http://ajax.googleapis.com/ajax/libs/jquery/{version}/jquery"):
         self.jquery_src = FileSource("lib/jquery-{0}.min.js".format(self.version))

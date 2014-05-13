@@ -52,20 +52,20 @@ $(function() {
         return false;
     });
     //Self text expando
-    $('.expando-button').live('click', function() {
+    $(document).on('click', '.expando-button', function() {
         $(this).toggleClass("expanded");
         $(this).thing().find(".expando").toggle();
         return false;
     });
     //Help expando
-    $('.help-toggle').live('click', function() {
+    $(document).on('click', '.help-toggle', function() {
         $(this).toggleClass("expanded");
         $(this).parent().parent().siblings(".markhelp-parent").toggle();
         return false;
     });
 
     //Options expando
-    $('.options_link').live('click', function(evt) {
+    $(document).on('click', '.options_link', function(evt) {
 
         if (! $(this).siblings(".options_expando").hasClass('expanded')) {
             $('.options_expando.expanded').each(function() { //Collapse any other open ones
@@ -83,45 +83,42 @@ $(function() {
         return false;
     });
     //Save button state transition
-    $(".save-button").live("click", function() {
+    $(document).on("click", ".save-button", function() {
         $(this).toggle();
         $(this).siblings(".unsave-button").toggle();
     });
-    $(".unsave-button").live("click", function() {
+    $(document).on("click", ".unsave-button", function() {
         $(this).toggle();
         $(this).siblings(".save-button").toggle();
     });
     //Hide options when we collapse
-    $('.options_expando .collapse-button').live("click", function() {
+    $(document).on("click", '.options_expando .collapse-button', function() {
         $(this).parent().removeClass('expanded');
         $(this).parent().parent().parent().addClass("collapsed");
         $(this).parent().siblings('.options_link').removeClass("active");
     });
     //Collapse when we click reply, or edit
-    $('.reply-button, .edit-button').live("click", function() {
+    $(document).on("click", '.reply-button, .edit-button', function() {
         $(this).parent().siblings('.options-link').click();
     });
-    /* the iphone doesn't play nice with live() unless there is already a registered click function.  That's sad */
-    $(".thing").click(function() {
-    });
 
-    $(".link").live("click", function(evt) {
+    $(document).on("click", ".link", function(evt) {
         if (evt && evt.target && $(evt.target).hasClass("thing")) {
             $(this).find(".options_link").click();
             return false;
         }
     });
     //Comment options
-    $(".comment.collapsed").live("click", function(e) {
+    $(document).on("click", ".comment.collapsed", function(e) {
         $(this).removeClass("collapsed");
     });
-    $(".message.unread").live("click", function(e) {
+    $(document).on("click", ".message.unread", function(e) {
         var thing = $(this)
         read_thing(thing);
         return false;
     });
     /*Finally*/
-    $('a[href=#]').live('click', function() {
+    $(document).on('click', 'a[href=#]', function() {
         return false;
     });
 });

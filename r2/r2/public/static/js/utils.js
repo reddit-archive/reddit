@@ -48,7 +48,7 @@ r.utils = {
     },
 
     querySelectorFromEl: function(targetEl, selector) {
-        return $(targetEl).parents().andSelf()
+        return $(targetEl).parents().addBack()
             .filter(selector || '*')
             .map(function(idx, el) {
                 var parts = [],

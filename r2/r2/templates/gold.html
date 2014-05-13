@@ -29,8 +29,10 @@
 
 <script type="text/javascript">
   $(function() {
+    ##  http://stackoverflow.com/questions/208471/g/1080243#1080243
+    ## 'click' also fires for keyboard events. Safer than using change.
     $(".gold-form [type='radio'][name='goldtype']")
-       .change(function() {
+       .click(function() {
           var button = $(this);
           var selection = "." + button.val();
           var goldsecs = $(".gold-subsection");
@@ -39,14 +41,6 @@
           others.fadeOut('fast');
           selected.fadeIn('fast');
     });
-
-##  http://stackoverflow.com/questions/208471/g/1080243#1080243
-    if ($.browser.msie) {
-      $(".gold-form [type='radio'][name='goldtype']").click(function() {
-        this.blur();
-        this.focus();
-      });
-    }
 
     var checked = $(".gold-form input[name='goldtype']:radio:checked");
     if (checked && checked[0]) {

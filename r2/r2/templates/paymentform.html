@@ -72,14 +72,14 @@
   
   <script type="text/javascript">
     function enable_all(elem) {
-       $(elem).parents("div.pay-form").andSelf()
+       $(elem).parents("div.pay-form").addBack()
              .find("[disabled]").removeAttr("disabled").end()
              .find("table").removeClass("disabled").end()
              .find("[name=edit]").val("on");
        return false;
     }
     function disable_all(elem) {
-       var what = $(elem).parents("div.pay-form").andSelf()
+       var what = $(elem).parents("div.pay-form").addBack()
                      .find("table").addClass("disabled")
                      .find(":input").not("button")
                      .attr("disabled", "disabled");

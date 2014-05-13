@@ -247,12 +247,12 @@ function toggle_label (elem, callback, cancelback) {
 function toggle(elem, callback, cancelback) {
     r.analytics.breadcrumbs.storeLastClick(elem)
 
-    var self = $(elem).parent().andSelf().filter(".option");
+    var self = $(elem).parent().addBack().filter(".option");
     var sibling = self.removeClass("active")
         .siblings().addClass("active").get(0); 
 
     /*
-    var self = $(elem).siblings().andSelf();
+    var self = $(elem).siblings().addBack();
     var sibling = self.filter(":hidden").debug();
     self = self.filter(":visible").removeClass("active");
     sibling = sibling.addClass("active").get(0);
@@ -843,19 +843,19 @@ function comment_reply_for_elem(elem) {
 
 function edit_usertext(elem) {
     var t = $(elem).thing();
-    t.find(".edit-usertext:first").parent("li").andSelf().hide();
+    t.find(".edit-usertext:first").parent("li").addBack().hide();
     show_edit_usertext(t.find(".usertext:first"));
 }
 
 function cancel_usertext(elem) {
     var t = $(elem);
-    t.thing().find(".edit-usertext:first").parent("li").andSelf().show(); 
+    t.thing().find(".edit-usertext:first").parent("li").addBack().show(); 
     hide_edit_usertext(t.closest(".usertext"));
 }
 
 function save_usertext(elem) {
     var t = $(elem).thing();
-    t.find(".edit-usertext:first").parent("li").andSelf().show(); 
+    t.find(".edit-usertext:first").parent("li").addBack().show(); 
 }
 
 function reply(elem) {
@@ -1058,7 +1058,7 @@ function fetch_parent(elem, parent_permalink, parent_id) {
                                 $.unsafe(parent) +
                                 '</div>'); 
                 }
-                $(elem).parent("li").andSelf().remove();
+                $(elem).parent("li").addBack().remove();
             });
     }
     return false;
