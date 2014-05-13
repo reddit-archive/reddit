@@ -183,8 +183,7 @@ def path_component(s):
     return (res and res[0]) or s
 
 def get_title(url):
-    """Fetches the contents of url and extracts (and utf-8 encodes)
-       the contents of <title>"""
+    """Fetch the contents of url and try to extract the page's title."""
     if not url or not url.startswith(('http://', 'https://')):
         return None
 
@@ -219,30 +218,44 @@ def get_title(url):
         return None
 
 def extract_title(data):
-    """Tries to extract the value of the title element from a string of HTML"""
+    """Try to extract the page title from a string of HTML.
+
+    An og:title meta tag is preferred, but will fall back to using
+    the <title> tag instead if one is not found. If using <title>,
+    also attempts to trim off the site's name from the end.
+    """
     bs = BeautifulSoup(data, convertEntities=BeautifulSoup.HTML_ENTITIES)
     if not bs or not bs.html.head:
         return
+    head_soup = bs.html.head
 
-    title_bs = bs.html.head.title
+    title = None
 
-    if not title_bs or not title_bs.string:
+    # try to find an og:title meta tag to use
+    og_title = (head_soup.find("meta", attrs={"property": "og:title"}) or
+                head_soup.find("meta", attrs={"name": "og:title"}))
+    if og_title:
+        title = og_title.get("content")
+
+    # if that failed, look for a <title> tag to use instead
+    if not title and head_soup.title and head_soup.title.string:
+        title = head_soup.title.string
+
+        # remove end part that's likely to be the site's name
+        # looks for last delimiter char between spaces in strings
+        # delimiters: |, -, emdash, endash,
+        #             left- and right-pointing double angle quotation marks
+        reverse_title = title[::-1]
+        to_trim = re.search(u'\s[\u00ab\u00bb\u2013\u2014|-]\s',
+                            reverse_title,
+                            flags=re.UNICODE)
+
+        # only trim if it won't take off over half the title
+        if to_trim and to_trim.end() < len(title) / 2:
+            title = title[:-(to_trim.end())]
+
+    if not title:
         return
-
-    title = title_bs.string
-
-    # remove end part that's likely to be the site's name
-    # looks for last delimiter char between spaces in strings
-    # delimiters: |, -, emdash, endash,
-    #             left- and right-pointing double angle quotation marks
-    reverse_title = title[::-1]
-    to_trim = re.search(u'\s[\u00ab\u00bb\u2013\u2014|-]\s',
-                        reverse_title,
-                        flags=re.UNICODE)
-
-    # only trim if it won't take off over half the title
-    if to_trim and to_trim.end() < len(title) / 2:
-        title = title[:-(to_trim.end())]
 
     # get rid of extraneous whitespace in the title
     title = re.sub(r'\s+', ' ', title, flags=re.UNICODE)
