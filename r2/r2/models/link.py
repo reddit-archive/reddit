@@ -1084,7 +1084,8 @@ class Comment(Thing, Printable):
                 if not user_is_admin:
                     item.author = DeletedUser()
                     item.body = '[deleted]'
-
+                    item.gildings = 0
+                    item.distinguished = None
 
             if focal_comment == item._id36:
                 extra_css += " border"
