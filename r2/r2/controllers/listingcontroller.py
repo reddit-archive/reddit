@@ -1188,6 +1188,7 @@ class UserListListingController(ListingController):
     builder_cls = UserListBuilder
     allow_stylesheets = False
     skip = False
+    friends_compat = True
 
     @property
     def infotext(self):
@@ -1301,7 +1302,7 @@ class UserListListingController(ListingController):
             content = PaneStack()
             content.append(self.listing_obj)
             content.append(self.invited_mod_listing())
-        elif self.where == 'friends' and is_api:
+        elif self.where == 'friends' and is_api and self.friends_compat:
             content = PaneStack()
             content.append(self.listing_obj)
             empty_builder = IDBuilder([])
@@ -1317,8 +1318,8 @@ class UserListListingController(ListingController):
     @base_listing
     @listing_api_doc(section=api_section.account,
                      uri='/prefs/{where}',
-                     uri_variants=['/prefs/' + where for where in [
-                        'blocked', 'friends']])
+                     uri_variants=['/prefs/friends', '/prefs/blocked',
+                         '/api/v1/me/friends', '/api/v1/me/blocked'])
     def GET_user_prefs(self, where, **kw):
         self.where = where
 
@@ -1328,6 +1329,14 @@ class UserListListingController(ListingController):
         self.jump_to_val = None
         self.show_not_found = False
         self.show_jump_to = False
+        # The /prefs/friends version of this endpoint used to contain
+        # two lists of users: friends AND blocked users. For backwards
+        # compatibility with the old JSON structure, an empty list
+        # of "blocked" users is sent.
+        # The /api/v1/me/friends version of the friends list does not
+        # have this requirement, so it will send just the "friends"
+        # data structure.
+        self.friends_compat = not request.path.startswith('/api/v1/me/')
 
         if where == 'friends':
             self.listing_cls = FriendListing
