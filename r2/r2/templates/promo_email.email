@@ -22,6 +22,7 @@
 
 <%!
     from datetime import datetime, timedelta
+    from pylons.i18n import ungettext
     from r2.models import Email
     from r2.lib import promote
     from r2.lib.template_helpers import get_domain
@@ -40,7 +41,7 @@ and choose "frontpage" or "targeted" and click "save":
 
 Please note that we can't approve your ad until you have authorized your credit
 card payment, and that your ad must be approved before it goes live on your
-selected dates. We require 2 business days as a grace period for the approval
+selected dates. We require ${g.min_promote_future} ${ungettext("business day", "business days", g.min_promote_future)} as a grace period for the approval
 process before the ad can go live. To pay for your campaign, click the "pay"
 button within the campaign dashboard on the link above.
 
