@@ -71,17 +71,13 @@ class Report(MultiRelation('report',
             author = Account._byID(thing.author_id, data=True)
             author._incr('reported')
 
-        ignore_reports = getattr(thing, 'ignore_reports', False)
-        if (not ignore_reports and
-                thing._age < thing.subreddit_slow.archive_age):
+        if not getattr(thing, "ignore_reports", False):
             # update the reports queue if it exists
             queries.new_report(thing, r)
 
             # if the thing is already marked as spam, accept the report
             if thing._spam:
                 cls.accept(thing)
-        else:
-            g.log.debug("Ignoring report %s" % r)
 
         return r
 
