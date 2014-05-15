@@ -154,8 +154,6 @@ class VoteDetailsByComment(VoteDetailsByThing):
 class Vote(MultiRelation('vote',
                          Relation(Account, Link),
                          Relation(Account, Comment))):
-    _defaults = {'organic': False}
-
     @classmethod
     def vote(cls, sub, obj, dir, ip, vote_info = None, cheater = False,
              timer=None, date=None):
