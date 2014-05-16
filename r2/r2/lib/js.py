@@ -284,17 +284,16 @@ class TemplateFileSource(DataSource, FileSource):
             }]
 
 
-class StringsSource(DataSource):
+class LocaleSpecificSource(object):
+    def get_localized_source(self, lang):
+        raise NotImplementedError
+
+
+class StringsSource(LocaleSpecificSource):
     """Translations sourced from a gettext catalog."""
 
-    def __init__(self, lang, keys):
-        DataSource.__init__(self, wrap="r.i18n.addMessages({content})")
-        self.catalog = get_catalog(lang)
+    def __init__(self, keys):
         self.keys = keys
-
-    def get_plural_forms(self):
-        validate_plural_forms(self.catalog.plural_expr)
-        return "r.i18n.setPluralForms('%s');" % self.catalog.plural_expr
 
     invalid_formatting_specifier_re = re.compile(r"(?<!%)%\w|(?<!%)%\(\w+\)[^s]")
     def _check_formatting_specifiers(self, string):
@@ -304,7 +303,9 @@ class StringsSource(DataSource):
         if self.invalid_formatting_specifier_re.search(string):
             raise ValueError("Invalid string formatting specifier: %r" % string)
 
-    def get_content(self):
+    def get_localized_source(self, lang):
+        catalog = get_catalog(lang)
+
         # relies on pyx files, so it can't be imported at global scope
         from r2.lib.utils import tup
 
@@ -312,7 +313,7 @@ class StringsSource(DataSource):
         for key in self.keys:
             key = tup(key)[0]  # because the key for plurals is (sing, plur)
             self._check_formatting_specifiers(key)
-            msg = self.catalog[key]
+            msg = catalog[key]
 
             if not msg or not msg.string:
                 continue
@@ -321,7 +322,14 @@ class StringsSource(DataSource):
             # so we'll just make it null
             strings = tup(msg.string)
             data[key] = [None] + list(strings)
-        return data
+        return "r.i18n.addMessages(%s)" % json.dumps(data)
+
+
+class PluralForms(LocaleSpecificSource):
+    def get_localized_source(self, lang):
+        catalog = get_catalog(lang)
+        validate_plural_forms(catalog.plural_expr)
+        return "r.i18n.setPluralForms('%s')" % catalog.plural_expr
 
 
 class LocalizedModule(Module):
@@ -331,14 +339,10 @@ class LocalizedModule(Module):
     r._, r.P_, and r.N_) are extracted from the source and their translations
     are built into the compiled source.
 
-    If `inject_plural_forms` is `True`, then the language's plural forms
-    expression will be baked into the module as well. This is only necessary
-    once per page.
-
     """
 
     def __init__(self, *args, **kwargs):
-        self.inject_plural_forms = kwargs.pop("inject_plural_forms", False)
+        self.localized_appendices = kwargs.pop("localized_appendices", [])
         Module.__init__(self, *args, **kwargs)
 
     @staticmethod
@@ -352,11 +356,13 @@ class LocalizedModule(Module):
         with open(self.path) as f:
             reddit_source = f.read()
 
+        localized_appendices = self.localized_appendices
         msgids = extract_javascript_msgids(reddit_source)
+        if msgids:
+            localized_appendices = localized_appendices + [StringsSource(msgids)]
 
         print >> sys.stderr, "Creating language-specific files:"
         for lang, unused in iter_langs():
-            strings = StringsSource(lang, msgids)
             lang_path = LocalizedModule.languagize_path(self.path, lang)
 
             # make sure we're not rewriting a different mangled file
@@ -367,13 +373,13 @@ class LocalizedModule(Module):
             with open(lang_path, "w") as out:
                 print >> sys.stderr, "  " + lang_path
                 out.write(reddit_source)
-                if self.inject_plural_forms:
-                    out.write(strings.get_plural_forms())
-                out.write(strings.get_source())
+                for appendix in localized_appendices:
+                    out.write(appendix.get_localized_source(lang) + ";")
 
     def use(self):
         from pylons.i18n import get_lang
         from r2.lib.template_helpers import static
+        from r2.lib.filters import SC_OFF, SC_ON
 
         if g.uncompressedJS:
             if c.lang == "en" or c.lang not in g.all_languages:
@@ -382,12 +388,14 @@ class LocalizedModule(Module):
                 return Module.use(self)
 
             msgids = extract_javascript_msgids(Module.get_source(self))
-            strings = StringsSource(c.lang, msgids)
-            return "\n".join((
-                Module.use(self),
-                inline_script_tag.format(content=strings.get_plural_forms()),
-                strings.use(),
-            ))
+            localized_appendices = self.localized_appendices + [StringsSource(msgids)]
+
+            lines = [Module.use(self)]
+            for appendix in localized_appendices:
+                line = SC_OFF + inline_script_tag.format(
+                    content=appendix.get_localized_source(c.lang)) + SC_ON
+                lines.append(line)
+            return "\n".join(lines)
         else:
             langs = get_lang() or [g.lang]
             url = LocalizedModule.languagize_path(self.name, langs[0])
@@ -449,7 +457,9 @@ module["reddit-init"] = LocalizedModule("reddit-init.js",
     "jquery.reddit.js",
     "reddit.js",
     "spotlight.js",
-    inject_plural_forms=True,
+    localized_appendices=[
+        PluralForms(),
+    ],
     wrap=catch_errors,
 )
 
