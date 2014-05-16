@@ -207,6 +207,7 @@ SAFE_PROPERTIES = {
     "orphans",
     "outline",
     "outline-color",
+    "outline-offset",
     "outline-style",
     "outline-width",
     "overflow",
