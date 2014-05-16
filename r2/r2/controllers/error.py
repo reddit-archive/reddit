@@ -37,7 +37,7 @@ try:
     from r2.config import extensions
     from r2.controllers.reddit_base import RedditController, Cookies
     from r2.lib.errors import ErrorSet
-    from r2.lib.filters import websafe_json
+    from r2.lib.filters import websafe_json, websafe
     from r2.lib import log, pages
     from r2.lib.strings import rand_strings
     from r2.lib.template_helpers import static
@@ -230,7 +230,7 @@ def handle_awful_failure(fail_text):
         log.write_error_summary(fail_text)
         for line in traceback.format_exc().splitlines():
             g.log.error(line)
-        return redditbroke % (make_failien_url(), fail_text)
+        return redditbroke % (make_failien_url(), websafe(fail_text))
     except:
         # we are doomed.  Admit defeat
         return "This is an error that should never occur.  You win."
