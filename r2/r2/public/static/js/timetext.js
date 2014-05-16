@@ -62,7 +62,7 @@
 
         age = (now - timestamp) / 1000
 
-        if (age > this.opts.maxage) {
+        if (this.opts.maxage !== false && age > this.opts.maxage) {
             $el.removeClass('live-timestamp')
             return
         }
