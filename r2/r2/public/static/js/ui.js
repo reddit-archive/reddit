@@ -47,8 +47,9 @@ r.ui.init = function() {
 }
 
 r.ui.TimeTextScrollListener = r.ScrollUpdater.extend({
-    initialize: function() {
-        this.timeText = new r.TimeText(this.selector)
+    initialize: function(options) {
+        this.timeText = options.timeText
+        this.timeText.updateCache($(this.selector))
     },
     selector: '.live-timestamp:visible',
     endUpdate: function($els) {
@@ -62,7 +63,10 @@ r.ui.initLiveTimestamps = function() {
     // the element to `.sitetable`s, which will contain it. This is kind of a
     // dirty hack and should be obsoleted by a router + view system.
     if ($('.sitetable').length) {
-      var listener = new r.ui.TimeTextScrollListener({ el: '.sitetable' })
+      var listener = new r.ui.TimeTextScrollListener({
+        el: '.sitetable',
+        timeText: new r.TimeText,
+      })
       listener.start()
 
       // Every time we add a new `thing`, we'll need to re-grab our element caches.

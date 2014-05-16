@@ -17,10 +17,10 @@
         maxage: 24 * 60 * 60
     }
 
-    function TimeText(selector, opts) {
+    function TimeText(opts) {
         this.opts = _.defaults(opts || {}, defaults)
 
-        this.elCache = selector ? $(selector) : $([])
+        this.elCache = $([])
 
         this.refresh = _.throttle(this._refresh, 1000)
 
@@ -49,10 +49,8 @@
         var $el = $(el)
         var timestamp = $el.data('timestamp')
         var isoTimestamp
-        var age
-        var count
-        var keys
         var text
+        var age
 
         if (!timestamp) {
             isoTimestamp = $el.attr('datetime')
@@ -67,10 +65,15 @@
             return
         }
 
-        text = r._('just now')
+        text = this.formatTime($el, age, timestamp, now)
+        $el.text(text)
+    }
 
-        $.each(CHUNKS, function (ix, chunk) {
-            count = Math.floor(age / chunk[0])
+    TimeText.prototype.formatTime = function($el, age, timestamp, now) {
+        var text = r._('just now')
+        $.each(CHUNKS, function(ix, chunk) {
+            var count = Math.floor(age / chunk[0])
+            var keys
 
             if (count > 0) {
                 keys = chunk[1]
@@ -78,8 +81,7 @@
                 return false
             }
         })
-
-        $el.text(text)
+        return text
     }
 
     r.TimeText = TimeText
