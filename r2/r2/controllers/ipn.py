@@ -703,14 +703,18 @@ class GoldPaymentController(RedditController):
             msg = _('Your reddit gold payment has failed, contact '
                     '%(gold_email)s for details') % {'gold_email':
                                                      g.goldthanks_email}
-        elif event_type == 'failed_subscription':
-            subject = _('reddit gold subscription payment failed')
-            msg = _('Your reddit gold subscription payment has failed. Please '
-                    'go to [your gold subscription page](%(gold_subscription)s) '
-                    'to make sure your information is correct, or contact '
-                    '%(gold_email)s for details')
-            msg %= {'gold_subscription': '/gold/subscription',
-                    'gold_email': g.goldthanks_email}
+        elif event_type == 'deleted_subscription':
+            # the subscription may have been deleted directly by the user using
+            # POST_delete_subscription, in which case gold_subscr_id is already
+            # unset and we don't need to message them
+            if webhook.buyer and webhook.buyer.gold_subscr_id:
+                subject = _('reddit gold subscription cancelled')
+                msg = _('Your reddit gold subscription has been cancelled '
+                        'because your credit card could not be charged. '
+                        'Contact %(gold_email)s for details')
+                msg %= {'gold_email': g.goldthanks_email}
+                webhook.buyer.gold_subscr_id = None
+                webhook.buyer._commit()
         elif event_type == 'refunded':
             if not (existing and existing.status == 'processed'):
                 return
@@ -860,12 +864,12 @@ class StripeController(GoldPaymentController):
         'invoice.created': 'noop',
         'invoice.updated': 'noop',
         'invoice.payment_succeeded': 'noop',
-        'invoice.payment_failed': 'failed_subscription',
+        'invoice.payment_failed': 'noop',
         'invoiceitem.deleted': 'noop',
         'customer.subscription.created': 'noop',
         'customer.deleted': 'noop',
         'customer.updated': 'noop',
-        'customer.subscription.deleted': 'noop',
+        'customer.subscription.deleted': 'deleted_subscription',
         'customer.subscription.trial_will_end': 'noop',
         'customer.subscription.updated': 'noop',
         'dummy': 'noop',
@@ -896,9 +900,9 @@ class StripeController(GoldPaymentController):
                     customer.delete()
                 except stripe.InvalidRequestError:
                     pass
-        elif status == 'invoice.payment_failed':
-            invoice = event.data.object
-            customer_id = invoice.customer
+        elif status == 'customer.subscription.deleted':
+            subscription = event.data.object
+            customer_id = subscription.customer
             buyer = account_from_stripe_customer_id(customer_id)
             webhook = Webhook(subscr_id=customer_id, buyer=buyer)
             return status, webhook
