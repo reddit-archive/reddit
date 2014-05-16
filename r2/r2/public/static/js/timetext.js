@@ -5,14 +5,12 @@
         }
     }
 
-    // Start with smallest chunk, since we're probably looking at a recent
-    // set of timestamps and probably don't need to check older dates.
     var CHUNKS = [
-        [60, r.NP_('a minute ago', '%(num)s minutes ago')],
-        [60 * 60, r.NP_('an hour ago', '%(num)s hours ago')],
-        [60 * 60 * 24, r.NP_('a day ago', '%(num)s days ago')],
+        [60 * 60 * 24 * 365, r.NP_('a year ago', '%(num)s years ago')],
         [60 * 60 * 24 * 30, r.NP_('a month ago', '%(num)s months ago')],
-        [60 * 60 * 24 * 365, r.NP_('a year ago', '%(num)s years ago')]
+        [60 * 60 * 24, r.NP_('a day ago', '%(num)s days ago')],
+        [60 * 60, r.NP_('an hour ago', '%(num)s hours ago')],
+        [60, r.NP_('a minute ago', '%(num)s minutes ago')],
     ]
 
     var defaults = {
@@ -74,7 +72,7 @@
         $.each(CHUNKS, function (ix, chunk) {
             count = Math.floor(age / chunk[0])
 
-            if (count < chunk[0] && count > 0) {
+            if (count > 0) {
                 keys = chunk[1]
                 text = r.P_(keys[0], keys[1], count).format({num: count})
                 return false
