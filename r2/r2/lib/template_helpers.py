@@ -168,6 +168,9 @@ def js_config(extra_config=None):
         "has_subscribed": logged and c.user.has_subscribed,
     }
 
+    if g.uncompressedJS:
+        config["uncompressedJS"] = True
+
     if extra_config:
         config.update(extra_config)
 

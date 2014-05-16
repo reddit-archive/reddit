@@ -47,6 +47,16 @@ r.utils = {
         }
     },
 
+  unescapeJson: function(json) {
+    return r.utils.structuredMap(json, function(val) {
+      if (_.isString(val)) {
+        return _.unescape(val)
+      } else {
+        return val
+      }
+    })
+  },
+
     querySelectorFromEl: function(targetEl, selector) {
         return $(targetEl).parents().addBack()
             .filter(selector || '*')

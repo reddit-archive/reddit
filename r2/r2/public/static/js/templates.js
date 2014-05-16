@@ -18,6 +18,12 @@ r.templating.TemplateSet.prototype = {
 
     set: function(templates) {
         _.each(templates, function(tplInfo) {
+            // if uncompressedJS, the template was embedded in the HTML
+            // rather than an external resource and was escaped for safety
+            if (r.config.uncompressedJS) {
+                tplInfo = r.utils.unescapeJson(tplInfo)
+            }
+
             var key = this._key(tplInfo.name, tplInfo.style)
             this.index[key] = tplInfo.template
         }, this)

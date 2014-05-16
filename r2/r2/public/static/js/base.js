@@ -46,13 +46,7 @@ r.sync = function(method, model, options) {
     var filteredData
 
     if (type === 'json') {
-      filteredData = r.utils.structuredMap(data, function(val) {
-        if (_.isString(val)) {
-          return _.unescape(val)
-        } else {
-          return val
-        }
-      })
+      filteredData = r.utils.unescapeJson(data)
     } else {
       filteredData = data
     }
