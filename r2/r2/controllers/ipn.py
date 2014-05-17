@@ -934,7 +934,13 @@ class StripeController(GoldPaymentController):
             # subscription charge - special handling
             customer_id = charge.customer
             buyer = account_from_stripe_customer_id(customer_id)
-            if not buyer:
+            if not buyer and status == 'charge.refunded':
+                # refund may happen after the subscription has been cancelled
+                # and removed from the user's account. the refund process will
+                # be able to find the user from the transaction record
+                webhook = Webhook(transaction_id=transaction_id)
+                return status, webhook
+            elif not buyer:
                 charge_date = datetime.fromtimestamp(charge.created, tz=g.tz)
 
                 # don't raise exception if charge date is within the past hour
