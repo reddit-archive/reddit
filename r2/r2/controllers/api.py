@@ -1615,6 +1615,8 @@ class ApiController(RedditController):
                    ip = ValidIP())
     def POST_share(self, shareform, jquery, emails, thing, share_from, reply_to,
                    message, ip):
+        if not thing:
+            abort(404, 'not found')
 
         # remove the ratelimit error if the user's karma is high
         sr = thing.subreddit_slow
