@@ -3554,12 +3554,18 @@ class ApiController(RedditController):
         if not link:
             abort(404, 'not found')
 
-        wrapped = wrap_links(link)
-        wrapped = list(wrapped)[0]
-        link_child = wrapped.link_child
-        if not link_child:
+        # pass through wrap_links/IDBuilder to ensure the user can view the link
+        listing = wrap_links(link)
+        try:
+            wrapped_link = listing.things[0]
+        except IndexError:
+            wrapped_link = None
+
+        if wrapped_link and wrapped_link.link_child:
+            content = wrapped_link.link_child.content()
+            return websafe(spaceCompress(content))
+        else:
             abort(404, 'not found')
-        return websafe(spaceCompress(link_child.content()))
 
     @validatedForm(VUser('password', default=''),
                    VModhash(),
