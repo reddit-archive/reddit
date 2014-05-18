@@ -154,6 +154,7 @@ class Globals(object):
         ],
 
         ConfigValue.float: [
+            'default_promote_bid',
             'min_promote_bid',
             'max_promote_bid',
             'statsd_sample_rate',
