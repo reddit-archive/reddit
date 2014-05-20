@@ -495,6 +495,7 @@ class CommentJsonTemplate(ThingJsonTemplate):
         parent_id="parent_id",
         replies="child",
         saved="saved",
+        score="score",
         score_hidden="score_hidden",
         subreddit="subreddit",
         subreddit_id="subreddit_id",
