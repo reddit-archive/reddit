@@ -1022,7 +1022,7 @@ class ApiController(RedditController):
 
         if not form.has_errors("email", errors.BAD_EMAILS) and email:
             if (not hasattr(c.user, 'email') or c.user.email != email):
-                if c.user.email_verified:
+                if c.user.email:
                     emailer.email_change_email(c.user)
 
                 c.user.email = email
@@ -1044,6 +1044,8 @@ class ApiController(RedditController):
         if (not email and c.user.email and 
             (errors.NO_EMAILS, 'email') in c.errors):
             c.errors.remove((errors.NO_EMAILS, 'email'))
+            if c.user.email:
+                emailer.email_change_email(c.user)
             c.user.email = ''
             c.user.email_verified = None
             c.user._commit()
@@ -1073,7 +1075,7 @@ class ApiController(RedditController):
                  form.has_errors("verpass", errors.BAD_PASSWORD_MATCH))):
             change_password(c.user, password)
 
-            if c.user.email_verified:
+            if c.user.email:
                 emailer.password_change_email(c.user)
 
             form.set_html('.status', _('your password has been updated'))
@@ -1109,7 +1111,7 @@ class ApiController(RedditController):
         if (not form.has_errors("email", errors.BAD_EMAILS) and
             email):
             if (not hasattr(c.user,'email') or c.user.email != email):
-                if c.user.email_verified:
+                if c.user.email:
                     emailer.email_change_email(c.user)
                 c.user.email = email
                 # unverified email for now
@@ -1144,7 +1146,7 @@ class ApiController(RedditController):
             not (form.has_errors("newpass", errors.BAD_PASSWORD) or
                  form.has_errors("verpass", errors.BAD_PASSWORD_MATCH))):
             change_password(c.user, password)
-            if c.user.email_verified:
+            if c.user.email:
                 emailer.password_change_email(c.user)
             if updated:
                 form.set_html(".status",
@@ -2864,7 +2866,7 @@ class ApiController(RedditController):
 
         # successfully entered user name and valid new password
         change_password(user, password)
-        if user.email_verified:
+        if user.email:
             emailer.password_change_email(user)
         g.log.warning("%s did a password reset for %s via %s",
                       request.ip, user.name, token._id)
