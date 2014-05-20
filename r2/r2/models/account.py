@@ -808,6 +808,7 @@ def passhash(username, password, salt = ''):
 def change_password(user, newpassword):
     user.password = bcrypt_password(newpassword)
     user._commit()
+    LastModified.touch(user._fullname, 'Password')
     return True
 
 #TODO reset the cache
