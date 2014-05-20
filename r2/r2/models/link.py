@@ -670,6 +670,14 @@ class Link(Thing, Printable):
         # If available, that should be used instead of calling this
         return Account._byID(self.author_id, data=True, return_dict=False)
 
+    def can_flair_slow(self, user):
+        """Returns whether the specified user can flair this link"""
+        site = self.subreddit_slow
+        can_assign_own = (self.author_id == user._id and
+                          site.link_flair_self_assign_enabled)
+
+        return site.is_moderator_with_perms(user, 'flair') or can_assign_own
+
     @classmethod
     def _utf8_encode(cls, value):
         """

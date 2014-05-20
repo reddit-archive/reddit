@@ -3335,11 +3335,11 @@ class ApiController(RedditController):
 
         """
         if link:
-            if hasattr(c.site, '_id') and c.site._id == link.sr_id:
-                site = c.site
-            else:
-                site = Subreddit._byID(link.sr_id, data=True)
-            return FlairSelector(link=link, site=site).render()
+            if not (c.user_is_admin or link.can_flair_slow(c.user)):
+                abort(403)
+
+            return FlairSelector(link=link, site=link.subreddit_slow).render()
+
         if user and not (c.user_is_admin
                          or c.site.is_moderator_with_perms(c.user, 'flair')):
             # ignore user parameter if c.user is not mod/admin
