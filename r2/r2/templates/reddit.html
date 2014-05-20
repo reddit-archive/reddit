@@ -138,8 +138,8 @@
 
   <% content = getattr(self, "content", None) or thing.content %>
   %if content:
-    ##<div class="fixedwidth"><!--IE6sux--></div>
-    ##<div class="clearleft"><!--IE6sux--></div>
+    ##<div class="fixedwidth"></div>
+    ##<div class="clearleft"></div>
     <a name="content"></a>
     <div ${tags(id=thing.content_id)} ${classes("content", thing.css_class)} role="main">
       ${content()}

@@ -53,6 +53,6 @@
    %endif
   %endfor:
   %if two_col:
-    <div ${optionalstyle("clear:both")}><!--IE6sux--></div>
+    <div ${optionalstyle("clear:both")}></div>
   %endif
 </div>

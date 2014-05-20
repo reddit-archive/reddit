@@ -119,7 +119,5 @@
          href="${permalink}">${thing.comment_label}</a>
     </small>
   </div>
-  <div class="reddit-link-end" ${optionalstyle("clear:left; padding:3px;")}>
-    <!--IE6sux-->
-  </div>
+  <div class="reddit-link-end" ${optionalstyle("clear:left; padding:3px;")}></div>
 </%def>

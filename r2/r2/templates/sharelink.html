@@ -27,7 +27,7 @@
       id="sharelink_${thing.link_name}"
       class="pretty-form sharelink" action="/post/share"
      ${"" if thing.link_name else "style='display:none'"}>
-  <div class="clearleft"><!--IEsux--></div>
+  <div class="clearleft"></div>
     ${error_field("RATELIMIT", "ratelimit")}
     <input type="hidden" name="parent" value="${thing.link_name}"/>
     <table class="sharetable preftable">
