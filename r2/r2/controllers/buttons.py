@@ -20,7 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from reddit_base import RedditController
+from reddit_base import RedditController, UnloggedUser
 from r2.lib.pages import (ButtonLite, ButtonDemoPanel, WidgetDemoPanel,
                           Bookmarklets, BoringPage)
 from r2.lib.pages.things import wrap_links
@@ -79,6 +79,8 @@ class ButtonsController(RedditController):
               newwindow = VBoolean('newwindow', default = False),
               styled = VBoolean('styled', default=True))
     def GET_button_lite(self, buttonimage, title, url, styled, newwindow):
+        c.user = UnloggedUser([c.lang])
+        c.user_is_loggedin = False
         c.render_style = 'js'
 
         if not url:
