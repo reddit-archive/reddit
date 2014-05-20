@@ -50,18 +50,6 @@
     &#32;(${percent}% ${_("like it")})
   </div>
 
-  <span class="upvotes">
-    ${unsafe(strings.person_label % dict(num = format_number(thing.a.upvotes),
-                                         persons = ungettext("upvote", "upvotes",
-                                         thing.a.upvotes)))}
-  </span>
-  &#32;
-  <span class="downvotes">
-    ${unsafe(strings.person_label % dict(num = format_number(thing.a.downvotes),
-                                         persons = ungettext("downvote", "downvotes",
-                                         thing.a.downvotes)))}
-  </span>
-
 %if getattr(thing.a, "shortlink", None):
   <div class="shortlink">
     shortlink:

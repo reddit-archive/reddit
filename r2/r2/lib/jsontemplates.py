@@ -160,6 +160,10 @@ class ThingJsonTemplate(JsonTemplate):
                     - time.timezone)
         elif attr == "child":
             return CachedVariable("childlisting")
+        elif attr == "upvotes":
+            return thing.score
+        elif attr == "downvotes":
+            return 0
 
         if attr == 'distinguished':
             distinguished = getattr(thing, attr, 'no')
