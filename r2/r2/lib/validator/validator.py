@@ -1230,7 +1230,7 @@ class VSubscribeSR(VByName):
 
     def param_docs(self):
         return {
-            self.param[0]: "name of a subreddit",
+            self.param[0]: "the [fullname](#fullname) of a subreddit",
         }
 
 MIN_PASSWORD_LENGTH = 3
