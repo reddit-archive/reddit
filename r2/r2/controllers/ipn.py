@@ -171,6 +171,8 @@ def check_txn_type(txn_type, psl):
         return (None, "new")
     elif txn_type == 'web_accept' and psl == 'completed':
         return (None, None)
+    elif txn_type == "paypal_here":
+        return ("Ok", None)
     else:
         raise ValueError("Unknown IPN txn_type / psl %r" %
                          ((txn_type, psl),))
