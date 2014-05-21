@@ -3004,6 +3004,8 @@ class WrappedUser(CachedTemplate):
         karma = ''
         if c.user_is_admin:
             karma = ' (%d)' % user.link_karma
+            if user._spam:
+                author_cls += " banned-user"
 
         CachedTemplate.__init__(self,
                                 name = user.name,

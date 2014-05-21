@@ -777,6 +777,7 @@ body > .content .link.compressed .midcol {
 }
 
 a.author { margin-right: 0.5em; }
+a.banned-user { color: red; }
 
 .thing .parent .author { margin-right: 0.5em; }
 
@@ -3958,13 +3959,13 @@ form input[type=radio] {margin: 2px .5em 0 0; }
        which we could try to fix here some day. */
 }
 
-.banned-user {
+div.banned-user {
     overflow: hidden;
     opacity: .7;
     filter:alpha(opacity=70); /* IE patch */
 }
 
-.banned-user .title {
+div.banned-user .title {
     text-decoration: line-through;
 }
 
