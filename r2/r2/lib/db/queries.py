@@ -940,6 +940,16 @@ def new_link(link):
     amqp.add_item('new_link', link._fullname)
 
 
+def add_to_commentstree_q(comment):
+    if utils.to36(comment.link_id) in g.live_config["fastlane_links"]:
+        amqp.add_item('commentstree_fastlane_q', comment._fullname)
+    elif g.shard_commentstree_queues:
+        amqp.add_item('commentstree_%d_q' % (comment.link_id % 10),
+                      comment._fullname)
+    else:
+        amqp.add_item('commentstree_q', comment._fullname)
+
+
 def new_comment(comment, inbox_rels):
     author = Account._byID(comment.author_id)
     job = [get_comments(author, 'new', 'all'),
@@ -962,14 +972,7 @@ def new_comment(comment, inbox_rels):
                 m.insert(get_spam_filtered_comments(sr), [comment])
 
             amqp.add_item('new_comment', comment._fullname)
-
-            if utils.to36(comment.link_id) in g.live_config["fastlane_links"]:
-                amqp.add_item('commentstree_fastlane_q', comment._fullname)
-            elif g.shard_commentstree_queues:
-                amqp.add_item('commentstree_%d_q' % (comment.link_id % 10),
-                              comment._fullname)
-            else:
-                amqp.add_item('commentstree_q', comment._fullname)
+            add_to_commentstree_q(comment)
 
             if not g.amqp_host:
                 add_comments([comment])
@@ -999,6 +1002,10 @@ def new_comment(comment, inbox_rels):
 
                 set_unread(comment, inbox_owner,
                            unread=not comment._deleted, mutator=m)
+
+
+def delete_comment(comment):
+    add_to_commentstree_q(comment)
 
 
 def new_subreddit(sr):

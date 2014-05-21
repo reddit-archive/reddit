@@ -58,6 +58,8 @@ def add_comments(comments):
 
     for link_id, coms in link_map.iteritems():
         link = links[link_id]
+        add_comments = [comment for comment in coms if not comment._deleted]
+        delete_comments = (comment for comment in coms if comment._deleted)
         timer = g.stats.get_timer('comment_tree.add.%s'
                                   % link.comment_tree_version)
         timer.start()
@@ -66,7 +68,10 @@ def add_comments(comments):
                 timer.intermediate('lock')
                 cache = get_comment_tree(link, timer=timer)
                 timer.intermediate('get')
-                cache.add_comments(coms)
+                if add_comments:
+                    cache.add_comments(add_comments)
+                for comment in delete_comments:
+                    cache.delete_comment(comment, link)
                 timer.intermediate('update')
         except:
             g.log.exception(
@@ -97,21 +102,6 @@ def update_comment_votes(comments, write_consistency_level = None):
             CommentSortsCache._set_values(c_key, c_r,
                                           write_consistency_level = write_consistency_level)
 
-def delete_comment(comment):
-    link = Link._byID(comment.link_id, data=True)
-    timer = g.stats.get_timer('comment_tree.delete.%s'
-                              % link.comment_tree_version)
-    timer.start()
-    with CommentTree.mutation_context(link):
-        timer.intermediate('lock')
-        cache = get_comment_tree(link)
-        timer.intermediate('get')
-        cache.delete_comment(comment, link)
-        timer.intermediate('update')
-        from r2.lib.db.queries import changed
-        changed([link])
-        timer.intermediate('changed')
-    timer.stop()
 
 def _comment_sorter_from_cids(cids, sort):
     comments = Comment._byID(cids, data = False, return_dict = False)

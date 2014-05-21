@@ -76,7 +76,6 @@ from r2.lib.db.queries import changed
 from r2.lib import media
 from r2.lib.db import tdb_cassandra
 from r2.lib import promote
-from r2.lib.comment_tree import delete_comment
 from r2.lib import tracking, emailer
 from r2.lib.subreddit_search import search_reddits
 from r2.lib.log import log_text
@@ -1227,7 +1226,7 @@ class ApiController(RedditController):
                     recipient = Account._byID(parent_link.author_id)
 
             if not was_deleted:
-                delete_comment(thing)
+                queries.delete_comment(thing)
 
             if recipient:
                 inbox_class = Inbox.rel(Account, Comment)
