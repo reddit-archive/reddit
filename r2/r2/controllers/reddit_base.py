@@ -100,6 +100,7 @@ from r2.models import (
     MultiReddit,
     NotFound,
     OAuth2AccessToken,
+    OAuth2Client,
     OAuth2Scope,
     Random,
     RandomNSFW,
@@ -796,8 +797,8 @@ class MinimalController(BaseController):
             type_ = "web"
         elif c.oauth_user and g.RL_OAUTH_SITEWIDE_ENABLED:
             type_ = "oauth"
-            max_reqs = g.RL_OAUTH_MAX_REQS
             period = g.RL_OAUTH_RESET_SECONDS
+            max_reqs = c.oauth_client._max_reqs
             # Convert client_id to ascii str for use as memcache key
             client_id = c.oauth2_access_token.client_id.encode("ascii")
             # OAuth2 ratelimits are per user-app combination
@@ -1111,6 +1112,7 @@ class OAuth2ResourceController(MinimalController):
             require(not account._deleted)
             c.user = c.oauth_user = account
             c.user_is_loggedin = True
+            c.oauth_client = OAuth2Client._byID(access_token.client_id)
         except RequirementException:
             self._auth_error(401, "invalid_token")
 

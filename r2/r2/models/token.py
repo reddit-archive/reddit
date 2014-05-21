@@ -341,6 +341,9 @@ class OAuth2Client(Token):
     max_developers = 20
     token_size = 10
     client_secret_size = 20
+    _float_props = (
+        "max_reqs_sec",
+    )
     _defaults = dict(name="",
                      description="",
                      about_url="",
@@ -348,6 +351,7 @@ class OAuth2Client(Token):
                      secret="",
                      redirect_uri="",
                      app_type="web",
+                     max_reqs_sec=g.RL_OAUTH_AVG_REQ_PER_SEC,
                     )
     _use_db = True
     _connection_pool = "main"
@@ -368,6 +372,10 @@ class OAuth2Client(Token):
                     yield int(k[len(self._developer_colname_prefix):], 36)
                 except ValueError:
                     pass
+
+    @property
+    def _max_reqs(self):
+        return self.max_reqs_sec * g.RL_OAUTH_RESET_SECONDS
 
     @property
     def _developers(self):
