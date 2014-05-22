@@ -326,6 +326,8 @@ def _set_media(link, force=False, **kwargs):
 
         link._commit()
 
+        hooks.get_hook("scraper.set_media").call(link=link)
+
 
 def force_thumbnail(link, image_data, file_type=".jpg"):
     image = str_to_image(image_data)
