@@ -2313,7 +2313,7 @@ class VFlairTemplateByID(VRequired):
             return None
 
 class VOneTimePassword(Validator):
-    max_skew = 2  # check two periods to allow for some clock skew
+    allowed_skew = [-1, 0, 1]  # allow a period of skew on either side of now
     ratelimit = 3  # maximum number of tries per period
 
     def __init__(self, param, required):
@@ -2330,13 +2330,13 @@ class VOneTimePassword(Validator):
         else:
             # leave this key around for one more time period than the maximum
             # number of time periods we'll check for valid passwords
-            key_ttl = totp.PERIOD * (cls.max_skew + 1)
+            key_ttl = totp.PERIOD * (len(cls.allowed_skew) + 1)
             valid_and_unused = g.cache.add(key, True, time=key_ttl)
 
         # check the password (allowing for some clock-skew as 2FA-users
         # frequently travel at relativistic velocities)
         if valid_and_unused:
-            for skew in range(cls.max_skew):
+            for skew in cls.allowed_skew:
                 expected_otp = totp.make_totp(secret, skew=skew)
                 if constant_time_compare(password, expected_otp):
                     return True
