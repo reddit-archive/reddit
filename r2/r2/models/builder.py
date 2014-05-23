@@ -22,6 +22,7 @@
 
 from collections import defaultdict
 from copy import deepcopy
+from itertools import izip
 import datetime
 import heapq
 from random import shuffle
@@ -382,14 +383,16 @@ class QueryBuilder(Builder):
         num_have = 0
         done = False
         items = []
+        orig_items = {}
         count = self.start_count
         first_item = None
         last_item = None
+        fetch_after = None
         have_next = True
         loopcount = 0
 
         while not done:
-            done, new_items = self.fetch_more(last_item, num_have)
+            done, new_items = self.fetch_more(fetch_after, num_have)
 
             #log loop
             loopcount += 1
@@ -405,22 +408,15 @@ class QueryBuilder(Builder):
                 done = True
                 have_next = False
 
-            if not first_item and self.start_count > 0:
-                first_item = new_items[0]
-
+            unwrapped_items = new_items
             if self.prewrap_fn:
-                orig_items = {}
-                new_items2 = []
-                for i in new_items:
-                    new = self.prewrap_fn(i)
-                    orig_items[new._id] = i
-                    new_items2.append(new)
-                new_items = new_items2
-            else:
-                orig_items = dict((i._id, i) for i in new_items)
+                new_items = [self.prewrap_fn(i) for i in new_items]
 
             if self.wrap:
                 new_items = self.wrap_items(new_items)
+
+            # For wrapped -> unwrapped lookups
+            orig_items.update(izip(new_items, unwrapped_items))
 
             #skip and count
             while new_items and (not self.num or num_have < self.num):
@@ -433,11 +429,17 @@ class QueryBuilder(Builder):
                     count = count - 1 if self.reverse else count + 1
                     if self.wrap:
                         i.num = count
-                last_item = i
+                fetch_after = i
         
             # get original version of last item
-            if last_item and (self.prewrap_fn or self.wrap):
-                last_item = orig_items[last_item._id]
+            fetch_after = orig_items[fetch_after]
+
+        # Make sure first_item and last_item refer to things in items
+        if items:
+            if self.start_count > 0:
+                # Make sure the item is the unwrapped version
+                first_item = orig_items[items[0]]
+            last_item = orig_items[items[-1]]
 
         if self.reverse:
             items.reverse()
