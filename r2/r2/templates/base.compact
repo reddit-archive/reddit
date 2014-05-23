@@ -44,7 +44,15 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     ${self.robots()}
     <link rel="stylesheet" href="${static('compact.css')}" type="text/css" media="screen" />
-    ${unsafe(js.use('jquery', 'reddit-init'))}
+
+    <!--[if gte IE 9]> <!-->
+      ${unsafe(js.use('jquery2x', 'reddit-init'))}
+    <!-- <![endif]-->
+
+    <!--[if lt IE 9]>
+      ${unsafe(js.use('jquery1x', 'reddit-init'))}
+    <![endif]-->
+
     ${js_setup(thing.extra_js_config)}
     ${googleanalytics('mobile')}
   </head>

@@ -27,7 +27,15 @@
   <head>
     <title>escappit</title>
     <% from r2.lib import js %>
-    ${unsafe(js.use('jquery', 'reddit'))}
+
+
+    <!--[if gte IE 9]> <!-->
+      ${unsafe(js.use('jquery2x', 'reddit'))}
+    <!-- <![endif]-->
+
+    <!--[if lt IE 9]>
+      ${unsafe(js.use('jquery1x', 'reddit'))}
+    <![endif]-->
     ${js_setup()}
   </head>
   <body>

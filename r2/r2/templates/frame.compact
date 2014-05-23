@@ -31,7 +31,14 @@
 <html>
   <head>
     <title>${thing.title}</title>
-    ${unsafe(js.use('jquery', 'mobile'))}
+
+    <!--[if gte IE 9]> <!-->
+      ${unsafe(js.use('jquery2x', 'mobile'))}
+    <!-- <![endif]-->
+
+    <!--[if lt IE 9]>
+      ${unsafe(js.use('jquery1x', 'mobile'))}
+    <![endif]-->
     ${js_setup()}
     <link rel="stylesheet" href="${static('compact.css')}"
           type="text/css" media="screen" />

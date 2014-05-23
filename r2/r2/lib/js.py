@@ -400,12 +400,15 @@ class LocalizedModule(Module):
 
 
 class JQuery(Module):
-    version = "1.11.0"
+    versions = {
+        1: "1.11.1",
+        2: "2.1.1",
+    }
 
-    def __init__(self, cdn_url="http://ajax.googleapis.com/ajax/libs/jquery/{version}/jquery"):
-        self.jquery_src = FileSource("lib/jquery-{0}.min.js".format(self.version))
+    def __init__(self, cdn_url="http://ajax.googleapis.com/ajax/libs/jquery/{version}/jquery", major_version=1):
+        self.jquery_src = FileSource("lib/jquery-{0}.min.js".format(self.versions[major_version]))
         Module.__init__(self, "jquery.js", self.jquery_src, should_compile=False)
-        self.cdn_src = cdn_url.format(version=self.version)
+        self.cdn_src = cdn_url.format(version=self.versions[major_version])
 
     def use(self):
         from r2.lib.template_helpers import static
@@ -419,7 +422,8 @@ class JQuery(Module):
 module = {}
 
 
-module["jquery"] = JQuery()
+module["jquery1x"] = JQuery(major_version=1)
+module["jquery2x"] = JQuery(major_version=2)
 
 
 module["html5shiv"] = Module("html5shiv.js",
