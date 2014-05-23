@@ -434,6 +434,10 @@ class QueryBuilder(Builder):
             # get original version of last item
             fetch_after = orig_items[fetch_after]
 
+        # Fewer items than we wanted, no next page.
+        if self.num and num_have < self.num:
+            have_next = False
+
         # Make sure first_item and last_item refer to things in items
         if items:
             if self.start_count > 0:
