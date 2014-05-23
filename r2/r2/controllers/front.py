@@ -849,6 +849,9 @@ class FrontController(RedditController):
         builder = url_links_builder(article.url, exclude=article._fullname,
                                     num=num, after=after, reverse=reverse,
                                     count=count)
+        if after and not builder.valid_after(after):
+            g.stats.event_count("listing.invalid_after", "duplicates")
+            self.abort403()
         num_duplicates = len(builder.get_items()[0])
         listing = LinkListing(builder).listing()
 
@@ -970,6 +973,9 @@ class FrontController(RedditController):
                                 count=count,
                                 wrap=ListingController.builder_wrapper,
                                 skip_deleted_authors=skip_deleted_authors)
+        if after and not builder.valid_after(after):
+            g.stats.event_count("listing.invalid_after", "search")
+            self.abort403()
 
         listing = LinkListing(builder, show_nums=True)
 

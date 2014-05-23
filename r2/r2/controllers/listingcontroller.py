@@ -110,6 +110,13 @@ class ListingController(RedditController):
 
         self.query_obj = self.query()
         self.builder_obj = self.builder()
+
+        # Don't leak info about things the user can't view
+        if after and not self.builder_obj.valid_after(after):
+            listing_name = self.__class__.__name__
+            g.stats.event_count("listing.invalid_after", listing_name)
+            self.abort403()
+
         self.listing_obj = self.listing()
 
         content = self.content()
