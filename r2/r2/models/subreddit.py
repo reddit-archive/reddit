@@ -372,9 +372,16 @@ class Subreddit(Thing, Printable, BaseSite):
         if not user.modmsgtime:
             user.modmsgtime = False
             user._commit()
+
+        hook = hooks.get_hook("subreddit.add_moderator")
+        hook.call(subreddit=self, user=user)
+
         return super(Subreddit, self).add_moderator(user, **kwargs)
 
     def remove_moderator(self, user, **kwargs):
+        hook = hooks.get_hook("subreddit.remove_moderator")
+        hook.call(subreddit=self, user=user)
+
         ret = super(Subreddit, self).remove_moderator(user, **kwargs)
 
         is_mod_somewhere = bool(Subreddit.reverse_moderator_ids(user))
