@@ -327,6 +327,12 @@ class Subreddit(Thing, Printable, BaseSite):
         else:
             return None
 
+    @property
+    def allowed_types(self):
+        if self.link_type == "any":
+            return set(("link", "self"))
+        return set((self.link_type,))
+
     def add_moderator(self, user, **kwargs):
         if not user.modmsgtime:
             user.modmsgtime = False
@@ -474,6 +480,16 @@ class Subreddit(Thing, Printable, BaseSite):
             return True
         else:
             return False
+
+    def can_submit_link(self, user):
+        if c.user_is_admin or self.is_moderator_with_perms(user, "posts"):
+            return True
+        return "link" in self.allowed_types
+
+    def can_submit_text(self, user):
+        if c.user_is_admin or self.is_moderator_with_perms(user, "posts"):
+            return True
+        return "self" in self.allowed_types
 
     def can_ban(self, user):
         return (user

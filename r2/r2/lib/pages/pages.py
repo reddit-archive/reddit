@@ -490,14 +490,27 @@ class Reddit(Templated):
             else:
                 fake_sub = isinstance(c.site, FakeSubreddit)
                 is_multi = isinstance(c.site, MultiReddit)
-                if c.site.link_type != 'self':
+
+                if isinstance(c.site, FakeSubreddit):
+                    submit_buttons = set(("link", "self"))
+                else:
+                    # we want to show submit buttons for logged-out users too
+                    # so we can't just use can_submit_link/text
+                    submit_buttons = c.site.allowed_types
+                    if c.user_is_loggedin:
+                        if c.site.can_submit_link(c.user):
+                            submit_buttons.add("link")
+                        if c.site.can_submit_text(c.user):
+                            submit_buttons.add("self")
+
+                if "link" in submit_buttons:
                     ps.append(SideBox(title=c.site.submit_link_label or
                                             strings.submit_link_label,
                                       css_class="submit submit-link",
                                       link="/submit",
                                       sr_path=not fake_sub or is_multi,
                                       show_cover=True))
-                if c.site.link_type != 'link':
+                if "self" in submit_buttons:
                     ps.append(SideBox(title=c.site.submit_text_label or
                                             strings.submit_text_label,
                                       css_class="submit submit-text",

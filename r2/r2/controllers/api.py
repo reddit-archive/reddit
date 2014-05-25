@@ -358,7 +358,7 @@ class ApiController(RedditController):
             # check for rate-limiting if there's no subreddit
             return
 
-        if sr.link_type == 'link' and kind == 'self':
+        if not sr.can_submit_text(c.user) and kind == "self":
             # this could happen if they actually typed "self" into the
             # URL box and we helpfully translated it for them
             c.errors.add(errors.NO_SELFS, field='sr')

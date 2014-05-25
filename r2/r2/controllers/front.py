@@ -1008,8 +1008,8 @@ class FrontController(RedditController):
             resubmit=resubmit,
             default_sr=c.site if not c.default_sr else None,
             extra_subreddits=extra_subreddits,
-            show_link=c.default_sr or c.site.link_type != 'self',
-            show_self=((c.default_sr or c.site.link_type != 'link')
+            show_link=c.default_sr or c.site.can_submit_link(c.user),
+            show_self=((c.default_sr or c.site.can_submit_text(c.user))
                       and not request.GET.get('no_self')),
             then=then,
         )
