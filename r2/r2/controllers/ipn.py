@@ -72,12 +72,13 @@ from r2.models import (
     send_system_message,
     Thing,
     update_gold_transaction,
+    generate_token,
 )
 
 stripe.api_key = g.secrets['stripe_secret_key']
 
 def generate_blob(data):
-    passthrough = randstr(15)
+    passthrough = generate_token(15)
 
     g.hardcache.set("payment_blob-" + passthrough,
                     data, 86400 * 30)
@@ -331,6 +332,7 @@ def send_gold_code(buyer, months, days,
 class IpnController(RedditController):
     # Used when buying gold with creddits
     @validatedForm(VUser(),
+                   VModhash(),
                    months = VInt("months"),
                    passthrough = VPrintable("passthrough", max_length=50))
     def POST_spendcreddits(self, form, jquery, months, passthrough):
