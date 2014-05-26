@@ -41,6 +41,7 @@ try:
     from r2.lib import log, pages
     from r2.lib.strings import rand_strings
     from r2.lib.template_helpers import static
+    from r2.lib.base import abort
     from r2.models.link import Link
     from r2.models.subreddit import DefaultSR, Subreddit
 except Exception, e:
@@ -106,6 +107,12 @@ class ErrorController(RedditController):
             pass
         except Exception as e:
             handle_awful_failure("ErrorController.__before__: %r" % e)
+
+        # c.error_page is special-cased in a couple places to bypass
+        # c.site checks. We shouldn't allow the user to get here other
+        # than through `middleware.py:error_mapper`.
+        if not request.environ.get('pylons.error_call'):
+            abort(403, "direct access to error controller disallowed")
 
     def __after__(self): 
         try:
