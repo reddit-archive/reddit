@@ -415,7 +415,7 @@ class JQuery(Module):
 
     def __init__(self, cdn_url="http://ajax.googleapis.com/ajax/libs/jquery/{version}/jquery", major_version=1):
         self.jquery_src = FileSource("lib/jquery-{0}.min.js".format(self.versions[major_version]))
-        Module.__init__(self, "jquery.js", self.jquery_src, should_compile=False)
+        Module.__init__(self, "jquery-{0}.min.js".format(self.versions[major_version]), self.jquery_src, should_compile=False)
         self.cdn_src = cdn_url.format(version=self.versions[major_version])
 
     def use(self):
