@@ -318,6 +318,21 @@ r.sponsored = {
         } else {
             this.hide_cpm()
         }
+
+        if (!this.userIsSponsor) {
+            var isTargeted = $form.find('#targeting').is(':checked')
+            var $geotargetRow = $('.geotarget-select').parents('tr')
+
+            if (isTargeted) {
+                $geotargetRow.find('select').prop('disabled', true)
+                $geotargetRow.find('.geotargeting-selects').hide()
+                $('.geotargeting-disabled').show()
+            } else {
+                $geotargetRow.find('select').prop('disabled', false)
+                $geotargetRow.find('.geotargeting-selects').show()
+                $('.geotargeting-disabled').hide()
+            }
+        }
     },
 
     disable_form: function($form) {
@@ -352,27 +367,11 @@ r.sponsored = {
 
     targeting_on: function() {
         $('.targeting').find('*[name="sr"]').prop("disabled", false).end().slideDown();
-
-        if (!this.userIsSponsor) {
-            var $geotargetRow = $('.geotarget-select').parents('tr')
-            $geotargetRow.find('select').prop('disabled', true)
-            $geotargetRow.find('.geotargeting-selects').hide()
-            $('.geotargeting-disabled').show()
-        }
-
         this.fill_campaign_editor()
     },
 
     targeting_off: function() {
         $('.targeting').find('*[name="sr"]').prop("disabled", true).end().slideUp();
-
-        if (!this.userIsSponsor) {
-            var $geotargetRow = $('.geotarget-select').parents('tr')
-            $geotargetRow.find('select').prop('disabled', false)
-            $geotargetRow.find('.geotargeting-selects').show()
-            $('.geotargeting-disabled').hide()
-        }
-
         this.fill_campaign_editor()
     },
 
