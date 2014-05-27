@@ -186,17 +186,16 @@ $(function() {
 
     // Attach event handlers to the various flair forms that may be on page.
 
-    $("#tabbedpane-grant .flair-entry").on("submit", {
+    $("#tabbedpane-grant").on("submit",  ".flair-entry", {
         action: "flair",
       }, onSubmit)
 
-    $("#tabbedpane-grant .flairdeletebtn").on("click", {
+    $("#tabbedpane-grant").on("click", ".flairdeletebtn", {
         action: "deleteflair",
       }, onDelete)
 
 
-    $("#tabbedpane-templates .flair-entry, " +
-        "#tabbedpane-link_templates .flair-entry").on("submit", {
+    $("#tabbedpane-templates, #tabbedpane-link_templates").on("submit", ".flair-entry", {
           action: "flairtemplate",
       }, onSubmit)
 
