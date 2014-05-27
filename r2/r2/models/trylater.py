@@ -93,14 +93,6 @@ class TryLaterBySubject(tdb_cassandra.View):
     _value_type = 'date'
 
     @classmethod
-    def _serialize_column(cls, attr, val):
-        # Everything this class serializes in columns is a date, but without
-        # a consistent attr (column key) there's no way to signal that to the
-        # regular _serialize_column method.  Thus, we override and perform no
-        # serialization, relying on pycassa to convert the dates to UUID1
-        return val
-
-    @classmethod
     def schedule(cls, system, subject, data, delay, trylater_rowkey=None):
         if trylater_rowkey is None:
             trylater_rowkey = system

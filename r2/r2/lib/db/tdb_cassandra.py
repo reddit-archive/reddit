@@ -507,7 +507,8 @@ class ThingBase(object):
         elif (attr in cls._date_props or attr == cls._timestamp_prop or
               (cls._value_type and cls._value_type == 'date')):
             # the _timestamp_prop is handled in _commit(), not here
-            if cls._get_column_validator(attr) == 'DateType':
+            validator = cls._get_column_validator(attr)
+            if validator in ("DateType", "TimeUUIDType"):
                 # pycassa will take it from here
                 return val
             else:
