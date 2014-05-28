@@ -1396,6 +1396,7 @@ class CommentPane(Templated):
                                   self.article.contest_mode,
                                   num, self.sort, self.num, c.lang,
                                   self.can_reply, c.render_style,
+                                  c.domain_prefix, c.secure,
                                   c.user.pref_show_flair,
                                   c.user.pref_show_link_flair,
                                   c.can_save,
