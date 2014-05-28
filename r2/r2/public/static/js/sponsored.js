@@ -257,8 +257,8 @@ r.sponsored = {
         var baseCpm = parseInt($("#bid").data("base_cpm")),
             geotargetCountryCpm = parseInt($("#bid").data("geotarget_country_cpm")),
             geotargetMetroCpm = parseInt($("#bid").data("geotarget_metro_cpm")),
-            isCountryGeotarget = $('#country').val() != '' && $('#country').attr('disabled') != 'disabled',
-            isMetroGeotarget = $('#metro').val() !== null && $('#metro').attr('disabled') != 'disabled'
+            isCountryGeotarget = $('#country').val() != '' && !$('#country').is(':disabled'),
+            isMetroGeotarget = $('#metro').val() !== null && !$('#metro').is(':disabled')
 
         /*
            NOTE: checking for country and metro geotargeting use different
@@ -322,13 +322,13 @@ r.sponsored = {
 
     disable_form: function($form) {
         $form.find('button[name="create"], button[name="save"]')
-            .prop("disabled", "disabled")
+            .prop("disabled", true)
             .addClass("disabled");
     },
 
     enable_form: function($form) {
         $form.find('button[name="create"], button[name="save"]')
-            .removeProp("disabled")
+            .prop("disabled", false)
             .removeClass("disabled");
     },
 
@@ -351,11 +351,11 @@ r.sponsored = {
     },
 
     targeting_on: function() {
-        $('.targeting').find('*[name="sr"]').prop("disabled", "").end().slideDown();
+        $('.targeting').find('*[name="sr"]').prop("disabled", false).end().slideDown();
 
         if (!this.userIsSponsor) {
             var $geotargetRow = $('.geotarget-select').parents('tr')
-            $geotargetRow.find('select').attr('disabled', 'disabled')
+            $geotargetRow.find('select').prop('disabled', true)
             $geotargetRow.find('.geotargeting-selects').hide()
             $('.geotargeting-disabled').show()
         }
@@ -364,11 +364,11 @@ r.sponsored = {
     },
 
     targeting_off: function() {
-        $('.targeting').find('*[name="sr"]').prop("disabled", "disabled").end().slideUp();
+        $('.targeting').find('*[name="sr"]').prop("disabled", true).end().slideUp();
 
         if (!this.userIsSponsor) {
             var $geotargetRow = $('.geotarget-select').parents('tr')
-            $geotargetRow.find('select').removeAttr('disabled')
+            $geotargetRow.find('select').prop('disabled', false)
             $geotargetRow.find('.geotargeting-selects').show()
             $('.geotargeting-disabled').hide()
         }
@@ -639,12 +639,12 @@ function edit_campaign($campaign_row) {
             if (targeting) {
                 radios.filter('*[value="one"]')
                     .prop("checked", "checked");
-                campaign.find('*[name="sr"]').val(targeting).prop("disabled", "").end()
+                campaign.find('*[name="sr"]').val(targeting).prop("disabled", false).end()
                     .find(".targeting").show();
             } else {
                 radios.filter('*[value="none"]')
                     .prop("checked", "checked");
-                campaign.find('*[name="sr"]').val("").prop("disabled", "disabled").end()
+                campaign.find('*[name="sr"]').val("").prop("disabled", true).end()
                     .find(".targeting").hide();
             }
 
@@ -678,11 +678,11 @@ function edit_campaign($campaign_row) {
 function check_number_of_campaigns(){
     if ($(".campaign-row").length >= $(".existing-campaigns").data("max-campaigns")){
       $(".error.TOO_MANY_CAMPAIGNS").fadeIn();
-      $("button.new-campaign").attr("disabled", "disabled");
+      $("button.new-campaign").prop("disabled", true);
       return true;
     } else {
       $(".error.TOO_MANY_CAMPAIGNS").fadeOut();
-      $("button.new-campaign").removeAttr("disabled");
+      $("button.new-campaign").prop("disabled", false);
       return false;
     }
 }
@@ -701,7 +701,7 @@ function create_campaign() {
                 .find('button[name="create"]').show().end()
                 .find('input[name="campaign_id36"]').val('').end()
                 .find('input[name="campaign_name"]').val('').end()
-                .find('input[name="sr"]').val('').prop("disabled", "disabled").end()
+                .find('input[name="sr"]').val('').prop("disabled", true).end()
                 .find('input[name="targeting"][value="none"]').prop("checked", "checked").end()
                 .find('input[name="priority"][data-default="true"]').prop("checked", "checked").end()
                 .find('input[name="bid"]').val(defaultBid).end()
