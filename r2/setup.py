@@ -83,7 +83,7 @@ setup(
         "lxml",
         "kazoo",
         "stripe",
-        "requests",
+        "requests<1.0.0",
         "tinycss2",
     ],
     dependency_links=[
