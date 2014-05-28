@@ -24,9 +24,9 @@ r.wiki = {
     },
 
     init: function() {
-        $('body').delegate('.wiki-page .revision_hide', 'click', this.toggleHide)
-        $('body').delegate('.wiki-page .revision_delete', 'click', this.toggleDelete)
-        $('body').delegate('.wiki-page .toggle-source', 'click', this.toggleSource)
+        $('body.wiki-page').on('click', '.revision_hide', this.toggleHide)
+        $('body.wiki-page').on('click', '.revision_delete', this.toggleDelete)
+        $('body.wiki-page').on('click', '.toggle-source', this.toggleSource)
     },
 
     toggleSource: function(event) {
