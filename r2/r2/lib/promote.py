@@ -44,7 +44,6 @@ from r2.lib.db.queries import (
 from r2.lib.cache import sgm
 from r2.lib.memoize import memoize
 from r2.lib.strings import strings
-from r2.lib.template_helpers import get_domain
 from r2.lib.utils import to_date, weighted_lottery
 from r2.models import (
     Account,
@@ -99,26 +98,29 @@ def promo_keep_fn(item):
 
 # attrs
 
+def _base_domain():
+    if g.domain_prefix:
+        return g.domain_prefix + '.' + g.domain
+    else:
+        return g.domain
+
 def promo_traffic_url(l): # old traffic url
-    domain = get_domain(cname=False, subreddit=False)
-    return "http://%s/traffic/%s/" % (domain, l._id36)
+    return "http://%s/traffic/%s/" % (_base_domain(), l._id36)
 
 def promotraffic_url(l): # new traffic url
-    domain = get_domain(cname=False, subreddit=False)
-    return "http://%s/promoted/traffic/headline/%s" % (domain, l._id36)
+    return "http://%s/promoted/traffic/headline/%s" % (_base_domain(), l._id36)
 
 def promo_edit_url(l):
-    domain = get_domain(cname=False, subreddit=False)
-    return "http://%s/promoted/edit_promo/%s" % (domain, l._id36)
+    return "http://%s/promoted/edit_promo/%s" % (_base_domain(), l._id36)
 
 def pay_url(l, campaign):
     return "%spromoted/pay/%s/%s" % (g.payment_domain, l._id36, campaign._id36)
 
 def view_live_url(l, srname):
-    url = get_domain(cname=False, subreddit=False)
+    domain = _base_domain()
     if srname:
-        url += '/r/%s' % srname
-    return 'http://%s/?ad=%s' % (url, l._fullname)
+        domain += '/r/%s' % srname
+    return 'http://%s/?ad=%s' % (domain, l._fullname)
 
 
 def refund_url(link, campaign):
