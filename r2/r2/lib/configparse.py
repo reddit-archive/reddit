@@ -27,19 +27,19 @@ class ConfigValue(object):
     _bool_map = dict(true=True, false=False)
 
     @staticmethod
-    def str(v, key=None, data=None):
+    def str(v, key=None):
         return str(v)
 
     @staticmethod
-    def int(v, key=None, data=None):
+    def int(v, key=None):
         return int(v)
 
     @staticmethod
-    def float(v, key=None, data=None):
+    def float(v, key=None):
         return float(v)
 
     @staticmethod
-    def bool(v, key=None, data=None):
+    def bool(v, key=None):
         if v in (True, False, None):
             return bool(v)
         try:
@@ -48,29 +48,32 @@ class ConfigValue(object):
             raise ValueError("Unknown value for %r: %r" % (key, v))
 
     @staticmethod
-    def tuple(v, key=None, data=None):
+    def tuple(v, key=None):
         return tuple(ConfigValue.to_iter(v))
 
     @staticmethod
     def dict(key_type, value_type):
-        def parse(v, key=None, data=None):
+        def parse(v, key=None):
             return {key_type(x): value_type(y)
                     for x, y in (
                         i.split(':', 1) for i in ConfigValue.to_iter(v))}
         return parse
 
     @staticmethod
-    def choice(v, key, data):
-        if v not in data:
-            raise ValueError("Unknown option for %r: %r not in %r" % (key, v, data))
-        return data[v]
+    def choice(**choices):
+        def parse_choice(v, key=None):
+            try:
+                return choices[v]
+            except KeyError:
+                raise ValueError("Unknown option for %r: %r not in %r" % (key, v, choices.keys()))
+        return parse_choice
 
     @staticmethod
     def to_iter(v, delim = ','):
         return (x.strip() for x in v.split(delim) if x)
 
     @staticmethod
-    def timeinterval(v, key=None, data=None):
+    def timeinterval(v, key=None):
         # this import is at function level because it relies on the cythonized
         # modules being present which is a problem for plugin __init__s that
         # use this module since they are imported in the early stages of the
@@ -80,7 +83,7 @@ class ConfigValue(object):
 
     messages_re = re.compile(r'"([^"]+)"')
     @staticmethod
-    def messages(v, key=None, data=None):
+    def messages(v, key=None):
         return ConfigValue.messages_re.findall(v.decode("string_escape"))
 
 
@@ -96,9 +99,7 @@ class ConfigValueParser(dict):
             # keys can be either a list or a dict
             for key in keys:
                 assert key not in self.config_keys
-                # if keys is a dict, the value is passed as extra data to the parser.
-                extra_data = keys[key] if type(keys) is dict else None
-                self.config_keys[key] = (parser, extra_data)
+                self.config_keys[key] = parser
                 new_keys.append(key)
         self._update_values(new_keys)
 
@@ -109,6 +110,6 @@ class ConfigValueParser(dict):
 
             value = self.raw_data[key]
             if key in self.config_keys:
-                parser, extra_data = self.config_keys[key]
-                value = parser(value, key, extra_data)
+                parser = self.config_keys[key]
+                value = parser(value, key)
             self[key] = value

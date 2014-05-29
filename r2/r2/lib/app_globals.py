@@ -229,16 +229,10 @@ class Globals(object):
             'wiki_page_gold_bottlecaps',
         ],
 
-        ConfigValue.choice: {
-             'cassandra_rcl': {
-                 'ONE': CL_ONE,
-                 'QUORUM': CL_QUORUM
-             },
-             'cassandra_wcl': {
-                 'ONE': CL_ONE,
-                 'QUORUM': CL_QUORUM
-             },
-        },
+        ConfigValue.choice(ONE=CL_ONE, QUORUM=CL_QUORUM): [
+             'cassandra_rcl',
+             'cassandra_wcl',
+        ],
 
         ConfigValue.timeinterval: [
             'ARCHIVE_AGE',
