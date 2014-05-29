@@ -39,6 +39,7 @@
         ${inline_radio_type("seconds_visibility", "private", _("only me"), checked=not thing.is_public)}
         ${inline_radio_type("seconds_visibility", "public", _("everyone"), checked=thing.is_public)}
       </form>
+      <div class="note">${_('note: you will only be eligible for a gilding trophy if this is set to "everyone"')}</div>
     </div>
     %endif
   </div>
