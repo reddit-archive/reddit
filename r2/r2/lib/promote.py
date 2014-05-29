@@ -621,10 +621,11 @@ def finalize_completed_campaigns(daysago=1):
     date = date.replace(hour=0, minute=0, second=0, microsecond=0)
 
     q = PromoCampaign._query(PromoCampaign.c.end_date == date,
-                             # exclude no transaction and freebies
-                             PromoCampaign.c.trans_id > 0,
+                             # exclude no transaction
+                             PromoCampaign.c.trans_id != NO_TRANSACTION,
                              data=True)
-    campaigns = list(q)
+    # filter out freebies
+    campaigns = filter(lambda camp: camp.trans_id > NO_TRANSACTION, q)
 
     if not campaigns:
         return
