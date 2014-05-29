@@ -36,10 +36,10 @@ export PGHOST=${PGHOST:-localhost}
 ## command line args
 # one of "link" or "comment"
 export THING_CLS="$1"
-# period of data to extract from postgres: e.g. "hour", "week", "year"
+# period of data to extract from postgres: e.g. "hour", "week", "year", "all"
 export INTERVAL="$2"
 # which period listings to update.
-# formatted as python tuple of strings: e.g. '("hour",)'
+# formatted as python tuple of strings: e.g. '("hour",)' or ("week", "all",) etc
 export TIMES="$3"
 
 THING_DUMP=$TMPDIR/$THING_CLS-$INTERVAL-thing.dump
@@ -69,6 +69,10 @@ function reddit {
     paster --plugin=r2 run $REDDIT_INI $REDDIT_ROOT/r2/lib/mr_top.py -c "$1"
 }
 
+# Hack to let pg fetch all things with intervals
+if [ $INTERVAL = "all" ]; then
+   export INTERVAL="century"
+fi
 
 MINID=$(run_query "SELECT thing_id
                    FROM reddit_thing_$THING_CLS
