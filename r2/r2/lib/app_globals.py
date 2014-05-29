@@ -105,6 +105,36 @@ def fetch_secrets(zk_client):
     return _decode_secrets(secrets)
 
 
+PERMISSIONS = {
+    "admin": "admin",
+    "sponsor": "sponsor",
+    "employee": "employee",
+}
+
+
+class PermissionFilteredEmployeeList(object):
+    def __init__(self, config, type):
+        self.config = config
+        self.type = type
+
+    def __iter__(self):
+        return (username
+                for username, permission in self.config["employees"].iteritems()
+                if permission == self.type)
+
+    def __getitem__(self, key):
+        return list(self)[key]
+
+    def __contains__(self, item):
+        # since we do these permission checks off usernames, make it case
+        # insensitive to relax config file editing pains (safe because
+        # Account._by_name is case-insensitive)
+        return any(item.lower() == username.lower() for username in self)
+
+    def __repr__(self):
+        return "<PermissionFilteredEmployeeList %r>" % (list(self),)
+
+
 class Globals(object):
     spec = {
 
@@ -204,9 +234,6 @@ class Globals(object):
             'srmembercaches',
             'ratelimitcaches',
             'cassandra_seeds',
-            'admins',
-            'sponsors',
-            'employees',
             'automatic_reddits',
             'hardcache_categories',
             'case_sensitive_domains',
@@ -275,6 +302,9 @@ class Globals(object):
         ],
         ConfigValue.dict(ConfigValue.str, ConfigValue.float): [
             'pennies_per_server_second',
+        ],
+        ConfigValue.dict(ConfigValue.str, ConfigValue.choice(**PERMISSIONS)): [
+            'employees',
         ],
     }
 
@@ -481,6 +511,14 @@ class Globals(object):
             self.throttles = tuple()  # immutable since it's not real
 
         self.startup_timer.intermediate("zookeeper")
+
+        ################# PRIVILEGED USERS
+        self.admins = PermissionFilteredEmployeeList(
+            self.live_config, type="admin")
+        self.sponsors = PermissionFilteredEmployeeList(
+            self.live_config, type="sponsor")
+        self.employees = PermissionFilteredEmployeeList(
+            self.live_config, type="employee")
 
         ################# MEMCACHE
         num_mc_clients = self.num_mc_clients
