@@ -992,7 +992,7 @@ class StripeController(GoldPaymentController):
             return status, webhook
         else:
             try:
-                passthrough, buyer_name = description.split('-', 1)
+                passthrough = description[:20]
             except (AttributeError, ValueError):
                 g.log.error('stripe_error on charge: %s', charge)
                 raise
