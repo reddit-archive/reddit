@@ -287,6 +287,7 @@ SAFE_FUNCTIONS = {
     "calc",
     "counter",
     "counters",
+    "cubic-bezier",
     "hsl",
     "hsla",
     "lang",
