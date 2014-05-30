@@ -185,7 +185,7 @@ class ToolbarController(RedditController):
         else:
             # It hasn't been submitted yet. Give them a chance to
             qs = utils.query_string({"url": path})
-            return self.redirect(add_sr("/submit?" + qs))
+            return self.redirect(add_sr("/submit" + qs))
 
     @validate(link = VLink('id'))
     def GET_comments(self, link):
