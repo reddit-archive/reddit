@@ -559,7 +559,7 @@ if [ ! -f /etc/gunicorn.d/geoip.conf ]; then
     cat > /etc/gunicorn.d/geoip.conf <<GEOIP
 CONFIG = {
     "mode": "wsgi",
-    "working_dir": "$REDDIT_HOME/reddit/scripts",
+    "working_dir": "$REDDIT_HOME/src/reddit/scripts",
     "user": "$REDDIT_USER",
     "group": "$REDDIT_USER",
     "args": (
