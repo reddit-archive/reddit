@@ -57,7 +57,7 @@ cpdef double _hot(long ups, long downs, double date):
 
 cpdef double controversy(long ups, long downs):
     """The controversy sort."""
-    if downs == 0 or ups == 0:
+    if downs <= 0 or ups <= 0:
         return 0
 
     magnitude = ups + downs

@@ -29,7 +29,7 @@ create or replace function score(ups integer, downs integer) returns integer as 
 $$ language sql immutable;
 
 create or replace function controversy(ups integer, downs integer) returns float as $$
-    select CASE WHEN $1 = 0 or $2 = 0 THEN 0
+    select CASE WHEN $1 <= 0 or $2 <= 0 THEN 0
                 WHEN $1 > $2 THEN power($1 + $2, cast($2 as float) / $1)
                 ELSE power($1 + $2, cast($1 as float) / $2)
            END;
