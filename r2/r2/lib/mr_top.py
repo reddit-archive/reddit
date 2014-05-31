@@ -82,7 +82,12 @@ def time_listings(intervals):
                        thing_controversy, thing.timestamp, fname)
 
                 if thing.url:
-                    for domain in UrlParser(thing.url).domain_permutations():
+                    try:
+                        parsed = UrlParser(thing.url)
+                    except ValueError:
+                        continue
+
+                    for domain in parsed.domain_permutations():
                         yield ("domain/link/top/%s/%s" % (interval, domain),
                                thing_score, thing.timestamp, fname)
                         yield ("domain/link/controversial/%s/%s" % (interval, domain),
