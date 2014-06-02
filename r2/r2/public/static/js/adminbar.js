@@ -166,65 +166,14 @@ r.adminbar.TimingBarGraph = Backbone.View.extend({
     }
 })
 
-r.adminbar.Timings = Backbone.Collection.extend({
-    model: Backbone.Model.extend({
-        duration: function() {
-            return this.get('end') - this.get('start')
-        }
-    }),
-    comparator: 'start',
 
-    initialize: function() {
-        this.on('reset', this.calculate, this)
-    },
 
-    calculate: function() {
-        this.startTime = this.min(function(timing) {
-            return timing.get('start')
-        }).get('start')
-        this.endTime = this.max(function(timing) {
-            return timing.get('end')
-        }).get('end')
-        this.duration = this.endTime - this.startTime
-    }
-})
 
-r.adminbar.NavigationTimings = r.adminbar.Timings.extend({
-    fetch: function() {
-        if (!window.performance || !window.performance.timing) {
-            return
-        }
 
-        var pt = window.performance.timing,
-            timings = []
 
-        function timing(key, start, end) {
-            if (!pt[start] || !pt[end]) {
-                return
-            }
-            timings.push({
-                key: key,
-                start: pt[start] / 1000,
-                end: pt[end] / 1000
-            })
-        }
 
-        timing('redirect', 'redirectStart', 'redirectEnd')
-        timing('start', 'fetchStart', 'domainLookupStart')
-        timing('dns', 'domainLookupStart', 'domainLookupEnd')
-        timing('tcp', 'connectStart', 'connectEnd')
-        timing('https', 'secureConnectionStart', 'connectEnd')
-        timing('request', 'requestStart', 'responseStart')
-        timing('response', 'responseStart', 'responseEnd')
-        timing('domLoading', 'domLoading', 'domInteractive')
-        timing('domInteractive', 'domInteractive', 'domContentLoadedEventStart')
-        timing('domContentLoaded', 'domContentLoadedEventStart', 'domContentLoadedEventEnd')
-        this.reset(_.values(timings))
-    }
-})
-
-r.adminbar.timings = new r.adminbar.Timings()
-r.adminbar.browserTimings = new r.adminbar.NavigationTimings()
+r.adminbar.timings = new r.Timings()
+r.adminbar.browserTimings = new r.NavigationTimings()
 
 r.adminbar.bar = new r.adminbar.AdminBar({
     el: $('#admin-bar')
