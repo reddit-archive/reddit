@@ -44,6 +44,8 @@ r.ui.init = function() {
     r.ui.PermissionEditor.init()
 
     r.ui.initLiveTimestamps()
+
+    r.ui.initTimings()
 }
 
 r.ui.TimeTextScrollListener = r.ScrollUpdater.extend({
@@ -74,6 +76,42 @@ r.ui.initLiveTimestamps = function() {
           listener.restart()
       })
     }
+}
+
+r.ui.initTimings = function() {
+  // sample at a rate of 5%
+  if (Math.random() > 0.05) { return }
+
+  if (!r.config.pageInfo.actionName) { return }
+
+  var browserTimings = new r.NavigationTimings()
+
+  $(function() {
+    _.defer(function() {
+      browserTimings.fetch()
+
+      var timingData = browserTimings.filter(function(t) {
+        return t.get('key') !== 'start'
+      }).reduce(function(o, t) {
+        if (!t.isValid()) { return o }
+
+        var val = t.duration()
+
+        if (val > 0) {
+        // Add 'Timing' because some of these keys clobber globals in pylons
+          var key = t.get('key') + 'Timing'
+          o[key] = val
+        }
+
+        return o
+      }, {})
+
+      timingData.actionName = r.config.pageInfo.actionName
+      timingData.verification = r.config.pageInfo.verification
+
+      $.post('/web/timings', timingData)
+    })
+  })
 }
 
 r.ui.showWorkingDeferred = function(el, deferred) {

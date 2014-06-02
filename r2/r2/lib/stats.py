@@ -329,6 +329,9 @@ class Stats:
         if counter:
             counter.increment(parts[-1], delta=delta)
 
+    def simple_timing(self, event_name, ms):
+        self.client.timing_stats.record(event_name, start=0, end=ms)
+
     def event_count(self, event_name, name, sample_rate=None):
         if sample_rate is None:
             sample_rate = 1.0

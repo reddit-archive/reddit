@@ -20,13 +20,18 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+import hashlib
+import hmac
+
 from pylons import g, c, request
 from pylons.i18n import _
 
 from r2.controllers.reddit_base import RedditController, abort_with_error
 from r2.lib.base import abort
+from r2.lib.utils import constant_time_compare
 from r2.lib.validator import (
     validate,
+    VFloat,
     VOneOf,
     VPrintable,
     VRatelimit,
@@ -79,3 +84,47 @@ class WebLogController(RedditController):
 
         VRatelimit.ratelimit(rate_user=False, rate_ip=True,
                              prefix="rate_weblog_", seconds=10)
+
+    @validate(
+        # set default to invalid number so we can ignore it later.
+        dns_timing=VFloat('dnsTiming', min=0, num_default=-1),
+        tcp_timing=VFloat('tcpTiming', min=0, num_default=-1),
+        request_timing=VFloat('requestTiming', min=0, num_default=-1),
+        response_timing=VFloat('responseTiming', min=0, num_default=-1),
+        dom_loading_timing=VFloat('domLoadingTiming', min=0, num_default=-1),
+        dom_interactive_timing=VFloat('domInteractiveTiming', min=0, num_default=-1),
+        dom_content_loaded_timing=VFloat('domContentLoadedTiming', min=0, num_default=-1),
+        action_name=VPrintable('actionName', max_length=256),
+        verification=VPrintable('verification', max_length=256),
+    )
+    def POST_timings(self, action_name, verification, **kwargs):
+        lookup = {
+            'dns_timing': 'dns',
+            'tcp_timing': 'tcp',
+            'request_timing': 'request',
+            'response_timing': 'response',
+            'dom_loading_timing': 'dom_loading',
+            'dom_interactive_timing': 'dom_interactive',
+            'dom_content_loaded_timing': 'dom_content_loaded',
+        }
+
+        if not (action_name and verification):
+            abort(422)
+
+        expected_mac = hmac.new(g.secrets["action_name"],
+                                action_name,
+                                hashlib.sha1).hexdigest()
+
+        if not constant_time_compare(verification, expected_mac):
+            abort(422)
+
+        # action_name comes in the format 'controller.METHOD_action'
+        stat_tpl = 'service_time.web.{}.frontend'.format(action_name)
+
+        for key, name in lookup.iteritems():
+            val = kwargs[key]
+            if val >= 0:
+                g.stats.simple_timing(stat_tpl + '.' + name, val)
+
+        abort(204)
+

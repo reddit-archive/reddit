@@ -20,6 +20,9 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+import hmac
+import hashlib
+
 from r2.models import *
 from filters import unsafe, websafe, _force_unicode, _force_utf8
 from r2.lib.utils import UrlParser, timeago, timesince, is_subdomain
@@ -124,6 +127,11 @@ def js_config(extra_config=None):
     logged = c.user_is_loggedin and c.user.name
     gold = bool(logged and c.user.gold)
 
+    controller_name = request.environ['pylons.routes_dict']['controller']
+    action_name = request.environ['pylons.routes_dict']['action']
+    mac = hmac.new(g.secrets["action_name"], controller_name + '.' + action_name, hashlib.sha1)
+    verification = mac.hexdigest()
+
     config = {
         # is the user logged in?
         "logged": logged,
@@ -166,6 +174,10 @@ def js_config(extra_config=None):
         "vote_hash": c.vote_hash,
         "gold": gold,
         "has_subscribed": logged and c.user.has_subscribed,
+        "pageInfo": {
+          "verification": verification,
+          "actionName": controller_name + '.' + action_name,
+        },
     }
 
     if g.uncompressedJS:

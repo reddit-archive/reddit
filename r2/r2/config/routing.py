@@ -423,6 +423,8 @@ def make_map():
 
     mc("/try", controller="forms", action="try_compact")
 
+    mc("/web/timings", controller="weblog", action="timings")
+
     mc("/web/log/:level", controller="weblog", action="message",
        requirements=dict(level="error"))
 
