@@ -480,7 +480,7 @@ class CachedTemplate(Templated):
         return ret
 
     def cache_key(self, attr, style, *a):
-        from pylons import c
+        from pylons import c, request
 
         # if template debugging is on, there will be no hash and we
         # can make the caching process-local.
@@ -501,6 +501,10 @@ class CachedTemplate(Templated):
                 c.site.link_flair_position,
                 c.user.flair_enabled_in_sr(c.site._id),
                 c.user.pref_show_flair, c.user.pref_show_link_flair])
+
+        if c.secure:
+            keys.append(request.host)
+
         keys = [make_cachable(x, *a) for x in keys]
 
         # add all parameters sent into __init__, using their current value
