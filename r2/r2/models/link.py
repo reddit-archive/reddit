@@ -312,6 +312,7 @@ class Link(Thing, Printable):
         now = datetime.now(g.tz)
 
         self._incr("gildings")
+        self.subreddit_slow.add_gilding_seconds()
 
         GildedLinksByAccount.gild(user, self)
 
@@ -892,6 +893,7 @@ class Comment(Thing, Printable):
         now = datetime.now(g.tz)
 
         self._incr("gildings")
+        self.subreddit_slow.add_gilding_seconds()
 
         GildedCommentsByAccount.gild(user, self)
 

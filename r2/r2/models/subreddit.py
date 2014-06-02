@@ -244,10 +244,12 @@ class Subreddit(Thing, Printable, BaseSite):
         spam_selfposts='high',
         spam_comments='low',
         archive_age=g.ARCHIVE_AGE,
+        gilding_server_seconds=0,
     )
     _essentials = ('type', 'name', 'lang')
     _data_int_props = Thing._data_int_props + ('mod_actions', 'reported',
-                                               'wiki_edit_karma', 'wiki_edit_age')
+                                               'wiki_edit_karma', 'wiki_edit_age',
+                                               'gilding_server_seconds')
 
     sr_limit = 50
     gold_limit = 100
@@ -983,6 +985,11 @@ class Subreddit(Thing, Printable, BaseSite):
 
     def get_tempbans(self, type=None, names=None):
         return SubredditTempBan.search(self.name, type, names)
+
+    def add_gilding_seconds(self):
+        from r2.models.gold import get_current_value_of_month
+        seconds = get_current_value_of_month()
+        self._incr("gilding_server_seconds", int(seconds))
 
 
 class FakeSubreddit(BaseSite):
