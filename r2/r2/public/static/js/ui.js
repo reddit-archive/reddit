@@ -86,8 +86,8 @@ r.ui.initLiveTimestamps = function() {
 }
 
 r.ui.initTimings = function() {
-  // sample at a rate of 5%
-  if (Math.random() > 0.05) { return }
+  // sample at a rate of 1%
+  if (Math.random() > 0.01) { return }
 
   if (!r.config.pageInfo.actionName) { return }
 
