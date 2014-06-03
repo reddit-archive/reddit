@@ -120,11 +120,13 @@ class WebLogController(RedditController):
 
         # action_name comes in the format 'controller.METHOD_action'
         stat_tpl = 'service_time.web.{}.frontend'.format(action_name)
+        stat_aggregate = 'service_time.web.frontend'
 
         for key, name in lookup.iteritems():
             val = kwargs[key]
             if val >= 0:
                 g.stats.simple_timing(stat_tpl + '.' + name, val)
+                g.stats.simple_timing(stat_aggregate + '.' + name, val)
 
         abort(204)
 
