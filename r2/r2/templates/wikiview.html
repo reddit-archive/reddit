@@ -49,7 +49,7 @@
          ${unsafe(_("revision by&nbsp;%s") % WrappedUser(thing.edit_by).render())}
          &mdash;&nbsp;
     %endif
-    ${unsafe("%(time)s&nbsp;ago" % dict(time=timestamp(thing.edit_date)))}
+    ${timestamp(thing.edit_date, include_tense=True)}
 %endif
 <a href="#" class="toggle-source">${_("view source")}</a>
 </em>
