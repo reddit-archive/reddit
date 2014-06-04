@@ -70,7 +70,7 @@
       <span class="status"></span>
     </form>
   %elif thing.name == "age":
-      ${unsafe(_("%(when)s&#32;ago") % dict(when=timestamp(thing.rel._date)))}
+      ${timestamp(thing.rel._date, include_tense=True)}
   %elif thing.name == "permissions":
       ${thing.permissions}
   %elif thing.name == "permissionsctl":
