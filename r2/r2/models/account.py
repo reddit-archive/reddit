@@ -124,6 +124,7 @@ class Account(Thing):
                      otp_secret=None,
                      state=0,
                      modmsgtime=None,
+                     banned_profile_visible=False,
                      pref_use_global_defaults=False,
                      pref_hide_locationbar=False,
                      )

@@ -757,7 +757,7 @@ class UserController(ListingController):
         # hide spammers profile pages
         if (not c.user_is_loggedin or
             (c.user._id != vuser._id and not c.user_is_admin)) \
-               and vuser._spam:
+               and (vuser._spam and not vuser.banned_profile_visible):
             return self.abort404()
 
         if where in ('liked', 'disliked') and not votes_visible(vuser):
