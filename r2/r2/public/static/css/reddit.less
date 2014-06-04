@@ -2830,7 +2830,7 @@ li.searchfacet {
 .usertable td, .usertable th { padding: 0 .7em }
 .usertable { white-space: nowrap }
 
-.usertable .moderator.toggle {
+.usertable > .toggle {
     display: inline-block;
     margin: 1em 0 .5em;
     padding: 11px 15px;
@@ -2839,15 +2839,15 @@ li.searchfacet {
     background: #fdffe8;
 }
 
-.usertable .moderator.toggle .option.main:before {
+.usertable > .toggle .option.main:before {
     margin-right: 7px;
 }
 
-.usertable .moderator.toggle .option {
+.usertable > .toggle .option {
     display: inline;
 }
 
-.usertable .moderator.toggle .togglebutton, .usertable .moderator.toggle .error {
+.usertable > .toggle .togglebutton, .usertable > .toggle .error {
     display: none;
     font-size: inherit;
     border-left: 1px solid #bbb;
@@ -2856,11 +2856,11 @@ li.searchfacet {
     margin-left: 10px;
 }
 
-.usertable .moderator.toggle .active .togglebutton {
+.usertable > .toggle .active .togglebutton {
     display: inline;
 }
 
-.usertable .moderator.toggle .error.active {
+.usertable > .toggle .error.active {
     display: inline;
 }
 
