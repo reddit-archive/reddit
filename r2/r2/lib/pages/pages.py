@@ -2042,8 +2042,10 @@ class SubredditTopBar(CachedTemplate):
                        type='flatlist', separator = '-',
                        css_class = 'sr-bar')
 
-    def popular_reddits(self):
-        buttons = [SubredditButton(sr) for sr in self.pop_reddits]
+    def popular_reddits(self, exclude_mine=False):
+        exclude = self.my_reddits if exclude_mine else []
+        buttons = [SubredditButton(sr) for sr in self.pop_reddits
+                                       if sr not in exclude]
 
         return NavMenu(buttons,
                        type='flatlist', separator = '-',
@@ -2073,11 +2075,17 @@ class SubredditTopBar(CachedTemplate):
         menus.append(self.special_reddits())
         menus.append(RawString(sep))
 
-
         if not c.user_is_loggedin:
             menus.append(self.popular_reddits())
         else:
             menus.append(self.subscribed_reddits())
+
+            # if the user has more than ~10 subscriptions the top bar will be
+            # completely full any anything we add to it won't be seen
+            if len(self.my_reddits) < 10:
+                sep = '<span class="separator">&nbsp;&ndash;&nbsp;</span>'
+                menus.append(RawString(sep))
+                menus.append(self.popular_reddits(exclude_mine=True))
 
         return menus
 
