@@ -84,7 +84,7 @@ def get_request_location():
 
     c.location = None
 
-    if request.via_cdn:
+    if getattr(request, 'via_cdn', False):
         g.stats.simple_event('geoip.cdn_request')
         edgescape_info = request.environ.get('HTTP_X_AKAMAI_EDGESCAPE')
         if edgescape_info:
@@ -94,7 +94,7 @@ def get_request_location():
                 c.location = location_dict.get('country_code', None)
             except:
                 pass
-    else:
+    elif getattr(request, 'ip', None):
         g.stats.simple_event('geoip.non_cdn_request')
         timer = g.stats.get_timer("geoip_service_timer")
         timer.start()
