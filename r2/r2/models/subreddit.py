@@ -39,6 +39,7 @@ from printable import Printable
 from r2.lib.db.userrel import UserRel
 from r2.lib.db.operators import lower, or_, and_, desc
 from r2.lib.errors import UserRequiredException
+from r2.lib.geoip import location_by_ips
 from r2.lib.memoize import memoize
 from r2.lib.permissions import ModeratorPermissionSet
 from r2.lib.utils import tup, last_modified_multi, fuzz_activity
@@ -74,6 +75,35 @@ def get_links_sr_ids(sr_ids, sort, time):
     results = [queries.get_links(sr, sort, time)
                for sr in srs]
     return queries.merge_results(*results)
+
+
+def get_request_location():
+    if c.location != '':
+        # unset c attributes have the value ''
+        return c.location
+
+    c.location = None
+
+    if request.via_cdn:
+        g.stats.simple_event('geoip.cdn_request')
+        edgescape_info = request.environ.get('HTTP_X_AKAMAI_EDGESCAPE')
+        if edgescape_info:
+            try:
+                items = edgescape_info.split(',')
+                location_dict = dict(item.split('=') for item in items)
+                c.location = location_dict.get('country_code', None)
+            except:
+                pass
+    else:
+        g.stats.simple_event('geoip.non_cdn_request')
+        timer = g.stats.get_timer("geoip_service_timer")
+        timer.start()
+        location = location_by_ips(request.ip)
+        if location:
+            c.location = location.get('country_code', None)
+        timer.stop()
+
+    return c.location
 
 
 class BaseSite(object):
