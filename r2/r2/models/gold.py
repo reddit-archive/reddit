@@ -578,3 +578,7 @@ def make_gold_message(thing, user_gilded):
         recipient=author_name,
         months=thing.gildings,
     )
+
+
+def creddits_lock(user):
+    return g.make_lock("gold_creddits", "creddits_%s" % user._id)

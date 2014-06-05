@@ -82,6 +82,7 @@ def load_controllers():
     from api import ApiminimalController
     from api_docs import ApidocsController
     from apiv1.user import APIv1UserController
+    from apiv1.gold import APIv1GoldController
     from multi import MultiApiController
     from oauth2 import OAuth2FrontendController
     from oauth2 import OAuth2AccessController

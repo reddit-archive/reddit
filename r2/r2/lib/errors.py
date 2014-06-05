@@ -140,6 +140,7 @@ error_list = dict((
         ('INVALID_LOCATION', _("invalid location")),
         ('BANNED_FROM_SUBREDDIT', _('that user is banned from the subreddit')),
         ('GOLD_REQUIRED', _('you must have an active reddit gold subscription to do that')),
+        ('INSUFFICIENT_CREDDITS', _("insufficient creddits")),
     ))
 
 errors = Storage([(e, e) for e in error_list.keys()])

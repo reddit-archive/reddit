@@ -114,6 +114,12 @@ class OAuth2Scope:
                 "information. Will not have access to your email or "
                 "password."),
         },
+        "creddits": {
+            "id": "creddits",
+            "name": _("Spend reddit gold creddits"),
+            "description": _("Spend my reddit gold creddits on giving "
+                "gold to other users."),
+        },
         "edit": {
             "id": "edit",
             "name": _("Edit Posts"),

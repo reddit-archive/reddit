@@ -384,6 +384,9 @@ def make_map():
     mc("/api/v1/me/:action", controller="apiv1user")
     mc("/api/v1/me/:action/:username", controller="apiv1user")
 
+    mc("/api/v1/gold/gild/:fullname", controller="apiv1gold", action="gild")
+    mc("/api/v1/gold/give/:username", controller="apiv1gold", action="give")
+
     mc('/dev', controller='redirect', action='redirect', dest='/dev/api')
     mc('/dev/api', controller='apidocs', action='docs')
     mc('/dev/api/:mode', controller='apidocs', action='docs',
