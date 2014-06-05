@@ -69,6 +69,7 @@ class ListingController(RedditController):
 
     # any text that should be shown on the top of the page
     infotext = None
+    infotext_class = None
 
     # builder class to use to generate the listing. if none, we'll try
     # to figure it out based on the query type
@@ -118,6 +119,7 @@ class ListingController(RedditController):
                                nav_menus=self.menus,
                                title=self.title(),
                                infotext=self.infotext,
+                               infotext_class=self.infotext_class,
                                robots=getattr(self, "robots", None),
                                **self.render_params).render()
 

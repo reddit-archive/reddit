@@ -186,7 +186,8 @@ class Reddit(Templated):
     extra_stylesheets  = []
 
     def __init__(self, space_compress=None, nav_menus=None, loginbox=True,
-                 infotext='', content=None, short_description='', title='',
+                 infotext='', infotext_class=None, content=None,
+                 short_description='', title='',
                  robots=None, show_sidebar=True, show_chooser=False,
                  footer=True, srbar=True, page_classes=None, short_title=None,
                  show_wiki_actions=False, extra_js_config=None,
@@ -236,7 +237,8 @@ class Reddit(Templated):
                     infotext = g.live_config["announcement_message"]
 
             if infotext:
-                self.infobar = InfoBar(message=infotext)
+                self.infobar = InfoBar(
+                    message=infotext, extra_class=infotext_class)
             elif (isinstance(c.site, DomainSR) and
                     c.site.domain.endswith("imgur.com")):
                 self.infobar = InfoBar(message=
