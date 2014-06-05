@@ -299,6 +299,17 @@ class Builder(object):
     def get_items(self):
         raise NotImplementedError
 
+    def convert_items(self, items):
+        """Convert a list of items to the desired output format"""
+        if self.wrap:
+            items = self.wrap_items(items)
+        else:
+            # make a copy of items so the converted items can be mutated without
+            # changing the original items
+            items = items[:]
+
+        return items
+
     def item_iter(self, a):
         """Iterates over the items returned by get_items"""
         raise NotImplementedError
@@ -343,6 +354,11 @@ class QueryBuilder(Builder):
         """Iterates over the items returned by get_items"""
         for i in a[0]:
             yield i
+
+    def convert_items(self, items):
+        if self.prewrap_fn:
+            items = [self.prewrap_fn(i) for i in items]
+        return Builder.convert_items(self, items)
 
     def init_query(self):
         q = self.query
@@ -409,11 +425,7 @@ class QueryBuilder(Builder):
                 have_next = False
 
             unwrapped_items = new_items
-            if self.prewrap_fn:
-                new_items = [self.prewrap_fn(i) for i in new_items]
-
-            if self.wrap:
-                new_items = self.wrap_items(new_items)
+            new_items = self.convert_items(new_items)
 
             # For wrapped -> unwrapped lookups
             orig_items.update(izip(new_items, unwrapped_items))
