@@ -93,6 +93,7 @@ from r2.models import (
     FakeSubreddit,
     Friends,
     Frontpage,
+    get_request_location,
     LabeledMulti,
     Link,
     Mod,
@@ -756,6 +757,11 @@ class MinimalController(BaseController):
         except CookieError:
             cookies_key = ''
 
+        if request.host != g.media_domain:
+            location = get_request_location()
+        else:
+            location = None
+
         return make_key('request',
                         c.lang,
                         c.content_langs,
@@ -766,6 +772,7 @@ class MinimalController(BaseController):
                         c.over18,
                         c.extension,
                         c.render_style,
+                        location,
                         cookies_key)
 
     def cached_response(self):
