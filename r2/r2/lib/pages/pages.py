@@ -31,9 +31,11 @@ from r2.models import Flair, FlairTemplate, FlairTemplateBySubredditIndex
 from r2.models import USER_FLAIR, LINK_FLAIR
 from r2.models.bidding import Bid
 from r2.models.gold import (
+    calculate_server_seconds,
     gold_payments_by_user,
     gold_received_by_user,
     days_to_pennies,
+    get_current_value_of_month,
     gold_goal_on,
     gold_revenue_steady,
     gold_revenue_volatile,
@@ -1835,11 +1837,6 @@ class ProfileBar(Templated):
 
 
 class ServerSecondsBar(Templated):
-    pennies_per_server_second = {
-        datetime.datetime.strptime(datestr, "%Y/%m/%d").date(): v
-        for datestr, v in g.live_config['pennies_per_server_second'].iteritems()
-    }
-
     my_message = _("you have helped pay for *%(time)s* of reddit server time.")
     their_message = _("/u/%(user)s has helped pay for *%%(time)s* of reddit server "
                       "time.")
@@ -1848,26 +1845,6 @@ class ServerSecondsBar(Templated):
                         "reddit server time.")
     their_gift_message = _("gifts on behalf of /u/%(user)s have helped pay for "
                            "*%%(time)s* of reddit server time.")
-
-    @classmethod
-    def get_rate(cls, dt):
-        cutoff_dates = sorted(cls.pennies_per_server_second.keys())
-        dt = dt.date()
-        key = max(filter(lambda cutoff_date: dt >= cutoff_date, cutoff_dates))
-        return cls.pennies_per_server_second[key]
-
-    @classmethod
-    def subtract_fees(cls, pennies):
-        # for simplicity all payment processor fees are $0.30 + 2.9%
-        return pennies * (1 - 0.029) - 30
-
-    @classmethod
-    def current_value_of_month(cls):
-        price = g.gold_month_price.pennies
-        after_fees = cls.subtract_fees(price)
-        current_rate = cls.get_rate(datetime.datetime.now(g.display_tz))
-        delta = datetime.timedelta(seconds=after_fees / current_rate)
-        return precise_format_timedelta(delta, threshold=5, locale=c.locale)
 
     def make_message(self, seconds, my_message, their_message):
         if not seconds:
@@ -1893,8 +1870,7 @@ class ServerSecondsBar(Templated):
         gold_payments = gold_payments_by_user(user)
 
         for payment in gold_payments:
-            rate = self.get_rate(payment.date)
-            seconds += self.subtract_fees(payment.pennies) / rate
+            seconds += calculate_server_seconds(payment.pennies, payment.date)
 
         try:
             q = (Bid.query().filter(Bid.account_id == user._id)
@@ -1905,8 +1881,8 @@ class ServerSecondsBar(Templated):
             selfserve_payments = []
 
         for payment in selfserve_payments:
-            rate = self.get_rate(payment.date)
-            seconds += self.subtract_fees(payment.charge_amount * 100) / rate
+            pennies = payment.charge_amount * 100
+            seconds += calculate_server_seconds(pennies, payment.date)
         self.message = self.make_message(seconds, self.my_message,
                                          self.their_message)
 
@@ -1914,9 +1890,8 @@ class ServerSecondsBar(Templated):
         gold_gifts = gold_received_by_user(user)
 
         for payment in gold_gifts:
-            rate = self.get_rate(payment.date)
             pennies = days_to_pennies(payment.days)
-            seconds += self.subtract_fees(pennies) / rate
+            seconds += calculate_server_seconds(pennies, payment.date)
         self.gift_message = self.make_message(seconds, self.my_gift_message,
                                               self.their_gift_message)
 
@@ -4240,7 +4215,12 @@ class Goldvertisement(Templated):
         self.percent_filled = int((revenue_today / revenue_goal) * 100)
         self.percent_filled_yesterday = int((revenue_yesterday /
                                              revenue_goal_yesterday) * 100)
-        self.hours_paid = ServerSecondsBar.current_value_of_month()
+
+        seconds = get_current_value_of_month()
+        delta = datetime.timedelta(seconds=seconds)
+        self.hours_paid = precise_format_timedelta(
+            delta, threshold=5, locale=c.locale)
+
         self.time_left_today = timeuntil(end_time, precision=60)
         if c.user.employee:
             self.goal_today = revenue_goal / 100.0
