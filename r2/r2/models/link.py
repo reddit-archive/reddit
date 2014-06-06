@@ -304,6 +304,8 @@ class Link(Thing, Printable):
 
     def markdown_link_slow(self):
         title = _force_unicode(self.title)
+        title = title.replace("[", r"\[")
+        title = title.replace("]", r"\]")
         return "[%s](%s)" % (title, self.make_permalink_slow())
 
     def _gild(self, user):
