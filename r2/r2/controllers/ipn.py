@@ -60,6 +60,7 @@ from r2.models import (
     append_random_bottlecap_phrase,
     cancel_subscription,
     Comment,
+    creddits_lock,
     Email,
     create_claimed_gold,
     create_gift_gold,
@@ -372,37 +373,37 @@ class IpnController(RedditController):
                 form.set_html(".status", _("that user has deleted their account"))
                 return
 
-        if not c.user.employee:
-            if months > c.user.gold_creddits:
-                raise ValueError("%s is trying to sneak around the creddit check"
-                                 % c.user.name)
 
-            c.user.gold_creddits -= months
-            c.user.gold_creddit_escrow += months
-            c.user._commit()
+        with creddits_lock(c.user):
+            if not c.user.employee and c.user.gold_creddits < months:
+                msg = "%s is trying to sneak around the creddit check"
+                msg %= c.user.name
+                raise ValueError(msg)
 
-        if payment_blob["goldtype"] == "gift":
-            thing_fullname = payment_blob.get("thing")
-            thing = send_gift(c.user, recipient, months, days, signed,
-                              giftmessage, thing_fullname)
-            form.set_html(".status", _("the gold has been delivered!"))
-        else:
-            try:
-                send_gold_code(c.user, months, days)
-            except MessageError:
+            if payment_blob["goldtype"] == "gift":
+                thing_fullname = payment_blob.get("thing")
+                if not thing_fullname:
+                    thing_fullname = payment_blob.get("comment")
+                thing = send_gift(c.user, recipient, months, days, signed,
+                                  giftmessage, thing_fullname)
+                form.set_html(".status", _("the gold has been delivered!"))
+            else:
+                try:
+                    send_gold_code(c.user, months, days)
+                except MessageError:
+                    msg = _("there was an error creating a gift code. "
+                            "please try again later, or contact %(email)s "
+                            "for assistance.") % {'email': g.goldthanks_email}
+                    form.set_html(".status", msg)
+                    return
+                thing = None
                 form.set_html(".status",
-                              _("there was an error creating a gift code. "
-                                "please try again later, or contact %(email)s "
-                                "for assistance.")
-                              % {'email': g.goldthanks_email})
-                return
-            thing = None
-            form.set_html(".status",
-                          _("the gift code has been messaged to you!"))
+                              _("the gift code has been messaged to you!"))
 
-        if not c.user.employee:
-            c.user.gold_creddit_escrow -= months
-            c.user._commit()
+            if not c.user.employee:
+                c.user.gold_creddits -= months
+                c.user._commit()
+
         form.find("button").hide()
 
         payment_blob["status"] = "processed"
