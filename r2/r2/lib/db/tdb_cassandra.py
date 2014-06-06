@@ -881,6 +881,7 @@ class DenormalizedRelation(object):
         raise NotImplementedError()
 
     @classmethod
+    @will_write
     def create(cls, thing1, thing2s, **kw):
         """Create a relationship between thing1 and thing2s.
 
@@ -904,6 +905,7 @@ class DenormalizedRelation(object):
             LastModified.touch(thing1._fullname, cls._last_modified_name)
 
     @classmethod
+    @will_write
     def destroy(cls, thing1, thing2s):
         """Destroy relationships between thing1 and some thing2s."""
         thing2s = tup(thing2s)
