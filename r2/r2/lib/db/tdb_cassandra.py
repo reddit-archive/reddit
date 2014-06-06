@@ -874,6 +874,7 @@ class DenormalizedRelation(object):
     _write_last_modified = True
     _extra_schema_creation_args = dict(key_validation_class=ASCII_TYPE,
                                        default_validation_class=UTF8_TYPE)
+    _ttl = None
 
     @classmethod
     def value_for(cls, thing1, thing2, **kw):
@@ -895,7 +896,7 @@ class DenormalizedRelation(object):
         thing2s = tup(thing2s)
         values = {thing2._id36 : cls.value_for(thing1, thing2, **kw)
                   for thing2 in thing2s}
-        cls._cf.insert(thing1._id36, values)
+        cls._cf.insert(thing1._id36, values, ttl=cls._ttl)
 
         for view in cls._views:
             view.create(thing1, thing2s, **kw)
