@@ -303,8 +303,8 @@ class Link(Thing, Printable):
                                    force_domain=force_domain)
 
     def markdown_link_slow(self):
-        return "[%s](%s)" % (self.title.decode('utf-8'),
-                             self.make_permalink_slow())
+        title = _force_unicode(self.title)
+        return "[%s](%s)" % (title, self.make_permalink_slow())
 
     def _gild(self, user):
         now = datetime.now(g.tz)
