@@ -2878,7 +2878,8 @@ class ApiController(RedditController):
 
 
     @validatedForm(VUser(),
-                   code = VPrintable("code", 30))
+                   VModhash(),
+                   code=VPrintable("code", 30))
     def POST_claimgold(self, form, jquery, code):
         status = ''
         if not code:
@@ -3633,7 +3634,8 @@ class ApiController(RedditController):
 
 
     @noresponse(VUser(),
-              ui_elem = VOneOf('id', ('organic',)))
+                VModhash(),
+                ui_elem=VOneOf('id', ('organic',)))
     def POST_disable_ui(self, ui_elem):
         if ui_elem:
             pref = "pref_%s" % ui_elem

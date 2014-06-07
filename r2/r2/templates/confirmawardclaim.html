@@ -32,6 +32,7 @@ ${unsafe(safemarkdown(_("# Claim this award for /u/%s? #") % thing.user))}
 
 ${trophy_info(thing.trophy, False)}
 
+<input type="hidden" name="uh" value="${c.modhash}">
 <button class="btn" type="submit">${_("Yes, please!")}</button>
 
 </form>
