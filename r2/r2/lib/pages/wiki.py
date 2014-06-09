@@ -137,7 +137,7 @@ class WikiBasePage(Reddit):
 
         Reddit.__init__(self, extra_js_config={'wiki_page': page}, 
                         show_wiki_actions=True, page_classes=page_classes,
-                        content=content, **context)
+                        content=content, short_title=page, **context)
 
     def content(self):
         return self._content

@@ -689,3 +689,23 @@ a.author { margin-right: 0.5em; }
     padding-left: 5px;
     font-weight: bold;
 }
+
+.wiki-page {
+    background-color: white;
+}
+
+.wiki {
+    padding: 0 5px;
+}
+
+.wiki img {
+    display: block;
+}
+
+.wiki p {
+    padding: 0 10px;
+}
+
+.wiki .toc {
+    display: none;
+}
