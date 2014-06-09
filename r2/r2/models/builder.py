@@ -852,6 +852,8 @@ class CommentBuilder(Builder):
                     parent.child = empty_listing()
                 if not parent.deleted:
                     parent.child.parent_name = parent._fullname
+                else:
+                    parent.child.parent_name = 'deleted'
                 parent.child.things.append(comment)
             else:
                 final.append(comment)
@@ -864,6 +866,8 @@ class CommentBuilder(Builder):
             parent.child = empty_listing(more_recursion)
             if not parent.deleted:
                 parent.child.parent_name = parent._fullname
+            else:
+                parent.child.parent_name = 'deleted'
 
         timer.intermediate("build_comments")
 
@@ -908,6 +912,8 @@ class CommentBuilder(Builder):
                     parent.child = empty_listing(w)
                     if not parent.deleted:
                         parent.child.parent_name = parent._fullname
+                    else:
+                        parent.child.parent_name = 'deleted'
 
         # build MoreChildren for missing root level comments
         if top_level_candidates:
