@@ -684,17 +684,13 @@ class WikiRecentRevisionBuilder(WikiRevisionBuilder):
         return item_age.days >= wiki.WIKI_RECENT_DAYS
 
 
-def empty_listing(*things):
-    parent_name = None
-    for t in things:
-        try:
-            parent_name = t.parent_name
-            break
-        except AttributeError:
-            continue
-    l = Listing(None, None, parent_name = parent_name)
+def add_child_listing(parent, *things):
+    l = Listing(None, nextprev=None)
     l.things = list(things)
-    return Wrapped(l)
+    parent.child = Wrapped(l)
+    parent_name = parent._fullname if not parent.deleted else "deleted"
+    parent.child.parent_name = parent_name
+
 
 def make_wrapper(parent_wrapper = Wrapped, **params):
     def wrapper_fn(thing):
@@ -849,12 +845,9 @@ class CommentBuilder(Builder):
             parent = wrapped_by_id.get(comment.parent_id)
             if parent:
                 if not hasattr(parent, 'child'):
-                    parent.child = empty_listing()
-                if not parent.deleted:
-                    parent.child.parent_name = parent._fullname
+                    add_child_listing(parent, comment)
                 else:
-                    parent.child.parent_name = 'deleted'
-                parent.child.things.append(comment)
+                    parent.child.things.append(comment)
             else:
                 final.append(comment)
 
@@ -863,11 +856,7 @@ class CommentBuilder(Builder):
                 continue
 
             parent = wrapped_by_id[parent_id]
-            parent.child = empty_listing(more_recursion)
-            if not parent.deleted:
-                parent.child.parent_name = parent._fullname
-            else:
-                parent.child.parent_name = 'deleted'
+            add_child_listing(parent, more_recursion)
 
         timer.intermediate("build_comments")
 
@@ -909,11 +898,7 @@ class CommentBuilder(Builder):
                 if hasattr(parent, 'child'):
                     parent.child.things.append(w)
                 else:
-                    parent.child = empty_listing(w)
-                    if not parent.deleted:
-                        parent.child.parent_name = parent._fullname
-                    else:
-                        parent.child.parent_name = 'deleted'
+                    add_child_listing(parent, w)
 
         # build MoreChildren for missing root level comments
         if top_level_candidates:
@@ -1033,7 +1018,7 @@ class MessageBuilder(Builder):
                 # uncollapsed, and truncate the thread
                 children = [wrapped[child] for child in children
                                            if child in wrapped]
-                parent.child = empty_listing()
+                add_child_listing(parent)
                 # if the parent is new, uncollapsed, or focal we don't
                 # want it to become a moremessages wrapper.
                 if (self.skip and 
@@ -1045,7 +1030,7 @@ class MessageBuilder(Builder):
                             break
                     else:
                         i = -1
-                    parent = Wrapped(MoreMessages(parent, empty_listing()))
+                    parent = Wrapped(MoreMessages(parent, parent.child))
                     children = children[i:]
 
                 parent.child.parent_name = parent._fullname
