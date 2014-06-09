@@ -1156,6 +1156,19 @@ class OAuth2ResourceController(MinimalController):
             else:
                 return None
 
+    def set_up_user_context(self):
+        if not c.user._loaded:
+            c.user._load()
+
+        if hasattr(c.user, 'msgtime') and c.user.msgtime:
+            c.have_messages = c.user.msgtime
+        c.have_mod_messages = bool(c.user.modmsgtime)
+
+        if not isinstance(c.site, FakeSubreddit) and not g.disallow_db_writes:
+            c.user.update_sr_activity(c.site)
+
+        c.user_special_distinguish = c.user.special_distinguish()
+
 
 class RedditController(OAuth2ResourceController):
 
@@ -1257,19 +1270,13 @@ class RedditController(OAuth2ResourceController):
                     c.user.pref_lang = g.lang
                     c.user.pref_content_langs = [g.lang]
                     c.user._commit()
+
         if c.user_is_loggedin:
-            if not c.user._loaded:
-                c.user._load()
+            self.set_up_user_context()
             c.modhash = c.user.modhash()
-            if hasattr(c.user, 'msgtime') and c.user.msgtime:
-                c.have_messages = c.user.msgtime
-            c.have_mod_messages = bool(c.user.modmsgtime)
             c.user_is_admin = maybe_admin and c.user.name in g.admins
-            c.user_special_distinguish = c.user.special_distinguish()
             c.user_is_sponsor = c.user_is_admin or c.user.name in g.sponsors
             c.otp_cached = is_otpcookie_valid
-            if not isinstance(c.site, FakeSubreddit) and not g.disallow_db_writes:
-                c.user.update_sr_activity(c.site)
 
         c.request_timer.intermediate("base-auth")
 
