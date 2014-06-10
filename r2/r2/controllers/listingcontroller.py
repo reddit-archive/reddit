@@ -41,7 +41,7 @@ from r2.lib.strings import Score
 import r2.lib.search as search
 from r2.lib.template_helpers import add_sr
 from r2.lib.admin_utils import check_cheating
-from r2.lib.utils import iters, timeago
+from r2.lib.utils import iters, timeago, precise_format_timedelta
 from r2.lib import organic, sup, trending
 from r2.lib.memoize import memoize
 from r2.lib.validator import *
@@ -52,6 +52,7 @@ from api_docs import api_doc, api_section
 
 from pylons.i18n import _
 
+from datetime import timedelta
 import random
 from functools import partial
 
@@ -1428,6 +1429,26 @@ class UserListListingController(ListingController):
 
 class GildedController(ListingController):
     title_text = _("gilded")
+
+    @property
+    def infotext(self):
+        if isinstance(c.site, FakeSubreddit):
+            return ''
+
+        seconds = c.site.gilding_server_seconds
+        if not seconds:
+            return ''
+
+        delta = timedelta(seconds=seconds)
+        server_time = precise_format_timedelta(
+            delta, threshold=5, locale=c.locale)
+        message = _("gildings in this subreddit have paid for %(time)s of "
+                    "server time")
+        return message % {'time': server_time}
+
+    @property
+    def infotext_class(self):
+        return "rounded gold-accent"
 
     def keep_fn(self):
         def keep(item):
