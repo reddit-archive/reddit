@@ -586,6 +586,7 @@ class ApiController(RedditController):
             #anything else we know (email, languages)?
             if email:
                 user.email = email
+                emailer.verify_email(user)
 
             user.pref_lang = c.lang
             if c.content_langs == 'all':
