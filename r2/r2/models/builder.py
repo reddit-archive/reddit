@@ -988,13 +988,7 @@ class MessageBuilder(Builder):
             message_ids.append(prev_item)
 
         messages = Message._byID(message_ids, data = True, return_dict = False)
-        wrapped = {}
-        for m in self.wrap_items(messages):
-            if not self._viewable_message(m):
-                g.log.warning("%r is not viewable by %s; path is %s" %
-                                 (m, c.user.name, request.fullpath))
-                continue
-            wrapped[m._id] = m
+        wrapped = {m._id: m for m in self.wrap_items(messages)}
 
         if prev_item:
             prev_item = wrapped[prev_item]
@@ -1005,7 +999,12 @@ class MessageBuilder(Builder):
         for parent, children in tree:
             if parent not in wrapped:
                 continue
+
             parent = wrapped[parent]
+
+            if not self._viewable_message(parent):
+                continue
+
             if children:
                 # if no parent is specified, check if any of the messages are
                 # uncollapsed, and truncate the thread
@@ -1107,6 +1106,13 @@ class UserMessageBuilder(MessageBuilder):
     def __init__(self, user, **kw):
         self.user = user
         MessageBuilder.__init__(self, **kw)
+
+    def _viewable_message(self, message):
+        is_author = message.author_id == c.user._id
+        if not c.user_is_admin and not is_author and message._spam:
+            return False
+
+        return super(UserMessageBuilder, self)._viewable_message(message)
 
     def get_tree(self):
         if self.parent:
