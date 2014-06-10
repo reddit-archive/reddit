@@ -424,7 +424,7 @@ class QueryBuilder(Builder):
             new_items = self.convert_items(fetched_items)
 
             # For wrapped -> unwrapped lookups
-            orig_items.update(izip(new_items, fetched_items))
+            orig_items.update((a._id, b) for a, b in izip(new_items, fetched_items))
 
             #skip and count
             while new_items and (not self.num or num_have < self.num):
@@ -446,13 +446,15 @@ class QueryBuilder(Builder):
             have_next = False
 
         # Make sure first_item and last_item refer to things in items
+        # NOTE: could retrieve incorrect item if there were items with
+        # duplicate _id
         first_item = None
         last_item = None
         if items:
             if self.start_count > 0:
                 # Make sure the item is the unwrapped version
-                first_item = orig_items[items[0]]
-            last_item = orig_items[items[-1]]
+                first_item = orig_items[items[0]._id]
+            last_item = orig_items[items[-1]._id]
 
         if self.reverse:
             items.reverse()
