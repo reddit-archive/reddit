@@ -43,6 +43,10 @@ function getrval(r) {
     } 
 }
 
+function showPreview(val) {
+  $("#previewbox").html(val)
+}
+
 function update() {
     f = document.forms.widget;
     which = getrval(f.which);
@@ -95,7 +99,7 @@ function update() {
                       escapeHTML(url).replace(/&amp;/g, '&') + 
                       '" type="text/javascript"><'+'/script>';
     $("#codebox").html(escapeHTML(script));
-    $.getScript(url+'&callback=' + encodeURIComponent('$("#previewbox").html'));
+    $.getScript(url+'&callback=showPreview');
                       
     }
 </script>
