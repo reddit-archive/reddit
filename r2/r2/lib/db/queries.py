@@ -1066,12 +1066,12 @@ def new_message(message, inbox_rels):
     from r2.lib.comment_tree import add_message
 
     from_user = Account._byID(message.author_id)
-    for inbox_rel in tup(inbox_rels):
-        to = inbox_rel._thing1
 
-        with CachedQueryMutator() as m:
-            m.insert(get_sent(from_user), [message])
+    with CachedQueryMutator() as m:
+        m.insert(get_sent(from_user), [message])
 
+        for inbox_rel in tup(inbox_rels):
+            to = inbox_rel._thing1
             # moderator message
             if isinstance(inbox_rel, ModeratorInbox):
                 m.insert(get_subreddit_messages(to), [inbox_rel])
