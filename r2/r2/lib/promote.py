@@ -23,9 +23,14 @@
 from collections import namedtuple
 from datetime import datetime, timedelta
 from decimal import Decimal, ROUND_DOWN, ROUND_UP
+import hashlib
+import hmac
 import itertools
 import json
+import random
 import time
+import urllib
+import urlparse
 
 from pylons import g, c
 from pylons.i18n import ungettext
@@ -158,6 +163,53 @@ def is_finished(link):
 
 def is_live_on_sr(link, sr):
     return bool(live_campaigns_by_link(link, sr=sr))
+
+
+def update_query(base_url, query_updates):
+    scheme, netloc, path, params, query, fragment = urlparse.urlparse(base_url)
+    query_dict = urlparse.parse_qs(query)
+    query_dict.update(query_updates)
+    query = urllib.urlencode(query_dict)
+    return urlparse.urlunparse((scheme, netloc, path, params, query, fragment))
+
+
+def add_trackers(items, sr):
+    """Add tracking names and hashes to a list of wrapped promoted links."""
+    for item in items:
+        tracking_name_fields = [item.fullname, item.campaign]
+        if not isinstance(sr, FakeSubreddit):
+            tracking_name_fields.append(sr.name)
+
+        tracking_name = '-'.join(tracking_name_fields)
+
+        # construct the impression pixel url
+        pixel_mac = hmac.new(
+            g.tracking_secret, tracking_name, hashlib.sha1).hexdigest()
+        pixel_query = {
+            "id": tracking_name,
+            "hash": pixel_mac,
+            "r": random.randint(0, 2147483647), # cachebuster
+        }
+        item.imp_pixel = update_query(g.adtracker_url, pixel_query)
+
+        # construct the click redirect url
+        url = urllib.unquote(item.url)
+        hashable = ''.join((url, tracking_name))
+        click_mac = hmac.new(
+            g.tracking_secret, hashable, hashlib.sha1).hexdigest()
+        click_query = {
+            "id": tracking_name,
+            "hash": click_mac,
+            "url": url,
+        }
+        click_url = update_query(g.clicktracker_url, click_query)
+
+        # overwrite the href_url with redirect click_url
+        item.href_url = click_url
+
+        # also overwrite the permalink url with redirect click_url for selfposts
+        if item.is_self:
+            item.permalink = click_url
 
 
 def update_promote_status(link, status):

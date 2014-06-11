@@ -5,6 +5,7 @@
 #include <stdlib.h>
 
 #include <openssl/sha.h>
+#include <openssl/hmac.h>
 
 #include "utils.h"
 
@@ -20,8 +21,9 @@ int main(int argc, char** argv)
     }
 
     char input_line[MAX_LINE];
-    unsigned char input_hash[SHA_DIGEST_LENGTH];
-    unsigned char expected_hash[SHA_DIGEST_LENGTH];
+    unsigned int hash_length = SHA_DIGEST_LENGTH;
+    unsigned char input_hash[hash_length];
+    unsigned char expected_hash[hash_length];
     int secret_length = strlen(secret);
 
     while (fgets(input_line, MAX_LINE, stdin) != NULL) {
@@ -40,6 +42,7 @@ int main(int argc, char** argv)
         /* in the query string, grab the fields we want to verify */
         char *id = NULL;
         char *hash = NULL;
+        char *url = NULL;
 
         char *key, *value;
         while (parse_query_param(&query, &key, &value) >= 0) {
@@ -47,6 +50,8 @@ int main(int argc, char** argv)
                 id = value;
             } else if (strcmp(key, "hash") == 0) {
                 hash = value;
+            } else if (strcmp(key, "url") == 0) {
+                url = value;
             }
         }
 
@@ -61,9 +66,16 @@ int main(int argc, char** argv)
         if (url_decode(hash) != 40)
             continue;
 
+        int url_length = 0;
+        if (url != NULL) {
+            url_length = url_decode(url);
+            if (url_length < 0)
+                continue;
+        }
+
         /* turn the expected hash into bytes */
         bool bad_hash = false;
-        for (int i = 0; i < SHA_DIGEST_LENGTH; i++) {
+        for (int i = 0; i < hash_length; i++) {
             int count = sscanf(&hash[i*2], "%2hhx", &input_hash[i]);
             if (count != 1) {
                 bad_hash = true;
@@ -75,34 +87,51 @@ int main(int argc, char** argv)
             continue;
 
         /* generate the expected hash */
-        SHA_CTX ctx;
-        int result = 0;
+        HMAC_CTX ctx;
 
-        result = SHA1_Init(&ctx);
-        if (result == 0)
+        // NOTE: EMR has openssl <1.0, so these HMAC methods don't return
+        // error codes -- see https://www.openssl.org/docs/crypto/hmac.html
+        HMAC_Init(&ctx, secret, secret_length, EVP_sha1());
+
+        if (strcmp("/click", path) == 0 && url != NULL) {
+            /* the url is only for click hashes */
+            HMAC_Update(&ctx, url, url_length);
+        }
+
+        HMAC_Update(&ctx, id, id_length);
+        HMAC_Final(&ctx, expected_hash, &hash_length);
+
+        /* generate the old ip hash */
+        SHA_CTX ctx_old;
+        int result_old = 0;
+        unsigned char expected_hash_old[SHA_DIGEST_LENGTH];
+
+        result_old = SHA1_Init(&ctx_old);
+        if (result_old == 0)
             continue;
 
         if (strcmp("/pixel/of_defenestration.png", path) != 0) {
             /* the IP is not included on adframe tracker hashes */
-            result = SHA1_Update(&ctx, ip, strlen(ip));
-            if (result == 0)
+            result_old = SHA1_Update(&ctx_old, ip, strlen(ip));
+            if (result_old == 0)
                 continue;
         }
 
-        result = SHA1_Update(&ctx, id, id_length);
-        if (result == 0)
+        result_old = SHA1_Update(&ctx_old, id, id_length);
+        if (result_old == 0)
             continue;
 
-        result = SHA1_Update(&ctx, secret, secret_length);
-        if (result == 0)
+        result_old = SHA1_Update(&ctx_old, secret, secret_length);
+        if (result_old == 0)
             continue;
 
-        result = SHA1_Final(expected_hash, &ctx);
-        if (result == 0)
+        result_old = SHA1_Final(expected_hash_old, &ctx_old);
+        if (result_old == 0)
             continue;
 
         /* check that the hashes match */
-        if (memcmp(input_hash, expected_hash, SHA_DIGEST_LENGTH) != 0)
+        if (memcmp(input_hash, expected_hash, SHA_DIGEST_LENGTH) != 0 &&
+            memcmp(input_hash, expected_hash_old, SHA_DIGEST_LENGTH) != 0)
             continue;
 
         /* split out the fullname and subreddit if necessary */

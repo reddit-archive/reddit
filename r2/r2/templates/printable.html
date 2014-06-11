@@ -120,6 +120,10 @@ ${self.RenderPrintable()}
       data-cid="${what.campaign}"
     % endif
 
+    % if hasattr(what, 'imp_pixel'):
+      data-imp-pixel="${what.imp_pixel}"
+    % endif
+
     % if hasattr(what, 'adserver_imp_pixel'):
       data-adserver-imp-pixel="${what.adserver_imp_pixel}"
     % endif

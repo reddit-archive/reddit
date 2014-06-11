@@ -45,7 +45,9 @@ use on Amazon Elastic Beanstalk (and possibly other systems).
 
 import cStringIO
 import hashlib
+import hmac
 import time
+import urllib
 
 from ConfigParser import RawConfigParser
 from wsgiref.handlers import format_date_time
@@ -144,16 +146,22 @@ def fetch_trackers():
 
 @application.route('/click')
 def click_redirect():
-    ip = get_client_ip()
-    destination = request.args['url'].encode('utf-8')
+    destination = urllib.unquote(request.args['url'].encode('utf-8'))
     fullname = request.args['id']
-    observed_hash = request.args['hash']
+    observed_mac = request.args['hash']
 
-    expected_hash_text = ''.join((ip, fullname, tracking_secret))
-    expected_hash = hashlib.sha1(expected_hash_text).hexdigest()
+    expected_hashable = ''.join((destination, fullname))
+    expected_mac = hmac.new(
+            tracking_secret, expected_hashable, hashlib.sha1).hexdigest()
 
-    if expected_hash != observed_hash:
-        abort(403)
+    if expected_mac != observed_mac:
+        # check old IP hash
+        ip = get_client_ip()
+        expected_hash_text_old = ''.join((ip, fullname, tracking_secret))
+        expected_hash_old = hashlib.sha1(expected_hash_text_old).hexdigest()
+
+        if expected_hash_old != observed_mac:
+            abort(403)
 
     now = format_date_time(time.time())
     response = redirect(destination)
