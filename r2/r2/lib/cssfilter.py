@@ -275,6 +275,7 @@ SAFE_PROPERTIES = {
     "white-space",
     "widows",
     "width",
+    "will-change",
     "word-break",
     "word-spacing",
     "z-index",
