@@ -197,6 +197,8 @@ class UnloggedUser(FakeAccount):
         "pref_lang": VLang.validate_lang,
         "pref_content_langs": VLang.validate_content_langs,
         "pref_frame_commentspanel": bool,
+        "pref_hide_locationbar": bool,
+        "pref_use_global_defaults": bool,
     }
 
     def __init__(self, browser_langs, *a, **kw):
@@ -215,6 +217,8 @@ class UnloggedUser(FakeAccount):
         self._defaults['pref_lang'] = lang
         self._defaults['pref_content_langs'] = content_langs
         self._defaults['pref_frame_commentspanel'] = False
+        self._defaults['pref_hide_locationbar'] = False
+        self._defaults['pref_use_global_defaults'] = False
         self._load()
 
     @property

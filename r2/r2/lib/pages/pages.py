@@ -194,6 +194,7 @@ class Reddit(Templated):
                  footer=True, srbar=True, page_classes=None, short_title=None,
                  show_wiki_actions=False, extra_js_config=None,
                  meta_thumbnail=None,
+                 show_locationbar=False,
                  **context):
         Templated.__init__(self, **context)
         self.title = title
@@ -217,6 +218,7 @@ class Reddit(Templated):
 
         #add the infobar
         self.welcomebar = None
+        self.locationbar = None
         self.infobar = None
         # generate a canonical link for google
         self.canonical_link = request.fullpath
@@ -253,6 +255,12 @@ class Reddit(Templated):
 
             if not c.user_is_loggedin:
                 self.welcomebar = WelcomeBar()
+
+            show_locationbar &= not c.user.pref_hide_locationbar
+            if (show_locationbar and c.used_localized_defaults and
+                    (not c.user_is_loggedin or
+                     not c.user.has_subscribed)):
+                self.locationbar = LocationBar()
 
         self.srtopbar = None
         if srbar and not c.cname and not is_api():
@@ -704,7 +712,8 @@ class Reddit(Templated):
     def content(self):
         """returns a Wrapped (or renderable) item for the main content div."""
         return self.content_stack((
-            self.welcomebar, self.infobar, self.nav_menu, self._content))
+            self.welcomebar, self.infobar, self.locationbar, self.nav_menu,
+            self._content))
 
     def page_classes(self):
         classes = set()
@@ -1934,6 +1943,10 @@ class ClientInfoBar(InfoBar):
         kwargs.setdefault("extra_class", "client-info")
         InfoBar.__init__(self, *args, **kwargs)
         self.client = client
+
+
+class LocationBar(Templated): pass
+
 
 class SidebarMessage(Templated):
     """An info message box on the sidebar."""

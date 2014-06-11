@@ -209,7 +209,16 @@ listing_api_doc = partial(
 )
 
 
-class ListingWithPromos(ListingController):
+class SubredditListingController(ListingController):
+    @property
+    def render_params(self):
+        if isinstance(c.site, DefaultSR):
+            return {'show_locationbar': True}
+        else:
+            return {}
+
+
+class ListingWithPromos(SubredditListingController):
     show_organic = False
 
     def make_requested_ad(self, requested_ad):
@@ -487,7 +496,7 @@ class BrowseController(ListingWithPromos):
         return ListingController.GET_listing(self, **env)
 
 
-class AdsController(ListingController):
+class AdsController(SubredditListingController):
     builder_cls = CampaignBuilder
     title_text = _('promoted links')
 
@@ -1169,7 +1178,8 @@ class MyredditsController(ListingController):
         self.where = where
         return ListingController.GET_listing(self, **env)
 
-class CommentsController(ListingController):
+
+class CommentsController(SubredditListingController):
     title_text = _('comments')
 
     def keep_fn(self):
@@ -1192,6 +1202,7 @@ class CommentsController(ListingController):
     def GET_listing(self, **env):
         c.profilepage = True
         return ListingController.GET_listing(self, **env)
+
 
 class UserListListingController(ListingController):
     builder_cls = UserListBuilder
@@ -1432,7 +1443,8 @@ class UserListListingController(ListingController):
         check_cheating('site')
         return self.build_listing(**kw)
 
-class GildedController(ListingController):
+
+class GildedController(SubredditListingController):
     title_text = _("gilded")
 
     @property

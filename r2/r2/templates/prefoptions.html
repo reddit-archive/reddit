@@ -103,6 +103,17 @@
   </tr>
 
   %if c.user_is_loggedin:
+    %if not c.user.has_subscribed and (c.user.pref_use_global_defaults or c.user.pref_hide_locationbar):
+    <tr>
+      <th>${_("location options")}</th>
+      <td class="prefright">
+        ${checkbox(_("use the global default subreddits for my front page"), "use_global_defaults")}
+        <br/>
+        ${checkbox(_("hide the location information bar"), "hide_locationbar")}
+      </td>
+    </tr>
+    %endif
+
   <tr>
     <th>${_("clicking options")}</th>
     <td class="prefright">

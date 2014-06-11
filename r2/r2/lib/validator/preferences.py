@@ -69,6 +69,8 @@ PREFS_VALIDATORS = dict(
     pref_show_trending=VBoolean("show_trending"),
     pref_highlight_new_comments=VBoolean("highlight_new_comments"),
     pref_monitor_mentions=VBoolean("monitor_mentions"),
+    pref_hide_locationbar=VBoolean("hide_locationbar"),
+    pref_use_global_defaults=VBoolean("use_global_defaults"),
 )
 
 

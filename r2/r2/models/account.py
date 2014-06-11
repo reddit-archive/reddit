@@ -123,6 +123,8 @@ class Account(Thing):
                      otp_secret=None,
                      state=0,
                      modmsgtime=None,
+                     pref_use_global_defaults=False,
+                     pref_hide_locationbar=False,
                      )
     _preference_attrs = tuple(k for k in _defaults.keys()
                               if k.startswith("pref_"))

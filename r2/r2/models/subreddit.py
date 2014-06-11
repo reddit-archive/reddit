@@ -84,7 +84,9 @@ def get_request_location():
 
     c.location = None
 
-    if getattr(request, 'via_cdn', False):
+    if c.user and c.user.pref_use_global_defaults:
+        pass
+    elif getattr(request, 'via_cdn', False):
         g.stats.simple_event('geoip.cdn_request')
         edgescape_info = request.environ.get('HTTP_X_AKAMAI_EDGESCAPE')
         if edgescape_info:
@@ -794,7 +796,9 @@ class Subreddit(Thing, Printable, BaseSite):
 
         srids = LocalizedDefaultSubreddits.get_srids(location)
 
-        if not srids:
+        if srids:
+            c.used_localized_defaults = True
+        else:
             limit = g.num_default_reddits + len(auto_srids)
             srids = cls.top_lang_srs(langs, limit=limit, filter_allow_top=True,
                                      over18=False, ids=True)

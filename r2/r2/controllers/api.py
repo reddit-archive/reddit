@@ -3988,3 +3988,15 @@ class ApiController(RedditController):
             from r2.models.admin_notes import AdminNotesBySystem
             AdminNotesBySystem.add(system, subject, note, author)
         form.refresh()
+
+    @validatedForm(VModhashIfLoggedIn())
+    def POST_hide_locationbar(self, form, jquery):
+        c.user.pref_hide_locationbar = True
+        c.user._commit()
+        jquery(".locationbar").hide()
+
+    @validatedForm(VModhashIfLoggedIn())
+    def POST_use_global_defaults(self, form, jquery):
+        c.user.pref_use_global_defaults = True
+        c.user._commit()
+        jquery.refresh()
