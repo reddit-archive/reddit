@@ -22,4 +22,12 @@
 
 <%inherit file="base.xml"/>
 
+<%def name="Title()">
+  %if thing.title:
+    ${thing.title}
+  %else:
+    ${parent.Title()}
+  %endif
+</%def>
+
 ${thing.content()}

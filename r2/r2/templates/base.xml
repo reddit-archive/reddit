@@ -34,7 +34,7 @@
     <description>${c.site.public_description or ''}</description>
     <image>
       <%
-        if g.css_killswitch or not c.site.header:
+        if g.css_killswitch or not c.site.header or not c.can_apply_styles:
             header_img = header_url(DefaultSR().header)
         else:
             header_img = header_url(c.site.header)
