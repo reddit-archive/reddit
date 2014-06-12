@@ -154,13 +154,13 @@ def click_redirect():
     expected_mac = hmac.new(
             tracking_secret, expected_hashable, hashlib.sha1).hexdigest()
 
-    if expected_mac != observed_mac:
+    if not constant_time_compare(expected_mac, observed_mac):
         # check old IP hash
         ip = get_client_ip()
         expected_hash_text_old = ''.join((ip, fullname, tracking_secret))
         expected_hash_old = hashlib.sha1(expected_hash_text_old).hexdigest()
 
-        if expected_hash_old != observed_mac:
+        if not constant_time_compare(expected_hash_old, observed_mac):
             abort(403)
 
     now = format_date_time(time.time())
@@ -170,6 +170,23 @@ def click_redirect():
     response.headers['Date'] = now
     response.headers['Expires'] = now
     return response
+
+
+# copied from r2.lib.utils
+def constant_time_compare(actual, expected):
+    """
+    Returns True if the two strings are equal, False otherwise
+
+    The time taken is dependent on the number of characters provided
+    instead of the number of characters that match.
+    """
+    actual_len   = len(actual)
+    expected_len = len(expected)
+    result = actual_len ^ expected_len
+    if expected_len > 0:
+        for i in xrange(actual_len):
+            result |= ord(actual[i]) ^ ord(expected[i % expected_len])
+    return result == 0
 
 
 if __name__ == "__main__":
