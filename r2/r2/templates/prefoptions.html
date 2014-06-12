@@ -101,6 +101,7 @@
       ${language_checkboxes(default = c.user.pref_content_langs)}
     </td>
   </tr>
+
   %if c.user_is_loggedin:
   <tr>
     <th>${_("clicking options")}</th>
@@ -132,7 +133,6 @@
   <tr>
     <th>${_("link options")}</th>
     <td class="prefright">
-%if c.user_is_loggedin:
       <p>
         ${checkbox(_("show the spotlight box on the front page"), "organic")}
         &#32;
@@ -140,10 +140,6 @@
           ${_("(it shows new and promoted links, and gives you a say in what's spam and what isn't.)")}
         </span>
       </p>
-%else:
-      <p>${checkbox(_("show me new links on the front page"), "organic")}</p>
-%endif
-
       <p>
         ${checkbox(_("show trending subreddits on the front page"), "show_trending")}
         &#32;
@@ -311,6 +307,7 @@
     </td>
   </tr>
   %endif
+
   %if c.user.gold:
   <tr class="gold-accent">
     <th>${_("gold options")}</th>
@@ -337,6 +334,7 @@
     </td>
   </tr>
   %endif
+
   <tr>
     <td>
       <input type="submit" class="btn" value="${_('save options')}"/>
