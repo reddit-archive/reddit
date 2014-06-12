@@ -393,7 +393,15 @@ def _is_query_precomputed(query):
     return False
 
 
-def cached_query(model, filter_fn=filter_identity, sort=None):
+class FakeQuery(object):
+    """A somewhat query-like object for conveying sort information."""
+
+    def __init__(self, sort, precomputed=False):
+        self._sort = sort
+        self.precomputed = precomputed
+
+
+def cached_query(model, filter_fn=filter_identity):
     """Decorate a function describing a cached query.
 
     The decorated function is expected to follow the naming convention common
@@ -401,12 +409,10 @@ def cached_query(model, filter_fn=filter_identity, sort=None):
     from the combination of the function name and its arguments separated by
     periods.
 
-    There are currently two types of cached queries: SQL-backed and
-    pure-Cassandra.  In the prior case, sort should be None and the decorated
-    function should return a Things/Relations query that would be used in the
-    absence of the query cache.  In the pure-Cassandra case, the sort field is
-    used for ranking the returned items should be provided in sort and the
-    return value of the decorated function is ignored.
+    The decorated function should return a raw thingdb query object
+    representing the query that is being cached. If there is no valid
+    underlying query to build off of, a FakeQuery specifying the correct
+    sorting criteria for the enumerated objects can be returned.
 
     """
     def cached_query_decorator(fn):
@@ -430,15 +436,11 @@ def cached_query(model, filter_fn=filter_identity, sort=None):
 
             query = fn(*args)
 
-            if query:
-                # sql-backed query
-                query_sort = query._sort
+            query_sort = query._sort
+            try:
+                is_precomputed = query.precomputed
+            except AttributeError:
                 is_precomputed = _is_query_precomputed(query)
-            else:
-                # pure-cassandra query
-                assert sort
-                query_sort = sort
-                is_precomputed = False
 
             return CachedQuery(model, row_key, query_sort, filter_fn,
                                is_precomputed)

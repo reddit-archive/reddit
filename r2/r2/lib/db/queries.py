@@ -35,6 +35,7 @@ from r2.models.query_cache import (
     CachedQuery,
     CachedQueryMutator,
     filter_thing,
+    FakeQuery,
     merged_cached_query,
     MergedCachedQuery,
     SubredditQueryCache,
@@ -533,28 +534,28 @@ def get_liked(user):
 def get_disliked(user):
     return rel_query(vote_rel, user, '-1')
 
-@cached_query(UserQueryCache, sort=[desc('action_date')])
+@cached_query(UserQueryCache)
 def get_hidden_links(user_id):
-    return
+    return FakeQuery(sort=[desc("action_date")])
 
 def get_hidden(user):
     return get_hidden_links(user)
 
-@cached_query(UserQueryCache, sort=[desc('action_date')])
+@cached_query(UserQueryCache)
 def get_categorized_saved_links(user_id, sr_id, category):
-    return
+    return FakeQuery(sort=[desc("action_date")])
 
-@cached_query(UserQueryCache, sort=[desc('action_date')])
+@cached_query(UserQueryCache)
 def get_categorized_saved_comments(user_id, sr_id, category):
-    return
+    return FakeQuery(sort=[desc("action_date")])
 
-@cached_query(UserQueryCache, sort=[desc('action_date')])
+@cached_query(UserQueryCache)
 def get_saved_links(user_id, sr_id):
-    return
+    return FakeQuery(sort=[desc("action_date")])
 
-@cached_query(UserQueryCache, sort=[desc('action_date')])
+@cached_query(UserQueryCache)
 def get_saved_comments(user_id, sr_id):
-    return
+    return FakeQuery(sort=[desc("action_date")])
 
 def get_saved(user, sr_id=None, category=None):
     sr_id = sr_id or 'none'
@@ -770,9 +771,9 @@ def get_all_accepted_links():
     return _promoted_link_query(None, 'accepted')
 
 
-@cached_query(UserQueryCache, sort=[desc('_date')])
+@cached_query(UserQueryCache)
 def get_underdelivered_campaigns():
-    return
+    return FakeQuery(sort=[desc("_date")])
 
 
 def set_underdelivered_campaigns(campaigns):
@@ -805,14 +806,14 @@ def get_all_promoted_links():
     return queries
 
 
-@cached_query(SubredditQueryCache, sort=[desc("date")], filter_fn=filter_thing)
+@cached_query(SubredditQueryCache, filter_fn=filter_thing)
 def get_all_gilded_comments():
-    return
+    return FakeQuery(sort=[desc("date")])
 
 
-@cached_query(SubredditQueryCache, sort=[desc("date")], filter_fn=filter_thing)
+@cached_query(SubredditQueryCache, filter_fn=filter_thing)
 def get_all_gilded_links():
-    return
+    return FakeQuery(sort=[desc("date")])
 
 
 @merged_cached_query
@@ -820,14 +821,14 @@ def get_all_gilded():
     return [get_all_gilded_comments(), get_all_gilded_links()]
 
 
-@cached_query(SubredditQueryCache, sort=[desc("date")], filter_fn=filter_thing)
+@cached_query(SubredditQueryCache, filter_fn=filter_thing)
 def get_gilded_comments(sr_id):
-    return
+    return FakeQuery(sort=[desc("date")])
 
 
-@cached_query(SubredditQueryCache, sort=[desc("date")], filter_fn=filter_thing)
+@cached_query(SubredditQueryCache, filter_fn=filter_thing)
 def get_gilded_links(sr_id):
-    return
+    return FakeQuery(sort=[desc("date")])
 
 
 @merged_cached_query
@@ -837,14 +838,14 @@ def get_gilded(sr_ids):
             for sr_id, query in itertools.product(tup(sr_ids), queries)]
 
 
-@cached_query(UserQueryCache, sort=[desc("date")], filter_fn=filter_thing)
+@cached_query(UserQueryCache, filter_fn=filter_thing)
 def get_gilded_user_comments(user_id):
-    return
+    return FakeQuery(sort=[desc("date")])
 
 
-@cached_query(UserQueryCache, sort=[desc("date")], filter_fn=filter_thing)
+@cached_query(UserQueryCache, filter_fn=filter_thing)
 def get_gilded_user_links(user_id):
-    return
+    return FakeQuery(sort=[desc("date")])
 
 
 @merged_cached_query
@@ -854,9 +855,9 @@ def get_gilded_users(user_ids):
             for user_id, query in itertools.product(tup(user_ids), queries)]
 
 
-@cached_query(UserQueryCache, sort=[desc("date")], filter_fn=filter_thing)
+@cached_query(UserQueryCache, filter_fn=filter_thing)
 def get_user_gildings(user_id):
-    return
+    return FakeQuery(sort=[desc("date")])
 
 
 @merged_cached_query
