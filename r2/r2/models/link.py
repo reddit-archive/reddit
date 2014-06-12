@@ -173,6 +173,9 @@ class Link(Thing, Printable):
         if author._spam:
             g.stats.simple_event('spam.autoremove.link')
             admintools.spam(l, banner='banned user')
+
+        hooks.get_hook('link.new').call(link=l)
+
         return l
 
     def _save(self, user, category=None):
@@ -1377,6 +1380,9 @@ class Message(Thing, Printable):
                 if (orig._id != author._id and
                         not sr.is_moderator_with_perms(orig, 'mail')):
                     inbox_rel.append(Inbox._add(orig, m, 'inbox'))
+
+        hooks.get_hook('message.new').call(message=m)
+
         return (m, inbox_rel)
 
     @property
