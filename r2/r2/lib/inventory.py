@@ -25,7 +25,6 @@ from collections import defaultdict, OrderedDict
 from datetime import datetime, timedelta
 import re
 
-from pylons import g
 from sqlalchemy import func
 
 from r2.lib.memoize import memoize
@@ -33,11 +32,11 @@ from r2.lib.utils import to_date, tup
 from r2.models import (
     Bid,
     FakeSubreddit,
+    LocalizedDefaultSubreddits,
     Location,
     NO_TRANSACTION,
     PromoCampaign,
     PromotionWeights,
-    Subreddit,
     traffic,
 )
 from r2.models.promo_metrics import LocationPromoMetrics, PromoMetrics
@@ -182,11 +181,7 @@ def get_predicted_pageviews(srs, start, end):
     sr_names = [sr.name for sr in srs]
 
     # default subreddits require a different inventory factor
-    content_langs = [g.site_lang]
-    default_srids = Subreddit.top_lang_srs(content_langs,
-                                           limit=g.num_default_reddits,
-                                           filter_allow_top=True, over18=False,
-                                           ids=True)
+    default_srids = LocalizedDefaultSubreddits.get_global_defaults()
 
     # prediction does not vary by date
     daily_inventory = PromoMetrics.get(MIN_DAILY_CASS_KEY, sr_names=sr_names)
