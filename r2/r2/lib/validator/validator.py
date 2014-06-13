@@ -947,6 +947,28 @@ class VModhash(Validator):
             '%s / X-Modhash header' % self.param: 'a [modhash](#modhashes)',
         }
 
+
+class VModhashIfLoggedIn(Validator):
+    handles_csrf = True
+    default_param = 'uh'
+
+    def __init__(self, param=None, fatal=True, *a, **kw):
+        Validator.__init__(self, param, *a, **kw)
+        self.fatal = fatal
+
+    def run(self, uh):
+        # import here so that we don't close around VModhash
+        # before r2admin can override
+        if c.user_is_loggedin:
+            from r2.lib.validator import VModhash
+            VModhash(fatal=self.fatal).run(uh)
+
+    def param_docs(self):
+        return {
+            '%s / X-Modhash header' % self.param: 'a [modhash](#modhashes)',
+        }
+
+
 class VVotehash(Validator):
     def run(self, vh):
         return None
