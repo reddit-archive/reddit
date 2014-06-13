@@ -20,14 +20,20 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from r2.models import Subreddit, SubredditPopularityByLanguage
+from collections import defaultdict
+from itertools import chain
+
+from pylons import g
+
+from r2.models import Subreddit
 from r2.lib.db.operators import desc
 from r2.lib import count
-from r2.lib.utils import fetch_things2, flatten
 from r2.lib.memoize import memoize
+from r2.lib.utils import fetch_things2, tup
 
-# the length of the stored per-language list
-limit = 2500
+
+LIMIT = 2500
+PREFIX = 'pop_reddits'
 
 def set_downs():
     sr_counts = count.get_sr_counts()
@@ -39,90 +45,32 @@ def set_downs():
             sr._downs = max(c, 0)
             sr._commit()
 
-def cache_lists():
-    def _chop(srs):
-        srs.sort(key=lambda s: s._downs, reverse=True)
-        return srs[:limit]
 
-    # bylang    =:= dict((lang, over18_state) -> [Subreddit])
-    # lang      =:= all | lang()
-    # nsfwstate =:= no_over18 | allow_over18 | only_over18
-    bylang = {}
+def cache_key(lang, over_18):
+    return '%s_%s' % (lang, over_18)
 
-    for sr in fetch_things2(Subreddit._query(sort=desc('_date'),
-                                             data=True)):
-        aid = getattr(sr, 'author_id', None)
-        if aid is not None and aid < 0:
-            # skip special system reddits like promos
-            continue
 
-        type = getattr(sr, 'type', 'private')
-        if type not in ('public', 'restricted', 'gold_restricted'):
-            # skips reddits that can't appear in the default list
-            # because of permissions
-            continue
+def update_cache():
+    query = Subreddit._query(sort=desc('_downs'), data=True)
 
-        for lang in 'all', sr.lang:
-            over18s = ['allow_over18']
-            if sr.over_18:
-                over18s.append('only_over18')
-            else:
-                over18s.append('no_over18')
+    to_cache = defaultdict(list)
 
-            for over18 in over18s:
-                k = (lang, over18)
-                bylang.setdefault(k, []).append(sr)
+    for sr in fetch_things2(query):
+        key = cache_key(sr.lang, sr.over_18)
+        if len(to_cache[key]) < LIMIT:
+            to_cache[key].append(sr._id)
 
-                # keep the lists small while we work
-                if len(bylang[k]) > limit*2:
-                    bylang[k] = _chop(bylang[k])
+    g.cache.set_multi(to_cache, prefix=PREFIX, time=3600)
 
-    for (lang, over18), srs in bylang.iteritems():
-        srs = _chop(srs)
-        sr_tuples = map(lambda sr: (sr._downs, sr.allow_top, sr._id), srs)
-
-        print "For %s/%s setting %s" % (lang, over18,
-                                        map(lambda sr: sr.name, srs[:50]))
-
-        SubredditPopularityByLanguage._set_values(lang, {over18: sr_tuples})
 
 def run():
     set_downs()
-    cache_lists()
+    update_cache()
 
-# this relies on c.content_langs being sorted to increase cache hit rate
-@memoize('sr_pops.pop_reddits', time=3600, stale=True)
-def pop_reddits(langs, over18, over18_only, filter_allow_top = False):
-    if not over18:
-        over18_state = 'no_over18'
-    elif over18_only:
-        over18_state = 'only_over18'
-    else:
-        over18_state = 'allow_over18'
 
-    # we only care about base languages, not subtags here. so en-US -> en
-    unique_langs = []
-    seen_langs = set()
-    for lang in langs:
-        if '-' in lang:
-            lang = lang.split('-', 1)[0]
-        if lang not in seen_langs:
-            unique_langs.append(lang)
-            seen_langs.add(lang)
-
-    # dict(lang_key -> [(_downs, allow_top, sr_id)])
-    bylang = SubredditPopularityByLanguage._byID(unique_langs,
-                                                 properties=[over18_state])
-    tups = flatten([lang_lists[over18_state] for lang_lists
-                                             in bylang.values()])
-
-    if filter_allow_top:
-        # remove the folks that have opted out of being on the front
-        # page as appropriate
-        tups = filter(lambda tpl: tpl[1], tups)
-
-    if len(tups) > 1:
-        # if there was only one returned, it's already sorted
-        tups.sort(key = lambda tpl: tpl[0], reverse=True)
-
-    return map(lambda tpl: tpl[2], tups)
+def pop_reddits(langs, over_18=False):
+    langs = tup(langs)
+    keys = [cache_key(lang, over_18) for lang in langs]
+    ret = g.cache.get_multi(keys, prefix=PREFIX)
+    srids = list(chain.from_iterable(ret.itervalues()))
+    return srids

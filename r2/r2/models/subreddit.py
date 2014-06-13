@@ -769,18 +769,6 @@ class Subreddit(Thing, Printable, BaseSite):
         return s
 
     @classmethod
-    def top_lang_srs(cls, lang, limit, filter_allow_top = False, over18 = True,
-                     over18_only = False, ids=False, stale=False):
-        from r2.lib import sr_pops
-        lang = tup(lang)
-
-        sr_ids = sr_pops.pop_reddits(lang, over18, over18_only, filter_allow_top = filter_allow_top)
-        sr_ids = sr_ids[:limit]
-
-        return (sr_ids if ids
-                else Subreddit._byID(sr_ids, data=True, return_dict=False, stale=stale))
-
-    @classmethod
     def default_subreddits(cls, ids=True, stale=True):
         """Return the subreddits a user with no subscriptions would see."""
         if g.automatic_reddits:
@@ -838,16 +826,17 @@ class Subreddit(Thing, Printable, BaseSite):
 
     @classmethod
     def random_reddit(cls, limit=2500, over18=False, user=None):
-        srs = cls.top_lang_srs(c.content_langs, limit,
-                               filter_allow_top = False,
-                               over18 = over18,
-                               over18_only = over18,
-                               ids=True)
+        from r2.lib import sr_pops
+        srids = sr_pops.pop_reddits(c.content_langs, over18=over18)
+
         if user:
             excludes = cls.user_subreddits(user, limit=None)
-            srs = list(set(srs) - set(excludes))
-        return (Subreddit._byID(random.choice(srs))
-                if srs else Subreddit._by_name(g.default_sr))
+            srids = list(set(srids) - set(excludes))
+
+        if srids:
+            Subreddit._byID(random.choice(srids), data=True)
+        else:
+            return Subreddit._by_name(g.default_sr)
 
     @classmethod
     def random_subscription(cls, user):
@@ -1943,13 +1932,6 @@ Subreddit.__bases__ += (
     UserRel('wikibanned', SRMember),
     UserRel('wikicontributor', SRMember),
 )
-
-
-class SubredditPopularityByLanguage(tdb_cassandra.View):
-    _use_db = True
-    _value_type = 'pickle'
-    _connection_pool = 'main'
-    _read_consistency_level = CL_ONE
 
 
 class SubredditTempBan(object):
