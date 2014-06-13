@@ -782,43 +782,22 @@ class Subreddit(Thing, Printable, BaseSite):
 
     @classmethod
     def default_subreddits(cls, ids=True, stale=True):
-        """
-        Return the subreddits a user with no subscriptions would see.
-
-        Uses either the request location or the current set of language
-        preferences.
-
-        """
-        langs = c.content_langs if c.content_langs else g.site_lang
-        location = get_request_location()
-
+        """Return the subreddits a user with no subscriptions would see."""
         if g.automatic_reddits:
             auto_srs = cls._by_name(g.automatic_reddits, stale=stale).values()
-            auto_srids = {sr._id for sr in auto_srs}
         else:
-            auto_srids = set()
+            auto_srs = set()
 
-        srids = LocalizedDefaultSubreddits.get_srids(location)
+        location = get_request_location()
+        srids = LocalizedDefaultSubreddits.get_defaults(location)
 
-        if srids:
-            c.used_localized_defaults = True
-        else:
-            limit = g.num_default_reddits + len(auto_srids)
-            srids = cls.top_lang_srs(langs, limit=limit, filter_allow_top=True,
-                                     over18=False, ids=True)
-
-            # we fetched extras in case automatic_reddits were included, remove
-            # automatic_reddits and prune the list
-            srids = [srid for srid in srids if not srid in auto_srids]
-            srids = srids[:g.num_default_reddits]
-
-        srids = list(set(srids) | auto_srids)
+        srs = Subreddit._byID(srids, data=True, return_dict=False, stale=stale)
+        srs = list(set(srs) | set(auto_srs))
+        srs = filter(lambda sr: sr.allow_top, srs)
 
         if ids:
-            return srids
+            return [sr._id for sr in srs]
         else:
-            srs = Subreddit._byID(srids, data=True, return_dict=False,
-                                  stale=stale)
             return srs
 
     @classmethod
@@ -922,8 +901,7 @@ class Subreddit(Thing, Printable, BaseSite):
     @classmethod
     def subscribe_defaults(cls, user):
         if not user.has_subscribed:
-            for sr in cls.user_subreddits(None, False,
-                                          limit = g.num_default_reddits):
+            for sr in cls.user_subreddits(user=None, ids=False, limit=None):
                 #this will call reverse_subscriber_ids after every
                 #addition. if it becomes a problem we should make an
                 #add_multiple_subscriber fn
@@ -1517,6 +1495,7 @@ class LocalizedDefaultSubreddits(tdb_cassandra.View):
         ids_by_location = cls.lookup(keys)
 
         if location_key and ids_by_location[location_key]:
+            c.used_localized_defaults = True
             return ids_by_location[location_key]
         else:
             return ids_by_location[global_key]
