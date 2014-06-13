@@ -1451,18 +1451,48 @@ class LocalizedDefaultSubreddits(tdb_cassandra.View):
         "key_validation_class": tdb_cassandra.ASCII_TYPE,
         "default_validation_class": tdb_cassandra.ASCII_TYPE,
     }
+    GLOBAL = "GLOBAL"
+    CACHE_PREFIX = "localized_defaults"
 
     @classmethod
     def _rowkey(cls, location):
         return str(location)
 
     @classmethod
+    def lookup(cls, keys, update=False):
+        def _lookup(keys):
+            rows = cls._cf.multiget(keys)
+            ret = {}
+            for key in keys:
+                columns = rows[key] if key in rows else {}
+                id36s = columns.keys()
+                ret[key] = id36s
+            return ret
+
+        id36s_by_location = sgm(
+            g.cache, keys, miss_fn=_lookup, prefix=cls.CACHE_PREFIX,
+            _update=update,
+        )
+        ids_by_location = {location: [int(id36, 36) for id36 in id36s]
+                           for location, id36s in id36s_by_location.iteritems()}
+        return ids_by_location
+
+    @classmethod
     def set_srs(cls, location, srs):
         rowkey = cls._rowkey(location)
         columns = {sr._id36: '' for sr in srs}
+
+        # update cassandra
         cls._set_values(rowkey, columns)
+
+        # update cache
         id36s = columns.keys()
-        g.cache.set(rowkey, id36s)
+        g.cache.set_multi({rowkey: id36s}, prefix=cls.CACHE_PREFIX)
+
+    @classmethod
+    def set_global_srs(cls, srs):
+        location = cls.GLOBAL
+        cls.set_srs(location, srs)
 
     @classmethod
     def get_srids(cls, location):
@@ -1470,17 +1500,26 @@ class LocalizedDefaultSubreddits(tdb_cassandra.View):
             return []
 
         rowkey = cls._rowkey(location)
-        id36s = g.cache.get(rowkey)
-
-        if id36s is None:
-            try:
-                columns = cls._cf.get(rowkey)
-            except tdb_cassandra.NotFoundException:
-                columns = {}
-            id36s = columns.keys()
-            g.cache.set(rowkey, id36s)
-        srids = [int(id36, 36) for id36 in id36s]
+        ids_by_location = cls.lookup([rowkey])
+        srids = ids_by_location[rowkey]
         return srids
+
+    @classmethod
+    def get_global_defaults(cls):
+        return cls.get_srids(cls.GLOBAL)
+
+    @classmethod
+    def get_defaults(cls, location):
+        location_key = cls._rowkey(location) if location else None
+        global_key = cls._rowkey(cls.GLOBAL)
+        keys = filter(None, [location_key, global_key])
+
+        ids_by_location = cls.lookup(keys)
+
+        if location_key and ids_by_location[location_key]:
+            return ids_by_location[location_key]
+        else:
+            return ids_by_location[global_key]
 
 
 class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
