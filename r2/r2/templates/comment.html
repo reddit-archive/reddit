@@ -143,7 +143,7 @@ ${parent.collapsed()}
 </%def>
 
 <%def name="Child()">
-%if thing.link.contest_mode and hasattr(thing, "child") and not thing.parent_id:
+%if not c.profilepage and thing.link.contest_mode and hasattr(thing, "child") and not thing.parent_id:
   <a href="#" class="showreplies"
      onclick="$(this).hide();$(this).parent().find('.noncollapsed').show();return false;">
     [${_("show replies")}]
