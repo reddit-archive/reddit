@@ -25,25 +25,11 @@ from r2.lib.normalized_hot import normalized_hot
 from r2.lib import count
 from r2.lib.utils import UniqueIterator, timeago
 
-from pylons import c
-
 import random
 from time import time
 
 organic_max_length= 50
 
-def keep_fresh_links(item):
-    if c.user_is_loggedin and c.user._id == item.author_id:
-        return True
-
-    if item._spam or item._deleted:
-        return False
-
-    from r2.lib.promote import is_promo
-    if is_promo(item):
-        return False
-
-    return item.fresh
 
 def cached_organic_links(*sr_ids):
     sr_count = count.get_link_counts()

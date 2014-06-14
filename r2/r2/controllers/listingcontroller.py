@@ -262,11 +262,16 @@ class ListingWithPromos(ListingController):
             if srnames:
                 show_promo = True
 
+        def organic_keep_fn(item):
+            base_keep_fn = super(ListingWithPromos, self).keep_fn()
+            would_keep = base_keep_fn(item)
+            return would_keep and item.fresh
+
         random.shuffle(organic_fullnames)
         organic_fullnames = organic_fullnames[:10]
         b = IDBuilder(organic_fullnames,
                       wrap=self.builder_wrapper,
-                      keep_fn=organic.keep_fresh_links,
+                      keep_fn=organic_keep_fn,
                       skip=True)
         organic_links = b.get_items()[0]
 
