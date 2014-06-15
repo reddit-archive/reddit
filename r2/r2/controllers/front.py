@@ -109,23 +109,23 @@ class FrontController(RedditController):
     def GET_random(self):
         """The Serendipity button"""
         sort = rand.choice(('new','hot'))
-        links = c.site.get_links(sort, 'all')
-        if isinstance(links, thing.Query):
-            links._limit = g.num_serendipity
-            links = [x._fullname for x in links]
+        q = c.site.get_links(sort, 'all')
+        if isinstance(q, thing.Query):
+            q._limit = g.num_serendipity
+            names = [link._fullname for link in q]
         else:
-            links = list(links)[:g.num_serendipity]
+            names = list(q)[:g.num_serendipity]
 
-        rand.shuffle(links)
+        rand.shuffle(names)
 
-        builder = IDBuilder(links, skip=True,
-                            keep_fn=lambda x: x.fresh,
-                            num=1)
-        links = builder.get_items()[0]
+        def keep_fn(item):
+            return item.fresh and item.keep_item(item)
+
+        builder = IDBuilder(names, skip=True, keep_fn=keep_fn, num=1)
+        links, first, last, before, after = builder.get_items()
 
         if links:
-            l = links[0]
-            return self.redirect(add_sr("/tb/" + l._id36))
+            return self.redirect(add_sr("/tb/" + links[0]._id36))
         else:
             return self.redirect(add_sr('/'))
 
