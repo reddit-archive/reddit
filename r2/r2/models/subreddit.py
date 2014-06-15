@@ -37,7 +37,7 @@ from r2.lib.db.thing import Thing, Relation, NotFound
 from account import Account, AccountsActiveBySR
 from printable import Printable
 from r2.lib.db.userrel import UserRel
-from r2.lib.db.operators import lower, or_, and_, desc
+from r2.lib.db.operators import lower, or_, and_, not_, desc
 from r2.lib.errors import UserRequiredException
 from r2.lib.geoip import location_by_ips
 from r2.lib.memoize import memoize
@@ -826,15 +826,18 @@ class Subreddit(Thing, Printable, BaseSite):
 
     @classmethod
     def random_reddit(cls, limit=2500, over18=False, user=None):
-        from r2.lib import sr_pops
-        srids = sr_pops.pop_reddits(c.content_langs, over18=over18)
+        offset = random.randint(0, limit)
+        q = cls._query(cls.c.over_18 == over18, sort=desc('_downs'),
+                       offset=offset, limit=1, data=True)
 
         if user:
             excludes = cls.user_subreddits(user, limit=None)
-            srids = list(set(srids) - set(excludes))
+            q._filter(not_(cls.c._id.in_(excludes)))
 
-        if srids:
-            Subreddit._byID(random.choice(srids), data=True)
+        srs = list(q)
+
+        if srs:
+            return srs[0]
         else:
             return Subreddit._by_name(g.default_sr)
 
