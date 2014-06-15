@@ -20,20 +20,9 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from collections import defaultdict
-from itertools import chain
-
-from pylons import g
-
-from r2.models import Subreddit
-from r2.lib.db.operators import desc
 from r2.lib import count
-from r2.lib.memoize import memoize
-from r2.lib.utils import fetch_things2, tup
+from r2.models import Subreddit
 
-
-LIMIT = 2500
-PREFIX = 'pop_reddits'
 
 def set_downs():
     sr_counts = count.get_sr_counts()
@@ -46,31 +35,5 @@ def set_downs():
             sr._commit()
 
 
-def cache_key(lang, over_18):
-    return '%s_%s' % (lang, over_18)
-
-
-def update_cache():
-    query = Subreddit._query(sort=desc('_downs'), data=True)
-
-    to_cache = defaultdict(list)
-
-    for sr in fetch_things2(query):
-        key = cache_key(sr.lang, sr.over_18)
-        if len(to_cache[key]) < LIMIT:
-            to_cache[key].append(sr._id)
-
-    g.cache.set_multi(to_cache, prefix=PREFIX, time=3600)
-
-
 def run():
     set_downs()
-    update_cache()
-
-
-def pop_reddits(langs, over_18=False):
-    langs = tup(langs)
-    keys = [cache_key(lang, over_18) for lang in langs]
-    ret = g.cache.get_multi(keys, prefix=PREFIX)
-    srids = list(chain.from_iterable(ret.itervalues()))
-    return srids
