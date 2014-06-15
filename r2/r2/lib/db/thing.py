@@ -873,6 +873,7 @@ class Query(object):
         self._write_cache = kw.get('write_cache')
         self._cache_time = kw.get('cache_time', 0)
         self._limit = kw.get('limit')
+        self._offset = kw.get('offset')
         self._data = kw.get('data')
         self._sort = kw.get('sort', ())
         self._filter_primary_sort_only = kw.get('filter_primary_sort_only', False)
@@ -966,6 +967,10 @@ class Query(object):
 
     def _iden(self):
         i = str(self._sort) + str(self._kind) + str(self._limit)
+
+        if self._offset:
+            i += str(self._offset)
+
         if self._rules:
             rules = copy(self._rules)
             rules.sort()
@@ -1031,6 +1036,7 @@ class Things(Query):
                   get_cols,
                   self._sort,
                   self._limit,
+                  self._offset,
                   self._rules)
         if self._use_data:
             c = tdb.find_data(*params)
@@ -1100,6 +1106,7 @@ class Relations(Query):
                           False,
                           sort = self._sort,
                           limit = self._limit,
+                          offset = self._offset,
                           constraints = self._rules)
         return Results(c, self._make_rel, True)
 
