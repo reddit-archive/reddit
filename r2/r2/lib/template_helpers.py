@@ -192,7 +192,7 @@ class JSPreload(js.DataSource):
         from r2.lib.pages.things import wrap_things
         if not isinstance(wrapped, Wrapped):
             wrapped = wrap_things(wrapped)[0]
-        self.data[url] = wrapped.render_nocache('', style='api').finalize()
+        self.data[url] = wrapped.render_nocache('api').finalize()
 
     def use(self):
         hooks.get_hook("js_preload.use").call(js_preload=self)
