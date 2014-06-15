@@ -33,6 +33,8 @@ from pylons import c, g
 from pylons.i18n import _, ungettext
 
 class PrintableButtons(Styled):
+    cachable = False
+
     def __init__(self, style, thing,
                  show_delete = False, show_report = True,
                  show_distinguish = False, show_marknsfw = False,
