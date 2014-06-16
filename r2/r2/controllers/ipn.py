@@ -373,6 +373,7 @@ class IpnController(RedditController):
                 form.set_html(".status", _("that user has deleted their account"))
                 return
 
+        redirect_to_spent = False
 
         with creddits_lock(c.user):
             if not c.user.employee and c.user.gold_creddits < months:
@@ -400,6 +401,8 @@ class IpnController(RedditController):
                 form.set_html(".status",
                               _("the gift code has been messaged to you!"))
 
+            redirect_to_spent = True
+
             if not c.user.employee:
                 c.user.gold_creddits -= months
                 c.user._commit()
@@ -412,6 +415,8 @@ class IpnController(RedditController):
         if thing:
             gilding_message = make_gold_message(thing, user_gilded=True)
             jquery.gild_thing(thing_fullname, gilding_message, thing.gildings)
+        elif redirect_to_spent:
+            form.redirect("/gold/thanks?v=spent-creddits")
 
     @textresponse(paypal_secret = VPrintable('secret', 50),
                   payment_status = VPrintable('payment_status', 20),
@@ -1115,6 +1120,7 @@ class StripeController(GoldPaymentController):
         if c.user_is_loggedin:
             body = append_random_bottlecap_phrase(body)
             send_system_message(c.user, subject, body, distinguished='gold-auto')
+            form.redirect("/gold/thanks?v=stripe")
 
     @validatedForm(VUser(),
                    VModhash(),

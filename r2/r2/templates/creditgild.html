@@ -20,22 +20,37 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%namespace file="goldpayment.html" import="stripe_form"/>
-
-<%
-   from r2.lib.filters import unsafe, safemarkdown
-   from r2.lib.template_helpers import static
+<%!
+   from r2.lib.strings import strings
 %>
 
-<div class="gold-form gold-payment">
-  <div class="roundfield">
-    <img src="${static('reddit_gold-70.png')}" class="gold-logo">
-    <div class="roundfield-content">
-      ${unsafe(safemarkdown(thing.summary, wrap=False))}
-      <div class="giftmessage">
-        ${unsafe(safemarkdown(thing.description))}
+<%namespace file="utils.html" import="md, _mdf"/>
+<%namespace file="goldpayment.html" import="stripe_form"/>
+
+<div class="gold-wrap">
+  <h1 class="gold-banner"><a href="/gold">${_('reddit gold')}</a></h1>
+
+  <div class="fancy">
+    <div class="fancy-inner">
+      <div class="fancy-content">
+        <div class="gold-form gold-payment">
+          <div class="container">
+            <h2 class="sidelines"><span>${_('In Summation')}</span></h2>
+
+            <div class="transaction-summary">
+              ${md(thing.summary)}
+              <div class="gift-message">
+                ${md(thing.description, wrap=True)}
+              </div>
+
+              ${_mdf(strings.gold_summary_gilding_page_footer, price=thing.price)}
+
+              ${stripe_form(display=True)}
+            </div>
+          </div>
+          <span role="presentation" class="gold-snoo" title="${_('Felicitations on this momentous occasion!')}"></span>
+        </div>
       </div>
-      ${stripe_form(display=True)}
     </div>
   </div>
 </div>

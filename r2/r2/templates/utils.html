@@ -600,3 +600,7 @@ ${unsafe(txt)}
 <%def name="_md(text, wrap=False)">
   ${md(_(text), wrap=wrap)}
 </%def>
+
+<%def name="_mdf(text, wrap=False, **kwargs)">
+  ${md(_(text) % kwargs, wrap=wrap)}
+</%def>

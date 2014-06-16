@@ -2295,7 +2295,8 @@ class GoldThanks(Templated):
 
 class Gold(Templated):
     def __init__(self, goldtype, period, months, signed,
-                 recipient, recipient_name, can_subscribe=True):
+                 email, recipient, giftmessage, can_subscribe=True,
+                 edit=False):
 
         if c.user.employee:
             user_creddits = 50
@@ -2304,18 +2305,23 @@ class Gold(Templated):
 
         Templated.__init__(self, goldtype = goldtype, period = period,
                            months = months, signed = signed,
-                           recipient_name = recipient_name,
+                           email=email,
+                           recipient=recipient,
+                           giftmessage=giftmessage,
                            user_creddits = user_creddits,
-                           bad_recipient =
-                           bool(recipient_name and not recipient),
-                           can_subscribe=can_subscribe)
+                           can_subscribe=can_subscribe,
+                           edit=edit)
+
+
+class Creddits(Templated):
+    pass
 
 
 class GoldPayment(Templated):
     def __init__(self, goldtype, period, months, signed,
                  recipient, giftmessage, passthrough, thing,
                  clone_template=False, thing_type=None):
-        pay_from_creddits = False
+        can_use_creddits = False
         desc = None
 
         if period == "monthly" or 1 <= months < 12:
@@ -2338,7 +2344,11 @@ class GoldPayment(Templated):
             user_creddits = c.user.gold_creddits
 
         if goldtype == "autorenew":
-            summary = strings.gold_summary_autorenew % dict(user=c.user.name)
+            summary = strings.gold_summary_autorenew % dict(
+                user=c.user.name,
+                period=period,
+                price=price,
+            )
             if period == "monthly":
                 paypal_buttonid = g.PAYPAL_BUTTONID_AUTORENEW_BYMONTH
             elif period == "yearly":
@@ -2361,8 +2371,11 @@ class GoldPayment(Templated):
                 coinbase_name = 'COINBASE_BUTTONID_ONETIME_%sYR' % quantity
                 coinbase_button_id = getattr(g, coinbase_name, None)
 
-            summary = strings.gold_summary_onetime % dict(user=c.user.name,
-                                     amount=Score.somethings(months, "month"))
+            summary = strings.gold_summary_onetime % dict(
+                amount=Score.somethings(months, "month"),
+                user=c.user.name,
+                price=price,
+            )
 
             stripe_key = g.secrets['stripe_public_key']
 
@@ -2386,7 +2399,7 @@ class GoldPayment(Templated):
 
             if goldtype in ("gift", "code"):
                 if months <= user_creddits:
-                    pay_from_creddits = True
+                    can_use_creddits = True
                 elif months >= 12:
                     # If you're not paying with creddits, you have to either
                     # buy by month or spend a multiple of 12 months
@@ -2394,7 +2407,9 @@ class GoldPayment(Templated):
 
             if goldtype == "creddits":
                 summary = strings.gold_summary_creddits % dict(
-                          amount=Score.somethings(months, "month"))
+                    amount=Score.somethings(months, "month"),
+                    price=price,
+                )
             elif goldtype == "gift":
                 if clone_template:
                     if thing_type == "comment":
@@ -2418,13 +2433,16 @@ class GoldPayment(Templated):
                         amount=Score.somethings(months, "month"),
                         recipient=recipient and
                                   recipient.name.replace('_', '&#95;'),
+                        price=price,
                     )
                 else:
                     # leave the replacements to javascript
                     summary = format
             elif goldtype == "code":
                 summary = strings.gold_summary_gift_code % dict(
-                          amount=Score.somethings(months, "month"))
+                    amount=Score.somethings(months, "month"),
+                    price=price,
+                )
             else:
                 raise ValueError("wtf is %r" % goldtype)
 
@@ -2434,13 +2452,15 @@ class GoldPayment(Templated):
                            months=months, quantity=quantity,
                            unit_price=unit_price, price=price,
                            summary=summary, giftmessage=giftmessage,
-                           pay_from_creddits=pay_from_creddits,
+                           can_use_creddits=can_use_creddits,
                            passthrough=passthrough,
                            thing=thing, clone_template=clone_template,
                            description=desc, thing_type=thing_type,
                            paypal_buttonid=paypal_buttonid,
                            stripe_key=stripe_key,
-                           coinbase_button_id=coinbase_button_id)
+                           coinbase_button_id=coinbase_button_id,
+                           user_creddits=user_creddits,
+                           )
 
 
 class GoldSubscription(Templated):
@@ -2496,6 +2516,11 @@ class GoldGiftCodeEmail(Templated):
     """Email sent to a logged-out person that purchases a reddit
     gold gift code."""
     pass
+
+
+class Gilding(Templated):
+    pass
+
 
 class Password(Templated):
     """Form encountered when 'recover password' is clicked in the LoginFormWide."""

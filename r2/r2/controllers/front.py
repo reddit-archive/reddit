@@ -1161,28 +1161,36 @@ class FrontController(RedditController):
                           ).render()
 
     @validate(vendor=VOneOf("v", ("claimed-gold", "claimed-creddits",
-                                  "paypal", "coinbase"),
+                                  "spent-creddits", "paypal", "coinbase",
+                                  "stripe"),
                             default="claimed-gold"))
     def GET_goldthanks(self, vendor):
         vendor_url = None
         lounge_md = None
 
         if vendor == "claimed-gold":
-            claim_msg = _("claimed! enjoy your reddit gold membership.")
+            claim_msg = _("Claimed! Enjoy your reddit gold membership.")
             if g.lounge_reddit:
                 lounge_md = strings.lounge_msg
         elif vendor == "claimed-creddits":
-            claim_msg = _("your gold creddits have been claimed! now go to "
+            claim_msg = _("Your gold creddits have been claimed! Now go to "
                           "someone's userpage and give them a present!")
+        elif vendor == "spent-creddits":
+            claim_msg = _("Thanks for buying reddit gold! Your transaction "
+                          "has been completed.")
         elif vendor == "paypal":
-            claim_msg = _("thanks for buying reddit gold! your transaction "
-                          "has been completed and emailed to you. you can "
+            claim_msg = _("Thanks for buying reddit gold! Your transaction "
+                          "has been completed and emailed to you. You can "
                           "check the details by logging into your account "
                           "at:")
             vendor_url = "https://www.paypal.com/us"
-        elif vendor == "coinbase":
+        elif vendor in {"coinbase", "stripe"}:  # Pending vendors
             claim_msg = _("thanks for buying reddit gold! your transaction is "
                           "being processed. if you have any questions please "
+                          "email us at %(gold_email)s")
+        elif vendor in {"coinbase", "stripe"}:  # Pending vendors
+            claim_msg = _("Thanks for buying reddit gold! Your transaction is "
+                          "being processed. If you have any questions please "
                           "email us at %(gold_email)s")
             claim_msg = claim_msg % {'gold_email': g.goldthanks_email}
         else:
@@ -1226,6 +1234,14 @@ class FrontController(RedditController):
     def GET_received_award(self, trophy, preexisting):
         content = AwardReceived(trophy=trophy, preexisting=preexisting)
         return BoringPage(_("award claim"), content=content).render()
+
+    def GET_gilding(self):
+        return BoringPage(
+            _("gilding"),
+            show_sidebar=False,
+            content=Gilding(),
+            page_classes=["gold-page", "gilding"],
+        ).render()
 
 
 class FormsController(RedditController):
@@ -1480,19 +1496,21 @@ class FormsController(RedditController):
                           show_sidebar=False,
                           content=content).render()
 
-    @validate(goldtype=VOneOf("goldtype",
+    @validate(is_payment=VBoolean("is_payment"),
+              goldtype=VOneOf("goldtype",
                               ("autorenew", "onetime", "creddits", "gift",
                                "code")),
               period=VOneOf("period", ("monthly", "yearly")),
               months=VInt("months"),
               # variables below are just for gifts
-              signed=VBoolean("signed"),
-              recipient_name=VPrintable("recipient", max_length=50),
+              signed=VBoolean("signed", default=True),
+              recipient=VExistingUname("recipient", default=None),
               thing=VByName("thing"),
               giftmessage=VLength("giftmessage", 10000),
-              email=ValidEmails("email", num=1))
-    def GET_gold(self, goldtype, period, months,
-                 signed, recipient_name, giftmessage, thing, email):
+              email=ValidEmail("email"),
+              edit=VBoolean("edit", default=False))
+    def GET_gold(self, is_payment, goldtype, period, months,
+                 signed, recipient, giftmessage, thing, email, edit):
 
         if thing:
             thing_sr = Subreddit._byID(thing.sr_id, data=True)
@@ -1503,7 +1521,10 @@ class FormsController(RedditController):
                 thing = None
 
         start_over = False
-        recipient = None
+
+        if edit:
+            start_over = True
+
         if not c.user_is_loggedin:
             if goldtype != "code":
                 start_over = True
@@ -1529,27 +1550,44 @@ class FormsController(RedditController):
                     thing = None
                     recipient = None
                     start_over = True
-            else:
-                try:
-                    recipient = Account._by_name(recipient_name or "")
-                except NotFound:
-                    start_over = True
+            elif not recipient:
+                start_over = True
         else:
             goldtype = ""
             start_over = True
 
         if start_over:
+            # If we have a form that didn't validate, and we're on the payment
+            # page, redirect to the form, passing all of our form fields
+            # (which are currently GET parameters).
+            if is_payment:
+                g.stats.simple_event("gold.checkout_redirects.to_form")
+                qs = query_string(request.GET)
+                return self.redirect('/gold' + qs)
+
             can_subscribe = (c.user_is_loggedin and
                              not c.user.has_gold_subscription)
             if not can_subscribe and goldtype == "autorenew":
-                goldtype = "creddits"
+                self.redirect("/creddits", code=302)
                 
             return BoringPage(_("reddit gold"),
                               show_sidebar=False,
                               content=Gold(goldtype, period, months, signed,
-                                           recipient, recipient_name,
-                                           can_subscribe=can_subscribe)).render()
+                                           email, recipient,
+                                           giftmessage,
+                                           can_subscribe=can_subscribe,
+                                           edit=edit),
+                              page_classes=["gold-page", "gold-signup"],
+                              ).render()
         else:
+            # If we have a validating form, and we're not yet on the payment
+            # page, redirect to it, passing all of our form fields
+            # (which are currently GET parameters).
+            if not is_payment:
+                g.stats.simple_event("gold.checkout_redirects.to_payment")
+                qs = query_string(request.GET)
+                return self.redirect('/gold/payment' + qs)
+
             payment_blob = dict(goldtype=goldtype,
                                 status="initialized")
             if c.user_is_loggedin:
@@ -1567,13 +1605,25 @@ class FormsController(RedditController):
 
             passthrough = generate_blob(payment_blob)
 
+            page_classes = ["gold-page", "gold-payment"]
+            if goldtype == "creddits":
+                page_classes.append("creddits-payment")
+
             return BoringPage(_("reddit gold"),
                               show_sidebar=False,
                               content=GoldPayment(goldtype, period, months,
                                                   signed, recipient,
                                                   giftmessage, passthrough,
-                                                  thing)
+                                                  thing),
+                              page_classes=page_classes,
                               ).render()
+
+    def GET_creddits(self):
+        return BoringPage(_("purchase creddits"),
+                          show_sidebar=False,
+                          content=Creddits(),
+                          page_classes=["gold-page", "creddits-purchase"],
+                          ).render()
 
     @validate(VUser())
     def GET_subscription(self):

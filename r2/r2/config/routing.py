@@ -257,10 +257,13 @@ def make_map():
     mc('/thanks', controller='forms', action="claim", secret='')
     mc('/thanks/:secret', controller='forms', action="claim")
 
-    mc('/gold', controller='forms', action="gold")
+    mc('/gold', controller='forms', action="gold", is_payment=False)
+    mc('/gold/payment', controller='forms', action="gold", is_payment=True)
     mc('/gold/creditgild/:passthrough', controller='forms', action='creditgild')
     mc('/gold/thanks', controller='front', action='goldthanks')
     mc('/gold/subscription', controller='forms', action='subscription')
+    mc('/gilding', controller='front', action='gilding')
+    mc('/creddits', controller='forms', action='creddits')
 
     mc('/password', controller='forms', action="password")
     mc('/:action', controller='front',

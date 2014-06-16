@@ -20,221 +20,194 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%namespace file="utils.html" import="error_field, success_field, radio_type"/>
-<%namespace name="utils" file="utils.html"/>
+<%namespace file="utils.html" import="error_field, radio_type, _md"/>
+<%namespace file="utils/gold.html" import="gold_dropdown"/>
 
-<%!
-  from r2.lib.strings import strings, Score
-%>
+<div class="gold-wrap">
+  <h1 class="gold-banner"><a href="/gold">${_('reddit gold')}</a></h1>
 
-<script type="text/javascript">
-  $(function() {
-    ##  http://stackoverflow.com/questions/208471/g/1080243#1080243
-    ## 'click' also fires for keyboard events. Safer than using change.
-    $(".gold-form [type='radio'][name='goldtype']")
-       .click(function() {
-          var button = $(this);
-          var selection = "." + button.val();
-          var goldsecs = $(".gold-subsection");
-          var selected = goldsecs.filter(selection);
-          var others = goldsecs.not(selection);
-          others.fadeOut('fast');
-          selected.fadeIn('fast');
-    });
-
-    var checked = $(".gold-form input[name='goldtype']:radio:checked");
-    if (checked && checked[0]) {
-      $(".gold-subsection." + checked[0].value).show();
-    }
-  });
-</script>
-
-<%def name="goldsec(goldtype)">
-  <form id="gold" action="/gold" method="get"
-        class="content gold-subsection ${goldtype}">
-    <input type="hidden" name="goldtype" value="${goldtype}"/>
-    ${caller.body()}
-  </form>
-</%def>
-
-<%def name="gold_dropdown(what)">
-  <%!
-    month_options = (1, 3)
-    year_options = (1, 2, 3)
-  %>
-  <select id="months" name="months" class="gold-dropdown">
-    %for i in month_options:
-       <option value="${i}">
-         ${unsafe(Score.somethings(i, what))}: ${g.gold_month_price * i}
-       </option>
-    %endfor
-    %for i in year_options:
-       <option value="${i * 12}" ${"SELECTED" if i == 1 else ""}>
-         ${unsafe(Score.somethings(i * 12, what))} &#32; (special price!): ${g.gold_year_price * i}
-       </option>
-    %endfor
-  </select>
-  <br/>
-</%def>
-
-<%def name="gold_gift_amount_options()">
-  <div class="spacer">
-    <label for="months">${_('How much gold do you wish to bestow?')}</label>
-    %if thing.user_creddits > 0:
-      <select id="months" name="months" class="gold-dropdown">
-        %for i in range(1, thing.user_creddits + 1):
-           <option value="${i}">
-             ${unsafe(Score.somethings(i, "month"))}
-           </option>
-        %endfor
-      </select>
-      <br/>
-      <span class="note">
-        ${_("Note: If you want to give more than %(number)d, you'll need to buy more creddits.") % dict(number=thing.user_creddits)}
-      </span>
-    %else:
-      ${gold_dropdown("months")}
-    %endif
-  </div>
-</%def>
-
-<div class="gold-form">
-  <h1 class="goldgift">
-    ${_("reddit gold")} (<a href="/gold/about">help</a>)
-  </h1>
-
-  <form class="content">
-    <%utils:round_field title="">
-
-    %if thing.can_subscribe:
-      ${radio_type("goldtype", "autorenew", _("Buy for yourself, as an ongoing subscription"),
-        "", thing.goldtype == "autorenew")}
-        <label for="goldtype_autorenew"><p class="goldtype-note">${_("Purchase a reddit gold membership for yourself that will automatically renew on a monthly or yearly basis.")}</p></label>
-    %endif
-
-    %if c.user_is_loggedin:
-      ${radio_type("goldtype", "onetime", _("Buy for yourself, as a one-time purchase"),
-        "", thing.goldtype == "onetime")}
-        <label for="goldtype_onetime"><p class="goldtype-note">${_("Purchase a reddit gold membership for yourself that lasts a specific amount of time, and will not automatically renew when it expires.")}</p></label>
-    %endif
-
-    %if c.user_is_loggedin:
-      ${radio_type("goldtype", "gift", _("Give reddit gold to someone else"),
-        "", thing.goldtype == "gift")}
-        <label for="goldtype_gift"><p class="goldtype-note">${_("Purchase a reddit gold membership for another reddit user (whose username you know). This membership will not automatically renew when it expires.")}</p></label>
-    %endif
-
-    %if c.user_is_loggedin:
-      ${radio_type("goldtype", "creddits", _('Buy reddit gold "creddits"'),
-        "", thing.goldtype == "creddits")}
-        <label for="goldtype_creddits"><p class="goldtype-note">${_("Each creddit acts as a \"voucher\" for one month of reddit gold membership. They're convenient if you give gold to others often (or can also be used on yourself).")}</p></label>
-    %endif
-
-    ${radio_type("goldtype", "code", _('Buy a reddit gold "gift code"'),
-      "", thing.goldtype == "code")}
-    <label for="goldtype_code"><p class="goldtype-note">${_("Purchase a gift code that can be redeemed for a specific-length reddit gold membership. Give it to a friend (even if you don't know their username), or use it yourself.")}</p></label>
-
-    %if c.user_is_loggedin:
-      ${radio_type("goldtype", "redeem", _("Redeem a reddit gold gift code"),
-        "", thing.goldtype == "redeem")}
-      <label for="goldtype_redeem"><p class="goldtype-note">${_("If you have a reddit gold gift code, redeem it here to apply the membership to your account.")}</p></label>
-    %endif
-
-    </%utils:round_field>
-  </form>
-
-  <%self:goldsec goldtype="autorenew">
-    <%utils:round_field title="${'Monthly or yearly?'}">
-      ${radio_type("period", "monthly", _("%s / month") % g.gold_month_price, "", False)}<br/>
-      ${radio_type("period", "yearly", _("%s / year (which works out to just %s / month!)")
-                                       % (g.gold_year_price, g.gold_year_price / 12),
-                   "", True)}<br/>
-      <button type="submit" class="btn gold-button">${_("subscribe")}</button>
-      <span class="status"></span>
-    </%utils:round_field>
-  </%self:goldsec>
-
-  <%self:goldsec goldtype="onetime">
-    <%utils:round_field title="${_('How many months?')}">
-      ${gold_dropdown("months")}
-      <button type="submit" class="btn gold-button">${_("buy")}</button>
-      <span class="status"></span>
-    </%utils:round_field>
-  </%self:goldsec>
-
-  <%self:goldsec goldtype="gift">
-    <%utils:round_field title="">
-      ${gold_gift_amount_options()}
-      <div class="spacer">
-        <label for="recipient">${_("To whom are you giving said gold?")}</label>
-        <input id="recipient" type="text" name="recipient" value="${thing.recipient_name}" />
-        ${error_field("NO_USER", "recipient", "span")}
-        ${error_field("USER_DOESNT_EXIST", "recipient", "span")}
-        %if thing.bad_recipient:
-          <br/>
-          <span class="wrong">${_("that user doesn't exist")}</span>
+  <div class="fancy">
+    <div class="fancy-inner">
+      <div class="fancy-content gold-checkout">
+        %if c.user_is_loggedin:
+          ${self.gold_loggedin_content()}
+        %else:
+          ${self.gold_loggedout_content()}
         %endif
+        <section class="gold-question">
+          <h3 class="toggle">${_('What is reddit gold?')}</h3>
+          <div class="details hidden">
+            <div class="container">
+              ${_('reddit gold is our premium membership.  It upgrades your account with access to extra features and special benefits from our gold partners.')}
+              &#32;
+              <a href="/gold/about">${_('Learn more')}</a>.
+            </div>
+          </div>
+        </section>
       </div>
+    </div>
+  </div>
+  %if c.user_is_loggedin:
+    <div class="creddits-prompt">
+      <div class="gilded-icon"></div>
+      ${_md("Give gold often? Consider [buying creddits to use](/creddits), they're 40% cheaper if purchased in a set of 12.")}
+    </div>
+  %endif
+</div>
 
-      <div class="spacer">
-        ${_("Do you want them to know it came from you?")}
-        <br/>
-        ${radio_type("signed", "yes", _("yes, include my username"),
-                     "",
-                     True)}
-        <br/>
-        ${radio_type("signed", "no", _("no, make it anonymous"),
-                     "",
-                     False)}
+<%def name="gold_loggedout_content()">
+  <header>
+    <h2 class="loggedout-give-gold sidelines"><span>${_('Give Gold')}</span></h2>
+    <div class="login-note">${_('Want to buy gold for yourself?')}&#32;<a href="/login" class="login-required">${_("You'll need to log in.")}</a></div>
+  </header>
+
+  <form class="loggedout-gold-form" name="loggedout-gold-form" action="/gold/payment" method="get">
+    <input type="hidden" name="goldtype" value="code">
+    <div id="form-options" class="container">
+      <section>
+        <label>
+          <h3>${_('How many months of gold would you like to give?')}</h3>
+          ${gold_dropdown("months", thing.months)}
+        </label>
+
+        <label class="loggedout-email">
+          <input type="email" name="email" class="inline" placeholder="enter your email address" value="${thing.email}">
+          ## weird validation here because we're using GETs: this explicitly checks of email was passed in the URL so that
+          ## the "no email" error doesn't show up on first page view.
+          %if 'email' in request.GET and not thing.email:
+            ${error_field("NO_EMAIL", "email", "span")}
+          %endif
+          ${error_field("BAD_EMAIL", "email", "span")}
+          <p class="hint">${_("(We'll send a code to your email address you can then give to your recipient)")}</p>
+        </label>
+      </section>
+    </div>
+
+    <section id="payment-options">
+      <div class="buttons">
+        <button type="submit" class="btn gold-button">${_("buy reddit gold")}</button>
       </div>
+    </section>
+  </form>
+</%def>
 
-      <div class="spacer">
-        <label for="giftmessage">${_("Gift message (optional):")}</label>
-        <textarea rows="5" cols="40" name="giftmessage" id="giftmessage">
-        </textarea>
+<%def name="gold_loggedin_content()">
+  <%
+  is_gift = thing.goldtype in ('code', 'gift')
+
+  active_tab = None
+  if thing.goldtype:
+      if is_gift or thing.goldtype == 'onetime':
+          active_tab = 'onetime'
+      else:
+          active_tab = 'autorenew'
+  %>
+  <form name="gold-form" class="gold-form" action="/gold/payment" method="get">
+  <input type="hidden" name="edit" id="edit" value="true">
+  <input type="hidden" name="goldtype" id="goldtype" value="${thing.goldtype}">
+
+    <section class="tab-chooser">
+      <h3>${_('What type of reddit gold would you like to purchase?')}</h3>
+      <a href="#onetime" class="tab-toggle ${'active' if active_tab == 'onetime' else ''}">${_('one-time purchase')}</a>
+      <a href="#autorenew" class="tab-toggle ${'active' if active_tab == 'autorenew' else ''}">${_('ongoing subscription')}</a>
+    </section>
+
+    <div id="form-options" class="container ${'hidden' if not active_tab else ''}">
+      <section id="autorenew" class="tab ${'active' if active_tab == 'autorenew' else ''}">
+        <h3>${_('What type of subscription would you like?')}</h3>
+        <ul>
+          <li>${radio_type("period", "monthly", _("monthly - %s") % g.gold_month_price, "", thing.period == "monthly")}</li>
+
+          <li>${radio_type("period", "yearly", _("yearly - %s (%s/month)") % (g.gold_year_price, g.gold_year_price / 12),"", thing.period != "monthly")}</li>
+        </ul>
+      </section>
+
+      <section id="onetime" class="tab ${'active' if active_tab == 'onetime' else ''}">
+        <h3>${_('How many months?')}</h3>
+        ${gold_dropdown("months", thing.months)}
+
+        <section id="give-as-gift">
+          <ul>
+            <li>
+            <label>
+              <input type="radio" id="notgift" name="gift" value="0" ${"checked" if not is_gift else ""}>
+              ${_('purchase this reddit gold for myself')}
+            </label>
+            </li>
+            <li>
+            <label>
+              <input type="radio" id="gift" name="gift" value="1" ${"checked" if is_gift else ""}>
+              ${_('give this reddit gold as a gift')}
+            </label>
+            </li>
+          </ul>
+          <div id="gifting-details" class="${'hidden' if not is_gift else ''}">
+            <ul class="indent">
+              <li>
+                ${radio_type("gifttype", "code", _("receive gold as a gift code"), "", thing.goldtype == "code")}
+              </li>
+              <li>
+                ${radio_type("gifttype", "gift", _("send gold to a user"), "", thing.goldtype == "gift")}
+
+                <div class="gift-details ${'hidden' if not thing.goldtype == 'gift' else ''}" id="gifttype-details-gift">
+
+                  <label>
+                    ${_('who should receive this gold?')}
+                    <input id="recipient" type="text" name="recipient" value="${thing.recipient.name if thing.recipient else ''}" placeholder="${_('enter a username')}" size="13" maxlength="20" class="inline">
+                    ## weird validation here because we're using GETs: this explicitly checks if email was passed in the URL so that
+                    ## the "no email" error doesn't show up on first page view.
+                    %if 'recipient' in request.GET:
+                      ${error_field("NO_USER", "recipient", "span")}
+                      ${error_field("USER_DOESNT_EXIST", "recipient", "span")}
+                    %endif
+                  </label>
+
+                  <ul class="indent">
+                    <li>
+                      <label>
+                        <input type="checkbox" id="signed-false" name="signed" value="false" ${"checked" if not thing.signed else ""}>
+                        ${_('make my gift anonymous')}
+                      </label>
+                    </li>
+                    <li>
+                      <label>
+                        <input type="checkbox" id="message" name="message" value="message" ${"checked" if thing.giftmessage else ""}>
+                        ${_('include a message')}
+                      </label>
+                    </li>
+                    <li>
+                      <textarea rows="5" cols="30" name="giftmessage" id="giftmessage" placeholder="${_('enter your message')}" class="giftmessage">${thing.giftmessage}</textarea>
+                    </li>
+                  </ul>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </section>
+      </section>
+    </div>
+
+    <section id="payment-options" class="${'hidden' if not active_tab else ''}">
+      <div class="buttons">
+        <button type="submit" class="btn gold-button">${_('purchase')}</button>
       </div>
-
-      <button type="submit" class="btn gold-button">${_("give")}</button>
-      <span class="status"></span>
-
-    </%utils:round_field>
-  </%self:goldsec>
-
-  <%self:goldsec goldtype="creddits">
-    <%utils:round_field title="${_('How many creddits would you like to buy? (each will allow you to give one month of reddit gold)')}">
-      ${gold_dropdown("creddits")}
-      <button type="submit" class="btn gold-button">${_("buy")}</button>
-      <span class="status"></span>
-    </%utils:round_field>
-  </%self:goldsec>
-
-  <%self:goldsec goldtype="code">
-    <%utils:round_field title="">
-      ${gold_gift_amount_options()}
-
-      %if not c.user_is_loggedin:
-        <div class="spacer">
-          <label for="email">${_("Your email address (where the code will be sent):")}</label>
-          <input id="email" type="text" name="email">
-        </div>
-      %endif
-
-      <button type="submit" class="btn gold-button">${_("buy")}</button>
-      <span class="status"></span>
-    </%utils:round_field>
-  </%self:goldsec>
-
-  <form id="thanks" action="/api/claimgold" method="post"
-      class="content gold-subsection redeem"
-      onsubmit="return post_form(this, 'claimgold');">
-    <input type="hidden" name="goldtype" value="redeem">
-    <%utils:round_field title="${_('Please enter the gold code to redeem below:')}">
-      <input type="text" name="code" value="" />
-      <button type="submit" class="btn gold-button">${_("redeem")}</button>
-      ${error_field("NO_TEXT", "code", "span")}
-      ${error_field("INVALID_CODE", "code", "span")}
-      ${error_field("CLAIMED_CODE", "code", "span")}
-    </%utils:round_field>
+    </section>
   </form>
 
-</div>
+  <section id="redeem-a-code" class="${'hidden' if active_tab else ''}">
+    <div class="sidelines"><span>${_('or')}</span></div>
+    <form id="redeem-form" action="/api/claimgold" method="post" onsubmit="return post_form(this, 'claimgold');">
+        <input type="text" name="code" value="" placeholder="${_('enter a gift code for redemption')}" maxlength="20">
+        <div class="redeem-submit hidden">
+          <div class="buttons">
+            <button type="submit" class="btn gold-button">${_("redeem this code")}</button>
+          </div>
+          <div class="errors">
+          ${error_field("NO_TEXT", "code", "span")}
+          ${error_field("INVALID_CODE", "code", "span")}
+          ${error_field("CLAIMED_CODE", "code", "span")}
+          </div>
+        </div>
+    </form>
+  </section>
+</%def>

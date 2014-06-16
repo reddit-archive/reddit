@@ -20,12 +20,8 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%namespace file="utils.html" import="error_field, success_field, radio_type"/>
-
+<%namespace file="utils.html" import="md,_md"/>
 <%
-   from r2.lib.filters import unsafe, safemarkdown
-   from r2.lib.template_helpers import static
-
    clone_class = ''
    if thing.clone_template:
      if thing.thing_type == 'comment':
@@ -34,66 +30,81 @@
        clone_class = 'cloneable-link'
 %>
 
-<div class="gold-form gold-payment ${clone_class}">
-  <div class="roundfield">
-    % if thing.clone_template:
-      <button class="close-button">${_('close')}</button>
-    % endif
-    <img src="${static('reddit_gold-70.png')}" class="gold-logo">
-    <div class="roundfield-content">
-      ${unsafe(safemarkdown(thing.summary, wrap=False))}
-      %if thing.thing and not thing.clone_template:
-        <div class="giftmessage">
-          ${unsafe(safemarkdown(thing.description))}
+<div class="gold-wrap ${clone_class}">
+  <h1 class="gold-banner"><a href="${'/gold' if thing.goldtype != 'creddits' else '/creddits'}">${_('reddit gold')}</a></h1>
+
+  <div class="fancy">
+    <div class="fancy-inner">
+      <div class="fancy-content">
+        <div class="gold-form gold-payment">
+          %if thing.clone_template:
+            <button class="close-button">${_('close')}</button>
+          %endif
+          <div class="container">
+            <h2 class="sidelines"><span>${_('In Summation')}</span></h2>
+
+            <div class="transaction-summary">
+              ${md(thing.summary)}
+
+              %if thing.thing and not thing.clone_template:
+                <div class="gift-message">
+                  ${md(thing.description, wrap=True)}
+                </div>
+              %endif
+
+              %if thing.giftmessage:
+                <p>${_('The following gift note will be attached:')}</p>
+                <div class="gift-message">
+                  ${md(thing.giftmessage, wrap=True)}
+                </div>
+              %endif
+            </div>
+          </div>
+          <div class="buttons">
+              <p>${_("Please select a payment method.")}</p>
+
+              %if thing.can_use_creddits:
+                ${self.creddits_button()}
+              %endif:
+
+              %if thing.paypal_buttonid:
+                ${self.paypal_button()}
+              %endif
+
+              %if thing.coinbase_button_id:
+                ${self.coinbase_button()}
+              %endif
+
+              %if thing.stripe_key:
+                ${self.stripe_button()}
+              %endif
+
+              %if thing.stripe_key and not thing.clone_template:
+                ${self.stripe_form()}
+              %endif
+
+              %if thing.clone_template and not thing.user_creddits:
+                <div class="note">${_md("Give gold often? Consider [buying creddits to use](/creddits), they're 40% cheaper if purchased in a set of 12.")}</div>
+              %endif
+          </div>
+          <div class="throbber"></div>
+          <span role="presentation" class="gold-snoo" title="${_('Felicitations on this momentous occasion!')}"></span>
         </div>
-      %endif
-
-    %if thing.giftmessage:
-      <p>${_("The following gift note will be attached:")}</p>
-      <div class="giftmessage">
-        ${unsafe(safemarkdown(thing.giftmessage))}
       </div>
-    %endif
-
-    %if thing.pay_from_creddits:
-      ${self.creddits_button()}
-    %else:
-      <p>${_("Please select a payment method.")}</p>
-
-      %if thing.paypal_buttonid:
-        ${self.paypal_button()}
-      %endif
-
-      %if thing.coinbase_button_id:
-        ${self.coinbase_button()}
-      %endif
-
-      %if thing.stripe_key:
-        ${self.stripe_button()}
-      %endif
-
-      %if thing.stripe_key and not thing.clone_template:
-        ${self.stripe_form()}
-      %endif
-
-      %if thing.clone_template:
-        <div class="note">${unsafe(safemarkdown(_("Give gold often? Consider [buying creddits to use](/gold?goldtype=creddits), they're 40% cheaper if purchased in a set of 12."), wrap=False))}</div>
-      %endif
-      <div class="throbber"></div>
-    %endif
     </div>
   </div>
 </div>
 
 <%def name="creddits_button()">
   <form id="giftgold" action="/api/spendcreddits" method="post"
-        class="content"
-        onsubmit="return post_form(this, 'spendcreddits');">
+        class="gold-checkout creddits-gold">
     <input type="hidden" name="months" value="${thing.months}">
     <input type="hidden" name="passthrough" value="${thing.passthrough}" class="passthrough">
-    <button class="btn gold-button">${_("use creddit")}</button>
-    <span class="status"></span>
-    <div class="throbber"></div>
+    <button class="btn gold-button"><span class="snoo-head"></span>${_("creddits")}</button>
+    <span class="status">
+      <span class="remaining" data-current="${thing.months}" data-total="${thing.user_creddits}" data-template="${_('(%(current)s of %(total)s remaining)') % dict(current='<%= current %>', total='<%= total %>')}">
+      </span>
+    </span>
   </form>
 </%def>
 
@@ -112,7 +123,9 @@
 </%def>
 
 <%def name="stripe_button()">
-  <button class="btn stripe-gold gold-button">${_('Credit Card')}</button>
+  <span class="gold-checkout">
+    <button class="btn stripe-gold gold-button">${_('Credit Card')}</button>
+  </span>
 </%def>
 
 <%def name="base_stripe_form()">
@@ -181,7 +194,7 @@
       </tr>
       <tr>
         <th><label>${_('zip')}</label></th>
-        <td><input type="text" class="card-address_zip"></td>
+        <td><input type="text" class="card-address_zip" length="12"></td>
       </tr>
     </table>
     <input type="hidden" name="stripePublicKey" value="${thing.stripe_key}">
@@ -195,26 +208,10 @@
 <div id="stripe-payment"
      class="charge"
      ${not display and "style='display:none'" or ''}>
-  <hr>
-  <table class="credit-card-input">
-    <tr> 
-      <th><label>${_('amount')}</label></th>
-      <th class="credit-card-amount">${thing.price}</th>
-    </tr>
-    %if thing.period:
-    <tr>
-      <th><label>${_('renewal interval')}</label></th>
-      <th class="credit-card-interval">${_(thing.period)}</th>
-    </tr>
-    %endif
-  </table>
-
   <input type="hidden" name="pennies" value="${thing.price.pennies}">
   <input type="hidden" name="months" value="${thing.months}">
   <input type="hidden" name="period" value="${thing.period}">
   <input type="hidden" name="passthrough" value="${thing.passthrough}">
-
-  <hr>
   ${base_stripe_form()}
 </div>
 </%def>

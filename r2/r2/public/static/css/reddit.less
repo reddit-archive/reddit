@@ -4,6 +4,14 @@
     -moz-box-sizing: @sizing;
 }
 
+.transform(@transformation) {
+    transform: @transformation;
+    -webkit-transform: @transformation;
+    -moz-transform: @transformation;
+    -o-transform: @transformation;
+    -ms-transform: @transformation;
+}
+
 .no-select {
     -webkit-user-select: none;
     -moz-user-select: none;
@@ -19,6 +27,12 @@
     -ms-transition: @arguments;
     transition: @arguments;
 }
+
+@gold-fonts: Palatino, georgia, garamond, FreeSerif, serif;
+@gold-button-bg: #938870;
+@gold-button-hover: #B8AB90;
+@gold-button-active: #C3B598;
+@gold-button-border: 1px solid #5E5137;
 
 html {
     height: 100%; /* Needed for toolbar's comments panel's pinstripe */
@@ -6144,7 +6158,6 @@ dd { margin-left: 20px;  }
 .giftgold a:before,
 .gilded-link a:before,
 .infobar.gold:before,
-.gold-form h1.goldgift:before,
 .users-online:before,
 .notice-taken:before,
 .notice-available:before,
@@ -6617,18 +6630,9 @@ body:not(.gold) .allminus-link {
     font-weight: bold;
 }
 .giftgold a:before,
-.gold-form h1.goldgift:before,
 .infobar.gold:before
 {
     background-image: url(../giftgold.png); /* SPRITE */
-}
-
-.gold-form p {
-    margin-bottom: 8px;
-}
-
-.gold-form .gold-button {
-    margin-top: 0;
 }
 
 .tiny {
@@ -6646,25 +6650,12 @@ body:not(.gold) .allminus-link {
     margin-top: 0px;
 }
 
-.gold-form {
-    font-family: "Hoefler Text","Palatino Linotype","Book Antiqua", Palatino,georgia,garamond,FreeSerif,serif;
-    min-height: 600px;
-    line-height: 22px;
-}
-
-.gold-form .roundfield {
-    border: 1px solid #E1B000;
-    background-color: #fffdcc;
-    color: #6a4d00;
-    width: 510px;
-}
-
 .gold-form .note {
     font-size: 13px;
     line-height: 16px;
     font-style: italic;
     color: #222;
-    margin-top: 7px;
+    margin-top: 25px;
 }
 
 .gold-form p.goldtype-note {
@@ -6693,12 +6684,23 @@ body:not(.gold) .allminus-link {
     position: absolute;
 }
 
-.gold-form.cloneable-link, .gold-form.cloneable-comment {
-    display: none;
+.gold-wrap.inline-gold {
+    .fancy {
+      width: 620px;
+      margin: 0;
+    }
+
+    .fancy-content {
+        margin: 10px auto;
+    }
+
+    .sidelines {
+        display: none;
+    }
 }
 
-.gold-form textarea, .gold-form input[type=text] {
-    margin-top: 3px;
+.gold-wrap.cloneable-link, .gold-wrap.cloneable-comment {
+    display: none;
 }
 
 .gold-form {
@@ -6731,9 +6733,11 @@ body:not(.gold) .allminus-link {
 }
 
 .gold-payment .close-button {
+    position: absolute;
+    top: 0;
+    right: 0;
     width: 13px;
     height: 13px;
-    float: right;
     margin: 6px 4px 6px 8px;
     border: none;
     background: url(../close.png) no-repeat;  /* SPRITE */
@@ -6745,31 +6749,41 @@ body:not(.gold) .allminus-link {
     opacity: .55;
 }
 
-.gold-payment .close-button:active {
-    position: relative;
-    top: 1px;
-}
-
 .giftmessage {
+    background-color: white;
+    border-radius: 3px;
     border: solid #888 1px;
     color: black;
-    background-color: white;
-    padding: 0 10px;
     margin-bottom: 15px;
-    border-radius: 3px;
+    margin-left: 20px;
+    padding: 0 10px;
+    max-width: 300px;
+    width: 90%;
 }
 
 .gold-button {
-    padding-top: 2px;
-    margin-top: 8px;
-    margin-right: 8px;
-    color: #482800;
-    background-color: #efcc4c;
-    border-color: #fff088 #fff088 #6a3d00 #6a3d00;
-    font-size: 16px;
-    font-family: Palatino,georgia,garamond,FreeSerif,serif;
-    -webkit-appearance: none;
-    text-shadow: 0px 1px 0px hsla(0,0%,100%,.7);
+  margin-left: 5px;
+  padding: 10px 20px;
+  color: #fff;
+  font-size: 1.1em;
+  font-family: @gold-fonts;
+  text-align: center;
+  background-color: @gold-button-bg;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  transition: background-color .2s;
+  box-sizing: content-box;
+  box-shadow: inset 0 -2px 0 rgba(0,0,0,0.27);
+}
+
+.gold-button:hover {
+  background-color: @gold-button-hover;
+}
+
+.gold-button:active {
+  background-color: @gold-button-hover;
+  border: @gold-button-border;
+  box-shadow: inset 0px 0px 7px rgba(0,0,0,0.27);
 }
 
 .gold-button.disabled, .gold-button:disabled  {
@@ -6777,6 +6791,42 @@ body:not(.gold) .allminus-link {
     background-color: #ccc;
     border-color: #aaa;
     text-shadow: none;
+}
+
+.creddits-gold {
+  .remaining {
+    font-size: 10px;
+    text-align: center;
+    width: 125px;
+    position: absolute;
+    display: block;
+    line-height: 1.5;
+  }
+
+  .gold-button {
+    padding-left: 35px;
+    position: relative;
+
+    .snoo-head {
+      background-image: url(../gold/snoo-head.png);
+      background-repeat: no-repeat;
+      position: absolute;
+      top: 7px;
+      left: 7px;
+      right: 0;
+      bottom: 0;
+      background-size: 23px;
+      width: 23px;
+      opacity: 0.5;
+      .transition(opacity, 0.2s);
+    }
+  }
+
+  .gold-button:hover{
+    .snoo-head {
+      opacity: 1;
+    }
+  }
 }
 
 .gold-dropdown, .goldvertisement {
@@ -7934,6 +7984,8 @@ body.post-under-6h-old .gilded-icon {
     font-size:smaller;
 }
 #stripe-payment {
+  padding-top: 15px;
+
     .credit-card-amount, .credit-card-interval {
         text-align: left;
     }
@@ -7944,8 +7996,8 @@ body.post-under-6h-old .gilded-icon {
     width:200px;
 }
 
-#stripe-payment input.card-cvc { width:5ex; }
-#stripe-payment input.card-address_zip { width:6ex; }
+#stripe-payment input.card-cvc { width:9ex; }
+#stripe-payment input.card-address_zip { width:13ex; }
 
 .stripe-note a.icon {
     position: relative;
@@ -8551,4 +8603,598 @@ body.with-listing-chooser {
             text-decoration: underline;
         }
     }
+}
+
+/* Responsive gold paper-style fancy borders with endcaps */
+.fancy {
+  @endcap-height: 27px;
+  @endcap-overhang-width: 4px;
+  @endcap-width: 27px;
+  @fancy-bg-color: #FFFCFC;
+  @inner-padding-width: 12px;
+
+  background-color: @fancy-bg-color;
+  border: 2px solid #D4D3CF;
+  margin: 10px auto;
+  max-width: 974px;
+  padding: 0;
+  position: relative;
+  width: 100%;
+
+  .fancy-inner {
+    background-image: url(../gold/gold-laurel-bg.png);
+    background-position: top center;
+    background-repeat: no-repeat;
+    border: 1px solid #e3e2df;
+    margin: @inner-padding-width;
+    padding: 0;
+    position: relative;
+  }
+
+  // end caps
+  &:before,
+  &:after,
+  .fancy-inner:before,
+  .fancy-inner:after {
+    background-image: url(../gold/endcap.png);
+    background-repeat: no-repeat;
+    background-size: 27px 27px;
+    content: '';
+    display: block;
+    height: @endcap-height;
+    position: absolute;
+    width: 100%;
+  }
+
+  // top right
+  &:before {
+    .transform(scaleX(-1));
+    background-position: top left; // mirrored x
+    margin-left: @endcap-overhang-width - 1px;
+    margin-top: -@endcap-overhang-width + 1px;
+  }
+
+  // bottom left
+  &:after {
+    .transform(scaleY(-1));
+    background-position: top left; // mirrored y
+    margin-left: -@endcap-overhang-width + 1px;
+    margin-top: @endcap-overhang-width - @endcap-height - 1px;
+  }
+
+  // top left
+  .fancy-inner:before {
+    background-position: top left;
+    margin-left: -@endcap-overhang-width - @inner-padding-width;
+    margin-top: -@endcap-overhang-width - @inner-padding-width;
+  }
+
+  // bottom right
+  .fancy-inner:after {
+    .transform(scaleY(-1) scaleX(-1));
+    background-position: top left; // mirrored xy
+    margin-left: @endcap-overhang-width + @inner-padding-width;
+    margin-top: @inner-padding-width + @endcap-overhang-width - @endcap-height;
+  }
+
+  .fancy-content {
+    margin: 30px auto;
+    max-width: 600px;
+    padding: 3px;
+  }
+}
+
+// Show nice little fancy lines on the side of a header.
+// Adapted from http://css-tricks.com/line-on-sides-headers/
+.sidelines {
+  overflow: hidden;
+  text-align: center;
+  font-size: 1.75em;
+  color: #444;
+  font-weight: bold;
+  line-height: 1.6;
+
+  span {
+    display: inline-block;
+    position: relative;
+
+    &:before,
+    &:after {
+      content: '';
+      position: absolute;
+      border: 0 solid #ccc;
+      height: 1px;
+      border-top-width: 1px;
+      top: 50%;
+      width: 600px;
+    }
+
+    &:before {
+      right: 100%;
+      margin-right: 15px;
+    }
+
+    &:after {
+      left: 100%;
+      margin-left: 15px;
+    }
+  }
+}
+
+.gold-wrap {
+  @dark: #686868;
+  @light: #cccccb;
+  @off-white: #fffdfd;
+
+  font-family: @gold-fonts;
+  color: @dark;
+  font-size: 1.5em;
+  line-height: 1.6em;
+
+  &.inline-gold {
+    margin: 10px 0;
+
+    h1 {
+      display: none;
+    }
+
+    .fancy-inner {
+      background-position: bottom center;
+    }
+
+    .gold-snoo {
+      display: none;
+    }
+
+    .gold-form {
+      margin: 0 20px 5px;
+      font-size: 1em;
+
+      .gold-button {
+        font-size: 1em;
+      }
+
+      .container {
+        padding: 0;
+        border: none;
+        background-color: transparent;
+      }
+
+      .transaction-summary {
+        padding-bottom: 0;
+      }
+    }
+  }
+
+  .gold-banner {
+    background: transparent url(../gold/reddit-golds.png) center center no-repeat;
+    background-size: contain;
+    height: 80px;
+    margin: 30px auto 20px;
+    text-indent: -9999px;
+    text-align: center;
+    max-width: 500px;
+
+    a {
+      display: block;
+      height: 100%;
+      width: 100%;
+    }
+  }
+  
+  .container {
+    padding: 10px 30px;
+    border: 1px solid @light;
+    background-color: @off-white;
+
+    a {
+      color: @dark;
+      text-decoration: underline;
+    }
+  }
+
+  .tab {
+    display: none;
+
+    &.active {
+      display: block;
+    }
+  }
+
+  .error {
+    background: transparent center left no-repeat;
+    background-image: url(../icon-circle-exclamation.png);  /* SPRITE */
+    padding-left: 20px;
+    white-space: nowrap;
+    line-height: 1;
+  }
+
+  #form-options section {
+    padding: 10px 0;
+  }
+
+  .tab-chooser {
+    margin-bottom: 10px;
+    width: 100%;
+    display: inline-block;
+
+    h3 {
+      text-align:  center;
+      font-weight: normal;
+      font-size: 1em;
+      font-style: italic;
+      margin: 0;
+      line-height: 3em;
+    }
+  }
+
+  a.tab-toggle {
+    .box-sizing(border-box);
+    background-color: @gold-button-bg;
+    border-radius: 3px;
+    border-right-width: 0;
+    border: @gold-button-border;
+    box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.27);
+    color: @off-white;
+    display: inline-block;
+    float: left;
+    font-family: @gold-fonts;
+    font-size: 1.1em;
+    height: 66px;
+    line-height: 66px;
+    text-align: center;
+    text-decoration: none;
+    vertical-align: middle;
+    width: 50%;
+
+    &.active {
+      background-color: @gold-button-active;
+      box-shadow: inset 0px 0px 14px rgba(0,0,0,0.27);
+    }
+
+    &:not(.active):hover {
+      background-color: @gold-button-hover;
+      box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.27);
+    }
+
+    &:first-of-type {
+      border-radius: 3px 0 0 3px;
+    }
+
+    &:last-of-type {
+        border-right-width: 1px;
+        border-radius: 0 3px 3px 0;
+    }
+  }
+
+  .buttons {
+    margin-top: 10px;
+  }
+
+  h2 {
+    color: @dark;
+  }
+
+  h3 {
+    font-size: 1.1em;
+    color: @dark;
+    margin-bottom: 10px;
+  }
+
+  h3.toggle, dt.toggle {
+    cursor: pointer;
+    margin-bottom: 0;
+  }
+
+  dt.toggle:before {
+    content: "[+] ";
+  }
+
+  dt.toggle.toggled:before {
+    content: "[–] ";
+  }
+
+  section#redeem-a-code {
+    margin-top: -10px;
+
+    .sidelines {
+      font-size: 1em;
+      font-weight: normal;
+      padding: 0.7em;
+      color: #686868;
+    }
+  }
+
+  .gold-payment {
+    .gift-message {
+      background-color: #fff;
+      margin: 10px 30px;
+      padding: 0 10px;
+      border: 1px solid #cccccb;
+    }
+
+    .transaction-summary {
+      padding-bottom: 10px;
+
+      p {
+        padding: 5px 0;
+      }
+    }
+
+    .divider-text {
+      font-weight: bold;
+      font-size: 1.75em;
+      color: #444;
+    }
+  }
+
+  span.gold-snoo {
+    background: transparent url(../gold/gold-snoo.png) center center no-repeat;
+    background-size: 100px;
+    position: absolute;
+    right: 160px;
+    margin-top: -85px;
+    width: 100px;
+    height: 171px;
+    text-indent: -9999px;
+  }
+
+  .login-note {
+    text-align: center;
+    font-size: 13px;
+    font-style: italic;
+    line-height: 1;
+    margin-bottom: 20px;
+
+    a {
+      text-decoration: underline;
+    }
+  }
+
+  section.gold-question {
+    margin-top: 20px;
+
+    h3.toggle {
+      font-weight: normal;
+      font-size: 0.9em;
+
+      &:before {
+        content: "[+] ";
+      }
+
+      &.toggled:before {
+        content: "[–] ";
+      }
+    }
+  }
+
+  section#give-as-gift {
+    padding-top: 10px;
+  }
+
+  input[type=checkbox], input[type=radio] {
+    margin: 0 0.5em 0 0;
+  }
+
+  input[type=text].inline, input[type=email].inline {
+    font-size: 0.9em;
+    margin: 2px 5px 5px 5px;
+  }
+
+  input[type=text], input[type=email], textarea {
+    box-sizing: border-box;
+    border: 1px solid @light;
+    color: @dark;
+    background-color: #fff;
+    font-family: @gold-fonts;
+    font-style: italic;
+    padding: 5px;
+    font-size: 1em;
+  }
+
+  input[name="code"] {
+    width: 100%;
+    padding: 10px;
+  }
+
+  input:focus::-webkit-input-placeholder,
+  textarea:focus::-webkit-input-placeholder,
+  input:focus:-moz-placeholder,
+  textarea:focus:-moz-placeholder,
+  input:focus:-ms-input-placeholder,
+  textarea:focus:-ms-input-placeholder {  
+    opacity: 0.3;
+  }
+
+  .hidden {
+    display: none;
+  }
+
+  .gift-details {
+      margin-left: 1em;
+      overflow: hidden;
+      .transition(max-height, 0.75s);
+  }
+
+  .gift-details.hidden {
+      display: block;
+      max-height: 0;
+  }
+
+  .gift-details:not(.hidden) {
+      max-height: 400px;
+  }
+
+  //explicit width for jquery slideToggle
+  .details {
+    font-size: 0.9em;
+    margin: 10px 0 0 0;
+    width: 600px;
+  }
+
+  .gilding-info {
+    .details {
+      width: 538px;
+    }
+
+    .examples {
+      margin-top: 10px;
+ 
+      img {
+        display: block;
+        margin: 0 auto;
+      }
+
+      p {
+        text-align: center;
+        font-size: 0.7em;
+      }
+    }
+  }
+
+  .gold-dropdown {
+    color: @dark;
+    background-color: @off-white;
+    font-size: 16px;
+  }
+
+  .indent {
+    margin-left: 20px;
+  }
+
+  .loggedout-gold-form {
+    .loggedout-email {
+      display: block;
+      margin: 10px 0;
+    }
+
+    .hint {
+      font-size: 12px;
+      font-style: italic;
+    }
+  }
+
+  .creddits-amount {
+    h2 {
+      font-size: 1.2em;
+      line-height: 1.6;
+    }
+
+    button {
+      margin-top: 20px;
+      font-size: 1.3em;
+      padding: 10px 25px;
+    }
+  }
+
+  .creddits-prompt {
+    text-align: center;
+    font-size: 0.8em;
+    margin-top: 20px;
+
+    p {
+        display: inline;
+    }
+
+    a {
+        text-decoration: underline;
+        color: @dark;
+    }
+  }
+
+
+  @media screen and (max-width: 1024px) {
+    .buttons {
+      text-align: center;
+    }
+
+    span.gold-snoo {
+      display: block;
+      position: static;
+      width: 100%;
+      text-align: center;
+      margin-top: 25px;
+    }
+  }
+}
+
+/* Page level logic for gold pages, outside of gold-wrap so we can use body classes. */
+.gold-page.creddits-purchase,
+.gold-page.creddits-payment {
+
+  .gold-banner {
+    background-image: url(../gold/reddit-creddits.png);
+  }
+
+  .gold-snoo {
+    background-image: url(../gold/creddits-snoo.png);
+  }
+}
+
+.gold-page.gilding {
+  .gold-banner {
+    background-image: url(../gold/reddit-gilding.png);
+  }
+
+  dt {
+    margin: 0.9em 0 0.5em;
+    font-weight: bold;
+    padding-top: 1em;
+    border-top: 1px solid #CCC;
+    font-size: 1.2em;
+  }
+
+  dt:first-of-type {
+    padding-top: 0;
+    border-top-width: 0;
+  }
+
+  dd {
+    margin-left: 0;
+    line-height: 1.8em;
+  }
+
+  .examples {
+    margin: 1em 0;
+
+    figure {
+      margin: 0 auto;
+      padding: 0;
+      width: 339px;
+      height: 227px;
+      border: 1px solid #cccccb;
+
+      &.userpage-gild {
+        background: url('../gold/userpage-gild.png') no-repeat center center;
+      }
+
+      &.comment-gild {
+        background: url('../gold/comment-gild.png') no-repeat top left;
+      }
+    }
+  }
+
+  .gold-button {
+    display: block;
+    box-sizing: border-box;
+    margin: 0;
+    font-size: 1.3em;
+  }
+}
+
+@media 
+(-webkit-min-device-pixel-ratio: 2), 
+(min-resolution: 192dpi) { 
+  .gold-page.gilding .examples figure {
+
+    &.userpage-gild {
+        background: url('../gold/userpage-gild-x2.png') no-repeat center center;
+        background-size: 339px 227px;
+      }
+
+    &.comment-gild {
+        background: url('../gold/comment-gild-x2.png') no-repeat top left;
+        background-size: 339px 227px;
+      }
+  }
 }

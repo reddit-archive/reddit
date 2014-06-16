@@ -150,6 +150,12 @@ r.analytics = {
         var form = $(this),
             vendor = form.data('vendor')
         form.parent().addClass('working')
+
+        // If we don't have _gaq, just return and let the event bubble and
+        // call its own submit.
+        if (!window._gaq) {
+            return;
+        }
         
         // Track a virtual pageview indicating user went off-site to "vendor."
         // If GA is loaded, have GA process form submission after firing
