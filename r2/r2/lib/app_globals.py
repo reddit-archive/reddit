@@ -546,6 +546,7 @@ class Globals(object):
             self.memcaches,
             min_compress_len=50 * 1024,
             num_clients=num_mc_clients,
+            binary=True,
         )
 
         # a pool just used for @memoize results
@@ -553,6 +554,7 @@ class Globals(object):
             self.memoizecaches,
             min_compress_len=50 * 1024,
             num_clients=num_mc_clients,
+            binary=True,
         )
 
         # a pool just for srmember rels
@@ -560,17 +562,20 @@ class Globals(object):
             self.srmembercaches,
             min_compress_len=96,
             num_clients=num_mc_clients,
+            binary=True,
         )
 
         ratelimitcaches = CMemcache(
             self.ratelimitcaches,
             min_compress_len=96,
             num_clients=num_mc_clients,
+            binary=True,
         )
 
         # a smaller pool of caches used only for distributed locks.
         # TODO: move this to ZooKeeper
         self.lock_cache = CMemcache(self.lockcaches,
+                                    binary=True,
                                     num_clients=num_mc_clients)
         self.make_lock = make_lock_factory(self.lock_cache, self.stats)
 
@@ -580,6 +585,7 @@ class Globals(object):
         if self.permacache_memcaches:
             permacache_memcaches = CMemcache(self.permacache_memcaches,
                                              min_compress_len=50 * 1024,
+                                             binary=True,
                                              num_clients=num_mc_clients)
         else:
             permacache_memcaches = None
@@ -588,6 +594,7 @@ class Globals(object):
         # for data that's frequently fetched but doesn't need to be fresh.
         if self.stalecaches:
             stalecaches = CMemcache(self.stalecaches,
+                                    binary=True,
                                     num_clients=num_mc_clients)
         else:
             stalecaches = None
@@ -599,6 +606,7 @@ class Globals(object):
             no_block=True,
             num_clients=num_mc_clients,
             min_compress_len=480,
+            binary=True,
         )
 
         # pagecaches hold fully rendered pages
@@ -608,6 +616,7 @@ class Globals(object):
             no_block=True,
             num_clients=num_mc_clients,
             min_compress_len=1400,
+            binary=True,
         )
 
         self.startup_timer.intermediate("memcache")

@@ -69,11 +69,12 @@ class CMemcache(CacheUtils):
                  noreply=False,
                  no_block=False,
                  min_compress_len=512 * 1024,
-                 num_clients=10):
+                 num_clients=10,
+                 binary=False):
         self.servers = servers
         self.clients = pylibmc.ClientPool(n_slots = num_clients)
         for x in xrange(num_clients):
-            client = pylibmc.Client(servers, binary=True)
+            client = pylibmc.Client(servers, binary=binary)
             behaviors = {
                 'no_block': no_block, # use async I/O
                 'tcp_nodelay': True, # no nagle
