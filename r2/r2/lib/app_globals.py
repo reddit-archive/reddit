@@ -614,7 +614,6 @@ class Globals(object):
             no_block=True,
             num_clients=num_mc_clients,
             min_compress_len=1400,
-            binary=True,
         )
 
         self.startup_timer.intermediate("memcache")
