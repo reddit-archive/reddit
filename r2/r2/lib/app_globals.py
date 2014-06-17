@@ -606,7 +606,6 @@ class Globals(object):
             no_block=True,
             num_clients=num_mc_clients,
             min_compress_len=480,
-            binary=True,
         )
 
         # pagecaches hold fully rendered pages
