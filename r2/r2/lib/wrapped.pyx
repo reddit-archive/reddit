@@ -449,6 +449,14 @@ def make_cachable(v, style):
 class CachedTemplate(Templated):
     cachable = True
 
+    def template_hash(self, style):
+        template = self.template(style)
+
+        # if template debugging is on, there will be no hash and we can make the
+        # caching process-local
+        template_hash = getattr(template, "hash", id(self.__class__))
+        return template_hash
+
     def cachable_attrs(self):
         """
         Generates an iterator of attr names and their values for every
@@ -463,17 +471,12 @@ class CachedTemplate(Templated):
     def cache_key(self, style):
         from pylons import c, request
 
-        # if template debugging is on, there will be no hash and we
-        # can make the caching process-local.
-        template_hash = getattr(self.template(style), "hash",
-                                id(self.__class__))
-
         # these values are needed to render any link on the site, and
         # a menu is just a set of links, so we best cache against
         # them.
         keys = [c.user_is_loggedin, c.user_is_admin, c.domain_prefix,
                 style, c.secure, c.cname, c.lang, c.site.path,
-                template_hash]
+                self.template_hash(style)]
 
         # if viewing a single subreddit, take flair settings into account.
         if c.user and hasattr(c.site, '_id'):
@@ -587,3 +590,13 @@ class Styled(CachedTemplate):
         if base_template:
             template = base_template.get_def(self.style)
             return template
+
+    def template_hash(self, style):
+        # use the hash of the base template so changes to the template file
+        # will be recognized
+        base_template = CachedTemplate.template(self, style)
+
+        # if template debugging is on, there will be no hash and we can make the
+        # caching process-local
+        template_hash = getattr(base_template, "hash", id(self.__class__))
+        return template_hash
