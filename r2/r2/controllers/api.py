@@ -3754,7 +3754,7 @@ class ApiController(RedditController):
             form.set_html('.status', _('application updated'))
             apps = PrefApps([], [client])
             jquery('#developed-app-%s' % client._id).replaceWith(
-                apps.call('developed_app', client, collapsed=False))
+                apps.render_developed_app(client, collapsed=False))
         else:
             # client_id was omitted or empty, creating new OAuth2Client
             client = OAuth2Client._new(name=name,
@@ -3768,7 +3768,7 @@ class ApiController(RedditController):
             apps = PrefApps([], [client])
             jquery('#developed-apps > h1').show()
             jquery('#developed-apps > ul').append(
-                apps.call('developed_app', client, collapsed=False))
+                apps.render_developed_app(client, collapsed=False))
 
     @validatedForm(VUser(),
                    VModhash(),
@@ -3795,7 +3795,7 @@ class ApiController(RedditController):
         apps = PrefApps([], [client])
         (jquery('#app-developer-%s input[name="name"]' % client._id).val('')
             .closest('.prefright').find('ul').append(
-                apps.call('editable_developer', client, account)))
+                apps.render_editable_developer(client, account)))
 
     @validatedForm(VUser(),
                    VModhash(),

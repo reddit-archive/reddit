@@ -977,6 +977,18 @@ class PrefApps(Templated):
         self.developed_apps = developed_apps
         super(PrefApps, self).__init__()
 
+    def render_developed_app(self, app, collapsed):
+        base_template = self.template()
+        developed_app_fn = base_template.get_def('developed_app')
+        res = developed_app_fn.render(app, collapsed=collapsed)
+        return spaceCompress(res)
+
+    def render_editable_developer(self, app, dev):
+        base_template = self.template()
+        editable_developer_fn = base_template.get_def('editable_developer')
+        res = editable_developer_fn.render(app, dev)
+        return spaceCompress(res)
+
 class PrefDelete(Templated):
     """Preference form for deleting a user's own account."""
     pass
