@@ -20,6 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+from ConfigParser import SafeConfigParser
 from datetime import datetime, timedelta
 from r2.lib.db import tdb_cassandra
 from r2.lib.db.thing import NotFound
@@ -27,9 +28,11 @@ from r2.lib.merge import *
 from pycassa.system_manager import TIME_UUID_TYPE
 from pylons import c, g
 from pylons.controllers.util import abort
+from r2.lib.db.tdb_cassandra import NotFound
 from r2.models.printable import Printable
 from r2.models.account import Account
 from collections import OrderedDict
+from StringIO import StringIO
 
 import pycassa.types
 
@@ -453,3 +456,38 @@ class ImagesByWikiPage(tdb_cassandra.View):
     def delete_image(cls, sr, page_name, image_name):
         rowkey = WikiPage.id_for(sr, page_name)
         cls._remove(rowkey, [image_name])
+
+
+class WikiPageIniItem(object):
+    _bool_values = ("is_enabled", "is_new")
+
+    @classmethod
+    def get_all(cls, return_dict=False):
+        items = OrderedDict()
+        try:
+            wp = WikiPage.get(*cls._get_wiki_config())
+        except NotFound:
+            return items if return_dict else items.values()
+        wp_content = StringIO(wp.content)
+        cfg = SafeConfigParser(allow_no_value=True)
+        cfg.readfp(wp_content)
+
+        for section in cfg.sections():
+            def_values = {'id': section}
+            for name, value in cfg.items(section):
+                # coerce boolean variables
+                if name in cls._bool_values:
+                    def_values[name] = cfg.getboolean(section, name)
+                else:
+                    def_values[name] = value
+
+            try:
+                item = cls(**def_values)
+            except TypeError:
+                # a required variable wasn't set for this item, skip
+                continue
+
+            if item.is_enabled:
+                items[section] = item
+        
+        return items if return_dict else items.values()
