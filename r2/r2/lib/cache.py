@@ -65,11 +65,11 @@ class CacheUtils(object):
 class CMemcache(CacheUtils):
     def __init__(self,
                  servers,
-                 debug = False,
-                 noreply = False,
-                 no_block = False,
+                 debug=False,
+                 noreply=False,
+                 no_block=False,
                  min_compress_len=512 * 1024,
-                 num_clients = 10):
+                 num_clients=10):
         self.servers = servers
         self.clients = pylibmc.ClientPool(n_slots = num_clients)
         for x in xrange(num_clients):
