@@ -22,7 +22,7 @@
 
 <%!
    from r2.lib.strings import strings
-   from r2.lib.template_helpers import format_number, html_datetime
+   from r2.lib.template_helpers import format_number, format_percent, html_datetime
  %>
 
 
@@ -46,8 +46,7 @@
     ${unsafe(strings.person_label % dict(num = format_number(thing.a.score),
                                          persons = ungettext("point", "points", 
                                          thing.a.score)))}
-    <% percent = int(float(thing.a.upvotes) / max(thing.a.upvotes + thing.a.downvotes, 1) * 100) %>
-    &#32;(${percent}% ${_("like it")})
+    &#32;(${_("%(percent)s like it") % dict(percent=format_percent(thing.a.upvote_ratio))})
   </div>
 
 %if getattr(thing.a, "shortlink", None):

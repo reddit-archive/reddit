@@ -552,6 +552,10 @@ def format_number(number, locale=None):
     return babel.numbers.format_number(number, locale=locale)
 
 
+def format_percent(ratio, locale=None):
+    return babel.numbers.format_percent(ratio, locale=locale or c.locale)
+
+
 def html_datetime(date):
     # Strip off the microsecond to appease the HTML5 gods, since
     # datetime.isoformat() returns too long of a microsecond value.

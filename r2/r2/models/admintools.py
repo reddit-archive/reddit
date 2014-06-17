@@ -356,6 +356,8 @@ def update_score(obj, up_change, down_change, vote, old_valid_thing):
 def compute_votes(wrapper, item):
     wrapper.upvotes   = item._ups
     wrapper.downvotes = item._downs
+    total_votes = max(item._ups + item._downs, 1)
+    wrapper.upvote_ratio = float(item._ups) / total_votes
 
 def ip_span(ip):
     ip = websafe(ip)
