@@ -585,7 +585,6 @@ class Globals(object):
         if self.permacache_memcaches:
             permacache_memcaches = CMemcache(self.permacache_memcaches,
                                              min_compress_len=50 * 1024,
-                                             binary=True,
                                              num_clients=num_mc_clients)
         else:
             permacache_memcaches = None
