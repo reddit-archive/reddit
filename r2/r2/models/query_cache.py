@@ -428,8 +428,11 @@ def cached_query(model, filter_fn=filter_identity):
                     args = list(args)
                     args[0] = args[0]._id
 
-                thing_id = to36(args[0])
-                row_key_components.append(thing_id)
+                if isinstance(args[0], (int, long)):
+                    serialized = to36(args[0])
+                else:
+                    serialized = str(args[0])
+                row_key_components.append(serialized)
 
             row_key_components.extend(str(x) for x in args[1:])
             row_key = '.'.join(row_key_components)
