@@ -330,6 +330,7 @@ class IdentityJsonTemplate(ThingJsonTemplate):
     _private_data_attrs = dict(
         over_18="pref_over_18",
         gold_creddits="gold_creddits",
+        gold_expiration="gold_expiration",
     )
 
     def raw_data(self, thing):
@@ -365,7 +366,10 @@ class IdentityJsonTemplate(ThingJsonTemplate):
             return display_comment_karma(thing.comment_karma)
         elif attr == "link_karma":
             return display_link_karma(thing.link_karma)
-
+        elif attr == "gold_expiration":
+            if not thing.gold:
+                return None
+            return calendar.timegm(thing.gold_expiration.utctimetuple())
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
 
