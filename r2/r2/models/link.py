@@ -524,6 +524,8 @@ class Link(Thing, Printable):
             # do we hide the score?
             if user_is_admin:
                 item.hide_score = False
+            elif user_is_loggedin and item.subreddit.is_moderator(c.user):
+                item.hide_score = False
             elif item.promoted and item.score <= 0:
                 item.hide_score = True
             elif user == item.author:
