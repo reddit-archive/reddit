@@ -121,7 +121,7 @@
      %>
   <div class="expando" ${"style='display: none'" if not expand else ""}>
     %if thing.link_child:
-      ${thing.link_child.content()}
+      ${unsafe(thing.link_child.content())}
     %endif
   </div>
   <div class="clear options_expando hidden">

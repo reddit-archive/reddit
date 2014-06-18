@@ -68,7 +68,7 @@
     &#32;|${tagline()}</p>
     %if thing.link_child and thing.link_child.expand:
       <div class="expando">
-        ${thing.link_child.content()}
+        ${unsafe(thing.link_child.content())}
       </div>
     %endif
   </div>
