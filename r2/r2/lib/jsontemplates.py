@@ -468,6 +468,14 @@ class LinkJsonTemplate(ThingJsonTemplate):
                 return safemarkdown(_("[removed]"))
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
+    def raw_data(self, thing):
+        d = ThingJsonTemplate.raw_data(self, thing)
+
+        if c.permalink_page:
+            d["upvote_ratio"] = thing.upvote_ratio
+
+        return d
+
     def rendered_data(self, thing):
         d = ThingJsonTemplate.rendered_data(self, thing)
         d['sr'] = thing.subreddit._fullname
