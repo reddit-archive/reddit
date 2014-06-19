@@ -780,10 +780,13 @@ class ApiController(RedditController):
                    type_and_permissions = VPermissions('type', 'permissions'),
                    note = VLength('note', 300),
                    duration = VInt('duration', min=1, max=999),
+                   ban_message = VMarkdown('ban_message', max_length=1000,
+                                           empty_error=None),
     )
     @api_doc(api_section.users)
     def POST_friend(self, form, jquery, ip, friend,
-                    container, type, type_and_permissions, note, duration):
+                    container, type, type_and_permissions, note, duration,
+                    ban_message):
         """
         Complement to POST_unfriend: handles friending as well as
         privilege changes on subreddits.
@@ -847,6 +850,12 @@ class ApiController(RedditController):
             return
         elif form.has_errors("note", errors.TOO_LONG):
             return
+
+        if type == "banned":
+            if form.has_errors("ban_message", errors.TOO_LONG):
+                return
+        else:
+            ban_message = None
 
         if type in self._sr_friend_types_with_permissions:
             if form.has_errors('type', errors.INVALID_PERMISSION_TYPE):
@@ -934,7 +943,7 @@ class ApiController(RedditController):
             table.find(".notfound").hide()
 
         if new:
-            notify_user_added(type, c.user, friend, container)
+            notify_user_added(type, c.user, friend, container, ban_message)
 
     @validatedForm(VGold(),
                    VModhash(),

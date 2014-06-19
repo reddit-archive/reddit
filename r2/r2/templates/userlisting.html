@@ -51,6 +51,12 @@
     %else:
         <input type="text" name="name" id="name">
     %endif
+    %if add_type == "banned":
+      <span class="ban-details">
+          <label for="note">${_('note to include in ban PM')}</label>
+          <textarea name="ban_message" id="ban_message"></textarea>
+      </span>
+    %endif
     %if permissions_form:
       ${permissions_form}
       &#32;
