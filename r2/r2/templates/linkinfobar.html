@@ -46,7 +46,7 @@
     ${unsafe(strings.person_label % dict(num = format_number(thing.a.score),
                                          persons = ungettext("point", "points", 
                                          thing.a.score)))}
-    &#32;(${_("%(percent)s like it") % dict(percent=format_percent(thing.a.upvote_ratio))})
+    &#32;(${_("%(percent)s upvoted") % dict(percent=format_percent(thing.a.upvote_ratio))})
   </div>
 
 %if getattr(thing.a, "shortlink", None):
