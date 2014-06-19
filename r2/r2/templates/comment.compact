@@ -59,8 +59,7 @@
    %>
   <div class="entry ${like_cls}">
     <div class="tagline">
-     ${WrappedUser(thing.author, thing.attribs, thing,
-                   gray = collapse).render()}&#32;
+     ${WrappedUser(thing.author, thing.attribs, thing, gray=collapse)}&#32;
      %if thing.score_hidden:
        [${_("score hidden")}]
      %else:

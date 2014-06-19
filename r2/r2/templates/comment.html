@@ -59,7 +59,7 @@ ${parent.midcol(not thing.collapsed, cls = cls)}
     &#32;
     ${_("by")}
     &#32;
-    ${thing.link_author.render()}
+    ${thing.link_author}
     ${_("in")}
     &#32;
     ${plain_link(thing.subreddit.name, thing.subreddit_path, sr_path = False,
@@ -93,8 +93,7 @@ ${parent.collapsed()}
      %if thing.deleted:
        <em>${_("deleted comment from")}</em>&#32;
      %endif
-     ${WrappedUser(thing.author, thing.attribs, thing,
-                   gray = collapse).render()}
+     ${WrappedUser(thing.author, thing.attribs, thing, gray=collapse)}
      &#32;
   %else:
      <em>${_("[deleted]")}</em>&#32;

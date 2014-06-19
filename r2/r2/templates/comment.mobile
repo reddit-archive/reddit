@@ -48,7 +48,7 @@
 %else:
 
 <p class="byline">
-  ${WrappedUser(thing.author, thing.attribs, thing, gray = collapse).render()}
+  ${WrappedUser(thing.author, thing.attribs, thing, gray=collapse)}
   &nbsp;|<span class="score">
   %if thing.score_hidden:
     [${_("score hidden")}]
