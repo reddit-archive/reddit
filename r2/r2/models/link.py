@@ -397,6 +397,16 @@ class Link(Thing, Printable):
                 # with what we do have
                 g.log.warning("Cassandra save/hide/visited lookup failed: %r", e)
 
+        # determine which subreddits the user could assign link flair in
+        if user_is_loggedin:
+            srs = {item.subreddit for item in wrapped
+                                  if item.subreddit.link_flair_position}
+            mod_flair_srids = {sr._id for sr in srs
+                               if (user_is_admin or
+                                   sr.is_moderator_with_perms(c.user, 'flair'))}
+            author_flair_srids = {sr._id for sr in srs
+                                  if sr.link_flair_self_assign_enabled}
+
         for item in wrapped:
             show_media = False
             if not hasattr(item, "score_fmt"):
@@ -608,6 +618,14 @@ class Link(Thing, Printable):
                 item.expunged = Link._should_expunge_selftext(item)
 
             item.editted = getattr(item, "editted", False)
+
+            if user_is_loggedin:
+                can_mod_flair = item.subreddit._id in mod_flair_srids
+                can_author_flair = (item.is_author and
+                                    item.subreddit._id in author_flair_srids)
+                item.can_flair = can_mod_flair or can_author_flair
+            else:
+                item.can_flair = False
 
             taglinetext = ''
             if item.different_sr:

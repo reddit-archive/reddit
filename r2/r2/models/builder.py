@@ -96,16 +96,11 @@ class Builder(object):
 
         subreddits = Subreddit.load_subreddits(items, stale=self.stale)
         can_ban_set = set()
-        can_flair_set = set()
-        can_own_flair_set = set()
+
         if user:
             for sr_id, sr in subreddits.iteritems():
                 if sr.can_ban(user):
                     can_ban_set.add(sr_id)
-                if sr.is_moderator_with_perms(user, 'flair'):
-                    can_flair_set.add(sr_id)
-                if sr.link_flair_self_assign_enabled:
-                    can_own_flair_set.add(sr_id)
 
         #get likes/dislikes
         try:
@@ -231,7 +226,6 @@ class Builder(object):
             w.show_reports = False
             w.show_spam    = False
             w.can_ban      = False
-            w.can_flair    = False
             w.use_big_modbuttons = self.spam_listing
 
             if (c.user_is_admin
@@ -265,13 +259,6 @@ class Builder(object):
                            c.user_is_admin)):
                     w.show_reports = True
                     w.use_big_modbuttons = True
-
-            if (c.user_is_admin
-                or (user and hasattr(item, 'sr_id')
-                    and (item.sr_id in can_flair_set
-                         or (w.author and w.author._id == user._id
-                             and item.sr_id in can_own_flair_set)))):
-                w.can_flair = True
 
             w.approval_checkmark = None
             if w.can_ban:
