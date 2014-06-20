@@ -180,6 +180,11 @@ def set_api_docs(fn, simple_vals, param_vals, extra_vals=None):
     doc['parameters'] = param_info
     doc['notes'] = notes
 
+def _validators_handle_csrf(simple_vals, param_vals):
+    for validator in chain(simple_vals, param_vals.itervalues()):
+        if getattr(validator, 'handles_csrf', False):
+            return True
+    return False
 
 def validate(*simple_vals, **param_vals):
     """Validation decorator that delegates error handling to the controller.
@@ -205,6 +210,7 @@ def validate(*simple_vals, **param_vals):
                 self.on_validation_error(err)
 
         set_api_docs(newfn, simple_vals, param_vals)
+        newfn.handles_csrf = _validators_handle_csrf(simple_vals, param_vals)
         return newfn
     return val
 
@@ -258,6 +264,8 @@ def api_validate(response_type=None, add_api_type_doc=False):
                     }
 
                 set_api_docs(newfn, simple_vals, param_vals, extra_param_vals)
+                newfn.handles_csrf = _validators_handle_csrf(simple_vals,
+                                                             param_vals)
                 return newfn
             return val
         return _api_validate
@@ -900,6 +908,7 @@ class VUser(Validator):
             self.set_error(errors.WRONG_PASSWORD)
 
 class VModhash(Validator):
+    handles_csrf = True
     default_param = 'uh'
     def __init__(self, param=None, fatal=True, *a, **kw):
         Validator.__init__(self, param, *a, **kw)
@@ -957,6 +966,8 @@ class VAdmin(Validator):
 
 def make_or_admin_secret_cls(base_cls):
     class VOrAdminSecret(base_cls):
+        handles_csrf = True
+
         def run(self, secret=None):
             '''If validation succeeds, return True if the secret was used,
             False otherwise'''
