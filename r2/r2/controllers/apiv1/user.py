@@ -55,6 +55,10 @@ PREFS_JSON_SPEC = VValidatedJSON.PartialObject({
 
 
 class APIv1UserController(OAuth2ResourceController):
+    # OAuth2 doesn't rely on ambient credentials for authentication,
+    # so CSRF prevention is unnecessary.
+    handles_csrf = True
+
     def pre(self):
         OAuth2ResourceController.pre(self)
         self.authenticate_with_token()

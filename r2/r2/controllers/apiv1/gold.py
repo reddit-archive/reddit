@@ -40,6 +40,8 @@ from r2.models.gold import creddits_lock
 
 
 class APIv1GoldController(OAuth2ResourceController):
+    handles_csrf = True
+
     def pre(self):
         OAuth2ResourceController.pre(self)
         self.authenticate_with_token()

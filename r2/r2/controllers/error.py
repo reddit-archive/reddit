@@ -91,6 +91,9 @@ class ErrorController(RedditController):
     This behaviour can be altered by changing the parameters to the
     ErrorDocuments middleware in your config/middleware.py file.
     """
+    # Handle POST endpoints redirecting to the error controller
+    handles_csrf = True
+
     def check_for_bearer_token(self):
         pass
 

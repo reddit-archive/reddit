@@ -42,6 +42,7 @@ from r2.lib.pages.things import hot_links_by_url_listing
 from r2.lib.pages import trafficpages
 from r2.lib.menus import *
 from r2.lib.admin_utils import check_cheating
+from r2.lib.csrf import csrf_exempt
 from r2.lib.utils import to36, sanitize_url, title_to_url
 from r2.lib.utils import query_string, UrlParser, url_links_builder
 from r2.lib.template_helpers import get_domain
@@ -215,6 +216,7 @@ class FrontController(RedditController):
         return old_visits
 
 
+    @csrf_exempt
     @validate(article=VLink('article'),
               comment=VCommentID('comment'),
               context=VInt('context', min=0, max=8),
@@ -1261,6 +1263,7 @@ class FrontController(RedditController):
             page_classes=["gold-page", "gilding"],
         ).render()
 
+    @csrf_exempt
     @validate(dest=VDestination(default='/'))
     def _modify_hsts_grant(self, dest):
         """Endpoint subdomains can redirect through to update HSTS grants."""

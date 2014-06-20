@@ -31,6 +31,7 @@ import stripe
 
 from r2.controllers.reddit_base import RedditController
 from r2.lib.base import abort
+from r2.lib.csrf import csrf_exempt
 from r2.lib.emailer import _system_email
 from r2.lib.errors import MessageError
 from r2.lib.filters import _force_unicode, _force_utf8
@@ -421,6 +422,7 @@ class IpnController(RedditController):
         elif redirect_to_spent:
             form.redirect("/gold/thanks?v=spent-creddits")
 
+    @csrf_exempt
     @textresponse(paypal_secret = VPrintable('secret', 50),
                   payment_status = VPrintable('payment_status', 20),
                   txn_id = VPrintable('txn_id', 20),
@@ -658,6 +660,7 @@ class GoldPaymentController(RedditController):
     event_type_mappings = {}
     abort_on_error = True
 
+    @csrf_exempt
     @textresponse(secret=VPrintable('secret', 50))
     def POST_goldwebhook(self, secret):
         self.validate_secret(secret)
@@ -1049,6 +1052,7 @@ class StripeController(GoldPaymentController):
         send_system_message(user, subject, message)
         return customer
 
+    @csrf_exempt
     @validatedForm(token=nop('stripeToken'),
                    passthrough=VPrintable("passthrough", max_length=50),
                    pennies=VInt('pennies'),

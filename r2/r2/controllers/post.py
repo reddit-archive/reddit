@@ -34,6 +34,7 @@ from r2.lib.validator.preferences import (
     PREFS_VALIDATORS,
     set_prefs,
 )
+from r2.lib.csrf import csrf_exempt
 from r2.models.recommend import ExploreSettings
 from pylons import request, c, g
 from pylons.controllers.util import redirect_to
@@ -43,6 +44,7 @@ import hashlib
 from r2.lib.base import abort
 
 class PostController(ApiController):
+    @csrf_exempt
     @validate(pref_lang = VLang('lang'),
               all_langs = VOneOf('all-langs', ('all', 'some'), default='all'))
     def POST_unlogged_options(self, all_langs, pref_lang):
@@ -85,6 +87,7 @@ class PostController(ApiController):
             return self.redirect('/')
 
 
+    @csrf_exempt
     @validate(msg_hash = nop('x'))
     def POST_optout(self, msg_hash):
         email, sent = opt_out(msg_hash)
@@ -95,6 +98,7 @@ class PostController(ApiController):
                                            sent = True,
                                            msg_hash = msg_hash)).render()
 
+    @csrf_exempt
     @validate(msg_hash = nop('x'))
     def POST_optin(self, msg_hash):
         email, sent = opt_in(msg_hash)
@@ -106,6 +110,7 @@ class PostController(ApiController):
                                            msg_hash = msg_hash)).render()
 
 
+    @csrf_exempt
     @validate(dest = VDestination(default = "/"))
     def POST_login(self, dest, *a, **kw):
         ApiController._handle_login(self, *a, **kw)
@@ -120,6 +125,7 @@ class PostController(ApiController):
             dest = hsts_modify_redirect(dest)
         return self.redirect(dest)
 
+    @csrf_exempt
     @validate(dest = VDestination(default = "/"))
     def POST_reg(self, dest, *a, **kw):
         ApiController._handle_register(self, *a, **kw)

@@ -28,6 +28,7 @@ from pylons.i18n import _
 
 from r2.controllers.reddit_base import RedditController, abort_with_error
 from r2.lib.base import abort
+from r2.lib.csrf import csrf_exempt
 from r2.lib.utils import constant_time_compare
 from r2.lib.validator import (
     validate,
@@ -42,6 +43,7 @@ from r2.lib.validator import (
 class WebLogController(RedditController):
     on_validation_error = staticmethod(abort_with_error)
 
+    @csrf_exempt
     @validate(
         VRatelimit(rate_user=False, rate_ip=True, prefix='rate_weblog_'),
         level=VOneOf('level', ('error',)),
@@ -85,6 +87,7 @@ class WebLogController(RedditController):
         VRatelimit.ratelimit(rate_user=False, rate_ip=True,
                              prefix="rate_weblog_", seconds=10)
 
+    @csrf_exempt
     @validate(
         # set default to invalid number so we can ignore it later.
         dns_timing=VFloat('dnsTiming', min=0, num_default=-1),

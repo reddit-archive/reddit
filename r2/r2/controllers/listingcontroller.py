@@ -41,6 +41,7 @@ from r2.lib.strings import Score
 import r2.lib.search as search
 from r2.lib.template_helpers import add_sr
 from r2.lib.admin_utils import check_cheating
+from r2.lib.csrf import csrf_exempt
 from r2.lib.utils import iters, timeago, precise_format_timedelta
 from r2.lib import organic, sup, trending
 from r2.lib.memoize import memoize
@@ -438,6 +439,7 @@ class NewController(ListingWithPromos):
     def query(self):
         return c.site.get_links('new', 'all')
 
+    @csrf_exempt
     def POST_listing(self, **env):
         # Redirect to GET mode in case of any legacy requests
         return self.redirect(request.fullpath)
@@ -490,6 +492,7 @@ class BrowseController(ListingWithPromos):
     def query(self):
         return c.site.get_links(self.sort, self.time)
 
+    @csrf_exempt
     @validate(t = VMenu('sort', ControversyTimeMenu))
     def POST_listing(self, sort, t, **env):
         # VMenu validator will save the value of time before we reach this

@@ -158,6 +158,8 @@ class OAuth2FrontendController(RedditController):
             return self._error_response(state, redirect_uri)
 
 class OAuth2AccessController(MinimalController):
+    handles_csrf = True
+
     def pre(self):
         set_extension(request.environ, "json")
         MinimalController.pre(self)

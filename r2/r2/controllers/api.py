@@ -89,6 +89,7 @@ from r2.lib.template_helpers import add_sr, get_domain
 from r2.lib.system_messages import notify_user_added
 from r2.controllers.ipn import generate_blob
 from r2.lib.lock import TimeoutExpired
+from r2.lib.csrf import csrf_exempt
 
 from r2.models import wiki
 from r2.models.recommend import AccountSRFeedback
@@ -128,6 +129,7 @@ class ApiminimalController(MinimalController):
     # (1) to add the endpoint to /dev/api/oauth, and
     # (2) to future-proof in case the function moves elsewhere
     @allow_oauth2_access
+    @csrf_exempt
     @validatedForm()
     @api_doc(api_section.captcha)
     def POST_new_captcha(self, form, jquery, *a, **kw):
@@ -492,6 +494,7 @@ class ApiController(RedditController):
         form._send_data(id=l._id36)
         form._send_data(name=l._fullname)
 
+    @csrf_exempt
     @validatedForm(VRatelimit(rate_ip = True,
                               rate_user = True,
                               prefix = 'fetchtitle_'),
@@ -552,6 +555,7 @@ class ApiController(RedditController):
                 responder.has_errors("passwd", errors.WRONG_PASSWORD)):
             self._login(responder, user, rem)
 
+    @csrf_exempt
     @cross_domain(allow_credentials=True)
     @api_doc(api_section.account, extends=_handle_login)
     def POST_login(self, *args, **kwargs):
@@ -612,6 +616,7 @@ class ApiController(RedditController):
 
             self._login(responder, user, rem)
 
+    @csrf_exempt
     @cross_domain(allow_credentials=True)
     @api_doc(api_section.account, extends=_handle_register)
     def POST_register(self, *args, **kwargs):
@@ -2318,6 +2323,7 @@ class ApiController(RedditController):
         else:
             jquery.refresh()
 
+    @csrf_exempt
     @noresponse(q = VPrintable('q', max_length=500),
                 sort = VPrintable('sort', max_length=10),
                 t = VPrintable('t', max_length=10),
@@ -2717,6 +2723,7 @@ class ApiController(RedditController):
         thing._unhide(c.user)
 
 
+    @csrf_exempt
     @validatedForm(VUser(),
                    parent = VByName('parent_id'))
     def POST_moremessages(self, form, jquery, parent):
@@ -2739,6 +2746,7 @@ class ApiController(RedditController):
                 item.child = None
         jquery.things(parent._fullname).parent().replace_things(a, False, True)
 
+    @csrf_exempt
     @require_oauth2_scope("read")
     @validatedForm(
         link=VByName('link_id'),
@@ -2927,6 +2935,7 @@ class ApiController(RedditController):
                                errors.NO_TEXT):
             form.redirect("/gold/thanks?v=%s" % status)
 
+    @csrf_exempt
     @validatedForm(
         VRatelimit(rate_ip=True, prefix="rate_password_"),
         user=VUserWithEmail('name'),
@@ -2947,6 +2956,7 @@ class ApiController(RedditController):
                 form.set_html(".status", _("try again tomorrow"))
 
 
+    @csrf_exempt
     @validatedForm(token=VOneTimeToken(PasswordResetToken, "key"),
                    password=VPassword(["passwd", "passwd2"]))
     def POST_resetpassword(self, form, jquery, token, password):
@@ -3432,6 +3442,7 @@ class ApiController(RedditController):
         ModAction.create(c.site, c.user, action='editflair',
                          details='flair_clear_template')
 
+    @csrf_exempt
     @require_oauth2_scope("flair")
     @validate(VUser(),
               user = VFlairAccount('name'),
@@ -3658,18 +3669,21 @@ class ApiController(RedditController):
         jquery('.gadget').show().find('.click-gadget').html(
             spaceCompress(content))
 
+    @csrf_exempt
     @noresponse()
     def POST_tb_commentspanel_show(self):
         # this preference is allowed for non-logged-in users
         c.user.pref_frame_commentspanel = True
         c.user._commit()
 
+    @csrf_exempt
     @noresponse()
     def POST_tb_commentspanel_hide(self):
         # this preference is allowed for non-logged-in users
         c.user.pref_frame_commentspanel = False
         c.user._commit()
 
+    @csrf_exempt
     @require_oauth2_scope("read")
     @json_validate(query=VPrintable('query', max_length=50),
                    include_over_18=VBoolean('include_over_18', default=True))
@@ -3688,6 +3702,7 @@ class ApiController(RedditController):
 
         return {'names': names}
 
+    @csrf_exempt
     @validate(link = VByName('link_id', thing_cls = Link))
     def POST_expando(self, link):
         if not link:
@@ -4010,6 +4025,7 @@ class ApiController(RedditController):
             thing=thing._fullname,
         ))
 
+    @csrf_exempt
     @validate(srnames=VPrintable("srnames", max_length=2100))
     def POST_request_promo(self, srnames):
         if not srnames:
