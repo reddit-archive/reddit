@@ -353,6 +353,9 @@ class Reddit(Templated):
             buttons.append(NavButton(menu.community_settings,
                                      css_class="reddit-edit",
                                      dest="edit"))
+            buttons.append(NavButton(menu.edit_stylesheet,
+                                     css_class="edit-stylesheet",
+                                     dest="stylesheet"))
 
         if is_moderator_with_perms('mail'):
             buttons.append(NamedButton("modmail",
