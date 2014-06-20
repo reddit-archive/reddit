@@ -602,6 +602,12 @@ class Account(Thing):
     def flair_enabled_in_sr(self, sr_id):
         return getattr(self, 'flair_%s_enabled' % sr_id, True)
 
+    def flair_text(self, sr_id):
+        return getattr(self, 'flair_%s_text' % sr_id, None)
+
+    def flair_css_class(self, sr_id):
+        return getattr(self, 'flair_%s_css_class' % sr_id, None)
+
     def update_sr_activity(self, sr):
         if not self._spam:
             AccountsActiveBySR.touch(self, sr)

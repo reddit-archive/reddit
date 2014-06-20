@@ -2944,16 +2944,18 @@ class Embed(Templated):
 
 
 def wrapped_flair(user, subreddit, force_show_flair):
-    if (not hasattr(subreddit, '_id')
-        or not (force_show_flair or getattr(subreddit, 'flair_enabled', True))):
+    if isinstance(subreddit, FakeSubreddit):
+        # FakeSubreddits don't show user flair
+        return False, 'right', '', ''
+    elif not (force_show_flair or subreddit.flair_enabled):
         return False, 'right', '', ''
 
-    get_flair_attr = lambda a, default=None: getattr(
-        user, 'flair_%s_%s' % (subreddit._id, a), default)
+    enabled = user.flair_enabled_in_sr(subreddit._id)
+    position = subreddit.flair_position
+    text = user.flair_text(subreddit._id)
+    css_class = user.flair_css_class(subreddit._id)
 
-    return (get_flair_attr('enabled', default=True),
-            getattr(subreddit, 'flair_position', 'right'),
-            get_flair_attr('text'), get_flair_attr('css_class'))
+    return enabled, position, text, css_class
 
 class WrappedUser(CachedTemplate):
     cachable = False
