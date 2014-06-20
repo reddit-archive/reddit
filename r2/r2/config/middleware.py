@@ -27,6 +27,7 @@ import urllib
 import tempfile
 import urlparse
 from threading import Lock
+import itertools
 
 from paste.cascade import Cascade
 from paste.registry import RegistryManager
@@ -42,6 +43,7 @@ from r2.config import hooks
 from r2.config.environment import load_environment
 from r2.config.extensions import extension_mapping, set_extension
 from r2.lib.utils import is_subdomain
+from r2.lib import csrf
 
 
 # patch in WebOb support for HTTP 429 "Too Many Requests"
@@ -395,6 +397,18 @@ class RedditApp(PylonsApp):
             self.load_controllers()
             self.register_hooks()
 
+    def _check_csrf_prevention(self):
+        from r2 import controllers
+        from pylons import g
+
+        if not g.running_as_script:
+            controllers_iter = itertools.chain(
+                controllers._reddit_controllers.itervalues(),
+                controllers._plugin_controllers.itervalues(),
+            )
+            for controller in controllers_iter:
+                csrf.check_controller_csrf_prevention(controller)
+
     def load_controllers(self):
         if self._controllers:
             return
@@ -404,6 +418,7 @@ class RedditApp(PylonsApp):
         controllers.load_controllers()
         config['r2.plugins'].load_controllers()
         self._controllers = controllers
+        self._check_csrf_prevention()
 
     def register_hooks(self):
         if self._hooks_registered:
