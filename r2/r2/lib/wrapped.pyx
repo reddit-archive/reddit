@@ -481,7 +481,8 @@ class CachedTemplate(Templated):
         auto_keys = [(k,  make_cachable(v, style))
                      for k, v in self.cachable_attrs()]
         keys.append(repr(auto_keys))
-        return "<%s:[%s]>" % (self.__class__.__name__, u''.join(keys))
+        h = md5(u''.join(keys)).hexdigest()
+        return "<%s:[%s]>" % (self.__class__.__name__, h)
 
 
 class Wrapped(CachedTemplate):
