@@ -1007,6 +1007,7 @@ class Subreddit(Thing, Printable, BaseSite):
 class FakeSubreddit(BaseSite):
     _defaults = dict(Subreddit._defaults,
         link_flair_position='right',
+        flair_enabled=False,
     )
 
     def __init__(self):
