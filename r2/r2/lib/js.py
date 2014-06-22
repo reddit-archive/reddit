@@ -24,8 +24,8 @@
 import inspect
 import sys
 import os.path
-from subprocess import Popen, PIPE
 import re
+import subprocess
 import json
 
 from r2.lib.translation import (
@@ -56,31 +56,18 @@ script_tag = '<script type="text/javascript" src="{src}"></script>\n'
 inline_script_tag = '<script type="text/javascript">{content}</script>'
 
 
-class ClosureError(Exception): pass
+class Uglify(object):
+    def compile(self, data, dest):
+        process = subprocess.Popen(
+            ["/usr/bin/uglifyjs", "-nc"],
+            stdin=subprocess.PIPE,
+            stdout=dest,
+        )
 
+        process.communicate(input=data)
 
-class ClosureCompiler(object):
-    def __init__(self, jarpath):
-        self.jarpath = jarpath
-        self.args = [
-            "--jscomp_off=internetExplorerChecks",
-        ]
-
-    def _run(self, data, out=PIPE, args=None, expected_code=0):
-        args = args or []
-        p = Popen(["java", "-jar", self.jarpath] + self.args + args,
-                stdin=PIPE, stdout=out, stderr=PIPE)
-        out, msg = p.communicate(data)
-        if p.returncode != expected_code:
-            raise ClosureError(msg)
-        else:
-            return out, msg
-
-    def compile(self, data, dest, args=None):
-        """Run closure compiler on a string of source code `data`, writing the
-        result to output file `dest`. A ClosureError exception will be raised if
-        the operation is unsuccessful."""
-        return self._run(data, dest, args)[0]
+        if process.returncode != 0:
+            raise subprocess.CalledProcessError(process.returncode, "uglifyjs")
 
 
 class Source(object):
@@ -168,7 +155,7 @@ class Module(Source):
         """The destination path of the module file on the filesystem."""
         return os.path.join(STATIC_ROOT, "static", self.name)
 
-    def build(self, closure):
+    def build(self, minifier):
         with open(self.path, "w") as out:
             source = self.get_source()
             if self.wrap:
@@ -176,7 +163,7 @@ class Module(Source):
 
             if self.should_compile:
                 print >> sys.stderr, "Compiling {0}...".format(self.name),
-                closure.compile(source, out)
+                minifier.compile(source, out)
             else:
                 print >> sys.stderr, "Concatenating {0}...".format(self.name),
                 out.write(source)
@@ -350,8 +337,8 @@ class LocalizedModule(Module):
         path_name, path_ext = os.path.splitext(path)
         return path_name + "." + lang + path_ext
 
-    def build(self, closure):
-        Module.build(self, closure)
+    def build(self, minifier):
+        Module.build(self, minifier)
 
         with open(self.path) as f:
             reddit_source = f.read()
@@ -602,8 +589,8 @@ def enumerate_outputs(*names):
 
 @build_command
 def build_module(name):
-    closure = ClosureCompiler("r2/lib/contrib/closure_compiler/compiler.jar")
-    module[name].build(closure)
+    minifier = Uglify()
+    module[name].build(minifier)
 
 
 if __name__ == "__main__":

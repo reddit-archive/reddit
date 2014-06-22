@@ -146,6 +146,7 @@ python-geoip
 
 nodejs
 node-less
+node-uglify
 gettext
 make
 optipng
