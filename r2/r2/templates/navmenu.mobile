@@ -29,10 +29,6 @@
 <%def name="flatlist()">
 </%def>
 
-
-<%def name="multicolumn()">
-</%def>
-
 <%def name="tabmenu()">
   ${parent.tabmenu()}
 </%def>

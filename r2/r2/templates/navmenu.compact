@@ -49,30 +49,6 @@
   %endif
 </%def>
 
-
-<%def name="multicolumn()">
-  <% 
-     buttons = thing.options
-     l = len(buttons)/2
-     l = max(l, len(buttons) - l)
-     buttons = (buttons[:l], buttons[l:])
-   %>
-  %for b in buttons:
-    <ul class="hover">
-      %for i, option in enumerate(b):
-        <%
-           cls = "first" if i == 0 else ""
-         %>
-        %if option == thing.selected:
-          <li class="selected ${cls}">${option.selected_title()}</li>
-        %else:
-          <li class="${cls}">${option}</li>
-        %endif
-      %endfor
-    </ul>
-  %endfor
-</%def>
-
 <%def name="tabmenu()">
   %if thing:
     <% css_class = str(thing.css_class) if thing.css_class else "" %>
