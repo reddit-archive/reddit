@@ -1164,6 +1164,16 @@ class Comment(Thing, Printable):
                 item.voting_score = [1, 1, 1]
                 item.render_css_class += " score-hidden"
 
+            # in contest mode, use only upvotes for the score if the subreddit
+            # has been (manually) set to do so
+            if (item.link.contest_mode and
+                    item.subreddit.contest_mode_upvotes_only and
+                    not item.score_hidden):
+                item.score = item._ups
+                item.voting_score = [
+                    item.score - 1, item.score, item.score + 1]
+                item.collapsed = False
+
             #will seem less horrible when add_props is in pages.py
             from r2.lib.pages import UserText
             item.usertext = UserText(item, item.body,
