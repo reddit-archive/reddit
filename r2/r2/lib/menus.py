@@ -188,8 +188,7 @@ def menu_style(type):
     (style, css_class) pair given a 'type', defaulting to style =
     'dropdown' with no css_class."""
     default = ('dropdown', '')
-    d = dict(heavydrop = ('dropdown', 'heavydrop'),
-             lightdrop = ('dropdown', 'lightdrop'),
+    d = dict(lightdrop = ('dropdown', 'lightdrop'),
              tabdrop = ('dropdown', 'tabdrop'),
              srdrop = ('dropdown', 'srdrop'),
              flatlist =  ('flatlist', 'flat-list'),
