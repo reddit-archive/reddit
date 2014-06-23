@@ -360,7 +360,10 @@ class FrontController(RedditController):
         c.previous_visits = previous_visits
 
         if article.contest_mode:
-            sort = "random"
+            if c.user_is_loggedin and sr.is_moderator(c.user):
+                sort = "top"
+            else:
+                sort = "random"
 
         # finally add the comment listing
         displayPane.append(CommentPane(article, CommentSortMenu.operator(sort),
