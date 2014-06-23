@@ -41,12 +41,6 @@
     ${ynbutton(_("enable contest mode"), _("contest mode enabled"), "set_contest_mode",
       hidden_data=dict(id=thing.link._fullname, state=True))}
   %endif
-%elif thing.contest_mode:
-  <span>${_("contest mode: scores hidden")}</span>
-%endif
-
-%if thing.can_edit or thing.contest_mode:
-  &nbsp;<span class="help-hoverable" title="${_('contest mode randomizes comment sorting, hides scores, and collapses replies by default.')}">(?)</span>
 %endif
 
 %if thing.can_edit and thing.link.is_self:
@@ -58,4 +52,14 @@
       question=_("sticky this? (any existing sticky will be replaced)"),
       hidden_data=dict(id=thing.link._fullname, state=True))}
   %endif
+%endif
+
+%if thing.contest_mode:
+  <div class="contest-mode infobar mellow"><strong>${_("this thread is in contest mode")}</strong>&#32;- 
+  %if thing.can_edit:
+    ${_('as a mod, comments are being sorted by "top" and scores are visible. regular users have randomized sorting and cannot see the scores.')}
+  %else:
+    ${_('contest mode randomizes comment sorting, hides scores, and collapses replies by default.')}
+  %endif
+  </div>
 %endif
