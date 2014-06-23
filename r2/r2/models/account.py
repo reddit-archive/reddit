@@ -75,6 +75,7 @@ class Account(Thing):
                      pref_min_link_score = -4,
                      pref_min_comment_score = -4,
                      pref_num_comments = g.num_comments,
+                     pref_highlight_controversial=False,
                      pref_lang = g.lang,
                      pref_content_langs = (g.lang,),
                      pref_over_18 = False,

@@ -106,6 +106,8 @@ ${self.RenderPrintable()}
       rowclass += " user-gilded"
     if getattr(what, "stickied", False):
       rowclass += " stickied"
+    if getattr(what, "is_controversial", False) and c.user.pref_highlight_controversial:
+      rowclass += " controversial"
   %>
   ${rowstyle}&#32;${rowclass}
 </%def>

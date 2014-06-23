@@ -276,7 +276,12 @@ class Globals(object):
         ConfigValue.bool: [
             'frontend_logging',
         ],
+        ConfigValue.int: [
+            'cflag_min_votes',
+        ],
         ConfigValue.float: [
+            'cflag_lower_bound',
+            'cflag_upper_bound',
             'spotlight_interest_sub_p',
             'spotlight_interest_nosub_p',
             'gold_revenue_goal',

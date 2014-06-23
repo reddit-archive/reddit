@@ -303,6 +303,13 @@ body[orient="landscape"] > #topbar > h1 { margin-left: -125px; width: 250px; }
 
 .comment.collapsed .tagline { margin-left: 20px; font-style: italcs; color: #AAA; }
 
+.comment.controversial > .entry .score:after {
+  content: '†';
+  position: relative;
+  top: -3px;
+  font-size: 9px;
+}
+
 /** gilding */
 .gilded-icon { position: relative; display: inline-block; margin: 0 0 -15px 8px; top: -8px; color: #99895F; font-size: .9em; vertical-align: middle; }
 

@@ -1969,6 +1969,11 @@ a.star { text-decoration: none; color: #ff8b60 }
 }
 
 .comment .score { font-size: x-small; }
+.comment.controversial > .entry .score:after {
+  content: '†';
+  position: relative;
+  top: -2px;
+}
 .comment .child, .comment .showreplies {
     margin-top: 10px; 
     margin-left: 15px; 

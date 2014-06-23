@@ -498,6 +498,7 @@ class CommentJsonTemplate(ThingJsonTemplate):
         body="body",
         body_html="body_html",
         distinguished="distinguished",
+        controversiality="controversiality",
         downs="downvotes",
         edited="editted",
         gilded="gilded",
@@ -518,6 +519,8 @@ class CommentJsonTemplate(ThingJsonTemplate):
         from r2.models import Comment, Link, Subreddit
         if attr == 'link_id':
             return make_fullname(Link, thing.link_id)
+        elif attr == "controversiality":
+            return 1 if thing.is_controversial else 0
         elif attr == "editted" and not isinstance(thing.editted, bool):
             return (time.mktime(thing.editted.astimezone(pytz.UTC).timetuple())
                     - time.timezone)
@@ -534,6 +537,7 @@ class CommentJsonTemplate(ThingJsonTemplate):
             return spaceCompress(safemarkdown(thing.body))
         elif attr == "gilded":
             return thing.gildings
+
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
     def kind(self, wrapped):

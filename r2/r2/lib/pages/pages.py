@@ -1435,7 +1435,7 @@ class CommentPane(Templated):
                                   c.user.pref_show_flair,
                                   c.user.pref_show_link_flair,
                                   c.can_save,
-                                  self.max_depth]))
+                                  self.max_depth, c.user.pref_highlight_controversial]))
 
     def __init__(self, article, sort, comment, context, num, **kw):
         # keys: lang, num, can_reply, render_style
@@ -1505,6 +1505,8 @@ class CommentPane(Templated):
                     # Preserve the viewing user's flair preferences.
                     c.user.pref_show_flair = user.pref_show_flair
                     c.user.pref_show_link_flair = user.pref_show_link_flair
+                    c.user.pref_highlight_controversial = user.pref_highlight_controversial
+
                     c.user_is_loggedin = False
 
                     # render as if not logged in (but possibly with reply buttons)

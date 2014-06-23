@@ -30,7 +30,7 @@ from r2.models.gold import append_random_bottlecap_phrase
 from r2.models.token import AwardClaimToken
 
 from _pylibmc import MemcachedError
-from pylons import g, config
+from pylons import g, c, config
 from pylons.i18n import _
 
 from datetime import datetime, timedelta
@@ -350,11 +350,31 @@ def update_score(obj, up_change, down_change, vote, old_valid_thing):
      obj._incr('_ups',   up_change)
      obj._incr('_downs', down_change)
 
+
+def _is_controversial(w, item):
+    """Determine if an item meets all criteria to display as controversial."""
+    cfg = g.live_config
+    votes = max(item._ups + item._downs, 1)
+
+    # A sample-size threshold before posts can be considered controversial
+    if votes < cfg['cflag_min_votes']:
+        return False
+
+    # If an item falls within a boundary of upvote ratios, it's controversial
+    # e.g. 0.4 < x < 0.6
+    if cfg['cflag_lower_bound'] <= w.upvote_ratio <= cfg['cflag_upper_bound']:
+        return True
+
+    return False
+
+
 def compute_votes(wrapper, item):
     wrapper.upvotes   = item._ups
     wrapper.downvotes = item._downs
     total_votes = max(item._ups + item._downs, 1)
     wrapper.upvote_ratio = float(item._ups) / total_votes
+    wrapper.is_controversial = (c.user.pref_highlight_controversial and
+                                _is_controversial(wrapper, item))
 
 def ip_span(ip):
     ip = websafe(ip)

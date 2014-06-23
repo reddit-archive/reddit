@@ -51,6 +51,7 @@ PREFS_VALIDATORS = dict(
     pref_min_comment_score=VInt('min_comment_score', -100, 100),
     pref_num_comments=VInt('num_comments', 1, g.max_comments,
                            default=g.num_comments),
+    pref_highlight_controversial=VBoolean('highlight_controversial'),
     pref_show_stylesheets=VBoolean('show_stylesheets'),
     pref_show_flair=VBoolean('show_flair'),
     pref_show_link_flair=VBoolean('show_link_flair'),
