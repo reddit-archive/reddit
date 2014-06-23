@@ -1625,8 +1625,8 @@ class VMenu(Validator):
                 sort = user_pref
 
         # validate the sort
-        if sort not in self.nav.options:
-            sort = self.nav.default
+        if sort not in self.nav._options:
+            sort = self.nav._default
 
         # commit the sort if changed and if this is a POST request
         if (self.remember and c.user_is_loggedin and sort != user_pref
@@ -1641,7 +1641,7 @@ class VMenu(Validator):
     def param_docs(self):
         return {
             self.param[0]: 'one of (%s)' % ', '.join("`%s`" % s
-                                                  for s in self.nav.options),
+                                                  for s in self.nav._options),
         }
 
 

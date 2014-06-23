@@ -31,7 +31,7 @@ from r2.config.extensions import is_api
 from r2.lib.pages import *
 from r2.lib.pages.things import wrap_links
 from r2.lib.menus import TimeMenu, SortMenu, RecSortMenu, ProfileSortMenu
-from r2.lib.menus import ControversyTimeMenu, menu
+from r2.lib.menus import ControversyTimeMenu, menu, QueryButton
 from r2.lib.rising import get_rising, normalized_rising
 from r2.lib.wrapped import Wrapped
 from r2.lib.normalized_hot import normalized_hot
@@ -584,10 +584,10 @@ class UserController(ListingController):
                             if sr.can_view(c.user)]
             srnames = sorted(set(srnames), key=lambda name: name.lower())
             if len(srnames) > 1:
-                sr_buttons = [NavButton(_('all'), None, opt='sr',
+                sr_buttons = [QueryButton(_('all'), None, query_param='sr',
                                         css_class='primary')]
                 for srname in srnames:
-                    sr_buttons.append(NavButton(srname, srname, opt='sr'))
+                    sr_buttons.append(QueryButton(srname, srname, query_param='sr'))
                 base_path = '/user/%s/saved' % self.vuser.name
                 if self.savedcategory:
                     base_path += '/%s' % urllib.quote(self.savedcategory)

@@ -291,7 +291,7 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
     @classmethod
     def add_props(cls, user, wrapped):
 
-        from r2.lib.menus import NavButton
+        from r2.lib.menus import QueryButton
         from r2.lib.db.thing import Thing
         from r2.lib.pages import WrappedUser
         from r2.lib.filters import _force_unicode
@@ -349,11 +349,12 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
         for item in wrapped:
             # Can I move these buttons somewhere else? Not great to have request stuff in here
             css_class = 'modactions %s' % item.action
-            item.button = NavButton('', item.action, opt='type', css_class=css_class)
+            item.button = QueryButton('', item.action, query_param='type',
+                                      css_class=css_class)
             item.button.build(base_path=request_path)
 
             mod_name = item.author.name
-            item.mod = NavButton(mod_name, mod_name, opt='mod')
+            item.mod = QueryButton(mod_name, mod_name, query_param='mod')
             item.mod.build(base_path=request_path)
             item.text = ModAction._text.get(item.action, '')
             item.details = item.get_extra_text()

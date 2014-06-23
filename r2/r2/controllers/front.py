@@ -551,15 +551,19 @@ class FrontController(RedditController):
         panes = PaneStack()
         panes.append(pane)
 
-        action_buttons = [NavButton(_('all'), None, opt='type', css_class='primary')]
+        action_buttons = [QueryButton(_('all'), None, query_param='type',
+                                      css_class='primary')]
         for a in ModAction.actions:
-            action_buttons.append(NavButton(ModAction._menu[a], a, opt='type'))
+            button = QueryButton(ModAction._menu[a], a, query_param='type')
+            action_buttons.append(button)
 
-        mod_buttons = [NavButton(_('all'), None, opt='mod', css_class='primary')]
+        mod_buttons = [QueryButton(_('all'), None, query_param='mod',
+                                   css_class='primary')]
         for mod_id in mod_ids:
             mod = mods[mod_id]
-            mod_buttons.append(NavButton(mod.name, mod.name, opt='mod'))
-        mod_buttons.append(NavButton('admins*', 'a', opt='mod'))
+            mod_buttons.append(QueryButton(mod.name, mod.name,
+                                           query_param='mod'))
+        mod_buttons.append(QueryButton('admins*', 'a', query_param='mod'))
         base_path = request.path
         menus = [NavMenu(action_buttons, base_path=base_path,
                          title=_('filter by action'), type='lightdrop', css_class='modaction-drop'),
@@ -703,9 +707,11 @@ class FrontController(RedditController):
         extension_handling = "private" if c.user.pref_private_feeds else False
 
         if location in ('reports', 'spam', 'modqueue'):
-            buttons = [NavButton(_('links and comments'), None, opt='only'),
-                       NavButton(_('links'), 'links', opt='only'),
-                       NavButton(_('comments'), 'comments', opt='only')]
+            buttons = [
+                QueryButton(_('links and comments'), None, query_param='only'),
+                QueryButton(_('links'), 'links', query_param='only'),
+                QueryButton(_('comments'), 'comments', query_param='only'),
+            ]
             menus = [NavMenu(buttons, base_path=request.path, title=_('show'),
                              type='lightdrop')]
         else:

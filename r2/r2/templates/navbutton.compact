@@ -37,7 +37,7 @@
 </%def>
 
 <%def name="post()">
-  ${post_link(thing.title, thing.base_path, thing.path, thing.action_params,
+  ${post_link(thing.title, thing.base_path, thing.base_path, thing.action_params,
               _sr_path=thing.sr_path, nocname=thing.nocname, target=thing.target,
               _class=thing.css_class, _id=thing._id)}
 </%def>
