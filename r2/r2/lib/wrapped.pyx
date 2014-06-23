@@ -26,6 +26,8 @@ import re, types
 
 from hashlib import md5
 
+RENDER_CACHE_SAMPLE_RATE = 0.001
+
 class _TemplateUpdater(object):
     # this class is just a hack to get around Cython's closure rules
 
@@ -319,6 +321,12 @@ class Templated(object):
                         r = item.render_nocache(style)
                     else:
                         r = cached[cache_key]
+
+                    event_name = 'render-cache.%s' % item.render_class_name
+                    name = 'hit' if cache_key in cached else 'miss'
+                    g.stats.event_count(
+                        event_name, name, sample_rate=RENDER_CACHE_SAMPLE_RATE)
+
                     # store the unevaluated templates in
                     # cached for caching
                     replacements[key] = r.finalize(kw)
