@@ -1747,7 +1747,8 @@ class _ThingSavesBySubreddit(tdb_cassandra.View):
     def get_saved_values(cls, user):
         rowkey = cls._rowkey(user, None)
         try:
-            columns = cls._cf.get(rowkey)
+            columns = cls._cf.get(rowkey,
+                                  column_count=tdb_cassandra.max_column_count)
         except NotFoundException:
             return []
 
