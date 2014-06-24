@@ -250,6 +250,15 @@ class NavMenu(Styled):
         for opt in self.options:
             yield opt
 
+    def cacheable_attrs(self):
+        return [
+            ('options', self.options),
+            ('title', self.title),
+            ('selected', self.selected),
+            ('separator', self.separator),
+        ]
+
+
 class NavButton(Styled):
     """Smallest unit of site navigation.  A button once constructed
     must also have its build() method called with the current path to
@@ -308,6 +317,18 @@ class NavButton(Styled):
         when it is different from self.title)"""
         return self.title
 
+    def cacheable_attrs(self):
+        return [
+            ('selected', self.selected),
+            ('title', self.title),
+            ('path', self.path),
+            ('sr_path', self.sr_path),
+            ('nocname', self.nocname),
+            ('target', self.target), 
+            ('css_class', self.css_class),
+            ('_id', self._id),
+        ]
+
 
 class QueryButton(NavButton):
     def __init__(self, title, dest, query_param, sr_path=True, aliases=None,
@@ -347,6 +368,13 @@ class PostButton(NavButton):
     def build(self, base_path=''):
         self.base_path = base_path
         self.action_params = {self.input_name: self.dest}
+
+    def cacheable_attrs(self):
+        attrs = NavButton.cacheable_attrs(self)
+        attrs.extend([
+            ('base_path', self.base_path),
+            ('action_params', self.action_params),
+        ])
 
     def is_selected(self):
         return False
@@ -435,6 +463,18 @@ class JsButton(NavButton):
 
     def is_selected(self):
         return False
+
+    def cachable_attrs(self):
+        return [
+            ('title', self.title),
+            ('path', self.path),
+            ('target', self.target), 
+            ('css_class', self.css_class),
+            ('_id', self._id),
+            ('tab_name', self.tab_name),
+            ('onclick', self.onclick),
+        ]
+
 
 class PageNameNav(Styled):
     """generates the links and/or labels which live in the header
