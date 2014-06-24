@@ -32,7 +32,6 @@ from r2.lib.providers.media import MediaProvider
 
 
 _NEVER = "Thu, 31 Dec 2037 23:59:59 GMT"
-_S3_DOMAIN = "s3.amazonaws.com"
 
 
 class S3MediaProvider(MediaProvider):
@@ -57,6 +56,7 @@ class S3MediaProvider(MediaProvider):
         ConfigValue.str: [
             "S3KEY_ID",
             "S3SECRET_KEY",
+            "s3_media_domain",
         ],
         ConfigValue.bool: [
             "s3_media_direct",
@@ -91,7 +91,7 @@ class S3MediaProvider(MediaProvider):
         )
 
         if g.s3_media_direct:
-            return "http://%s/%s/%s" % (_S3_DOMAIN, bucket_name, name)
+            return "http://%s/%s/%s" % (g.s3_media_domain, bucket_name, name)
         else:
             return "http://%s/%s" % (bucket_name, name)
 
@@ -102,9 +102,9 @@ class S3MediaProvider(MediaProvider):
         HTTPS URLs must be direct-S3 URLs so that we can use Amazon's certs.
 
         """
-        if http_url.startswith("http://%s" % _S3_DOMAIN):
+        if http_url.startswith("http://%s" % g.s3_media_domain):
             # it's already a direct url, just change scheme
             return http_url.replace("http://", "https://")
         else:
             # an indirect url, put the s3 domain in there too
-            return http_url.replace("http://", "https://%s/" % _S3_DOMAIN)
+            return http_url.replace("http://", "https://%s/" % g.s3_media_domain)
