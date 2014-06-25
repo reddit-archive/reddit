@@ -563,7 +563,7 @@ class FrontController(RedditController):
             mod = mods[mod_id]
             mod_buttons.append(QueryButton(mod.name, mod.name,
                                            query_param='mod'))
-        mod_buttons.append(QueryButton('admins*', 'a', query_param='mod'))
+        mod_buttons.append(QueryButton(_('admins*'), 'a', query_param='mod'))
         base_path = request.path
         menus = [NavMenu(action_buttons, base_path=base_path,
                          title=_('filter by action'), type='lightdrop', css_class='modaction-drop'),
