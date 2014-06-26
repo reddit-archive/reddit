@@ -1012,15 +1012,17 @@ class MessageController(ListingController):
         else:
             self.where = where
         self.subwhere = subwhere
+        self.message = message
         if mark is not None:
             self.mark = mark
+        elif self.message:
+            self.mark = "false"
         elif is_api():
             self.mark = 'false'
         elif c.render_style and c.render_style == "xml":
             self.mark = 'false'
         else:
             self.mark = 'true'
-        self.message = message
         return ListingController.GET_listing(self, **env)
 
     @validate(VUser(),
