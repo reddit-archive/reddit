@@ -40,7 +40,6 @@ from decimal import Decimal
 
 from BeautifulSoup import BeautifulSoup, SoupStrainer
 
-from time import sleep
 from datetime import date, datetime, timedelta
 from pylons import c, g
 from pylons.i18n import ungettext, _
@@ -1035,53 +1034,6 @@ def in_chunks(it, size=25):
         if chunk:
             yield chunk
 
-def spaceout(items, targetseconds,
-             minsleep = 0, die = False,
-             estimate = None):
-    """Given a list of items and a function to apply to them, space
-       the execution out over the target number of seconds and
-       optionally stop when we're out of time"""
-    targetseconds = float(targetseconds)
-    state = [1.0]
-
-    if estimate is None:
-        try:
-            estimate = len(items)
-        except TypeError:
-            # if we can't come up with an estimate, the best we can do
-            # is just enforce the minimum sleep time (and the max
-            # targetseconds if die==True)
-            pass
-
-    mean = lambda lst: sum(float(x) for x in lst)/float(len(lst))
-    beginning = datetime.now()
-
-    for item in items:
-        start = datetime.now()
-        yield item
-        end = datetime.now()
-
-        took_delta = end - start
-        took = (took_delta.days * 60 * 24
-                + took_delta.seconds
-                + took_delta.microseconds/1000000.0)
-        state.append(took)
-        if len(state) > 10:
-            del state[0]
-
-        if die and end > beginning + timedelta(seconds=targetseconds):
-            # we ran out of time, ignore the rest of the iterator
-            break
-
-        if estimate is None:
-            if minsleep:
-                # we have no idea how many items we're going to get
-                sleep(minsleep)
-        else:
-            sleeptime = max((targetseconds / estimate) - mean(state),
-                            minsleep)
-            if sleeptime > 0:
-                sleep(sleeptime)
 
 def progress(it, verbosity=100, key=repr, estimate=None, persec=True):
     """An iterator that yields everything from `it', but prints progress
