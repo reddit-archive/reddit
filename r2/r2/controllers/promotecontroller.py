@@ -854,6 +854,17 @@ class PromoteApiController(ApiController):
             form.set_html(".status", msg)
             return
 
+        # check the campaign start date is still valid (user may have created
+        # the campaign a few days ago)
+        now = promote.promo_datetime_now()
+        min_start = now + timedelta(days=g.min_promote_future)
+        if campaign.start_date < min_start:
+            msg = _("please change campaign start date to %(date)s or later")
+            date = format_date(min_start, format="short", locale=c.locale)
+            msg %= {'date': date}
+            form.set_html(".status", msg)
+            return
+
         address_modified = not pay_id or edit
         if address_modified:
             address_fields = ["firstName", "lastName", "company", "address",
