@@ -1105,6 +1105,13 @@ class Comment(Thing, Printable):
                         not user_is_admin):
                     link_author = DeletedUser()
                 item.link_author = WrappedUser(link_author)
+                item.full_comment_path = item.link.make_permalink(item.subreddit)
+                item.full_comment_count = item.link.num_comments
+            else:
+                # these aren't used so set them to constant values to avoid
+                # invalidating items in render cache
+                item.full_comment_path = ''
+                item.full_comment_count = 0
 
             item.subreddit_path = item.subreddit.path
             if cname:
@@ -1113,9 +1120,6 @@ class Comment(Thing, Printable):
                                 subreddit=False))
                 if site != item.subreddit:
                     item.subreddit_path += item.subreddit.path
-
-            item.full_comment_path = item.link.make_permalink(item.subreddit)
-            item.full_comment_count = item.link.num_comments
 
             # don't collapse for admins, on profile pages, or if deleted
             item.collapsed = False
