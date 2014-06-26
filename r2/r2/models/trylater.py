@@ -101,7 +101,7 @@ class TryLaterBySubject(tdb_cassandra.View):
 
         # TTL 10 minutes after the TryLater runs just in case TryLater
         # is running late.
-        ttl = (delay + datetime.timedelta(minutes=10)).seconds
+        ttl = (delay + datetime.timedelta(minutes=10)).total_seconds()
         coldict = {subject: when}
         cls._set_values(system, coldict, ttl=ttl)
         return scheduled
