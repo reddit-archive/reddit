@@ -20,15 +20,15 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from wrapped import CachedTemplate, Styled
-from pylons import c, request, g
-from utils import  query_string, timeago
-from strings import StringHandler, plurals
-from r2.lib.db import operators
-import r2.lib.search as search
-from r2.lib.filters import _force_unicode
+from pylons import c, request
 from pylons.i18n import _, N_
 
+from r2.lib.db import operators
+from r2.lib.filters import _force_unicode
+from r2.lib.search import sorts as search_sorts
+from r2.lib.strings import StringHandler, plurals
+from r2.lib.utils import  query_string, timeago
+from r2.lib.wrapped import Styled
 
 
 class MenuHandler(StringHandler):
@@ -549,7 +549,7 @@ class CommentSortMenu(SortMenu):
 class SearchSortMenu(SortMenu):
     """Sort menu for search pages."""
     _default = 'relevance'
-    mapping = search.sorts
+    mapping = search_sorts
     _options = mapping.keys()
 
     @classmethod
