@@ -239,7 +239,7 @@ rate_limit = (function() {
     var default_rate_limit = 333,  // default rate-limit duration (in ms)
         rate_limits = {  // rate limit per-action (in ms, 0 = don't rate limit)
             "vote": 333,
-            "comment": 5000,
+            "comment": 333,
             "ignore": 0,
             "ban": 0,
             "unban": 0,
