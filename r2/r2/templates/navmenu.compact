@@ -20,7 +20,7 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%namespace file="utils.html" import="plain_link, img_link, separator"/>
+<%namespace file="utils.html" import="plain_link, post_link, img_link, separator"/>
 
 <%def name="dropdown()">
   ${flatlist()}
@@ -44,7 +44,12 @@
              class_name = ""
         %>
         <li ${class_name}>
-          ${option}
+          %if thing.use_post:
+            ${post_link(option.title, option.base_path, option.path,
+                        option.action_params, _sr_path=option.sr_path)}
+          %else:
+            ${plain_link(option.title, option.path, _sr_path = option.sr_path)}
+          %endif
         </li>
       %endfor
     </ul>
