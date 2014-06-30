@@ -80,7 +80,9 @@ class CMemcache(CacheUtils):
                 'tcp_nodelay': True, # no nagle
                 '_noreply': int(noreply),
                 'ketama': True, # consistent hashing
-                }
+            }
+            if not binary:
+                behaviors['verify_keys'] = True
 
             client.behaviors.update(behaviors)
             self.clients.put(client)
