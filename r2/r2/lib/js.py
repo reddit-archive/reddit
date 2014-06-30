@@ -470,6 +470,7 @@ module["reddit"] = LocalizedModule("reddit.js",
     "multi.js",
     "filter.js",
     "recommender.js",
+    "report.js",
     "saved.js",
     PermissionsDataSource({
         "moderator": ModeratorPermissionSet,

@@ -27,7 +27,7 @@ from wrapped import Wrapped, StringTemplate, CacheStub, CachedVariable, Template
 from mako.template import Template
 from r2.config.extensions import get_api_subtype
 from r2.lib.filters import spaceCompress, safemarkdown
-from r2.models import Account
+from r2.models import Account, Report
 from r2.models.subreddit import SubSR
 from r2.models.token import OAuth2Scope, extra_oauth2_scope
 import time, pytz
@@ -171,10 +171,13 @@ class ThingJsonTemplate(JsonTemplate):
                 return None
             return distinguished
         
-        if attr in ["num_reports", "banned_by", "approved_by"]:
+        if attr in ["num_reports", "report_reasons", "banned_by", "approved_by"]:
             if c.user_is_loggedin and thing.subreddit.is_moderator(c.user):
                 if attr == "num_reports":
                     return thing.reported
+                elif attr == "report_reasons":
+                    return Report.get_reasons(thing)
+
                 ban_info = getattr(thing, "ban_info", {})
                 if attr == "banned_by":
                     banner = (ban_info.get("banner")
@@ -423,6 +426,7 @@ class LinkJsonTemplate(ThingJsonTemplate):
         media_embed="media_embed",
         num_comments="num_comments",
         num_reports="num_reports",
+        report_reasons="report_reasons",
         over_18="over_18",
         permalink="permalink",
         saved="saved",
@@ -513,6 +517,7 @@ class CommentJsonTemplate(ThingJsonTemplate):
         likes="likes",
         link_id="link_id",
         num_reports="num_reports",
+        report_reasons="report_reasons",
         parent_id="parent_id",
         replies="child",
         saved="saved",

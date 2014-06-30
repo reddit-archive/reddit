@@ -23,7 +23,7 @@
 from r2.lib.db.thing import NotFound
 from r2.lib.menus import Styled
 from r2.lib.wrapped import Wrapped
-from r2.models import LinkListing, Link, PromotedLink
+from r2.models import LinkListing, Link, PromotedLink, Report
 from r2.models import make_wrapper, IDBuilder, Thing
 from r2.lib.utils import tup
 from r2.lib.strings import Score
@@ -132,6 +132,7 @@ class LinkButtons(PrintableButtons):
                                   ignore_reports = thing.ignore_reports,
                                   show_delete = show_delete,
                                   show_report = show_report and c.user_is_loggedin,
+                                  report_reasons = Report.get_reasons(thing),
                                   show_distinguish = show_distinguish,
                                   show_marknsfw = show_marknsfw,
                                   show_unmarknsfw = show_unmarknsfw,
@@ -173,6 +174,7 @@ class CommentButtons(PrintableButtons):
                                   parent_permalink = thing.parent_permalink, 
                                   can_reply = thing.can_reply,
                                   show_report = show_report,
+                                  report_reasons = Report.get_reasons(thing),
                                   show_distinguish = show_distinguish,
                                   show_delete = show_delete,
                                   show_givegold=show_givegold,

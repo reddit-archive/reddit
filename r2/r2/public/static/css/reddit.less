@@ -10054,3 +10054,54 @@ body.with-listing-chooser {
       }
   }
 }
+
+.report-form {
+    display: none;
+    background-color: #f6e69f;
+    border: thin solid #d8bb3c;
+    max-width: 300px;
+    padding: 5px;
+    margin: 5px 0;
+    font-size: larger;
+
+    input {
+        margin: 5px 0;
+
+        &[type="radio"] {
+            margin: 2px 0.5em 0 0;
+        }
+
+        &[name="other_reason"] {
+            width: 95%;
+        }
+
+        &:disabled {
+            background: #dddddd;
+        }
+    }
+}
+
+.reported-stamp.has-reasons {
+    cursor: pointer;
+}
+
+ul.report-reasons {
+    width: 80%;
+    background-color: #f6e69f;
+    border: thin solid black;
+    display: none;
+
+    li {
+        &.report-reason {
+            padding: 1px 10px;
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        &.report-reason-title {
+            padding: 1px 10px;
+            font-weight: bold;
+        }
+    }
+}

@@ -1,0 +1,73 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be
+## consistent with Exhibit B.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is reddit.
+##
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is reddit Inc.
+##
+## All portions of the code written by reddit are Copyright (c) 2006-2014
+## reddit Inc. All Rights Reserved.
+###############################################################################
+
+<%namespace file="utils.html" import="error_field" />
+
+<div id="report-thing-fullname" class="report-form clonable rounded">
+  <input type="hidden" name="thing_id" value="thing-fullname">
+  <span class="reason-prompt">
+    ${_('why are you reporting this?')}
+  </span>
+  <ol>
+    <li>
+      <label>
+        <input type="radio" name="reason" value="spam">${_("spam")}</input>
+      </label>
+    </li>
+    <li>
+      <label>
+        <input type="radio" name="reason" value="vote manipulation">${_("vote manipulation")}</input>
+      </label>
+    </li>
+    <li>
+      <label>
+        <input type="radio" name="reason" value="personal information">${_("personal information")}</input>
+      </label>
+    </li>
+    <li>
+      <label>
+        <input type="radio" name="reason" value="sexualizing minors">${_("sexualizing minors")}</input>
+      </label>
+    </li>
+    <li>
+      <label>
+        <input type="radio" name="reason" value="breaking reddit">${_("breaking reddit")}</input>
+      </label>
+    </li>
+    <li>
+      <label>
+        <input type="radio" name="reason" value="other">
+          ${_("other (max %(num)s characters):") % dict(num=100)}
+        </input>
+      </label>
+      <input name="other_reason" value="" maxlength="100" type="text" disabled="disabled"></input>
+    </li>
+  </ol>
+  <button type="button" class="btn submit-report" disabled="disabled">
+    ${_("submit")}
+  </button>
+  <button type="button" class="btn cancel-report-thing">
+    ${_("cancel")}
+  </button>
+  <span class="status"></span>
+  ${error_field("TOO_LONG", "reason", "span")}
+</div>

@@ -1403,10 +1403,15 @@ class ApiController(RedditController):
         jquery.refresh()
 
     @require_oauth2_scope("report")
-    @noresponse(VUser(), VModhash(),
-                thing = VByName('id'))
+    @validatedForm(
+        VUser(),
+        VModhash(),
+        thing=VByName('thing_id'),
+        reason=VLength('reason', max_length=100, empty_error=None),
+        other_reason=VLength('other_reason', max_length=100, empty_error=None),
+    )
     @api_doc(api_section.links_and_comments)
-    def POST_report(self, thing):
+    def POST_report(self, form, jquery, thing, reason, other_reason):
         """Report a link or comment.
 
         Reporting a thing brings it to the attention of the subreddit's
@@ -1416,6 +1421,12 @@ class ApiController(RedditController):
         """
         if not thing or thing._deleted:
             return
+
+        if (form.has_errors("reason", errors.TOO_LONG) or
+            form.has_errors("other_reason", errors.TOO_LONG)):
+            return
+
+        reason = other_reason if reason == "other" else reason
 
         # if it is a message that is being reported, ban it.
         # every user is admin over their own personal inbox
@@ -1434,12 +1445,21 @@ class ApiController(RedditController):
         hooks.get_hook("thing.report").call(thing=thing)
 
         sr = getattr(thing, 'subreddit_slow', None)
-        if (c.user._spam or
+        if not (c.user._spam or
                 c.user.ignorereports or
                 (sr and sr.is_banned(c.user))):
+            Report.new(c.user, thing, reason)
+            admintools.report(thing)
+
+        if isinstance(thing, Link):
+            button = jquery(".id-%s .report-button" % thing._fullname)
+        elif isinstance(thing, Comment):
+            button = jquery(".id-%s .entry:first .report-button" % thing._fullname)
+        else:
             return
-        Report.new(c.user, thing)
-        admintools.report(thing)
+
+        button.text(_("reported"))
+        form.fadeOut()
 
     @require_oauth2_scope("privatemessages")
     @noresponse(VUser(), VModhash(),

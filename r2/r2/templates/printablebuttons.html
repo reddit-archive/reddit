@@ -20,7 +20,7 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%namespace file="utils.html" import="plain_link, pretty_button, data" />
+<%namespace file="utils.html" import="plain_link, pretty_button, data, error_field" />
 
 <%!
    from r2.lib.strings import strings
@@ -52,8 +52,14 @@
       %endif
     %endif
   %elif thing.show_report:
-    <li>
-      ${ynbutton(_("report"), _("reported"), "report", "hide_thing")}
+    <li class="report-button">
+      %if thing.style in ("linkbuttons", "commentbuttons"):
+        <a href="javascript:void(0)" class="report-thing">
+          ${_("report")}
+        </a>
+      %else:
+        ${ynbutton(_("report"), _("reported"), "report", "hide_thing")}
+      %endif
     </li>
   %endif
   %if thing.show_marknsfw:
@@ -174,6 +180,28 @@
   </span>
 </%def>
 
+<%def name="reports_button()">
+<li 
+    %if thing.report_reasons:
+      class="rounded reported-stamp stamp has-reasons"
+      title="${_('click to show report reasons')}"
+    %else:
+      class="rounded reported-stamp stamp"
+    %endif
+    >
+  ${strings.reports % thing.thing.reported}
+</li>
+</%def>
+
+<%def name="report_reasons()">
+<ul class="report-reasons rounded">
+  <li class="report-reason-title">${_("report reasons:")}</li>
+  %for reason in thing.report_reasons:
+    <li class="report-reason" title="${reason}">${reason}</li>
+  %endfor
+</ul>
+</%def>
+
 <%def name="linkbuttons()">
   %if thing.show_comments:
     <li class="first">
@@ -252,9 +280,7 @@
   %endif
 
   %if thing.show_reports and not thing.show_spam:
-   <li class="rounded reported-stamp stamp">
-     ${strings.reports % thing.thing.reported}
-   </li>
+    ${reports_button()}
   %endif
 
   %if getattr(thing.thing, "use_big_modbuttons", False):
@@ -262,6 +288,11 @@
   %elif thing.ignore_reports and thing.can_ban:
     ${ignore_reports_toggle(thing.thing)}
   %endif
+
+  %if thing.show_reports and not thing.show_spam and thing.report_reasons:
+    ${report_reasons()}
+  %endif
+
 </%def>
 
 <%def name="commentbuttons()">
@@ -280,6 +311,7 @@
           </li>
         %endif
     %endif
+
     %if c.profilepage:
       <li>
         ${self.bylink_button(_("context"), thing.permalink + "?context=3")}
@@ -292,6 +324,7 @@
                             a_class="may-blank")}
       </li>
     %endif
+
     %if not thing.profilepage:
       %if thing.parent_permalink:
         <li>
@@ -304,24 +337,31 @@
         </li>
       %endif
     %endif
+
     ${self.banbuttons()}
     ${self.distinguish()}
     ${self.give_gold()}
+
     %if not thing.profilepage and thing.can_reply:
       <li>
         ${self.simple_button(_("reply {verb}"), "reply")}
       </li>
     %endif
+
     %if thing.show_reports and not thing.show_spam:
-     <li class="rounded reported-stamp stamp">
-       ${strings.reports % thing.thing.reported}
-     </li>
+     ${reports_button()}
     %endif
+
     %if getattr(thing.thing, "use_big_modbuttons", False):
        ${big_modbuttons(thing.thing)}
     %elif thing.ignore_reports and thing.can_ban:
       ${ignore_reports_toggle(thing.thing)}
     %endif
+
+    %if thing.show_reports and not thing.show_spam and thing.report_reasons:
+      ${report_reasons()}
+    %endif
+
   %endif
 </%def>
 

@@ -39,7 +39,7 @@ class Report(MultiRelation('report',
     _field = 'reported'
 
     @classmethod
-    def new(cls, user, thing):
+    def new(cls, user, thing, reason=None):
         from r2.lib.db import queries
 
         # check if this report exists already!
@@ -53,7 +53,11 @@ class Report(MultiRelation('report',
             g.log.debug("Ignoring duplicate report %s" % oldreport)
             return oldreport
 
-        r = Report(user, thing, '0')
+        kw = {}
+        if reason:
+            kw['reason'] = reason
+
+        r = Report(user, thing, '0', **kw)
         if not thing._loaded:
             thing._load()
 
@@ -84,7 +88,7 @@ class Report(MultiRelation('report',
     @classmethod
     def for_thing(cls, thing):
         rel = cls.rel(Account, thing.__class__)
-        rels = rel._query(rel.c._thing2_id == thing._id)
+        rels = rel._query(rel.c._thing2_id == thing._id, data=True)
 
         return list(rels)
 
@@ -118,3 +122,20 @@ class Report(MultiRelation('report',
 
         queries.clear_reports(to_clear, rels)
 
+
+    @classmethod
+    def get_reasons(cls, wrapped, max_reasons=20):
+        if wrapped.can_ban and wrapped.reported > 0:
+            reports = cls.for_thing(wrapped.lookups[0])
+            reasons = set()
+            for report in reports:
+                if len(reasons) >= max_reasons:
+                    break
+
+                reason = getattr(report, 'reason', None)
+                if reason:
+                    reasons.add(reason)
+
+            return list(reasons)
+        else:
+            return []
