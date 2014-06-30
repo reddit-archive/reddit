@@ -856,7 +856,7 @@ class PromoteApiController(ApiController):
         # the campaign a few days ago)
         now = promote.promo_datetime_now()
         min_start = now + timedelta(days=g.min_promote_future)
-        if campaign.start_date < min_start:
+        if campaign.start_date.date() < min_start.date():
             msg = _("please change campaign start date to %(date)s or later")
             date = format_date(min_start, format="short", locale=c.locale)
             msg %= {'date': date}
