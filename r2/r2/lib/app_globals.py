@@ -569,7 +569,6 @@ class Globals(object):
             self.ratelimitcaches,
             min_compress_len=96,
             num_clients=num_mc_clients,
-            binary=True,
         )
 
         # a smaller pool of caches used only for distributed locks.
