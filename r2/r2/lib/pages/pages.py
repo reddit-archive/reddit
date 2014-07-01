@@ -150,6 +150,10 @@ class Robots(Templated):
     pass
 
 
+class CrossDomain(Templated):
+    pass
+
+
 class Reddit(Templated):
     '''Base class for rendering a page on reddit.  Handles toolbar creation,
     content of the footers, and content of the corner buttons.

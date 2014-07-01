@@ -54,6 +54,7 @@ def make_map():
     mc('/admin/', controller='awards')
 
     mc('/robots.txt', controller='robots', action='robots')
+    mc('/crossdomain', controller='robots', action='crossdomain')
 
     mc('/login', controller='forms', action='login')
     mc('/register', controller='forms', action='register')

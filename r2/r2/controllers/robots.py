@@ -22,7 +22,8 @@
 from pylons import request, response, g
 
 from r2.controllers.reddit_base import MinimalController
-from r2.lib.pages import Robots
+from r2.lib.base import abort
+from r2.lib.pages import Robots, CrossDomain
 from r2.lib import utils
 
 
@@ -46,3 +47,10 @@ class RobotsController(MinimalController):
         else:
             return "User-Agent: *\nDisallow: /\n"
 
+    def GET_crossdomain(self):
+        # Our middleware is weird and won't let us add a route for just
+        # '/crossdomain.xml'. Just 404 for other extensions.
+        if request.environ.get('extension', None) != 'xml':
+            abort(404)
+        response.content_type = "text/x-cross-domain-policy"
+        return CrossDomain().render(style='xml')
