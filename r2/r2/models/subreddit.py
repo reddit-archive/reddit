@@ -766,7 +766,6 @@ class Subreddit(Thing, Printable, BaseSite):
     @staticmethod
     def wrapped_cache_key(wrapped, style):
         s = Printable.wrapped_cache_key(wrapped, style)
-        s.extend([wrapped._spam])
         return s
 
     @classmethod
