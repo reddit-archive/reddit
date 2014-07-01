@@ -81,7 +81,7 @@ class Printable(object):
 
     @staticmethod
     def wrapped_cache_key(wrapped, style):
-        s = [wrapped._fullname, wrapped._spam, wrapped.reported]
+        s = [wrapped._fullname, wrapped._spam]
 
         # Printables can contain embedded WrappedUsers, which need to consider
         # the site and user's flair settings. Add something to the key

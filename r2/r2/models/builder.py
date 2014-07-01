@@ -261,6 +261,11 @@ class Builder(object):
                     w.show_reports = True
                     w.use_big_modbuttons = True
 
+                    # report_count isn't used in any template, but add it to
+                    # the Wrapped so it's pulled into the render cache key in
+                    # instances when reported will be used in the template
+                    w.report_count = item.reported
+
             w.approval_checkmark = None
             if w.can_ban:
                 verdict = getattr(w, "verdict", None)
