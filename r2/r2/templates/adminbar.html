@@ -55,7 +55,7 @@
       ${indicator('disabled', _('ratelimit disabled'), g.disable_ratelimit)}
       <span class="controls">
         %if c.user_is_admin:
-          ${admin_menu(selected=None)}
+          ${admin_menu()}
         %endif
         <span class="timings-button"><span class="state">-</span>${_('timings')}</span>
         <span class="hide-button">${_('hide')}</span>
