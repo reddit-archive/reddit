@@ -466,7 +466,6 @@ class Link(Thing, Printable):
             else:
                 item.domain = (domain(item.url) if not item.is_self
                                else 'self.' + item.subreddit.name)
-            item.urlprefix = ''
 
             if user_is_loggedin:
                 item.user_gilded = (user, item) in user_gildings
