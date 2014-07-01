@@ -20,7 +20,11 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 from r2.lib.pages import *
-from reddit_base import cross_domain
+from reddit_base import (
+    change_user_cookie_security,
+    delete_force_https_cookie,
+    set_force_https_cookie,
+)
 from api import ApiController
 from r2.lib.errors import BadRequestError, errors
 from r2.lib.utils import Storage, query_string, UrlParser
@@ -55,6 +59,11 @@ class PostController(ApiController):
         filter_prefs(prefs, c.user)
         if c.errors.errors:
             return abort(BadRequestError(errors.INVALID_PREF))
+        # Changing the force HTTPS pref requires us to change the secure flag
+        # of existing cookies
+        new_https_pref = prefs['pref_force_https'] != c.user.pref_force_https
+        if not c.oauth_user and new_https_pref:
+            change_user_cookie_security(prefs['pref_force_https'])
         set_prefs(c.user, prefs)
         c.user._commit()
         u = UrlParser(c.site.path + "prefs")

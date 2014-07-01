@@ -155,6 +155,7 @@ class Globals(object):
             'ADMIN_COOKIE_TTL',
             'ADMIN_COOKIE_MAX_IDLE',
             'OTP_COOKIE_TTL',
+            'hsts_max_age',
             'num_comments',
             'max_comments',
             'max_comments_gold',

@@ -69,6 +69,7 @@ from r2.lib.utils import (
     is_subdomain,
     is_throttled,
     tup,
+    UrlParser,
 )
 from r2.lib.validator import (
     build_arg_list,
@@ -144,7 +145,7 @@ def pagecache_policy(policy):
     return pagecache_decorator
 
 
-cache_affecting_cookies = ('over18', '_options')
+cache_affecting_cookies = ('over18', '_options', 'secure_session')
 
 class Cookies(dict):
     def add(self, name, value, *k, **kw):
@@ -176,6 +177,8 @@ class Cookie(object):
             return "first"
         elif cookie_name == "over18":
             return "over18"
+        elif cookie_name == "secure_session":
+            return "secure_session"
         elif cookie_name.endswith("_last_thing"):
             return "last_thing"
         elif cookie_name.endswith("_options"):
@@ -697,6 +700,138 @@ def cross_domain(origin_check=is_trusted_origin, **options):
         return cross_domain_handler
     return cross_domain_wrap
 
+
+def set_hsts(max_age):
+    # TODO: Are there any subdomains that should *not* be HTTPS?
+    hsts_val = "max-age=%d; includeSubDomains" % max_age
+    response.headers["Strict-Transport-Security"] = hsts_val
+
+
+def hsts_eligible():
+    # When we're on HTTP, the secure_session cookie is the only way we can
+    # prove the user wants HSTS.
+    return (c.user.pref_force_https or
+            ("secure_session" in c.cookies and not c.secure))
+
+
+def hsts_modify_redirect(url):
+    hsts_url = UrlParser("https://" + g.domain + "/modify_hsts_grant")
+    # `dest` should be fully qualified so users get sent back to the right
+    # subdomain.
+    dest_url = UrlParser(url)
+    if not dest_url.hostname:
+        dest_url.hostname = request.host.lower()
+        dest_url.scheme = request.environ["wsgi.url_scheme"]
+    hsts_url.query_dict['dest'] = dest_url.unparse()
+    return hsts_url.unparse()
+
+
+def enforce_https():
+    """Enforce user preferences for HTTPS connections.
+
+    Make sure users who only want HTTPS connections get sent to the HTTPS
+    site, and ensure secure flags on session cookies jive with the user's
+    HTTPS prefs.
+    """
+    # OAuth HTTPS enforcement is dealt with elsewhere
+    if c.oauth_user:
+        return
+
+    need_grant = False
+    redirect_url = None
+    grant = None
+    if hsts_eligible():
+        grant = g.hsts_max_age
+        # They're forcing HTTPS but don't have a "secure_session" cookie?
+        # Somehow their HTTPS preferences changed without invalidating their
+        # old cookies, ensure that this session's cookies are secured properly.
+
+        # Since users invalidate their old cookies when they enable the pref
+        # themselves, this should only be hit when the pref is involuntarily
+        # toggled.
+        if "secure_session" not in c.cookies:
+            # HSTS might not be set up properly, but we can't force a grant
+            # here because of badly behaved clients that will just never
+            # send a "secure_session" cookie.
+            change_user_cookie_security(True)
+        if not c.secure:
+            # The client might not support HSTS, or might have had their grant
+            # expire. redirect to the HTTPS version through the HSTS endpoint.
+            need_grant = True
+            new_url = UrlParser(request.environ['FULLPATH'])
+            new_url.scheme = "https"
+            new_url.hostname = request.host.lower()
+            redirect_url = new_url.unparse()
+    else:
+        grant = 0
+        if c.secure:
+            # User disabled HTTPS forcing under another session or their
+            # session became invalid and they're left with this dangling cookie.
+            if "secure_session" in c.cookies:
+                change_user_cookie_security(False)
+                need_grant = True
+
+    if grant is not None:
+        if request.host == g.domain and c.secure:
+            # Always set an HSTS header if we can and we're on the base domain
+            set_hsts(grant)
+        elif need_grant:
+            # Definitely need to change the grant, but we're not on an origin
+            # where we can modify it, redirect through one that can.
+            dest = redirect_url or request.environ['FULLPATH']
+            redirect_url = hsts_modify_redirect(dest)
+
+    if redirect_url:
+        abort(307, location=redirect_url)
+
+
+# Cookies that might need the secure flag toggled
+PRIVATE_USER_COOKIES = ["recentclicks2"]
+PRIVATE_SESSION_COOKIES = [g.login_cookie, g.admin_cookie]
+
+
+def change_user_cookie_security(secure, rem=True):
+    """Mark a user's cookies as either secure or insecure.
+
+    (Un)set the secure flag on sensitive cookies, and add / remove
+    the cookie marking the session as HTTPS-only
+    """
+    if secure:
+        set_secure_session_cookie(rem)
+    else:
+        delete_secure_session_cookie()
+
+    if not c.user_is_loggedin:
+        return
+
+    user_prefix = c.user.name + "_"
+    securable = (PRIVATE_SESSION_COOKIES +
+                 [user_prefix + c_name for c_name in PRIVATE_USER_COOKIES])
+    for name, cookie in c.cookies.iteritems():
+        if name in securable:
+            cookie.secure = secure
+            if name in PRIVATE_SESSION_COOKIES:
+                cookie.httponly = True
+                # TODO: need a way to tell if a session is supposed to last
+                # forever. We don't get to see the expiry date of a cookie
+                if rem and name == g.login_cookie:
+                    cookie.expires = NEVER
+            cookie.dirty = True
+
+
+def set_secure_session_cookie(rem=False):
+    expires = NEVER if rem else None
+    c.cookies["secure_session"] = Cookie(value="1",
+                                         httponly=True,
+                                         expires=expires)
+
+
+def delete_secure_session_cookie():
+    c.cookies["secure_session"] = Cookie(value="",
+                                         httponly=True,
+                                         expires=DELETE)
+
+
 def require_https():
     if not c.secure:
         abort(ForbiddenError(errors.HTTPS_REQUIRED))
@@ -1174,17 +1309,23 @@ class RedditController(OAuth2ResourceController):
         user.update_last_visit(c.start_time)
         c.cookies[g.login_cookie] = Cookie(value=user.make_cookie(),
                                            expires=NEVER if rem else None,
-                                           httponly=True)
+                                           httponly=True,
+                                           secure=user.pref_force_https)
+        # Make sure user-specific cookies get the secure flag set properly
+        change_user_cookie_security(user.pref_force_https, rem)
 
     @staticmethod
     def logout():
         c.cookies[g.login_cookie] = Cookie(value='', expires=DELETE)
+        delete_secure_session_cookie()
 
     @staticmethod
     def enable_admin_mode(user, first_login=None):
         # no expiration time so the cookie dies with the browser session
         admin_cookie = user.make_admin_cookie(first_login=first_login)
-        c.cookies[g.admin_cookie] = Cookie(value=admin_cookie, httponly=True)
+        c.cookies[g.admin_cookie] = Cookie(value=admin_cookie,
+                                           httponly=True,
+                                           secure=user.pref_force_https)
 
     @staticmethod
     def remember_otp(user):
@@ -1273,6 +1414,8 @@ class RedditController(OAuth2ResourceController):
             c.user_is_admin = maybe_admin and c.user.name in g.admins
             c.user_is_sponsor = c.user_is_admin or c.user.name in g.sponsors
             c.otp_cached = is_otpcookie_valid
+
+        enforce_https()
 
         c.request_timer.intermediate("base-auth")
 

@@ -93,6 +93,7 @@ class Account(Thing):
                      pref_collapse_read_messages = False,
                      pref_private_feeds = True,
                      pref_local_js = False,
+                     pref_force_https = False,
                      pref_show_adbox = True,
                      pref_show_sponsors = True, # sponsored links
                      pref_show_sponsorships = True,
