@@ -47,6 +47,7 @@ class Printable(object):
                         'subreddit_slow', '_deleted', '_spam',
                         'cachable', 'make_permalink', 'permalink',
                         'timesince',
+                        'num',  # listings only, replaced by CachedVariable
                         ])
 
     @classmethod
