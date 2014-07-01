@@ -245,6 +245,8 @@ class Link(Thing, Printable):
         'num_comments',
         'link_child',
         'fresh',
+        'media_object',
+        'secure_media_object',
     }.union(Printable.cache_ignore)
 
     @staticmethod
@@ -264,7 +266,6 @@ class Link(Thing, Printable):
             s.append(request.GET.has_key("nothumbs"))
         elif style == "compact":
             s.append(c.permalink_page)
-        s.append(getattr(wrapped, 'media_object', {}))
         s.append(wrapped.ignore_reports)
 
         # add link flair to the key if the user and site have enabled it and it
