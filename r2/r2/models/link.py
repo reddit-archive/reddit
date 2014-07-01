@@ -240,9 +240,13 @@ class Link(Thing, Printable):
 
         return True
 
-    # none of these things will change over a link's lifetime
-    cache_ignore = set(['subreddit', 'num_comments', 'link_child']
-                       ).union(Printable.cache_ignore)
+    cache_ignore = {
+        'subreddit',
+        'num_comments',
+        'link_child',
+        'fresh',
+    }.union(Printable.cache_ignore)
+
     @staticmethod
     def wrapped_cache_key(wrapped, style):
         s = Printable.wrapped_cache_key(wrapped, style)
