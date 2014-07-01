@@ -49,6 +49,7 @@ class Printable(object):
                         'timesince',
                         'num',  # listings only, replaced by CachedVariable
                         'rowstyle_cls',  # listings only, replaced by CachedVariable
+                        'upvote_ratio',
                         ])
 
     @classmethod
