@@ -243,6 +243,7 @@ class Builder(object):
                     w.moderator_banned = ban_info.get('moderator_banned', False)
                     w.autobanned = ban_info.get('auto', False)
                     w.banner = ban_info.get('banner')
+                    w.banned_at = ban_info.get("banned_at", None)
                     if ban_info.get('note', None) and w.banner:
                         w.banner += ' (%s)' % ban_info['note']
                     w.use_big_modbuttons = True

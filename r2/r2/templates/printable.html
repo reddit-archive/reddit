@@ -24,6 +24,7 @@
    from r2.lib.template_helpers import add_sr, static
    from r2.lib.strings import strings
    from r2.lib.pages.things import BanButtons
+   from r2.lib.utils import long_datetime
 %>
 
 <%namespace file="utils.html" import="plain_link" />
@@ -32,7 +33,12 @@ ${self.RenderPrintable()}
 
 <%def name="admintagline()">
   %if thing.show_spam:
-      <li><b>[
+      %if thing.banned_at:
+        <li title="${_("removed at %(time)s") % dict(time=long_datetime(thing.banned_at))}">
+      %else:
+        <li>
+      %endif
+      <b>[
         %if c.user_is_admin:
           ${"auto" if thing.autobanned else ""}${strings.banned} 
           ${("by %s" % thing.banner) if thing.banner else ""}
