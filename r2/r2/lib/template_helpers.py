@@ -268,6 +268,9 @@ def replace_render(listing, item, render_func):
                 num = ""
             replacements["num"] = num
 
+        if getattr(item, "rowstyle_cls", None):
+            replacements["rowstyle"] = item.rowstyle_cls
+
         if hasattr(item, "num_comments"):
             com_label, com_cls = comment_label(item.num_comments)
             if style == "compact":

@@ -769,9 +769,9 @@ class PromotedLink(Link):
             item.user_is_sponsor = user_is_sponsor
             status = getattr(item, "promote_status", -1)
             if item.is_author or c.user_is_sponsor:
-                item.rowstyle = "link " + PROMOTE_STATUS.name[status].lower()
+                item.rowstyle_cls = "link " + PROMOTE_STATUS.name[status].lower()
             else:
-                item.rowstyle = "link promoted"
+                item.rowstyle_cls = "link promoted"
         # Run this last
         Printable.add_props(user, wrapped)
 

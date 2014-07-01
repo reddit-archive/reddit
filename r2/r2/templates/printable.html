@@ -83,14 +83,17 @@ ${self.RenderPrintable()}
 
 <%def name="thing_css_rowclass(what)">
   <%
+    rowstyle = getattr(what, "rowstyle", "")
+
     if what.show_spam:
-      rowclass = what.rowstyle + " spam"
+      rowclass = "spam"
       if what.show_spam == "author":
         rowclass += " banned-user"
     elif what.show_reports:
-      rowclass = what.rowstyle + " reported"
+      rowclass = "reported"
     else:
-      rowclass = what.rowstyle
+      rowclass = ""
+
     if getattr(what, "deleted", False):
       rowclass += " deleted"
     if hasattr(what, "saved") and what.saved:
@@ -104,7 +107,7 @@ ${self.RenderPrintable()}
     if getattr(what, "stickied", False):
       rowclass += " stickied"
   %>
-  ${rowclass}
+  ${rowstyle}&#32;${rowclass}
 </%def>
 
 <%def name="thing_data_attributes(what)">

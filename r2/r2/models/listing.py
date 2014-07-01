@@ -29,7 +29,7 @@ from subreddit import DefaultSR, AllSR, Frontpage
 from pylons import i18n, request, g
 from pylons.i18n import _
 
-from r2.lib.wrapped import Wrapped
+from r2.lib.wrapped import Wrapped, CachedVariable
 from r2.lib import utils
 from r2.lib.db import operators
 from r2.lib.cache import sgm
@@ -94,8 +94,9 @@ class Listing(object):
             self.next = (request.path + utils.query_string(p))
 
         for count, thing in enumerate(self.things):
-            thing.rowstyle = getattr(thing, 'rowstyle', "")
-            thing.rowstyle += ' ' + ('even' if (count % 2) else 'odd')
+            thing.rowstyle_cls = getattr(thing, 'rowstyle_cls', "")
+            thing.rowstyle_cls += ' ' + ('even' if (count % 2) else 'odd')
+            thing.rowstyle = CachedVariable("rowstyle")
 
         #TODO: need name for template -- must be better way
         return Wrapped(self)

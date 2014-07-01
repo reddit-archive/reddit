@@ -31,7 +31,7 @@ class Printable(object):
     is_special = False
     can_ban = False
     deleted = False
-    rowstyle = ''
+    rowstyle_cls = ''
     collapsed = False
     author = None
     margin = 0
@@ -48,6 +48,7 @@ class Printable(object):
                         'cachable', 'make_permalink', 'permalink',
                         'timesince',
                         'num',  # listings only, replaced by CachedVariable
+                        'rowstyle_cls',  # listings only, replaced by CachedVariable
                         ])
 
     @classmethod
