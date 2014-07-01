@@ -23,13 +23,40 @@
 from collections import Counter, OrderedDict
 
 from r2.lib.wrapped import Wrapped, Templated, CachedTemplate
-from r2.models import Account, DefaultSR, make_feedurl
-from r2.models import FakeSubreddit, Subreddit, SubSR, AllMinus, AllSR
-from r2.models import Friends, All, Sub, NotFound, DomainSR, Random, Mod, RandomNSFW, RandomSubscription, MultiReddit, ModSR, Frontpage, LabeledMulti
-from r2.models import Filtered
-from r2.models import Link, Printable, Trophy, PromoCampaign, Comment
-from r2.models import Flair, FlairTemplate, FlairTemplateBySubredditIndex
-from r2.models import USER_FLAIR, LINK_FLAIR
+from r2.models import (
+    Account,
+    All,
+    AllMinus,
+    AllSR,
+    Comment,
+    DefaultSR,
+    DomainSR,
+    FakeSubreddit,
+    Filtered,
+    Flair,
+    FlairTemplate,
+    FlairTemplateBySubredditIndex,
+    Friends,
+    Frontpage,
+    LINK_FLAIR,
+    LabeledMulti,
+    Link,
+    Mod,
+    ModSR,
+    MultiReddit,
+    NotFound,
+    Printable,
+    PromoCampaign,
+    Random,
+    RandomNSFW,
+    RandomSubscription,
+    Sub,
+    SubSR,
+    Subreddit,
+    Trophy,
+    USER_FLAIR,
+    make_feedurl,
+)
 from r2.models.bidding import Bid
 from r2.models.gold import (
     calculate_server_seconds,
