@@ -59,6 +59,18 @@ class HTTPTooManyRequests(webob.exc.HTTPClientError):
 webob.exc.status_map[429] = HTTPTooManyRequests
 webob.util.status_reasons[429] = HTTPTooManyRequests.title
 
+# patch out SSRFable/XSSable endpoints in older versions of weberror
+import weberror.evalexception
+
+
+# We could probably just set `.exposed = False`, but this makes me feel better
+def _stub(*args, **kwargs):
+    pass
+
+weberror.evalexception.EvalException.post_traceback = _stub
+weberror.evalexception.EvalException.relay = _stub
+
+
 #from pylons.middleware import error_mapper
 def error_mapper(code, message, environ, global_conf=None, **kw):
     if environ.get('pylons.error_call'):
