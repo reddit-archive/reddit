@@ -51,6 +51,7 @@ class Printable(object):
                         'rowstyle_cls',  # listings only, replaced by CachedVariable
                         'upvote_ratio',
                         'should_incr_counts',
+                        'keep_item',
                         ])
 
     @classmethod
