@@ -745,7 +745,6 @@ class Subreddit(Thing, Printable, BaseSite):
 
             #will seem less horrible when add_props is in pages.py
             from r2.lib.pages import UserText
-            item.description_usertext = UserText(item, item.description, target=target)
             if item.public_description or item.description:
                 text = (item.public_description or
                         summarize_markdown(item.description))
@@ -757,8 +756,13 @@ class Subreddit(Thing, Printable, BaseSite):
 
 
         Printable.add_props(user, wrapped)
-    #TODO: make this work
-    cache_ignore = set(["subscribers"]).union(Printable.cache_ignore)
+
+    cache_ignore = {
+        "description",
+        "public_description",
+        "subscribers",
+    }.union(Printable.cache_ignore)
+
     @staticmethod
     def wrapped_cache_key(wrapped, style):
         s = Printable.wrapped_cache_key(wrapped, style)

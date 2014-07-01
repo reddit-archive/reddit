@@ -868,6 +868,9 @@ class SubredditInfoBar(CachedTemplate):
 
         # hackity hack. do i need to add all the others props?
         self.sr = list(wrap_links(site))[0]
+        target = "_top" if c.cname else None
+        self.description_usertext = UserText(self.sr, self.sr.description,
+                                             target=target)
 
         # we want to cache on the number of subscribers
         self.subscribers = self.sr._ups
