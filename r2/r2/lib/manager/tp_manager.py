@@ -30,62 +30,74 @@ from r2.lib.utils import Storage
 
 import inspect, re, os
 
+NULL_TEMPLATE = mTemplate("")
+NULL_TEMPLATE.is_null = True
+
 class tp_manager:
     def __init__(self, template_cls=mTemplate):
         self.templates = {}
         self.Template = template_cls
-
-    def add(self, name, style, file = None):
-        key = (name.lower(), style.lower())
-        if file is None:
-            file = "/%s.%s" % (name, style)
-        elif not file.startswith('/'):
-            file = '/' + file
-        self.templates[key] = file
-        return file
+        self.cache_override_styles = set()
 
     def add_handler(self, name, style, handler):
         key = (name.lower(), style.lower())
         self.templates[key] = handler
 
-    def get(self, thing, style, cache = True):
+        # a template has been manually specified for this style so record that
+        # we should override g.reload_templates when retrieving templates
+        self.cache_override_styles.add(style.lower())
+
+    def cache_template(self, cls, style, template):
+        use_cache = not g.reload_templates
+        if use_cache:
+            if (not hasattr(template, "hash") and
+                    getattr(template, "filename", None)):
+                with open(template.filename, 'r') as handle:
+                    template.hash = hashlib.sha1(handle.read()).hexdigest()
+            key = (cls.__name__.lower(), style)
+            self.templates[key] = template
+
+    def get_template(self, cls, style):
+        name = cls.__name__.lower()
+        use_cache = not g.reload_templates
+
+        if use_cache or style.lower() in self.cache_override_styles:
+            key = (name, style)
+            template = self.templates.get(key)
+            if template:
+                return template
+
+        filename = "/%s.%s" % (name, style)
+        try:
+            template = g.mako_lookup.get_template(filename)
+        except TemplateLookupException:
+            return
+
+        self.cache_template(cls, style, template)
+
+        return template
+
+    def get(self, thing, style):
         if not isinstance(thing, type(object)):
             thing = thing.__class__
 
         style = style.lower()
-        top_key = (thing.__name__.lower(), style)
+        template = self.get_template(thing, style)
+        if template:
+            return template
 
-        template = None
-        for cls in inspect.getmro(thing):
-            name = cls.__name__.lower()
-            key = (name, style)
-
-            template_or_name = self.templates.get(key)
-            if not template_or_name:
-                template_or_name = self.add(name, style)
-
-            if isinstance(template_or_name, self.Template):
-                template = template_or_name
+        # walk back through base classes to find a template
+        for cls in inspect.getmro(thing)[1:]:
+            template = self.get_template(cls, style)
+            if template:
                 break
-            else:
-                try:
-                    template = g.mako_lookup.get_template(template_or_name)
-                    if cache:
-                        self.templates[key] = template
-                        # also store a hash for the template
-                        if (not hasattr(template, "hash") and
-                            hasattr(template, "filename")):
-                            with open(template.filename, 'r') as handle:
-                                template.hash = hashlib.sha1(handle.read()).hexdigest()
-                        # cache also for the base class so
-                        # introspection is not required on subsequent passes
-                        if key != top_key:
-                            self.templates[top_key] = template
-                    break
-                except TemplateLookupException:
-                    pass
+        else:
+            # didn't find a template, use the null template
+            template = NULL_TEMPLATE
 
-        if not template or not isinstance(template, self.Template):
-            raise AttributeError, ("template doesn't exist for %s" % str(top_key))
+        # cache template for thing so we don't need to introspect on subsequent
+        # calls
+        self.cache_template(thing, style, template)
+
         return template
 

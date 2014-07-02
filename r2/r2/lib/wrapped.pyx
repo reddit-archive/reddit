@@ -154,38 +154,17 @@ class Templated(object):
         if not hasattr(self, "render_class"):
             self.render_class = self.__class__
 
-    def _notfound(self, style):
-        from pylons import g, request
-        from pylons.controllers.util import abort
-        from r2.lib.log import log_text
-        if g.debug:
-            raise NotImplementedError (repr(self), style)
-        else:
-            if style == 'png':
-                level = "debug"
-            else:
-                level = "warning"
-            log_text("missing template",
-                     "Couldn't find %s template for %r %s" %
-                      (style, self, request.path),
-                     level)
-            abort(404)
-
-    def template(self, style = 'html'):
+    def template(self, style='html'):
         """
         Fetches template from the template manager
         """
         from r2.config.templates import tpm
-        from pylons import g
 
-        use_cache = not g.reload_templates
-        template = None
-        try:
-            template = tpm.get(self.render_class,
-                               style, cache = use_cache)
-        except AttributeError:
-            self._notfound(style)
-        return template
+        return tpm.get(self.render_class, style)
+
+    def template_is_null(self, style='html'):
+        template = self.template(style)
+        return getattr(template, "is_null", False)
 
     def cache_key(self, *a):
         """
@@ -219,22 +198,18 @@ class Templated(object):
         # fetch template
         template = self.template(style)
         if timer: timer.intermediate('template')
-        if template:
-            # store the global render style (since child templates)
-            render_style = c.render_style
-            c.render_style = style
-            # render the template
-            res = template.render(thing = self)
-            if timer: timer.intermediate('render')
-            if not isinstance(res, StringTemplate):
-                res = StringTemplate(res)
-            # reset the global render style
-            c.render_style = render_style
-            if timer: timer.stop()
-            return res
-        else:
-            # timings for not found templates will not be sent.
-            self._notfound(style)
+        # store the global render style (since child templates)
+        render_style = c.render_style
+        c.render_style = style
+        # render the template
+        res = template.render(thing = self)
+        if timer: timer.intermediate('render')
+        if not isinstance(res, StringTemplate):
+            res = StringTemplate(res)
+        # reset the global render style
+        c.render_style = render_style
+        if timer: timer.stop()
+        return res
 
     def _render(self, style, **kwargs):
         """
@@ -587,9 +562,8 @@ class Styled(CachedTemplate):
 
     def template(self, style='html'):
         base_template = CachedTemplate.template(self, style)
-        if base_template:
-            template = base_template.get_def(self.style)
-            return template
+        template = base_template.get_def(self.style)
+        return template
 
     def template_hash(self, style):
         # use the hash of the base template so changes to the template file
