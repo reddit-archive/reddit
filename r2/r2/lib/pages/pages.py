@@ -2544,16 +2544,6 @@ class CreditGild(Templated):
     """Page for credit card payments for gilding."""
     pass
 
-
-class GiftGold(Templated):
-    """The page to gift reddit gold trophies"""
-    def __init__(self, recipient):
-        if c.user.employee:
-            gold_creddits = 500
-        else:
-            gold_creddits = c.user.gold_creddits
-        Templated.__init__(self, recipient=recipient, gold_creddits=gold_creddits)
-
 class GoldGiftCodeEmail(Templated):
     """Email sent to a logged-out person that purchases a reddit
     gold gift code."""
