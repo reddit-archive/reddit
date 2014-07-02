@@ -266,7 +266,6 @@ class Link(Thing, Printable):
             s.append(request.GET.has_key("nothumbs"))
         elif style == "compact":
             s.append(c.permalink_page)
-        s.append(wrapped.ignore_reports)
 
         # add link flair to the key if the user and site have enabled it and it
         # exists
@@ -495,6 +494,11 @@ class Link(Thing, Printable):
                 # some subreddits can have gilding disabled
                 item.subreddit.allow_gilding
             )
+
+            if item.can_ban:
+                # set an attribute on the Wrapped item so that it will be
+                # added to the render cache key
+                item.ignore_reports_key = item.ignore_reports
 
             item.num = None
             item.permalink = item.make_permalink(item.subreddit)
