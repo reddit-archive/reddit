@@ -253,14 +253,20 @@ class Link(Thing, Printable):
     def wrapped_cache_key(wrapped, style):
         s = Printable.wrapped_cache_key(wrapped, style)
         if wrapped.promoted is not None:
-            s.extend([getattr(wrapped, "promote_status", -1),
-                      getattr(wrapped, "disable_comments", False),
-                      getattr(wrapped, "media_override", False),
-                      c.user_is_sponsor,
-                      wrapped.url, repr(wrapped.title)])
+            s.extend([
+                getattr(wrapped, "promote_status", -1),
+                getattr(wrapped, "disable_comments", False),
+                getattr(wrapped, "media_override", False),
+                c.user_is_sponsor,
+                wrapped.url,
+                repr(wrapped.title),
+            ])
+
         if style == "htmllite":
-             s.extend([request.GET.has_key('twocolumn'),
-                       c.link_target])
+             s.extend([
+                 request.GET.has_key('twocolumn'),
+                 c.link_target,
+            ])
         elif style == "xml":
             s.append(request.GET.has_key("nothumbs"))
         elif style == "compact":
