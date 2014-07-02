@@ -438,7 +438,8 @@ class NamedButton(NavButton):
         menutext = menu[self.name] % fmt_args
         dest = dest or name
         NavButton.__init__(self, menutext, dest, sr_path=sr_path,
-                           nocname=nocname, aliases=aliases)
+                           nocname=nocname, aliases=aliases,
+                           css_class=css_class)
 
 
 class JsButton(NavButton):
