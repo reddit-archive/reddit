@@ -249,7 +249,7 @@ class NavMenu(Styled):
         for opt in self.options:
             yield opt
 
-    def cacheable_attrs(self):
+    def cachable_attrs(self):
         return [
             ('options', self.options),
             ('title', self.title),
@@ -316,7 +316,7 @@ class NavButton(Styled):
         when it is different from self.title)"""
         return self.title
 
-    def cacheable_attrs(self):
+    def cachable_attrs(self):
         return [
             ('selected', self.selected),
             ('title', self.title),
@@ -368,7 +368,7 @@ class PostButton(NavButton):
         self.base_path = base_path
         self.action_params = {self.input_name: self.dest}
 
-    def cacheable_attrs(self):
+    def cachable_attrs(self):
         return [
             ('selected', self.selected),
             ('title', self.title),
