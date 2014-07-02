@@ -41,8 +41,7 @@
    author = WrappedUser(thing.author, thing.attribs, thing,
                         force_show_flair=False).render()
  %>
-${unsafe(taglinetext % dict(date = thing._date.strftime("%Y-%m-%d"), 
-                            author= author))}
+${unsafe(taglinetext % dict(author=author))}
 </%def>
 
 <%def name="buttons(comments=True, delete=True, report=True, additional='')">

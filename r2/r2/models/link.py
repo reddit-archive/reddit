@@ -256,7 +256,6 @@ class Link(Thing, Printable):
             s.extend([getattr(wrapped, "promote_status", -1),
                       getattr(wrapped, "disable_comments", False),
                       getattr(wrapped, "media_override", False),
-                      wrapped._date,
                       c.user_is_sponsor,
                       wrapped.url, repr(wrapped.title)])
         if style == "htmllite":
