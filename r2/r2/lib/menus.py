@@ -444,7 +444,7 @@ class NamedButton(NavButton):
                  dest=None, fmt_args={}, css_class=''):
         self.name = name.strip('/')
         menutext = menu[self.name] % fmt_args
-        dest = dest or name
+        dest = dest if dest is not None else name
         NavButton.__init__(self, menutext, dest, sr_path=sr_path,
                            nocname=nocname, aliases=aliases,
                            css_class=css_class)
