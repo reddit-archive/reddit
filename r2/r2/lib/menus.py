@@ -393,7 +393,11 @@ class OffsiteButton(NavButton):
         self.path = self.bare_path = self.dest
 
     def cachable_attrs(self):
-        return [('path', self.path), ('title', self.title)]
+        return [
+            ('path', self.path),
+            ('title', self.title),
+            ('css_class', self.css_class),
+        ]
 
 
 class SubredditButton(NavButton):
@@ -422,8 +426,12 @@ class SubredditButton(NavButton):
         return self.isselected
 
     def cachable_attrs(self):
-        return [('path', self.path), ('title', self.title),
-                ('isselected', self.isselected)]
+        return [
+            ('path', self.path),
+            ('title', self.title),
+            ('isselected', self.isselected),
+            ('css_class', self.css_class),
+        ]
 
 
 class NamedButton(NavButton):
