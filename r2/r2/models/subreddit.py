@@ -1935,13 +1935,13 @@ class SRMember(Relation(Subreddit, Account)):
     _cache = TransitionalCache(
         original_cache=g.srmembercache,
         replacement_cache=g.srmember2cache,
-        read_original=True,
+        read_original=False,
         key_transform=translate_key,
     )
     _fast_cache = TransitionalCache(
         original_cache=g.srmembercache,
         replacement_cache=g.srmember2cache,
-        read_original=True,
+        read_original=False,
         key_transform=translate_key,
     )
 

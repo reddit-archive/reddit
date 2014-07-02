@@ -690,7 +690,7 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
         _fast_cache = TransitionalCache(
             original_cache=g.cache,
             replacement_cache=g.relcache,
-            read_original=True,
+            read_original=False,
             key_transform=rel_key_migrate,
         )
 
