@@ -369,11 +369,16 @@ class PostButton(NavButton):
         self.action_params = {self.input_name: self.dest}
 
     def cacheable_attrs(self):
-        attrs = NavButton.cacheable_attrs(self)
-        attrs.extend([
+        return [
+            ('selected', self.selected),
+            ('title', self.title),
             ('base_path', self.base_path),
             ('action_params', self.action_params),
-        ])
+            ('sr_path', self.sr_path),
+            ('target', self.target),
+            ('css_class', self.css_class),
+            ('_id', self._id),
+        ]
 
     def is_selected(self):
         return False
