@@ -605,7 +605,7 @@ class PromotedLinkTraffic(Templated):
 
             start = to_date(camp.start_date).strftime('%Y-%m-%d')
             end = to_date(camp.end_date).strftime('%Y-%m-%d')
-            target = camp.sr_name or 'frontpage'
+            target = camp.target.pretty_name
             location = camp.location_str
             spent = promote.get_spent_amount(camp)
             is_active = self.campaign and self.campaign._id36 == camp._id36

@@ -288,25 +288,6 @@ class PromoCampaign(Thing):
         return target_sr_names, target_name
 
     @classmethod
-    def _new(cls, link, sr_name, bid, cpm, start_date, end_date, priority,
-             location):
-        pc = PromoCampaign(
-            link_id=link._id,
-            sr_name=sr_name,
-            bid=bid,
-            cpm=cpm,
-            start_date=start_date,
-            end_date=end_date,
-            trans_id=NO_TRANSACTION,
-            owner_id=link.author_id,
-        )
-        pc.priority = priority
-        pc.location = location
-        pc.target = Target(sr_name or Frontpage.name)
-        pc._commit()
-        return pc
-
-    @classmethod
     def create(cls, link, target, bid, cpm, start_date, end_date, priority,
              location):
         pc = PromoCampaign(
@@ -414,20 +395,6 @@ class PromoCampaign(Thing):
     def is_live_now(self):
         now = datetime.now(g.tz)
         return self.start_date < now and self.end_date > now
-
-    def update(self, start_date, end_date, bid, cpm, sr_name, trans_id,
-               priority, location, commit=True):
-        self.start_date = start_date
-        self.end_date = end_date
-        self.bid = bid
-        self.cpm = cpm
-        self.sr_name = sr_name
-        self.trans_id = trans_id
-        self.priority = priority
-        self.location = location
-        self.target = Target(sr_name or Frontpage.name)
-        if commit:
-            self._commit()
 
     def delete(self):
         self._deleted = True

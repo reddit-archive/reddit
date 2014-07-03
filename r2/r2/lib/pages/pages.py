@@ -3701,7 +3701,7 @@ class PromoteLinkEdit(Templated):
             impressions = 0
 
             for campaign in campaigns:
-                subreddits.add(campaign.sr_name)
+                subreddits |= set(campaign.target.subreddit_names)
                 budget += campaign.bid
                 if hasattr(campaign, 'cpm') and campaign.priority.cpm:
                     impressions += campaign.impressions
@@ -3737,7 +3737,8 @@ class RenderableCampaign(Templated):
                              not transaction.is_refund() and
                              self.spent < campaign.bid)
         self.pay_url = promote.pay_url(link, campaign)
-        self.view_live_url = promote.view_live_url(link, campaign.sr_name)
+        sr_name = random.choice(campaign.target.subreddit_names)
+        self.view_live_url = promote.view_live_url(link, sr_name)
         self.refund_url = promote.refund_url(link, campaign)
 
         if campaign.location:
@@ -3747,6 +3748,13 @@ class RenderableCampaign(Templated):
         else:
             self.country, self.region, self.metro = '', '', ''
         self.location_str = campaign.location_str
+        if campaign.target.is_collection:
+            self.targeting_data = campaign.target.collection.name
+        else:
+            sr_name = campaign.target.subreddit_name
+            # LEGACY: sponsored.js uses blank to indicate no targeting, meaning
+            # targeted to the frontpage
+            self.targeting_data = '' if sr_name == Frontpage.name else sr_name
 
         Templated.__init__(self)
 
@@ -4221,7 +4229,7 @@ class PromoteReport(Templated):
                 'link': link._id36,
                 'owner': owners[link.author_id].name,
                 'campaign': camp._id36,
-                'target': camp.sr_name or 'frontpage',
+                'target': camp.target.pretty_name,
                 'bid': format_currency(bid, 'USD', locale=c.locale),
                 'fp_impressions': fp_imps[fullname],
                 'sr_impressions': sr_imps[fullname],

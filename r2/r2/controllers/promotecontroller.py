@@ -107,6 +107,7 @@ from r2.models import (
     PromotionWeights,
     PromotedLinkRoadblock,
     Subreddit,
+    Target,
 )
 
 
@@ -114,17 +115,17 @@ def campaign_has_oversold_error(form, campaign):
     if campaign.priority.inventory_override:
         return
 
-    target = Subreddit._by_name(campaign.sr_name) if campaign.sr_name else None
-    return has_oversold_error(form, campaign, campaign.start_date,
-                              campaign.end_date, campaign.bid, campaign.cpm,
-                              target, campaign.location)
+    return has_oversold_error(
+        form, campaign, campaign.start_date, campaign.end_date, campaign.bid,
+        campaign.cpm, campaign.target, campaign.location,
+    )
 
 
 def has_oversold_error(form, campaign, start, end, bid, cpm, target, location):
     ndays = (to_date(end) - to_date(start)).days
     total_request = calc_impressions(bid, cpm)
     daily_request = int(total_request / ndays)
-    oversold = inventory.get_oversold(target or Frontpage, start, end,
+    oversold = inventory.get_oversold(target.subreddits_slow, start, end,
                                       daily_request, ignore=campaign,
                                       location=location)
 
@@ -133,7 +134,7 @@ def has_oversold_error(form, campaign, start, end, bid, cpm, target, location):
         available = min_daily * ndays
         msg_params = {
             'available': format_number(available, locale=c.locale),
-            'target': target.name if target else 'the frontpage',
+            'target': target.pretty_name,
             'start': start.strftime('%m/%d/%Y'),
             'end': end.strftime('%m/%d/%Y'),
         }
@@ -778,22 +779,24 @@ class PromoteApiController(ApiController):
                 return
 
         elif targeting == 'none':
-            sr = None
+            sr = Frontpage
+
+        target = Target(sr.name)
 
         # Check inventory
         campaign = campaign if campaign_id36 else None
         if not priority.inventory_override:
             oversold = has_oversold_error(form, campaign, start, end, bid, cpm,
-                                          sr, location)
+                                          target, location)
             if oversold:
                 return
 
         if campaign:
-            promote.edit_campaign(link, campaign, dates, bid, cpm, sr, priority,
-                                  location)
+            promote.edit_campaign(link, campaign, dates, bid, cpm, target,
+                                  priority, location)
         else:
-            campaign = promote.new_campaign(link, dates, bid, cpm, sr, priority,
-                                            location)
+            campaign = promote.new_campaign(link, dates, bid, cpm, target,
+                                            priority, location)
         rc = RenderableCampaign.from_campaigns(link, campaign)
         jquery.update_campaign(campaign._fullname, rc.render_html())
 

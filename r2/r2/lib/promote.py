@@ -51,6 +51,7 @@ from r2.models import (
     DefaultSR,
     FakeAccount,
     FakeSubreddit,
+    Frontpage,
     get_promote_srid,
     Link,
     MultiReddit,
@@ -214,12 +215,11 @@ def get_transactions(link, campaigns):
     bids_by_campaign = {c._id: bid_dict[(c._id, c.trans_id)] for c in campaigns}
     return bids_by_campaign
 
-def new_campaign(link, dates, bid, cpm, sr, priority, location):
-    # empty string for sr_name means target to all
-    sr_name = sr.name if sr else ""
-    campaign = PromoCampaign._new(link, sr_name, bid, cpm, dates[0], dates[1],
-                                  priority, location)
-    PromotionWeights.add(link, campaign._id, sr_name, dates[0], dates[1], bid)
+def new_campaign(link, dates, bid, cpm, target, priority, location):
+    campaign = PromoCampaign.create(link, target, bid, cpm, dates[0], dates[1],
+                                    priority, location)
+    PromotionWeights.add(link, campaign._id, target.subreddit_names, dates[0],
+                         dates[1], bid)
     PromotionLog.add(link, 'campaign %s created' % campaign._id)
 
     if campaign.priority.cpm:
@@ -234,42 +234,41 @@ def new_campaign(link, dates, bid, cpm, sr, priority, location):
 def free_campaign(link, campaign, user):
     auth_campaign(link, campaign, user, -1)
 
-def edit_campaign(link, campaign, dates, bid, cpm, sr, priority, location):
-    sr_name = sr.name if sr else '' # empty string means target to all
-
+def edit_campaign(link, campaign, dates, bid, cpm, target, priority, location):
     changed = {}
     if bid != campaign.bid:
+         # if the bid amount changed, cancel any pending transactions
+        void_campaign(link, campaign, reason='changed_bid')
         changed['bid'] = ("$%0.2f" % campaign.bid, "$%0.2f" % bid)
+        campaign.bid = bid
     if dates[0] != campaign.start_date or dates[1] != campaign.end_date:
         original = '%s to %s' % (campaign.start_date, campaign.end_date)
         edited = '%s to %s' % (dates[0], dates[1])
         changed['dates'] = (original, edited)
+        campaign.start_date = dates[0]
+        campaign.end_date = dates[1]
     if cpm != campaign.cpm:
         changed['cpm'] = (campaign.cpm, cpm)
-    if sr_name != campaign.sr_name:
-        format_sr_name = (lambda sr_name: '/r/%s' % sr_name if sr_name
-                                                            else '<frontpage>')
-        changed['sr_name'] = map(format_sr_name, (campaign.sr_name, sr_name))
+        campaign.cpm = cpm
+    if target != campaign.target:
+        changed['target'] = (campaign.target, target)
+        campaign.target = target
     if priority != campaign.priority:
         changed['priority'] = (campaign.priority.name, priority.name)
+        campaign.priority = priority
     if location != campaign.location:
         changed['location'] = (campaign.location, location)
+        campaign.location = location
 
     change_strs = map(lambda t: '%s: %s -> %s' % (t[0], t[1][0], t[1][1]),
                       changed.iteritems())
     change_text = ', '.join(change_strs)
+    campaign._commit()
 
-    # if the bid amount changed, cancel any pending transactions
-    if campaign.bid != bid:
-        void_campaign(link, campaign, reason='changed_bid')
-
-    # update the schedule
-    PromotionWeights.reschedule(link, campaign._id, sr_name,
-                                dates[0], dates[1], bid)
-
-    # update values in the db
-    campaign.update(dates[0], dates[1], bid, cpm, sr_name,
-                    campaign.trans_id, priority, location, commit=True)
+    # update the index
+    PromotionWeights.reschedule(link, campaign._id,
+                                campaign.target.subreddit_names, dates[0],
+                                dates[1], bid)
 
     if campaign.priority.cpm:
         # make it a freebie, if applicable
@@ -291,11 +290,10 @@ def terminate_campaign(link, campaign):
     now = promo_datetime_now()
     original_end = campaign.end_date
     dates = [campaign.start_date, now]
-    sr = Subreddit._by_name(campaign.sr_name) if campaign.sr_name else None
 
     # NOTE: this will delete PromotionWeights after and including now.date()
-    edit_campaign(link, campaign, dates, campaign.bid, campaign.cpm, sr,
-                  campaign.priority, campaign.location)
+    edit_campaign(link, campaign, dates, campaign.bid, campaign.cpm,
+                  campaign.target, campaign.priority, campaign.location)
 
     campaigns = list(PromoCampaign._by_link(link._id))
     is_live = any(is_live_promo(link, camp) for camp in campaigns
@@ -581,7 +579,7 @@ def live_campaigns_by_link(link, sr=None):
 def promote_link(link, campaign):
     if (not link.over_18 and
         not link.over_18_override and
-        campaign.sr_name and Subreddit._by_name(campaign.sr_name).over_18):
+        any(sr.over_18 for sr in campaign.target.subreddits_slow)):
         link.over_18 = True
         link._commit()
 
@@ -710,8 +708,11 @@ PromoTuple = namedtuple('PromoTuple', ['link', 'weight', 'campaign'])
 @memoize('all_live_promo_srnames')
 def all_live_promo_srnames():
     now = promo_datetime_now()
-    return {camp.sr_name for camp, link in get_promos(now)
-            if is_live_promo(link, camp)}
+    srnames = itertools.chain.from_iterable(
+        camp.target.subreddit_names for camp, link in get_promos(now)
+                                    if is_live_promo(link, camp)
+    )
+    return set(srnames)
 
 
 def srnames_from_site(user, site):
@@ -742,7 +743,9 @@ def _get_live_promotions(sr_names):
             weight = (camp.bid / camp.ndays)
             pt = PromoTuple(link=link._fullname, weight=weight,
                             campaign=camp._fullname)
-            ret[camp.sr_name].append(pt)
+            for sr_name in camp.target.subreddit_names:
+                if sr_name in sr_names:
+                    ret[sr_name].append(pt)
     return ret
 
 

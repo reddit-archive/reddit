@@ -32,7 +32,8 @@
     data-startdate="${thing.campaign.start_date.strftime('%m/%d/%Y')}"
     data-enddate="${thing.campaign.end_date.strftime('%m/%d/%Y')}"
     data-bid="${'%.2f' % thing.campaign.bid}"
-    data-targeting="${thing.campaign.sr_name}"
+    data-targeting-collection="${thing.campaign.target.is_collection}"
+    data-targeting="${thing.targeting_data}"
     data-country="${thing.country}"
     data-region="${thing.region}"
     data-metro="${thing.metro}"
@@ -106,11 +107,8 @@
     %endif
   </td>
 
-  <%
-  campaign_target = '/r/%s' % thing.campaign.sr_name if thing.campaign.sr_name else _('frontpage')
-  %>
-  <td class="campaign-target" title="${campaign_target}">
-    ${campaign_target}
+  <td class="campaign-target" title="${thing.campaign.target.pretty_name}">
+    ${thing.campaign.target.pretty_name}
   </td>
 
   <td class="campaign-location" title="${thing.location_str}">

@@ -147,10 +147,11 @@ def get_campaigns_by_date(srs, start, end, ignore=None):
         if not (transaction.is_auth() or transaction.is_charged()):
             continue
 
-        sr_name = camp.sr_name or DefaultSR.name
+        sr_names = camp.target.subreddit_names
         camp_dates = set(get_date_range(camp.start_date, camp.end_date))
         for date in camp_dates.intersection(dates):
-            ret[sr_name][date].append(camp)
+            for sr_name in sr_names:
+                ret[sr_name][date].append(camp)
 
     if is_single:
         return ret[srs[0].name]
@@ -302,7 +303,10 @@ def get_available_pageviews(srs, start, end, datestr=False, ignore=None):
         return ret
 
 
-def get_oversold(sr, start, end, daily_request, ignore=None, location=None):
+def get_oversold(srs, start, end, daily_request, ignore=None, location=None):
+    assert len(srs) == 1, "can't check inventory for multiple subreddits"
+    sr = srs[0]
+
     if location:
         available_by_date = get_available_pageviews_geotargeted(sr, location,
                                 start, end, datestr=True, ignore=ignore)

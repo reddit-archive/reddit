@@ -42,9 +42,9 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from r2.lib.db.thing import Thing, NotFound
 from r2.lib.memoize import memoize
-from r2.lib.utils import Enum, to_date
+from r2.lib.utils import Enum, to_date, tup
 from r2.models.account import Account
-from r2.models import Link
+from r2.models import Link, Frontpage
 
 
 engine = g.dbm.get_engine('authorize')
@@ -383,14 +383,14 @@ class PromotionWeights(Sessionized, Base):
     finished   = Column(Boolean)
 
     @classmethod
-    def reschedule(cls, thing, idx, sr, start_date, end_date, total_weight,
+    def reschedule(cls, thing, idx, sr_names, start_date, end_date, total_weight,
                    finished = False):
         cls.delete_unfinished(thing, idx)
-        cls.add(thing, idx, sr, start_date, end_date, total_weight,
+        cls.add(thing, idx, sr_names, start_date, end_date, total_weight,
                 finished = finished)
 
     @classmethod
-    def add(cls, thing, idx, sr, start_date, end_date, total_weight,
+    def add(cls, thing, idx, sr_names, start_date, end_date, total_weight,
             finished = False):
         start_date = to_date(start_date)
         end_date   = to_date(end_date)
@@ -399,11 +399,15 @@ class PromotionWeights(Sessionized, Base):
         duration = max((end_date - start_date).days, 1)
         weight = total_weight / duration
 
-        d = start_date
-        while d < end_date:
-            cls._new(thing, idx, sr, d,
-                     thing.author_id, weight, weight, finished = finished)
-            d += datetime.timedelta(1)
+        for sr_name in tup(sr_names):
+            # for some reason we use empty string to indicate Frontpage
+            sr_name = '' if sr_name == Frontpage.name else sr_name
+
+            d = start_date
+            while d < end_date:
+                cls._new(thing, idx, sr_name, d,
+                         thing.author_id, weight, weight, finished = finished)
+                d += datetime.timedelta(days=1)
 
     @classmethod
     def delete_unfinished(cls, thing, idx):
