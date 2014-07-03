@@ -170,6 +170,13 @@ class PromoCampaign(Thing):
         location_code=None,
     )
 
+    # special attributes that shouldn't set Thing data attributes because they
+    # have special setters that set other data attributes
+    _derived_attrs = (
+        "location",
+        "priority",
+    )
+
     def __getattr__(self, attr):
         val = Thing.__getattr__(self, attr)
         if attr in ('start_date', 'end_date'):
@@ -178,26 +185,37 @@ class PromoCampaign(Thing):
                 val = val.replace(tzinfo=g.tz)
         return val
 
+    def __setattr__(self, attr, val, make_dirty=True):
+        if attr in self._derived_attrs:
+            object.__setattr__(self, attr, val)
+        else:
+            Thing.__setattr__(self, attr, val, make_dirty=make_dirty)
+
     @classmethod
-    def get_priority_name(cls, priority):
+    def priority_name_from_priority(cls, priority):
         if not priority in PROMOTE_PRIORITIES.values():
             raise ValueError("%s is not a valid priority" % val)
         return priority.name
 
-    @classmethod 
+    @classmethod
+    def location_code_from_location(cls, location):
+        return location.to_code() if location else None
+
+    @classmethod
     def _new(cls, link, sr_name, bid, cpm, start_date, end_date, priority,
              location):
-        location_code = location.to_code() if location else None
-        pc = PromoCampaign(link_id=link._id,
-                           sr_name=sr_name,
-                           bid=bid,
-                           cpm=cpm,
-                           start_date=start_date,
-                           end_date=end_date,
-                           trans_id=NO_TRANSACTION,
-                           owner_id=link.author_id,
-                           priority_name=cls.get_priority_name(priority),
-                           location_code=location_code)
+        pc = PromoCampaign(
+            link_id=link._id,
+            sr_name=sr_name,
+            bid=bid,
+            cpm=cpm,
+            start_date=start_date,
+            end_date=end_date,
+            trans_id=NO_TRANSACTION,
+            owner_id=link.author_id,
+        )
+        pc.priority = priority
+        pc.location = location
         pc._commit()
         return pc
 
@@ -235,12 +253,20 @@ class PromoCampaign(Thing):
     def priority(self):
         return PROMOTE_PRIORITIES[self.priority_name]
 
+    @priority.setter
+    def priority(self, priority):
+        self.priority_name = self.priority_name_from_priority(priority)
+
     @property
     def location(self):
         if self.location_code is not None:
             return Location.from_code(self.location_code)
         else:
             return None
+
+    @location.setter
+    def location(self, location):
+        self.location_code = self.location_code_from_location(location)
 
     @property
     def location_str(self):
@@ -270,8 +296,8 @@ class PromoCampaign(Thing):
         self.cpm = cpm
         self.sr_name = sr_name
         self.trans_id = trans_id
-        self.priority_name = self.get_priority_name(priority)
-        self.location_code = location.to_code() if location else None
+        self.priority = priority
+        self.location = location
         if commit:
             self._commit()
 
