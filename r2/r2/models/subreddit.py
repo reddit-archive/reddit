@@ -1864,13 +1864,23 @@ Random = RandomReddit()
 RandomNSFW = RandomNSFWReddit()
 RandomSubscription = RandomSubscriptionReddit()
 
-Subreddit._specials.update(dict(friends = Friends,
-                                randnsfw = RandomNSFW,
-                                myrandom = RandomSubscription,
-                                random = Random,
-                                mod = Mod,
-                                contrib = Contrib,
-                                all = All))
+# add to _specials so they can be retrieved with Subreddit._by_name, e.g.
+# Subreddit._by_name("all")
+Subreddit._specials.update({
+    sr.name: sr for sr in (
+        Friends,
+        RandomNSFW,
+        RandomSubscription,
+        Random,
+        Contrib,
+        All,
+        Frontpage,
+    )
+})
+
+# some subreddits have unfortunate names
+Subreddit._specials['mod'] = Mod
+
 
 class SRMember(Relation(Subreddit, Account)):
     _defaults = dict(encoded_permissions=None)
