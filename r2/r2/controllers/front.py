@@ -700,7 +700,25 @@ class FrontController(RedditController):
     @validate(VSrModerator(perms='posts'),
               location=nop('location'),
               only=VOneOf('only', ('links', 'comments')))
+    @api_doc(
+        api_section.moderation,
+        uses_site=True,
+        uri='/about/{location}',
+        uri_variants=['/about/' + loc for loc in
+                      ('reports', 'spam', 'modqueue', 'unmoderated')],
+    )
     def GET_spamlisting(self, location, only, num, after, reverse, count):
+        """Return a listing of posts relevant to moderators.
+
+        * reports: Things that have been reported.
+        * spam: Things that have been marked as spam or otherwise removed.
+        * modqueue: Things requiring moderator review, such as reported things
+            and items caught by the spam filter.
+        * unmoderated: Things that have yet to be approved/removed by a mod.
+
+        Requires the "posts" moderator permission for the subreddit.
+
+        """
         c.allow_styles = True
         c.profilepage = True
         pane = self._make_spamlisting(location, only, num, after, reverse,
