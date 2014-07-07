@@ -1060,7 +1060,8 @@ class ModeratorMessageBuilder(MessageBuilder):
 
     def get_tree(self):
         if self.parent:
-            return conversation(self.user, self.parent)
+            sr = Subreddit._byID(self.parent.sr_id)
+            return sr_conversation(sr, self.parent)
         sr_ids = Subreddit.reverse_moderator_ids(self.user)
         return moderator_messages(sr_ids)
 

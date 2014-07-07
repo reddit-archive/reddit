@@ -910,6 +910,13 @@ class MessageController(ListingController):
                 message_cls = SrMessageBuilder
             elif self.where == 'moderator' and self.subwhere != 'unread':
                 message_cls = ModeratorMessageBuilder
+            elif self.message and self.message.sr_id:
+                sr = self.message.subreddit_slow
+                if sr.is_moderator_with_perms(c.user, 'mail'):
+                    # this is a moderator message and the user is a moderator.
+                    # use the ModeratorMessageBuilder because not all messages
+                    # will be in the user's mailbox
+                    message_cls = ModeratorMessageBuilder
 
             parent = None
             skip = False
