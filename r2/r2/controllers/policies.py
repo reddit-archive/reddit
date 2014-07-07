@@ -20,7 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from pylons import g
+from pylons import g, c
 from pylons.i18n import _
 from BeautifulSoup import BeautifulSoup, Tag
 
@@ -37,6 +37,8 @@ from r2.lib.pages import PolicyPage, PolicyView
 class PoliciesController(RedditController):
     @validate(requested_rev=nop('v'))
     def GET_policy_page(self, page, requested_rev):
+        if c.render_style == 'compact':
+            self.redirect('/wiki/' + page)
         if page == 'privacypolicy':
             wiki_name = g.wiki_page_privacy_policy
             pagename = _('privacy policy')
