@@ -161,6 +161,9 @@ class ListingController(RedditController):
     def keep_fn(self):
         def keep(item):
             wouldkeep = item.keep_item(item)
+            if isinstance(c.site, AllSR):
+                if not item.subreddit.allow_top:
+                    return False
             if getattr(item, "promoted", None) is not None:
                 return False
             if item._deleted and not c.user_is_admin:
