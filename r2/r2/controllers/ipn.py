@@ -648,6 +648,7 @@ class GoldPaymentController(RedditController):
     name = ''
     webhook_secret = ''
     event_type_mappings = {}
+    abort_on_error = True
 
     @textresponse(secret=VPrintable('secret', 50))
     def POST_goldwebhook(self, secret):
@@ -660,7 +661,10 @@ class GoldPaymentController(RedditController):
             g.log.error('%s %s: unknown status %s' % (self.name,
                                                       webhook,
                                                       status))
-            self.abort403()
+            if self.abort_on_error:
+                self.abort403()
+            else:
+                return
         self.process_webhook(event_type, webhook)
 
     def validate_secret(self, secret):
@@ -684,7 +688,10 @@ class GoldPaymentController(RedditController):
                 webhook.load_blob()
             except GoldException as e:
                 g.log.error('%s: payment_blob %s', webhook.transaction_id, e)
-                self.abort403()
+                if self.abort_on_error:
+                    self.abort403()
+                else:
+                    return
         msg = None
 
         if event_type == 'cancelled':
@@ -1140,6 +1147,7 @@ class CoinbaseController(GoldPaymentController):
         'mispaid': 'noop',
         'expired': 'noop',
     }
+    abort_on_error = False
 
     @classmethod
     def process_response(cls):
