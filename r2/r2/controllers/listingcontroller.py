@@ -458,6 +458,9 @@ class BrowseController(ListingWithPromos):
         if self.time != 'all' and c.default_sr:
             oldest = timeago('1 %s' % (str(self.time),))
             def keep(item):
+                if isinstance(c.site, AllSR):
+                    if not item.subreddit.allow_top:
+                        return False
                 return item._date > oldest and item.keep_item(item)
             return keep
         else:
