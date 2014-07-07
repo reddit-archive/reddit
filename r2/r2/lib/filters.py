@@ -324,7 +324,9 @@ def generate_table_of_contents(soup, prefix):
         if previous and thislevel > previous:
             newul = Tag(soup, "ul")
             newul.level = thislevel
-            parent.append(newul)
+            newli = Tag(soup, "li", [("class", "toc_child")])
+            newli.append(newul)
+            parent.append(newli)
             parent = newul
             level += 1
         elif level and thislevel < previous:

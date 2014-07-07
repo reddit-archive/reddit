@@ -144,9 +144,16 @@
             font-size: .9em;
         }
 
+        .revisions li {
+            font-size: .85em;
+        }
+
+        .toc ul ul li {
+            font-size: .85em;
+        }
+
         li {
             margin: .75em 0;
-            font-size: .85em;
 
             &.selected {
                 font-weight: bold;
@@ -168,6 +175,10 @@
 
                 & > li {
                     display: none;
+                }
+
+                & > li.toc_child {
+                    display: block;
                 }
 
                 ul ul {
