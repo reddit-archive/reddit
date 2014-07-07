@@ -694,6 +694,7 @@ class FrontController(RedditController):
                           location=location,
                           extension_handling=False).render()
 
+    @require_oauth2_scope("read")
     @base_listing
     @disable_subreddit_css()
     @validate(VSrModerator(perms='posts'),
