@@ -1070,14 +1070,15 @@ class ModeratorMessageBuilder(MessageBuilder):
         return moderator_messages(sr_ids)
 
 class MultiredditMessageBuilder(MessageBuilder):
-    def __init__(self, user, **kw):
-        self.user = user
+    def __init__(self, sr, **kw):
+        self.sr = sr
         MessageBuilder.__init__(self, **kw)
 
     def get_tree(self):
         if self.parent:
-            return conversation(self.user, self.parent)
-        return moderator_messages(c.site.sr_ids)
+            sr = Subreddit._byID(self.parent.sr_id)
+            return sr_conversation(sr, self.parent)
+        return moderator_messages(self.sr.sr_ids)
 
 class TopCommentBuilder(CommentBuilder):
     """A comment builder to fetch only the top-level, non-spam,
