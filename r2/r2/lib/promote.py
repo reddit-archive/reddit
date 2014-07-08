@@ -252,6 +252,8 @@ def edit_campaign(link, campaign, dates, bid, cpm, sr, priority, location):
         changed['sr_name'] = map(format_sr_name, (campaign.sr_name, sr_name))
     if priority != campaign.priority:
         changed['priority'] = (campaign.priority.name, priority.name)
+    if location != campaign.location:
+        changed['location'] = (campaign.location, location)
 
     change_strs = map(lambda t: '%s: %s -> %s' % (t[0], t[1][0], t[1][1]),
                       changed.iteritems())
