@@ -140,7 +140,9 @@ def responsive(res, space_compress=None):
     if is_api():
         res = websafe_json(simplejson.dumps(res or ''))
         if c.allowed_callback:
-            res = "%s(%s)" % (websafe_json(c.allowed_callback), res)
+            # Add a comment to the beginning to prevent the "Rosetta Flash"
+            # XSS when an attacker controls the beginning of a resource
+            res = "/**/%s(%s)" % (websafe_json(c.allowed_callback), res)
     elif space_compress:
         res = spaceCompress(res)
     return res

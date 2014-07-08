@@ -480,7 +480,9 @@ def set_content_type():
             c.user_is_loggedin = False
 
             def to_js(content):
-                return wrapper + "(" + utils.string2js(content) + ");"
+                # Add a comment to the beginning to prevent the "Rosetta Flash"
+                # XSS when an attacker controls the beginning of a resource
+                return "/**/" + wrapper + "(" + utils.string2js(content) + ");"
 
             c.response_wrapper = to_js
         if ext in ("rss", "api", "json") and request.method.upper() == "GET":
