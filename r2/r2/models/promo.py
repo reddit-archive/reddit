@@ -433,6 +433,17 @@ class PromoCampaign(Thing):
         self._deleted = True
         self._commit()
 
+
+def backfill_campaign_targets():
+    from r2.lib.db.operators import desc
+    from r2.lib.utils import fetch_things2
+
+    q = PromoCampaign._query(sort=desc("_date"), data=True)
+    for campaign in fetch_things2(q):
+        sr_name = campaign.sr_name or Frontpage.name
+        campaign.target = Target(sr_name)
+        campaign._commit()
+
 class PromotionLog(tdb_cassandra.View):
     _use_db = True
     _connection_pool = 'main'
