@@ -21,6 +21,7 @@
 ###############################################################################
 
 <%!
+   from r2.config import feature
    from r2.models.subreddit import DefaultSR
    from r2.lib.template_helpers import add_sr, static
 %>
@@ -64,7 +65,7 @@
   %elif thing.simple:
   <div id="searchexpando" class="infobar">
       % if not isinstance(c.site, DefaultSR):
-      <label><input type="checkbox" name="restrict_sr" />${_('limit my search to %(path)s') % dict(path=c.site.path.rstrip('/'))}</label>
+      <label><input type="checkbox" name="restrict_sr" ${"checked" if feature.is_enabled('search_auto_restrict_sr') else ''} />${_('limit my search to %(path)s') % dict(path=c.site.path.rstrip('/'))}</label>
       % endif
 
       ${search_faq()}
