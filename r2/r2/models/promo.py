@@ -302,6 +302,7 @@ class PromoCampaign(Thing):
         )
         pc.priority = priority
         pc.location = location
+        pc.target = Target(sr_name or Frontpage.name)
         pc._commit()
         return pc
 
@@ -424,6 +425,7 @@ class PromoCampaign(Thing):
         self.trans_id = trans_id
         self.priority = priority
         self.location = location
+        self.target = Target(sr_name or Frontpage.name)
         if commit:
             self._commit()
 
