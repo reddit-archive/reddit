@@ -197,7 +197,6 @@ class UnloggedUser(FakeAccount):
     COOKIE_NAME = "_options"
     allowed_prefs = {
         "pref_lang": VLang.validate_lang,
-        "pref_content_langs": VLang.validate_content_langs,
         "pref_frame_commentspanel": bool,
         "pref_hide_locationbar": bool,
         "pref_use_global_defaults": bool,
@@ -205,19 +204,9 @@ class UnloggedUser(FakeAccount):
 
     def __init__(self, browser_langs, *a, **kw):
         FakeAccount.__init__(self, *a, **kw)
-        if browser_langs:
-            lang = browser_langs[0]
-            content_langs = list(browser_langs)
-            # try to coerce the default language 
-            if g.lang not in content_langs:
-                content_langs.append(g.lang)
-            content_langs.sort()
-        else:
-            lang = g.lang
-            content_langs = 'all'
+        lang = browser_langs[0] if browser_langs else g.lang
         self._defaults = self._defaults.copy()
         self._defaults['pref_lang'] = lang
-        self._defaults['pref_content_langs'] = content_langs
         self._defaults['pref_frame_commentspanel'] = False
         self._defaults['pref_hide_locationbar'] = False
         self._defaults['pref_use_global_defaults'] = False
@@ -564,14 +553,6 @@ def set_iface_lang():
     except (babel.core.UnknownLocaleError, ValueError):
         c.locale = babel.core.Locale.parse(g.lang, sep='-')
 
-
-def set_content_lang():
-    if c.user.pref_content_langs != 'all':
-        c.content_langs = list(c.user.pref_content_langs)
-        c.content_langs.sort()
-    else:
-        c.content_langs = c.user.pref_content_langs
-
 def set_cnameframe():
     if (bool(request.params.get(utils.UrlParser.cname_get))
         or not request.host.split(":")[0].endswith(g.domain)):
@@ -780,7 +761,6 @@ class MinimalController(BaseController):
 
         return make_key('request',
                         c.lang,
-                        c.content_langs,
                         request.host,
                         c.secure,
                         c.cname,
@@ -1280,11 +1260,8 @@ class RedditController(OAuth2ResourceController):
             if not c.user:
                 c.user = UnloggedUser(get_browser_langs())
                 # patch for fixing mangled language preferences
-                if (not isinstance(c.user.pref_lang, basestring) or
-                    not all(isinstance(x, basestring)
-                            for x in c.user.pref_content_langs)):
+                if not isinstance(c.user.pref_lang, basestring):
                     c.user.pref_lang = g.lang
-                    c.user.pref_content_langs = [g.lang]
                     c.user._commit()
 
         if c.user_is_loggedin:
@@ -1307,7 +1284,6 @@ class RedditController(OAuth2ResourceController):
 
         #set_browser_langs()
         set_iface_lang()
-        set_content_lang()
         set_recent_clicks()
         # used for HTML-lite templates
         set_colors()

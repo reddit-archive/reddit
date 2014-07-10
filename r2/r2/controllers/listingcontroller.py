@@ -1091,9 +1091,6 @@ class RedditsController(ListingController):
                                             read_cache = True,
                                             cache_time = 60 * 60)
                 reddits._sort = desc('_downs')
-            # Consider resurrecting when it is not the World Cup
-            #if c.content_langs != 'all':
-            #    reddits._filter(Subreddit.c.lang == c.content_langs)
 
             if g.domain != 'reddit.com':
                 # don't try to render special subreddits (like promos)

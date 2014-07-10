@@ -75,19 +75,6 @@ PREFS_VALIDATORS = dict(
 )
 
 
-def format_content_lang_pref(content_langs):
-    pref_content_langs = []
-    for lang in content_langs:
-        if lang in g.all_languages:
-            pref_content_langs.append(lang)
-    pref_content_langs = tuple(sorted(pref_content_langs))
-
-    if not pref_content_langs or "all" in pref_content_langs:
-        return "all"
-    else:
-        return pref_content_langs
-
-
 def set_prefs(user, prefs):
     for k, v in prefs.iteritems():
         setattr(user, k, v)

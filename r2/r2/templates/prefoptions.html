@@ -25,7 +25,7 @@
    from r2.lib.utils import UrlParser
    import random
 %>
-<%namespace file="utils.html" import="language_tool, language_checkboxes, plain_link"/>
+<%namespace file="utils.html" import="language_tool, plain_link"/>
 
 <%def name="checkbox(text, name, disabled = False, disabled_text = '', prefix = 'pref_')">
     <input name="${name}" id="${name}" type="checkbox"
@@ -93,12 +93,6 @@
                       default_lang = c.user.pref_lang)}
       &#32;<span class="little gray hover">(*) ${_("incomplete")}
       &#32;<a href="http://www.reddit.com/r/i18n/wiki/getting_started">${_("volunteer to translate")}</a></span>
-    </td>
-  </tr>
-  <tr>
-    <th>${_("content language")}</th>
-    <td class="prefright">
-      ${language_checkboxes(default = c.user.pref_content_langs)}
     </td>
   </tr>
 

@@ -28,7 +28,6 @@ from r2.lib.emailer import opt_in, opt_out
 from r2.lib.validator import *
 from r2.lib.validator.preferences import (
     filter_prefs,
-    format_content_lang_pref,
     PREFS_VALIDATORS,
     set_prefs,
 )
@@ -40,20 +39,10 @@ from r2.models import *
 import hashlib
 
 class PostController(ApiController):
-    def _langs_from_post(self, all_or_some):
-        if all_or_some == 'all':
-            return 'all'
-        langs = []
-        for lang in g.all_languages:
-            if request.POST.get('lang-' + lang):
-                langs.append(str(lang))
-        return format_content_lang_pref(langs)
-
     @validate(pref_lang = VLang('lang'),
               all_langs = VOneOf('all-langs', ('all', 'some'), default='all'))
     def POST_unlogged_options(self, all_langs, pref_lang):
-        content_langs = self._langs_from_post(all_langs)
-        prefs = {"pref_content_lang": content_langs, "pref_lang": pref_lang}
+        prefs = {"pref_lang": pref_lang}
         set_prefs(c.user, prefs)
         c.user._commit()
         return self.redirect(request.referer)
@@ -62,8 +51,6 @@ class PostController(ApiController):
               all_langs=VOneOf('all-langs', ('all', 'some'), default='all'),
               **PREFS_VALIDATORS)
     def POST_options(self, all_langs, **prefs):
-        pref_content_langs = self._langs_from_post(all_langs)
-        prefs['pref_content_langs'] = pref_content_langs
         filter_prefs(prefs, c.user)
         if c.errors.errors:
             return abort(BadRequestError(errors.INVALID_PREF))

@@ -355,24 +355,6 @@ class VLang(Validator):
                 return g.lang
             else:
                 raise ValueError("invalid language %r" % lang)
-
-    @staticmethod
-    def validate_content_langs(langs):
-        if langs == "all":
-            return langs
-
-        validated = []
-        for lang in langs:
-            try:
-                validated.append(VLang.validate_lang(lang, strict=True))
-            except ValueError:
-                pass
-
-        if not validated:
-            raise ValueError("no valid languages")
-
-        return validated
-
     def run(self, lang):
         return VLang.validate_lang(lang)
 
@@ -380,16 +362,6 @@ class VLang(Validator):
         return {
             self.param: "a valid IETF language tag (underscore separated)",
         }
-
-
-class VContentLang(VLang):
-    def run(self, lang):
-        if lang == "all":
-            return lang
-        try:
-            return VLang.validate_lang(lang, strict=True)
-        except ValueError:
-            self.set_error(errors.INVALID_LANG)
 
 
 class VRequired(Validator):

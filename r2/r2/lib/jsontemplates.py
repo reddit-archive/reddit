@@ -390,8 +390,6 @@ class PrefsJsonTemplate(ThingJsonTemplate):
     def thing_attr(self, thing, attr):
         if attr == "pref_clickgadget":
             return bool(thing.pref_clickgadget)
-        elif attr == "pref_content_langs":
-            return tup(thing.pref_content_langs)
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
 

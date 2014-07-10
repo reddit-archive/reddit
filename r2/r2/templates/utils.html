@@ -217,45 +217,6 @@ ${unsafe(txt)}
 %endif
 </%def>
 
-<%def name="language_checkboxes(default = 'all')">
-<%
-   all_checked, some_checked = "checked='checked'", "" 
-   if default != "all":
-     all_checked, some_checked = some_checked, all_checked
-%>
-<input type="radio" name="all-langs" id="all-langs" value="all"
-       onclick="clear_all_langs(this)" ${all_checked}/>
-<label for="all-langs">${_("all languages")}</label>
-<br/>
-<input type="radio" name="all-langs" id="some-langs" value="some"
-       ${some_checked}/>
-<label for="some-langs">${_("some languages")}</label>
-<hr/>
-<table>
-<%
-   all_langs = [x for x in g.all_languages if len(x) == 2]
- %>
-%for col in cols(all_langs, 3):
-  <tr>
-  %for lang in col:
-    <td style="padding-right: 15px; white-space: nowrap;">
-    <%
-       idname = "lang-" + lang
-       if default != "all" and lang in default:
-         checked = "checked='checked'"
-       else:
-         checked = ""
-    %>
-    <input type="checkbox" name="${idname}" id="${idname}"
-           onclick="check_some_langs(this)" ${checked}/>
-    <label for="${idname}">${g.lang_name[lang][0]}</label>
-    </td>
-  %endfor
-  </tr>
-%endfor
-</table>
-</%def>
-
 <%def name="separator(separator_char)">
   <span class="separator">${separator_char}</span>
 </%def>

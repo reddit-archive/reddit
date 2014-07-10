@@ -588,12 +588,6 @@ class ApiController(RedditController):
                 emailer.verify_email(user)
 
             user.pref_lang = c.lang
-            if c.content_langs == 'all':
-                user.pref_content_langs = 'all'
-            else:
-                langs = list(c.content_langs)
-                langs.sort()
-                user.pref_content_langs = tuple(langs)
 
             d = c.user._dirties.copy()
             user._commit()

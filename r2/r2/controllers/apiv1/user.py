@@ -37,7 +37,6 @@ from r2.lib.pages import FriendTableItem
 from r2.lib.validator import (
     validate,
     VAccountByName,
-    VContentLang,
     VFriendOfMine,
     VLength,
     VList,
@@ -53,10 +52,6 @@ PREFS_JSON_SPEC = VValidatedJSON.PartialObject({
     vprefs.PREFS_VALIDATORS.iteritems()
     if k in Account._preference_attrs
 })
-
-PREFS_JSON_SPEC.spec["content_langs"] = VValidatedJSON.ArrayOf(
-    VContentLang("content_langs")
-)
 
 
 class APIv1UserController(OAuth2ResourceController):
@@ -145,8 +140,6 @@ class APIv1UserController(OAuth2ResourceController):
         user_prefs = c.user.preferences()
         for short_name, new_value in validated_prefs.iteritems():
             pref_name = "pref_" + short_name
-            if pref_name == "pref_content_langs":
-                new_value = vprefs.format_content_lang_pref(new_value)
             user_prefs[pref_name] = new_value
         vprefs.filter_prefs(user_prefs, c.user)
         vprefs.set_prefs(c.user, user_prefs)

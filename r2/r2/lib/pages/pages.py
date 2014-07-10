@@ -2048,7 +2048,6 @@ class SubredditTopBar(CachedTemplate):
         self._my_reddits = None
         self._pop_reddits = None
         name = '' if not c.user_is_loggedin else c.user.name
-        langs = "" if name else c.content_langs
         # poor man's expiration, with random initial time
         t = int(time.time()) / 3600
         if c.user_is_loggedin:
@@ -2060,8 +2059,7 @@ class SubredditTopBar(CachedTemplate):
         # it is added to the render cache key.
         self.location = c.location or "no_location"
 
-        CachedTemplate.__init__(self, name = name, langs = langs, t = t,
-                               over18 = c.over18)
+        CachedTemplate.__init__(self, name=name, t=t, over18=c.over18)
 
     @property
     def my_reddits(self):
