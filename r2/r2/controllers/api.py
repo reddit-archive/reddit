@@ -1419,6 +1419,14 @@ class ApiController(RedditController):
         [/api/hide](#POST_api_hide) for details).
 
         """
+        if not thing:
+            # preserve old behavior: we used to send the thing's fullname as the
+            # "id" parameter, but we can't use that because that name is used to
+            # send the form's id
+            thing_id = request.POST.get('id')
+            if thing_id:
+                thing = VByName('id').run(thing_id)
+
         if not thing or thing._deleted:
             return
 
