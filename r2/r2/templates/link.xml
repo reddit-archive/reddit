@@ -55,7 +55,11 @@
          domain = get_domain(cname = c.cname, subreddit = False) 
        %>
       %if getattr(thing, 'selftext', None):
-        ${unsafe(safemarkdown(thing.selftext))}
+        %if not thing.expunged:
+          ${unsafe(safemarkdown(thing.selftext))}
+        %else:
+          ${_('[removed]')}
+        %endif
       %endif
       submitted by <a href="http://${domain}/user/${thing.author.name}">
          ${thing.author.name}
