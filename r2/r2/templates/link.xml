@@ -61,9 +61,14 @@
           ${_('[removed]')}
         %endif
       %endif
-      submitted by <a href="http://${domain}/user/${thing.author.name}">
-         ${thing.author.name}
-      </a>
+      submitted by
+      %if not thing.author._deleted:
+        <a href="http://${domain}/user/${thing.author.name}">
+           ${thing.author.name}
+        </a>
+      %else:
+        ${_("[deleted]")}
+      %endif
        %if thing.different_sr:
         to <a href="http://${domain}${thing.subreddit.path}">
          ${thing.subreddit.name}</a> 

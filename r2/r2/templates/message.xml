@@ -23,6 +23,7 @@
 <%!
    from r2.lib.filters import safemarkdown
    from r2.lib.template_helpers import add_sr
+   from r2.models.account import DeletedUser
 %>
 
 <%
@@ -33,14 +34,18 @@
   <link>${permalink}</link>
   <title>
   <%
-   author = thing.author.name
+   author = thing.author
+   if author._deleted:
+     author = DeletedUser()
+   author_name = author.name
    if thing.sr_id and not (getattr(thing, "is_child", False) or
                            getattr(thing, "is_parent", False)):
      subreddit = thing.subreddit.name
-     author = thing.updated_author % dict(author=author, subreddit=subreddit)
+     author_name = thing.updated_author % dict(author=author_name,
+                                               subreddit=subreddit)
   %>
   ${thing.subject} : ${unsafe(thing.taglinetext % dict(when=thing.timesince,
-                                                       author=u"%s" % author,
+                                                       author=u"%s" % author_name,
                                                        dest=u"%s" % thing.dest))}
   </title>
   <pubDate>${thing._date.strftime('%a, %d %b %Y %H:%M:%S %z')}</pubDate>

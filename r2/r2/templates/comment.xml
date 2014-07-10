@@ -31,7 +31,11 @@
     author = _('[deleted]')
     body = _('[deleted]')
   else:
-    author = thing.author.name
+    if thing.author._deleted:
+        author = _('[deleted]')
+    else:
+        author = thing.author.name
+
     body = thing.body
 
   permalink = add_sr(thing.permalink, force_hostname = True)
