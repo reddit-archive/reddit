@@ -33,7 +33,7 @@ from r2.lib.db import tdb_cassandra
 from r2.lib.db.thing import Thing, NotFound
 from r2.lib.memoize import memoize
 from r2.lib.utils import Enum, to_datetime, to_date
-from r2.models.subreddit import Subreddit
+from r2.models.subreddit import Subreddit, Frontpage
 
 
 PROMOTE_STATUS = Enum("unpaid", "unseen", "accepted", "rejected",
@@ -163,6 +163,63 @@ def calc_impressions(bid, cpm_pennies):
 
 NO_TRANSACTION = 0
 
+
+class Collection(object):
+    def __init__(self, name, sr_names):
+        self.name = name
+        self.sr_names = sr_names
+
+
+class Target(object):
+    """Wrapper around either a Collection or a Subreddit name"""
+    def __init__(self, target):
+        if isinstance(target, Collection):
+            self.collection = target
+            self.is_collection = True
+        elif isinstance(target, basestring):
+            self.subreddit_name = target
+            self.is_collection = False
+        else:
+            raise ValueError("target must be a Collection or Subreddit name")
+
+        # defer looking up subreddits, we might only need their names
+        self._subreddits = None
+
+    @property
+    def subreddit_names(self):
+        if self.is_collection:
+            return self.collection.sr_names
+        else:
+            return [self.subreddit_name]
+
+    @property
+    def subreddits_slow(self):
+        if self._subreddits is not None:
+            return self._subreddits
+
+        sr_names = self.subreddit_names
+        srs = Subreddit._by_name(sr_names).values()
+        self._subreddits = srs
+        return srs
+
+    def __eq__(self, other):
+        if self.is_collection != other.is_collection:
+            return False
+
+        return set(self.subreddit_names) == set(other.subreddit_names)
+
+    @property
+    def pretty_name(self):
+        if self.is_collection:
+            return _("collection: %(name)s") % {'name': self.collection.name}
+        elif self.subreddit_name == Frontpage.name:
+            return _("frontpage")
+        else:
+            return "/r/%s" % self.subreddit_name
+
+    def __repr__(self):
+        return "<%s: %s>" % (self.__class__.__name__, self.pretty_name)
+
 class PromoCampaign(Thing):
     _defaults = dict(
         priority_name=PROMOTE_DEFAULT_PRIORITY.name,
@@ -175,7 +232,11 @@ class PromoCampaign(Thing):
     _derived_attrs = (
         "location",
         "priority",
+        "target",
     )
+
+    SR_NAMES_DELIM = '|'
+    SUBREDDIT_TARGET = "subreddit"
 
     def __getattr__(self, attr):
         val = Thing.__getattr__(self, attr)
@@ -191,6 +252,22 @@ class PromoCampaign(Thing):
         else:
             Thing.__setattr__(self, attr, val, make_dirty=make_dirty)
 
+    def __getstate__(self):
+        """
+        Remove _target before returning object state for pickling.
+
+        Thing objects are pickled for caching. The state of the object is
+        obtained by calling the __getstate__ method. Remove the _target
+        attribute because it may contain Subreddits or other non-trivial objects
+        that shouldn't be included.
+
+        """
+
+        state = self.__dict__
+        if "_target" in state:
+            state = {k: v for k, v in state.iteritems() if k != "_target"}
+        return state
+
     @classmethod
     def priority_name_from_priority(cls, priority):
         if not priority in PROMOTE_PRIORITIES.values():
@@ -200,6 +277,15 @@ class PromoCampaign(Thing):
     @classmethod
     def location_code_from_location(cls, location):
         return location.to_code() if location else None
+
+    @classmethod
+    def unpack_target(cls, target):
+        """Convert a Target into attributes suitable for storage."""
+        sr_names = target.subreddit_names
+        target_sr_names = cls.SR_NAMES_DELIM.join(sr_names)
+        target_name = (target.collection.name if target.is_collection
+                                              else cls.SUBREDDIT_TARGET)
+        return target_sr_names, target_name
 
     @classmethod
     def _new(cls, link, sr_name, bid, cpm, start_date, end_date, priority,
@@ -220,13 +306,30 @@ class PromoCampaign(Thing):
         return pc
 
     @classmethod
+    def create(cls, link, target, bid, cpm, start_date, end_date, priority,
+             location):
+        pc = PromoCampaign(
+            link_id=link._id,
+            bid=bid,
+            cpm=cpm,
+            start_date=start_date,
+            end_date=end_date,
+            trans_id=NO_TRANSACTION,
+            owner_id=link.author_id,
+        )
+        pc.priority = priority
+        pc.location = location
+        pc.target = target
+        pc._commit()
+        return pc
+
+    @classmethod
     def _by_link(cls, link_id):
         '''
         Returns an iterable of campaigns associated with link_id or an empty
         list if there are none.
         '''
         return cls._query(PromoCampaign.c.link_id == link_id, data=True)
-
 
     @classmethod
     def _by_user(cls, account_id):
@@ -267,6 +370,29 @@ class PromoCampaign(Thing):
     @location.setter
     def location(self, location):
         self.location_code = self.location_code_from_location(location)
+
+    @property
+    def target(self):
+        if hasattr(self, "_target"):
+            return self._target
+
+        sr_names = self.target_sr_names.split(self.SR_NAMES_DELIM)
+        if self.target_name == self.SUBREDDIT_TARGET:
+            sr_name = sr_names[0]
+            target = Target(sr_name)
+        else:
+            collection = Collection(self.target_name, sr_names)
+            target = Target(collection)
+
+        self._target = target
+        return target
+
+    @target.setter
+    def target(self, target):
+        self.target_sr_names, self.target_name = self.unpack_target(target)
+
+        # set _target so we don't need to lookup on subsequent access
+        self._target = target
 
     @property
     def location_str(self):
