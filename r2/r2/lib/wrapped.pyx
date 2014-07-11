@@ -243,9 +243,11 @@ class Templated(object):
         if not isinstance(c.render_tracker, dict):
             primary = True
             c.render_tracker = {}
-        
-        # insert a stub for cachable non-primary templates
-        if self.cachable and style != "api":
+
+        if (self.cachable and
+                not self.template_is_null(style) and
+                style != "api"):
+            # insert a stub for cachable non-primary templates
             res = CacheStub(self, style)
             cache_key = self.cache_key(style)
             # in the tracker, we need to store:
