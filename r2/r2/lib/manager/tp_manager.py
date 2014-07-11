@@ -20,15 +20,14 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from pylons import g
+
 import hashlib
-from mako.template import Template as mTemplate
+import inspect
+
 from mako.exceptions import TemplateLookupException
-from r2.lib.filters import websafe, unsafe
+from mako.template import Template as mTemplate
+from pylons import g
 
-from r2.lib.utils import Storage
-
-import inspect, re, os
 
 NULL_TEMPLATE = mTemplate("")
 NULL_TEMPLATE.is_null = True
