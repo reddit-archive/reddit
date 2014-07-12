@@ -601,7 +601,7 @@ class Link(Thing, Printable):
 
             # bits that we will render stubs (to make the cached
             # version more flexible)
-            item.num = CachedVariable("num")
+            item.num_text = CachedVariable("num")
             item.commentcls = CachedVariable("commentcls")
             item.comment_label = CachedVariable("numcomments")
             item.lastedited = CachedVariable("lastedited")

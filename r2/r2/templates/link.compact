@@ -46,9 +46,7 @@
 %>
 <div class="${div_class}">
   <span class="rank">
-    %if thing.num > 0:
-      ${thing.num}
-    %endif
+    ${thing.num_text}
   </span>
   <% 
      like_cls = "unvoted"

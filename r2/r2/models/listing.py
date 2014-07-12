@@ -342,5 +342,5 @@ class SpotlightListing(Listing):
     def listing(self):
         res = Listing.listing(self)
         for t in res.things:
-            t.num = ""
+            t.num_text = ""
         return Wrapped(self)

@@ -33,11 +33,8 @@
 <%namespace file="printablebuttons.html" import="toggle_button" />
  
 <%def name="numcol()">
-  <% num = thing.num %>
   <span class="rank">
-    %if thing.num > 0:
-      ${thing.num}
-    %endif
+    ${thing.num_text}
   </span>
 </%def>
 

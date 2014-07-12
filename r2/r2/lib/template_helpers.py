@@ -262,7 +262,11 @@ def replace_render(listing, item, render_func):
 
         #only LinkListing has a show_nums attribute
         if listing and hasattr(listing, "show_nums"):
-            replacements["num"] = str(item.num) if listing.show_nums else ""
+            if listing.show_nums and item.num > 0:
+                num = str(item.num)
+            else:
+                num = ""
+            replacements["num"] = num
 
         if hasattr(item, "num_comments"):
             com_label, com_cls = comment_label(item.num_comments)
