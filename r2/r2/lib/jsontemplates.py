@@ -595,6 +595,7 @@ class MessageJsonTemplate(ThingJsonTemplate):
         context="context",
         created="created",
         dest="dest",
+        distinguished="distinguished",
         first_message="first_message",
         first_message_name="first_message_name",
         new="new",
