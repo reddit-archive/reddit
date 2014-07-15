@@ -214,18 +214,4 @@ $(MANGLE_BUILDSTAMP): $(MANGLEABLE_FILES)
 clean_names:
 	rm -f $(MANGLE_BUILDSTAMP) $(NAMES_FILE) $(MANGLEABLE_FILES) $(MANGLED_FILES)
 
-#### gzip!
-GZIPPABLE := $(filter %.css %.js,$(MANGLED_FILES))
-GZIPPED := $(addsuffix .gzip,$(GZIPPABLE))
-
-.PHONY: clean_gzip
-
-gzip: $(GZIPPED)
-
-$(GZIPPED): %.gzip: %
-	gzip -c $< > $@
-
-clean_gzip:
-	rm -f $(GZIPPED)
-
 $(shell rm -f $(DEFS_FILE))

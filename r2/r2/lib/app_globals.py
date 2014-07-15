@@ -211,8 +211,6 @@ class Globals(object):
             'disable_captcha',
             'disable_ads',
             'disable_require_admin_otp',
-            'static_pre_gzipped',
-            'static_secure_pre_gzipped',
             'trust_local_proxies',
             'shard_link_vote_queues',
             'shard_commentstree_queues',

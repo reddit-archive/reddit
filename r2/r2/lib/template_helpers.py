@@ -46,7 +46,7 @@ static_text_extensions = {
     '.css': 'css',
     '.less': 'css'
 }
-def static(path, allow_gzip=True):
+def static(path):
     """
     Simple static file maintainer which automatically paths and
     versions files being served out of static.
@@ -58,8 +58,6 @@ def static(path, allow_gzip=True):
     dirname, filename = os.path.split(path)
     extension = os.path.splitext(filename)[1]
     is_text = extension in static_text_extensions
-    can_gzip = is_text and 'gzip' in request.accept_encoding
-    should_gzip = allow_gzip and can_gzip
     should_cache_bust = False
 
     path_components = []
@@ -67,7 +65,6 @@ def static(path, allow_gzip=True):
 
     if g.static_domain:
         domain = g.static_domain
-        suffix = ".gzip" if should_gzip and g.static_pre_gzipped else ""
     else:
         path_components.append(c.site.static_path)
 
