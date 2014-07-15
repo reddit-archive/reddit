@@ -65,14 +65,9 @@ def static(path, allow_gzip=True):
     path_components = []
     actual_filename = None
 
-    if not c.secure and g.static_domain:
-        scheme = "http"
+    if g.static_domain:
         domain = g.static_domain
         suffix = ".gzip" if should_gzip and g.static_pre_gzipped else ""
-    elif c.secure and g.static_secure_domain:
-        scheme = "https"
-        domain = g.static_secure_domain
-        suffix = ".gzip" if should_gzip and g.static_secure_pre_gzipped else ""
     else:
         path_components.append(c.site.static_path)
 
@@ -84,14 +79,12 @@ def static(path, allow_gzip=True):
             should_cache_bust = True
             actual_filename = filename
 
-        scheme = None
         domain = None
-        suffix = ""
 
     path_components.append(dirname)
     if not actual_filename:
         actual_filename = g.static_names.get(filename, filename)
-    path_components.append(actual_filename + suffix)
+    path_components.append(actual_filename)
 
     actual_path = os.path.join(*path_components)
 
@@ -101,7 +94,7 @@ def static(path, allow_gzip=True):
         query = 'v=' + str(file_id)
 
     return urlparse.urlunsplit((
-        scheme,
+        None,
         domain,
         actual_path,
         query,
