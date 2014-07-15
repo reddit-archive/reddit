@@ -2321,7 +2321,6 @@ class GoldPayment(Templated):
     def __init__(self, goldtype, period, months, signed,
                  recipient, giftmessage, passthrough, thing,
                  clone_template=False, thing_type=None):
-        can_use_creddits = False
         desc = None
 
         if period == "monthly" or 1 <= months < 12:
@@ -2342,6 +2341,12 @@ class GoldPayment(Templated):
             user_creddits = 50
         else:
             user_creddits = c.user.gold_creddits
+            
+        if (goldtype in ("gift", "code", "onetime") and
+                months <= user_creddits):
+            can_use_creddits = True
+        else:
+            can_use_creddits = False
 
         if goldtype == "autorenew":
             summary = strings.gold_summary_autorenew % dict(
@@ -2394,16 +2399,9 @@ class GoldPayment(Templated):
                 else:
                     paypal_buttonid = g.PAYPAL_BUTTONID_CREDDITS_BYYEAR
                 quantity = months / 12
+                months = quantity * 12
                 coinbase_name = 'COINBASE_BUTTONID_ONETIME_%sYR' % quantity
                 coinbase_button_id = getattr(g, coinbase_name, None)
-
-            if goldtype in ("gift", "code"):
-                if months <= user_creddits:
-                    can_use_creddits = True
-                elif months >= 12:
-                    # If you're not paying with creddits, you have to either
-                    # buy by month or spend a multiple of 12 months
-                    months = quantity * 12
 
             if goldtype == "creddits":
                 summary = strings.gold_summary_creddits % dict(

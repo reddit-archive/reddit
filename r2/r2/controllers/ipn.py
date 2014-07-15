@@ -347,7 +347,7 @@ class IpnController(RedditController):
             raise ValueError("/spendcreddits got no passthrough?")
 
         blob_key, payment_blob = get_blob(passthrough)
-        if payment_blob["goldtype"] not in ("gift", "code"):
+        if payment_blob["goldtype"] not in ("gift", "code", "onetime"):
             raise ValueError("/spendcreddits payment_blob %s has goldtype %s" %
                              (passthrough, payment_blob["goldtype"]))
 
@@ -374,6 +374,7 @@ class IpnController(RedditController):
                 return
 
         redirect_to_spent = False
+        thing = None
 
         with creddits_lock(c.user):
             if not c.user.employee and c.user.gold_creddits < months:
@@ -388,7 +389,7 @@ class IpnController(RedditController):
                 thing = send_gift(c.user, recipient, months, days, signed,
                                   giftmessage, thing_fullname)
                 form.set_html(".status", _("the gold has been delivered!"))
-            else:
+            elif payment_blob["goldtype"] == "code":
                 try:
                     send_gold_code(c.user, months, days)
                 except MessageError:
@@ -397,9 +398,11 @@ class IpnController(RedditController):
                             "for assistance.") % {'email': g.goldthanks_email}
                     form.set_html(".status", msg)
                     return
-                thing = None
                 form.set_html(".status",
                               _("the gift code has been messaged to you!"))
+            elif payment_blob["goldtype"] == "onetime":
+                admintools.engolden(c.user, days)
+                form.set_html(".status", _("the gold has been delivered!"))
 
             redirect_to_spent = True
 
