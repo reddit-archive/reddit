@@ -208,6 +208,7 @@ class SubredditJsonTemplate(ThingJsonTemplate):
         header_title="header_title",
         over18="over_18",
         public_description="public_description",
+        public_description_html="public_description_html",
         public_traffic="public_traffic",
         submission_type="link_type",
         submit_link_label="submit_link_label",
@@ -257,6 +258,8 @@ class SubredditJsonTemplate(ThingJsonTemplate):
             return None
         elif attr == 'description_html':
             return safemarkdown(thing.description)
+        elif attr == 'public_description_html':
+            return safemarkdown(thing.public_description)
         elif attr in ('is_banned', 'is_contributor', 'is_moderator',
                       'is_subscriber'):
             if c.user_is_loggedin:
