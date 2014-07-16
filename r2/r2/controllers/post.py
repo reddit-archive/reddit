@@ -22,8 +22,8 @@
 from r2.lib.pages import *
 from reddit_base import (
     change_user_cookie_security,
-    delete_force_https_cookie,
-    set_force_https_cookie,
+    hsts_modify_redirect,
+    hsts_eligible,
 )
 from api import ApiController
 from r2.lib.errors import BadRequestError, errors
@@ -70,7 +70,10 @@ class PostController(ApiController):
         u.update_query(done = 'true')
         if c.cname:
             u.put_in_frame()
-        return self.redirect(u.unparse())
+        redirect_url = u.unparse()
+        if new_https_pref:
+            redirect_url = hsts_modify_redirect(u)
+        return self.redirect(redirect_url)
 
     def GET_over18(self):
         return BoringPage(_("over 18?"),
@@ -122,6 +125,8 @@ class PostController(ApiController):
             return LoginPage(user_login = request.POST.get('user'),
                              dest = dest).render()
 
+        if hsts_eligible():
+            dest = hsts_modify_redirect(dest)
         return self.redirect(dest)
 
     @validate(dest = VDestination(default = "/"))
@@ -134,6 +139,8 @@ class PostController(ApiController):
             return LoginPage(user_reg = request.POST.get('user'),
                              dest = dest).render()
 
+        if hsts_eligible():
+            dest = hsts_modify_redirect(dest)
         return self.redirect(dest)
 
     def GET_login(self, *a, **kw):

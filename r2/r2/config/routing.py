@@ -322,6 +322,8 @@ def make_map():
     mc('/resetpassword', controller='forms',
        action='resetpassword')
 
+    mc('/modify_hsts_grant', controller='front', action='modify_hsts_grant')
+
     mc('/post/:action/:url_user', controller='post',
        requirements=dict(action="login|reg"))
     mc('/post/:action', controller='post',

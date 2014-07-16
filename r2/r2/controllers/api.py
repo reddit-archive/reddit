@@ -22,6 +22,7 @@
 
 from r2.controllers.reddit_base import (
     cross_domain,
+    hsts_modify_redirect,
     MinimalController,
     pagecache_policy,
     PAGECACHE_POLICY,
@@ -521,6 +522,13 @@ class ApiController(RedditController):
         if request.params.get("hoist") != "cookie":
             responder._send_data(modhash = user.modhash())
             responder._send_data(cookie  = user.make_cookie())
+        if user.pref_force_https:
+            # The client may decide to redirect somewhere after a successful
+            # login, send it our HSTS grant endpoint so it can redirect through
+            # there and pick up the user's grant.
+            hsts_redir = "https://" + g.domain + "/modify_hsts_grant?dest="
+            responder._send_data(hsts_redir=hsts_redir)
+        responder._send_data(need_https=user.pref_force_https)
 
     @validatedForm(VLoggedOut(),
                    user = VThrottledLogin(['user', 'passwd']),
@@ -1213,8 +1221,11 @@ class ApiController(RedditController):
                 form.has_errors("passwd", errors.WRONG_PASSWORD) or
                 form.has_errors("delete_message", errors.TOO_LONG) or
                 form.has_errors("confirm", errors.CONFIRM)):
+            redirect_url = "/?deleted=true"
+            if c.user.pref_force_https:
+                redirect_url = hsts_modify_redirect(redirect_url)
             c.user.delete(delete_message)
-            form.redirect("/?deleted=true")
+            form.redirect(redirect_url)
 
     @require_oauth2_scope("edit")
     @noresponse(VUser(),

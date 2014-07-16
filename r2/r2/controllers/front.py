@@ -23,11 +23,14 @@
 from pylons.i18n import _, ungettext
 from r2.controllers.reddit_base import (
     base_listing,
+    disable_subreddit_css,
+    hsts_modify_redirect,
+    hsts_eligible,
     pagecache_policy,
     PAGECACHE_POLICY,
     paginated_listing,
-    disable_subreddit_css,
     RedditController,
+    require_https,
 )
 from r2 import config
 from r2.models import *
@@ -54,7 +57,7 @@ from r2.lib.validator import *
 from r2.lib import jsontemplates
 from r2.lib import sup
 import r2.lib.db.thing as thing
-from r2.lib.errors import errors
+from r2.lib.errors import errors, ForbiddenError
 from listingcontroller import ListingController
 from oauth2 import require_oauth2_scope
 from api_docs import api_doc, api_section
@@ -1256,6 +1259,19 @@ class FrontController(RedditController):
             page_classes=["gold-page", "gilding"],
         ).render()
 
+    @validate(dest=VDestination(default='/'))
+    def _modify_hsts_grant(self, dest):
+        """Endpoint subdomains can redirect through to update HSTS grants."""
+        require_https()
+        if request.host != g.domain:
+            abort(ForbiddenError(errors.WRONG_DOMAIN))
+        self.redirect(dest, code=307)
+
+    POST_modify_hsts_grant = _modify_hsts_grant
+    GET_modify_hsts_grant = _modify_hsts_grant
+    DELETE_modify_hsts_grant = _modify_hsts_grant
+    PUT_modify_hsts_grant = _modify_hsts_grant
+
 
 class FormsController(RedditController):
 
@@ -1397,6 +1413,8 @@ class FormsController(RedditController):
               dest=VDestination())
     def POST_logout(self, dest):
         """wipe login cookie and redirect to referer."""
+        if hsts_eligible():
+            dest = hsts_modify_redirect(dest)
         self.logout()
         return self.redirect(dest)
 
