@@ -4728,7 +4728,7 @@ ul.tabmenu.formtab {
     border: 1px solid #336699; 
     background-color: #EFF7FF;
     width: 570px;
-    padding: 5px;
+    padding: 10px;
     -webkit-box-shadow: inset 0px 1px 0px hsla(0,0%,100%,.8), 0px 1px 0px hsla(0,0%,100%,.6);
     -moz-box-shadow: inset 0px 1px 0px hsla(0,0%,100%,.8), 0px 1px 0px hsla(0,0%,100%,.6);
     box-shadow: inset 0px 1px 0px hsla(0,0%,100%,.8), 0px 1px 0px hsla(0,0%,100%,.6);
@@ -4786,22 +4786,22 @@ ul.tabmenu.formtab {
     text-align: left;
 }
 
-.existing-campaigns > table > tbody > tr > th { 
+.existing-campaigns > table > thead > tr > th { 
     text-align: center;
     font-weight: bold;
-    padding: 1px 5px;
+    padding: 5px;
     border: solid #369;
     border-width: 0px 1px 1px;
 }
-.existing-campaigns > table > tbody > tr > th:first-child,
+.existing-campaigns > table > thead > tr > th:first-child,
 .existing-campaigns > table > tbody > tr > td:first-child {
     border-left: none;
 }
-.existing-campaigns > table > tbody > tr > th:last-child,
+.existing-campaigns > table > thead > tr > th:last-child,
 .existing-campaigns > table > tbody > tr > td:last-child {
     border-right: none;
 }
-.existing-campaigns > table > tbody > tr:last-child > th,
+.existing-campaigns > table > thead > tr:last-child > th,
 .existing-campaigns > table > tbody > tr:last-child > td {
     border-bottom: none;
 }
@@ -4823,18 +4823,22 @@ ul.tabmenu.formtab {
 
 .campaign .bid-info { font-size: x-small; }
 .campaign .bid-info.error { color: red; }
-.campaign .buttons { float:right; }
 .campaign td.prefright { 
     padding: 8px 4px 4px;
 }
 .campaign #bid, .campaign #impressions {
     text-align: right;
     width: auto;
+    margin-bottom: 5px;
 }
 
 .campaign .targeting {
-    margin-left: 25px;
     margin-top: 10px;
+    margin-left: 110px;
+    .label {
+        font-size: 12px;
+        text-transform: uppercase;
+    }
 }
 
 .campaign .targeting input{
@@ -4863,16 +4867,19 @@ ul.tabmenu.formtab {
     }
 
 #campaign td,
-#campaign span,
 #campaign label,
 #campaign li {
     font-size: small;
 }
 
 #campaign .geotarget-select {
-    float: left;
-    clear: left;
+    display: block;
     margin-top: 2px;
+}
+
+.geotargeting-disabled {
+    font-size: 13px;
+    color: grey;
 }
 
 /***traffic stuff***/
@@ -5497,40 +5504,36 @@ div #campaign-field {
 }
 
 .create-promotion .infobar {
-    margin: 5px;
-    
     a {
         white-space: nowrap;
     }
 }
 
-.create-promo {
-    float: left;
+.create-promotion {
     margin: 5px 20px 0 5px;
-    width: 650px;
 }
 
-.create-promo .infobar { 
-    margin-right: 0; 
-    border-color: red;
+.create-promotion .infobar { 
+    margin: 0;
     color: black;
+    border: 0;
     background: none; 
-    width: 100%;
+    padding: 0 5px;
 }
-.create-promo h2 { margin-top: 10px; color: black; }
-.create-promo ol { margin: 0px 30px 10px 30px; }
-.create-promo ol > li {
+.create-promotion h2 { margin-top: 10px; color: black; }
+.create-promotion ol { margin: 0px 30px 10px 30px; }
+.create-promotion ol > li {
     list-style-type: disc; 
 }
-.create-promo .rules { float:  left; margin-left:  15px; }
+.create-promotion .rules { float:  left; margin-left:  15px; }
 
-.create-promo textarea,
-.create-promo input[type=text] {
+.create-promotion textarea,
+.create-promotion input[type=text] {
     width: 100%;
     .box-sizing(border-box);
 }
 
-.create-promo .campaign {
+.create-promotion .campaign {
     width: auto;
 }
 
@@ -5544,20 +5547,191 @@ div #campaign-field {
     }
 }
 
-.fancy-settings h1, .create-promotion h1 { font-size: 200%; color: #999; margin:10px 5px; }
+.create-promotion button {
+    &:extend(.fancybutton all);
+
+    &[disabled] {
+        &:extend(.fancybutton.disabled all);
+    }
+}
+
+.fancy-settings h1, .create-promotion h2 { font-size: 200%; color: #999; margin: 10px 5px 0; font-weight: normal; }
 .fancy-settings h2 { font-size: 200%; font-weight:normal; color: #999; margin:10px 5px; }
 .fancy-settings h1 strong { font-weight:bold; color: #666;  }
 .create-promotion .sitetable { margin: 5px;  }
 
-.create-promotion .create-promo .save-button {
-    float: right;
+.editor footer.buttons {
+    text-align: right;
+}
 
-    button {
-        margin-top: 0px;
+.label-group { 
+    display: inline-block; 
+    
+    .label { 
+        font-size: 13px; 
+    }
+
+    small.label { 
+        margin-left: 5px; 
+        &:before { 
+            content: "("; 
+        }
+        &:after { 
+            content: ")"; 
+        }
+    }
+}
+
+.dashboard {
+    width: 700px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+}
+
+.creative-dashboard {
+    .thing {
+        font-size: 10px; 
+        .tagline { 
+            margin: 0; 
+        }
+    }
+
+    .linefield,
+    .linefield .infotext {
+        border-radius: 7px;
+    }
+
+    .image-field .infotext {
+        border: 0;
+        background: none;
+        box-shadow: none;
+        margin: 0 0 5px;
+        font-size: 13px;
+        color: grey;
+    }
+}
+
+.campaign-dashboard {
+    background: #CEE3F8;
+    padding: 10px;
+    border-radius: 7px;
+
+    h2 {
+        color: blue;
+        font-weight: bold;
+        font-size: 15px;
+    }
+
+    header {
+        position: relative;
+        min-height: 40px;
+        .new-campaign {
+            position: absolute;
+            top: 10px;
+            right: 0;
+        }
+        p.error {
+            padding: 5px;
+        }
+    }
+
+    .campaign {
+        border-radius: 7px;
+    }
+
+    .linefield { 
+        width: auto; 
+        background-color: transparent;
+        margin: 0;
+        padding: 0;
+        .linefield-content {
+            padding: 0;
+        }
+        > .title {
+            display: none;
+        }
+    }
+
+    .timing-field,
+    .budget-field {
+        .form-group .label { 
+            display: inline-block;
+            width: 100px;
+            text-align: right;
+            font-weight: bold;
+            margin-right: 10px;
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+        .input-group,
+        .display-text { 
+            display: inline-block; 
+            font-size: 13px;
+        }
+    }
+
+    .campaign-dashboard-label() {
+        width: 100px;
+        float: left;
+        font-size: 13px;
+        font-weight: bold;
+        text-align: right;
+        color: black;
+        padding: 0;   
+    }
+
+    .priority-field, 
+    .targeting-field {
+        .radio-group,
+        .radio-group {
+            > .form-group,
+            > .label {
+                display: block;
+            }
+        }
+
+        .radio-group, 
+        .select-group {
+            > .label {
+                .campaign-dashboard-label();
+            }
+
+            > div, > .form-group {
+                margin-left: 110px;
+                margin-bottom: 5px;
+            }
+        }
+    }
+
+    .priority-field .title {
+        display: block;
+        .campaign-dashboard-label();
+    }
+
+    .budget-field { 
+        input { 
+            font-size: 10px; 
+        }
+        .linefield-content, 
+        .minimum-spend, 
+        .price-info { 
+            font-size: 13px; 
+        }
+        .error, .available-info {
+            margin-left: 110px;
+        }
+        .minimum-spend.error {
+            margin-left: 10px;
+        }
     }
 }
 
 .existing-campaigns {
+    border: 1px solid;
+    border-radius: 7px;
+    margin-top: 5px;
+    background: #EFF7FF;
+
     th button.new-campaign {
         margin: 3px 0;
         white-space: nowrap;
@@ -5565,10 +5739,15 @@ div #campaign-field {
 
     .campaign {
         border: 0;
+        background: transparent;
+        .linefield {
+            border-radius: 0;
+            border-width: 0 0 1px;
+        }
     }
 }
 
-.create-promo .hidden { display: none; }
+.create-promotion .hidden { display: none; }
 button.new-campaign:disabled { color: gray; }
 
 .bidding-history { 
