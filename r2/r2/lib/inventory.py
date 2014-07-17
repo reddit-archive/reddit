@@ -150,7 +150,7 @@ def get_sold_pageviews(srs, start, end, ignore=None):
         return ret
 
 
-def get_predicted_pageviews(srs, start, end):
+def get_predicted_pageviews(srs):
     srs, is_single = tup(srs, ret_is_single=True)
     sr_names = [sr.name for sr in srs]
 
@@ -159,16 +159,13 @@ def get_predicted_pageviews(srs, start, end):
 
     # prediction does not vary by date
     daily_inventory = PromoMetrics.get(MIN_DAILY_CASS_KEY, sr_names=sr_names)
-    dates = get_date_range(start, end)
     ret = {}
     for sr in srs:
         if not isinstance(sr, FakeSubreddit) and sr._id in default_srids:
             factor = DEFAULT_INVENTORY_FACTOR
         else:
             factor = INVENTORY_FACTOR
-        sr_daily_inventory = daily_inventory.get(sr.name, 0) * factor
-        sr_daily_inventory = int(sr_daily_inventory)
-        ret[sr.name] = dict.fromkeys(dates, sr_daily_inventory)
+        ret[sr.name] = int(daily_inventory.get(sr.name, 0) * factor)
 
     if is_single:
         return ret[srs[0].name]
@@ -176,7 +173,7 @@ def get_predicted_pageviews(srs, start, end):
         return ret
 
 
-def get_predicted_geotargeted(sr, location, start, end):
+def get_predicted_geotargeted(sr, location):
     """
     Predicted geotargeted impressions are estimated as:
 
@@ -185,16 +182,11 @@ def get_predicted_geotargeted(sr, location, start, end):
 
     """
 
-    sr_inventory_by_date = get_predicted_pageviews(sr, start, end)
-
+    predicted_pageviews = get_predicted_pageviews(sr)
     no_location = Location(None)
     r = LocationPromoMetrics.get(DefaultSR, [no_location, location])
     ratio = r[(DefaultSR, location)] / float(r[(DefaultSR, no_location)])
-
-    ret = {}
-    for date, sr_inventory in sr_inventory_by_date.iteritems():
-        ret[date] = int(sr_inventory * ratio)
-    return ret
+    return int(predicted_pageviews * ratio)
 
 
 def get_available_pageviews_geotargeted(sr, location, start, end, datestr=False, 
@@ -217,15 +209,15 @@ def get_available_pageviews_geotargeted(sr, location, start, end, datestr=False,
     """
 
     predicted_by_location = {
-        None: get_predicted_pageviews(sr, start, end),
-        location: get_predicted_geotargeted(sr, location, start, end),
+        None: get_predicted_pageviews(sr),
+        location: get_predicted_geotargeted(sr, location),
     }
 
     if location.metro:
         country_location = Location(country=location.country)
-        country_prediction = get_predicted_geotargeted(sr, country_location,
-                                                       start, end)
+        country_prediction = get_predicted_geotargeted(sr, country_location)
         predicted_by_location[country_location] = country_prediction
+    locations = predicted_by_location.keys()
 
     datekey = lambda dt: dt.strftime('%m/%d/%Y') if datestr else dt
 
@@ -234,17 +226,16 @@ def get_available_pageviews_geotargeted(sr, location, start, end, datestr=False,
     for date, campaigns in campaigns_by_date.iteritems():
 
         # calculate sold impressions for each location
-        sold_by_location = dict.fromkeys(predicted_by_location.keys(), 0)
+        sold_by_location = dict.fromkeys(locations, 0)
         for camp in campaigns:
             daily_impressions = camp.impressions / camp.ndays
-            for location in predicted_by_location:
+            for location in locations:
                 if not location or location.contains(camp.location):
                     sold_by_location[location] += daily_impressions
 
         # calculate available impressions for each location
-        available_by_location = dict.fromkeys(predicted_by_location.keys(), 0)
-        for location, predictions_by_date in predicted_by_location.iteritems():
-            predicted = predictions_by_date[date]
+        available_by_location = dict.fromkeys(locations, 0)
+        for location, predicted in predicted_by_location.iteritems():
             sold = sold_by_location[location]
             available_by_location[location] = predicted - sold
 

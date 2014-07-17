@@ -4070,16 +4070,15 @@ class PromoteInventory(Templated):
         )
         rows.append(total_row)
 
-        predicted_by_date = inventory.get_predicted_pageviews(self.sr,
-                                            self.start, self.end)
+        predicted_pageviews = inventory.get_predicted_pageviews(self.sr)
         predicted_row = Storage(
             info={'title': 'predicted'},
             is_total=True,
-            columns=[format_number(predicted_by_date[date]) for date in dates],
+            columns=[format_number(predicted_pageviews) for date in dates],
         )
         rows.append(predicted_row)
 
-        remaining_by_date = {date: predicted_by_date[date] - total_by_date[date]
+        remaining_by_date = {date: predicted_pageviews - total_by_date[date]
                              for date in dates}
         remaining_row = Storage(
             info={'title': 'remaining'},
