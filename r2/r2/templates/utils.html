@@ -337,11 +337,11 @@ ${unsafe(txt)}
             <br/>
           %endif
           <input type="file" name="file" id="file" 
-                 onchange="$(this).next().show(); ${onchange}"/>
-          <button id="submit-img" class="submit-img"
+                 onchange="$(this).next().prop('disabled', false); ${onchange}"/>
+          <button id="submit-img" class="submit-img primary-button"
                   type="submit" name="upload" 
                   onclick="$(this).siblings('.img-status').show().html('${_('uploading')}'); return true;"
-                  style="display: none;" >
+                  disabled>
             ${_('upload')}
           </button>
 
