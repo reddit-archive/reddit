@@ -63,7 +63,9 @@
       <input type="text" maxlength="300" name="note"
              onchange="$(this).parent().addClass('edited')"
              value="${getattr(thing.rel, 'note', '')}" />
-      <button onclick="$(this).parent().removeClass('edited')" type="submit">submit</button>
+      <button onclick="$(this).parent().removeClass('edited')" type="submit">
+        ${_("submit")}
+      </button>
     </form>
   %elif cell_type == "age":
       ${timestamp(thing.rel._date, include_tense=True)}
