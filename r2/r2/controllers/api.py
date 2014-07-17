@@ -970,9 +970,9 @@ class ApiController(RedditController):
             else:
                 abort(403, 'forbidden')
         if form.has_errors("note", errors.TOO_LONG):
+            # NOTE: there's no error displayed in the form
             return
         c.site.add_rel_note(type[:-4], user, note)
-        form.set_html('.status', _("saved"))
 
     @validatedForm(VUser(),
                    VModhash())
