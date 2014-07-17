@@ -60,8 +60,8 @@
           method="post" class="pretty-form medium-text rel-note ${thing.type}-note"
           onsubmit="return post_form(this, '${thing.type}note');">
       <input type="hidden" name="name" value="${thing.user.name}" />
-      <input type="text" maxlength="300" name="note" class="tiny"
              onfocus="$(this).parent().addClass('edited')"
+      <input type="text" maxlength="300" name="note"
              value="${getattr(thing.rel, 'note', '')}" />
       <button onclick="$(this).parent().removeClass('edited')" type="submit">submit</button>
     </form>

@@ -6564,16 +6564,20 @@ body:not(.gold) .allminus-link {
 }
 
 .rel-note button[type=submit] { 
-    display: none; 
+    visibility: hidden;
     font-size: x-small;
     padding-top: 1px;
-    padding-bottom: 1px; 
+    padding-bottom: 1px;
     margin: 0px;
     margin-left: 5px;
-    width: 45px;
 }
-.rel-note.edited button[type=submit] { display: inline-block; }
-.rel-note.edited input[type=text] { width: 250px; margin-right: 0px; }
+.rel-note.edited button[type=submit] { visibility: visible; }
+
+.rel-note input[name=note] {
+    font-size: xx-small;
+    max-width: 200px;
+    width: 100%;
+}
 
 .friend-add.edited .ban-details { display: block; }
 
@@ -6633,10 +6637,6 @@ body:not(.gold) .allminus-link {
 .infobar.gold:before
 {
     background-image: url(../giftgold.png); /* SPRITE */
-}
-
-.tiny {
-    font-size: xx-small;
 }
 
 .gold-accent.comment-visits-box {
