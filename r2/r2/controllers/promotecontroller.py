@@ -156,7 +156,7 @@ class PromoteController(RedditController):
             return self.abort404()
         rendered = wrap_links(link, skip=False)
         form = PromoteLinkForm(link, rendered)
-        page = Reddit(title=_("edit sponsored link"), content=form,
+        page = PromotePage(title=_("edit sponsored link"), content=form,
                       show_sidebar=False, extension_handling=False)
         return page.render()
 
