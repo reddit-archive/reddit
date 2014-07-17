@@ -3626,6 +3626,11 @@ class ApiController(RedditController):
         if form.has_errors("password", errors.WRONG_PASSWORD):
             return
 
+        if c.user.otp_secret:
+            c.errors.add(errors.OTP_ALREADY_ENABLED, field="password")
+            form.has_errors("password", errors.OTP_ALREADY_ENABLED)
+            return
+
         secret = totp.generate_secret()
         g.cache.set('otp_secret_' + c.user._id36, secret, time=300)
         jquery("body").make_totp_qrcode(secret)
@@ -3635,6 +3640,11 @@ class ApiController(RedditController):
                    otp=nop("otp"))
     def POST_enable_otp(self, form, jquery, otp):
         if form.has_errors("password", errors.WRONG_PASSWORD):
+            return
+
+        if c.user.otp_secret:
+            c.errors.add(errors.OTP_ALREADY_ENABLED, field="otp")
+            form.has_errors("otp", errors.OTP_ALREADY_ENABLED)
             return
 
         secret = g.cache.get("otp_secret_" + c.user._id36)
