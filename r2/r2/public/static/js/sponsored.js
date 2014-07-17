@@ -4,6 +4,7 @@ r.sponsored = {
             r.sponsored.fill_campaign_editor()
         })
         this.inventory = {}
+        this.campaignListColumns = $('.existing-campaigns thead th').length
     },
 
     setup: function(inventory_by_sr, isEmpty, userIsSponsor) {
@@ -600,7 +601,7 @@ function edit_campaign($campaign_row) {
             campaignTable = $(".existing-campaigns table").get(0),
             editRowIndex = $campaign_row.get(0).rowIndex + 1
             $editRow = $(campaignTable.insertRow(editRowIndex)),
-            $editCell = $("<td>").attr("colspan", 8).append(campaign)
+            $editCell = $("<td>").attr("colspan", r.sponsored.campaignListColumns).append(campaign)
 
         $editRow.attr("id", "edit-campaign-tr")
         $editRow.append($editCell)
