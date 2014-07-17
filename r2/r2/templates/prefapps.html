@@ -21,7 +21,7 @@
 ###############################################################################
 
 <%!
-  from r2.lib.template_helpers import static, media_https_if_secure
+  from r2.lib.template_helpers import static, make_url_protocol_relative
   from r2.lib.utils import timeuntil
 %>
 
@@ -32,7 +32,7 @@
 <%def name="icon(app)">
   <div class="app-icon">
     &nbsp;
-    <img src="${media_https_if_secure(app.icon_url) or static('defaultapp.png')}">
+    <img src="${make_url_protocol_relative(app.icon_url) or static('defaultapp.png')}">
     &nbsp;
   </div>
 </%def>
