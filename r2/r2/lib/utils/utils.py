@@ -638,6 +638,18 @@ class UrlParser(object):
                            u.path, u.params, u.query, fragment))
 
 
+def url_is_embeddable_image(url):
+    """The url is on an oembed-friendly domain and looks like an image."""
+    parsed_url = UrlParser(url)
+
+    if parsed_url.path_extension().lower() in {"jpg", "gif", "png", "jpeg"}:
+        if parsed_url.hostname not in g.known_image_domains:
+            return False
+        return True
+
+    return False
+
+
 def pload(fname, default = None):
     "Load a pickled object from a file"
     try:

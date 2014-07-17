@@ -234,6 +234,7 @@ class Globals(object):
             'automatic_reddits',
             'hardcache_categories',
             'case_sensitive_domains',
+            'known_image_domains',
             'reserved_subdomains',
             'offsite_subdomains',
             'TRAFFIC_LOG_HOSTS',

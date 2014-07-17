@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
@@ -22,6 +23,7 @@
 
 from collections import Counter, OrderedDict
 
+from r2.config import feature
 from r2.lib.wrapped import Wrapped, Templated, CachedTemplate
 from r2.models import (
     Account,
@@ -118,13 +120,14 @@ from r2.lib.template_helpers import (
     format_number,
     media_https_if_secure,
     comment_label,
+    static,
 )
 from r2.lib.subreddit_search import popular_searches
 from r2.lib.log import log_text
 from r2.lib.memoize import memoize
 from r2.lib.utils import trunc_string as _truncate, to_date
 from r2.lib.filters import safemarkdown
-from r2.lib.utils import Storage, tup
+from r2.lib.utils import Storage, tup, url_is_embeddable_image
 from r2.lib.utils import precise_format_timedelta
 
 from babel.numbers import format_currency
@@ -228,7 +231,6 @@ class Reddit(Templated):
                  robots=None, show_sidebar=True, show_chooser=False,
                  footer=True, srbar=True, page_classes=None, short_title=None,
                  show_wiki_actions=False, extra_js_config=None,
-                 meta_thumbnail=None,
                  show_locationbar=False,
                  **context):
         Templated.__init__(self, **context)
@@ -242,7 +244,6 @@ class Reddit(Templated):
         self.loginbox = True
         self.show_sidebar = show_sidebar
         self.space_compress = space_compress
-        self.meta_thumbnail = meta_thumbnail
         # instantiate a footer
         self.footer = RedditFooter() if footer else None
         self.debug_footer = DebugFooter()
@@ -1360,13 +1361,16 @@ class LinkInfoPage(Reddit):
                 title = strings.permalink_title % params
                 short_description = _truncate(comment.body.strip(), MAX_DESCRIPTION_LENGTH) if comment.body else None
 
-        if self.link.has_thumbnail and self.link.thumbnail:
-            kw['meta_thumbnail'] = self.link.thumbnail
-
         self.subtitle = subtitle
 
         if hasattr(self.link, "shortlink"):
             self.shortlink = self.link.shortlink
+
+        if feature.is_enabled('link_og_data'):
+            self.og_data = self._build_og_data(
+                _force_unicode(link_title),
+                short_description,
+            )
 
         if hasattr(self.link, "dart_keyword"):
             c.custom_dart_keyword = self.link.dart_keyword
@@ -1384,6 +1388,40 @@ class LinkInfoPage(Reddit):
         self.show_promote_button = show_promote_button
         robots = "noindex,nofollow" if link._deleted or link._spam else None
         Reddit.__init__(self, title = title, short_description=short_description, robots=robots, *a, **kw)
+
+    def _build_og_data(self, link_title, meta_description):
+        sr_fragment = "/r/" + c.site.name if not c.default_sr else get_domain()
+        return {
+            "title": u"%s • %s" % (link_title, sr_fragment),
+            "image": self._build_og_image(),
+            "description": self._build_og_description(meta_description),
+        }
+
+    def _build_og_image(self):
+        if self.link.media_object:
+            media_embed = media.get_media_embed(self.link.media_object)
+            if media_embed and media_embed.public_thumbnail_url:
+                return media_embed.public_thumbnail_url
+
+        if self.link.url and url_is_embeddable_image(self.link.url):
+            return self.link.url
+
+        if self.link.has_thumbnail and self.link.thumbnail:
+            # This is really not a great thumbnail for facebook right now
+            # because it's so small. We should look into scraping larger
+            # thumbnails.
+            return self.link.thumbnail
+
+        return static('icon.png')
+
+    def _build_og_description(self, meta_description):
+        if self.link.selftext:
+            return meta_description
+
+        return strings.link_info_og_description % {
+            "score": self.link.score,
+            "num_comments": self.link.num_comments,
+        }
 
     def build_toolbars(self):
         base_path = "/%s/%s/" % (self.link._id36, title_to_url(self.link.title))

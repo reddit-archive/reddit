@@ -99,6 +99,9 @@ string_dict = dict(
 
     permalink_title = _("%(author)s comments on %(title)s"),
     link_info_title = _("%(title)s : %(site)s"),
+    link_info_og_description = _("Found on reddit, the front page of the internet.\\n\\n%(score)s points and %(num_comments)s comments so far"),
+
+
     banned_subreddit_title = _("this subreddit has been banned"),
     banned_subreddit_message = _("most likely this was done automatically by our spam filtering program. the program is still learning, and may even have some bugs, so if you feel the ban was a mistake, please submit a link to our [request a subreddit listing](%(link)s) and be sure to include the **exact name of the subreddit**."),
     private_subreddit_title = _("this subreddit is private"),

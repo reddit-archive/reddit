@@ -373,16 +373,32 @@ def get_media_embed(media_object):
 
 
 class MediaEmbed(object):
+    """A MediaEmbed holds data relevant for serving media for an object."""
+
     width = None
     height = None
     content = None
     scrolling = False
 
-    def __init__(self, height, width, content, scrolling=False):
+    def __init__(self, height, width, content, scrolling=False,
+                 public_thumbnail_url=None):
+        """Build a MediaEmbed.
+
+        :param height int - The height of the media embed, in pixels
+        :param width int - The width of the media embed, in pixels
+        :param content string - The content of the media embed - HTML.
+        :param scrolling bool - Whether the media embed should scroll or not.
+        :param public_thumbnail_url string - The URL of the most representative
+            thumbnail for this media. This may be on an uncontrolled domain,
+            and is not necessarily our own thumbs domain (and should not be
+            served to browsers).
+        """
+
         self.height = int(height)
         self.width = int(width)
         self.content = content
         self.scrolling = scrolling
+        self.public_thumbnail_url = public_thumbnail_url
 
 
 def _make_thumbnail_from_url(thumbnail_url, referer):
@@ -553,6 +569,7 @@ class _EmbedlyScraper(Scraper):
         html = oembed.get("html")
         width = oembed.get("width")
         height = oembed.get("height")
+        public_thumbnail_url = oembed.get('thumbnail_url')
         if not (html and width and height):
             return
 
@@ -560,6 +577,7 @@ class _EmbedlyScraper(Scraper):
             width=width,
             height=height,
             content=html,
+            public_thumbnail_url=public_thumbnail_url,
         )
 
 

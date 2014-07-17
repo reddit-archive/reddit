@@ -33,9 +33,6 @@
     <title>${self.Title()}</title>
     <meta name="keywords" content="${self.keywords()}" />
     <meta name="description" content="${getattr(thing, 'short_description', None) or g.short_description}" />
-    %if getattr(thing, 'meta_thumbnail', None):
-      <meta name="og:image" content="${thing.meta_thumbnail}">
-    %endif
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     ${self.viewport()}
     ${self.robots()}
