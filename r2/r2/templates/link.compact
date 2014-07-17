@@ -22,13 +22,13 @@
 
 <%!
    from r2.lib.template_helpers import add_sr
-   from r2.lib.template_helpers import media_https_if_secure
+   from r2.lib.template_helpers import make_url_protocol_relative
    import urllib
    from r2.lib.filters import _force_unicode, _force_utf8
  %>
 <%namespace file="printable.compact" import="delete_report_buttons"/>
 <%namespace file="printable.html" import="arrow, score"/>
-<%namespace file="link.html" import="tagline"/>
+<%namespace file="link.html" import="tagline, thumbnail"/>
 <%namespace file="utils.html" import="plain_link" />
 <%namespace file="utils.compact" import="icon_button, toggle_button" />
 <%namespace file="printablebuttons.html" import="state_button" />
@@ -76,11 +76,7 @@
   %if c.site.link_flair_position == 'left' and thing.flair_text:
     ${flair()}
   %endif
-  %if thing.has_thumbnail and thing.thumbnail:
-    <a href="${url}" class="thumbnail">
-      <img src="${media_https_if_secure(thing.thumbnail)}" alt=""/>
-     </a>
-  %endif
+    ${thumbnail()}
     <p class="title">
     <a href="${url}">${thing.title}</a>
     %if c.site.link_flair_position == 'right' and thing.flair_text:

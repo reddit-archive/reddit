@@ -22,7 +22,7 @@
 
 <%!
    from r2.lib.template_helpers import get_domain
-   from r2.lib.template_helpers import media_https_if_secure
+   from r2.lib.template_helpers import make_url_protocol_relative
    from r2.lib.pages.things import LinkButtons
    from r2.lib.pages import WrappedUser
    from r2.lib.strings import Score, strings
@@ -240,7 +240,7 @@ ${parent.thing_css_class(what)} ${"over18" if thing.over_18 else ""} ${thing.vis
             else:
                 size_str = ""
         %>
-        <img src="${media_https_if_secure(thing.thumbnail)}" ${size_str} alt=""/>
+        <img src="${make_url_protocol_relative(thing.thumbnail)}" ${size_str} alt="">
     % endif
   </%call>
   %endif

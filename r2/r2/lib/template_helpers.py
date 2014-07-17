@@ -99,6 +99,14 @@ def static(path):
     ))
 
 
+def make_url_protocol_relative(url):
+    if not url:
+        return url
+
+    assert url.startswith("http://"), "make_url_protocol_relative: not http"
+    return url[len("http:"):]
+
+
 def media_https_if_secure(url):
     if not c.secure:
         return url
