@@ -20,41 +20,43 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%namespace file="promotelinkform.html" import="title_field, url_field, text_field, kind_selector" />
+<%namespace file="promotelinkbase.html" import="title_field, url_field, text_field, post_type_field" />
 <%namespace file="utils.html" import="error_field" />
 <%namespace name="utils" file="utils.html"/>
 
 
 <div class="create-promotion">
-  <h1>${_("create a promotion")}</h1>
+  <div class="dashboard">
+    <header>
+      <h2>new promotion</h2>
+    </header>
+    <div class="dashboard-content">
+      <div class="pretty-form promotelink-editor editor" id="promo-form">
+        <div class="editor-group">
+        %if c.user_is_sponsor:
+         ${username_field()}
+        %endif
+        ${title_field(None, editable=True)}
+        ${post_type_field()}
+        ${url_field(None, editable=True, enable_override=c.user_is_sponsor)}
+        ${text_field(visible=False)}
 
-  <div class="create-promo">
+        <footer class="buttons">
+          <div class="rules">
+            By clicking "next" you agree to the&#32;<a href="http://www.reddit.com/wiki/selfserve#wiki_online_self_serve_advertising_rules">Self Serve Advertising Rules.</a>
+          </div>
 
-    <div class="pretty-form" id="promo-form">
-
-      %if c.user_is_sponsor:
-       ${username_field()}
-      %endif
-      ${title_field(None, editable=True)}
-      ${kind_selector()}
-      ${url_field(None, editable=True, enable_override=c.user_is_sponsor)}
-      ${text_field(visible=False)}
-
-      <div class="rules">
-        By clicking "next" you agree to the&#32;<a href="http://www.reddit.com/wiki/selfserve#wiki_online_self_serve_advertising_rules">Self Serve Advertising Rules.</a>
+          ${error_field("RATELIMIT", "ratelimit")}
+          &#32;
+          <span class="status error"></span>
+          ${error_field("RATELIMIT", "ratelimit")}
+          <button name="create" class="btn primary-button" type="button"
+                  onclick="return post_pseudo_form('#promo-form', 'edit_promo')">
+            ${_("next")}
+          </button>
+        </footer>
+        </div>
       </div>
-
-      <div class="save-button">
-        ${error_field("RATELIMIT", "ratelimit")}
-        &#32;
-        <span class="status error"></span>
-        ${error_field("RATELIMIT", "ratelimit")}
-        <button name="create" class="btn fancybutton" type="button"
-                onclick="return post_pseudo_form('#promo-form', 'edit_promo')">
-          ${_("next")}
-        </button>
-      </div>
-
     </div>
   </div>
 </div>

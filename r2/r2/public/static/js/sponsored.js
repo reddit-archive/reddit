@@ -321,15 +321,15 @@ r.sponsored = {
 
         if (!this.userIsSponsor) {
             var isTargeted = $form.find('#targeting').is(':checked')
-            var $geotargetRow = $('.geotarget-select').parents('tr')
+            var $geotargetRow = $('.geotargeting-selects')
 
             if (isTargeted) {
                 $geotargetRow.find('select').prop('disabled', true)
-                $geotargetRow.find('.geotargeting-selects').hide()
+                $geotargetRow.hide()
                 $('.geotargeting-disabled').show()
             } else {
                 $geotargetRow.find('select').prop('disabled', false)
-                $geotargetRow.find('.geotargeting-selects').show()
+                $geotargetRow.show()
                 $('.geotargeting-disabled').hide()
             }
         }
@@ -348,21 +348,11 @@ r.sponsored = {
     },
 
     hide_cpm: function() {
-        var priceRow = $('.price-info').parent('td').parent('tr'),
-            budgetRow = $('#bid').parent('td').parent('tr'),
-            impressionsRow = $('#impressions').parent('td').parent('tr')
-        priceRow.hide("slow")
-        budgetRow.hide("slow")
-        impressionsRow.hide("slow")
+        $('.budget-field').css('display', 'none');
     },
 
     show_cpm: function() {
-        var priceRow = $('.price-info').parent('td').parent('tr'),
-            budgetRow = $('#bid').parent('td').parent('tr'),
-            impressionsRow = $('#impressions').parent('td').parent('tr')
-        priceRow.show("slow")
-        budgetRow.show("slow")
-        impressionsRow.show("slow")
+        $('.budget-field').css('display', 'block');
     },
 
     targeting_on: function() {
@@ -538,7 +528,7 @@ function check_enddate(startdate, enddate) {
                 $existing.fadeIn()
             } else {
                 $(campaign_html).hide()
-                .insertAfter('.existing-campaigns tr:last')
+                .appendTo('.existing-campaigns tbody')
                 .css('display', 'table-row')
                 .fadeIn()
             }
@@ -547,6 +537,7 @@ function check_enddate(startdate, enddate) {
                 $('.existing-campaigns p.error').hide()
                 $('.existing-campaigns table').fadeIn()
                 $('#campaign .buttons button[name=cancel]').removeClass('hidden')
+                $("button.new-campaign").prop("disabled", false);
             }
         })
     }
@@ -574,7 +565,7 @@ function cancel_edit(callback) {
                 var campaign = detach_campaign_form();
                 td.delete_table_row(function() {
                         tr.fadeIn(function() {
-                                $(".existing-campaigns").before(campaign);
+                                $('.new-campaign-container').append(campaign);
                                 campaign.hide();
                                 if(callback) { callback(); }
                             });
@@ -726,3 +717,25 @@ function terminate_campaign($campaign_row) {
                                      "link_id36": link_id36},
               null, true, "json", false);
 }
+
+function edit_promotion() {
+    cancel_edit(function() {
+        $('.promotelink-editor')
+            .find('.collapsed-display').slideUp().end()
+            .find('.uncollapsed-display').slideDown().end()
+    })
+    return false;
+}
+
+function cancel_edit_promotion() {
+    $('.promotelink-editor')
+        .find('.collapsed-display').slideDown().end()
+        .find('.uncollapsed-display').slideUp().end()
+
+    return false;
+}
+
+function cancel_edit_campaign() {
+    return cancel_edit()
+}
+

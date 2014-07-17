@@ -47,7 +47,7 @@ from r2.lib.pages import (
     PaymentForm,
     PromoteInventory,
     PromotePage,
-    PromoteLinkForm,
+    PromoteLinkEdit,
     PromoteLinkNew,
     PromoteReport,
     Reddit,
@@ -155,7 +155,7 @@ class PromoteController(RedditController):
         if not link or link.promoted is None:
             return self.abort404()
         rendered = wrap_links(link, skip=False)
-        form = PromoteLinkForm(link, rendered)
+        form = PromoteLinkEdit(link, rendered)
         page = PromotePage(title=_("edit sponsored link"), content=form,
                       show_sidebar=False, extension_handling=False)
         return page.render()

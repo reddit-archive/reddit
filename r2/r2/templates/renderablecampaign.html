@@ -61,27 +61,27 @@
   </td>
 
   <td class="campaign-bid ${'paid' if thing.paid else ''}">
-    <div class="bid-amount">
+    <span class="bid-amount">
       %if thing.campaign.priority.cpm:
-      ${format_currency(thing.campaign.bid, 'USD', locale=c.locale)}
+        ${format_currency(thing.campaign.bid, 'USD', locale=c.locale)}
       %else:
-      ${_("N/A")}
+        ${_("N/A")}
       %endif
-    </div>
+    </span>
 
     %if thing.campaign.priority.cpm:
       %if not thing.paid:
         %if c.user_is_sponsor:
-          <button class="free fancybutton" onclick="free_campaign(${jquery_row})">
+          <button class="free" onclick="free_campaign(${jquery_row})">
             ${_("free")}
           </button>
         %else:
-          <button class="pay fancybutton" onclick="$.redirect('${thing.pay_url}')">
+          <button class="pay" onclick="$.redirect('${thing.pay_url}')">
             ${_("pay")}
           </button>
         %endif
       %elif not thing.free and not (thing.is_complete or thing.is_live):
-        <button class="pay fancybutton" onclick="$.redirect('${thing.pay_url}')">
+        <button class="pay" onclick="$.redirect('${thing.pay_url}')">
           ${_("change")}
         </button>
       %endif
@@ -92,7 +92,7 @@
     %endif
 
     %if not thing.free and c.user_is_sponsor and thing.needs_refund:
-      <button class="refund fancybutton" onclick="$.redirect('${thing.refund_url}')">
+      <button class="refund" onclick="$.redirect('${thing.refund_url}')">
         ${_("refund")}
       </button>
     %endif
@@ -122,25 +122,25 @@
       <span class='info'>${_("complete")}</span>
     %else:
       %if not thing.is_live or c.user_is_sponsor:
-        <button class="edit fancybutton" onclick="edit_campaign(${jquery_row})">
+        <button class="edit" onclick="edit_campaign(${jquery_row})">
           ${_("edit")}
         </button>
       %endif
 
       %if not thing.is_live:
-        <button class="delete fancybutton" onclick="del_campaign(${jquery_row})">
+        <button class="delete" onclick="del_campaign(${jquery_row})">
           ${_("delete")}
         </button>
       %endif
 
       %if thing.is_live:
-        <button class="view fancybutton" onclick="$.redirect('${thing.view_live_url}')">
+        <button class="view" onclick="$.redirect('${thing.view_live_url}')">
           ${_("view live")}
         </button>
       %endif
 
       %if thing.is_live and c.user_is_sponsor:
-        <button class="terminate fancybutton" onclick="terminate_campaign(${jquery_row})">
+        <button class="terminate" onclick="terminate_campaign(${jquery_row})">
           ${_("terminate")}
         </button>
       %endif
