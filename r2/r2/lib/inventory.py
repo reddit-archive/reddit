@@ -48,20 +48,6 @@ PAGEVIEWS_REGEXP = re.compile('(.*)-GET_listing')
 INVENTORY_FACTOR = 1.00
 DEFAULT_INVENTORY_FACTOR = 5.00
 
-def get_predicted_by_date(sr_name, start, stop=None):
-    """Return dict mapping datetime objects to predicted pageviews."""
-    if not sr_name:
-        sr_name = DefaultSR.name.lower()
-    # lowest pageviews any day the last 2 weeks
-    min_daily = PromoMetrics.get(MIN_DAILY_CASS_KEY, sr_name).get(sr_name, 0)
-    # expand out to the requested range of dates
-    ndays = (stop - start).days if stop else 1  # default is one day
-    predicted = OrderedDict()
-    for i in range(ndays):
-        date = start + timedelta(i)
-        predicted[date] = min_daily
-    return predicted
-
 
 def update_prediction_data():
     """Fetch prediction data and write it to cassandra."""
