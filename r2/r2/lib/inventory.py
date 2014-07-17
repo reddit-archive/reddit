@@ -95,7 +95,7 @@ def get_date_range(start, end):
 
 
 def get_campaigns_by_date(srs, start, end, ignore=None):
-    srs, is_single = tup(srs, ret_is_single=True)
+    srs = tup(srs)
     sr_names = [sr.name for sr in srs]
     q = PromotionWeights.get_campaigns(start, end=end, sr_names=sr_names)
     campaign_ids = {pw.promo_idx for pw in q}
@@ -112,11 +112,7 @@ def get_campaigns_by_date(srs, start, end, ignore=None):
         transaction_by_id = {}
 
     dates = set(get_date_range(start, end))
-    ret = {sr.name: dict.fromkeys(dates) for sr in srs}
-    for srname, date_dict in ret.iteritems():
-        for date in date_dict:
-            ret[srname][date] = []
-
+    ret = {date: set() for date in dates}
     for camp in campaigns:
         if camp.trans_id == NO_TRANSACTION:
             continue
@@ -129,28 +125,23 @@ def get_campaigns_by_date(srs, start, end, ignore=None):
         if not (transaction.is_auth() or transaction.is_charged()):
             continue
 
-        sr_names = camp.target.subreddit_names
         camp_dates = set(get_date_range(camp.start_date, camp.end_date))
         for date in camp_dates.intersection(dates):
-            for sr_name in sr_names:
-                ret[sr_name][date].append(camp)
-
-    if is_single:
-        return ret[srs[0].name]
-    else:
-        return ret
+            ret[date].add(camp)
+    return ret
 
 
 def get_sold_pageviews(srs, start, end, ignore=None):
     srs, is_single = tup(srs, ret_is_single=True)
-    campaigns_by_sr_by_date = get_campaigns_by_date(srs, start, end, ignore)
+    campaigns_by_date = get_campaigns_by_date(srs, start, end, ignore)
 
-    ret = {}
-    for sr_name, campaigns_by_date in campaigns_by_sr_by_date.iteritems():
-        ret[sr_name] = defaultdict(int)
-        for date, campaigns in campaigns_by_date.iteritems():
-            for camp in campaigns:
-                daily_impressions = camp.impressions / camp.ndays
+    ret = {sr.name: defaultdict(int) for sr in srs}
+    for date, campaigns in campaigns_by_date.iteritems():
+        for camp in campaigns:
+            daily_impressions = camp.impressions / camp.ndays
+            for sr_name in camp.target.subreddit_names:
+                # NOTE: campaign should only have one sr in target, but we're
+                # not enforcing that here
                 ret[sr_name][date] += daily_impressions
 
     if is_single:
