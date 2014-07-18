@@ -53,6 +53,7 @@ from r2.models import (
     Sub,
     SubSR,
     Subreddit,
+    Target,
     Trophy,
     USER_FLAIR,
     make_feedurl,
@@ -3684,8 +3685,9 @@ class PromoteLinkEdit(Templated):
         inv_start = min_start
         inv_end = min_start + datetime.timedelta(days=14)
         inv_srs = top_srs + [Frontpage]
+        targets = [Target(sr.name) for sr in inv_srs]
         sr_inventory = inventory.get_available_pageviews(
-            inv_srs, inv_start, inv_end, datestr=True)
+            targets, inv_start, inv_end, datestr=True)
 
         # LEGACY: sponsored.js uses blank to indicate no targeting, meaning
         # targeted to the frontpage

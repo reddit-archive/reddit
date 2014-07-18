@@ -25,8 +25,10 @@ from collections import defaultdict, OrderedDict
 from datetime import datetime, timedelta
 import re
 
+from itertools import chain
 from sqlalchemy import func
 
+from r2.lib.inventory_optimization import get_maximized_pageviews
 from r2.lib.memoize import memoize
 from r2.lib.utils import to_date, tup
 from r2.models import (
@@ -37,6 +39,7 @@ from r2.models import (
     NO_TRANSACTION,
     PromoCampaign,
     PromotionWeights,
+    Subreddit,
     traffic,
 )
 from r2.models.promo_metrics import LocationPromoMetrics, PromoMetrics
@@ -136,25 +139,6 @@ def get_campaigns_by_date(srs, start, end, ignore=None):
     return ret
 
 
-def get_sold_pageviews(srs, start, end, ignore=None):
-    srs, is_single = tup(srs, ret_is_single=True)
-    campaigns_by_date = get_campaigns_by_date(srs, start, end, ignore)
-
-    ret = {sr.name: defaultdict(int) for sr in srs}
-    for date, campaigns in campaigns_by_date.iteritems():
-        for camp in campaigns:
-            daily_impressions = camp.impressions / camp.ndays
-            for sr_name in camp.target.subreddit_names:
-                # NOTE: campaign should only have one sr in target, but we're
-                # not enforcing that here
-                ret[sr_name][date] += daily_impressions
-
-    if is_single:
-        return ret[srs[0].name]
-    else:
-        return ret
-
-
 def get_predicted_pageviews(srs):
     srs, is_single = tup(srs, ret_is_single=True)
     sr_names = [sr.name for sr in srs]
@@ -248,39 +232,80 @@ def get_available_pageviews_geotargeted(sr, location, start, end, datestr=False,
     return ret
 
 
-def get_available_pageviews(srs, start, end, datestr=False, ignore=None):
-    srs, is_single = tup(srs, ret_is_single=True)
-    pageviews_by_sr_by_date = get_predicted_pageviews(srs, start, end)
-    sold_by_sr_by_date = get_sold_pageviews(srs, start, end, ignore)
+
+def make_target_name(target):
+    name = ("collection: %s" % target.collection.name if target.is_collection
+                                           else target.subreddit_name)
+    return name
+
+
+def get_available_pageviews(targets, start, end, datestr=False, ignore=None):
+    pageviews_by_sr_name = {}
+    all_campaigns = set()
+
+    targets, is_single = tup(targets, ret_is_single=True)
+    target_srs = chain.from_iterable(
+        target.subreddits_slow for target in targets)
+    all_sr_names = set()
+    srs = set(target_srs)
+
+    # get all campaigns in target_srs and pull in campaigns from other
+    # subreddits that are targeted
+    while srs:
+        all_sr_names |= {sr.name for sr in srs}
+        new_pageviews_by_sr_name = get_predicted_pageviews(srs)
+        pageviews_by_sr_name.update(new_pageviews_by_sr_name)
+
+        new_campaigns_by_date = get_campaigns_by_date(srs, start, end, ignore)
+        new_campaigns = set(chain.from_iterable(
+            new_campaigns_by_date.itervalues()))
+        all_campaigns.update(new_campaigns)
+
+        new_sr_names = set(chain.from_iterable(
+            campaign.target.subreddit_names for campaign in new_campaigns
+        ))
+        new_sr_names -= all_sr_names
+        srs = set(Subreddit._by_name(new_sr_names).values())
+
+    # determine booked impressions by target for each day
+    dates = set(get_date_range(start, end))
+    booked_by_target_by_date = {date: defaultdict(int) for date in dates}
+    for campaign in all_campaigns:
+        camp_dates = set(get_date_range(campaign.start_date, campaign.end_date))
+        sr_names = tuple(sorted(campaign.target.subreddit_names))
+        daily_impressions = campaign.impressions / campaign.ndays
+
+        for date in camp_dates.intersection(dates):
+            booked_by_target_by_date[date][sr_names] += daily_impressions
 
     datekey = lambda dt: dt.strftime('%m/%d/%Y') if datestr else dt
 
     ret = {}
-    dates = get_date_range(start, end)
-    for sr in srs:
-        sold_by_date = sold_by_sr_by_date[sr.name]
-        pageviews_by_date = pageviews_by_sr_by_date[sr.name]
-        ret[sr.name] = {}
+    for target in targets:
+        name = make_target_name(target)
+        ret[name] = {}
         for date in dates:
-            sold = sold_by_date[date]
-            pageviews = pageviews_by_date[date]
-            ret[sr.name][datekey(date)] = max(0, pageviews - sold)
+            booked_by_target = booked_by_target_by_date[date]
+            pageviews = get_maximized_pageviews(
+                target.subreddit_names, booked_by_target, pageviews_by_sr_name)
+            ret[name][datekey(date)] = max(0, pageviews)
 
     if is_single:
-        return ret[srs[0].name]
+        name = make_target_name(targets[0])
+        return ret[name]
     else:
         return ret
 
 
-def get_oversold(srs, start, end, daily_request, ignore=None, location=None):
-    assert len(srs) == 1, "can't check inventory for multiple subreddits"
-    sr = srs[0]
-
+def get_oversold(target, start, end, daily_request, ignore=None, location=None):
     if location:
+        srs = target.subreddits_slow
+        assert len(srs) == 1, "can't check inventory for multiple subreddits"
+        sr = srs[0]
         available_by_date = get_available_pageviews_geotargeted(sr, location,
                                 start, end, datestr=True, ignore=ignore)
     else:
-        available_by_date = get_available_pageviews(sr, start, end,
+        available_by_date = get_available_pageviews(target, start, end,
                                                     datestr=True, ignore=ignore)
     oversold = {}
     for datestr, available in available_by_date.iteritems():

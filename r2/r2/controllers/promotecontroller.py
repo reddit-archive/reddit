@@ -125,9 +125,8 @@ def has_oversold_error(form, campaign, start, end, bid, cpm, target, location):
     ndays = (to_date(end) - to_date(start)).days
     total_request = calc_impressions(bid, cpm)
     daily_request = int(total_request / ndays)
-    oversold = inventory.get_oversold(target.subreddits_slow, start, end,
-                                      daily_request, ignore=campaign,
-                                      location=location)
+    oversold = inventory.get_oversold(
+        target, start, end, daily_request, ignore=campaign, location=location)
 
     if oversold:
         min_daily = min(oversold.values())
@@ -438,8 +437,9 @@ class PromoteApiController(ApiController):
     def GET_check_inventory(self, responder, sr, location, start, end):
         sr = sr or Frontpage
         if not location or not location.country:
-            available = inventory.get_available_pageviews(sr, start, end,
-                                                          datestr=True)
+            target = Target(sr.name)
+            available = inventory.get_available_pageviews(
+                target, start, end, datestr=True)
         elif sr == Frontpage or c.user_is_sponsor:
             available = inventory.get_available_pageviews_geotargeted(sr,
                             location, start, end, datestr=True)
