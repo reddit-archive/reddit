@@ -686,7 +686,7 @@ function cancel_edit(callback) {
         var tr = $("#campaign").parents("tr:first").prev();
         /* copy the campaign element */
         /* delete the original */
-        $("#campaign").fadeOut(function() {
+        $("#campaign").slideUp(function() {
                 $(this).parent('tr').prev().fadeIn();
                 var td = $(this).parent();
                 var campaign = detach_campaign_form();
@@ -700,7 +700,7 @@ function cancel_edit(callback) {
             });
     } else {
         if ($("#campaign:visible").length) {
-            $("#campaign").fadeOut(function() {
+            $("#campaign").slideUp(function() {
                     if(callback) { 
                         callback();
                     }});
@@ -797,7 +797,7 @@ function edit_campaign($campaign_row) {
 
             campaign.find('button[name="save"]').show().end()
                 .find('button[name="create"]').hide().end();
-            campaign.fadeIn();
+            campaign.slideDown();
             r.sponsored.fill_campaign_editor();
         })
     })
@@ -846,7 +846,7 @@ function create_campaign() {
                 .find('select[name="country"]').val('').end()
                 .find('select[name="region"]').hide().end()
                 .find('select[name="metro"]').hide().end()
-                .fadeIn();
+                .slideDown();
             r.sponsored.fill_campaign_editor();
         });
 }
