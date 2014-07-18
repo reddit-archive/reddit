@@ -3624,8 +3624,6 @@ class PromoteLinkEdit(Templated):
         default_end = min_start + datetime.timedelta(days=2)
         self.default_end = default_end.strftime("%m/%d/%Y")
 
-        self.subreddit_selector = SubredditSelector()
-
         self.link = link
         self.listing = listing
         campaigns = list(PromoCampaign._by_link(link._id))
@@ -3670,16 +3668,20 @@ class PromoteLinkEdit(Templated):
                         self.metros[region_code].sort(key=location_sort)
                 self.regions[code].sort(key=location_sort)
 
+        user_srs = Subreddit.user_subreddits(c.user, ids=False)
+        user_srs = filter(lambda sr: sr.can_submit(c.user, promotion=True),
+                          user_srs)
+        top_srs = sorted(user_srs, key=lambda sr: sr._ups, reverse=True)[:20]
+        extra_subreddits = [(_("suggestions:"), top_srs)]
+        self.subreddit_selector = SubredditSelector(
+            extra_subreddits=extra_subreddits, include_user_subscriptions=False)
+
         # preload some inventory
-        srnames = set()
-        for title, names in self.subreddit_selector.subreddit_names:
-            srnames.update(names)
-        srs = Subreddit._by_name(srnames)
-        srs[''] = Frontpage
         inv_start = min_start
         inv_end = min_start + datetime.timedelta(days=14)
+        inv_srs = top_srs + [Frontpage]
         sr_inventory = inventory.get_available_pageviews(
-            srs.values(), inv_start, inv_end, datestr=True)
+            inv_srs, inv_start, inv_end, datestr=True)
 
         sr_inventory[''] = sr_inventory[Frontpage.name]
         del sr_inventory[Frontpage.name]
