@@ -48,7 +48,7 @@
   <%
     op = "reg" if register else "login"
     base = g.https_endpoint if not c.cname else ''
-    tabindex = 3 if register else 2
+    tabindex = 2 if register else 3
   %>
   <form id="login_${op}" method="post" 
         action="${add_sr(base + '/post/' + op, nocname=not c.authorized_cname)}"
