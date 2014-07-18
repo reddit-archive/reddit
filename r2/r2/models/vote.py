@@ -189,7 +189,8 @@ class Vote(MultiRelation('vote',
 
             #these still need to be recalculated
             old_valid_thing = getattr(v, 'valid_thing', False)
-            v.valid_thing = (valid_thing(v, karma, cheater = cheater)
+            v.valid_thing = (valid_thing(
+                                v, karma, cheater=cheater, vote_info=vote_info)
                              and getattr(v,'valid_thing', False))
             v.valid_user = (getattr(v, 'valid_user', False)
                             and v.valid_thing
@@ -200,7 +201,9 @@ class Vote(MultiRelation('vote',
             oldamount = 0
             v = rel(sub, obj, str(amount), date=date)
             v.ip = ip
-            old_valid_thing = v.valid_thing = valid_thing(v, karma, cheater = cheater)
+            v.valid_thing = valid_thing(
+                                v, karma, cheater=cheater, vote_info=vote_info)
+            old_valid_thing = v.valid_thing
             v.valid_user = (v.valid_thing and valid_user(v, sr, karma)
                             and not is_self_link)
 
