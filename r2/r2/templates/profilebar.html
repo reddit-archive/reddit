@@ -39,7 +39,7 @@
           <span class="unusual">(deleted)</span>
         %endif
 
-        %if thing.user._spam:
+        %if thing.user._spam or thing.user._banned:
           <span class="unusual">(banned)</span>
         %endif
       </span>
