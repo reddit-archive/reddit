@@ -4491,7 +4491,7 @@ class SubscribeButton(Templated):
 
 class SubredditSelector(Templated):
     def __init__(self, default_sr=None, extra_subreddits=None, required=False,
-                 include_searches=True):
+                 include_searches=True, include_user_subscriptions=True):
         Templated.__init__(self)
 
         if extra_subreddits:
@@ -4499,10 +4499,11 @@ class SubredditSelector(Templated):
         else:
             self.subreddits = []
 
-        self.subreddits.append((
-            _('popular choices'),
-            Subreddit.user_subreddits(c.user, ids=False)
-        ))
+        if include_user_subscriptions:
+            self.subreddits.append((
+                _('popular choices'),
+                Subreddit.user_subreddits(c.user, ids=False)
+            ))
 
         self.default_sr = default_sr
         self.required = required
