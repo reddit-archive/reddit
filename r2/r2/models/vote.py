@@ -185,6 +185,9 @@ class Vote(MultiRelation('vote',
         if len(oldvote):
             v = oldvote[0]
             oldamount = int(v._name)
+            if amount == oldamount:
+                return v
+
             v._name = str(amount)
 
             #these still need to be recalculated
