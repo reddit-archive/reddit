@@ -1213,6 +1213,9 @@ class RedditController(OAuth2ResourceController):
 
         set_cnameframe()
 
+        # Set IE to always use latest rendering engine
+        response.headers["X-UA-Compatible"] = "IE=edge"
+
         # populate c.cookies unless we're on the unsafe media_domain
         if request.host != g.media_domain or g.media_domain == g.domain:
             cookie_counts = collections.Counter()
