@@ -91,6 +91,8 @@ SAFE_PROPERTIES = {
     "background-image",
     "background-origin",
     "background-position",
+    "background-position-x",
+    "background-position-y",
     "background-repeat",
     "background-size",
     "border",
