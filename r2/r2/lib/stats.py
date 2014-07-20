@@ -239,6 +239,14 @@ class Timer:
         self._stop = None
         self._timings = []
 
+    def __enter__(self):
+        self.start()
+        return self
+
+    def __exit__(self, type, value, tb):
+        self.stop()
+        return self
+
     def flush(self):
         for timing in self._timings:
             self.send(*timing)
@@ -289,6 +297,10 @@ class Stats:
 
     def get_timer(self, name, publish=True):
         return Timer(self.client, name, publish)
+
+    # Just a convenience method to use timers as context managers clearly
+    def quick_time(self, *args, **kwargs):
+        return self.get_timer(*args, **kwargs)
 
     def transact(self, action, start, end):
         timer = self.get_timer('service_time')
