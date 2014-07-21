@@ -333,7 +333,7 @@
     </li>
   %else:
     <li class="first">
-      ${self.bylink_button(_("permalink"), thing.permalink)}
+      ${self.bylink_button(_("permalink"), thing.permalink, sr_path=False)}
     </li>
   %endif
   %if thing.recipient:
@@ -494,8 +494,8 @@
                _class=a_class, title=title)}
 </%def>
 
-<%def name="bylink_button(title, link)">
- ${plain_link(title, link, _class="bylink", rel="nofollow")}
+<%def name="bylink_button(title, link, sr_path=True)">
+  ${plain_link(title, link, _class="bylink", rel="nofollow", _sr_path=sr_path)}
 </%def>
 
 <%def name="toggleable_label(class_name,
