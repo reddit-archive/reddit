@@ -67,7 +67,16 @@ def get_predicted_by_date(sr_name, start, stop=None):
 def update_prediction_data():
     """Fetch prediction data and write it to cassandra."""
     min_daily_by_sr = _min_daily_pageviews_by_sr(NDAYS_TO_QUERY)
-    PromoMetrics.set(MIN_DAILY_CASS_KEY, min_daily_by_sr)
+
+    # combine front page values (sometimes frontpage gets '' for its name)
+    if '' in min_daily_by_sr:
+        fp = DefaultSR.name.lower()
+        min_daily_by_sr[fp] = min_daily_by_sr.get(fp, 0) + min_daily_by_sr['']
+        del min_daily_by_sr['']
+
+    filtered = {sr_name: num for sr_name, num in min_daily_by_sr.iteritems()
+                if num > 100}
+    PromoMetrics.set(MIN_DAILY_CASS_KEY, filtered)
 
 
 def _min_daily_pageviews_by_sr(ndays=NDAYS_TO_QUERY, end_date=None):

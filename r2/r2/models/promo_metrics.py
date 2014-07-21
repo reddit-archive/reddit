@@ -63,10 +63,6 @@ class PromoMetrics(tdb_cassandra.View):
 
     @classmethod
     def set(cls, metric_name, values_by_sr):
-        if '' in values_by_sr:  # combine front page values
-            fp = DefaultSR.name.lower()
-            values_by_sr[fp] = values_by_sr.get(fp, 0) + values_by_sr['']
-            del(values_by_sr[''])
         cls._set_values(metric_name, values_by_sr)
 
 
