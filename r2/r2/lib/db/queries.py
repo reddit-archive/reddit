@@ -1067,6 +1067,9 @@ def new_message(message, inbox_rels):
 
     from_user = Account._byID(message.author_id)
 
+    update_recipient = False
+    update_modmail = False
+
     with CachedQueryMutator() as m:
         m.insert(get_sent(from_user), [message])
 
@@ -1075,14 +1078,16 @@ def new_message(message, inbox_rels):
             # moderator message
             if isinstance(inbox_rel, ModeratorInbox):
                 m.insert(get_subreddit_messages(to), [inbox_rel])
+                update_modmail = True
             # personal message
             else:
                 m.insert(get_inbox_messages(to), [inbox_rel])
+                update_recipient = True
 
             set_unread(message, to, unread=True, mutator=m)
 
     amqp.add_item('new_message', message._fullname)
-    add_message(message)
+    add_message(message, update_recipient, update_modmail)
 
 def set_unread(messages, to, unread, mutator=None):
     # Maintain backwards compatability

@@ -1394,7 +1394,14 @@ class Message(Thing, Printable):
             sr = Subreddit._byID(sr_id)
 
         inbox_rel = []
-        if sr_id:
+
+        inbox_hook = hooks.get_hook("message.skip_inbox")
+        skip_inbox = inbox_hook.call_until_return(message=m)
+        if skip_inbox:
+            m._spam = True
+            m._commit()
+
+        if not skip_inbox and sr_id:
             # if there is a subreddit id, and it's either a reply or
             # an initial message to an SR, add to the moderator inbox
             # (i.e., don't do it for automated messages from the SR)
@@ -1410,7 +1417,7 @@ class Message(Thing, Printable):
 
         # if there is a "to" we may have to create an inbox relation as well
         # also, only global admins can be message spammed.
-        if to and (not m._spam or to.name in g.admins):
+        if not skip_inbox and to and (not m._spam or to.name in g.admins):
             # if the current "to" is not a sr moderator,
             # they need to be notified
             if not sr_id or not sr.is_moderator(to):

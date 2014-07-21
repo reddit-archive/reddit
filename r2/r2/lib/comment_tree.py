@@ -216,16 +216,16 @@ def messages_key(user_id):
 def messages_lock_key(user_id):
     return 'message_conversations_lock_' + str(user_id)
 
-def add_message(message):
+def add_message(message, update_recipient=True, update_modmail=True):
     # add the message to the author's list and the recipient
     with g.make_lock("message_tree", messages_lock_key(message.author_id)):
         add_message_nolock(message.author_id, message)
-    if message.to_id:
+    if update_recipient and message.to_id:
         with g.make_lock("message_tree", messages_lock_key(message.to_id)):
             add_message_nolock(message.to_id, message)
     # Messages to a subreddit should end in its inbox. Messages
     # FROM a subreddit (currently, just ban messages) should NOT
-    if message.sr_id and not message.from_sr:
+    if update_modmail and message.sr_id and not message.from_sr:
         with g.make_lock("modmail_tree", sr_messages_lock_key(message.sr_id)):
             add_sr_message_nolock(message.sr_id, message)
 
