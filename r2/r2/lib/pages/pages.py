@@ -344,6 +344,10 @@ class Reddit(Templated):
         self.toolbars = self.build_toolbars()
         self.subreddit_stylesheet_url = self.get_subreddit_stylesheet_url()
 
+        if c.user_is_admin:
+            if not isinstance(c.site, FakeSubreddit) and c.site._spam:
+                self.extra_page_classes = ["banned"]
+
     @staticmethod
     def get_subreddit_stylesheet_url():
         if c.can_apply_styles and c.allow_styles:
@@ -1727,6 +1731,11 @@ class ProfilePage(Reddit):
 
     def __init__(self, user, *a, **kw):
         self.user     = user
+        if c.user_is_admin:
+            if user._spam or user._banned:
+                self.extra_page_classes.append("banned")
+            if user._deleted:
+                self.extra_page_classes.append("deleted")
         Reddit.__init__(self, *a, **kw)
 
     def build_toolbars(self):
