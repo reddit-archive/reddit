@@ -3940,7 +3940,9 @@ class UserText(CachedTemplate):
                  textarea_class = '',
                  name = "text",
                  expunged=False,
-                 include_errors=True):
+                 include_errors=True,
+                 show_embed_help=False,
+                ):
 
         css_class = "usertext"
         if cloneable:
@@ -3972,7 +3974,9 @@ class UserText(CachedTemplate):
                                 textarea_class = textarea_class,
                                 name = name,
                                 expunged=expunged,
-                                include_errors=include_errors)
+                                include_errors=include_errors,
+                                show_embed_help=show_embed_help,
+                               )
 
 class MediaEmbedBody(CachedTemplate):
     """What's rendered inside the iframe that contains media objects"""

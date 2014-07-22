@@ -27,9 +27,9 @@
 %>
 
 <%namespace file="printablebuttons.html" import="toggle_button" />
-<%namespace file="utils.html" import="error_field, md"/>
+<%namespace file="utils.html" import="error_field, md, _md"/>
 
-<%def name="markhelp()">
+<%def name="markhelp(show_embed_help=False)">
   <div class="markhelp" style="display:none">
     <p>${md(strings.formatting_help_info)}</p>
     <table class="md">
@@ -94,6 +94,12 @@
           <td>super^script</td>
           <td>super<sup>script</sup></td>
       </tr>
+      % if show_embed_help:
+      <tr>
+          <td>${_md('Links on their own line will be embedded:\n\nhttp://example.com')}</td>
+          <td>${_('an embedded version of that link')}</td>
+      </tr>
+      % endif
     </table>
   </div>
 </%def>
@@ -168,7 +174,7 @@
         </div>
       </div>
 
-      ${markhelp()}
+      ${markhelp(show_embed_help=thing.show_embed_help)}
     </div>
   %endif
 
