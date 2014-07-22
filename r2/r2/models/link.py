@@ -486,7 +486,11 @@ class Link(Thing, Printable):
                 item.user_gilded = False
                 item.saved = item.hidden = item.visited = False
 
-            item.gilded_message = make_gold_message(item, item.user_gilded)
+            if c.permalink_page or c.profilepage:
+                item.gilded_message = make_gold_message(item, item.user_gilded)
+            else:
+                item.gilded_message = ''
+
             item.can_gild = (
                 c.user_is_loggedin and
                 # you can't gild your own submission
