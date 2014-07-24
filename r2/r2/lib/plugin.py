@@ -35,6 +35,7 @@ class Plugin(object):
     needs_static_build = False
     needs_translation = True
     errors = {}
+    source_root_url = None
 
     def __init__(self, entry_point):
         self.entry_point = entry_point
@@ -80,6 +81,8 @@ class Plugin(object):
     def load_controllers(self):
         pass
 
+    def get_documented_controllers(self):
+        return []
 
 
 class PluginLoader(object):
@@ -155,3 +158,8 @@ class PluginLoader(object):
         for plugin in self:
             errors.add_error_codes(plugin.errors)
             plugin.load_controllers()
+
+    def get_documented_controllers(self):
+        for plugin in self:
+            for controller, url_prefix in plugin.get_documented_controllers():
+                yield controller, url_prefix

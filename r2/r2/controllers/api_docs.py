@@ -101,9 +101,17 @@ def api_doc(section, uses_site=False, **kwargs):
         doc['lineno'] = api_function.func_code.co_firstlineno
 
         file_path = abspath(api_function.func_code.co_filename)
+
         root_dir = g.paths['root']
         if file_path.startswith(root_dir):
             doc['relfilepath'] = relpath(file_path, root_dir)
+            doc['source_root_url'] = "https://github.com/reddit/reddit/blob/master/r2/r2/"
+        else:
+            for plugin in g.plugins:
+                plugin_root = plugin.path
+                if plugin.source_root_url and file_path.startswith(plugin_root):
+                    doc['relfilepath'] = relpath(file_path, plugin_root)
+                    doc['source_root_url'] = plugin.source_root_url
 
         return api_function
     return add_metadata
@@ -218,6 +226,9 @@ class ApidocsController(RedditController):
         for name, value in vars(listingcontroller).iteritems():
             if name.endswith('Controller'):
                 api_controllers.append((value, ''))
+
+        # bring in documented plugin controllers
+        api_controllers.extend(g.plugins.get_documented_controllers())
 
         # merge documentation info together.
         api_docs = defaultdict(dict)

@@ -222,7 +222,7 @@ example, `t3_15bfi0`.
           <div class="endpoint" id="${api_method_id(uri, method)}">
             <div class="links">
               %if docs.get('lineno') and docs.get('relfilepath'):
-                <a href="https://github.com/reddit/reddit/blob/master/r2/r2/${docs['relfilepath']}#L${docs['lineno']}">view code</a>
+                <a href="${docs["source_root_url"]}${docs['relfilepath']}#L${docs['lineno']}">view code</a>
               %endif
               <a href="#${api_method_id(uri, method)}">#</a>
             </div>
