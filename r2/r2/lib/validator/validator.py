@@ -828,7 +828,7 @@ class VByName(Validator):
                         ignore_missing=self.ignore_missing,
                         return_dict=False,
                     )
-                except NotFound:
+                except tdb_cassandra.NotFound:
                     pass
         else:
             if items and self.multiple:
