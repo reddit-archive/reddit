@@ -57,11 +57,9 @@
   </div>
 %endif
 
-  <table>
-    %if c.user_is_admin:
-      <%include file="adminlinkinfo.html"/>
-    %endif
-  </table>
+  ${self.info_table()}
 </div>
 
+<%def name="info_table()">
+</%def>
 

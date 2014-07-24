@@ -1427,7 +1427,11 @@ class LinkInfoPage(Reddit):
     def rightbox(self):
         rb = Reddit.rightbox(self)
         if not (self.link.promoted and not c.user_is_sponsor):
-            rb.insert(1, LinkInfoBar(a = self.link))
+            if c.user_is_admin:
+                from admin_pages import AdminLinkInfoBar
+                rb.insert(1, AdminLinkInfoBar(a=self.link))
+            else:
+                rb.insert(1, LinkInfoBar(a=self.link))
         return rb
 
     def page_classes(self):

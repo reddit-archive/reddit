@@ -23,7 +23,7 @@
 from pylons import c, g, config
 from pylons.i18n import N_
 from r2.lib.wrapped import Templated
-from pages   import Reddit
+from r2.lib.pages import LinkInfoBar, Reddit
 from r2.lib.menus import (
     NamedButton,
     NavButton,
@@ -108,6 +108,9 @@ class AdminNotesSidebar(Templated):
         for note in self.notes:
             note["timesince"] = timesince(note["when"])
         Templated.__init__(self)
+
+
+class AdminLinkInfoBar(LinkInfoBar): pass
 
 
 if config['r2.import_private']:
