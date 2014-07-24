@@ -430,7 +430,10 @@ class ThingBase(object):
             items.extend(typ._byID(ids).values())
 
         if is_single:
-            return items[0]
+            try:
+                return items[0]
+            except IndexError:
+                raise NotFound("<%s %r>" % (cls.__name__, ids[0]))
         elif return_dict:
             return dict((x._fullname, x) for x in items)
         else:
