@@ -37,49 +37,49 @@ from r2.lib.validator import validate, VOneOf
 # Each section can have a title and a markdown-formatted description.
 section_info = {
     'account': {
-        'title': _('account'),
+        'title': 'account',
     },
     'apps': {
-        'title': _('apps'),
+        'title': 'apps',
     },
     'flair': {
-        'title': _('flair'),
+        'title': 'flair',
     },
     'gold': {
-        'title': _('reddit gold'),
+        'title': 'reddit gold',
     },
     'links_and_comments': {
-        'title': _('links & comments'),
+        'title': 'links & comments',
     },
     'messages': {
-        'title': _('private messages'),
+        'title': 'private messages',
     },
     'moderation': {
-        'title': _('moderation'),
+        'title': 'moderation',
     },
     'misc': {
-        'title': _('misc'),
+        'title': 'misc',
     },
     'listings': {
-        'title': _('listings'),
+        'title': 'listings',
     },
     'search': {
-        'title': _('search'),
+        'title': 'search',
     },
     'subreddits': {
-        'title': _('subreddits'),
+        'title': 'subreddits',
     },
     'multis': {
-        'title': _('multis'),
+        'title': 'multis',
     },
     'users': {
-        'title': _('users'),
+        'title': 'users',
     },
     'wiki': {
-        'title': _('wiki'),
+        'title': 'wiki',
     },
     'captcha': {
-        'title': _('captcha'),
+        'title': 'captcha',
     }
 }
 
