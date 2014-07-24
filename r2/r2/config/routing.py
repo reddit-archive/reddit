@@ -167,7 +167,7 @@ def make_map():
           requirements=dict(where='contributors|banned|wikibanned|wikicontributors|moderators'),
           action='listing')
        connect('/about/:location', controller='front', action='editreddit',
-          location='about')
+          requirements=dict(location='edit|stylesheet|traffic|about'))
        connect('/comments', controller='comments', action='listing')
        connect('/comments/gilded', action='listing', controller='gilded')
        connect('/gilded', action='listing', controller='gilded')
