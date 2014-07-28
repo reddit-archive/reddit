@@ -1453,7 +1453,14 @@ class LocalizedDefaultSubreddits(tdb_cassandra.View):
         columns = {sr._id36: '' for sr in srs}
 
         # update cassandra
+        try:
+            existing = cls._cf.get(rowkey)
+        except tdb_cassandra.NotFoundException:
+            existing = {}
+
         cls._set_values(rowkey, columns)
+        removed_srid36s = set(existing.keys()) - set(columns.keys())
+        cls._remove(rowkey, removed_srid36s)
 
         # update cache
         id36s = columns.keys()
