@@ -63,8 +63,9 @@
 </%def>
 
 <%def name="num_input(s, name)">
-  <input type="text" size="4" maxlength="4" 
+  <input size="4" maxlength="4" 
          name="${name}" style="margin:  0 .5em 0 .5em"
+         type="number"
          value="${s if s is not None else ''}" />
 </%def>
 
