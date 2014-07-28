@@ -32,13 +32,6 @@ from r2.models import Email, DefaultSR, Account, Award
 from r2.models.token import EmailVerificationToken, PasswordResetToken
 
 
-def _feedback_email(email, body, kind, name='', reply_to = ''):
-    """Function for handling feedback and ad_inq emails.  Adds an
-    email to the mail queue to the feedback email account."""
-    Email.handler.add_to_queue(c.user if c.user_is_loggedin else None,
-                               g.feedback_email, name, email,
-                               kind, body = body, reply_to = reply_to)
-
 def _system_email(email, body, kind, reply_to = "", thing = None):
     """
     For sending email from the system to a user (reply address will be
@@ -125,15 +118,6 @@ def email_change_email(user):
                          EmailChangeEmail(user=user).render(style='email'),
                          Email.Kind.EMAIL_CHANGE)
 
-def feedback_email(email, body, name='', reply_to = ''):
-    """Queues a feedback email to the feedback account."""
-    return _feedback_email(email, body,  Email.Kind.FEEDBACK, name = name,
-                           reply_to = reply_to)
-
-def ad_inq_email(email, body, name='', reply_to = ''):
-    """Queues a ad_inq email to the feedback account."""
-    return _feedback_email(email, body,  Email.Kind.ADVERTISE, name = name,
-                           reply_to = reply_to)
 
 def gold_email(body, to_address, from_name=g.domain):
     return _gold_email(body, to_address, from_name, Email.Kind.GOLDMAIL)

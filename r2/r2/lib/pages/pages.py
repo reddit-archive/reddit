@@ -2852,28 +2852,6 @@ class ButtonDemoPanel(Templated):
 class ContactUs(Templated):
     pass
 
-class FeedbackBlurb(Templated):
-    pass
-
-class Feedback(Templated):
-    """The feedback and ad inquery form(s)"""
-    def __init__(self, title, action):
-        email = name = ''
-        if c.user_is_loggedin:
-            email = getattr(c.user, "email", "")
-            name = c.user.name
-
-        captcha = None
-        if not c.user_is_loggedin or c.user.needs_captcha():
-            captcha = Captcha()
-
-        Templated.__init__(self,
-                         captcha = captcha,
-                         title = title,
-                         action = action,
-                         email = email,
-                         name = name)
-
 
 class WidgetDemoPanel(Templated):
     """Demo page for the .embed widget."""
