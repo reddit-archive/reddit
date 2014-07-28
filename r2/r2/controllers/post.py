@@ -37,6 +37,7 @@ from pylons.controllers.util import redirect_to
 from pylons.i18n import _
 from r2.models import *
 import hashlib
+from r2.lib.base import abort
 
 class PostController(ApiController):
     @validate(pref_lang = VLang('lang'),
