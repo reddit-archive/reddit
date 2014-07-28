@@ -49,12 +49,6 @@ def _nerds_email(body, from_name, kind):
     Email.handler.add_to_queue(None, g.nerds_email, from_name, g.nerds_email,
                                kind, body = body)
 
-def _gold_email(body, to_address, from_name, kind):
-    """
-    For sending email to reddit gold subscribers
-    """
-    Email.handler.add_to_queue(None, to_address, from_name, g.goldthanks_email,
-                               kind, body = body)
 
 def verify_email(user, dest=None):
     """
@@ -118,9 +112,6 @@ def email_change_email(user):
                          EmailChangeEmail(user=user).render(style='email'),
                          Email.Kind.EMAIL_CHANGE)
 
-
-def gold_email(body, to_address, from_name=g.domain):
-    return _gold_email(body, to_address, from_name, Email.Kind.GOLDMAIL)
 
 def nerds_email(body, from_name=g.domain):
     """Queues a feedback email to the nerds running this site."""
