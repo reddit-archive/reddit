@@ -178,8 +178,67 @@ class Collection(object):
         self.sr_names = sr_names
         self.description = description
 
+    @classmethod
+    def by_name(cls, name):
+        return CollectionStorage.get_collection(name)
+
+    @classmethod
+    def get_all(cls):
+        return CollectionStorage.get_all()
+
     def __repr__(self):
         return "<%s: %s>" % (self.__class__.__name__, self.name)
+
+
+class CollectionStorage(tdb_cassandra.View):
+    _use_db = True
+    _connection_pool = 'main'
+    _extra_schema_creation_args = {
+        "key_validation_class": tdb_cassandra.UTF8_TYPE,
+        "column_name_class": tdb_cassandra.UTF8_TYPE,
+        "default_validation_class": tdb_cassandra.UTF8_TYPE,
+    }
+    _compare_with = tdb_cassandra.UTF8_TYPE
+    _read_consistency_level = tdb_cassandra.CL.ONE
+    _write_consistency_level = tdb_cassandra.CL.QUORUM
+    SR_NAMES_DELIM = '|'
+
+    @classmethod
+    def set(cls, name, description, srs):
+        rowkey = name
+        columns = {
+            'description': description,
+            'sr_names': cls.SR_NAMES_DELIM.join(sr.name for sr in srs),
+        }
+        cls._set_values(rowkey, columns)
+
+    @classmethod
+    def get_collection(cls, name):
+        if not name:
+            return None
+
+        rowkey = name
+        try:
+            columns = cls._cf.get(rowkey)
+        except tdb_cassandra.NotFoundException:
+            return None
+
+        description = columns['description']
+        sr_names = columns['sr_names'].split(cls.SR_NAMES_DELIM)
+        return Collection(name, sr_names, description=description)
+
+    @classmethod
+    def get_all(cls):
+        ret = []
+        for name, columns in cls._cf.get_range():
+            description = columns['description']
+            sr_names = columns['sr_names'].split(cls.SR_NAMES_DELIM)
+            ret.append(Collection(name, sr_names, description=description))
+        return ret
+
+    def delete(cls, name):
+        rowkey = name
+        cls._cf.remove(rowkey)
 
 
 class Target(object):
