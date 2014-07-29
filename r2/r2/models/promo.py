@@ -173,9 +173,13 @@ NO_TRANSACTION = 0
 
 
 class Collection(object):
-    def __init__(self, name, sr_names):
+    def __init__(self, name, sr_names, description=None):
         self.name = name
         self.sr_names = sr_names
+        self.description = description
+
+    def __repr__(self):
+        return "<%s: %s>" % (self.__class__.__name__, self.name)
 
 
 class Target(object):
