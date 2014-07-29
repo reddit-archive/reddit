@@ -70,6 +70,7 @@ from r2.lib.validator import (
     ValidCard,
     VBoolean,
     VByName,
+    VCollection,
     VDate,
     VDateRange,
     VExistingUname,
@@ -83,6 +84,7 @@ from r2.lib.validator import (
     VOneOf,
     VPriority,
     VPromoCampaign,
+    VPromoTarget,
     VRatelimit,
     VSelfText,
     VShamedDomain,
@@ -431,16 +433,25 @@ class PromoteListingController(ListingController):
 
 class PromoteApiController(ApiController):
     @json_validate(sr=VSubmitSR('sr', promotion=True),
+                   collection=VCollection('collection'),
                    location=VLocation(),
                    start=VDate('startdate'),
                    end=VDate('enddate'))
-    def GET_check_inventory(self, responder, sr, location, start, end):
-        sr = sr or Frontpage
-        if not location or not location.country:
+    def GET_check_inventory(self, responder, sr, collection, location, start,
+                            end):
+        if collection:
+            target = Target(collection)
+            sr = None
+        else:
+            sr = sr or Frontpage
             target = Target(sr.name)
+
+        if not location or not location.country:
             available = inventory.get_available_pageviews(
                 target, start, end, datestr=True)
         elif sr == Frontpage or c.user_is_sponsor:
+            # geotargeting is available on the Frontpage for all users or on
+            # individual subreddits for sponsors
             available = inventory.get_available_pageviews_geotargeted(sr,
                             location, start, end, datestr=True)
         else:
@@ -667,36 +678,49 @@ class PromoteApiController(ApiController):
             PromotedLinkRoadblock.remove(sr, sd, ed)
             jquery.refresh()
 
-    @validatedForm(VSponsor('link_id36'),
-                   VModhash(),
-                   dates=VDateRange(['startdate', 'enddate'],
-                       earliest=timedelta(days=g.min_promote_future),
-                       latest=timedelta(days=g.max_promote_future),
-                       reference_date=promote.promo_datetime_now,
-                       business_days=True,
-                       sponsor_override=True),
-                   link=VLink('link_id36'),
-                   bid=VFloat('bid', coerce=False),
-                   sr=VSubmitSR('sr', promotion=True),
-                   campaign_id36=nop("campaign_id36"),
-                   targeting=VLength("targeting", 10),
-                   priority=VPriority("priority"),
-                   location=VLocation())
+    @validatedForm(
+        VSponsor('link_id36'),
+        VModhash(),
+        dates=VDateRange(['startdate', 'enddate'],
+            earliest=timedelta(days=g.min_promote_future),
+            latest=timedelta(days=g.max_promote_future),
+            reference_date=promote.promo_datetime_now,
+            business_days=True,
+            sponsor_override=True),
+        link=VLink('link_id36'),
+        bid=VFloat('bid', coerce=False),
+        target=VPromoTarget(),
+        campaign_id36=nop("campaign_id36"),
+        priority=VPriority("priority"),
+        location=VLocation(),
+    )
     def POST_edit_campaign(self, form, jquery, link, campaign_id36,
-                          dates, bid, sr, targeting, priority, location):
+                           dates, bid, target, priority, location):
         if not link:
             return
 
-        start, end = dates or (None, None)
+        if not target:
+            # tried to target a bad subreddit or collection
+            if form.has_errors('target_name', errors.SUBREDDIT_NOEXIST,
+                               errors.SUBREDDIT_NOTALLOWED,
+                               errors.SUBREDDIT_REQUIRED,
+                               errors.COLLECTION_NOEXIST):
+                return
 
-        if location and sr and not c.user_is_sponsor:
-            # only sponsors can geotarget on subreddits
+        start, end = dates or (None, None)
+        is_frontpage = (not target.is_collection and
+                        target.subreddit_name == Frontpage.name)
+
+        if location and not is_frontpage and not c.user_is_sponsor:
+            # regular users can only target to Frontpage
             location = None
 
         if location and location.metro:
             cpm = g.cpm_selfserve_geotarget_metro.pennies
         elif location:
             cpm = g.cpm_selfserve_geotarget_country.pennies
+        elif target.is_collection or is_frontpage:
+            cpm = g.cpm_selfserve_collection.pennies
         else:
             author = Account._byID(link.author_id, data=True)
             cpm = author.cpm_selfserve_pennies
@@ -760,14 +784,9 @@ class PromoteApiController(ApiController):
         else:
             bid = 0.   # Set bid to 0 as dummy value
 
-        if targeting == 'one':
-            if form.has_errors('sr', errors.SUBREDDIT_NOEXIST,
-                               errors.SUBREDDIT_NOTALLOWED,
-                               errors.SUBREDDIT_REQUIRED):
-                # checking to get the error set in the form, but we can't
-                # check for rate-limiting if there's no subreddit
-                return
-
+        if not target.is_collection and not is_frontpage:
+            # targeted to a single subreddit, check roadblock
+            sr = target.subreddits_slow[0]
             roadblock = PromotedLinkRoadblock.is_roadblocked(sr, start, end)
             if roadblock and not c.user_is_sponsor:
                 msg_params = {"start": roadblock[0].strftime('%m/%d/%Y'),
@@ -776,11 +795,6 @@ class PromoteApiController(ApiController):
                              msg_params=msg_params)
                 form.has_errors('sr', errors.OVERSOLD)
                 return
-
-        elif targeting == 'none':
-            sr = Frontpage
-
-        target = Target(sr.name)
 
         # Check inventory
         campaign = campaign if campaign_id36 else None

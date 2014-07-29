@@ -1245,6 +1245,39 @@ class VSubscribeSR(VByName):
             self.param[0]: "the [fullname](#fullname) of a subreddit",
         }
 
+
+class VCollection(Validator):
+    def run(self, name):
+        collection = Collection.by_name(name)
+        if collection:
+            return collection
+        self.set_error(errors.COLLECTION_NOEXIST)
+
+
+class VPromoTarget(Validator):
+    default_param = ("targeting", "sr", "collection")
+
+    def run(self, targeting, sr_name, collection_name):
+        if targeting == "collection" and collection_name == "none":
+            return Target(Frontpage.name)
+        elif targeting == "collection":
+            collection = VCollection("collection").run(collection_name)
+            if collection:
+                return Target(collection)
+            else:
+                # VCollection added errors so no need to do anything
+                return
+        elif targeting == "one":
+            sr = VSubmitSR("sr", promotion=True).run(sr_name)
+            if sr:
+                return Target(sr.name)
+            else:
+                # VSubmitSR added errors so no need to do anything
+                return
+        else:
+            self.set_error(errors.INVALID_TARGET, field="targeting")
+
+
 MIN_PASSWORD_LENGTH = 3
 
 class VPassword(Validator):
