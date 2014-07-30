@@ -288,7 +288,7 @@ r.sponsored = {
     on_impression_change: function() {
         var $form = $("#campaign"),
             cpm = this.get_cpm($form),
-            impressions = parseInt($form.find('*[name="impressions"]').val().replace(/,/g, "") || 0)
+            impressions = parseInt($form.find('*[name="impressions"]').val().replace(/,/g, "") || 0),
             bid = this.calc_bid(impressions, cpm),
             $bid = $form.find('*[name="bid"]')
         $bid.val(bid)
