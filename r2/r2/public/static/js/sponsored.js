@@ -142,8 +142,8 @@ r.sponsored = {
         return dates
     },
 
-    get_inventory_key: function(srname, geotarget) {
-        var inventoryKey = srname
+    get_inventory_key: function(srname, collection, geotarget) {
+        var inventoryKey = collection ? '#' + collection : srname
         if (geotarget.country != "") {
             inventoryKey += "/" + geotarget.country
         }
@@ -154,7 +154,7 @@ r.sponsored = {
     },
 
     get_check_inventory: function(srname, collection, geotarget, dates) {
-        var inventoryKey = this.get_inventory_key(srname, geotarget)
+        var inventoryKey = this.get_inventory_key(srname, collection, geotarget)
         var fetch = _.some(dates, function(date) {
             var datestr = $.datepicker.formatDate('mm/dd/yy', date)
             if (!(this.inventory[inventoryKey] && _.has(this.inventory[inventoryKey], datestr))) {
@@ -267,12 +267,13 @@ r.sponsored = {
             geotarget = {'country': country, 'region': region, 'metro': metro},
             dates = r.sponsored.get_dates(startdate, enddate),
             booked = this.get_booked_inventory($form, srname, geotarget, isOverride),
-            inventoryKey = this.get_inventory_key(srname, geotarget),
             collection = $form.find('input[name=collection]:checked').val();
 
         if (collection === 'none') {
             collection = null;
         }
+
+        var inventoryKey = this.get_inventory_key(srname, collection, geotarget);
 
 
 
