@@ -153,7 +153,7 @@ r.sponsored = {
         return inventoryKey
     },
 
-    get_check_inventory: function(srname, geotarget, dates) {
+    get_check_inventory: function(srname, collection, geotarget, dates) {
         var inventoryKey = this.get_inventory_key(srname, geotarget)
         var fetch = _.some(dates, function(date) {
             var datestr = $.datepicker.formatDate('mm/dd/yy', date)
@@ -172,6 +172,7 @@ r.sponsored = {
                 url: '/api/check_inventory.json',
                 data: {
                     sr: srname,
+                    collection: collection,
                     country: geotarget.country,
                     region: geotarget.region,
                     metro: geotarget.metro,
@@ -266,7 +267,14 @@ r.sponsored = {
             geotarget = {'country': country, 'region': region, 'metro': metro},
             dates = r.sponsored.get_dates(startdate, enddate),
             booked = this.get_booked_inventory($form, srname, geotarget, isOverride),
-            inventoryKey = this.get_inventory_key(srname, geotarget)
+            inventoryKey = this.get_inventory_key(srname, geotarget),
+            collection = $form.find('input[name=collection]:checked').val();
+
+        if (collection === 'none') {
+            collection = null;
+        }
+
+
 
         // bail out in state where targeting is selected but srname
         // has not been entered yet
@@ -275,7 +283,7 @@ r.sponsored = {
             return
         }
 
-        $.when(r.sponsored.get_check_inventory(srname, geotarget, dates)).then(
+        $.when(r.sponsored.get_check_inventory(srname, collection, geotarget, dates)).then(
             function() {
                 if (isOverride) {
                     // do a simple sum of available inventory for override
