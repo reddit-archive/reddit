@@ -28,6 +28,48 @@
     transition: @arguments;
 }
 
+.linear-gradient(@color1, @color2) {
+    background: @color1;
+    background: -moz-linear-gradient(top,  @color1 0%, @color2 100%);
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,@color1), color-stop(100%, @color2));
+    background: -webkit-linear-gradient(top,  @color1 0%, @color2 100%);
+    background: -o-linear-gradient(top,  @color1 0%, @color2 100%);
+    background: -ms-linear-gradient(top,  @color1 0%, @color2 100%);
+    background: linear-gradient(to bottom,  @color1 0%, @color2 100%);
+}
+
+.basic-button {
+    border-width: 1px;
+    border-style: solid;
+    border-radius: 5px;
+
+    &:focus {
+        outline: 0;
+        box-shadow: inset 0 0 0 1px fadeout(white, 65%);
+    }
+
+    &:active {
+        box-shadow: inset 0 1px 1px 1px fadeout(black, 90%);
+    }
+
+    &:disabled {
+        .linear-gradient(#e9edf1, #dce3ea) !important;
+        color: #999999 !important;
+        text-shadow: 0 1px 0 lighten(#dce3ea, 15%) !important;
+        border-color: darken(#dce3ea, 5%) !important;
+        box-shadow: none !important;
+    }
+}
+
+.button-style(@top-color, @bottom-color, @border-color) {
+    &:extend(.basic-button all);
+    .linear-gradient(@top-color, @bottom-color);
+    border-color: @border-color;
+    &:hover {
+        .linear-gradient(lighten(@top-color, 5%), @bottom-color);
+    }
+}
+
 @gold-fonts: Palatino, georgia, garamond, FreeSerif, serif;
 @gold-button-bg: #938870;
 @gold-button-hover: #B8AB90;
@@ -4671,6 +4713,13 @@ ul.tabmenu.formtab {
 .linefield span + span { 
     margin-left: 10px; 
 }
+
+.adbeta {
+    .campaign .linefield span + span {
+        margin-left: 0;
+    }
+}
+
 .linefield .info { 
     font-style: italic;
     color: red;
@@ -4741,6 +4790,7 @@ ul.tabmenu.formtab {
     padding-right: 20px;
 }
 
+.no-adbeta {
 .campaign { 
     border: 1px solid #336699; 
     background-color: #EFF7FF;
@@ -4749,6 +4799,7 @@ ul.tabmenu.formtab {
     -webkit-box-shadow: inset 0px 1px 0px hsla(0,0%,100%,.8), 0px 1px 0px hsla(0,0%,100%,.6);
     -moz-box-shadow: inset 0px 1px 0px hsla(0,0%,100%,.8), 0px 1px 0px hsla(0,0%,100%,.6);
     box-shadow: inset 0px 1px 0px hsla(0,0%,100%,.8), 0px 1px 0px hsla(0,0%,100%,.6);
+}
 }
 
 .campaign .status { 
@@ -4762,14 +4813,28 @@ ul.tabmenu.formtab {
     border: none;
 }
 
+.no-adbeta {
 .existing-campaigns  { 
     td.campaign-bid .bid-amount {
         display: block;
+    }
+}
+}
+
+.adbeta {
+.existing-campaigns {
+    td.campaign-bid span {
+        display: inline-block;
+        margin-right: 5px;
+        line-height: 20px;
+        margin-top: 3px;
+        vertical-align: top;
     }
 
     td.campaign-bid.paid {
         background: url(../green-check.png) no-repeat scroll center right;
     }
+}
 }
 
 .existing-campaigns tr.refund {
@@ -4777,32 +4842,60 @@ ul.tabmenu.formtab {
     font-weight: bold;
 }
 
+.no-adbeta {
 .prefright p.minimum-spend {
     padding-left: 1em;
     font-size: small;
     color: gray;
 }
+}
 
+.no-adbeta {
 .minimum-spend {
     display: inline;
     padding: 0 5px;
 }
+}
 
-.prefright p.minimum-spend.error {
+.no-adbeta .prefright p.minimum-spend.error,
+.adbeta .minimum-spend.error {
     font-weight: bold;
     color: red;
 }
 
-.existing-campaigns > table > tbody > tr > td { 
+.adbeta {
+.existing-campaigns table {
+    margin: 10px 0;
+}
+}
+
+.no-adbeta {
+.existing-campaigns > table > tbody > tr > td {
     text-align: center;
     border: 1px solid #369;
     padding: 5px;
     max-width: 120px;
 }
+}
+
+.adbeta {
+.existing-campaigns > table > tbody > tr > td {
+    border-bottom: 1px solid darken(white, 15%);
+    max-width: 120px;
+}
+}
+
 .existing-campaigns > table > tbody > tr#edit-campaign-tr > td { 
     text-align: left;
 }
 
+.adbeta {
+.existing-campaigns > table > tbody > tr#edit-campaign-tr > td {
+    padding: 0;
+}
+}
+
+.no-adbeta {
 .existing-campaigns > table > thead > tr > th { 
     text-align: center;
     font-weight: bold;
@@ -4818,16 +4911,35 @@ ul.tabmenu.formtab {
 .existing-campaigns > table > tbody > tr > td:last-child {
     border-right: none;
 }
+
 .existing-campaigns > table > thead > tr:last-child > th,
 .existing-campaigns > table > tbody > tr:last-child > td {
     border-bottom: none;
 }
+}
 
+.adbeta {
+#edit-campaign-tr .campaign-editor > .linefield {
+    border-radius: 0;
+    margin: 0;
+}
+
+.existing-campaigns > table > thead > tr > th {
+    @color: lighten(black, 45%);
+    font-weight: bold;
+    color: @color;
+    border-bottom: 1px solid lighten(@color, 20%);
+}
+}
+
+.adbeta, .no-adbeta {
 .existing-campaigns td > button {
     margin: 2px;
     padding: 2px 4px;
 }
+}
 
+.no-adbeta {
 .existing-campaigns {
     td.campaign-target,
     td.campaign-location {
@@ -4836,7 +4948,57 @@ ul.tabmenu.formtab {
         max-width: 100px;
     }
 }
+}
 
+.adbeta {
+.existing-campaigns {
+    .campaign-target,
+    .campaign-location {
+         overflow: hidden;
+         text-overflow: ellipsis;
+         max-width: 100px;
+     }
+
+    td, th {
+        padding: 8px 2px 5px 8px;
+    }
+
+    .campaign-start-date {
+        text-align: right;
+        padding-right: 7px;
+        padding-left: 8px;
+    }
+
+    .campaign-end-date,
+    .campaign-buttons,
+    .campaign-bid,
+    .campaign-duration,
+    .campaign-spent {
+        text-align: right;
+        padding-right: 8px;
+        padding-left: 2px;
+    }
+
+    thead {
+        .campaign-start-date,
+        .campaign-end-date,
+        .campaign-spent {
+            width: 10%;
+        }
+        .campaign-spent,
+        .campaign-priority,
+        .campaign-duration {
+            width: 8%;
+        }
+        .campaign-bid {
+            width: 12%;
+        }
+        .campaign-buttons {
+            width: 15%;
+        }
+    }
+}
+}
 
 .campaign .bid-info { font-size: x-small; }
 .campaign .bid-info.error { color: red; }
@@ -4849,6 +5011,7 @@ ul.tabmenu.formtab {
     margin-bottom: 5px;
 }
 
+.no-adbeta {
 .campaign .collection-targeting,
 .campaign .subreddit-targeting {
     margin-top: 10px;
@@ -4857,6 +5020,7 @@ ul.tabmenu.formtab {
         font-size: 12px;
         text-transform: uppercase;
     }
+}
 }
 
 .campaign .subreddit-targeting input{
@@ -4873,8 +5037,10 @@ ul.tabmenu.formtab {
     padding-top: 8px;
     width: 90px;
 }
+.no-adbeta {
 .linefield .campaign input[type=text] { 
     font-size: x-small; 
+}
 }
 
 .linefield-content .infotext {
@@ -5614,6 +5780,7 @@ div #campaign-field {
   width: auto;
 }
 
+.no-adbeta { // begin super long no-adbeta block
 .create-promotion .help { 
     font-size: x-small;
 }
@@ -5644,7 +5811,7 @@ div #campaign-field {
     margin: 0;
     color: black;
     border: 0;
-    background: none; 
+    background: none;
     padding: 0 5px;
 }
 .create-promotion h2 { margin-top: 10px; color: black; }
@@ -5682,10 +5849,26 @@ div #campaign-field {
     }
 }
 
-.fancy-settings h1, .create-promotion h2 { font-size: 200%; color: #999; margin: 10px 5px 0; font-weight: normal; }
-.fancy-settings h2 { font-size: 200%; font-weight:normal; color: #999; margin:10px 5px; }
-.fancy-settings h1 strong { font-weight:bold; color: #666;  }
-.create-promotion .sitetable { margin: 5px;  }
+.fancy-settings h1,
+.create-promotion h2 {
+    font-size: 200%;
+    color: #999;
+    margin: 10px 5px;
+    font-weight: normal;
+}
+.fancy-settings h2 {
+    font-size: 200%;
+    font-weight:normal;
+    color: #999;
+    margin: 10px 5px;
+}
+.fancy-settings h1 strong {
+    font-weight:bold;
+    color: #666;
+}
+.create-promotion .sitetable {
+    margin: 5px;
+}
 
 .editor footer.buttons {
     text-align: right;
@@ -5885,6 +6068,616 @@ div #campaign-field {
 
 .create-promotion .hidden { display: none; }
 button.new-campaign:disabled { color: gray; }
+} // end of super-long .no-adbeta block
+
+.adbeta { // begin super-long .adbeta block
+#promo-form {
+    .linefield {
+        width: auto;
+    }
+
+    .usertext-edit {
+        width: auto;
+    }
+}
+
+.form-group {
+    display: block;
+
+    > label,
+    > .label,
+    > .label-group {
+        display: inline-block;
+     }
+ 
+    > .label-group > .label {
+        display: block;
+    }
+}
+
+.input-group {
+    display: inline-block;
+    vertical-align: top;
+}
+
+.checkbox-group,
+.radio-group {
+    font-size: 14px;
+    line-height: 20px;
+
+    .form-group {
+        margin: 5px 0;
+    }
+
+    input[type=radio],
+    input[type=checkbox] {
+        font-size: 20px;
+        line-height: 20px;
+        margin-right: 10px;
+        margin-left: 1px;
+    }
+}
+
+.radio-group {
+    .label-group,
+    .label,
+    input[type=radio] {
+        vertical-align: middle;
+    }
+}
+
+.dashboard {
+    header {
+        position: relative;
+        margin-bottom: 10px;
+    }
+}
+
+.campaign {
+    .checkbox-group,
+    .radio-group,
+    .form-group,
+    .select-group,
+    .targeting {
+        margin-bottom: 10px;
+        > .label:first-child {
+            width: 100px;
+            margin-right: 10px;
+            text-transform: uppercase;
+            font-size: 12px;
+            color: lighten(black, 40%);
+            letter-spacing: 0.6px;
+        }
+    }
+ 
+    .radio-group .form-group {
+        margin-bottom: 5px;
+    }
+
+    .targeting-field .radio-group {
+        .label-group,
+        input[type=radio] {
+            vertical-align: middle;
+        }
+
+        .label-group {
+            font-size: 15px;
+        }
+
+        .label-group small {
+            font-size: 0.67em;
+        }
+    }
+
+    .targeting-field .target-group {
+        display: flex;
+
+        > .group {
+            flex-basis: 0;
+            flex-grow: 1;
+        }
+    }
+
+    .budget-field,
+    .timing-field {
+        .group {
+            display: flex;
+            margin-bottom: 10px;
+        }
+
+        .form-group {
+            flex-basis: 0;
+            flex-grow: 1;
+            label, .label {
+                display: block;
+            }
+        }
+    }
+
+    .display-text {
+        font-size: 16px;
+        font-weight: bold;
+        line-height: 20px;
+        margin: 5px 0;
+    }
+
+    .budget-field {
+        .group {
+            margin-bottom: 10px;
+        }
+    }
+}
+
+.create-promotion {
+    @bg-color: lighten(#cee3f8, 5%);
+    width: 800px;
+    margin: auto;
+    color: lighten(black, 5%);
+
+    textarea,
+    input[type=text] {
+        width: 100%;
+        .box-sizing(border-box);
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    .help p {
+        margin: 0;
+    }
+
+    .help a.help {
+        font-weight: bold;
+        text-decoration: none;
+        float: right;
+        color: orangered;
+    }
+
+    h2 {
+        margin: 20px 0 5px;
+        font-size: 200%;
+        color: lighten(black, 40%);
+        font-weight: normal;
+    }
+
+    .infobar {
+        margin: 5px 0;
+        padding: 0;
+        background: transparent;
+        border: 0;
+        color: lighten(black, 25%);
+
+        a {
+            white-space: nowrap;
+        }
+    }
+
+    .post-type-field,
+    .targeting-feild {
+        .radio-group {
+            .label-group {
+                font-size: 15px;
+            }
+            .label-group small {
+                font-size: 0.67em;
+            }
+        }
+    }
+
+    .post-type-field {
+        .radio-group {
+            overflow: auto;
+        }
+        .form-group {
+            float: left;
+            width: 33%;
+        }
+    }
+
+    > header {
+        margin: 10px;
+    }
+
+    .rules {
+        float: left;
+        font-size: 13px;
+        line-height: 30px;
+    }
+
+    .primary-button {
+        @color2: lighten(#FF4500, 15%);
+        @color1: lighten(@color2, 7%);
+        .button-style(@color1, @color2, darken(@color2, 10%));
+        
+        color: white;
+        text-shadow: 0 1px 0 darken(@color2, 10%);
+    }
+
+    button {
+        @color: desaturate(darken(#CEE3F8, 5%), 15%);
+        .button-style(@color, darken(@color, 5%), darken(@color, 15%));
+        
+        margin: 0;
+        padding: 5px 20px;
+        font-size: 12px;
+        font-weight: bold;
+        color: lighten(#369, 5%);
+        text-shadow: 0 1px 0 lighten(#369, 45%);
+        vertical-align: text-top;
+    }
+
+    .new-campaign {
+        position: absolute;
+        right: 0;
+        top: 10px;
+        padding: 10px 15px;
+        font-size: 13px;
+    }
+
+    .campaign-buttons,
+    .campaign-bid {
+        button {
+            font-size: 10px;
+            font-weight: normal;
+            border-top-width: 1px;
+            box-shadow: none;
+            margin-bottom: 0;
+            &:active {
+                box-shadow: inset 0 1px 0 1px fadeout(black, 90%);
+            }
+            &:hover, &:active {
+                margin-bottom: 0;
+            }
+        }
+    }
+
+    .editor-group {
+        position: relative;
+        @background-color: darken(#FFFFFF, 1%);
+        background: @bg-color;
+        margin: 0 0 10px;
+        border-radius: 2px;
+        font-size: 15px;
+        line-height: 20px;
+
+        footer {
+            margin: 0 20px;
+            padding: 10px 0;
+        }
+    }
+
+    .promotelink-editor {
+        .collapsed-display {
+            .linefield {
+                border-bottom: 0;
+                padding-bottom: 0;
+            }
+        }
+        .thing {
+            border-color: darken(@bg-color, 10%);
+            font-size: 10px;
+
+            .title {
+                padding: 0;
+                font-weight: normal;
+            }
+
+            .rank {
+                display: none;
+            }
+
+            .flat-list.buttons {
+                text-align: left;
+            }
+
+            a.thumbnail {
+                line-height: 0;
+            }
+        }
+    }
+
+    .dashboard {
+        padding: 20px;
+        border-bottom: 2px solid #ccc;
+    }
+
+    .campaign-editor {
+        @color: #f8f8f8;
+
+        .editor-group {
+            background: transparent;
+            background: @color;
+            border: none;
+            box-shadow: none;
+            font-size: 13px;
+
+            >.linefield > .title:before {
+                background: darken(#f7f7f7, 10%);
+                margin-right: 0;
+            }
+
+            >.linefield > .title {
+                color: lighten(black, 40%);
+            }
+
+            .linefield {
+                border-bottom-color: darken(#FFFFFF, 10%);
+            }
+        }
+
+    }
+
+    .campaign-list-editor {
+        > .editor-group > .linefield {
+            border-bottom: 0;
+            padding-bottom: 10px;
+
+            .help {
+               font-size: 12px;
+               margin-right: 120px;
+            }
+        }
+    }
+
+    .campaign-list {
+        padding-bottom: 5px;
+    }
+
+    .editor {
+        @background-color: #CEE3F8;
+        .image-field {
+            input[type=file] {
+                margin-top: 10px;
+                margin-left: 0;
+            }
+            button.submit-img {
+                position: absolute;
+                bottom: 10px;
+                right: 20px;
+            }
+        }
+        .image-field.has-image {
+            .linefield-content {
+                margin-left: 110px;
+            }
+            .img-preview-container {
+                position: absolute;
+                left: 20px;
+                top: 45px;
+                margin: 0;
+                padding: 5px;
+                img {
+                    display: block;
+                }
+                br {
+                    display: none;
+                }
+            }
+        }
+
+        textarea,
+        input[type=text],
+        .date-input input,
+        .linefield {
+            border-radius: 2px;
+            font-size: 15px;
+            line-height: 20px;
+        }
+
+        textarea,
+        input[type=text],
+        .date-input input {
+            border: 1px solid;
+            border-color: darken(white, 25%) darken(white, 20%) darken(white, 15%);
+            background: darken(white, 1%);
+            padding: 5px 10px;
+
+            &:focus {
+                background: white;
+                border-color: lighten(#369, 15%);
+                outline: none;
+                box-shadow: 0 0 3px white;
+            }
+
+            &:disabled {
+                box-shadow: none;
+                color: darken(white, 40%);
+                border-color: darken(white, 20%);
+                background: darken(white, 2%);
+            }
+        }
+
+        input[type=text],
+        .date-input input {
+            padding: 5px;
+            box-shadow: inset 0 1px 0 1px darken(white, 5%);
+            font-size: 15px;
+        }
+
+        textarea {
+            resize: vertical;
+            padding: 10px;
+            box-shadow: inset 0 2px 0 1px darken(white, 5%);
+        }
+
+        .date-input .datepicker {
+            @color: lighten(#369, 30%);
+            text-shadow: none;
+            border-color: @color;
+
+            .ui-corner-all,
+            & {
+                border-radius: 2px;
+            }
+
+            .ui-datepicker-header,
+            .ui-datepicker-calendar,
+            td,
+            th,
+            th span {
+                box-shadow: none;
+                border-color: @color;
+            }
+
+            table,
+            th {
+                border: 0;
+            }
+
+            th span {
+                font-size: 12px;
+                font-weight: normal;
+                background: transparent;
+                height: auto;
+            }
+
+            td a,
+            td span {
+                box-shadow: none;
+                font-size: 15px;
+                width: 100%;
+                box-sizing: border-box;
+                text-align: right;
+            }
+
+            .ui-datepicker-today span {
+                background: lighten(@color, 5%);
+                box-shadow: none;
+                text-shadow: none;
+            }
+
+            a {
+                text-shadow: none;
+            }
+
+            a.ui-state-active {
+                background: lighten(orangered, 50%);
+                color: orangered;
+                text-shadow: none;
+            }
+
+            a.ui-state-hover {
+                text-shadow: none;
+                border-color: darken(@color, 5%);
+            }
+
+        }
+
+        .linefield {
+            width: auto;
+            padding: 20px 0;
+            margin: 0 20px;
+            border-radius: 0;
+            border-bottom: 1px solid darken(@bg-color, 10%);
+            background: transparent;
+            font-size: 15px;
+
+            span {
+                font-size: inherit;
+            }
+
+            &:last-child {
+                border-bottom: none;
+            }
+            > .linefield-content {
+                padding: 0;
+            }
+
+            > .title {
+                padding: 0;
+                display: block;
+                margin: 5px 0;
+                color: #369;
+                font-size: 15px;
+
+                &:before {
+                    position: absolute;
+                    width: 20px;
+                    height: 20px;
+                    right: 100%;
+                    border-radius: 10px;
+                    background: darken(@bg-color, 5%);
+                    margin-right: -10px;
+                }
+            }
+        }
+
+        > .linefield {
+            padding: 0;
+            background: transparent;
+            border: 0;
+        }
+
+        > .linefield > .title {
+            font-weight: normal;
+            font-size: 18px;
+            line-height: 20px;
+            margin: 10px;
+            color: saturate(darken(#369, 10%), 100%);
+        }
+
+        .buttons {
+            text-align: right;
+            button {
+                margin-left: 5px;
+            }
+        }
+
+        .infotext {
+            border: 0;
+            background: transparent;
+            font-style: italic;
+            color: grey;
+            padding: 0;
+            font-size: 13px;
+            line-height: 20px;
+            box-shadow: none;
+        }
+    }
+
+    .text-field {
+        textarea {
+            font-size: 13px;
+        }
+    }
+
+    .existing-campaigns {
+        .campaign-editor .editor-group {
+            margin-bottom: 10px;
+            border-radius: 0;
+        }
+
+        .campaign-editor footer {
+            margin-bottom: 10px;
+        }
+
+        .campaign {
+            border: 0;
+        }
+    }
+
+    .help {
+        font-size: 13px;
+    }
+
+    .campaign-dashboard header {
+        .error, .help {
+            margin-right:  150px;
+        }
+    }
+}
+
+.geotargeting-disabled {
+    font-size: 12px;
+    color: grey;
+}
+
+.fancy-settings h1 { font-size: 200%; color: #999; margin:10px 5px; }
+.fancy-settings h2 { font-size: 200%; font-weight:normal; color: #999; margin:10px 5px; }
+.fancy-settings h1 strong { font-weight:bold; color: #666;  }
+}
 
 .bidding-history { 
     padding-top: 5px; 

@@ -3547,6 +3547,11 @@ class PromotePage(Reddit):
     searchbox          = False
 
     def __init__(self, nav_menus = None, *a, **kw):
+        extra_page_classes = []
+        if feature.is_enabled('promote_redesign'):
+            extra_page_classes.append('adbeta')
+        else:
+            extra_page_classes.append('no-adbeta')
         buttons = [NamedButton('new_promo')]
         if c.user_is_sponsor:
             buttons.append(NamedButton('roadblock'))
@@ -3570,7 +3575,8 @@ class PromotePage(Reddit):
             nav_menus = [menu]
 
         kw['show_sidebar'] = False
-        Reddit.__init__(self, nav_menus = nav_menus, *a, **kw)
+        Reddit.__init__(self, nav_menus=nav_menus,
+                        extra_page_classes=extra_page_classes, *a, **kw)
 
 class PromoteLinkNew(Templated):
     pass
