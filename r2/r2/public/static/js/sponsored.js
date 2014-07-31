@@ -19,9 +19,111 @@ r.sponsored = {
         this.userIsSponsor = userIsSponsor
     },
 
+    setup_collection_selector: function() {
+        var $collectionSelector = $('.collection-selector');
+        var $collectionList = $('.form-group-list');
+        var $collections = $collectionList.find('.form-group .label-group');
+        var collectionCount = $collections.length;
+        var collectionHeight = $collections.eq(0).outerHeight();
+        var $subredditList = $('.collection-subreddit-list ul');
+        var $subredditListLabel = $('.collection-subreddit-list .label');
+
+        var subredditNameTemplate = _.template('<% _.each(sr_names, function(name) { %>'
+            + ' <li><%= name %></li> <% }); %>');
+        var render_subreddit_list = _.bind(function(collection) {
+            if (collection === 'none' || 
+                    typeof this.collectionsByName[collection] === 'undefined') {
+                return '';
+            }
+            else {
+                return subredditNameTemplate(this.collectionsByName[collection]);
+            }
+        }, this);
+
+        var collapse = _.bind(function() {
+            this.collapse_collection_selector();
+            this.fill_campaign_editor();
+        }, this);
+        
+        this.collapse_collection_selector = function collapse_widget() {
+            $('body').off('click', collapse);
+            var $selected = get_selected();
+            var index = $collections.index($selected);
+            $collectionSelector.addClass('collapsed').removeClass('expanded');
+            $collectionList.innerHeight(collectionHeight)
+                .css('top', -collectionHeight * index);
+            var val = $collectionList.find('input[type=radio]:checked').val();
+            var subredditListItems = render_subreddit_list(val);
+            var subredditListLabelText = (subredditListItems) ?
+                'includes these subreddits and more!' :
+                'subreddits included on the frontpage are based on users\' subscriptions';
+            $subredditList.html(subredditListItems);
+            $subredditListLabel.text(subredditListLabelText);
+        }
+
+        function expand() {
+            $('body').on('click', collapse);
+            $collectionSelector.addClass('expanded').removeClass('collapsed');
+            $collectionList
+                .innerHeight(collectionCount * collectionHeight)
+                .css('top', 0);
+        }
+
+        function get_selected() {
+            return $collectionList.find('input[type=radio]:checked')
+                .siblings('.label-group')
+        }
+
+        $collectionSelector
+            .removeClass('uninitialized')
+            .on('click', '.label-group', function(e) {
+                if ($collectionSelector.is('.collapsed')) {
+                    // necessary to prevent event propagation from re-collapsing
+                    setTimeout(expand, 0);
+                }
+                else {
+                    // necessary, as this fires before the input actually 
+                    // changes state
+                    setTimeout(collapse, 0);
+                }
+            });
+
+        collapse();
+    },
+
     setup_geotargeting: function(regions, metros) {
         this.regions = regions
         this.metros = metros
+    },
+
+    setup_collections: function(collections, defaultValue) {
+        defaultValue = defaultValue || 'none';
+
+        this.collections = [{
+            name: 'none', 
+            sr_names: null, 
+            description: 'display your ad on the homepage to anyone',
+        }].concat(collections || []);
+
+        this.collectionsByName = _.reduce(collections, function(obj, item) {
+            obj[item.name] = item;
+            return obj;
+        }, {});
+
+        var template = _.template('<label class="form-group">'
+          + '<input type="radio" name="collection" value="<%= name %>"'
+          + '    <% print(name === \'' + defaultValue + '\' ? "checked=\'checked\'" : "") %>/>'
+          + '  <div class="label-group">'
+          + '    <span class="label"><% print(name === \'none\' ? \'frontpage\' : name) %></span>'
+          + '    <small class="description"><%= description %></small>'
+          + '  </div>'
+          + '</label>');
+
+        var rendered = _.map(this.collections, template).join('');
+        $(_.bind(function() {
+            $('.collection-selector .form-group-list').html(rendered);
+            this.setup_collection_selector();
+        }, this))
     },
 
     get_dates: function(startdate, enddate) {
@@ -63,7 +165,6 @@ r.sponsored = {
             dates.sort(function(d1,d2){return d1 - d2})
             var end = new Date(dates[dates.length-1].getTime())
             end.setDate(end.getDate() + 5)
-
             return $.ajax({
                 type: 'GET',
                 url: '/api/check_inventory.json',
@@ -153,7 +254,7 @@ r.sponsored = {
             enddate = $form.find('*[name="enddate"]').val(),
             ndays = this.get_duration($form),
             daily_request = Math.floor(requested / ndays),
-            targeted = $form.find('#targeting').is(':checked'),
+            targeted = $form.find('#subreddit_targeting').is(':checked'),
             target = $form.find('*[name="sr"]').val(),
             srname = targeted ? target : '',
             canGeotarget = !targeted || this.userIsSponsor,
@@ -321,17 +422,18 @@ r.sponsored = {
         }
 
         if (!this.userIsSponsor) {
-            var isTargeted = $form.find('#targeting').is(':checked')
+            var geotargetingEnabled = $form.find('#collection_targeting').is(':checked') &&
+                $('.collection-selector input[name="collection"][value="none"]').is(':checked')
             var $geotargetRow = $('.geotargeting-selects')
 
-            if (isTargeted) {
-                $geotargetRow.find('select').prop('disabled', true)
-                $geotargetRow.hide()
-                $('.geotargeting-disabled').show()
-            } else {
+            if (geotargetingEnabled) {
                 $geotargetRow.find('select').prop('disabled', false)
                 $geotargetRow.show()
                 $('.geotargeting-disabled').hide()
+            } else {
+                $geotargetRow.find('select').prop('disabled', true)
+                $geotargetRow.hide()
+                $('.geotargeting-disabled').show()
             }
         }
     },
@@ -356,13 +458,15 @@ r.sponsored = {
         $('.budget-field').css('display', 'block');
     },
 
-    targeting_on: function() {
-        $('.targeting').find('*[name="sr"]').prop("disabled", false).end().slideDown();
+    subreddit_targeting: function() {
+        $('.subreddit-targeting').find('*[name="sr"]').prop("disabled", false).end().slideDown();
+        $('.collection-targeting').find('*[name="collection"]').prop("disabled", true).end().slideUp();
         this.fill_campaign_editor()
     },
 
-    targeting_off: function() {
-        $('.targeting').find('*[name="sr"]').prop("disabled", true).end().slideUp();
+    collection_targeting: function() {
+        $('.subreddit-targeting').find('*[name="sr"]').prop("disabled", true).end().slideUp();
+        $('.collection-targeting').find('*[name="collection"]').prop("disabled", false).end().slideDown();
         this.fill_campaign_editor()
     },
 
@@ -623,18 +727,26 @@ function edit_campaign($campaign_row) {
 
             /* check if targeting is turned on */
             var targeting = $campaign_row.data("targeting"),
-                radios = campaign.find('*[name="targeting"]');
-            if (targeting) {
+                radios = campaign.find('*[name="targeting"]'),
+                isCollection = ($campaign_row.data("targeting-collection") === "True"),
+                collectionTargeting = isCollection ? targeting : 'none';
+            if (targeting && !isCollection) {
                 radios.filter('*[value="one"]')
                     .prop("checked", "checked");
                 campaign.find('*[name="sr"]').val(targeting).prop("disabled", false).end()
-                    .find(".targeting").show();
+                    .find(".subreddit-targeting").show().end()
+                    .find(".collection-targeting").hide();
             } else {
-                radios.filter('*[value="none"]')
+                radios.filter('*[value="collection"]')
+                    .prop("checked", "checked");
+                $('.collection-targeting input[value="' + collectionTargeting + '"]')
                     .prop("checked", "checked");
                 campaign.find('*[name="sr"]').val("").prop("disabled", true).end()
-                    .find(".targeting").hide();
+                    .find(".subreddit-targeting").hide().end()
+                    .find(".collection-targeting").show();
             }
+
+            r.sponsored.collapse_collection_selector();
 
             /* set geotargeting */
             var country = $campaign_row.data("country"),
@@ -684,16 +796,23 @@ function create_campaign() {
 
             init_startdate();
             init_enddate();
+
             $("#campaign")
+                .find(".collection-targeting").show().end()
+                .find('input[name="collection"]').eq(0).prop("checked", "checked").end().end()
+                .find('input[name="collection"]').slice(1).prop("checked", false).end().end()
+                .find('.collection-selector .form-group-list').css('top', 0).end()
                 .find('button[name="save"]').hide().end()
                 .find('button[name="create"]').show().end()
                 .find('input[name="campaign_id36"]').val('').end()
                 .find('input[name="campaign_name"]').val('').end()
                 .find('input[name="sr"]').val('').prop("disabled", true).end()
-                .find('input[name="targeting"][value="none"]').prop("checked", "checked").end()
+                .find('input[name="collection"]').val('').prop("disabled", false).end()
+                .find('input[name="targeting"][value="collection"]').prop("checked", "checked").end()
                 .find('input[name="priority"][data-default="true"]').prop("checked", "checked").end()
                 .find('input[name="bid"]').val(defaultBid).end()
-                .find(".targeting").hide().end()
+                .find(".subreddit-targeting").hide().end()
+                .find(".collection-targeting").show().end()
                 .find('select[name="country"]').val('').end()
                 .find('select[name="region"]').hide().end()
                 .find('select[name="metro"]').hide().end()

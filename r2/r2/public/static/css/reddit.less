@@ -4849,16 +4849,17 @@ ul.tabmenu.formtab {
     margin-bottom: 5px;
 }
 
-.campaign .targeting {
+.campaign .collection-targeting,
+.campaign .subreddit-targeting {
     margin-top: 10px;
     margin-left: 110px;
-    .label {
+    > .label {
         font-size: 12px;
         text-transform: uppercase;
     }
 }
 
-.campaign .targeting input{
+.campaign .subreddit-targeting input{
     width: 95%;
     border-radius: 7px;
 }
@@ -4897,6 +4898,115 @@ ul.tabmenu.formtab {
 .geotargeting-disabled {
     font-size: 13px;
     color: grey;
+}
+
+.collection-selector {
+    position: relative;
+    width: 400px;
+    height: 30px;
+    z-index: 100;
+
+    .widget-container {
+        width: 100%;
+        background: #fff;
+        border: 1px solid #2E6399;
+        border-radius: 5px;
+        overflow: hidden;
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+    
+    .form-group-list {
+        position: relative;
+
+        transition: all 0.2s;
+    }
+
+    .form-group {
+        display: block;
+        padding: 0;
+        margin: 0;
+
+        > input[type=radio] {
+            display: none;
+        }
+
+        > .label-group {
+            height: 30px;
+            width: 100%;
+            padding: 5px 10px;
+            box-sizing: border-box;
+            cursor: pointer;
+            color: #2E6399;
+
+            transition: background 0.2s;
+
+            &:hover {
+                background: #E4EDF7;
+            }
+
+            .label {
+                font-weight: bold;
+            }
+            .description {
+                margin-left: 5px;
+            }
+        }
+
+        > input[type=radio]:checked + .label-group {
+            background: #CEE3F8;
+            display: block;
+            box-shadow: inset 0 1px 0 #fff;
+        }
+    }
+
+    .selected-style() {
+        background-color: #0000FF;
+        color: #FFF;
+        box-shadow: none;
+    }
+    
+    &.expanded .form-group {
+        > input[type=radio]:checked + .label-group {
+            .selected-style();
+        }
+    }
+
+    &.uninitialized {
+        .form-group {
+            > .label-group {
+                display: none;
+            }
+
+            > input[type=radio]:checked + .label-group {
+                display: block;
+            }
+        }
+        &:hover .form-group {
+            > .label-group {
+                display: block;
+            }
+            
+            > input[type=radio]:checked + .label-group {
+                .selected-style();
+            }
+        }
+    }
+}
+
+.collection-subreddit-list {
+    font-size: 13px;
+    .label {
+        margin: 5px 0;
+        color: grey;
+    }
+    ul {
+        li {
+            display: inline-block;
+            margin-right: 5px;
+        }
+    }
 }
 
 /***traffic stuff***/
@@ -5699,7 +5809,6 @@ div #campaign-field {
 
     .priority-field, 
     .targeting-field {
-        .radio-group,
         .radio-group {
             > .form-group,
             > .label {
@@ -5712,11 +5821,21 @@ div #campaign-field {
             > .label {
                 .campaign-dashboard-label();
             }
+        }
 
-            > div, > .form-group {
+        .linefield-content {
+            > .radio-group > .form-group,
+            > .target-group > div,
+            > .select-group > div {
                 margin-left: 110px;
                 margin-bottom: 5px;
             }
+        }
+    }
+
+    .targeting-field {
+        .linefield-content .target-group > div {
+            margin-bottom: 10px;
         }
     }
 

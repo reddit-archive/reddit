@@ -78,6 +78,7 @@ from r2.models.promo import (
     PROMOTE_PRIORITIES,
     PromotedLinkRoadblock,
     PromotionLog,
+    Collection,
 )
 from r2.models.token import OAuth2Client, OAuth2AccessToken
 from r2.models import traffic
@@ -3683,6 +3684,11 @@ class PromoteLinkEdit(Templated):
                             self.metros[region_code].append(metro_tuple)
                         self.metros[region_code].sort(key=location_sort)
                 self.regions[code].sort(key=location_sort)
+        
+        self.collections = []
+            
+        for cl in Collection.get_all():
+            self.collections.append(cl.__dict__)    
 
         user_srs = Subreddit.user_subreddits(c.user, ids=False)
         user_srs = filter(lambda sr: sr.can_submit(c.user, promotion=True),

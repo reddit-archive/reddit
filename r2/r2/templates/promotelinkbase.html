@@ -39,6 +39,7 @@
                     ${simplejson.dumps(c.user_is_sponsor)});
   r.sponsored.setup_geotargeting(${unsafe(simplejson.dumps(thing.regions))},
                                  ${unsafe(simplejson.dumps(thing.metros))});
+  r.sponsored.setup_collections(${unsafe(simplejson.dumps(thing.collections))});
 </script>
 </%def>
 
@@ -349,35 +350,46 @@
 
 <%def name="targeting_field()">
   <%utils:line_field title="${_('targeting')}" css_class="rounded targeting-field">
-    <div class="target-group">
-      <div class="radio-group group">
-        <span class="label">target</span>
-        <label class="form-group">
-          <input id="no_targeting" class="nomargin"
-                 type="radio"  value="none" name="targeting"
-                 onclick="r.sponsored.targeting_off()"
-                 checked="checked">
-          <div class="label-group">
-            <span class="label">${_("frontpage")}</span>
-            <small class="label">${_("displayed on the home page to anyone")}</small>
-          </div>
-        </label>
-        <label class="form-group">
-          <input id="targeting" class="nomargin"
-                 type="radio"  value="one" name="targeting"
-                 onclick="r.sponsored.targeting_on()">
-          <div class="label-group">
-            <span class="label">${_("targeted")}</span>
-            <small class="label">${_("targets a subreddit and its subscribers")}</small>
-          </div>
-        </label>
-      </div>
-      <div class="group">
-        <div class="targeting" style="display:none">
-          <span class="label">subreddit</span>
-          ${error_field("OVERSOLD", "sr", "div")}
-          ${thing.subreddit_selector}
+    <div class="radio-group group">
+      <span class="label">target</span>
+      <label class="form-group">
+        <input id="collection_targeting" class="nomargin"
+               type="radio" value="collection" name="targeting"
+               onclick="r.sponsored.collection_targeting()"
+               checked="checked">
+        <div class="label-group">
+          <span class="label">${_("collection")}</span>
+          <small class="label">${_("targets a collection of similar subreddits")}</small>
         </div>
+      </label>
+      <label class="form-group">
+        <input id="subreddit_targeting" class="nomargin"
+               type="radio" value="one" name="targeting"
+               onclick="r.sponsored.subreddit_targeting()">
+        <div class="label-group">
+          <span class="label">${_("targeted")}</span>
+          <small class="label">${_("targets a subreddit and its subscribers")}</small>
+        </div>
+      </label>
+    </div>
+    <div class="target-group group">
+      <div class="collection-targeting">
+        <span class="label">${_("collection")}</span>
+        <div class="collection-selector uninitialized">
+          <div class="widget-container">
+            <div class="form-group-list">
+            </div>
+          </div>
+        </div>
+        <div class="collection-subreddit-list">
+          <div class="label"></div>
+          <ul></ul>
+        </div>
+      </div>
+      <div class="subreddit-targeting" style="display:none">
+        <span class="label">subreddit</span>
+        ${error_field("OVERSOLD", "sr", "div")}
+        ${thing.subreddit_selector}
       </div>
     </div>
     <div class="select-group">
