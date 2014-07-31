@@ -3224,6 +3224,8 @@ class ApiController(RedditController):
     )
     @api_doc(api_section.flair, uses_site=True)
     def GET_flairlist(self, num, after, reverse, count, user):
+        if user and user._deleted:
+            return self.abort403()
         flair = FlairList(num, after, reverse, '', user)
         return BoringPage(_("API"), content = flair).render()
 
@@ -3346,6 +3348,10 @@ class ApiController(RedditController):
                          or c.site.is_moderator_with_perms(c.user, 'flair')):
             # ignore user parameter if c.user is not mod/admin
             user = None
+        # Don't leak old flair for deleted users
+        if user and user._deleted:
+            abort(403)
+
         return FlairSelector(user=user).render()
 
     @require_oauth2_scope("flair")

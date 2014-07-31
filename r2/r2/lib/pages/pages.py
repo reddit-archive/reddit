@@ -3288,6 +3288,7 @@ class FlairList(Templated):
             next_page = None
         uids = [row._thing2_id for row in flair_rows]
         users = Account._byID(uids, data=True)
+        users = {id: u for id, u in users.iteritems() if not u._deleted}
         result = [FlairListRow(users[row._thing2_id])
                   for row in flair_rows if row._thing2_id in users]
         links = []
