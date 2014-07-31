@@ -570,6 +570,8 @@ class ApiController(RedditController):
 
             amqp.add_item('new_account', user._fullname)
 
+            hooks.get_hook("account.registered").call(user=user)
+
             reject = hooks.get_hook("account.spotcheck").call(account=user)
             if any(reject):
                 return

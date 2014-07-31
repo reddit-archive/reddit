@@ -20,14 +20,17 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+from r2.lib.db import tdb_cassandra
 from r2.lib.errors import MessageError
 from r2.lib.utils import tup, fetch_things2
 from r2.lib.filters import websafe
+from r2.lib.hooks import HookRegistrar
 from r2.lib.log import log_text
 from r2.models import Account, Message, Report, Subreddit
 from r2.models.award import Award
 from r2.models.gold import append_random_bottlecap_phrase, creddits_lock
 from r2.models.token import AwardClaimToken
+from r2.models.wiki import WikiPage
 
 from _pylibmc import MemcachedError
 from pylons import g, c, config
@@ -35,6 +38,8 @@ from pylons.i18n import _
 
 from datetime import datetime, timedelta
 from copy import copy
+
+hooks = HookRegistrar()
 
 class AdminTools(object):
 
@@ -405,6 +410,35 @@ def filter_quotas(unfiltered):
         return baskets, None
 
 
+def wiki_template(template_slug, sr=None):
+    """Pull content from a subreddit's wiki page for internal use."""
+    if not sr:
+        sr = Subreddit._by_name(g.default_sr)
+
+    try:
+        wiki = WikiPage.get(sr, "templates/%s" % template_slug)
+    except tdb_cassandra.NotFound:
+        return None
+
+    return wiki._get("content")
+
+
+@hooks.on("account.registered")
+def send_welcome_message(user):
+    welcome_title = wiki_template("welcome_title").format(
+        username=user.name,
+    )
+    welcome_message = wiki_template("welcome_message").format(
+        username=user.name,
+    )
+
+    if not welcome_title or not welcome_message:
+        g.log.warning("Unable to send welcome message: invalid wiki templates.")
+        return
+
+    return send_system_message(user, welcome_title, welcome_message)
+
+
 def send_system_message(user, subject, body, system_user=None,
                         distinguished='admin', repliable=False):
     from r2.lib.db import queries
@@ -427,6 +461,7 @@ def send_system_message(user, subject, body, system_user=None,
     except MemcachedError:
         raise MessageError('reddit_inbox')
 
+hooks.register_all()
 
 if config['r2.import_private']:
     from r2admin.models.admintools import *
