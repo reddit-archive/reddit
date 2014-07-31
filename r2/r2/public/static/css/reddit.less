@@ -5066,16 +5066,17 @@ ul.tabmenu.formtab {
     color: grey;
 }
 
+.adbeta, .no-adbeta {
 .collection-selector {
     position: relative;
-    width: 400px;
-    height: 30px;
+    width: 100%;
+    height: 50px;
     z-index: 100;
 
     .widget-container {
         width: 100%;
         background: #fff;
-        border: 1px solid #2E6399;
+        border: 1px solid #CECECE;
         border-radius: 5px;
         overflow: hidden;
         position: absolute;
@@ -5085,57 +5086,76 @@ ul.tabmenu.formtab {
     
     .form-group-list {
         position: relative;
-
         transition: all 0.2s;
-    }
-
-    .form-group {
-        display: block;
-        padding: 0;
-        margin: 0;
-
-        > input[type=radio] {
-            display: none;
-        }
-
-        > .label-group {
-            height: 30px;
-            width: 100%;
-            padding: 5px 10px;
-            box-sizing: border-box;
-            cursor: pointer;
-            color: #2E6399;
-
-            transition: background 0.2s;
-
-            &:hover {
-                background: #E4EDF7;
-            }
-
-            .label {
-                font-weight: bold;
-            }
-            .description {
-                margin-left: 5px;
-            }
-        }
-
-        > input[type=radio]:checked + .label-group {
-            background: #CEE3F8;
+        
+        .form-group {
             display: block;
-            box-shadow: inset 0 1px 0 #fff;
+            padding: 0;
+            margin: 0;
+
+            > input[type=radio] {
+                display: none;
+            }
+
+            > .label-group {
+                height: 50px;
+                width: 100%;
+                padding: 5px 10px;
+                box-sizing: border-box;
+                cursor: pointer;
+                color: #404040;
+
+                &:hover {
+                    background: #E4EDF7;
+                }
+
+                .label {
+                    font-size: 15px;
+                }
+                .description {
+                    font-size: 10px;
+                }
+            }
+
+            > input[type=radio]:checked + .label-group {
+                background: #FFFFFF;
+                display: block;
+            }
         }
     }
+
 
     .selected-style() {
-        background-color: #0000FF;
+        background-color: #4A90E2;
         color: #FFF;
         box-shadow: none;
     }
     
-    &.expanded .form-group {
-        > input[type=radio]:checked + .label-group {
-            .selected-style();
+    &.expanded {
+        .form-group {
+            > input[type=radio]:checked + .label-group {
+                .selected-style();
+            }
+
+        }
+    }
+    &.collapsed {
+        input[type=radio]:checked + .label-group {
+            box-shadow: inset 0 -1px 0 1px #f2f2f2
+        }
+        .widget-container:before {
+            display: block;
+            content: "";
+            width: 0;
+            height: 0;
+            border-width: 15px 10px 0;
+            border-style: solid;
+            border-color: #CCC transparent;
+            position: absolute;
+            top: 18px;
+            right: 10px;
+            z-index: 100;
+            pointer-events: none;
         }
     }
 
@@ -5165,7 +5185,8 @@ ul.tabmenu.formtab {
     font-size: 13px;
     .label {
         margin: 5px 0;
-        color: grey;
+        color: #404040;
+        font-size: 10px;
     }
     ul {
         li {
@@ -5173,6 +5194,7 @@ ul.tabmenu.formtab {
             margin-right: 5px;
         }
     }
+}
 }
 
 /***traffic stuff***/
@@ -6138,7 +6160,8 @@ button.new-campaign:disabled { color: gray; }
     .radio-group,
     .form-group,
     .select-group,
-    .targeting {
+    .collection-targeting,
+    .subreddit-targeting {
         margin-bottom: 10px;
         > .label:first-child {
             width: 100px;
@@ -6169,12 +6192,12 @@ button.new-campaign:disabled { color: gray; }
         }
     }
 
-    .targeting-field .target-group {
-        display: flex;
-
-        > .group {
-            flex-basis: 0;
-            flex-grow: 1;
+    .targeting-field .linefield-content {
+        > .radio-group,
+        > .target-group {
+            width: 50%;
+            display: inline-block;
+            vertical-align: top;
         }
     }
 
