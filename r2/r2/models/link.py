@@ -774,6 +774,10 @@ class LinksByUrl(tdb_cassandra.View):
 class PromotedLink(Link):
     _nodb = True
 
+    # embeds are editable by users (advertisers) so they can change and should
+    # be considered in the render cache key
+    cache_ignore = Link.cache_ignore - {"media_object", "secure_media_object"}
+
     @classmethod
     def add_props(cls, user, wrapped):
         Link.add_props(user, wrapped)
