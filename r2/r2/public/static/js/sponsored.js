@@ -106,6 +106,9 @@ r.sponsored = {
         }].concat(collections || []);
 
         this.collectionsByName = _.reduce(collections, function(obj, item) {
+            if (item.sr_names) {
+                item.sr_names = item.sr_names.slice(0, 20);
+            }
             obj[item.name] = item;
             return obj;
         }, {});
