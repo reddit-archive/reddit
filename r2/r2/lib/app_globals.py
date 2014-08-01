@@ -180,6 +180,8 @@ class Globals(object):
             'max_promote_future',
             'RL_RESET_MINUTES',
             'RL_OAUTH_RESET_MINUTES',
+            'comment_karma_display_floor',
+            'link_karma_display_floor',
         ],
 
         ConfigValue.float: [

@@ -21,7 +21,7 @@
 ###############################################################################
 
 <%!
-   from r2.lib.template_helpers import header_url
+   from r2.lib.template_helpers import display_link_karma, header_url
    from r2.models.subreddit import DefaultSR
    from r2.lib import authentication
    
@@ -84,7 +84,7 @@
     %if c.user_is_loggedin:
     <div class="menuitem">
       ${plain_link(c.user.name, "/user/%s/" % c.user.name, _sr_path=False)}
-      &nbsp;(<b>${c.user.safe_karma}</b>)
+      &nbsp;(<b>${display_link_karma(c.user.link_karma)}</b>)
     </div>
     <div class="menuitem">
       ${plain_link("subreddits", "/subreddits/mine", _sr_path=False)}

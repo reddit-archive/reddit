@@ -587,3 +587,15 @@ def simplified_timesince(date, include_tense=True):
     if include_tense:
         since.append(_("ago"))
     return " ".join(since)
+
+
+def display_link_karma(karma):
+    if not c.user_is_admin:
+        return max(karma, g.link_karma_display_floor)
+    return karma
+
+
+def display_comment_karma(karma):
+    if not c.user_is_admin:
+        return max(karma, g.comment_karma_display_floor)
+    return karma

@@ -22,7 +22,7 @@
 
 <%! 
    from r2.lib.filters import unsafe, safemarkdown
-   from r2.lib.template_helpers import static, format_number
+   from r2.lib.template_helpers import static, format_number, display_comment_karma, display_link_karma
  %>
 <%namespace file="utils.html" import="submit_form, plain_link, thing_timestamp"/>
 <%namespace file="printablebuttons.html" import="toggle_button"/>
@@ -57,12 +57,12 @@
     </div>
   %endif
 
-  <span class="karma">${format_number(thing.user.safe_karma)}</span>
+  <span class="karma">${format_number(display_link_karma(thing.user.link_karma))}</span>
   &#32;
   ${_("link karma")}
 
   <br/>
-  <span class="karma comment-karma">${format_number(thing.user.comment_karma)}</span>
+  <span class="karma comment-karma">${format_number(display_comment_karma(thing.user.comment_karma))}</span>
   &#32;
   ${_("comment karma")}
 
@@ -89,8 +89,8 @@
           <th>${sr_name}</th>
         % endif
 
-          <td>${link_karma}</td>
-          <td>${comment_karma}</td>
+          <td>${display_link_karma(link_karma)}</td>
+          <td>${display_comment_karma(comment_karma)}</td>
         </tr>
      %endfor
      </tbody>

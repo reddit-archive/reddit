@@ -199,11 +199,6 @@ class Account(Thing):
     def comment_karma(self):
         return self.karma('comment')
 
-    @property
-    def safe_karma(self):
-        karma = self.link_karma
-        return max(karma, 1) if karma > -1000 else karma
-
     def all_karmas(self, include_old=True):
         """Get all of the user's subreddit-specific karma totals.
 
