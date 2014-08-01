@@ -102,6 +102,11 @@ def get_campaigns_by_date(srs, start, end, ignore=None):
     if ignore:
         campaign_ids.discard(ignore._id)
     campaigns = PromoCampaign._byID(campaign_ids, data=True, return_dict=False)
+
+    # filter out deleted campaigns that didn't have their PromotionWeights
+    # deleted
+    campaigns = filter(lambda camp: not camp._deleted, campaigns)
+
     transaction_ids = {camp.trans_id for camp in campaigns
                                      if camp.trans_id != NO_TRANSACTION}
 
