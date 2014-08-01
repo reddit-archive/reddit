@@ -93,7 +93,9 @@ def cost_per_click(spend, clicks):
 
 
 def promo_keep_fn(item):
-    return is_promoted(item) and not item.hidden
+    return (is_promoted(item) and
+            not item.hidden and
+            (c.over18 or not item.over_18))
 
 
 # attrs
