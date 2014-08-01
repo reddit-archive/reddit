@@ -1260,6 +1260,8 @@ class VPromoTarget(Validator):
     def run(self, targeting, sr_name, collection_name):
         if targeting == "collection" and collection_name == "none":
             return Target(Frontpage.name)
+        elif targeting == "none":
+            return Target(Frontpage.name)
         elif targeting == "collection":
             collection = VCollection("collection").run(collection_name)
             if collection:
