@@ -1063,7 +1063,7 @@ class KarmaListJsonTemplate(ThingJsonTemplate):
             'sr': label,
             'link_karma': lc,
             'comment_karma': cc,
-        } for label, title, lc, cc in karmas]
+        } for label, (lc, cc) in karmas.iteritems()]
         return karmas
 
     def kind(self, wrapped):

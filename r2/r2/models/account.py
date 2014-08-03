@@ -39,6 +39,7 @@ from pylons import c, g, request
 from pylons.i18n import _
 import time
 import hashlib
+from collections import Counter, OrderedDict
 from copy import copy
 from datetime import datetime, timedelta
 import bcrypt
@@ -203,32 +204,44 @@ class Account(Thing):
         return max(karma, 1) if karma > -1000 else karma
 
     def all_karmas(self, include_old=True):
-        """returns a list of tuples in the form (name, hover-text, link_karma,
-        comment_karma)"""
+        """Get all of the user's subreddit-specific karma totals.
+
+        Returns an OrderedDict keyed on subreddit name and containing
+        (link_karma, comment_karma) tuples, ordered by the combined total
+        descending.
+        """
         link_suffix = '_link_karma'
         comment_suffix = '_comment_karma'
-        karmas = []
-        sr_names = set()
-        for k in self._t.keys():
-            if k.endswith(link_suffix):
-                sr_names.add(k[:-len(link_suffix)])
-            elif k.endswith(comment_suffix):
-                sr_names.add(k[:-len(comment_suffix)])
-        for sr_name in sr_names:
-            karmas.append((sr_name, None,
-                           self._t.get(sr_name + link_suffix, 0),
-                           self._t.get(sr_name + comment_suffix, 0)))
 
-        karmas.sort(key = lambda x: x[2] + x[3], reverse=True)
+        comment_karmas = Counter()
+        link_karmas = Counter()
+        combined_karmas = Counter()
 
-        old_link_karma = self._t.get('link_karma', 0)
-        old_comment_karma = self._t.get('comment_karma', 0)
-        if include_old and (old_link_karma or old_comment_karma):
-            karmas.append((_('ancient history'),
-                           _('really obscure karma from before it was cool to track per-subreddit'),
-                           old_link_karma, old_comment_karma))
+        for key, value in self._t.iteritems():
+            if key.endswith(link_suffix):
+                sr_name = key[:-len(link_suffix)]
+                link_karmas[sr_name] = value
+            elif key.endswith(comment_suffix):
+                sr_name = key[:-len(comment_suffix)]
+                comment_karmas[sr_name] = value
+            else:
+                continue
 
-        return karmas
+            combined_karmas[sr_name] += value
+
+        all_karmas = OrderedDict()
+        for sr_name, total in combined_karmas.most_common():
+            all_karmas[sr_name] = (link_karmas[sr_name],
+                                   comment_karmas[sr_name])
+
+        if include_old:
+            old_link_karma = self._t.get('link_karma', 0)
+            old_comment_karma = self._t.get('comment_karma', 0)
+            if old_link_karma or old_comment_karma:
+                all_karmas['ancient history'] = (old_link_karma,
+                                                 old_comment_karma)
+
+        return all_karmas
 
     def update_last_visit(self, current_time):
         from admintools import apply_updates

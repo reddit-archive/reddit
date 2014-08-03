@@ -47,11 +47,11 @@
 
   </h1>
 
-  %if c.user != thing.user:
+  %if c.user_is_loggedin and not thing.viewing_self:
     <div>
     ${toggle_button("fancy-toggle-button", _("+ friends"), _("- friends"),
-         "friend('%s', '%s', 'friend')" % (thing.user.name, thing.my_fullname),
-         "unfriend('%s', '%s', 'friend')" % (thing.user.name, thing.my_fullname),
+         "friend('%s', '%s', 'friend')" % (thing.user.name, c.user._fullname),
+         "unfriend('%s', '%s', 'friend')" % (thing.user.name, c.user._fullname),
          css_class = "add", alt_css_class = "remove",
          reverse = thing.is_friend, login_required=True)}
     </div>
@@ -66,12 +66,8 @@
   &#32;
   ${_("comment karma")}
 
-  %if c.user_is_admin or c.user == thing.user:
-    <table id="per-sr-karma"
-      % if not c.user_is_admin:
-      class="more-karmas"
-      % endif
-      >
+  %if thing.show_private_info:
+    <table id="per-sr-karma"${" class='more-karmas'" if not c.user_is_admin else ""}>
      <thead>
         <tr>
           <th id="sr-karma-header">subreddit</th>
@@ -79,28 +75,27 @@
           <th>comment</th>
         </tr>
      </thead>
-     <%
-       karmas = thing.user.all_karmas()
-     %>
      <tbody>
-     %for i, (label, title, lc, cc) in enumerate(karmas):
-        <tr
-        % if c.user_is_admin and i >= 5:
-          class="more-karmas"
-        % endif
-        >
-        % if title:
-          <th class="helpful" title="${title}"><span>${label}</span></th>
+     %for i, (sr_name, (link_karma, comment_karma)) in enumerate(thing.all_karmas.iteritems()):
+       %if c.user_is_admin and i >= 5:
+         <tr class="more-karmas">
+       %else:
+         <tr>
+       %endif
+
+        % if sr_name == "ancient history":
+          <th class="helpful" title="${_('really obscure karma from before it was cool to track per-subreddit')}"><span>${_(sr_name)}</span></th>
         % else:
-          <th>${label}</th>
+          <th>${sr_name}</th>
         % endif
-          <td>${lc}</td>
-          <td>${cc}</td>
+
+          <td>${link_karma}</td>
+          <td>${comment_karma}</td>
         </tr>
-      %endfor
-      </tbody>
+     %endfor
+     </tbody>
     </table>
-    % if not c.user_is_admin or len(karmas) > 5:
+    % if not c.user_is_admin or len(thing.all_karmas) > 5:
     <div class="karma-breakdown">
       <a href="javascript:void(0)"
          onclick="$('.more-karmas').show();$(this).hide();return false">
@@ -110,21 +105,17 @@
     % endif
   %endif
 
-  %if thing.gold_remaining or thing.gold_creddit_message:
+  %if thing.show_private_info and thing.user.gold:
     <div class="rounded gold-accent gold-expiration-info">
-      %if thing.gold_remaining:
-        <div class="gold-remaining"
-             %if thing.gold_expiration:
-               title="${thing.gold_expiration.strftime('%Y-%m-%d')}"
-             %endif
-             >
+      %if hasattr(thing, "gold_remaining"):
+        <div class="gold-remaining" title="${thing.user.gold_expiration.strftime('%Y-%m-%d')}">
           <span class="karma">
             ${thing.gold_remaining}
           </span>
           <br>
           ${_("of reddit gold remaining")}
         </div>
-        %if getattr(thing, "paypal_subscr_id", None):
+        %if hasattr(thing, "paypal_subscr_id"):
           <%  
             paypal_link = ("https://www.paypal.com/cgi-bin/webscr?cmd=_subscr-find&alias=%s" % g.goldthanks_email)
            %>
@@ -137,7 +128,7 @@
           </div>
         %endif
 
-        %if getattr(thing, "stripe_customer_id", None):
+        %if hasattr(thing, "stripe_customer_id"):
            <div>
             <a href="/gold/subscription">
               ${_("manage recurring subscription")}
@@ -145,7 +136,7 @@
           </div>
         %endif
       %endif
-      %if thing.gold_creddit_message:
+      %if hasattr(thing, "gold_creddit_message"):
         <div class="gold-creddits-remaining">
           ${plain_link(thing.gold_creddit_message, "/gold?goldtype=gift")}
         </div>
@@ -153,7 +144,7 @@
     </div>
   %endif
 
-%if getattr(thing, "goldlink", None):
+%if hasattr(thing, "goldlink"):
   <div class="giftgold">
     <a href="${thing.goldlink}">
       ${thing.giftmsg}
@@ -162,7 +153,7 @@
 %endif
 
   <div class="bottom">
-    %if thing.user != c.user:
+    %if not thing.viewing_self:
       <img src="${static('mailgray.png')}"/>
       &#32;
       ${plain_link(_("send message"), "/message/compose/?to=%s" % thing.user.name)}

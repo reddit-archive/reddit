@@ -1861,59 +1861,56 @@ class ProfileBar(Templated):
     """Draws a right box for info about the user (karma, etc)"""
     def __init__(self, user):
         Templated.__init__(self, user = user)
-        self.is_friend = None
-        self.my_fullname = None
-        self.gold_remaining = None
-        running_out_of_gold = False
-        self.gold_creddit_message = None
+        self.viewing_self = False
+        self.show_private_info = False
 
         if c.user_is_loggedin:
-            if ((user._id == c.user._id or c.user_is_admin)
-                and getattr(user, "gold", None)):
-                self.gold_expiration = getattr(user, "gold_expiration", None)
-                if self.gold_expiration is None:
-                    self.gold_remaining = _("an unknown amount")
-                else:
-                    gold_days_left = (self.gold_expiration -
-                                      datetime.datetime.now(g.tz)).days
-                    if gold_days_left < 7:
-                        running_out_of_gold = True
+            self.viewing_self = user._id == c.user._id
+            self.show_private_info = self.viewing_self or c.user_is_admin
+            if user.gold and self.show_private_info:
+                gold_days_left = (user.gold_expiration -
+                                  datetime.datetime.now(g.tz)).days
 
-                    if gold_days_left < 1:
-                        self.gold_remaining = _("less than a day")
-                    else:
-                        # Round remaining gold to number of days
-                        precision = 60 * 60 * 24
-                        self.gold_remaining = timeuntil(self.gold_expiration,
-                                                        precision)
+                if gold_days_left < 1:
+                    self.gold_remaining = _("less than a day")
+                else:
+                    # Round remaining gold to number of days
+                    precision = 60 * 60 * 24
+                    self.gold_remaining = timeuntil(user.gold_expiration,
+                                                    precision)
 
                 if user.has_paypal_subscription:
                     self.paypal_subscr_id = user.gold_subscr_id
                 if user.has_stripe_subscription:
                     self.stripe_customer_id = user.gold_subscr_id
 
-            if ((user._id == c.user._id or c.user_is_admin) and
-                user.gold_creddits > 0):
+            if user.gold_creddits > 0 and self.show_private_info:
                 msg = ungettext("%(creddits)s gold creddit to give",
                                 "%(creddits)s gold creddits to give",
                                 user.gold_creddits)
                 msg = msg % dict(creddits=user.gold_creddits)
                 self.gold_creddit_message = msg
 
-            if user._id != c.user._id:
+            if not self.viewing_self:
                 self.goldlink = "/gold?goldtype=gift&recipient=" + user.name
                 self.giftmsg = _("give reddit gold to %(user)s to show "
                                  "your appreciation") % {'user': user.name}
-            elif running_out_of_gold:
-                self.goldlink = "/gold/about"
-                self.giftmsg = _("renew your reddit gold")
-            elif not c.user.gold:
+            elif not user.gold:
                 self.goldlink = "/gold/about"
                 self.giftmsg = _("get extra features and help support reddit "
                                  "with a reddit gold subscription")
+            elif gold_days_left < 7:
+                will_auto_renew = (user.has_paypal_subscription or
+                                   user.has_stripe_subscription)
+                if not will_auto_renew:
+                    self.goldlink = "/gold/about"
+                    self.giftmsg = _("renew your reddit gold")
 
-            self.my_fullname = c.user._fullname
-            self.is_friend = self.user._id in c.user.friends
+            if not self.viewing_self:
+                self.is_friend = user._id in c.user.friends
+
+            if self.show_private_info:
+                self.all_karmas = user.all_karmas()
 
 
 class ServerSecondsBar(Templated):
