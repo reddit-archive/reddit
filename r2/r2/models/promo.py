@@ -140,6 +140,14 @@ class Location(object):
                 else:
                     return self.metro == other.metro
 
+    def __eq__(self, other):
+        if not isinstance(other, Location):
+            return False
+
+        return (self.country == other.country and
+                self.region == other.region and
+                self.metro == other.metro)
+
 
 @memoize("get_promote_srid")
 def get_promote_srid(name = 'promos'):
