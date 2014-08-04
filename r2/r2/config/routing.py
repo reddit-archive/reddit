@@ -422,9 +422,6 @@ def make_map():
     mc("/web/log/:level", controller="weblog", action="message",
        requirements=dict(level="error"))
 
-    # Obsolete content redirects
-    mc("/selfserviceoatmeal", controller="redirect", dest="/ad_inq")
-
     # This route handles displaying the error page and
     # graphics used in the 404/500
     # error pages. It should likely stay at the top

@@ -287,6 +287,9 @@ class EmailHandler(object):
 class Email(object):
     handler = EmailHandler()
 
+    # Do not modify in any way other than appending new items!
+    # Database tables storing mail stuff use an int column as an index into 
+    # this Enum, so anything other than appending new items breaks mail history.
     Kind = Enum("SHARE", "FEEDBACK", "ADVERTISE", "OPTOUT", "OPTIN",
                 "VERIFY_EMAIL", "RESET_PASSWORD",
                 "BID_PROMO",
@@ -305,10 +308,11 @@ class Email(object):
                 "GOLD_GIFT_CODE",
                 )
 
+    # Do not remove anything from this dictionary!  See above comment.
     subjects = {
         Kind.SHARE : _("[reddit] %(user)s has shared a link with you"),
         Kind.FEEDBACK : _("[feedback] feedback from '%(user)s'"),
-        Kind.ADVERTISE :  _("[ad_inq] feedback from '%(user)s'"),
+        Kind.ADVERTISE :  _("[advertising] feedback from '%(user)s'"),
         Kind.OPTOUT : _("[reddit] email removal notice"),
         Kind.OPTIN  : _("[reddit] email addition notice"),
         Kind.RESET_PASSWORD : _("[reddit] reset your password"),

@@ -519,7 +519,7 @@ class AdsController(SubredditListingController):
         if c.user.pref_show_promote or c.user_is_sponsor:
             return infotext % {'link': '/promoted'}
         else:
-            return infotext % {'link': '/ad_inq'}
+            return infotext % {'link': '/advertising'}
 
     def keep_fn(self):
         def keep(item):

@@ -410,10 +410,6 @@ class PromoteListingController(ListingController):
     @validate(VSponsor(),
               sr=nop('sr'))
     def GET_listing(self, sr=None, sort="all", **env):
-        if not c.user_is_loggedin or not c.user.email_verified:
-            # never reached--see MinimalController.on_validation_error
-            return self.redirect("/ad_inq")
-
         if (sort in ('underdelivered', 'reported', 'house') and
             not c.user_is_sponsor):
             self.abort403()
