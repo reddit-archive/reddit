@@ -653,6 +653,13 @@ class Account(Thing):
                  self.name in g.employees))
 
     @property
+    def https_forced(self):
+        """Return whether this account may only be used via HTTPS."""
+        if not g.disable_require_employee_https and self.employee:
+            return True
+        return self.pref_force_https
+
+    @property
     def cpm_selfserve_pennies(self):
         override_price = getattr(self, 'cpm_selfserve_pennies_override', None)
         if override_price is not None:

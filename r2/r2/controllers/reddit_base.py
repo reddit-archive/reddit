@@ -286,7 +286,9 @@ def read_user_cookie(name):
 
 def set_user_cookie(name, val, **kwargs):
     uname = c.user.name if c.user_is_loggedin else ""
+    secure = kwargs.pop('secure', c.user.https_forced)
     c.cookies[uname + '_' + name] = Cookie(value=val,
+                                           secure=secure,
                                            **kwargs)
 
 
@@ -710,7 +712,7 @@ def set_hsts(max_age):
 def hsts_eligible():
     # When we're on HTTP, the secure_session cookie is the only way we can
     # prove the user wants HSTS.
-    return (c.user.pref_force_https or
+    return (c.user.https_forced or
             ("secure_session" in c.cookies and not c.secure))
 
 
@@ -1310,9 +1312,9 @@ class RedditController(OAuth2ResourceController):
         c.cookies[g.login_cookie] = Cookie(value=user.make_cookie(),
                                            expires=NEVER if rem else None,
                                            httponly=True,
-                                           secure=user.pref_force_https)
+                                           secure=user.https_forced)
         # Make sure user-specific cookies get the secure flag set properly
-        change_user_cookie_security(user.pref_force_https, rem)
+        change_user_cookie_security(user.https_forced, rem)
 
     @staticmethod
     def logout():
@@ -1325,7 +1327,7 @@ class RedditController(OAuth2ResourceController):
         admin_cookie = user.make_admin_cookie(first_login=first_login)
         c.cookies[g.admin_cookie] = Cookie(value=admin_cookie,
                                            httponly=True,
-                                           secure=user.pref_force_https)
+                                           secure=user.https_forced)
 
     @staticmethod
     def remember_otp(user):
