@@ -333,6 +333,9 @@
         </span>
         <br/>
         ${checkbox(_("notify me when people say my username"), "monitor_mentions")}
+        <br><br>
+        <% creddit_link = '&#32;<a href="/creddits">creddit</a>&#32;' %>
+        ${checkbox(unsafe(_("use a %(creddit_link)s to automatically renew my gold if it expires") % dict(creddit_link=creddit_link)), "creddit_autorenew")}
     </td>
   </tr>
   %endif

@@ -1937,12 +1937,9 @@ class ProfileBar(Templated):
                 self.goldlink = "/gold/about"
                 self.giftmsg = _("get extra features and help support reddit "
                                  "with a reddit gold subscription")
-            elif gold_days_left < 7:
-                will_auto_renew = (user.has_paypal_subscription or
-                                   user.has_stripe_subscription)
-                if not will_auto_renew:
-                    self.goldlink = "/gold/about"
-                    self.giftmsg = _("renew your reddit gold")
+            elif gold_days_left < 7 and not user.gold_will_autorenew:
+                self.goldlink = "/gold/about"
+                self.giftmsg = _("renew your reddit gold")
 
             if not self.viewing_self:
                 self.is_friend = user._id in c.user.friends

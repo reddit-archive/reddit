@@ -128,6 +128,7 @@ class Account(Thing):
                      banned_profile_visible=False,
                      pref_use_global_defaults=False,
                      pref_hide_locationbar=False,
+                     pref_creddit_autorenew=False,
                      )
     _preference_attrs = tuple(k for k in _defaults.keys()
                               if k.startswith("pref_"))
@@ -677,6 +678,11 @@ class Account(Thing):
     def has_stripe_subscription(self):
         return (self.has_gold_subscription and
                 self.gold_subscr_id.startswith('cus_'))
+
+    @property
+    def gold_will_autorenew(self):
+        return (self.has_gold_subscription or
+                (self.pref_creddit_autorenew and self.gold_creddits > 0))
 
 
 class FakeAccount(Account):

@@ -26,7 +26,7 @@ from r2.lib.filters import websafe
 from r2.lib.log import log_text
 from r2.models import Account, Message, Report, Subreddit
 from r2.models.award import Award
-from r2.models.gold import append_random_bottlecap_phrase
+from r2.models.gold import append_random_bottlecap_phrase, creddits_lock
 from r2.models.token import AwardClaimToken
 
 from _pylibmc import MemcachedError
@@ -259,6 +259,14 @@ def update_gold_users():
     for account in all_gold_users():
         days_left = (account.gold_expiration - now).days
         if days_left < 0:
+            if account.pref_creddit_autorenew:
+                with creddits_lock(account):
+                    if account.gold_creddits > 0:
+                        admintools.engolden(account, 31)
+                        account.gold_creddits -= 1
+                        account._commit()
+                        continue
+
             admintools.degolden(account)
 
             subject = _("Your reddit gold subscription has expired.")
@@ -268,7 +276,7 @@ def update_gold_users():
 
             send_system_message(account, subject, message,
                                 distinguished='gold-auto')
-        elif days_left <= warning_days and not account.has_gold_subscription:
+        elif days_left <= warning_days and not account.gold_will_autorenew:
             hc_key = "gold_expiration_notice-" + account.name
             already_warned = g.hardcache.get(hc_key)
             if not already_warned:

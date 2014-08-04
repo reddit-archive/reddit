@@ -72,6 +72,7 @@ PREFS_VALIDATORS = dict(
     pref_monitor_mentions=VBoolean("monitor_mentions"),
     pref_hide_locationbar=VBoolean("hide_locationbar"),
     pref_use_global_defaults=VBoolean("use_global_defaults"),
+    pref_creddit_autorenew=VBoolean("creddit_autorenew"),
 )
 
 
@@ -105,5 +106,7 @@ def filter_prefs(prefs, user):
                      'pref_show_sponsors',
                      'pref_show_sponsorships',
                      'pref_highlight_new_comments',
-                     'pref_monitor_mentions'):
+                     'pref_monitor_mentions',
+                     'pref_creddit_autorenew',
+                    ):
             prefs[pref] = True
