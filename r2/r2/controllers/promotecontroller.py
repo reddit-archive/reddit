@@ -707,6 +707,9 @@ class PromoteApiController(ApiController):
                                errors.COLLECTION_NOEXIST):
                 return
 
+        if target.is_collection and not c.user_is_sponsor:
+            return abort(403, 'forbidden')
+
         start, end = dates or (None, None)
         is_frontpage = (not target.is_collection and
                         target.subreddit_name == Frontpage.name)
