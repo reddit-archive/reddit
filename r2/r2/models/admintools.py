@@ -245,12 +245,9 @@ def accountid_from_paypalsubscription(subscr_id):
     else:
         return None
 
-def update_gold_users(verbose=False):
+def update_gold_users():
     now = datetime.now(g.display_tz)
-    minimum = None
-    count = 0
-    expiration_dates = {}
-
+    warning_days = 3
     renew_msg = _("[Click here for details on how to set up an "
                   "automatically-renewing subscription or to renew.]"
                   "(/gold) If you have any thoughts, complaints, "
@@ -260,19 +257,10 @@ def update_gold_users(verbose=False):
                   "patronage.") % {'gold_email': g.goldthanks_email}
 
     for account in all_gold_users():
-        if not hasattr(account, "gold_expiration"):
-            g.log.error("%s has no gold_expiration" % account.name)
-            continue
-
-        delta = account.gold_expiration - now
-        days_left = delta.days
-
-        hc_key = "gold_expiration_notice-" + account.name
-
+        days_left = (account.gold_expiration - now).days
         if days_left < 0:
-            if verbose:
-                print "%s just expired" % account.name
             admintools.degolden(account)
+
             subject = _("Your reddit gold subscription has expired.")
             message = _("Your subscription to reddit gold has expired.")
             message += "\n\n" + renew_msg
@@ -280,30 +268,12 @@ def update_gold_users(verbose=False):
 
             send_system_message(account, subject, message,
                                 distinguished='gold-auto')
-            continue
-
-        count += 1
-
-        if verbose:
-            exp_date = account.gold_expiration.strftime('%Y-%m-%d')
-            expiration_dates.setdefault(exp_date, 0)
-            expiration_dates[exp_date] += 1
-
-#           print "%s expires in %d days" % (account.name, days_left)
-            if minimum is None or delta < minimum[0]:
-                minimum = (delta, account)
-
-        if days_left <= 3 and not g.hardcache.get(hc_key):
-            if verbose:
-                print "%s expires soon: %s days" % (account.name, days_left)
-            if account.has_gold_subscription:
-                if verbose:
-                    print "Not sending notice to %s (%s)" % (account.name,
-                                                     account.gold_subscr_id)
-            else:
-                if verbose:
-                    print "Sending notice to %s" % account.name
-                g.hardcache.set(hc_key, True, 86400 * 10)
+        elif days_left <= warning_days and not account.has_gold_subscription:
+            hc_key = "gold_expiration_notice-" + account.name
+            already_warned = g.hardcache.get(hc_key)
+            if not already_warned:
+                g.hardcache.set(hc_key, True, 86400 * (warning_days + 1))
+                
                 subject = _("Your reddit gold subscription is about to "
                             "expire!")
                 message = _("Your subscription to reddit gold will be "
@@ -314,16 +284,6 @@ def update_gold_users(verbose=False):
                 send_system_message(account, subject, message,
                                     distinguished='gold-auto')
 
-    if verbose:
-        for exp_date in sorted(expiration_dates.keys()):
-            num_expiring = expiration_dates[exp_date]
-            print '%s %3d %s' % (exp_date, num_expiring, '*' * num_expiring)
-        print "%s goldmembers" % count
-        if minimum is None:
-            print "Nobody found."
-        else:
-            delta, account = minimum
-            print "Next expiration is %s, in %d days" % (account.name, delta.days)
 
 def admin_ratelimit(user):
     return True
