@@ -21,9 +21,8 @@
 ###############################################################################
 from r2.lib.pages import *
 from reddit_base import (
-    change_user_cookie_security,
-    hsts_modify_redirect,
     hsts_eligible,
+    hsts_modify_redirect,
 )
 from api import ApiController
 from r2.lib.errors import BadRequestError, errors
@@ -59,21 +58,13 @@ class PostController(ApiController):
         filter_prefs(prefs, c.user)
         if c.errors.errors:
             return abort(BadRequestError(errors.INVALID_PREF))
-        # Changing the force HTTPS pref requires us to change the secure flag
-        # of existing cookies
-        new_https_pref = prefs['pref_force_https'] != c.user.pref_force_https
-        if not c.oauth_user and new_https_pref:
-            change_user_cookie_security(prefs['pref_force_https'])
         set_prefs(c.user, prefs)
         c.user._commit()
         u = UrlParser(c.site.path + "prefs")
         u.update_query(done = 'true')
         if c.cname:
             u.put_in_frame()
-        redirect_url = u.unparse()
-        if new_https_pref:
-            redirect_url = hsts_modify_redirect(u)
-        return self.redirect(redirect_url)
+        return self.redirect(u.unparse())
 
     def GET_over18(self):
         return BoringPage(_("over 18?"),

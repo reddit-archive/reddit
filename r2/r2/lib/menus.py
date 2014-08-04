@@ -102,7 +102,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      blocked      = _("blocked"),
                      update       = _("password/email"),
                      delete       = _("delete"),
-                     otp          = _("two-factor authentication"),
+                     security     = _("security"),
 
                      # messages
                      compose      = _("compose"),

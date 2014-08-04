@@ -1036,6 +1036,42 @@ class ApiController(RedditController):
         # invalidated.  drop a new cookie.
         self.login(c.user)
 
+    @validatedForm(VUser("curpass", default=""),
+                   VModhash(),
+                   force_https=VBoolean("force_https"),
+                   password=VPassword(
+                       ["curpass", "curpass"],
+                       docs=dict(curpass="the user's current password"),
+                   ))
+    @api_doc(api_section.account)
+    def POST_set_force_https(self, form, jquery, password, force_https):
+        """Toggle HTTPS-only sessions, invalidating other sessions.
+
+        A valid password (`curpass`) must be supplied.
+        """
+        if form.has_errors("curpass", errors.WRONG_PASSWORD):
+            return
+        can_disable = g.disable_require_employee_https or not c.user.employee
+        if not force_https and not can_disable:
+            form.set_html(".status", _("employees are required to use HTTPS"))
+            return
+        c.user.pref_force_https = force_https
+        c.user._commit()
+
+        # run the change password command to get a new salt.
+        # OAuth tokens are fine since that always happened over HTTPS.
+        change_password(c.user, password)
+        form.set_html(".status",
+                      _("HTTPS preferences have been successfully changed"))
+        form.set_inputs(curpass="")
+
+        # the password salt has changed, so the user's cookie has been
+        # invalidated.  drop a new cookie.
+        self.login(c.user)
+
+        # Modify their HSTS grant
+        form.redirect(hsts_modify_redirect("/prefs/security"))
+
     @validatedForm(
         VUser('curpass', default=''),
         VModhash(),
@@ -3728,7 +3764,7 @@ class ApiController(RedditController):
         c.user.otp_secret = secret
         c.user._commit()
 
-        form.redirect("/prefs/otp")
+        form.redirect("/prefs/security")
 
     @validatedForm(VUser("password", default=""),
                    VOneTimePassword("otp", required=True),
@@ -3744,7 +3780,7 @@ class ApiController(RedditController):
 
         c.user.otp_secret = ""
         c.user._commit()
-        form.redirect("/prefs/otp")
+        form.redirect("/prefs/security")
 
     @require_oauth2_scope("read")
     @json_validate(query=VLength("query", max_length=50))
