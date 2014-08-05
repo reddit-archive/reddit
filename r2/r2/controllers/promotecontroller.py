@@ -448,7 +448,7 @@ class PromoteApiController(ApiController):
         if not location or not location.country:
             available = inventory.get_available_pageviews(
                 target, start, end, datestr=True)
-        elif sr == Frontpage or c.user_is_sponsor:
+        elif not collection and (sr == Frontpage or c.user_is_sponsor):
             # geotargeting is available on the Frontpage for all users or on
             # individual subreddits for sponsors
             available = inventory.get_available_pageviews_geotargeted(sr,
