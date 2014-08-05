@@ -699,12 +699,13 @@ class PromoteApiController(ApiController):
             return
 
         if not target:
-            # tried to target a bad subreddit or collection
-            if form.has_errors('target_name', errors.SUBREDDIT_NOEXIST,
-                               errors.SUBREDDIT_NOTALLOWED,
-                               errors.SUBREDDIT_REQUIRED,
-                               errors.COLLECTION_NOEXIST):
-                return
+            # run form.has_errors to populate the errors in the response
+            form.has_errors('sr', errors.SUBREDDIT_NOEXIST,
+                            errors.SUBREDDIT_NOTALLOWED,
+                            errors.SUBREDDIT_REQUIRED)
+            form.has_errors('collection', errors.COLLECTION_NOEXIST)
+            form.has_errors('targeting', errors.INVALID_TARGET)
+            return
 
         if target.is_collection and not c.user_is_sponsor:
             return abort(403, 'forbidden')
