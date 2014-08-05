@@ -767,24 +767,29 @@ def valid_login(name, password):
         return False
     return valid_password(a, password)
 
-def valid_password(a, password):
+def valid_password(a, password, compare_password=None):
     # bail out early if the account or password's invalid
     if not hasattr(a, 'name') or not hasattr(a, 'password') or not password:
         return False
 
+    convert_password = False
+    if compare_password is None:
+        convert_password = True
+        compare_password = a.password
+
     # standardize on utf-8 encoding
     password = filters._force_utf8(password)
 
-    if a.password.startswith('$2a$'):
+    if compare_password.startswith('$2a$'):
         # it's bcrypt.
-        expected_hash = bcrypt.hashpw(password, a.password)
-        if not constant_time_compare(a.password, expected_hash):
+        expected_hash = bcrypt.hashpw(password, compare_password)
+        if not constant_time_compare(compare_password, expected_hash):
             return False
 
         # if it's using the current work factor, we're done, but if it's not
         # we'll have to rehash.
         # the format is $2a$workfactor$salt+hash
-        work_factor = int(a.password.split("$")[2])
+        work_factor = int(compare_password.split("$")[2])
         if work_factor == g.bcrypt_work_factor:
             return a
     else:
@@ -792,17 +797,18 @@ def valid_password(a, password):
         # if the length of the stored hash is 43 bytes, the sha-1 hash has a salt
         # otherwise it's sha-1 with no salt.
         salt = ''
-        if len(a.password) == 43:
-            salt = a.password[:3]
+        if len(compare_password) == 43:
+            salt = compare_password[:3]
         expected_hash = passhash(a.name, password, salt)
 
-        if not constant_time_compare(a.password, expected_hash):
+        if not constant_time_compare(compare_password, expected_hash):
             return False
 
     # since we got this far, it's a valid password but in an old format
     # let's upgrade it
-    a.password = bcrypt_password(password)
-    a._commit()
+    if convert_password:
+        a.password = bcrypt_password(password)
+        a._commit()
     return a
 
 def bcrypt_password(password):
