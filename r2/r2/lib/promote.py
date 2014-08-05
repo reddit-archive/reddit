@@ -722,10 +722,10 @@ def srnames_from_site(user, site):
         srnames = {sr.name for sr in site.srs}
     elif user and not isinstance(user, FakeAccount):
         srnames = {sr.name for sr in Subreddit.user_subreddits(user, ids=False)}
-        srnames.add('')
+        srnames.add(Frontpage.name)
     else:
         srnames = {sr.name for sr in Subreddit.user_subreddits(None, ids=False)}
-        srnames.add('')
+        srnames.add(Frontpage.name)
     return srnames
 
 
