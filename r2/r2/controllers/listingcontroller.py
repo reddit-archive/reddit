@@ -1141,6 +1141,8 @@ class MyredditsController(ListingController):
         return w
 
     def query(self):
+        if self.where == 'moderator' and not c.user.is_moderator_somewhere:
+            return []
         reddits = SRMember._query(SRMember.c._name == self.where,
                                   SRMember.c._thing2_id == c.user._id,
                                   #hack to prevent the query from
