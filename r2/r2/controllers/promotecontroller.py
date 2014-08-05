@@ -714,8 +714,11 @@ class PromoteApiController(ApiController):
         is_frontpage = (not target.is_collection and
                         target.subreddit_name == Frontpage.name)
 
-        if location and not is_frontpage and not c.user_is_sponsor:
-            # regular users can only target to Frontpage
+        if (location and
+                target.is_collection or
+                (not is_frontpage and not c.user_is_sponsor)):
+            # regular users can only target to Frontpage and no one can
+            # location target a collection
             location = None
 
         if location and location.metro:
