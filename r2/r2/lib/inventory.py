@@ -114,7 +114,7 @@ def get_campaigns_by_date(srs, start, end, ignore=None):
     q = PromotionWeights.get_campaigns(start, end=end, sr_names=sr_names)
     campaign_ids = {pw.promo_idx for pw in q}
     if ignore:
-        campaign_ids -= ignore._id
+        campaign_ids.discard(ignore._id)
     campaigns = PromoCampaign._byID(campaign_ids, data=True, return_dict=False)
     transaction_ids = {camp.trans_id for camp in campaigns
                                      if camp.trans_id != NO_TRANSACTION}
