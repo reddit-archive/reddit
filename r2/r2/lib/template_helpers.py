@@ -144,6 +144,8 @@ def js_config(extra_config=None):
         "ajax_domain": get_domain(cname=c.authorized_cname, subreddit=False),
         "extension": c.extension,
         "https_endpoint": is_subdomain(request.host, g.domain) and g.https_endpoint,
+        # does the client only want to communicate over HTTPS?
+        "https_forced": c.user.https_forced,
         # debugging?
         "debug": g.debug,
         "send_logs": g.live_config["frontend_logging"],

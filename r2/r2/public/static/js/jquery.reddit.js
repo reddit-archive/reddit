@@ -697,12 +697,17 @@ $.rehighlight_new_comments = function() {
   }
 }
 
-/* namespace globals for cookies -- default prefix and domain */
+/* namespace globals for cookies -- default prefix, security and domain */
 var default_cookie_domain
 $.default_cookie_domain = function(domain) {
     if (domain) {
         default_cookie_domain = domain
     }
+}
+
+var default_cookie_security
+$.default_cookie_security = function(security) {
+    default_cookie_security = security
 }
 
 var cookie_name_prefix = "_"
@@ -719,6 +724,7 @@ $.cookie_write = function(c) {
         options.expires = c.expires
         options.domain = c.domain || default_cookie_domain
         options.path = c.path || '/'
+        options.secure = c.secure || default_cookie_security
 
         var key = cookie_name_prefix + c.name,
             value = c.data

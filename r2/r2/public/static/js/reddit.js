@@ -1153,6 +1153,9 @@ $(function() {
         }
         /* set up the cookie domain */
         $.default_cookie_domain(reddit.cur_domain.split(':')[0]);
+
+        // When forcing HTTPS, all cookies need the secure flag
+        $.default_cookie_security(reddit.https_forced)
         
         /* visually mark the last-clicked entry */
         last_click();
