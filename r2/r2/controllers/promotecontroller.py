@@ -304,8 +304,7 @@ class PromoteListingController(ListingController):
         return [pt.link for pt in promotuples]
 
     def live_by_subreddit(cls, sr):
-        sr_names = [''] if sr == Frontpage else [sr.name]
-        return cls._live_by_subreddit(sr_names)
+        return cls._live_by_subreddit([sr.name])
 
     @classmethod
     @memoize('house_link_names', time=60)
@@ -337,7 +336,7 @@ class PromoteListingController(ListingController):
             srnames = promote.all_live_promo_srnames()
             buttons = [NavButton('all', '')]
             try:
-                srnames.remove('')
+                srnames.remove(Frontpage.name)
                 frontbutton = NavButton('FRONTPAGE', Frontpage.name,
                                         aliases=['/promoted/live_promos/%s' %
                                                  urllib.quote(Frontpage.name)])

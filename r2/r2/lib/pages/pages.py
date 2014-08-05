@@ -3687,6 +3687,8 @@ class PromoteLinkEdit(Templated):
         sr_inventory = inventory.get_available_pageviews(
             inv_srs, inv_start, inv_end, datestr=True)
 
+        # LEGACY: sponsored.js uses blank to indicate no targeting, meaning
+        # targeted to the frontpage
         sr_inventory[''] = sr_inventory[Frontpage.name]
         del sr_inventory[Frontpage.name]
         self.inventory = sr_inventory
@@ -4023,7 +4025,9 @@ class PromoteInventory(Templated):
         self.start = start
         self.end = end
         self.sr = sr
-        self.sr_name = '' if isinstance(sr, DefaultSR) else sr.name
+        self.display_name = ('the frontpage' if sr == Frontpage
+                                else '/r/%s' % sr.name)
+        self.sr_input = '' if sr == Frontpage else sr.name
         self.setup()
 
     def setup(self):
@@ -4192,6 +4196,7 @@ class PromoteReport(Templated):
             if not (campaign_start <= date < campaign_end):
                 continue
             if sr == '':
+                # LEGACY: traffic uses '' to indicate Frontpage
                 fp_hits[codename] += pageviews
             else:
                 sr_hits[codename] += pageviews

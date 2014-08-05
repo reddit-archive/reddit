@@ -1328,7 +1328,7 @@ class DefaultSR(_DefaultSR):
         from r2.lib import promote
         srs = Subreddit.user_subreddits(c.user, ids=False)
         # '' is for promos targeted to the frontpage
-        sr_names = [''] + [sr.name for sr in srs]
+        sr_names = [self.name] + [sr.name for sr in srs]
         return promote.get_live_promotions(sr_names)
 
 

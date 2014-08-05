@@ -383,6 +383,11 @@ class PromotionWeights(Sessionized, Base):
     finished   = Column(Boolean)
 
     @classmethod
+    def filter_sr_name(cls, sr_name):
+        # LEGACY: use empty string to indicate Frontpage
+        return '' if sr_name == Frontpage.name else sr_name
+
+    @classmethod
     def reschedule(cls, thing, idx, sr_names, start_date, end_date, total_weight,
                    finished = False):
         cls.delete_unfinished(thing, idx)
@@ -400,9 +405,7 @@ class PromotionWeights(Sessionized, Base):
         weight = total_weight / duration
 
         for sr_name in tup(sr_names):
-            # for some reason we use empty string to indicate Frontpage
-            sr_name = '' if sr_name == Frontpage.name else sr_name
-
+            sr_name = cls.filter_sr_name(sr_name)
             d = start_date
             while d < end_date:
                 cls._new(thing, idx, sr_name, d,
@@ -437,6 +440,7 @@ class PromotionWeights(Sessionized, Base):
             q = q.filter(cls.account_id == author_id)
 
         if sr_names:
+            sr_names = [cls.filter_sr_name(sr_name) for sr_name in sr_names]
             q = q.filter(cls.sr_name.in_(sr_names))
 
         return list(q)

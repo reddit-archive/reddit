@@ -29,7 +29,7 @@
 
 ${unsafe(js.use('sponsored'))}
 
-<h1>promoted link inventory for ${('/r/%s' % thing.sr_name) if thing.sr_name else 'the frontpage'}</h1>
+<h1>promoted link inventory for ${thing.display_name}</h1>
 
 <div>
     <form id="promote-inventory-form" action="/promoted/inventory" method="get">
@@ -59,7 +59,7 @@ ${unsafe(js.use('sponsored'))}
             <tr>
                 <th>subreddit</th>
                 <td class="prefright">
-                    <input name="sr_name" class="rounded styled-input" value="${thing.sr_name}">
+                    <input name="sr_name" class="rounded styled-input" value="${thing.sr_input}">
                     ${error_field("SUBREDDIT_NOEXIST", "sr_name", "div")}
                 </td>
             </tr>

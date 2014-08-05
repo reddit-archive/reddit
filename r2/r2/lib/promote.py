@@ -565,11 +565,7 @@ def live_campaigns_by_link(link, sr=None):
     if not is_promoted(link):
         return []
 
-    if sr:
-        sr_names = [''] if isinstance(sr, DefaultSR) else [sr.name]
-    else:
-        sr_names = None
-
+    sr_names = [sr.name] if sr else None
     now = promo_datetime_now()
     return [camp for camp, link in get_promos(now, sr_names=sr_names,
                                               link=link)

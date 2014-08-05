@@ -110,16 +110,11 @@ def get_date_range(start, end):
 
 def get_campaigns_by_date(srs, start, end, ignore=None):
     srs, is_single = tup(srs, ret_is_single=True)
-    sr_names = ['' if isinstance(sr, DefaultSR) else sr.name for sr in srs]
-    dates = set(get_date_range(start, end))
-    q = (PromotionWeights.query()
-                .filter(PromotionWeights.sr_name.in_(sr_names))
-                .filter(PromotionWeights.date.in_(dates)))
-
-    if ignore:
-        q = q.filter(PromotionWeights.promo_idx != ignore._id)
-
+    sr_names = [sr.name for sr in srs]
+    q = PromotionWeights.get_campaigns(start, end=end, sr_names=sr_names)
     campaign_ids = {pw.promo_idx for pw in q}
+    if ignore:
+        campaign_ids -= ignore._id
     campaigns = PromoCampaign._byID(campaign_ids, data=True, return_dict=False)
     transaction_ids = {camp.trans_id for camp in campaigns
                                      if camp.trans_id != NO_TRANSACTION}
@@ -130,6 +125,7 @@ def get_campaigns_by_date(srs, start, end, ignore=None):
     else:
         transaction_by_id = {}
 
+    dates = set(get_date_range(start, end))
     ret = {sr.name: dict.fromkeys(dates) for sr in srs}
     for srname, date_dict in ret.iteritems():
         for date in date_dict:
