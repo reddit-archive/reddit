@@ -360,7 +360,7 @@
                checked="checked">
         <div class="label-group">
 
-          <span class="label">${_("collection" if c.user_is_sponsor else "frontpage")}</span>
+          <span class="label">${_("interests" if c.user_is_sponsor else "frontpage")}</span>
           <small class="label">${_("targets a collection of similar subreddits")}</small>
         </div>
       </label>
@@ -369,14 +369,14 @@
                type="radio" value="one" name="targeting"
                onclick="r.sponsored.subreddit_targeting()">
         <div class="label-group">
-          <span class="label">${_("targeted")}</span>
+          <span class="label">${_("subreddits")}</span>
           <small class="label">${_("targets a subreddit and its subscribers")}</small>
         </div>
       </label>
     </div>
     <div class="target-group group">
       <div class="collection-targeting" style="${'display:none' if not c.user_is_sponsor else ''}">
-        <span class="label">${_("collection")}</span>
+        <span class="label">${_("interest audience group")}</span>
         <div class="collection-selector uninitialized">
           <div class="widget-container">
             <div class="form-group-list">

@@ -102,7 +102,7 @@ r.sponsored = {
         this.collections = [{
             name: 'none', 
             sr_names: null, 
-            description: 'display your ad on the homepage to anyone',
+            description: 'influencers on reddit’s highest trafficking page',
         }].concat(collections || []);
 
         this.collectionsByName = _.reduce(collections, function(obj, item) {
@@ -117,7 +117,7 @@ r.sponsored = {
           + '<input type="radio" name="collection" value="<%= name %>"'
           + '    <% print(name === \'' + defaultValue + '\' ? "checked=\'checked\'" : "") %>/>'
           + '  <div class="label-group">'
-          + '    <span class="label"><% print(name === \'none\' ? \'frontpage\' : name) %></span>'
+          + '    <span class="label"><% print(name === \'none\' ? \'frontpage influencers\' : name) %></span>'
           + '    <small class="description"><%= description %></small>'
           + '  </div>'
           + '</label>');
