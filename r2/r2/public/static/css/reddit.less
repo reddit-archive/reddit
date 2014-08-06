@@ -4505,6 +4505,23 @@ ul.tabmenu.formtab {
     background-image: url(../vid-expanded-hover.png); /* SPRITE */
 }
 
+.expando .psuedo-selftext {
+    border-radius: 7px;
+    border: 1px solid #369;
+    overflow: hidden;
+    max-width: 710px;
+
+    /* webkit won't properly mask the overflow of iframe corners without this hack */
+    -webkit-mask-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAA5JREFUeNpiYGBgAAgwAAAEAAGbA+oJAAAAAElFTkSuQmCC');
+}
+
+.expando .psuedo-selftext iframe {
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    border: 0;
+}
+
 
 /******** self text stuff ****/
 .subreddit .usertext .md {
