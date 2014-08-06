@@ -3888,14 +3888,18 @@ def make_link_child(item):
                 media_embed = None
 
             if media_embed:
-                should_authenticate = (item.subreddit.type == "private")
-                media_embed =  MediaEmbed(media_domain = g.media_domain,
-                                          height = media_embed.height + 10,
-                                          width = media_embed.width + 10,
-                                          scrolling = media_embed.scrolling,
-                                          id36 = item._id36,
-                                          authenticated=should_authenticate,
-                                        )
+                if media_embed.sandbox:
+                    should_authenticate = (item.subreddit.type == "private")
+                    media_embed = MediaEmbed(
+                        media_domain=g.media_domain,
+                        height=media_embed.height + 10,
+                        width=media_embed.width + 10,
+                        scrolling=media_embed.scrolling,
+                        id36=item._id36,
+                        authenticated=should_authenticate,
+                    )
+                else:
+                    media_embed = media_embed.content
             else:
                 g.log.debug("media_object without media_embed %s" % item)
 

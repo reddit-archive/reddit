@@ -381,7 +381,7 @@ class MediaEmbed(object):
     scrolling = False
 
     def __init__(self, height, width, content, scrolling=False,
-                 public_thumbnail_url=None):
+                 public_thumbnail_url=None, sandbox=True):
         """Build a MediaEmbed.
 
         :param height int - The height of the media embed, in pixels
@@ -392,6 +392,8 @@ class MediaEmbed(object):
             thumbnail for this media. This may be on an uncontrolled domain,
             and is not necessarily our own thumbs domain (and should not be
             served to browsers).
+        :param sandbox bool - True if the content should be sandboxed
+            in an iframe on the media domain.
         """
 
         self.height = int(height)
@@ -399,6 +401,7 @@ class MediaEmbed(object):
         self.content = content
         self.scrolling = scrolling
         self.public_thumbnail_url = public_thumbnail_url
+        self.sandbox = sandbox
 
 
 def _make_thumbnail_from_url(thumbnail_url, referer):
