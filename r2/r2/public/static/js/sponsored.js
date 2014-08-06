@@ -437,7 +437,8 @@ r.sponsored = {
             impressions = this.calc_impressions(bid, cpm),
             priority = $form.find('*[name="priority"]:checked'),
             isOverride = priority.data("override"),
-            isCpm = priority.data("cpm")
+            isCpm = priority.data("cpm"),
+            targetingType = this.get_targeting_type();
 
         $(".duration").text(ndays + " " + ((ndays > 1) ? r._("days") : r._("day")))
         $(".price-info").text(r._("$%(cpm)s per 1,000 impressions").format({cpm: (cpm/100).toFixed(2)}))
@@ -454,15 +455,13 @@ r.sponsored = {
             this.hide_cpm()
         }
 
-        if (!this.userIsSponsor) {
-            var geotargetingEnabled = $form.find('#collection_targeting').is(':checked') &&
-                $('.collection-selector input[name="collection"][value="none"]').is(':checked')
-
-            if (geotargetingEnabled) {
-                this.enable_geotargeting();
-            } else {
-                this.disable_geotargeting();
-            }
+        var geotargetingEnabled = targetingType === 'frontpage' || 
+                (this.userIsSponsor && targetingType === 'subreddit')
+            
+        if (geotargetingEnabled) {
+            this.enable_geotargeting();
+        } else {
+            this.disable_geotargeting();
         }
     },
 
