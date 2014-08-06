@@ -1005,11 +1005,15 @@ class PrefsPage(Reddit):
         if c.user.pref_private_feeds:
             buttons.append(NamedButton('feeds'))
 
-        buttons.extend([NamedButton('friends'),
-                        NamedButton('blocked'),
-                        NamedButton('update'),
-                        NamedButton('security')])
+        buttons.extend([
+            NamedButton('friends'),
+            NamedButton('blocked'),
+            NamedButton('update'),
+        ])
 
+        # Hide the security tab behind a feature flag while it's being tested
+        if feature.is_enabled_for('allow_force_https', c.user):
+            buttons += [NamedButton('security')]
         #if CustomerID.get_id(user):
         #    buttons += [NamedButton('payment')]
         buttons += [NamedButton('delete')]
