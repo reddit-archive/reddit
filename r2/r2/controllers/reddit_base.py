@@ -1295,7 +1295,7 @@ class RedditController(OAuth2ResourceController):
         if not isinstance(c.site, FakeSubreddit):
             request.environ['REDDIT_NAME'] = c.site.name
 
-        # random reddit trickery -- have to do this after the content lang is set
+        # random reddit trickery
         if c.site == Random:
             c.site = Subreddit.random_reddit(user=c.user)
             site_path = c.site.path.strip('/')
