@@ -517,6 +517,8 @@ class ApiController(RedditController):
         AJAX login handler, used by both login and register to set the
         user cookie and send back a redirect.
         """
+        c.user = user
+        c.user_is_loggedin = True
         self.login(user, rem = rem)
 
         if request.params.get("hoist") != "cookie":
@@ -608,7 +610,6 @@ class ApiController(RedditController):
             if any(reject):
                 return
 
-            c.user = user
             self._login(responder, user, rem)
 
     @cross_domain(allow_credentials=True)
