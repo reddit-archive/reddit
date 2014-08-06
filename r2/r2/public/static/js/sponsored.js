@@ -457,18 +457,23 @@ r.sponsored = {
         if (!this.userIsSponsor) {
             var geotargetingEnabled = $form.find('#collection_targeting').is(':checked') &&
                 $('.collection-selector input[name="collection"][value="none"]').is(':checked')
-            var $geotargetRow = $('.geotargeting-selects')
 
             if (geotargetingEnabled) {
-                $geotargetRow.find('select').prop('disabled', false)
-                $geotargetRow.show()
-                $('.geotargeting-disabled').hide()
+                this.enable_geotargeting();
             } else {
-                $geotargetRow.find('select').prop('disabled', true)
-                $geotargetRow.hide()
-                $('.geotargeting-disabled').show()
+                this.disable_geotargeting();
             }
         }
+    },
+
+    disable_geotargeting: function() {
+        $('.geotargeting-selects').find('select').prop('disabled', true).end().hide();
+        $('.geotargeting-disabled').show();
+    },
+
+    enable_geotargeting: function() {
+        $('.geotargeting-selects').find('select').prop('disabled', false).end().show();
+        $('.geotargeting-disabled').hide();
     },
 
     disable_form: function($form) {
