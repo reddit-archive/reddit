@@ -826,21 +826,22 @@ class Subreddit(Thing, Printable, BaseSite):
         return sr_ids + automatic_ids
 
     @classmethod
-    def random_reddit(cls, limit=2500, over18=False, user=None):
-        offset = random.randint(0, limit)
-        q = cls._query(cls.c.over_18 == over18, sort=desc('_downs'),
-                       offset=offset, limit=1, data=True)
+    def random_reddit(cls, over18=False, user=None):
+        if over18:
+            sr_ids = NamedGlobals.get("popular_over_18_sr_ids")
+        else:
+            sr_ids = NamedGlobals.get("popular_sr_ids")
 
         if user:
-            excludes = cls.user_subreddits(user, limit=None)
-            q._filter(not_(cls.c._id.in_(excludes)))
+            excludes = set(cls.user_subreddits(user, limit=None))
+            sr_ids = list(set(sr_ids) - excludes)
 
-        srs = list(q)
-
-        if srs:
-            return srs[0]
-        else:
+        if not sr_ids:
             return Subreddit._by_name(g.default_sr)
+
+        sr_id = random.choice(sr_ids)
+        sr = Subreddit._byID(sr_id, data=True)
+        return sr
 
     @classmethod
     def update_popular_subreddits(cls, limit=5000):
