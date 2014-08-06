@@ -57,6 +57,7 @@ from r2.models.query_cache import MergedCachedQuery
 import pycassa
 
 from r2.lib.utils import set_last_modified
+from r2.models.keyvalue import NamedGlobals
 from r2.models.wiki import WikiPage
 import os.path
 import random
@@ -840,6 +841,25 @@ class Subreddit(Thing, Printable, BaseSite):
             return srs[0]
         else:
             return Subreddit._by_name(g.default_sr)
+
+    @classmethod
+    def update_popular_subreddits(cls, limit=5000):
+        q = cls._query(cls.c.type == "public", sort=desc('_downs'), limit=limit,
+                       data=True)
+        srs = list(q)
+
+        sr_ids = [sr._id for sr in srs if not sr.over_18]
+        over_18_sr_ids = [sr._id for sr in srs if sr.over_18]
+
+        # /r/promos is public but has special handling to make it unviewable
+        promo_sr_id = cls.get_promote_srid()
+        try:
+            sr_ids.remove(promo_sr_id)
+        except ValueError:
+            pass
+
+        NamedGlobals.set("popular_sr_ids", sr_ids)
+        NamedGlobals.set("popular_over_18_sr_ids", over_18_sr_ids)
 
     @classmethod
     def random_subscription(cls, user):
