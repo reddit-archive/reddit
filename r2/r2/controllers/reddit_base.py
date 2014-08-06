@@ -1359,10 +1359,8 @@ class RedditController(OAuth2ResourceController):
         #check whether to allow custom styles
         c.allow_styles = True
         c.can_apply_styles = self.allow_stylesheets
-        if g.css_killswitch:
-            c.can_apply_styles = False
         #if the preference is set and we're not at a cname
-        elif not c.user.pref_show_stylesheets and not c.cname:
+        if not c.user.pref_show_stylesheets and not c.cname:
             c.can_apply_styles = False
         #if the site has a cname, but we're not using it
         elif c.site.domain and c.site.css_on_cname and not c.cname:

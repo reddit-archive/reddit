@@ -448,7 +448,7 @@ class FrontController(RedditController):
             c.site = Subreddit._byID(c.site._id, data=True, stale=False)
 
         if c.site.stylesheet_url_http:
-            url = Reddit.get_subreddit_stylesheet_url()
+            url = Reddit.get_subreddit_stylesheet_url(c.site)
             if url:
                 return self.redirect(url)
             else:
