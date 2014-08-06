@@ -396,6 +396,21 @@ r.sponsored = {
         }
     },
 
+    get_targeting_type: function() {
+        var isCollection = $('input[name="targeting"][value="collection"]').is(':checked'),
+            isFrontpage = $('input[name="collection"][value="none"]').is(':checked');
+
+        if (isCollection === false) {
+            return 'subreddit';
+        }
+        else if (isFrontpage) {
+            return 'frontpage';
+        }
+        else {
+            return 'collection';
+        }
+    },
+
     on_date_change: function() {
         this.fill_campaign_editor()
     },
