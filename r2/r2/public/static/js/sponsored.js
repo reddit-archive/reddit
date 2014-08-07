@@ -156,33 +156,50 @@ r.sponsored = {
         return inventoryKey
     },
 
-    get_check_inventory: function(srname, collection, geotarget, dates) {
-        var inventoryKey = this.get_inventory_key(srname, collection, geotarget)
-        var fetch = _.some(dates, function(date) {
-            var datestr = $.datepicker.formatDate('mm/dd/yy', date)
-            if (!(this.inventory[inventoryKey] && _.has(this.inventory[inventoryKey], datestr))) {
-                r.debug('need to fetch ' + datestr + ' for ' + inventoryKey)
-                return true
+    needs_to_fetch_inventory: function(targeting, timing) {
+        var dates = timing.dates,
+            inventoryKey = targeting.inventoryKey;
+        return _.some(dates, function(date) {
+            var datestr = $.datepicker.formatDate('mm/dd/yy', date);
+            if (_.has(this.inventory, inventoryKey) && _.has(this.inventory[inventoryKey], datestr)) {
+                return false;
             }
-        }, this)
+            else {
+                r.debug('need to fetch ' + datestr + ' for ' + inventoryKey);
+                return true;
+            }
+        }, this);
+    },
 
-        if (fetch) {
-            dates.sort(function(d1,d2){return d1 - d2})
-            var end = new Date(dates[dates.length-1].getTime())
-            end.setDate(end.getDate() + 5)
-            return $.ajax({
-                type: 'GET',
-                url: '/api/check_inventory.json',
-                data: {
-                    sr: srname,
-                    collection: collection,
-                    country: geotarget.country,
-                    region: geotarget.region,
-                    metro: geotarget.metro,
-                    startdate: $.datepicker.formatDate('mm/dd/yy', dates[0]),
-                    enddate: $.datepicker.formatDate('mm/dd/yy', end)
-                },
-                success: function(data) {
+    fetch_inventory: function(targeting, timing) {
+        var srname = targeting.sr,
+            collection = targeting.collection,
+            geotarget = targeting.geotarget, 
+            inventoryKey = targeting.inventoryKey,
+            dates = timing.dates;
+        dates.sort(function(d1,d2){return d1 - d2})
+        var end = new Date(dates[dates.length-1].getTime())
+        end.setDate(end.getDate() + 5)
+        return $.ajax({
+            type: 'GET',
+            url: '/api/check_inventory.json',
+            data: {
+                sr: srname,
+                collection: collection,
+                country: geotarget.country,
+                region: geotarget.region,
+                metro: geotarget.metro,
+                startdate: $.datepicker.formatDate('mm/dd/yy', dates[0]),
+                enddate: $.datepicker.formatDate('mm/dd/yy', end)
+            },
+        });
+    },
+
+    get_check_inventory: function(targeting, timing) {
+        var inventoryKey = targeting.inventoryKey;
+        if (this.needs_to_fetch_inventory(targeting, timing)) {
+            return this.fetch_inventory(targeting, timing).then(
+                function(data) {
                     if (!r.sponsored.inventory[inventoryKey]) {
                         r.sponsored.inventory[inventoryKey] = {}
                     }
@@ -192,8 +209,7 @@ r.sponsored = {
                             r.sponsored.inventory[inventoryKey][datestr] = data.inventory[datestr]
                         }
                     }
-                }
-            })
+                });
         } else {
             return true
         }
@@ -252,58 +268,32 @@ r.sponsored = {
 
     },
 
-    check_inventory: function($form, isOverride) {
-        var bid = this.get_bid($form),
-            cpm = this.get_cpm($form),
-            requested = this.calc_impressions(bid, cpm),
-            startdate = $form.find('*[name="startdate"]').val(),
-            enddate = $form.find('*[name="enddate"]').val(),
-            ndays = this.get_duration($form),
-            daily_request = Math.floor(requested / ndays),
-            targeted = $form.find('#subreddit_targeting').is(':checked'),
-            target = $form.find('*[name="sr"]').val(),
-            srname = targeted ? target : '',
-            canGeotarget = !targeted || this.userIsSponsor,
-            country = canGeotarget && $('#country').val() || "",
-            region = canGeotarget && $('#region').val() || "",
-            metro = canGeotarget && $('#metro').val() || "",
-            geotarget = {'country': country, 'region': region, 'metro': metro},
-            dates = r.sponsored.get_dates(startdate, enddate),
-            booked = this.get_booked_inventory($form, srname, geotarget, isOverride),
-            collection = $form.find('input[name=collection]:checked').val();
+    check_inventory: function($form, targeting, timing, budget, isOverride) {
+        var bid = budget.bid,
+            cpm = budget.cpm,
+            requested = budget.impressions,
+            daily_request = Math.floor(requested / timing.duration),
+            inventoryKey = targeting.inventoryKey,
+            booked = this.get_booked_inventory($form, targeting.sr, 
+                    targeting.geotarget, isOverride);
 
-        if (collection === 'none') {
-            collection = null;
-        }
-
-        var inventoryKey = this.get_inventory_key(srname, collection, geotarget);
-
-
-
-        // bail out in state where targeting is selected but srname
-        // has not been entered yet
-        if (targeted && srname == '') {
-            r.sponsored.disable_form($form)
-            return
-        }
-
-        $.when(r.sponsored.get_check_inventory(srname, collection, geotarget, dates)).then(
+        $.when(r.sponsored.get_check_inventory(targeting, timing)).then(
             function() {
                 if (isOverride) {
                     // do a simple sum of available inventory for override
-                    var available = _.reduce(_.map(dates, function(date){
+                    var available = _.reduce(_.map(timing.dates, function(date){
                         var datestr = $.datepicker.formatDate('mm/dd/yy', date),
                             daily_booked = booked[datestr] || 0
                         return r.sponsored.inventory[inventoryKey][datestr] + daily_booked
                     }), function(memo, num){ return memo + num; }, 0)
                 } else {
                     // calculate conservative inventory estimate
-                    var minDaily = _.min(_.map(dates, function(date) {
+                    var minDaily = _.min(_.map(timing.dates, function(date) {
                         var datestr = $.datepicker.formatDate('mm/dd/yy', date),
                             daily_booked = booked[datestr] || 0
                         return r.sponsored.inventory[inventoryKey][datestr] + daily_booked
                     }))
-                    var available = minDaily * ndays
+                    var available = minDaily * timing.duration
                 }
 
                 var maxbid = r.sponsored.calc_bid(available, cpm)
@@ -315,9 +305,9 @@ r.sponsored = {
                                           "to %(end)s. We may not fully deliver."
                                       ).format({
                                           available: r.utils.prettyNumber(available),
-                                          target: targeted ? srname : 'the frontpage',
-                                          start: startdate,
-                                          end: enddate
+                                          target: targeting.displayName,
+                                          start: timing.startdate,
+                                          end: timing.enddate
                                       })
                         $(".available-info").text('')
                         $(".OVERSOLD_DETAIL").text(message).show()
@@ -329,9 +319,9 @@ r.sponsored = {
                                           "Maximum budget is $%(max)s."
                                       ).format({
                                           available: r.utils.prettyNumber(available),
-                                          target: targeted ? srname : 'the frontpage',
-                                          start: startdate,
-                                          end: enddate,
+                                          target: targeting.displayName,
+                                          start: timing.startdate,
+                                          end: timing.enddate,
                                           max: maxbid
                                       })
 
@@ -356,13 +346,6 @@ r.sponsored = {
 
     duration_from_dates: function(start, end) {
         return Math.round((Date.parse(end) - Date.parse(start)) / (86400*1000))
-    },
-
-    get_duration: function($form) {
-        var start = $form.find('*[name="startdate"]').val(),
-            end = $form.find('*[name="enddate"]').val()
-
-        return this.duration_from_dates(start, end)
     },
 
     get_bid: function($form) {
@@ -396,19 +379,70 @@ r.sponsored = {
         }
     },
 
-    get_targeting_type: function() {
-        var isCollection = $('input[name="targeting"][value="collection"]').is(':checked'),
-            isFrontpage = $('input[name="collection"][value="none"]').is(':checked');
+    get_targeting: function($form) {
+        var isSubreddit = $form.find('input[name="targeting"][value="one"]').is(':checked'),
+            collectionVal = $form.find('input[name="collection"]:checked').val(),
+            isFrontpage = !isSubreddit && collectionVal === 'none',
+            isCollection = !isSubreddit && !isFrontpage,
+            type = isFrontpage ? 'frontpage' : isCollection ? 'collection' : 'subreddit',
+            sr = isSubreddit ? $form.find('*[name="sr"]').val() : '',
+            collection = isCollection ? collectionVal : null,
+            displayName = isFrontpage ? 'the frontpage' : isCollection ? collection : sr,
+            canGeotarget = isFrontpage || (isSubreddit && this.userIsSponsor),
+            country = canGeotarget && $('#country').val() || '',
+            region = canGeotarget && $('#region').val() || '',
+            metro = canGeotarget && $('#metro').val() || '',
+            geotarget = {'country': country, 'region': region, 'metro': metro},
+            inventoryKey = this.get_inventory_key(sr, collection, geotarget),
+            isValid = isFrontpage || (isSubreddit && sr) || (isCollection && collection);
 
-        if (isCollection === false) {
-            return 'subreddit';
+        return {
+            'type': type,
+            'displayName': displayName,
+            'isValid': isValid,
+            'sr': sr,
+            'collection': collection,
+            'canGeotarget': canGeotarget,
+            'geotarget': geotarget,
+            'inventoryKey': inventoryKey,
+        };
+    },
+
+    get_timing: function($form) {
+        var startdate = $form.find('*[name="startdate"]').val(),
+            enddate = $form.find('*[name="enddate"]').val(),
+            duration = this.duration_from_dates(startdate, enddate),
+            dates = r.sponsored.get_dates(startdate, enddate);
+
+        return {
+            'startdate': startdate,
+            'enddate': enddate,
+            'duration': duration,
+            'dates': dates,
         }
-        else if (isFrontpage) {
-            return 'frontpage';
-        }
-        else {
-            return 'collection';
-        }
+    },
+
+    get_budget: function($form) {
+        var bid = this.get_bid($form),
+            cpm = this.get_cpm($form),
+            impressions = this.calc_impressions(bid, cpm);
+
+        return {
+            'bid': bid,
+            'cpm': cpm,
+            'impressions': impressions,
+        };
+    },
+
+    get_priority: function($form) {
+        var priority = $form.find('*[name="priority"]:checked'),
+            isOverride = priority.data("override"),
+            isCpm = priority.data("cpm");
+
+        return {
+            isOverride: isOverride,
+            isCpm: isCpm,
+        };
     },
 
     on_date_change: function() {
@@ -431,34 +465,37 @@ r.sponsored = {
 
     fill_campaign_editor: function() {
         var $form = $("#campaign"),
-            bid = this.get_bid($form),
-            cpm = this.get_cpm($form),
-            ndays = this.get_duration($form),
-            impressions = this.calc_impressions(bid, cpm),
-            priority = $form.find('*[name="priority"]:checked'),
-            isOverride = priority.data("override"),
-            isCpm = priority.data("cpm"),
-            targetingType = this.get_targeting_type();
+            priority = this.get_priority($form),
+            targeting = this.get_targeting($form),
+            timing = this.get_timing($form),
+            ndays = timing.duration,
+            budget = this.get_budget($form),
+            cpm = budget.cpm,
+            impressions = budget.impressions,
+            checkInventory = targeting.isValid && priority.isCpm;
 
         $(".duration").text(ndays + " " + ((ndays > 1) ? r._("days") : r._("day")))
         $(".price-info").text(r._("$%(cpm)s per 1,000 impressions").format({cpm: (cpm/100).toFixed(2)}))
         $form.find('*[name="impressions"]').val(r.utils.prettyNumber(impressions))
         $(".OVERSOLD").hide()
 
-        this.enable_form($form)
 
-        if (isCpm) {
+        if (targeting.isValid) {
+            this.enable_form($form)
+        }
+
+        if (priority.isCpm) {
             this.show_cpm()
             this.check_bid($form)
-            this.check_inventory($form, isOverride)
         } else {
             this.hide_cpm()
         }
 
-        var geotargetingEnabled = targetingType === 'frontpage' || 
-                (this.userIsSponsor && targetingType === 'subreddit')
+        if (checkInventory) {
+            this.check_inventory($form, targeting, timing, budget, priority.isOverride)
+        }
             
-        if (geotargetingEnabled) {
+        if (targeting.canGeotarget) {
             this.enable_geotargeting();
         } else {
             this.disable_geotargeting();
