@@ -149,20 +149,6 @@ class Location(object):
                 self.metro == other.metro)
 
 
-@memoize("get_promote_srid")
-def get_promote_srid(name = 'promos'):
-    try:
-        sr = Subreddit._by_name(name, stale=True)
-    except NotFound:
-        sr = Subreddit._new(name = name,
-                            title = "promoted links",
-                            # negative author_ids make this unlisable
-                            author_id = -1,
-                            type = "public", 
-                            ip = '0.0.0.0')
-    return sr._id
-
-
 def calc_impressions(bid, cpm_pennies):
     # bid is in dollars, cpm_pennies is pennies
     # CPM is cost per 1000 impressions

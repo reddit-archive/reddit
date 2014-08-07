@@ -29,7 +29,7 @@ from r2.lib.utils import fetch_things2, tup, UniqueIterator, set_last_modified
 from r2.lib import utils
 from r2.lib import amqp, sup, filters
 from r2.lib.comment_tree import add_comments, update_comment_votes
-from r2.models.promo import PROMOTE_STATUS, get_promote_srid, PromotionLog
+from r2.models.promo import PROMOTE_STATUS, PromotionLog
 from r2.models.query_cache import (
     cached_query,
     CachedQuery,
@@ -711,7 +711,7 @@ def _promoted_link_query(user_id, status):
                                  PROMOTE_STATUS.pending,
                                  PROMOTE_STATUS.finished)}
 
-    q = Link._query(Link.c.sr_id == get_promote_srid(),
+    q = Link._query(Link.c.sr_id == Subreddit.get_promote_srid(),
                     Link.c._spam == (True, False),
                     Link.c._deleted == (True, False),
                     Link.c.promote_status == STATUS_CODES[status],

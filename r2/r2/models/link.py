@@ -52,7 +52,7 @@ from r2.models.gold import (
 )
 from r2.models.subreddit import MultiReddit
 from r2.models.query_cache import CachedQueryMutator
-from r2.models.promo import PROMOTE_STATUS, get_promote_srid
+from r2.models.promo import PROMOTE_STATUS
 
 from pylons import c, g, request
 from pylons.i18n import _
@@ -1022,7 +1022,7 @@ class Comment(Thing, Printable):
 
         can_reply_srs = set(s._id for s in subreddits if s.can_comment(user)) \
                         if c.user_is_loggedin else set()
-        can_reply_srs.add(get_promote_srid())
+        can_reply_srs.add(Subreddit.get_promote_srid())
 
         min_score = user.pref_min_comment_score
 

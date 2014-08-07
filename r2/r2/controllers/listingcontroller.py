@@ -180,7 +180,7 @@ class ListingController(RedditController):
 
     def listing(self):
         """Listing to generate from the builder"""
-        if (getattr(c.site, "_id", -1) == get_promote_srid() and
+        if (getattr(c.site, "_id", -1) == Subreddit.get_promote_srid() and
             not c.user_is_sponsor):
             abort(403, 'forbidden')
         model = LinkListing(self.builder_obj, show_nums=self.show_nums)

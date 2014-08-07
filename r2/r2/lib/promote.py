@@ -52,7 +52,6 @@ from r2.models import (
     FakeAccount,
     FakeSubreddit,
     Frontpage,
-    get_promote_srid,
     Link,
     MultiReddit,
     NO_TRANSACTION,
@@ -169,7 +168,7 @@ def new_promotion(title, url, selftext, user, ip):
     Creates a new promotion with the provided title, etc, and sets it
     status to be 'unpaid'.
     """
-    sr = Subreddit._byID(get_promote_srid())
+    sr = Subreddit._byID(Subreddit.get_promote_srid())
     l = Link._submit(title, url, user, sr, ip)
     l.promoted = True
     l.disable_comments = False
