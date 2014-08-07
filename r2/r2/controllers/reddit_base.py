@@ -709,11 +709,16 @@ def set_hsts(max_age):
     response.headers["Strict-Transport-Security"] = hsts_val
 
 
+def have_secure_session_cookie():
+    cookie = c.cookies.get("secure_session", None)
+    return cookie and cookie.value == "1"
+
+
 def hsts_eligible():
     # When we're on HTTP, the secure_session cookie is the only way we can
     # prove the user wants HSTS.
     return (c.user.https_forced or
-            ("secure_session" in c.cookies and not c.secure))
+            (not c.secure and have_secure_session_cookie()))
 
 
 def hsts_modify_redirect(url):
@@ -751,7 +756,7 @@ def enforce_https():
         # Since users invalidate their old cookies when they enable the pref
         # themselves, this should only be hit when the pref is involuntarily
         # toggled.
-        if "secure_session" not in c.cookies:
+        if not have_secure_session_cookie():
             # HSTS might not be set up properly, but we can't force a grant
             # here because of badly behaved clients that will just never
             # send a "secure_session" cookie.
@@ -769,7 +774,7 @@ def enforce_https():
         if c.secure:
             # User disabled HTTPS forcing under another session or their
             # session became invalid and they're left with this dangling cookie.
-            if "secure_session" in c.cookies:
+            if have_secure_session_cookie():
                 change_user_cookie_security(False)
                 need_grant = True
 
