@@ -1262,6 +1262,7 @@ class FrontController(RedditController):
     @validate(dest=VDestination(default='/'))
     def _modify_hsts_grant(self, dest):
         """Endpoint subdomains can redirect through to update HSTS grants."""
+        from r2.lib.base import abort
         require_https()
         if request.host != g.domain:
             abort(ForbiddenError(errors.WRONG_DOMAIN))
