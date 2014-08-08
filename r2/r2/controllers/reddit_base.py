@@ -146,6 +146,9 @@ def pagecache_policy(policy):
 
 
 cache_affecting_cookies = ('over18', '_options', 'secure_session')
+# Cookies which may be set in a response without making it uncacheable
+CACHEABLE_COOKIES = ()
+
 
 class Cookies(dict):
     def add(self, name, value, *k, **kw):
@@ -703,12 +706,6 @@ def cross_domain(origin_check=is_trusted_origin, **options):
     return cross_domain_wrap
 
 
-def set_hsts(max_age):
-    # TODO: Are there any subdomains that should *not* be HTTPS?
-    hsts_val = "max-age=%d; includeSubDomains" % max_age
-    response.headers["Strict-Transport-Security"] = hsts_val
-
-
 def have_secure_session_cookie():
     cookie = c.cookies.get("secure_session", None)
     return cookie and cookie.value == "1"
@@ -781,7 +778,7 @@ def enforce_https():
     if grant is not None:
         if request.host == g.domain and c.secure:
             # Always set an HSTS header if we can and we're on the base domain
-            set_hsts(grant)
+            c.hsts_grant = grant
         elif need_grant:
             # Definitely need to change the grant, but we're not on an origin
             # where we can modify it, redirect through one that can.
@@ -1025,6 +1022,7 @@ class MinimalController(BaseController):
                                               g.domain_prefix)
         c.secure = request.environ["wsgi.url_scheme"] == "https"
         c.request_origin = request.host_url
+        c.hsts_grant = None
 
         #check if user-agent needs a dose of rate-limiting
         if not c.error_page:
@@ -1118,6 +1116,10 @@ class MinimalController(BaseController):
         response.headers['X-Content-Type-Options'] = 'nosniff'
         response.headers['X-XSS-Protection'] = '1; mode=block'
 
+        # Don't poison the cache with uncacheable cookies
+        dirty_cookies = (k for k, v in c.cookies.iteritems() if v.dirty)
+        would_poison = any((k not in CACHEABLE_COOKIES) for k in dirty_cookies)
+
         # save the result of this page to the pagecache if possible.  we
         # mustn't cache things that rely on state not tracked by request_key
         # such as If-Modified-Since headers for 304s or requesting IP for 429s.
@@ -1125,6 +1127,7 @@ class MinimalController(BaseController):
             and request.method.upper() == 'GET'
             and c.can_use_pagecache
             and not c.used_cache
+            and not would_poison
             and response.status_int not in (304, 429)
             and not response.status.startswith("5")
             and not c.is_exception_response):
@@ -1149,6 +1152,10 @@ class MinimalController(BaseController):
 
         if c.ratelimit_headers:
             response.headers.update(c.ratelimit_headers)
+
+        if c.hsts_grant is not None:
+            hsts_val = "max-age=%d; includeSubDomains" % c.hsts_grant
+            response.headers["Strict-Transport-Security"] = hsts_val
 
         # send cookies
         for k, v in c.cookies.iteritems():
