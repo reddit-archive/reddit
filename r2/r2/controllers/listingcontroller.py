@@ -1076,6 +1076,10 @@ class MessageController(ListingController):
             #reset the inbox
             if c.have_messages and self.mark != 'false':
                 c.have_messages = False
+                # Note: This will be removed post-backfill. Inbox count
+                # modification is not necessary here as it happens
+                # implicitly on set_unread from Message.add_props, and in fact
+                # will be more accurate there.
                 c.user.msgtime = False
                 c.user._commit()
 

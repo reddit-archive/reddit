@@ -60,7 +60,9 @@ class Account(Thing):
     _data_int_props = Thing._data_int_props + ('link_karma', 'comment_karma',
                                                'report_made', 'report_correct',
                                                'report_ignored', 'spammer',
-                                               'reported', 'gold_creddits', )
+                                               'reported', 'gold_creddits',
+                                               'inbox_count',
+                                              )
     _int_prop_suffix = '_karma'
     _essentials = ('name', )
     _defaults = dict(pref_numsites = 25,
@@ -126,6 +128,7 @@ class Account(Thing):
                      otp_secret=None,
                      state=0,
                      modmsgtime=None,
+                     inbox_count=0,
                      banned_profile_visible=False,
                      pref_use_global_defaults=False,
                      pref_hide_locationbar=False,

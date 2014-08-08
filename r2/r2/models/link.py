@@ -1956,10 +1956,12 @@ class Inbox(MultiRelation('inbox',
         if not to._loaded:
             to._load()
 
-        #if there is not msgtime, or it's false, set it
-        if orangered and (not hasattr(to, 'msgtime') or not to.msgtime):
-            to.msgtime = obj._date
-            to._commit()
+        if orangered:
+            to._incr('inbox_count', 1)
+            # Double-commit is temporary, this will be removed post-backfill
+            if not getattr(to, 'msgtime', None):
+                to.msgtime = obj._date
+                to._commit()
 
         return i
 
@@ -1978,11 +1980,18 @@ class Inbox(MultiRelation('inbox',
             inbox = inbox_rel._query(inbox_rel.c._thing2_id == thing_ids,
                                      data=True)
         res = []
+
+        read_counter = 0
         for i in inbox:
             if getattr(i, "new", False) != unread:
+                read_counter += 1 if unread else -1
                 i.new = unread
                 i._commit()
             res.append(i)
+
+        if read_counter != 0 and hasattr(to, 'inbox_count'):
+            to._incr('inbox_count', read_counter)
+
         return res
 
 

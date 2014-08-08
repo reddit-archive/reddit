@@ -22,6 +22,7 @@
 
 <%!
    from pylons import request
+   from r2.config import feature
    from r2.lib.template_helpers import add_sr, display_link_karma, header_url
    from r2.models import Sub, FakeSubreddit
    from r2.models.subreddit import DefaultSR
@@ -83,19 +84,15 @@
 
       ${separator("|")}
 
-      <%
-         if c.have_messages:
-           mail_img_class = 'havemail'
-           mail_img_title = "new mail!"
-           mail_path = "/message/unread/"
-         else:
-           mail_img_class = 'nohavemail'
-           mail_img_title = "no new mail"
-           mail_path = "/message/inbox/"
-       %>
-      ${plain_link(_("messages"), path=mail_path,
-                 title = mail_img_title, _sr_path = False,
-                 _id = "mail", _class=mail_img_class)}
+
+      %if c.have_messages:
+        ${plain_link(_("messages"), path="/message/unread/", title=_("new mail!"), _class="havemail", _sr_path=False, _id="mail")}
+        %if c.user.inbox_count > 0 and feature.is_enabled('show_inbox_count'):
+          <span class="message-count">${c.user.inbox_count}</span>
+        %endif
+      %else:
+        ${plain_link(_("messages"), path="/message/inbox/", title=_("no new mail"), _class="nohavemail", _sr_path=False, _id="mail")}
+      %endif
       ${separator("|")}
       %if c.user_is_loggedin and c.user.is_moderator_somewhere:
          <%
