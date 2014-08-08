@@ -786,7 +786,8 @@ def enforce_https():
             redirect_url = hsts_modify_redirect(dest)
 
     if redirect_url:
-        abort(307, location=redirect_url)
+        headers = {"Cache-Control": "no-cache", "Pragma": "no-cache"}
+        abort(307, location=redirect_url, headers=headers)
 
 
 # Cookies that might need the secure flag toggled
