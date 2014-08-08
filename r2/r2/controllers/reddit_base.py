@@ -1031,7 +1031,6 @@ class MinimalController(BaseController):
             ratelimit_throttled()
             ratelimit_agents()
 
-        c.allow_loggedin_cache = False
         c.allow_framing = False
 
         c.cdn_cacheable = (request.via_cdn and
@@ -1106,7 +1105,7 @@ class MinimalController(BaseController):
             wrapped_content = c.response_wrapper(content)
             response.content = wrapped_content
 
-        if c.user_is_loggedin and not c.allow_loggedin_cache:
+        if c.user_is_loggedin:
             response.headers['Cache-Control'] = 'no-cache'
             response.headers['Pragma'] = 'no-cache'
 
@@ -1572,7 +1571,7 @@ class RedditController(OAuth2ResourceController):
                               must_revalidate=True):
         """Check If-Modified-Since and abort(304) if appropriate."""
 
-        if c.user_is_loggedin and not c.allow_loggedin_cache:
+        if c.user_is_loggedin:
             return
 
         # HTTP timestamps round to nearest second. truncate this value for

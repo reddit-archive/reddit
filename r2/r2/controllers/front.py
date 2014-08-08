@@ -464,8 +464,6 @@ class FrontController(RedditController):
             stylesheet_contents = c.site.stylesheet_contents_secure
 
         if stylesheet_contents:
-            c.allow_loggedin_cache = True
-
             if c.site.stylesheet_modified:
                 self.abort_if_not_modified(
                     c.site.stylesheet_modified,
