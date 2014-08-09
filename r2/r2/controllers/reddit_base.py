@@ -1335,8 +1335,8 @@ class OAuth2ResourceController(MinimalController):
         if not c.user._loaded:
             c.user._load()
 
-        if hasattr(c.user, 'msgtime') and c.user.msgtime:
-            c.have_messages = c.user.msgtime
+        if c.user.inbox_count > 0:
+            c.have_messages = True
         c.have_mod_messages = bool(c.user.modmsgtime)
 
         if not isinstance(c.site, FakeSubreddit) and not g.disallow_db_writes:

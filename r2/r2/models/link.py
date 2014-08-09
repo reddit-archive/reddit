@@ -1491,9 +1491,6 @@ class Message(Thing, Printable):
     @classmethod
     def add_props(cls, user, wrapped):
         from r2.lib.db import queries
-        #TODO global-ish functions that shouldn't be here?
-        #reset msgtime after this request
-        msgtime = c.have_messages
 
         # make sure there is a sr_id set:
         for w in wrapped:
@@ -1958,10 +1955,6 @@ class Inbox(MultiRelation('inbox',
 
         if orangered:
             to._incr('inbox_count', 1)
-            # Double-commit is temporary, this will be removed post-backfill
-            if not getattr(to, 'msgtime', None):
-                to.msgtime = obj._date
-                to._commit()
 
         return i
 
