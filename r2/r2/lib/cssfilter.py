@@ -204,6 +204,7 @@ SAFE_PROPERTIES = {
     "min-height",
     "min-width",
     "opacity",
+    "order",
     "orphans",
     "outline",
     "outline-color",
