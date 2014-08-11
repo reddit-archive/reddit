@@ -32,7 +32,7 @@ def _keep(msg, account):
     if msg._deleted:
         return False
 
-    if msg._spam and msg.author_id != account.user._id:
+    if msg._spam and msg.author_id != account._id:
         return False
 
     if msg.author_id in account.enemies:
