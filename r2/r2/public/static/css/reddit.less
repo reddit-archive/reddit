@@ -4714,11 +4714,11 @@ ul.tabmenu.formtab {
     margin-left: 10px; 
 }
 
-.adbeta {
-    .campaign .linefield span + span {
-        margin-left: 0;
-    }
+
+.campaign .linefield span + span {
+    margin-left: 0;
 }
+
 
 .linefield .info { 
     font-style: italic;
@@ -4790,18 +4790,6 @@ ul.tabmenu.formtab {
     padding-right: 20px;
 }
 
-.no-adbeta {
-.campaign { 
-    border: 1px solid #336699; 
-    background-color: #EFF7FF;
-    width: 570px;
-    padding: 10px;
-    -webkit-box-shadow: inset 0px 1px 0px hsla(0,0%,100%,.8), 0px 1px 0px hsla(0,0%,100%,.6);
-    -moz-box-shadow: inset 0px 1px 0px hsla(0,0%,100%,.8), 0px 1px 0px hsla(0,0%,100%,.6);
-    box-shadow: inset 0px 1px 0px hsla(0,0%,100%,.8), 0px 1px 0px hsla(0,0%,100%,.6);
-}
-}
-
 .campaign .status { 
     font-size: x-small;
 }
@@ -4813,15 +4801,6 @@ ul.tabmenu.formtab {
     border: none;
 }
 
-.no-adbeta {
-.existing-campaigns  { 
-    td.campaign-bid .bid-amount {
-        display: block;
-    }
-}
-}
-
-.adbeta {
 .existing-campaigns {
     td.campaign-bid span {
         display: inline-block;
@@ -4835,90 +4814,34 @@ ul.tabmenu.formtab {
         background: url(../green-check.png) no-repeat scroll center right;
     }
 }
-}
 
 .existing-campaigns tr.refund {
     color: red;
     font-weight: bold;
 }
 
-.no-adbeta {
-.prefright p.minimum-spend {
-    padding-left: 1em;
-    font-size: small;
-    color: gray;
-}
-}
-
-.no-adbeta {
-.minimum-spend {
-    display: inline;
-    padding: 0 5px;
-}
-}
-
-.no-adbeta .prefright p.minimum-spend.error,
-.adbeta .minimum-spend.error {
+.minimum-spend.error {
     font-weight: bold;
     color: red;
 }
 
-.adbeta {
 .existing-campaigns table {
     margin: 10px 0;
 }
-}
 
-.no-adbeta {
-.existing-campaigns > table > tbody > tr > td {
-    text-align: center;
-    border: 1px solid #369;
-    padding: 5px;
-    max-width: 120px;
-}
-}
-
-.adbeta {
 .existing-campaigns > table > tbody > tr > td {
     border-bottom: 1px solid darken(white, 15%);
     max-width: 120px;
-}
 }
 
 .existing-campaigns > table > tbody > tr#edit-campaign-tr > td { 
     text-align: left;
 }
 
-.adbeta {
 .existing-campaigns > table > tbody > tr#edit-campaign-tr > td {
     padding: 0;
 }
-}
 
-.no-adbeta {
-.existing-campaigns > table > thead > tr > th { 
-    text-align: center;
-    font-weight: bold;
-    padding: 5px;
-    border: solid #369;
-    border-width: 0px 1px 1px;
-}
-.existing-campaigns > table > thead > tr > th:first-child,
-.existing-campaigns > table > tbody > tr > td:first-child {
-    border-left: none;
-}
-.existing-campaigns > table > thead > tr > th:last-child,
-.existing-campaigns > table > tbody > tr > td:last-child {
-    border-right: none;
-}
-
-.existing-campaigns > table > thead > tr:last-child > th,
-.existing-campaigns > table > tbody > tr:last-child > td {
-    border-bottom: none;
-}
-}
-
-.adbeta {
 #edit-campaign-tr .campaign-editor > .linefield {
     border-radius: 0;
     margin: 0;
@@ -4930,27 +4853,12 @@ ul.tabmenu.formtab {
     color: @color;
     border-bottom: 1px solid lighten(@color, 20%);
 }
-}
 
-.adbeta, .no-adbeta {
 .existing-campaigns td > button {
     margin: 2px;
     padding: 2px 4px;
 }
-}
 
-.no-adbeta {
-.existing-campaigns {
-    td.campaign-target,
-    td.campaign-location {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 100px;
-    }
-}
-}
-
-.adbeta {
 .existing-campaigns {
     .campaign-target,
     .campaign-location {
@@ -4998,7 +4906,6 @@ ul.tabmenu.formtab {
         }
     }
 }
-}
 
 .campaign .bid-info { font-size: x-small; }
 .campaign .bid-info.error { color: red; }
@@ -5009,18 +4916,6 @@ ul.tabmenu.formtab {
     text-align: right;
     width: auto;
     margin-bottom: 5px;
-}
-
-.no-adbeta {
-.campaign .collection-targeting,
-.campaign .subreddit-targeting {
-    margin-top: 10px;
-    margin-left: 110px;
-    > .label {
-        font-size: 12px;
-        text-transform: uppercase;
-    }
-}
 }
 
 .campaign .subreddit-targeting input{
@@ -5036,11 +4931,6 @@ ul.tabmenu.formtab {
     padding: 4px; 
     padding-top: 8px;
     width: 90px;
-}
-.no-adbeta {
-.linefield .campaign input[type=text] { 
-    font-size: x-small; 
-}
 }
 
 .linefield-content .infotext {
@@ -5066,7 +4956,6 @@ ul.tabmenu.formtab {
     color: grey;
 }
 
-.adbeta, .no-adbeta {
 .collection-selector {
     position: relative;
     width: 100%;
@@ -5194,7 +5083,6 @@ ul.tabmenu.formtab {
             margin-right: 5px;
         }
     }
-}
 }
 
 /***traffic stuff***/
@@ -5802,297 +5690,6 @@ div #campaign-field {
   width: auto;
 }
 
-.no-adbeta { // begin super long no-adbeta block
-.create-promotion .help { 
-    font-size: x-small;
-}
-
-.create-promotion .help p { 
-    margin: 5px;
-    max-width: 610px;
-}
-
-.create-promotion .help a.help { 
-    font-weight: bold;
-    text-decoration: none;
-    float: right;
-    color: orangered;
-}
-
-.create-promotion .infobar {
-    a {
-        white-space: nowrap;
-    }
-}
-
-.create-promotion {
-    margin: 5px 20px 0 5px;
-}
-
-.create-promotion .infobar { 
-    margin: 0;
-    color: black;
-    border: 0;
-    background: none;
-    padding: 0 5px;
-}
-.create-promotion h2 { margin-top: 10px; color: black; }
-.create-promotion ol { margin: 0px 30px 10px 30px; }
-.create-promotion ol > li {
-    list-style-type: disc; 
-}
-.create-promotion .rules { float:  left; margin-left:  15px; }
-
-.create-promotion textarea,
-.create-promotion input[type=text] {
-    width: 100%;
-    .box-sizing(border-box);
-}
-
-.create-promotion .campaign {
-    width: auto;
-}
-
-#promo-form {
-    .linefield {
-        width: auto;
-    }
-
-    .usertext-edit {
-        width: auto;
-    }
-}
-
-.create-promotion button {
-    &:extend(.fancybutton all);
-
-    &[disabled] {
-        &:extend(.fancybutton.disabled all);
-    }
-}
-
-.fancy-settings h1,
-.create-promotion h2 {
-    font-size: 200%;
-    color: #999;
-    margin: 10px 5px;
-    font-weight: normal;
-}
-.fancy-settings h2 {
-    font-size: 200%;
-    font-weight:normal;
-    color: #999;
-    margin: 10px 5px;
-}
-.fancy-settings h1 strong {
-    font-weight:bold;
-    color: #666;
-}
-.create-promotion .sitetable {
-    margin: 5px;
-}
-
-.editor footer.buttons {
-    text-align: right;
-}
-
-.label-group { 
-    display: inline-block; 
-    
-    .label { 
-        font-size: 13px; 
-    }
-
-    small.label { 
-        margin-left: 5px; 
-        &:before { 
-            content: "("; 
-        }
-        &:after { 
-            content: ")"; 
-        }
-    }
-}
-
-.dashboard {
-    width: 700px;
-    margin-bottom: 10px;
-    box-sizing: border-box;
-}
-
-.creative-dashboard {
-    .thing {
-        font-size: 10px; 
-        .tagline { 
-            margin: 0; 
-        }
-    }
-
-    .linefield,
-    .linefield .infotext {
-        border-radius: 7px;
-    }
-
-    .image-field .infotext {
-        border: 0;
-        background: none;
-        box-shadow: none;
-        margin: 0 0 5px;
-        font-size: 13px;
-        color: grey;
-    }
-}
-
-.campaign-dashboard {
-    background: #CEE3F8;
-    padding: 10px;
-    border-radius: 7px;
-
-    h2 {
-        color: blue;
-        font-weight: bold;
-        font-size: 15px;
-    }
-
-    header {
-        position: relative;
-        min-height: 40px;
-        .new-campaign {
-            position: absolute;
-            top: 10px;
-            right: 0;
-        }
-        p.error {
-            padding: 5px;
-        }
-    }
-
-    .campaign {
-        border-radius: 7px;
-    }
-
-    .linefield { 
-        width: auto; 
-        background-color: transparent;
-        margin: 0;
-        padding: 0;
-        .linefield-content {
-            padding: 0;
-        }
-        > .title {
-            display: none;
-        }
-    }
-
-    .timing-field,
-    .budget-field {
-        .form-group .label { 
-            display: inline-block;
-            width: 100px;
-            text-align: right;
-            font-weight: bold;
-            margin-right: 10px;
-            font-size: 13px;
-            margin-bottom: 5px;
-        }
-        .input-group,
-        .display-text { 
-            display: inline-block; 
-            font-size: 13px;
-        }
-    }
-
-    .campaign-dashboard-label() {
-        width: 100px;
-        float: left;
-        font-size: 13px;
-        font-weight: bold;
-        text-align: right;
-        color: black;
-        padding: 0;   
-    }
-
-    .priority-field, 
-    .targeting-field {
-        .radio-group {
-            > .form-group,
-            > .label {
-                display: block;
-            }
-        }
-
-        .radio-group, 
-        .select-group {
-            > .label {
-                .campaign-dashboard-label();
-            }
-        }
-
-        .linefield-content {
-            > .radio-group > .form-group,
-            > .target-group > div,
-            > .select-group > div {
-                margin-left: 110px;
-                margin-bottom: 5px;
-            }
-        }
-    }
-
-    .targeting-field {
-        .linefield-content .target-group > div {
-            margin-bottom: 10px;
-        }
-    }
-
-    .priority-field .title {
-        display: block;
-        .campaign-dashboard-label();
-    }
-
-    .budget-field { 
-        input { 
-            font-size: 10px; 
-        }
-        .linefield-content, 
-        .minimum-spend, 
-        .price-info { 
-            font-size: 13px; 
-        }
-        .error, .available-info {
-            margin-left: 110px;
-        }
-        .minimum-spend.error {
-            margin-left: 10px;
-        }
-    }
-}
-
-.existing-campaigns {
-    border: 1px solid;
-    border-radius: 7px;
-    margin-top: 5px;
-    background: #EFF7FF;
-
-    th button.new-campaign {
-        margin: 3px 0;
-        white-space: nowrap;
-    }
-
-    .campaign {
-        border: 0;
-        background: transparent;
-        .linefield {
-            border-radius: 0;
-            border-width: 0 0 1px;
-        }
-    }
-}
-
-.create-promotion .hidden { display: none; }
-button.new-campaign:disabled { color: gray; }
-} // end of super-long .no-adbeta block
-
-.adbeta { // begin super-long .adbeta block
 #promo-form {
     .linefield {
         width: auto;
@@ -6700,7 +6297,6 @@ button.new-campaign:disabled { color: gray; }
 .fancy-settings h1 { font-size: 200%; color: #999; margin:10px 5px; }
 .fancy-settings h2 { font-size: 200%; font-weight:normal; color: #999; margin:10px 5px; }
 .fancy-settings h1 strong { font-weight:bold; color: #666;  }
-}
 
 .bidding-history { 
     padding-top: 5px; 

@@ -133,9 +133,7 @@ r.sponsored = {
         var rendered = _.map(this.collections, template).join('');
         $(_.bind(function() {
             $('.collection-selector .form-group-list').html(rendered);
-            if (this.userIsSponsor) {
-                this.setup_collection_selector();
-            }
+            this.setup_collection_selector();
             this.render_campaign_dashboard_header();
         }, this))
     },
@@ -608,17 +606,13 @@ r.sponsored = {
 
     subreddit_targeting: function() {
         $('.subreddit-targeting').find('*[name="sr"]').prop("disabled", false).end().slideDown();
-        if (this.userIsSponsor) {
-            $('.collection-targeting').find('*[name="collection"]').prop("disabled", true).end().slideUp();
-        }
+        $('.collection-targeting').find('*[name="collection"]').prop("disabled", true).end().slideUp();
         this.fill_campaign_editor()
     },
 
     collection_targeting: function() {
         $('.subreddit-targeting').find('*[name="sr"]').prop("disabled", true).end().slideUp();
-        if (this.userIsSponsor) {
-            $('.collection-targeting').find('*[name="collection"]').prop("disabled", false).end().slideDown();
-        }
+        $('.collection-targeting').find('*[name="collection"]').prop("disabled", false).end().slideDown();
         this.fill_campaign_editor()
     },
 
@@ -891,10 +885,8 @@ function edit_campaign($campaign_row) {
                 radios.filter('*[value="one"]')
                     .prop("checked", "checked");
                 campaign.find('*[name="sr"]').val(targeting).prop("disabled", false).end()
-                    .find(".subreddit-targeting").show();
-                if (r.sponsored.userIsSponsor) {
-                    $(".collection-targeting").hide();
-                }
+                    .find(".subreddit-targeting").show();    
+                $(".collection-targeting").hide();
             } else {
                 radios.filter('*[value="collection"]')
                     .prop("checked", "checked");
@@ -902,14 +894,10 @@ function edit_campaign($campaign_row) {
                     .prop("checked", "checked");
                 campaign.find('*[name="sr"]').val("").prop("disabled", true).end()
                     .find(".subreddit-targeting").hide();
-                if (r.sponsored.userIsSponsor) {
-                    $('.collection-targeting').show();
-                }
+                $('.collection-targeting').show();
             }
 
-            if (r.sponsored.userIsSponsor) {
-                r.sponsored.collapse_collection_selector();
-            }
+            r.sponsored.collapse_collection_selector();
 
             /* set geotargeting */
             var country = $campaign_row.data("country"),
@@ -960,15 +948,13 @@ function create_campaign() {
             init_startdate();
             init_enddate();
 
-            if (r.sponsored.userIsSponsor) {
-                $('#campaign')
-                    .find(".collection-targeting").show().end()
-                    .find('input[name="collection"]').prop("disabled", false).end()
-                    .find('input[name="collection"]').eq(0).prop("checked", "checked").end().end()
-                    .find('input[name="collection"]').slice(1).prop("checked", false).end().end()
-                    .find('.collection-selector .form-group-list').css('top', 0).end()
-                r.sponsored.collapse_collection_selector();
-            }
+            $('#campaign')
+                .find(".collection-targeting").show().end()
+                .find('input[name="collection"]').prop("disabled", false).end()
+                .find('input[name="collection"]').eq(0).prop("checked", "checked").end().end()
+                .find('input[name="collection"]').slice(1).prop("checked", false).end().end()
+                .find('.collection-selector .form-group-list').css('top', 0).end()
+            r.sponsored.collapse_collection_selector();
 
             $("#campaign")
                 .find('button[name="save"]').hide().end()
