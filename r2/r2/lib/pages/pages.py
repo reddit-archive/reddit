@@ -3728,32 +3728,6 @@ class PromoteLinkEdit(Templated):
         }
         self.infobar = InfoBar(message=message)
 
-        if campaigns:
-            subreddits = set()
-            budget = 0.
-            impressions = 0
-
-            for campaign in campaigns:
-                subreddits |= set(campaign.target.subreddit_names)
-                budget += campaign.bid
-                if hasattr(campaign, 'cpm') and campaign.priority.cpm:
-                    impressions += campaign.impressions
-
-            num_srs = len(subreddits)
-            summary = ungettext("this promotion has a total budget of "
-                                "%(budget)s for %(impressions)s impressions in "
-                                "%(num)s subreddit",
-                                "this promotion has a total budget of "
-                                "%(budget)s for %(impressions)s impressions in "
-                                "%(num)s subreddits",
-                                num_srs)
-            self.summary = summary % {
-                'budget': format_currency(budget, 'USD', locale=c.locale),
-                'impressions': format_number(impressions),
-                'num': num_srs,
-            }
-        else:
-            self.summary = None
 
 class RenderableCampaign(Templated):
     def __init__(self, link, campaign, transaction, is_pending, is_live,

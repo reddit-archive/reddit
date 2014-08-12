@@ -45,11 +45,9 @@ ${unsafe(js.use('sponsored'))}
   <div class="dashboard campaign-dashboard">
     <header>
       <h2>${_("campaign dashboard")}</h2>
-      %if thing.summary:
-        <div class="help">
-          <p>${thing.summary}</p>
-        </div>
-      %endif
+      <div class="help" style="${'display:none' if not thing.campaigns else ''}">
+        <p></p>
+      </div>
       <p class="error"
          style="${'display:none' if thing.campaigns else ''}">
         ${_("You don't have any campaigns for this link yet.  You should add one.")}

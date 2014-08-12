@@ -131,6 +131,7 @@ r.sponsored = {
             if (this.userIsSponsor) {
                 this.setup_collection_selector();
             }
+            this.render_campaign_dashboard_header();
         }, this))
     },
 
@@ -448,6 +449,71 @@ r.sponsored = {
         };
     },
 
+    get_campaigns: function($list) {
+        var campaignRows = $list.find('.existing-campaigns tbody tr').toArray(),
+            collections = this.collectionsByName,
+            subreddits = {},
+            totalImpressions = 0,
+            totalBid = 0;
+
+        function mapSubreddit(name) {
+            subreddits[name] = 1;
+        }
+
+        function getSubredditsByCollection(name) {
+            return collections[name] && collections[name].sr_names || null;
+        }
+
+        function mapCollection(name) {
+            var subredditNames = getSubredditsByCollection(name);
+            if (subredditNames) {
+                _.each(subredditNames, mapSubreddit);
+            }
+        }
+
+        _.each(campaignRows, function(row) {
+            var data = $(row).data(),
+                isCollection = (data.targetingCollection === 'True'),
+                mappingFunction = isCollection ? mapCollection : mapSubreddit;
+            mappingFunction(data.targeting);
+            var bid = parseInt(data.bid, 10);
+            var cpm = parseInt(data.cpm, 10);
+            var impressions = bid / cpm * 1000 * 100;
+            totalBid += parseInt(data.bid, 10);
+            totalImpressions += impressions;
+        });
+
+        return {
+            count: campaignRows.length,
+            subreddits: _.keys(subreddits),
+            totalBid: totalBid,
+            totalImpressions: totalImpressions,
+            prettyBid: '$' + totalBid.toFixed(2),
+            prettyImpressions: r.utils.prettyNumber(totalImpressions),
+        };
+    },
+
+    campaign_dashboard_help_template: _.template('<p>this promotion has a '
+            + 'total budget of <%= prettyBid %> for <%= prettyImpressions %> '
+            + 'impressions in <%= subreddits.length %> '
+            + 'subreddit<% subreddits.length > 1 && print("s") %></p>'),
+
+    render_campaign_dashboard_header: function() {
+        var campaigns = this.get_campaigns($('.campaign-list'));
+        var $campaignDashboardHeader = $('.campaign-dashboard header');
+        if (campaigns.count) {
+            $campaignDashboardHeader
+                .find('.help').show().html(
+                        this.campaign_dashboard_help_template(campaigns)).end()
+                .find('.error').hide();
+        }
+        else {
+            $campaignDashboardHeader
+                .find('.error').show().end()
+                .find('.help').hide();
+        }
+    },
+
     on_date_change: function() {
         this.fill_campaign_editor()
     },
@@ -639,7 +705,7 @@ r.sponsored = {
 
     calc_bid: function(impressions, cpm_pennies) {
         return (Math.floor(impressions * cpm_pennies / 1000) / 100).toFixed(2)
-    }
+    },
 }
 
 var dateFromInput = function(selector, offset) {
@@ -725,6 +791,8 @@ function check_enddate(startdate, enddate) {
                 $('#campaign .buttons button[name=cancel]').removeClass('hidden')
                 $("button.new-campaign").prop("disabled", false);
             }
+
+            r.sponsored.render_campaign_dashboard_header();
         })
     }
 }(jQuery));
@@ -753,14 +821,14 @@ function cancel_edit(callback) {
                         tr.fadeIn(function() {
                                 $('.new-campaign-container').append(campaign);
                                 campaign.hide();
-                                if(callback) { callback(); }
+                                if (callback) { callback(); }
                             });
                     });
             });
     } else {
         if ($("#campaign:visible").length) {
             $("#campaign").slideUp(function() {
-                    if(callback) { 
+                    if (callback) {
                         callback();
                     }});
         }
@@ -776,7 +844,10 @@ function del_campaign($campaign_row) {
     $.request("delete_campaign", {"campaign_id36": campaign_id36,
                                   "link_id36": link_id36},
               null, true, "json", false);
-    $campaign_row.children(":first").delete_table_row(check_number_of_campaigns);
+    $campaign_row.children(":first").delete_table_row(function() {
+        r.sponsored.render_campaign_dashboard_header();
+        return check_number_of_campaigns();
+    });
 }
 
 
