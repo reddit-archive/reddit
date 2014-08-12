@@ -78,14 +78,17 @@ r.sponsored = {
             .removeClass('uninitialized')
             .on('click', '.label-group', function(e) {
                 if ($collectionSelector.is('.collapsed')) {
-                    // necessary to prevent event propagation from re-collapsing
-                    setTimeout(expand, 0);
+                    expand();
                 }
                 else {
-                    // necessary, as this fires before the input actually 
-                    // changes state
-                    setTimeout(collapse, 0);
+                    var $selected = get_selected();
+                    if ($selected[0] !== this) {
+                        $selected.siblings('input').prop('checked', false);
+                        $(this).siblings('input').prop('checked', 'checked');
+                    }
+                    collapse();
                 }
+                return false;
             });
 
         collapse();
@@ -884,9 +887,11 @@ function create_campaign() {
             if (r.sponsored.userIsSponsor) {
                 $('#campaign')
                     .find(".collection-targeting").show().end()
+                    .find('input[name="collection"]').prop("disabled", false).end()
                     .find('input[name="collection"]').eq(0).prop("checked", "checked").end().end()
                     .find('input[name="collection"]').slice(1).prop("checked", false).end().end()
                     .find('.collection-selector .form-group-list').css('top', 0).end()
+                r.sponsored.collapse_collection_selector();
             }
 
             $("#campaign")
