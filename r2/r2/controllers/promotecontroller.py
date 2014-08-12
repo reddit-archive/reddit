@@ -703,9 +703,6 @@ class PromoteApiController(ApiController):
             form.has_errors('targeting', errors.INVALID_TARGET)
             return
 
-        if target.is_collection and not c.user_is_sponsor:
-            return abort(403, 'forbidden')
-
         start, end = dates or (None, None)
         is_frontpage = (not target.is_collection and
                         target.subreddit_name == Frontpage.name)
