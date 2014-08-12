@@ -18,6 +18,16 @@ r.analytics = {
         $('form.gold-checkout').one('submit', this.fireGoldCheckout)
     },
 
+    fireGAEvent: function(category, action, opt_label, opt_value, opt_noninteraction) {
+      opt_label = opt_label || '';
+      opt_value = opt_value || 0;
+      opt_noninteraction = !!opt_noninteraction;
+
+      if (window._gaq) {
+        _gaq.push(['_trackEvent', category, action, opt_label, opt_value, opt_noninteraction]);
+      }
+    },
+
     fetchTrackingHash: function(el) {
         /*------------------------------------------* 
            Generates a trackingName like:
