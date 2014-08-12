@@ -1264,7 +1264,14 @@ class FrontController(RedditController):
         require_https()
         if request.host != g.domain:
             abort(ForbiddenError(errors.WRONG_DOMAIN))
-        self.redirect(dest, code=307)
+
+        # We can't send the user back to http: if they're forcing HTTPS
+        if c.user.https_forced:
+            dest_parsed = UrlParser(dest)
+            dest_parsed.scheme = "https"
+            dest = dest_parsed.unparse()
+
+        return self.redirect(dest, code=307)
 
     POST_modify_hsts_grant = _modify_hsts_grant
     GET_modify_hsts_grant = _modify_hsts_grant
