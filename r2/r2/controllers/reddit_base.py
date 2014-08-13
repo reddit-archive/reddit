@@ -485,6 +485,7 @@ def set_content_type():
             # force logged-out state since these can be accessed cross-domain
             c.user = UnloggedUser(get_browser_langs())
             c.user_is_loggedin = False
+            c.forced_loggedout = True
 
             def to_js(content):
                 # Add a comment to the beginning to prevent the "Rosetta Flash"
@@ -518,6 +519,7 @@ def set_content_type():
         c.allowed_callback = callback
         c.user = UnloggedUser(get_browser_langs())
         c.user_is_loggedin = False
+        c.forced_loggedout = True
         response.content_type = "application/javascript"
 
 def get_browser_langs():
@@ -711,6 +713,15 @@ def have_secure_session_cookie():
     return cookie and cookie.value == "1"
 
 
+def make_url_https(url):
+    """Turn a possibly relative URL into a fully-qualified HTTPS URL."""
+    new_url = UrlParser(url)
+    new_url.scheme = "https"
+    if not new_url.hostname:
+        new_url.hostname = request.host.lower()
+    return new_url.unparse()
+
+
 def hsts_eligible():
     # When we're on HTTP, the secure_session cookie is the only way we can
     # prove the user wants HSTS.
@@ -721,12 +732,9 @@ def hsts_eligible():
 def hsts_modify_redirect(url):
     hsts_url = UrlParser("https://" + g.domain + "/modify_hsts_grant")
     # `dest` should be fully qualified so users get sent back to the right
-    # subdomain.
-    dest_url = UrlParser(url)
-    if not dest_url.hostname:
-        dest_url.hostname = request.host.lower()
-        dest_url.scheme = request.environ["wsgi.url_scheme"]
-    hsts_url.query_dict['dest'] = dest_url.unparse()
+    # subdomain. `dest` must also be HTTPS because Safari will crash if
+    # you redirect to an http: URL after giving a grant.
+    hsts_url.query_dict['dest'] = make_url_https(url)
     return hsts_url.unparse()
 
 
@@ -741,39 +749,63 @@ def enforce_https():
     if c.oauth_user:
         return
 
+    # This is likely a cross-domain request, the initiator has no way of
+    # respecting the user's HTTPS preferences and redirecting them is unlikely
+    # to stop them from making future requests via HTTP.
+    if c.forced_loggedout or c.render_style == "js":
+        return
+
+    # This is likely a request from an API client. Redirecting them or giving
+    # them an HSTS grant is unlikely to stop them from making requests to HTTP.
+    # Just record it so we know who to talk to.
+    if is_api() and c.user.https_forced and not c.secure:
+        g.stats.count_string('https.pref_violation', request.user_agent)
+        # TODO: 400 here after a grace period. Sending a user's cookies over
+        # HTTP when they asked you not to isn't nice.
+
     need_grant = False
     redirect_url = None
     grant = None
-    if hsts_eligible():
-        grant = g.hsts_max_age
-        # They're forcing HTTPS but don't have a "secure_session" cookie?
-        # Somehow their HTTPS preferences changed without invalidating their
-        # old cookies, ensure that this session's cookies are secured properly.
-
-        # Since users invalidate their old cookies when they enable the pref
-        # themselves, this should only be hit when the pref is involuntarily
-        # toggled.
-        if not have_secure_session_cookie():
-            # HSTS might not be set up properly, but we can't force a grant
-            # here because of badly behaved clients that will just never
-            # send a "secure_session" cookie.
-            change_user_cookie_security(True)
-        if not c.secure:
-            # The client might not support HSTS, or might have had their grant
-            # expire. redirect to the HTTPS version through the HSTS endpoint.
-            need_grant = True
-            new_url = UrlParser(request.environ['FULLPATH'])
-            new_url.scheme = "https"
-            new_url.hostname = request.host.lower()
-            redirect_url = new_url.unparse()
+    # Forcing the users through the HSTS gateway probably wouldn't help much for
+    # these render types since they're mostly made by clients that don't respect
+    # HSTS.
+    if c.render_style not in {"html", "compact", "mobile"}:
+        # Redirect here so that any links returned in the response will be to
+        # the https: site.
+        # TODO: Would just setting `c.secure = True` or modifying `add_sr`
+        # be better?
+        if hsts_eligible() and not c.secure:
+            redirect_url = make_url_https(request.environ['FULLPATH'])
     else:
-        grant = 0
-        if c.secure:
-            # User disabled HTTPS forcing under another session or their
-            # session became invalid and they're left with this dangling cookie.
-            if have_secure_session_cookie():
-                change_user_cookie_security(False)
+        if hsts_eligible():
+            grant = g.hsts_max_age
+            # They're forcing HTTPS but don't have a "secure_session" cookie?
+            # Somehow their HTTPS preferences changed without invalidating their
+            # old cookies, ensure that this session's cookies are secured
+            # properly.
+
+            # Since users invalidate their old cookies when they enable the pref
+            # themselves, this should only be hit when the pref is involuntarily
+            # toggled.
+            if not have_secure_session_cookie():
+                # HSTS might not be set up properly, but we can't force a grant
+                # here because of badly behaved clients that will just never
+                # send a "secure_session" cookie.
+                change_user_cookie_security(True)
+            if not c.secure:
+                # The client might not support HSTS, or might have had their
+                # grant expire. redirect to the HTTPS version through the HSTS
+                # endpoint.
                 need_grant = True
+                redirect_url = make_url_https(request.environ['FULLPATH'])
+        else:
+            grant = 0
+            if c.secure:
+                # User disabled HTTPS forcing under another session or their
+                # session became invalid and they're left with a dangling cookie
+                if have_secure_session_cookie():
+                    change_user_cookie_security(False)
+                    need_grant = True
 
     if grant is not None:
         if request.host == g.domain and c.secure:
