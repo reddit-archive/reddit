@@ -162,7 +162,7 @@ def make_map():
        connect('/about/log', controller='front', action='moderationlog')
        connect('/about/:location', controller='front',
           action='spamlisting',
-          requirements=dict(location='reports|spam|modqueue|unmoderated'))
+          requirements=dict(location='reports|spam|modqueue|unmoderated|edited'))
        connect('/about/:where', controller='userlistlisting',
           requirements=dict(where='contributors|banned|wikibanned|wikicontributors|moderators'),
           action='listing')

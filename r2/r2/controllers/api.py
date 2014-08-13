@@ -1478,6 +1478,10 @@ class ApiController(RedditController):
 
             item._commit()
 
+            # only add to the edited page if this is marked as edited
+            if hasattr(item, "editted"):
+                queries.edit(item)
+
             changed(item)
 
             amqp.add_item('usertext_edited', item._fullname)

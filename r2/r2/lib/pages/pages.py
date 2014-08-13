@@ -424,7 +424,8 @@ class Reddit(Templated):
         if is_moderator_with_perms('posts'):
             buttons += [NamedButton("modqueue", css_class="reddit-modqueue"),
                         NamedButton("reports", css_class="reddit-reported"),
-                        NamedButton("spam", css_class="reddit-spam")]
+                        NamedButton("spam", css_class="reddit-spam"),
+                        NamedButton("edited", css_class="reddit-edited")]
 
         if is_single_subreddit:
             if is_moderator_with_perms('access'):

@@ -361,6 +361,29 @@ def get_spam_comments(sr_id):
                           Comment.c._spam == True,
                           sort = db_sort('new'))
 
+
+@cached_query(SubredditQueryCache)
+def get_edited_comments(sr_id):
+    return FakeQuery(sort=[desc("editted")])
+
+
+@cached_query(SubredditQueryCache)
+def get_edited_links(sr_id):
+    return FakeQuery(sort=[desc("editted")])
+
+
+@merged_cached_query
+def get_edited(sr, user=None, include_links=True, include_comments=True):
+    sr_ids = moderated_srids(sr, user)
+    queries = []
+
+    if include_links:
+        queries.append(get_edited_links)
+    if include_comments:
+        queries.append(get_edited_comments)
+    return [query(sr_id) for sr_id, query in itertools.product(sr_ids, queries)]
+
+
 def moderated_srids(sr, user):
     if isinstance(sr, (ModContribSR, MultiReddit)):
         srs = Subreddit._byID(sr.sr_ids, return_dict=False)
@@ -1201,10 +1224,12 @@ def delete(things):
             query_cache_deletes.append((get_spam_filtered_links(sr), links))
             query_cache_deletes.append((get_unmoderated_links(sr_id),
                                             links))
+            query_cache_deletes.append((get_edited_links(sr_id), links))
         if comments:
             query_cache_deletes.append((get_spam_comments(sr), comments))
             query_cache_deletes.append((get_spam_filtered_comments(sr),
                                         comments))
+            query_cache_deletes.append((get_edited_comments(sr), comments))
 
     for author_id, a_things in by_author.iteritems():
         author = authors[author_id]
@@ -1235,6 +1260,17 @@ def delete(things):
         for q, deletes in query_cache_deletes:
             m.delete(q, deletes)
     changed(things)
+
+
+def edit(thing):
+    if isinstance(thing, Link):
+        query = get_edited_links
+    elif isinstance(thing, Comment):
+        query = get_edited_comments
+
+    with CachedQueryMutator() as m:
+        m.delete(query(thing.sr_id), [thing])
+        m.insert(query(thing.sr_id), [thing])
 
 
 def ban(things, filtered=True):

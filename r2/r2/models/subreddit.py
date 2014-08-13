@@ -173,6 +173,12 @@ class BaseSite(object):
         from r2.lib.db import queries
         return queries.get_unmoderated(self, user=c.user)
 
+    def get_edited(self, include_links=True, include_comments=True):
+        from r2.lib.db import queries
+        return queries.get_edited(self, user=c.user,
+                                  include_links=include_links,
+                                  include_comments=include_comments)
+
     def get_all_comments(self):
         from r2.lib.db import queries
         return queries.get_sr_comments(self)

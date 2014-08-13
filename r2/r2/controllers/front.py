@@ -593,6 +593,9 @@ class FrontController(RedditController):
                                         include_comments=include_comments)
         elif location == 'unmoderated':
             query = c.site.get_unmoderated()
+        elif location == 'edited':
+            query = c.site.get_edited(include_links=include_links,
+                                      include_comments=include_comments)
         else:
             raise ValueError
 
@@ -632,6 +635,8 @@ class FrontController(RedditController):
                 if x.author._spam and x.subreddit.exclude_banned_modqueue:
                     return False
                 return not getattr(x, 'verdict', None)
+            elif location == "edited":
+                return bool(getattr(x, "editted", False))
             else:
                 raise ValueError
 
@@ -705,7 +710,7 @@ class FrontController(RedditController):
         uses_site=True,
         uri='/about/{location}',
         uri_variants=['/about/' + loc for loc in
-                      ('reports', 'spam', 'modqueue', 'unmoderated')],
+                      ('reports', 'spam', 'modqueue', 'unmoderated', 'edited')],
     )
     def GET_spamlisting(self, location, only, num, after, reverse, count):
         """Return a listing of posts relevant to moderators.
@@ -715,6 +720,7 @@ class FrontController(RedditController):
         * modqueue: Things requiring moderator review, such as reported things
             and items caught by the spam filter.
         * unmoderated: Things that have yet to be approved/removed by a mod.
+        * edited: Things that have been edited recently.
 
         Requires the "posts" moderator permission for the subreddit.
 
@@ -725,7 +731,7 @@ class FrontController(RedditController):
                                       count)
         extension_handling = "private" if c.user.pref_private_feeds else False
 
-        if location in ('reports', 'spam', 'modqueue'):
+        if location in ('reports', 'spam', 'modqueue', 'edited'):
             buttons = [
                 QueryButton(_('links and comments'), None, query_param='only'),
                 QueryButton(_('links'), 'links', query_param='only'),
