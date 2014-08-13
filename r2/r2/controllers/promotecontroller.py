@@ -716,8 +716,6 @@ class PromoteApiController(ApiController):
 
         if location and location.metro:
             cpm = g.cpm_selfserve_geotarget_metro.pennies
-        elif location:
-            cpm = g.cpm_selfserve_geotarget_country.pennies
         elif (target.is_collection and
                 target.collection.name == "technology buffs"):
             # special price override -- technology collection is more expensive

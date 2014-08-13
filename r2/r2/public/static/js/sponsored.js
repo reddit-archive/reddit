@@ -361,25 +361,14 @@ r.sponsored = {
 
     get_cpm: function($form) {
         var baseCpm = parseInt($("#bid").data("base_cpm")),
-            geotargetCountryCpm = parseInt($("#bid").data("geotarget_country_cpm")),
             geotargetMetroCpm = parseInt($("#bid").data("geotarget_metro_cpm")),
             collectionCpm = parseInt($("#bid").data("collection_cpm")),
-            isCountryGeotarget = $('#country').val() != '' && !$('#country').is(':disabled'),
             isMetroGeotarget = $('#metro').val() !== null && !$('#metro').is(':disabled'),
             isCollectionTarget = $('input[name="targeting"][value="collection"]').is(':checked'),
             isTechCollection = isCollectionTarget && $('input[name="collection"]:checked').val() == "technology buffs"
 
-        /*
-           NOTE: checking for country and metro geotargeting use different
-           conditions because the country select has an option "none" with value
-           of "", while the metro select will be disabled when not selected,
-           giving it a value of null
-        */
-
         if (isMetroGeotarget) {
             return geotargetMetroCpm
-        } else if (isCountryGeotarget) {
-            return geotargetCountryCpm
         } else if (isCollectionTarget && !isTechCollection) {
             return collectionCpm
         } else {
