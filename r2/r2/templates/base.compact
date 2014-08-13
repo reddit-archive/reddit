@@ -41,6 +41,7 @@
     <title>${self.Title()}</title>
     <meta name="title" content="${self.Title()}" />
     <meta name="description" content="${thing.short_description or g.short_description}" />
+    <meta name="referrer" content="${c.referrer_policy}" />
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     ${self.robots()}
     <link rel="stylesheet" href="${static('compact.css')}" type="text/css" media="screen" />

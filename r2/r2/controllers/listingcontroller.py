@@ -65,6 +65,9 @@ class ListingController(RedditController):
     # allow stylesheets on listings
     allow_stylesheets = True
 
+    # toggle sending origin-only referrer headers on cross-domain navigation
+    private_referrer = True
+
     # toggles showing numbers
     show_nums = True
 
@@ -98,6 +101,12 @@ class ListingController(RedditController):
         """list of menus underneat the header (e.g., sort, time, kind,
         etc) to be displayed on this listing page"""
         return []
+
+    def can_send_referrer(self):
+        """Return whether links within this listing may have full referrers"""
+        if not self.private_referrer:
+            return c.site.allows_referrers
+        return False
 
     def build_listing(self, num, after, reverse, count, **kwargs):
         """uses the query() method to define the contents of the
@@ -208,6 +217,8 @@ class ListingController(RedditController):
     @base_listing
     def GET_listing(self, **env):
         check_cheating('site')
+        if self.can_send_referrer():
+            c.referrer_policy = "always"
         return self.build_listing(**env)
 
 listing_api_doc = partial(
@@ -220,6 +231,8 @@ listing_api_doc = partial(
 
 
 class SubredditListingController(ListingController):
+    private_referrer = False
+
     @property
     def render_params(self):
         if isinstance(c.site, DefaultSR):

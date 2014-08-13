@@ -135,6 +135,10 @@ class BaseSite(object):
     def analytics_name(self):
         return self.name
 
+    @property
+    def allows_referrers(self):
+        return True
+
     def is_moderator_with_perms(self, user, *perms):
         rel = self.is_moderator(user)
         if rel:
@@ -377,6 +381,11 @@ class Subreddit(Thing, Printable, BaseSite):
         if self.link_type == "any":
             return set(("link", "self"))
         return set((self.link_type,))
+
+    @property
+    def allows_referrers(self):
+        return self.type in {'public', 'restricted',
+                             'gold_restricted', 'archived'}
 
     def add_moderator(self, user, **kwargs):
         if not user.modmsgtime:
@@ -1399,6 +1408,10 @@ class MultiReddit(FakeSubreddit):
     def banned_sr_ids(self):
         return [sr._id for sr in self.srs if sr._spam]
 
+    @property
+    def allows_referrers(self):
+        return all(sr.allows_referrers for sr in self.srs)
+
     def keep_for_rising(self, sr_id):
         return sr_id in self.kept_sr_ids
 
@@ -1667,6 +1680,12 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         return 'multi'
 
     @property
+    def allows_referrers(self):
+        if self.visibility != 'public':
+            return False
+        return super(LabeledMulti, self).allows_referrers
+
+    @property
     def title(self):
         if isinstance(self.owner, Account):
             return _('%s subreddits curated by /u/%s') % (self.name, self.owner.name)
@@ -1805,6 +1824,11 @@ class ModContribSR(MultiReddit):
     @property
     def srs(self):
         return Subreddit._byID(self.sr_ids, data=True, return_dict=False)
+
+    @property
+    def allows_referrers(self):
+        return False
+
 
 class ModSR(ModContribSR):
     name  = "subreddits you moderate"

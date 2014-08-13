@@ -363,6 +363,9 @@ class FrontController(RedditController):
         # Used in template_helpers
         c.previous_visits = previous_visits
 
+        if c.site.allows_referrers:
+            c.referrer_policy = "always"
+
         if article.contest_mode:
             if c.user_is_loggedin and sr.is_moderator(c.user):
                 sort = "top"

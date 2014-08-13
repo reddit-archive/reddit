@@ -33,6 +33,7 @@
     <title>${self.Title()}</title>
     <meta name="keywords" content="${self.keywords()}" />
     <meta name="description" content="${getattr(thing, 'short_description', None) or g.short_description}" />
+    <meta name="referrer" content="${c.referrer_policy}">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     ${self.viewport()}
     ${self.robots()}

@@ -1062,6 +1062,11 @@ class MinimalController(BaseController):
 
         c.allow_framing = False
 
+        # According to http://www.w3.org/TR/2014/WD-referrer-policy-20140807/
+        # we really want "origin-when-crossorigin", but that isn't widely
+        # supported yet.
+        c.referrer_policy = "origin"
+
         c.cdn_cacheable = (request.via_cdn and
                            g.login_cookie not in request.cookies)
 
