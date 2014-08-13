@@ -4015,6 +4015,23 @@ class PaymentForm(Templated):
         Templated.__init__(self, **kw)
 
 
+class Bookings(object):
+    def __init__(self):
+        self.subreddit = 0
+        self.collection = 0
+
+    def __repr__(self):
+        if self.subreddit and not self.collection:
+            return format_number(self.subreddit)
+        elif self.collection and not self.subreddit:
+            return "%s*" % format_number(self.collection)
+        elif not self.subreddit and not self.collection:
+            return format_number(0)
+        else:
+            nums = tuple(map(format_number, (self.subreddit, self.collection)))
+            return "%s (%s*)" % nums
+
+
 class PromoteInventory(Templated):
     def __init__(self, start, end, sr):
         Templated.__init__(self)
@@ -4033,21 +4050,25 @@ class PromoteInventory(Templated):
                     in chain.from_iterable(campaigns_by_date.itervalues())}
         links_by_id = Link._byID(link_ids, data=True)
         dates = inventory.get_date_range(self.start, self.end)
-        imps_by_link_by_date = defaultdict(lambda: dict.fromkeys(dates, 0))
-        total_by_date = dict.fromkeys(dates, 0)
+        imps_by_link = defaultdict(lambda: dict.fromkeys(dates, Bookings()))
+        total_by_date = dict.fromkeys(dates, Bookings())
         for date, campaigns in campaigns_by_date.iteritems():
             for camp in campaigns:
                 link = links_by_id[camp.link_id]
                 daily_impressions = camp.impressions / camp.ndays
-                imps_by_link_by_date[link._id][date] += daily_impressions
-                total_by_date[date] += daily_impressions
+                if camp.target.is_collection:
+                    total_by_date[date].collection += daily_impressions
+                    imps_by_link[link._id][date].collection += daily_impressions
+                else:
+                    total_by_date[date].subreddit += daily_impressions
+                    imps_by_link[link._id][date].subreddit += daily_impressions
 
         account_ids = {link.author_id for link in links_by_id.itervalues()}
         accounts_by_id = Account._byID(account_ids, data=True)
 
         self.header = ['link'] + [date.strftime("%m/%d/%Y") for date in dates]
         rows = []
-        for link_id, imps_by_date in imps_by_link_by_date.iteritems():
+        for link_id, imps_by_date in imps_by_link.iteritems():
             link = links_by_id[link_id]
             author = accounts_by_id[link.author_id]
             info = {
@@ -4055,14 +4076,14 @@ class PromoteInventory(Templated):
                 'edit_url': promote.promo_edit_url(link),
             }
             row = Storage(info=info, is_total=False)
-            row.columns = [format_number(imps_by_date[date]) for date in dates]
+            row.columns = [str(imps_by_date[date]) for date in dates]
             rows.append(row)
         rows.sort(key=lambda row: row.info['author'].lower())
 
         total_row = Storage(
             info={'title': 'total'},
             is_total=True,
-            columns=[format_number(total_by_date[date]) for date in dates],
+            columns=[str(total_by_date[date]) for date in dates],
         )
         rows.append(total_row)
 
@@ -4074,8 +4095,10 @@ class PromoteInventory(Templated):
         )
         rows.append(predicted_row)
 
-        remaining_by_date = {date: predicted_pageviews - total_by_date[date]
-                             for date in dates}
+        remaining_by_date = {
+            date: predicted_pageviews - total_by_date[date].subreddit
+            for date in dates
+        }
         remaining_row = Storage(
             info={'title': 'remaining'},
             is_total=True,
