@@ -148,6 +148,9 @@ class Location(object):
                 self.region == other.region and
                 self.metro == other.metro)
 
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
 
 def calc_impressions(bid, cpm_pennies):
     # bid is in dollars, cpm_pennies is pennies
@@ -264,6 +267,9 @@ class Target(object):
             return False
 
         return set(self.subreddit_names) == set(other.subreddit_names)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     @property
     def pretty_name(self):
