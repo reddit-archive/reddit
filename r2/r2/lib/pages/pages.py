@@ -3719,12 +3719,11 @@ class PromoteLinkEdit(Templated):
         self.inventory = sr_inventory
         message = _("This dashboard allows you to easily place ads on reddit. "
                     "Have any questions? [Check out the FAQ](%(faq)s).\n\n"
-                    "Need some ideas on how to showcase your brand? "
-                    "[Here's a slideshow](%(link)s) on ways brands used "
-                    "reddit ads last year.")
+                    "__New!__ Interest Audience Targeting and user interface changes. "
+                    "[Read our announcement post](%(link)s) on /r/selfserve.")
         message %= {
-            'link': 'http://www.slideshare.net/reddit/redditthing',
-            'faq': 'http://www.reddit.com/wiki/selfserve'
+            'link': '/r/selfserve/comments/2dg4lq/announcement_interest_audience_group_targeting/',
+            'faq': 'http://www.reddit.com/wiki/selfserve',
         }
         self.infobar = InfoBar(message=message)
 
