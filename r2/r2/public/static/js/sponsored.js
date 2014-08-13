@@ -26,7 +26,8 @@ r.sponsored = {
         var collectionCount = $collections.length;
         var collectionHeight = $collections.eq(0).outerHeight();
         var $subredditList = $('.collection-subreddit-list ul');
-        var $subredditListLabel = $('.collection-subreddit-list .label');
+        var $collectionLabel = $('.collection-subreddit-list .collection-label');
+        var $frontpageLabel = $('.collection-subreddit-list .frontpage-label');
 
         var subredditNameTemplate = _.template('<% _.each(sr_names, function(name) { %>'
             + ' <li><%= name %></li> <% }); %>');
@@ -54,11 +55,15 @@ r.sponsored = {
                 .css('top', -collectionHeight * index);
             var val = $collectionList.find('input[type=radio]:checked').val();
             var subredditListItems = render_subreddit_list(val);
-            var subredditListLabelText = (subredditListItems) ?
-                'includes these subreddits and more!' :
-                'subreddits included on the frontpage are based on users\' subscriptions';
             $subredditList.html(subredditListItems);
-            $subredditListLabel.text(subredditListLabelText);
+            if (val === 'none') {
+                $collectionLabel.hide();
+                $frontpageLabel.show();
+            }
+            else {
+                $collectionLabel.show();
+                $frontpageLabel.hide();
+            }
         }
 
         function expand() {

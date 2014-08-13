@@ -384,7 +384,13 @@
           </div>
         </div>
         <div class="collection-subreddit-list">
-          <div class="label"></div>
+          <div class="label frontpage-label">
+            ${_("subreddits included on the frontpage are based on users\' subscriptions")}
+          </div>
+          <div class="label collection-label" style="display:none;">
+            ${_('includes these subreddits')}
+            &#32;<a href="/wiki/advertising/interestaudiencegroups">${_('and more!')}</a>
+          </div>
           <ul></ul>
           ${error_field("COLLECTION_NOEXIST", "collection", "div")}
         </div>
