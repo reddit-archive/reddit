@@ -50,6 +50,7 @@ extension_mapping = {
 }
 
 API_TYPES = ('api', 'json')
+RSS_TYPES = ('rss', 'xml')
 
 def set_extension(environ, ext):
     environ["extension"] = ext

@@ -222,9 +222,10 @@ class Link(Thing, Printable):
                      wrapped._score < user.pref_min_link_score)):
                 return False
 
-        # Always show NSFW to API users unless obey_over18=true in querystring
+        # show NSFW to API and RSS users unless obey_over18=true
         is_api = c.render_style in extensions.API_TYPES
-        if is_api and not c.obey_over18:
+        is_rss = c.render_style in extensions.RSS_TYPES
+        if (is_api or is_rss) and not c.obey_over18:
             return True
 
         is_nsfw = wrapped.over_18 or wrapped.subreddit.over_18
