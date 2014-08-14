@@ -39,7 +39,7 @@ from pylons.i18n import _
 from datetime import datetime, timedelta
 from copy import copy
 
-hooks = HookRegistrar()
+admintools_hooks = HookRegistrar()
 
 class AdminTools(object):
 
@@ -423,7 +423,7 @@ def wiki_template(template_slug, sr=None):
     return wiki._get("content")
 
 
-@hooks.on("account.registered")
+@admintools_hooks.on("account.registered")
 def send_welcome_message(user):
     welcome_title = wiki_template("welcome_title").format(
         username=user.name,
@@ -461,7 +461,6 @@ def send_system_message(user, subject, body, system_user=None,
     except MemcachedError:
         raise MessageError('reddit_inbox')
 
-hooks.register_all()
 
 if config['r2.import_private']:
     from r2admin.models.admintools import *

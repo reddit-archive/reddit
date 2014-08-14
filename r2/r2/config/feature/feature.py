@@ -24,7 +24,7 @@ from r2.config.feature.state import FeatureState
 from r2.config.feature.world import World
 from r2.lib.hooks import HookRegistrar
 
-hooks = HookRegistrar()
+feature_hooks = HookRegistrar()
 
 _world = World()
 _featurestate_cache = {}
@@ -55,7 +55,7 @@ def is_enabled_for(name, user):
     return _get_featurestate(name).is_enabled(user)
 
 
-@hooks.on('worker.live_config.update')
+@feature_hooks.on('worker.live_config.update')
 def clear_featurestate_cache():
     global _featurestate_cache
     _featurestate_cache = {}
@@ -71,6 +71,3 @@ def _get_featurestate(name):
         _featurestate_cache[name] = FeatureState(name, _world)
 
     return _featurestate_cache[name]
-
-
-hooks.register_all()

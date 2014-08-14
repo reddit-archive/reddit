@@ -38,6 +38,7 @@ from pylons.middleware import ErrorDocuments, ErrorHandler
 from pylons.wsgiapp import PylonsApp
 from routes.middleware import RoutesMiddleware
 
+from r2.config import hooks
 from r2.config.environment import load_environment
 from r2.config.extensions import extension_mapping, set_extension
 from r2.lib.utils import is_subdomain
@@ -380,24 +381,36 @@ class RedditApp(PylonsApp):
         super(RedditApp, self).__init__(*args, **kwargs)
         self._loading_lock = Lock()
         self._controllers = None
+        self._hooks_registered = False
 
     def setup_app_env(self, environ, start_response):
         PylonsApp.setup_app_env(self, environ, start_response)
-        self.load_controllers()
+        self.load()
+
+    def load(self):
+        if self._controllers and self._hooks_registered:
+            return
+
+        with self._loading_lock:
+            self.load_controllers()
+            self.register_hooks()
 
     def load_controllers(self):
         if self._controllers:
             return
 
-        with self._loading_lock:
-            if self._controllers:
-                return
+        controllers = importlib.import_module(self.package_name +
+                                              '.controllers')
+        controllers.load_controllers()
+        config['r2.plugins'].load_controllers()
+        self._controllers = controllers
 
-            controllers = importlib.import_module(self.package_name +
-                                                  '.controllers')
-            controllers.load_controllers()
-            config['r2.plugins'].load_controllers()
-            self._controllers = controllers
+    def register_hooks(self):
+        if self._hooks_registered:
+            return
+
+        hooks.register_hooks()
+        self._hooks_registered = True
 
     def find_controller(self, controller_name):
         if controller_name in self.controller_classes:

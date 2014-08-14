@@ -20,24 +20,17 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from pylons import g
 
-from r2.lib import amqp
-from r2.lib.hooks import all_hooks, get_hook
-from r2.models.trylater import TryLater
+def register_hooks():
+    """Register all known non-plugin hooks. Called on app setup."""
+    from r2.config.feature.feature import feature_hooks
+    feature_hooks.register_all()
 
-PREFIX = "trylater."
+    from r2.models.admintools import admintools_hooks
+    admintools_hooks.register_all()
 
+    from r2.models.account import trylater_hooks
+    trylater_hooks.register_all()
 
-## Entry point
-def run_trylater():
-    our_hooks = (key[len(PREFIX):] for key in all_hooks().keys()
-                 if key.startswith(PREFIX))
-    with TryLater.multi_handle(our_hooks) as handleable:
-        for system, mature_items in handleable.iteritems():
-            hook_name = "trylater.%s" % system
-            g.log.info("Trying %s", system)
-
-            get_hook(hook_name).call(mature_items=mature_items)
-
-    amqp.worker.join()
+    from r2.models import subreddit
+    subreddit.trylater_hooks.register_all()
