@@ -289,10 +289,7 @@ def read_user_cookie(name):
 
 def set_user_cookie(name, val, **kwargs):
     uname = c.user.name if c.user_is_loggedin else ""
-    secure = kwargs.pop('secure', c.user.https_forced)
-    c.cookies[uname + '_' + name] = Cookie(value=val,
-                                           secure=secure,
-                                           **kwargs)
+    c.cookies[uname + '_' + name] = Cookie(value=val, **kwargs)
 
 
 valid_click_cookie = fullname_regex(Link, True).match
@@ -1191,13 +1188,14 @@ class MinimalController(BaseController):
             response.headers["Strict-Transport-Security"] = hsts_val
 
         # send cookies
+        secure_cookies = c.user.https_forced
         for k, v in c.cookies.iteritems():
             if v.dirty:
                 response.set_cookie(key=k,
                                     value=quote(v.value),
                                     domain=v.domain,
                                     expires=v.expires,
-                                    secure=getattr(v, 'secure', False),
+                                    secure=getattr(v, 'secure', secure_cookies),
                                     httponly=getattr(v, 'httponly', False))
 
         if self.should_update_last_visit():
