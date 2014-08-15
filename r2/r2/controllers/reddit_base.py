@@ -43,6 +43,7 @@ from pylons import c, g, request, response
 from pylons.i18n import _
 from pylons.i18n.translation import LanguageError
 
+from r2.config import feature
 from r2.config.extensions import is_api, set_extension
 from r2.lib import filters, pages, utils, hooks
 from r2.lib.authentication import authenticate_user
@@ -804,7 +805,7 @@ def enforce_https():
                     change_user_cookie_security(False)
                     need_grant = True
 
-    if grant is not None:
+    if feature.is_enabled("give_hsts_grants") and grant is not None:
         if request.host == g.domain and c.secure:
             # Always set an HSTS header if we can and we're on the base domain
             c.hsts_grant = grant
