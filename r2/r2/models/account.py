@@ -20,6 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+from r2.config import feature
 from r2.lib.db.thing     import Thing, Relation, NotFound
 from r2.lib.db.operators import lower
 from r2.lib.db.userrel   import UserRel
@@ -655,7 +656,7 @@ class Account(Thing):
     @property
     def https_forced(self):
         """Return whether this account may only be used via HTTPS."""
-        if not g.disable_require_employee_https and self.employee:
+        if feature.is_enabled_for("require_https", self):
             return True
         return self.pref_force_https
 

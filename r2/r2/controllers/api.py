@@ -1052,9 +1052,9 @@ class ApiController(RedditController):
         """
         if form.has_errors("curpass", errors.WRONG_PASSWORD):
             return
-        can_disable = g.disable_require_employee_https or not c.user.employee
-        if not force_https and not can_disable:
-            form.set_html(".status", _("employees are required to use HTTPS"))
+        if not force_https and feature.is_enabled("require_https"):
+            form.set_html(".status",
+                          _("you may not disable HTTPS on this account"))
             return
         c.user.pref_force_https = force_https
         # Most pages we'd try to frame would be http:, and most browsers
