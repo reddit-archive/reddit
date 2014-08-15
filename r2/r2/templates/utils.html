@@ -553,8 +553,8 @@ ${unsafe(txt)}
   %endif
 </%def>
 
-<%def name="md(text, wrap=False)">
-  ${unsafe(safemarkdown(text, wrap=wrap))}
+<%def name="md(text, wrap=False, **kwargs)">
+  ${unsafe(safemarkdown(text, wrap=wrap, **kwargs))}
 </%def>
 
 <%def name="_md(text, wrap=False)">
