@@ -83,8 +83,13 @@
                 ${self.stripe_form()}
               %endif
 
-              %if thing.clone_template and not thing.user_creddits:
-                <div class="note">${_md("Give gold often? Consider [buying creddits to use](/creddits), they're 40% cheaper if purchased in a set of 12.")}</div>
+              %if thing.clone_template:
+                <div class="note">
+                  %if not thing.user_creddits:
+                    ${_md("Give gold often? Consider [buying creddits to use](/creddits), they're 40% cheaper if purchased in a set of 12.")}
+                  %endif
+                  ${_md("Would you like to [learn more about giving gold](/gilding)?")}
+                </div>
               %endif
           </div>
           <div class="throbber"></div>

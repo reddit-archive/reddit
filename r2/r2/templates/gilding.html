@@ -30,36 +30,45 @@
         <div class="fancy-content">
             <div class="container">
                 <dl class="gilding-faq">
-                  <dt class="toggle toggled">${_('What is gilding?')}</dt>
+                  <dt class="toggle toggled" id="what-is-gilding">${_('What is gilding?')}</dt>
                   <dd>
                     ${_md("Giving [reddit gold](/gold/about) is referred to as 'gilding'. You can either give reddit gold directly to a user or gild one of their posts or comments.")}
                   </dd>
 
-                  <dt class="toggle">${_('How do I gild someone?')}</dt>
-                  <dd class="hidden">
+                  <dt class="toggle toggled" id="how-do-i-gild">${_('How do I gild someone?')}</dt>
+                  <dd>
                     ${_("You can click the 'give gold' link directly below a submission:")}
 
-                    <div class="examples">
+                    <div class="example">
                       <figure class="comment-gild">
                       </figure>
                     </div>
 
                     ${_("Or by giving them gold via their userpage:")}
 
-                    <div class="examples">
+                    <div class="example">
                       <figure class="userpage-gild">
                       </figure>
                     </div>
                   </dd>
 
-                  <dt class="toggle">${_('How much does it cost?')}</dt>
-                  <dd class="hidden">
+                  <dt class="toggle toggled" id="how-much-does-it-cost">${_('How much does it cost?')}</dt>
+                  <dd>
                     ${_mdf("A single gilding costs %(price)s. If you plan to do a lot you can get a discount if you purchase some [creddits](/creddits).", price=g.gold_month_price)}
                   </dd>
 
+                  <dt class="toggle toggled" id="what-are-creddits">${_('What are creddits?')}</dt>
+                  <dd>${_('Each creddit you have can be converted into one month of reddit gold. Stored as a balance on your account, creddits allow you to give gold without having to enter payment information.')}&#32;${_('Additionally, buying creddits in bulk lowers the cost of each gilding.')}
+                  </dd>
 
-                  <dt class="toggle">${_('What are creddits?')}</dt>
-                  <dd class="hidden">${_('Each creddit you have can be converted into one month of reddit gold. Stored as a balance on your account, creddits allow you to give gold without having to enter payment information.')}&#32;${_('Additionally, buying creddits in bulk lowers the cost of each gilding.')}</dd>
+                  <dt class="toggle toggled" id="using-creddits">${_('How do I use creddits?')}</dt>
+                  <dd>${_('Your creddits are listed as a payment method on the checkout page.')}
+
+                  <div class="example">
+                      <figure class="using-creddits">
+                      </figure>
+                    </div>
+                  </dd>
 
                 </dl>
           </div>

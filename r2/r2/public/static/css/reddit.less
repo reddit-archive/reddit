@@ -9785,6 +9785,10 @@ body.with-listing-chooser {
       font-size: 1.75em;
       color: #444;
     }
+
+    .status {
+        margin: 5px 0 0 0;
+    }
   }
 
   span.gold-snoo {
@@ -10013,22 +10017,28 @@ body.with-listing-chooser {
     line-height: 1.8em;
   }
 
-  .examples {
+  .example {
     margin: 1em 0;
 
     figure {
       margin: 0 auto;
       padding: 0;
       width: 339px;
-      height: 227px;
       border: 1px solid #cccccb;
 
       &.userpage-gild {
+        height: 227px;
         background: url('../gold/userpage-gild.png') no-repeat center center;
       }
 
       &.comment-gild {
+        height: 160px;
         background: url('../gold/comment-gild.png') no-repeat top left;
+      }
+
+      &.using-creddits {
+        height: 90px;
+        background: url('../gold/using-creddits.png') no-repeat top left;
       }
     }
   }
@@ -10044,7 +10054,7 @@ body.with-listing-chooser {
 @media 
 (-webkit-min-device-pixel-ratio: 2), 
 (min-resolution: 192dpi) { 
-  .gold-page.gilding .examples figure {
+  .gold-page.gilding .example figure {
 
     &.userpage-gild {
         background: url('../gold/userpage-gild-x2.png') no-repeat center center;
@@ -10053,7 +10063,12 @@ body.with-listing-chooser {
 
     &.comment-gild {
         background: url('../gold/comment-gild-x2.png') no-repeat top left;
-        background-size: 339px 227px;
+        background-size: 339px 160px;
+      }
+
+    &.using-creddits {
+        background: url('../gold/using-creddits-x2.png') no-repeat top left;
+        background-size: 339px 90px;
       }
   }
 }
