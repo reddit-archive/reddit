@@ -76,6 +76,8 @@ class Link(Thing, Printable):
                      banned_before_moderator=False,
                      media_object=None,
                      secure_media_object=None,
+                     media_url=None,
+                     media_autoplay=False,
                      promoted=None,
                      pending=False,
                      disable_comments=False,

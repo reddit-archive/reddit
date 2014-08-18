@@ -145,6 +145,7 @@ error_list = dict((
         ('BANNED_FROM_SUBREDDIT', _('that user is banned from the subreddit')),
         ('GOLD_REQUIRED', _('you must have an active reddit gold subscription to do that')),
         ('INSUFFICIENT_CREDDITS', _("insufficient creddits")),
+        ('SCRAPER_ERROR', _("unable to scrape provided url")),
     ))
 
 errors = Storage([(e, e) for e in error_list.keys()])

@@ -193,37 +193,21 @@
 <%def name="media_field(link)">
   <%utils:line_field title="${_('media')}" id="media-field" css_class="rounded media-field">
     <div class="delete-field">
-      <label for="width">Dimensions:</label>&#32;
-      <input name="media-width" type='text' size='5' maxsize='5' 
-             id="width"
-             style="width:auto"
-        %if link.media_object:
-          value='${link.media_object.get("width", 0)}'
-        %else:
-          placeholder="${_('width')}"
-        %endif
-      />
-      x
-      <input name="media-height" type='text' size='5' maxsize='5'
-             style="width:auto"
-             %if link.media_object:
-               value='${link.media_object.get("height", 0)}'
-            %else:
-              placeholder="${_('height')}"
-            %endif
-      />
       <p>
-        <label for="media-embed">Embed Code</label>
-        <textarea id="media-embed" name="media-embed" rows="7" cols="1">
-          %if link.media_object:
-            ${link.media_object.get('content','')}
-          %endif
-        </textarea>
+        <label for="media_url">Source URL</label>
+        <input id="media_url" name="media_url" type="text" class="rounded"
+               value="${link.media_url or ""}">
+        ${error_field("BAD_URL", "media_url", "div")}
+        ${error_field("SCRAPER_ERROR", "media_url", "div")}
       </p>
+      ${checkbox("media_autoplay",
+                 _("autoplay"),
+                 link.media_autoplay)}
+      <br>
       ${checkbox("media-override",
                  _("media override (adds an onclick to the link to generate a drop-down rather than a link out)"),
                  getattr(link, "media_override", False) or False)}
-      <br />
+      <br>
 
     </div>
   </%utils:line_field>

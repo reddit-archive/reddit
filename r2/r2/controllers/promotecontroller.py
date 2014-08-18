@@ -39,7 +39,7 @@ from r2.lib.base import abort
 from r2.lib.db import queries
 from r2.lib.errors import errors
 from r2.lib.filters import websafe
-from r2.lib.media import force_thumbnail, thumbnail_url
+from r2.lib.media import force_thumbnail, thumbnail_url, _scrape_media
 from r2.lib.memoize import memoize
 from r2.lib.menus import NamedButton, NavButton, NavMenu
 from r2.lib.pages import (
@@ -528,15 +528,16 @@ class PromoteApiController(ApiController):
                    kind=VOneOf('kind', ['link', 'self']),
                    disable_comments=VBoolean("disable_comments"),
                    sendreplies=VBoolean("sendreplies"),
-                   media_width=VInt("media-width", min=0),
-                   media_height=VInt("media-height", min=0),
-                   media_embed=VLength("media-embed", 1000),
+                   media_url=VUrl("media_url", allow_self=False,
+                                  valid_schemes=('http', 'https')),
+                   media_autoplay=VBoolean("media_autoplay"),
                    media_override=VBoolean("media-override"),
                    domain_override=VLength("domain", 100)
                    )
     def POST_edit_promo(self, form, jquery, username, l, title, url,
-                        selftext, kind, disable_comments, sendreplies, media_height,
-                        media_width, media_embed, media_override, domain_override):
+                        selftext, kind, disable_comments, sendreplies,
+                        media_url, media_autoplay, media_override,
+                        domain_override):
 
         should_ratelimit = False
         if not c.user_is_sponsor:
@@ -628,14 +629,36 @@ class PromoteApiController(ApiController):
             # comment disabling and sendreplies is free to be changed any time.
             l.disable_comments = disable_comments
             l.sendreplies = sendreplies
+
             if c.user_is_sponsor or c.user.trusted_sponsor:
-                if media_embed and media_width and media_height:
-                    l.media_object = dict(height=media_height,
-                                          width=media_width,
-                                          content=media_embed,
-                                          type='custom')
-                else:
-                    l.media_object = None
+                if (not media_url and
+                        form.has_errors("media_url", errors.BAD_URL)):
+                    return
+
+                media_url = media_url or None
+                media_changed = (media_url != l.media_url or
+                                 media_autoplay != l.media_autoplay)
+
+                if media_changed:
+                    if media_url:
+                        media = _scrape_media(
+                            media_url, autoplay=media_autoplay,
+                            save_thumbnail=False, use_cache=True)
+
+                        if media:
+                            l.set_media_object(media.media_object)
+                            l.set_secure_media_object(media.secure_media_object)
+                            l.media_url = media_url
+                            l.media_autoplay = media_autoplay
+                        else:
+                            c.errors.add(errors.SCRAPER_ERROR, field="media_url")
+                            form.set_error(errors.SCRAPER_ERROR, "media_url")
+                            return
+                    else:
+                        l.set_media_object(None)
+                        l.set_secure_media_object(None)
+                        l.media_url = None
+                        l.media_autoplay = False
 
                 l.media_override = media_override
                 if getattr(l, "domain_override", False) or domain_override:
