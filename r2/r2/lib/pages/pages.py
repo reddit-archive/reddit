@@ -365,6 +365,18 @@ class Reddit(Templated):
         self.toolbars = self.build_toolbars()
         self.subreddit_stylesheet_url = self.get_subreddit_stylesheet_url(c.site)
 
+        # use override stylesheet if they have custom styles disabled or
+        # this subreddit has no custom stylesheet (or is the front page)
+        has_override_enabled = c.user.gold and c.user.pref_stylesheet_override
+        no_sr_styles = (isinstance(c.site, DefaultSR) or
+                        not c.user.pref_show_stylesheets or
+                        not self.subreddit_stylesheet_url)
+        if has_override_enabled and no_sr_styles:
+            sr = Subreddit._by_name(c.user.pref_stylesheet_override)
+            # make sure they can still view their override subreddit
+            if sr.can_view(c.user):
+                self.subreddit_stylesheet_url = self.get_subreddit_stylesheet_url(sr)
+
     @staticmethod
     def get_subreddit_stylesheet_url(sr):
         if not g.css_killswitch and c.can_apply_styles and c.allow_styles:

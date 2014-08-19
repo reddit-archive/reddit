@@ -77,10 +77,13 @@
 </%def>
 
 <%def name="num_input(s, name)">
-  <input size="4" maxlength="4" 
-         name="${name}" style="margin:  0 .5em 0 .5em"
-         type="number"
-         value="${s if s is not None else ''}" />
+  <input type="text" class="number" size="4" maxlength="4"
+         name="${name}" value="${s if s is not None else ''}">
+</%def>
+
+<%def name="text_input(s, name)">
+  <input type="text" class="text" size="20" maxlength="20"
+         name="${name}" value="${s if s is not None else ''}">
 </%def>
 
 %if c.user_is_loggedin and thing.done:
@@ -345,6 +348,16 @@
         <br><br>
         <% creddit_link = unsafe('&#32;<a href="/creddits">creddit</a>&#32;') %>
         ${checkbox(_wsf("use a %(creddit_link)s to automatically renew my gold if it expires", creddit_link=creddit_link), "creddit_autorenew")}
+        <br><br>
+        <p>
+        <%
+          input = capture(text_input, c.user.pref_stylesheet_override, 'stylesheet_override')
+          s = c.user.pref_stylesheet_override
+        %>
+        ${unsafe(_("use stylesheet from /r/%(sr)s by default") % dict(sr=input))}
+        &#32;<span class="little gray">${_("(blank for standard reddit style)")}</span>
+        <br>
+        <span class="little gray">${_("(used anywhere there isn't another custom style - front page, multireddits, or everywhere if you have custom styles disabled)")}</span>
     </td>
   </tr>
   %elif c.user.is_moderator_somewhere:

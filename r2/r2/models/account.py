@@ -92,6 +92,7 @@ class Account(Thing):
                      pref_no_profanity = True,
                      pref_label_nsfw = True,
                      pref_show_stylesheets = True,
+                     pref_stylesheet_override=None,
                      pref_show_flair = True,
                      pref_show_link_flair = True,
                      pref_mark_messages_read = True,
