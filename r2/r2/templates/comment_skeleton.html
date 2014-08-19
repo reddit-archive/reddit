@@ -29,17 +29,16 @@
   %endif
 </%def>
 
-<%def name="tagline(collapse=False)">
-</%def>
-
-<%def name="collapsed()">
-${self.tagline(True)}
+<%def name="tagline()">
 </%def>
 
 <%def name="commentBody()">
   ${thing.usertext}
 </%def>
 
+<%def name="thing_css_class(what)">
+  ${parent.thing_css_class(what)} ${"collapsed" if thing.collapsed else "noncollapsed"}
+</%def>
 
 <%def name="entry()">
 <%
@@ -47,19 +46,17 @@ ${self.tagline(True)}
    collapse = thing.collapsed
 %>
 
-<div class="collapsed" ${(not collapse and "style='display:none'" or "")}>
-  ${self.collapsed()}
-</div>
-<div class="noncollapsed" ${(collapse and "style='display:none'" or "")}>
-  <p class="tagline">
-    ${self.tagline()}
-%if not getattr(thing, "votable", True):
+
+<p class="tagline">
+  ${self.tagline()}
+  %if not getattr(thing, "votable", True):
     <div class="unvotable-message">${strings.unvotable_message}</div>
-%endif
-  </p>
-  ${self.commentBody()}
-  <ul class="flat-list buttons">
-    ${self.buttons()}
-  </ul>
-</div>
+  %endif
+</p>
+
+${self.commentBody()}
+
+<ul class="flat-list buttons">
+  ${self.buttons()}
+</ul>
 </%def>

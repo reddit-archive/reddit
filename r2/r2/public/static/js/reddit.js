@@ -368,64 +368,80 @@ function helpoff(elem) {
 };
 
 function show_all_messages(elem) {
-    var m = $(elem).parents(".message");
+    var $rootMessage = $(elem).parents(".message");
+    var $childMessages = $rootMessage.find(".message");
+    var $messages = $rootMessage.add($childMessages);
     var ids = [];
-    m.find(".entry .collapsed").hide().end()
-        .find(".noncollapsed, .midcol:first").filter(":hidden")
-        .each(function() { 
-                var t = $(this).show().thing_id(); 
-                if(ids.indexOf(t) == -1) {
-                    ids.push(t);
-                }
-            });
-    if(ids.length) {
+
+    _.each($messages, function(message) {
+      var $message = $(message);
+      var $expander = $message.find(".expand:first");
+      var isCollapsed = $message.hasClass("collapsed");
+
+      if (isCollapsed) {
+        $message.toggleClass("collapsed noncollapsed");
+        $expander.text("[-]");
+        ids.push($message.thing_id());
+      }
+    });
+
+    if (ids.length) {
         $.request("uncollapse_message", {"id": ids.join(',')});
     }
-    return false; 
+    return false;
 }
 
 function hide_all_messages(elem) {
-    var m = $(elem).parents(".message");
+    var $rootMessage = $(elem).parents(".message");
+    var $childMessages = $rootMessage.find(".message");
+    var $messages = $rootMessage.add($childMessages);
     var ids = [];
-    m.find(".entry .collapsed").show().end()
-        .find(".noncollapsed, .midcol:first").filter(":visible")
-        .each(function() { 
-                var t = $(this).hide().thing_id(); 
-                if(ids.indexOf(t) == -1) {
-                    ids.push(t);
-                }
-            });
-    if(ids.length) {
+
+    _.each($messages, function(message) {
+      var $message = $(message);
+      var $expander = $message.find(".expand:first");
+      var isCollapsed = $message.hasClass("collapsed");
+
+      if (!isCollapsed) {
+        $message.toggleClass("collapsed noncollapsed");
+        $expander.text("[+]");
+        ids.push($message.thing_id());
+      }
+    });
+
+    if (ids.length) {
         $.request("collapse_message", {"id": ids.join(',')});
     }
-    return false; 
+    return false;
 }
 
-function hidecomment(elem) {
-    var t = $(elem).thing();
-    t.hide()
-        .find(".noncollapsed:first, .midcol:first").hide().end()
-        .show().find(".entry:first .collapsed").show();
-    if(t.hasClass("message")) {
-        $.request("collapse_message", {"id": $(t).thing_id()});
-    } else {
-        t.find(".child:first").hide();
-    }
-    return false;
-};
+function togglecomment(elem) {
+  var comment = $(elem).thing()
+  var expander = comment.find(".expand:first")
+  var isCollapsed = comment.hasClass("collapsed")
+  comment.toggleClass("collapsed noncollapsed")
 
-function showcomment(elem) {
-    var t = $(elem).thing();
-    t.find(".entry:first .collapsed").hide().end()
-        .find(".noncollapsed:first, .midcol:first").show().end()
-        .show();
-    if(t.hasClass("message")) {
-        $.request("uncollapse_message", {"id": $(t).thing_id()});
-    } else {
-        t.find(".child:first").show();
-    }
-    return false;
-};
+  if (!isCollapsed) {
+    expander.text("[+]")
+  } else {
+    expander.text("[–]")
+  }
+}
+
+function togglemessage(elem) {
+  var message = $(elem).thing()
+  var expander = message.find(".expand:first")
+  var isCollapsed = message.hasClass("collapsed")
+  message.toggleClass("collapsed noncollapsed")
+
+  if (!isCollapsed) {
+    expander.text("[+]")
+    $.request("collapse_message", { "id": $(message).thing_id() })
+  } else {
+    expander.text("[–]")
+    $.request("uncollapse_message", { "id": $(message).thing_id() })
+  }
+}
 
 function morechildren(form, link_id, children, depth, pv_hex) {
     $(form).html(reddit.status_msg.loading)
@@ -1036,31 +1052,31 @@ function check_some_langs(elem) {
 }
 
 function fetch_parent(elem, parent_permalink, parent_id) {
-    $(elem).css("color", "red").html(reddit.status_msg.loading);
     var thing = $(elem).thing();
-    var parentdiv = thing.find(".uncollapsed .parent");
-    if (parentdiv.length == 0) {
-        var parent = '';
-        $.getJSON(parent_permalink, function(response) {
-                $.each(response, function() {
-                        if (this && this.data.children) {
-                            $.each(this.data.children, function() {
-                                    if(this.data.name == parent_id) {
-                                        parent= this.data.body_html; 
-                                    }
-                                });
-                        }
-                    });
-                if(parent) {
-                    /* make a parent div for the contents of the fetch */
-                    thing.find(".noncollapsed .md").first() 
-                        .before('<div class="parent rounded">' +
-                                $.unsafe(parent) +
-                                '</div>'); 
-                }
-                $(elem).parent("li").addBack().remove();
-            });
-    }
+    var parent = '';
+
+    $(elem).css("color", "red").html(reddit.status_msg.loading);
+
+    $.getJSON(parent_permalink, function(response) {
+      $.each(response, function() {
+        if (this && this.data.children) {
+          $.each(this.data.children, function() {
+            if (this.data.name == parent_id) {
+              parent = this.data.body_html;
+            }
+          });
+        }
+      });
+
+      if (parent) {
+        /* make a parent div for the contents of the fetch */
+        thing.find(".md").first()
+          .before('<div class="parent rounded">' + $.unsafe(parent) + '</div>');
+      }
+
+      /* remove the button */
+      $(elem).parent("li").addBack().remove();
+    });
     return false;
 }
 

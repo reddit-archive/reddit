@@ -34,7 +34,7 @@
 ##################
 
 <%def name="midcol(display=True, cls = '')">
-${parent.midcol(not thing.collapsed, cls = cls)}
+${parent.midcol(cls = cls)}
 </%def>
 
 <%def name="ParentDiv()">
@@ -67,39 +67,29 @@ ${parent.midcol(not thing.collapsed, cls = cls)}
   %endif
 </%def>
 
-<%def name="collapsed()">
-${parent.collapsed()}
-</%def>
-
-<%def name="tagline(collapse=False,showexpandcollapse=True)">
+<%def name="tagline()">
   <%
      if c.user_is_admin:
        show = True
      else:
        show = not thing.deleted
   %>
-  %if showexpandcollapse:
-    <a href="#" class="expand"
-       %if collapse:
-         onclick="return showcomment(this)">
-       %else:
-         onclick="return hidecomment(this)">
-       %endif
-       [${"+" if collapse else unsafe("&ndash;")}]
-    </a>
-  %endif
+
+  <a href="javascript:void(0)" class="expand" onclick="return togglecomment(this)">
+    ${"[%s]" % ("+" if thing.collapsed else "–")}
+  </a>
 
   %if show:
      %if thing.deleted:
        <em>${_("deleted comment from")}</em>&#32;
      %endif
-     ${WrappedUser(thing.author, thing.attribs, thing, gray=collapse)}
+     ${WrappedUser(thing.author, thing.attribs, thing)}
      &#32;
   %else:
      <em>${_("[deleted]")}</em>&#32;
   %endif
 
-  %if collapse and thing.collapsed and show:
+  %if thing.collapsed and show:
     ${thing.collapsed_reason}
   %else:
     %if show:
@@ -117,12 +107,11 @@ ${parent.collapsed()}
 
   ${self.gildings()}
 
-  %if collapse:
-    &nbsp;<a href="#" class="expand"
-       onclick="return showcomment(this)">
-       (${thing.numchildren_text})
-    </a>
-  %endif
+  &nbsp;
+  <span class="numchildren">
+     (${thing.numchildren_text})
+  </span>
+
   ${self.approval_checkmark()}
   %if getattr(thing, 'savedcategory', None) is not None:
     ${plain_link(_('category: %s') % thing.savedcategory,
@@ -140,7 +129,7 @@ ${parent.collapsed()}
   </a>
   <div class="child noncollapsed" style="display:none">
 %else:
-  <div class="child" ${thing.collapsed and "style='display:none'" or ""}>
+  <div class="child">
 %endif
     ${thing.childlisting}
   </div>

@@ -42,15 +42,11 @@
 ${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if thing.was_comment else ""} ${"recipient" if thing.recipient else ""} ${"message-reply" if getattr(thing, "is_child", False) else ""} ${"message-parent" if getattr(thing, "is_parent", False) else ""} ${"focal" if getattr(thing, "focal", False) else ""} ${"gold" if getattr(thing, "distinguished", "") == "gold" else ""} ${"gold-auto" if getattr(thing, "distinguished", "") == "gold-auto" else ""}
 </%def>
 
-<%def name="tagline(collapse=False)">
-     <a href="#" class="expand"
-        %if collapse:
-           onclick="return showcomment(this)">
-         %else:
-           onclick="return hidecomment(this)">
-         %endif
-         [${"+" if collapse else unsafe("&ndash;")}]&nbsp;
-     </a>
+<%def name="tagline()">
+  <a href="javascript:void(0)" class="expand" onclick="return togglemessage(this)">
+    ${"[%s]" % ("+" if thing.collapsed else "–")}
+  </a>
+
   <span class="head">
   <%
    author = WrappedUser(thing.author, thing.attribs, thing).render()
