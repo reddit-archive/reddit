@@ -32,6 +32,12 @@
 <%def name="tagline()">
 </%def>
 
+<%def name="buttons()">
+</%def>
+
+<%def name="arrows()">
+</%def>
+
 <%def name="commentBody()">
   ${thing.usertext}
 </%def>
@@ -43,9 +49,7 @@
 <%def name="entry()">
 <%
    from r2.lib.strings import strings
-   collapse = thing.collapsed
 %>
-
 
 <p class="tagline">
   ${self.tagline()}
