@@ -4050,8 +4050,8 @@ class PromoteInventory(Templated):
                     in chain.from_iterable(campaigns_by_date.itervalues())}
         links_by_id = Link._byID(link_ids, data=True)
         dates = inventory.get_date_range(self.start, self.end)
-        imps_by_link = defaultdict(lambda: dict.fromkeys(dates, Bookings()))
-        total_by_date = dict.fromkeys(dates, Bookings())
+        total_by_date = {date: Bookings() for date in dates}
+        imps_by_link = defaultdict(lambda: {date: Bookings() for date in dates})
         for date, campaigns in campaigns_by_date.iteritems():
             for camp in campaigns:
                 link = links_by_id[camp.link_id]
