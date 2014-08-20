@@ -24,9 +24,6 @@
 
 <%def name="entry()">
   <div class="commentbox">
-    <span class="commentbody">
-      ${self.commentBody()}
-    </span>
     <p class="tagline">
       ${self.tagline()}
       &#32;
@@ -34,5 +31,9 @@
         ${_("context")}
       </a>
     </p>
+
+    <span class="commentbody">
+      ${self.commentBody()}
+    </span>
   </div>
 </%def>
