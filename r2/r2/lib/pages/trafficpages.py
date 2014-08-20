@@ -205,14 +205,19 @@ class RedditTraffic(Templated):
         raise NotImplementedError()
 
 
-def make_subreddit_traffic_report(subreddits=None):
+def make_subreddit_traffic_report(subreddits=None, num=None):
     """Return a report of subreddit traffic in the last full month.
 
     If given a list of subreddits, those subreddits will be put in the report
     otherwise the top subreddits by pageviews will be automatically chosen.
 
     """
-    subreddit_summary = traffic.PageviewsBySubreddit.top_last_month(subreddits)
+
+    if subreddits:
+        subreddit_summary = traffic.PageviewsBySubreddit.last_month(subreddits)
+    else:
+        subreddit_summary = traffic.PageviewsBySubreddit.top_last_month(num)
+
     report = []
     for srname, data in subreddit_summary:
         if srname == _DefaultSR.name:

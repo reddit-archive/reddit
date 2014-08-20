@@ -425,9 +425,14 @@ class PageviewsBySubreddit(Base):
 
     @classmethod
     @memoize_traffic(time=3600 * 6)
-    def top_last_month(cls, srs=None):
-        ids = [sr.name for sr in srs] if srs else None
-        return top_last_month(cls, "subreddit", ids)
+    def top_last_month(cls, num=None):
+        return top_last_month(cls, "subreddit", num=num)
+
+    @classmethod
+    @memoize_traffic(time=3600 * 6)
+    def last_month(cls, srs):
+        ids = [sr.name for sr in srs]
+        return top_last_month(cls, "subreddit", ids=ids)
 
 
 class PageviewsBySubredditAndPath(Base):
