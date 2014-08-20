@@ -251,7 +251,7 @@ def make_history_query(cls, interval):
     return time_points, q
 
 
-def top_last_month(cls, key, ids=None):
+def top_last_month(cls, key, ids=None, num=None):
     """Aggregate a listing of the top items (by pageviews) last month.
 
     We use the last month because it's guaranteed to be fully computed and
@@ -270,7 +270,8 @@ def top_last_month(cls, key, ids=None):
     if ids:
         q = q.filter(getattr(cls, key).in_(ids))
     else:
-        q = q.limit(55)
+        num = num or 55
+        q = q.limit(num)
 
     return [(getattr(r, key), (r.unique_count, r.pageview_count))
             for r in q.all()]
