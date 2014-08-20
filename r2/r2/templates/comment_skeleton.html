@@ -43,7 +43,7 @@
 </%def>
 
 <%def name="thing_css_class(what)">
-  ${parent.thing_css_class(what)} ${"collapsed" if thing.collapsed else "noncollapsed"}
+  ${parent.thing_css_class(what)} ${"collapsed" if thing.collapsed else "noncollapsed"} ${"collapsed-for-reason" if hasattr(thing, "collapsed_reason") else ""}
 </%def>
 
 <%def name="entry()">

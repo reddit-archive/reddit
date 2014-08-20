@@ -2044,6 +2044,16 @@ a.star { text-decoration: none; color: #ff8b60 }
             font-style: italic;
         }
     }
+
+    &.collapsed-for-reason {
+        .collapsed-reason {
+            display: inline;
+        }
+
+        .score, .live-timestamp {
+            display: none;
+        }
+    }
 }
 
 .comment {
@@ -2070,6 +2080,12 @@ a.star { text-decoration: none; color: #ff8b60 }
         margin-top: 10px; 
         margin-left: 15px; 
         border-left: 1px dotted #DDF;
+    }
+
+    &.collapsed-for-reason {
+        .collapsed-reason {
+            display: none;
+        }
     }
 }
 

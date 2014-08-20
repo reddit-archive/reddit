@@ -90,21 +90,19 @@ ${parent.midcol(cls = cls)}
   %endif
 
   %if thing.collapsed and show:
-    ${thing.collapsed_reason}
-  %else:
-    %if show:
-      %if thing.score_hidden:
-        <span title="${_('this subreddit hides comment scores for %d minutes') % thing.subreddit.comment_score_hide_mins}">
-          [${_("score hidden")}]
-        </span>&#32;
-      %else:
-        ${unsafe(self.score(thing, likes = thing.likes))}&#32;
-      %endif
-    %endif
-    ${thing_timestamp(thing, thing.timesince, live=True, include_tense=True)}
-    ${edited(thing, thing.lastedited)}
+    <span class="collapsed-reason">${thing.collapsed_reason}</span>
   %endif
 
+  %if show and thing.score_hidden:
+    <span title="${_('this subreddit hides comment scores for %d minutes') % thing.subreddit.comment_score_hide_mins}">
+      [${_("score hidden")}]
+    </span>&#32;
+  %elif show and not thing.score_hidden:
+    ${unsafe(self.score(thing, likes = thing.likes))}&#32;
+  %endif
+
+  ${thing_timestamp(thing, thing.timesince, live=True, include_tense=True)}
+  ${edited(thing, thing.lastedited)}
   ${self.gildings()}
 
   &nbsp;
