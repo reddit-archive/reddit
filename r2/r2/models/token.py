@@ -659,6 +659,14 @@ class OAuth2RefreshToken(OAuth2AccessToken):
     def _by_user_view(cls):
         return OAuth2RefreshTokensByUser
 
+    def revoke(self):
+        super(OAuth2RefreshToken, self).revoke()
+        account = Account._byID36(self.user_id)
+        access_tokens = OAuth2AccessToken._by_user(account)
+        for token in access_tokens:
+            if token.refresh_token == self._id:
+                token.revoke()
+
 class OAuth2RefreshTokensByUser(tdb_cassandra.View):
     """Index listing the outstanding refresh tokens for an account."""
 

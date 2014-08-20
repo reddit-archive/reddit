@@ -24,11 +24,12 @@ from urllib import urlencode
 import base64
 import simplejson
 
-from pylons import c, g, request
+from pylons import c, g, request, response
 from pylons.i18n import _
 from r2.config.extensions import set_extension
 from r2.lib.base import abort
 from reddit_base import RedditController, MinimalController, require_https
+from r2.lib.db import tdb_cassandra
 from r2.lib.db.thing import NotFound
 from r2.models import Account
 from r2.models.token import (
@@ -49,6 +50,7 @@ from r2.lib.validator import (
     VOAuth2ClientID,
     VOAuth2Scope,
     VOAuth2RefreshToken,
+    VRatelimit,
 )
 
 
@@ -312,6 +314,57 @@ class OAuth2AccessController(MinimalController):
         )
         resp = self._make_token_dict(access_token)
         return self.api_wrapper(resp)
+
+    @validate(
+        VRatelimit(rate_user=False, rate_ip=True, prefix="rate_revoke_token_"),
+        token_id=nop("token"),
+        token_hint=VOneOf("token_type_hint", ("access_token", "refresh_token")),
+    )
+    def POST_revoke_token(self, token_id, token_hint):
+        '''Revoke an OAuth2 access or refresh token.
+
+        token_type_hint is optional, and hints to the server
+        whether the passed token is a refresh or access token.
+
+        A call to this endpoint is considered a success if
+        the passed `token_id` is no longer valid. Thus, if an invalid
+        `token_id` was passed in, a successful 204 response will be returned.
+
+        See [RFC7009](http://tools.ietf.org/html/rfc7009)
+
+        '''
+        # In success cases, this endpoint returns no data.
+        response.status = 204
+
+        if not token_id:
+            return
+
+        types = (OAuth2AccessToken, OAuth2RefreshToken)
+        if token_hint == "refresh_token":
+            types = reversed(types)
+
+        for token_type in types:
+            try:
+                token = token_type._byID(token_id)
+            except tdb_cassandra.NotFound:
+                continue
+            else:
+                break
+        else:
+            # No Token found. The given token ID is already gone
+            # or never existed. Either way, from the client's perspective,
+            # the passed in token is no longer valid.
+            return
+
+        if constant_time_compare(token.client_id, c.oauth2_client._id):
+            token.revoke()
+        else:
+            # RFC 7009 is not clear on how to handle this case.
+            # Given that a malicious client could do much worse things
+            # with a valid token then revoke it, returning an error
+            # here is best as it may help certain clients debug issues
+            response.status = 400
+            return self.api_wrapper({"error": "unauthorized_client"})
 
 
 def require_oauth2_scope(*scopes):

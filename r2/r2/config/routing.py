@@ -378,7 +378,7 @@ def make_map():
     mc("/api/v1/:action", controller="oauth2frontend",
        requirements=dict(action="authorize"))
     mc("/api/v1/:action", controller="oauth2access",
-       requirements=dict(action="access_token"))
+       requirements=dict(action="access_token|revoke_token"))
     mc("/api/v1/user/:username/trophies",
        controller="apiv1user", action="usertrophies")
     mc("/api/v1/:action", controller="apiv1user")
