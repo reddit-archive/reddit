@@ -237,7 +237,7 @@ def make_subreddit_traffic_report(subreddits=None, num=None):
 class SitewideTraffic(RedditTraffic):
     """An overview of all traffic to the site."""
     def __init__(self):
-        self.subreddit_summary = make_subreddit_traffic_report()
+        self.subreddit_summary = make_subreddit_traffic_report(num=250)
         RedditTraffic.__init__(self, g.domain)
 
     def get_dow_summary(self):
