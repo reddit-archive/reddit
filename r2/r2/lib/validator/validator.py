@@ -1768,8 +1768,7 @@ class VCommentIDs(Validator):
     def run(self, id_str):
         if id_str:
             cids = [int(i, 36) for i in id_str.split(',')]
-            comments = Comment._byID(cids, data=True, return_dict = False)
-            return comments
+            return cids
         return []
 
     def param_docs(self):

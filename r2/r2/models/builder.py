@@ -774,8 +774,7 @@ class CommentBuilder(Builder):
 
         if self.children:
             # requested specific child comments
-            children = [child._id for child in self.children
-                                  if child._id in cids]
+            children = [cid for cid in self.children if cid in cids]
             self.update_candidates(candidates, sorter, children)
             dont_collapse.extend(comment for sort_val, comment in candidates)
 
