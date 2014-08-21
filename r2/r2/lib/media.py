@@ -58,7 +58,6 @@ from urllib2 import (
 )
 
 
-MEDIA_FILENAME_LENGTH = 12
 thumbnail_size = 70, 70
 
 # TODO: replace this with data from the embedly service api when available
@@ -201,8 +200,8 @@ def thumbnail_url(link):
 
 
 def _filename_from_content(contents):
-    sha = hashlib.sha1(contents).digest()
-    return base64.urlsafe_b64encode(sha[0:MEDIA_FILENAME_LENGTH])
+    hash_bytes = hashlib.sha1(contents).digest()
+    return base64.urlsafe_b64encode(hash_bytes).rstrip("=")
 
 
 def upload_media(image, file_type='.jpg'):
