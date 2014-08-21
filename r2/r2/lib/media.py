@@ -200,7 +200,7 @@ def thumbnail_url(link):
 
 
 def _filename_from_content(contents):
-    hash_bytes = hashlib.sha1(contents).digest()
+    hash_bytes = hashlib.sha256(contents).digest()
     return base64.urlsafe_b64encode(hash_bytes).rstrip("=")
 
 
