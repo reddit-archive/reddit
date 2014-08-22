@@ -106,9 +106,9 @@ ${parent.midcol(cls = cls)}
   ${self.gildings()}
 
   &nbsp;
-  <span class="numchildren">
-     (${thing.numchildren_text})
-  </span>
+  <a href="javascript:void(0)" class="numchildren" onclick="return togglecomment(this)">
+    (${thing.numchildren_text})
+  </a>
 
   ${self.approval_checkmark()}
   %if getattr(thing, 'savedcategory', None) is not None:
