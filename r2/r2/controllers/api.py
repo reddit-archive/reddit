@@ -155,32 +155,46 @@ class ApiController(RedditController):
 
     @pagecache_policy(PAGECACHE_POLICY.NEVER)
     @require_oauth2_scope("read")
-    @validate(url=VUrl('url'),
-              link=VByName('id'),
-              count = VLimit('limit'))
+    @validate(
+        link=VByName('id'),
+        url=VUrl('url'),
+    )
     @api_doc(api_section.links_and_comments, uses_site=True)
-    def GET_info(self, url, link, count):
-        """Get a link by fullname or a list of links by URL.
+    def GET_info(self, link, url):
+        """Get a link by fullname."""
+        if url:
+            return self.GET_url_info()
 
-        If `id` is provided, the link with the given fullname will be returned.
-        If `url` is provided, a list of links with the given URL will be
-        returned.
+        c.update_last_visit = False
+        listing = wrap_links(things or [])
+        return BoringPage(_("API"), content=listing).render()
 
-        If both `url` and `id` are provided, `id` will take precedence.
+    @pagecache_policy(PAGECACHE_POLICY.NEVER)
+    @require_oauth2_scope("read")
+    @validate(
+        url=VUrl('url'),
+        count=VLimit('limit'),
+        link=VByName('id'),
+    )
+    def GET_url_info(self, url, count, link):
+        """
+        Return a list of links with the given URL.
 
         If a subreddit is provided, only links in that subreddit will be
         returned.
 
         """
 
+        if link and not url:
+            return self.GET_info()
+
         c.update_last_visit = False
 
-        if link or not url:
-            listing = wrap_links(link or [], num=count)
-        else:
+        if url:
             listing = hot_links_by_url_listing(url, sr=c.site, num=count)
+        else:
+            listing = None
         return BoringPage(_("API"), content=listing).render()
-
 
     @json_validate()
     @api_doc(api_section.account, extensions=["json"])

@@ -398,7 +398,7 @@ def make_map():
     mc('/dev/api/:mode', controller='apidocs', action='docs',
        requirements=dict(mode="oauth"))
 
-    mc("/button_info", controller="api", action="info", limit=1)
+    mc("/button_info", controller="api", action="url_info", limit=1)
 
     mc('/captcha/:iden', controller='captcha', action='captchaimg')
 
