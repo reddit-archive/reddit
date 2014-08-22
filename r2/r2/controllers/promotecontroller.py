@@ -730,12 +730,13 @@ class PromoteApiController(ApiController):
         is_frontpage = (not target.is_collection and
                         target.subreddit_name == Frontpage.name)
 
-        if (location and
-                target.is_collection or
-                (not is_frontpage and not c.user_is_sponsor)):
-            # regular users can only target to Frontpage and no one can
-            # location target a collection
-            location = None
+        if location:
+            non_cpm_collection = target.is_collection and not priority.cpm
+
+            if not (is_frontpage or (non_cpm_collection and c.user_is_sponsor)):
+                # regular users can location target to Frontpage and sponsors
+                # can location target a collection if it's a non-cpm priority
+                location = None
 
         if location and location.metro:
             cpm = g.cpm_selfserve_geotarget_metro.pennies
