@@ -166,6 +166,8 @@ class OAuth2AccessController(MinimalController):
         auth = request.headers.get("Authorization")
         try:
             client_id, client_secret = parse_http_basic(auth)
+            require(client_id)
+            require(client_secret)
             client = OAuth2Client.get_token(client_id)
             require(client)
             require(constant_time_compare(client.secret, client_secret))
