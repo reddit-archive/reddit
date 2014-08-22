@@ -156,17 +156,27 @@ class ApiController(RedditController):
     @pagecache_policy(PAGECACHE_POLICY.NEVER)
     @require_oauth2_scope("read")
     @validate(
-        link=VByName('id'),
+        things=VByName('id', multiple=True, limit=100),
         url=VUrl('url'),
     )
     @api_doc(api_section.links_and_comments, uses_site=True)
-    def GET_info(self, link, url):
-        """Get a link by fullname."""
+    def GET_info(self, things, url):
+        """
+        Return a listing of things specified by their fullnames.
+
+        Only Links, Comments, and Subreddits are allowed.
+
+        """
+
         if url:
             return self.GET_url_info()
 
+        thing_classes = (Link, Comment, Subreddit)
+        things = things or []
+        things = filter(lambda thing: isinstance(thing, thing_classes), things)
+
         c.update_last_visit = False
-        listing = wrap_links(things or [])
+        listing = wrap_links(things)
         return BoringPage(_("API"), content=listing).render()
 
     @pagecache_policy(PAGECACHE_POLICY.NEVER)
@@ -174,9 +184,9 @@ class ApiController(RedditController):
     @validate(
         url=VUrl('url'),
         count=VLimit('limit'),
-        link=VByName('id'),
+        things=VByName('id', multiple=True, limit=100),
     )
-    def GET_url_info(self, url, count, link):
+    def GET_url_info(self, url, count, things):
         """
         Return a list of links with the given URL.
 
@@ -185,7 +195,7 @@ class ApiController(RedditController):
 
         """
 
-        if link and not url:
+        if things and not url:
             return self.GET_info()
 
         c.update_last_visit = False
