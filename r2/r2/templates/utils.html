@@ -400,6 +400,7 @@ ${unsafe(txt)}
     var user_type = '${"guest" if not c.user_is_loggedin else "goldloggedin" if c.user.gold else "loggedin"}';
     var _gaq = _gaq || [];
     _gaq.push(
+        ['_require', 'inpage_linkid', '//www.google-analytics.com/plugins/ga/inpage_linkid.js'],
         ['_setAccount', '${g.googleanalytics}'],
         ['_setDomainName', '${g.domain}'],
         ['_setCustomVar', 1, 'site', '${tracking.get_site()}', 3],
