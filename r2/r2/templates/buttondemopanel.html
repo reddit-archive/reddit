@@ -147,9 +147,9 @@ $(function() {
 </script>
 
 <%def name="drawbadge(image)">
-  <a href="http://${domain}/submit" 
-    onclick="window.location = 'http://${domain}/submit?url=' + encodeURIComponent(window.location); return false">
-   <img src="http://${get_domain(subreddit=False)}/static/spreddit${image}.gif" 
+  <a href="//${domain}/submit"
+    onclick="window.location = '//${domain}/submit?url=' + encodeURIComponent(window.location); return false">
+   <img src="//${get_domain(subreddit=False)}/static/spreddit${image}.gif"
         alt="submit to reddit" border="0" />
    </a>
 </%def>
@@ -168,20 +168,20 @@ $(function() {
 
 <%def name="draw_point_button(image)">
   <script type="text/javascript" 
-          src="http://${domain}/buttonlite.js?i=${image}"></script>
+          src="//${domain}/buttonlite.js?i=${image}"></script>
 </%def>
 
 <%def name="point_option_example()" buffered="True">
    <script type="text/javascript" 
-        src="http://${domain}/buttonlite.js?i=1&styled=off&url=foo.com&newwindow=1"></script>
+        src="//${domain}/buttonlite.js?i=1&styled=off&url=foo.com&newwindow=1"></script>
 </%def>
 
 <%def name="draw_interactive(type)">
 %if type:
   <script type="text/javascript" 
-          src="http://${domain}/static/button/button${type}.js"></script>
+          src="//${domain}/static/button/button${type}.js"></script>
 %else:
-  <script type="text/javascript" src="http://${domain}/static/button/button1.js"></script>
+  <script type="text/javascript" src="//${domain}/static/button/button1.js"></script>
 %endif
 </%def>
 
@@ -190,11 +190,11 @@ $(function() {
 </%def>
 
 <%def name="draw_interactive_example()"><script type="text/javascript">
-  reddit_url = "http://${domain}/buttons";
+  reddit_url = "//${domain}/buttons";
   reddit_title = "Buttons!";
   reddit_bgcolor = "FF3";
   reddit_bordercolor = "00F";
 </script>
-<script type="text/javascript" src="http://${domain}/static/button/button3.js"></script>
+<script type="text/javascript" src="//${domain}/static/button/button3.js"></script>
 </%def>
 
