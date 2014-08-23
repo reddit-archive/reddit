@@ -42,9 +42,19 @@ from r2.lib import amqp
 from r2.lib import recommender
 from r2.lib import hooks
 
-from r2.lib.utils import get_title, sanitize_url, timeuntil, set_last_modified
-from r2.lib.utils import query_string, timefromnow, randstr
-from r2.lib.utils import timeago, tup
+from r2.lib.utils import (
+    extract_user_mentions,
+    get_title,
+    query_string,
+    randstr,
+    sanitize_url,
+    set_last_modified,
+    timeago,
+    timefromnow,
+    timeuntil,
+    tup,
+)
+
 from r2.lib.pages import (BoringPage, FormPage, CssError, UploadedImage,
                           ClickGadget, UrlParser, WrappedUser)
 from r2.lib.pages import FlairList, FlairCsv, FlairTemplateEditor, \
@@ -1322,29 +1332,12 @@ class ApiController(RedditController):
 
         #comments have special delete tasks
         elif isinstance(thing, Comment):
-            parent_id = getattr(thing, 'parent_id', None)
-            link_id = thing.link_id
-            recipient = None
-
-            if parent_id:
-                parent_comment = Comment._byID(parent_id, data=True)
-                recipient = Account._byID(parent_comment.author_id)
-            else:
-                parent_link = Link._byID(link_id, data=True)
-                if parent_link.is_self:
-                    recipient = Account._byID(parent_link.author_id)
-
             if not was_deleted:
                 queries.delete_comment(thing)
 
-            if recipient:
-                inbox_class = Inbox.rel(Account, Comment)
-                d = inbox_class._fast_query(recipient, thing, ("inbox",
-                                                               "selfreply",
-                                                               "mention"))
-                rels = filter(None, d.values()) or None
-                queries.new_comment(thing, rels)
-
+            queries.new_comment(thing, None)  # possible inbox_rels are
+                                              # handled by unnotify
+            queries.unnotify(thing)
             queries.delete(thing)
 
     @require_oauth2_scope("modposts")
@@ -1622,8 +1615,11 @@ class ApiController(RedditController):
                                 errors.NO_TEXT, errors.TOO_LONG) and
             not form.has_errors("thing_id", errors.NOT_AUTHOR)):
 
+            removed_mentions = None
             if isinstance(item, Comment):
                 kind = 'comment'
+                removed_mentions = set(extract_user_mentions(item.body)) - \
+                    set(extract_user_mentions(text))
                 item.body = text
             elif isinstance(item, Link):
                 kind = 'link'
@@ -1652,6 +1648,13 @@ class ApiController(RedditController):
             changed(item)
 
             amqp.add_item('usertext_edited', item._fullname)
+
+            # new mentions are subject to more constraints, handled in butler_q
+            if removed_mentions:
+                queries.unnotify(item, list(Account._names_to_ids(
+                    removed_mentions,
+                    ignore_missing=True,
+                )))
 
             if kind == 'link':
                 set_last_modified(item, 'comments')
@@ -2445,6 +2448,9 @@ class ApiController(RedditController):
             sr = thing.subreddit_slow
             action = 'remove' + thing.__class__.__name__.lower()
             ModAction.create(sr, c.user, action, **kw)
+
+        queries.unnotify(thing)
+
 
     @require_oauth2_scope("modposts")
     @noresponse(VUser(), VModhash(),

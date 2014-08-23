@@ -45,6 +45,7 @@ from r2.lib.template_helpers import add_sr
 from r2.lib.admin_utils import check_cheating
 from r2.lib.csrf import csrf_exempt
 from r2.lib.utils import (
+    extract_user_mentions,
     iters,
     timeago,
     trunc_string,
@@ -53,7 +54,6 @@ from r2.lib.utils import (
 from r2.lib import organic, sup, trending
 from r2.lib.memoize import memoize
 from r2.lib.validator import *
-from r2.lib.butler import extract_user_mentions
 import socket
 
 from api_docs import api_doc, api_section

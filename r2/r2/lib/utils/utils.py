@@ -1283,6 +1283,27 @@ def extract_urls_from_markdown(md):
             yield url
 
 
+def extract_user_mentions(text, num=None):
+    from r2.lib.validator import chkuser
+    if num is None:
+        num = g.butler_max_mentions
+
+    cur_num = 0
+    for url in extract_urls_from_markdown(text):
+        if num != -1 and cur_num >= num:
+            break
+
+        if not url.startswith("/u/"):
+            continue
+
+        username = url[len("/u/"):]
+        if not chkuser(username):
+            continue
+
+        cur_num += 1
+        yield username.lower()
+
+
 def summarize_markdown(md):
     """Get the first paragraph of some Markdown text, potentially truncated."""
 
@@ -1466,6 +1487,14 @@ def fuzz_activity(count):
     decay = math.exp(float(-count) / 60)
     jitter = round(5 * decay)
     return count + random.randint(0, jitter)
+
+
+# port of https://docs.python.org/dev/library/itertools.html#itertools-recipes
+def partition(pred, iterable):
+    "Use a predicate to partition entries into false entries and true entries"
+    # partition(is_odd, range(10)) --> 0 2 4 6 8   and  1 3 5 7 9
+    t1, t2 = itertools.tee(iterable)
+    return itertools.ifilterfalse(pred, t1), itertools.ifilter(pred, t2)
 
 # http://docs.python.org/2/library/itertools.html#recipes
 def roundrobin(*iterables):

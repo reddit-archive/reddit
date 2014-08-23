@@ -1966,6 +1966,44 @@ class Inbox(MultiRelation('inbox',
         return i
 
     @classmethod
+    def possible_recipients(cls, obj):
+        """Determine all possible recipients of Inboxes for this object.
+           `obj` may be one of (Comment, Message).
+        """
+
+        possible_recipients = []
+        if isinstance(obj, Comment):
+            # Item is a comment. Eligible types of inboxes: mentions,
+            # selfreply (which can exist on all posts if sendreplies=True),
+            # inbox (which is a comment reply)
+
+            parent_id = getattr(obj, 'parent_id', None)
+            if parent_id:
+                # Comment reply
+                parent_comment = Comment._byID(parent_id, data=True)
+                possible_recipients.append(parent_comment.author_id)
+            else:
+                # Selfreply
+                # Do not check sendreplies, as they may have flagged it off
+                # between when the comment was created and when we are checking
+                parent_link = Link._byID(obj.link_id, data=True)
+                possible_recipients.append(parent_link.author_id)
+
+            mentions = utils.extract_user_mentions(obj.body)
+            possible_recipients.extend(Account._names_to_ids(
+                mentions,
+                ignore_missing=True,
+            ))
+        elif isinstance(obj, Message):
+            if obj.to_id:
+                possible_recipients.append(obj.to_id)
+        else:
+            g.log.warning("Unknown object type for recipients: %r", obj)
+
+        return possible_recipients
+
+
+    @classmethod
     def set_unread(cls, things, unread, to=None):
         things = tup(things)
         if len(set(type(x) for x in things)) != 1:

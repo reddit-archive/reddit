@@ -974,6 +974,28 @@ def add_to_commentstree_q(comment):
         amqp.add_item('commentstree_q', comment._fullname)
 
 
+def update_comment_notifications(comment, inbox_rels, mutator):
+    is_visible = not comment._deleted and not comment._spam
+
+    for inbox_rel in tup(inbox_rels):
+        inbox_owner = inbox_rel._thing1
+        if inbox_rel._name == "inbox":
+            query = get_inbox_comments(inbox_owner)
+        elif inbox_rel._name == "selfreply":
+            query = get_inbox_selfreply(inbox_owner)
+        else:
+            raise ValueError("wtf is " + inbox_rel._name)
+
+        # mentions happen in butler_q
+
+        if is_visible:
+            mutator.insert(query, [inbox_rel])
+        else:
+            mutator.delete(query, [inbox_rel])
+
+        set_unread(comment, inbox_owner, unread=is_visible, mutator=mutator)
+
+
 def new_comment(comment, inbox_rels):
     author = Account._byID(comment.author_id)
     job = [get_comments(author, 'new', 'all'),
@@ -1005,24 +1027,7 @@ def new_comment(comment, inbox_rels):
         # r2.lib.db.queries.run_new_comments (to minimise lock contention)
 
         if inbox_rels:
-            for inbox_rel in tup(inbox_rels):
-                inbox_owner = inbox_rel._thing1
-                if inbox_rel._name == "inbox":
-                    query = get_inbox_comments(inbox_owner)
-                elif inbox_rel._name == "selfreply":
-                    query = get_inbox_selfreply(inbox_owner)
-                else:
-                    raise ValueError("wtf is " + inbox_rel._name)
-
-                # mentions happen in butler_q
-
-                if not comment._deleted:
-                    m.insert(query, [inbox_rel])
-                else:
-                    m.delete(query, [inbox_rel])
-
-                set_unread(comment, inbox_owner,
-                           unread=not comment._deleted, mutator=m)
+            update_comment_notifications(comment, inbox_rels, mutator=m)
 
 
 def delete_comment(comment):
@@ -1159,6 +1164,49 @@ def set_unread(messages, to, unread, mutator=None):
 
     if not mutator:
         m.send()
+
+
+def unnotify(thing, possible_recipients=None):
+    """Given a Thing, remove any notifications to possible recipients for it.
+
+    `possible_recipients` is a list of account IDs to unnotify. If not passed,
+    deduce all possible recipients and remove their notifications.
+    """
+    from r2.lib import butler
+
+    if not possible_recipients:
+        possible_recipients = Inbox.possible_recipients(thing)
+
+    if not possible_recipients:
+        return
+
+    accounts = Account._byID(
+        possible_recipients,
+        return_dict=False,
+        ignore_missing=True,
+    )
+
+    if isinstance(thing, Comment):
+        rels = Inbox._fast_query(
+            accounts,
+            thing,
+            ("inbox", "selfreply", "mention"),
+        )
+
+        replies, mentions = utils.partition(
+            lambda r: r._name == "mention",
+            filter(None, rels.values()),
+        )
+
+        for mention in mentions:
+            butler.remove_mention_notification(mention)
+
+        replies = list(replies)
+        if replies:
+            with CachedQueryMutator() as m:
+                update_comment_notifications(thing, replies, mutator=m)
+    else:
+        raise ValueError("Unable to unnotify thing of type: %r" % thing)
 
 
 def changed(things, boost_only=False):

@@ -163,6 +163,7 @@ class Globals(object):
             'num_serendipity',
             'sr_dropdown_threshold',
             'comment_visits_period',
+            'butler_max_mentions',
             'min_membership_create_community',
             'bcrypt_work_factor',
             'cassandra_pool_size',

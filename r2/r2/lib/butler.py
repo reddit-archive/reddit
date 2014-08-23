@@ -24,19 +24,8 @@ from pylons import g, c
 
 from r2.lib.db import queries
 from r2.lib import amqp
-from r2.lib.utils import extract_urls_from_markdown
-from r2.lib.validator import chkuser
+from r2.lib.utils import extract_user_mentions
 from r2.models import query_cache, Thing, Comment, Account, Inbox, NotFound
-
-
-def extract_user_mentions(text):
-    for url in extract_urls_from_markdown(text):
-        if not url.startswith("/u/"):
-            continue
-
-        username = url[len("/u/"):]
-        if chkuser(username):
-            yield username.lower()
 
 
 def notify_mention(user, thing):
@@ -44,6 +33,14 @@ def notify_mention(user, thing):
     with query_cache.CachedQueryMutator() as m:
         m.insert(queries.get_inbox_comment_mentions(user), [inbox_rel])
         queries.set_unread(thing, user, unread=True, mutator=m)
+
+
+def remove_mention_notification(mention):
+    inbox_owner = mention._thing1
+    thing = mention._thing2
+    with query_cache.CachedQueryMutator() as m:
+        m.delete(queries.get_inbox_comment_mentions(inbox_owner), [mention])
+        queries.set_unread(thing, inbox_owner, unread=False, mutator=m)
 
 
 def monitor_mentions(comment):
@@ -60,11 +57,12 @@ def monitor_mentions(comment):
         return
 
     subreddit = comment.subreddit_slow
-    usernames = list(extract_user_mentions(comment.body))
+    usernames = list(extract_user_mentions(comment.body, num=g.butler_max_mentions + 1))
     inbox_class = Inbox.rel(Account, Comment)
 
-    # don't be a jerk spammer
-    if len(usernames) > 3:
+    # If more than our allowed number of mentions were passed, don't highlight
+    # any of them.
+    if len(usernames) > g.butler_max_mentions:
         return
 
     # Subreddit.can_view stupidly requires this.

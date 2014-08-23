@@ -329,6 +329,17 @@ class Account(Thing):
         else:
             raise NotFound, 'Account %s' % name
 
+    @classmethod
+    def _names_to_ids(cls, names, ignore_missing=False, allow_deleted=False,
+                      _update=False):
+        for name in names:
+            uid = cls._by_name_cache(name.lower(), allow_deleted, _update=_update)
+            if not uid:
+                if ignore_missing:
+                    continue
+                raise NotFound('Account %s' % name)
+            yield uid
+
     # Admins only, since it's not memoized
     @classmethod
     def _by_name_multiple(cls, name):

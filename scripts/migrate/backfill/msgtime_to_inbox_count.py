@@ -21,10 +21,14 @@
 ###############################################################################
 """Converts msgtime for users to inbox_count, for inbox count tracking."""
 
+import sys
+
 from r2.lib.db import queries
 from r2.lib.db.operators import desc
 from r2.lib.utils import fetch_things2, progress
 from r2.models import Account, Message
+
+from pylons import g
 
 
 def _keep(msg, account):
@@ -44,14 +48,31 @@ def _keep(msg, account):
 
     return True
 
+resume_id = long(sys.argv[1]) if len(sys.argv) > 1 else None
 
 msg_accounts = Account._query(sort=desc("_date"), data=True)
-for account in progress(fetch_things2(msg_accounts)):
+
+if resume_id:
+    msg_accounts._filter(Account.c._id < resume_id)
+
+for account in progress(fetch_things2(msg_accounts), estimate=resume_id):
     current_inbox_count = account.inbox_count
+    unread_messages = list(queries.get_unread_inbox(account))
 
-    unread_messages = queries.get_unread_inbox(account)
-    msgs = Message._by_fullname(unread_messages, data=True, return_dict=False)
-    kept_msgs = sum(1 for msg in msgs if _keep(msg, account))
+    if account._id % 100000 == 0:
+        g.reset_caches()
 
-    if kept_msgs or current_inbox_count:
-        account._incr('inbox_count', kept_msgs - current_inbox_count)
+    if not len(unread_messages):
+        if current_inbox_count:
+            account._incr('inbox_count', -current_inbox_count)
+    else:
+        msgs = Message._by_fullname(
+            unread_messages,
+            data=True,
+            return_dict=False,
+            ignore_missing=True,
+        )
+        kept_msgs = sum(1 for msg in msgs if _keep(msg, account))
+
+        if kept_msgs or current_inbox_count:
+            account._incr('inbox_count', kept_msgs - current_inbox_count)
