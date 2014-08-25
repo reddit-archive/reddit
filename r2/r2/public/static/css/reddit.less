@@ -5913,8 +5913,10 @@ div #campaign-field {
     }
 }
 
-.create-promotion {
-    
+.inventory-dashboard {
+    .geotargeting-group {
+        display: none;
+    }
 }
 
 .sponsored-page {
@@ -6474,15 +6476,20 @@ dd { margin-left: 20px;  }
 
 .inventory-table {
     font-size: smaller;
-    text-align: center;
+    text-align: right;
     margin-top: 20px;
 
     th, td {
-        padding: 2px;
+        padding: 3px;
     }
 
     th {
         border-bottom: 1px solid #000000;
+        text-align: right;
+
+        &:first-child {
+            text-align: left;
+        }
     }
 
     td.title {

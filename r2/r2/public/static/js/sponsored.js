@@ -702,6 +702,45 @@ r.sponsored = {
     calc_bid: function(impressions, cpm_pennies) {
         return (Math.floor(impressions * cpm_pennies / 1000) / 100).toFixed(2)
     },
+
+    render_timing_duration: function($form, ndays) {
+        $form.find('.timing-field .duration').text(
+                ndays + " " + ((ndays > 1) ? r._("days") : r._("day")));
+    },
+
+    fill_inventory_form: function() {
+        var $form = $('.inventory-dashboard'),
+            targeting = this.get_targeting($form),
+            timing = this.get_timing($form);
+
+        this.render_timing_duration($form, timing.duration);
+    },
+
+    submit_inventory_form: function() {
+        var $form = $('.inventory-dashboard'),
+            targeting = this.get_targeting($form),
+            timing = this.get_timing($form);
+
+        var data = {
+            startdate: timing.startdate,
+            enddate: timing.enddate,
+        };
+
+        if (targeting.type === 'collection') {
+            data.collection_name = targeting.collection;
+        }
+        else if (targeting.type === 'subreddit') {
+            data.sr_name = targeting.sr;
+        }
+
+        this.reload_with_params(data);
+    },
+
+    reload_with_params: function(data) {
+        var queryString = '?' + $.param(data);
+        var location = window.location;
+        window.location = location.origin + location.pathname + queryString;
+    },
 }
 
 var dateFromInput = function(selector, offset) {

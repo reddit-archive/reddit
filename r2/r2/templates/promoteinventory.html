@@ -22,6 +22,7 @@
 
 <%!
    from r2.lib import js
+   import simplejson
 %>
 
 <%namespace name="pr" file="promotelinkbase.html" />
@@ -29,43 +30,23 @@
 
 ${unsafe(js.use('sponsored'))}
 
-<h1>promoted link inventory for ${thing.display_name}</h1>
-
-<div>
-    <form id="promote-inventory-form" action="/promoted/inventory" method="get">
-        <table class="preftable">
-            <tr>
-                <th>start</th>
-                <td class="prefright">
-                    <%pr:datepicker name="startdate" value="${thing.start.strftime('%m/%d/%Y')}"
-                      minDateSrc="date-min" initfuncname="init_startdate"
-                      min_date_offset="86400000">
-                        function(elem) { check_enddate(elem, $("#enddate")); return elem; }
-                    </%pr:datepicker>
-                </td>
-            </tr>
-
-            <tr>
-                <th>end</th>
-                <td class="prefright">
-                    <%pr:datepicker name="enddate" value="${thing.end.strftime('%m/%d/%Y')}"
-                      minDateSrc="startdate" initfuncname="init_enddate"
-                      min_date_offset="86400000">
-                        function(elem) { return elem; }
-                    </%pr:datepicker>
-                </td>
-            </tr>
-
-            <tr>
-                <th>subreddit</th>
-                <td class="prefright">
-                    <input name="sr_name" class="rounded styled-input" value="${thing.sr_input}">
-                    ${error_field("SUBREDDIT_NOEXIST", "sr_name", "div")}
-                </td>
-            </tr>
-        </table>
-        <button type="submit" name="submit">submit</button>
-    </form>
+<div class="sponsored-page">
+  <div class="dashboard inventory-dashboard">
+    <header>
+      <h2>promoted link inventory for ${thing.display_name}</h2>
+    </header>
+    <div class="dashboard-content">
+      <div class="editor">
+        <div class="editor-group">
+          ${pr.targeting_field(default_checked=thing.targeting_type)}
+          ${pr.timing_field()}
+        </div>
+        <footer class="buttons">
+          <button name="submit" onclick="r.sponsored.submit_inventory_form()">submit</button>
+        </footer>
+      </div>
+    </div>
+  </div>
 </div>
 
 <table class="inventory-table">
@@ -82,22 +63,31 @@ ${unsafe(js.use('sponsored'))}
         <tr class="${'total' if row.is_total else ''}">
             <td class="title">
             %if not row.is_total:
-                <div class="author">${row.info['author']}</div>
-                <div class="view-link">
-                    ${plain_link("view link", row.info['edit_url'])}
+                <div class="author view-link">
+                    ${plain_link(row.info['author'], row.info['edit_url'])}
                 </div>
             %else:
                 <div class="author">${row.info['title']}</div>
             %endif
             </td>
             %for column in row.columns:
-            <td>${column}</td>
+              <td
+                  %if column == '0':
+                    class="no-inventory"
+                  %endif
+                  >${column}</td>
             %endfor
         %endfor
     </tbody>
 </table>
 
 <script type="text/javascript">
+    r.sponsored.set_form_render_fnc(r.sponsored.fill_inventory_form);
+    r.sponsored.setup_geotargeting(${unsafe(simplejson.dumps(thing.regions))},
+                                   ${unsafe(simplejson.dumps(thing.metros))});
+    r.sponsored.setup_collections(${unsafe(simplejson.dumps(thing.collections))},
+                                  ${unsafe(simplejson.dumps(thing.collection_input))});
+
     $(function() {
       init_startdate();
       init_enddate();

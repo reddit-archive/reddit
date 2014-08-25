@@ -4052,19 +4052,23 @@ class Bookings(object):
             return "%s (%s*)" % nums
 
 
-class PromoteInventory(Templated):
+class PromoteInventory(PromoteLinkBase):
     def __init__(self, start, end, target):
         Templated.__init__(self)
         self.start = start
         self.end = end
+        self.default_start = start.strftime('%m/%d/%Y')
+        self.default_end = end.strftime('%m/%d/%Y')
         self.target = target
         self.display_name = target.pretty_name
         if target.is_collection:
             self.sr_input = None
             self.collection_input = target.collection.name
+            self.targeting_type = "collection"
         else:
             self.sr_input = target.subreddit_name
             self.collection_input = None
+            self.targeting_type = "collection" if target.subreddit_name == Frontpage.name else "one"
         self.setup()
 
     def setup(self):
@@ -4132,6 +4136,17 @@ class PromoteInventory(Templated):
         rows.append(remaining_row)
 
         self.rows = rows
+
+        default_sr = None
+        if not self.target.is_collection and self.sr_input:
+            default_sr = Subreddit._by_name(self.sr_input)
+        self.subreddit_selector = SubredditSelector(
+                default_sr=default_sr,
+                include_user_subscriptions=False)
+
+        self.get_locations()
+        self.get_collections()
+
 
 class PromoteReport(Templated):
     def __init__(self, links, link_text, owner_name, bad_links, start, end):
