@@ -34,6 +34,7 @@
 <%def name="javascript_setup()">
 <script type="text/javascript">
   r.sponsored.init();
+  r.sponsored.set_form_render_fnc(r.sponsored.fill_campaign_editor);
   r.sponsored.setup(${unsafe(simplejson.dumps(thing.inventory))},
                     ${simplejson.dumps(not thing.campaigns)},
                     ${simplejson.dumps(c.user_is_sponsor)});

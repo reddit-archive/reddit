@@ -1,7 +1,13 @@
 r.sponsored = {
+    set_form_render_fnc: function(render) {
+        this.render = render;
+    },
+
+    render: function() {},
+
     init: function() {
         $("#sr-autocomplete").on("sr-changed blur", function() {
-            r.sponsored.fill_campaign_editor()
+            r.sponsored.render()
         })
         this.inventory = {}
         this.campaignListColumns = $('.existing-campaigns thead th').length
@@ -10,7 +16,7 @@ r.sponsored = {
     setup: function(inventory_by_sr, isEmpty, userIsSponsor) {
         this.inventory = inventory_by_sr
         if (isEmpty) {
-            this.fill_campaign_editor()
+            this.render()
             init_startdate()
             init_enddate()
             $("#campaign").find("button[name=create]").show().end()
@@ -43,7 +49,7 @@ r.sponsored = {
 
         var collapse = _.bind(function() {
             this.collapse_collection_selector();
-            this.fill_campaign_editor();
+            this.render();
         }, this);
         
         this.collapse_collection_selector = function collapse_widget() {
@@ -509,11 +515,11 @@ r.sponsored = {
     },
 
     on_date_change: function() {
-        this.fill_campaign_editor()
+        this.render()
     },
 
     on_bid_change: function() {
-        this.fill_campaign_editor()
+        this.render()
     },
 
     on_impression_change: function() {
@@ -598,17 +604,17 @@ r.sponsored = {
     subreddit_targeting: function() {
         $('.subreddit-targeting').find('*[name="sr"]').prop("disabled", false).end().slideDown();
         $('.collection-targeting').find('*[name="collection"]').prop("disabled", true).end().slideUp();
-        this.fill_campaign_editor()
+        this.render()
     },
 
     collection_targeting: function() {
         $('.subreddit-targeting').find('*[name="sr"]').prop("disabled", true).end().slideUp();
         $('.collection-targeting').find('*[name="collection"]').prop("disabled", false).end().slideDown();
-        this.fill_campaign_editor()
+        this.render()
     },
 
     priority_changed: function() {
-        this.fill_campaign_editor()
+        this.render()
     },
 
     update_regions: function() {
@@ -654,16 +660,16 @@ r.sponsored = {
 
     country_changed: function() {
         this.update_regions()
-        this.fill_campaign_editor()
+        this.render()
     },
 
     region_changed: function() {
         this.update_metros()
-        this.fill_campaign_editor()
+        this.render()
     },
 
     metro_changed: function() {
-        this.fill_campaign_editor()
+        this.render()
     },
 
     check_bid: function($form) {
@@ -913,7 +919,7 @@ function edit_campaign($campaign_row) {
             campaign.find('button[name="save"]').show().end()
                 .find('button[name="create"]').hide().end();
             campaign.slideDown();
-            r.sponsored.fill_campaign_editor();
+            r.sponsored.render();
         })
     })
 }
@@ -963,7 +969,7 @@ function create_campaign() {
                 .find('select[name="region"]').hide().end()
                 .find('select[name="metro"]').hide().end()
                 .slideDown();
-            r.sponsored.fill_campaign_editor();
+            r.sponsored.render();
         });
 }
 
