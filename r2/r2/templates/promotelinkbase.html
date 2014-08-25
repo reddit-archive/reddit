@@ -333,7 +333,7 @@
   </%utils:line_field>
 </%def>
 
-<%def name="targeting_field()">
+<%def name="targeting_field(default_checked='collection')">
   <%utils:line_field title="${_('targeting')}" css_class="rounded targeting-field">
     <div class="radio-group group">
       <span class="label">target</span>
@@ -341,7 +341,10 @@
         <input id="collection_targeting" class="nomargin"
                type="radio" value="collection" name="targeting"
                onclick="r.sponsored.collection_targeting()"
-               checked="checked">
+               %if default_checked == 'collection':
+                 checked="checked"
+               %endif
+               >
         <div class="label-group">
 
           <span class="label">${_("interests")}</span>
@@ -351,7 +354,11 @@
       <label class="form-group">
         <input id="subreddit_targeting" class="nomargin"
                type="radio" value="one" name="targeting"
-               onclick="r.sponsored.subreddit_targeting()">
+               onclick="r.sponsored.subreddit_targeting()"
+               %if default_checked == 'one':
+                 checked="checked"
+               %endif
+               >
         <div class="label-group">
           <span class="label">${_("subreddits")}</span>
           <small class="label">${_("targets a subreddit and its subscribers")}</small>
@@ -359,7 +366,11 @@
       </label>
     </div>
     <div class="target-group group">
-      <div class="collection-targeting">
+      <div class="collection-targeting"
+           %if default_checked != 'collection':
+             style="display:none"
+           %endif
+           >
         <span class="label">${_("interest audience group")}</span>
         <div class="collection-selector uninitialized">
           <div class="widget-container">
@@ -379,7 +390,11 @@
           ${error_field("COLLECTION_NOEXIST", "collection", "div")}
         </div>
       </div>
-      <div class="subreddit-targeting" style="display:none">
+      <div class="subreddit-targeting"
+           %if default_checked != 'one':
+             style="display:none"
+           %endif
+           >
         <span class="label">subreddit</span>
         ${error_field("OVERSOLD", "sr", "div")}
         ${thing.subreddit_selector}
