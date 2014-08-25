@@ -343,6 +343,34 @@ REDDITSHELL
 chmod 755 /usr/local/bin/reddit-run /usr/local/bin/reddit-shell
 
 ###############################################################################
+# pixel and click server
+###############################################################################
+mkdir -p /var/opt/reddit/
+chown $REDDIT_USER:$REDDIT_GROUP /var/opt/reddit/
+
+mkdir -p /srv/www/pixel
+chown $REDDIT_USER:$REDDIT_GROUP /srv/www/pixel
+cp $REDDIT_HOME/src/reddit/r2/r2/public/static/pixel.png /srv/www/pixel
+
+if [ ! -f /etc/gunicorn.d/click.conf ]; then
+    cat > /etc/gunicorn.d/click.conf <<CLICK
+CONFIG = {
+    "mode": "wsgi",
+    "working_dir": "$REDDIT_HOME/src/reddit/scripts",
+    "user": "$REDDIT_USER",
+    "group": "$REDDIT_USER",
+    "args": (
+        "--bind=unix:/var/opt/reddit/click.sock",
+        "--workers=1",
+        "tracker:application",
+    ),
+}
+CLICK
+fi
+
+service gunicorn start
+
+###############################################################################
 # nginx
 ###############################################################################
 
@@ -361,10 +389,47 @@ server {
 }
 MEDIA
 
+cat > /etc/nginx/sites-available/reddit-pixel <<PIXEL
+upstream click_server {
+  server unix:/var/opt/reddit/click.sock fail_timeout=0;
+}
+
+server {
+  listen 8082;
+
+  log_format directlog '\$remote_addr - \$remote_user [\$time_local] '
+                      '"\$request_method \$request_uri \$server_protocol" \$status \$body_bytes_sent '
+                      '"\$http_referer" "\$http_user_agent"';
+  access_log      /var/log/nginx/traffic/traffic.log directlog;
+
+  location / {
+
+    rewrite ^/pixel/of_ /pixel.png;
+
+    add_header Last-Modified "";
+    add_header Pragma "no-cache";
+
+    expires -1;
+    root /srv/www/pixel/;
+  }
+
+  location /click {
+    proxy_pass http://click_server;
+  }
+}
+PIXEL
+
 # remove the default nginx site that may conflict with haproxy
 rm -rf /etc/nginx/sites-enabled/default
 # put our config in place
 ln -nsf /etc/nginx/sites-available/reddit-media /etc/nginx/sites-enabled/
+ln -nsf /etc/nginx/sites-available/reddit-pixel /etc/nginx/sites-enabled/
+
+# make the pixel log directory
+mkdir -p /var/log/nginx/traffic
+
+# link the ini file for the Flask click tracker
+ln -nsf $REDDIT_HOME/src/reddit/r2/development.ini $REDDIT_HOME/src/reddit/scripts/production.ini
 
 service nginx restart
 
@@ -410,6 +475,11 @@ frontend frontend
     acl is-media path_beg /media/
     use_backend media if is-media
 
+    # send pixel stuff to local nginx
+    acl is-pixel path_beg /pixel/
+    acl is-click path_beg /click
+    use_backend pixel if is-pixel || is-click
+
     default_backend reddit
 
 backend reddit
@@ -437,6 +507,15 @@ backend media
     balance roundrobin
 
     server nginx localhost:9000 maxconn 20
+
+backend pixel
+    mode http
+    timeout connect 4000
+    timeout server 30000
+    timeout queue 60000
+    balance roundrobin
+
+    server nginx localhost:8082 maxconn 20
 HAPROXY
 
 # this will start it even if currently stopped
