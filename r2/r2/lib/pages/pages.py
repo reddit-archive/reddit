@@ -3585,9 +3585,53 @@ class PromoteLinkNew(Templated):
     pass
 
 class PromoteLinkBase(Templated):
-    pass
+    min_start = None
+    max_start = None
+    max_end = None
 
-class PromoteLinkEdit(Templated):
+    def get_locations(self): 
+        # geotargeting
+        def location_sort(location_tuple):
+            code, name, default = location_tuple
+            if code == '':
+                return -2
+            elif code == 'US':
+                return -1
+            else:
+                return name
+
+        countries = [(code, country['name'], False) for code, country
+                                                    in g.locations.iteritems()]
+        countries.append(('', _('none'), True))
+
+        countries = sorted(countries, key=location_sort)
+        regions = {}
+        metros = {}
+        for code, country in g.locations.iteritems():
+            if 'regions' in country and country['regions']:
+                regions[code] = [('', _('all'), True)]
+
+                for region_code, region in country['regions'].iteritems():
+                    if region['metros']:
+                        region_tuple = (region_code, region['name'], False)
+                        regions[code].append(region_tuple)
+                        metros[region_code] = []
+
+                        for metro_code, metro in region['metros'].iteritems():
+                            metro_tuple = (metro_code, metro['name'], False)
+                            metros[region_code].append(metro_tuple)
+                        metros[region_code].sort(key=location_sort)
+                regions[code].sort(key=location_sort)
+
+        self.countries = countries
+        self.regions = regions
+        self.metros = metros
+
+    def get_collections(self):
+        self.collections = [cl.__dict__ for cl in Collection.get_all()]
+
+
+class PromoteLinkEdit(PromoteLinkBase):
     def __init__(self, link, listing, *a, **kw):
         self.setup(link, listing)
         Templated.__init__(self, *a, **kw)
@@ -3643,12 +3687,14 @@ class PromoteLinkEdit(Templated):
         else:
             max_start = promote.get_max_startdate()
 
+        default_end = min_start + datetime.timedelta(days=2)
+        default_start = min_start
+
+        self.min_start = min_start.strftime("%m/%d/%Y")
         self.max_start = max_start.strftime("%m/%d/%Y")
         self.max_end = max_end.strftime("%m/%d/%Y")
-
-        self.min_start = self.default_start = min_start.strftime("%m/%d/%Y")
-        default_end = min_start + datetime.timedelta(days=2)
-        self.default_end = default_end.strftime("%m/%d/%Y")
+        self.default_start = default_start.strftime("%m/%d/%Y")
+        self.default_end = default_end.strftime("%m/%d/%Y") 
 
         self.link = link
         self.listing = listing
@@ -3661,43 +3707,8 @@ class PromoteLinkEdit(Templated):
         self.priorities = [(p.name, p.text, p.description, p.default, p.inventory_override, p.cpm)
                            for p in sorted(PROMOTE_PRIORITIES.values(), key=lambda p: p.value)]
 
-        # geotargeting
-        def location_sort(location_tuple):
-            code, name, default = location_tuple
-            if code == '':
-                return -2
-            elif code == 'US':
-                return -1
-            else:
-                return name
-
-        countries = [(code, country['name'], False) for code, country
-                                                    in g.locations.iteritems()]
-        countries.append(('', _('none'), True))
-
-        self.countries = sorted(countries, key=location_sort)
-        self.regions = {}
-        self.metros = {}
-        for code, country in g.locations.iteritems():
-            if 'regions' in country and country['regions']:
-                self.regions[code] = [('', _('all'), True)]
-
-                for region_code, region in country['regions'].iteritems():
-                    if region['metros']:
-                        region_tuple = (region_code, region['name'], False)
-                        self.regions[code].append(region_tuple)
-                        self.metros[region_code] = []
-
-                        for metro_code, metro in region['metros'].iteritems():
-                            metro_tuple = (metro_code, metro['name'], False)
-                            self.metros[region_code].append(metro_tuple)
-                        self.metros[region_code].sort(key=location_sort)
-                self.regions[code].sort(key=location_sort)
-        
-        self.collections = []
-            
-        for cl in Collection.get_all():
-            self.collections.append(cl.__dict__)    
+        self.get_locations()
+        self.get_collections()
 
         user_srs = Subreddit.user_subreddits(c.user, ids=False)
         user_srs = filter(lambda sr: sr.can_submit(c.user, promotion=True),
