@@ -4148,11 +4148,14 @@ class PromoteInventory(PromoteLinkBase):
         self.get_collections()
 
 
-class PromoteReport(Templated):
+class PromoteReport(PromoteLinkBase):
     def __init__(self, links, link_text, owner_name, bad_links, start, end):
         self.links = links
         self.start = start
         self.end = end
+        self.default_start = start.strftime('%m/%d/%Y')
+        self.default_end = end.strftime('%m/%d/%Y')
+
         if links:
             self.make_reports()
             p = request.GET.copy()

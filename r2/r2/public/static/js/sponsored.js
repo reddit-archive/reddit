@@ -493,6 +493,16 @@ r.sponsored = {
         };
     },
 
+    get_reporting: function($form) {
+        var link_text = $form.find('[name=link_text]').val(),
+            owner = $form.find('[name=owner]').val();
+
+        return {
+            link_text: link_text,
+            owner: owner,
+        };
+    },
+
     campaign_dashboard_help_template: _.template('<p>this promotion has a '
             + 'total budget of <%= prettyBid %> for <%= prettyImpressions %> '
             + 'impressions in <%= subreddits.length %> '
@@ -732,6 +742,28 @@ r.sponsored = {
         else if (targeting.type === 'subreddit') {
             data.sr_name = targeting.sr;
         }
+
+        this.reload_with_params(data);
+    },
+
+    fill_reporting_form: function() {
+        var $form = $('.reporting-dashboard'),
+            timing = this.get_timing($form);
+
+        this.render_timing_duration($form, timing.duration);
+    },
+
+    submit_reporting_form: function() {
+        var $form = $('.reporting-dashboard'),
+            timing = this.get_timing($form),
+            reporting = this.get_reporting($form);
+
+        var data = {
+            startdate: timing.startdate,
+            enddate: timing.enddate,
+            link_text: reporting.link_text,
+            owner: reporting.owner,
+        };
 
         this.reload_with_params(data);
     },

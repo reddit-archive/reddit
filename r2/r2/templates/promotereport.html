@@ -31,42 +31,35 @@
 
 ${unsafe(js.use('sponsored'))}
 
-<h1>sponsored link report</h1>
-
-<div class="promote-report-form">
-  <form action="/promoted/report" method="get">
-    <h2>date range</h2>
-    <div class="note">
-      note: the end date is not included, so selecting 1/2/2013-1/3/2013 will retrieve traffic for the day of 1/2/2013 only.
+<div class="sponsored-page">
+  <div class="dashboard reporting-dashboard">
+    <header>
+      <h2>sponsored link report</h2>
+      <p class="note">
+        note: the end date is not included, so selecting 1/2/2013-1/3/2013 will retrieve traffic for the day of 1/2/2013 only.
+      </p>
+    </header>
+    <div class="dashboard-content">
+      <div class="editor">
+        <div class="editor-group">
+          ${pr.timing_field()}
+          ${pr.reporting_field(link_text=thing.link_text, owner=thing.owner_name)}
+        </div>
+        <footer class="buttons">
+          <button name="submit" onclick="r.sponsored.submit_reporting_form()">submit</button>
+        </footer>
+      </div>
     </div>
-  <%pr:datepicker name="startdate" value="${thing.start.strftime('%m/%d/%Y')}"
-    minDateSrc="date-min" initfuncname="init_startdate"
-    min_date_offset="86400000">
-      function(elem) { check_enddate(elem, $("#enddate")); return elem; }
-  </%pr:datepicker>
-  &nbsp;&ndash;&nbsp;
-  <%pr:datepicker name="enddate" value="${thing.end.strftime('%m/%d/%Y')}"
-    minDateSrc="startdate" initfuncname="init_enddate"
-    min_date_offset="86400000">
-      function(elem) { return elem; }
-  </%pr:datepicker>
-
-    <h2>link ids</h2>
-    <textarea name="link_text" rows="5" cols="80">
-        ${thing.link_text}
-    </textarea>
-    %if thing.bad_links:
-    <div class="error">
-      ${"%s not found" % (', '.join(thing.bad_links))}
-    </div>
-    %endif
-    <br>
-    <h2>owner<h2>
-    <input name="owner" value="${thing.owner_name}">
-    <br>
-    <input type="submit" value="${_("go")}"></input>
-  </form>
+  </div>
 </div>
+<script type="text/javascript">
+  r.sponsored.set_form_render_fnc(r.sponsored.fill_reporting_form);
+  $(function() {
+    init_startdate();
+    init_enddate();
+    r.sponsored.render();
+  });
+</script>
 
 %if thing.link_report:
 <h1>links</h1>
@@ -151,10 +144,3 @@ ${unsafe(js.use('sponsored'))}
   ${plain_link(unsafe("download as csv"), thing.csv_url)}
 </div>
 %endif
-
-<script type="text/javascript">
-    $(function() {
-      init_startdate();
-      init_enddate();
-    });
-</script>

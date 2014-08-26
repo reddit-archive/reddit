@@ -218,6 +218,11 @@ class PromoteController(RedditController):
     def GET_report(self, start, end, link_text=None, owner=None):
         now = datetime.now(g.tz).replace(hour=0, minute=0, second=0,
                                          microsecond=0)
+        if not start or not end:
+            start = promote.promo_datetime_now(offset=1).date()
+            end = promote.promo_datetime_now(offset=8).date()
+            c.errors.remove((errors.BAD_DATE, 'startdate'))
+            c.errors.remove((errors.BAD_DATE, 'enddate'))
         end = end or now - timedelta(days=1)
         start = start or end - timedelta(days=7)
 

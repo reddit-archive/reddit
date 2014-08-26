@@ -433,6 +433,20 @@
   </%utils:line_field>
 </%def>
 
+<%def name="reporting_field(link_text='', owner='')">
+  <%utils:line_field title="${_('report')}" css_class="rounded reporting-field">
+    <label class="form-group">
+      <div class="label">${_('link ids')}</div>
+      <textarea name="link_text">${link_text}</textarea>
+      ${error_field("BAD_LINKS", "bad_links", "div")}
+    </label>
+    <label class="form-group">
+      <div class="label">${_('owner')}</div>
+      <input type="text" name="owner" value="${owner}" />
+    </label>
+  </%utils:line_field>
+</%def>
+
 <%def name="admin_panel()">
   %if c.user_is_sponsor:
     <div class="spacer bidding-history">
