@@ -768,6 +768,13 @@ r.sponsored = {
         this.reload_with_params(data);
     },
 
+    fill_roadblock_form: function() {
+        var $form = $('.roadblock-dashboard'),
+            timing = this.get_timing($form);
+
+        this.render_timing_duration($form, timing.duration);
+    },
+
     reload_with_params: function(data) {
         var queryString = '?' + $.param(data);
         var location = window.location;

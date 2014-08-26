@@ -433,6 +433,18 @@
   </%utils:line_field>
 </%def>
 
+<%def name="subreddit_targeting_field(subreddit_selector)">
+  <%utils:line_field title="${_('subreddit targeting')}" css_class="rounded subreddit-targeting-field">
+    <div class="target-group group">
+      <div class="subreddit-targeting">
+        <span class="label">subreddit</span>
+        ${error_field("OVERSOLD", "sr", "div")}
+        ${subreddit_selector}
+      </div>
+    </div>
+  </%utils:line_field>
+</%def>
+
 <%def name="reporting_field(link_text='', owner='')">
   <%utils:line_field title="${_('report')}" css_class="rounded reporting-field">
     <label class="form-group">

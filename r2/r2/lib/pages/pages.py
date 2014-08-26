@@ -3820,7 +3820,7 @@ class RefundPage(Reddit):
         Reddit.__init__(self, title="refund", show_sidebar=False)
 
 
-class Roadblocks(Templated):
+class Roadblocks(PromoteLinkBase):
     def __init__(self):
         self.roadblocks = PromotedLinkRoadblock.get_roadblocks()
         Templated.__init__(self)
@@ -3830,8 +3830,8 @@ class Roadblocks(Templated):
         startdate = now + datetime.timedelta(1)
         enddate   = startdate + datetime.timedelta(1)
 
-        self.startdate = startdate.strftime("%m/%d/%Y")
-        self.enddate   = enddate  .strftime("%m/%d/%Y")
+        self.default_start = startdate.strftime('%m/%d/%Y')
+        self.default_end = enddate.strftime('%m/%d/%Y')
 
 
 class TabbedPane(Templated):

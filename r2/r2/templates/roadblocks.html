@@ -32,87 +32,64 @@
 
 ${unsafe(js.use('sponsored'))}
 
-<div class="pretty-form campaign">
-  <%utils:line_field title="${_('create a roadblock')}" id="campaign-field">
-    <%
-       start_title = "Date when your sponsored link will start running.  We start new campaigns at midnight UTC+5"
-       end_title = "Date when your sponsored link will end (at midnight UTC+5)"
-       targeting_title = "name of the community that you are targeting. A blank entry here means that the ad is untargeted and will run site-wise "
-       newcamp_title = "click to create a new campaign.  To edit an existing campaing in the table below, click the 'edit' button."
-     %>
-    <table class="preftable">
-      <tr>
-        <th>for date</th>
-        <td class="prefright">
-          ${error_field("BAD_DATE_RANGE", "enddate", "div")}
-        <%p:datepicker name="startdate", value="${thing.startdate}"
-                          minDateSrc="date-min" initfuncname="init_startdate">
-        function(elem) {
-          var other = $("#enddate");
-          if(dateFromInput("#startdate") >= dateFromInput("#enddate")) {
-             var newd = new Date();
-             newd.setTime($(elem).datepicker('getDate').getTime() + 86400*1000);
-             $("#enddate").val((newd.getMonth()+1) + "/" + 
-                               newd.getDate() + "/" + newd.getFullYear());
-          }
-          $("#datepicker-enddate").datepicker("destroy");
-        }
-        </%p:datepicker>
-        -
-        <%p:datepicker name="enddate", value="${thing.enddate}"
-                          minDateSrc="startdate" initfuncname="init_enddate">
-          function(elem) { }
-        </%p:datepicker>
-       </td>
-       </tr>
-     </table>
-     <script type="text/javascript">
-       $(function() {
-          init_startdate();
-          init_enddate();
-       })
-     </script>
-     <div class="targeting">
-       ${SubredditSelector()}
-     </div>
-     <div class="buttons">
-       <span class="status error"></span>
-       <button name="create"
-          onclick="return post_pseudo_form('.campaign', 'add_roadblock')">
-         create
-       </button>
-     </div>
-     <div class="clear"></div>
+<div class="sponsored-page">
+  <div class="dashboard roadblock-dashboard campaign">
+    <header>
+      <h2>create a roadblock</h2>
+    </header>
+    <div class="dashboard-content">
+      <div class="editor">
+        <div class="editor-group">
+          ${p.timing_field()}
+          ${p.subreddit_targeting_field(SubredditSelector())}
+        </div>
+        <footer class="buttons">
+          <span class="status error"></span>
+          <button name="create"
+                  onclick="return post_pseudo_form('.campaign', 'add_roadblock')">
+             create
+           </button>
+        </footer>
+      </div>
     </div>
-  </%utils:line_field>
+  </div>
+  <div class='existing-campaigns'>
+    <table>
+      <thead>
+        <tr>
+          <th>subreddit</th>
+          <th>Start Date</th>
+          <th>End Date</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        %if thing.roadblocks:
+          %for reddit, startdate, enddate in thing.roadblocks:
+            <tr>
+              <td>${reddit}</td>
+              <td>${startdate.strftime("%Y-%m-%d")}</td>
+              <td>${enddate.strftime("%Y-%m-%d")}</td>
+              <td class="campaign-buttons">
+                <form method="post" action="/post/rm_roadblock" onsubmit="return post_form(this, 'rm_roadblock')">
+                  <input type="hidden" name="sr" value="${reddit}"/>
+                  <input type="hidden" name="startdate" value='${startdate.strftime("%m/%d/%Y")}'/>
+                  <input type="hidden" name="enddate" value='${enddate.strftime("%m/%d/%Y")}'/>
+                  <button type="submit">remove</button>
+                </form>
+              </td>
+            </tr>
+          %endfor
+        %endif
+    </table>
+  </div>
 </div>
 
-<%utils:line_field title="${_('existing roadblocks')}">
-<div  class='existing-campaigns'>
-  %if thing.roadblocks:
-  <table>
-    <tr>
-      <th>reddit</th>
-      <th>Start Date</th>
-      <th>End Date</th>
-      <th></th>
-    </tr>
-  %for reddit, startdate, enddate in thing.roadblocks:
-    <tr>
-      <td>${reddit}</td>
-      <td>${startdate.strftime("%Y-%m-%d")}</td>
-      <td>${enddate.strftime("%Y-%m-%d")}</td>
-      <td>
-        <form method="post" action="/post/rm_roadblock" onsubmit="return post_form(this, 'rm_roadblock')">
-          <input type="hidden" name="sr" value="${reddit}"/>
-          <input type="hidden" name="startdate" value='${startdate.strftime("%m/%d/%Y")}'/>
-          <input type="hidden" name="enddate" value='${enddate.strftime("%m/%d/%Y")}'/>
-          <button type="submit">remove</button>
-        </form>
-      </td>
-    </tr>
-  %endfor
-  </table>
-  %endif
-</div>
-</%utils:line_field>
+<script type="text/javascript">
+  r.sponsored.set_form_render_fnc(r.sponsored.fill_roadblock_form);
+  $(function() {
+    r.sponsored.render();
+    init_startdate();
+    init_enddate();
+  })
+</script>
