@@ -99,6 +99,7 @@ from r2.lib.validator import (
 from r2.models import (
     Account,
     calc_impressions,
+    Collection,
     Frontpage,
     Link,
     Message,
@@ -255,22 +256,30 @@ class PromoteController(RedditController):
         start=VDate('startdate', reference_date=promote.promo_datetime_now),
         end=VDate('enddate', reference_date=promote.promo_datetime_now),
         sr_name=nop('sr_name'),
+        collection_name=nop('collection_name'),
     )
-    def GET_promote_inventory(self, start, end, sr_name):
+    def GET_promote_inventory(self, start, end, sr_name, collection_name):
         if not start or not end:
             start = promote.promo_datetime_now(offset=1).date()
             end = promote.promo_datetime_now(offset=8).date()
             c.errors.remove((errors.BAD_DATE, 'startdate'))
             c.errors.remove((errors.BAD_DATE, 'enddate'))
 
-        sr = Frontpage
+        target = Target(Frontpage.name)
         if sr_name:
             try:
                 sr = Subreddit._by_name(sr_name)
+                target = Target(sr.name)
             except NotFound:
                 c.errors.add(errors.SUBREDDIT_NOEXIST, field='sr_name')
+        elif collection_name:
+            collection = Collection.by_name(collection_name)
+            if not collection:
+                c.errors.add(errors.COLLECTION_NOEXIST, field='collection_name')
+            else:
+                target = Target(collection)
 
-        content = PromoteInventory(start, end, sr)
+        content = PromoteInventory(start, end, target)
         return PromotePage(title=_("sponsored link inventory"),
                            content=content).render()
 

@@ -4042,19 +4042,24 @@ class Bookings(object):
 
 
 class PromoteInventory(Templated):
-    def __init__(self, start, end, sr):
+    def __init__(self, start, end, target):
         Templated.__init__(self)
         self.start = start
         self.end = end
-        self.sr = sr
-        self.display_name = ('the frontpage' if sr == Frontpage
-                                else '/r/%s' % sr.name)
-        self.sr_input = '' if sr == Frontpage else sr.name
+        self.target = target
+        self.display_name = target.pretty_name
+        if target.is_collection:
+            self.sr_input = None
+            self.collection_input = target.collection.name
+        else:
+            self.sr_input = target.subreddit_name
+            self.collection_input = None
         self.setup()
 
     def setup(self):
-        campaigns_by_date = inventory.get_campaigns_by_date(self.sr, self.start,
-                                                            self.end)
+        srs = self.target.subreddits_slow
+        campaigns_by_date = inventory.get_campaigns_by_date(
+            srs, self.start, self.end)
         link_ids = {camp.link_id for camp
                     in chain.from_iterable(campaigns_by_date.itervalues())}
         links_by_id = Link._byID(link_ids, data=True)
@@ -4096,7 +4101,9 @@ class PromoteInventory(Templated):
         )
         rows.append(total_row)
 
-        predicted_pageviews = inventory.get_predicted_pageviews(self.sr)
+        predicted_pageviews_by_sr = inventory.get_predicted_pageviews(srs)
+        predicted_pageviews = sum(pageviews for pageviews
+                                  in predicted_pageviews_by_sr.itervalues())
         predicted_row = Storage(
             info={'title': 'predicted'},
             is_total=True,
@@ -4104,14 +4111,12 @@ class PromoteInventory(Templated):
         )
         rows.append(predicted_row)
 
-        remaining_by_date = {
-            date: predicted_pageviews - total_by_date[date].subreddit
-            for date in dates
-        }
+        available_pageviews = inventory.get_available_pageviews(
+            self.target, self.start, self.end)
         remaining_row = Storage(
             info={'title': 'remaining'},
             is_total=True,
-            columns=[format_number(remaining_by_date[date]) for date in dates],
+            columns=[format_number(available_pageviews[date]) for date in dates],
         )
         rows.append(remaining_row)
 
