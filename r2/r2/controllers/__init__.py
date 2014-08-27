@@ -56,6 +56,7 @@ def load_controllers():
 
     from listingcontroller import MyredditsController
 
+    from admin import AdminToolController
     from front import FormsController
     from front import FrontController
     from health import HealthController

@@ -3024,6 +3024,14 @@ class AdminAwardWinners(Templated):
         Templated.__init__(self, award = award, trophies = trophies)
 
 
+class AdminCreddits(Templated):
+    """The admin interface for giving creddits to a user."""
+    def __init__(self, recipient):
+        self.recipient = recipient
+
+        Templated.__init__(self)
+
+
 class Ads(Templated):
     def __init__(self):
         Templated.__init__(self)

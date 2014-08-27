@@ -3506,6 +3506,25 @@ class ApiController(RedditController):
         Trophy.by_account(recipient, _update=True)
         Trophy.by_award(award, _update=True)
 
+    @validatedForm(
+        VAdmin(),
+        recipient=VExistingUname("recipient"),
+        num_creddits=VInt('num_creddits', num_default=0),
+    )
+    def POST_givecreddits(self, form, jquery, recipient, num_creddits):
+        if form.has_errors("recipient",
+                           errors.USER_DOESNT_EXIST, errors.NO_USER):
+            return
+
+        with creddits_lock(recipient):
+            recipient.gold_creddits += num_creddits
+            # make sure it doesn't go into the negative
+            recipient.gold_creddits = max(0, recipient.gold_creddits)
+            recipient._commit()
+
+        form.set_html(".status", _('saved'))
+
+
     @noresponse(VUser(),
               ui_elem = VOneOf('id', ('organic',)))
     def POST_disable_ui(self, ui_elem):
