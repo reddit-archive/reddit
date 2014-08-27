@@ -596,6 +596,8 @@ class PromoteApiController(ApiController):
             l = promote.new_promotion(title, url if kind == 'link' else 'self',
                                       selftext if kind == 'self' else '',
                                       user, request.ip)
+            l.domain_override = domain_override or None
+            l._commit()
 
         elif promote.is_promo(l):
             # changing link type is not allowed
