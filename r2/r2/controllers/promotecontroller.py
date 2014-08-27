@@ -608,15 +608,14 @@ class PromoteApiController(ApiController):
             changed = False
             # live items can only be changed by a sponsor, and also
             # pay the cost of de-approving the link
-            trusted = c.user_is_sponsor or c.user.trusted_sponsor
-            if not promote.is_promoted(l) or trusted:
+            if not promote.is_promoted(l) or c.user_is_sponsor:
                 if title and title != l.title:
                     l.title = title
-                    changed = not trusted
+                    changed = not c.user_is_sponsor
 
                 if kind == 'link' and url and url != l.url:
                     l.url = url
-                    changed = not trusted
+                    changed = not c.user_is_sponsor
 
             # only trips if the title and url are changed by a non-sponsor
             if changed:
@@ -630,7 +629,7 @@ class PromoteApiController(ApiController):
             l.disable_comments = disable_comments
             l.sendreplies = sendreplies
 
-            if c.user_is_sponsor or c.user.trusted_sponsor:
+            if c.user_is_sponsor:
                 if (not media_url and
                         form.has_errors("media_url", errors.BAD_URL)):
                     return
@@ -933,8 +932,7 @@ class PromoteApiController(ApiController):
               file=VUploadLength('file', 500*1024),
               img_type=VImageType('img_type'))
     def POST_link_thumb(self, link=None, file=None, img_type='jpg'):
-        if link and (not promote.is_promoted(link) or
-                     c.user_is_sponsor or c.user.trusted_sponsor):
+        if link and (not promote.is_promoted(link) or c.user_is_sponsor):
             errors = dict(BAD_CSS_NAME="", IMAGE_ERROR="")
 
             # thumnails for promoted links can change and therefore expire

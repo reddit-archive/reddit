@@ -172,8 +172,7 @@ ${pr.javascript_setup()}
     <input type="hidden" name="link_id36" value="${thing.link._id36}">
 
     <%
-       trusted = c.user_is_sponsor or c.user.trusted_sponsor
-       editable = trusted or not promote.is_promoted(thing.link)
+       editable = c.user_is_sponsor or not promote.is_promoted(thing.link)
      %>
 
     <input name="kind" value="${'self' if thing.link.is_self else 'link'}" type="hidden">
@@ -203,7 +202,7 @@ ${pr.javascript_setup()}
         %if editable:
           ${pr.commenting_field(thing.link)}
 
-          %if trusted:
+          %if c.user_is_sponsor:
             ${pr.media_field(thing.link)}
           %endif
         %endif
