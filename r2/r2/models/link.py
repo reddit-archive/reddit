@@ -1330,8 +1330,13 @@ class MoreComments(Printable):
 class MoreRecursion(MoreComments):
     pass
 
+
 class MoreChildren(MoreComments):
-    pass
+    def __init__(self, link, sort_operator, depth, parent_id=None):
+        from r2.lib.menus import CommentSortMenu
+        self.sort = CommentSortMenu.sort(sort_operator)
+        MoreComments.__init__(self, link, depth, parent_id)
+
 
 class Message(Thing, Printable):
     _defaults = dict(reported=0,

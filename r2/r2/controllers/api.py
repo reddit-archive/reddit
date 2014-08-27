@@ -2660,14 +2660,17 @@ class ApiController(RedditController):
         jquery.things(parent._fullname).parent().replace_things(a, False, True)
 
     @require_oauth2_scope("read")
-    @validatedForm(link = VByName('link_id'),
-                   sort = VMenu('where', CommentSortMenu),
-                   children = VCommentIDs('children'),
-                   pv_hex=VPrintable("pv_hex", 40, docs={"pv_hex":
-                       "(optional) a previous-visits token"}),
-                   mc_id=nop("id", docs={"id":
-                       "(optional) id of the associated MoreChildren object"}),
-                  )
+    @validatedForm(
+        link=VByName('link_id'),
+        sort=VMenu('morechildren', CommentSortMenu, remember=False),
+        children=VCommentIDs('children'),
+        pv_hex=VPrintable(
+            "pv_hex", 40,
+            docs={"pv_hex": "(optional) a previous-visits token"}),
+        mc_id=nop(
+            "id",
+            docs={"id": "(optional) id of the associated MoreChildren object"}),
+    )
     @api_doc(api_section.links_and_comments)
     def POST_morechildren(self, form, jquery, link, sort, children,
                           pv_hex, mc_id):

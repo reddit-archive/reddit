@@ -529,22 +529,24 @@ class SortMenu(NavMenu):
     def make_title(self, attr):
         return menu[attr]
 
+    _mapping = {
+        "hot": operators.desc('_hot'),
+        "new": operators.desc('_date'),
+        "old": operators.asc('_date'),
+        "top": operators.desc('_score'),
+        "controversial": operators.desc('_controversy'),
+        "confidence": operators.desc('_confidence'),
+        "random": operators.shuffled('_confidence'),
+    }
+    _reverse_mapping = {v: k for k, v in _mapping.iteritems()}
+
     @classmethod
-    def operator(self, sort):
-        if sort == 'hot':
-            return operators.desc('_hot')
-        elif sort == 'new':
-            return operators.desc('_date')
-        elif sort == 'old':
-            return operators.asc('_date')
-        elif sort == 'top':
-            return operators.desc('_score')
-        elif sort == 'controversial':
-            return operators.desc('_controversy')
-        elif sort == 'confidence':
-            return operators.desc('_confidence')
-        elif sort == 'random':
-            return operators.shuffled('_confidence')
+    def operator(cls, sort):
+        return cls._mapping.get(sort)
+
+    @classmethod
+    def sort(cls, operator):
+        return cls._reverse_mapping.get(operator)
 
 
 class ProfileSortMenu(SortMenu):

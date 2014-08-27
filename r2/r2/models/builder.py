@@ -914,7 +914,7 @@ class CommentBuilder(Builder):
                 missing_depth = depth.get(visible_id, 0) + 1 - offset_depth
 
                 if missing_depth < self.max_depth:
-                    mc = MoreChildren(self.link, depth=missing_depth,
+                    mc = MoreChildren(self.link, self.sort, depth=missing_depth,
                                       parent_id=visible_id)
                     mc.children.extend(missing_children)
                     w = Wrapped(mc)
@@ -933,7 +933,7 @@ class CommentBuilder(Builder):
 
         # build MoreChildren for missing root level comments
         if top_level_candidates:
-            mc = MoreChildren(self.link, depth=0, parent_id=None)
+            mc = MoreChildren(self.link, self.sort, depth=0, parent_id=None)
             mc.children.extend(top_level_candidates)
             w = Wrapped(mc)
             w.count = sum(1 + num_children[comment]

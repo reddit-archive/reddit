@@ -443,11 +443,11 @@ function togglemessage(elem) {
   }
 }
 
-function morechildren(form, link_id, children, depth, pv_hex) {
+function morechildren(form, link_id, sort, children, depth, pv_hex) {
     $(form).html(reddit.status_msg.loading)
         .css("color", "red");
     var id = $(form).parents(".thing.morechildren:first").thing_id();
-    $.request('morechildren', {link_id: link_id,
+    $.request('morechildren', {link_id: link_id, sort: sort,
               children: children, depth: depth, id: id, pv_hex: pv_hex});
     return false;
 };
