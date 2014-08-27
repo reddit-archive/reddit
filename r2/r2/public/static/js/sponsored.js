@@ -843,6 +843,7 @@ function del_campaign($campaign_row) {
 
 function edit_campaign($campaign_row) {
     cancel_edit(function() {
+        cancel_edit_promotion();
         var campaign = detach_campaign_form(),
             campaignTable = $(".existing-campaigns table").get(0),
             editRowIndex = $campaign_row.get(0).rowIndex + 1
@@ -933,8 +934,9 @@ function create_campaign() {
     if (check_number_of_campaigns()){
         return;
     }
-    cancel_edit(function() {;
-            var defaultBid = $("#bid").data("default_bid")
+    cancel_edit(function() {
+            cancel_edit_promotion();
+            var defaultBid = $("#bid").data("default_bid");
 
             init_startdate();
             init_enddate();
