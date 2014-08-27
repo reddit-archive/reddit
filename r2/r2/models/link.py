@@ -78,6 +78,7 @@ class Link(Thing, Printable):
                      secure_media_object=None,
                      media_url=None,
                      media_autoplay=False,
+                     domain_override=None,
                      promoted=None,
                      pending=False,
                      disable_comments=False,
@@ -463,7 +464,7 @@ class Link(Thing, Printable):
 
             item.score = max(0, item.score)
 
-            if getattr(item, "domain_override", None):
+            if item.domain_override:
                 item.domain = item.domain_override
             else:
                 item.domain = (domain(item.url) if not item.is_self

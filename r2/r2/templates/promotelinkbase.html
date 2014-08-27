@@ -120,7 +120,7 @@
     %if enable_override:
       <label style="display:block; text-align:right" for="domain">${_("Override display domain:")}</label>
       <input id="domain" name="domain" type="text" 
-             %if link and getattr(link, "domain_override", False):
+             %if link and link.domain_override:
                value="${link.domain_override}" class="rounded"
              %else:
                class="gray rounded" value="optional"

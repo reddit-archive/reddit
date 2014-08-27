@@ -661,8 +661,7 @@ class PromoteApiController(ApiController):
                         l.media_autoplay = False
 
                 l.media_override = media_override
-                if getattr(l, "domain_override", False) or domain_override:
-                    l.domain_override = domain_override
+                l.domain_override = domain_override or None
             l._commit()
 
         form.redirect(promote.promo_edit_url(l))
