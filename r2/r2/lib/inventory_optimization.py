@@ -271,6 +271,10 @@ class System(object):
         for campaign in self.campaigns:
             unassigned = unassigned_by_campaign[campaign.name]
             if unassigned > 0:
+                if not campaign.target_names:
+                    # all the campaign's targets were already allocated
+                    continue
+
                 # allocate inventory from the lowest level target
                 target_name = min(campaign.target_names,
                                   key=lambda name: level_by_target_name[name])
