@@ -1000,6 +1000,7 @@ function cancel_edit_promotion() {
 }
 
 function cancel_edit_campaign() {
+    $("button.new-campaign").prop("disabled", false);
     return cancel_edit()
 }
 
