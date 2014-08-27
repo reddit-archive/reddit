@@ -216,9 +216,15 @@
 
 <%def name="timing_field()">
   <%utils:line_field title="${_('timing')}" css_class="rounded timing-field">
-    <input type="hidden" id="date-min" value="${thing.min_start}">
-    <input type="hidden" id="date-start-max" value="${thing.max_start}">
-    <input type="hidden" id="date-end-max" value="${thing.max_end}">
+    %if thing.min_start:
+      <input type="hidden" id="date-min" value="${thing.min_start}">
+    %endif
+    %if thing.max_start:
+      <input type="hidden" id="date-start-max" value="${thing.max_start}">
+    %endif
+    %if thing.max_end:
+      <input type="hidden" id="date-end-max" value="${thing.max_end}">
+    %endif
 
     <div class="group">
       <div class="form-group">
