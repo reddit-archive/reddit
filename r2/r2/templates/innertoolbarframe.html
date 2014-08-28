@@ -23,6 +23,7 @@
 <%namespace file="less.html" import="less_js, less_stylesheet"/>
 
 <%!
+    from r2.config import feature
     from r2.lib.template_helpers import add_sr
 %>
 <html>
@@ -33,7 +34,11 @@
        }
     </script>
     ${less_stylesheet("reddit.less")}
-    ${less_stylesheet("markdown.less")}
+    %if feature.is_enabled('new_markdown_style'):
+      ${less_stylesheet("markdown.less")}
+    %else:
+      ${less_stylesheet("old-markdown.less")}
+    %endif
     ${less_js()}
   </head>
   <body class="${'expanded' if thing.expanded else ''}" id="inner_toolbar" onload="window.frames[1].focus()">

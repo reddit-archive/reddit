@@ -21,6 +21,7 @@
 ###############################################################################
 
 <%! 
+   from r2.config import feature
    from r2.lib.template_helpers import add_sr, static, join_urls, class_dict, get_domain
    from r2.lib.filters import unsafe
    from r2.lib.pages import SearchForm, ClickGadget, SideContentBox, Login, ListingChooser
@@ -45,7 +46,11 @@
 
 <%def name="global_stylesheets()">
   ${less_stylesheet("reddit.less")}
-  ${less_stylesheet("markdown.less")}
+  %if feature.is_enabled('new_markdown_style'):
+    ${less_stylesheet("markdown.less")}
+  %else:
+    ${less_stylesheet("old-markdown.less")}
+  %endif
   %if c.site.stylesheet:
     <link rel="stylesheet" href="${static(c.site.stylesheet)}" type="text/css" >
   %endif

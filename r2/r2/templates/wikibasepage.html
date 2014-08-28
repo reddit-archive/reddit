@@ -19,13 +19,21 @@
 ## All portions of the code written by reddit are Copyright (c) 2006-2014
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
+<%!
+    from r2.config import feature
+%>
+
 <%namespace file="less.html" import="less_stylesheet"/>
 <%inherit file="reddit.html"/>
 
 <%def name="global_stylesheets()">
     ${parent.global_stylesheets()}
     ${less_stylesheet('wiki.less')}
-    ${less_stylesheet('markdown.less')}
+    %if feature.is_enabled('new_markdown_style'):
+      ${less_stylesheet("markdown.less")}
+    %else:
+      ${less_stylesheet("old-markdown.less")}
+    %endif
 </%def>
 
 <%def name="actionsbar(actions)">

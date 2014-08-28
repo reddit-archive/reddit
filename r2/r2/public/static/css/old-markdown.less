@@ -1,0 +1,103 @@
+/* markdown */
+.md { max-width: 60em; overflow: auto; font-size: small; }
+.md p, .md h1 { margin: 5px 0}
+.md h1 { font-weight: normal; font-size: 100%; }
+.md > * { margin-bottom: 0px }
+.md strong { font-weight: bold; }
+.md em { font-style: italic; }
+.md strong em { font-style: italic; font-weight: bold }
+.md img { display: none }
+.md ol, .md ul { margin: 10px 2em; }
+.md ul { list-style: disc outside }
+.md ol {
+    list-style: decimal outside;
+    margin-left: 3em;
+}
+.md pre { margin: 10px; }
+.md blockquote, .help blockquote {
+    border-left: 2px solid #369;
+    padding-left: 4px;
+    margin: 5px;
+    margin-right: 15px;
+}
+.md td, .md th { border: 1px solid #EEE; padding: 1px 3px; }
+.md th { font-weight: bold;  }
+.md table { margin: 5px 10px;  }
+.md center { text-align: left;  }
+
+.wiki-page {
+  .wiki-page-content {
+    .md {
+      word-wrap: break-word;
+      max-width: none;
+    }
+
+    .md.wiki {
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        font-weight: bold;
+        color: black;
+        margin-bottom: .25em;
+        margin-top: .5em;
+      }
+
+      h1 {
+        margin-top: .75em;
+        font-size: 2.4em;
+      }
+
+      ul:first-child + h1 {
+        margin-top: 0;
+      }
+
+      h2 {
+        margin-top: .75em;
+        font-size: 1.8em;
+      }
+
+      h3 {
+        font-size: 1.6em;
+      }
+
+      h4 {
+        font-size: 1.4em;
+        color: #333;
+      }
+
+      h5 {
+        font-size: 1.2em;
+        color: #444;
+      }
+
+      h6 {
+        font-size: 1.05em;
+        color: #666;
+      }
+
+      img {
+        display: block;
+      }
+
+      blockquote {
+        padding-left: 1em;
+      }
+
+      p, .md.wiki blockquote {
+        margin: .75em 0;
+      }
+
+      > .toc > ul {
+        padding: 10px 25px;
+        margin-right: 0;
+
+        ul {
+          padding-left: 25px;
+        }
+      }
+    }
+  }
+}
