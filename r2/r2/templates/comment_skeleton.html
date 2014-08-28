@@ -24,9 +24,7 @@
 <%namespace file="utils.html" import="plain_link" />
 
 <%def name="midcol(display=True, cls = '')">
-  %if c.profilepage or (not thing._deleted and  (not thing._spam or thing.is_author or c.user_is_admin)):
-    ${parent.midcol(display=display, cls = cls)}
-  %endif
+  ${parent.midcol(display=display, cls = cls)}
 </%def>
 
 <%def name="tagline()">
