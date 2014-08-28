@@ -1,0 +1,318 @@
+@red: #F2142F;
+@orangered: #FF4500;
+@orange: #FF912E;
+@yellow: #FFD635;
+@highlight: #FFF03E;
+@gold: #D8C161;
+@lime: #C7E223;
+@green: #80D654;
+@teal: #52C0B1;
+@dark-teal: #0BA08E;
+@link-blue: #2E9FCC;
+@periwinkle: #9494FF;
+@white: #FFFFFF;
+@off-white: #FCFCF7;
+@eggshell: #F2F1E9;
+@pale-grey: #E5E3DA;
+@grey: #B5B3AC;
+@semi-black: #222222;
+@ui-blue: #336699;
+@ads-blue: #6093BF;
+@ads-grey: #F8F8F8;
+@dark-grey: #808080;
+
+
+.md {
+  h1, h2, h3, h4, h5, h6 {
+    &:extend(.md .-headers all);
+  }
+
+  th, td {
+    &:extend(.md .-cells all);
+  }
+
+  ul, ol {
+    &:extend(.md .-lists all);
+  }
+
+  .-lists, pre, blockquote {
+    &:extend(.md .-blocks all);
+  }
+
+
+  color: @semi-black;
+  max-width: 60em;
+
+  .-headers {
+    border: 0;
+    -webkit-font-smoothing: antialiased;
+    
+    code {
+      font-size: inherit;
+    }
+  }
+
+  h1,
+  h6,
+  blockquote,
+  del {
+    color: @dark-grey;
+  }
+
+  h2 {
+    color: @ui-blue;
+  }
+
+  a {
+    color: @link-blue;
+    text-decoration: none;
+  }
+
+  h6 {
+    text-transform: uppercase;
+  }
+
+  em {
+    font-style: italic;
+  }
+
+  th,
+  strong,
+  .-headers {
+    font-weight: bold;
+  }
+
+  h1,
+  h4,
+  h6 {
+    font-weight: normal;
+  }
+
+  h4 {
+    text-decoration: underline;
+  }
+
+  * {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  &,
+  .-cells,
+  .-blocks,
+  .-headers {
+    > :first-child {
+      margin-top: 0;
+    }
+
+    > :last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  tr,
+  code,
+  table,
+  .-cells,
+  .-blocks,
+  .-headers {
+    margin: 0;
+    padding: 0;
+  }
+
+  hr {
+    border: 0;
+    color: transparent;
+    background: @pale-grey;
+    height: 2px;
+    padding: 0;
+  }
+
+  tr {
+    background-color: @white;
+    
+    &:nth-child(2n) {
+      background-color: @off-white;
+    }
+  }
+
+  blockquote {
+    border-left: 2px solid @pale-grey;
+  }
+
+  code,
+  pre {
+    border: 1px solid @pale-grey;
+    background-color: @off-white;
+    border-radius: 2px;
+  }
+
+  code {
+    margin: 0 2px;
+    white-space: nowrap;
+  }
+
+  pre {
+    overflow: auto;
+
+    code {
+      white-space: pre;
+      background-color: transparent;
+      border: 0;
+      display: block;
+    }
+  }
+
+  .-cells {
+    border: 1px solid @pale-grey;
+    text-align: left;
+
+    &[align=center] {
+      text-align: center;
+    }
+
+    &[align=right] {
+      text-align: right;
+    }
+  }
+
+  img {
+    max-width: 100%;
+  }
+
+  ul {
+    list-style-type: disc;
+  }
+
+  ol {
+    list-style-type: decimal;
+  }
+}
+
+.make-markdown-text-scale(@base-font-size: 13px, 
+                          @font-scale-unit: 0.075,
+                          @h6: -1,
+                          @p: 0,
+                          @h5: 1,
+                          @h4: 3,
+                          @h3: 5,
+                          @h2: 11,
+                          @h1: 13) {
+  .font-scale(@scale:1) {
+    font-size: round(@base-font-size * (1 + (@font-scale-unit * @scale)));
+  }
+
+  h1 {
+    .font-scale(@h1);
+  }
+
+  h2 {
+    .font-scale(@h2);
+  }
+
+  h3 {
+    .font-scale(@h3);
+  }
+
+  h4 {
+    .font-scale(@h4); 
+  }
+
+  h5 {
+    .font-scale(@h5)
+  }
+
+  &,
+  pre {
+    .font-scale(@p);
+  }
+
+  h6 {
+    .font-scale(@h6); 
+  }
+}
+
+.make-markdown-layout(@line-height:20px, @spacing-scale: 1) {
+  @quarter-line: round(@line-height * 0.25);
+  @half-line: round(@line-height * 0.5);
+  @line-and-a-quarter: round(@line-height * 1.25);
+  @line-and-a-half: round(@line-height * 1.5);
+  
+  // line-heights
+  &,
+  pre {
+    line-height: @line-height;
+  }
+
+  h2 {
+    line-height: @line-and-a-quarter;
+  }
+
+  h1 {
+    line-height: @line-and-a-half;
+  }
+
+  // padding
+  blockquote {
+    padding: 0 @half-line;
+  }
+
+  code {
+    padding: 0 @quarter-line;
+  }
+
+  pre code {
+    // this reset needs to be here instead of in the main .md block, as 
+    // the styles added in this mixin can have additional precedence
+    // (i.e. `.wikipage-content .md code` would override `.md pre code`)
+    padding: 0;
+  }
+
+  pre,
+  .-cells {
+    padding: @quarter-line @half-line;
+  }
+
+  .-lists {
+    padding-left: @line-and-a-quarter;
+  }
+
+  // margins (scale with @spacing-scale)
+  .-headers {
+    margin-top: round(@line-height * @spacing-scale);
+    margin-bottom: round(@half-line * @spacing-scale);
+  }
+
+  h1,
+  h2 {
+    margin-top: round(@line-and-a-quarter * @spacing-scale);
+  }
+
+  li {
+    margin-top: round(@quarter-line * @spacing-scale);
+    margin-bottom: round(@quarter-line * @spacing-scale);
+  }
+
+  p,
+  table,
+  .-blocks {
+    margin-top: round(@half-line * @spacing-scale);
+    margin-bottom: round(@half-line * @spacing-scale);
+  }
+}
+
+
+.md {
+  .make-markdown-layout(18px, 0.5);
+  .make-markdown-text-scale(13px, 0.05, -1, 0, 0, 3, 3, 5, 9);
+}
+
+.wiki-page-content .md {
+  .make-markdown-layout(22px, 1);
+  .make-markdown-text-scale(14px, 0.075, -1, 0, 1, 3, 5, 11, 13);
+}
+
+.side .md {
+  .make-markdown-layout(16px, 0.5);
+  .make-markdown-text-scale(12px, 0.05, -1, 0, 0, 3, 3, 5, 9);
+}
