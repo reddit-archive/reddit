@@ -6563,18 +6563,6 @@ dd { margin-left: 20px;  }
 
 .titlebox .age {float: right;}
 .titlebox .md { font-size: 90%; }
-.titlebox .account-notes {
-    font-weight: normal;
-    font-size: small;
-    margin-left: 5px;
-}
-
-.titlebox .account-notes .unusual {
-    background-color: #ffdddd;
-    border: solid red 1px;
-    padding: 1px 2px 2px;
-    margin-left: 5px;
-}
 
 #side-multi-list {
     li {
@@ -10119,4 +10107,17 @@ ul.report-reasons {
             font-weight: bold;
         }
     }
+}
+
+body.banned div#header {
+  background-color: #cf6165;
+}
+
+body.deleted div#header {
+  background-color: #999;
+}
+
+body.banned.deleted div#header {
+  background-color: #999;
+  background-image: repeating-linear-gradient(45deg, transparent, transparent 30px, #cf6165 30px, #cf6165 60px);
 }

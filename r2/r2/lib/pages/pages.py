@@ -785,6 +785,10 @@ class Reddit(Templated):
             if c.user.gold:
                 classes.add('gold')
 
+        if c.user_is_admin:
+            if not isinstance(c.site, FakeSubreddit) and c.site._spam:
+                classes.add("banned")
+
         if isinstance(c.site, MultiReddit):
             classes.add('multi-page')
 
@@ -1828,6 +1832,16 @@ class ProfilePage(Reddit):
 
         return toolbar
 
+    def page_classes(self):
+        classes = Reddit.page_classes(self)
+
+        if c.user_is_admin:
+            if self.user._spam or self.user._banned:
+                classes.add("banned")
+            if self.user._deleted:
+                classes.add("deleted")
+
+        return classes
 
     def rightbox(self):
         rb = Reddit.rightbox(self)
