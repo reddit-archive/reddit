@@ -33,10 +33,17 @@
 <form action="/post/set_force_https" method="post"
       onsubmit="return post_form(this, 'set_force_https')" id="pref_force_https">
 
+%if c.user.https_forced:
+    ${_md("HTTPS is currently **enabled** for your account.", wrap=True)}
+%else:
+    ${_md("HTTPS is currently **disabled** for your account.", wrap=True)}
+%endif
+
 ${_md(
-    " * enabling this setting will ensure you always communicate with reddit over a secure channel when logged in.\n"
-    " * some third-party apps may not support this option\n"
-    " * changing this setting *will invalidate old sessions*, and will log you out of reddit on other devices.",
+    " * enabling this preference will ensure your browser communicates with reddit over a secure channel when logged in.\n"
+    " * enabling this preference will disable the \"display links with a reddit toolbar\" preference\n"
+    " * some third-party apps may not support this preference\n"
+    " * changing this preference *will log you out of reddit on other devices*, and will invalidate your old private RSS feeds.",
 wrap=True)}
 
 <div class="spacer">
