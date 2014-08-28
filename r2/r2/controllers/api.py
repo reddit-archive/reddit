@@ -1057,6 +1057,10 @@ class ApiController(RedditController):
             form.set_html(".status", _("employees are required to use HTTPS"))
             return
         c.user.pref_force_https = force_https
+        # Most pages we'd try to frame would be http:, and most browsers
+        # disallow mixed-content. Disable the toolbar when forcing HTTPS.
+        if force_https:
+            c.user.pref_frame = False
         c.user._commit()
 
         # run the change password command to get a new salt.

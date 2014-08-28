@@ -118,7 +118,7 @@ class ToolbarController(RedditController):
             self.abort403()
         elif link.is_self:
             return self.redirect(link.url)
-        elif not (c.user_is_loggedin and c.user.pref_frame):
+        elif not (c.user_is_loggedin and c.user.uses_toolbar):
             return self.redirect(link.make_permalink_slow(force_domain=True))
         
         # if the domain is shame-banned, bail out.

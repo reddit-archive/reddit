@@ -660,6 +660,10 @@ class Account(Thing):
         return self.pref_force_https
 
     @property
+    def uses_toolbar(self):
+        return not self.https_forced and self.pref_frame
+
+    @property
     def cpm_selfserve_pennies(self):
         override_price = getattr(self, 'cpm_selfserve_pennies_override', None)
         if override_price is not None:

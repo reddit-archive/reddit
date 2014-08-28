@@ -365,7 +365,7 @@ class Link(Thing, Printable):
         user_is_admin = c.user_is_admin
         user_is_loggedin = c.user_is_loggedin
         pref_media = user.pref_media
-        pref_frame = user.pref_frame
+        pref_frame = user.uses_toolbar
         cname = c.cname
         site = c.site
 

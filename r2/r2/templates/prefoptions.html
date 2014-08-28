@@ -112,7 +112,7 @@
   <tr>
     <th>${_("clicking options")}</th>
     <td class="prefright">
-      ${checkbox(_("display links with a reddit toolbar"), "frame")}
+      ${checkbox(_("display links with a reddit toolbar"), "frame", disabled=c.user.https_forced, disabled_text=_("(not supported when using HTTPS)"))}
       <br/>
       ${checkbox(_("open links in a new window"), "newwindow")}
     </td>
