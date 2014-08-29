@@ -106,6 +106,32 @@ r.login.ui = {
         }
     },
 
+    _determinePopupEventName: function(el) {
+      var $el = $(el);
+
+      if ($el.hasClass('up')) {
+        return 'upvote';
+      } else if ($el.hasClass('down')) {
+        return 'downvote';
+      } else if ($el.hasClass('arrow')) {
+        return 'arrow';
+      } else if ($el.hasClass('give-gold')) {
+        return 'give-gold';
+      } else if ($el.parents("#header").length && $el.attr('href').indexOf('login') !== -1) {
+        return 'login-or-register';
+      } else if ($el.parents('.subscribe-button').length) {
+        return 'subscribe-button';
+      } else if ($el.parents('.submit-link').length) {
+        return 'submit-link';
+      } else if ($el.parents('.submit-text').length) {
+        return 'submit-text';
+      } else if ($el.parents('.share-button').length) {
+        return 'share-button';
+      } else {
+        return $el.attr('class');
+      }
+    },
+
     loginRequiredAction: function(e) {
         if (r.config.logged) {
             return true
@@ -132,6 +158,8 @@ r.login.ui = {
                 }
                 window.location = dest
             }, this))
+
+            r.analytics.fireGAEvent('login-required-popup', 'opened', this._determinePopupEventName(el));
 
             return false
         }
@@ -168,6 +196,7 @@ r.ui.LoginForm.prototype = $.extend(new r.ui.Form(), {
     },
 
     _submit: function() {
+        r.analytics.fireGAEvent('login-form', 'submit');
         return r.login.post(this, 'login')
     },
 
@@ -267,6 +296,7 @@ r.ui.RegisterForm.prototype = $.extend(new r.ui.Form(), {
     },
 
     _submit: function() {
+        r.analytics.fireGAEvent('register-form', 'submit');
         return r.login.post(this, 'register')
     },
 
