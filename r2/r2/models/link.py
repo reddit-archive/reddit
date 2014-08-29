@@ -2028,7 +2028,17 @@ class Inbox(MultiRelation('inbox',
             res.append(i)
 
         if read_counter != 0 and hasattr(to, 'inbox_count'):
-            to._incr('inbox_count', read_counter)
+            if to.inbox_count + read_counter < 0:
+                g.log.info(
+                    "Inbox count for %r would be negative: %d + %d. Zeroing.",
+                    to.name,
+                    to.inbox_count,
+                    read_counter,
+                )
+                g.stats.simple_event("inbox_counts.negative_total_fix")
+                to._incr('inbox_count', -to.inbox_count)
+            else:
+                to._incr('inbox_count', read_counter)
 
         return res
 
