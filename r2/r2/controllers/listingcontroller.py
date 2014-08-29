@@ -1024,6 +1024,24 @@ class MessageController(ListingController):
                                reverse = self.reverse)
         return ListingController.builder(self)
 
+    def _verify_inbox_count(self, kept_msgs):
+        """If a user has experienced drift in their inbox counts, correct it.
+
+        A small percentage (~0.2%) of users are seeing drift in their inbox
+        counts (presumably because _incr is experiencing rare failures). If the
+        user has no unread messages in their inbox currently, this will repair
+        that drift and log it. Yes, this is a hack.
+        """
+        if not len(kept_msgs) and c.user.inbox_count != 0:
+            g.log.info(
+                "Fixing inbox drift for %r. Kept msgs: %d. Inbox_count: %d.",
+                c.user,
+                len(kept_msgs),
+                c.user.inbox_count,
+            )
+            g.stats.simple_event("inbox_counts.drift_fix")
+            c.user._incr('inbox_count', -c.user.inbox_count)
+
     def listing(self):
         if (self.where == 'messages' and
             (c.user.pref_threaded_messages or self.message)):
@@ -1034,6 +1052,9 @@ class MessageController(ListingController):
         for i in pane.things:
             if i.was_comment:
                 i.child = None
+
+        if self.where == 'unread':
+            self._verify_inbox_count(pane.things)
 
         return pane
 
