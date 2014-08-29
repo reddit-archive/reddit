@@ -1194,7 +1194,8 @@ class MinimalController(BaseController):
             response.headers["Strict-Transport-Security"] = hsts_val
 
         # send cookies
-        secure_cookies = c.user.https_forced
+        # HACK: make sure c.user always gets set to something
+        secure_cookies = c.user and c.user.https_forced
         for k, v in c.cookies.iteritems():
             if v.dirty:
                 response.set_cookie(key=k,
