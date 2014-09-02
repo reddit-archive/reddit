@@ -101,37 +101,8 @@ int main(int argc, char** argv)
         HMAC_Update(&ctx, id, id_length);
         HMAC_Final(&ctx, expected_hash, &hash_length);
 
-        /* generate the old ip hash */
-        SHA_CTX ctx_old;
-        int result_old = 0;
-        unsigned char expected_hash_old[SHA_DIGEST_LENGTH];
-
-        result_old = SHA1_Init(&ctx_old);
-        if (result_old == 0)
-            continue;
-
-        if (strcmp("/pixel/of_defenestration.png", path) != 0) {
-            /* the IP is not included on adframe tracker hashes */
-            result_old = SHA1_Update(&ctx_old, ip, strlen(ip));
-            if (result_old == 0)
-                continue;
-        }
-
-        result_old = SHA1_Update(&ctx_old, id, id_length);
-        if (result_old == 0)
-            continue;
-
-        result_old = SHA1_Update(&ctx_old, secret, secret_length);
-        if (result_old == 0)
-            continue;
-
-        result_old = SHA1_Final(expected_hash_old, &ctx_old);
-        if (result_old == 0)
-            continue;
-
         /* check that the hashes match */
-        if (memcmp(input_hash, expected_hash, SHA_DIGEST_LENGTH) != 0 &&
-            memcmp(input_hash, expected_hash_old, SHA_DIGEST_LENGTH) != 0)
+        if (memcmp(input_hash, expected_hash, SHA_DIGEST_LENGTH) != 0)
             continue;
 
         /* split out the fullname and subreddit if necessary */

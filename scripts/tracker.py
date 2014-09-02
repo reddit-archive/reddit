@@ -24,12 +24,6 @@
 This is a tiny Flask app used for a couple of self-serve ad tracking
 mechanisms. The URLs it provides are:
 
-/fetch-trackers
-
-    Given a list of Ad IDs, generate tracking hashes specific to the user's
-    IP address. This must run outside the original request because the HTML
-    may be cached by the CDN.
-
 /click
 
     Promoted links have their URL replaced with a /click URL by the JS
@@ -56,7 +50,6 @@ from flask import Flask, request, json, make_response, abort, redirect
 
 
 application = Flask(__name__)
-MAX_FULLNAME_LENGTH = 128  # can include srname and codename, leave room
 REQUIRED_PACKAGES = [
     "flask",
 ]
@@ -96,51 +89,9 @@ config = ApplicationConfig()
 tracking_secret = config.get('DEFAULT', 'tracking_secret')
 
 
-def jsonpify(callback_name, data):
-    data = callback_name + '(' + json.dumps(data) + ')'
-    response = make_response(data)
-    response.mimetype = 'text/javascript'
-    return response
-
-
-def get_client_ip():
-    """Figure out the IP address of the remote client.
-
-    If the remote address is on the 10.* network, we'll assume that it is a
-    trusted load balancer and that the last component of X-Forwarded-For is
-    trustworthy.
-
-    """
-
-    if request.remote_addr.startswith("10."):
-        # it's a load balancer, use x-forwarded-for
-        return request.access_route[-1]
-    else:
-        # direct connection to someone outside
-        return request.remote_addr
-
-
 @application.route("/")
 def healthcheck():
     return "I am healthy."
-
-
-@application.route('/fetch-trackers')
-def fetch_trackers():
-    ip = get_client_ip()
-    jsonp_callback = request.args['callback']
-    ids = request.args.getlist('ids[]')
-
-    if len(ids) > 100:
-        abort(400)
-
-    hashed = {}
-    for fullname in ids:
-        if len(fullname) > MAX_FULLNAME_LENGTH:
-            continue
-        text = ''.join((ip, fullname, tracking_secret))
-        hashed[fullname] = hashlib.sha1(text).hexdigest()
-    return jsonpify(jsonp_callback, hashed)
 
 
 @application.route('/click')
@@ -154,13 +105,7 @@ def click_redirect():
             tracking_secret, expected_hashable, hashlib.sha1).hexdigest()
 
     if not constant_time_compare(expected_mac, observed_mac):
-        # check old IP hash
-        ip = get_client_ip()
-        expected_hash_text_old = ''.join((ip, fullname, tracking_secret))
-        expected_hash_old = hashlib.sha1(expected_hash_text_old).hexdigest()
-
-        if not constant_time_compare(expected_hash_old, observed_mac):
-            abort(403)
+        abort(403)
 
     now = format_date_time(time.time())
     response = redirect(destination)
