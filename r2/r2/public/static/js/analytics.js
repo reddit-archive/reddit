@@ -1,7 +1,4 @@
 r.analytics = {
-    trackers: {},
-    _pendingTrackers: {},
-
     init: function() {
         // these guys are relying on the custom 'onshow' from jquery.reddit.js
         $(document).delegate(
@@ -10,7 +7,7 @@ r.analytics = {
               '.linklisting .promotedlink.promoted:not(".requested")',
             'onshow',
             _.bind(function(ev) {
-                this.fetchTrackersOrFirePixel(ev.target)
+                this.fireTrackingPixel(ev.target)
             }, this)
         )
 
@@ -28,58 +25,7 @@ r.analytics = {
       }
     },
 
-    fetchTrackingHash: function(el) {
-        /*------------------------------------------* 
-           Generates a trackingName like:
-           t3_ab-t8_99-pics if targeted with campaign
-           t3_ab-t8_99      not targeted with campaign
-           t3_ab--pics      targeted with no campaign
-           t3_ab-           not targeted, no campaign 
-         *------------------------------------------*/
-
-        var $el = $(el),
-            fullname = $el.data('fullname'),
-            campaign = $el.data('cid'),
-            trackingName = fullname
-
-        // append a hyphen even if there's no campaign
-        trackingName += '-' + (campaign || '')
-
-        if (!r.config.is_fake)
-            trackingName += '-' + r.config.post_site
-
-        // if we don't have a hash or a deferred fetch, queue a fetch
-        if (!(trackingName in this.trackers)) {
-            this._pendingTrackers[trackingName] = this.trackers[trackingName] = new $.Deferred
-            this.fetchTrackingHashes()
-        }
-
-        return this.trackers[trackingName]
-    },
-
-    fetchTrackingHashes: _.debounce(function() {
-        var toFetch = this._pendingTrackers
-        $.ajax({
-            url: r.config.fetch_trackers_url,
-            type: 'get',
-            dataType: 'jsonp',
-            data: {'ids': _.keys(toFetch)},
-            success: function(data) {
-                _.each(data, function(hash, trackingName) {
-                    toFetch[trackingName].resolve(trackingName, hash)
-                })
-            }
-        })
-        this._pendingTrackers = {}
-    }, 0),
-
-    fetchTrackersOrFirePixel: function(el) {
-        this.fetchTrackingHash(el).done(_.bind(function(trackingName, hash) {
-            this.fireTrackingPixel(el, trackingName, hash)
-        }, this))
-    },
-
-    fireTrackingPixel: function(el, trackingName, hash) {
+    fireTrackingPixel: function(el) {
         var $el = $(el)
         if ($el.data('trackerFired'))
             return
@@ -90,12 +36,12 @@ r.analytics = {
             onCommentsPage = $('body').hasClass('comments-page')
 
         if (inOrganicListing || onCommentsPage) {
-            var pixel = new Image()
-            pixel.src = r.config.adtracker_url + '?' + $.param({
-                'id': trackingName,
-                'hash': hash,
-                'r': Math.round(Math.random() * 2147483647) // cachebuster
-            })
+            var pixel = new Image(),
+                impPixel = $el.data('impPixel')
+
+                if (impPixel) {
+                    pixel.src = impPixel
+                }
 
             var adServerPixel = new Image(),
                 adServerImpPixel = $el.data('adserverImpPixel'),
@@ -104,40 +50,6 @@ r.analytics = {
             if (adServerImpPixel) {
                 adServerPixel.src = adServerImpPixel
             }
-        }
-
-        // If IE7/8 thinks the text of a link looks like an email address
-        // (e.g. it has an @ in it), then setting the href replaces the
-        // text as well. We'll store the original text and replace it to
-        // hack around this. Distilled reproduction in: http://jsfiddle.net/JU2Vj/1/
-        var link = $el.find('a.title'),
-            old_html = link.html(),
-            dest = link.attr('href'),
-            click_params = {
-                'id': trackingName,
-                'hash': hash,
-                'url': dest
-            },
-            click_url
-
-        click_url = r.config.clicktracker_url + '?' + $.param(click_params)
-
-        save_href(link)
-        link.attr('href', click_url)
-
-        if (link.html() != old_html)
-            link.html(old_html)
-
-        // also do the thumbnail
-        var thumb = $el.find('a.thumbnail')
-        save_href(thumb)
-        thumb.attr('href', click_url)
-
-        // also do the "comments" link for selftext promos
-        if ($el.hasClass('self')) {
-            var comments = $el.find('a.comments')
-            save_href(comments)
-            comments.attr('href', click_url)
         }
 
         $el.data('trackerFired', true)

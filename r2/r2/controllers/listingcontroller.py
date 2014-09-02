@@ -597,6 +597,11 @@ class AdsController(SubredditListingController):
         except NotImplementedError:
             self.abort404()
 
+    def listing(self):
+        listing = ListingController.listing(self)
+        promote.add_trackers(listing.things, c.site)
+        return listing
+
 
 class RandomrisingController(ListingWithPromos):
     where = 'randomrising'
