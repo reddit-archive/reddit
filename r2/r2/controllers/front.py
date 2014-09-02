@@ -154,6 +154,7 @@ class FrontController(RedditController):
         else:
             kw['after'] = after
             kw['reverse'] = False
+        c.referrer_policy = "always"
         return DetailsPage(thing=thing, expand_children=False, **kw).render()
 
     @validate(VUser())
