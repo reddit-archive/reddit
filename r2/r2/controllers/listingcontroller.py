@@ -237,11 +237,6 @@ class ListingWithPromos(SubredditListingController):
         except NotFound:
             self.abort404()
 
-        if not (link.promoted and
-                (c.user_is_sponsor or
-                 c.user_is_loggedin and link.author_id == c.user._id)):
-            self.abort403()
-
         if not promote.is_live_on_sr(link, c.site):
             self.abort403()
 
