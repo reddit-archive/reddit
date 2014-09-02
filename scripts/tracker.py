@@ -94,7 +94,6 @@ class ApplicationConfig(object):
 
 config = ApplicationConfig()
 tracking_secret = config.get('DEFAULT', 'tracking_secret')
-adtracker_url = config.get('DEFAULT', 'adtracker_url')
 
 
 def jsonpify(callback_name, data):
