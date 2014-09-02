@@ -731,12 +731,18 @@ class PromoteApiController(ApiController):
                         target.subreddit_name == Frontpage.name)
 
         if location:
-            non_cpm_collection = target.is_collection and not priority.cpm
+            if c.user_is_sponsor:
+                non_cpm_collection = target.is_collection and not priority.cpm
+                is_subreddit = not target.is_collection
 
-            if not (is_frontpage or (non_cpm_collection and c.user_is_sponsor)):
-                # regular users can location target to Frontpage and sponsors
-                # can location target a collection if it's a non-cpm priority
-                location = None
+                if not (is_frontpage or non_cpm_collection or is_subreddit):
+                    # sponsors can location target the frontpage, collections
+                    # at non-cpm priority, or subreddits
+                    return abort(403, 'forbidden')
+            else:
+                if not is_frontpage:
+                    # regular users can only location target the frontpage
+                    return abort(403, 'forbidden')
 
         if location and location.metro:
             cpm = g.cpm_selfserve_geotarget_metro.pennies
