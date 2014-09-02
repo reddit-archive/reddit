@@ -244,6 +244,8 @@ class ListingWithPromos(SubredditListingController):
                          skip=False)
         res.parent_name = "promoted"
         if res.things:
+            # update the css class so analytics.js can avoid firing pixels etc.
+            res.things[0].rowstyle_cls += " requested"
             return res
 
     def make_single_ad(self):

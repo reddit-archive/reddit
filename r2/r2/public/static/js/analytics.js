@@ -5,7 +5,9 @@ r.analytics = {
     init: function() {
         // these guys are relying on the custom 'onshow' from jquery.reddit.js
         $(document).delegate(
-            '.organic-listing .promotedlink.promoted, .comments-page .promotedlink.promoted, .linklisting .promotedlink.promoted',
+            '.organic-listing .promotedlink.promoted:not(".requested"), ' +
+              '.comments-page .promotedlink.promoted, ' +
+              '.linklisting .promotedlink.promoted:not(".requested")',
             'onshow',
             _.bind(function(ev) {
                 this.fetchTrackersOrFirePixel(ev.target)
