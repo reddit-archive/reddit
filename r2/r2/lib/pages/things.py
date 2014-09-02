@@ -208,7 +208,6 @@ def default_thing_wrapper(**params):
         if isinstance(thing, Link):
             if thing.promoted is not None:
                 w.render_class = PromotedLink
-                w.rowstyle_cls = 'promoted link'
             elif style == 'htmllite':
                 w.score_fmt = Score.points
             w.should_incr_counts = style != 'htmllite'
