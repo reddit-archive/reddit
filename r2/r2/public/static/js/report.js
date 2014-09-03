@@ -74,7 +74,7 @@ r.report = {
     $submitButton.removeAttr("disabled");
 
     if (isOther) {
-      $otherInput.removeAttr("disabled");
+      $otherInput.removeAttr("disabled").focus();
     } else {
       $otherInput.attr("disabled", "disabled");
     }
