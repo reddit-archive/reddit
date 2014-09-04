@@ -61,6 +61,10 @@ class APIv1GoldController(OAuth2ResourceController):
                 err = RedditError("INSUFFICIENT_CREDDITS")
                 self.on_validation_error(err)
 
+            note = None
+            if c.user.name.lower() in g.live_config["proxy_gilding_accounts"]:
+                note = "proxy"
+
             send_gift(
                 buyer=c.user,
                 recipient=recipient,
@@ -69,6 +73,7 @@ class APIv1GoldController(OAuth2ResourceController):
                 signed=False,
                 giftmessage=None,
                 thing_fullname=thing_fullname,
+                note=note,
             )
 
             if not c.user.employee:

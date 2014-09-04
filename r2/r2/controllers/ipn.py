@@ -239,7 +239,7 @@ def months_and_days_from_pennies(pennies, discount=False):
     return (months, days)
 
 def send_gift(buyer, recipient, months, days, signed, giftmessage,
-              thing_fullname):
+              thing_fullname, note=None):
     admintools.engolden(recipient, days)
 
     if thing_fullname:
@@ -255,7 +255,7 @@ def send_gift(buyer, recipient, months, days, signed, giftmessage,
         sender = _("An anonymous redditor")
         md_sender = _("An anonymous redditor")
 
-    create_gift_gold (buyer._id, recipient._id, days, c.start_time, signed)
+    create_gift_gold(buyer._id, recipient._id, days, c.start_time, signed, note)
 
     if months == 1:
         amount = "a month"

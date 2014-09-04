@@ -276,7 +276,7 @@ def create_claimed_gold (trans_id, payer_email, paying_id,
                                 account_id=account_id,
                                 date=date)
 
-def create_gift_gold (giver_id, recipient_id, days, date, signed):
+def create_gift_gold (giver_id, recipient_id, days, date, signed, note=None):
     trans_id = "X%d%s-%s" % (int(time()), randstr(2), 'S' if signed else 'A')
 
     gold_table.insert().execute(trans_id=trans_id,
@@ -286,7 +286,9 @@ def create_gift_gold (giver_id, recipient_id, days, date, signed):
                                 pennies=0,
                                 days=days,
                                 account_id=recipient_id,
-                                date=date)
+                                date=date,
+                                secret=note,
+    )
 
 
 def create_gold_code(trans_id, payer_email, paying_id, pennies, days, date):
