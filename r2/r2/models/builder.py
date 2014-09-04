@@ -414,6 +414,7 @@ class QueryBuilder(Builder):
         count = self.start_count
         fetch_after = None
         loopcount = 0
+        stopped_early = False
 
         while not done:
             done, fetched_items = self.fetch_more(fetch_after, num_have)
@@ -422,6 +423,7 @@ class QueryBuilder(Builder):
             loopcount += 1
             if loopcount == 20:
                 done = True
+                stopped_early = True
 
             #no results, we're done
             if not fetched_items:
@@ -453,7 +455,7 @@ class QueryBuilder(Builder):
 
         # Is there a next page or not?
         have_next = True
-        if self.num and num_have < self.num:
+        if self.num and num_have < self.num and not stopped_early:
             have_next = False
 
         # Make sure first_item and last_item refer to things in items
