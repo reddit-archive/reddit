@@ -1444,6 +1444,7 @@ class LinkInfoPage(Reddit):
             "site_name": "reddit",
             "title": u"%s • %s" % (link_title, sr_fragment),
             "description": self._build_og_description(meta_description),
+            "ttl": "600",  # re-fetch frequently to update vote/comment count
         }
         if not self.link.nsfw:
             data["image"] = self._build_og_image()
