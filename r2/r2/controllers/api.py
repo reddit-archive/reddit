@@ -1487,10 +1487,12 @@ class ApiController(RedditController):
     )
     @api_doc(api_section.links_and_comments)
     def POST_report(self, form, jquery, thing, reason, other_reason):
-        """Report a link or comment.
+        """Report a link, comment or message.
 
         Reporting a thing brings it to the attention of the subreddit's
-        moderators. The thing is implicitly hidden as well (see
+        moderators. Reporting a message sends it to a system for admin review.
+
+        For links and comments, the thing is implicitly hidden as well (see
         [/api/hide](#POST_api_hide) for details).
 
         """
@@ -2398,7 +2400,7 @@ class ApiController(RedditController):
                 spam = VBoolean('spam', default=True))
     @api_doc(api_section.moderation)
     def POST_remove(self, thing, spam):
-        """Remove a link or comment.
+        """Remove a link, comment, or modmail message.
 
         If the thing is a link, it will be removed from all subreddit listings.
         If the thing is a comment, it will be redacted and removed from all
@@ -2448,8 +2450,7 @@ class ApiController(RedditController):
             sr = thing.subreddit_slow
             action = 'remove' + thing.__class__.__name__.lower()
             ModAction.create(sr, c.user, action, **kw)
-
-        queries.unnotify(thing)
+            queries.unnotify(thing)
 
 
     @require_oauth2_scope("modposts")
