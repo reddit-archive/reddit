@@ -1032,6 +1032,9 @@ class MessageController(ListingController):
         user has no unread messages in their inbox currently, this will repair
         that drift and log it. Yes, this is a hack.
         """
+        if g.disallow_db_writes:
+            return
+
         if not len(kept_msgs) and c.user.inbox_count != 0:
             g.log.info(
                 "Fixing inbox drift for %r. Kept msgs: %d. Inbox_count: %d.",
