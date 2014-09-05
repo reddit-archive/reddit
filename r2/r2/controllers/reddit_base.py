@@ -765,16 +765,9 @@ def enforce_https():
     redirect_url = None
     grant = None
     # Forcing the users through the HSTS gateway probably wouldn't help much for
-    # these render types since they're mostly made by clients that don't respect
+    # other render types since they're mostly made by clients that don't respect
     # HSTS.
-    if c.render_style not in {"html", "compact", "mobile"}:
-        # Redirect here so that any links returned in the response will be to
-        # the https: site.
-        # TODO: Would just setting `c.secure = True` or modifying `add_sr`
-        # be better?
-        if hsts_eligible() and not c.secure:
-            redirect_url = make_url_https(request.environ['FULLPATH'])
-    else:
+    if c.render_style in {"html", "compact", "mobile"}:
         if hsts_eligible():
             grant = g.hsts_max_age
             # They're forcing HTTPS but don't have a "secure_session" cookie?
