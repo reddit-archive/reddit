@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
@@ -28,6 +29,7 @@ from reddit_base import RedditController, base_listing, paginated_listing
 from r2.models import *
 from r2.models.query_cache import CachedQuery, MergedCachedQuery
 from r2.config.extensions import is_api
+from r2.lib.filters import _force_unicode
 from r2.lib.pages import *
 from r2.lib.pages.things import wrap_links
 from r2.lib.menus import TimeMenu, SortMenu, RecSortMenu, ProfileSortMenu
@@ -42,7 +44,12 @@ import r2.lib.search as search
 from r2.lib.template_helpers import add_sr
 from r2.lib.admin_utils import check_cheating
 from r2.lib.csrf import csrf_exempt
-from r2.lib.utils import iters, timeago, precise_format_timedelta
+from r2.lib.utils import (
+    iters,
+    timeago,
+    trunc_string,
+    precise_format_timedelta,
+)
 from r2.lib import organic, sup, trending
 from r2.lib.memoize import memoize
 from r2.lib.validator import *
@@ -234,11 +241,38 @@ listing_api_doc = partial(
 class SubredditListingController(ListingController):
     private_referrer = False
 
+    def _build_og_title(self):
+        sr_fragment = "/r/" + c.site.name
+        title = c.site.title.strip()
+        if not title:
+            return sr_fragment
+
+        if sr_fragment in title:
+            return _force_unicode(title)
+
+        return u"%s • %s" % (_force_unicode(title), sr_fragment)
+
+    def _build_og_description(self):
+        description = c.site.public_description.strip()
+        if not description:
+            description = _(g.short_description)
+        return _force_unicode(trunc_string(description, MAX_DESCRIPTION_LENGTH))
+
     @property
     def render_params(self):
         if isinstance(c.site, DefaultSR):
             return {'show_locationbar': True}
         else:
+            if not c.user_is_loggedin:
+                return {
+                    "og_data": {
+                        "site_name": "reddit",
+                        "title": self._build_og_title(),
+                        "image": static('icon.png'),
+                        "description": self._build_og_description(),
+                    }
+                }
+
             return {}
 
 
