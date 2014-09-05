@@ -256,6 +256,7 @@ SAFE_PROPERTIES = {
     "text-indent",
     "text-justify",
     "text-overflow",
+    "text-rendering",
     "text-shadow",
     "text-space-collapse",
     "text-transform",
