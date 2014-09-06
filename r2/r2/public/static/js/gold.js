@@ -286,6 +286,9 @@ r.gold.signupForm = (function() {
       case 'gift':
         fields.push('months', 'recipient', 'signed', 'giftmessage')
         break
+      case 'creddits':
+        fields.push('num_creddits')
+        break
     }
 
     return fields
@@ -350,6 +353,8 @@ r.gold.signupForm = (function() {
       goldtype = 'autorenew'
     } else if (isGift && $gifttype.length > 0) {
       goldtype = $gifttype.val()
+    } else if ($tab.prop('id') == 'creddits') {
+      goldtype = 'creddits'
     } else {
       goldtype = 'onetime'
     }

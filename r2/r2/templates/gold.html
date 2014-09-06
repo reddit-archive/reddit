@@ -46,13 +46,7 @@
         </section>
       </div>
     </div>
-  </div>
-  %if c.user_is_loggedin:
-    <div class="creddits-prompt">
-      <div class="gilded-icon"></div>
-      ${_md("Give gold often? Consider [buying creddits to use](/creddits), they're 40% cheaper if purchased in a set of 12.")}
-    </div>
-  %endif
+  </div>  
 </div>
 
 <%def name="gold_loggedout_content()">
@@ -67,7 +61,7 @@
       <section>
         <label>
           <h3>${_('How many months of gold would you like to give?')}</h3>
-          ${gold_dropdown("months", thing.months)}
+          ${gold_dropdown("months", thing.months, "months")}
         </label>
 
         <label class="loggedout-email">
@@ -99,8 +93,10 @@
   if thing.goldtype:
       if is_gift or thing.goldtype == 'onetime':
           active_tab = 'onetime'
-      else:
+      elif thing.goldtype == 'autorenew':
           active_tab = 'autorenew'
+      else:
+          active_tab = 'creddits'
   %>
   <form name="gold-form" class="gold-form" action="/gold/payment" method="get">
   <input type="hidden" name="edit" id="edit" value="true">
@@ -110,9 +106,21 @@
       <h3>${_('What type of reddit gold would you like to purchase?')}</h3>
       <a href="#onetime" class="tab-toggle ${'active' if active_tab == 'onetime' else ''}">${_('one-time purchase')}</a>
       <a href="#autorenew" class="tab-toggle ${'active' if active_tab == 'autorenew' else ''}">${_('ongoing subscription')}</a>
+      <a href="#creddits" class="tab-toggle ${'active' if active_tab == 'creddits' else ''}">${_('creddits')}</a>
     </section>
 
     <div id="form-options" class="container ${'hidden' if not active_tab else ''}">
+
+      <section id="creddits" class="tab ${'active' if active_tab == 'creddits' else ''}">
+        <h3>${_('How many creddits would you like to buy?')}</h3>
+        ${gold_dropdown("num_creddits", thing.months, somethings="creddits")}
+
+        <section class="creddits-explained">
+          ${_('Stored as a balance on your account, creddits allow you to give gold without having to enter payment information. Each creddit you have can be converted into one month of reddit gold.')}
+          &#32;<a href="/gilding#what-are-creddits">${_('Learn more about using creddits')}</a>.
+        </section>
+      </section>
+
       <section id="autorenew" class="tab ${'active' if active_tab == 'autorenew' else ''}">
         <h3>${_('What type of subscription would you like?')}</h3>
         <ul>
@@ -189,7 +197,7 @@
 
     <section id="payment-options" class="${'hidden' if not active_tab else ''}">
       <div class="buttons">
-        <button type="submit" class="btn gold-button">${_('purchase')}</button>
+        <button type="submit" class="btn gold-button">${_('continue')}</button>
       </div>
     </section>
   </form>

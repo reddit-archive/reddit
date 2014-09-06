@@ -1545,6 +1545,7 @@ class FormsController(RedditController):
                                "code")),
               period=VOneOf("period", ("monthly", "yearly")),
               months=VInt("months"),
+              num_creddits=VInt("num_creddits"),
               # variables below are just for gifts
               signed=VBoolean("signed", default=True),
               recipient=VExistingUname("recipient", default=None),
@@ -1552,7 +1553,7 @@ class FormsController(RedditController):
               giftmessage=VLength("giftmessage", 10000),
               email=ValidEmail("email"),
               edit=VBoolean("edit", default=False))
-    def GET_gold(self, is_payment, goldtype, period, months,
+    def GET_gold(self, is_payment, goldtype, period, months, num_creddits,
                  signed, recipient, giftmessage, thing, email, edit):
 
         if thing:
@@ -1580,9 +1581,14 @@ class FormsController(RedditController):
                 start_over = True
             elif c.user.has_gold_subscription:
                 return self.redirect("/gold/subscription")
-        elif goldtype in ("onetime", "creddits", "code"):
+        elif goldtype in ("onetime", "code"):
             if months is None or months < 1:
                 start_over = True
+        elif goldtype == "creddits":
+            if num_creddits is None or num_creddits < 1:
+                start_over = True
+            else:
+                months = num_creddits
         elif goldtype == "gift":
             if months is None or months < 1:
                 start_over = True

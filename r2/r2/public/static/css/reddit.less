@@ -9581,6 +9581,11 @@ body.with-listing-chooser {
   }
 }
 
+.gold-page,
+.gilding {
+    overflow-y: scroll;
+}
+
 .gold-wrap {
   @dark: #686868;
   @light: #cccccb;
@@ -9691,9 +9696,10 @@ body.with-listing-chooser {
   a.tab-toggle {
     .box-sizing(border-box);
     background-color: @gold-button-bg;
-    border-radius: 3px;
-    border-right-width: 0;
-    border: @gold-button-border;
+    border-radius: 0px;
+    border-top: @gold-button-border;
+    border-bottom: @gold-button-border;
+    border-right: @gold-button-border;
     box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.27);
     color: @off-white;
     display: inline-block;
@@ -9705,7 +9711,7 @@ body.with-listing-chooser {
     text-align: center;
     text-decoration: none;
     vertical-align: middle;
-    width: 50%;
+    width: 33%;
 
     &.active {
       background-color: @gold-button-active;
@@ -9719,6 +9725,7 @@ body.with-listing-chooser {
 
     &:first-of-type {
       border-radius: 3px 0 0 3px;
+      border-left: @gold-button-border;
     }
 
     &:last-of-type {
@@ -9938,35 +9945,6 @@ body.with-listing-chooser {
     }
   }
 
-  .creddits-amount {
-    h2 {
-      font-size: 1.2em;
-      line-height: 1.6;
-    }
-
-    button {
-      margin-top: 20px;
-      font-size: 1.3em;
-      padding: 10px 25px;
-    }
-  }
-
-  .creddits-prompt {
-    text-align: center;
-    font-size: 0.8em;
-    margin-top: 20px;
-
-    p {
-        display: inline;
-    }
-
-    a {
-        text-decoration: underline;
-        color: @dark;
-    }
-  }
-
-
   @media screen and (max-width: 1024px) {
     .buttons {
       text-align: center;
@@ -9985,10 +9963,6 @@ body.with-listing-chooser {
 /* Page level logic for gold pages, outside of gold-wrap so we can use body classes. */
 .gold-page.creddits-purchase,
 .gold-page.creddits-payment {
-
-  .gold-banner {
-    background-image: url(../gold/reddit-creddits.png);
-  }
 
   .gold-snoo {
     background-image: url(../gold/creddits-snoo.png);

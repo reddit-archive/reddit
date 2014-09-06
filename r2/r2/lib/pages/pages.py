@@ -2578,7 +2578,7 @@ class GoldPayment(Templated):
 
             if goldtype == "creddits":
                 summary = strings.gold_summary_creddits % dict(
-                    amount=Score.somethings(months, "month"),
+                    amount=Score.somethings(months, "creddit"),
                     price=price,
                 )
             elif goldtype == "gift":

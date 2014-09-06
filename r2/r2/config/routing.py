@@ -277,7 +277,8 @@ def make_map():
     mc('/gold/thanks', controller='front', action='goldthanks')
     mc('/gold/subscription', controller='forms', action='subscription')
     mc('/gilding', controller='front', action='gilding')
-    mc('/creddits', controller='forms', action='creddits')
+    mc('/creddits', controller='redirect', action='redirect', 
+       dest='/gold?goldtype=creddits')
 
     mc('/password', controller='forms', action="password")
     mc('/:action', controller='front',
