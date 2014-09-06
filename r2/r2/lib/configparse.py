@@ -52,6 +52,12 @@ class ConfigValue(object):
         return tuple(ConfigValue.to_iter(v))
 
     @staticmethod
+    def tuple_of(value_type):
+        def parse(v, key=None):
+            return tuple(value_type(x) for x in ConfigValue.to_iter(v))
+        return parse
+
+    @staticmethod
     def dict(key_type, value_type):
         def parse(v, key=None):
             return {key_type(x): value_type(y)
