@@ -21,6 +21,8 @@
 ###############################################################################
 
 <%!
+   from pylons import g
+
    from r2.lib.template_helpers import get_domain
    from r2.lib.template_helpers import make_url_protocol_relative
    from r2.lib.pages.things import LinkButtons
@@ -234,7 +236,14 @@ ${parent.thing_css_class(what)} ${"over18" if thing.over_18 else ""} ${thing.vis
     % if not thing.thumbnail_sprited:
         <%
             if hasattr(thing, 'thumbnail_size'):
-                size_str = "width='%d' height='%d'" % (thing.thumbnail_size[0], thing.thumbnail_size[1])
+                scaling_factor = 1
+                if thing.thumbnail_size[0] > g.thumbnail_size[0]:
+                  # hidpi scaling, calculate in case hidpi changes definition in the future and
+                  # we have multiple sets of image dimensions. Currently should always be 1 or 2.
+                  # Width is always the maximum allowed, so we don't need to check height.
+                  scaling_factor = thing.thumbnail_size[0] // g.thumbnail_size[0]
+
+                size_str = "width='%d' height='%d'" % (thing.thumbnail_size[0] // scaling_factor, thing.thumbnail_size[1] // scaling_factor)
             else:
                 size_str = ""
         %>

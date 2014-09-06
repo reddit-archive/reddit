@@ -598,6 +598,12 @@ body[orient="landscape"] > #topbar > h1 {
     overflow: hidden;
     max-height: 50px; 
 }
+
+.link .thumbnail img {
+    max-width: 50px;
+    max-height: 50px;
+}
+
 /* Entry*/
 
 .link .entry { 

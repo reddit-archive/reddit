@@ -203,6 +203,8 @@ body[orient="landscape"] > #topbar > h1 { margin-left: -125px; width: 250px; }
 /*Image*/
 .link .thumbnail { float: right; margin: 0 0 5px 5px; overflow: hidden; max-height: 50px; }
 
+.link .thumbnail img { max-width: 50px; max-height: 50px; }
+
 /* Entry*/
 .link .entry { margin: 0px 50px 3px 0px; }
 

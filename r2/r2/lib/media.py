@@ -42,6 +42,7 @@ import requests
 
 from pylons import g
 
+from r2.config import feature
 from r2.lib import amqp, hooks
 from r2.lib.memoize import memoize
 from r2.lib.nymph import optimize_png
@@ -57,8 +58,6 @@ from urllib2 import (
     URLError,
 )
 
-
-thumbnail_size = 70, 70
 
 # TODO: replace this with data from the embedly service api when available
 _SECURE_SERVICES = [
@@ -115,6 +114,12 @@ def _square_image(img):
 
 def _prepare_image(image):
     image = _square_image(image)
+
+    if feature.is_enabled('hidpi_thumbnails'):
+        thumbnail_size = [int(d * g.thumbnail_hidpi_scaling) for d in g.thumbnail_size]
+    else:
+        thumbnail_size = g.thumbnail_size
+
     image.thumbnail(thumbnail_size, Image.ANTIALIAS)
     return image
 

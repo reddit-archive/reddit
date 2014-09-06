@@ -173,6 +173,7 @@ class Globals(object):
             'sr_contributor_quota',
             'sr_quota_time',
             'sr_invite_limit',
+            'thumbnail_hidpi_scaling',
             'wiki_keep_recent_days',
             'wiki_max_page_length_bytes',
             'wiki_max_page_name_length',
@@ -244,6 +245,10 @@ class Globals(object):
             'exempt_login_user_agents',
             'timed_templates',
             'autoexpand_media_types',
+        ],
+
+        ConfigValue.tuple_of(ConfigValue.int): [
+            'thumbnail_size',
         ],
 
         ConfigValue.dict(ConfigValue.str, ConfigValue.int): [
