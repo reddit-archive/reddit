@@ -51,7 +51,9 @@
         </li>
       %endif
     %endif
-  %elif thing.show_report:
+  %endif
+
+  %if thing.show_report:
     <li class="report-button">
       %if thing.style in ("linkbuttons", "commentbuttons"):
         <a href="javascript:void(0)" class="report-thing">

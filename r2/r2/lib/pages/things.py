@@ -78,9 +78,6 @@ class LinkButtons(PrintableButtons):
         # do we show the report button?
         show_report = not is_author and report
 
-        if c.user_is_admin and thing.promoted is None:
-            show_report = False
-
         show_marknsfw = show_unmarknsfw = False
         show_rescrape = False
         if thing.can_ban or is_author or (thing.promoted and c.user_is_sponsor):
