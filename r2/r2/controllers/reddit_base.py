@@ -1308,11 +1308,15 @@ class OAuth2ResourceController(MinimalController):
             require(access_token)
             require(access_token.check_valid())
             c.oauth2_access_token = access_token
-            account = Account._byID36(access_token.user_id, data=True)
-            require(account)
-            require(not account._deleted)
-            c.user = c.oauth_user = account
-            c.user_is_loggedin = True
+            if access_token.user_id:
+                account = Account._byID36(access_token.user_id, data=True)
+                require(account)
+                require(not account._deleted)
+                c.user = c.oauth_user = account
+                c.user_is_loggedin = True
+            else:
+                c.user = UnloggedUser(get_browser_langs())
+                c.user_is_loggedin = False
             c.oauth_client = OAuth2Client._byID(access_token.client_id)
         except RequirementException:
             self._auth_error(401, "invalid_token")

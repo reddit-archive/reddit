@@ -179,10 +179,16 @@ class OAuth2AccessController(MinimalController):
         except RequirementException:
             abort(401, headers=[("WWW-Authenticate", 'Basic realm="reddit"')])
 
-    @validate(grant_type=VOneOf("grant_type",
-                                ("authorization_code",
-                                 "refresh_token",
-                                 "password")))
+    @validate(
+        grant_type=VOneOf("grant_type",
+            (
+                 "authorization_code",
+                 "refresh_token",
+                 "password",
+                 "client_credentials",
+            )
+        ),
+    )
     def POST_access_token(self, grant_type):
         """
         Exchange an [OAuth 2.0](http://oauth.net/2/) authorization code
@@ -214,6 +220,8 @@ class OAuth2AccessController(MinimalController):
             return self._access_token_refresh()
         elif grant_type == "password":
             return self._access_token_password()
+        elif grant_type == "client_credentials":
+            return self._access_token_client_credentials()
         else:
             resp = {"error": "unsupported_grant_type"}
             return self.api_wrapper(resp)
@@ -313,6 +321,30 @@ class OAuth2AccessController(MinimalController):
                 client._id,
                 user._id36,
                 scope
+        )
+        resp = self._make_token_dict(access_token)
+        return self.api_wrapper(resp)
+
+    @validate(
+        scope=nop("scope"),
+    )
+    def _access_token_client_credentials(self, scope):
+        client = c.oauth2_client
+        if not client.is_confidential():
+            return self.api_wrapper({"error": "unauthorized_client",
+                "error_description": "Only confidential clients may use client_credentials auth"})
+        if scope:
+            scope = OAuth2Scope(scope)
+            if not scope.is_valid():
+                c.errors.add(errors.INVALID_OPTION, "scope")
+                return self.api_wrapper({"error": "invalid_scope"})
+        else:
+            scope = OAuth2Scope(OAuth2Scope.FULL_ACCESS)
+
+        access_token = OAuth2AccessToken._new(
+            client._id,
+            None,
+            scope,
         )
         resp = self._make_token_dict(access_token)
         return self.api_wrapper(resp)
