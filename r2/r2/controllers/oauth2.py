@@ -206,14 +206,20 @@ class OAuth2AccessController(MinimalController):
         username and client secret as the password.  (The client id and secret
         are visible on the [app preferences page](/prefs/apps).)
 
-        Per the OAuth specification, **grant_type** must
-        be ``authorization_code`` for the initial access token or
-        ``refresh_token`` for renewing the access token.
+        Per the OAuth specification, **grant_type** must be one of:
+
+        * ``authorization_code`` for the initial access token ("standard" OAuth2 flow)
+        * ``refresh_token`` for renewing the access token.
+        * ``password`` for script-type apps using password auth
+        * ``client_credentials`` for application-only (logged out) access
 
         **redirect_uri** must exactly match the value that was used in the call
         to [/api/v1/authorize](#api_method_authorize) that created this grant.
-        """
 
+        See reddit's [OAuth2 wiki](https://github.com/reddit/reddit/wiki/OAuth2) for
+        more information.
+
+        """
         if grant_type == "authorization_code":
             return self._access_token_code()
         elif grant_type == "refresh_token":
