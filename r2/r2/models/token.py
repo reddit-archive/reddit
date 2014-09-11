@@ -564,8 +564,8 @@ class OAuth2AccessToken(Token):
     _ttl = datetime.timedelta(minutes=60)
     _defaults = dict(scope="",
                      token_type="bearer",
-                     refresh_token=None,
-                     user_id=None,
+                     refresh_token="",
+                     user_id="",
                     )
     _use_db = True
     _connection_pool = "main"
