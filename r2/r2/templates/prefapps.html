@@ -129,10 +129,12 @@ ${utils.radio_type('app_type', "script", _("script"),
           <input type="hidden" name="client_id" value="${app._id}" />
           <input type="hidden" name="app_type" value="${app.app_type}" />
           <table class="preftable">
-            <tr>
-              <th>${_("secret")}</th>
-              <td class="prefright">${app.secret}</td>
-            </tr>
+            %if app.is_confidential():
+              <tr>
+                <th>${_("secret")}</th>
+                <td class="prefright">${app.secret}</td>
+              </tr>
+            %endif
             <tr>
               <th>${_("name")}</th>
               <td class="prefright">

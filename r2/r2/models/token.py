@@ -364,6 +364,9 @@ class OAuth2Client(Token):
 
     _developer_colname_prefix = 'has_developer_'
 
+    APP_TYPES = ("web", "installed", "script")
+    PUBLIC_APP_TYPES = ("installed",)
+
     @classmethod
     def _new(cls, **kwargs):
         if "secret" not in kwargs:
@@ -507,6 +510,10 @@ class OAuth2Client(Token):
         for token in OAuth2AccessToken._by_user(account):
             if token.client_id == self._id:
                 token.revoke()
+
+    def is_confidential(self):
+        return self.app_type not in self.PUBLIC_APP_TYPES
+
 
 class OAuth2ClientsByDeveloper(tdb_cassandra.View):
     """Index providing access to the list of OAuth2Clients of which an Account is a developer."""

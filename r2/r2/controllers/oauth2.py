@@ -171,10 +171,11 @@ class OAuth2AccessController(MinimalController):
         try:
             client_id, client_secret = parse_http_basic(auth)
             require(client_id)
-            require(client_secret)
             client = OAuth2Client.get_token(client_id)
             require(client)
-            require(constant_time_compare(client.secret, client_secret))
+            if client.is_confidential():
+                require(client_secret)
+                require(constant_time_compare(client.secret, client_secret))
             return client
         except RequirementException:
             abort(401, headers=[("WWW-Authenticate", 'Basic realm="reddit"')])

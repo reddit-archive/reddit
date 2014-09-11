@@ -3972,7 +3972,7 @@ class ApiController(RedditController):
                    about_url=VSanitizedUrl('about_url'),
                    icon_url=VSanitizedUrl('icon_url'),
                    redirect_uri=VRedirectUri('redirect_uri'),
-                   app_type=VOneOf('app_type', ('web', 'installed', 'script')))
+                   app_type=VOneOf('app_type', OAuth2Client.APP_TYPES))
     @api_doc(api_section.apps)
     def POST_updateapp(self, form, jquery, name, about_url, icon_url,
                        redirect_uri, app_type):
