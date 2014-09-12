@@ -180,7 +180,7 @@
          %>
       <p>
       ${unsafe(_("don't show me submissions with a score less than %(num)s") % dict(num = input))}
-      &#32;<span class="little gray">${_("(blank for none)")}</span>
+      &#32;<span class="little gray">${_("(leave blank to show all submissions)")}</span>
       </p>
     </td>
   </tr>
@@ -193,7 +193,7 @@
        %>
     <p>
       ${unsafe(_("don't show me comments with a score less than %(num)s") % dict(num = input))}
-      &#32;<span class="little gray">${_("(blank for none)")}</span>
+      &#32;<span class="little gray">${_("(leave blank to show all comments)")}</span>
     </p>
     <p>
       <% 
