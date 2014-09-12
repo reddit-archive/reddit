@@ -480,10 +480,10 @@ r.sponsored = {
                 isCollection = (data.targetingCollection === 'True'),
                 mappingFunction = isCollection ? mapCollection : mapSubreddit;
             mappingFunction(data.targeting);
-            var bid = parseInt(data.bid, 10);
+            var bid = parseFloat(data.bid, 10);
             var cpm = parseInt(data.cpm, 10);
             var impressions = bid / cpm * 1000 * 100;
-            totalBid += parseInt(data.bid, 10);
+            totalBid += bid;
             totalImpressions += impressions;
         });
 
@@ -491,7 +491,7 @@ r.sponsored = {
             count: campaignRows.length,
             subreddits: _.keys(subreddits),
             totalBid: totalBid,
-            totalImpressions: totalImpressions,
+            totalImpressions: totalImpressions | 0,
             prettyBid: '$' + totalBid.toFixed(2),
             prettyImpressions: r.utils.prettyNumber(totalImpressions),
         };
