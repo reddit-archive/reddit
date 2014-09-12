@@ -357,6 +357,7 @@ class Link(Thing, Printable):
         from r2.lib import media
         from r2.lib.utils import timeago
         from r2.lib.template_helpers import get_domain
+        from r2.models.report import Report
         from r2.models.subreddit import FakeSubreddit
         from r2.lib.wrapped import CachedVariable
 
@@ -502,6 +503,8 @@ class Link(Thing, Printable):
                 # set an attribute on the Wrapped item so that it will be
                 # added to the render cache key
                 item.ignore_reports_key = item.ignore_reports
+
+            item.mod_reports, item.user_reports = Report.get_reports(item)
 
             item.num = None
             item.permalink = item.make_permalink(item.subreddit)
@@ -990,6 +993,7 @@ class Comment(Thing, Printable):
         from r2.lib.utils import timeago
         from r2.lib.wrapped import CachedVariable
         from r2.lib.pages import WrappedUser
+        from r2.models.report import Report
 
         #fetch parent links
         links = Link._byID(set(l.link_id for l in wrapped), data=True,
@@ -1111,6 +1115,8 @@ class Comment(Thing, Printable):
                 # some subreddits can have gilding disabled
                 item.subreddit.allow_gilding
             )
+
+            item.mod_reports, item.user_reports = Report.get_reports(item)
 
             # not deleted on profile pages,
             # deleted if spam and not author or admin

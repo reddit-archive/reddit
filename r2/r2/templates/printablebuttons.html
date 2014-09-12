@@ -184,7 +184,7 @@
 
 <%def name="reports_button()">
 <li 
-    %if thing.report_reasons:
+    %if thing.mod_reports or thing.user_reports:
       class="rounded reported-stamp stamp has-reasons"
       title="${_('click to show report reasons')}"
     %else:
@@ -197,10 +197,31 @@
 
 <%def name="report_reasons()">
 <ul class="report-reasons rounded">
-  <li class="report-reason-title">${_("report reasons:")}</li>
-  %for reason in thing.report_reasons:
-    <li class="report-reason" title="${reason}">${reason}</li>
-  %endfor
+  %if thing.mod_reports:
+    <li class="report-reason-title">${_("moderator reports:")}</li>
+    %for reason, user in thing.mod_reports:
+      <li class="report-reason mod-report" title="${_(reason)}">${user}:
+      %if reason:
+        ${reason}
+      %else:
+        ${_("<no reason>")}
+      %endif
+      </li>
+    %endfor
+  %endif
+
+  %if thing.user_reports:
+    <li class="report-reason-title">${_("user reports:")}</li>
+    %for reason, count in thing.user_reports:
+      <li class="report-reason" title="${reason}">${count}:
+      %if reason:
+        ${reason}
+      %else:
+        ${_("<no reason>")}
+      %endif
+      </li>
+    %endfor
+  %endif
 </ul>
 </%def>
 
@@ -291,7 +312,7 @@
     ${ignore_reports_toggle(thing.thing)}
   %endif
 
-  %if thing.show_reports and not thing.show_spam and thing.report_reasons:
+  %if thing.show_reports and not thing.show_spam and (thing.mod_reports or thing.user_reports):
     ${report_reasons()}
   %endif
 
@@ -360,7 +381,7 @@
       ${ignore_reports_toggle(thing.thing)}
     %endif
 
-    %if thing.show_reports and not thing.show_spam and thing.report_reasons:
+    %if thing.show_reports and not thing.show_spam and (thing.mod_reports or thing.user_reports):
       ${report_reasons()}
     %endif
 

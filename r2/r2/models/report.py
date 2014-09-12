@@ -20,6 +20,8 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+from collections import Counter
+
 from r2.lib.db.thing import Thing, Relation, MultiRelation, thing_prefix
 from r2.lib.utils import tup
 from r2.lib.memoize import memoize
@@ -122,20 +124,51 @@ class Report(MultiRelation('report',
 
         queries.clear_reports(to_clear, rels)
 
+    @classmethod
+    def get_reports(cls, wrapped, max_user_reasons=20):
+        """Get two lists of mod and user reports on the item."""
+        if wrapped.can_ban and wrapped.reported > 0:
+            from r2.models import SRMember
+
+            reports = cls.for_thing(wrapped.lookups[0])
+
+            query = SRMember._query(SRMember.c._thing1_id == wrapped.sr_id,
+                                    SRMember.c._name == "moderator")
+            mod_dates = {rel._thing2_id: rel._date for rel in query}
+
+            mod_reports = []
+            user_reports = []
+
+            for report in reports:
+                # include in mod reports if made after the user became a mod
+                if (report._thing1_id in mod_dates and
+                        report._date >= mod_dates[report._thing1_id]):
+                    mod_reports.append(report)
+                else:
+                    user_reports.append(report)
+
+            # mod reports return as tuples with (reason, name)
+            mods = Account._byID([report._thing1_id
+                                  for report in mod_reports],
+                                 data=True, return_dict=True)
+            mod_reports = [(getattr(report, "reason", None),
+                            mods[report._thing1_id].name)
+                            for report in mod_reports]
+
+            # user reports return as tuples with (reason, count)
+            user_reports = Counter([getattr(report, "reason", None)
+                                    for report in user_reports])
+            user_reports = user_reports.most_common(max_user_reasons)
+
+            return mod_reports, user_reports
+        else:
+            return [], []
 
     @classmethod
-    def get_reasons(cls, wrapped, max_reasons=20):
+    def get_reasons(cls, wrapped):
+        """Transition method in case API clients were already using this."""
         if wrapped.can_ban and wrapped.reported > 0:
-            reports = cls.for_thing(wrapped.lookups[0])
-            reasons = set()
-            for report in reports:
-                if len(reasons) >= max_reasons:
-                    break
-
-                reason = getattr(report, 'reason', None)
-                if reason:
-                    reasons.add(reason)
-
-            return list(reasons)
+            return [("This attribute is deprecated. Please use mod_reports "
+                     "and user_reports instead.")]
         else:
             return []
