@@ -134,13 +134,16 @@ class FrontController(RedditController):
             return self.redirect(add_sr('/'))
 
     @disable_subreddit_css()
-    @validate(VAdmin(),
-              thing=VByName('article'),
-              oldid36=nop('article'),
-              after=nop('after'),
-              before=nop('before'),
-              count=VCount('count'))
-    def GET_details(self, thing, oldid36, after, before, count):
+    @validate(
+        VAdmin(),
+        thing=VByName('article'),
+        oldid36=nop('article'),
+        after=nop('after'),
+        before=nop('before'),
+        count=VCount('count'),
+        listing_only=VBoolean('listing_only'),
+    )
+    def GET_details(self, thing, oldid36, after, before, count, listing_only):
         """The (now deprecated) details page.  Content on this page
         has been subsubmed by the presence of the LinkInfoBar on the
         rightbox, so it is only useful for Admin-only wizardry."""
@@ -151,7 +154,10 @@ class FrontController(RedditController):
             except (NotFound, ValueError):
                 abort(404)
 
-        kw = {'count': count}
+        kw = {
+            'count': count,
+            'listing_only': listing_only,
+        }
         if before:
             kw['after'] = before
             kw['reverse'] = True
@@ -159,7 +165,10 @@ class FrontController(RedditController):
             kw['after'] = after
             kw['reverse'] = False
         c.referrer_policy = "always"
-        return DetailsPage(thing=thing, expand_children=False, **kw).render()
+        page = DetailsPage(thing=thing, expand_children=False, **kw)
+        if listing_only:
+            return page.details.listing.listing().render()
+        return page.render()
 
     @validate(VUser())
     def GET_explore(self):
