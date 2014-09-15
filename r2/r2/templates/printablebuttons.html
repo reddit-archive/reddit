@@ -210,7 +210,7 @@
                           a_class=thing.commentcls)}
     </li>
   %endif
-  %if thing.editable:
+  %if thing.editable and not thing.promoted:
     <li>
       ${self.simple_button(_("edit"), "edit_usertext", css_class="edit-usertext")}
     </li>
