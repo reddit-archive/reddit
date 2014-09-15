@@ -8,7 +8,7 @@
 @green: #80D654;
 @teal: #52C0B1;
 @dark-teal: #0BA08E;
-@link-blue: #2E9FCC;
+@link-blue: #218bb2;
 @periwinkle: #9494FF;
 @white: #FFFFFF;
 @off-white: #FCFCF7;
@@ -302,8 +302,10 @@
 }
 
 
+@base-line-height: 18px;
+
 .md {
-  .make-markdown-layout(18px, 0.5);
+  .make-markdown-layout(@base-line-height, 0.5);
   .make-markdown-text-scale(13px, 0.05, -1, 0, 0, 3, 3, 5, 9);
 }
 
@@ -315,4 +317,12 @@
 .side .md {
   .make-markdown-layout(16px, 0.5);
   .make-markdown-text-scale(12px, 0.05, -1, 0, 0, 3, 3, 5, 9);
+}
+
+.link .usertext .md {
+  padding: round(@base-line-height / 4) round(@base-line-height / 2);
+}
+
+.commentarea .md {
+  margin: round(@base-line-height / 4) 0;
 }
