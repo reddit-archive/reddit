@@ -1409,11 +1409,10 @@ class LinkInfoPage(Reddit):
         if hasattr(self.link, "shortlink"):
             self.shortlink = self.link.shortlink
 
-        if feature.is_enabled('link_og_data'):
-            self.og_data = self._build_og_data(
-                _force_unicode(link_title),
-                short_description,
-            )
+        self.og_data = self._build_og_data(
+            _force_unicode(link_title),
+            short_description,
+        )
 
         if feature.is_enabled('link_twitter_card_data'):
             self.twitter_card = self._build_twitter_card_data(
