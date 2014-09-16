@@ -126,14 +126,15 @@ def _clean_url(url):
     return url
 
 
-def _initialize_request(url, referer):
+def _initialize_request(url, referer, gzip=False):
     url = _clean_url(url)
 
     if not url.startswith(("http://", "https://")):
         return
 
     req = urllib2.Request(url)
-    req.add_header('Accept-Encoding', 'gzip')
+    if gzip:
+        req.add_header('Accept-Encoding', 'gzip')
     if g.useragent:
         req.add_header('User-Agent', g.useragent)
     if referer:
@@ -142,7 +143,7 @@ def _initialize_request(url, referer):
 
 
 def _fetch_url(url, referer=None):
-    request = _initialize_request(url, referer=referer)
+    request = _initialize_request(url, referer=referer, gzip=True)
     if not request:
         return None, None
     response = urllib2.urlopen(request)
