@@ -663,6 +663,21 @@ ul.flat-vert {text-align: left;}
     display: none;
 }
 
+.submit.mod-override .morelink {
+    a:after {
+        background-image: url("../shield.png");
+        content: " ";
+        position: absolute;
+        height: 16px;
+        width: 16px;
+        margin: 7px;
+    }
+
+    &:hover a:after {
+        opacity: 0.5;
+    }
+}
+
 .sidebox .subtitle {
     margin-left: 10px;
     color: dimgray;

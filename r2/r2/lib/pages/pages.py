@@ -549,6 +549,7 @@ class Reddit(Templated):
             else:
                 fake_sub = isinstance(c.site, FakeSubreddit)
                 is_multi = isinstance(c.site, MultiReddit)
+                mod_link_override = mod_self_override = False
 
                 if isinstance(c.site, FakeSubreddit):
                     submit_buttons = set(("link", "self"))
@@ -556,23 +557,34 @@ class Reddit(Templated):
                     # we want to show submit buttons for logged-out users too
                     # so we can't just use can_submit_link/text
                     submit_buttons = c.site.allowed_types
+
                     if c.user_is_loggedin:
-                        if c.site.can_submit_link(c.user):
+                        if ("link" not in submit_buttons and
+                                c.site.can_submit_link(c.user)):
                             submit_buttons.add("link")
-                        if c.site.can_submit_text(c.user):
+                            mod_link_override = True
+                        if ("self" not in submit_buttons and
+                                c.site.can_submit_text(c.user)):
                             submit_buttons.add("self")
+                            mod_self_override = True
 
                 if "link" in submit_buttons:
+                    css_class = "submit submit-link"
+                    if mod_link_override:
+                        css_class += " mod-override"
                     ps.append(SideBox(title=c.site.submit_link_label or
                                             strings.submit_link_label,
-                                      css_class="submit submit-link",
+                                      css_class=css_class,
                                       link="/submit",
                                       sr_path=not fake_sub or is_multi,
                                       show_cover=True))
                 if "self" in submit_buttons:
+                    css_class = "submit submit-text"
+                    if mod_self_override:
+                        css_class += " mod-override"
                     ps.append(SideBox(title=c.site.submit_text_label or
                                             strings.submit_text_label,
-                                      css_class="submit submit-text",
+                                      css_class=css_class,
                                       link="/submit?selftext=true",
                                       sr_path=not fake_sub or is_multi,
                                       show_cover=True))
