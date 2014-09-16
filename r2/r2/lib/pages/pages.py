@@ -2462,6 +2462,9 @@ class UploadedImage(Templated):
         Templated.__init__(self, status=status, img_src=img_src, name = name,
                            form_id = form_id)
 
+    def render(self, *a, **kw):
+        return responsive(Templated.render(self, *a, **kw))
+
 class Thanks(Templated):
     """The page to claim reddit gold trophies"""
     def __init__(self, secret=None):

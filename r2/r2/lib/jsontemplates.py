@@ -1044,6 +1044,15 @@ class SubredditSettingsTemplate(ThingJsonTemplate):
             return getattr(thing.site, attr[5:])
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
+
+class UploadedImageJsonTemplate(JsonTemplate):
+    def render(self, thing, *a, **kw):
+        return ObjectTemplate({
+            "errors": list(k for (k, v) in thing.errors if v),
+            "img_src": thing.img_src,
+        })
+
+
 class ModActionTemplate(ThingJsonTemplate):
     _data_attrs_ = dict(
         action='action',

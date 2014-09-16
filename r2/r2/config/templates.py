@@ -75,6 +75,7 @@ api('flairselector', FlairSelectorJsonTemplate)
 api('subredditstylesheet', StylesheetTemplate)
 api('subredditstylesheetsource', StylesheetTemplate)
 api('createsubreddit', SubredditSettingsTemplate)
+api('uploadedimage', UploadedImageJsonTemplate)
 
 api('modaction', ModActionTemplate)
 
