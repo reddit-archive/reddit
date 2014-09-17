@@ -99,7 +99,7 @@ string_dict = dict(
 
     permalink_title = _("%(author)s comments on %(title)s"),
     link_info_title = _("%(title)s : %(site)s"),
-    link_info_og_description = _("Found on reddit, the front page of the internet.\\n\\n%(score)s points and %(num_comments)s comments so far"),
+    link_info_og_description = _("%(score)s points and %(num_comments)s comments so far on reddit"),
 
 
     banned_subreddit_title = _("this subreddit has been banned"),

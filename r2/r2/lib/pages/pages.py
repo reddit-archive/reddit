@@ -1393,6 +1393,12 @@ class LinkInfoPage(Reddit):
                 short_description,
             )
 
+        if feature.is_enabled('link_twitter_card_data'):
+            self.twitter_card = self._build_twitter_card_data(
+                _force_unicode(link_title),
+                short_description,
+            )
+
         if hasattr(self.link, "dart_keyword"):
             c.custom_dart_keyword = self.link.dart_keyword
 
@@ -1442,6 +1448,21 @@ class LinkInfoPage(Reddit):
         return strings.link_info_og_description % {
             "score": self.link.score,
             "num_comments": self.link.num_comments,
+        }
+
+    def _build_twitter_card_data(self, link_title, meta_description):
+        """Build a set of data for Twitter's Summary Cards:
+        https://dev.twitter.com/cards/types/summary
+        https://dev.twitter.com/cards/markup
+        """
+
+        sr_fragment = "/r/" + c.site.name if not c.default_sr else get_domain()
+        return {
+            "site": "reddit", # The twitter account of the site.
+            "card": "summary",
+            "title": _truncate(u"%s • %s" % (link_title, sr_fragment), 70),
+            # Twitter will fall back to any defined OpenGraph attributes, so we
+            # don't need to define 'twitter:image' or 'twitter:description'.
         }
 
     def build_toolbars(self):
@@ -2766,6 +2787,7 @@ class FrameToolbar(Wrapped):
     extension_handling = False
     cache_ignore = Link.cache_ignore
     site_tracking = True
+
     def __init__(self, link, title = None, url = None, expanded = False, **kw):
         if link:
             self.title = link.title
