@@ -259,6 +259,7 @@ class Subreddit(Thing, Printable, BaseSite):
         archive_age=g.ARCHIVE_AGE,
         gilding_server_seconds=0,
         contest_mode_upvotes_only=False,
+        collapse_deleted_comments=False,
     )
     _essentials = ('type', 'name', 'lang')
     _data_int_props = Thing._data_int_props + ('mod_actions', 'reported',

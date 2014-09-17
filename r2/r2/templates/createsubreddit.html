@@ -303,6 +303,17 @@
             ${_("make the traffic stats page available to everyone")}
           </label>
         </li>
+        <li>
+          <input class="nomargin" type="checkbox"
+                 name="collapse_deleted_comments" id="collapse_deleted_comments"
+                 %if thing.site and thing.site.collapse_deleted_comments:
+                   checked="checked"
+                 %endif
+          >
+          <label for="collapse_deleted_comments">
+            ${_("collapse deleted and removed comments")}
+          </label>
+        </li>
       </ul>
     </div>
     <div class="usertext-edit">

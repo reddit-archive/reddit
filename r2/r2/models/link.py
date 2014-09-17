@@ -1163,7 +1163,8 @@ class Comment(Thing, Printable):
                     item.subreddit_path += item.subreddit.path
 
             item.collapsed = False
-            if item.deleted and not (profilepage or user_is_admin):
+            if (item.deleted and item.subreddit.collapse_deleted_comments and
+                    not (profilepage or user_is_admin)):
                 item.collapsed = True
             elif item.score < min_score and not (profilepage or user_is_admin):
                 item.collapsed = True
