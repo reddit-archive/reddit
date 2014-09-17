@@ -1162,13 +1162,13 @@ class Comment(Thing, Printable):
                 if site != item.subreddit:
                     item.subreddit_path += item.subreddit.path
 
-            # don't collapse for admins, on profile pages, or if deleted
             item.collapsed = False
-            if ((item.score < min_score) and not (profilepage or
-                item.deleted or user_is_admin)):
+            if item.deleted and not (profilepage or user_is_admin):
+                item.collapsed = True
+            elif item.score < min_score and not (profilepage or user_is_admin):
                 item.collapsed = True
                 item.collapsed_reason = _("comment score below threshold")
-            if user_is_loggedin and item.author_id in c.user.enemies:
+            elif user_is_loggedin and item.author_id in c.user.enemies:
                 if "grayed" not in extra_css:
                     extra_css += " grayed"
                 item.collapsed = True
