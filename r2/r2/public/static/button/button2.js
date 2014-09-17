@@ -1,6 +1,5 @@
 (function() {
-  var base_url = '//www.reddit.com/static'
-  var write_string="<iframe src=\"" + base_url + "/button/button2.html?url=";
+  var write_string="<iframe src=\"//www.redditstatic.com/button/button2.html?url=";
 
   if (window.reddit_url)  { 
       write_string += encodeURIComponent(reddit_url); 

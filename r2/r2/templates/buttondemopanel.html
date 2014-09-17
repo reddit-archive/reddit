@@ -21,6 +21,8 @@
 ###############################################################################
 
 <%!
+   from pylons import g
+
    from r2.lib.template_helpers import get_domain
  %>
 
@@ -149,7 +151,7 @@ $(function() {
 <%def name="drawbadge(image)">
   <a href="//${domain}/submit"
     onclick="window.location = '//${domain}/submit?url=' + encodeURIComponent(window.location); return false">
-   <img src="//${get_domain(subreddit=False)}/static/spreddit${image}.gif"
+   <img src="//${g.static_domain}/spreddit${image}.gif"
         alt="submit to reddit" border="0" />
    </a>
 </%def>
@@ -179,9 +181,9 @@ $(function() {
 <%def name="draw_interactive(type)">
 %if type:
   <script type="text/javascript" 
-          src="//${domain}/static/button/button${type}.js"></script>
+          src="//${g.static_domain}/button/button${type}.js"></script>
 %else:
-  <script type="text/javascript" src="//${domain}/static/button/button1.js"></script>
+  <script type="text/javascript" src="//${g.static_domain}/button/button1.js"></script>
 %endif
 </%def>
 
@@ -195,6 +197,6 @@ $(function() {
   reddit_bgcolor = "FF3";
   reddit_bordercolor = "00F";
 </script>
-<script type="text/javascript" src="//${domain}/static/button/button3.js"></script>
+<script type="text/javascript" src="//${g.static_domain}/button/button3.js"></script>
 </%def>
 

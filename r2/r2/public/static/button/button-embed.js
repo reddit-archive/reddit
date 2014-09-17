@@ -6,11 +6,6 @@ var buttonEmbed = (function() {
   var down = $q('a.down')
   var submission = $q('a.submission-details')
   var query = getQueryParams()
-  var submissionInfo = {
-    thingId: null,
-    modhash: null,
-    score: null
-  }
 
   function $q(s) {
     return document.querySelector(s)
@@ -49,59 +44,6 @@ var buttonEmbed = (function() {
     return params
   }
 
-  /* Serialize a simple object of key/value pairs into a URL encoded string */
-  function serialize(obj) {
-    var str = []
-    for (var p in obj) {
-      if (obj.hasOwnProperty(p)) {
-        str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]))
-      }
-    }
-    return str.join("&")
-  }
-
-  function onVote(e) {
-    var vote = e.currentTarget
-
-    if (!submissionInfo.thingId) {
-      vote.href = submitUrl()
-      return
-    }
-
-    if (!submissionInfo.modhash) {
-      vote.href = submission.href
-      return
-    }
-
-    e.stopPropagation()
-    e.preventDefault()
-
-    var voteIsActive = vote.className.indexOf('active') !== -1
-    var direction = (vote.className.indexOf('up') !== -1) ? 1 : -1
-
-    up.className = up.className.replace(/\bactive\b/, '')
-    down.className = down.className.replace(/\bactive\b/, '')
-
-    if (voteIsActive) {
-      submission.innerHTML = pointLabel(parseInt(submissionInfo.score, 10))
-      xhr('POST', apiUrl + '/api/vote', serialize({
-        id: submissionInfo.thingId,
-        dir: 0,
-        uh: submissionInfo.modhash
-      }))
-    } else {
-      submission.innerHTML = pointLabel(direction + parseInt(submissionInfo.score, 10))
-      vote.className += ' active'
-      xhr('POST', apiUrl + '/api/vote', serialize({
-        id: submissionInfo.thingId,
-        dir: direction,
-        uh: submissionInfo.modhash
-      }))
-    }
-
-    return false
-  }
-
   function pointLabel(x) {
     x = parseInt(x, 10)
     return x + " <span class='points-label'>point" + (x !== 1 ? "s" : "") + "</span>"
@@ -125,8 +67,6 @@ var buttonEmbed = (function() {
 
   function loadSubmission() {
     xhr('GET', apiUrl + "/button_info.json?url=" + encodeURIComponent(query.url), '', function (response) {
-      submissionInfo.modhash = response.data.modhash
-
       if (response.data && response.data.children.length > 0) {
         var child = response.data.children[0]
 
@@ -134,17 +74,7 @@ var buttonEmbed = (function() {
         submission.href = baseUrl + child.data.permalink
         submission.innerHTML = pointLabel(child.data.score)
         submission.className += " has-points"
-        submissionInfo.thingId = child.data.name
-        submissionInfo.score = parseInt(child.data.score, 10)
-
-        /* Set our vote as cast for rendering */
-        if (child.data.likes === true) {
-          submissionInfo.score--
-          up.className += " active"
-        } else if (child.data.likes === false) {
-          submissionInfo.score++
-          down.className += " active"
-        }
+        up.href = down.href = submission.href
       } else {
         submission.innerHTML = 'submit'
       }
@@ -175,13 +105,8 @@ var buttonEmbed = (function() {
   }
 
   function init() {
-    submission.href = logo.href = submitUrl()
-
-    up.addEventListener('click', onVote)
-    down.addEventListener('click', onVote)
-
+    submission.href = logo.href = up.href = down.href = submitUrl()
     applyParams()
-
     loadSubmission()
   }
 
