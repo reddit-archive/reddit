@@ -316,8 +316,19 @@ def sanitize_url(url, require_scheme=False, valid_schemes=VALID_SCHEMES):
         url = urlunparse((u[0], idna_hostname, u[2], u[3], u[4], u[5]))
     return url
 
-def trunc_string(text, length):
-    return text[0:length]+'...' if len(text)>length else text
+def trunc_string(text, max_length, suffix='...'):
+    """Truncate a string, attempting to split on a word-break.
+
+    If the first word is longer than max_length, then truncate within the word.
+
+    Adapted from http://stackoverflow.com/a/250406/120999 .
+    """
+    if len(text) <= max_length:
+        return text
+    else:
+        hard_truncated = text[:(max_length - len(suffix))]
+        word_truncated = hard_truncated.rsplit(' ', 1)[0]
+        return word_truncated + suffix
 
 # Truncate a time to a certain number of minutes
 # e.g, trunc_time(5:52, 30) == 5:30
