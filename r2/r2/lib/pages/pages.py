@@ -4723,6 +4723,11 @@ class ListingSuggestions(Templated):
                 self.suggestion_type = "random"
 
 
+class UnreadMessagesSuggestions(Templated):
+    """Let a user mark all as read if they have > 1 page of unread messages."""
+    pass
+
+
 class ExploreItem(Templated):
     """For managing recommended content."""
 

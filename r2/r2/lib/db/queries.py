@@ -43,7 +43,7 @@ from r2.models.query_cache import (
     UserQueryCache,
 )
 from r2.models.last_modified import LastModified
-from r2.lib.utils import SimpleSillyStub
+from r2.lib.utils import in_chunks, SimpleSillyStub
 
 import cPickle as pickle
 
@@ -1166,6 +1166,42 @@ def set_unread(messages, to, unread, mutator=None):
         m.send()
 
 
+def unread_handler(things, user, unread):
+    """Given a user and Things of varying types, set their unread state."""
+    sr_messages = collections.defaultdict(list)
+    comments = []
+    messages = []
+    # Group things by subreddit or type
+    for thing in things:
+        if isinstance(thing, Message):
+            if getattr(thing, 'sr_id', False):
+                sr_messages[thing.sr_id].append(thing)
+            else:
+                messages.append(thing)
+        else:
+            comments.append(thing)
+
+    if sr_messages:
+        mod_srs = Subreddit.reverse_moderator_ids(user)
+        srs = Subreddit._byID(sr_messages.keys())
+    else:
+        mod_srs = []
+
+    # Batch set items as unread
+    for sr_id, things in sr_messages.items():
+        # Remove the item(s) from the user's inbox
+        set_unread(things, user, unread)
+        if sr_id in mod_srs:
+            # Only moderators can change the read status of that
+            # message in the modmail inbox
+            sr = srs[sr_id]
+            set_unread(things, sr, unread)
+    if comments:
+        set_unread(comments, user, unread)
+    if messages:
+        set_unread(messages, user, unread)
+
+
 def unnotify(thing, possible_recipients=None):
     """Given a Thing, remove any notifications to possible recipients for it.
 
@@ -1762,3 +1798,15 @@ def process_votes(qname, limit=0):
         timer.flush()
 
     amqp.consume_items(qname, _handle_vote, verbose = False)
+
+
+def consume_mark_all_read():
+    @g.stats.amqp_processor('markread_q')
+    def process_mark_all_read(msg):
+        user = Account._by_fullname(msg.body)
+        inbox_fullnames = get_unread_inbox(user)
+        for inbox_chunk in in_chunks(inbox_fullnames, size=100):
+            things = Thing._by_fullname(inbox_chunk, return_dict=False)
+            unread_handler(things, user, unread=False)
+
+    amqp.consume_items('markread_q', process_mark_all_read)

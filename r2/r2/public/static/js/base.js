@@ -122,6 +122,7 @@ $(function() {
         r.multi.init()
         r.recommend.init()
         r.saved.init()
+        r.messages.init()
         r.resAdvisory.init()
         r.filter.init()
     } catch (err) {

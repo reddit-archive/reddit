@@ -2689,54 +2689,19 @@ class ApiController(RedditController):
     def POST_uncollapse_message(self, things):
         self.collapse_handler(things, False)
 
-    def unread_handler(self, things, unread):
-        if not things:
-            if (errors.TOO_MANY_THING_IDS, 'id') in c.errors:
-                return abort(413)
-            else:
-                return abort(400)
-
-        sr_messages = defaultdict(list)
-        comments = []
-        messages = []
-        # Group things by subreddit or type
-        for thing in things:
-            if isinstance(thing, Message):
-                if getattr(thing, 'sr_id', False):
-                    sr_messages[thing.sr_id].append(thing)
-                else:
-                    messages.append(thing)
-            else:
-                comments.append(thing)
-
-        if sr_messages:
-            mod_srs = Subreddit.reverse_moderator_ids(c.user)
-            srs = Subreddit._byID(sr_messages.keys())
-        else:
-            mod_srs = []
-
-        # Batch set items as unread
-        for sr_id, things in sr_messages.items():
-            # Remove the item(s) from the user's inbox
-            queries.set_unread(things, c.user, unread)
-            if sr_id in mod_srs:
-                # Only moderators can change the read status of that
-                # message in the modmail inbox
-                sr = srs[sr_id]
-                queries.set_unread(things, sr, unread)
-        if comments:
-            queries.set_unread(comments, c.user, unread)
-        if messages:
-            queries.set_unread(messages, c.user, unread)
-
-
     @require_oauth2_scope("privatemessages")
     @noresponse(VUser(),
                 VModhash(),
                 things = VByName('id', multiple=True, limit=25))
     @api_doc(api_section.messages)
     def POST_unread_message(self, things):
-        self.unread_handler(things, True)
+        if not things:
+            if (errors.TOO_MANY_THING_IDS, 'id') in c.errors:
+                return abort(413)
+            else:
+                return abort(400)
+
+        queries.unread_handler(things, c.user, unread=True)
 
     @require_oauth2_scope("privatemessages")
     @noresponse(VUser(),
@@ -2744,7 +2709,27 @@ class ApiController(RedditController):
                 things = VByName('id', multiple=True, limit=25))
     @api_doc(api_section.messages)
     def POST_read_message(self, things):
-        self.unread_handler(things, False)
+        if not things:
+            if (errors.TOO_MANY_THING_IDS, 'id') in c.errors:
+                return abort(413)
+            else:
+                return abort(400)
+
+        queries.unread_handler(things, c.user, unread=False)
+
+    @require_oauth2_scope("privatemessages")
+    @noresponse(VUser(),
+                VModhash(),
+                VRatelimit(rate_user=True, prefix="rate_read_all_"))
+    @api_doc(api_section.messages)
+    def POST_read_all_messages(self):
+        """Queue up marking all messages for a user as read.
+
+        This may take some time, and returns 202 to acknowledge acceptance of
+        the request.
+        """
+        amqp.add_item('mark_all_read', c.user._fullname)
+        return abort(202)
 
     @require_oauth2_scope("report")
     @noresponse(VUser(),

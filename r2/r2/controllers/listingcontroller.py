@@ -1137,6 +1137,9 @@ class MessageController(ListingController):
             self.mark = 'true'
         if c.user_is_admin:
             c.referrer_policy = "always"
+        if self.where == 'unread':
+            self.next_suggestions_cls = UnreadMessagesSuggestions
+
         return ListingController.GET_listing(self, **env)
 
     @validate(

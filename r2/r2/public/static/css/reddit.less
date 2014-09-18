@@ -52,7 +52,7 @@
         box-shadow: inset 0 1px 1px 1px fadeout(black, 90%);
     }
 
-    &:disabled {
+    &:disabled, &.disabled {
         .linear-gradient(#e9edf1, #dce3ea) !important;
         color: #999999 !important;
         text-shadow: 0 1px 0 lighten(#dce3ea, 15%) !important;
@@ -1248,13 +1248,24 @@ body.with-listing-chooser.explore-page #header .pagename {
 }
 
 .next-suggestions {
-    margin-left: 1.5em;
+    margin-left: 0.75em;
 
     a {
         background: none;
         font-weight: normal;
         margin-left: .5em;
     }
+}
+
+.next-suggestions .mark-all-read-container .throbber {
+  position: absolute;
+  margin-left: 5px;
+  margin-top: -2px;
+  padding-left: 22px;
+  min-width: 18px;
+  width: auto;
+  font-size: 10px;
+  line-height: 16px;
 }
 
 /* corner help */
