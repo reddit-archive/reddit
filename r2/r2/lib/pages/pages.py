@@ -880,6 +880,7 @@ class RedditFooter(CachedTemplate):
                     NamedButton("gold", False, nocname=True, dest = "/gold/about", css_class = "buygold"),
                     NamedButton("store", False, nocname=True),
                     OffsiteButton(_("redditgifts"), "http://redditgifts.com"),
+                    OffsiteButton(_("reddit AMA app"), "https://redditama.reddit.com"),
                     OffsiteButton(_("reddit.tv"), "http://reddit.tv"),
                     OffsiteButton(_("radio reddit"), "http://radioreddit.com"),
                 ],
