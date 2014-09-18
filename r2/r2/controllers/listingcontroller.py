@@ -1098,7 +1098,7 @@ class MessageController(ListingController):
             return self.abort404()
         if self.where != 'sent':
             #reset the inbox
-            if c.have_messages and self.mark != 'false':
+            if c.have_messages and c.user.pref_mark_messages_read and self.mark != 'false':
                 c.have_messages = False
 
         return q

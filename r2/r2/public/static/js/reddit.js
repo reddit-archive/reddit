@@ -186,11 +186,20 @@ function change_state(elem, op, callback, keep, post_callback) {
     return false;
 };
 
+function alterUnreadCount(num) {
+  var msgCount = $('.message-count');
+  if (msgCount.length > 0) {
+    msgCount.text(parseInt(msgCount.text(), 10) + num);
+  }
+}
+
 function unread_thing(elem) {
     var t = $(elem);
     if (!t.hasClass("thing")) {
         t = t.thing();
     }
+
+    alterUnreadCount(1);
     $(t).addClass("new unread");
 }
 
@@ -204,6 +213,8 @@ function read_thing(elem) {
     } else {
         $(t).removeClass("unread");
     }
+
+    alterUnreadCount(-1);
     $.request("read_message", {"id": $(t).thing_id()});
 }
 
