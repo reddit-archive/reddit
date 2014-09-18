@@ -88,7 +88,7 @@
       %if c.have_messages:
         ${plain_link(_("messages"), path="/message/unread/", title=_("new mail!"), _class="havemail", _sr_path=False, _id="mail")}
         %if c.user.inbox_count > 0 and feature.is_enabled('show_inbox_count'):
-          <span class="message-count">${c.user.inbox_count}</span>
+          ${plain_link(c.user.inbox_count, path="/message/unread/", _class="message-count", _sr_path=False)}
         %endif
       %else:
         ${plain_link(_("messages"), path="/message/inbox/", title=_("no new mail"), _class="nohavemail", _sr_path=False, _id="mail")}
