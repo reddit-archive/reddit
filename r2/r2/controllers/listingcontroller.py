@@ -241,14 +241,23 @@ listing_api_doc = partial(
 class SubredditListingController(ListingController):
     private_referrer = False
 
-    def _build_og_title(self):
+    def _build_og_title(self, max_length=256):
         sr_fragment = "/r/" + c.site.name
         title = c.site.title.strip()
         if not title:
-            return sr_fragment
+            return trunc_string(sr_fragment, max_length)
 
         if sr_fragment in title:
-            return _force_unicode(title)
+            return _force_unicode(trunc_string(title, max_length))
+
+        # We'd like to always show the whole subreddit name, so let's
+        # truncate the title while still ensuring the entire thing is under
+        # the limit.
+        # This doesn't handle `max_length`s shorter than `sr_fragment`.
+        # Unknown what the behavior should be, but realistically it shouldn't
+        # happen, since this is scoped pretty small.
+        max_title_length = max_length - len(u" • %s" % sr_fragment)
+        title = trunc_string(title, max_title_length)
 
         return u"%s • %s" % (_force_unicode(title), sr_fragment)
 
@@ -264,13 +273,22 @@ class SubredditListingController(ListingController):
             return {'show_locationbar': True}
         else:
             if not c.user_is_loggedin:
+                # This data is only for scrapers, which shouldn't be logged in.
                 return {
                     "og_data": {
                         "site_name": "reddit",
                         "title": self._build_og_title(),
                         "image": static('icon.png'),
                         "description": self._build_og_description(),
-                    }
+                    },
+                    "twitter_card": {
+                        "site": "reddit",
+                        "card": "summary",
+                        "title": self._build_og_title(max_length=70),
+                        # Twitter will fall back to any defined OpenGraph
+                        # attributes, so we don't need to define
+                        # 'twitter:image' or 'twitter:description'.
+                    },
                 }
 
             return {}
