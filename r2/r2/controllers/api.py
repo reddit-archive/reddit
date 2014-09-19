@@ -1493,6 +1493,8 @@ class ApiController(RedditController):
 
         reason = other_reason if reason == "other" else reason
 
+        sr = getattr(thing, 'subreddit_slow', None)
+
         # if it is a message that is being reported, ban it.
         # every user is admin over their own personal inbox
         if isinstance(thing, Message):
@@ -1501,7 +1503,9 @@ class ApiController(RedditController):
             admintools.spam(thing, False, True, c.user.name)
         # auto-hide links that are reported
         elif isinstance(thing, Link):
-            thing._hide(c.user)
+            # don't hide items from admins/moderators when reporting
+            if not (c.user_is_admin or sr.is_moderator(c.user)):
+                thing._hide(c.user)
         # TODO: be nice to be able to remove comments that are reported
         # from a user's inbox so they don't have to look at them.
         elif isinstance(thing, Comment):
@@ -1509,7 +1513,6 @@ class ApiController(RedditController):
 
         hooks.get_hook("thing.report").call(thing=thing)
 
-        sr = getattr(thing, 'subreddit_slow', None)
         if not (c.user._spam or
                 c.user.ignorereports or
                 (sr and sr.is_banned(c.user))):
