@@ -147,7 +147,7 @@
   <%utils:line_field title="${_('thumbnail')}" 
                      css_class="rounded image-field ${'has-image' if current_image else ''}">
     <div class="infotext">
-      ${_('images will be resized if larger than 70 x 70 pixels')}
+      ${_('images will be resized if larger than 140x140 pixels (displayed at 70x70)')}
     </div>
     <div class="delete-field">
       <%utils:image_upload post_target="/api/link_thumb" 
