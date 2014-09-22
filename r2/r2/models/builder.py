@@ -607,6 +607,23 @@ class CampaignBuilder(IDBuilder):
         return not self.must_skip(after)
 
 
+class ModActionBuilder(QueryBuilder):
+    def wrap_items(self, items):
+        wrapped = []
+        by_render_class = defaultdict(list)
+
+        for item in items:
+            w = self.wrap(item)
+            wrapped.append(w)
+            w.fullname = item._fullname
+            by_render_class[w.render_class].append(w)
+
+        for render_class, _items in by_render_class.iteritems():
+            render_class.add_props(c.user, _items)
+
+        return wrapped
+
+
 class SimpleBuilder(IDBuilder):
     def thing_lookup(self, names):
         return names

@@ -21,23 +21,41 @@
 ###############################################################################
 
 <%!
-   from r2.lib.template_helpers import add_sr
+    from r2.lib.filters import _force_unicode
+    from r2.lib.template_helpers import add_sr
+    from r2.models import Comment, Link
 %>
 
 <%
-  title = ('%(subreddit)s: %(mod)s %(action)s' % {'subreddit': thing.sr_name,
-                                                  'mod': thing.author.name,
-                                                  'action': thing.text})
-  title += ' "%s"' % thing.target_title if hasattr(thing, 'target_text') else ''
-  title += ' (%s)' % thing.details if hasattr(thing, 'details') else ''
+  title = '%(subreddit)s: %(mod)s %(action)s'
+  title %= {
+    'subreddit': thing.subreddit.name,
+    'mod': thing.moderator.name,
+    'action': thing.text,
+  }
+
+  if hasattr(thing, "target") and isinstance(thing.target, Comment):
+    title += ' "%s"' % _force_unicode(thing.parent_link.title)
+  elif hasattr(thing, "target") and isinstance(thing.target, Link):
+    title += ' "%s"' % _force_unicode(thing.target.title)
+
+  if thing.details:
+    title += ' (%s)' % thing.details
+
+  if isinstance(thing, Comment):
+    permalink = thing.target.make_permalink(thing.parent_link, thing.subreddit)
+  elif isinstance(thing, Link):
+    permalink = thing.target.make_permalink(thing.subreddit)
+  else:
+    permalink = None
 %>
 
 <item>
   <guid>${thing._id}</guid>
   <title>${title}</title>
   <pubDate>${thing.date.strftime('%a, %d %b %Y %H:%M:%S %z')}</pubDate>
-  %if hasattr(thing, 'target_text'):
-    <link>${add_sr(thing.target_path)}</link>
+  %if permalink:
+    <link>${add_sr(permalink)}</link>
   %endif
-  <category>${thing.sr_name}</category>
+  <category>${thing.subreddit.name}</category>
 </item>

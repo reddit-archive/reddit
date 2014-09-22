@@ -486,10 +486,9 @@ class FrontController(RedditController):
 
     def _make_moderationlog(self, srs, num, after, reverse, count, mod=None, action=None):
         query = Subreddit.get_modactions(srs, mod=mod, action=action)
-        builder = QueryBuilder(query, num=num, after=after,
-                               count=count,
-                               reverse=reverse,
-                               wrap=default_thing_wrapper())
+        builder = ModActionBuilder(
+            query, num=num, after=after, count=count, reverse=reverse,
+            wrap=default_thing_wrapper())
         listing = ModActionListing(builder)
         pane = listing.listing()
         return pane

@@ -22,17 +22,26 @@
 
 from datetime import timedelta
 import itertools
+from uuid import UUID
+
+from pycassa.system_manager import TIME_UUID_TYPE
+from pylons import c, request
+from pylons.i18n import _
 
 from r2.lib.db import tdb_cassandra
 from r2.lib.utils import tup
-from r2.models import Account, Subreddit, Link, Comment, Printable
-from r2.models.subreddit import DefaultSR
-from pycassa.system_manager import TIME_UUID_TYPE
-from uuid import UUID
-from pylons.i18n import _
-from pylons import request
+from r2.models import (
+    Account,
+    Comment,
+    DefaultSR,
+    Link,
+    ModSR,
+    MultiReddit,
+    Subreddit,
+)
 
-class ModAction(tdb_cassandra.UuidThing, Printable):
+
+class ModAction(tdb_cassandra.UuidThing):
     """
     Columns:
     sr_id - Subreddit id36
@@ -176,37 +185,8 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
                      'permission_moderator': _('set permissions on moderator'),
                      'permission_moderator_invite': _('set permissions on moderator invitation')}
 
-    # This stuff won't change
-    cache_ignore = set(['subreddit', 'target', 'mod', 'button']).union(Printable.cache_ignore)
-
-    # Thing properties for Printable
-    @property
-    def author_id(self):
-        return int(self.mod_id36, 36)
-
-    @property
-    def sr_id(self):
-        return int(self.sr_id36, 36)
-
-    @property
-    def _ups(self):
-        return 0
-
-    @property
-    def _downs(self):
-        return 0
-
-    @property
-    def _deleted(self):
-        return False
-
-    @property
-    def _spam(self):
-        return False
-
-    @property
-    def reported(self):
-        return False
+    # NOTE: Wrapped ModAction objects are not cachable because wrapped_cache_key
+    # is not defined
 
     @classmethod
     def create(cls, sr, mod, action, details=None, target=None, description=None):
@@ -282,96 +262,90 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
             text += ' %s' % self.description
         return text
 
-    @staticmethod
-    def get_rgb(i, fade=0.8):
-        r = int(256 - (hash(str(i)) % 256)*(1-fade))
-        g = int(256 - (hash(str(i) + ' ') % 256)*(1-fade))
-        b = int(256 - (hash(str(i) + '  ') % 256)*(1-fade))
+    @classmethod
+    def get_rgb(cls, item, fade=0.8):
+        sr_id = item.subreddit._id
+        r = int(256 - (hash(str(sr_id)) % 256)*(1-fade))
+        g = int(256 - (hash(str(sr_id) + ' ') % 256)*(1-fade))
+        b = int(256 - (hash(str(sr_id) + '  ') % 256)*(1-fade))
         return (r, g, b)
 
     @classmethod
     def add_props(cls, user, wrapped):
-
-        from r2.lib.menus import QueryButton
         from r2.lib.db.thing import Thing
+        from r2.lib.menus import QueryButton
         from r2.lib.pages import WrappedUser
-        from r2.lib.filters import _force_unicode
 
-        TITLE_MAX_WIDTH = 50
+        target_names = {item.target_fullname for item in wrapped
+                            if hasattr(item, "target_fullname")}
+        targets = Thing._by_fullname(target_names, data=True)
 
-        request_path = request.path
+        # get moderators
+        moderators = Account._byID36({item.mod_id36 for item in wrapped},
+                                     data=True)
 
-        target_fullnames = [item.target_fullname for item in wrapped if hasattr(item, 'target_fullname')]
-        targets = Thing._by_fullname(target_fullnames, data=True)
-        authors = Account._byID([t.author_id for t in targets.values() if hasattr(t, 'author_id')], data=True)
-        links = Link._byID([t.link_id for t in targets.values() if hasattr(t, 'link_id')], data=True)
+        # get authors for targets that are Links or Comments
+        target_author_names = {target.author_id for target in targets.values()
+                                    if hasattr(target, "author_id")}
+        target_authors = Account._byID(target_author_names, data=True)
 
-        sr_ids = set([t.sr_id for t in targets.itervalues() if hasattr(t, 'sr_id')] +
-                     [w.sr_id for w in wrapped])
-        subreddits = Subreddit._byID(sr_ids, data=True)
+        # get parent links for targets that are Comments
+        parent_link_names = {target.link_id for target in targets.values()
+                                    if hasattr(target, "link_id")}
+        parent_links = Link._byID(parent_link_names, data=True)
 
-        # Assemble target links
-        target_links = {}
-        target_accounts = {}
-        for fullname, target in targets.iteritems():
-            if isinstance(target, Link):
-                author = authors[target.author_id]
-                title = _force_unicode(target.title)
-                if len(title) > TITLE_MAX_WIDTH:
-                    short_title = title[:TITLE_MAX_WIDTH] + '...'
-                else:
-                    short_title = title
-                text = '%(link)s "%(title)s" %(by)s %(author)s' % {
-                        'link': _('link'),
-                        'title': short_title, 
-                        'by': _('by'),
-                        'author': author.name}
-                path = target.make_permalink(subreddits[target.sr_id])
-                target_links[fullname] = (text, path, title)
-            elif isinstance(target, Comment):
-                author = authors[target.author_id]
-                link = links[target.link_id]
-                title = _force_unicode(link.title)
-                if len(title) > TITLE_MAX_WIDTH:
-                    short_title = title[:TITLE_MAX_WIDTH] + '...'
-                else:
-                    short_title = title
-                text = '%(comment)s %(by)s %(author)s %(on)s "%(title)s"' % {
-                        'comment': _('comment'),
-                        'by': _('by'),
-                        'author': author.name,
-                        'on': _('on'),
-                        'title': short_title}
-                path = target.make_permalink(link, subreddits[link.sr_id])
-                target_links[fullname] = (text, path, title)
-            elif isinstance(target, Account):
-                target_accounts[fullname] = WrappedUser(target)
+        # get subreddits
+        srs = Subreddit._byID36({item.sr_id36 for item in wrapped}, data=True)
 
         for item in wrapped:
-            # Can I move these buttons somewhere else? Not great to have request stuff in here
-            css_class = 'modactions %s' % item.action
-            item.button = QueryButton('', item.action, query_param='type',
-                                      css_class=css_class)
-            item.button.build(base_path=request_path)
-
-            mod_name = item.author.name
-            item.mod = QueryButton(mod_name, mod_name, query_param='mod')
-            item.mod.build(base_path=request_path)
-            item.text = ModAction._text.get(item.action, '')
+            item.moderator = moderators[item.mod_id36]
+            item.subreddit = srs[item.sr_id36]
+            item.text = cls._text.get(item.action, '')
             item.details = item.get_extra_text()
+            item.target = None
+            item.target_author = None
 
-            if hasattr(item, 'target_fullname') and item.target_fullname:
-                target = targets[item.target_fullname]
-                if isinstance(target, Account):
-                    item.target_wrapped_user = target_accounts[item.target_fullname]
-                elif isinstance(target, Link) or isinstance(target, Comment):
-                    item.target_text, item.target_path, item.target_title = target_links[item.target_fullname]
+            if hasattr(item, "target_fullname") and item.target_fullname:
+                item.target = targets[item.target_fullname]
 
-            item.bgcolor = ModAction.get_rgb(item.sr_id)
-            item.sr_name = subreddits[item.sr_id].name
-            item.sr_path = subreddits[item.sr_id].path
+                if hasattr(item.target, "author_id"):
+                    author_name = item.target.author_id
+                    item.target_author = target_authors[author_name]
 
-        Printable.add_props(user, wrapped)
+                if hasattr(item.target, "link_id"):
+                    parent_link_name = item.target.link_id
+                    item.parent_link = parent_links[parent_link_name]
+
+        if c.render_style == "html":
+            request_path = request.path
+
+            # make wrapped users for targets that are accounts
+            user_targets = filter(lambda target: isinstance(target, Account),
+                                  targets.values())
+            wrapped_user_targets = {user._fullname: WrappedUser(user)
+                                    for user in user_targets}
+
+            for item in wrapped:
+                if isinstance(item.target, Account):
+                    user_name = item.target._fullname
+                    item.wrapped_user_target = wrapped_user_targets[user_name]
+
+                css_class = 'modactions %s' % item.action
+                action_button = QueryButton(
+                    '', item.action, query_param='type', css_class=css_class)
+                action_button.build(base_path=request_path)
+                item.action_button = action_button
+
+                mod_button = QueryButton(
+                    item.moderator.name, item.moderator.name, query_param='mod')
+                mod_button.build(base_path=request_path)
+                item.mod_button = mod_button
+
+                if isinstance(c.site, ModSR) or isinstance(c.site, MultiReddit):
+                    item.bgcolor = 'rgb(%s,%s,%s)' % cls.get_rgb(item)
+                else:
+                    item.bgcolor = "rgb(255,255,255)"
+
 
 class ModActionBySR(tdb_cassandra.View):
     _use_db = True

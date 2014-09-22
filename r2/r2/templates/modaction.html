@@ -22,29 +22,57 @@
 
 <%namespace file="utils.html" import="timestamp, plain_link"/>
 
-<%
+<%!
     from pylons import c
-    from r2.models.subreddit import ModSR, MultiReddit
-    bgcolor = "rgb(255,255,255)"
-    is_multi = isinstance(c.site, ModSR) or isinstance(c.site, MultiReddit)
-    if is_multi and hasattr(thing, 'bgcolor'):
-        bgcolor = 'rgb(%s,%s,%s)' % thing.bgcolor
- %> 
+    from r2.lib.filters import _force_unicode
+    from r2.models import Account, Comment, Link
 
-<tr class="modactions" style="background-color: ${bgcolor}" data-fullname="${thing.fullname}">
+    TITLE_MAX_WIDTH = 50
+%>
+
+<tr class="modactions" style="background-color: ${thing.bgcolor}" data-fullname="${thing.fullname}">
   <td class="timestamp whitespace:nowrap">${timestamp(thing.date, live=True, include_tense=True)}</td>
   %if is_multi:
-    <td class="subreddit">${plain_link('/r/' + thing.sr_name, thing.sr_path + 'about/log', title=thing.sr_name)}</td>
+    <td class="subreddit">${plain_link('/r/' + thing.subreddit.name, thing.subreddit.path + 'about/log', title=thing.subreddit.name)}</td>
   %endif
-  <td class="whitespace:nowrap">${thing.mod}</td>
-  <td class="button">${thing.button}</td>
+  <td class="whitespace:nowrap">${thing.mod_button}</td>
+  <td class="button">${thing.action_button}</td>
   <td class="description">${thing.text}&#32;
-  %if hasattr(thing, 'target_text'):
-    ${plain_link(thing.target_text, thing.target_path, title=thing.target_title,
-                 sr_path=False, cname=False, _class="subreddit hover may-blank")}&#32;
-  %elif hasattr(thing, 'target_wrapped_user'):
-    ${thing.target_wrapped_user}&#32;
+
+  %if hasattr(thing, "target") and isinstance(thing.target, Comment):
+    <%
+      title = _force_unicode(thing.parent_link.title)
+      if len(title) > TITLE_MAX_WIDTH:
+          short_title = title[:TITLE_MAX_WIDTH] + '...'
+      else:
+          short_title = title
+      text = _('comment by %(comment_author)s on "%(link_title)s"')
+      text %= {
+        'comment_author': thing.target_author.name,
+        'link_title': short_title,
+      }
+      permalink = thing.target.make_permalink(thing.parent_link, thing.subreddit)
+    %>
+    ${plain_link(text, permalink, title=title, sr_path=False, cname=False, _class="may-blank")}&#32;
+  %elif hasattr(thing, "target") and isinstance(thing.target, Link):
+    <%
+      title = _force_unicode(thing.target.title)
+      if len(title) > TITLE_MAX_WIDTH:
+          short_title = title[:TITLE_MAX_WIDTH] + '...'
+      else:
+          short_title = title
+      text = _('link "%(link_title)s" by %(link_author)s')
+      text %= {
+        'link_title': short_title,
+        'link_author': thing.target_author.name
+      }
+      permalink = thing.target.make_permalink(thing.subreddit)
+    %>
+    ${plain_link(text, permalink, title=title, sr_path=False, cname=False, _class="may-blank")}&#32;
+  %elif hasattr(thing, "wrapped_user_target"):
+    ${thing.wrapped_user_target}&#32;
   %endif
+
   %if hasattr(thing, 'details') and thing.details:
     <em>(${thing.details})</em>
   %endif
