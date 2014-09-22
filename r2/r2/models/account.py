@@ -130,6 +130,7 @@ class Account(Thing):
                      pref_use_global_defaults=False,
                      pref_hide_locationbar=False,
                      pref_creddit_autorenew=False,
+                     update_sent_messages=True,
                      )
     _preference_attrs = tuple(k for k in _defaults.keys()
                               if k.startswith("pref_"))

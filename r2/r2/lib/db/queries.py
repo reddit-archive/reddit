@@ -1090,6 +1090,10 @@ def new_message(message, inbox_rels, add_to_sent=True):
 
     from_user = Account._byID(message.author_id)
 
+    # check if the from_user is exempt from ever adding to sent
+    if not from_user.update_sent_messages:
+        add_to_sent = False
+
     update_recipient = False
     update_modmail = False
 
