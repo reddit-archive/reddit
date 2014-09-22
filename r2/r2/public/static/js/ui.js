@@ -113,7 +113,13 @@ r.ui.initTimings = function() {
 
       // Sample at 1% of 1% for now
       if (Math.random() <= 0.01 && r.config.stats_domain ) {
-        $.post(r.config.stats_domain, { rum: timingData })
+        $.ajax({
+          type: 'POST',
+          url: r.config.stats_domain,
+          data: JSON.stringify({ rum: timingData  }),
+          contentType: 'application/json; charset=utf-8',
+          dataType: 'json',
+        })
       }
     })
   })
