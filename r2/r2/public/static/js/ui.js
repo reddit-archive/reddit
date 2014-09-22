@@ -110,6 +110,11 @@ r.ui.initTimings = function() {
       timingData.verification = r.config.pageInfo.verification
 
       $.post('/web/timings', timingData)
+
+      // Sample at 1% of 1% for now
+      if (Math.random() <= 0.01 && r.config.stats_domain ) {
+        $.post(r.config.stats_domain, { rum: timingData })
+      }
     })
   })
 }
