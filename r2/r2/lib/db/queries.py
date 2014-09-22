@@ -1085,7 +1085,7 @@ def new_vote(vote, foreground=False, timer=None):
                 m.delete(get_liked(user), [vote])
                 m.delete(get_disliked(user), [vote])
 
-def new_message(message, inbox_rels):
+def new_message(message, inbox_rels, add_to_sent=True):
     from r2.lib.comment_tree import add_message
 
     from_user = Account._byID(message.author_id)
@@ -1094,7 +1094,8 @@ def new_message(message, inbox_rels):
     update_modmail = False
 
     with CachedQueryMutator() as m:
-        m.insert(get_sent(from_user), [message])
+        if add_to_sent:
+            m.insert(get_sent(from_user), [message])
 
         for inbox_rel in tup(inbox_rels):
             to = inbox_rel._thing1
