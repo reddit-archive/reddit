@@ -1460,11 +1460,17 @@ class LinkInfoPage(Reddit):
         https://dev.twitter.com/cards/markup
         """
 
-        sr_fragment = "/r/" + c.site.name if not c.default_sr else get_domain()
+        # Twitter limits us to 70 characters for the title.  Even though it's
+        # at the end, we'd like to always show the whole subreddit name, so
+        # let's truncate the title while still ensuring the entire thing is
+        # under the limit.
+        sr_fragment = u" • /r/" + c.site.name if not c.default_sr else get_domain()
+        max_link_title_length = 70 - len(sr_fragment)
+
         return {
             "site": "reddit", # The twitter account of the site.
             "card": "summary",
-            "title": _truncate(u"%s • %s" % (link_title, sr_fragment), 70),
+            "title": _truncate(link_title, max_link_title_length) + sr_fragment
             # Twitter will fall back to any defined OpenGraph attributes, so we
             # don't need to define 'twitter:image' or 'twitter:description'.
         }
