@@ -146,6 +146,7 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
                      'allow_top': _('toggle allow in default/trending lists'),
                      'show_media': _('toggle show thumbnail images of content'),
                      'public_traffic': _('toggle public traffic stats page'),
+                     'collapse_deleted_comments': _('toggle collapse deleted/removed comments'),
                      'exclude_banned_modqueue': _('toggle exclude banned users\' posts from modqueue'),
                      'domain': _('domain'),
                      'show_cname_sidebar': _('toggle show sidebar from cname'),
