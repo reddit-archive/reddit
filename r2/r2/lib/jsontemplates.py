@@ -1052,12 +1052,17 @@ class ModActionTemplate(ThingJsonTemplate):
         sr_id36='sr_id36',
         subreddit='sr_name',
         target_fullname='target_fullname',
+        target_author='target_author',
     )
 
     def thing_attr(self, thing, attr):
         if attr == 'date':
             return (time.mktime(thing.date.astimezone(pytz.UTC).timetuple())
                     - time.timezone)
+        elif attr == 'target_author':
+            if thing.target_author:
+                return thing.target_author.name
+            return ""
         elif attr == "moderator":
             return thing.moderator.name
 
