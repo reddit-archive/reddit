@@ -1430,6 +1430,10 @@ class MultiReddit(FakeSubreddit):
         else:
             return FakeSRMember(ModeratorPermissionSet)
 
+    def srs_with_perms(self, user, *perms):
+        return [sr for sr in self.srs
+                if sr.is_moderator_with_perms(user, *perms)]
+
     @property
     def title(self):
         return _('posts from %s') % ', '.join(sr.name for sr in self.srs)

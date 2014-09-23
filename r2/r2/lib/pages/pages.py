@@ -1106,7 +1106,16 @@ class MessagePage(Reddit):
                                    self._content))
 
     def build_toolbars(self):
-        buttons =  [NamedButton('compose', sr_path = False),
+        if isinstance(c.site, MultiReddit):
+            mod_srs = c.site.srs_with_perms(c.user, "mail")
+            sr_path = bool(mod_srs)
+        elif (not isinstance(c.site, FakeSubreddit) and
+                c.site.is_moderator_with_perms(c.user, "mail")):
+            sr_path = True
+        else:
+            sr_path = False
+
+        buttons =  [NamedButton('compose', sr_path=sr_path),
                     NamedButton('inbox', aliases = ["/message/comments",
                                                     "/message/uread",
                                                     "/message/messages",
@@ -1126,11 +1135,22 @@ class MessagePage(Reddit):
 
 class MessageCompose(Templated):
     """Compose message form."""
-    def __init__(self, to='', subject='', message='', captcha=None):
+    def __init__(self, to='', subject='', message='', captcha=None,
+                 admin_check=True):
         from r2.models.admintools import admintools
 
+        if admin_check:
+            self.admins = admintools.admin_list()
+
         Templated.__init__(self, to=to, subject=subject, message=message,
-                           captcha=captcha, admins=admintools.admin_list())
+                           captcha=captcha, admin_check=admin_check)
+
+
+class ModeratorMessageCompose(MessageCompose):
+    def __init__(self, mod_srs, from_user=True, **kw):
+        self.mod_srs = mod_srs
+        self.from_user = from_user
+        MessageCompose.__init__(self, admin_check=False, **kw)
 
 
 class BoringPage(Reddit):

@@ -242,30 +242,42 @@ class ApiController(RedditController):
         return bool(c.user.needs_captcha())
 
     @require_oauth2_scope("privatemessages")
-    @validatedForm(VCaptcha(),
-                   VUser(),
-                   VModhash(),
-                   to = VMessageRecipient('to'),
-                   subject = VLength('subject', 100, empty_error=errors.NO_SUBJECT),
-                   body = VMarkdown(['text', 'message']))
+    @validatedForm(
+        VCaptcha(),
+        VUser(),
+        VModhash(),
+        from_sr=VSRByName('from_sr'),
+        to=VMessageRecipient('to'),
+        subject=VLength('subject', 100, empty_error=errors.NO_SUBJECT),
+        body=VMarkdown(['text', 'message']))
     @api_doc(api_section.messages)
-    def POST_compose(self, form, jquery, to, subject, body):
+    def POST_compose(self, form, jquery, from_sr, to, subject, body):
         """
         Handles message composition under /message/compose.
         """
-        if not (form.has_errors("to",  errors.USER_DOESNT_EXIST,
-                                errors.NO_USER, errors.SUBREDDIT_NOEXIST,
-                                errors.USER_BLOCKED) or
+        if (form.has_errors("to",
+                    errors.USER_DOESNT_EXIST, errors.NO_USER,
+                    errors.SUBREDDIT_NOEXIST, errors.USER_BLOCKED) or
                 form.has_errors("subject", errors.NO_SUBJECT) or
                 form.has_errors("subject", errors.TOO_LONG) or
                 form.has_errors("text", errors.NO_TEXT, errors.TOO_LONG) or
-                form.has_errors("captcha", errors.BAD_CAPTCHA)):
+                form.has_errors("captcha", errors.BAD_CAPTCHA) or
+                form.has_errors("from_sr", errors.SUBREDDIT_NOEXIST)):
+            return
 
+        c.errors.remove((errors.BAD_SR_NAME, "from_sr"))
+
+        if from_sr:
+            if not from_sr.is_moderator_with_perms(c.user, "mail"):
+                abort(403)
+            m, inbox_rel = Message._new(c.user, to, subject, body, request.ip,
+                                        sr=from_sr, from_sr=True)
+        else:
             m, inbox_rel = Message._new(c.user, to, subject, body, request.ip)
-            form.set_html(".status", _("your message has been delivered"))
-            form.set_inputs(to = "", subject = "", text = "", captcha="")
 
-            queries.new_message(m, inbox_rel)
+        form.set_html(".status", _("your message has been delivered"))
+        form.set_inputs(to = "", subject = "", text = "", captcha="")
+        queries.new_message(m, inbox_rel)
 
     @require_oauth2_scope("submit")
     @json_validate()

@@ -1106,9 +1106,35 @@ class MessageController(ListingController):
         message=nop('message'),
     )
     def GET_compose(self, to, subject, message):
+        mod_srs = []
+        subreddit_message = False
+        from_user = True
+
+        if isinstance(c.site, MultiReddit):
+            mod_srs = c.site.srs_with_perms(c.user, "mail")
+            if not mod_srs:
+                abort(403)
+            subreddit_message = True
+        elif not isinstance(c.site, FakeSubreddit):
+            if not c.site.is_moderator_with_perms(c.user, "mail"):
+                abort(403)
+            mod_srs = [c.site]
+            subreddit_message = True
+            from_user = False
+        elif c.user.is_moderator_somewhere:
+            mod_srs = Mod.srs_with_perms(c.user, "mail")
+            subreddit_message = bool(mod_srs)
+
         captcha = Captcha() if c.user.needs_captcha() else None
-        content = MessageCompose(to=to, subject=subject, captcha=captcha,
-                                 message=message)
+
+        if subreddit_message:
+            content = ModeratorMessageCompose(mod_srs, from_user=from_user,
+                                              to=to, subject=subject,
+                                              captcha=captcha, message=message)
+        else:
+            content = MessageCompose(to=to, subject=subject, captcha=captcha,
+                                     message=message)
+
         return MessagePage(content=content).render()
 
 class RedditsController(ListingController):

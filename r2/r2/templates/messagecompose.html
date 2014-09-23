@@ -35,115 +35,125 @@
                     method="post", _id = "compose-message",
                     action="/message/compose">
 
-<script type="text/javascript">
-function admincheck(elem) {
-  var admins = ${unsafe(simplejson.dumps(thing.admins))};
-
-  if ($.inArray(elem.value, admins) >= 0) {
-    $(".admin-to")
-      .text(elem.value)
-      .attr('href', '/about/team/#user/' + elem.value);
-    $(".clippy").show();
-  } else {
-    $(".clippy").hide();
-  }
-}
-</script>
-
-<div class="spacer">
-  <%utils:round_field title="${_('to')}", 
-                      description="${_('(username, or /r/name for that subreddit\'s mods)')}">
-    <input type="text" name="to" value="${thing.to or ''}"
-           onchange="admincheck(this)"/>
-    ${error_field("NO_USER", "to")}
-    ${error_field("USER_DOESNT_EXIST", "to")}
-    ${error_field("SUBREDDIT_NOEXIST", "to")}
-    ${error_field("USER_BLOCKED", "to")}
-  </%utils:round_field>
-</div>
-
-<div class="spacer">
-  <%utils:round_field title="${_('subject')}">
-    <input type="text" name="subject" value="${thing.subject or ''}"/>
-    ${error_field("NO_SUBJECT", "subject", "span")}
-    ${error_field("TOO_LONG", "subject", "span")}
-  </%utils:round_field>
-</div>
-
-<div class="spacer">
-  <%utils:round_field title="${_('message')}">
-    ${UserText(None, text=thing.message, have_form = False, creating = True)}
-  </%utils:round_field>
-</div>
-
-<div class="clippy"
-%if thing.to not in thing.admins:
-  style="display:none"
+${to_field()}
+${subject_field()}
+${message_field()}
+%if thing.admin_check:
+  ${clippy_field()}
 %endif
->
-   <img src="${static('alien-clippy.png')}" />
-
-   <div class="clippy-bubble">
-     <p class="clippy-headline">It looks like you're writing to an admin!</p>
-     <p>
-
-       Before you click "send", you might want to make sure that
-       &#32;
-       <a class="admin-to" href="/about/team/#user/${thing.to}">${thing.to}</a>
-       &#32;
-       is the right admin for the job. The
-       &#32;
-       <a href="/about/team/">team page</a>
-       &#32;
-       has some info about who handles what.
-
-       Also:
-     </p>
-     <ul>
-       <li>If you'd like to message all the admins at once, send your message to the
- 	&#32;<a href="/message/compose?to=${g.admin_message_acct|u}">admin message list.</a></li>
-
-       <li>If you think your posts are being caught in the spam filter,
-         please write to
-         &#32;
-         <a href="http://www.reddit.com/wiki/faq#wiki_how_can_i_tell_who_moderates_a_given_subreddit.3F">
-          the moderators of the subreddit
-         </a>
-         &#32;
-         instead.
-       </li>
-
-       <li>If
-         &#32;
-         <span class="admin-to">${thing.to}</span>
-         &#32;<i>is</i>&#32; is a moderator of a specific subreddit you're
-         inquiring about, and that's actually the reason you're writing, please
-         message 
-         &#32;
-         <a href="http://www.reddit.com/wiki/faq#wiki_how_can_i_tell_who_moderates_a_given_subreddit.3F">
-          all of the moderators of the subreddit
-         </a>
-         &#32; (using the "message the mods" feature located at the top of the
-         mod box) with a direct link to the comment page of the submission or other
-         reason you're writing about.
-
-       <li>If you're concerned that something is wrong with your entire account,
-	 please send your message to the admin list by 
-         &#32;<a href="/message/compose?to=${g.admin_message_acct|u}">messaging 
-	all of the admins of ${g.admin_message_acct}</a>&#32;(It'll be dealt with faster).</li>
-     </ul>
-  </div>
-
-  <br class="clear"/>
-
- </div>
-
-
-<div class="spacer">
-  ${thing.captcha}
-</div>
+${captcha_field()}
 
 <button id="send" name="send" type="submit">${_("send")}</button>
 <span class="status"></span>
 
 </%utils:submit_form>
+
+
+<%def name="to_field()">
+  <div class="spacer">
+    <%utils:round_field title="${_('to')}", 
+                        description="${_('(username, or /r/name for that subreddit\'s mods)')}">
+      <input type="text" name="to" value="${thing.to or ''}"
+             onchange="${'admincheck(this)' if thing.admin_check else ''}"/>
+      ${error_field("NO_USER", "to")}
+      ${error_field("USER_DOESNT_EXIST", "to")}
+      ${error_field("SUBREDDIT_NOEXIST", "to")}
+      ${error_field("USER_BLOCKED", "to")}
+    </%utils:round_field>
+  </div>
+</%def>
+
+<%def name="subject_field()">
+  <div class="spacer">
+    <%utils:round_field title="${_('subject')}">
+      <input type="text" name="subject" value="${thing.subject or ''}"/>
+      ${error_field("NO_SUBJECT", "subject", "span")}
+      ${error_field("TOO_LONG", "subject", "span")}
+    </%utils:round_field>
+  </div>
+</%def>
+
+<%def name="message_field()">
+  <div class="spacer">
+    <%utils:round_field title="${_('message')}">
+      ${UserText(None, text=thing.message, have_form = False, creating = True)}
+    </%utils:round_field>
+  </div>
+</%def>
+
+<%def name="clippy_field()">
+  <script type="text/javascript">
+  function admincheck(elem) {
+    var admins = ${unsafe(simplejson.dumps(thing.admins))};
+
+    if ($.inArray(elem.value, admins) >= 0) {
+      $(".admin-to")
+        .text(elem.value)
+        .attr('href', '/about/team/#user/' + elem.value);
+      $(".clippy").show();
+    } else {
+      $(".clippy").hide();
+    }
+  }
+  </script>
+
+  <div class="clippy" ${"style='display:none'" if thing.to not in thing.admins else ""}>
+     <img src="${static('alien-clippy.png')}" />
+     <div class="clippy-bubble">
+       <p class="clippy-headline">It looks like you're writing to an admin!</p>
+       <p>
+         Before you click "send", you might want to make sure that
+         &#32;
+         <a class="admin-to" href="/about/team/#user/${thing.to}">${thing.to}</a>
+         &#32;
+         is the right admin for the job. The
+         &#32;
+         <a href="/about/team/">team page</a>
+         &#32;
+         has some info about who handles what.
+
+         Also:
+       </p>
+
+       <ul>
+         <li>If you'd like to message all the admins at once, send your message to the&#32;<a href="/message/compose?to=${g.admin_message_acct|u}">admin message list.</a></li>
+
+         <li>If you think your posts are being caught in the spam filter,
+           please write to
+           &#32;
+           <a href="http://www.reddit.com/wiki/faq#wiki_how_can_i_tell_who_moderates_a_given_subreddit.3F">
+            the moderators of the subreddit
+           </a>
+           &#32;
+           instead.
+         </li>
+
+         <li>If
+           &#32;
+           <span class="admin-to">${thing.to}</span>
+           &#32;<i>is</i>&#32; is a moderator of a specific subreddit you're
+           inquiring about, and that's actually the reason you're writing, please
+           message 
+           &#32;
+           <a href="http://www.reddit.com/wiki/faq#wiki_how_can_i_tell_who_moderates_a_given_subreddit.3F">
+            all of the moderators of the subreddit
+           </a>
+           &#32; (using the "message the mods" feature located at the top of the
+           mod box) with a direct link to the comment page of the submission or other
+           reason you're writing about.
+         </li>
+
+         <li>If you're concerned that something is wrong with your entire account, please send your message to the admin list by 
+           &#32;<a href="/message/compose?to=${g.admin_message_acct|u}">messaging all of the admins of ${g.admin_message_acct}</a>&#32;(It'll be dealt with faster).
+         </li>
+       </ul>
+    </div>
+    <br class="clear"/>
+  </div>
+</%def>
+
+<%def name="captcha_field()">
+  <div class="spacer">
+    ${thing.captcha}
+  </div>
+</%def>
