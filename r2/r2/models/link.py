@@ -1417,11 +1417,9 @@ class Message(Thing, Printable):
             m._commit()
 
         if not skip_inbox and sr_id:
-            # if there is a subreddit id, and it's either a reply or
-            # an initial message to an SR, add to the moderator inbox
-            # (i.e., don't do it for automated messages from the SR)
-            if parent or to_subreddit and not from_sr:
+            if parent or to_subreddit or from_sr:
                 inbox_rel.append(ModeratorInbox._add(sr, m, 'inbox'))
+
             if sr.is_moderator(author):
                 m.distinguished = 'yes'
                 m._commit()
