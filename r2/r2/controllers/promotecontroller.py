@@ -41,7 +41,7 @@ from r2.lib.errors import errors
 from r2.lib.filters import websafe
 from r2.lib.media import force_thumbnail, thumbnail_url, _scrape_media
 from r2.lib.memoize import memoize
-from r2.lib.menus import NamedButton, NavButton, NavMenu
+from r2.lib.menus import NamedButton, NavButton, NavMenu, QueryButton
 from r2.lib.pages import (
     LinkInfoPage,
     PaymentForm,
@@ -305,12 +305,13 @@ class PromoteListingController(ListingController):
     @property
     def menus(self):
         filters = [
-            NamedButton('all_promos', dest='', aliases=['/sponsor']),
-            NamedButton('future_promos'),
-            NamedButton('unpaid_promos'),
-            NamedButton('rejected_promos'),
-            NamedButton('pending_promos'),
-            NamedButton('live_promos'),
+            NamedButton('all_promos', dest='', use_params=True,
+                        aliases=['/sponsor']),
+            NamedButton('future_promos', use_params=True),
+            NamedButton('unpaid_promos', use_params=True),
+            NamedButton('rejected_promos', use_params=True),
+            NamedButton('pending_promos', use_params=True),
+            NamedButton('live_promos', use_params=True),
         ]
         menus = [NavMenu(filters, base_path=self.base_path, title='show',
                          type='lightdrop')]
@@ -370,13 +371,20 @@ class SponsorListingController(PromoteListingController):
             menus = []
         else:
             menus = super(SponsorListingController, self).menus
+            menus.append(NavMenu([
+                QueryButton("exclude managed", dest=None,
+                            query_param='include_managed'),
+                QueryButton("include managed", dest="yes",
+                            query_param='include_managed'),
+            ], base_path=request.path, type='lightdrop'))
 
         if self.sort == 'live_promos':
             srnames = promote.all_live_promo_srnames()
-            buttons = [NavButton('all', '')]
+            buttons = [NavButton('all', '', use_params=True)]
             try:
                 srnames.remove(Frontpage.name)
                 frontbutton = NavButton('FRONTPAGE', Frontpage.name,
+                                        use_params=True,
                                         aliases=['/promoted/live_promos/%s' %
                                                  urllib.quote(Frontpage.name)])
                 buttons.append(frontbutton)
@@ -384,7 +392,8 @@ class SponsorListingController(PromoteListingController):
                 pass
 
             srnames = sorted(srnames, key=lambda name: name.lower())
-            buttons.extend([NavButton(name, name) for name in srnames])
+            buttons.extend(
+                NavButton(name, name, use_params=True) for name in srnames)
             base_path = self.base_path + '/live_promos'
             menus.append(NavMenu(buttons, base_path=base_path,
                                  title='subreddit', type='lightdrop'))
@@ -411,6 +420,15 @@ class SponsorListingController(PromoteListingController):
         link_names = {Link._fullname_from_id36(to36(camp.link_id))
                       for camp in q}
         return sorted(link_names, reverse=True)
+
+    def keep_fn(self):
+        base_keep_fn = PromoteListingController.keep_fn(self)
+
+        def keep(item):
+            if not self.include_managed and item.managed_promo:
+                return False
+            return base_keep_fn(item)
+        return keep
 
     def query(self):
         if self.sort == "future_promos":
@@ -441,10 +459,13 @@ class SponsorListingController(PromoteListingController):
     @validate(
         VSponsorAdmin(),
         sr=nop('sr'),
+        include_managed=VBoolean("include_managed"),
     )
-    def GET_listing(self, sr=None, sort="all", **env):
+    def GET_listing(self, sr=None, include_managed=False, sort="all", **kw):
         self.sort = sort
         self.sr = None
+        self.include_managed = include_managed
+
         if sr and sr == Frontpage.name:
             self.sr = Frontpage
         elif sr:
@@ -452,7 +473,7 @@ class SponsorListingController(PromoteListingController):
                 self.sr = Subreddit._by_name(sr)
             except NotFound:
                 pass
-        return ListingController.GET_listing(self, **env)
+        return ListingController.GET_listing(self, **kw)
 
 
 class PromoteApiController(ApiController):
