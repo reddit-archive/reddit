@@ -366,7 +366,10 @@ class SponsorListingController(PromoteListingController):
 
     @property
     def menus(self):
-        menus = super(SponsorListingController, self).menus
+        if self.sort in {'underdelivered', 'reported', 'house'}:
+            menus = []
+        else:
+            menus = super(SponsorListingController, self).menus
 
         if self.sort == 'live_promos':
             srnames = promote.all_live_promo_srnames()
