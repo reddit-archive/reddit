@@ -190,6 +190,11 @@ class MessageButtons(PrintableButtons):
                      getattr(thing, "repliable", True) and
                      valid_recipient)
 
+        # Allow comment-reply messages to have links to the full thread.
+        if was_comment:
+            self.full_comment_path = thing.link_permalink
+            self.full_comment_count = thing.full_comment_count
+
         PrintableButtons.__init__(self, "messagebuttons", thing,
                                   profilepage = c.profilepage,
                                   permalink = permalink,

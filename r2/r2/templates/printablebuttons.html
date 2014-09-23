@@ -394,6 +394,12 @@
     <li>
       ${self.bylink_button(_("context"), thing.permalink + "?context=3")}
     </li>
+    <li>
+      ${self.comment_button("comment",
+                            _("full comments") + " (%d)" % thing.full_comment_count,
+                            thing.full_comment_path,
+                            a_class="may-blank full-comments")}
+    </li>
   %else:
     <li class="first">
       ${self.bylink_button(_("permalink"), thing.permalink, sr_path=False)}

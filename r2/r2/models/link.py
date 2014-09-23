@@ -1567,6 +1567,7 @@ class Message(Thing, Printable):
                 item.link_title = link.title
                 item.permalink = item.lookups[0].make_permalink(link, sr=sr)
                 item.link_permalink = link.make_permalink(sr)
+                item.full_comment_count = link.num_comments
                 if item.parent_id:
                     parent = parents[item.parent_id]
                     item.parent = parent._fullname
