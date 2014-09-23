@@ -3648,6 +3648,23 @@ class ApiController(RedditController):
 
         form.set_html(".status", _('saved'))
 
+    @validatedForm(
+        VAdmin(),
+        VModhash(),
+        recipient=VExistingUname("recipient"),
+        num_months=VInt('num_months', num_default=0),
+    )
+    def POST_givegold(self, form, jquery, recipient, num_months):
+        if form.has_errors("recipient",
+                           errors.USER_DOESNT_EXIST, errors.NO_USER):
+            return
+        
+        if not recipient.gold and num_months < 0:
+            form.set_html(".status", _('no gold to take'))
+            return
+
+        admintools.adjust_gold_expiration(recipient, months=num_months)
+        form.set_html(".status", _('saved'))
 
     @noresponse(VUser(),
                 VModhash(),

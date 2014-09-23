@@ -3093,7 +3093,13 @@ class AdminCreddits(Templated):
     """The admin interface for giving creddits to a user."""
     def __init__(self, recipient):
         self.recipient = recipient
+        Templated.__init__(self)
 
+
+class AdminGold(Templated):
+    """The admin interface for giving or taking days of gold for a user."""
+    def __init__(self, recipient):
+        self.recipient = recipient
         Templated.__init__(self)
 
 

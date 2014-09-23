@@ -125,6 +125,7 @@ def make_map():
        requirements=dict(action="give|winners"))
 
     mc('/admin/creddits', controller='admintool', action='creddits')
+    mc('/admin/gold', controller='admintool', action='gold')
 
     mc('/admin/errors', controller='errorlog')
 
