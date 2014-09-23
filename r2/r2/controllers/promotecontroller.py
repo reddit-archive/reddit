@@ -458,19 +458,17 @@ class SponsorListingController(PromoteListingController):
 
     @validate(
         VSponsorAdmin(),
-        sr=nop('sr'),
+        srname=nop('sr'),
         include_managed=VBoolean("include_managed"),
     )
-    def GET_listing(self, sr=None, include_managed=False, sort="all", **kw):
+    def GET_listing(self, srname=None, include_managed=False, sort="all", **kw):
         self.sort = sort
         self.sr = None
         self.include_managed = include_managed
 
-        if sr and sr == Frontpage.name:
-            self.sr = Frontpage
-        elif sr:
+        if srname:
             try:
-                self.sr = Subreddit._by_name(sr)
+                self.sr = Subreddit._by_name(srname)
             except NotFound:
                 pass
         return ListingController.GET_listing(self, **kw)
