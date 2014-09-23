@@ -447,13 +447,13 @@ class NamedButton(NavButton):
     separately)."""
 
     def __init__(self, name, sr_path=True, nocname=False, aliases=None,
-                 dest=None, fmt_args={}, css_class=''):
+                 dest=None, fmt_args={}, use_params=False, css_class=''):
         self.name = name.strip('/')
         menutext = menu[self.name] % fmt_args
         dest = dest if dest is not None else name
         NavButton.__init__(self, menutext, dest, sr_path=sr_path,
                            nocname=nocname, aliases=aliases,
-                           css_class=css_class)
+                           use_params=use_params, css_class=css_class)
 
 
 class JsButton(NavButton):
