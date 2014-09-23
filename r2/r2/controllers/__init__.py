@@ -69,8 +69,10 @@ def load_controllers():
     from awards import AwardsController
     from errorlog import ErrorlogController
     from promotecontroller import PromoteController
+    from promotecontroller import SponsorController
     from promotecontroller import PromoteApiController
     from promotecontroller import PromoteListingController
+    from promotecontroller import SponsorListingController
     from mediaembed import MediaembedController
     from mediaembed import AdController
     from policies import PoliciesController

@@ -215,24 +215,36 @@ def make_map():
     mc('/framebuster/:what/:blah',
        controller='front', action='framebuster')
 
-    mc('/promoted/report', controller='promote', action='report')
-    mc('/promoted/live_promos/:sr', controller='promotelisting',
-       sort='live_promos', action='listing')
-    mc('/promoted/:sort', controller='promotelisting', action="listing",
+    # sponsor endpoints
+    mc('/sponsor/report', controller='sponsor', action='report')
+    mc('/sponsor/inventory', controller='sponsor', action='promote_inventory')
+    mc('/sponsor/roadblock', controller='sponsor', action="roadblock")
+
+    # sponsor listings
+    mc('/sponsor/promoted/:sort', controller='sponsorlisting', action='listing',
        requirements=dict(sort="future_promos|pending_promos|unpaid_promos|"
                               "rejected_promos|live_promos|underdelivered|"
                               "reported|house|all"))
-    mc('/promoted/', controller='promotelisting', action="listing")
+    mc('/sponsor', controller='sponsorlisting', action="listing",
+       sort="all")
+    mc('/sponsor/promoted/', controller='sponsorlisting', action="listing",
+       sort="all")
+    mc('/sponsor/promoted/live_promos/:sr', controller='sponsorlisting',
+       sort='live_promos', action='listing')
 
-    mc('/promoted/edit_promo/:link',
-       controller='promote', action='edit_promo')
-    mc('/promoted/pay/:link/:campaign',
-       controller='promote', action='pay')
+
+    # listings of user's promos
+    mc('/promoted/:sort', controller='promotelisting', action="listing",
+       requirements=dict(sort="future_promos|pending_promos|unpaid_promos|"
+                              "rejected_promos|live_promos|all"))
+    mc('/promoted/', controller='promotelisting', action="listing", sort="all")
+
+    # editing endpoints
+    mc('/promoted/new_promo', controller='promote', action='new_promo')
+    mc('/promoted/edit_promo/:link', controller='promote', action='edit_promo')
+    mc('/promoted/pay/:link/:campaign', controller='promote', action='pay')
     mc('/promoted/refund/:link/:campaign', controller='promote',
        action='refund')
-    mc('/promoted/inventory', controller='promote', action='promote_inventory')
-    mc('/promoted/:action', controller='promote',
-       requirements=dict(action="edit_promo|new_promo|roadblock"))
 
     mc('/health', controller='health', action='health')
     mc('/health/ads', controller='health', action='promohealth')

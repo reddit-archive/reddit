@@ -172,11 +172,6 @@ class PromoteController(RedditController):
         content = RefundPage(link, campaign)
         return Reddit("refund", content=content, show_sidebar=False).render()
 
-    @validate(VSponsorAdmin())
-    def GET_roadblock(self):
-        return PromotePage(title=_("manage roadblocks"),
-                           content=Roadblocks()).render()
-
     @validate(VSponsor("link"),
               link=VLink("link"),
               campaign=VPromoCampaign("campaign"))
@@ -200,6 +195,13 @@ class PromoteController(RedditController):
                             content=content,
                             show_sidebar=False)
         return res.render()
+
+
+class SponsorController(PromoteController):
+    @validate(VSponsorAdmin())
+    def GET_roadblock(self):
+        return PromotePage(title=_("manage roadblocks"),
+                           content=Roadblocks()).render()
 
     @validate(VSponsorAdminOrAdminSecret('secret'),
               start=VDate('startdate'),
@@ -289,11 +291,9 @@ class PromoteListingController(ListingController):
         'unpaid_promos': N_('unpaid promoted links'),
         'rejected_promos': N_('rejected promoted links'),
         'live_promos': N_('live promoted links'),
-        'underdelivered': N_('underdelivered promoted links'),
-        'reported': N_('reported promoted links'),
-        'house': N_('house promoted links'),
         'all': N_('all promoted links'),
     }
+    base_path = '/promoted'
 
     def title(self):
         return _(self.titles[self.sort])
@@ -301,6 +301,91 @@ class PromoteListingController(ListingController):
     @property
     def title_text(self):
         return _('promoted by you')
+
+    @property
+    def menus(self):
+        filters = [
+            NamedButton('all_promos', dest='', aliases=['/sponsor']),
+            NamedButton('future_promos'),
+            NamedButton('unpaid_promos'),
+            NamedButton('rejected_promos'),
+            NamedButton('pending_promos'),
+            NamedButton('live_promos'),
+        ]
+        menus = [NavMenu(filters, base_path=self.base_path, title='show',
+                         type='lightdrop')]
+        return menus
+
+    def keep_fn(self):
+        def keep(item):
+            if self.sort == "future_promos":
+                # this sort is used to review links that need to be approved
+                # skip links that don't have any paid campaigns
+                campaigns = list(PromoCampaign._by_link(item._id))
+                if not any(promote.authed_or_not_needed(camp)
+                           for camp in campaigns):
+                    return False
+
+            if item.promoted and not item._deleted:
+                return True
+            else:
+                return False
+        return keep
+
+    def query(self):
+        if self.sort == "future_promos":
+            return queries.get_unapproved_links(c.user._id)
+        elif self.sort == "pending_promos":
+            return queries.get_accepted_links(c.user._id)
+        elif self.sort == "unpaid_promos":
+            return queries.get_unpaid_links(c.user._id)
+        elif self.sort == "rejected_promos":
+            return queries.get_rejected_links(c.user._id)
+        elif self.sort == "live_promos":
+            return queries.get_live_links(c.user._id)
+        elif self.sort == "all":
+            return queries.get_promoted_links(c.user._id)
+
+    @validate(VSponsor())
+    def GET_listing(self, sort="all", **env):
+        self.sort = sort
+        return ListingController.GET_listing(self, **env)
+
+
+class SponsorListingController(PromoteListingController):
+    titles = dict(PromoteListingController.titles.items() + {
+        'underdelivered': N_('underdelivered promoted links'),
+        'reported': N_('reported promoted links'),
+        'house': N_('house promoted links'),
+    }.items())
+    base_path = '/sponsor/promoted'
+
+    @property
+    def title_text(self):
+        return _('promos on reddit')
+
+    @property
+    def menus(self):
+        menus = super(SponsorListingController, self).menus
+
+        if self.sort == 'live_promos':
+            srnames = promote.all_live_promo_srnames()
+            buttons = [NavButton('all', '')]
+            try:
+                srnames.remove(Frontpage.name)
+                frontbutton = NavButton('FRONTPAGE', Frontpage.name,
+                                        aliases=['/promoted/live_promos/%s' %
+                                                 urllib.quote(Frontpage.name)])
+                buttons.append(frontbutton)
+            except KeyError:
+                pass
+
+            srnames = sorted(srnames, key=lambda name: name.lower())
+            buttons.extend([NavButton(name, name) for name in srnames])
+            base_path = self.base_path + '/live_promos'
+            menus.append(NavMenu(buttons, base_path=base_path,
+                                 title='subreddit', type='lightdrop'))
+        return menus
 
     @classmethod
     @memoize('live_by_subreddit', time=300)
@@ -324,101 +409,37 @@ class PromoteListingController(ListingController):
                       for camp in q}
         return sorted(link_names, reverse=True)
 
-    @property
-    def menus(self):
-        filters = [
-            NamedButton('all_promos', dest=''),
-            NamedButton('future_promos'),
-            NamedButton('unpaid_promos'),
-            NamedButton('rejected_promos'),
-            NamedButton('pending_promos'),
-            NamedButton('live_promos'),
-        ]
-        menus = [NavMenu(filters, base_path='/promoted', title='show',
-                        type='lightdrop')]
-
-        if self.sort == 'live_promos' and c.user_is_sponsor:
-            srnames = promote.all_live_promo_srnames()
-            buttons = [NavButton('all', '')]
-            try:
-                srnames.remove(Frontpage.name)
-                frontbutton = NavButton('FRONTPAGE', Frontpage.name,
-                                        aliases=['/promoted/live_promos/%s' %
-                                                 urllib.quote(Frontpage.name)])
-                buttons.append(frontbutton)
-            except KeyError:
-                pass
-
-            srnames = sorted(srnames, key=lambda name: name.lower())
-            buttons.extend([NavButton(name, name) for name in srnames])
-            menus.append(NavMenu(buttons, base_path='/promoted/live_promos',
-                                 title='subreddit', type='lightdrop'))
-
-        return menus
-
-    def keep_fn(self):
-        def keep(item):
-            if self.sort == "future_promos":
-                # this sort is used to review links that need to be approved
-                # skip links that don't have any paid campaigns
-                campaigns = list(PromoCampaign._by_link(item._id))
-                if not any(promote.authed_or_not_needed(camp)
-                           for camp in campaigns):
-                    return False
-
-            if item.promoted and not item._deleted:
-                return True
-            else:
-                return False
-        return keep
-
     def query(self):
-        if c.user_is_sponsor:
-            if self.sort == "future_promos":
-                return queries.get_all_unapproved_links()
-            elif self.sort == "pending_promos":
-                return queries.get_all_accepted_links()
-            elif self.sort == "unpaid_promos":
-                return queries.get_all_unpaid_links()
-            elif self.sort == "rejected_promos":
-                return queries.get_all_rejected_links()
-            elif self.sort == "live_promos" and self.sr:
-                return self.live_by_subreddit(self.sr)
-            elif self.sort == 'live_promos':
-                return queries.get_all_live_links()
-            elif self.sort == 'underdelivered':
-                q = queries.get_underdelivered_campaigns()
-                campaigns = PromoCampaign._by_fullname(list(q), data=True,
-                                                       return_dict=False)
-                link_ids = [camp.link_id for camp in campaigns]
-                return [Link._fullname_from_id36(to36(id)) for id in link_ids]
-            elif self.sort == 'reported':
-                return queries.get_reported_links(Subreddit.get_promote_srid())
-            elif self.sort == 'house':
-                return self.get_house_link_names()
-            elif self.sort == 'all':
-                return queries.get_all_promoted_links()
-        else:
-            if self.sort == "future_promos":
-                return queries.get_unapproved_links(c.user._id)
-            elif self.sort == "pending_promos":
-                return queries.get_accepted_links(c.user._id)
-            elif self.sort == "unpaid_promos":
-                return queries.get_unpaid_links(c.user._id)
-            elif self.sort == "rejected_promos":
-                return queries.get_rejected_links(c.user._id)
-            elif self.sort == "live_promos":
-                return queries.get_live_links(c.user._id)
-            elif self.sort == "all":
-                return queries.get_promoted_links(c.user._id)
+        if self.sort == "future_promos":
+            return queries.get_all_unapproved_links()
+        elif self.sort == "pending_promos":
+            return queries.get_all_accepted_links()
+        elif self.sort == "unpaid_promos":
+            return queries.get_all_unpaid_links()
+        elif self.sort == "rejected_promos":
+            return queries.get_all_rejected_links()
+        elif self.sort == "live_promos" and self.sr:
+            return self.live_by_subreddit(self.sr)
+        elif self.sort == 'live_promos':
+            return queries.get_all_live_links()
+        elif self.sort == 'underdelivered':
+            q = queries.get_underdelivered_campaigns()
+            campaigns = PromoCampaign._by_fullname(list(q), data=True,
+                                                   return_dict=False)
+            link_ids = [camp.link_id for camp in campaigns]
+            return [Link._fullname_from_id36(to36(id)) for id in link_ids]
+        elif self.sort == 'reported':
+            return queries.get_reported_links(Subreddit.get_promote_srid())
+        elif self.sort == 'house':
+            return self.get_house_link_names()
+        elif self.sort == 'all':
+            return queries.get_all_promoted_links()
 
-    @validate(VSponsor(),
-              sr=nop('sr'))
+    @validate(
+        VSponsorAdmin(),
+        sr=nop('sr'),
+    )
     def GET_listing(self, sr=None, sort="all", **env):
-        if (sort in ('underdelivered', 'reported', 'house') and
-            not c.user_is_sponsor):
-            self.abort403()
-
         self.sort = sort
         self.sr = None
         if sr and sr == Frontpage.name:

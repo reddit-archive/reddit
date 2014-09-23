@@ -736,7 +736,11 @@ class Reddit(Templated):
         more_buttons = []
 
         if c.user_is_loggedin:
-            if c.user.pref_show_promote or c.user_is_sponsor:
+            if c.user_is_sponsor:
+                sponsor_button = NavButton(
+                    menu.sponsor, dest='/sponsor', sr_path=False)
+                more_buttons.append(sponsor_button)
+            elif c.user.pref_show_promote:
                 more_buttons.append(NavButton(menu.promote, 'promoted', False))
 
         #if there's only one button in the dropdown, get rid of the dropdown
@@ -3626,23 +3630,30 @@ class PromotePage(Reddit):
     extension_handling = False
     searchbox          = False
 
-    def __init__(self, nav_menus = None, *a, **kw):
-        buttons = [NamedButton('new_promo')]
+    @classmethod
+    def get_menu(cls):
         if c.user_is_sponsor:
-            buttons.append(NamedButton('roadblock'))
-            buttons.append(NamedButton('current_promos', dest = ''))
+            buttons = [
+                NavButton(menu['new_promo'], dest='/promoted/new_promo'),
+                NavButton(menu['roadblock'], dest='/sponsor/roadblock'),
+                NavButton(menu['current_promos'], dest='/sponsor/promoted',
+                          aliases=['/sponsor']),
+                NavButton('inventory', '/sponsor/inventory'),
+                NavButton('report', '/sponsor/report'),
+                NavButton('underdelivered', '/sponsor/promoted/underdelivered'),
+                NavButton('house ads', '/sponsor/promoted/house'),
+                NavButton('reported links', '/sponsor/promoted/reported'),
+            ]
+            return NavMenu(buttons, type='flatlist')
         else:
-            buttons.append(NamedButton('my_current_promos', dest = ''))
+            buttons = [
+                NamedButton('new_promo'),
+                NamedButton('my_current_promos', dest=''),
+            ]
+            return NavMenu(buttons, base_path='/promoted', type='flatlist')
 
-        if c.user_is_sponsor:
-            buttons.append(NavButton('inventory', 'inventory'))
-            buttons.append(NavButton('report', 'report'))
-            buttons.append(NavButton('underdelivered', 'underdelivered'))
-            buttons.append(NavButton('house ads', 'house'))
-            buttons.append(NavButton('reported links', 'reported'))
-
-        menu  = NavMenu(buttons, base_path = '/promoted',
-                        type='flatlist')
+    def __init__(self, nav_menus=None, *a, **kw):
+        menu = self.get_menu()
 
         if nav_menus:
             nav_menus.insert(0, menu)
