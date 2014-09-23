@@ -2928,7 +2928,7 @@ class ApiController(RedditController):
                 c.user._commit()
                 status = 'claimed-creddits'
             else:
-                admintools.engolden(c.user, days)
+                admintools.adjust_gold_expiration(c.user, days=days)
 
                 g.cache.set("recent-gold-" + c.user.name, True, 600)
                 status = 'claimed-gold'

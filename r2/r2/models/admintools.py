@@ -168,33 +168,42 @@ class AdminTools(object):
                 sr._commit()
                 sr._incr('mod_actions', len(sr_things))
 
-    def engolden(self, account, days):
-        account.gold = True
-
+    def adjust_gold_expiration(self, account, days=0, months=0, years=0):
         now = datetime.now(g.display_tz)
+        if months % 12 == 0:
+            years += months / 12
+        else:
+            days += months * 31
+        days += years * 366
 
         existing_expiration = getattr(account, "gold_expiration", None)
         if existing_expiration is None or existing_expiration < now:
             existing_expiration = now
         account.gold_expiration = existing_expiration + timedelta(days)
+        
+        if account.gold_expiration > now and not account.gold:
+            self.engolden(account)
+        elif account.gold_expiration <= now and account.gold:
+            self.degolden(account)
 
+        account._commit()     
+
+    def engolden(self, account):
+        now = datetime.now(g.display_tz)
+        account.gold = True
         description = "Since " + now.strftime("%B %Y")
+        
         trophy = Award.give_if_needed("reddit_gold", account,
                                      description=description,
                                      url="/gold/about")
         if trophy and trophy.description.endswith("Member Emeritus"):
             trophy.description = description
             trophy._commit()
-        account._commit()
 
+        account._commit()
         account.friend_rels_cache(_update=True)
 
-    def degolden(self, account, severe=False):
-
-        if severe:
-            account.gold_charter = False
-            Award.take_away("charter_subscriber", account)
-
+    def degolden(self, account):
         Award.take_away("reddit_gold", account)
         account.gold = False
         account._commit()
@@ -267,7 +276,7 @@ def update_gold_users():
             if account.pref_creddit_autorenew:
                 with creddits_lock(account):
                     if account.gold_creddits > 0:
-                        admintools.engolden(account, 31)
+                        admintools.adjust_gold_expiration(account, days=31)
                         account.gold_creddits -= 1
                         account._commit()
                         continue
