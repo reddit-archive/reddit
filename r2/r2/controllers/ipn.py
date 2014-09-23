@@ -397,8 +397,6 @@ class IpnController(RedditController):
 
             if payment_blob["goldtype"] == "gift":
                 thing_fullname = payment_blob.get("thing")
-                if not thing_fullname:
-                    thing_fullname = payment_blob.get("comment")
                 thing = send_gift(c.user, recipient, months, days, signed,
                                   giftmessage, thing_fullname)
                 form.set_text(".status", _("the gold has been delivered!"))
