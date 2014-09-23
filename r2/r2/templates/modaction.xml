@@ -23,7 +23,7 @@
 <%!
     from r2.lib.filters import _force_unicode
     from r2.lib.template_helpers import add_sr
-    from r2.models import Comment, Link
+    from r2.models import Account, Comment, Link
 %>
 
 <%
@@ -38,6 +38,8 @@
     title += ' "%s"' % _force_unicode(thing.parent_link.title)
   elif hasattr(thing, "target") and isinstance(thing.target, Link):
     title += ' "%s"' % _force_unicode(thing.target.title)
+  elif hasattr(thing, "target") and isinstance(thing.target, Account):
+    title += ' %s' % thing.target.name
 
   if thing.details:
     title += ' (%s)' % thing.details
