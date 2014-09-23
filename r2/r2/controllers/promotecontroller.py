@@ -543,30 +543,32 @@ class PromoteApiController(ApiController):
         else:
             form.set_html('.status', _('refund not needed'))
 
-    @validatedForm(VSponsor('link_id36'),
-                   VModhash(),
-                   VRatelimit(rate_user=True,
-                              rate_ip=True,
-                              prefix='create_promo_'),
-                   VShamedDomain('url'),
-                   username=VLength('username', 100, empty_error=None),
-                   l=VLink('link_id36'),
-                   title=VTitle('title'),
-                   url=VUrl('url', allow_self=False),
-                   selftext=VSelfText('text'),
-                   kind=VOneOf('kind', ['link', 'self']),
-                   disable_comments=VBoolean("disable_comments"),
-                   sendreplies=VBoolean("sendreplies"),
-                   media_url=VUrl("media_url", allow_self=False,
-                                  valid_schemes=('http', 'https')),
-                   media_autoplay=VBoolean("media_autoplay"),
-                   media_override=VBoolean("media-override"),
-                   domain_override=VLength("domain", 100)
-                   )
+    @validatedForm(
+        VSponsor('link_id36'),
+        VModhash(),
+        VRatelimit(rate_user=True,
+                   rate_ip=True,
+                   prefix='create_promo_'),
+        VShamedDomain('url'),
+        username=VLength('username', 100, empty_error=None),
+        l=VLink('link_id36'),
+        title=VTitle('title'),
+        url=VUrl('url', allow_self=False),
+        selftext=VSelfText('text'),
+        kind=VOneOf('kind', ['link', 'self']),
+        disable_comments=VBoolean("disable_comments"),
+        sendreplies=VBoolean("sendreplies"),
+        media_url=VUrl("media_url", allow_self=False,
+                       valid_schemes=('http', 'https')),
+        media_autoplay=VBoolean("media_autoplay"),
+        media_override=VBoolean("media-override"),
+        domain_override=VLength("domain", 100),
+        is_managed=VBoolean("is_managed"),
+    )
     def POST_edit_promo(self, form, jquery, username, l, title, url,
                         selftext, kind, disable_comments, sendreplies,
                         media_url, media_autoplay, media_override,
-                        domain_override):
+                        domain_override, is_managed):
 
         should_ratelimit = False
         if not c.user_is_sponsor:
@@ -626,6 +628,8 @@ class PromoteApiController(ApiController):
                                       selftext if kind == 'self' else '',
                                       user, request.ip)
             l.domain_override = domain_override or None
+            if c.user_is_sponsor:
+                l.managed_promo = is_managed
             l._commit()
 
         elif promote.is_promo(l):
@@ -692,6 +696,7 @@ class PromoteApiController(ApiController):
 
                 l.media_override = media_override
                 l.domain_override = domain_override or None
+                l.managed_promo = is_managed
             l._commit()
 
         form.redirect(promote.promo_edit_url(l))

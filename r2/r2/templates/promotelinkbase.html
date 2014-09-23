@@ -214,6 +214,19 @@
   </%utils:line_field>
 </%def>
 
+<%def name="managed_field(link)">
+  <%utils:line_field title="" id="managed-field" css_class="rounded managed-field">
+    <div class="checkbox-group">
+      <div class="form-group">
+        ${checkbox("is_managed", _("managed promotion"), link.managed_promo if link else False)}
+      </div>
+      <div class="infotext rounded">
+        <p>${_("Managed promotions don't appear in the selfserve approval queues.")}</p>
+      </div>
+    </div>
+  </%utils:line_field>
+</%def>
+
 <%def name="timing_field()">
   <%utils:line_field title="${_('timing')}" css_class="rounded timing-field">
     %if thing.min_start:

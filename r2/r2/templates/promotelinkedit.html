@@ -203,6 +203,7 @@ ${pr.javascript_setup()}
           ${pr.commenting_field(thing.link)}
 
           %if c.user_is_sponsor:
+            ${pr.managed_field(thing.link)}
             ${pr.media_field(thing.link)}
           %endif
         %endif

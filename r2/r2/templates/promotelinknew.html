@@ -20,7 +20,7 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%namespace file="promotelinkbase.html" import="title_field, url_field, text_field, post_type_field" />
+<%namespace file="promotelinkbase.html" import="title_field, url_field, text_field, post_type_field, managed_field" />
 <%namespace file="utils.html" import="error_field" />
 <%namespace name="utils" file="utils.html"/>
 
@@ -35,6 +35,7 @@
         <div class="editor-group">
         %if c.user_is_sponsor:
          ${username_field()}
+         ${managed_field(None)}
         %endif
         ${title_field(None, editable=True)}
         ${post_type_field()}
