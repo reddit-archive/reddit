@@ -1099,18 +1099,17 @@ class MessageController(ListingController):
             c.referrer_policy = "always"
         return ListingController.GET_listing(self, **env)
 
-    @validate(VUser(),
-              to = nop('to'),
-              subject = nop('subject'),
-              message = nop('message'),
-              success = nop('success'))
-    def GET_compose(self, to, subject, message, success):
+    @validate(
+        VUser(),
+        to=nop('to'),
+        subject=nop('subject'),
+        message=nop('message'),
+    )
+    def GET_compose(self, to, subject, message):
         captcha = Captcha() if c.user.needs_captcha() else None
-        content = MessageCompose(to = to, subject = subject,
-                                 captcha = captcha,
-                                 message = message,
-                                 success = success)
-        return MessagePage(content = content).render()
+        content = MessageCompose(to=to, subject=subject, captcha=captcha,
+                                 message=message)
+        return MessagePage(content=content).render()
 
 class RedditsController(ListingController):
     render_cls = SubredditsPage
