@@ -31,7 +31,7 @@
 %>
  
 <%inherit  file="printable.html"/>
-<%namespace file="utils.html" import="plain_link, thing_timestamp, edited" />
+<%namespace file="utils.html" import="plain_link, thing_timestamp, edited, nsfw_stamp" />
 <%namespace file="printablebuttons.html" import="toggle_button" />
  
 <%def name="numcol()">
@@ -67,9 +67,7 @@
   <ul class="flat-list buttons">
     %if thing.nsfw:
      <li class="rounded nsfw-stamp stamp">
-       <acronym title="${_('Adult content: Not Safe For Work')}">
-         ${_("NSFW")}
-       </acronym>
+      ${nsfw_stamp()}
      </li>
     %endif
     ${self.buttons()}

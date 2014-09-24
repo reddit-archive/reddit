@@ -564,3 +564,9 @@ ${unsafe(txt)}
 <%def name="_mdf(text, wrap=False, **kwargs)">
   ${md(_(text) % kwargs, wrap=wrap)}
 </%def>
+
+<%def name="nsfw_stamp()">
+  <acronym title="${_('Adult content: Not Safe For Work')}">
+    ${_("NSFW")}
+  </acronym>
+</%def>
