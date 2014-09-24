@@ -180,9 +180,12 @@ class CachedQuery(_CachedQueryBase):
                     pure.append(q.key)
                 else:
                     need_mangling.append(q.key)
+
             mangled = model.index_mangle_keys(need_mangling)
-            fetched = model.get(pure + mangled)
-            cached_queries.update(fetched)
+            fetched = model.get(pure + mangled.keys())
+            for key, values in fetched.iteritems():
+                key = mangled.get(key, key)
+                cached_queries[key] = values
 
         for q in queries:
             cached_query = cached_queries.get(q.key)
@@ -536,17 +539,19 @@ class _BaseQueryCache(object):
     @classmethod
     def index_mangle_keys(cls, keys):
         if not keys:
-            return []
+            return {}
 
         index_keys = ["/".join((key, "index")) for key in keys]
         rows = cls._cf.multiget(index_keys,
                                 column_reversed=True,
                                 column_count=1)
 
-        res = []
+        res = {}
         for key, columns in rows.iteritems():
+            root_key = key.rsplit("/")[0]
             index_component = columns.keys()[0]
-            res.append("/".join((key, index_component)))
+            mangled = "/".join((root_key, index_component))
+            res[mangled] = root_key
         return res
 
     @classmethod
