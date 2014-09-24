@@ -93,7 +93,7 @@
             %if c.profilepage:
                 ${icon_button("Context", "context-icon", thing.permalink + ".compact?context=3")}
             %elif thing.parent_permalink:
-                ${icon_button("Parent", "parent-icon", thing.parent_permalink + ".compact")}
+                ${icon_button("Parent", "parent-icon", thing.parent_permalink)}
             %endif
             %if thing.is_author:
                 ${icon_button("Edit", "edit-icon", onclick="return edit_usertext(this)", outer_class="edit-button")}
