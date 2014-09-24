@@ -240,8 +240,8 @@ class LinkFields(FieldsBase):
         if self.link.is_self:
             return g.domain
         else:
-            url = r2utils.UrlParser(self.link.url)
             try:
+                url = r2utils.UrlParser(self.link.url)
                 return list(url.domain_permutations())
             except ValueError:
                 return None
