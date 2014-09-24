@@ -31,6 +31,9 @@
 <%namespace file="printablebuttons.html" import="simple_button"/>
 
 <div class="thing comment id-${thing._fullname} ${thing_css_rowclass(thing)}">
+  %if not thing.deleted:
+    <p class="parent"><a name="${thing._id36}"></a></p>
+  %endif
   %if c.profilepage:
     %if thing.link: 
       %if thing.link.title:
