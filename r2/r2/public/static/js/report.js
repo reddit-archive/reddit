@@ -7,8 +7,8 @@ r.report = {
     );
 
     $('div.content').on(
-      'click',
-      'button.submit-report',
+      'submit',
+      'form.report-form',
       $.proxy(this, 'submitReport')
     );
 
@@ -56,7 +56,7 @@ r.report = {
   },
 
   submitReport: function(event) {
-    var $reportForm = $(event.target).parent()
+    var $reportForm = $(event.target).thing().find(".report-form")
     return post_pseudo_form($reportForm, "report");
   },
 

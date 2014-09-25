@@ -22,7 +22,7 @@
 
 <%namespace file="utils.html" import="error_field" />
 
-<div id="report-thing-fullname" class="report-form clonable rounded">
+<form id="report-thing-fullname" class="report-form clonable rounded">
   <input type="hidden" name="thing_id" value="thing-fullname">
   <span class="reason-prompt">
     ${_('why are you reporting this?')}
@@ -62,7 +62,7 @@
       <input name="other_reason" value="" maxlength="100" type="text" disabled="disabled"></input>
     </li>
   </ol>
-  <button type="button" class="btn submit-report" disabled="disabled">
+  <button type="submit" class="btn submit-report" disabled="disabled">
     ${_("submit")}
   </button>
   <button type="button" class="btn cancel-report-thing">
@@ -70,4 +70,4 @@
   </button>
   <span class="status"></span>
   ${error_field("TOO_LONG", "reason", "span")}
-</div>
+</form>
