@@ -2,10 +2,14 @@
     $.fn.make_totp_qrcode = function (secret) {
         var form = $('#pref-otp'),
             newform = $('#pref-otp-qr'),
-            placeholder = $('<div>'),
-            uri = ('otpauth://totp/' + encodeURIComponent("/u/" +
-                    r.config.logged + " on " + r.config.cur_domain) +
-                   '?secret=' + secret)
+            placeholder = $('<div>')
+
+        var username = encodeURIComponent("/u/" + r.config.logged);
+        var params = $.param({
+          "secret": secret,
+          "issuer": r.config.cur_domain,
+        });
+        var uri = 'otpauth://totp/' + username + '?' + params;
 
         newform.find('#otp-secret-info').append(
             placeholder,
