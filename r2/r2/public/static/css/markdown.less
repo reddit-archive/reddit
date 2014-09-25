@@ -22,6 +22,19 @@
 @dark-grey: #808080;
 
 
+.md-font-size(@font, @line, @top, @bottom) {
+  // define a desired font size/line-height/margin-top/margin-bottom as ints
+  // have converted to em-based definition
+  font-size: @font * 1px;
+  line-height: (@line / @font) * 1em;
+  margin-top: (@top / @font) * 1em;
+  margin-bottom: (@bottom / @font) * 1em;
+}
+.md-font-size(@font, @line) {
+  font-size: @font * 1px;
+  line-height: (@line / @font) * 1em;
+}
+
 .md {
   h1, h2, h3, h4, h5, h6 {
     &:extend(.md .-headers all);
@@ -35,12 +48,10 @@
     &:extend(.md .-lists all);
   }
 
-  .-lists, pre, blockquote {
+  .-lists, pre, blockquote, table, p {
     &:extend(.md .-blocks all);
   }
 
-
-  color: @semi-black;
   max-width: 60em;
 
   .-headers {
@@ -52,15 +63,14 @@
     }
   }
 
-  h1,
-  h6,
+  &,
+  .-headers {
+    color: @semi-black;
+  }
+
   blockquote,
   del {
     color: @dark-grey;
-  }
-
-  h2 {
-    color: @ui-blue;
   }
 
   a {
@@ -69,7 +79,7 @@
   }
 
   h6 {
-    text-transform: uppercase;
+    text-decoration: underline;
   }
 
   em {
@@ -79,17 +89,17 @@
   th,
   strong,
   .-headers {
-    font-weight: bold;
+    font-weight: 600;
   }
 
-  h1,
-  h4,
-  h6 {
-    font-weight: normal;
-  }
-
+  h2,
   h4 {
-    text-decoration: underline;
+    font-weight: 500;
+  }
+
+  &,
+  h6 {
+    font-weight: 400;
   }
 
   * {
@@ -112,7 +122,6 @@
 
   tr,
   code,
-  table,
   .-cells,
   .-blocks,
   .-headers {
@@ -160,10 +169,12 @@
       background-color: transparent;
       border: 0;
       display: block;
+      padding: 0 !important;
     }
   }
 
-  .-cells {
+  // can't rely on &:extend here, doesn't apply the align rules
+  td, th {
     border: 1px solid @pale-grey;
     text-align: left;
 
@@ -187,142 +198,154 @@
   ol {
     list-style-type: decimal;
   }
-}
 
-.make-markdown-text-scale(@base-font-size: 13px, 
-                          @font-scale-unit: 0.075,
-                          @h6: -1,
-                          @p: 0,
-                          @h5: 1,
-                          @h4: 3,
-                          @h3: 5,
-                          @h2: 11,
-                          @h1: 13) {
-  .font-scale(@scale:1) {
-    font-size: round(@base-font-size * (1 + (@font-scale-unit * @scale)));
-  }
-
-  h1 {
-    .font-scale(@h1);
-  }
-
-  h2 {
-    .font-scale(@h2);
-  }
-
-  h3 {
-    .font-scale(@h3);
-  }
-
-  h4 {
-    .font-scale(@h4); 
-  }
-
-  h5 {
-    .font-scale(@h5)
-  }
-
-  &,
-  pre {
-    .font-scale(@p);
-  }
-
-  h6 {
-    .font-scale(@h6); 
-  }
-}
-
-.make-markdown-layout(@line-height:20px, @spacing-scale: 1) {
-  @quarter-line: round(@line-height * 0.25);
-  @half-line: round(@line-height * 0.5);
-  @line-and-a-quarter: round(@line-height * 1.25);
-  @line-and-a-half: round(@line-height * 1.5);
-  
-  // line-heights
-  &,
-  pre {
-    line-height: @line-height;
-  }
-
-  h2 {
-    line-height: @line-and-a-quarter;
-  }
-
-  h1 {
-    line-height: @line-and-a-half;
-  }
-
-  // padding
   blockquote {
-    padding: 0 @half-line;
+    padding: 0 8px;
   }
 
   code {
-    padding: 0 @quarter-line;
-  }
-
-  pre code {
-    // this reset needs to be here instead of in the main .md block, as 
-    // the styles added in this mixin can have additional precedence
-    // (i.e. `.wikipage-content .md code` would override `.md pre code`)
-    padding: 0;
+    padding: 0 4px;
   }
 
   pre,
   .-cells {
-    padding: @quarter-line @half-line;
+    padding: 4px 8px;
   }
 
   .-lists {
-    padding-left: @line-and-a-quarter;
+    padding-left: 24px;
   }
 
-  // margins (scale with @spacing-scale)
-  .-headers {
-    margin-top: round(@line-height * @spacing-scale);
-    margin-bottom: round(@half-line * @spacing-scale);
+  sup {
+    font-size: 0.86em;
+    line-height: 0;
   }
-
-  h1,
-  h2 {
-    margin-top: round(@line-and-a-quarter * @spacing-scale);
-  }
-
-  li {
-    margin-top: round(@quarter-line * @spacing-scale);
-    margin-bottom: round(@quarter-line * @spacing-scale);
-  }
-
-  p,
-  table,
-  .-blocks {
-    margin-top: round(@half-line * @spacing-scale);
-    margin-bottom: round(@half-line * @spacing-scale);
-  }
-}
-
-
-@base-line-height: 18px;
-
-.md {
-  .make-markdown-layout(@base-line-height, 0.5);
-  .make-markdown-text-scale(13px, 0.05, -1, 0, 0, 3, 3, 5, 9);
-}
-
-.wiki-page-content .md {
-  .make-markdown-layout(22px, 1);
-  .make-markdown-text-scale(14px, 0.075, -1, 0, 1, 3, 5, 11, 13);
-}
-
-.side .md {
-  .make-markdown-layout(16px, 0.5);
-  .make-markdown-text-scale(12px, 0.05, -1, 0, 0, 3, 3, 5, 9);
 }
 
 .link .usertext .md {
-  padding: round(@base-line-height / 4) round(@base-line-height / 2);
+  padding: 4px 8px;
 }
 
 .commentarea .md {
-  margin: round(@base-line-height / 4) 0;
+  margin: 4px 0;
+}
+
+
+.md {
+  // default font scale : font-size, line-height, margin-top, margin-bottom
+  h1,
+  h2 {
+    .md-font-size(18, 24, 16, 16);
+  }
+
+  h3,
+  h4 {
+    .md-font-size(16, 20, 12, 12);
+  }
+
+  h5,
+  h6 {
+    .md-font-size(14, 20, 12, 8);
+  }
+
+  .-blocks {
+    .md-font-size(14, 20, 8, 8);
+  }
+
+  li {
+    .md-font-size(14, 20, 2, 2);
+  }
+  
+  & {
+    .md-font-size(14, 20);
+  }
+}
+
+.wiki-page-content .md {
+  // font scale for wiki pages
+  h1 {
+    .md-font-size(32, 40, 40, 24);
+  }
+
+  h2 {
+    .md-font-size(24, 32, 32, 16);
+  }
+
+  h3 {
+    .md-font-size(20, 24, 24, 12);
+  }
+
+  h4 {
+    .md-font-size(18, 24, 24, 12);
+  }
+
+  h5 {
+    .md-font-size(16, 24, 24, 8);
+  }
+
+  h6 {
+    .md-font-size(16, 24, 24, 8);
+  }
+
+  .-blocks {
+    .md-font-size(16, 24, 8, 12);
+  }
+
+  li {
+    .md-font-size(16, 24, 4, 4);
+  }
+
+  & {
+    .md-font-size(16, 24);
+  }
+}
+
+.side .md {
+  // font scale for sidebar
+  .-blocks {
+    .md-font-size(12, 16, 16, 8);
+  }
+
+  & {
+    .md-font-size(12, 16);
+  }
+}
+
+
+.wiki-page-content .md {
+  // Style changes for wiki pages
+  h1,
+  h6 {
+    color: @dark-grey;
+    font-weight: 300;
+  }
+
+  h2 {
+    color: @ui-blue;
+  }
+
+  h2,
+  h3 {
+    font-weight: 600;
+  }
+
+  h4 {
+    font-style: italic;
+  }
+
+  h5 {
+    text-decoration: underline;
+  }
+
+  h4,
+  h5 {
+    font-weight: 400;
+  }
+
+  h6 {
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    .md-font-size(14, 16, 24, 8);
+  }
 }
