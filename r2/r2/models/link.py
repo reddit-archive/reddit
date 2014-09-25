@@ -1374,8 +1374,6 @@ class Message(Thing, Printable):
         sr_id = None
         # check to see if the recipient is a subreddit and swap args accordingly
         if to and isinstance(to, Subreddit):
-            if from_sr:
-                raise CreationError("Cannot send from SR to SR")
             to_subreddit = True
             to, sr = None, to
         else:
