@@ -3873,20 +3873,7 @@ class PromoteLinkEdit(PromoteLinkBase):
         extra_subreddits = [(_("suggestions:"), top_srs)]
         self.subreddit_selector = SubredditSelector(
             extra_subreddits=extra_subreddits, include_user_subscriptions=False)
-
-        # preload some inventory
-        inv_start = min_start
-        inv_end = min_start + datetime.timedelta(days=14)
-        inv_srs = top_srs + [Frontpage]
-        targets = [Target(sr.name) for sr in inv_srs]
-        sr_inventory = inventory.get_available_pageviews(
-            targets, inv_start, inv_end, datestr=True)
-
-        # LEGACY: sponsored.js uses blank to indicate no targeting, meaning
-        # targeted to the frontpage
-        sr_inventory[''] = sr_inventory[Frontpage.name]
-        del sr_inventory[Frontpage.name]
-        self.inventory = sr_inventory
+        self.inventory = {}
         message = _("This dashboard allows you to easily place ads on reddit. "
                     "Have any questions? [Check out the FAQ](%(faq)s).\n\n"
                     "__New!__ Interest Audience Targeting and user interface changes. "
