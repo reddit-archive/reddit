@@ -259,7 +259,8 @@ class ApiController(RedditController):
         from_sr=VSRByName('from_sr'),
         to=VMessageRecipient('to'),
         subject=VLength('subject', 100, empty_error=errors.NO_SUBJECT),
-        body=VMarkdown(['text', 'message']))
+        body=VMarkdownLength(['text', 'message'], max_length=10000),
+    )
     @api_doc(api_section.messages)
     def POST_compose(self, form, jquery, from_sr, to, subject, body):
         """
@@ -271,6 +272,7 @@ class ApiController(RedditController):
                 form.has_errors("subject", errors.NO_SUBJECT) or
                 form.has_errors("subject", errors.TOO_LONG) or
                 form.has_errors("text", errors.NO_TEXT, errors.TOO_LONG) or
+                form.has_errors("message", errors.TOO_LONG) or
                 form.has_errors("captcha", errors.BAD_CAPTCHA) or
                 form.has_errors("from_sr", errors.SUBREDDIT_NOEXIST)):
             return
@@ -324,25 +326,24 @@ class ApiController(RedditController):
                 'submit_text_html': submit_text_html}
 
     @require_oauth2_scope("submit")
-    @validatedForm(VUser(),
-                   VModhash(),
-                   VCaptcha(),
-                   VRatelimit(rate_user = True, rate_ip = True,
-                              prefix = "rate_submit_"),
-                   VShamedDomain('url'),
-                   sr = VSubmitSR('sr', 'kind'),
-                   url = VUrl('url'),
-                   title = VTitle('title'),
-                   save = VBoolean('save'),
-                   sendreplies = VBoolean('sendreplies'),
-                   selftext = VSelfText('text'),
-                   kind = VOneOf('kind', ['link', 'self']),
-                   then = VOneOf('then', ('tb', 'comments'),
-                                 default='comments'),
-                   extension=VLength("extension", 20, docs={"extension":
-                       "extension used for redirects"}),
-                   resubmit=VBoolean('resubmit'),
-                  )
+    @validatedForm(
+        VUser(),
+        VModhash(),
+        VCaptcha(),
+        VRatelimit(rate_user=True, rate_ip=True, prefix="rate_submit_"),
+        VShamedDomain('url'),
+        sr=VSubmitSR('sr', 'kind'),
+        url=VUrl('url'),
+        title=VTitle('title'),
+        save=VBoolean('save'),
+        sendreplies=VBoolean('sendreplies'),
+        selftext=VMarkdown('text'),
+        kind=VOneOf('kind', ['link', 'self']),
+        then=VOneOf('then', ('tb', 'comments'), default='comments'),
+        extension=VLength("extension", 20,
+                          docs={"extension": "extension used for redirects"}),
+        resubmit=VBoolean('resubmit'),
+    )
     @api_doc(api_section.links_and_comments)
     def POST_submit(self, form, jquery, url, selftext, kind, title,
                     save, sr, then, extension, sendreplies, resubmit):
@@ -476,6 +477,12 @@ class ApiController(RedditController):
                 c.errors.add(errors.QUOTA_FILLED)
                 form.set_error(errors.QUOTA_FILLED, None)
                 return
+
+        if kind == 'self' and len(selftext) > sr.selftext_max_length:
+            c.errors.add(errors.TOO_LONG, field='text',
+                         msg_params={'max_length': sr.selftext_max_length})
+            form.set_error(errors.TOO_LONG, 'text')
+            return
 
         if not request.POST.get('sendreplies'):
             sendreplies = kind == 'self'
@@ -825,8 +832,8 @@ class ApiController(RedditController):
                    type_and_permissions = VPermissions('type', 'permissions'),
                    note = VLength('note', 300),
                    duration = VInt('duration', min=1, max=999),
-                   ban_message = VMarkdown('ban_message', max_length=1000,
-                                           empty_error=None),
+                   ban_message = VMarkdownLength('ban_message', max_length=1000,
+                                                 empty_error=None),
     )
     @api_doc(api_section.users)
     def POST_friend(self, form, jquery, friend,
@@ -1606,73 +1613,84 @@ class ApiController(RedditController):
             return
 
     @require_oauth2_scope("edit")
-    @validatedForm(VUser(),
-                   VModhash(),
-                   item = VByNameIfAuthor('thing_id'),
-                   text = VSelfText('text'))
+    @validatedForm(
+        VUser(),
+        VModhash(),
+        item=VByNameIfAuthor('thing_id'),
+        text=VMarkdown('text'),
+    )
     @api_doc(api_section.links_and_comments)
     def POST_editusertext(self, form, jquery, item, text):
         """Edit the body text of a comment or self-post."""
-        if (not form.has_errors("text",
-                                errors.NO_TEXT, errors.TOO_LONG) and
-            not form.has_errors("thing_id", errors.NOT_AUTHOR)):
+        if (form.has_errors('text', errors.NO_TEXT) or
+                form.has_errors("thing_id", errors.NOT_AUTHOR)):
+            return
 
-            removed_mentions = None
-            if isinstance(item, Comment):
-                kind = 'comment'
-                removed_mentions = set(extract_user_mentions(item.body)) - \
-                    set(extract_user_mentions(text))
-                item.body = text
-            elif isinstance(item, Link):
-                kind = 'link'
-                if not getattr(item, "is_self", False):
-                    return abort(403, "forbidden")
-                item.selftext = text
-            else:
-                g.log.warning("%s tried to edit usertext on %r", c.user, item)
-                return
+        max_length = item.subreddit_slow.selftext_max_length
+        if ((isinstance(item, Comment) and len(text) > 10000) or
+                (isinstance(item, Link) and len(text) > max_length)):
+            c.errors.add(errors.TOO_LONG, field='text',
+                         msg_params={'max_length': max_length})
+            form.set_error(errors.TOO_LONG, 'text')
+            return
 
-            if item._deleted:
+        removed_mentions = None
+        if isinstance(item, Comment):
+            kind = 'comment'
+            removed_mentions = set(extract_user_mentions(item.body)) - \
+                set(extract_user_mentions(text))
+            item.body = text
+        elif isinstance(item, Link):
+            kind = 'link'
+            if not getattr(item, "is_self", False):
                 return abort(403, "forbidden")
+            item.selftext = text
+        else:
+            g.log.warning("%s tried to edit usertext on %r", c.user, item)
+            return
 
-            if (item._date < timeago('3 minutes')
-                or (item._ups + item._downs > 2)):
-                item.editted = c.start_time
+        if item._deleted:
+            return abort(403, "forbidden")
 
-            item.ignore_reports = False
+        if (item._date < timeago('3 minutes')
+            or (item._ups + item._downs > 2)):
+            item.editted = c.start_time
 
-            item._commit()
+        item.ignore_reports = False
 
-            # only add to the edited page if this is marked as edited
-            if hasattr(item, "editted"):
-                queries.edit(item)
+        item._commit()
 
-            changed(item)
+        # only add to the edited page if this is marked as edited
+        if hasattr(item, "editted"):
+            queries.edit(item)
 
-            amqp.add_item('usertext_edited', item._fullname)
+        changed(item)
 
-            # new mentions are subject to more constraints, handled in butler_q
-            if removed_mentions:
-                queries.unnotify(item, list(Account._names_to_ids(
-                    removed_mentions,
-                    ignore_missing=True,
-                )))
+        amqp.add_item('usertext_edited', item._fullname)
 
-            if kind == 'link':
-                set_last_modified(item, 'comments')
-                LastModified.touch(item._fullname, 'Comments')
+        # new mentions are subject to more constraints, handled in butler_q
+        if removed_mentions:
+            queries.unnotify(item, list(Account._names_to_ids(
+                removed_mentions,
+                ignore_missing=True,
+            )))
 
-            wrapper = default_thing_wrapper(expand_children = True)
-            jquery(".content").replace_things(item, True, True, wrap = wrapper)
-            jquery(".content .link .rank").hide()
+        if kind == 'link':
+            set_last_modified(item, 'comments')
+            LastModified.touch(item._fullname, 'Comments')
+
+        wrapper = default_thing_wrapper(expand_children = True)
+        jquery(".content").replace_things(item, True, True, wrap = wrapper)
+        jquery(".content .link .rank").hide()
 
     @require_oauth2_scope("submit")
-    @validatedForm(VUser(),
-                   VModhash(),
-                   VRatelimit(rate_user = True, rate_ip = True,
-                              prefix = "rate_comment_"),
-                   parent = VSubmitParent(['thing_id', 'parent']),
-                   comment = VMarkdown(['text', 'comment']))
+    @validatedForm(
+        VUser(),
+        VModhash(),
+        VRatelimit(rate_user=True, rate_ip=True, prefix="rate_comment_"),
+        parent=VSubmitParent(['thing_id', 'parent']),
+        comment=VMarkdownLength(['text', 'comment'], max_length=10000),
+    )
     @api_doc(api_section.links_and_comments)
     def POST_comment(self, commentform, jquery, parent, comment):
         """Submit a new comment or reply to a message.
@@ -1725,6 +1743,7 @@ class ApiController(RedditController):
             c.errors.remove((errors.RATELIMIT, 'ratelimit'))
 
         if (commentform.has_errors("text", errors.NO_TEXT, errors.TOO_LONG) or
+                commentform.has_errors("comment", errors.TOO_LONG) or
                 commentform.has_errors("ratelimit", errors.RATELIMIT) or
                 commentform.has_errors("parent", errors.DELETED_COMMENT,
                     errors.DELETED_LINK, errors.TOO_OLD, errors.USER_BLOCKED)):
@@ -2176,9 +2195,9 @@ class ApiController(RedditController):
                    title = VLength("title", max_length = 100),
                    header_title = VLength("header-title", max_length = 500),
                    domain = VCnameDomain("domain"),
-                   submit_text = VMarkdown("submit_text", max_length=1024),
-                   public_description = VMarkdown("public_description", max_length = 500),
-                   description = VMarkdown("description", max_length = 5120),
+                   submit_text = VMarkdownLength("submit_text", max_length=1024),
+                   public_description = VMarkdownLength("public_description", max_length = 500),
+                   description = VMarkdownLength("description", max_length = 5120),
                    lang = VLang("lang"),
                    over_18 = VBoolean('over_18'),
                    allow_top = VBoolean('allow_top'),

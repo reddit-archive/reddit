@@ -44,7 +44,7 @@ from r2.lib.validator import (
     VSubredditName,
     VSRByName,
     VValidatedJSON,
-    VMarkdown,
+    VMarkdownLength,
     VMultiPath,
     VMultiByPath,
 )
@@ -68,7 +68,7 @@ multi_json_spec = VValidatedJSON.Object({
 
 
 multi_description_json_spec = VValidatedJSON.Object({
-    'body_md': VMarkdown('body_md', empty_error=None),
+    'body_md': VMarkdownLength('body_md', max_length=10000, empty_error=None),
 })
 
 

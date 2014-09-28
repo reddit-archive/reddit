@@ -86,7 +86,7 @@ from r2.lib.validator import (
     VPromoCampaign,
     VPromoTarget,
     VRatelimit,
-    VSelfText,
+    VMarkdownLength,
     VShamedDomain,
     VSponsor,
     VSponsorAdmin,
@@ -572,7 +572,7 @@ class PromoteApiController(ApiController):
         l=VLink('link_id36'),
         title=VTitle('title'),
         url=VUrl('url', allow_self=False),
-        selftext=VSelfText('text'),
+        selftext=VMarkdownLength('text', max_length=40000),
         kind=VOneOf('kind', ['link', 'self']),
         disable_comments=VBoolean("disable_comments"),
         sendreplies=VBoolean("sendreplies"),
@@ -639,6 +639,9 @@ class PromoteApiController(ApiController):
         if ((not l or not promote.is_promoted(l)) and
             (form.has_errors('title', errors.NO_TEXT, errors.TOO_LONG) or
              jquery.has_errors('ratelimit', errors.RATELIMIT))):
+            return
+
+        if kind == 'self' and form.has_errors('text', errors.TOO_LONG):
             return
 
         if not l:

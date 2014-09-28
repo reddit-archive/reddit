@@ -620,14 +620,13 @@ class VTitle(VLength):
                         "up to %d characters long" % self.max_length,
         }
 
-class VMarkdown(VLength):
-    def __init__(self, param, max_length = 10000, renderer='reddit', **kw):
-        VLength.__init__(self, param, max_length, **kw)
+class VMarkdown(Validator):
+    def __init__(self, param, renderer='reddit'):
+        Validator.__init__(self, param)
         self.renderer = renderer
 
-    def run(self, text, text2 = ''):
+    def run(self, text):
         text = text or text2
-        VLength.run(self, text)
         try:
             markdown_souptest(text, renderer=self.renderer)
             return text
@@ -646,17 +645,24 @@ class VMarkdown(VLength):
             tup(self.param)[0]: "raw markdown text",
         }
 
-class VSelfText(VMarkdown):
 
-    def set_max_length(self, val):
-        self._max_length = val
+class VMarkdownLength(VMarkdown):
+    def __init__(self, param, renderer='reddit', max_length=10000,
+                 empty_error=errors.NO_TEXT, length_error=errors.TOO_LONG):
+        VMarkdown.__init__(self, param, renderer)
+        self.max_length = max_length
+        self.empty_error = empty_error
+        self.length_error = length_error
 
-    def get_max_length(self):
-        if c.site.link_type == "self":
-            return self._max_length * 4
-        return self._max_length * 1.5
-
-    max_length = property(get_max_length, set_max_length)
+    def run(self, text, text2=''):
+        text = text or text2
+        text = VLength(self.param, self.max_length,
+                       empty_error=self.empty_error,
+                       length_error=self.length_error).run(text)
+        if text:
+            return VMarkdown.run(self, text)
+        else:
+            return ''
 
 
 class VSavedCategory(Validator):
