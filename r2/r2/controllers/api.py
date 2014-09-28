@@ -335,7 +335,6 @@ class ApiController(RedditController):
         sr=VSubmitSR('sr', 'kind'),
         url=VUrl('url'),
         title=VTitle('title'),
-        save=VBoolean('save'),
         sendreplies=VBoolean('sendreplies'),
         selftext=VMarkdown('text'),
         kind=VOneOf('kind', ['link', 'self']),
@@ -346,7 +345,7 @@ class ApiController(RedditController):
     )
     @api_doc(api_section.links_and_comments)
     def POST_submit(self, form, jquery, url, selftext, kind, title,
-                    save, sr, then, extension, sendreplies, resubmit):
+                    sr, then, extension, sendreplies, resubmit):
         """Submit a link to a subreddit.
 
         Submit will create a link or self-post in the subreddit `sr` with the
@@ -359,9 +358,6 @@ class ApiController(RedditController):
         `extension` is used for determining which view-type (e.g. `json`,
         `compact` etc.) to use for the redirect that is generated if the
         `resubmit` error occurs.
-
-        If `save` is true, the link will be implicitly saved after submission
-        (see [/api/save](#POST_api_save) for more information).
 
         """
 
@@ -487,8 +483,6 @@ class ApiController(RedditController):
             l.set_url_cache()
 
         queries.queue_vote(c.user, l, True, request.ip, cheater=c.cheater)
-        if save:
-            l._save(c.user)
 
         if sr.should_ratelimit(c.user, 'link'):
             c.user.clog_quota('link', l)
