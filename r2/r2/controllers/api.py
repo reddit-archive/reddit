@@ -372,88 +372,38 @@ class ApiController(RedditController):
                 url = kind = 'self'
 
             # VUrl may have replaced 'url' by adding 'http://'
-            form.set_inputs(url = url)
+            form.set_inputs(url=url)
 
         if not kind or form.has_errors('sr', errors.INVALID_OPTION):
-            # this should only happen if somebody is trying to post
-            # links in some automated manner outside of the regular
-            # submission page, and hasn't updated their script
             return
 
         if form.has_errors('captcha', errors.BAD_CAPTCHA):
             return
 
-        if (form.has_errors('sr',
+        if (not sr or form.has_errors('sr',
                             errors.SUBREDDIT_NOEXIST,
                             errors.SUBREDDIT_NOTALLOWED,
                             errors.SUBREDDIT_REQUIRED,
                             errors.NO_SELFS,
-                            errors.NO_LINKS)
-            or not sr):
-            # checking to get the error set in the form, but we can't
-            # check for rate-limiting if there's no subreddit
+                            errors.NO_LINKS)):
             return
 
         if not sr.can_submit_text(c.user) and kind == "self":
             # this could happen if they actually typed "self" into the
             # URL box and we helpfully translated it for them
             c.errors.add(errors.NO_SELFS, field='sr')
-
-            # and trigger that by hand for the form
             form.has_errors('sr', errors.NO_SELFS)
-
             return
 
-        should_ratelimit = sr.should_ratelimit(c.user, 'link')
-        #remove the ratelimit error if the user's karma is high
-        if not should_ratelimit:
+        if form.has_errors("title", errors.NO_TEXT, errors.TOO_LONG):
+            return
+
+        if not sr.should_ratelimit(c.user, 'link'):
             c.errors.remove((errors.RATELIMIT, 'ratelimit'))
-
-        ban = None
-
-        if kind == 'link':
-            check_domain = True
-
-            # check for no url, or clear that error field on return
-            if form.has_errors("url", errors.NO_URL, errors.BAD_URL):
-                pass
-            elif form.has_errors("url", errors.DOMAIN_BANNED):
-                g.stats.simple_event('spam.shame.link')
-            elif not resubmit:
-                listing = hot_links_by_url_listing(url, sr=sr, num=1)
-                links = listing.things
-                if links:
-                    c.errors.add(errors.ALREADY_SUB, field='url')
-                    form.has_errors('url', errors.ALREADY_SUB)
-                    check_domain = False
-                    u = links[0].already_submitted_link
-                    if extension:
-                        u = UrlParser(u)
-                        u.set_extension(extension)
-                        u = u.unparse()
-                    form.redirect(u)
-            # check for title, otherwise look it up and return it
-            elif form.has_errors("title", errors.NO_TEXT):
-                pass
-
-            if url is None:
-                g.log.warning("%s is trying to submit url=None (title: %r)"
-                              % (request.ip, title))
-            elif check_domain:
-                ban = is_banned_domain(url)
         else:
-            form.has_errors('text', errors.TOO_LONG)
+            if form.has_errors('ratelimit', errors.RATELIMIT):
+                return
 
-        if form.has_errors("title", errors.TOO_LONG, errors.NO_TEXT):
-            pass
-
-        if form.has_errors('ratelimit', errors.RATELIMIT):
-            pass
-
-        if form.has_error() or not title:
-            return
-
-        if should_ratelimit:
             filled_quota = c.user.quota_full('link')
             if filled_quota is not None:
                 if c.user._spam:
@@ -464,19 +414,44 @@ class ApiController(RedditController):
                               (c.user.name, filled_quota), "info")
 
                     verify_link = "/verify?reason=submit"
-                    reddiquette_link = "/wiki/reddiquette" 
+                    reddiquette_link = "/wiki/reddiquette"
 
                     if c.user.email_verified:
-                        msg = strings.verified_quota_msg % dict(reddiquette=reddiquette_link)
+                        msg = strings.verified_quota_msg
+                        msg %= {"reddiquette": reddiquette_link}
                     else:
-                        msg = strings.unverified_quota_msg % dict(verify=verify_link,
-                                                                  reddiquette=reddiquette_link)
+                        msg = strings.unverified_quota_msg
+                        msg %= {
+                            "verify": verify_link,
+                            "reddiquette": reddiquette_link,
+                        }
 
                 md = safemarkdown(msg)
                 form.set_html(".status", md)
                 c.errors.add(errors.QUOTA_FILLED)
                 form.set_error(errors.QUOTA_FILLED, None)
                 return
+
+        if kind == 'link':
+            if not url or form.has_errors("url", errors.NO_URL, errors.BAD_URL):
+                return
+
+            if form.has_errors("url", errors.DOMAIN_BANNED):
+                g.stats.simple_event('spam.shame.link')
+                return
+
+            if not resubmit:
+                listing = hot_links_by_url_listing(url, sr=sr, num=1)
+                links = listing.things
+                if links:
+                    c.errors.add(errors.ALREADY_SUB, field='url')
+                    form.has_errors('url', errors.ALREADY_SUB)
+                    u = links[0].already_submitted_link
+                    if extension:
+                        u = UrlParser(u)
+                        u.set_extension(extension)
+                        u = u.unparse()
+                    form.redirect(u)
 
         if kind == 'self' and len(selftext) > sr.selftext_max_length:
             c.errors.add(errors.TOO_LONG, field='text',
@@ -491,16 +466,17 @@ class ApiController(RedditController):
         cleaned_title = re.sub(r'\s+', ' ', title, flags=re.UNICODE)
         cleaned_title = cleaned_title.strip()
 
-        # well, nothing left to do but submit it
         l = Link._submit(cleaned_title, url if kind == 'link' else 'self',
                          c.user, sr, request.ip, spam=c.user._spam,
                          sendreplies=sendreplies)
 
-        if ban:
-            g.stats.simple_event('spam.domainban.link_url')
-            admintools.spam(l, banner = "domain (%s)" % ban.banmsg)
-            hooks.get_hook('banned_domain.submit').call(item=l, url=url,
-                                                        ban=ban)
+        if kind == 'link':
+            ban = is_banned_domain(url)
+            if ban:
+                g.stats.simple_event('spam.domainban.link_url')
+                admintools.spam(l, banner = "domain (%s)" % ban.banmsg)
+                hooks.get_hook('banned_domain.submit').call(item=l, url=url,
+                                                            ban=ban)
 
         if kind == 'self':
             l.url = l.make_permalink_slow()
@@ -514,13 +490,11 @@ class ApiController(RedditController):
         if save:
             l._save(c.user)
 
-        #set the ratelimiter
-        if should_ratelimit:
+        if sr.should_ratelimit(c.user, 'link'):
             c.user.clog_quota('link', l)
             VRatelimit.ratelimit(rate_user=True, rate_ip = True,
                                  prefix = "rate_submit_")
 
-        #update the queries
         queries.new_link(l)
         changed(l)
 
@@ -529,8 +503,10 @@ class ApiController(RedditController):
         elif then == 'tb':
             form.attr('target', '_top')
             path = add_sr('/tb/%s' % l._id36)
+
         if extension:
             path += ".%s" % extension
+
         form.redirect(path)
         form._send_data(url=path)
         form._send_data(id=l._id36)
