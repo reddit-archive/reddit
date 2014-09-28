@@ -30,6 +30,7 @@ from sqlalchemy import (
     Column,
     DateTime,
     Date,
+    distinct,
     Float,
     func as safunc,
     Integer,
@@ -423,27 +424,41 @@ class PromotionWeights(Sessionized, Base):
             item._delete()
 
     @classmethod
-    def get_campaigns(cls, start, end=None, link=None, author_id=None,
-                      sr_names=None):
+    def _filter_query(cls, query, start, end=None, link=None,
+                      author_id=None, sr_names=None):
         start = to_date(start)
-        q = cls.query()
+
         if end:
             end = to_date(end)
-            q = q.filter(and_(cls.date >= start, cls.date < end))
+            query = query.filter(and_(cls.date >= start, cls.date < end))
         else:
-            q = q.filter(cls.date == start)
+            query = query.filter(cls.date == start)
 
         if link:
-            q = q.filter(cls.thing_name == link._fullname)
+            query = query.filter(cls.thing_name == link._fullname)
 
         if author_id:
-            q = q.filter(cls.account_id == author_id)
+            query = query.filter(cls.account_id == author_id)
 
         if sr_names:
             sr_names = [cls.filter_sr_name(sr_name) for sr_name in sr_names]
-            q = q.filter(cls.sr_name.in_(sr_names))
+            query = query.filter(cls.sr_name.in_(sr_names))
 
-        return list(q)
+        return query
+
+    @classmethod
+    def get_campaign_ids(cls, start, end=None, link=None, author_id=None,
+                         sr_names=None):
+        query = cls.session.query(distinct(cls.promo_idx))
+        query = cls._filter_query(query, start, end, link, author_id, sr_names)
+        return {i[0] for i in query}
+
+    @classmethod
+    def get_link_names(cls, start, end=None, link=None, author_id=None,
+                       sr_names=None):
+        query = cls.session.query(distinct(cls.thing_name))
+        query = cls._filter_query(query, start, end, link, author_id, sr_names)
+        return {i[0] for i in query}
 
 
 # do all the leg work of creating/connecting to tables

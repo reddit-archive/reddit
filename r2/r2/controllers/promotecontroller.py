@@ -224,9 +224,8 @@ class SponsorController(PromoteController):
         owner_name = owner.name if owner else ''
 
         if owner:
-            promo_weights = PromotionWeights.get_campaigns(start, end,
-                                                           author_id=owner._id)
-            campaign_ids = [pw.promo_idx for pw in promo_weights]
+            campaign_ids = PromotionWeights.get_campaign_ids(
+                start, end, author_id=owner._id)
             campaigns = PromoCampaign._byID(campaign_ids, data=True)
             link_ids = {camp.link_id for camp in campaigns.itervalues()}
             links.extend(Link._byID(link_ids, data=True, return_dict=False))
@@ -412,8 +411,7 @@ class SponsorListingController(PromoteListingController):
     @memoize('house_link_names', time=60)
     def get_house_link_names(cls):
         now = promote.promo_datetime_now()
-        pws = PromotionWeights.get_campaigns(now)
-        campaign_ids = {pw.promo_idx for pw in pws}
+        campaign_ids = PromotionWeights.get_campaign_ids(now)
         q = PromoCampaign._query(PromoCampaign.c._id.in_(campaign_ids),
                                  PromoCampaign.c.priority_name == 'house',
                                  data=True)

@@ -59,11 +59,9 @@ def error_statistics(errors):
 
 
 def get_scheduled(date, sr_name=''):
-    all_promotions = PromotionWeights.get_campaigns(date)
-    fp_promotions = [p for p in all_promotions if p.sr_name == sr_name]
-    campaigns = PromoCampaign._byID([i.promo_idx for i in fp_promotions],
-                                    return_dict=False, data=True)
-    links = Link._by_fullname([i.thing_name for i in fp_promotions],
+    campaign_ids = PromotionWeights.get_campaign_ids(date, sr_names=[sr_name])
+    campaigns = PromoCampaign._byID(campaign_ids, return_dict=False, data=True)
+    links = Link._by_fullname({camp.link_id for camp in campaigns},
                               return_dict=False, data=True)
     links = {l._id: l for l in links}
     kept = []
@@ -77,8 +75,7 @@ def get_scheduled(date, sr_name=''):
 
         kept.append(camp._id)
 
-    return [('%s_%s' % (PC_PREFIX, to36(p.promo_idx)), p.thing_name, p.bid)
-            for p in fp_promotions if p.promo_idx in kept]
+    return [(camp._fullname, camp.link_id, camp.bid) for camp in kept]
 
 
 def get_campaign_pageviews(date, sr_name=''):

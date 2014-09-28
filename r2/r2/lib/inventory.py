@@ -100,8 +100,8 @@ def get_date_range(start, end):
 def get_campaigns_by_date(srs, start, end, ignore=None):
     srs = tup(srs)
     sr_names = [sr.name for sr in srs]
-    q = PromotionWeights.get_campaigns(start, end=end, sr_names=sr_names)
-    campaign_ids = {pw.promo_idx for pw in q}
+    campaign_ids = PromotionWeights.get_campaign_ids(
+        start, end=end, sr_names=sr_names)
     if ignore:
         campaign_ids.discard(ignore._id)
     campaigns = PromoCampaign._byID(campaign_ids, data=True, return_dict=False)

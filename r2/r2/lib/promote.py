@@ -504,8 +504,8 @@ def is_geotargeted_promo(link):
 
 
 def get_promos(date, sr_names=None, link=None):
-    pws = PromotionWeights.get_campaigns(date, sr_names=sr_names, link=link)
-    campaign_ids = {pw.promo_idx for pw in pws}
+    campaign_ids = PromotionWeights.get_campaign_ids(
+        date, sr_names=sr_names, link=link)
     campaigns = PromoCampaign._byID(campaign_ids, data=True, return_dict=False)
     link_ids = {camp.link_id for camp in campaigns}
     links = Link._byID(link_ids, data=True)
