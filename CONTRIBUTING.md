@@ -12,8 +12,8 @@ actually get implemented.
 
 2. **Don't submit unconfirmed bugs**.
 Please make sure your bug is an actual bug before reporting it.
-Unfortunately, things will sometimes break on the operations side of the site.
-(e.g. a database slowing down, or a server being unavailable) These issues may
+Unfortunately, things will sometimes break on the operations side of the site
+(e.g. a database slowing down, or a server being unavailable). These issues may
 look like a bug, but they are not.  If you're not sure, make a post in
 [/r/bugs](http://www.reddit.com/r/bugs).
 
