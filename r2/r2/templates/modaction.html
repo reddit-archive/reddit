@@ -48,7 +48,7 @@
           short_title = title
       text = _('comment by %(comment_author)s on "%(link_title)s"')
       text %= {
-        'comment_author': thing.target_author.name,
+        'comment_author': '[deleted]' if thing.target_author._deleted else thing.target_author.name,
         'link_title': short_title,
       }
       permalink = thing.target.make_permalink(thing.parent_link, thing.subreddit)
@@ -64,7 +64,7 @@
       text = _('link "%(link_title)s" by %(link_author)s')
       text %= {
         'link_title': short_title,
-        'link_author': thing.target_author.name
+        'link_author': '[deleted]' if thing.target_author._deleted else thing.target_author.name,
       }
       permalink = thing.target.make_permalink(thing.subreddit)
     %>

@@ -1060,7 +1060,9 @@ class ModActionTemplate(ThingJsonTemplate):
             return (time.mktime(thing.date.astimezone(pytz.UTC).timetuple())
                     - time.timezone)
         elif attr == 'target_author':
-            if thing.target_author:
+            if thing.target_author and thing.target_author._deleted:
+                return "[deleted]"
+            elif thing.target_author:
                 return thing.target_author.name
             return ""
         elif attr == "moderator":
