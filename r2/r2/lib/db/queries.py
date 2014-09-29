@@ -1678,26 +1678,18 @@ def get_likes(user, items):
     # check the prequeued_vote_keys
     keys = {}
     for item in items:
-        if (user, item) in res:
-            continue
-
-        key = prequeued_vote_key(user, item)
-        keys[key] = (user, item)
+        # we can only vote on links and comments
+        if isinstance(item, (Comment, Link)):
+            key = prequeued_vote_key(user, item)
+            keys[key] = (user, item)
+        else:
+            res[(user, item)] = None
     if keys:
         r = g.cache.get_multi(keys.keys())
         for key, v in r.iteritems():
             res[keys[key]] = (True if v == '1'
                               else False if v == '-1'
                               else None)
-
-    for item in items:
-        # already retrieved above
-        if (user, item) in res:
-            continue
-
-        # we can only vote on links and comments
-        if not isinstance(item, (Link, Comment)):
-            res[(user, item)] = None
 
     likes = Vote.likes(user, [i for i in items if (user, i) not in res])
 
