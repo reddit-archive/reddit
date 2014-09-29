@@ -1719,64 +1719,54 @@ class ApiController(RedditController):
         if not should_ratelimit:
             c.errors.remove((errors.RATELIMIT, 'ratelimit'))
 
-        if (not commentform.has_errors("text",
-                                       errors.NO_TEXT,
-                                       errors.TOO_LONG) and
-            not commentform.has_errors("ratelimit",
-                                       errors.RATELIMIT) and
-            not commentform.has_errors("parent",
-                                       errors.DELETED_COMMENT,
-                                       errors.DELETED_LINK,
-                                       errors.TOO_OLD,
-                                       errors.USER_BLOCKED)):
+        if (commentform.has_errors("text", errors.NO_TEXT, errors.TOO_LONG) or
+                commentform.has_errors("ratelimit", errors.RATELIMIT) or
+                commentform.has_errors("parent", errors.DELETED_COMMENT,
+                    errors.DELETED_LINK, errors.TOO_OLD, errors.USER_BLOCKED)):
+            return
 
-            if is_message:
-                if parent.from_sr:
-                    to = Subreddit._byID(parent.sr_id)
-                else:
-                    to = Account._byID(parent.author_id)
-                subject = parent.subject
-                re = "re: "
-                if not subject.startswith(re):
-                    subject = re + subject
-                item, inbox_rel = Message._new(c.user, to, subject,
-                                               comment, request.ip,
-                                               parent=parent)
-                item.parent_id = parent._id
+        if is_message:
+            if parent.from_sr:
+                to = Subreddit._byID(parent.sr_id)
             else:
-                item, inbox_rel = Comment._new(c.user, link, parent_comment,
-                                               comment, request.ip)
-                queries.queue_vote(c.user, item, True, request.ip,
-                                   cheater=c.cheater)
+                to = Account._byID(parent.author_id)
 
-                # adding to comments-tree is done as part of
-                # newcomments_q, so if they refresh immediately they
-                # won't see their comment
+            subject = parent.subject
+            re = "re: "
+            if not subject.startswith(re):
+                subject = re + subject
 
-            #update the queries
-            if is_message:
-                queries.new_message(item, inbox_rel)
-            else:
-                queries.new_comment(item, inbox_rel)
+            item, inbox_rel = Message._new(c.user, to, subject, comment,
+                                           request.ip, parent=parent)
+            item.parent_id = parent._id
+        else:
+            item, inbox_rel = Comment._new(c.user, link, parent_comment,
+                                           comment, request.ip)
+            queries.queue_vote(c.user, item, True, request.ip,
+                               cheater=c.cheater)
 
-            #set the ratelimiter
-            if should_ratelimit:
-                VRatelimit.ratelimit(rate_user=True, rate_ip = True,
-                                     prefix = "rate_comment_")
+        if is_message:
+            queries.new_message(item, inbox_rel)
+        else:
+            queries.new_comment(item, inbox_rel)
 
-            # clean up the submission form and remove it from the DOM (if reply)
-            t = commentform.find("textarea")
-            t.attr('rows', 3).html("").val("")
-            if isinstance(parent, (Comment, Message)):
-                commentform.remove()
-                jquery.things(parent._fullname).set_html(".reply-button:first",
-                                                         _("replied"))
+        if should_ratelimit:
+            VRatelimit.ratelimit(rate_user=True, rate_ip = True,
+                                 prefix = "rate_comment_")
 
-            # insert the new comment
-            jquery.insert_things(item)
+        # clean up the submission form and remove it from the DOM (if reply)
+        t = commentform.find("textarea")
+        t.attr('rows', 3).html("").val("")
+        if isinstance(parent, (Comment, Message)):
+            commentform.remove()
+            jquery.things(parent._fullname).set_html(".reply-button:first",
+                                                     _("replied"))
 
-            # remove any null listings that may be present
-            jquery("#noresults").hide()
+        # insert the new comment
+        jquery.insert_things(item)
+
+        # remove any null listings that may be present
+        jquery("#noresults").hide()
 
     @validatedForm(VUser(),
                    VModhash(),

@@ -216,10 +216,11 @@ def messages_key(user_id):
 def messages_lock_key(user_id):
     return 'message_conversations_lock_' + str(user_id)
 
-def add_message(message, update_recipient=True, update_modmail=True):
-    # add the message to the author's list and the recipient
+def add_message(message, update_recipient=True, update_modmail=True,
+                add_to_user=None):
     with g.make_lock("message_tree", messages_lock_key(message.author_id)):
         add_message_nolock(message.author_id, message)
+
     if update_recipient and message.to_id:
         with g.make_lock("message_tree", messages_lock_key(message.to_id)):
             add_message_nolock(message.to_id, message)
@@ -228,6 +229,9 @@ def add_message(message, update_recipient=True, update_modmail=True):
         with g.make_lock("modmail_tree", sr_messages_lock_key(message.sr_id)):
             add_sr_message_nolock(message.sr_id, message)
 
+    if add_to_user and add_to_user._id != message.to_id:
+        with g.make_lock("message_tree", messages_lock_key(add_to_user._id)):
+            add_message_nolock(add_to_user._id, message)
 
 def _add_message_nolock(key, message):
     from r2.models import Account, Message

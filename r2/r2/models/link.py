@@ -1383,6 +1383,7 @@ class Message(Thing, Printable):
 
         if sr:
             sr_id = sr._id
+
         if parent:
             m.parent_id = parent._id
             if parent.first_message:
@@ -1431,8 +1432,7 @@ class Message(Thing, Printable):
         # if there is a "to" we may have to create an inbox relation as well
         # also, only global admins can be message spammed.
         if not skip_inbox and to and (not m._spam or to.name in g.admins):
-            # if the current "to" is not a sr moderator,
-            # they need to be notified
+            # if "to" is not a sr moderator they need to be notified
             if not sr_id or not sr.is_moderator(to):
                 # Record the inbox relation, but don't give the user
                 # an orangered, if they PM themselves.
@@ -1441,15 +1441,23 @@ class Message(Thing, Printable):
                              author._id not in to.enemies)
                 inbox_rel.append(Inbox._add(to, m, 'inbox',
                                             orangered=orangered))
-            # find the message originator
-            elif sr_id and m.first_message:
-                first = Message._byID(m.first_message, True)
-                orig = Account._byID(first.author_id, True)
-                # Only inbox if the origin account does not have
-                # modmail access.
-                if (orig._id != author._id and
-                        not sr.is_moderator_with_perms(orig, 'mail')):
-                    inbox_rel.append(Inbox._add(orig, m, 'inbox'))
+
+        # update user inboxes for non-mods involved in a modmail conversation
+        if not skip_inbox and sr_id and m.first_message:
+            first_message = Message._byID(m.first_message, data=True)
+            first_sender = Account._byID(first_message.author_id, data=True)
+            first_sender_modmail = sr.is_moderator_with_perms(
+                first_sender, 'mail')
+
+            if first_sender != author and not first_sender_modmail:
+                inbox_rel.append(Inbox._add(first_sender, m, 'inbox'))
+
+            if first_message.to_id:
+                first_recipient = Account._byID(first_message.to_id, data=True)
+                first_recipient_modmail = sr.is_moderator_with_perms(
+                    first_recipient, 'mail')
+                if first_recipient != author and not first_recipient_modmail:
+                    inbox_rel.append(Inbox._add(first_recipient, m, 'inbox'))
 
         hooks.get_hook('message.new').call(message=m)
 
