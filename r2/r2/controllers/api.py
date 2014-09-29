@@ -265,6 +265,11 @@ class ApiController(RedditController):
                 form.has_errors("from_sr", errors.SUBREDDIT_NOEXIST)):
             return
 
+        if from_sr and isinstance(to, Subreddit):
+            c.errors.add(errors.NO_SR_TO_SR_MESSAGE, field="from")
+            form.has_errors("from", errors.NO_SR_TO_SR_MESSAGE)
+            return
+
         c.errors.remove((errors.BAD_SR_NAME, "from_sr"))
 
         if from_sr:

@@ -146,6 +146,7 @@ error_list = dict((
         ('GOLD_REQUIRED', _('you must have an active reddit gold subscription to do that')),
         ('INSUFFICIENT_CREDDITS', _("insufficient creddits")),
         ('SCRAPER_ERROR', _("unable to scrape provided url")),
+        ('NO_SR_TO_SR_MESSAGE', _("can't send a message from a subreddit to another subreddit")),
     ))
 
 errors = Storage([(e, e) for e in error_list.keys()])

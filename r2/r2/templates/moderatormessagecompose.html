@@ -20,6 +20,7 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
+<%namespace file="utils.html" import="error_field"/>
 <%namespace name="utils" file="utils.html"/>
 <%namespace file="messagecompose.html" import="to_field, subject_field, message_field, captcha_field"/>
 
@@ -56,5 +57,6 @@ ${captcha_field()}
         <input type="text" name="from_sr" value="${thing.mod_srs[0].name}" readonly>
       %endif
     </%utils:round_field>
+    ${error_field("NO_SR_TO_SR_MESSAGE", "from")}
   </div>
 </%def>
