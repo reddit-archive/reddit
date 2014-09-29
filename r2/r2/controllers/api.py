@@ -270,6 +270,9 @@ class ApiController(RedditController):
             form.has_errors("from", errors.NO_SR_TO_SR_MESSAGE)
             return
 
+        if from_sr and from_sr._spam:
+            return
+
         c.errors.remove((errors.BAD_SR_NAME, "from_sr"))
 
         if from_sr:

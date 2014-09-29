@@ -1432,7 +1432,7 @@ class MultiReddit(FakeSubreddit):
 
     def srs_with_perms(self, user, *perms):
         return [sr for sr in self.srs
-                if sr.is_moderator_with_perms(user, *perms)]
+                if sr.is_moderator_with_perms(user, *perms) and not sr._spam]
 
     @property
     def title(self):
