@@ -270,6 +270,11 @@ class ApiController(RedditController):
             form.has_errors("from", errors.NO_SR_TO_SR_MESSAGE)
             return
 
+        if from_sr and BlockedSubredditsByAccount.is_blocked(to, from_sr):
+            c.errors.add(errors.USER_BLOCKED_MESSAGE, field="to")
+            form.has_errors("to", errors.USER_BLOCKED_MESSAGE)
+            return
+
         if from_sr and from_sr._spam:
             return
 
@@ -1550,8 +1555,11 @@ class ApiController(RedditController):
         form.fadeOut()
 
     @require_oauth2_scope("privatemessages")
-    @noresponse(VUser(), VModhash(),
-                thing=VByName('id'))
+    @noresponse(
+        VUser(),
+        VModhash(),
+        thing=VByName('id'),
+    )
     @api_doc(api_section.messages)
     def POST_block(self, thing):
         '''For blocking via inbox.'''
@@ -1563,7 +1571,8 @@ class ApiController(RedditController):
         except NotFound:
             sr = None
 
-        if getattr(thing, "from_sr", False):
+        if getattr(thing, "from_sr", False) and sr:
+            BlockedSubredditsByAccount.block(c.user, sr)
             return
 
         # Users may only block someone who has
@@ -1580,6 +1589,26 @@ class ApiController(RedditController):
         if block_acct.name in g.admins:
             return
         c.user.add_enemy(block_acct)
+
+    @require_oauth2_scope("privatemessages")
+    @noresponse(
+        VUser(),
+        VModhash(),
+        thing=VByName('id'),
+    )
+    @api_doc(api_section.messages)
+    def POST_unblock_subreddit(self, thing):
+        if not thing:
+            return
+
+        try:
+            sr = Subreddit._byID(thing.sr_id) if thing.sr_id else None
+        except NotFound:
+            sr = None
+
+        if getattr(thing, "from_sr", False) and sr:
+            BlockedSubredditsByAccount.unblock(c.user, sr)
+            return
 
     @require_oauth2_scope("edit")
     @validatedForm(VUser(),

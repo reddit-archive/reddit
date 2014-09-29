@@ -923,6 +923,35 @@ class AccountsActiveBySR(tdb_cassandra.View):
         return cls._cf.get_count(sr_id)
 
 
+class BlockedSubredditsByAccount(tdb_cassandra.DenormalizedRelation):
+    _use_db = True
+    _last_modified_name = 'block_subreddit'
+    _read_consistency_level = tdb_cassandra.CL.QUORUM
+    _write_consistency_level = tdb_cassandra.CL.QUORUM
+    _connection_pool = 'main'
+    _views = []
+
+    @classmethod
+    def value_for(cls, thing1, thing2):
+        return ''
+
+    @classmethod
+    def block(cls, user, sr):
+        cls.create(user, sr)
+
+    @classmethod
+    def unblock(cls, user, sr):
+        cls.destroy(user, sr)
+
+    @classmethod
+    def is_blocked(cls, user, sr):
+        try:
+            r = cls.fast_query(user, sr)
+        except tdb_cassandra.NotFound:
+            return False
+        return True
+
+
 @trylater_hooks.on("trylater.account_deletion")
 def on_account_deletion(mature_items):
     for account_id36 in mature_items.itervalues():

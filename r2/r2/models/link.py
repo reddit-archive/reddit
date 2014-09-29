@@ -32,7 +32,7 @@ from r2.lib.utils import (
     tup,
     UrlParser,
 )
-from account import Account, DeletedUser
+from account import Account, DeletedUser, BlockedSubredditsByAccount
 from subreddit import DefaultSR, DomainSR, Subreddit
 from printable import Printable
 from r2.config import extensions
@@ -1517,6 +1517,11 @@ class Message(Thing, Printable):
         # load the unread mod list for the same reason
         mod_unread = set(queries.get_unread_subreddit_messages_multi(msg_srs))
 
+        # load blocked subreddits
+        sr_blocks = BlockedSubredditsByAccount.fast_query(
+            user, m_subreddits.values())
+        blocked_srids = {sr._id for _user, sr in sr_blocks.iterkeys()}
+
         for item in wrapped:
             item.to = tos.get(item.to_id)
             if item.sr_id:
@@ -1571,13 +1576,17 @@ class Message(Thing, Printable):
                 item.subreddit = m_subreddits[item.sr_id]
 
             item.hide_author = False
+            item.is_collapsed = None
             if getattr(item, "from_sr", False):
                 if not (item.subreddit.is_moderator(c.user) or
                         c.user_is_admin):
                     item.author = item.subreddit
                     item.hide_author = True
+                if item.subreddit._id in blocked_srids:
+                    item.subject = _('[message from blocked subreddit]')
+                    item.sr_blocked = True
+                    item.is_collapsed = True
 
-            item.is_collapsed = None
             if not item.new:
                 if item.recipient:
                     item.is_collapsed = item.to_collapse
