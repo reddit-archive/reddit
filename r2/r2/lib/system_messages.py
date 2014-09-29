@@ -117,4 +117,4 @@ def notify_user_added(rel_type, author, user, target, message=None):
 
         item, inbox_rel = Message._new(modmail_author, target, subject, msg,
                                        request.ip, sr=target)
-        queries.new_message(item, inbox_rel, update_modmail=False)
+        queries.new_message(item, inbox_rel)
