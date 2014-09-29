@@ -1554,6 +1554,10 @@ class ApiController(RedditController):
             sr = Subreddit._byID(thing.sr_id) if thing.sr_id else None
         except NotFound:
             sr = None
+
+        if getattr(thing, "from_sr", False):
+            return
+
         # Users may only block someone who has
         # actively harassed them (i.e., comment/link reply
         # or PM). Check that 'thing' is in the user's inbox somewhere

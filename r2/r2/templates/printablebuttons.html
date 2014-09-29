@@ -401,7 +401,7 @@
   %endif
   %if thing.recipient:
     ${self.banbuttons()}
-      %if (not thing.was_comment or thing.thing.message_style == "mention") and thing.thing.author_id != c.user._id and thing.thing.author_id not in c.user.enemies:
+      %if not getattr(thing.thing, "from_sr", False) and (not thing.was_comment or thing.thing.message_style == "mention") and thing.thing.author_id != c.user._id and thing.thing.author_id not in c.user.enemies:
         <li>
           ${ynbutton(_("block user"), _("blocked"), "block", "hide_thing")}
         </li>
