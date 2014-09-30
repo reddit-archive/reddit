@@ -1528,6 +1528,26 @@ class Message(Thing, Printable):
                                   if l.parent_id and l.was_comment),
                                 data=True, return_dict=True)
 
+        # special handling for mod replies to mod PMs
+        mod_message_authors = {}
+        mod_messages = [
+            item for item in wrapped
+            if (item.to_id is None and
+                    item.sr_id and
+                    item.parent_id and
+                    (c.user_is_admin or item.subreddit.is_moderator(user)))
+        ]
+        if mod_messages:
+            parent_ids = [item.parent_id for item in mod_messages]
+            parents = Message._byID(parent_ids, data=True, return_dict=True)
+            author_ids = {item.author_id for item in parents.itervalues()}
+            authors = Account._byID(author_ids, data=True, return_dict=True)
+
+            for item in mod_messages:
+                parent = parents[item.parent_id]
+                author = authors[parent.author_id]
+                mod_message_authors[item._id] = author
+
         # load the unread list to determine message newness
         unread = set(queries.get_unread_inbox(user))
 
@@ -1625,6 +1645,10 @@ class Message(Thing, Printable):
                 taglinetext = _("subreddit message %(author)s sent %(when)s")
             elif item.author_id == c.user._id:
                 taglinetext = _("to %(dest)s sent %(when)s")
+            elif (item._id in mod_message_authors and
+                    (item.subreddit.is_moderator(c.user) or c.user_is_admin)):
+                item.to = mod_message_authors[item._id]
+                taglinetext = _("to %(dest)s from %(author)s sent %(when)s")
             elif item.to_id == c.user._id or item.to_id is None:
                 taglinetext = _("from %(author)s sent %(when)s")
             else:
