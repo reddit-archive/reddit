@@ -946,10 +946,10 @@ class BlockedSubredditsByAccount(tdb_cassandra.DenormalizedRelation):
     @classmethod
     def is_blocked(cls, user, sr):
         try:
-            r = cls.fast_query(user, sr)
+            r = cls.fast_query(user, [sr])
         except tdb_cassandra.NotFound:
             return False
-        return True
+        return (user, sr) in r
 
 
 @trylater_hooks.on("trylater.account_deletion")
