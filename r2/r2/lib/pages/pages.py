@@ -49,6 +49,7 @@ from r2.models import (
     NotFound,
     Printable,
     PromoCampaign,
+    PromotionPrices,
     Random,
     RandomNSFW,
     RandomSubscription,
@@ -3842,6 +3843,7 @@ class PromoteLinkEdit(PromoteLinkBase):
             'faq': 'http://www.reddit.com/wiki/selfserve',
         }
         self.infobar = InfoBar(message=message)
+        self.price_dict = PromotionPrices.get_price_dict()
 
 
 class RenderableCampaign(Templated):

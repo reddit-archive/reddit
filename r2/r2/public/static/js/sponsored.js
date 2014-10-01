@@ -13,8 +13,9 @@ r.sponsored = {
         this.campaignListColumns = $('.existing-campaigns thead th').length
     },
 
-    setup: function(inventory_by_sr, isEmpty, userIsSponsor) {
+    setup: function(inventory_by_sr, priceDict, isEmpty, userIsSponsor) {
         this.inventory = inventory_by_sr
+        this.priceDict = priceDict
         if (isEmpty) {
             this.render()
             init_startdate()
@@ -366,19 +367,22 @@ r.sponsored = {
     },
 
     get_cpm: function($form) {
-        var baseCpm = parseInt($("#bid").data("base_cpm")),
-            geotargetMetroCpm = parseInt($("#bid").data("geotarget_metro_cpm")),
-            collectionCpm = parseInt($("#bid").data("collection_cpm")),
-            isMetroGeotarget = $('#metro').val() !== null && !$('#metro').is(':disabled'),
-            isCollectionTarget = $('input[name="targeting"][value="collection"]').is(':checked'),
-            isTechCollection = isCollectionTarget && $('input[name="collection"]:checked').val() == "technology buffs"
+        var isMetroGeotarget = $('#metro').val() !== null && !$('#metro').is(':disabled'),
+            isSubreddit = $form.find('input[name="targeting"][value="one"]').is(':checked'),
+            collectionVal = $form.find('input[name="collection"]:checked').val(),
+            isFrontpage = !isSubreddit && collectionVal === 'none',
+            isCollection = !isSubreddit && !isFrontpage,
+            sr = isSubreddit ? $form.find('*[name="sr"]').val() : '',
+            collection = isCollection ? collectionVal : null
 
         if (isMetroGeotarget) {
-            return geotargetMetroCpm
-        } else if (isCollectionTarget && !isTechCollection) {
-            return collectionCpm
+            return this.priceDict.METRO
+        } else if (isFrontpage) {
+            return this.priceDict.COLLECTION_DEFAULT
+        } else if (isCollection) {
+            return this.priceDict.COLLECTION[collection] || this.priceDict.COLLECTION_DEFAULT
         } else {
-            return baseCpm
+            return this.priceDict.SUBREDDIT[sr] || this.priceDict.SUBREDDIT_DEFAULT
         }
     },
 

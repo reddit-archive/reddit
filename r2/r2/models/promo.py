@@ -571,3 +571,106 @@ class PromotedLinkRoadblock(tdb_cassandra.View):
                 start, end = cls._dates_from_key(key)
                 ret.append((sr.name, start, end))
         return ret
+
+
+class PromotionPrices(tdb_cassandra.View):
+    """
+    Price rules:
+    * Location targeting trumps all: Anything targeting a metro gets the global
+      metro price.
+    * Any collection or subreddit with a specified price gets that price
+    * Any collection or subreddit without a specified price gets the global
+      collection or subreddit price
+    * Frontpage gets the global collection price.
+
+    """
+
+    _use_db = True
+    _connection_pool = 'main'
+    _read_consistency_level = tdb_cassandra.CL.ONE
+    _write_consistency_level = tdb_cassandra.CL.ALL
+    _extra_schema_creation_args = {
+        "key_validation_class": tdb_cassandra.UTF8_TYPE,
+        "column_name_class": tdb_cassandra.UTF8_TYPE,
+        "default_validation_class": tdb_cassandra.INT_TYPE,
+    }
+
+    @classmethod
+    def _get_components(cls, target, cpm):
+        rowkey = column_name = None
+        column_value = cpm
+
+        if isinstance(target, Target):
+            if target.is_collection:
+                rowkey = "COLLECTION"
+                column_name = target.collection.name
+            else:
+                rowkey = "SUBREDDIT"
+                column_name = target.subreddit_name
+
+        if not rowkey or not column_name:
+            raise ValueError("target must be Target")
+
+        return rowkey, column_name, column_value
+
+    @classmethod
+    def set_price(cls, target, cpm):
+        rowkey, column_name, column_value = cls._get_components(target, cpm)
+        cls._cf.insert(rowkey, {column_name: column_value})
+
+    @classmethod
+    def get_price(cls, target, location):
+        if location and location.metro:
+            return g.cpm_selfserve_geotarget_metro.pennies
+
+        # check for Frontpage
+        if (isinstance(target, Target) and
+                not target.is_collection and
+                target.subreddit_name == Frontpage.name):
+            return g.cpm_selfserve_collection.pennies
+
+        # check for target specific override price
+        rowkey, column_name, _ = cls._get_components(target, None)
+        try:
+            columns = cls._cf.get(rowkey, columns=[column_name])
+        except tdb_cassandra.NotFoundException:
+            columns = {}
+        if column_name in columns:
+            return columns[column_name]
+
+        # use global price
+        if isinstance(target, Target):
+            if target.is_collection:
+                return g.cpm_selfserve_collection.pennies
+            else:
+                return g.cpm_selfserve.pennies
+
+        raise ValueError("target must be Target")
+
+    @classmethod
+    def get_price_dict(cls):
+        r = {
+            "COLLECTION": {},
+            "SUBREDDIT": {},
+            "METRO": g.cpm_selfserve_geotarget_metro.pennies,
+            "COLLECTION_DEFAULT": g.cpm_selfserve_collection.pennies,
+            "SUBREDDIT_DEFAULT": g.cpm_selfserve.pennies,
+        }
+
+        try:
+            collections = cls._cf.get("COLLECTION")
+        except tdb_cassandra.NotFoundException:
+            collections = {}
+
+        try:
+            subreddits = cls._cf.get("SUBREDDIT")
+        except tdb_cassandra.NotFoundException:
+            subreddits = {}
+
+        for name, cpm in collections.iteritems():
+            r["COLLECTION"][name] = cpm
+
+        for name, cpm in subreddits.iteritems():
+            r["SUBREDDIT"][name] = cpm
+
+        return r

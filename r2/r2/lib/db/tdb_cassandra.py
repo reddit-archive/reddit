@@ -31,9 +31,14 @@ from pylons import g
 from pycassa import ColumnFamily
 from pycassa.pool import MaximumRetryException
 from pycassa.cassandra.ttypes import ConsistencyLevel, NotFoundException
-from pycassa.system_manager import (SystemManager, UTF8_TYPE,
-                                    COUNTER_COLUMN_TYPE, TIME_UUID_TYPE,
-                                    ASCII_TYPE)
+from pycassa.system_manager import (
+    ASCII_TYPE,
+    COUNTER_COLUMN_TYPE,
+    INT_TYPE,
+    SystemManager,
+    TIME_UUID_TYPE,
+    UTF8_TYPE,
+)
 from pycassa.types import DateType, LongType, IntegerType
 from pycassa.util import convert_uuid_to_time
 from r2.lib.utils import tup, Storage

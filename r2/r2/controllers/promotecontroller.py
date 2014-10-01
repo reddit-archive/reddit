@@ -106,6 +106,7 @@ from r2.models import (
     NotFound,
     PromoCampaign,
     PromotionLog,
+    PromotionPrices,
     PromotionWeights,
     PromotedLinkRoadblock,
     Subreddit,
@@ -795,18 +796,7 @@ class PromoteApiController(ApiController):
                     # regular users can only location target the frontpage
                     return abort(403, 'forbidden')
 
-        if location and location.metro:
-            cpm = g.cpm_selfserve_geotarget_metro.pennies
-        elif (target.is_collection and
-                target.collection.name == "technology buffs"):
-            # special price override -- technology collection is more expensive
-            author = Account._byID(link.author_id, data=True)
-            cpm = author.cpm_selfserve_pennies
-        elif target.is_collection or is_frontpage:
-            cpm = g.cpm_selfserve_collection.pennies
-        else:
-            author = Account._byID(link.author_id, data=True)
-            cpm = author.cpm_selfserve_pennies
+        cpm = PromotionPrices.get_price(target, location)
 
         if (form.has_errors('startdate', errors.BAD_DATE,
                             errors.DATE_TOO_EARLY, errors.DATE_TOO_LATE) or
