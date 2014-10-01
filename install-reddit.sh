@@ -286,6 +286,7 @@ sudo -u $REDDIT_USER make clean all
 cd $REDDIT_HOME/src/reddit/r2
 sudo -u $REDDIT_USER make clean all
 
+plugin_str=$(echo -n "$REDDIT_PLUGINS" | tr " " ,)
 if [ ! -f development.update ]; then
     cat > development.update <<DEVELOPMENT
 # after editing this file, run "make ini" to
@@ -303,7 +304,7 @@ page_cache_time = 0
 
 domain = $REDDIT_DOMAIN
 
-plugins = about, liveupdate, meatspace
+plugins = $plugin_str
 
 media_provider = filesystem
 media_fs_root = /srv/www/media
@@ -314,10 +315,10 @@ media_fs_base_url_https = https://%(domain)s/media/
 port = 8001
 DEVELOPMENT
     chown $REDDIT_USER development.update
+else
+    sed -i "s/^plugins = .*$/plugins = $plugin_str/" $REDDIT_HOME/src/reddit/r2/development.update
+    sed -i "s/^domain = .*$/domain = $REDDIT_DOMAIN/" $REDDIT_HOME/src/reddit/r2/development.update
 fi
-
-plugin_str=$(echo -n "$REDDIT_PLUGINS" | tr " " ,)
-sed -i "s/^plugins = .*$/plugins = $plugin_str/" $REDDIT_HOME/src/reddit/r2/development.update
 
 sudo -u $REDDIT_USER make ini
 
