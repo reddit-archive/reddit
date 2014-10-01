@@ -31,6 +31,7 @@ from r2.config.feature.world import World
 
 MockAccount = collections.namedtuple('Account', 'name')
 gary = MockAccount(name='gary')
+all_uppercase = MockAccount(name='ALL_UPPERCASE')
 
 
 class TestFeature(unittest.TestCase):
@@ -126,9 +127,13 @@ class TestFeature(unittest.TestCase):
         self.assertFalse(feature_state.is_enabled(user=gary))
 
     def test_user_in(self):
-        cfg = {'users': ['gary']}
+        cfg = {'users': ['Gary']}
         feature_state = self._make_state(cfg)
         self.assertTrue(feature_state.is_enabled(user=gary))
+
+        cfg = {'users': ['ALL_UPPERCASE']}
+        feature_state = self._make_state(cfg)
+        self.assertTrue(feature_state.is_enabled(user=all_uppercase))
 
         cfg = {'users': ['dave', 'gary']}
         feature_state = self._make_state(cfg)
