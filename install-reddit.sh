@@ -61,6 +61,9 @@ REDDIT_HOME=${REDDIT_HOME:-/home/$REDDIT_USER}
 # domains. an IP address will suffice if nothing else is available.
 REDDIT_DOMAIN=${REDDIT_DOMAIN:-reddit.local}
 
+#The plugins to clone and register in the ini file
+REDDIT_PLUGINS=${REDDIT_PLUGINS:-meatspace about liveupdate}
+
 ###############################################################################
 # Sanity Checks
 ###############################################################################
@@ -212,9 +215,9 @@ function clone_reddit_plugin_repo {
 
 clone_reddit_repo reddit reddit/reddit
 clone_reddit_repo i18n reddit/reddit-i18n
-clone_reddit_plugin_repo about
-clone_reddit_plugin_repo liveupdate
-clone_reddit_plugin_repo meatspace
+for plugin in $REDDIT_PLUGINS; do
+    clone_reddit_plugin_repo $plugin
+done
 
 ###############################################################################
 # Configure Cassandra
@@ -269,9 +272,9 @@ function install_reddit_repo {
 
 install_reddit_repo reddit/r2
 install_reddit_repo i18n
-install_reddit_repo about
-install_reddit_repo liveupdate
-install_reddit_repo meatspace
+for plugin in $REDDIT_PLUGINS; do
+    install_reddit_repo $plugin
+done
 
 # generate binary translation files from source
 cd $REDDIT_HOME/src/i18n/
@@ -312,6 +315,9 @@ port = 8001
 DEVELOPMENT
     chown $REDDIT_USER development.update
 fi
+
+plugin_str=$(echo -n "$REDDIT_PLUGINS" | tr " " ,)
+sed -i "s/^plugins = .*$/plugins = $plugin_str/" $REDDIT_HOME/src/reddit/r2/development.update
 
 sudo -u $REDDIT_USER make ini
 
