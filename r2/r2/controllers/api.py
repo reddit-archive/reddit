@@ -449,11 +449,12 @@ class ApiController(RedditController):
                         u = u.unparse()
                     form.redirect(u)
 
-        if kind == 'self' and len(selftext) > sr.selftext_max_length:
-            c.errors.add(errors.TOO_LONG, field='text',
-                         msg_params={'max_length': sr.selftext_max_length})
-            form.set_error(errors.TOO_LONG, 'text')
-            return
+        if not c.user_is_admin and kind == 'self':
+            if len(selftext) > sr.selftext_max_length:
+                c.errors.add(errors.TOO_LONG, field='text',
+                             msg_params={'max_length': sr.selftext_max_length})
+                form.set_error(errors.TOO_LONG, 'text')
+                return
 
         if not request.POST.get('sendreplies'):
             sendreplies = kind == 'self'
@@ -1598,7 +1599,8 @@ class ApiController(RedditController):
 
         max_length = item.subreddit_slow.selftext_max_length
         if ((isinstance(item, Comment) and len(text) > 10000) or
-                (isinstance(item, Link) and len(text) > max_length)):
+                (not c.user_is_admin and
+                     isinstance(item, Link) and len(text) > max_length)):
             c.errors.add(errors.TOO_LONG, field='text',
                          msg_params={'max_length': max_length})
             form.set_error(errors.TOO_LONG, 'text')
