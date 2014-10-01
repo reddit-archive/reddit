@@ -278,13 +278,13 @@ done
 
 # generate binary translation files from source
 cd $REDDIT_HOME/src/i18n/
-sudo -u $REDDIT_USER make
+sudo -u $REDDIT_USER make clean all
 
 # this builds static files and should be run *after* languages are installed
 # so that the proper language-specific static files can be generated and after
 # plugins are installed so all the static files are available.
 cd $REDDIT_HOME/src/reddit/r2
-sudo -u $REDDIT_USER make
+sudo -u $REDDIT_USER make clean all
 
 if [ ! -f development.update ]; then
     cat > development.update <<DEVELOPMENT
@@ -322,7 +322,7 @@ sed -i "s/^plugins = .*$/plugins = $plugin_str/" $REDDIT_HOME/src/reddit/r2/deve
 sudo -u $REDDIT_USER make ini
 
 if [ ! -L run.ini ]; then
-    sudo -u $REDDIT_USER ln -s development.ini run.ini
+    sudo -u $REDDIT_USER ln -nsf development.ini run.ini
 fi
 
 ###############################################################################
@@ -360,9 +360,9 @@ server {
 MEDIA
 
 # remove the default nginx site that may conflict with haproxy
-rm /etc/nginx/sites-enabled/default
+rm -rf /etc/nginx/sites-enabled/default
 # put our config in place
-ln -s /etc/nginx/sites-available/reddit-media /etc/nginx/sites-enabled/
+ln -nsf /etc/nginx/sites-available/reddit-media /etc/nginx/sites-enabled/
 
 service nginx restart
 
@@ -557,7 +557,7 @@ exec gunicorn_paster /etc/sutro.ini
 UPSTART_SUTRO
 fi
 
-start sutro
+service sutro restart
 
 ###############################################################################
 # geoip service
@@ -619,6 +619,7 @@ set_consumer_count vote_comment_q 1
 
 chown -R $REDDIT_USER:$REDDIT_GROUP $CONSUMER_CONFIG_ROOT/
 
+initctl emit reddit-stop
 initctl emit reddit-start
 
 ###############################################################################
