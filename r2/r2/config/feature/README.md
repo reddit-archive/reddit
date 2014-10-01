@@ -57,10 +57,13 @@ feature_some_flag = {"url": "public_flag_name"}
 # On by group of users
 feature_some_flag = {"users": ["umbrae", "ajacksified"]}
 
+# On when viewing certain subreddits
+feature_some_flag = {"subreddits": ["wtf", "aww"]}
+
 # For both admin and a group of users
 feature_some_flag = {"admin": true, "users": ["user1", "user2"]}
 
-# Not yet available: rampups, variants for A/B, subreddit groups, etc
+# Not yet available: rampups, variants for A/B, etc.
 ```
 
 Since we're currently overloading live_config, each feature flag should be
