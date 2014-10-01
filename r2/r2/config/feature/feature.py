@@ -38,7 +38,9 @@ def is_enabled(name):
     :param name string - a given feature name
     :return bool
     """
-    return _get_featurestate(name).is_enabled(_world.current_user())
+    return _get_featurestate(name).is_enabled(
+               user=_world.current_user(),
+               subreddit=_world.current_subreddit())
 
 
 def is_enabled_for(name, user):

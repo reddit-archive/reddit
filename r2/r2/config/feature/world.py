@@ -32,6 +32,14 @@ class World(object):
     def current_user(self):
         return c.user
 
+    def current_subreddit(self):
+        if not c.site:
+            # In non-request code (eg queued jobs), there isn't necessarily a
+            # site name (or other request-type data).  In those cases, we don't
+            # want to trigger any subreddit-specific code.
+            return ''
+        return c.site.name
+
     def is_admin(self, user):
         if not user or not hasattr(user, 'name'):
             return False
