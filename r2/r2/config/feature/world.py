@@ -32,9 +32,6 @@ class World(object):
     def current_user(self):
         return c.user
 
-    def current_subreddit(self):
-        return c.site.name
-
     def is_admin(self, user):
         if not user or not hasattr(user, 'name'):
             return False
