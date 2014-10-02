@@ -95,8 +95,8 @@ class FeatureState(object):
         if cfg.get('employee') and world.is_employee(user):
             return True
 
-        users = [u.lower() for u in cfg.get('users', [])]
-        if users and user and user.name.lower() in users:
+        users = cfg.get('users')
+        if users and user and user.name in users:
             return True
 
         subreddits = [s.lower() for s in cfg.get('subreddits', [])]
