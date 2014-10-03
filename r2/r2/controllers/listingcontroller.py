@@ -51,7 +51,7 @@ from r2.lib.utils import (
     trunc_string,
     precise_format_timedelta,
 )
-from r2.lib import organic, sup, trending
+from r2.lib import hooks, organic, sup, trending
 from r2.lib.memoize import memoize
 from r2.lib.validator import *
 import socket
@@ -274,6 +274,17 @@ class SubredditListingController(ListingController):
         else:
             if not c.user_is_loggedin:
                 # This data is only for scrapers, which shouldn't be logged in.
+                twitter_card = {
+                    "site": "reddit",
+                    "card": "summary",
+                    "title": self._build_og_title(max_length=70),
+                    # Twitter will fall back to any defined OpenGraph
+                    # attributes, so we don't need to define
+                    # 'twitter:image' or 'twitter:description'.
+                }
+                hook = hooks.get_hook('subreddit_listing.twitter_card')
+                hook.call(tags=twitter_card, sr_name=c.site.name)
+
                 return {
                     "og_data": {
                         "site_name": "reddit",
@@ -281,14 +292,7 @@ class SubredditListingController(ListingController):
                         "image": static('icon.png'),
                         "description": self._build_og_description(),
                     },
-                    "twitter_card": {
-                        "site": "reddit",
-                        "card": "summary",
-                        "title": self._build_og_title(max_length=70),
-                        # Twitter will fall back to any defined OpenGraph
-                        # attributes, so we don't need to define
-                        # 'twitter:image' or 'twitter:description'.
-                    },
+                    "twitter_card": twitter_card,
                 }
 
             return {}

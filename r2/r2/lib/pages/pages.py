@@ -94,7 +94,7 @@ from pylons.i18n import _, ungettext
 from pylons import c, request, g, config
 from pylons.controllers.util import abort
 
-from r2.lib import media, inventory
+from r2.lib import hooks, inventory, media
 from r2.lib import promote, tracking
 from r2.lib.captcha import get_iden
 from r2.lib.filters import (
@@ -1427,6 +1427,9 @@ class LinkInfoPage(Reddit):
                 _force_unicode(link_title),
                 short_description,
             )
+            hook = hooks.get_hook('comments_page.twitter_card')
+            hook.call(tags=self.twitter_card, sr_name=c.site.name,
+                      id36=self.link._id36)
 
         if hasattr(self.link, "dart_keyword"):
             c.custom_dart_keyword = self.link.dart_keyword
