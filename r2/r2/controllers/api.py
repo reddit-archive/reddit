@@ -2488,6 +2488,8 @@ class ApiController(RedditController):
             sr = thing.subreddit_slow
             action = 'remove' + thing.__class__.__name__.lower()
             ModAction.create(sr, c.user, action, **kw)
+
+        if isinstance(thing, Comment):
             queries.unnotify(thing)
 
 
