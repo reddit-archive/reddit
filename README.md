@@ -23,3 +23,9 @@ Alternatively, refer to our [Install Guide](https://github.com/reddit/reddit/wik
 To learn more about reddit's API, check out our [automated API documentation](http://www.reddit.com/dev/api) and the [API wiki page](https://github.com/reddit/reddit/wiki/API). Please use a unique User-Agent string and take care to abide by our [API rules](https://github.com/reddit/reddit/wiki/API#wiki-rules).
 
 Happy hacking!
+
+### Issues and Contribution Guidelines
+
+Thanks for wanting to help make reddit better! First things first, though: **github issues is only for _confirmed_, active bugs**. Please submit ideas to [/r/ideasfortheadmins](https://www.reddit.com/r/ideasfortheadmins/).
+
+Please read more on contributions in [CONTRIBUTING.md](CONTRIBUTING.md).
