@@ -625,7 +625,7 @@ class VMarkdown(Validator):
         Validator.__init__(self, param)
         self.renderer = renderer
 
-    def run(self, text):
+    def run(self, text, text2=''):
         text = text or text2
         try:
             markdown_souptest(text, renderer=self.renderer)
