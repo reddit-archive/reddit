@@ -56,6 +56,9 @@ import stripe
 gold_bonus_cutoff = datetime(2010,7,27,0,0,0,0,g.tz)
 gold_static_goal_cutoff = datetime(2013, 11, 7, tzinfo=g.display_tz)
 
+NON_REVENUE_STATUSES = ("declined", "chargeback", "fudge", "invalid",
+                        "refunded", "reversed")
+
 ENGINE_NAME = 'authorize'
 
 ENGINE = g.dbm.get_engine(ENGINE_NAME)
@@ -444,7 +447,6 @@ def append_random_bottlecap_phrase(message):
 
 
 def gold_revenue_multi(dates):
-    NON_REVENUE_STATUSES = ("declined", "chargeback", "fudge")
     date_expr = sa.func.date_trunc('day',
                     sa.func.timezone(TIMEZONE.zone, gold_table.c.date))
     query = (select([date_expr, sa_sum(gold_table.c.pennies)])
