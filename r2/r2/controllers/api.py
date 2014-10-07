@@ -448,6 +448,7 @@ class ApiController(RedditController):
                         u.set_extension(extension)
                         u = u.unparse()
                     form.redirect(u)
+                    return
 
         if not c.user_is_admin and kind == 'self':
             if len(selftext) > sr.selftext_max_length:
