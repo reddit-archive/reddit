@@ -57,20 +57,6 @@ class Flair(Relation(Subreddit, Account)):
         relids = cls.all_flair_by_sr_cache(sr_id, _update=_update)
         return cls._byID(relids).itervalues()
 
-    @classmethod
-    def flair_id_query(cls, sr, limit, after, reverse=False):
-        extra_rules = [
-            cls.c._thing1_id == sr._id,
-            cls.c._name == 'flair',
-          ]
-        if after:
-            if reverse:
-                extra_rules.append(cls.c._thing2_id < after._id)
-            else:
-                extra_rules.append(cls.c._thing2_id > after._id)
-        sort = (desc if reverse else asc)('_thing2_id')
-        return cls._query(*extra_rules, sort=sort, limit=limit)
-
 Subreddit.__bases__ += (UserRel('flair', Flair,
                                 disable_ids_fn = True,
                                 disable_reverse_ids_fn = True),)

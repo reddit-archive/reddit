@@ -61,6 +61,7 @@ from r2.models import (
     wiki,
 )
 from r2.models.admintools import compute_votes, ip_span
+from r2.models.flair import Flair
 from r2.models.listing import Listing
 
 
@@ -1214,3 +1215,20 @@ class SavedBuilder(IDBuilder):
             category = categories.get(w._id, '')
             w.savedcategory = category
         return wrapped
+
+
+class FlairListBuilder(UserListBuilder):
+    def init_query(self):
+        q = self.query
+
+        if self.reverse:
+            q._reverse()
+
+        q._data = True
+        self.orig_rules = deepcopy(q._rules)
+        # FlairLists use Accounts for afters
+        if self.after:
+            if self.reverse:
+                q._filter(Flair.c._thing2_id < self.after._id)
+            else:
+                q._filter(Flair.c._thing2_id > self.after._id)

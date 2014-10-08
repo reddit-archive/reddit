@@ -906,7 +906,7 @@ class FlairListJsonTemplate(JsonTemplate):
                           flair_css_class=row.flair_css_class)
             else:
               # prev/next link
-              return dict(after=row.after, reverse=row.reverse)
+              return dict(after=row.after, reverse=row.previous)
 
         json_rows = [row_to_json(row) for row in thing.flair]
         result = dict(users=[row for row in json_rows if 'user' in row])
