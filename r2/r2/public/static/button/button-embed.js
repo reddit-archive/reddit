@@ -48,11 +48,10 @@ var buttonEmbed = (function() {
     if (response.data && response.data.children.length > 0) {
       var child = response.data.children[0];
 
-      logo.href = child.data.permalink;
       submission.href = baseUrl + child.data.permalink;
       submission.innerHTML = pointLabel(child.data.score);
       submission.className += ' has-points';
-      up.href = down.href = submission.href;
+      logo.href = up.href = down.href = submission.href;
     } else {
       submission.innerHTML = 'submit';
     }
