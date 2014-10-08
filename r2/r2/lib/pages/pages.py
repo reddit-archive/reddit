@@ -3850,6 +3850,7 @@ class PromoteLinkEdit(PromoteLinkBase):
         self.promotion_log = PromotionLog.get(link)
 
         self.min_bid = 0 if c.user_is_sponsor else g.min_promote_bid
+        self.max_bid = 0 if c.user_is_sponsor else g.max_promote_bid
 
         self.priorities = [(p.name, p.text, p.description, p.default, p.inventory_override, p.cpm)
                            for p in sorted(PROMOTE_PRIORITIES.values(), key=lambda p: p.value)]

@@ -21,6 +21,7 @@
 ###############################################################################
 
 <%!
+  from r2.config import feature
   from r2.lib.media import thumbnail_url
   from r2.lib.pages import UserText
   import simplejson
@@ -33,7 +34,7 @@
 
 <%def name="javascript_setup()">
 <script type="text/javascript">
-  r.sponsored.init();
+  r.sponsored.init(${unsafe(simplejson.dumps(feature.is_enabled('keep_campaign_open')))});
   r.sponsored.set_form_render_fnc(r.sponsored.fill_campaign_editor);
   r.sponsored.setup(${unsafe(simplejson.dumps(thing.inventory))},
                     ${unsafe(simplejson.dumps(thing.price_dict))},
@@ -321,7 +322,9 @@
                   onkeyup="r.sponsored.on_bid_change()"
                   value="${'%.2f' % g.default_promote_bid}"
                   data-default_bid="${g.default_promote_bid}"
-                  data-min_bid="${thing.min_bid}"/>
+                  data-min_bid="${thing.min_bid}"
+                  data-real_min_bid="${g.min_promote_bid}"
+                  data-max_bid="${thing.max_bid}"/>
           <div class="minimum-spend">
             ${_('%(minimum)s minimum') % dict(minimum=format_currency(thing.min_bid, 'USD', locale=c.locale))}
           </div>

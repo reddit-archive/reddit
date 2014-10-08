@@ -21,7 +21,6 @@
 ###############################################################################
 
 <%!
-  from r2.config import feature
   from r2.lib import promote
   from r2.lib import js
 %>
@@ -96,6 +95,10 @@ ${pr.javascript_setup()}
         ${pr.timing_field()}
         ${pr.priority_field()}
         ${pr.budget_field()}
+        <%utils:line_field title="${_('confirm')}" css_class="rounded confirmation-field">
+          <div id="campaign-creator">
+          </div>
+        </%utils:line_field>
       </div>
       <footer class="buttons">
         <input type="hidden" name="campaign_id36" value="">
@@ -106,29 +109,6 @@ ${pr.javascript_setup()}
                 onclick="return cancel_edit_campaign()">
           ${_("cancel")}
         </button>
-        <button name="save"
-                onclick="return post_pseudo_form('.campaign', 'edit_campaign')"
-                class="primary-button">
-          ${_("save")}
-        </button>
-        % if feature.is_enabled('keep_campaign_open'):
-          <button name="create"
-                  onclick="return send_campaign(false);"
-                  class="create primary-button">
-            ${_("create")}
-          </button>
-          <button name="create_and_close"
-                  onclick="return send_campaign(true);"
-                  class="create primary-button">
-            ${_("create and close")}
-          </button>
-        % else:
-          <button name="create"
-                  onclick="return send_campaign(true);"
-                  class="create primary-button">
-            ${_("create")}
-          </button>
-        % endif
       </footer>
     </div>
   </div>
@@ -154,7 +134,7 @@ ${pr.javascript_setup()}
              data-max-campaigns="${g.MAX_CAMPAIGNS_PER_LINK}">
           <table style="${'display:none' if not thing.campaigns else ''}">
             <thead>
-              <tr>
+              <tr class="campaign-header-row">
                 <th class="campaign-start-date" title="${start_title}">${_("start")}</th>
                 <th class="campaign-end-date" title="${end_title}">${_("end")}</th>
                 <th class="campaign-duration">${_("duration")}</th>
