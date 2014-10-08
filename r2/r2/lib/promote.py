@@ -197,7 +197,7 @@ def add_trackers(items, sr):
 
         # construct the click redirect url
         url = urllib.unquote(item.url.encode("utf-8"))
-        hashable = ''.join((url, tracking_name))
+        hashable = ''.join((url, tracking_name.encode("utf-8")))
         click_mac = hmac.new(
             g.tracking_secret, hashable, hashlib.sha1).hexdigest()
         click_query = {
