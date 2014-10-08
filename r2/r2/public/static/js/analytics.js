@@ -2,9 +2,7 @@ r.analytics = {
     init: function() {
         // these guys are relying on the custom 'onshow' from jquery.reddit.js
         $(document).delegate(
-            '.organic-listing .promotedlink.promoted:not(".requested"), ' +
-              '.comments-page .promotedlink.promoted, ' +
-              '.linklisting .promotedlink.promoted:not(".requested")',
+            '.organic-listing .promotedlink.promoted',
             'onshow',
             _.bind(function(ev) {
                 this.fireTrackingPixel(ev.target)
@@ -26,30 +24,25 @@ r.analytics = {
     },
 
     fireTrackingPixel: function(el) {
-        var $el = $(el)
-        if ($el.data('trackerFired'))
-            return
-
-        // fire the impression pixel only if this is an organic listing or
-        // comments page
-        var inOrganicListing = $el.parent().hasClass('organic-listing'),
+        var $el = $(el),
             onCommentsPage = $('body').hasClass('comments-page')
 
-        if (inOrganicListing || onCommentsPage) {
-            var pixel = new Image(),
-                impPixel = $el.data('impPixel')
+        if ($el.data('trackerFired') || onCommentsPage)
+            return
 
-                if (impPixel) {
-                    pixel.src = impPixel
-                }
+        var pixel = new Image(),
+            impPixel = $el.data('impPixel')
 
-            var adServerPixel = new Image(),
-                adServerImpPixel = $el.data('adserverImpPixel'),
-                adServerClickUrl = $el.data('adserverClickUrl')
+        if (impPixel) {
+            pixel.src = impPixel
+        }
 
-            if (adServerImpPixel) {
-                adServerPixel.src = adServerImpPixel
-            }
+        var adServerPixel = new Image(),
+            adServerImpPixel = $el.data('adserverImpPixel'),
+            adServerClickUrl = $el.data('adserverClickUrl')
+
+        if (adServerImpPixel) {
+            adServerPixel.src = adServerImpPixel
         }
 
         $el.data('trackerFired', true)
