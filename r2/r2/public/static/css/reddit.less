@@ -465,14 +465,6 @@ ul.flat-vert {text-align: left;}
 
 .tabpane-content { border: 1px solid #5f99cf; padding: 4px 4px 4px 4px; }
 
-#search input[type=text] {
-    border: 1px solid gray;
-    font-size: 18px;
-    width: 300px;
-    box-sizing: border-box;
-    padding: 2px;
-}
-
 .content {
     z-index: 1;
     margin: 7px 5px 0px 5px;
@@ -2597,16 +2589,18 @@ textarea.gray { color: gray; }
 
 .login-form-side input[type=text],
 .login-form-side input[type=password] {
+    font-family: verdana; /* Override Chrome's defaults. */
+    font-size: 11px;
+    box-sizing: border-box;
     border: 1px solid #999;
-    width: 137px;
-    height: 17px;
+    width: 141px;
     margin: 5px 0px 0px 5px;
     top: 5px;
-    padding: 1px;
+    padding: 6px;
  }
 
 .login-form-side input[type=password] {
-    width: 138px;
+    width: 142px;
 }
 
 .login-form-side #remember-me,
@@ -2621,6 +2615,7 @@ textarea.gray { color: gray; }
 .login-form-side #remember-me {
     float: left;
     line-height: 24px;
+    margin-left: 5px;
 }
 
 .login-form-side #remember-me * {
@@ -2822,8 +2817,57 @@ li.searchfacet {
   color: #888888;
 }
 
-#search input[type='submit'] {
-	padding: 1px 10px;
+#search {
+    /* Allow the search icon to be on the same line as the search box. */
+    white-space: nowrap;
+}
+
+#searchexpando, #moresearchinfo {
+    white-space: normal;
+}
+
+#search input[type=text] {
+    border: 1px solid gray;
+    font-size: 13px;
+    font-family: verdana; /* Override Chrome's defaults. */
+    width: 300px;
+    box-sizing: border-box;
+    padding: 6px;
+    padding-right: 25px; /* 13px image + 6px right margin + 6px left margin */
+    padding-left: 9px;
+    vertical-align: middle;
+}
+
+#search input[type=submit] {
+    background-color: transparent;
+    background-image: url(../search.png); /* SPRITE */
+    background-repeat: no-repeat;
+    height: 13px;
+    width: 13px;
+    box-sizing: border-box;
+    border: none;
+    margin: 0;
+    margin-left: -22px; /* 13px image + 6px margin + 3px visual adjustment */
+    vertical-align: middle;
+}
+
+#search input[type=submit]:hover {
+    background-image: url(../search-mouseover.png); /* SPRITE */
+}
+
+@media
+(-webkit-min-device-pixel-ratio: 2),
+(min-resolution: 192dpi) {
+    #search input[type=submit] {
+        background-image: data-uri('../search-x2.png');
+        background-size: 13px 13px;
+        background-position: 0 0;
+    }
+
+    #search input[type=submit]:hover {
+        background-image: data-uri('../search-mouseover-x2.png');
+        background-position: 0 0;
+    }
 }
 
 /* login, register */
