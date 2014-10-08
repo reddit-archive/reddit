@@ -397,7 +397,7 @@ class QueryBuilder(Builder):
                     q._rules = deepcopy(self.orig_rules)
                     q._after(last_item)
                     last_item = None
-                q._limit = max(int(num_need * EXTRA_FACTOR), 1)
+                q._limit = max(int(num_need * EXTRA_FACTOR), self.num // 2, 1)
         else:
             done = True
         new_items = list(q)
@@ -527,7 +527,7 @@ class IDBuilder(QueryBuilder):
             else:
                 if last_item:
                     last_item = None
-                slice_size = max(int(num_need * EXTRA_FACTOR), 1)
+                slice_size = max(int(num_need * EXTRA_FACTOR), self.num // 2, 1)
         else:
             slice_size = len(names)
             done = True
