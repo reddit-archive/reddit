@@ -176,6 +176,9 @@ def update_query(base_url, query_updates):
 def add_trackers(items, sr):
     """Add tracking names and hashes to a list of wrapped promoted links."""
     for item in items:
+        if not item.promoted:
+            continue
+
         tracking_name_fields = [item.fullname, item.campaign]
         if not isinstance(sr, FakeSubreddit):
             tracking_name_fields.append(sr.name)
