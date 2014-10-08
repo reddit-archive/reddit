@@ -196,7 +196,7 @@ def add_trackers(items, sr):
         item.imp_pixel = update_query(g.adtracker_url, pixel_query)
 
         # construct the click redirect url
-        url = urllib.unquote(item.url)
+        url = urllib.unquote(item.url.encode("utf-8"))
         hashable = ''.join((url, tracking_name))
         click_mac = hmac.new(
             g.tracking_secret, hashable, hashlib.sha1).hexdigest()
