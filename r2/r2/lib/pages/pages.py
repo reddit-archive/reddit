@@ -1385,8 +1385,15 @@ class LinkInfoPage(Reddit):
         # link_listing will be the one-element listing at the top
         self.link_listing = wrap_links(link, wrapper = wrapper)
 
-        # link is a wrapped Link object
-        self.link = self.link_listing.things[0]
+        # add click tracker
+        things = self.link_listing.things
+
+        # links aren't associated with any campaign at this point
+        for link in things:
+            link.campaign = ''
+
+        promote.add_trackers(things, c.site)
+        self.link = things[0]
 
         link_title = ((self.link.title) if hasattr(self.link, 'title') else '')
 
