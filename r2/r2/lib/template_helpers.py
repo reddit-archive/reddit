@@ -441,7 +441,7 @@ def add_sr(path, sr_path = True, nocname=False, force_hostname = False, retain_e
             u.hostname = get_domain(cname = (c.cname and not nocname),
                                     subreddit = False)
 
-    if c.secure:
+    if c.secure and u.is_reddit_url():
         u.scheme = "https"
 
     if retain_extension:
