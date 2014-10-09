@@ -162,10 +162,10 @@ $(MINIFIED_OTHER_STYLESHEETS): $(STATIC_BUILD_DIR)/%.css: $(CSS_SOURCE_DIR)/%.cs
 $(STATIC_BUILD_DIR)/sprite-%.png $(STATIC_BUILD_DIR)/%.css: $(CSS_SOURCE_DIR)/%.less $(STATIC_BUILDSTAMP)
 	# see above
 	rm -f $(STATIC_BUILD_DIR)/sprite-$*.png $(STATIC_BUILD_DIR)/$*.css
-	$(PYTHON) r2/lib/nymph.py $(CSS_SOURCE_DIR)/$*.less $(STATIC_BUILD_DIR)/sprite-$*.png > $(STATIC_BUILD_DIR)/$*.less.tmp
-	$(LESSC) $(STATIC_BUILD_DIR)/$*.less.tmp > $(STATIC_BUILD_DIR)/$*.css.tmp
+	$(PYTHON) r2/lib/nymph.py $(CSS_SOURCE_DIR)/$*.less $(STATIC_BUILD_DIR)/sprite-$*.png > $(CSS_SOURCE_DIR)/$*.less.tmp
+	$(LESSC) $(CSS_SOURCE_DIR)/$*.less.tmp > $(STATIC_BUILD_DIR)/$*.css.tmp
 	$(CSS_COMPRESS) < $(STATIC_BUILD_DIR)/$*.css.tmp > $(STATIC_BUILD_DIR)/$*.css
-	rm $(STATIC_BUILD_DIR)/$*.less.tmp $(STATIC_BUILD_DIR)/$*.css.tmp
+	rm $(CSS_SOURCE_DIR)/$*.less.tmp $(STATIC_BUILD_DIR)/$*.css.tmp
 
 # deprecated; remove once compact.scss has been converted to LESS
 $(STATIC_BUILD_DIR)/sprite-%.png $(STATIC_BUILD_DIR)/%.css: $(CSS_SOURCE_DIR)/%.css $(STATIC_BUILDSTAMP)
