@@ -4021,10 +4021,9 @@ class ApiController(RedditController):
         if not icon_file:
             form.set_error(errors.TOO_LONG, 'file')
         if not form.has_error():
-            filename = 'icon-%s' % client._id
             try:
-                client.icon_url = media.upload_icon(filename, icon_file,
-                                                    (72, 72))
+                icon_url = media.upload_icon(icon_file, (72, 72))
+                client.icon_url = g.media_provider.convert_to_https(icon_url)
             except IOError, ex:
                 c.errors.add(errors.BAD_IMAGE,
                              msg_params=dict(message=ex.message),

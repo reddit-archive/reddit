@@ -351,11 +351,12 @@ def force_thumbnail(link, image_data, file_type=".jpg"):
     link._commit()
 
 
-def upload_icon(file_name, image_data, size):
+def upload_icon(image_data, size):
     image = str_to_image(image_data)
     image.format = 'PNG'
     image.thumbnail(size, Image.ANTIALIAS)
     icon_data = _image_to_str(image)
+    file_name = _filename_from_content(icon_data)
     return g.media_provider.put(file_name + ".png", icon_data)
 
 
