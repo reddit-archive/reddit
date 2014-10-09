@@ -4022,8 +4022,7 @@ class ApiController(RedditController):
             form.set_error(errors.TOO_LONG, 'file')
         if not form.has_error():
             try:
-                icon_url = media.upload_icon(icon_file, (72, 72))
-                client.icon_url = g.media_provider.convert_to_https(icon_url)
+                client.icon_url = media.upload_icon(icon_file, (72, 72))
             except IOError, ex:
                 c.errors.add(errors.BAD_IMAGE,
                              msg_params=dict(message=ex.message),
@@ -4033,7 +4032,7 @@ class ApiController(RedditController):
                 client._commit()
                 form.set_html('.status', 'uploaded')
                 jquery('#developed-app-%s .app-icon img'
-                       % client._id).attr('src', client.icon_url)
+                       % client._id).attr('src', g.media_provider.convert_to_https(client.icon_url))
                 jquery('#developed-app-%s .ajax-upload-form'
                        % client._id).hide()
                 jquery('#developed-app-%s .edit-app-icon-button'
