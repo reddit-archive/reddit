@@ -473,6 +473,17 @@ class SponsorListingController(PromoteListingController):
         return ListingController.GET_listing(self, **kw)
 
 
+def allowed_location_and_target(location, target):
+    if c.user_is_sponsor:
+        return True
+
+    # regular users can only use locations when targeting frontpage
+    is_location = location and location.country
+    is_frontpage = (not target.is_collection and
+                    target.subreddit_name == Frontpage.name)
+    return not is_location or is_frontpage
+
+
 class PromoteApiController(ApiController):
     @json_validate(sr=VSubmitSR('sr', promotion=True),
                    collection=VCollection('collection'),
@@ -488,16 +499,12 @@ class PromoteApiController(ApiController):
             sr = sr or Frontpage
             target = Target(sr.name)
 
-        if not location or not location.country:
-            available = inventory.get_available_pageviews(
-                target, start, end, datestr=True)
-        elif not collection and (sr == Frontpage or c.user_is_sponsor):
-            # geotargeting is available on the Frontpage for all users or on
-            # individual subreddits for sponsors
-            available = inventory.get_available_pageviews_geotargeted(sr,
-                            location, start, end, datestr=True)
-        else:
+        if not allowed_location_and_target(location, target):
             return abort(403, 'forbidden')
+
+        available = inventory.get_available_pageviews(
+                        target, start, end, location=location, datestr=True)
+
         return {'inventory': available}
 
     @validatedForm(VSponsorAdmin(),
@@ -782,22 +789,9 @@ class PromoteApiController(ApiController):
             return
 
         start, end = dates or (None, None)
-        is_frontpage = (not target.is_collection and
-                        target.subreddit_name == Frontpage.name)
 
-        if location:
-            if c.user_is_sponsor:
-                non_cpm_collection = target.is_collection and not priority.cpm
-                is_subreddit = not target.is_collection
-
-                if not (is_frontpage or non_cpm_collection or is_subreddit):
-                    # sponsors can location target the frontpage, collections
-                    # at non-cpm priority, or subreddits
-                    return abort(403, 'forbidden')
-            else:
-                if not is_frontpage:
-                    # regular users can only location target the frontpage
-                    return abort(403, 'forbidden')
+        if not allowed_location_and_target(location, target):
+            return abort(403, 'forbidden')
 
         cpm = PromotionPrices.get_price(target, location)
 
@@ -859,6 +853,9 @@ class PromoteApiController(ApiController):
 
         else:
             bid = 0.   # Set bid to 0 as dummy value
+
+        is_frontpage = (not target.is_collection and
+                        target.subreddit_name == Frontpage.name)
 
         if not target.is_collection and not is_frontpage:
             # targeted to a single subreddit, check roadblock
