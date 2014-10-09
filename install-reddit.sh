@@ -165,6 +165,7 @@ nginx
 stunnel
 gunicorn
 sutro
+libpcre3-dev
 PACKAGES
 
 # paper over stack size issues with cassandra
