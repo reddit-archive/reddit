@@ -51,6 +51,7 @@ from r2.lib.validator import (
     VOAuth2Scope,
     VOAuth2RefreshToken,
     VRatelimit,
+    VLength,
 )
 
 
@@ -187,6 +188,7 @@ class OAuth2AccessController(MinimalController):
                  "refresh_token",
                  "password",
                  "client_credentials",
+                 "https://oauth.reddit.com/grants/installed_client",
             )
         ),
     )
@@ -212,7 +214,9 @@ class OAuth2AccessController(MinimalController):
         * ``authorization_code`` for the initial access token ("standard" OAuth2 flow)
         * ``refresh_token`` for renewing the access token.
         * ``password`` for script-type apps using password auth
-        * ``client_credentials`` for application-only (logged out) access
+        * ``client_credentials`` for application-only (logged out) access - confidential clients
+        * ``https://oauth.reddit.com/grants/installed_client`` extension grant for application-only (logged out)
+                access - non-confidential (installed) clients
 
         **redirect_uri** must exactly match the value that was used in the call
         to [/api/v1/authorize](#api_method_authorize) that created this grant.
@@ -229,6 +233,8 @@ class OAuth2AccessController(MinimalController):
             return self._access_token_password()
         elif grant_type == "client_credentials":
             return self._access_token_client_credentials()
+        elif grant_type == "https://oauth.reddit.com/grants/installed_client":
+            return self._access_token_extension_client_credentials()
         else:
             resp = {"error": "unsupported_grant_type"}
             return self.api_wrapper(resp)
@@ -352,6 +358,29 @@ class OAuth2AccessController(MinimalController):
             client._id,
             "",
             scope,
+        )
+        resp = self._make_token_dict(access_token)
+        return self.api_wrapper(resp)
+
+    @validate(
+        scope=nop("scope"),
+        device_id=VLength("device_id", 30),
+    )
+    def _access_token_extension_client_credentials(self, scope, device_id):
+        client = c.oauth2_client
+        if scope:
+            scope = OAuth2Scope(scope)
+            if not scope.is_valid():
+                c.errors.add(errors.INVALID_OPTION, "scope")
+                return self.api_wrapper({"error": "invalid_scope"})
+        else:
+            scope = OAuth2Scope(OAuth2Scope.FULL_ACCESS)
+
+        access_token = OAuth2AccessToken._new(
+            client._id,
+            "",
+            scope,
+            device_id=device_id,
         )
         resp = self._make_token_dict(access_token)
         return self.api_wrapper(resp)

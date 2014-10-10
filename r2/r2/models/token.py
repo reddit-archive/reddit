@@ -571,12 +571,14 @@ class OAuth2AccessToken(Token):
     _connection_pool = "main"
 
     @classmethod
-    def _new(cls, client_id, user_id, scope, refresh_token=None):
+    def _new(cls, client_id, user_id, scope, refresh_token=None, device_id=None):
         return super(OAuth2AccessToken, cls)._new(
                      client_id=client_id,
                      user_id=user_id,
                      scope=str(scope),
-                     refresh_token=refresh_token)
+                     refresh_token=refresh_token,
+                     device_id=device_id,
+        )
 
     @classmethod
     def _by_user_view(cls):
