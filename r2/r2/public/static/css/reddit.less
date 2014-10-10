@@ -2591,7 +2591,7 @@ textarea.gray { color: gray; }
 .login-form-side input[type=password] {
     font-family: verdana; /* Override Chrome's defaults. */
     font-size: 11px;
-    box-sizing: border-box;
+    .box-sizing(border-box);
     border: 1px solid #999;
     width: 141px;
     margin: 5px 0px 0px 5px;
@@ -2831,7 +2831,7 @@ li.searchfacet {
     font-size: 13px;
     font-family: verdana; /* Override Chrome's defaults. */
     width: 300px;
-    box-sizing: border-box;
+    .box-sizing(border-box);
     padding: 6px;
     padding-right: 25px; /* 13px image + 6px right margin + 6px left margin */
     padding-left: 9px;
@@ -2844,7 +2844,7 @@ li.searchfacet {
     background-repeat: no-repeat;
     height: 13px;
     width: 13px;
-    box-sizing: border-box;
+    .box-sizing(border-box);
     border: none;
     margin: 0;
     margin-left: -22px; /* 13px image + 6px margin + 3px visual adjustment */
@@ -5142,7 +5142,7 @@ ul.tabmenu.formtab {
     
     .form-group-list {
         position: relative;
-        transition: all 0.2s;
+        .transition(all, 0.2s);
         
         .form-group {
             display: block;
@@ -5157,7 +5157,7 @@ ul.tabmenu.formtab {
                 height: 50px;
                 width: 100%;
                 padding: 5px 10px;
-                box-sizing: border-box;
+                .box-sizing(border-box);
                 cursor: pointer;
                 color: #404040;
 
@@ -6331,7 +6331,7 @@ div #campaign-field {
                 box-shadow: none;
                 font-size: 15px;
                 width: 100%;
-                box-sizing: border-box;
+                .box-sizing(border-box);
                 text-align: right;
             }
 
@@ -6873,7 +6873,7 @@ dd { margin-left: 20px;  }
 .side .recommend-box {
     margin: 15px 5px 30px 0px;
     opacity: 0;
-    transition: all .1s ease-in-out;
+    .transition(all, .1s, ease-in-out);
 
     h1 {
         display: inline-block;
@@ -7691,8 +7691,8 @@ body:not(.gold) .allminus-link {
   background-color: @gold-button-bg;
   border-radius: 4px;
   border: 1px solid transparent;
-  transition: background-color .2s;
-  box-sizing: content-box;
+  .transition(background-color, .2s);
+  .box-sizing(content-box);
   box-shadow: inset 0 -2px 0 rgba(0,0,0,0.27);
 }
 
@@ -9919,7 +9919,7 @@ body.with-listing-chooser {
   }
 
   input[type=text], input[type=email], textarea {
-    box-sizing: border-box;
+    .box-sizing(border-box);
     border: 1px solid @light;
     color: @dark;
     background-color: #fff;
@@ -10086,7 +10086,7 @@ body.with-listing-chooser {
 
   .gold-button {
     display: block;
-    box-sizing: border-box;
+    .box-sizing(border-box);
     margin: 0;
     font-size: 1.3em;
   }
