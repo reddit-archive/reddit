@@ -59,24 +59,24 @@
          %if thing.prev_search:
            value="${thing.prev_search}" style="color:black"
          %endif
-         name="q" placeholder="${_('search')}">
-  <input type="submit" value="">
+         name="q" placeholder="${_('search')}" tabindex="20">
+  <input type="submit" value="" tabindex="22">
   %if thing.subreddit_search:
     
   %elif thing.simple:
   <div id="searchexpando" class="infobar">
       % if not isinstance(c.site, DefaultSR):
-      <label><input type="checkbox" name="restrict_sr">${_('limit my search to %(path)s') % dict(path=c.site.path.rstrip('/'))}</label>
+      <label><input type="checkbox" name="restrict_sr" tabindex="21">${_('limit my search to %(path)s') % dict(path=c.site.path.rstrip('/'))}</label>
       % endif
 
       ${search_faq()}
   </div>
   %else:
     %if not thing.site or isinstance(thing.site, DefaultSR):
-      <input type="hidden" name="restrict_sr" value="off">
+      <input type="hidden" name="restrict_sr" value="off" tabindex="21">
     %else:
       <br><br>
-      <label><input type="checkbox" ${'checked="checked"' if thing.restrict_sr else ''} name="restrict_sr">
+      <label><input type="checkbox" ${'checked="checked"' if thing.restrict_sr else ''} name="restrict_sr" tabindex="21">
       ${_('limit my search to %(path)s') % dict(path=thing.site.path.rstrip('/'))}</label>
     %endif
     ${search_faq()}
