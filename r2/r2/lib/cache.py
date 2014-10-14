@@ -352,7 +352,9 @@ class TransitionalCache(CacheUtils):
 
     `original_cache` is the cache chain previously in use (this'll frequently
     be `g.cache` since it's the catch-all for most things) and
-    `replacement_cache` is the new place for the keys using this chain to live.
+    `replacement_cache` is the new place for the keys using this chain to
+    live.  `key_transform` is an optional function to translate the key names
+    into different names on the `replacement_cache`.
 
     To use this cache chain, do three separate deployments as follows:
 
@@ -369,10 +371,13 @@ class TransitionalCache(CacheUtils):
 
     """
 
-    def __init__(self, original_cache, replacement_cache, read_original):
+    def __init__(
+            self, original_cache, replacement_cache, read_original,
+            key_transform=None):
         self.original = original_cache
         self.replacement = replacement_cache
         self.read_original = read_original
+        self.key_transform = key_transform
 
     @property
     def stats(self):
@@ -381,11 +386,27 @@ class TransitionalCache(CacheUtils):
         else:
             return self.replacement.stats
 
+    def transform_memcache_key(self, args):
+        if self.key_transform:
+            old_key = args[0]
+            if isinstance(old_key, dict):  # multiget passes a dict
+                new_key = {self.key_transform(k): v for k,v in
+                           old_key.iteritems()}
+            elif isinstance(old_key, list):
+                new_key = [self.key_transform(k) for k in old_key]
+            else:
+                new_key = self.key_transform(old_key)
+
+            return (new_key,) + args[1:]
+        else:
+            return args
+
     def make_get_fn(fn_name):
         def transitional_cache_get_fn(self, *args, **kwargs):
             if self.read_original:
                 return getattr(self.original, fn_name)(*args, **kwargs)
             else:
+                args = self.transform_memcache_key(args)
                 return getattr(self.replacement, fn_name)(*args, **kwargs)
         return transitional_cache_get_fn
 
@@ -396,6 +417,7 @@ class TransitionalCache(CacheUtils):
     def make_set_fn(fn_name):
         def transitional_cache_set_fn(self, *args, **kwargs):
             getattr(self.original, fn_name)(*args, **kwargs)
+            args = self.transform_memcache_key(args)
             getattr(self.replacement, fn_name)(*args, **kwargs)
         return transitional_cache_set_fn
 
