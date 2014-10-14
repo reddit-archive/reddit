@@ -364,7 +364,7 @@ class OAuth2AccessController(MinimalController):
 
     @validate(
         scope=nop("scope"),
-        device_id=VLength("device_id", 30, min_length=20),
+        device_id=VLength("device_id", 50, min_length=20),
     )
     def _access_token_extension_client_credentials(self, scope, device_id):
         if ((errors.NO_TEXT, "device_id") in c.errors or
