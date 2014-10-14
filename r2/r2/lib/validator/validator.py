@@ -549,12 +549,16 @@ class VLength(Validator):
     only_whitespace = re.compile(r"\A\s*\Z", re.UNICODE)
 
     def __init__(self, param, max_length,
+                 min_length=0,
                  empty_error = errors.NO_TEXT,
                  length_error = errors.TOO_LONG,
+                 short_error=errors.TOO_SHORT,
                  **kw):
         Validator.__init__(self, param, **kw)
         self.max_length = max_length
+        self.min_length = min_length
         self.length_error = length_error
+        self.short_error = short_error
         self.empty_error = empty_error
 
     def run(self, text, text2 = ''):
@@ -563,6 +567,9 @@ class VLength(Validator):
             self.set_error(self.empty_error, code=400)
         elif len(text) > self.max_length:
             self.set_error(self.length_error, {'max_length': self.max_length}, code=400)
+        elif len(text) < self.min_length:
+            self.set_error(self.short_error, {'min_length': self.min_length},
+                           code=400)
         else:
             return text
 

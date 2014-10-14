@@ -364,9 +364,17 @@ class OAuth2AccessController(MinimalController):
 
     @validate(
         scope=nop("scope"),
-        device_id=VLength("device_id", 30),
+        device_id=VLength("device_id", 30, min_length=20),
     )
     def _access_token_extension_client_credentials(self, scope, device_id):
+        if ((errors.NO_TEXT, "device_id") in c.errors or
+                (errors.TOO_SHORT, "device_id") in c.errors or
+                (errors.TOO_LONG, "device_id") in c.errors):
+            return self.api_wrapper({
+                "error": "invalid_request",
+                "error_description": "bad device_id",
+            })
+
         client = c.oauth2_client
         if scope:
             scope = OAuth2Scope(scope)
