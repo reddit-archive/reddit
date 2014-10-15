@@ -217,7 +217,11 @@ r.ui.LoginForm.prototype = $.extend(new r.ui.Form(), {
                 if (hsts_redir) {
                     redir = hsts_redir + encodeURIComponent(redir)
                 }
-                window.location = redir
+                if (window.location === redir) {
+                    window.location.reload();
+                } else {
+                    window.location = redir;
+                }
             }
         } else {
             r.ui.Form.prototype._handleResult.call(this, result)
