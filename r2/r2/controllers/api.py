@@ -617,6 +617,8 @@ class ApiController(RedditController):
                 emailer.verify_email(user)
 
             user.pref_lang = c.lang
+            if feature.is_enabled('new_user_new_window_preference'):
+                user.pref_newwindow = True
 
             d = c.user._dirties.copy()
             user._commit()
