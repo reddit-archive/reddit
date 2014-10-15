@@ -47,11 +47,11 @@
     <link rel="stylesheet" href="${static('compact.css')}" type="text/css" media="screen" />
 
     <!--[if gte IE 9]> <!-->
-      ${unsafe(js.use('jquery2x', 'reddit-init'))}
+      ${unsafe(js.use('reddit-init'))}
     <!-- <![endif]-->
 
     <!--[if lt IE 9]>
-      ${unsafe(js.use('jquery1x', 'reddit-init'))}
+      ${unsafe(js.use('reddit-init-legacy'))}
     <![endif]-->
 
     ${js_setup(thing.extra_js_config)}

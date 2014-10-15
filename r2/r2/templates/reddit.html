@@ -108,11 +108,11 @@
 <%def name="javascript()">
   <% from r2.lib import js %>
   <!--[if gte IE 9]> <!-->
-    ${unsafe(js.use('jquery2x', 'reddit-init'))}
+    ${unsafe(js.use('reddit-init'))}
   <!-- <![endif]-->
 
   <!--[if lt IE 9]>
-    ${unsafe(js.use('html5shiv', 'jquery1x', 'reddit-init'))}
+    ${unsafe(js.use('reddit-init-legacy'))}
   <![endif]-->
   ${less_js()}
 </%def>
