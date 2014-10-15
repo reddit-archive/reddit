@@ -1023,8 +1023,6 @@ class Comment(Thing, Printable):
                         if c.user_is_loggedin else set()
         can_reply_srs.add(Subreddit.get_promote_srid())
 
-        min_score = user.pref_min_comment_score
-
         profilepage = c.profilepage
         user_is_admin = c.user_is_admin
         user_is_loggedin = c.user_is_loggedin
@@ -1162,6 +1160,12 @@ class Comment(Thing, Printable):
                                 subreddit=False))
                 if site != item.subreddit:
                     item.subreddit_path += item.subreddit.path
+
+            # always use the default collapse threshold in contest mode threads
+            if item.link.contest_mode:
+                min_score = Account._defaults['pref_min_comment_score']
+            else:
+                min_score = user.pref_min_comment_score
 
             item.collapsed = False
             if (item.deleted and item.subreddit.collapse_deleted_comments and
