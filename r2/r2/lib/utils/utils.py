@@ -533,6 +533,11 @@ class UrlParser(object):
             (subreddit and subreddit.domain and
                 is_subdomain(self.hostname, subreddit.domain))
         )
+        # Handle backslash trickery like /\example.com/ being treated as
+        # equal to //example.com/ by some browsers
+        if not self.hostname and not self.scheme and self.path:
+            if self.path.startswith("/\\"):
+                return False
         if not subdomain or not self.hostname or not g.offsite_subdomains:
             return subdomain
         return not any(
