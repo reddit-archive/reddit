@@ -19,7 +19,16 @@
          % if thing.required:
          required
          % endif
+         % if thing.class_name:
+          class="${thing.class_name}"
+         % endif
+         % if thing.placeholder:
+          placeholder="${thing.placeholder}"
+         % endif
          />
+  % if thing.show_add:
+    <button class="add">${_("add")}</button>
+  % endif
   <ul id="sr-drop-down">
     <li class="sr-name-row"
         onmouseover="highlight_reddit(this)"

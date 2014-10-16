@@ -96,7 +96,7 @@
 
   %if thing.can_edit:
     <form class="add-sr">
-      <input type="text" class="sr-name" placeholder="${_('add subreddit')}"><button class="add">${_('add')}</button>
+      ${thing.subreddit_selector}
       <div class="error add-error"></div>
     </form>
   %endif

@@ -2315,6 +2315,12 @@ class MultiInfoBar(Templated):
         srs.sort(key=lambda sr: sr.name.lower())
         self.description_md = multi.description_md
         self.srs = srs
+        self.subreddit_selector = SubredditSelector(
+                placeholder=_("add subreddit"),
+                class_name="sr-name",
+                include_user_subscriptions=False,
+                show_add=True,
+            )
 
         explore_sr = g.live_config["listing_chooser_explore_sr"]
         if explore_sr:
@@ -4707,8 +4713,13 @@ class SubscribeButton(Templated):
 
 class SubredditSelector(Templated):
     def __init__(self, default_sr=None, extra_subreddits=None, required=False,
-                 include_searches=True, include_user_subscriptions=True):
+                 include_searches=True, include_user_subscriptions=True, class_name=None,
+                 placeholder=None, show_add=False):
         Templated.__init__(self)
+
+        self.placeholder = placeholder
+        self.class_name = class_name
+        self.show_add = show_add
 
         if extra_subreddits:
             self.subreddits = extra_subreddits
