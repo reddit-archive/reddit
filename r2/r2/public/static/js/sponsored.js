@@ -596,13 +596,13 @@ r.sponsored = {
     },
 
     disable_form: function($form) {
-        $form.find('button[name="create"], button[name="save"]')
+        $form.find('.create, button[name="save"]')
             .prop("disabled", true)
             .addClass("disabled");
     },
 
     enable_form: function($form) {
-        $form.find('button[name="create"], button[name="save"]')
+        $form.find('.create, button[name="save"]')
             .prop("disabled", false)
             .removeClass("disabled");
     },
@@ -887,11 +887,14 @@ function detach_campaign_form() {
 }
 
 function cancel_edit(callback) {
-    if($("#campaign").parents('tr:first').length) {
-        var tr = $("#campaign").parents("tr:first").prev();
+    var $campaign = $('#campaign');
+    var isEditingExistingCampaign = !!$campaign.parents('tr:first').length;
+
+    if (isEditingExistingCampaign) {
+        var tr = $campaign.parents("tr:first").prev();
         /* copy the campaign element */
         /* delete the original */
-        $("#campaign").slideUp(function() {
+        $campaign.slideUp(function() {
                 $(this).parent('tr').prev().fadeIn();
                 var td = $(this).parent();
                 var campaign = detach_campaign_form();
@@ -904,16 +907,33 @@ function cancel_edit(callback) {
                     });
             });
     } else {
-        if ($("#campaign:visible").length) {
-            $("#campaign").slideUp(function() {
-                    if (callback) {
-                        callback();
-                    }});
-        }
-        else if (callback) {
+        var keep_open = $campaign.hasClass('keep-open');
+        
+        if ($campaign.is(':visible') && !keep_open) {
+            $campaign.slideUp(callback);
+        } else if (callback) {
             callback();
         }
+
+        if (keep_open) {
+            $campaign.removeClass('keep-open');
+            $campaign.find('.status')
+                .text(r._('Created new campaign!'))
+                .show()
+                .delay(1000)
+                .fadeOut();
+
+            r.sponsored.render();
+        }
     }
+}
+
+function send_campaign(close) {
+    if (!close) {
+        $('#campaign').addClass('keep-open');
+    }
+
+    post_pseudo_form('.campaign', 'edit_campaign');
 }
 
 function del_campaign($campaign_row) {
@@ -999,7 +1019,7 @@ function edit_campaign($campaign_row) {
             init_enddate();
 
             campaign.find('button[name="save"]').show().end()
-                .find('button[name="create"]').hide().end();
+                .find('.create').hide().end();
             campaign.slideDown();
             r.sponsored.render();
         })
@@ -1039,7 +1059,7 @@ function create_campaign() {
 
             $("#campaign")
                 .find('button[name="save"]').hide().end()
-                .find('button[name="create"]').show().end()
+                .find('.create').show().end()
                 .find('input[name="campaign_id36"]').val('').end()
                 .find('input[name="campaign_name"]').val('').end()
                 .find('input[name="sr"]').val('').prop("disabled", true).end()

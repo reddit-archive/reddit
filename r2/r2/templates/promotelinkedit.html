@@ -21,6 +21,7 @@
 ###############################################################################
 
 <%!
+  from r2.config import feature
   from r2.lib import promote
   from r2.lib import js
 %>
@@ -110,11 +111,24 @@ ${pr.javascript_setup()}
                 class="primary-button">
           ${_("save")}
         </button>
-        <button name="create"
-                onclick="return post_pseudo_form('.campaign', 'edit_campaign')"
-                class="primary-button">
-          ${_("create")}
-        </button>
+        % if feature.is_enabled('keep_campaign_open'):
+          <button name="create"
+                  onclick="return send_campaign(false);"
+                  class="create primary-button">
+            ${_("create")}
+          </button>
+          <button name="create_and_close"
+                  onclick="return send_campaign(true);"
+                  class="create primary-button">
+            ${_("create and close")}
+          </button>
+        % else:
+          <button name="create"
+                  onclick="return send_campaign(true);"
+                  class="create primary-button">
+            ${_("create")}
+          </button>
+        % endif
       </footer>
     </div>
   </div>
