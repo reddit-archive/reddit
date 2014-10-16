@@ -90,6 +90,7 @@
   %if thing.show_distinguish:
   <li class="toggle">
     <form method="post" action="/post/distinguish">
+      <input type="hidden" value="${c.profilepage}" name="profilepage">
       <input type="hidden" value="${_('distinguishing...')}" name="executed"/>
       <a href="javascript:void(0)"
          onclick="return toggle_distinguish_span(this)">${_("distinguish")}</a>

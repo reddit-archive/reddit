@@ -2557,6 +2557,7 @@ class ApiController(RedditController):
         """
         if not thing:return
 
+        c.profilepage = request.params.get('profilepage') == 'True'
         log_modaction = True
         log_kw = {}
         send_message = False
