@@ -241,11 +241,29 @@ function click_thing(elem) {
 }
 
 function hide_thing(elem) {
-    $(elem).thing().fadeOut(function() {
-            $(this).toggleClass("hidden");
+    var $thing = $(elem).thing();
+
+    if ($thing.is('.comment') && $thing.has('.child:not(:empty)').length) {
+        var deleted = '[' + _.escape(r._('deleted')) + ']';
+        var $entry = $thing.addClass('deleted').find('.entry:first');
+
+        $entry.find('.usertext')
+            .addClass('grayed')
+            .find('.md')
+                .html('<p>' + deleted + '</p>');
+
+        $entry.find('.author')
+            .replaceWith('<em>' + deleted + '</em>')  ;  
+        
+        $entry.find('.userattrs, .score, .buttons')
+            .remove();
+    } else {
+        $thing.fadeOut(function() {
+            $(this).toggleClass('hidden');
             unexpando_child(elem);
-    });
-};
+        });
+    }
+}
 
 function toggle_label (elem, callback, cancelback) {
   $(elem).parent().find(".option").toggle();
