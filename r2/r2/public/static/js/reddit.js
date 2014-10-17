@@ -804,10 +804,13 @@ function expando_child(elem) {
 function unexpando_child(elem) {
     var thing = $(elem).thing();
     var button = thing.find(".expando-button");
-    button
-        .addClass("collapsed")
-        .removeClass("expanded")
-        .get(0).onclick = function() {expando_child(elem)};
+
+    if (button.length) {
+        button
+            .addClass("collapsed")
+            .removeClass("expanded")
+            .get(0).onclick = function() {expando_child(elem)};
+    }
 
     thing.find(".expando").hide().empty();
 }
