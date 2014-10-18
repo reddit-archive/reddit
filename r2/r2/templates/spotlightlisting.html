@@ -24,7 +24,7 @@
 <%namespace file="utils.html" import="tags, text_with_links, classes"/>
 <%
    import json
-   from r2.lib.template_helpers import static
+   from r2.lib.template_helpers import static, _ws
    from r2.lib.wrapped import Templated
 %>
 
@@ -68,7 +68,7 @@
         <p>
           ${text_with_links(
             _("Use of this tool is open to all members of reddit.com, and for as little as %(price)s you can advertise in this area. %%(get_started)s") % dict(price=format_currency(g.min_promote_bid, 'USD', locale=c.locale)),
-              get_started=dict(link_text=unsafe(_("Get started &rsaquo;")), path="/advertising")
+              get_started=dict(link_text=unsafe(_ws("Get started") + " &rsaquo;"), path="/advertising")
           )}
         </p>
       </div>

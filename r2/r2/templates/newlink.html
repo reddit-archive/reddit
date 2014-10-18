@@ -23,7 +23,7 @@
 <%!
    from r2.lib.strings import strings
    from r2.lib.pages import SubredditSelector, UserText
-   from r2.lib.template_helpers import add_sr
+   from r2.lib.template_helpers import add_sr, _ws
    from r2.lib.filters import safemarkdown
 %>
 
@@ -34,10 +34,10 @@
   if thing.default_sr:
     sr = "&#32;" + _a_buffered(thing.default_sr.name, href=thing.default_sr.path)
   else:
-    sr = _("reddit")
+    sr = _ws("reddit")
 %>
 
-<h1>${unsafe(_("submit to %(sr)s") % dict(sr=sr))}</h1>
+<h1>${unsafe(_ws("submit to %(sr)s") % dict(sr=sr))}</h1>
 
 <%utils:submit_form onsubmit="return post_form(this, 'submit', linkstatus, null, true)" 
                     action=${add_sr("/submit")},
@@ -107,7 +107,7 @@ ${thing.formtabs_menu}
 
 <div class="spacer">
     <div class="submit_text roundfield">
-        <h1>${unsafe(_('submitting to %(sr)s') % dict(sr='/r/<span class="sr"></span>'))}</h1>
+        <h1>${unsafe(_ws('submitting to %(sr)s') % dict(sr='/r/<span class="sr"></span>'))}</h1>
         <span class="content">
             %if thing.default_sr and thing.default_sr.submit_text:
                 ${unsafe(safemarkdown(thing.default_sr.submit_text))}

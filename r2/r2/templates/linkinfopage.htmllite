@@ -20,11 +20,11 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%inherit file="base.htmllite"/>
+<%inherit file="base.htmllite" import="_ws"/>
 
 ${thing._content}
 
 <%def name="titlebar(site)">
-  ${unsafe(_("comments from %(site)s").replace(" ", "&#32;") % dict(site=site))}
+  ${unsafe(_ws("comments from %(site)s").replace(" ", "&#32;") % dict(site=site))}
 </%def>
 

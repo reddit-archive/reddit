@@ -22,7 +22,7 @@
 
 <%!
     from r2.lib.pages import WrappedUser
-    from r2.lib.template_helpers import add_sr
+    from r2.lib.template_helpers import add_sr, _ws
 %>
 <%namespace file="printable.compact" import="delete_report_buttons"/>
 <%namespace file="printable.html" import="arrow, score, thing_css_rowclass"/>
@@ -67,7 +67,7 @@
      %endif
      &#32;
      ## thing.timesince is a cache stub
-     ${unsafe(_("%(timeago)s") % dict(timeago=thing.timesince))}
+     ${unsafe(_ws("%(timeago)s") % dict(timeago=thing.timesince))}
      % if thing.gilded_message:
        <span class="gilded-icon" title="${thing.gilded_message}" data-count="${thing.gildings}">
          % if thing.gildings > 1:

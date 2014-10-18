@@ -23,6 +23,7 @@
 <%!
    from r2.lib.strings import strings, Score
    from r2.lib.pages import WrappedUser, UserText
+   from r2.lib.template_helpers import _ws
  %>
 
 <%namespace file="utils.html" import="plain_link, thing_timestamp, text_with_links"/>
@@ -83,7 +84,7 @@
     %endif
   </div>
 
-  <h3>${unsafe(_('%(count)s subreddits in this multi:') % dict(count='<span class="count">%d</span>&#32;' % len(thing.srs)))}</h3>
+  <h3>${unsafe(_ws('%(count)s subreddits in this multi:') % dict(count='<span class="count">%d</span>&#32;' % len(thing.srs)))}</h3>
   <ul class="subreddits">
   %for sr in thing.srs:
     <li data-name="${sr.name}">
@@ -102,7 +103,7 @@
 
   <div class="bottom">
     %if thing.multi.owner:
-      ${unsafe(_("created by&#32;%(user)s") % dict(user = unsafe(WrappedUser(thing.multi.owner).render())))}
+      ${unsafe(_ws("created by %(user)s").replace(" ", "&#32;") % dict(user = unsafe(WrappedUser(thing.multi.owner).render())))}
     %endif
 
     <span class="age">

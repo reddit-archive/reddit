@@ -24,7 +24,7 @@
 
 <%!
    from pylons.i18n import _
-   from r2.lib.template_helpers import get_domain, style_line
+   from r2.lib.template_helpers import get_domain, style_line, _ws
    from r2.models.subreddit import FakeSubreddit, DefaultSR
 %>
 
@@ -86,5 +86,5 @@
 </div>
 
 <%def name="titlebar(site)">
-  ${unsafe(_("links from %(site)s").replace(" ", "&#32;") % dict(site=site))}
+  ${unsafe(_ws("links from %(site)s").replace(" ", "&#32;") % dict(site=site))}
 </%def>

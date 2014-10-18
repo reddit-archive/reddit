@@ -26,7 +26,7 @@
 <%!
     from r2.lib.strings import strings
     from r2.lib.filters import safemarkdown
-    from r2.lib.template_helpers import format_number, js_timestamp
+    from r2.lib.template_helpers import format_number, js_timestamp, _ws
 %>
 
 <%def name="make_traffic_table()">
@@ -83,13 +83,13 @@
   %if thing.prev or thing.next:
     <p class="nextprev"> ${_("view more:")}&#32;
     %if thing.prev:
-      ${plain_link(unsafe("&lsaquo; " + _("prev")), thing.prev, _sr_path=False, rel="nofollow prev")}  
+      ${plain_link(unsafe("&lsaquo; " + _ws("prev")), thing.prev, _sr_path=False, rel="nofollow prev")}
     %endif
     %if thing.prev and thing.next:
       <span class="separator"></span>
     %endif
     %if thing.next:
-      ${plain_link(unsafe(_("next") + " &rsaquo;"), thing.next,  _sr_path=False, rel="nofollow next")}  
+      ${plain_link(unsafe(_ws("next") + " &rsaquo;"), thing.next,  _sr_path=False, rel="nofollow next")}
     %endif
     </p>
   %endif
@@ -125,8 +125,8 @@
       %for camp in thing.campaign_table:
           <tr class="${'promo-traffic-live' if camp['live'] else ''} ${'active' if camp['active'] else ''} ${'total' if camp['total'] else ''}">
               <td>${camp['id']}</td>
-              <td>${plain_link(unsafe(_("detail")), camp['url'])}</td>
-              <td>${plain_link(unsafe(_("csv")), camp['csv'])}</td>
+              <td>${plain_link(_("detail"), camp['url'])}</td>
+              <td>${plain_link(_("csv"), camp['csv'])}</td>
               <td>${camp['start']}</td>
               <td>${camp['end']}</td>
               <td>${camp['target']}</td>

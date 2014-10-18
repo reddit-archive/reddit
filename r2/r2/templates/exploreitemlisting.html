@@ -20,6 +20,9 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
+<%!
+   from r2.lib.template_helpers import _ws
+%>
 <%namespace file="utils.html" import="plain_link" />
 <%
    _id = ("_%s" % thing.parent_name) if hasattr(thing, 'parent_name') else ''
@@ -60,7 +63,7 @@
       %endfor
       <div class="nav-buttons">
         <span class="nextprev">${_("view more:")}&#32;
-          ${plain_link(unsafe(_("reload suggestions") + " &rsaquo;"), request.url, _sr_path=False, nocname=True)}
+          ${plain_link(unsafe(_ws("reload suggestions") + " &rsaquo;"), request.url, _sr_path=False, nocname=True)}
         </span>
       </div>
   %else:
@@ -71,7 +74,7 @@
     </div>
     <div class="nav-buttons">
       <span class="nextprev">
-        ${plain_link(unsafe(_("try again") + " &rsaquo;"), "/explore", _sr_path=False, nocname=True)}
+        ${plain_link(unsafe(_ws("try again") + " &rsaquo;"), "/explore", _sr_path=False, nocname=True)}
       </span>
     </div>
   %endif

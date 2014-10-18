@@ -20,6 +20,9 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
+<%!
+   from r2.lib.template_helpers import _ws
+%>
 <%namespace file="utils.html" import="plain_link"/>
 
 <div id="sr-header-area">
@@ -38,7 +41,7 @@
       %>
     </div>
 
-    ${plain_link(unsafe(_(editmore) + " &raquo;"),
+    ${plain_link(unsafe(_ws(editmore) + " &raquo;"),
                  "/subreddits/", id="sr-more-link")}
   </div>
 </div>

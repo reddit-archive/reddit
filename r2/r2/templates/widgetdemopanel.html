@@ -21,8 +21,8 @@
 ###############################################################################
 
 <%!
-   from r2.lib.template_helpers import get_domain
- %>
+   from r2.lib.template_helpers import get_domain, _ws
+%>
 
 <% 
    domain = get_domain(cname = c.cname, subreddit = False) 
@@ -157,11 +157,11 @@ function update() {
          </p>
          <p>
           <input type="radio" name="which" value="one" onclick="update()" /> 
-           ${unsafe(_("links %(submitted_by)s the user %(who)s") % dict(submitted_by = where2(), who = text_input("who")))}
+           ${unsafe(_ws("links %(submitted_by)s the user %(who)s") % dict(submitted_by = where2(), who = text_input("who")))}
          </p>
          <p>
            <input type="radio" name="which" value="two" onclick="update()" /> 
-          ${unsafe(_("links from the domain %(domain)s") % dict(domain = text_input("domain")))}
+          ${unsafe(_ws("links from the domain %(domain)s") % dict(domain = text_input("domain")))}
          </p>
        </td>
      </tr>
@@ -178,10 +178,10 @@ function update() {
              <option value="top">${_("top")}</option>
            </select>
            </%def>
-           ${unsafe(_("sort links by %(what)s") % dict(what = what()))}
+           ${unsafe(_ws("sort links by %(what)s") % dict(what = what()))}
          </p>
          <p>
-           ${unsafe(_("date range includes %(when)s") % dict(when = when()))}
+           ${unsafe(_ws("date range includes %(when)s") % dict(when = when()))}
          </p>
          <p>
            ${_("number of links to show")}:

@@ -613,3 +613,8 @@ def display_comment_karma(karma):
     if not c.user_is_admin:
         return max(karma, g.comment_karma_display_floor)
     return karma
+
+
+def _ws(*args, **kwargs):
+    """Helper function to get HTML escaped output from gettext"""
+    return websafe(_(*args, **kwargs))

@@ -21,6 +21,7 @@
 ###############################################################################
 
 <%!
+   from r2.lib.filters import websafe
    from r2.lib.strings import strings
    from r2.lib.template_helpers import format_number, format_percent, html_datetime
  %>
@@ -44,8 +45,8 @@
 
   <div class="score">
     ${unsafe(strings.person_label % dict(num = format_number(thing.a.score),
-                                         persons = ungettext("point", "points", 
-                                         thing.a.score)))}
+                                         persons = websafe(ungettext("point", "points",
+                                                                     thing.a.score))))}
     &#32;(${_("%(percent)s upvoted") % dict(percent=format_percent(thing.a.upvote_ratio))})
   </div>
 

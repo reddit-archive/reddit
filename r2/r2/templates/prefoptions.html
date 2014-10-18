@@ -21,7 +21,7 @@
 ###############################################################################
 
 <%!
-   from r2.lib.template_helpers import add_sr
+   from r2.lib.template_helpers import add_sr, _ws
    from r2.lib.utils import UrlParser
    import random
 %>
@@ -171,7 +171,7 @@
          <span class="little gray">${_("(except my own)")}</span>
       </p>
       <p>
-        ${unsafe(_("display %(num)s links at once") % \
+        ${unsafe(_ws("display %(num)s links at once") % \
         dict(num=capture(link_options)))}
       </p>
       <%
@@ -179,7 +179,7 @@
          'min_link_score')
          %>
       <p>
-      ${unsafe(_("don't show me submissions with a score less than %(num)s") % dict(num = input))}
+      ${unsafe(_ws("don't show me submissions with a score less than %(num)s") % dict(num = input))}
       &#32;<span class="little gray">${_("(leave blank to show all submissions)")}</span>
       </p>
     </td>
@@ -192,7 +192,7 @@
                        'min_comment_score')
        %>
     <p>
-      ${unsafe(_("don't show me comments with a score less than %(num)s") % dict(num = input))}
+      ${unsafe(_ws("don't show me comments with a score less than %(num)s") % dict(num = input))}
       &#32;<span class="little gray">${_("(leave blank to show all comments)")}</span>
     </p>
     <p>
@@ -201,7 +201,7 @@
        'num_comments')
        %>
     <% s = c.user.pref_num_comments %>
-    ${unsafe(_("display %(num)s comments by default") % \
+    ${unsafe(_ws("display %(num)s comments by default") % \
     dict(num = input))}
     &#32;
     <span class="little gray">
@@ -276,7 +276,7 @@
            link1 = "&#32;<a href='/user/%s/liked'>/user/%s/liked</a>&#32;" % (c.user.name, c.user.name)
            link2 = "&#32;<a href='/user/%s/disliked'>/user/%s/disliked</a>" % (c.user.name, c.user.name)
            %>
-        (${unsafe(_("let everyone see %(link1)s and %(link2)s") % dict(link1=link1, link2=link2))})
+        (${unsafe(_ws("let everyone see %(link1)s and %(link2)s") % dict(link1=link1, link2=link2))})
       </span>
       <br/>
       ${checkbox(_("allow my data to be used for research purposes"), "research")}
@@ -325,7 +325,7 @@
         ${checkbox(_("notify me when people say my username"), "monitor_mentions")}
         <br><br>
         <% creddit_link = '&#32;<a href="/creddits">creddit</a>&#32;' %>
-        ${checkbox(unsafe(_("use a %(creddit_link)s to automatically renew my gold if it expires") % dict(creddit_link=creddit_link)), "creddit_autorenew")}
+        ${checkbox(unsafe(_ws("use a %(creddit_link)s to automatically renew my gold if it expires") % dict(creddit_link=creddit_link)), "creddit_autorenew")}
     </td>
   </tr>
   %endif
