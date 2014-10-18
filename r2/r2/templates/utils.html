@@ -86,6 +86,20 @@ ${first_defined(kw[1:])}
 %endif
 </%def>
 
+<%def name="form_group(field_name, *args, **kwargs)">
+  <% error = c.errors.get_first(field_name, *args) %>
+  <div class="c-form-group ${'c-has-feedback c-has-error' if (error and kwargs['show_errors']) else ''}">
+    ${caller.body()}
+    %if kwargs['show_errors']:
+      <div class="c-form-control-feedback-wrapper">
+        <span class="c-form-control-feedback c-form-control-feedback-throbber"></span>
+        <span class="c-form-control-feedback c-form-control-feedback-error" title="${_(error.message) if error else ''}"></span>
+        <span class="c-form-control-feedback c-form-control-feedback-success"></span>
+      </div>
+    %endif
+  </div>
+</%def>
+
 <%def name="error_field(error_name, field_name, kind='span')">
   <% error_key = (error_name, field_name) %>
   <${kind} class="error ${error_name} field-${field_name}" 

@@ -157,26 +157,51 @@
 
     %if not c.user_is_loggedin and not g.read_only_mode:
       %if thing.enable_login_cover:
-      <div class="login-popup cover-overlay" style="display: none">
-        <div class="cover" onclick="return hidecover(this)"></div>
-        <div class="popup">
-          <a href="#" onclick="return hidecover(this)" class="hidecover">
-            ${_("close this window")}
-          </a>
-          <h1 class="cover-msg">${strings.cover_msg}</h1>
-          ${Login(is_popup=True)}
-        </div>
-      </div>
+        %if feature.is_enabled('new_login_flow'):
+          <div id="login-popup-v2" class="login-popup cover-overlay" style="display: none">
+            <div class="cover" onclick="return hidecover(this)"></div>
+            <div class="popup-v2">
+              <a href="#" onclick="return hidecover(this)" class="hidecover c-hide-text">
+                ${_("close this window")}
+              </a>
+              <div class="clear"></div>
+              <div class="popup-v2-body">
+                <h2 class="cover-msg">${strings.cover_msg}</h2>
+                ${Login(is_popup=True)}
+              </div>
+            </div>
+          </div>
+          <div class="lang-popup cover-overlay" style="display: none">
+            <div class="cover" onclick="return hidecover(this)"></div>
+            <div class="popup">
+              <a href="#" onclick="return hidecover(this)" class="hidecover">
+                ${_("close this window")}
+              </a>
+              <%include file="prefoptions.html" />
+            </div>
+          </div>
+        %else:
+          <div class="login-popup cover-overlay" style="display: none">
+            <div class="cover" onclick="return hidecover(this)"></div>
+            <div class="popup">
+              <a href="#" onclick="return hidecover(this)" class="hidecover">
+                ${_("close this window")}
+              </a>
+              <h1 class="cover-msg">${strings.cover_msg}</h1>
+              ${Login(is_popup=True)}
+            </div>
+          </div>
+          <div class="lang-popup cover-overlay" style="display: none">
+            <div class="cover" onclick="return hidecover(this)"></div>
+            <div class="popup">
+              <a href="#" onclick="return hidecover(this)" class="hidecover">
+                ${_("close this window")}
+              </a>
+              <%include file="prefoptions.html" />
+            </div>
+          </div>
+        %endif
       %endif
-      <div class="lang-popup cover-overlay" style="display: none">
-        <div class="cover" onclick="return hidecover(this)"></div>
-        <div class="popup">
-          <a href="#" onclick="return hidecover(this)" class="hidecover">
-            ${_("close this window")}
-          </a>
-          <%include file="prefoptions.html" />
-        </div>
-      </div>
     %endif
   %endif
   ${framebuster()}

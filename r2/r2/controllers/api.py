@@ -241,6 +241,44 @@ class ApiController(RedditController):
         if not (responder.has_errors("user", errors.BAD_USERNAME)):
             return bool(user)
 
+    @csrf_exempt
+    @json_validate(user=VUname(("user",)))
+    def POST_check_username(self, responder, user):
+        """
+        Check whether a username is valid.
+        """
+
+        if not (responder.has_errors("user",
+                    errors.USERNAME_TOO_SHORT,
+                    errors.USERNAME_INVALID_CHARACTERS,
+                    errors.USERNAME_TAKEN_DEL,
+                    errors.USERNAME_TAKEN)):
+            # Pylons does not handle 204s correctly.
+            return {}
+
+    @csrf_exempt
+    @json_validate(password=VPassword(("passwd")))
+    def POST_check_password(self, responder, password):
+        """
+        Check whether a password is valid.
+        """
+    
+        if not (responder.has_errors("passwd", errors.SHORT_PASSWORD) or
+                responder.has_errors("passwd", errors.BAD_PASSWORD)):
+            # Pylons does not handle 204s correctly.
+            return {}
+
+    @csrf_exempt
+    @json_validate(email=ValidEmail("email"))
+    def POST_check_email(self, responder, email):
+        """
+        Check whether an email is valid.
+        """
+
+        if not (responder.has_errors("email", errors.BAD_EMAIL)):
+            # Pylons does not handle 204s correctly.
+            return {}
+
     @allow_oauth2_access
     @json_validate()
     @api_doc(api_section.captcha, extensions=["json"])
@@ -584,25 +622,22 @@ class ApiController(RedditController):
         """
         return self._handle_login(*args, **kwargs)
 
-    @validatedForm(VCaptcha(),
+    @validatedForm(VRegistrationCaptcha(),
                    VRatelimit(rate_ip = True, prefix = "rate_register_"),
                    name = VUname(['user']),
-                   email=ValidEmails(
-                       "email",
-                       num=1,
-                       docs={
-                           "email": "(optional) the user's email address",
-                       },
-                   ),
-                   password = VPassword(['passwd', 'passwd2']),
+                   email=ValidEmail("email"),
+                   password = VPasswordChange(['passwd', 'passwd2']),
                    rem = VBoolean('rem'))
     def _handle_register(self, form, responder, name, email,
                       password, rem):
         bad_captcha = responder.has_errors('captcha', errors.BAD_CAPTCHA)
-        if not (responder.has_errors("user", errors.BAD_USERNAME,
+        if not (responder.has_errors("user",
+                                errors.USERNAME_TOO_SHORT,
+                                errors.USERNAME_INVALID_CHARACTERS,
                                 errors.USERNAME_TAKEN_DEL,
                                 errors.USERNAME_TAKEN) or
-                responder.has_errors("email", errors.BAD_EMAILS) or
+                responder.has_errors("email", errors.BAD_EMAIL) or
+                responder.has_errors("passwd", errors.SHORT_PASSWORD) or
                 responder.has_errors("passwd", errors.BAD_PASSWORD) or
                 responder.has_errors("passwd2", errors.BAD_PASSWORD_MATCH) or
                 responder.has_errors('ratelimit', errors.RATELIMIT) or
@@ -1029,7 +1064,7 @@ class ApiController(RedditController):
 
     @validatedForm(VUser('curpass', default=''),
                    VModhash(),
-                   password=VPassword(
+                   password=VPasswordChange(
                         ['curpass', 'curpass'],
                         docs=dict(curpass="the user's current password")
                    ),
@@ -1062,7 +1097,7 @@ class ApiController(RedditController):
     @validatedForm(VUser("curpass", default=""),
                    VModhash(),
                    force_https=VBoolean("force_https"),
-                   password=VPassword(
+                   password=VPasswordChange(
                        ["curpass", "curpass"],
                        docs=dict(curpass="the user's current password"),
                    ))
@@ -1152,7 +1187,7 @@ class ApiController(RedditController):
     @validatedForm(
         VUser('curpass', default=''),
         VModhash(),
-        password=VPassword(['newpass', 'verpass']),
+        password=VPasswordChange(['newpass', 'verpass']),
     )
     @api_doc(api_section.account)
     def POST_update_password(self, form, jquery, password):
@@ -1185,7 +1220,7 @@ class ApiController(RedditController):
     @validatedForm(VUser('curpass', default = ''),
                    VModhash(),
                    email = ValidEmails("email", num = 1),
-                   password = VPassword(['newpass', 'verpass']),
+                   password = VPasswordChange(['newpass', 'verpass']),
                    verify = VBoolean("verify"),
                    dest=VDestination())
     @api_doc(api_section.account)
@@ -3020,7 +3055,7 @@ class ApiController(RedditController):
 
     @csrf_exempt
     @validatedForm(token=VOneTimeToken(PasswordResetToken, "key"),
-                   password=VPassword(["passwd", "passwd2"]))
+                   password=VPasswordChange(["passwd", "passwd2"]))
     def POST_resetpassword(self, form, jquery, token, password):
         # was the token invalid or has it expired?
         if not token:

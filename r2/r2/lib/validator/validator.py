@@ -905,6 +905,13 @@ class VCaptcha(Validator):
             self.param[1]: "the user's response to the CAPTCHA challenge",
         }
 
+
+class VRegistrationCaptcha(VCaptcha):
+    def run(self, iden, solution):
+        if not feature.is_enabled('new_login_flow'):
+            return VCaptcha.run(self, iden, solution)
+
+
 class VUser(Validator):
     def run(self, password = None):
         if not c.user_is_loggedin:
@@ -1300,13 +1307,30 @@ class VPromoTarget(Validator):
 MIN_PASSWORD_LENGTH = 3
 
 class VPassword(Validator):
-    def run(self, password, verify):
+    def run(self, password):
         if not (password and len(password) >= MIN_PASSWORD_LENGTH):
+            self.set_error(errors.SHORT_PASSWORD, {"chars": MIN_PASSWORD_LENGTH})
             self.set_error(errors.BAD_PASSWORD)
-        elif verify != password:
-            self.set_error(errors.BAD_PASSWORD_MATCH)
         else:
             return password.encode('utf8')
+
+    def param_docs(self):
+        return {
+            self.param[0]: "the password"
+        }
+
+
+class VPasswordChange(VPassword):
+    def run(self, password, verify):
+        base = super(VPasswordChange, self).run(password)
+
+        if self.has_errors:
+            return base
+
+        if (verify != password):
+            self.set_error(errors.BAD_PASSWORD_MATCH)
+        else:
+            return base
 
     def param_docs(self):
         return {
@@ -1314,7 +1338,10 @@ class VPassword(Validator):
             self.param[1]: "the password again (for verification)",
         }
 
-user_rx = re.compile(r"\A[\w-]{3,20}\Z", re.UNICODE)
+MIN_USERNAME_LENGTH = 3
+MAX_USERNAME_LENGTH = 20
+
+user_rx = re.compile(r"\A[\w-]+\Z", re.UNICODE)
 
 def chkuser(x):
     if x is None:
@@ -1332,16 +1359,27 @@ class VUname(VRequired):
     def __init__(self, item, *a, **kw):
         VRequired.__init__(self, item, errors.BAD_USERNAME, *a, **kw)
     def run(self, user_name):
+        length = 0 if not user_name else len(user_name)
+        if (length < MIN_USERNAME_LENGTH or length > MAX_USERNAME_LENGTH):
+            msg_params = {
+                'min': MIN_USERNAME_LENGTH,
+                'max': MAX_USERNAME_LENGTH,
+            }
+            self.set_error(errors.USERNAME_TOO_SHORT, msg_params=msg_params)
+            self.set_error(errors.BAD_USERNAME)
+            return
         user_name = chkuser(user_name)
         if not user_name:
-            return self.error(errors.BAD_USERNAME)
+            self.set_error(errors.USERNAME_INVALID_CHARACTERS)
+            self.set_error(errors.BAD_USERNAME)
+            return
         else:
             try:
                 a = Account._by_name(user_name, True)
                 if a._deleted:
-                   return self.error(errors.USERNAME_TAKEN_DEL)
+                   return self.set_error(errors.USERNAME_TAKEN_DEL)
                 else:
-                   return self.error(errors.USERNAME_TAKEN)
+                   return self.set_error(errors.USERNAME_TAKEN)
             except NotFound:
                 return user_name
 
@@ -1941,7 +1979,7 @@ class ValidEmail(Validator):
         if not email:
             self.set_error(errors.NO_EMAIL)
         elif not self.email_re.match(email):
-            self.set_error(errors.BAD_EMAIL, {'email': email})
+            self.set_error(errors.BAD_EMAIL)
         else:
             return email
 

@@ -169,6 +169,18 @@ r.utils = {
                 return $.ajax(options).done(_.bind(this.set, this, key))
             }
         }
+    },
+
+    parseError: function(error) {
+        var name = error[0];
+        var message = error[1];
+        var field = error[2];
+
+        return {
+            name: name,
+            message: message,
+            field: field,
+        }
     }
 
 }

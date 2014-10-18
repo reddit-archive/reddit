@@ -37,6 +37,8 @@ error_list = dict((
         ('INVALID_SCHEME', _('URI scheme must be one of: %(schemes)s')),
         ('BAD_CAPTCHA', _('care to try these again?')),
         ('BAD_USERNAME', _('invalid user name')),
+        ('USERNAME_TOO_SHORT', _('username must be between %(min)d and %(max)d characters')),
+        ('USERNAME_INVALID_CHARACTERS', _('username must contain only letters, numbers, "-", and "_"')),
         ('USERNAME_TAKEN', _('that username is already taken')),
         ('USERNAME_TAKEN_DEL', _('that username is taken by a deleted account')),
         ('USER_BLOCKED', _("you can't send to a user that you have blocked")),
@@ -49,8 +51,9 @@ error_list = dict((
         ('DELETED_LINK', _('the link you are commenting on has been deleted')),
         ('DELETED_COMMENT', _('that comment has been deleted')),
         ('DELETED_THING', _('that element has been deleted')),
+        ('SHORT_PASSWORD', _('the password must be at least %(chars)d characters')),
         ('BAD_PASSWORD', _('that password is unacceptable')),
-        ('WRONG_PASSWORD', _('invalid password')),
+        ('WRONG_PASSWORD', _('wrong password')),
         ('BAD_PASSWORD_MATCH', _('passwords do not match')),
         ('NO_NAME', _('please enter a name')),
         ('NO_EMAIL', _('please enter an email address')),
@@ -83,7 +86,7 @@ error_list = dict((
         ('BAD_CNAME', "that domain isn't going to work"),
         ('USED_CNAME', "that domain is already in use"),
         ('INVALID_OPTION', _('that option is not valid')),
-        ('BAD_EMAIL', _('the following email is invalid: %(email)s')),
+        ('BAD_EMAIL', _('that email is invalid')),
         ('BAD_EMAILS', _('the following emails are invalid: %(emails)s')),
         ('NO_EMAILS', _('please enter at least one email address')),
         ('TOO_MANY_EMAILS', _('please only share to %(num)s emails at a time.')),
@@ -212,6 +215,14 @@ class ErrorSet(object):
 
     def get(self, name, default=None):
         return self.errors.get(name, default)
+
+    def get_first(self, field_name, *error_names):
+        error = None
+
+        for error_name in error_names:
+            error = self.get((error_name, field_name))
+            if error:
+                return error
 
     def __getitem__(self, name):
         return self.errors[name]
