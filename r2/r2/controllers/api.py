@@ -300,7 +300,7 @@ class ApiController(RedditController):
         else:
             m, inbox_rel = Message._new(c.user, to, subject, body, request.ip)
 
-        form.set_html(".status", _("your message has been delivered"))
+        form.set_text(".status", _("your message has been delivered"))
         form.set_inputs(to = "", subject = "", text = "", captcha="")
         queries.new_message(m, inbox_rel)
 
@@ -517,7 +517,7 @@ class ApiController(RedditController):
                    url = VSanitizedUrl('url'))
     def POST_fetch_title(self, form, jquery, url):
         if form.has_errors('ratelimit', errors.RATELIMIT):
-            form.set_html(".title-status", "");
+            form.set_text(".title-status", "")
             return
 
         VRatelimit.ratelimit(rate_ip = True, rate_user = True,
@@ -526,9 +526,9 @@ class ApiController(RedditController):
             title = get_title(url)
             if title:
                 form.set_inputs(title = title)
-                form.set_html(".title-status", "");
+                form.set_text(".title-status", "")
             else:
-                form.set_html(".title-status", _("no title found"))
+                form.set_text(".title-status", _("no title found"))
         
     def _login(self, responder, user, rem = None):
         """
@@ -865,7 +865,7 @@ class ApiController(RedditController):
             subreddit_quota = g.cache.incr(quota_key)
             quota_limit = getattr(g, "sr_%s_quota" % type)
             if subreddit_quota > quota_limit and container.use_quotas:
-                form.set_html(".status", errors.SUBREDDIT_RATELIMIT)
+                form.set_text(".status", errors.SUBREDDIT_RATELIMIT)
                 c.errors.add(errors.SUBREDDIT_RATELIMIT)
                 form.set_error(errors.SUBREDDIT_RATELIMIT, None)
                 return
@@ -964,7 +964,7 @@ class ApiController(RedditController):
             user_row = row_cls(new)
             if tempinfo:
                 BannedListing.populate_from_tempbans(user_row, tempinfo)
-            form.set_html(".status:first", user_row.executed_message)
+            form.set_text(".status:first", user_row.executed_message)
             rev_types = ["moderator", "moderator_invite", "friend"]
             index = 0 if user_row.type not in rev_types else -1
             table = jquery("." + type + "-table").show().find("table")
@@ -982,7 +982,7 @@ class ApiController(RedditController):
         if form.has_errors("note", errors.TOO_LONG):
             return
         c.user.add_friend_note(friend, note)
-        form.set_html('.status', _("saved"))
+        form.set_text('.status', _("saved"))
 
     @validatedForm(VModhash(),
                    type = VOneOf('type', ('bannednote', 'wikibannednote')),
@@ -1045,7 +1045,7 @@ class ApiController(RedditController):
         if form.has_errors("curpass", errors.WRONG_PASSWORD):
             return
 
-        form.set_html('.status',
+        form.set_text('.status',
                       _('all other sessions have been logged out'))
         form.set_inputs(curpass = "")
 
@@ -1075,7 +1075,7 @@ class ApiController(RedditController):
         if form.has_errors("curpass", errors.WRONG_PASSWORD):
             return
         if not force_https and feature.is_enabled("require_https"):
-            form.set_html(".status",
+            form.set_text(".status",
                           _("you may not disable HTTPS on this account"))
             return
         c.user.pref_force_https = force_https
@@ -1088,7 +1088,7 @@ class ApiController(RedditController):
         # run the change password command to get a new salt.
         # OAuth tokens are fine since that always happened over HTTPS.
         change_password(c.user, password)
-        form.set_html(".status",
+        form.set_text(".status",
                       _("HTTPS preferences have been successfully changed"))
         form.set_inputs(curpass="")
 
@@ -1132,10 +1132,10 @@ class ApiController(RedditController):
                     dest = None
 
                 emailer.verify_email(c.user, dest=dest)
-                form.set_html('.status',
+                form.set_text('.status',
                      _("you should be getting a verification email shortly."))
             else:
-                form.set_html('.status', _('your email has been updated'))
+                form.set_text('.status', _('your email has been updated'))
 
         # user is removing their email
         if (not email and c.user.email and 
@@ -1147,7 +1147,7 @@ class ApiController(RedditController):
             c.user.email_verified = None
             c.user._commit()
             Award.take_away("verified_email", c.user)
-            form.set_html('.status', _('your email has been updated'))
+            form.set_text('.status', _('your email has been updated'))
 
     @validatedForm(
         VUser('curpass', default=''),
@@ -1175,7 +1175,7 @@ class ApiController(RedditController):
             if c.user.email:
                 emailer.password_change_email(c.user)
 
-            form.set_html('.status', _('your password has been updated'))
+            form.set_text('.status', _('your password has been updated'))
             form.set_inputs(curpass="", newpass="", verpass="")
 
             # the password has changed, so the user's cookie has been
@@ -1222,10 +1222,10 @@ class ApiController(RedditController):
                     dest = None
 
                 emailer.verify_email(c.user, dest=dest)
-                form.set_html('.status',
+                form.set_text('.status',
                      _("you should be getting a verification email shortly."))
             else:
-                form.set_html('.status', _('your email has been updated'))
+                form.set_text('.status', _('your email has been updated'))
 
         # user is removing their email
         if (not email and c.user.email and 
@@ -1236,7 +1236,7 @@ class ApiController(RedditController):
             c.user._commit()
             Award.take_away("verified_email", c.user)
             updated = True
-            form.set_html('.status', _('your email has been updated'))
+            form.set_text('.status', _('your email has been updated'))
 
         # change password
         if (password and
@@ -1246,10 +1246,10 @@ class ApiController(RedditController):
             if c.user.email:
                 emailer.password_change_email(c.user)
             if updated:
-                form.set_html(".status",
+                form.set_text(".status",
                               _('your email and password have been updated'))
             else:
-                form.set_html('.status', 
+                form.set_text('.status',
                               _('your password has been updated'))
             form.set_inputs(curpass = "", newpass = "", verpass = "")
             # the password has changed, so the user's cookie has been
@@ -1767,7 +1767,7 @@ class ApiController(RedditController):
         t.attr('rows', 3).html("").val("")
         if isinstance(parent, (Comment, Message)):
             commentform.remove()
-            jquery.things(parent._fullname).set_html(".reply-button:first",
+            jquery.things(parent._fullname).set_text(".reply-button:first",
                                                      _("replied"))
 
         # insert the new comment
@@ -1824,10 +1824,10 @@ class ApiController(RedditController):
             c.user.add_share_emails(emails)
             c.user._commit()
             link = jquery.things(thing._fullname)
-            link.set_html(".share", _("shared"))
+            link.set_text(".share", _("shared"))
             shareform.html("<div class='clearleft'></div>"
                            "<p class='error'>%s</p>" % 
-                           _("your link has been shared."))
+                           websafe(_("your link has been shared.")))
             
             # Set up the parts that are common between e-mail and PMs
             urlparts = (get_domain(cname=c.cname, subreddit=False),
@@ -1958,7 +1958,7 @@ class ApiController(RedditController):
 
         if css_errors:
             error_items = [CssError(x).render(style='html') for x in css_errors]
-            form.set_html(".status", _('validation errors'))
+            form.set_text(".status", _('validation errors'))
             form.set_html(".errors ul", ''.join(error_items))
             form.find('.errors').show()
             c.errors.add(errors.BAD_CSS, field="stylesheet_contents")
@@ -1971,7 +1971,7 @@ class ApiController(RedditController):
         if op == 'save':
             wr = c.site.change_css(stylesheet_contents, parsed, reason=reason)
             form.find('.errors').hide()
-            form.set_html(".status", _('saved'))
+            form.set_text(".status", _('saved'))
             form.set_html(".errors ul", "")
             if wr:
                 description = wiki.modactions.get('config/stylesheet')
@@ -2073,7 +2073,7 @@ class ApiController(RedditController):
         # hide the preview box
         form.find('.img-preview-container').hide()
         # reset the status boxes
-        form.set_html('.img-status', _("deleted"))
+        form.set_text('.img-status', _("deleted"))
         
 
     def GET_upload_sr_img(self, *a, **kw):
@@ -2368,7 +2368,7 @@ class ApiController(RedditController):
 
             # flag search indexer that something has changed
             changed(sr)
-            form.parent().set_html('.status', _("saved"))
+            form.parent().set_text('.status', _("saved"))
 
         if form.has_error():
             return
@@ -3009,10 +3009,10 @@ class ApiController(RedditController):
         else:
             VRatelimit.ratelimit(rate_ip=True, prefix="rate_password_")
             if emailer.password_email(user):
-                form.set_html(".status",
+                form.set_text(".status",
                       _("an email will be sent to that account's address shortly"))
             else:
-                form.set_html(".status", _("try again tomorrow"))
+                form.set_text(".status", _("try again tomorrow"))
 
 
     @csrf_exempt
@@ -3056,7 +3056,7 @@ class ApiController(RedditController):
         if not c.user_is_loggedin or c.user._fullname == token.user_id:
             jquery.redirect('/login')
 
-        form.set_html(".status", _("password updated"))
+        form.set_text(".status", _("password updated"))
 
     @require_oauth2_scope("subscribe")
     @noresponse(VUser(),
@@ -3122,7 +3122,7 @@ class ApiController(RedditController):
         key = "error_status-%s" % str(hexkey)
         g.hardcache.set(key, status, 86400 * 365)
 
-        form.set_html(".status", _('saved'))
+        form.set_text(".status", _('saved'))
 
     @validatedForm(VAdmin(),
                    VModhash(),
@@ -3141,24 +3141,24 @@ class ApiController(RedditController):
             pass
 
         if awardtype is None:
-            form.set_html(".status", "bad awardtype")
+            form.set_text(".status", "bad awardtype")
             return
 
         if form.has_errors(("codename"), errors.INVALID_OPTION):
-            form.set_html(".status", "some other award has that codename")
+            form.set_text(".status", "some other award has that codename")
             pass
 
         url_ok = True
 
         if not imgurl.startswith("//"):
             url_ok = False
-            form.set_html(".status", "the url must be protocol-relative")
+            form.set_text(".status", "the url must be protocol-relative")
 
         try:
             imgurl % 1
         except TypeError:
             url_ok = False
-            form.set_html(".status", "the url must have a %d for size")
+            form.set_text(".status", "the url must have a %d for size")
 
         if not url_ok:
             c.errors.add(errors.BAD_URL, field="imgurl")
@@ -3169,7 +3169,7 @@ class ApiController(RedditController):
 
         if award is None:
             Award._new(codename, title, awardtype, imgurl, api_ok)
-            form.set_html(".status", "saved. reload to see it.")
+            form.set_text(".status", "saved. reload to see it.")
             return
 
         award.codename = codename
@@ -3178,7 +3178,7 @@ class ApiController(RedditController):
         award.imgurl = imgurl
         award.api_ok = api_ok
         award._commit()
-        form.set_html(".status", _('saved'))
+        form.set_text(".status", _('saved'))
 
     @require_oauth2_scope("modflair")
     @validatedForm(VSrModerator(perms='flair'),
@@ -3206,10 +3206,10 @@ class ApiController(RedditController):
                 return
 
         if form.has_errors('css_class', errors.BAD_CSS_NAME):
-            form.set_html(".status:first", _('invalid css class'))
+            form.set_text(".status:first", _('invalid css class'))
             return
         if form.has_errors('css_class', errors.TOO_MUCH_FLAIR_CSS):
-            form.set_html(".status:first", _('too many css classes'))
+            form.set_text(".status:first", _('too many css classes'))
             return
 
         if flair_type == LINK_FLAIR:
@@ -3253,7 +3253,7 @@ class ApiController(RedditController):
                     % user._fullname).parent().html(flair)
                 jquery('input[name="text"]').data('saved', text)
                 jquery('input[name="css_class"]').data('saved', css_class)
-                form.set_html('.status', _('saved'))
+                form.set_text('.status', _('saved'))
 
     @require_oauth2_scope("modflair")
     @validatedForm(VSrModerator(perms='flair'),
@@ -3427,10 +3427,10 @@ class ApiController(RedditController):
 
         # Check validation.
         if form.has_errors('css_class', errors.BAD_CSS_NAME):
-            form.set_html(".status:first", _('invalid css class'))
+            form.set_text(".status:first", _('invalid css class'))
             return
         if form.has_errors('css_class', errors.TOO_MUCH_FLAIR_CSS):
-            form.set_html(".status:first", _('too many css classes'))
+            form.set_text(".status:first", _('too many css classes'))
             return
 
         # Load flair template thing.
@@ -3447,7 +3447,7 @@ class ApiController(RedditController):
                     text_editable=text_editable,
                     flair_type=flair_type)
             except OverflowError:
-                form.set_html(".status:first", _('max flair templates reached'))
+                form.set_text(".status:first", _('max flair templates reached'))
                 return
 
             new = True
@@ -3467,12 +3467,12 @@ class ApiController(RedditController):
             jquery(empty_id).html(
                 FlairTemplateEditor(empty_template, flair_type)
                 .render(style='html'))
-            form.set_html('.status', _('saved'))
+            form.set_text('.status', _('saved'))
         else:
             jquery('#%s' % flair_template._id).html(
                 FlairTemplateEditor(flair_template, flair_type)
                 .render(style='html'))
-            form.set_html('.status', _('saved'))
+            form.set_text('.status', _('saved'))
             jquery('input[name="text"]').data('saved', text)
             jquery('input[name="css_class"]').data('saved', css_class)
         ModAction.create(c.site, c.user, action='editflair',
@@ -3663,7 +3663,7 @@ class ApiController(RedditController):
 
         t = Trophy._new(recipient, award, description=description, url=url)
 
-        form.set_html(".status", _('saved'))
+        form.set_text(".status", _('saved'))
         form._send_data(trophy_fn=t._id36)
 
     @validatedForm(secret_used=VAdminOrAdminSecret("secret"),
@@ -3701,7 +3701,7 @@ class ApiController(RedditController):
             recipient.gold_creddits = max(0, recipient.gold_creddits)
             recipient._commit()
 
-        form.set_html(".status", _('saved'))
+        form.set_text(".status", _('saved'))
 
     @validatedForm(
         VAdmin(),
@@ -3715,11 +3715,11 @@ class ApiController(RedditController):
             return
         
         if not recipient.gold and num_months < 0:
-            form.set_html(".status", _('no gold to take'))
+            form.set_text(".status", _('no gold to take'))
             return
 
         admintools.adjust_gold_expiration(recipient, months=num_months)
-        form.set_html(".status", _('saved'))
+        form.set_text(".status", _('saved'))
 
     @noresponse(VUser(),
                 VModhash(),
@@ -3956,13 +3956,13 @@ class ApiController(RedditController):
                 abort(400, "invalid request")
                 return
             if not client:
-                form.set_html('.status', _('invalid client id'))
+                form.set_text('.status', _('invalid client id'))
                 return
             if getattr(client, 'deleted', False):
-                form.set_html('.status', _('cannot update deleted app'))
+                form.set_text('.status', _('cannot update deleted app'))
                 return
             if not client.has_developer(c.user):
-                form.set_html('.status', _('app does not belong to you'))
+                form.set_text('.status', _('app does not belong to you'))
                 return
 
             client.name = name
@@ -3970,7 +3970,7 @@ class ApiController(RedditController):
             client.about_url = about_url or ''
             client.redirect_uri = redirect_uri
             client._commit()
-            form.set_html('.status', _('application updated'))
+            form.set_text('.status', _('application updated'))
             apps = PrefApps([], [client])
             jquery('#developed-app-%s' % client._id).replaceWith(
                 apps.render_developed_app(client, collapsed=False))
@@ -3983,7 +3983,7 @@ class ApiController(RedditController):
                                        app_type=app_type)
             client._commit()
             client.add_developer(c.user)
-            form.set_html('.status', _('application created'))
+            form.set_text('.status', _('application created'))
             apps = PrefApps([], [client])
             jquery('#developed-apps > h1').show()
             jquery('#developed-apps > ul').append(
@@ -4010,7 +4010,7 @@ class ApiController(RedditController):
             form.set_error(errors.TOO_MANY_DEVELOPERS, '')
             return
 
-        form.set_html('.status', _('developer added'))
+        form.set_text('.status', _('developer added'))
         apps = PrefApps([], [client])
         (jquery('#app-developer-%s input[name="name"]' % client._id).val('')
             .closest('.prefright').find('ul').append(
@@ -4058,7 +4058,7 @@ class ApiController(RedditController):
                 form.set_error(errors.BAD_IMAGE, 'file')
             else:
                 client._commit()
-                form.set_html('.status', 'uploaded')
+                form.set_text('.status', 'uploaded')
                 jquery('#developed-app-%s .app-icon img'
                        % client._id).attr('src', g.media_provider.convert_to_https(client.icon_url))
                 jquery('#developed-app-%s .ajax-upload-form'

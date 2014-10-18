@@ -339,7 +339,7 @@ class IpnController(RedditController):
                    passthrough = VPrintable("passthrough", max_length=50))
     def POST_spendcreddits(self, form, jquery, months, passthrough):
         if months is None or months < 1:
-            form.set_html(".status", _("nice try."))
+            form.set_text(".status", _("nice try."))
             return
 
         days = months * 31
@@ -371,7 +371,7 @@ class IpnController(RedditController):
                                  % (recipient_name, c.user.name))
 
             if recipient._deleted:
-                form.set_html(".status", _("that user has deleted their account"))
+                form.set_text(".status", _("that user has deleted their account"))
                 return
 
         redirect_to_spent = False
@@ -389,7 +389,7 @@ class IpnController(RedditController):
                     thing_fullname = payment_blob.get("comment")
                 thing = send_gift(c.user, recipient, months, days, signed,
                                   giftmessage, thing_fullname)
-                form.set_html(".status", _("the gold has been delivered!"))
+                form.set_text(".status", _("the gold has been delivered!"))
             elif payment_blob["goldtype"] == "code":
                 try:
                     send_gold_code(c.user, months, days)
@@ -397,13 +397,13 @@ class IpnController(RedditController):
                     msg = _("there was an error creating a gift code. "
                             "please try again later, or contact %(email)s "
                             "for assistance.") % {'email': g.goldthanks_email}
-                    form.set_html(".status", msg)
+                    form.set_text(".status", msg)
                     return
-                form.set_html(".status",
+                form.set_text(".status",
                               _("the gift code has been messaged to you!"))
             elif payment_blob["goldtype"] == "onetime":
                 admintools.adjust_gold_expiration(c.user, days=days)
-                form.set_html(".status", _("the gold has been delivered!"))
+                form.set_text(".status", _("the gold has been delivered!"))
 
             redirect_to_spent = True
 
@@ -851,16 +851,16 @@ def handle_stripe_error(fn):
         try:
             return fn(cls, form, *a, **kw)
         except stripe.CardError as e:
-            form.set_html('.status', 
+            form.set_text('.status',
                           _('error: %(error)s') % {'error': e.message})
         except stripe.InvalidRequestError as e:
-            form.set_html('.status', _('invalid request'))
+            form.set_text('.status', _('invalid request'))
         except stripe.APIConnectionError as e:
-            form.set_html('.status', _('api error'))
+            form.set_text('.status', _('api error'))
         except stripe.AuthenticationError as e:
-            form.set_html('.status', _('connection error'))
+            form.set_text('.status', _('connection error'))
         except stripe.StripeError as e:
-            form.set_html('.status', _('error'))
+            form.set_text('.status', _('error'))
             g.log.error('stripe error: %s' % e)
         except:
             raise
@@ -996,12 +996,12 @@ class StripeController(GoldPaymentController):
 
         if (customer['active_card']['address_line1_check'] == 'fail' or
             customer['active_card']['address_zip_check'] == 'fail'):
-            form.set_html('.status',
+            form.set_text('.status',
                           _('error: address verification failed'))
             form.find('.stripe-submit').removeAttr('disabled').end()
             return None
         elif customer['active_card']['cvc_check'] == 'fail':
-            form.set_html('.status', _('error: cvc check failed'))
+            form.set_text('.status', _('error: cvc check failed'))
             form.find('.stripe-submit').removeAttr('disabled').end()
             return None
         else:
@@ -1074,7 +1074,7 @@ class StripeController(GoldPaymentController):
         except GoldException as e:
             # This should never happen. All fields in the payment_blob
             # are validated on creation
-            form.set_html('.status',
+            form.set_text('.status',
                           _('something bad happened, try again later'))
             g.log.debug('POST_goldcharge: %s' % e.message)
             return
@@ -1083,14 +1083,14 @@ class StripeController(GoldPaymentController):
             plan_id = (g.STRIPE_MONTHLY_GOLD_PLAN if period == 'monthly'
                        else g.STRIPE_YEARLY_GOLD_PLAN)
             if c.user.has_gold_subscription:
-                form.set_html('.status',
+                form.set_text('.status',
                               _('your account already has a gold subscription'))
                 return
         else:
             plan_id = None
             penny_months, days = months_and_days_from_pennies(pennies)
             if not months or months != penny_months:
-                form.set_html('.status', _('stop trying to trick the form'))
+                form.set_text('.status', _('stop trying to trick the form'))
                 return
 
         if c.user_is_loggedin:
@@ -1124,7 +1124,7 @@ class StripeController(GoldPaymentController):
             body = _('Your payment is being processed and reddit gold '
                      'will be delivered shortly.')
 
-        form.set_html('.status', status)
+        form.set_text('.status', status)
         if c.user_is_loggedin:
             body = append_random_bottlecap_phrase(body)
             send_system_message(c.user, subject, body, distinguished='gold-auto')
@@ -1138,7 +1138,7 @@ class StripeController(GoldPaymentController):
         if not customer:
             return
 
-        form.set_html('.status', _('your payment details have been updated'))
+        form.set_text('.status', _('your payment details have been updated'))
 
     @validatedForm(VUser(),
                    VModhash(),
@@ -1150,7 +1150,7 @@ class StripeController(GoldPaymentController):
         if not customer:
             return
 
-        form.set_html(".status", _("your subscription has been cancelled"))
+        form.set_text(".status", _("your subscription has been cancelled"))
 
 class CoinbaseController(GoldPaymentController):
     name = 'coinbase'

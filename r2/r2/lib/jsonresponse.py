@@ -245,6 +245,10 @@ class JQueryResponse(JsonResponse):
             return self.find(selector).show().html(value).end()
         return self.find(selector).hide().html("").end()
 
+    def set_text(self, selector, value):
+        if value:
+            return self.find(selector).show().text(value).end()
+        return self.find(selector).hide().html("").end()
 
     def set(self, **kw):
         obj = self

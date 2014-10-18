@@ -516,7 +516,7 @@ class PromoteApiController(ApiController):
             return abort(404, 'not found')
 
         if campaign_has_oversold_error(form, campaign):
-            form.set_html(".freebie", "target oversold, can't freebie")
+            form.set_text(".freebie", _("target oversold, can't freebie"))
             return
 
         if promote.is_promo(link) and campaign:
@@ -564,9 +564,9 @@ class PromoteApiController(ApiController):
         if refund_amount > 0:
             promote.refund_campaign(link, campaign, billable_amount,
                                     billable_impressions)
-            form.set_html('.status', _('refund succeeded'))
+            form.set_text('.status', _('refund succeeded'))
         else:
-            form.set_html('.status', _('refund not needed'))
+            form.set_text('.status', _('refund not needed'))
 
     @validatedForm(
         VSponsor('link_id36'),
@@ -938,7 +938,7 @@ class PromoteApiController(ApiController):
             msg = _("please change campaign start date to %(date)s or earlier")
             date = format_date(max_start, format="short", locale=c.locale)
             msg %= {'date': date}
-            form.set_html(".status", msg)
+            form.set_text(".status", msg)
             return
 
         # check the campaign start date is still valid (user may have created
@@ -949,7 +949,7 @@ class PromoteApiController(ApiController):
             msg = _("please change campaign start date to %(date)s or later")
             date = format_date(min_start, format="short", locale=c.locale)
             msg %= {'date': date}
-            form.set_html(".status", msg)
+            form.set_text(".status", msg)
             return
 
         address_modified = not pay_id or edit
@@ -974,7 +974,7 @@ class PromoteApiController(ApiController):
                 return
 
         msg = reason or _("failed to authenticate card. sorry.")
-        form.set_html(".status", msg)
+        form.set_text(".status", msg)
 
     @validate(VSponsor("link_name"),
               VModhash(),

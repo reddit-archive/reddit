@@ -297,7 +297,7 @@ def _validatedForm(self, self_method, responder, simple_vals, param_vals,
     form = responder(request.POST.get('id', "body"))
 
     # clear out the status line as a courtesy
-    form.set_html(".status", "")
+    form.set_text(".status", "")
 
     # do the actual work
     val = self_method(self, form, responder, *a, **kw)
