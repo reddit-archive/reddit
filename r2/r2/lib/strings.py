@@ -33,6 +33,7 @@ from pylons.i18n import _, ungettext, get_lang
 import random
 import babel.numbers
 
+from r2.lib.filters import websafe
 from r2.lib.translation import set_lang
 
 __all__ = ['StringHandler', 'strings', 'PluralManager', 'plurals',
@@ -61,9 +62,6 @@ string_dict = dict(
 
     # this accomodates asian languages which don't use spaces
     float_label = _("%(num)5.3f %(thing)s"),
-
-    # this is for Japanese which treats people counts differently
-    person_label = _("<span class='number'>%(num)s</span>&#32;<span class='word'>%(persons)s</span>"),
 
     already_submitted = _("that link has already been submitted, but you can try to [submit it again](%s)."),
 
@@ -286,24 +284,30 @@ plurals = PluralManager([P_("comment",     "comments"),
 class Score(object):
     """Convienience class for populating '10 points' in a traslatible
     fasion, used primarily by the score() method in printable.html"""
+
+    # This used to pass through _() because allegedly Japanese needed different
+    # markup, but that doesn't appear to be the case anymore
+    PERSON_LABEL = ('<span class="number">%(num)s</span>&#32;'
+                    '<span class="word">%(persons)s</span>')
+
     @staticmethod
     def number_only(x):
         return str(max(x, 0))
 
     @staticmethod
     def points(x):
-        return  strings.points_label % dict(num=x, point=plurals.N_points(x))
+        return strings.points_label % dict(num=x,
+                                           point=plurals.N_points(x))
 
     @staticmethod
     def safepoints(x):
-        return  strings.points_label % dict(num=max(x,0),
-                                            point=plurals.N_points(x))
+        return Score.points(max(x, 0))
 
     @staticmethod
     def _people(x, label, prepend=''):
         num = prepend + babel.numbers.format_number(x, c.locale)
-        return strings.person_label % \
-            dict(num=num, persons=label(x))
+        return Score.PERSON_LABEL % \
+            dict(num=num, persons=websafe(label(x)))
 
     @staticmethod
     def subscribers(x):
