@@ -19,7 +19,10 @@
 ## All portions of the code written by reddit are Copyright (c) 2006-2014
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
-
+<%!
+   from r2.lib.filters import websafe
+   from r2.lib.template_helpers import _ws
+ %>
 <%namespace file="utils.html" import="md,_md"/>
 <%
    clone_class = ''
@@ -107,7 +110,7 @@
     <input type="hidden" name="passthrough" value="${thing.passthrough}" class="passthrough">
     <button class="btn gold-button"><span class="snoo-head"></span>${_("creddits")}</button>
     <span class="status">
-      <span class="remaining" data-current="${thing.months}" data-total="${thing.user_creddits}" data-template="${_('(%(current)s of %(total)s remaining)') % dict(current='<%= current %>', total='<%= total %>')}">
+      <span class="remaining" data-current="${thing.months}" data-total="${thing.user_creddits}" data-template="${websafe(_ws('(%(current)s of %(total)s remaining)')) % dict(current='<%- current %>', total='<%- total %>')}">
       </span>
     </span>
   </form>
