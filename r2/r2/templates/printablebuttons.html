@@ -23,6 +23,7 @@
 <%namespace file="utils.html" import="plain_link, pretty_button, data, error_field" />
 
 <%!
+   from r2.lib.filters import mako_websafe
    from r2.lib.strings import strings
    from r2.models.promo import PROMOTE_STATUS
  %>
@@ -447,7 +448,7 @@
   <%
      link = _link()
      if fmt:
-         link = fmt % {fmt_param: link}
+         link = mako_websafe(fmt) % {fmt_param: link}
          ## preserve spaces before and after < & > for space compression
          link = link.replace(" <", "&#32;<").replace("> ", ">&#32;")
    %>   
@@ -500,8 +501,8 @@
      if question is None:
          question = _("are you sure?")
      link = ('<a href="#" class="togglebutton" onclick="return toggle(this)">'
-             + title + '</a>')
-     link = format % {format_arg : link}
+             + mako_websafe(title) + '</a>')
+     link = mako_websafe(format) % {format_arg : link}
      link = unsafe(link.replace(" <", "&#32;<").replace("> ", ">&#32;"))
    %>
   <form class="toggle ${op}-button ${_class}" action="#" method="get">

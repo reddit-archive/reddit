@@ -21,7 +21,7 @@
 ###############################################################################
 
 <%! 
-   from r2.lib.template_helpers import static, get_domain, add_sr
+   from r2.lib.template_helpers import static, get_domain, add_sr, _ws
    from r2.lib.strings import Score
 %>
 
@@ -188,21 +188,21 @@
     <span>
     %if thing.saved:
       ${state_button("unsave", _("unsave"),
-        "return change_state(this, 'unsave');", "<b>%s</b>" % _("unsaved"),
+        "return change_state(this, 'unsave');", "<b>%s</b>" % _ws("unsaved"),
         a_class="clickable")}
     %else:
        ${state_button("save", _("save"),
-         "return change_state(this, 'save');", "<b>%s</b>" % _("saved"),
+         "return change_state(this, 'save');", "<b>%s</b>" % _ws("saved"),
          a_class="clickable")}
     %endif
     </span><span>
     %if thing.hidden:
       ${state_button("unhide", _("unhide"),
-        "return change_state(this, 'unhide');", "<b>%s</b>" % _("unhidden"),
+        "return change_state(this, 'unhide');", "<b>%s</b>" % _ws("unhidden"),
         a_class="clickable")}
     %else:
        ${state_button("hide", _("hide"),
-         "return change_state(this, 'hide');", "<b>%s</b>" % _("hide"),
+         "return change_state(this, 'hide');", "<b>%s</b>" % _ws("hide"),
          a_class="clickable")}
     %endif
     </span>
