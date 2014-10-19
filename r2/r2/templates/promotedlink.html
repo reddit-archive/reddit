@@ -21,6 +21,7 @@
 ###############################################################################
 
 <%!
+   from r2.lib.filters import mako_websafe
    from r2.lib.promote import promo_edit_url
    from r2.lib import promote
    from r2.lib.pages.things import LinkButtons
@@ -37,7 +38,7 @@
      taglinetext = _("to be promoted by %(author)s") 
    else:
      taglinetext = _("promoted by %(author)s") 
-   taglinetext = taglinetext.replace(" ", "&#32;")
+   taglinetext = mako_websafe(taglinetext).replace(" ", "&#32;")
    author = WrappedUser(thing.author, thing.attribs, thing,
                         force_show_flair=False).render()
  %>

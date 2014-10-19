@@ -21,7 +21,7 @@
 ###############################################################################
 
 <%!
-   from r2.lib.filters import safemarkdown
+   from r2.lib.filters import safemarkdown, websafe, mako_websafe
    from r2.lib.template_helpers import add_sr
    from r2.models.account import DeletedUser
 %>
@@ -41,12 +41,13 @@
    if thing.sr_id and not (getattr(thing, "is_child", False) or
                            getattr(thing, "is_parent", False)):
      subreddit = thing.subreddit.name
-     author_name = thing.updated_author % dict(author=author_name,
-                                               subreddit=subreddit)
+     author_name = websafe(thing.updated_author) % dict(author=author_name,
+                                                        subreddit=subreddit)
+   taglinetext = mako_websafe(thing.taglinetext)
   %>
-  ${thing.subject} : ${unsafe(thing.taglinetext % dict(when=thing.timesince,
-                                                       author=u"%s" % author_name,
-                                                       dest=u"%s" % thing.dest))}
+  ${thing.subject} : ${unsafe(taglinetext % dict(when=thing.timesince,
+                                                 author=u"%s" % author_name,
+                                                 dest=u"%s" % thing.dest))}
   </title>
   <pubDate>${thing._date.strftime('%a, %d %b %Y %H:%M:%S %z')}</pubDate>
   <dc:date>${thing._date.isoformat()}-0700</dc:date>

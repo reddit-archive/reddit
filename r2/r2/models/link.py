@@ -364,7 +364,7 @@ class Link(Thing, Printable):
         from r2.lib.count import incr_counts
         from r2.lib import media
         from r2.lib.utils import timeago
-        from r2.lib.template_helpers import get_domain
+        from r2.lib.template_helpers import get_domain, _ws, unsafe
         from r2.models.report import Report
         from r2.models.subreddit import FakeSubreddit
         from r2.lib.wrapped import CachedVariable
@@ -651,17 +651,17 @@ class Link(Thing, Printable):
 
             taglinetext = ''
             if item.different_sr:
-                author_text = (" <span>" + _("by %(author)s to %(reddit)s") +
+                author_text = (" <span>" + _ws("by %(author)s to %(reddit)s") +
                                "</span>")
             else:
-                author_text = " <span>" + _("by %(author)s") + "</span>"
+                author_text = " <span>" + _ws("by %(author)s") + "</span>"
             if item.editted:
                 if item.score_fmt == Score.points:
                     taglinetext = ("<span>" +
-                                   _("%(score)s submitted %(when)s "
-                                     "%(lastedited)s") +
+                                   _ws("%(score)s submitted %(when)s "
+                                       "%(lastedited)s") +
                                    "</span>")
-                    taglinetext += author_text
+                    taglinetext = unsafe(taglinetext + author_text)
                 elif item.different_sr:
                     taglinetext = _("submitted %(when)s %(lastedited)s "
                                     "by %(author)s to %(reddit)s")
@@ -671,9 +671,9 @@ class Link(Thing, Printable):
             else:
                 if item.score_fmt == Score.points:
                     taglinetext = ("<span>" +
-                                   _("%(score)s submitted %(when)s") +
+                                   _ws("%(score)s submitted %(when)s") +
                                    "</span>")
-                    taglinetext += author_text
+                    taglinetext = unsafe(taglinetext + author_text)
                 elif item.different_sr:
                     taglinetext = _("submitted %(when)s by %(author)s "
                                     "to %(reddit)s")

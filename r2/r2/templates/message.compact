@@ -22,7 +22,7 @@
 
 <%!
     from r2.lib.pages import WrappedUser 
-    from r2.lib.filters import safemarkdown
+    from r2.lib.filters import safemarkdown, websafe, mako_websafe
 %>
 <%namespace file="printable.html" import="arrow, score"/>
 <%namespace file="utils.html" import="plain_link" />
@@ -61,9 +61,9 @@
                    (thing.subreddit.path, thing.subreddit.path)
      if not thing.dest:
        thing.dest = subreddit
-     author = thing.updated_author % dict(author=author, subreddit=subreddit)
+     author = websafe(thing.updated_author) % dict(author=author, subreddit=subreddit)
    
-   taglinetext = thing.taglinetext.replace(' ', '&nbsp;')
+   taglinetext = mako_websafe(thing.taglinetext).replace(' ', '&nbsp;')
    taglinetext = taglinetext % dict(when=thing.timesince,
                                     author=u"<b>%s</b>" % author,
                                     dest=u"<b>%s</b>" % thing.dest)

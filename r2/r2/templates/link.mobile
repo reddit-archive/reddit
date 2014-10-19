@@ -22,6 +22,7 @@
 
 <%! 
     from pylons.i18n import _, ungettext
+    from r2.lib.filters import mako_websafe
     from r2.lib.template_helpers import add_sr
 %>
 
@@ -100,10 +101,10 @@
         taglinetext = _("%(when)s ago by %(author)s to %(reddit)s from %(domain)s")
     else:
         taglinetext = _("%(when)s ago by %(author)s from %(domain)s")
-    taglinetext = taglinetext.replace(" ", "&#32;")
+    taglinetext = mako_websafe(taglinetext).replace(" ", "&#32;")
   %>
-  ${unsafe(taglinetext % dict(reddit = self.subreddit(), 
+  ${unsafe(taglinetext % dict(reddit = self.subreddit(),
                               domain = self.domain(),
-                              when = thing.timesince, 
+                              when = thing.timesince,
                               author= self.author()))}
 </%def>

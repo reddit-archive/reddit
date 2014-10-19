@@ -90,7 +90,12 @@ except ImportError:
 
         return res
 
-class _Unsafe(unicode): pass
+
+class _Unsafe(unicode):
+    # Necessary so Wrapped instances with these can get cached
+    def cache_key(self, style):
+        return unicode(self)
+
 
 def _force_unicode(text):
     if text == None:

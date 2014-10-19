@@ -21,7 +21,7 @@
 ###############################################################################
 
 <%!
-   from r2.lib.filters import safemarkdown
+   from r2.lib.filters import safemarkdown, websafe, mako_websafe
    from r2.lib.pages.things import MessageButtons
    from r2.lib.pages import WrappedUser
    from r2.lib.template_helpers import static
@@ -55,11 +55,11 @@ ${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if
                                           thing.subreddit.path)
      if not thing.dest:
        thing.dest = subreddit
-     author = thing.updated_author.replace(' ', '&#32;') % dict(
+     author = websafe(thing.updated_author).replace(' ', '&#32;') % dict(
        author=author,
        subreddit=subreddit)
 
-   taglinetext = thing.taglinetext.replace(' ', '&#32;') % dict(
+   taglinetext = mako_websafe(thing.taglinetext).replace(' ', '&#32;') % dict(
      when=capture(thing_timestamp, thing, thing.timesince, include_tense=True),
      author=u"<b>%s</b>" % author,
      dest=u"<b>%s</b>" % thing.dest)
