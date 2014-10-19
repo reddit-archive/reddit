@@ -21,6 +21,7 @@
 ###############################################################################
 
 <%!
+  from r2.lib.filters import jssafe
   from r2.lib.template_helpers import static, make_url_protocol_relative
   from r2.lib.utils import timeuntil
 %>
@@ -123,7 +124,7 @@ ${utils.radio_type('app_type', "script", _("script"),
       <div class="edit-app-form">
         <form method="post" action="/api/updateapp" class="pretty-form"
          id="update-app-${app._id}"
-         onsubmit="${"return post_form(this, 'updateapp', function(x) {return '%s'})" % _("updating...")}">
+         onsubmit="${"return post_form(this, 'updateapp', function(x) {return '%s'})" % jssafe(_("updating..."))}">
           <input type="hidden" name="uh" value="${c.modhash}" />
           <input type="hidden" name="client_id" value="${app._id}" />
           <input type="hidden" name="app_type" value="${app.app_type}" />
@@ -180,7 +181,7 @@ ${utils.radio_type('app_type', "script", _("script"),
               <br>
               <form method="post" action="/api/adddeveloper"
                class="pretty-form" id="app-developer-${app._id}"
-               onsubmit="${"return post_form(this, 'adddeveloper', function(x) {return '%s'})" % _("adding...")}">
+               onsubmit="${"return post_form(this, 'adddeveloper', function(x) {return '%s'})" % jssafe(_("adding..."))}">
                 <input type="hidden" name="uh" value="${c.modhash}" />
                 <input type="hidden" name="client_id" value="${app._id}" />
                 ${_('add developer')}: <input class="text" name="name">
@@ -318,7 +319,7 @@ ${utils.radio_type('app_type', "script", _("script"),
     %endif
   </button>
   <form method="post" action="/api/updateapp" class="pretty-form" id="create-app"
-   onsubmit="${"return post_form(this, 'updateapp', function(x) {return '%s'})" % _("creating...")}">
+   onsubmit="${"return post_form(this, 'updateapp', function(x) {return '%s'})" % jssafe(_("creating..."))}">
     <h1>${_("create application")}</h1>
     <input type="hidden" name="uh" value="${c.modhash}" />
     <table class="content preftable">

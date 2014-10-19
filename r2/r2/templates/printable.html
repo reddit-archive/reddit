@@ -20,7 +20,8 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%! 
+<%!
+   from r2.lib.filters import jssafe
    from r2.lib.template_helpers import add_sr, static
    from r2.lib.strings import strings
    from r2.lib.pages.things import BanButtons
@@ -55,7 +56,7 @@ ${self.RenderPrintable()}
   %if getattr(thing, "approval_checkmark", None):
       <img class="approval-checkmark" title="${thing.approval_checkmark}"
            src="${static('green-check.png')}"
-           onclick="alert('${thing.approval_checkmark}\n\n${_("(no need to click for this info; just hover over the checkmark next time)")}')"
+           onclick="alert('${thing.approval_checkmark}\n\n${jssafe(_("(no need to click for this info; just hover over the checkmark next time)"))}')"
          >
   %endif
 </%def>

@@ -23,7 +23,7 @@
 <%namespace file="utils.html" import="plain_link, pretty_button, data, error_field" />
 
 <%!
-   from r2.lib.filters import mako_websafe
+   from r2.lib.filters import mako_websafe, jssafe
    from r2.lib.strings import strings
    from r2.models.promo import PROMOTE_STATUS
  %>
@@ -84,7 +84,7 @@
 
 <%def name="distinguish_setter(name, value=None)">
   <a href="javascript:void(0)"
-     onclick="return set_distinguish(this, '${value or name}')">${_(name)}</a>
+     onclick="return set_distinguish(this, '${jssafe(value or name)}')">${_(name)}</a>
 </%def>
 
 <%def name="distinguish()">

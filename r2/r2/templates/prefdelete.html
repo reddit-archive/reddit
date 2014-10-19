@@ -21,7 +21,7 @@
 ###############################################################################
 
 <%!
-   from r2.lib.filters import safemarkdown
+   from r2.lib.filters import safemarkdown, jssafe
 %>
 <%namespace file="utils.html" import="error_field"/>
 <%namespace name="utils" file="utils.html"/>
@@ -29,7 +29,7 @@
 <h1>${_("delete your reddit account")}</h1>
 
 <form action="/post/delete" method="post"
-  onsubmit="${"return post_form(this, 'delete_user', function(x) {return '%s'})" % _("deleting...")}" id="pref-delete">
+  onsubmit="${"return post_form(this, 'delete_user', function(x) {return '%s'})" % jssafe(_("deleting..."))}" id="pref-delete">
 
 <div class="spacer">
   <%utils:round_field title="${_('sorry to see you go!')}">
