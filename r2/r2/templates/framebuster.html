@@ -30,11 +30,11 @@
 
 
     <!--[if gte IE 9]> <!-->
-      ${unsafe(js.use('framebuster'))}
+      ${unsafe(js.use('reddit-init', 'reddit'))}
     <!-- <![endif]-->
 
     <!--[if lt IE 9]>
-      ${unsafe(js.use('framebuster-legacy'))}
+      ${unsafe(js.use('reddit-init-legacy', 'reddit'))}
     <![endif]-->
     ${js_setup()}
   </head>
