@@ -33,11 +33,11 @@
     <title>${thing.title}</title>
 
     <!--[if gte IE 9]> <!-->
-      ${unsafe(js.use('jquery2x', 'mobile'))}
+      ${unsafe(js.use('reddit-init', 'mobile'))}
     <!-- <![endif]-->
 
     <!--[if lt IE 9]>
-      ${unsafe(js.use('jquery1x', 'mobile'))}
+      ${unsafe(js.use('reddit-init-legacy', 'mobile'))}
     <![endif]-->
     ${js_setup()}
     <link rel="stylesheet" href="${static('compact.css')}"

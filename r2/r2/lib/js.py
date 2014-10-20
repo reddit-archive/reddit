@@ -462,6 +462,16 @@ module["reddit"] = LocalizedModule("reddit.js",
     wrap=catch_errors,
 )
 
+module["framebuster"] = LocalizedModule("framebuster.js",
+    "lib/jquery-2.1.1.js",
+    module["reddit"],
+)
+
+module["framebuster-legacy"] = LocalizedModule("framebuster-legacy.js",
+    "lib/jquery-1.11.1.js",
+    module["reddit"],
+)
+
 module["admin"] = Module("admin.js",
     # include Backbone and timings so they are available early to render admin bar fast.
     "lib/backbone-1.0.0.js",
