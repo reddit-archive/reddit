@@ -1100,6 +1100,7 @@ def new_message(message, inbox_rels, add_to_sent=True, update_modmail=True):
     if not from_user.update_sent_messages:
         add_to_sent = False
 
+    modmail_rel_included = False
     update_recipient = False
     add_to_user = None
 
@@ -1112,7 +1113,7 @@ def new_message(message, inbox_rels, add_to_sent=True, update_modmail=True):
 
             if isinstance(inbox_rel, ModeratorInbox):
                 m.insert(get_subreddit_messages(to), [inbox_rel])
-                update_modmail &= True
+                modmail_rel_included = True
             else:
                 m.insert(get_inbox_messages(to), [inbox_rel])
                 update_recipient = True
@@ -1120,6 +1121,8 @@ def new_message(message, inbox_rels, add_to_sent=True, update_modmail=True):
                 add_to_user = to
 
             set_unread(message, to, unread=True, mutator=m)
+
+    update_modmail = update_modmail and modmail_rel_included
 
     amqp.add_item('new_message', message._fullname)
     add_message(message, update_recipient=update_recipient,
