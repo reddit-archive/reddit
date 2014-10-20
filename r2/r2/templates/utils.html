@@ -406,6 +406,9 @@ ${unsafe(txt)}
         ['_setCustomVar', 2, 'srpath', '${tracking.get_srpath()}', 3],
         ['_setCustomVar', 3, 'usertype', user_type, 2],
         ['_setCustomVar', 4, 'uitype', '${uitype}', 3],
+        %if g.googleanalytics_sample_rate:
+        ['_setSampleRate', '${g.googleanalytics_sample_rate}'],
+        %endif
         ['_trackPageview']
     );
 
