@@ -36,12 +36,12 @@ from r2.lib.strings import Score
   <select id=${what} name=${what} class="gold-dropdown">
     %for i in month_options:
        <option value="${i}" ${"selected" if chosen_months == i else ""}>
-         ${unsafe(Score.somethings(i, somethings))}: ${g.gold_month_price * i}
+         ${Score.somethings(i, somethings)}: ${g.gold_month_price * i}
        </option>
     %endfor
     %for i in year_options:
        <option value="${i * 12}" ${"selected" if (chosen_months == (i * 12) or (not chosen_months and i == 1)) else ""}>
-         ${unsafe(Score.somethings(i * 12, somethings))} &#32; (special price!): ${g.gold_year_price * i}
+         ${Score.somethings(i * 12, somethings)} &#32; (special price!): ${g.gold_year_price * i}
        </option>
     %endfor
   </select>

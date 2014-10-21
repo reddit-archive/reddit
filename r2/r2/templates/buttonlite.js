@@ -21,6 +21,7 @@
 ###############################################################################
 
 <%!
+   from r2.lib.filters import jssafe, websafe
    from r2.lib.template_helpers import static, get_domain
    from r2.lib.utils import query_string
    from r2.lib.strings import Score
@@ -47,7 +48,7 @@
     write_string += unstyled_submit + '<img style="height: 2.3ex; vertical-align:top; margin-right: 1ex" src="${static('spreddit' + str(thing.image) + '.gif')}">' + "</a>";
 %endif
 %if thing._fullname:
-    write_string += '${Score.safepoints(thing.score)}';
+    write_string += '${jssafe(websafe(Score.safepoints(thing.score)))}';
     %if thing.styled:  
         write_string += ' on ' + styled_submit + 'reddit</a>';
     %else:
