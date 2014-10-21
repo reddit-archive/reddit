@@ -513,7 +513,7 @@ ${unsafe(txt)}
     timestamp_class = unsafe(' class="live-timestamp"') if live else ''
   %>
   <time title="${long_datetime(date)}" datetime="${html_datetime(date)}"${timestamp_class}>
-    ${unsafe(since or simplified_timesince(date, include_tense))}
+    ${(since or simplified_timesince(date, include_tense))}
   </time>
 </%def>
 
