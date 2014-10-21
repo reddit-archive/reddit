@@ -90,6 +90,7 @@ r.ui.initTimings = function() {
   if (Math.random() > 0.01) { return }
 
   if (!r.config.pageInfo.actionName) { return }
+  if (!r.config.stats_domain) { return }
 
   var browserTimings = new r.NavigationTimings()
 
@@ -116,18 +117,13 @@ r.ui.initTimings = function() {
       timingData.actionName = r.config.pageInfo.actionName
       timingData.verification = r.config.pageInfo.verification
 
-      $.post('/web/timings', timingData)
-
-      // Sample at 1% of 1% for now
-      if (Math.random() <= 0.01 && r.config.stats_domain ) {
-        $.ajax({
-          type: 'POST',
-          url: r.config.stats_domain,
-          data: JSON.stringify({ rum: timingData  }),
-          contentType: 'application/json; charset=utf-8',
-          dataType: 'json',
-        })
-      }
+      $.ajax({
+        type: 'POST',
+        url: r.config.stats_domain,
+        data: JSON.stringify({ rum: timingData  }),
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+      })
     })
   })
 }
