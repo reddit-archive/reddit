@@ -137,6 +137,7 @@ string_dict = dict(
     giftgold_note = _("Here's a note that was included:\n\n----\n\n"),
     youve_been_gilded_comment = _("Another user liked [your comment](%(url)s) so much that they gilded it, giving you reddit gold.\n\n"),
     youve_been_gilded_link = _("Another user liked [your submission](%(url)s) so much that they gilded it, giving you reddit gold.\n\n"),
+    gold_claimed_code = _("Thanks for claiming a reddit gold code.\n\n"),
     gold_summary_autorenew = _("You're about to set up an ongoing, autorenewing subscription to reddit gold for yourself (%(user)s). You'll pay %(price)s for this, %(period)s."),
     gold_summary_onetime = _("You're about to make a one-time purchase of %(amount)s of reddit gold for yourself (%(user)s). You'll pay a total of %(price)s for this."),
     gold_summary_creddits = _("You're about to purchase %(amount)s. They work like gift certificates: each creddit you have will allow you to give one month of reddit gold to someone else. You'll pay a total of %(price)s for this."),

@@ -2961,6 +2961,22 @@ class ApiController(RedditController):
                 c.user._commit()
                 status = 'claimed-creddits'
             else:
+                # send the user a message if they don't already have gold
+                if not c.user.gold:
+                    subject = "You claimed a reddit gold code!"
+                    message = strings.gold_claimed_code
+                    message += "\n\n" + strings.gold_benefits_msg
+
+                    if g.lounge_reddit:
+                        message += "\n* " + strings.lounge_msg
+                    message = append_random_bottlecap_phrase(message)
+
+                    try:
+                        send_system_message(c.user, subject, message,
+                                            distinguished='gold-auto')
+                    except MessageError:
+                        g.log.error('claimgold: could not send system message')
+
                 admintools.adjust_gold_expiration(c.user, days=days)
 
                 g.cache.set("recent-gold-" + c.user.name, True, 600)
