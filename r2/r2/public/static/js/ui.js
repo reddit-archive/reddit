@@ -86,11 +86,15 @@ r.ui.initLiveTimestamps = function() {
 }
 
 r.ui.initTimings = function() {
-  // sample at a rate of 1%
-  if (Math.random() > 0.01) { return }
+  // return if we're not configured for sending stats
+  if (!r.config.pageInfo.actionName || !r.config.stats_domain) {
+    return
+  }
 
-  if (!r.config.pageInfo.actionName) { return }
-  if (!r.config.stats_domain) { return }
+  // Sample based on the configuration sample rate
+  if (Math.random() > r.config.stats_sample_rate / 100) {
+    return
+  }
 
   var browserTimings = new r.NavigationTimings()
 

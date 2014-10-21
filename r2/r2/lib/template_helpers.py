@@ -151,6 +151,7 @@ def js_config(extra_config=None):
         # where do ajax requests go?
         "ajax_domain": get_domain(cname=c.authorized_cname, subreddit=False),
         "stats_domain": g.stats_domain or '',
+        "stats_sample_rate": g.stats_sample_rate or 0,
         "extension": c.extension,
         "https_endpoint": is_subdomain(request.host, g.domain) and g.https_endpoint,
         # does the client only want to communicate over HTTPS?
