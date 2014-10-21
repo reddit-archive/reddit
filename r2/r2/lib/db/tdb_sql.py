@@ -105,6 +105,7 @@ class TransactionSet(threading.local):
 transactions = TransactionSet()
 
 MAX_THING_ID = 9223372036854775807 # http://www.postgresql.org/docs/8.3/static/datatype-numeric.html
+MIN_THING_ID = 0
 
 def make_metadata(engine):
     metadata = sa.MetaData(engine)

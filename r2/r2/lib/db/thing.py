@@ -360,8 +360,11 @@ class DataThing(object):
         ids, single = tup(ids, True)
         prefix = thing_prefix(cls.__name__)
 
-        if not all(x <= tdb.MAX_THING_ID for x in ids):
-            raise NotFound('huge thing_id in %r' % ids)
+        for x in ids:
+            if x > tdb.MAX_THING_ID:
+                raise NotFound('huge thing_id in %r' % ids)
+            elif x < tdb.MIN_THING_ID:
+                raise NotFound('negative thing_id in %r' % ids)
 
         def count_found(ret, still_need):
             cls._cache.stats.cache_report(
