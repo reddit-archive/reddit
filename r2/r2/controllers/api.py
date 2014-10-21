@@ -376,12 +376,13 @@ class ApiController(RedditController):
         if form.has_errors('captcha', errors.BAD_CAPTCHA):
             return
 
-        if (not sr or form.has_errors('sr',
+        if form.has_errors('sr',
                             errors.SUBREDDIT_NOEXIST,
                             errors.SUBREDDIT_NOTALLOWED,
                             errors.SUBREDDIT_REQUIRED,
+                            errors.INVALID_OPTION,
                             errors.NO_SELFS,
-                            errors.NO_LINKS)):
+                            errors.NO_LINKS):
             return
 
         if not sr.can_submit_text(c.user) and kind == "self":
