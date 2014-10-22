@@ -803,7 +803,7 @@ class UserController(ListingController):
         return q
 
     @require_oauth2_scope("history")
-    @validate(vuser = VExistingUname('username'),
+    @validate(vuser = VExistingUname('username', allow_deleted=True),
               sort = VMenu('sort', ProfileSortMenu, remember = False),
               time = VMenu('t', TimeMenu, remember = False),
               show=VOneOf('show', ('given',)))
@@ -820,6 +820,10 @@ class UserController(ListingController):
 
         # the validator will ensure that vuser is a valid account
         if not vuser:
+            return self.abort404()
+
+        # only allow admins to view deleted users
+        if vuser._deleted and not c.user_is_admin:
             return self.abort404()
 
         if c.user_is_admin:
