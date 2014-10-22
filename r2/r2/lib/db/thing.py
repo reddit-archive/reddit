@@ -23,6 +23,7 @@
 import hashlib
 import new
 import sys
+import itertools
 
 from copy import copy, deepcopy
 from datetime import datetime
@@ -763,27 +764,34 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
                      self._type2.__name__,self._thing2_id,
                      '[unsaved]' if not self._created else '\b'))
 
+        @staticmethod
+        def _fast_cache_key_from_parts(class_name, thing1_id, thing2_id, name):
+            return thing_prefix(class_name) + str(
+                (thing1_id, thing2_id, name)
+            )
+
+        def _fast_cache_key(self):
+            return self._fast_cache_key_from_parts(
+                self.__class__.__name__,
+                self._thing1_id,
+                self._thing2_id,
+                self._name)
+
         def _commit(self):
             DataThing._commit(self)
             #if i denormalized i need to check here
             if denorm1: self._thing1._commit(denorm1[0])
             if denorm2: self._thing2._commit(denorm2[0])
             #set fast query cache
-            self._cache.set(thing_prefix(self.__class__.__name__)
-                      + str((self._thing1_id, self._thing2_id, self._name)),
-                      self._id)
+            self._cache.set(self._fast_cache_key(), self._id)
 
         def _delete(self):
             tdb.del_rel(self._type_id, self._id)
-            
+
             #clear cache
-            prefix = thing_prefix(self.__class__.__name__)
-            #TODO - there should be just one cache key for a rel?
-            self._cache.delete(prefix + str(self._id))
+            self._cache.delete(self._cache_key())
             #update fast query cache
-            self._cache.set(prefix + str((self._thing1_id,
-                                    self._thing2_id,
-                                    self._name)), None)
+            self._cache.set(self._fast_cache_key(), None)
             #temporarily set this property so the rest of this request
             #know it's deleted. save -> unsave, hide -> unhide
             self._name = 'un' + self._name
@@ -793,63 +801,84 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
                         thing_data=False):
             """looks up all the relationships between thing1_ids and
                thing2_ids and caches them"""
-            prefix = thing_prefix(cls.__name__)
 
-            thing1_dict = dict((t._id, t) for t in tup(thing1s))
-            thing2_dict = dict((t._id, t) for t in tup(thing2s))
+            cache_key_lookup = dict()
 
-            thing1_ids = thing1_dict.keys()
-            thing2_ids = thing2_dict.keys()
-
-            name = tup(name)
-
-            # permute all of the pairs
-            pairs = set((x, y, n)
-                        for x in thing1_ids
-                        for y in thing2_ids
-                        for n in name)
-
-            def lookup_rel_ids(pairs):
+            # We didn't find these keys in the cache, look them up in the
+            # database
+            def lookup_rel_ids(uncached_keys):
                 rel_ids = {}
 
+                # Lookup thing ids and name from cache key
                 t1_ids = set()
                 t2_ids = set()
                 names = set()
-                for t1, t2, name in pairs:
-                    t1_ids.add(t1)
-                    t2_ids.add(t2)
+                for cache_key in uncached_keys:
+                    (thing1, thing2, name) = cache_key_lookup[cache_key]
+                    t1_ids.add(thing1._id)
+                    t2_ids.add(thing2._id)
                     names.add(name)
 
-                if t1_ids and t2_ids and names:
-                    q = cls._query(cls.c._thing1_id == t1_ids,
-                                   cls.c._thing2_id == t2_ids,
-                                   cls.c._name == names)
-                else:
-                    q = []
+                q = cls._query(
+                        cls.c._thing1_id == t1_ids,
+                        cls.c._thing2_id == t2_ids,
+                        cls.c._name == names)
 
                 for rel in q:
-                    rel_ids[(rel._thing1_id, rel._thing2_id, rel._name)] = rel._id
+                    rel_ids[cls._fast_cache_key_from_parts(
+                        cls.__name__,
+                        rel._thing1_id,
+                        rel._thing2_id,
+                        rel._name
+                    )] = rel._id
 
-                for p in pairs:
-                    if p not in rel_ids:
-                        rel_ids[p] = None
+                for cache_key in uncached_keys:
+                    if cache_key not in rel_ids:
+                        rel_ids[cache_key] = None
 
                 return rel_ids
 
+            # make lookups for thing ids and names
+            thing1_dict = dict((t._id, t) for t in tup(thing1s))
+            thing2_dict = dict((t._id, t) for t in tup(thing2s))
+
+            names = tup(name)
+
+            # permute all of the pairs via cartesian product
+            rel_tuples = itertools.product(
+                thing1_dict.values(),
+                thing2_dict.values(),
+                names)
+
+            # create cache keys for all permutations and initialize lookup
+            for t in rel_tuples:
+                thing1, thing2, name = t
+                cache_key = cls._fast_cache_key_from_parts(
+                    cls.__name__,
+                    thing1._id,
+                    thing2._id,
+                    name)
+                cache_key_lookup[cache_key] = t
+
             # get the relation ids from the cache or query the db
-            res = sgm(cls._cache, pairs, lookup_rel_ids, prefix)
+            res = sgm(cls._cache, cache_key_lookup.keys(), lookup_rel_ids)
 
             # get the relation objects
             rel_ids = {rel_id for rel_id in res.itervalues()
                               if rel_id is not None}
-            rels = cls._byID_rel(rel_ids, data=data, eager_load=eager_load,
-                                 thing_data=thing_data)
+            rels = cls._byID_rel(
+                rel_ids,
+                data=data,
+                eager_load=eager_load,
+                thing_data=thing_data)
 
+            # Takes aggregated results from cache and db (res) and transforms
+            # the values from ids to Relations.
             res_obj = {}
-            for (thing1_id, thing2_id, name), rel_id in res.iteritems():
-                pair = (thing1_dict[thing1_id], thing2_dict[thing2_id], name)
+            for cache_key, rel_id in res.iteritems():
+                t = cache_key_lookup[cache_key]
                 rel = rels[rel_id] if rel_id is not None else None
-                res_obj[pair] = rel
+                res_obj[t] = rel
 
             return res_obj
 
