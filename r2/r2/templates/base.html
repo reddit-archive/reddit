@@ -47,7 +47,10 @@
       ${self.javascript_run()}
     </script>
     <style type="text/css">
-      ${unsafe(_("/* Custom css: use this block to insert special translation-dependent css in the page header */"))}
+      ## <style>s are treated as RAWTEXT segments, so we can't `websafe()` their contents.
+      ## According to the HTML spec's RAWTEXT parsing rules, this should work for escaping.
+      ## http://www.w3.org/TR/html5/syntax.html#rawtext-less-than-sign-state
+      ${unsafe(_("/* Custom css: use this block to insert special translation-dependent css in the page header */").replace("</", ""))}
     </style>
 
     ${self.head()}
