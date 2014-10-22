@@ -780,9 +780,11 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
 
         @staticmethod
         def _fast_cache_key_from_parts(class_name, thing1_id, thing2_id, name):
-            return thing_prefix(class_name) + str(
-                (thing1_id, thing2_id, name)
-            )
+            return thing_prefix(class_name) + '_'.join([
+                str(thing1_id),
+                str(thing2_id),
+                name]
+            ).replace(' ', '_')
 
         def _fast_cache_key(self):
             return self._fast_cache_key_from_parts(
