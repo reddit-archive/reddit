@@ -37,7 +37,7 @@ try:
     from r2.config import extensions
     from r2.controllers.reddit_base import RedditController, Cookies
     from r2.lib.errors import ErrorSet
-    from r2.lib.filters import websafe_json, websafe
+    from r2.lib.filters import websafe_json, websafe, safemarkdown
     from r2.lib import log, pages
     from r2.lib.strings import rand_strings
     from r2.lib.template_helpers import static
@@ -208,7 +208,8 @@ class ErrorController(RedditController):
             elif code == 500:
                 randmin = {'admin': random.choice(self.admins)}
                 failien_url = make_failien_url()
-                return redditbroke % (failien_url, rand_strings.sadmessages % randmin)
+                sad_message = safemarkdown(rand_strings.sadmessages % randmin)
+                return redditbroke % (failien_url, sad_message)
             elif code == 503:
                 return self.send503()
             elif c.site:

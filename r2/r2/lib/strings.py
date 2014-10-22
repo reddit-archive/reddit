@@ -427,7 +427,7 @@ def generate_strings():
     # used by error pages and in the sidebar for why to create a subreddit
     for name, rand_string in rand_strings:
         for string in rand_string:
-            print "# TRANSLATORS: Do not translate literally. Come up with a funny/relevant phrase (see the English version for ideas)"
+            print "# TRANSLATORS: Do not translate literally. Come up with a funny/relevant phrase (see the English version for ideas.) Accepts markdown formatting."
             print "print _('" + string + "')"
 
     # these are used in r2.lib.pages.trafficpages
