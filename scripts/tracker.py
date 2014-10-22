@@ -42,6 +42,7 @@ import hashlib
 import hmac
 import time
 import urllib
+from urlparse import parse_qsl, urlparse, urlunparse
 
 from ConfigParser import RawConfigParser
 from wsgiref.handlers import format_date_time
@@ -106,6 +107,16 @@ def click_redirect():
 
     if not constant_time_compare(expected_mac, observed_mac):
         abort(403)
+
+    # fix encoding in the query string of the destination
+    u = urlparse(destination)
+    if u.query:
+        query_dict = dict(parse_qsl(u.query))
+
+        # this effectively calls urllib.quote_plus on every query value
+        query = urllib.urlencode(query_dict)
+        destination = urlunparse(
+            (u.scheme, u.netloc, u.path, u.params, query, u.fragment))
 
     now = format_date_time(time.time())
     response = redirect(destination)
