@@ -82,6 +82,8 @@ def make_map():
     mc('/subreddits/login', controller='forms', action='login')
     mc('/subreddits/:where', controller='reddits', action='listing',
        where='popular', requirements=dict(where="popular|new|banned"))
+    # If no subreddit is specified, might as well show a list of 'em.
+    mc('/r', controller='redirect', action='redirect', dest='/subreddits')
 
     mc('/subreddits/mine/:where', controller='myreddits', action='listing',
        where='subscriber',
