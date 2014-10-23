@@ -22,6 +22,7 @@ _.extend(r.WebSocket.prototype, Backbone.Events, {
         r.debug('websocket: connecting')
         this.trigger('connecting')
 
+        this._connectionStart = Date.now()
         this._socket = new WebSocket(this._url)
         this._socket.onopen = _.bind(this._onOpen, this)
         this._socket.onmessage = _.bind(this._onMessage, this)
@@ -30,10 +31,29 @@ _.extend(r.WebSocket.prototype, Backbone.Events, {
         this._connectionAttempts += 1
     },
 
+    _sendStats: function (payload) {
+      if (!r.config.stats_domain) {
+        return
+      }
+
+      $.ajax({
+        type: 'POST',
+        url: r.config.stats_domain,
+        data: JSON.stringify(payload),
+        contentType: 'application/json; charset=utf-8',
+      })
+    },
+
     _onOpen: function (ev) {
         r.debug('websocket: connected')
         this.trigger('connected')
         this._connectionAttempts = 0
+
+        this._sendStats({
+          websocketPerformance: {
+            connectionTiming: Date.now() - this._connectionStart,
+          },
+        })
     },
 
     _onMessage: function (ev) {
@@ -61,5 +81,11 @@ _.extend(r.WebSocket.prototype, Backbone.Events, {
             r.debug('websocket: maximum retries exceeded. bailing out')
             this.trigger('disconnected')
         }
+
+        this._sendStats({
+          websocketError: {
+            error: 1,
+          },
+        })
     }
 })
