@@ -104,12 +104,18 @@ body {
 
 textarea { font:  normal small verdana, arial, helvetica, sans-serif; }
 
+/* [1] fixes a bug in old versions of WebKit, as used in Android 4.0. See
+ * https://github.com/necolas/normalize.css/commit/79b3d21b697e ,
+ * https://github.com/h5bp/mobile-boilerplate/issues/121 */
 button,
-html input[type="button"],
+html input[type="button"], /* [1] */
 input[type="reset"],
 input[type="submit"] {
     -webkit-appearance: button;
     cursor: pointer;
+    /* Since we reset the padding on some of these things above, make it
+     * something reasonable (and consistent). */
+    padding: 2px 6px 3px;
 }
 
 button[disabled],
