@@ -580,7 +580,7 @@ var exports = r.sponsored = {
     get_dates: function(startdate, enddate) {
         var start = $.datepicker.parseDate('mm/dd/yy', startdate),
             end = $.datepicker.parseDate('mm/dd/yy', enddate),
-            ndays = (end - start) / (1000 * 60 * 60 * 24),
+            ndays = Math.round((end - start) / (1000 * 60 * 60 * 24)),
             dates = []
 
         for (var i=0; i < ndays; i++) {
