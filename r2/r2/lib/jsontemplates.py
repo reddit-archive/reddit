@@ -230,18 +230,26 @@ class SubredditJsonTemplate(ThingJsonTemplate):
     )
 
     # subreddit *attributes* (right side of the equals)
-    # that are only accessible if the user can view the subreddit
-    _private_attrs = set([
-        "accounts_active",
-        "comment_score_hide_mins",
-        "description",
-        "description_html",
-        "header",
-        "header_size",
-        "header_title",
-        "submit_link_label",
-        "submit_text_label",
-    ])
+    # that are accessible even if the user can't view the subreddit
+    _public_attrs = {
+        "_id36",
+        # subreddit ID with prefix
+        "_fullname",
+        # Creation date
+        "created",
+        "created_utc",
+        # Canonically-cased subreddit name
+        "name",
+        # Canonical subreddit URL, relative to reddit.com
+        "path",
+        # Text shown on the access denied page
+        "public_description",
+        "public_description_html",
+        # Title shown in search
+        "title",
+        # Type of subreddit, so people know that it's private
+        "type",
+    }
 
     def raw_data(self, thing):
         data = ThingJsonTemplate.raw_data(self, thing)
@@ -252,7 +260,7 @@ class SubredditJsonTemplate(ThingJsonTemplate):
         return data
 
     def thing_attr(self, thing, attr):
-        if attr in self._private_attrs and not thing.can_view(c.user):
+        if attr not in self._public_attrs and not thing.can_view(c.user):
             return None
 
         if attr == "_ups" and thing.hide_subscribers:
