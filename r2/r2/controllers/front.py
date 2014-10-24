@@ -742,8 +742,17 @@ class FrontController(RedditController):
         """
         c.allow_styles = True
         c.profilepage = True
-        pane = self._make_spamlisting(location, only, num, after, reverse,
-                                      count)
+        panes = PaneStack()
+
+        # We clone and modify this when a user clicks 'reply' on a comment.
+        replyBox = UserText(item=None, display=False, cloneable=True,
+                            creating=True, post_form='comment')
+        panes.append(replyBox)
+
+        spamlisting = self._make_spamlisting(location, only, num, after,
+                                             reverse, count)
+        panes.append(spamlisting)
+
         extension_handling = "private" if c.user.pref_private_feeds else False
 
         if location in ('reports', 'spam', 'modqueue', 'edited'):
@@ -756,7 +765,7 @@ class FrontController(RedditController):
                              type='lightdrop')]
         else:
             menus = None
-        return EditReddit(content=pane,
+        return EditReddit(content=panes,
                           location=location,
                           nav_menus=menus,
                           extension_handling=extension_handling).render()

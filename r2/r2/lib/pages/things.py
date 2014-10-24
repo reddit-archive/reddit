@@ -151,6 +151,7 @@ class CommentButtons(PrintableButtons):
         show_report = not is_author and report and thing.can_reply
         # do we show the delete button?
         show_delete = is_author and delete and not thing._deleted
+        suppress_reply_buttons = getattr(thing, 'suppress_reply_buttons', False)
 
         show_distinguish = (is_author and
                             (thing.can_ban or  # Moderator distinguish
@@ -171,6 +172,7 @@ class CommentButtons(PrintableButtons):
                                   deleted = thing.deleted,
                                   parent_permalink = thing.parent_permalink, 
                                   can_reply = thing.can_reply,
+                                  suppress_reply_buttons = suppress_reply_buttons,
                                   show_report = show_report,
                                   mod_reports=thing.mod_reports,
                                   user_reports=thing.user_reports,

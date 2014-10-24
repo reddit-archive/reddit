@@ -93,6 +93,7 @@ class ListingController(RedditController):
     # login box, subreddit box, submit box, etc, visible
     show_sidebar = True
     show_chooser = False
+    suppress_reply_buttons = False
 
     # class (probably a subclass of Reddit) to use to render the page.
     render_cls = Reddit
@@ -209,6 +210,7 @@ class ListingController(RedditController):
         for i in pane:
             if hasattr(i, 'full_comment_path'):
                 i.child = None
+            i.suppress_reply_buttons = self.suppress_reply_buttons
         return pane
 
     def title(self):
@@ -871,6 +873,7 @@ class UserController(ListingController):
         self.vuser = vuser
         self.render_params = {'user' : vuser}
         c.profilepage = True
+        self.suppress_reply_buttons = True
 
         if vuser.pref_hide_from_robots:
             self.robots = 'noindex,nofollow'
@@ -1355,6 +1358,7 @@ class CommentsController(SubredditListingController):
     @require_oauth2_scope("read")
     def GET_listing(self, **env):
         c.profilepage = True
+        self.suppress_reply_buttons = True
         return ListingController.GET_listing(self, **env)
 
 
@@ -1635,4 +1639,5 @@ class GildedController(SubredditListingController):
     @require_oauth2_scope("read")
     def GET_listing(self, **env):
         c.profilepage = True
+        self.suppress_reply_buttons = True
         return ListingController.GET_listing(self, **env)
