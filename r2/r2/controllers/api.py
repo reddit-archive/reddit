@@ -1615,9 +1615,10 @@ class ApiController(RedditController):
             return
 
         removed_mentions = None
+        original_text = item.body
         if isinstance(item, Comment):
             kind = 'comment'
-            removed_mentions = set(extract_user_mentions(item.body)) - \
+            removed_mentions = set(extract_user_mentions(original_text)) - \
                 set(extract_user_mentions(text))
             item.body = text
         elif isinstance(item, Link):
@@ -1647,6 +1648,9 @@ class ApiController(RedditController):
         changed(item)
 
         amqp.add_item('usertext_edited', item._fullname)
+
+        hooks.get_hook("thing.edit").call(
+            thing=item, original_text=original_text)
 
         # new mentions are subject to more constraints, handled in butler_q
         if removed_mentions:
