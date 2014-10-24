@@ -2777,6 +2777,10 @@ class PasswordReset(Templated):
     entered their user name in Password.)"""
     pass
 
+class MessageNotificationEmail(Templated):
+    """Notification e-mail that a user has received a new message."""
+    pass
+
 class PasswordChangeEmail(Templated):
     """Notification e-mail that a user's password has changed."""
     pass

@@ -61,6 +61,7 @@ PREFS_VALIDATORS = dict(
     pref_mark_messages_read=VBoolean("mark_messages_read"),
     pref_threaded_messages=VBoolean("threaded_messages"),
     pref_collapse_read_messages=VBoolean("collapse_read_messages"),
+    pref_email_messages=VBoolean("email_messages"),
     pref_private_feeds=VBoolean("private_feeds"),
     pref_store_visits=VBoolean('store_visits'),
     pref_show_adbox=VBoolean("show_adbox"),

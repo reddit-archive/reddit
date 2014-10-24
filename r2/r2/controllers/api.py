@@ -1245,6 +1245,7 @@ class ApiController(RedditController):
                 emailer.email_change_email(c.user)
             c.user.set_email('')
             c.user.email_verified = None
+            c.user.pref_email_messages = False
             c.user._commit()
             Award.take_away("verified_email", c.user)
             form.set_text('.status', _('your email has been updated'))

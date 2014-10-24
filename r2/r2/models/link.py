@@ -51,6 +51,7 @@ from r2.models.gold import (
     make_gold_message,
 )
 from r2.models.subreddit import MultiReddit
+from r2.models.trylater import TryLater
 from r2.models.query_cache import CachedQueryMutator
 from r2.models.promo import PROMOTE_STATUS
 
@@ -58,11 +59,14 @@ from pylons import c, g, request
 from pylons.i18n import _
 from datetime import datetime, timedelta
 from hashlib import md5
+import simplejson as json
 
 import random, re
 from collections import defaultdict
 from pycassa.cassandra.ttypes import NotFoundException
 import pytz
+
+NOTIFICATION_EMAIL_DELAY = timedelta(hours=1)
 
 class LinkExists(Exception): pass
 
@@ -829,6 +833,7 @@ class Comment(Thing, Printable):
     @classmethod
     def _new(cls, author, link, parent, body, ip):
         from r2.lib.db.queries import changed
+        from r2.lib.emailer import message_notification_email
 
         kw = {}
         if link.comment_tree_version > 1:
@@ -909,6 +914,16 @@ class Comment(Thing, Printable):
                 TryLater.schedule('message_notification_email', data,
                                   NOTIFICATION_EMAIL_DELAY)
 
+            if orangered and to.pref_email_messages:
+                data = {
+                    'to': to._id36,
+                    'comment': c._fullname,
+                    'permalink': c.make_permalink_slow(force_domain=True),
+                }
+                data = json.dumps(data)
+                TryLater.schedule('message_notification_email', data,
+                                  NOTIFICATION_EMAIL_DELAY)
+
         hooks.get_hook('comment.new').call(comment=c)
 
         return (c, inbox_rel)
@@ -953,18 +968,21 @@ class Comment(Thing, Printable):
         s.extend([hasattr(wrapped, "link") and wrapped.link.contest_mode])
         return s
 
-    def make_permalink(self, link, sr=None, context=None, anchor=False):
-        url = link.make_permalink(sr) + self._id36
+    def make_permalink(self, link, sr=None, context=None, anchor=False,
+                       force_domain=False):
+        url = link.make_permalink(sr, force_domain=force_domain) + self._id36
         if context:
             url += "?context=%d" % context
         if anchor:
             url += "#%s" % self._id36
         return url
 
-    def make_permalink_slow(self, context=None, anchor=False):
+    def make_permalink_slow(self, context=None, anchor=False,
+                            force_domain=False):
         l = Link._byID(self.link_id, data=True)
         return self.make_permalink(l, l.subreddit_slow,
-                                   context=context, anchor=anchor)
+                                   context=context, anchor=anchor,
+                                   force_domain=force_domain)
 
     def _gild(self, user):
         now = datetime.now(g.tz)
@@ -1418,6 +1436,8 @@ class Message(Thing, Printable):
     @classmethod
     def _new(cls, author, to, subject, body, ip, parent=None, sr=None,
              from_sr=False):
+        from r2.lib.emailer import message_notification_email
+
         m = Message(subject=subject, body=body, author_id=author._id, new=True,
                     ip=ip, from_sr=from_sr)
         m._spam = author._spam
@@ -1497,6 +1517,21 @@ class Message(Thing, Printable):
                              author._id not in to.enemies)
                 inbox_rel.append(Inbox._add(to, m, 'inbox',
                                             orangered=orangered))
+
+                if orangered and to.pref_email_messages:
+                    from r2.lib.template_helpers import get_domain
+                    permalink = 'http://%(domain)s%(path)s' % {
+                        'domain': get_domain(),
+                        'path': m.permalink,
+                    }
+                    data = {
+                        'to': to._id36,
+                        'comment': m._fullname,
+                        'permalink': permalink,
+                    }
+                    data = json.dumps(data)
+                    TryLater.schedule('message_notification_email', data,
+                                      NOTIFICATION_EMAIL_DELAY)
 
         # update user inboxes for non-mods involved in a modmail conversation
         if not skip_inbox and sr_id and m.first_message:

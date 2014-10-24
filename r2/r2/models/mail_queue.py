@@ -309,6 +309,7 @@ class Email(object):
                 "SUSPICIOUS_PAYMENT",
                 "FRAUD_ALERT",
                 "USER_FRAUD",
+                "MESSAGE_NOTIFICATION",
                 )
 
     # Do not remove anything from this dictionary!  See above comment.
@@ -337,6 +338,7 @@ class Email(object):
         Kind.SUSPICIOUS_PAYMENT: _("[selfserve] suspicious payment alert"),
         Kind.FRAUD_ALERT: _("[selfserve] fraud alert"),
         Kind.USER_FRAUD: _("[selfserve] a user has committed fraud"),
+        Kind.MESSAGE_NOTIFICATION: _("[reddit] message notification"),
         }
 
     def __init__(self, user, thing, email, from_name, date, ip,

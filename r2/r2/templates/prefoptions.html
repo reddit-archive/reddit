@@ -21,6 +21,7 @@
 ###############################################################################
 
 <%!
+   from r2.config import feature
    from r2.lib.template_helpers import add_sr, _wsf, format_html
    from r2.lib.utils import UrlParser
    import random
@@ -237,6 +238,10 @@
       </span>
       <br>
       ${checkbox(_("notify me when people say my username"), "monitor_mentions")}
+      %if feature.is_enabled('orangereds_as_emails'):
+        <br>
+        ${checkbox(_("send messages as emails"), "email_messages", disabled=(not c.user.email_verified), disabled_text=_("requires a verified email"))}
+      %endif
     </td>
   </tr>
   <tr>

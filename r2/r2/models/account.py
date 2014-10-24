@@ -96,6 +96,7 @@ class Account(Thing):
                      pref_mark_messages_read = True,
                      pref_threaded_messages = True,
                      pref_collapse_read_messages = False,
+                     pref_email_messages = False,
                      pref_private_feeds = True,
                      pref_force_https = False,
                      pref_show_adbox = True,
