@@ -31,7 +31,7 @@ from datetime import datetime
 from pylons import g
 
 from r2.lib import hooks
-from r2.lib.cache import sgm
+from r2.lib.cache import sgm, TransitionalCache
 from r2.lib.db import tdb_sql as tdb, sorts, operators
 from r2.lib.utils import Results, tup, to36
 
@@ -661,6 +661,14 @@ class RelationMeta(type):
     def __repr__(cls):
         return '<relation: %s>' % cls._type_name
 
+def rel_key_migrate(old_key):
+    return (str(old_key)
+            .replace('(', '')
+            .replace(')', '')
+            .replace('\'', '')
+            .replace('L,', '')
+            .replace(' ', '_'))
+
 def Relation(type1, type2, denorm1 = None, denorm2 = None):
     class RelationCls(DataThing):
         __metaclass__ = RelationMeta
@@ -679,6 +687,12 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
         _incr_data = staticmethod(tdb.incr_rel_data)
         _type_prefix = Relation._type_prefix
         _eagerly_loaded_data = False
+        _fast_cache = TransitionalCache(
+            original_cache=g.cache,
+            replacement_cache=g.relcache,
+            read_original=True,
+            key_transform=rel_key_migrate,
+        )
 
         # data means, do you load the reddit_data_rel_* fields (the data on the
         # rel itself). eager_load means, do you load thing1 and thing2
@@ -783,7 +797,7 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
             if denorm1: self._thing1._commit(denorm1[0])
             if denorm2: self._thing2._commit(denorm2[0])
             #set fast query cache
-            self._cache.set(self._fast_cache_key(), self._id)
+            self._fast_cache.set(self._fast_cache_key(), self._id)
 
         def _delete(self):
             tdb.del_rel(self._type_id, self._id)
@@ -791,7 +805,7 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
             #clear cache
             self._cache.delete(self._cache_key())
             #update fast query cache
-            self._cache.set(self._fast_cache_key(), None)
+            self._fast_cache.set(self._fast_cache_key(), None)
             #temporarily set this property so the rest of this request
             #know it's deleted. save -> unsave, hide -> unhide
             self._name = 'un' + self._name
@@ -861,7 +875,7 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
                 cache_key_lookup[cache_key] = t
 
             # get the relation ids from the cache or query the db
-            res = sgm(cls._cache, cache_key_lookup.keys(), lookup_rel_ids)
+            res = sgm(cls._fast_cache, cache_key_lookup.keys(), lookup_rel_ids)
 
             # get the relation objects
             rel_ids = {rel_id for rel_id in res.itervalues()

@@ -240,6 +240,8 @@ class Globals(object):
             'pagecaches',
             'memoizecaches',
             'srmembercaches',
+            'srmember2caches',
+            'relcaches',
             'ratelimitcaches',
             'cassandra_seeds',
             'automatic_reddits',
@@ -577,6 +579,22 @@ class Globals(object):
             binary=True,
         )
 
+        # temporary transition pool
+        srmember2caches = CMemcache(
+            self.srmember2caches,
+            min_compress_len=96,
+            num_clients=num_mc_clients,
+            binary=True,
+        )
+
+        # a pool just for rels
+        relcaches = CMemcache(
+            self.relcaches,
+            min_compress_len=96,
+            num_clients=num_mc_clients,
+            binary=True,
+        )
+
         ratelimitcaches = CMemcache(
             self.ratelimitcaches,
             min_compress_len=96,
@@ -693,10 +711,29 @@ class Globals(object):
                 stalecaches,
                 srmembercaches,
             )
+            self.srmember2cache = StaleCacheChain(
+                localcache_cls(),
+                stalecaches,
+                srmember2caches,
+            )
         else:
             self.srmembercache = MemcacheChain(
                 (localcache_cls(), srmembercaches))
+            self.srmember2cache = MemcacheChain(
+                (localcache_cls(), srmember2caches))
         cache_chains.update(srmembercache=self.srmembercache)
+        cache_chains.update(srmember2cache=self.srmember2cache)
+
+        if stalecaches:
+            self.relcache = StaleCacheChain(
+                localcache_cls(),
+                stalecaches,
+                relcaches,
+            )
+        else:
+            self.relcache = MemcacheChain(
+                (localcache_cls(), relcaches))
+        cache_chains.update(relcache=self.relcache)
 
         self.ratelimitcache = MemcacheChain(
                 (localcache_cls(), ratelimitcaches))
