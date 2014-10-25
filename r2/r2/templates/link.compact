@@ -78,7 +78,7 @@
   %endif
     ${thumbnail()}
     <p class="title">
-    <a href="${url}">${thing.title}</a>
+    <a href="${url}" class="may-blank">${thing.title}</a>
     %if c.site.link_flair_position == 'right' and thing.flair_text:
       ${flair()}
     %endif
