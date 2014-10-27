@@ -1100,6 +1100,9 @@ def new_message(message, inbox_rels, add_to_sent=True, update_modmail=True):
     if not from_user.update_sent_messages:
         add_to_sent = False
 
+    if message.display_author:
+        add_to_sent = False
+
     modmail_rel_included = False
     update_recipient = False
     add_to_user = None

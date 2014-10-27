@@ -408,19 +408,21 @@
     </li>
   %endif
   %if thing.recipient:
-    ${self.banbuttons()}
-      %if (not thing.was_comment or thing.thing.message_style == "mention") and thing.thing.author_id != c.user._id and thing.thing.author_id not in c.user.enemies:
-        <li>
-          %if getattr(thing.thing, "from_sr", False):
-            %if getattr(thing.thing, "sr_blocked", False):
-              ${ynbutton(_("unblock subreddit"), _("unblocked"), "unblock_subreddit")}
+    %if thing.can_block:
+      ${self.banbuttons()}
+        %if (not thing.was_comment or thing.thing.message_style == "mention") and thing.thing.author_id != c.user._id and thing.thing.author_id not in c.user.enemies:
+          <li>
+            %if getattr(thing.thing, "from_sr", False):
+              %if getattr(thing.thing, "sr_blocked", False):
+                ${ynbutton(_("unblock subreddit"), _("unblocked"), "unblock_subreddit")}
+              %else:
+                ${ynbutton(_("block subreddit"), _("blocked"), "block", "hide_thing")}
+              %endif
             %else:
-              ${ynbutton(_("block subreddit"), _("blocked"), "block", "hide_thing")}
+              ${ynbutton(_("block user"), _("blocked"), "block", "hide_thing")}
             %endif
-          %else:
-            ${ynbutton(_("block user"), _("blocked"), "block", "hide_thing")}
-          %endif
-        </li>
+          </li>
+        %endif
       %endif
     <li class="unread">
      ${self.state_button("unread", _("mark unread"), \

@@ -191,6 +191,10 @@ class MessageButtons(PrintableButtons):
         can_reply = (c.user_is_loggedin and
                      getattr(thing, "repliable", True) and
                      valid_recipient)
+        can_block = True
+
+        if not thing.was_comment and thing.display_author:
+            can_block = False
 
         # Allow comment-reply messages to have links to the full thread.
         if was_comment:
@@ -206,7 +210,9 @@ class MessageButtons(PrintableButtons):
                                   can_reply = can_reply,
                                   parent_id = getattr(thing, "parent_id", None),
                                   show_report = True,
-                                  show_delete = False)
+                                  show_delete = False,
+                                  can_block = can_block,
+                                 )
 
 # formerly ListingController.builder_wrapper
 def default_thing_wrapper(**params):

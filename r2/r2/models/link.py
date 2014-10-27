@@ -1367,7 +1367,10 @@ class Message(Thing, Printable):
                      sr_id=None,
                      to_collapse=None,
                      author_collapse=None,
-                     from_sr=False)
+                     from_sr=False,
+                     display_author=None,
+                     display_to=None,
+                     )
     _data_int_props = Thing._data_int_props + ('reported',)
     _essentials = ('author_id',)
     cache_ignore = set(["to", "subreddit"]).union(Printable.cache_ignore)
@@ -1615,6 +1618,13 @@ class Message(Thing, Printable):
                         item.message_style = "mention"
             elif item.sr_id is not None:
                 item.subreddit = m_subreddits[item.sr_id]
+            else:
+                if item.display_author:
+                    item.author = Account._byID(item.display_author)
+                if item.display_to:
+                    item.to = Account._byID(item.display_to)
+                    if item.to_id == c.user._id:
+                        item.body = strings.anonymous_gilder_warning + item.body
 
             item.hide_author = False
             item.is_collapsed = None
@@ -1640,10 +1650,12 @@ class Message(Thing, Printable):
                 if not c.user_is_admin:
                     item.subject = _('[message from blocked user]')
                     item.body = _('[unblock user to see this message]')
+
             taglinetext = ''
             if item.hide_author:
                 taglinetext = _("subreddit message %(author)s sent %(when)s")
-            elif item.author_id == c.user._id:
+            elif (item.author_id == c.user._id and
+                  not getattr(item, "display_author", None)):
                 taglinetext = _("to %(dest)s sent %(when)s")
             elif (item._id in mod_message_authors and
                     (item.subreddit.is_moderator(c.user) or c.user_is_admin)):

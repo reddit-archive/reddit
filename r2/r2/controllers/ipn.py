@@ -251,9 +251,11 @@ def send_gift(buyer, recipient, months, days, signed, giftmessage,
     if signed:
         sender = buyer.name
         md_sender = "[%s](/user/%s)" % (sender, sender)
+        repliable = False
     else:
         sender = _("An anonymous redditor")
         md_sender = _("An anonymous redditor")
+        repliable = True
 
     create_gift_gold(buyer._id, recipient._id, days, c.start_time, signed, note)
 
@@ -282,9 +284,12 @@ def send_gift(buyer, recipient, months, days, signed, giftmessage,
         message += '\n* ' + strings.lounge_msg
     message = append_random_bottlecap_phrase(message)
 
+    if not signed:
+        message += '\n\n' + strings.respond_to_anonymous_gilder
+
     try:
-        send_system_message(recipient, subject, message,
-                            distinguished='gold-auto')
+        send_system_message(recipient, subject, message, author=buyer,
+                            distinguished='gold-auto', repliable=repliable)
     except MessageError:
         g.log.error('send_gift: could not send system message')
 

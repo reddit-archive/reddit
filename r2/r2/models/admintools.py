@@ -447,7 +447,7 @@ def send_welcome_message(user):
 
 def send_system_message(user, subject, body, system_user=None,
                         distinguished='admin', repliable=False,
-                        add_to_sent=True):
+                        add_to_sent=True, author=None):
     from r2.lib.db import queries
 
     if system_user is None:
@@ -456,11 +456,14 @@ def send_system_message(user, subject, body, system_user=None,
         g.log.warning("Can't send system message "
                       "- invalid system_user or g.system_user setting")
         return
+    if not author:
+        author = system_user
 
-    item, inbox_rel = Message._new(system_user, user, subject, body,
+    item, inbox_rel = Message._new(author, user, subject, body,
                                    ip='0.0.0.0')
     item.distinguished = distinguished
     item.repliable = repliable
+    item.display_author = system_user._id
     item._commit()
 
     try:

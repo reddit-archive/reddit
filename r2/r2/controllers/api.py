@@ -1563,7 +1563,7 @@ class ApiController(RedditController):
                 return
 
         block_acct = Account._byID(thing.author_id)
-        if block_acct.name in g.admins:
+        if block_acct.name in g.admins or thing.display_author:
             return
         c.user.add_enemy(block_acct)
 
@@ -1747,6 +1747,9 @@ class ApiController(RedditController):
             item, inbox_rel = Message._new(c.user, to, subject, comment,
                                            request.ip, parent=parent)
             item.parent_id = parent._id
+            if parent.display_author:
+                item.display_to = parent.display_author
+            item._commit()
         else:
             item, inbox_rel = Comment._new(c.user, link, parent_comment,
                                            comment, request.ip)
