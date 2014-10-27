@@ -102,6 +102,13 @@ class Link(Thing, Printable):
         Thing.__init__(self, *a, **kw)
 
     @property
+    def body(self):
+        if self.is_self:
+            return self.selftext
+        else:
+            raise AttributeError
+
+    @property
     def has_thumbnail(self):
         return self._t.get('has_thumbnail', hasattr(self, 'thumbnail_url'))
 
