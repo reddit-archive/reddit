@@ -1791,8 +1791,11 @@ class VDelay(Validator):
 class VCommentIDs(Validator):
     def run(self, id_str):
         if id_str:
-            cids = [int(i, 36) for i in id_str.split(',')]
-            return cids
+            try:
+                cids = [int(i, 36) for i in id_str.split(',')]
+                return cids
+            except ValueError:
+                abort(400)
         return []
 
     def param_docs(self):
