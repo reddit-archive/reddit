@@ -55,9 +55,12 @@ from r2.lib.validator import (
 )
 
 
-def _update_redirect_uri(base_redirect_uri, params):
+def _update_redirect_uri(base_redirect_uri, params, as_fragment=False):
     parsed = UrlParser(base_redirect_uri)
-    parsed.update_query(**params)
+    if as_fragment:
+        parsed.fragment = urlencode(params)
+    else:
+        parsed.update_query(**params)
     return parsed.unparse()
 
 
@@ -73,7 +76,7 @@ class OAuth2FrontendController(RedditController):
         if not redirect_uri or not client or redirect_uri != client.redirect_uri:
             abort(ForbiddenError(errors.OAUTH2_INVALID_REDIRECT_URI))
 
-    def _error_response(self, state, redirect_uri):
+    def _error_response(self, state, redirect_uri, as_fragment=False):
         """Return an error redirect, but only if client_id and redirect_uri are valid."""
 
         resp = {"state": state}
@@ -91,11 +94,11 @@ class OAuth2FrontendController(RedditController):
         else:
             resp["error"] = "invalid_request"
 
-        final_redirect = _update_redirect_uri(redirect_uri, resp)
+        final_redirect = _update_redirect_uri(redirect_uri, resp, as_fragment)
         return self.redirect(final_redirect, code=302)
 
     @validate(VUser(),
-              response_type = VOneOf("response_type", ("code",)),
+              response_type = VOneOf("response_type", ("code", "token")),
               client = VOAuth2ClientID(),
               redirect_uri = VRequired("redirect_uri", errors.OAUTH2_INVALID_REDIRECT_URI),
               scope = VOAuth2Scope(),
@@ -125,13 +128,23 @@ class OAuth2FrontendController(RedditController):
         indicating why the request failed.
         """
 
+        # Check redirect URI first; it will ensure client exists
         self._check_redirect_uri(client, redirect_uri)
+
+        if response_type == "token" and client.is_confidential():
+            # Prevent "confidential" clients from distributing tokens
+            # in a non-confidential manner
+            c.errors.add((errors.OAUTH2_INVALID_CLIENT, "client_id"))
+        if response_type == "token" and duration != "temporary":
+            # implicit grant -> No refresh tokens allowed
+            c.errors.add((errors.INVALID_OPTION, "duration"))
 
         if not c.errors:
             return OAuth2AuthorizationPage(client, redirect_uri, scope, state,
-                                           duration).render()
+                                           duration, response_type).render()
         else:
-            return self._error_response(state, redirect_uri)
+            return self._error_response(state, redirect_uri,
+                                        as_fragment=(response_type == "token"))
 
     @validate(VUser(),
               VModhash(fatal=False),
@@ -141,22 +154,39 @@ class OAuth2FrontendController(RedditController):
               state = VRequired("state", errors.NO_TEXT),
               duration = VOneOf("duration", ("temporary", "permanent"),
                                 default="temporary"),
-              authorize = VRequired("authorize", errors.OAUTH2_ACCESS_DENIED))
+              authorize = VRequired("authorize", errors.OAUTH2_ACCESS_DENIED),
+              response_type = VOneOf("response_type", ("code", "token"),
+                                     default="code"))
     def POST_authorize(self, authorize, client, redirect_uri, scope, state,
-                       duration):
+                       duration, response_type):
         """Endpoint for OAuth2 authorization."""
 
+        if response_type == "token" and client.is_confidential():
+            # Prevent "confidential" clients from distributing tokens
+            # in a non-confidential manner
+            c.errors.add((errors.OAUTH2_INVALID_CLIENT, "client_id"))
+        if response_type == "token" and duration != "temporary":
+            # implicit grant -> No refresh tokens allowed
+            c.errors.add((errors.INVALID_OPTION, "duration"))
         self._check_redirect_uri(client, redirect_uri)
 
-        if not c.errors:
+        if c.errors:
+            return self._error_response(state, redirect_uri,
+                                        as_fragment=(response_type == "token"))
+
+        if response_type == "code":
             code = OAuth2AuthorizationCode._new(client._id, redirect_uri,
-                                                c.user._id36, scope,
-                                                duration == "permanent")
+                                            c.user._id36, scope,
+                                            duration == "permanent")
             resp = {"code": code._id, "state": state}
             final_redirect = _update_redirect_uri(redirect_uri, resp)
-            return self.redirect(final_redirect, code=302)
-        else:
-            return self._error_response(state, redirect_uri)
+        elif response_type == "token":
+            token = OAuth2AccessToken._new(client._id, c.user._id36, scope)
+            token_data = OAuth2AccessController._make_token_dict(token)
+            token_data["state"] = state
+            final_redirect = _update_redirect_uri(redirect_uri, token_data, as_fragment=True)
+
+        return self.redirect(final_redirect, code=302)
 
 class OAuth2AccessController(MinimalController):
     handles_csrf = True
@@ -247,7 +277,8 @@ class OAuth2AccessController(MinimalController):
             resp["error"] = "invalid_request"
         return resp
 
-    def _make_token_dict(self, access_token, refresh_token=None):
+    @classmethod
+    def _make_token_dict(cls, access_token, refresh_token=None):
         if not access_token:
             return {"error": "invalid_grant"}
         expires_in = int(access_token._ttl) if access_token._ttl else None
