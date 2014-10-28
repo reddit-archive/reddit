@@ -1921,29 +1921,11 @@ Subreddit._specials.update({
 Subreddit._specials['mod'] = Mod
 
 
-def translate_key(old_key):
-    return (str(old_key)
-            .replace('(', '')
-            .replace(')', '')
-            .replace('\'', '')
-            .replace('L,', '')
-            .replace(' ', '_'))
-
 class SRMember(Relation(Subreddit, Account)):
     _defaults = dict(encoded_permissions=None)
     _permission_class = None
-    _cache = TransitionalCache(
-        original_cache=g.srmembercache,
-        replacement_cache=g.srmember2cache,
-        read_original=False,
-        key_transform=translate_key,
-    )
-    _fast_cache = TransitionalCache(
-        original_cache=g.srmembercache,
-        replacement_cache=g.srmember2cache,
-        read_original=False,
-        key_transform=translate_key,
-    )
+    _cache = g.srmembercache
+    _fast_cache = g.srmembercache
 
     def has_permission(self, perm):
         """Returns whether this member has explicitly been granted a permission.

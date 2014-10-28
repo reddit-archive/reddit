@@ -31,7 +31,7 @@ from datetime import datetime
 from pylons import g
 
 from r2.lib import hooks
-from r2.lib.cache import sgm, TransitionalCache
+from r2.lib.cache import sgm
 from r2.lib.db import tdb_sql as tdb, sorts, operators
 from r2.lib.utils import Results, tup, to36
 
@@ -661,14 +661,6 @@ class RelationMeta(type):
     def __repr__(cls):
         return '<relation: %s>' % cls._type_name
 
-def rel_key_migrate(old_key):
-    return (str(old_key)
-            .replace('(', '')
-            .replace(')', '')
-            .replace('\'', '')
-            .replace('L,', '')
-            .replace(' ', '_'))
-
 def Relation(type1, type2, denorm1 = None, denorm2 = None):
     class RelationCls(DataThing):
         __metaclass__ = RelationMeta
@@ -687,12 +679,7 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
         _incr_data = staticmethod(tdb.incr_rel_data)
         _type_prefix = Relation._type_prefix
         _eagerly_loaded_data = False
-        _fast_cache = TransitionalCache(
-            original_cache=g.cache,
-            replacement_cache=g.relcache,
-            read_original=False,
-            key_transform=rel_key_migrate,
-        )
+        _fast_cache = g.relcache
 
         # data means, do you load the reddit_data_rel_* fields (the data on the
         # rel itself). eager_load means, do you load thing1 and thing2
