@@ -43,7 +43,7 @@ from r2.models.query_cache import (
     UserQueryCache,
 )
 from r2.models.last_modified import LastModified
-from r2.lib.utils import in_chunks, SimpleSillyStub
+from r2.lib.utils import in_chunks, is_subdomain, SimpleSillyStub
 
 import cPickle as pickle
 
@@ -1067,7 +1067,7 @@ def new_vote(vote, foreground=False, timer=None):
                             ])
 
             parsed = utils.UrlParser(item.url)
-            if parsed.hostname and not parsed.hostname.endswith('imgur.com'):
+            if not is_subdomain(parsed.hostname, 'imgur.com'):
                 for domain in parsed.domain_permutations():
                     for sort in ("hot", "top", "controversial"):
                         results.append(get_domain_links(domain, sort, "all"))
