@@ -90,14 +90,23 @@ var InfoText = React.createClass({
 
   mixins: [UseDefaultClassName],
 
+  getFormattedProps: function() {
+    var props = _.clone(this.props);
+    if (props.impressions) {
+      props.impressions = r.utils.prettyNumber(props.impressions);
+    }
+    return props;
+  },
+
   render: function() {
     var text = Array.isArray(this.props.children)
              ? this.props.children.join('\n')
              : this.props.children;
     return React.DOM.span({ className: this.getClassName() },
-      text.format(this.props)
+      text.format(this.getFormattedProps())
     );
   },
+
 });
 
 var CampaignOptionTable = React.createClass({
@@ -252,7 +261,7 @@ var CampaignCreator = React.createClass({
             CampaignOptionTable(null, CampaignOption(requested))
           ),
           InfoText(maximized,
-              r._('the maximum budget available is $%(bid)s (%(impressions)s)')
+              r._('the maximum budget available is $%(bid)s (%(impressions)s impressions)')
           )
         ];
       }
@@ -290,7 +299,7 @@ var CampaignCreator = React.createClass({
       }
       else {
         result = [result, InfoText(maximized,
-          r._('the maximum budget available is $%(bid)s (%(impressions)s)')
+          r._('the maximum budget available is $%(bid)s (%(impressions)s impressions)')
         )];
       }
       return result;
