@@ -866,10 +866,10 @@ class RedditFooter(CachedTemplate):
     def __init__(self):
         self.nav = [
             NavMenu([
-                    NamedButton("blog", False, nocname=True),
+                    NamedButton("blog", False, nocname=True, dest="/r/blog"),
                     NamedButton("about", False, nocname=True),
                     NamedButton("team", False, nocname=True, dest="/about/team"),
-                    NamedButton("code", False, nocname=True),
+                    OffsiteButton(_("source code"), "https://github.com/reddit"),
                     NamedButton("advertising", False, nocname=True),
                     NamedButton("jobs", False, nocname=True),
                 ],
@@ -878,10 +878,10 @@ class RedditFooter(CachedTemplate):
                 separator = ""),
 
             NavMenu([
-                    NamedButton("wiki", False, nocname=True),
-                    OffsiteButton(_("FAQ"), dest = "/wiki/faq", nocname=True),
-                    OffsiteButton(_("reddiquette"), nocname=True, dest = "/wiki/reddiquette"),
                     NamedButton("rules", False, nocname=True),
+                    NamedButton("faq", False, nocname=True, dest="/wiki/faq"),
+                    NamedButton("wiki", False, nocname=True),
+                    NamedButton("reddiquette", False, nocname=True, dest="/wiki/reddiquette"),
                     NamedButton("contact", False),
                 ],
                 title = _("help"),
@@ -889,9 +889,7 @@ class RedditFooter(CachedTemplate):
                 separator = ""),
 
             NavMenu([
-                    OffsiteButton("mobile", "http://i.reddit.com"),
-                    OffsiteButton(_("firefox extension"), "https://addons.mozilla.org/firefox/addon/socialite/"),
-                    OffsiteButton(_("chrome extension"), "https://chrome.google.com/webstore/detail/algjnflpgoopkdijmkalfcifomdhmcbe"),
+                    OffsiteButton(_("mobile site"), "http://i.reddit.com"),
                     NamedButton("buttons", True),
                     NamedButton("widget", True),
                 ],
@@ -900,9 +898,10 @@ class RedditFooter(CachedTemplate):
                 separator = ""),
 
             NavMenu([
-                    NamedButton("gold", False, nocname=True, dest = "/gold/about", css_class = "buygold"),
-                    NamedButton("store", False, nocname=True),
-                    OffsiteButton(_("redditgifts"), "http://redditgifts.com"),
+                    NamedButton("gold", False, nocname=True, dest="/gold/about", css_class="buygold"),
+                    OffsiteButton(_("redditgifts marketplace"), "http://redditgifts.com"),
+                    OffsiteButton(_("redditmade"), "https://redditmade.com"),
+                    OffsiteButton(_("Alien Blue iOS app"), "https://alienblue.org"),
                     OffsiteButton(_("reddit AMA app"), "https://redditama.reddit.com"),
                     OffsiteButton(_("reddit.tv"), "http://reddit.tv"),
                     OffsiteButton(_("radio reddit"), "http://radioreddit.com"),

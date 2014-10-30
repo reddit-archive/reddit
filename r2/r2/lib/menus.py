@@ -81,17 +81,17 @@ menu =   MenuHandler(hot          = _('hot'),
                      logout       = _("logout"),
                      
                      #reddit footer strings
+                     faq          = _("faq"),
+                     reddiquette  = _("reddiquette"),
                      contact      = _("contact us"),
                      buttons      = _("buttons"),
                      widget       = _("widget"), 
-                     code         = _("source code"),
                      mobile       = _("mobile"), 
-                     store        = _("store"),  
                      advertising  = _("advertise"),
                      gold         = _('reddit gold'),
                      reddits      = _('subreddits'),
                      team         = _('team'),
-                     rules        = _('rules'),
+                     rules        = _('site rules'),
                      jobs         = _('jobs'),
 
                      #preferences
