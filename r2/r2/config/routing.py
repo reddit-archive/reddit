@@ -221,6 +221,7 @@ def make_map():
     mc('/sponsor/report', controller='sponsor', action='report')
     mc('/sponsor/inventory', controller='sponsor', action='promote_inventory')
     mc('/sponsor/roadblock', controller='sponsor', action="roadblock")
+    mc('/sponsor/lookup_user', controller='sponsor', action="lookup_user")
 
     # sponsor listings
     mc('/sponsor/promoted/:sort', controller='sponsorlisting', action='listing',

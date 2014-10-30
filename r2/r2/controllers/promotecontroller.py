@@ -54,6 +54,7 @@ from r2.lib.pages import (
     RefundPage,
     RenderableCampaign,
     Roadblocks,
+    SponsorLookupUser,
     UploadedImage,
 )
 from r2.lib.pages.things import wrap_links
@@ -286,6 +287,14 @@ class SponsorController(PromoteController):
         content = PromoteInventory(start, end, target)
         return PromotePage(title=_("sponsored link inventory"),
                            content=content).render()
+
+    @validate(
+        VSponsorAdmin(),
+        user=VByName('name', thing_cls=Account),
+    )
+    def GET_lookup_user(self, user):
+        content = SponsorLookupUser(user=user)
+        return PromotePage(title=_("lookup user"), content=content).render()
 
 
 class PromoteListingController(ListingController):
