@@ -62,6 +62,8 @@ class Account(Thing):
                                                'report_ignored', 'spammer',
                                                'reported', 'gold_creddits',
                                                'inbox_count',
+                                               'num_payment_methods',
+                                               'num_failed_payments',
                                               )
     _int_prop_suffix = '_karma'
     _essentials = ('name', )
@@ -136,6 +138,7 @@ class Account(Thing):
                      num_failed_payments=0,
                      pref_show_snoovatar=False,
                      gild_reveal_username=False,
+                     payment_flagged=False,
                      )
     _preference_attrs = tuple(k for k in _defaults.keys()
                               if k.startswith("pref_"))

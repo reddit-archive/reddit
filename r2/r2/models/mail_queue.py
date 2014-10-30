@@ -306,6 +306,7 @@ class Email(object):
                 "REFUNDED_PROMO",
                 "VOID_PAYMENT",
                 "GOLD_GIFT_CODE",
+                "SUSPICIOUS_PAYMENT",
                 )
 
     # Do not remove anything from this dictionary!  See above comment.
@@ -331,6 +332,7 @@ class Email(object):
         Kind.REFUNDED_PROMO: _("[reddit] your campaign didn't get enough impressions"),
         Kind.VOID_PAYMENT: _("[reddit] your payment has been voided"),
         Kind.GOLD_GIFT_CODE: _("[reddit] your reddit gold gift code"),
+        Kind.SUSPICIOUS_PAYMENT: _("[selfserve] suspicious payment alert"),
         }
 
     def __init__(self, user, thing, email, from_name, date, ip,

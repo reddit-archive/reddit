@@ -257,6 +257,15 @@ def void_payment(thing, campaign, reason):
                         reason=reason)
 
 
+def suspicious_payment(user, link):
+    from r2.lib.pages import SuspiciousPaymentEmail
+
+    email = "fraud@reddit.com"
+    body = SuspiciousPaymentEmail(user, link).render(style="email")
+    kind = Email.Kind.SUSPICIOUS_PAYMENT
+    _system_email(email, body, kind)
+
+
 def send_html_email(to_addr, from_addr, subject, html, subtype="html"):
     from r2.lib.filters import _force_utf8
     msg = MIMEText(_force_utf8(html), subtype)

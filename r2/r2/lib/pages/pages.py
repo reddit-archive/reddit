@@ -2757,6 +2757,12 @@ class VerifyEmail(Templated):
 class Promo_Email(Templated):
     pass
 
+
+class SuspiciousPaymentEmail(Templated):
+    def __init__(self, user, link):
+        Templated.__init__(self, user=user, link=link)
+
+
 class ResetPassword(Templated):
     """Form for actually resetting a lost password, after the user has
     clicked on the link provided to them in the Password_Reset email

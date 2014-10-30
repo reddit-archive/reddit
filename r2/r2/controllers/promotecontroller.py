@@ -977,18 +977,20 @@ class PromoteApiController(ApiController):
         rc = RenderableCampaign.from_campaigns(link, campaign)
         jquery.update_campaign(campaign._fullname, rc.render_html())
 
-    @validatedForm(VSponsor('link'),
-                   VModhash(),
-                   link=VByName("link"),
-                   campaign=VPromoCampaign("campaign"),
-                   customer_id=VInt("customer_id", min=0),
-                   pay_id=VInt("account", min=0),
-                   edit=VBoolean("edit"),
-                   address=ValidAddress(
-                    ["firstName", "lastName", "company", "address",
-                     "city", "state", "zip", "country", "phoneNumber"]),
-                   creditcard=ValidCard(["cardNumber", "expirationDate",
-                                           "cardCode"]))
+    @validatedForm(
+        VSponsor('link'),
+        VModhash(),
+        link=VByName("link"),
+        campaign=VPromoCampaign("campaign"),
+        customer_id=VInt("customer_id", min=0),
+        pay_id=VInt("account", min=0),
+        edit=VBoolean("edit"),
+        address=ValidAddress(
+            ["firstName", "lastName", "company", "address", "city", "state",
+             "zip", "country", "phoneNumber"]
+        ),
+        creditcard=ValidCard(["cardNumber", "expirationDate", "cardCode"]),
+    )
     def POST_update_pay(self, form, jquery, link, campaign, customer_id, pay_id,
                         edit, address, creditcard):
         if not g.authorizenetapi:
@@ -1033,7 +1035,9 @@ class PromoteApiController(ApiController):
 
             pay_id = edit_profile(c.user, address, creditcard, pay_id)
 
-        reason = None
+            if pay_id:
+                promote.new_payment_method(c.user, link)
+
         if pay_id:
             success, reason = promote.auth_campaign(link, campaign, c.user,
                                                     pay_id)
@@ -1041,9 +1045,13 @@ class PromoteApiController(ApiController):
             if success:
                 form.redirect(promote.promo_edit_url(link))
                 return
-
-        msg = reason or _("failed to authenticate card. sorry.")
-        form.set_text(".status", msg)
+            else:
+                promote.failed_payment_method(c.user, link)
+                msg = reason or _("failed to authenticate card. sorry.")
+                form.set_text(".status", msg)
+        else:
+            promote.failed_payment_method(c.user, link)
+            form.set_text(".status", _("failed to authenticate card. sorry."))
 
     @validate(VSponsor("link_name"),
               VModhash(),

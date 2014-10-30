@@ -905,6 +905,29 @@ def get_spent_amount(campaign):
     return spent
 
 
+PAYMENT_METHODS_ALERT_LIMIT = 3
+FAILED_PAYMENTS_ALERT_LIMIT = 5
+
+def new_payment_method(user, link):
+    user._incr('num_payment_methods')
+    if (user.num_payment_methods > PAYMENT_METHODS_ALERT_LIMIT and
+            not user.payment_flagged):
+        payment_flag_user(user, link)
+
+
+def failed_payment_method(user, link):
+    user._incr('num_failed_payments')
+    if (user.num_failed_payments > FAILED_PAYMENTS_ALERT_LIMIT and
+            not user.payment_flagged):
+        payment_flag_user(user, link)
+
+
+def payment_flag_user(user, link):
+    user.payment_flagged = True
+    user._commit()
+    emailer.suspicious_payment(user, link)
+
+
 def Run(verbose=True):
     """reddit-job-update_promos: Intended to be run hourly to pull in
     scheduled changes to ads
