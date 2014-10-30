@@ -434,16 +434,15 @@ def wiki_template(template_slug, sr=None):
 
 @admintools_hooks.on("account.registered")
 def send_welcome_message(user):
-    welcome_title = wiki_template("welcome_title").format(
-        username=user.name,
-    )
-    welcome_message = wiki_template("welcome_message").format(
-        username=user.name,
-    )
+    welcome_title = wiki_template("welcome_title")
+    welcome_message = wiki_template("welcome_message")
 
     if not welcome_title or not welcome_message:
         g.log.warning("Unable to send welcome message: invalid wiki templates.")
         return
+
+    welcome_title = welcome_title.format(username=user.name)
+    welcome_message = welcome_message.format(username=user.name)
 
     return send_system_message(user, welcome_title, welcome_message)
 
