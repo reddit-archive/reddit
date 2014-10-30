@@ -10,9 +10,7 @@ r.ui.init = function() {
     }
 
     // mobile suggest infobar
-    var smallScreen = window.matchMedia
-                      ? matchMedia('(max-device-width: 700px)').matches
-                      : $(window).width() < 700,
+    var smallScreen = r.ui.isSmallScreen(),
         onFrontPage = $.url().attr('path') == '/'
     if (smallScreen && onFrontPage && r.config.renderstyle != 'compact') {
         var infobar = $('<div class="infobar mellow">')
@@ -32,7 +30,9 @@ r.ui.init = function() {
         $(el).data('SubredditSubmitText', new r.ui.SubredditSubmitText({el: el}))
     })
 
-    if (r.config.new_window) {
+    /* Open links in new tabs if they have the preference set or are logged out
+     * and on a "large" screen. */
+    if (r.config.new_window && (r.config.logged || !smallScreen)) {
         $(document.body).on('click', 'a.may-blank, .may-blank-within a', function() {
             if (!this.target) {
                 this.target = '_blank'
@@ -46,6 +46,13 @@ r.ui.init = function() {
     r.ui.initLiveTimestamps()
 
     r.ui.initTimings()
+}
+
+r.ui.isSmallScreen = function() {
+ return window.matchMedia
+          // 736px is the width of the iPhone 6+.
+          ? matchMedia('(max-device-width: 736px)').matches
+          : $(window).width() < 736;
 }
 
 r.ui.TimeTextScrollListener = r.ScrollUpdater.extend({
