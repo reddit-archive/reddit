@@ -91,7 +91,6 @@ class CommentVotesByAccount(VotesByAccount):
 
 class VoteDetailsByThing(tdb_cassandra.View):
     _use_db = False
-    _ttl = timedelta(days=90)
     _fetch_all_columns = True
     _extra_schema_creation_args = dict(key_validation_class=ASCII_TYPE,
                                        default_validation_class=UTF8_TYPE)
@@ -108,11 +107,13 @@ class VoteDetailsByThing(tdb_cassandra.View):
             date=epoch_seconds(pgvote._date),
             valid_user=pgvote.valid_user,
             valid_thing=pgvote.valid_thing,
-            ip=getattr(pgvote, "ip", ""),
         )
         if vote_info and isinstance(vote_info, basestring):
             details['vote_info'] = vote_info
         cls._set_values(votee._id36, {voter._id36: json.dumps(details)})
+        ip = getattr(pgvote, "ip", "")
+        if ip:
+            VoterIPByThing.create(votee._fullname, voter._id36, ip)
 
     @classmethod
     def get_details(cls, thing):
@@ -132,10 +133,16 @@ class VoteDetailsByThing(tdb_cassandra.View):
     def decode_details(self):
         raw_details = self._values()
         details = []
+        try:
+            ips = VoterIPByThing._byID(self.votee_fullname)
+        except tdb_cassandra.NotFound:
+            ips = None
         for key, value in raw_details.iteritems():
             data = Storage(json.loads(value))
             data["_id"] = key + "_" + self._id
             data["voter_id"] = key
+            if "ip" not in data:
+                data["ip"] = getattr(ips, key, None)
             details.append(data)
         details.sort(key=lambda d: d["date"])
         return details
@@ -145,10 +152,32 @@ class VoteDetailsByThing(tdb_cassandra.View):
 class VoteDetailsByLink(VoteDetailsByThing):
     _use_db = True
 
+    @property
+    def votee_fullname(self):
+        id36 = self._id
+        return Link._fullname_from_id36(id36)
+
 
 @tdb_cassandra.view_of(CommentVotesByAccount)
 class VoteDetailsByComment(VoteDetailsByThing):
     _use_db = True
+
+    @property
+    def votee_fullname(self):
+        id36 = self._id
+        return Comment._fullname_from_id36(id36)
+
+
+class VoterIPByThing(tdb_cassandra.View):
+    _use_db = True
+    _ttl = timedelta(days=90)
+    _fetch_all_columns = True
+    _extra_schema_creation_args = dict(key_validation_class=ASCII_TYPE,
+                                       default_validation_class=UTF8_TYPE)
+
+    @classmethod
+    def create(cls, votee_fullname, voter_id36, ip):
+        cls._set_values(votee_fullname, {voter_id36: ip})
 
 
 class Vote(MultiRelation('vote',
