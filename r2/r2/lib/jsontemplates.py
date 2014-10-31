@@ -334,6 +334,7 @@ class IdentityJsonTemplate(ThingJsonTemplate):
         is_mod="is_mod",
         link_karma="link_karma",
         name="name",
+        hide_from_robots="pref_hide_from_robots",
     )
     _private_data_attrs = dict(
         over_18="pref_over_18",
