@@ -561,7 +561,7 @@ $.fn.insert_table_rows = function(rows, index) {
                       i = Math.min(i, table.rows.length);
 
                       var $newRow = $(table.insertRow(i)),
-                          $toInsert = $($.unsafe(row))
+                          $toInsert = $($.parseHTML($.unsafe(row)))
 
                       $toInsert.hide()
                       $newRow.replaceWith($toInsert)
