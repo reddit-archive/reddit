@@ -31,7 +31,7 @@ from r2.models import Account, Report
 from r2.models.subreddit import SubSR
 from r2.models.token import OAuth2Scope, extra_oauth2_scope
 import time, pytz
-from pylons import c, g
+from pylons import c, g, response
 from pylons.i18n import _
 
 from r2.models.wiki import ImagesByWikiPage
@@ -346,6 +346,8 @@ class IdentityJsonTemplate(ThingJsonTemplate):
         attrs = self._data_attrs_.copy()
         if c.user_is_loggedin and thing._id == c.user._id:
             attrs.update(self._private_data_attrs)
+        if thing.pref_hide_from_robots:
+            response.headers['X-Robots-Tag'] = 'noindex, nofollow'
         data = {k: self.thing_attr(thing, v) for k, v in attrs.iteritems()}
         try:
             self.add_message_data(data, thing)
