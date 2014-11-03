@@ -1166,6 +1166,7 @@ class MessageController(ListingController):
         mod_srs = []
         subreddit_message = False
         from_user = True
+        self.where = "compose"
 
         if isinstance(c.site, MultiReddit):
             mod_srs = c.site.srs_with_perms(c.user, "mail")
@@ -1192,7 +1193,7 @@ class MessageController(ListingController):
             content = MessageCompose(to=to, subject=subject, captcha=captcha,
                                      message=message)
 
-        return MessagePage(content=content).render()
+        return MessagePage(content=content, title=self.title()).render()
 
 class RedditsController(ListingController):
     render_cls = SubredditsPage
