@@ -1530,16 +1530,16 @@ class Message(Thing, Printable):
         m_subreddits = Subreddit._byID(sr_ids, data=True, return_dict=True)
 
         # load the links and their subreddits (if comment-as-message)
-        links = Link._byID(set(l.link_id for l in wrapped if l.was_comment),
-                           data=True,
-                           return_dict=True)
-        # subreddits of the links (for comment-as-message)
-        l_subreddits = Subreddit._byID(set(l.sr_id for l in links.values()),
-                                       data=True, return_dict=True)
+        link_ids = {item.link_id for item in wrapped if item.was_comment}
+        links = Link._byID(link_ids, data=True, return_dict=True)
 
-        parents = Comment._byID(set(l.parent_id for l in wrapped
-                                  if l.parent_id and l.was_comment),
-                                data=True, return_dict=True)
+        # subreddits of the links (for comment-as-message)
+        link_srids = {link.sr_id for link in links.itervalues()}
+        l_subreddits = Subreddit._byID(link_srids, data=True, return_dict=True)
+
+        parent_ids = {item.parent_id for item in wrapped
+            if item.parent_id and item.was_comment}
+        parents = Comment._byID(parent_ids, data=True, return_dict=True)
 
         # load full modlist for all subreddit messages
         mods_by_srid = {
