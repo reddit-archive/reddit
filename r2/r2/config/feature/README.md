@@ -60,6 +60,9 @@ feature_some_flag = {"users": ["umbrae", "ajacksified"]}
 # On when viewing certain subreddits
 feature_some_flag = {"subreddits": ["wtf", "aww"]}
 
+# On by subdomain
+feature_some_flag = {"subdomains": ["beta"]}
+
 # For both admin and a group of users
 feature_some_flag = {"admin": true, "users": ["user1", "user2"]}
 

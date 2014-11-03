@@ -40,6 +40,9 @@ class World(object):
             return ''
         return c.site.name
 
+    def current_subdomain(self):
+        return c.subdomain
+
     def is_admin(self, user):
         if not user or not hasattr(user, 'name'):
             return False

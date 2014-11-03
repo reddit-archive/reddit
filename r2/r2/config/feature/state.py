@@ -75,7 +75,7 @@ class FeatureState(object):
 
         return config
 
-    def is_enabled(self, user=None, subreddit=None):
+    def is_enabled(self, user=None, subreddit=None, subdomain=None):
         cfg = self.config
         world = self.world
 
@@ -101,6 +101,10 @@ class FeatureState(object):
 
         subreddits = [s.lower() for s in cfg.get('subreddits', [])]
         if subreddits and subreddit and subreddit.lower() in subreddits:
+            return True
+
+        subdomains = [s.lower() for s in cfg.get('subdomains', [])]
+        if subdomains and subdomain and subdomain.lower() in subdomains:
             return True
 
         # Unknown value, default to off.

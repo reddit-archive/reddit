@@ -53,6 +53,23 @@ class UtilsTest(unittest.TestCase):
         expect('z', 5)
         self.assertRaises(ValueError, expect, None, 6)
 
+    def test_extract_subdomain(self):
+        self.assertEquals(
+            utils.extract_subdomain('beta.reddit.com', 'reddit.com'),
+            'beta')
+
+        self.assertEquals(
+            utils.extract_subdomain('beta.reddit.local:8000', 'reddit.local'),
+            'beta')
+
+        self.assertEquals(
+            utils.extract_subdomain('reddit.com', 'reddit.com'),
+            '')
+
+        self.assertEquals(
+            utils.extract_subdomain('internet-frontpage.com', 'reddit.com'),
+            '')
+
 
 class TestCanonicalizeEmail(unittest.TestCase):
     def test_empty_string(self):

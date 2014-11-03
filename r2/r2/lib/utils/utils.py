@@ -41,7 +41,7 @@ from decimal import Decimal
 from BeautifulSoup import BeautifulSoup, SoupStrainer
 
 from datetime import date, datetime, timedelta
-from pylons import c, g
+from pylons import c, g, request
 from pylons.i18n import ungettext, _
 from r2.lib.filters import _force_unicode, _force_utf8
 from mako.filters import url_escape
@@ -171,6 +171,29 @@ def domain(s):
     res = r_domain.findall(s)
     domain = (res and res[0]) or s
     return domain.lower()
+
+def extract_subdomain(host=None, base_domain=None):
+    """Try to extract a subdomain from the request, as compared to g.domain.
+
+    host and base_domain exist as arguments primarily for the sake of unit
+    tests, although their usage should not be considered restrained to that.
+    """
+    # These would be the argument defaults, but we need them evaluated at
+    # run-time, not definition-time.
+    if host is None:
+        host = request.host
+    if base_domain is None:
+        base_domain = g.domain
+
+    if not host:
+        return ''
+
+    end_index = host.find(base_domain) - 1 # For the conjoining dot.
+    # Is either the requested domain the same as the base domain, or the
+    # base is not a substring?
+    if end_index < 0:
+        return ''
+    return host[:end_index]
 
 r_path_component = re.compile(".*?/(.*)")
 def path_component(s):

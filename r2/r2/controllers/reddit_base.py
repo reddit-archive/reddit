@@ -66,6 +66,7 @@ from r2.lib.utils import (
     Enum,
     SimpleSillyStub,
     UniqueIterator,
+    extract_subdomain,
     http_utils,
     is_subdomain,
     is_throttled,
@@ -1075,6 +1076,7 @@ class MinimalController(BaseController):
         c.extension = request.environ.get('extension')
         # the domain has to be set before Cookies get initialized
         set_subreddit()
+        c.subdomain = extract_subdomain()
         c.errors = ErrorSet()
         c.cookies = Cookies()
         # if an rss feed, this will also log the user in if a feed=

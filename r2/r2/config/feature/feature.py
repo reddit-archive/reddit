@@ -40,7 +40,8 @@ def is_enabled(name):
     """
     return _get_featurestate(name).is_enabled(
                user=_world.current_user(),
-               subreddit=_world.current_subreddit())
+               subreddit=_world.current_subreddit(),
+               subdomain=_world.current_subdomain())
 
 
 def is_enabled_for(name, user):

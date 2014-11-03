@@ -170,6 +170,29 @@ class TestFeature(unittest.TestCase):
         feature_state = self._make_state(cfg)
         self.assertFalse(feature_state.is_enabled(subreddit='wtf'))
 
+    def test_subdomain_in(self):
+        cfg = {'subdomains': ['BETA']}
+        feature_state = self._make_state(cfg)
+        self.assertTrue(feature_state.is_enabled(subdomain='beta'))
+
+        cfg = {'subdomains': ['beta']}
+        feature_state = self._make_state(cfg)
+        self.assertTrue(feature_state.is_enabled(subdomain='BETA'))
+
+        cfg = {'subdomains': ['www', 'beta']}
+        feature_state = self._make_state(cfg)
+        self.assertTrue(feature_state.is_enabled(subdomain='beta'))
+
+    def test_subdomain_not_in(self):
+        cfg = {'subdomains': []}
+        feature_state = self._make_state(cfg)
+        self.assertFalse(feature_state.is_enabled(subdomain='beta'))
+        self.assertFalse(feature_state.is_enabled(subdomain=''))
+
+        cfg = {'subdomains': ['www', 'betanauts']}
+        feature_state = self._make_state(cfg)
+        self.assertFalse(feature_state.is_enabled(subdomain='beta'))
+
     def test_multiple(self):
         # is_admin, globally off should still be False
         cfg = {'enabled': 'off', 'admin': True}
