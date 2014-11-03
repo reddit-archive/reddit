@@ -239,8 +239,6 @@ r.gold = {
             showError('.card-address_city', r._('missing city'))
         } else if (!cardCountry) {
             showError('.card-address_country', r._('missing country'))
-        } else if (!cardZip) {
-            showError('.card-address_zip', r._('missing zip code'))
         } else {
             status
               .removeClass('error')
