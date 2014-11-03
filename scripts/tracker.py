@@ -96,7 +96,7 @@ def healthcheck():
 
 @application.route('/click')
 def click_redirect():
-    destination = urllib.unquote(request.args['url'].encode('utf-8'))
+    destination = request.args['url'].encode('utf-8')
     fullname = request.args['id'].encode('utf-8')
     observed_mac = request.args['hash']
 
