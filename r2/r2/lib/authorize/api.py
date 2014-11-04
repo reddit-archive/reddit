@@ -520,10 +520,7 @@ class CreateCustomerProfileTransactionRequest(AuthorizeNetRequest):
                           trans_id=int)
 
     def __init__(self, **kw):
-        from pylons import g
         self._extra = kw.get("extraOptions", {})
-        #if g.debug:
-        #    self._extra['x_test_request'] = "TRUE"
         AuthorizeNetRequest.__init__(self, **kw)
 
     @property
