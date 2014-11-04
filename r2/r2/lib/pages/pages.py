@@ -1424,14 +1424,13 @@ class LinkInfoPage(Reddit):
             short_description,
         )
 
-        if feature.is_enabled('link_twitter_card_data'):
-            self.twitter_card = self._build_twitter_card_data(
-                _force_unicode(link_title),
-                short_description,
-            )
-            hook = hooks.get_hook('comments_page.twitter_card')
-            hook.call(tags=self.twitter_card, sr_name=c.site.name,
-                      id36=self.link._id36)
+        self.twitter_card = self._build_twitter_card_data(
+            _force_unicode(link_title),
+            short_description,
+        )
+        hook = hooks.get_hook('comments_page.twitter_card')
+        hook.call(tags=self.twitter_card, sr_name=c.site.name,
+                  id36=self.link._id36)
 
         if hasattr(self.link, "dart_keyword"):
             c.custom_dart_keyword = self.link.dart_keyword
