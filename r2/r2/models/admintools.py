@@ -400,8 +400,6 @@ def filter_quotas(unfiltered):
         # Then, make sure it's worthy of quota-clogging
         if item._spam:
             pass
-        elif item._deleted:
-            pass
         elif item._score <= 0:
             pass
         elif age < 86400 and item._score <= g.QUOTA_THRESHOLD and not approved:
