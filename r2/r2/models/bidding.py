@@ -258,17 +258,6 @@ class PayID(Sessionized, Base):
     def get_ids(cls, key):
         return [int(x.pay_id) for x in cls.get(key)]
 
-class ShippingAddress(Sessionized, Base):
-    __tablename__ = "authorize_ship_id"
-
-    account_id    = Column(BigInteger, primary_key = True,
-                           autoincrement = False)
-    ship_id       = Column(BigInteger, primary_key = True,
-                           autoincrement = False)
-
-    def __repr__(self):
-        return "<%s(%d)>" % (self.__class__.__name__, self.authorize_id)
-
 class Bid(Sessionized, Base):
     __tablename__ = "bids"
 

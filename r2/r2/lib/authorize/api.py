@@ -40,7 +40,7 @@ from xml.sax.saxutils import escape
 
 from r2.lib.export import export
 from r2.lib.utils import iters, Storage
-from r2.models.bidding import CustomerID, PayID, ShippingAddress
+from r2.models.bidding import CustomerID, PayID
 
 __all__ = ["PROFILE_LIMIT"]
 
@@ -166,14 +166,12 @@ class Profile(SimpleXMLObject):
     Converts a user into a Profile object.
     """
     _keys = ["merchantCustomerId", "description",
-             "email", "customerProfileId", "paymentProfiles", "shipToList",
-             "validationMode"]
-    def __init__(self, user, paymentProfiles, address,
-                 validationMode=None):
+             "email", "customerProfileId", "paymentProfiles", "validationMode"]
+
+    def __init__(self, user, paymentProfiles, validationMode=None):
         SimpleXMLObject.__init__(self, merchantCustomerId=user._fullname,
                                  description=user.name, email="",
                                  paymentProfiles=paymentProfiles,
-                                 shipToList=address,
                                  validationMode=validationMode,
                                  customerProfileId=CustomerID.get_id(user))
 
@@ -385,22 +383,6 @@ class CreateCustomerPaymentProfileRequest(CustomerRequest):
         return CustomerRequest.process_error(self, res)
 
 
-class CreateCustomerShippingAddressRequest(CustomerRequest):
-    """
-    Adds a shipping address.
-    """
-    _keys = CustomerRequest._keys + ["address"]
-    def process_response(self, res):
-        pay_id = int(res.customeraddressid.contents[0])
-        ShippingAddress.add(self._user, pay_id)
-        return pay_id
-
-    def process_error(self, res):
-        if self.is_error_code(res, Errors.DUPLICATE_RECORD):
-            return
-        return CustomerRequest.process_error(self, res)
-
-
 class GetCustomerPaymentProfileRequest(CustomerRequest):
     _keys = CustomerRequest._keys + ["customerPaymentProfileId"]
     """
@@ -424,28 +406,6 @@ class GetCustomerPaymentProfileRequest(CustomerRequest):
     def process_error(self, res):
         if self.is_error_code(res, Errors.RECORD_NOT_FOUND):
             PayID.delete(self._user, self.customerPaymentProfileId)
-        return CustomerRequest.process_error(self, res)
-
-
-class GetCustomerShippingAddressRequest(CustomerRequest):
-    """
-    Same as GetCustomerPaymentProfileRequest except with shipping addresses.
-
-    Error handling is identical.
-    """
-    _keys = CustomerRequest._keys + ["customerAddressId"]
-    def __init__(self, user, shippingid):
-        CustomerRequest.__init__(self, user,
-                                 customerAddressId=shippingid)
-
-    def process_response(self, res):
-        # add the id to the user object in case something has gone wrong
-        ShippingAddress.add(self._user, self.customerAddressId)
-        return Address.fromXML(res.address)
-
-    def process_error(self, res):
-        if self.is_error_code(res, Errors.RECORD_NOT_FOUND):
-            ShippingAddress.delete(self._user, self.customerAddressId)
         return CustomerRequest.process_error(self, res)
  
 
@@ -476,13 +436,6 @@ class GetCustomerProfileRequest(CustomerRequest):
             raise AuthorizeNetException, \
                   "account name doesn't match authorize.net account"
 
-        # parse the ship-to list, and make sure the Account is up todate
-        ship_to = []
-        for profile in res.findAll("shiptolist"):
-            a = Address.fromXML(profile)
-            ShippingAddress.add(acct, a.customerAddressId)
-            ship_to.append(a)
-
         # parse the payment profiles, and ditto
         profiles = []
         for profile in res.findAll("paymentprofiles"):
@@ -492,7 +445,7 @@ class GetCustomerProfileRequest(CustomerRequest):
             PayID.add(acct, a.customerPaymentProfileId)
             profiles.append(payprof)
 
-        return acct, Profile(acct, profiles, ship_to)
+        return acct, Profile(acct, profiles)
     
 class DeleteCustomerProfileRequest(CustomerRequest):
     """
@@ -523,20 +476,6 @@ class DeleteCustomerPaymentProfileRequest(GetCustomerPaymentProfileRequest):
         return GetCustomerPaymentProfileRequest.process_error(self, res)
 
 
-class DeleteCustomerShippingAddressRequest(GetCustomerShippingAddressRequest):
-    """
-    Delete a customer shipping address
-    """
-    def process_response(self, res):
-        ShippingAddress.delete(self._user, self.customerAddressId)
-        return True
-
-    def process_error(self, res):
-        if self.is_error_code(res, Errors.RECORD_NOT_FOUND):
-            ShippingAddress.delete(self._user, self.customerAddressId)
-        GetCustomerShippingAddressRequest.process_error(self, res)
-
-
 class UpdateCustomerPaymentProfileRequest(CreateCustomerPaymentProfileRequest):
     """
     For updating the user's payment profile
@@ -551,20 +490,6 @@ class UpdateCustomerPaymentProfileRequest(CreateCustomerPaymentProfileRequest):
 
     def process_response(self, res):
         return self.paymentProfile.customerPaymentProfileId
-
-
-class UpdateCustomerShippingAddressRequest(
-    CreateCustomerShippingAddressRequest):
-    """
-    For updating the user's shipping address
-    """
-    def __init__(self, user, address_id, address):
-        address.customerAddressId = address_id
-        CreateCustomerShippingAddressRequest.__init__(self, user,
-                                                      address=address)
-
-    def process_response(self, res):
-        return True
 
 
 class CreateCustomerProfileTransactionRequest(AuthorizeNetRequest):
