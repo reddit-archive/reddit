@@ -212,11 +212,6 @@ class Transaction(SimpleXMLObject):
         return self.simple_tag(self._name(), content)
 
 
-# authorize and charge
-@export
-class ProfileTransAuthCapture(Transaction): pass
-
-
 # only authorize (no charge is made)
 @export
 class ProfileTransAuthOnly(Transaction): pass
@@ -225,11 +220,6 @@ class ProfileTransAuthOnly(Transaction): pass
 # charge only (requires previous auth_only)
 @export
 class ProfileTransPriorAuthCapture(Transaction): pass
-
-
-# stronger than above: charge even on decline (not sure why you would want to)
-@export
-class ProfileTransCaptureOnly(Transaction): pass
 
 
 # refund a transaction
