@@ -22,7 +22,7 @@
 
 from sqlalchemy.orm.exc import MultipleResultsFound
 
-from pylons import g
+from pylons import g, request
 
 from r2.lib.db.thing import NotFound
 from r2.lib.utils import Storage
@@ -108,8 +108,8 @@ def edit_profile(user, address, creditcard, pay_id=None):
         return None
 
 
-def _make_transaction(trans_cls, amount, user, pay_id,
-                      order=None, trans_id=None, test=None):
+def _make_transaction(trans_cls, amount, user, pay_id, order=None,
+                      trans_id=None, test=None, include_request_ip=False):
     """
     private function for handling transactions (since the data is
     effectively the same regardless of trans_cls)
@@ -123,12 +123,18 @@ def _make_transaction(trans_cls, amount, user, pay_id,
     trans = trans_cls(amount, cust_id, pay_id, trans_id=trans_id,
                       order=order)
     extra = {}
+
     # the optional test field makes the transaction a test, and will
     # make the response be the error code corresponding to int(test).
     if isinstance(test, int):
-        extra = dict(x_test_request="TRUE",
-                     x_card_num=test_card.ERRORCARD.cardNumber,
-                     x_amount=test)
+        extra.update({
+            "x_test_request": "TRUE",
+            "x_card_num": test_card.ERRORCARD.cardNumber,
+            "x_amount": test,
+        })
+
+    if include_request_ip:
+        extra.update({"x_customer_ip": request.ip})
 
     # using the transaction, generate a transaction request and make it
     req = CreateCustomerProfileTransactionRequest(transaction=trans,
@@ -155,9 +161,10 @@ def auth_transaction(amount, user, payid, thing, campaign):
 
     elif int(payid) in PayID.get_ids(user):
         order = Order(invoiceNumber="T%dC%d" % (thing._id, campaign))
-        success, res = _make_transaction(ProfileTransAuthOnly,
-                                         amount, user, payid,
-                                         order=order)
+        success, res = _make_transaction(
+            ProfileTransAuthOnly, amount, user, payid, order=order,
+            include_request_ip=True)
+
         if success:
             Bid._new(res.trans_id, user, payid, thing._id, amount, campaign)
             return res.trans_id, ""
