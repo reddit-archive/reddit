@@ -405,23 +405,28 @@ def dockletStr(context, type, browser):
 
 
 
-def add_sr(path, sr_path = True, nocname=False, force_hostname = False, retain_extension=True):
+def add_sr(
+        path, sr_path=True, nocname=False, force_hostname=False,
+        retain_extension=True):
     """
     Given a path (which may be a full-fledged url or a relative path),
     parses the path and updates it to include the subreddit path
     according to the rules set by its arguments:
+
+     * sr_path: if a cname is not used for the domain, updates the
+       path to include c.site.path.
+
+     * nocname: when updating the hostname, overrides the value of
+       c.cname to set the hostname to g.domain.  The default behavior
+       is to set the hostname consistent with c.cname.
 
      * force_hostname: if True, force the url's hostname to be updated
        even if it is already set in the path, and subject to the
        c.cname/nocname combination.  If false, the path will still
        have its domain updated if no hostname is specified in the url.
 
-     * nocname: when updating the hostname, overrides the value of
-       c.cname to set the hostname to g.domain.  The default behavior
-       is to set the hostname consistent with c.cname.
-
-     * sr_path: if a cname is not used for the domain, updates the
-       path to include c.site.path.
+     * retain_extension: if True, sets the extention according to
+       c.render_style.
 
     For caching purposes: note that this function uses:
       c.cname, c.render_style, c.site.name
