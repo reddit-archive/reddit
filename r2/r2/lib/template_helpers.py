@@ -407,7 +407,7 @@ def dockletStr(context, type, browser):
 
 def add_sr(
         path, sr_path=True, nocname=False, force_hostname=False,
-        retain_extension=True):
+        retain_extension=True, force_https=False):
     """
     Given a path (which may be a full-fledged url or a relative path),
     parses the path and updates it to include the subreddit path
@@ -428,6 +428,8 @@ def add_sr(
      * retain_extension: if True, sets the extention according to
        c.render_style.
 
+     * force_https: force the URL scheme to https
+
     For caching purposes: note that this function uses:
       c.cname, c.render_style, c.site.name
     """
@@ -446,7 +448,7 @@ def add_sr(
             u.hostname = get_domain(cname = (c.cname and not nocname),
                                     subreddit = False)
 
-    if c.secure and u.is_reddit_url():
+    if (c.secure and u.is_reddit_url()) or force_https:
         u.scheme = "https"
 
     if retain_extension:
