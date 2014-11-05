@@ -575,13 +575,15 @@ class PromotedLinkRoadblock(tdb_cassandra.View):
 
 class PromotionPrices(tdb_cassandra.View):
     """
-    Price rules:
-    * Location targeting trumps all: Anything targeting a metro gets the global
-      metro price.
-    * Any collection or subreddit with a specified price gets that price
-    * Any collection or subreddit without a specified price gets the global
-      collection or subreddit price
-    * Frontpage gets the global collection price.
+    Check all the following potentially specially priced conditions:
+    * metro level targeting
+    * country level targeting (but not if the metro targeting is used)
+    * collection targeting
+    * frontpage targeting
+    * subreddit targeting
+
+    The price is the maximum price for all matching conditions. If no special
+    conditions are met use the global price.
 
     """
 
@@ -595,10 +597,14 @@ class PromotionPrices(tdb_cassandra.View):
         "default_validation_class": tdb_cassandra.INT_TYPE,
     }
 
+    COLLECTION_DEFAULT = g.cpm_selfserve_collection.pennies
+    SUBREDDIT_DEFAULT = g.cpm_selfserve.pennies
+    COUNTRY_DEFAULT = g.cpm_selfserve_collection.pennies
+    METRO_DEFAULT = g.cpm_selfserve_geotarget_metro.pennies
+
     @classmethod
-    def _get_components(cls, target, cpm):
+    def _rowkey_and_column_from_target(cls, target):
         rowkey = column_name = None
-        column_value = cpm
 
         if isinstance(target, Target):
             if target.is_collection:
@@ -611,50 +617,94 @@ class PromotionPrices(tdb_cassandra.View):
         if not rowkey or not column_name:
             raise ValueError("target must be Target")
 
-        return rowkey, column_name, column_value
+        return rowkey, column_name
 
     @classmethod
-    def set_price(cls, target, cpm):
-        rowkey, column_name, column_value = cls._get_components(target, cpm)
-        cls._cf.insert(rowkey, {column_name: column_value})
+    def _rowkey_and_column_from_location(cls, location):
+        if not isinstance(location, Location):
+            raise ValueError("location must be Location")
+
+        if location.metro:
+            rowkey = "METRO"
+            # NOTE: the column_name will also be the key used in the frontend
+            # to determine pricing
+            column_name = ''.join(map(str, (location.country, location.metro)))
+        else:
+            rowkey = "COUNTRY"
+            column_name = location.country
+        return rowkey, column_name
 
     @classmethod
-    def get_price(cls, target, location):
-        if location and location.metro:
-            return g.cpm_selfserve_geotarget_metro.pennies
+    def set_target_price(cls, target, cpm):
+        rowkey, column_name = cls._rowkey_and_column_from_target(target)
+        cls._cf.insert(rowkey, {column_name: cpm})
 
-        # check for Frontpage
-        if (isinstance(target, Target) and
-                not target.is_collection and
-                target.subreddit_name == Frontpage.name):
-            return g.cpm_selfserve_collection.pennies
+    @classmethod
+    def set_location_price(cls, location, cpm):
+        rowkey, column_name = cls._rowkey_and_column_from_location(location)
+        cls._cf.insert(rowkey, {column_name: cpm})
 
-        # check for target specific override price
-        rowkey, column_name, _ = cls._get_components(target, None)
+    @classmethod
+    def lookup_target_price(cls, target, default):
+        rowkey, column_name = cls._rowkey_and_column_from_target(target)
+        target_price = cls._lookup_price(rowkey, column_name)
+        return target_price or default
+
+    @classmethod
+    def lookup_location_price(cls, location, default):
+        rowkey, column_name = cls._rowkey_and_column_from_location(location)
+        location_price = cls._lookup_price(rowkey, column_name)
+        return location_price or default
+
+    @classmethod
+    def _lookup_price(cls, rowkey, column_name):
         try:
             columns = cls._cf.get(rowkey, columns=[column_name])
         except tdb_cassandra.NotFoundException:
             columns = {}
-        if column_name in columns:
-            return columns[column_name]
 
-        # use global price
-        if isinstance(target, Target):
-            if target.is_collection:
-                return g.cpm_selfserve_collection.pennies
-            else:
-                return g.cpm_selfserve.pennies
+        return columns.get(column_name)
 
-        raise ValueError("target must be Target")
+    @classmethod
+    def get_price(cls, target, location):
+        prices = []
+
+        # set location specific prices or use defaults
+        if location and location.metro:
+            metro_price = cls.lookup_location_price(location, cls.METRO_DEFAULT)
+            prices.append(metro_price)
+        elif location:
+            country_price = cls.lookup_location_price(
+                location, cls.COUNTRY_DEFAULT)
+            prices.append(country_price)
+
+        # set target specific prices or use default
+        if (not target.is_collection and
+                target.subreddit_name == Frontpage.name):
+            # Frontpage is priced as a collection
+            prices.append(cls.COLLECTION_DEFAULT)
+        elif target.is_collection:
+            collection_price = cls.lookup_target_price(
+                target, cls.COLLECTION_DEFAULT)
+            prices.append(collection_price)
+        else:
+            subreddit_price = cls.lookup_target_price(
+                target, cls.SUBREDDIT_DEFAULT)
+            prices.append(subreddit_price)
+
+        return max(prices)
 
     @classmethod
     def get_price_dict(cls):
         r = {
             "COLLECTION": {},
             "SUBREDDIT": {},
-            "METRO": g.cpm_selfserve_geotarget_metro.pennies,
+            "COUNTRY": {},
+            "METRO": {},
             "COLLECTION_DEFAULT": g.cpm_selfserve_collection.pennies,
             "SUBREDDIT_DEFAULT": g.cpm_selfserve.pennies,
+            "COUNTRY_DEFAULT": g.cpm_selfserve_collection.pennies,
+            "METRO_DEFAULT": g.cpm_selfserve_geotarget_metro.pennies,
         }
 
         try:
@@ -667,10 +717,26 @@ class PromotionPrices(tdb_cassandra.View):
         except tdb_cassandra.NotFoundException:
             subreddits = {}
 
+        try:
+            countries = cls._cf.get("COUNTRY")
+        except tdb_cassandra.NotFoundException:
+            countries = {}
+
+        try:
+            metros = cls._cf.get("METRO")
+        except tdb_cassandra.NotFoundException:
+            metros = {}
+
         for name, cpm in collections.iteritems():
             r["COLLECTION"][name] = cpm
 
         for name, cpm in subreddits.iteritems():
             r["SUBREDDIT"][name] = cpm
+
+        for name, cpm in countries.iteritems():
+            r["COUNTRY"][name] = cpm
+
+        for name, cpm in metros.iteritems():
+            r["METRO"][name] = cpm
 
         return r

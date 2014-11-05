@@ -820,23 +820,34 @@ var exports = r.sponsored = {
     },
 
     get_cpm: function($form) {
-        var isMetroGeotarget = $('#metro').val() !== null && !$('#metro').is(':disabled'),
-            isSubreddit = $form.find('input[name="targeting"][value="one"]').is(':checked'),
-            collectionVal = $form.find('input[name="collection"]:checked').val(),
-            isFrontpage = !isSubreddit && collectionVal === 'none',
-            isCollection = !isSubreddit && !isFrontpage,
-            sr = isSubreddit ? $form.find('*[name="sr"]').val() : '',
-            collection = isCollection ? collectionVal : null
+        var isMetroGeotarget = $('#metro').val() !== null && !$('#metro').is(':disabled');
+        var metro = $('#metro').val();
+        var country = $('#country').val();
+        var isGeotarget = country !== '' && !$('#country').is(':disabled');
+        var isSubreddit = $form.find('input[name="targeting"][value="one"]').is(':checked');
+        var collectionVal = $form.find('input[name="collection"]:checked').val();
+        var isFrontpage = !isSubreddit && collectionVal === 'none';
+        var isCollection = !isSubreddit && !isFrontpage;
+        var sr = isSubreddit ? $form.find('*[name="sr"]').val() : '';
+        var collection = isCollection ? collectionVal : null;
+        var prices = [];
 
         if (isMetroGeotarget) {
-            return this.priceDict.METRO
-        } else if (isFrontpage) {
-            return this.priceDict.COLLECTION_DEFAULT
-        } else if (isCollection) {
-            return this.priceDict.COLLECTION[collection] || this.priceDict.COLLECTION_DEFAULT
-        } else {
-            return this.priceDict.SUBREDDIT[sr] || this.priceDict.SUBREDDIT_DEFAULT
+            var metroKey = metro + country;
+            prices.push(this.priceDict.METRO[metro] || this.priceDict.METRO_DEFAULT);
+        } else if (isGeotarget) {
+            prices.push(this.priceDict.COUNTRY[country] || this.priceDict.COUNTRY_DEFAULT);
         }
+
+        if (isFrontpage) {
+            prices.push(this.priceDict.COLLECTION_DEFAULT);
+        } else if (isCollection) {
+            prices.push(this.priceDict.COLLECTION[collectionVal] || this.priceDict.COLLECTION_DEFAULT);
+        } else {
+            prices.push(this.priceDict.SUBREDDIT[sr] || this.priceDict.SUBREDDIT_DEFAULT);
+        }
+
+        return _.max(prices);
     },
 
     get_targeting: function($form) {
