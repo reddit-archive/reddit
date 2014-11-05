@@ -58,7 +58,13 @@ from r2.lib.pages import (
 )
 from r2.lib.pages.things import wrap_links
 from r2.lib.system_messages import user_added_messages
-from r2.lib.utils import make_offset_date, to_date, to36
+from r2.lib.utils import (
+    is_subdomain,
+    make_offset_date,
+    to_date,
+    to36,
+    UrlParser,
+)
 from r2.lib.validator import (
     json_validate,
     nop,
@@ -585,6 +591,9 @@ class PromoteApiController(ApiController):
         sendreplies=VBoolean("sendreplies"),
         media_url=VUrl("media_url", allow_self=False,
                        valid_schemes=('http', 'https')),
+        gifts_embed_url=VUrl("gifts_embed_url", allow_self=False,
+                             valid_schemes=('http', 'https')),
+        media_url_type=VOneOf("media_url_type", ("redditgifts", "scrape")),
         media_autoplay=VBoolean("media_autoplay"),
         media_override=VBoolean("media-override"),
         domain_override=VLength("domain", 100),
@@ -593,7 +602,8 @@ class PromoteApiController(ApiController):
     def POST_edit_promo(self, form, jquery, username, l, title, url,
                         selftext, kind, disable_comments, sendreplies,
                         media_url, media_autoplay, media_override,
-                        domain_override, is_managed):
+                        gifts_embed_url, media_url_type, domain_override,
+                        is_managed):
 
         should_ratelimit = False
         if not c.user_is_sponsor:
@@ -652,6 +662,7 @@ class PromoteApiController(ApiController):
             return
 
         if not l:
+            # creating a new promoted link
             l = promote.new_promotion(title, url if kind == 'link' else 'self',
                                       selftext if kind == 'self' else '',
                                       user, request.ip)
@@ -659,74 +670,120 @@ class PromoteApiController(ApiController):
             if c.user_is_sponsor:
                 l.managed_promo = is_managed
             l._commit()
+            form.redirect(promote.promo_edit_url(l))
 
-        elif promote.is_promo(l):
-            # changing link type is not allowed
-            if ((l.is_self and kind == 'link') or
-                (not l.is_self and kind == 'self')):
-                c.errors.add(errors.NO_CHANGE_KIND, field="kind")
-                form.set_error(errors.NO_CHANGE_KIND, "kind")
+        elif not promote.is_promo(l):
+            return
+
+        # changing link type is not allowed
+        if ((l.is_self and kind == 'link') or
+            (not l.is_self and kind == 'self')):
+            c.errors.add(errors.NO_CHANGE_KIND, field="kind")
+            form.set_error(errors.NO_CHANGE_KIND, "kind")
+            return
+
+        changed = False
+        # live items can only be changed by a sponsor, and also
+        # pay the cost of de-approving the link
+        if not promote.is_promoted(l) or c.user_is_sponsor:
+            if title and title != l.title:
+                l.title = title
+                changed = not c.user_is_sponsor
+
+            if kind == 'link' and url and url != l.url:
+                l.url = url
+                changed = not c.user_is_sponsor
+
+        # only trips if the title and url are changed by a non-sponsor
+        if changed:
+            promote.unapprove_promotion(l)
+
+        # selftext can be changed at any time
+        if kind == 'self':
+            l.selftext = selftext
+
+        # comment disabling and sendreplies is free to be changed any time.
+        l.disable_comments = disable_comments
+        l.sendreplies = sendreplies
+
+        if c.user_is_sponsor:
+            if (form.has_errors("media_url", errors.BAD_URL) or
+                    form.has_errors("gifts_embed_url", errors.BAD_URL)):
                 return
 
-            changed = False
-            # live items can only be changed by a sponsor, and also
-            # pay the cost of de-approving the link
-            if not promote.is_promoted(l) or c.user_is_sponsor:
-                if title and title != l.title:
-                    l.title = title
-                    changed = not c.user_is_sponsor
+        scraper_embed = media_url_type == "scrape"
+        media_url = media_url or None
+        gifts_embed_url = gifts_embed_url or None
 
-                if kind == 'link' and url and url != l.url:
-                    l.url = url
-                    changed = not c.user_is_sponsor
+        if c.user_is_sponsor and scraper_embed and media_url != l.media_url:
+            if media_url:
+                media = _scrape_media(
+                    media_url, autoplay=media_autoplay,
+                    save_thumbnail=False, use_cache=True)
 
-            # only trips if the title and url are changed by a non-sponsor
-            if changed:
-                promote.unapprove_promotion(l)
+                if media:
+                    l.set_media_object(media.media_object)
+                    l.set_secure_media_object(media.secure_media_object)
+                    l.media_url = media_url
+                    l.gifts_embed_url = None
+                    l.media_autoplay = media_autoplay
+                else:
+                    c.errors.add(errors.SCRAPER_ERROR, field="media_url")
+                    form.set_error(errors.SCRAPER_ERROR, "media_url")
+                    return
+            else:
+                l.set_media_object(None)
+                l.set_secure_media_object(None)
+                l.media_url = None
+                l.gifts_embed_url = None
+                l.media_autoplay = False
 
-            # selftext can be changed at any time
-            if kind == 'self':
-                l.selftext = selftext
-
-            # comment disabling and sendreplies is free to be changed any time.
-            l.disable_comments = disable_comments
-            l.sendreplies = sendreplies
-
-            if c.user_is_sponsor:
-                if (not media_url and
-                        form.has_errors("media_url", errors.BAD_URL)):
+        if (c.user_is_sponsor and not scraper_embed and
+                gifts_embed_url != l.gifts_embed_url):
+            if gifts_embed_url:
+                parsed = UrlParser(gifts_embed_url)
+                if not is_subdomain(parsed.hostname, "redditgifts.com"):
+                    c.errors.add(errors.BAD_URL, field="gifts_embed_url")
+                    form.set_error(errors.BAD_URL, "gifts_embed_url")
                     return
 
-                media_url = media_url or None
-                media_changed = (media_url != l.media_url or
-                                 media_autoplay != l.media_autoplay)
+                iframe = """
+                    <iframe class="redditgifts-embed"
+                            src="%(embed_url)s"
+                            width="710" height="500" scrolling="no"
+                            frameborder="0" allowfullscreen>
+                    </iframe>
+                """ % {'embed_url': websafe(gifts_embed_url)}
+                media_object = {
+                    'oembed': {
+                        'description': 'redditgifts embed',
+                        'height': 500,
+                        'html': iframe,
+                        'provider_name': 'redditgifts',
+                        'provider_url': 'http://www.redditgifts.com/',
+                        'title': 'redditgifts secret santa 2014',
+                        'type': 'rich',
+                        'width': 710},
+                        'type': 'redditgifts'
+                }
+                l.set_media_object(media_object)
+                l.set_secure_media_object(media_object)
+                l.media_url = None
+                l.gifts_embed_url = gifts_embed_url
+                l.media_autoplay = False
+            else:
+                l.set_media_object(None)
+                l.set_secure_media_object(None)
+                l.media_url = None
+                l.gifts_embed_url = None
+                l.media_autoplay = False
 
-                if media_changed:
-                    if media_url:
-                        media = _scrape_media(
-                            media_url, autoplay=media_autoplay,
-                            save_thumbnail=False, use_cache=True)
+        if c.user_is_sponsor:
+            l.media_override = media_override
+            l.domain_override = domain_override or None
+            l.managed_promo = is_managed
 
-                        if media:
-                            l.set_media_object(media.media_object)
-                            l.set_secure_media_object(media.secure_media_object)
-                            l.media_url = media_url
-                            l.media_autoplay = media_autoplay
-                        else:
-                            c.errors.add(errors.SCRAPER_ERROR, field="media_url")
-                            form.set_error(errors.SCRAPER_ERROR, "media_url")
-                            return
-                    else:
-                        l.set_media_object(None)
-                        l.set_secure_media_object(None)
-                        l.media_url = None
-                        l.media_autoplay = False
-
-                l.media_override = media_override
-                l.domain_override = domain_override or None
-                l.managed_promo = is_managed
-            l._commit()
-
+        l._commit()
         form.redirect(promote.promo_edit_url(l))
 
     @validatedForm(VSponsorAdmin(),

@@ -77,6 +77,7 @@ class Link(Thing, Printable):
                      media_object=None,
                      secure_media_object=None,
                      media_url=None,
+                     gifts_embed_url=None,
                      media_autoplay=False,
                      domain_override=None,
                      promoted=None,

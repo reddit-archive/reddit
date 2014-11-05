@@ -196,12 +196,35 @@
 <%def name="media_field(link)">
   <%utils:line_field title="${_('media')}" id="media-field" css_class="rounded media-field">
     <div class="delete-field">
-      <p>
-        <label for="media_url">Source URL</label>
+      <div class="radio-group">
+        <%
+          scraper_checked = link.media_url or not link.gifts_embed_url
+        %>
+        <label class="form-group checkbox">
+          <input type="radio" id="scrape" value="scrape" name="media_url_type"
+                 ${"checked='checked'" if scraper_checked else ''}>
+          <span class="label">scraper</span>
+        </label>
+        <label class="form-group checkbox">
+          <input type="radio" id="redditgifts" value="redditgifts" name="media_url_type"
+                 ${"checked='checked'" if not scraper_checked else ''}>
+          <span class="label">redditgifts</span>
+        </label>
+      </div>
+      <p id="scraper_input" ${"" if scraper_checked else "style='display:none'"}>
+        <label for="media_url">source URL to scrape</label>
         <input id="media_url" name="media_url" type="text" class="rounded"
-               value="${link.media_url or ""}">
+               value="${link.media_url or ""}"
+               ${"" if scraper_checked else "disabled"}>
         ${error_field("BAD_URL", "media_url", "div")}
         ${error_field("SCRAPER_ERROR", "media_url", "div")}
+      </p>
+      <p id="rg_input" ${"style='display:none'" if scraper_checked else ""}>
+        <label for="gifts_embed_url">redditgifts embed URL</label>
+        <input id="gifts_embed_url" name="gifts_embed_url" type="text" class="rounded"
+               value="${link.gifts_embed_url or ''}"
+               ${"disabled" if scraper_checked else ""}>
+        ${error_field("BAD_URL", "gifts_embed_url", "div")}
       </p>
       ${checkbox("media_autoplay",
                  _("autoplay"),
@@ -211,7 +234,6 @@
                  _("media override (adds an onclick to the link to generate a drop-down rather than a link out)"),
                  getattr(link, "media_override", False) or False)}
       <br>
-
     </div>
   </%utils:line_field>
 </%def>

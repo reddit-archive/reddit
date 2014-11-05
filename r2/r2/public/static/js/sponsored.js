@@ -476,6 +476,7 @@ var exports = r.sponsored = {
         })
         this.inventory = {}
         this.campaignListColumns = $('.existing-campaigns thead th').length
+        $("input[name='media_url_type']").on("change", this.mediaInputChange)
     },
 
     setup: function(inventory_by_sr, priceDict, isEmpty, userIsSponsor) {
@@ -1251,6 +1252,17 @@ var exports = r.sponsored = {
         var queryString = '?' + $.param(data);
         var location = window.location;
         window.location = location.origin + location.pathname + queryString;
+    },
+
+    mediaInputChange: function() {
+        var $scraperInputWrapper = $('#scraper_input');
+        var $rgInputWrapper = $('#rg_input');
+        var isScraper = $(this).val() === 'scrape';
+
+        $scraperInputWrapper.toggle(isScraper);
+        $scraperInputWrapper.find('input').prop('disabled', !isScraper);
+        $rgInputWrapper.toggle(!isScraper);
+        $rgInputWrapper.find('input').prop('disabled', isScraper);
     },
 };
 
