@@ -1169,7 +1169,9 @@ class Comment(Thing, Printable):
                     item.subreddit_path += item.subreddit.path
 
             # always use the default collapse threshold in contest mode threads
-            if item.link.contest_mode:
+            # if the user has a custom collapse threshold
+            if (item.link.contest_mode and 
+                    user.pref_min_comment_score is not None):
                 min_score = Account._defaults['pref_min_comment_score']
             else:
                 min_score = user.pref_min_comment_score
