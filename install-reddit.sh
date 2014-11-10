@@ -489,7 +489,7 @@ backend reddit
     timeout queue 60000
     balance roundrobin
 
-    server app01-8001 localhost:8001 maxconn 1
+    server app01-8001 localhost:8001 maxconn 30
 
 backend sutro
     mode http
