@@ -43,6 +43,27 @@ var UseDefaultClassName = (function() {
 })();
 
 
+var CampaignFormattedProps = {
+  componentWillMount: function() {
+    this.formattedProps = this.getFormattedProps(_.clone(this.props), this.props);
+  },
+
+  componentWillUpdate: function(nextProps) {
+    this.formattedProps = this.getFormattedProps(_.clone(nextProps), nextProps);
+  },
+
+  getFormattedProps: function(formattedProps, props) {
+    if (props.impressions) {
+      formattedProps.impressions = r.utils.prettyNumber(props.impressions);
+    }
+    if (props.bid) {
+      formattedProps.bid = props.bid.toFixed(2);
+    }
+    return formattedProps;
+  },
+};
+
+
 var CampaignButton = React.createClass({
   displayName: 'CampaignButton',
 
@@ -88,22 +109,14 @@ var CampaignButton = React.createClass({
 var InfoText = React.createClass({
   displayName: 'InfoText',
 
-  mixins: [UseDefaultClassName],
-
-  getFormattedProps: function() {
-    var props = _.clone(this.props);
-    if (props.impressions) {
-      props.impressions = r.utils.prettyNumber(props.impressions);
-    }
-    return props;
-  },
+  mixins: [UseDefaultClassName, CampaignFormattedProps],
 
   render: function() {
     var text = Array.isArray(this.props.children)
              ? this.props.children.join('\n')
              : this.props.children;
     return React.DOM.span({ className: this.getClassName() },
-      text.format(this.getFormattedProps())
+      text.format(this.formattedProps)
     );
   },
 
@@ -124,7 +137,7 @@ var CampaignOptionTable = React.createClass({
 var CampaignOption = React.createClass({
   displayName: 'CampaignOption',
 
-  mixins: [UseDefaultClassName],
+  mixins: [UseDefaultClassName, CampaignFormattedProps],
 
   getDefaultProps: function() {
     return {
@@ -141,9 +154,9 @@ var CampaignOption = React.createClass({
     return React.DOM.tr({ className: this.getClassName() },
       React.DOM.td({ className: 'date start-date' }, this.props.start),
       React.DOM.td({ className: 'date end-date' }, this.props.end),
-      React.DOM.td({ className: 'bid' }, '$', this.props.bid),
+      React.DOM.td({ className: 'bid' }, '$', this.formattedProps.bid),
       React.DOM.td({ className: 'impressions' },
-        r.utils.prettyNumber(this.props.impressions), ' impressions'
+        this.formattedProps.impressions, ' impressions'
       ),
       React.DOM.td({ className: 'buttons' },
         CampaignButton({
@@ -285,12 +298,12 @@ var CampaignCreator = React.createClass({
         InfoText(null, r._('the campaign you requested is available!')),
         CampaignOptionTable(null, CampaignOption(requested))
       );
-      if (maximized.impressions > requested.impressions &&
-          requested.impressions * 1.2 >= maximized.impressions &&
-          maximized.impressions === this.state.totalAvailable) {
-        var difference = maximized.impressions - requested.impressions;
+      if (maximized.bid > requested.bid &&
+          requested.bid * 1.2 >= maximized.bid &&
+          this.state.available === this.state.totalAvailable) {
+        var difference = maximized.bid - requested.bid;
         result = [result, CampaignSet(null,
-          InfoText({ difference: this.getBid(difference).toFixed(2) },
+          InfoText({ difference: difference.toFixed(2) },
             r._('want to maximize your campaign? for only $%(difference)s more ' +
                  'you can buy all available inventory for your selected dates!')
           ),
@@ -375,7 +388,7 @@ var CampaignCreator = React.createClass({
   },
 
   getBid: function(impressions) {
-    return (impressions / 1000) * (this.props.cpm / 100);
+    return Math.floor((impressions / 1000) * this.props.cpm) / 100;
   },
 
   getOptionData: function(startDate, duration, impressions) {
@@ -385,7 +398,7 @@ var CampaignCreator = React.createClass({
     return {
       start: this.formatDate(startDate),
       end: this.formatDate(endDate),
-      bid: this.getBid(impressions).toFixed(2),
+      bid: this.getBid(impressions),
       impressions: Math.floor(impressions),
       isNew: this.props.isNew,
     };
