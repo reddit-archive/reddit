@@ -49,6 +49,12 @@ def _nerds_email(body, from_name, kind):
     Email.handler.add_to_queue(None, g.nerds_email, from_name, g.nerds_email,
                                kind, body = body)
 
+def _fraud_email(body, kind):
+    """
+    For sending email to the fraud mailbox
+    """
+    Email.handler.add_to_queue(None, g.fraud_email, g.domain, g.fraud_email,
+                               kind, body=body)
 
 def verify_email(user, dest=None):
     """
@@ -257,13 +263,16 @@ def void_payment(thing, campaign, reason):
                         reason=reason)
 
 
+def fraud_alert(body):
+    return _fraud_email(body, Email.Kind.FRAUD_ALERT)
+
 def suspicious_payment(user, link):
     from r2.lib.pages import SuspiciousPaymentEmail
 
-    email = "fraud@reddit.com"
     body = SuspiciousPaymentEmail(user, link).render(style="email")
     kind = Email.Kind.SUSPICIOUS_PAYMENT
-    _system_email(email, body, kind)
+
+    return _fraud_email(body, kind)
 
 
 def send_html_email(to_addr, from_addr, subject, html, subtype="html"):
