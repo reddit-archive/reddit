@@ -2837,7 +2837,6 @@ class ApiController(RedditController):
                 item.child = None
         jquery.things(parent._fullname).parent().replace_things(a, False, True)
 
-    @csrf_exempt
     @require_oauth2_scope("read")
     @validatedForm(
         link=VByName('link_id'),
@@ -2851,7 +2850,7 @@ class ApiController(RedditController):
             docs={"id": "(optional) id of the associated MoreChildren object"}),
     )
     @api_doc(api_section.links_and_comments)
-    def POST_morechildren(self, form, jquery, link, sort, children,
+    def GET_morechildren(self, form, jquery, link, sort, children,
                           pv_hex, mc_id):
         """Retrieve additional comments omitted from a base comment tree.
 
@@ -2932,6 +2931,11 @@ class ApiController(RedditController):
             if lock:
                 lock.release()
 
+    @csrf_exempt
+    @require_oauth2_scope("read")
+    def POST_morechildren(self):
+        """Wrapper around `GET_morechildren` for backwards-compatibility"""
+        return self.GET_morechildren()
 
     @validate(uh = nop('uh'), # VModHash() will raise, check manually
               action = VOneOf('what', ('like', 'dislike', 'save')),
@@ -3827,9 +3831,8 @@ class ApiController(RedditController):
 
         return {'names': names}
 
-    @csrf_exempt
-    @validate(link = VByName('link_id', thing_cls = Link))
-    def POST_expando(self, link):
+    @validate(link=VByName('link_id', thing_cls=Link))
+    def GET_expando(self, link):
         if not link:
             abort(404, 'not found')
 
@@ -3845,6 +3848,10 @@ class ApiController(RedditController):
             return websafe(spaceCompress(content))
         else:
             abort(404, 'not found')
+
+    @csrf_exempt
+    def POST_expando(self):
+        return self.GET_expando()
 
     @validatedForm(VUser('password', default=''),
                    VModhash(),

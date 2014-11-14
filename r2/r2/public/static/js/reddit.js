@@ -482,10 +482,18 @@ function morechildren(form, link_id, sort, children, depth, pv_hex) {
     $(form).html(reddit.status_msg.loading)
         .css("color", "red");
     var id = $(form).parents(".thing.morechildren:first").thing_id();
-    $.request('morechildren', {link_id: link_id, sort: sort,
-              children: children, depth: depth, id: id, pv_hex: pv_hex});
+    var child_params = {
+        link_id: link_id,
+        sort: sort,
+        children: children,
+        depth: depth,
+        id: id,
+        pv_hex: pv_hex,
+    };
+    $.request('morechildren', child_params, undefined, undefined,
+              undefined, true);
     return false;
-};
+}
 
 function moremessages(elem) {
     $(elem).html(reddit.status_msg.loading).css("color", "red");
@@ -809,7 +817,7 @@ function expando_child(elem) {
                       expando.html($.unsafe(r));
                       $(document).trigger('expando_thing', thing)
                   },
-                  false, "html");
+                  false, "html", true);
     }
     else {
         expando.html($.unsafe(child_cache[key]));
