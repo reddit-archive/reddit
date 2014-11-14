@@ -158,6 +158,12 @@
     %if not c.user_is_loggedin and not g.read_only_mode:
       %if thing.enable_login_cover:
         %if feature.is_enabled('new_login_flow'):
+          <script>
+            var BETA_HOST = 'beta.reddit.com';
+            if (location.host === BETA_HOST) {
+              r.config.https_endpoint = 'https://' + BETA_HOST;
+            }
+          </script>
           <div id="login-popup-v2" class="login-popup cover-overlay" style="display: none">
             <div class="cover" onclick="return hidecover(this)"></div>
             <div class="popup-v2">
