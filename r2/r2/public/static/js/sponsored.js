@@ -56,7 +56,9 @@ var CampaignFormattedProps = {
     if (props.impressions) {
       formattedProps.impressions = r.utils.prettyNumber(props.impressions);
     }
-    if (props.bid) {
+    if (props.bid === null) {
+      formattedProps.bid = 'N/A';
+    } else if (props.bid) {
       formattedProps.bid = props.bid.toFixed(2);
     }
     return formattedProps;
@@ -1010,7 +1012,7 @@ var exports = r.sponsored = {
               InfoText(null, r._('house campaigns, man.')),
               CampaignOptionTable(null,
                 CampaignOption({
-                  bid: 'N/A',
+                  bid: null,
                   end: timing.enddate,
                   impressions: 'unsold ',
                   isNew: !$("#campaign").parents('tr:first').length,
