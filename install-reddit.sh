@@ -82,6 +82,15 @@ if [ "$DISTRIB_ID" != "Ubuntu" -o "$DISTRIB_RELEASE" != "12.04" ]; then
     exit 1
 fi
 
+if [[ "2000000" -gt $(awk '/MemTotal/{print $2}' /proc/meminfo) ]]; then
+    LOW_MEM_PROMPT="reddit requires at least 2GB of memory to work properly, continue anyway? [y/n] "
+    read -er -n1 -p "$LOW_MEM_PROMPT" response
+    if [[ "$response" != "y" ]]; then
+      echo "Quitting."
+      exit 1
+    fi
+fi
+
 ###############################################################################
 # Install prerequisites
 ###############################################################################
