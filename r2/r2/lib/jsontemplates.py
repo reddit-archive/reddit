@@ -1075,8 +1075,9 @@ class ModActionTemplate(ThingJsonTemplate):
         mod_id36='mod_id36',
         sr_id36='sr_id36',
         subreddit='sr_name',
-        target_fullname='target_fullname',
         target_author='target_author',
+        target_fullname='target_fullname',
+        target_permalink='target_permalink',
     )
 
     def thing_attr(self, thing, attr):
@@ -1089,6 +1090,11 @@ class ModActionTemplate(ThingJsonTemplate):
             elif thing.target_author:
                 return thing.target_author.name
             return ""
+        elif attr == 'target_permalink':
+            try:
+                return thing.target.make_permalink_slow()
+            except AttributeError:
+                return None
         elif attr == "moderator":
             return thing.moderator.name
 
