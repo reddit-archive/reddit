@@ -171,6 +171,12 @@ var CampaignOption = React.createClass({
   },
 
   handleClick: function(close) {
+    var $startdate = $('#startdate');
+    var $enddate = $('#enddate');
+    var $bid = $('#bid');
+    var userStartdate = $startdate.val();
+    var userEnddate = $enddate.val();
+    var userBid = $bid.val();
     $('#startdate').val(this.props.start);
     $('#enddate').val(this.props.end);
     $('#bid').val(this.props.bid);
@@ -180,6 +186,10 @@ var CampaignOption = React.createClass({
       // with an `error` class, which might be one of our InfoText components
       // but we want react to manage that
       $('.campaign-creator .info-text').removeAttr('style');
+      // reset the form with the user's original values
+      $startdate.val(userStartdate);
+      $enddate.val(userEnddate);
+      $bid.val(userBid);
     }, 0);
   },
 });
