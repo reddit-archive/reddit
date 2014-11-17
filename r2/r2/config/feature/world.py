@@ -29,25 +29,33 @@ class World(object):
     Proxying through World allows for easy testing and caching if needed.
     """
 
+    @staticmethod
+    def get_safe(o, key, default=None):
+        try:
+            return getattr(o, key)
+        except TypeError:
+            return default
+
     def current_user(self):
-        return c.user
+        return self.get_safe(c, 'user')
 
     def current_subreddit(self):
-        if not c.site:
+        site = self.get_safe(c, 'site')
+        if not site:
             # In non-request code (eg queued jobs), there isn't necessarily a
             # site name (or other request-type data).  In those cases, we don't
             # want to trigger any subreddit-specific code.
             return ''
-        return c.site.name
+        return site.name
 
     def current_subdomain(self):
-        return c.subdomain
+        return self.get_safe(c, 'subdomain')
 
     def is_admin(self, user):
         if not user or not hasattr(user, 'name'):
             return False
 
-        return user.name in g.admins
+        return user.name in self.get_safe(g, 'admins', [])
 
     def is_employee(self, user):
         if not user:
@@ -58,4 +66,5 @@ class World(object):
         return set(request.GET.getall('feature'))
 
     def live_config(self, name):
-        return g.live_config.get(name)
+        live = self.get_safe(g, 'live_config', {})
+        return live.get(name)
