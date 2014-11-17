@@ -78,7 +78,7 @@ var CampaignButton = React.createClass({
   },
 
   render: function() {
-    if (r.sponsored.featureKeepCampaignOpen && this.props.isNew) {
+    if (this.props.isNew) {
       return React.DOM.div({ className: 'button-group' },
         React.DOM.button(
           { ref: 'keepOpen', className: 'campaign-button', onClick: this.handleClick },
@@ -98,7 +98,7 @@ var CampaignButton = React.createClass({
 
   handleClick: function(e) {
     var close = true;
-    if (r.sponsored.featureKeepCampaignOpen && this.refs.keepOpen) {
+    if (this.refs.keepOpen) {
       close = !(e.target === this.refs.keepOpen.getDOMNode());
     }
     if (typeof this.props.onClick === 'function') {
@@ -470,8 +470,7 @@ var exports = r.sponsored = {
 
     render: function() {},
 
-    init: function(featureKeepCampaignOpen) {
-        this.featureKeepCampaignOpen = featureKeepCampaignOpen || false;
+    init: function() {
         $("#sr-autocomplete").on("sr-changed blur", function() {
             r.sponsored.render()
         })

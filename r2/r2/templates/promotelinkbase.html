@@ -34,7 +34,7 @@
 
 <%def name="javascript_setup()">
 <script type="text/javascript">
-  r.sponsored.init(${unsafe(simplejson.dumps(feature.is_enabled('keep_campaign_open')))});
+  r.sponsored.init();
   r.sponsored.set_form_render_fnc(r.sponsored.fill_campaign_editor);
   r.sponsored.setup(${unsafe(simplejson.dumps(thing.inventory))},
                     ${unsafe(simplejson.dumps(thing.price_dict))},
