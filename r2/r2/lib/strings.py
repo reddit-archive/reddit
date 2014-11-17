@@ -136,6 +136,7 @@ string_dict = dict(
     youve_been_gilded_comment = _("Another user liked [your comment](%(url)s) so much that they gilded it, giving you reddit gold.\n\n"),
     youve_been_gilded_link = _("Another user liked [your submission](%(url)s) so much that they gilded it, giving you reddit gold.\n\n"),
     respond_to_anonymous_gilder = _("Want to say thanks to your mysterious benefactor? Reply to this message. You will find out their username if they choose to reply back."),
+    unsupported_respond_to_gilder = _("Sorry, replying directly to your mysterious benefactor is not yet supported for this gilding."),
     anonymous_gilder_warning = _("***WARNING: Responding to this message will reveal your username to the gildee.***\n\n"),
     gold_claimed_code = _("Thanks for claiming a reddit gold code.\n\n"),
     gold_summary_autorenew = _("You're about to set up an ongoing, autorenewing subscription to reddit gold for yourself (%(user)s). You'll pay %(price)s for this, %(period)s."),

@@ -255,7 +255,11 @@ def send_gift(buyer, recipient, months, days, signed, giftmessage,
     else:
         sender = _("An anonymous redditor")
         md_sender = _("An anonymous redditor")
-        repliable = True
+        
+        if buyer.name in g.live_config["proxy_gilding_accounts"]:
+            repliable = False
+        else:    
+            repliable = True
 
     create_gift_gold(buyer._id, recipient._id, days, c.start_time, signed, note)
 
@@ -285,7 +289,10 @@ def send_gift(buyer, recipient, months, days, signed, giftmessage,
     message = append_random_bottlecap_phrase(message)
 
     if not signed:
-        message += '\n\n' + strings.respond_to_anonymous_gilder
+        if not repliable:
+            message += '\n\n' + strings.unsupported_respond_to_gilder
+        else:
+            message += '\n\n' + strings.respond_to_anonymous_gilder
 
     try:
         send_system_message(recipient, subject, message, author=buyer,
