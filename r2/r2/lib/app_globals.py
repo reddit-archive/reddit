@@ -54,6 +54,8 @@ from r2.lib.cache import (
     Permacache,
     SelfEmptyingCache,
     StaleCacheChain,
+    validate_size_error,
+    validate_size_warn,
 )
 from r2.lib.configparse import ConfigValue, ConfigValueParser
 from r2.lib.contrib import ipaddress
@@ -640,81 +642,101 @@ class Globals(object):
 
         # the main memcache pool. used for most everything.
         memcache = CMemcache(
+            "main",
             self.memcaches,
             min_compress_len=1400,
             num_clients=num_mc_clients,
             binary=True,
+            validators=[validate_size_error],
         )
 
         # a pool just used for @memoize results
         memoizecaches = CMemcache(
+            "memoize",
             self.memoizecaches,
             min_compress_len=50 * 1024,
             num_clients=num_mc_clients,
             binary=True,
+            validators=[validate_size_error],
         )
 
         # a pool just for srmember rels
         srmembercaches = CMemcache(
+            "srmember",
             self.srmembercaches,
             min_compress_len=96,
             num_clients=num_mc_clients,
             binary=True,
+            validators=[validate_size_error],
         )
 
         # a pool just for rels
         relcaches = CMemcache(
+            "rel",
             self.relcaches,
             min_compress_len=96,
             num_clients=num_mc_clients,
             binary=True,
+            validators=[validate_size_error],
         )
 
         ratelimitcaches = CMemcache(
+            "ratelimit",
             self.ratelimitcaches,
             min_compress_len=96,
             num_clients=num_mc_clients,
+            validators=[validate_size_error],
         )
 
         # a smaller pool of caches used only for distributed locks.
         # TODO: move this to ZooKeeper
-        self.lock_cache = CMemcache(self.lockcaches,
+        self.lock_cache = CMemcache("lock",
+                                    self.lockcaches,
                                     binary=True,
-                                    num_clients=num_mc_clients)
+                                    num_clients=num_mc_clients,
+                                    validators=[validate_size_error],)
         self.make_lock = make_lock_factory(self.lock_cache, self.stats)
 
         # memcaches used in front of the permacache CF in cassandra.
         # XXX: this is a legacy thing; permacache was made when C* didn't have
         # a row cache.
-        permacache_memcaches = CMemcache(self.permacache_memcaches,
+        permacache_memcaches = CMemcache("perma",
+                                         self.permacache_memcaches,
                                          min_compress_len=1400,
-                                         num_clients=num_mc_clients)
+                                         num_clients=num_mc_clients,
+                                         validators=[validate_size_error],)
 
         # the stalecache is a memcached local to the current app server used
         # for data that's frequently fetched but doesn't need to be fresh.
         if self.stalecaches:
-            stalecaches = CMemcache(self.stalecaches,
+            stalecaches = CMemcache("stale",
+                                    self.stalecaches,
                                     binary=True,
-                                    num_clients=num_mc_clients)
+                                    num_clients=num_mc_clients,
+                                    validators=[validate_size_error],)
         else:
             stalecaches = None
 
         # rendercache holds rendered partial templates.
         rendercaches = CMemcache(
+            "render",
             self.rendercaches,
             noreply=True,
             no_block=True,
             num_clients=num_mc_clients,
             min_compress_len=480,
+            validators=[validate_size_warn],
         )
 
         # pagecaches hold fully rendered pages
         pagecaches = CMemcache(
+            "page",
             self.pagecaches,
             noreply=True,
             no_block=True,
             num_clients=num_mc_clients,
             min_compress_len=1400,
+            validators=[validate_size_warn],
         )
 
         self.startup_timer.intermediate("memcache")
