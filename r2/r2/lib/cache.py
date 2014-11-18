@@ -39,7 +39,6 @@ from r2.lib.hardcachebackend import HardCacheBackend
 
 from r2.lib.sgm import sgm # get this into our namespace so that it's
                            # importable from us
-from r2.config import feature
 
 # This is for use in the health controller
 _CACHE_SERVERS = set()
@@ -101,24 +100,20 @@ class CMemcache(CacheUtils):
 
 
     def retry(self, times, fn):
-        if feature.is_enabled('memcached_retry'):
-            ex = None
-            for i in xrange(times):
-                try:
-                    return fn()
-                except (pylibmc.NotFound,
-                        pylibmc.BadKeyProvided,
-                        pylibmc.UnknownStatKey,
-                        pylibmc.InvalidHostProtocolError,
-                        pylibmc.NotSupportedError):
-                    raise
-                except MemcachedError as e:
-                    ex = e
-                    g.log.info('Memcached error, retrying: %r', e)
+        ex = None
+        for i in xrange(times):
+            try:
+                return fn()
+            except (pylibmc.NotFound,
+                    pylibmc.BadKeyProvided,
+                    pylibmc.UnknownStatKey,
+                    pylibmc.InvalidHostProtocolError,
+                    pylibmc.NotSupportedError):
+                raise
+            except MemcachedError as e:
+                ex = e
 
-            raise MemcachedMaximumRetryException(ex)
-        else:
-            return fn()
+        raise MemcachedMaximumRetryException(ex)
 
     def get(self, key, default = None):
         def do_get():
