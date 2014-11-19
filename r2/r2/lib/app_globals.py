@@ -222,6 +222,7 @@ class Globals(object):
             'ENFORCE_RATELIMIT',
             'RL_SITEWIDE_ENABLED',
             'RL_OAUTH_SITEWIDE_ENABLED',
+            'RL_STRICT_ENFORCEMENT',
         ],
 
         ConfigValue.tuple: [

@@ -976,6 +976,11 @@ class MinimalController(BaseController):
             client_id = c.oauth2_access_token.client_id.encode("ascii")
             # OAuth2 ratelimits are per user-app combination
             key = 'siterl-oauth-' + c.user._id36 + ":" + client_id
+        elif g.RL_STRICT_ENFORCEMENT:
+            type_ = "strict"
+            max_reqs = g.RL_MAX_REQS
+            period = g.RL_RESET_SECONDS
+            key = "siterl-strict-" + request.ip
         elif c.cdn_cacheable:
             type_ = "cdn"
         elif not is_api():
