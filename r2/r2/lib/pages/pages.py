@@ -631,7 +631,9 @@ class Reddit(Templated):
 
                 if num_not_shown > 0:
                     more_text = _("...and %d more") % (num_not_shown)
-                    mod_href = "http://%s/about/moderators" % get_domain()
+                else:
+                    more_text = _("about moderation team")
+                mod_href = c.site.path + 'about/moderators'
 
                 if '/r/%s' % c.site.name == g.admin_message_acct:
                     label = _('message the admins')
@@ -991,7 +993,7 @@ class SponsorshipBox(Templated):
 
 class SideContentBox(Templated):
     def __init__(self, title, content, helplink=None, _id=None, extra_class=None,
-                 more_href = None, more_text = "more", collapsible=False):
+                 more_href=None, more_text="more", collapsible=False):
         Templated.__init__(self, title=title, helplink = helplink,
                            content=content, _id=_id, extra_class=extra_class,
                            more_href = more_href, more_text = more_text,
