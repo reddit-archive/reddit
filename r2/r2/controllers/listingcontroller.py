@@ -1414,7 +1414,18 @@ class UserListListingController(ListingController):
         return lambda rel : cls(rel, editable=self.editable)
 
     def title(self):
-        return menu[self.where]
+        section_title = menu[self.where]
+
+        # We'll probably want to slowly start opting more and more things into
+        # having this suffix, to make similar tabs on different subreddits
+        # distinct.
+        if self.where == 'moderators':
+            return '%(section)s - /r/%(subreddit)s' % {
+                'section': section_title,
+                'subreddit': c.site.name,
+            }
+
+        return section_title
 
     def rel(self):
         if self.where in ['friends', 'blocked']:
