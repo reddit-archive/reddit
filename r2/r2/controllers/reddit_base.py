@@ -967,11 +967,8 @@ class MinimalController(BaseController):
         if c.error_page:
             # ErrorController is re-running pre, don't double ratelimit
             return
-        if c.cdn_cacheable:
-            type_ = "cdn"
-        elif not is_api():
-            type_ = "web"
-        elif c.oauth_user and g.RL_OAUTH_SITEWIDE_ENABLED:
+
+        if c.oauth_user and g.RL_OAUTH_SITEWIDE_ENABLED:
             type_ = "oauth"
             period = g.RL_OAUTH_RESET_SECONDS
             max_reqs = c.oauth_client._max_reqs
@@ -979,6 +976,10 @@ class MinimalController(BaseController):
             client_id = c.oauth2_access_token.client_id.encode("ascii")
             # OAuth2 ratelimits are per user-app combination
             key = 'siterl-oauth-' + c.user._id36 + ":" + client_id
+        elif c.cdn_cacheable:
+            type_ = "cdn"
+        elif not is_api():
+            type_ = "web"
         elif g.RL_SITEWIDE_ENABLED:
             type_ = "api"
             max_reqs = g.RL_MAX_REQS
