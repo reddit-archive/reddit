@@ -20,7 +20,10 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%inherit file="base.htmllite" import="_ws"/>
+<%!
+    from r2.lib.template_helpers import _ws
+%>
+<%inherit file="base.htmllite"/>
 
 ${thing._content}
 
