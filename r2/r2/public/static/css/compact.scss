@@ -1,9 +1,14 @@
-//Requires Compass and Sass to compile properly
-//gem install haml
-//gem install compass
+// Requires Compass and Sass to compile properly
+// [$]> gem install haml compass
+// [$]> cd r2/public/static/css
+// [$]> scss --compass --sourcemap=none --no-cache --style compact --watch compact.scss:compact.css
+
 /* mixins */
 
 @import "compass/css3";
+// TODO: Replace with non-deprecated
+// http://compass-style.org/reference/compass/css3/flexbox/ .
+@import "compass/css3/box";
 
 @mixin vertical_gradient($from, $to) {
     @include background(linear-gradient(top, $from, $to));
