@@ -517,6 +517,11 @@ body.toolbar { margin: 0px; padding: 0px; overflow: hidden; }
 
 #suggested-reddits ul li a { background: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #becfe0), color-stop(100%, #81a3c5)); background: -webkit-linear-gradient(top, #becfe0, #81a3c5); background: -moz-linear-gradient(top, #becfe0, #81a3c5); background: -o-linear-gradient(top, #becfe0, #81a3c5); background: linear-gradient(top, #becfe0, #81a3c5); background-color: #9fb9d2; -webkit-border-radius: 10px; -moz-border-radius: 10px; -ms-border-radius: 10px; -o-border-radius: 10px; border-radius: 10px; display: inline-block; margin: 5px; padding: 3px 7px; text-decoration: none; border: 1px solid #507faf; color: #304c69; }
 
+.rulespage { padding: 3px; }
+.rulespage li { padding: 3px; }
+.rulespage li .good-example { background: #bcf5a9; }
+.rulespage li .bad-example { background: #f5a9a9; }
+
 /* Autocomplete */
 #sr-autocomplete-area { position: relative; z-index: 50; }
 

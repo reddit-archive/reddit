@@ -1455,6 +1455,20 @@ body.toolbar {
     border: 1px solid hsl(210, 37%, 50%);
     color: hsl(210, 37%, 30%);
 }
+
+.rulespage {
+    padding: 3px;
+    li {
+        padding: 3px;
+        .good-example {
+            background: #bcf5a9;
+        }
+        .bad-example {
+            background: #f5a9a9;
+        }
+    }
+}
+
 /* Autocomplete */
 #sr-autocomplete-area {
 	position: relative;
