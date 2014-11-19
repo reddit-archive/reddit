@@ -19,7 +19,7 @@
 # All portions of the code written by reddit are Copyright (c) 2006-2014 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
-from pylons import c, g
+from pylons import c, g, request
 
 from r2.controllers.api_docs import api_doc, api_section
 from r2.controllers.oauth2 import require_oauth2_scope
@@ -35,7 +35,7 @@ from r2.lib.validator import (
     VByName,
     VInt,
 )
-from r2.models import Comment, Link
+from r2.models import Account, Comment, Link, NotFound
 from r2.models.gold import creddits_lock
 
 
@@ -55,18 +55,25 @@ class APIv1GoldController(OAuth2ResourceController):
     def on_validation_error(error):
         abort_with_error(error, error.code or 400)
 
-    def _gift_using_creddits(self, recipient, months=1, thing_fullname=None):
+    def _gift_using_creddits(self, recipient, months=1, thing_fullname=None,
+            proxying_for=None):
         with creddits_lock(c.user):
             if not c.user.employee and c.user.gold_creddits < months:
                 err = RedditError("INSUFFICIENT_CREDDITS")
                 self.on_validation_error(err)
 
             note = None
+            buyer = c.user
             if c.user.name.lower() in g.live_config["proxy_gilding_accounts"]:
-                note = "proxy"
+                note = "proxy-%s" % c.user.name
+                if proxying_for:
+                    try:
+                        buyer = Account._by_name(proxying_for)
+                    except NotFound:
+                        pass
 
             send_gift(
-                buyer=c.user,
+                buyer=buyer,
                 recipient=recipient,
                 months=months,
                 days=months * 31,
@@ -96,6 +103,7 @@ class APIv1GoldController(OAuth2ResourceController):
         self._gift_using_creddits(
             recipient=target.author_slow,
             thing_fullname=target._fullname,
+            proxying_for=request.POST.get("proxying_for"),
         )
 
     @require_oauth2_scope("creddits")
@@ -111,4 +119,5 @@ class APIv1GoldController(OAuth2ResourceController):
         self._gift_using_creddits(
             recipient=user,
             months=months,
+            proxying_for=request.POST.get("proxying_for"),
         )
