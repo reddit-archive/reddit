@@ -1125,6 +1125,12 @@ class MinimalController(BaseController):
                 g.log.warning("pagecache error: %s", e)
                 return
 
+            # Store stats on pagecache hits / misses by endpoint
+            controller = request.environ['pylons.routes_dict']['controller']
+            action_name = request.environ['pylons.routes_dict']['action']
+            key = ".".join(("endpoint_pagecache", controller, action_name))
+            g.stats.event_count(key, "hit" if r else "miss", sample_rate=0.01)
+
             if r:
                 r, c.cookies = r
                 response.headers = r.headers
