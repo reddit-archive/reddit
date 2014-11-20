@@ -474,6 +474,9 @@ class Globals(object):
         if self.media_domain == self.domain:
             print >> sys.stderr, ("Warning: g.media_domain == g.domain. " +
                    "This may give untrusted content access to user cookies")
+        if self.oauth_domain == self.domain:
+            print >> sys.stderr, ("Warning: g.oauth_domain == g.domain. "
+                    "CORS requests to g.domain will be allowed")
 
         for arg in sys.argv:
             tokens = arg.split("=")

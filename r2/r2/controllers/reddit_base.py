@@ -1096,6 +1096,9 @@ class MinimalController(BaseController):
 
         g.stats.count_string('user_agents', request.user_agent)
 
+        if is_subdomain(request.host, g.oauth_domain):
+            self.check_cors()
+
         if not self.defer_ratelimiting:
             self.run_sitewide_ratelimits()
             c.request_timer.intermediate("minimal-ratelimits")
@@ -1254,7 +1257,7 @@ class MinimalController(BaseController):
 
     def check_cors(self):
         origin = request.headers.get("Origin")
-        if not origin:
+        if c.cors_checked or not origin:
             return
 
         method = request.method
@@ -1264,15 +1267,27 @@ class MinimalController(BaseController):
             if not method:
                 self.abort403()
 
-        action = request.environ["pylons.routes_dict"]["action_name"]
+        via_oauth = is_subdomain(request.host, g.oauth_domain)
+        if via_oauth:
+            response.headers["Access-Control-Allow-Origin"] = "*"
+            response.headers["Access-Control-Allow-Methods"] = \
+                "GET, POST, PUT, PATCH, DELETE"
+            response.headers["Access-Control-Allow-Headers"] = \
+                "Authorization, "
+            response.headers["Access-Control-Allow-Credentials"] = "false"
+            response.headers['Access-Control-Expose-Headers'] = \
+                "X-Ratelimit-Used, X-Ratelimit-Remaining, X-Ratelimit-Reset"
+        else:
+            action = request.environ["pylons.routes_dict"]["action_name"]
 
-        handler = self._get_action_handler(action, method)
-        cors = handler and getattr(handler, "cors_perms", None)
+            handler = self._get_action_handler(action, method)
+            cors = handler and getattr(handler, "cors_perms", None)
 
-        if cors and cors["origin_check"](origin):
-            response.headers["Access-Control-Allow-Origin"] = origin
-            if cors.get("allow_credentials"):
-                response.headers["Access-Control-Allow-Credentials"] = "true"
+            if cors and cors["origin_check"](origin):
+                response.headers["Access-Control-Allow-Origin"] = origin
+                if cors.get("allow_credentials"):
+                    response.headers["Access-Control-Allow-Credentials"] = "true"
+        c.cors_checked = True
 
     def OPTIONS(self):
         """Return empty responses for CORS preflight requests"""
