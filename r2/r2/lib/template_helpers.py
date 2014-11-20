@@ -24,7 +24,7 @@ import hmac
 import hashlib
 
 from r2.models import *
-from filters import unsafe, websafe, _force_unicode, _force_utf8
+from filters import unsafe, websafe, _force_utf8, conditional_websafe
 from r2.lib.utils import UrlParser, timeago, timesince, is_subdomain
 
 from r2.lib import hooks
@@ -625,6 +625,40 @@ def display_comment_karma(karma):
     return karma
 
 
+def format_html(format_string, *args, **kwargs):
+    """
+    Similar to str % foo, but passes all arguments through conditional_websafe,
+    and calls 'unsafe' on the result. This function should be used instead
+    of str.format or % interpolation to build up small HTML fragments.
+
+    Example:
+
+      format_html("Are you %s? %s", name, unsafe(checkbox_html))
+    """
+    if args and kwargs:
+        raise ValueError("Can't specify both positional and keyword args")
+    args_safe = tuple(map(conditional_websafe, args))
+    kwargs_gen = ((k, conditional_websafe(v)) for (k, v) in kwargs.iteritems())
+    kwargs_safe = dict(kwargs_gen)
+
+    format_args = args_safe or kwargs_safe
+    return unsafe(format_string % format_args)
+
+
 def _ws(*args, **kwargs):
     """Helper function to get HTML escaped output from gettext"""
     return websafe(_(*args, **kwargs))
+
+
+def _wsf(format_trans, *args, **kwargs):
+    """
+    format_html, but with an escaped, translated string as the format str
+
+    Sometimes trusted HTML needs to be included in a translatable string,
+    but we don't trust translators to write HTML themselves.
+
+    Example:
+
+      _wsf("Are you %s? %s", name, unsafe(checkbox_html))
+    """
+    return format_html(_ws(format_trans), *args, **kwargs)
