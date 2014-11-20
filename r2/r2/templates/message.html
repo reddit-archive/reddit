@@ -21,7 +21,7 @@
 ###############################################################################
 
 <%!
-   from r2.lib.filters import safemarkdown, websafe, mako_websafe
+   from r2.lib.filters import safemarkdown, websafe, conditional_websafe
    from r2.lib.pages.things import MessageButtons
    from r2.lib.pages import WrappedUser
    from r2.lib.template_helpers import static, add_attr
@@ -74,7 +74,7 @@ ${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if
 
     substitutions['when'] = capture(thing_timestamp, thing, thing.timesince, include_tense=True)
 
-    taglinetext = mako_websafe(thing.taglinetext).replace(' ', '&#32;')
+    taglinetext = conditional_websafe(thing.taglinetext).replace(' ', '&#32;')
     taglinetext %= substitutions
   %>
 

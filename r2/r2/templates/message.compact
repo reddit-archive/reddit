@@ -21,8 +21,8 @@
 ###############################################################################
 
 <%!
-    from r2.lib.pages import WrappedUser 
-    from r2.lib.filters import safemarkdown, websafe, mako_websafe
+    from r2.lib.pages import WrappedUser
+    from r2.lib.filters import safemarkdown, websafe, conditional_websafe
     from r2.models import Account
 %>
 <%namespace file="printable.html" import="arrow, score"/>
@@ -70,7 +70,7 @@
 
     substitutions['when'] = thing.timesince
 
-    taglinetext = mako_websafe(thing.taglinetext).replace(' ', '&nbsp;')
+    taglinetext = conditional_websafe(thing.taglinetext).replace(' ', '&nbsp;')
     taglinetext %= substitutions
   %>
 

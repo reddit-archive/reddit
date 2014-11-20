@@ -121,7 +121,8 @@ def unsafe(text=''):
 def websafe_json(text=""):
     return c_websafe_json(_force_unicode(text))
 
-def mako_websafe(text = ''):
+
+def conditional_websafe(text = ''):
     if text.__class__ == _Unsafe:
         return text
     elif isinstance(text, Templated):
@@ -133,6 +134,12 @@ def mako_websafe(text = ''):
     elif text.__class__ != unicode:
         text = _force_unicode(text)
     return c_websafe(text)
+
+
+def mako_websafe(text=''):
+    """Wrapper for conditional_websafe so cached templates don't explode"""
+    return conditional_websafe(text)
+
 
 def websafe(text=''):
     if text.__class__ != unicode:

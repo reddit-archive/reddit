@@ -23,7 +23,7 @@
 <%!
    from pylons import g
 
-   from r2.lib.filters import mako_websafe
+   from r2.lib.filters import conditional_websafe
    from r2.lib.template_helpers import get_domain
    from r2.lib.template_helpers import make_url_protocol_relative
    from r2.lib.pages.things import LinkButtons
@@ -199,7 +199,7 @@ ${parent.thing_css_class(what)} ${"over18" if thing.over_18 else ""} ${thing.vis
 
 <%def name="tagline()">
   <%
-    taglinetext = mako_websafe(thing.taglinetext).replace(" ", "&#32;")
+    taglinetext = conditional_websafe(thing.taglinetext).replace(" ", "&#32;")
   %>
   ${unsafe(taglinetext % dict(reddit=self.subreddit(),
                               score=capture(self.score, thing, thing.likes, tag='span'),
