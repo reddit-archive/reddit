@@ -70,7 +70,6 @@ class TimingStatBuffer:
                 break
 
             total_time, count = v.real, v.imag
-            yield k, str(int(count)) + '|c'
             divisor = count or 1
             mean = total_time / divisor
             yield k, str(mean * 1000) + '|ms'
