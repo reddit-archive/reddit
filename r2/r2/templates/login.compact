@@ -25,5 +25,5 @@
 %if c.user_is_loggedin:
   <p class="error">${_("you are logged in. go use the site!")}</p>
 %else:
-  ${login_form(user = thing.user_login, dest = thing.dest)}
+  ${login_form(user=thing.user_login, dest=thing.dest, compact=True)}
 %endif

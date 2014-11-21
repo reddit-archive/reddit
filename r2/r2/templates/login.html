@@ -55,8 +55,8 @@
   %endif
 %endif
 
-<%def name="login_form(register=False, user='', dest='')">
-  %if feature.is_enabled('new_login_flow'):
+<%def name="login_form(register=False, user='', dest='', compact=False)">
+  %if feature.is_enabled('new_login_flow') and not compact:
     <%
       op = "reg" if register else "login"
       base = g.https_endpoint if not c.cname else ''
