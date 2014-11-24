@@ -1106,10 +1106,9 @@ class Comment(Thing, Printable):
             item.can_gild = (
                 # this is a way of checking if the user is logged in that works
                 # both within CommentPane instances and without.  e.g. CommentPane
-                # explicitly sets user_is_loggedin = False but can_reply is
-                # correct.  while on user overviews, you can't reply but will get
-                # the correct value for user_is_loggedin
-                (c.user_is_loggedin or getattr(item, "can_reply", True)) and
+                # explicitly sets user_is_loggedin = False but can_save will
+                # always be True if the user is logged in
+                item.can_save and
                 # you can't gild your own comment
                 not (c.user_is_loggedin and
                      item.author and
