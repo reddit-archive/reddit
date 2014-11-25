@@ -55,7 +55,7 @@
   %endif
 %endif
 
-<%def name="login_form(register=False, user='', dest='', compact=False)">
+<%def name="login_form(register=False, user='', dest='', compact=False, autofocus=True)">
   %if feature.is_enabled('new_login_flow') and not compact:
     <%
       op = "reg" if register else "login"
@@ -81,7 +81,7 @@
                     show_errors=register)">
         <label for="user_${op}" class="screenreader-only">${_('username')}:</label>
         <input value="${user}" name="user" id="user_${op}" class="c-form-control"
-               type="text" maxlength="20" tabindex="${tabindex}" autofocus
+               type="text" maxlength="20" tabindex="${tabindex}"
                %if register:
                 placeholder="${_('choose a username')}"
                 data-validate-url="/api/check_username.json"
@@ -89,6 +89,9 @@
                 autocomplete="off"
                %else:
                 placeholder="${_('username')}"
+                %if autofocus:
+                  autofocus
+                %endif
                %endif
                >
       </%call>
@@ -242,14 +245,15 @@
 
 <%def name="login_panel(lf, user_reg = '', user_login = '', dest='', registration_info=None)">
   %if feature.is_enabled('new_login_flow'):
+    <% autofocus = (not thing.is_popup) %>
     <div class="split-panel">
       <div class="split-panel-section split-panel-divider">
         <h3>${_("create a new account")}</h3>
-        ${lf(register=True, user=user_reg, dest=dest)}
+        ${lf(register=True, user=user_reg, dest=dest, autofocus=autofocus)}
       </div>
       <div class="split-panel-section">
         <h3>${_("sign in")}</h3>
-        ${lf(user = user_login, dest = dest)}
+        ${lf(user = user_login, dest = dest, autofocus=autofocus)}
       </div>
     </div>
     <p>
