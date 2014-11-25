@@ -1304,7 +1304,7 @@ class VPromoTarget(Validator):
             self.set_error(errors.INVALID_TARGET, field="targeting")
 
 
-MIN_PASSWORD_LENGTH = 3
+MIN_PASSWORD_LENGTH = 6
 
 class VPassword(Validator):
     def run(self, password):
