@@ -19,6 +19,42 @@
 # All portions of the code written by reddit are Copyright (c) 2006-2015 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
+"""A delayed execution system.
+
+The ``trylater`` module provides tools for performing an action at a set time
+in the future.  To use it, you must do two things.
+
+First, make a scheduling call::
+
+    from datetime import timedelta
+
+    from r2.models.trylater import TryLater
+
+    def make_breakfast(spam):
+        breakfast = cook(spam)
+        later = timedelta(minutes=45)
+        # The storage layer only likes strings.
+        data = json.dumps(breakfast)
+        TryLater.schedule('wash_dishes', data, later)
+
+Then, write the delayed code and decorate it with a hook, using the same
+identifier as you used when you scheduled it::
+
+    from r2.lib import hooks
+    trylater_hooks = hooks.HookRegistrar()
+
+    @trylater_hooks.on('trylater.wash_dishes')
+    def on_dish_washing(data):
+        # data is an ordered dictionary of timeuuid -> data pairs.
+        for datum in data.values():
+            meal = json.loads(datum)
+            for dish in meal.dishes:
+                dish.wash()
+
+Note: once you've scheduled a ``TryLater`` task, there's no stopping it!  If
+you might need to cancel your jobs later, use ``TryLaterBySubject``, which uses
+almost the exact same semantics, but has a useful ``unschedule`` method.
+"""
 
 import contextlib
 import datetime
@@ -68,6 +104,13 @@ class TryLater(tdb_cassandra.View):
 
     @classmethod
     def schedule(cls, system, data, delay=None):
+        """Schedule code for later execution.
+
+        system:  an string identifying the hook to be executed
+        data:    passed to the hook as an argument
+        delay:   (optional) a datetime.timedelta indicating the desired
+                 execution time
+        """
         if delay is None:
             delay = datetime.timedelta(minutes=60)
         key = datetime.datetime.now(g.tz) + delay
