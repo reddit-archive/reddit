@@ -72,11 +72,33 @@
   </div>
 
   %if thing.verify and not c.user.email_verified:
-     <input type="hidden" name="verify" value="1"/>
-     <input type="hidden" name="dest" value="${thing.dest}">
-     <button type="submit" class="btn">${_('send verification email')}</button>
+    <div class="spacer">
+      <div class="roundfield-actions">
+        <input type="hidden" name="verify" value="1"/>
+        <input type="hidden" name="dest" value="${thing.dest}">
+        <button type="submit" class="btn">${_('send verification email')}</button>
+        %if thing.subscribe:
+           <a id="subscribe"
+              href="http://reddit.us2.list-manage1.com/subscribe?u=8dd663d8559f5530305877239&amp;id=42fb5066f2&amp"
+              class="c-pull-right">
+             subscribe to our advertising newsletter
+           </a>
+         </div>
+         <script>
+           $('#subscribe').on('click', function(e) {
+             e.preventDefault();
+
+             var $subscribe = $(this);
+             var $email = $subscribe.parents('form').find('[name=email]');
+             var href = $subscribe.attr('href');
+
+             window.open(href + '&MERGE0=' + encodeURIComponent($email.val()), '_blank');
+           });
+         </script>
+        %endif
+      </div>
   %else:
-     <button type="submit" class="btn">${_('save')}</button>
+    <button type="submit" class="btn">${_('save')}</button>
   %endif
   <span class="status error"></span>
 </form>

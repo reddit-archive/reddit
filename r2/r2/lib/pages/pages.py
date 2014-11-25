@@ -146,6 +146,7 @@ import sys, random, datetime, calendar, simplejson, re, time
 import time
 from itertools import chain, product
 from urllib import quote, urlencode
+from urlparse import urlparse
 
 # the ip tracking code is currently deeply tied with spam prevention stuff
 # this will be open sourced as soon as it can be decoupled
@@ -1057,13 +1058,18 @@ class PrefFeeds(Templated):
 class PrefSecurity(Templated):
     pass
 
+
+re_promoted = re.compile(r"/promoted.*", re.I)
+
 class PrefUpdate(Templated):
     """Preference form for updating email address and passwords"""
-    def __init__(self, email=True, password=True, verify=False, dest=None):
+    def __init__(self, email=True, password=True, verify=False, dest=None, subscribe=False):
+        is_promoted = dest and re.match(re_promoted, urlparse(dest).path) != None
         self.email = email
         self.password = password
         self.verify = verify
         self.dest = dest
+        self.subscribe = subscribe or is_promoted
         Templated.__init__(self)
 
 class PrefApps(Templated):
