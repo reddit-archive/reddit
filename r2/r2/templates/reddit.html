@@ -164,10 +164,10 @@
               r.config.https_endpoint = 'https://' + BETA_HOST;
             }
           </script>
-          <div id="login-popup-v2" class="login-popup cover-overlay" style="display: none">
-            <div class="cover" onclick="return hidecover(this)"></div>
+          <div id="login-popup-v2" class="login-popup cover-overlay" tabindex="-1" style="display: none">
+            <div class="cover"></div>
             <div class="popup-v2">
-              <a href="#" onclick="return hidecover(this)" class="hidecover c-hide-text">
+              <a href="javascript: void 0;" class="hidecover c-hide-text">
                 ${_("close this window")}
               </a>
               <div class="clear"></div>
