@@ -190,6 +190,8 @@ def send_queued_mail(test = False):
                                       leave = False).render(style = "email")
             # handle unknown types here
             elif not email.body:
+                print ("Rejecting email with an empty body from %r and to %r"
+                       % (email.fr_addr, email.to_addr))
                 email.set_sent(rejected = True)
                 continue
             sendmail(email)
