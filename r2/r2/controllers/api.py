@@ -1417,14 +1417,15 @@ class ApiController(RedditController):
                 state=VBoolean('state'))
     @api_doc(api_section.links_and_comments)
     def POST_sendreplies(self, thing, state):
-        """Enable or disable inbox replies for a link.
+        """Enable or disable inbox replies for a link or comment.
 
         `state` is a boolean that indicates whether you are enabling or
         disabling inbox replies - true to enable, false to disable.
 
         """
-        if not isinstance(thing, Link):
+        if not isinstance(thing, (Link, Comment)):
             return
+
         thing.sendreplies = state
         thing._commit()
 

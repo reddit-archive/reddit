@@ -363,6 +363,18 @@
       %endif
     %endif
 
+    %if thing.is_author:
+      <li>
+        %if thing.thing.inbox_replies_enabled:
+          ${ynbutton(_("disable inbox replies"), _("inbox replies disabled"), "sendreplies",
+            hidden_data=dict(id=thing.thing._fullname, state=False))}
+        %else:
+          ${ynbutton(_("enable inbox replies"), _("inbox replies enabled"), "sendreplies",
+            hidden_data=dict(id=thing.thing._fullname, state=True))}
+        %endif
+      </li>
+    %endif
+
     ${self.banbuttons()}
     ${self.distinguish()}
     ${self.give_gold()}
