@@ -62,7 +62,7 @@ from r2.lib.errors import errors, ForbiddenError
 from listingcontroller import ListingController
 from oauth2 import require_oauth2_scope
 from api_docs import api_doc, api_section
-from pylons import c, request, response
+from pylons import c, request
 from r2.models.token import EmailVerificationToken
 from r2.controllers.ipn import generate_blob, validate_blob, GoldException
 
@@ -450,48 +450,20 @@ class FrontController(RedditController):
     @require_oauth2_scope("modconfig")
     @api_doc(api_section.moderation, uses_site=True)
     def GET_stylesheet(self):
-        """Get the subreddit's current stylesheet.
-
-        This will return either the content of or a redirect to the subreddit's
-        current stylesheet if one exists.
+        """Redirect to the subreddit's stylesheet if one exists.
 
         See also: [/api/subreddit_stylesheet](#POST_api_subreddit_stylesheet).
 
         """
-        if g.css_killswitch:
-            self.abort404()
-
-        # de-stale the subreddit object so we don't poison nginx's cache
+        # de-stale the subreddit object so we don't poison downstream caches
         if not isinstance(c.site, FakeSubreddit):
             c.site = Subreddit._byID(c.site._id, data=True, stale=False)
 
-        if c.site.stylesheet_url_http:
-            url = Reddit.get_subreddit_stylesheet_url(c.site)
-            if url:
-                return self.redirect(url)
-            else:
-                self.abort404()
-
-        if not c.secure:
-            stylesheet_contents = c.site.stylesheet_contents
+        url = Reddit.get_subreddit_stylesheet_url(c.site)
+        if url:
+            return self.redirect(url)
         else:
-            stylesheet_contents = c.site.stylesheet_contents_secure
-
-        if stylesheet_contents:
-            if c.site.stylesheet_modified:
-                self.abort_if_not_modified(
-                    c.site.stylesheet_modified,
-                    private=False,
-                    max_age=timedelta(days=7),
-                    must_revalidate=False,
-                )
-
-            response.content_type = 'text/css'
-            if c.site.type == 'private':
-                response.headers['X-Private-Subreddit'] = 'private'
-            return stylesheet_contents
-        else:
-            return self.abort404()
+            self.abort404()
 
     def _make_moderationlog(self, srs, num, after, reverse, count, mod=None, action=None):
         query = Subreddit.get_modactions(srs, mod=mod, action=action)
@@ -685,20 +657,14 @@ class FrontController(RedditController):
         elif (location == 'stylesheet'
               and c.site.can_change_stylesheet(c.user)
               and not g.css_killswitch):
-            if hasattr(c.site,'stylesheet_contents_user') and c.site.stylesheet_contents_user:
-                stylesheet_contents = c.site.stylesheet_contents_user
-            elif hasattr(c.site,'stylesheet_contents') and c.site.stylesheet_contents:
-                stylesheet_contents = c.site.stylesheet_contents
-            else:
-                stylesheet_contents = ''
+            stylesheet_contents = c.site.fetch_stylesheet_source()
             c.allow_styles = True
             pane = SubredditStylesheet(site=c.site,
                                        stylesheet_contents=stylesheet_contents)
         elif (location == 'stylesheet'
               and c.site.can_view(c.user)
               and not g.css_killswitch):
-            stylesheet = (c.site.stylesheet_contents_user or
-                          c.site.stylesheet_contents)
+            stylesheet = c.site.fetch_stylesheet_source()
             pane = SubredditStylesheetSource(stylesheet_contents=stylesheet)
         elif (location == 'traffic' and
               (c.site.public_traffic or

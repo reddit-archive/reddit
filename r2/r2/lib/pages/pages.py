@@ -358,13 +358,9 @@ class Reddit(Templated):
             if c.secure:
                 if sr.stylesheet_url_https:
                     return sr.stylesheet_url_https
-                elif sr.stylesheet_contents_secure:
-                    return sr.stylesheet_url
             else:
                 if sr.stylesheet_url_http:
                     return sr.stylesheet_url_http
-                elif sr.stylesheet_contents:
-                    return sr.stylesheet_url
 
     def wiki_actions_menu(self, moderator=False):
         buttons = []

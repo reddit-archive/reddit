@@ -25,7 +25,6 @@ from __future__ import with_statement
 import base64
 import collections
 import datetime
-import hashlib
 import itertools
 import json
 
@@ -113,7 +112,6 @@ class BaseSite(object):
     _defaults = dict(
         static_path=g.static_path,
         stylesheet=None,
-        stylesheet_hash='',
         header=None,
         header_title='',
     )
@@ -200,13 +198,6 @@ class BaseSite(object):
     def get_live_promos(self):
         raise NotImplementedError
 
-    @property
-    def stylesheet_url(self):
-        from r2.lib.template_helpers import get_domain
-        return "//%s/stylesheet.css?v=%s" % (get_domain(cname=False,
-                                                        subreddit=True),
-                                             self.stylesheet_hash)
-
 
 class SubredditExists(Exception): pass
 
@@ -216,9 +207,6 @@ class Subreddit(Thing, Printable, BaseSite):
     # attribute, even on a cname. So c.site.static_path should always be
     # the same as g.static_path.
     _defaults = dict(BaseSite._defaults,
-        stylesheet_contents='',
-        stylesheet_contents_secure='',
-        stylesheet_modified=None,
         stylesheet_url_http="",
         stylesheet_url_https="",
         header_size=None,
@@ -434,12 +422,11 @@ class Subreddit(Thing, Printable, BaseSite):
             (r._thing2_id, r.get_permissions())
             for r in self.each_moderator_invite())
 
-    @property
-    def stylesheet_contents_user(self):
+    def fetch_stylesheet_source(self):
         try:
             return WikiPage.get(self, 'config/stylesheet')._get('content','')
         except tdb_cassandra.NotFound:
-           return  self._t.get('stylesheet_contents_user')
+            return ""
 
     @property
     def prev_stylesheet(self):
@@ -620,29 +607,12 @@ class Subreddit(Thing, Printable, BaseSite):
 
         minified_http, minified_https = parsed
         if minified_http or minified_https:
-            if g.subreddit_stylesheets_static:
-                self.stylesheet_url_http = upload_stylesheet(minified_http)
-                self.stylesheet_url_https = g.media_provider.convert_to_https(
-                                             upload_stylesheet(minified_https))
-                self.stylesheet_hash = ""
-                self.stylesheet_contents = ""
-                self.stylesheet_contents_secure = ""
-                self.stylesheet_modified = None
-            else:
-                self.stylesheet_url_http = ""
-                self.stylesheet_url_https = ""
-                self.stylesheet_hash = hashlib.md5(minified_https).hexdigest()
-                self.stylesheet_contents = minified_http
-                self.stylesheet_contents_secure = minified_https
-                self.stylesheet_modified = datetime.datetime.now(g.tz)
+            self.stylesheet_url_http = upload_stylesheet(minified_http)
+            self.stylesheet_url_https = g.media_provider.convert_to_https(
+                upload_stylesheet(minified_https))
         else:
             self.stylesheet_url_http = ""
             self.stylesheet_url_https = ""
-            self.stylesheet_contents = ""
-            self.stylesheet_contents_secure = ""
-            self.stylesheet_hash = ""
-            self.stylesheet_modified = datetime.datetime.now(g.tz)
-        self.stylesheet_contents_user = ""  # reads from wiki; ensure pg clean
         self._commit()
 
         ModAction.create(self, c.user, action='wikirevise', details='Updated subreddit stylesheet')
@@ -1355,24 +1325,12 @@ class DefaultSR(_DefaultSR):
         return (self._base and self._base.header_size) or None
 
     @property
-    def stylesheet_contents(self):
-        return self._base.stylesheet_contents if self._base else ""
-
-    @property
-    def stylesheet_contents_secure(self):
-        return self._base.stylesheet_contents_secure if self._base else ""
-
-    @property
     def stylesheet_url_http(self):
         return self._base.stylesheet_url_http if self._base else ""
 
     @property
     def stylesheet_url_https(self):
         return self._base.stylesheet_url_https if self._base else ""
-
-    @property
-    def stylesheet_hash(self):
-        return self._base.stylesheet_hash if self._base else ""
 
     def get_all_comments(self):
         from r2.lib.db.queries import get_sr_comments, merge_results
