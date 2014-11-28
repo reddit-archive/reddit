@@ -35,7 +35,12 @@ try:
     # get caught and the stack trace won't be presented to the user in
     # production
     from r2.config import extensions
-    from r2.controllers.reddit_base import RedditController, Cookies
+    from r2.controllers.reddit_base import (
+        RedditController,
+        Cookies,
+        pagecache_policy,
+        PAGECACHE_POLICY,
+    )
     from r2.lib.errors import ErrorSet
     from r2.lib.filters import websafe_json, websafe, safemarkdown
     from r2.lib import log, pages
@@ -167,6 +172,9 @@ class ErrorController(RedditController):
             response.headers["Retry-After"] = str(retry_after)
         return request.environ['usable_error_content']
 
+    # Misses are both incredibly common and cheap for this endpoint, don't force
+    # more useful things out of the pagecache.
+    @pagecache_policy(PAGECACHE_POLICY.NEVER)
     def GET_document(self):
         try:
             c.errors = c.errors or ErrorSet()
