@@ -70,7 +70,12 @@ class BaseController(WSGIController):
 
     def __before__(self):
         self.pre()
-        self.try_pagecache()
+        # This guards against checking the pagecache twice and possibly
+        # modifying the request key when being redirected from one endpoint
+        # to the other in-request (i.e. when redirected to the error document)
+        if not c.tried_pagecache:
+            c.tried_pagecache = True
+            self.try_pagecache()
 
     def __after__(self):
         self.post()
