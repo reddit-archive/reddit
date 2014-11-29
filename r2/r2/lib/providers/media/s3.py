@@ -94,17 +94,3 @@ class S3MediaProvider(MediaProvider):
             return "http://%s/%s/%s" % (g.s3_media_domain, bucket_name, name)
         else:
             return "http://%s/%s" % (bucket_name, name)
-
-    def convert_to_https(self, http_url):
-        """Convert an HTTP URL on S3 to an HTTPS URL.
-
-        This currently assumes that no HTTPS-configured CDN is present, so
-        HTTPS URLs must be direct-S3 URLs so that we can use Amazon's certs.
-
-        """
-        if http_url.startswith("http://%s" % g.s3_media_domain):
-            # it's already a direct url, just change scheme
-            return http_url.replace("http://", "https://")
-        else:
-            # an indirect url, put the s3 domain in there too
-            return http_url.replace("http://", "https://%s/" % g.s3_media_domain)

@@ -38,16 +38,15 @@ class FileSystemMediaProvider(MediaProvider):
     `media_fs_root` is the root directory on the filesystem to write the objects
     into.
 
-    `media_fs_base_url_http` and `media_fs_base_url_https` are the base URLs on
-    which to find the media objects. They should be an absolute URL to the root
-    directory of the media object server.
+    `media_fs_base_url_http` is the base URL on which to find the media
+    objects. It should be an absolute URL to the root directory of the media
+    object server that is accessible via both HTTP and HTTPS.
 
     """
     config = {
         ConfigValue.str: [
             "media_fs_root",
             "media_fs_base_url_http",
-            "media_fs_base_url_https",
         ],
     }
 
@@ -57,8 +56,3 @@ class FileSystemMediaProvider(MediaProvider):
         with open(path, "w") as f:
             f.write(contents)
         return urlparse.urljoin(g.media_fs_base_url_http, name)
-
-    def convert_to_https(self, http_url):
-        # http://whatever.com/whatever/filename.jpg -> filename.jpg
-        name = http_url[http_url.rfind("/") + 1:]
-        return urlparse.urljoin(g.media_fs_base_url_https, name)

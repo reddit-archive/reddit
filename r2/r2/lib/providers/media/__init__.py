@@ -35,11 +35,8 @@ class MediaProvider(object):
 
         `contents` is a byte string of the contents of the file.
 
-        The return value should be an absolute URL with the `http` scheme.
+        The return value should be an absolute URL with the `http` scheme but
+        should also work if accessed with `https`.
 
         """
-        raise NotImplementedError
-
-    def convert_to_https(self, http_url):
-        """Return an HTTPS url for a given HTTP media URL."""
         raise NotImplementedError

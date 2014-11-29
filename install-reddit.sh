@@ -319,7 +319,6 @@ plugins = $plugin_str
 media_provider = filesystem
 media_fs_root = /srv/www/media
 media_fs_base_url_http = http://%(domain)s/media/
-media_fs_base_url_https = https://%(domain)s/media/
 
 [server:main]
 port = 8001

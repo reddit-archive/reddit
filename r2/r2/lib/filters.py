@@ -270,7 +270,7 @@ def safemarkdown(text, nofollow=False, wrap=True, **kwargs):
         return SC_OFF + text + SC_ON
 
 def wikimarkdown(text, include_toc=True, target=None):
-    from r2.lib.template_helpers import media_https_if_secure
+    from r2.lib.template_helpers import make_url_protocol_relative
 
     # this hard codes the stylesheet page for now, but should be parameterized
     # in the future to allow per-page images.
@@ -285,7 +285,7 @@ def wikimarkdown(text, include_toc=True, target=None):
         name = name and name.group(1)
         if name and name in page_images:
             url = page_images[name]
-            url = media_https_if_secure(url)
+            url = make_url_protocol_relative(url)
             tag['src'] = url
         else:
             tag.extract()

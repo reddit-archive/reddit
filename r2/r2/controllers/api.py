@@ -95,7 +95,7 @@ from r2.lib.media import str_to_image
 from r2.controllers.api_docs import api_doc, api_section
 from r2.lib.search import SearchQuery
 from r2.controllers.oauth2 import require_oauth2_scope, allow_oauth2_access
-from r2.lib.template_helpers import add_sr, get_domain
+from r2.lib.template_helpers import add_sr, get_domain, make_url_protocol_relative
 from r2.lib.system_messages import notify_user_added
 from r2.controllers.ipn import generate_blob
 from r2.lib.lock import TimeoutExpired
@@ -4098,7 +4098,7 @@ class ApiController(RedditController):
                 client._commit()
                 form.set_text('.status', 'uploaded')
                 jquery('#developed-app-%s .app-icon img'
-                       % client._id).attr('src', g.media_provider.convert_to_https(client.icon_url))
+                       % client._id).attr('src', make_url_protocol_relative(client.icon_url))
                 jquery('#developed-app-%s .ajax-upload-form'
                        % client._id).hide()
                 jquery('#developed-app-%s .edit-app-icon-button'

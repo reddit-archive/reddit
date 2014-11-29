@@ -568,6 +568,8 @@ class Subreddit(Thing, Printable, BaseSite):
     
     def parse_css(self, content, verify=True):
         from r2.lib import cssfilter
+        from r2.lib.template_helpers import make_url_protocol_relative
+
         if g.css_killswitch or (verify and not self.can_change_stylesheet(c.user)):
             return (None, None)
 
@@ -582,7 +584,7 @@ class Subreddit(Thing, Printable, BaseSite):
         )
 
         # parse and resolve images with https-safe urls
-        https_images = {name: g.media_provider.convert_to_https(url)
+        https_images = {name: make_url_protocol_relative(url)
                         for name, url in http_images.iteritems()}
         parsed_https, errors_https = cssfilter.validate_css(
             content,
@@ -595,6 +597,7 @@ class Subreddit(Thing, Printable, BaseSite):
     def change_css(self, content, parsed, prev=None, reason=None, author=None, force=False):
         from r2.models import ModAction
         from r2.lib.media import upload_stylesheet
+        from r2.lib.template_helpers import make_url_protocol_relative
 
         author = author if author else c.user._id36
         if content is None:
@@ -608,7 +611,7 @@ class Subreddit(Thing, Printable, BaseSite):
         minified_http, minified_https = parsed
         if minified_http or minified_https:
             self.stylesheet_url_http = upload_stylesheet(minified_http)
-            self.stylesheet_url_https = g.media_provider.convert_to_https(
+            self.stylesheet_url_https = make_url_protocol_relative(
                 upload_stylesheet(minified_https))
         else:
             self.stylesheet_url_http = ""
