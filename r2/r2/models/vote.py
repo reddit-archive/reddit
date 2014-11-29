@@ -32,10 +32,17 @@ from r2.lib.utils import SimpleSillyStub, Storage
 from account import Account
 from link import Link, Comment
 
+import pytz
+
+from pycassa.types import CompositeType, AsciiType
 from pylons import g
 from datetime import datetime, timedelta
 
 __all__ = ['Vote', 'score_changes']
+
+
+VOTE_TIMEZONE = pytz.timezone("America/Los_Angeles")
+
 
 def score_changes(amount, old_amount):
     uc = dc = 0
@@ -166,6 +173,50 @@ class VoteDetailsByComment(VoteDetailsByThing):
     def votee_fullname(self):
         id36 = self._id
         return Comment._fullname_from_id36(id36)
+
+
+class VoteDetailsByDay(tdb_cassandra.View):
+    _use_db = False
+    _fetch_all_columns = True
+    _write_consistency_level = tdb_cassandra.CL.ONE
+    _compare_with = CompositeType(AsciiType(), AsciiType())
+    _extra_schema_creation_args = {
+        "key_validation_class": ASCII_TYPE,
+        "default_validation_class": UTF8_TYPE,
+    }
+
+    @classmethod
+    def _rowkey(cls, date):
+        return date.strftime("%Y-%m-%d")
+
+    @classmethod
+    def create(cls, thing1, thing2s, pgvote, vote_info):
+        assert len(thing2s) == 1
+
+        voter = pgvote._thing1
+        votee = pgvote._thing2
+
+        rowkey = cls._rowkey(pgvote._date.astimezone(VOTE_TIMEZONE).date())
+        colname = (voter._id36, votee._id36)
+        details = {
+            "direction": pgvote._name,
+            "date": epoch_seconds(pgvote._date),
+        }
+        cls._set_values(rowkey, {colname: json.dumps(details)})
+
+    @classmethod
+    def count_votes(cls, date):
+        return cls._cf.get_count(cls._rowkey(date))
+
+
+@tdb_cassandra.view_of(LinkVotesByAccount)
+class LinkVoteDetailsByDay(VoteDetailsByDay):
+    _use_db = True
+
+
+@tdb_cassandra.view_of(CommentVotesByAccount)
+class CommentVoteDetailsByDay(VoteDetailsByDay):
+    _use_db = True
 
 
 class VoterIPByThing(tdb_cassandra.View):
