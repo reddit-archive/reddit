@@ -110,6 +110,14 @@ def make_url_protocol_relative(url):
     return urlparse.urlunsplit((None, netloc, path, query, fragment))
 
 
+def make_url_https(url):
+    if not url or url.startswith("https://"):
+        return url
+
+    scheme, netloc, path, query, fragment = urlparse.urlsplit(url)
+    return urlparse.urlunsplit(("https", netloc, path, query, fragment))
+
+
 def header_url(url):
     if url == g.default_header_url:
         return static(url)

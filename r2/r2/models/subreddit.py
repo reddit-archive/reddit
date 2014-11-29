@@ -207,6 +207,7 @@ class Subreddit(Thing, Printable, BaseSite):
     # attribute, even on a cname. So c.site.static_path should always be
     # the same as g.static_path.
     _defaults = dict(BaseSite._defaults,
+        stylesheet_url="",
         stylesheet_url_http="",
         stylesheet_url_https="",
         header_size=None,
@@ -574,30 +575,23 @@ class Subreddit(Thing, Printable, BaseSite):
             return (None, None)
 
         if not content:
-            return ([], ("", ""))
+            return ([], "")
 
         # parse in regular old http mode
-        http_images = ImagesByWikiPage.get_images(self, "config/stylesheet")
-        parsed_http, errors_http = cssfilter.validate_css(
+        images = ImagesByWikiPage.get_images(self, "config/stylesheet")
+        protocol_relative_images = {
+            name: make_url_protocol_relative(url)
+            for name, url in images.iteritems()}
+        parsed, errors = cssfilter.validate_css(
             content,
-            http_images,
+            protocol_relative_images,
         )
 
-        # parse and resolve images with https-safe urls
-        https_images = {name: make_url_protocol_relative(url)
-                        for name, url in http_images.iteritems()}
-        parsed_https, errors_https = cssfilter.validate_css(
-            content,
-            https_images,
-        )
-
-        # the two reports should be identical so we'll just return the http one
-        return (errors_http, (parsed_http, parsed_https))
+        return (errors, parsed)
 
     def change_css(self, content, parsed, prev=None, reason=None, author=None, force=False):
         from r2.models import ModAction
         from r2.lib.media import upload_stylesheet
-        from r2.lib.template_helpers import make_url_protocol_relative
 
         author = author if author else c.user._id36
         if content is None:
@@ -608,12 +602,12 @@ class Subreddit(Thing, Printable, BaseSite):
             wiki = WikiPage.create(self, 'config/stylesheet')
         wr = wiki.revise(content, previous=prev, author=author, reason=reason, force=force)
 
-        minified_http, minified_https = parsed
-        if minified_http or minified_https:
-            self.stylesheet_url_http = upload_stylesheet(minified_http)
-            self.stylesheet_url_https = make_url_protocol_relative(
-                upload_stylesheet(minified_https))
+        if parsed:
+            self.stylesheet_url = upload_stylesheet(parsed)
+            self.stylesheet_url_http = ""
+            self.stylesheet_url_https = ""
         else:
+            self.stylesheet_url = ""
             self.stylesheet_url_http = ""
             self.stylesheet_url_https = ""
         self._commit()
@@ -1326,6 +1320,10 @@ class DefaultSR(_DefaultSR):
     @property
     def header_size(self):
         return (self._base and self._base.header_size) or None
+
+    @property
+    def stylesheet_url(self):
+        return self._base.stylesheet_url if self._base else ""
 
     @property
     def stylesheet_url_http(self):

@@ -123,6 +123,7 @@ from r2.lib.template_helpers import (
     comment_label,
     format_number,
     get_domain,
+    make_url_https,
     make_url_protocol_relative,
     static,
 )
@@ -356,10 +357,14 @@ class Reddit(Templated):
     def get_subreddit_stylesheet_url(sr):
         if not g.css_killswitch and c.can_apply_styles and c.allow_styles:
             if c.secure:
-                if sr.stylesheet_url_https:
+                if sr.stylesheet_url:
+                    return make_url_https(sr.stylesheet_url)
+                elif sr.stylesheet_url_https:
                     return sr.stylesheet_url_https
             else:
-                if sr.stylesheet_url_http:
+                if sr.stylesheet_url:
+                    return sr.stylesheet_url
+                elif sr.stylesheet_url_http:
                     return sr.stylesheet_url_http
 
     def wiki_actions_menu(self, moderator=False):
