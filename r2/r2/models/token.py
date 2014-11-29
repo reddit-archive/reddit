@@ -751,4 +751,5 @@ class AwardClaimToken(ConsumableToken):
 
     def confirm_url(self):
         # Full URL; for emailing, PM'ing, etc.
-        return "http://%s/awards/confirm/%s" % (g.domain, self._id)
+        base = g.https_endpoint or g.origin
+        return "%s/awards/confirm/%s" % (base, self._id)

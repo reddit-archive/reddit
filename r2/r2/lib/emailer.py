@@ -60,7 +60,8 @@ def verify_email(user, dest=None):
     Award.take_away("verified_email", user)
 
     token = EmailVerificationToken._new(user)
-    emaillink = 'http://' + g.domain + '/verification/' + token._id
+    base = g.https_endpoint or g.origin
+    emaillink = base + '/verification/' + token._id
     if dest:
         emaillink += '?dest=%s' % dest
     g.log.debug("Generated email verification link: " + emaillink)
