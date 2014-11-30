@@ -1037,6 +1037,7 @@ class MinimalController(BaseController):
             if g.ENFORCE_RATELIMIT:
                 # For non-abort situations, the headers will be added in post(),
                 # to avoid including them in a pagecache
+                request.environ['retry_after'] = retry_after
                 response.headers.update(c.ratelimit_headers)
                 abort(429)
         elif reqs_remaining < (0.1 * max_reqs):

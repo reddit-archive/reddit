@@ -156,7 +156,10 @@ class ErrorController(RedditController):
             template_name = '/ratelimit_throttled.html'
 
         template = g.mako_lookup.get_template(template_name)
-        return template.render(logo_url=static(g.default_header_url))
+        return template.render(
+            logo_url=static(g.default_header_url),
+            retry_after=retry_after,
+        )
 
     def send503(self):
         retry_after = request.environ.get("retry_after")
