@@ -224,37 +224,6 @@ def pushup_permacache(verbosity=1000):
         populate(keys)
 
 
-def port_cassavotes():
-    from r2.models import Vote, Account, Link, Comment
-    from r2.models.vote import CassandraVote, CassandraLinkVote, CassandraCommentVote
-    from r2.lib.db.tdb_cassandra import CL
-    from r2.lib.utils import fetch_things2, to36, progress
-
-    ts = [(Vote.rel(Account, Link), CassandraLinkVote),
-          (Vote.rel(Account, Comment), CassandraCommentVote)]
-
-    dataattrs = set(['valid_user', 'valid_thing', 'ip', 'organic'])
-
-    for prel, crel in ts:
-        vq = prel._query(sort=desc('_date'),
-                         data=True,
-                         eager_load=False)
-        vq = fetch_things2(vq)
-        vq = progress(vq, persec=True)
-        for v in vq:
-            t1 = to36(v._thing1_id)
-            t2 = to36(v._thing2_id)
-            cv = crel(thing1_id = t1,
-                      thing2_id = t2,
-                      date=v._date,
-                      name=v._name)
-            for dkey, dval in v._t.iteritems():
-                if dkey in dataattrs:
-                    setattr(cv, dkey, dval)
-
-            cv._commit(write_consistency_level=CL.ONE)
-
-
 def port_cassaurls(after_id=None, estimate=15231317):
     from r2.models import Link, LinksByUrl
     from r2.lib.db import tdb_cassandra

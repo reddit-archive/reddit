@@ -27,7 +27,7 @@ from r2.lib.db.thing import MultiRelation, Relation
 from r2.lib.db import tdb_cassandra
 from r2.lib.db.tdb_cassandra import TdbException, ASCII_TYPE, UTF8_TYPE
 from r2.lib.db.sorts import epoch_seconds
-from r2.lib.utils import SimpleSillyStub, Storage
+from r2.lib.utils import Storage
 
 from account import Account
 from link import Link, Comment
@@ -36,24 +36,12 @@ import pytz
 
 from pycassa.types import CompositeType, AsciiType
 from pylons import g
-from datetime import datetime, timedelta
+from datetime import timedelta
 
-__all__ = ['Vote', 'score_changes']
+__all__ = ['cast_vote', 'get_votes']
 
 
 VOTE_TIMEZONE = pytz.timezone("America/Los_Angeles")
-
-
-def score_changes(amount, old_amount):
-    uc = dc = 0
-    a, oa = amount, old_amount
-    if oa == 0 and a > 0: uc = a
-    elif oa == 0 and a < 0: dc = -a
-    elif oa > 0 and a == 0: uc = -oa
-    elif oa < 0 and a == 0: dc = oa
-    elif oa > 0 and a < 0: uc = -oa; dc = -a
-    elif oa < 0 and a > 0: dc = oa; uc = a
-    return uc, dc
 
 
 class VotesByAccount(tdb_cassandra.DenormalizedRelation):
@@ -234,124 +222,145 @@ class VoterIPByThing(tdb_cassandra.View):
 class Vote(MultiRelation('vote',
                          Relation(Account, Link),
                          Relation(Account, Comment))):
-    @classmethod
-    def vote(cls, sub, obj, dir, ip, vote_info = None, cheater = False,
-             timer=None, date=None):
-        from admintools import valid_user, valid_thing, update_score
-        from r2.lib.count import incr_sr_count
-        from r2.lib.db import queries
+    pass
 
-        if timer is None:
-            timer = SimpleSillyStub()
 
-        sr = obj.subreddit_slow
-        kind = obj.__class__.__name__.lower()
-        karma = sub.karma(kind, sr)
+def cast_vote(sub, obj, dir, ip, vote_info, cheater, timer, date):
+    from r2.models.admintools import valid_user, valid_thing, update_score
+    from r2.lib.count import incr_sr_count
+    from r2.lib.db import queries
 
-        is_self_link = (kind == 'link'
-                        and getattr(obj,'is_self',False))
+    names_by_dir = {True: "1", None: "0", False: "-1"}
 
-        #check for old vote
-        rel = cls.rel(sub, obj)
-        oldvote = rel._fast_query(sub, obj, ['-1', '0', '1']).values()
-        oldvote = filter(None, oldvote)
+    # `vote` mimics the old pg vote rel interface so downstream code doesn't
+    # need to change. (but it totally needn't stay that way forever!)
+    vote = Storage(
+        _thing1=sub,
+        _thing2=obj,
+        _name=names_by_dir[dir],
+        _date=date,
+        valid_thing=True,
+        valid_user=True,
+        ip=ip,
+    )
 
-        timer.intermediate("pg_read_vote")
+    # these track how much ups/downs should change on `obj`
+    ups_delta = 1 if int(vote._name) > 0 else 0
+    downs_delta = 1 if int(vote._name) < 0 else 0
 
-        amount = 1 if dir is True else 0 if dir is None else -1
+    # see if the user has voted on this thing before
+    pgrel = Vote.rel(sub, obj)
+    pgoldvote = pgrel._fast_query(sub, obj, ["-1", "0", "1"]).values()
+    try:
+        pgoldvote = filter(None, pgoldvote)[0]
+    except IndexError:
+        pgoldvote = None
+    timer.intermediate("pg_read_vote")
 
-        is_new = False
-        #old vote
-        if len(oldvote):
-            v = oldvote[0]
-            oldamount = int(v._name)
-            if amount == oldamount:
-                return v
+    if pgoldvote:
+        # old_vote is mimicking `{Link,Comment}VoteDetailsByThing` here because
+        # that will eventually be exactly what it is
+        old_vote = {
+            "direction": pgoldvote._name,
+            "valid_thing": pgoldvote.valid_thing,
+            "valid_user": pgoldvote.valid_user,
+            "ip": getattr(pgoldvote, "ip", None),
+        }
+        vote.valid_thing = old_vote["valid_thing"]
+        vote.valid_user = old_vote["valid_user"]
 
-            v._name = str(amount)
+        if vote._name == old_vote["direction"]:
+            # the old vote and new vote are the same. bail out.
+            return vote
 
-            #these still need to be recalculated
-            old_valid_thing = getattr(v, 'valid_thing', False)
-            v.valid_thing = (old_valid_thing and
-                             valid_thing(
-                                v, karma, cheater=cheater, vote_info=vote_info)
-                            )
-            v.valid_user = (getattr(v, 'valid_user', False)
-                            and v.valid_thing
-                            and valid_user(v, sr, karma))
-        #new vote
-        else:
-            is_new = True
-            oldamount = 0
-            v = rel(sub, obj, str(amount), date=date)
-            v.ip = ip
-            v.valid_thing = valid_thing(
-                                v, karma, cheater=cheater, vote_info=vote_info)
-            old_valid_thing = v.valid_thing
-            v.valid_user = (v.valid_thing and valid_user(v, sr, karma)
-                            and not is_self_link)
+        # remove the old vote from the score
+        old_direction = int(old_vote["direction"])
+        ups_delta -= 1 if old_direction > 0 else 0
+        downs_delta -= 1 if old_direction < 0 else 0
+    else:
+        old_vote = None
 
-        v._commit()
+    # calculate valid_thing and valid_user
+    sr = obj.subreddit_slow
+    kind = obj.__class__.__name__.lower()
+    karma = sub.karma(kind, sr)
 
-        timer.intermediate("pg_write_vote")
+    if vote.valid_thing:
+        vote.valid_thing = valid_thing(vote, karma, cheater, vote_info)
 
-        g.stats.simple_event("vote.valid_thing." + str(v.valid_thing).lower())
-        g.stats.simple_event("vote.valid_user." + str(v.valid_user).lower())
+    if vote.valid_user:
+        vote.valid_user = vote.valid_thing and valid_user(vote, sr, karma)
 
-        up_change, down_change = score_changes(amount, oldamount)
+    if kind == "link" and getattr(obj, "is_self", False):
+        # self-posts do not generate karma
+        vote.valid_user = False
 
-        if not (is_new and obj.author_id == sub._id and amount == 1):
-            # we don't do this if it's the author's initial automatic
-            # vote, because we checked it in with _ups == 1
-            update_score(obj, up_change, down_change,
-                         v, old_valid_thing)
-            timer.intermediate("pg_update_score")
+    g.stats.simple_event("vote.valid_thing." + str(vote.valid_thing).lower())
+    g.stats.simple_event("vote.valid_user." + str(vote.valid_user).lower())
 
-        if v.valid_user:
-            author = Account._byID(obj.author_id, data=True)
-            author.incr_karma(kind, sr, up_change - down_change)
-            timer.intermediate("pg_incr_karma")
+    # write out the new/modified vote to postgres
+    if pgoldvote:
+        pgvote = pgoldvote
+        pgvote._name = vote._name
+    else:
+        pgvote = pgrel(sub, obj, vote._name, date=vote._date, ip=ip)
+    pgvote.valid_thing = vote.valid_thing
+    pgvote.valid_user = vote.valid_user
+    pgvote._commit()
+    timer.intermediate("pg_write_vote")
 
-        #update the sr's valid vote count
-        if is_new and v.valid_thing and kind == 'link':
-            if sub._id != obj.author_id:
-                incr_sr_count(sr)
+    # update various score/karma/vote counts
+    if not (not old_vote and obj.author_id == sub._id and vote._name == "1"):
+        # newly created objects start out with _ups = 1, so we skip updating
+        # their score here if this is the author's own initial vote on it.
+        old_valid_thing = old_vote["valid_thing"] if old_vote else True
+        update_score(obj, ups_delta, downs_delta, vote, old_valid_thing)
+        timer.intermediate("pg_update_score")
+
+    if vote.valid_user:
+        author = Account._byID(obj.author_id, data=True)
+        author.incr_karma(kind, sr, ups_delta - downs_delta)
+        timer.intermediate("pg_incr_karma")
+
+    if not old_vote and vote.valid_thing and kind == "link":
+        if sub._id != obj.author_id:
+            incr_sr_count(sr)
             timer.intermediate("incr_sr_counts")
 
-        # now write it out to Cassandra. We'll write it out to both
-        # this way for a while
-        VotesByAccount.copy_from(v, vote_info)
-        timer.intermediate("cassavotes")
+    # write the vote to cassandra
+    VotesByAccount.copy_from(vote, vote_info)
+    timer.intermediate("cassavotes")
 
-        queries.changed(v._thing2, True)
-        timer.intermediate("changed")
+    # update the search index
+    queries.changed(vote._thing2, boost_only=True)
+    timer.intermediate("changed")
 
-        return v
+    return vote
 
-    @classmethod
-    def likes(cls, sub, objs):
-        if not sub or not objs:
-            return {}
 
-        from r2.models import Account
-        assert isinstance(sub, Account)
+def get_votes(sub, objs):
+    if not sub or not objs:
+        return {}
 
-        rels = {}
-        for obj in objs:
-            try:
-                types = VotesByAccount.rel(sub.__class__, obj.__class__)
-            except TdbException:
-                # for types for which we don't have a vote rel, we'll
-                # skip them
-                continue
+    from r2.models import Account
+    assert isinstance(sub, Account)
 
-            rels.setdefault(types, []).append(obj)
+    rels = {}
+    for obj in objs:
+        try:
+            types = VotesByAccount.rel(sub.__class__, obj.__class__)
+        except TdbException:
+            # for types for which we don't have a vote rel, we'll
+            # skip them
+            continue
 
-        dirs_by_name = {"1": True, "0": None, "-1": False}
+        rels.setdefault(types, []).append(obj)
 
-        ret = {}
-        for relcls, items in rels.iteritems():
-            votes = relcls.fast_query(sub, items)
-            for cross, name in votes.iteritems():
-                ret[cross] = dirs_by_name[name]
-        return ret
+    dirs_by_name = {"1": True, "0": None, "-1": False}
+
+    ret = {}
+    for relcls, items in rels.iteritems():
+        votes = relcls.fast_query(sub, items)
+        for cross, name in votes.iteritems():
+            ret[cross] = dirs_by_name[name]
+    return ret

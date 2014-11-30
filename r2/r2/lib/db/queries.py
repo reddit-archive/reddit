@@ -20,7 +20,8 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from r2.models import Account, Link, Comment, Vote, Report
+from r2.models import Account, Link, Comment, Report
+from r2.models.vote import cast_vote, get_votes
 from r2.models import Message, Inbox, Subreddit, ModContribSR, ModeratorInbox, MultiReddit
 from r2.lib.db.thing import Thing, Merge
 from r2.lib.db.operators import asc, desc, timeago
@@ -544,18 +545,16 @@ def rel_query(rel, thing_id, name, filters = []):
 
     return q
 
-vote_rel = Vote.rel(Account, Link)
-
 cached_userrel_query = cached_query(UserQueryCache, filter_thing2)
 cached_srrel_query = cached_query(SubredditQueryCache, filter_thing2)
 
 @cached_userrel_query
 def get_liked(user):
-    return rel_query(vote_rel, user, '1')
+    return FakeQuery(sort=[desc("_date")])
 
 @cached_userrel_query
 def get_disliked(user):
-    return rel_query(vote_rel, user, '-1')
+    return FakeQuery(sort=[desc("_date")])
 
 @cached_query(UserQueryCache)
 def get_hidden_links(user_id):
@@ -1697,7 +1696,7 @@ def get_likes(user, items):
                               else False if v == '-1'
                               else None)
 
-    likes = Vote.likes(user, [i for i in items if (user, i) not in res])
+    likes = get_votes(user, [i for i in items if (user, i) not in res])
 
     res.update(likes)
 
@@ -1711,7 +1710,7 @@ def handle_vote(user, thing, dir, ip, vote_info,
     from r2.lib.db import tdb_sql
     from sqlalchemy.exc import IntegrityError
     try:
-        v = Vote.vote(user, thing, dir, ip, vote_info=vote_info,
+        v = cast_vote(user, thing, dir, ip, vote_info=vote_info,
                       cheater=cheater, timer=timer, date=date)
     except (tdb_sql.CreationError, IntegrityError):
         g.log.error("duplicate vote for: %s" % str((user, thing, dir)))

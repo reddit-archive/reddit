@@ -26,7 +26,6 @@ from r2.lib.db.thing import Thing, Relation, MultiRelation, thing_prefix
 from r2.lib.utils import tup
 from r2.lib.memoize import memoize
 from r2.models import Link, Comment, Message, Subreddit, Account
-from r2.models.vote import score_changes
 from datetime import datetime
 
 from pylons import g, c
