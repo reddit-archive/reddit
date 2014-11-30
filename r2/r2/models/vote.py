@@ -36,7 +36,7 @@ import pytz
 
 from pycassa.types import CompositeType, AsciiType
 from pylons import g
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 __all__ = ['cast_vote', 'get_votes']
 
@@ -111,7 +111,7 @@ class VoteDetailsByThing(tdb_cassandra.View):
             VoterIPByThing.create(votee._fullname, voter._id36, ip)
 
     @classmethod
-    def get_details(cls, thing):
+    def get_details(cls, thing, voters=None):
         if isinstance(thing, Link):
             details_cls = VoteDetailsByLink
         elif isinstance(thing, Comment):
@@ -119,25 +119,33 @@ class VoteDetailsByThing(tdb_cassandra.View):
         else:
             raise ValueError
 
+        voter_id36s = None
+        if voters:
+            voter_id36s = [voter._id36 for voter in voters]
+
         try:
-            raw_details = details_cls._byID(thing._id36)
-            return raw_details.decode_details()
+            raw_details = details_cls._byID(thing._id36, properties=voter_id36s)
         except tdb_cassandra.NotFound:
             return []
 
-    def decode_details(self):
-        raw_details = self._values()
-        details = []
         try:
-            ips = VoterIPByThing._byID(self.votee_fullname)
+            ips = VoterIPByThing._byID(thing._fullname, properties=voter_id36s)
         except tdb_cassandra.NotFound:
             ips = None
+
+        return raw_details.decode_details(ips=ips)
+
+    def decode_details(self, ips=None):
+        raw_details = self._values()
+        details = []
         for key, value in raw_details.iteritems():
             data = Storage(json.loads(value))
             data["_id"] = key + "_" + self._id
             data["voter_id"] = key
-            if "ip" not in data:
-                data["ip"] = getattr(ips, key, None)
+            try:
+                data["ip"] = str(getattr(ips, key))
+            except AttributeError:
+                data["ip"] = None
             details.append(data)
         details.sort(key=lambda d: d["date"])
         return details
@@ -249,25 +257,18 @@ def cast_vote(sub, obj, dir, ip, vote_info, cheater, timer, date):
     downs_delta = 1 if int(vote._name) < 0 else 0
 
     # see if the user has voted on this thing before
-    pgrel = Vote.rel(sub, obj)
-    pgoldvote = pgrel._fast_query(sub, obj, ["-1", "0", "1"]).values()
-    try:
-        pgoldvote = filter(None, pgoldvote)[0]
-    except IndexError:
-        pgoldvote = None
-    timer.intermediate("pg_read_vote")
+    old_votes = VoteDetailsByThing.get_details(obj, [sub])
+    old_vote = None
+    if old_votes:
+        old_vote = old_votes[0]
+    timer.intermediate("cass_read_vote")
 
-    if pgoldvote:
-        # old_vote is mimicking `{Link,Comment}VoteDetailsByThing` here because
-        # that will eventually be exactly what it is
-        old_vote = {
-            "direction": pgoldvote._name,
-            "valid_thing": pgoldvote.valid_thing,
-            "valid_user": pgoldvote.valid_user,
-            "ip": getattr(pgoldvote, "ip", None),
-        }
+    if old_vote:
+        vote._date = datetime.utcfromtimestamp(
+            old_vote["date"]).replace(tzinfo=pytz.UTC)
         vote.valid_thing = old_vote["valid_thing"]
         vote.valid_user = old_vote["valid_user"]
+        vote.ip = old_vote["ip"]
 
         if vote._name == old_vote["direction"]:
             # the old vote and new vote are the same. bail out.
@@ -277,8 +278,6 @@ def cast_vote(sub, obj, dir, ip, vote_info, cheater, timer, date):
         old_direction = int(old_vote["direction"])
         ups_delta -= 1 if old_direction > 0 else 0
         downs_delta -= 1 if old_direction < 0 else 0
-    else:
-        old_vote = None
 
     # calculate valid_thing and valid_user
     sr = obj.subreddit_slow
@@ -298,7 +297,15 @@ def cast_vote(sub, obj, dir, ip, vote_info, cheater, timer, date):
     g.stats.simple_event("vote.valid_thing." + str(vote.valid_thing).lower())
     g.stats.simple_event("vote.valid_user." + str(vote.valid_user).lower())
 
-    # write out the new/modified vote to postgres
+    # TEMPORARY: write out the new/modified vote to postgres
+    pgrel = Vote.rel(sub, obj)
+    pgoldvotes = pgrel._fast_query(sub, obj, ["-1", "0", "1"]).values()
+    try:
+        pgoldvote = filter(None, pgoldvotes)[0]
+    except IndexError:
+        pgoldvote = None
+    timer.intermediate("pg_read_vote")
+
     if pgoldvote:
         pgvote = pgoldvote
         pgvote._name = vote._name
