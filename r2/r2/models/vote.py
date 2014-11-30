@@ -244,6 +244,9 @@ class Vote(MultiRelation('vote',
 
         timer.intermediate("pg_write_vote")
 
+        g.stats.simple_event("vote.valid_thing." + str(v.valid_thing).lower())
+        g.stats.simple_event("vote.valid_user." + str(v.valid_user).lower())
+
         up_change, down_change = score_changes(amount, oldamount)
 
         if not (is_new and obj.author_id == sub._id and amount == 1):
