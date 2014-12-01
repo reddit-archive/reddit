@@ -1103,6 +1103,12 @@ class MinimalController(BaseController):
         hooks.get_hook("reddit.request.minimal_begin").call()
 
     def can_use_pagecache(self):
+        # Don't allow using pagecache if redirecting from an endpoint
+        # that disallowed it (for ex. redirecting from one that caches loggedin
+        # responses to one that doesn't)
+        if not request.environ.get("CAN_USE_PAGECACHE", True):
+            return False
+
         handler = self._get_action_handler()
         policy = getattr(handler, "pagecache_policy",
                          PAGECACHE_POLICY.LOGGEDOUT_ONLY)
@@ -1115,12 +1121,20 @@ class MinimalController(BaseController):
         return False
 
     def try_pagecache(self):
-        c.can_use_pagecache = self.can_use_pagecache()
+        can_use_pagecache = self.can_use_pagecache()
+        request.environ["CAN_USE_PAGECACHE"] = can_use_pagecache
 
-        if request.method.upper() == 'GET' and c.can_use_pagecache:
-            c.request_key = self.request_key()
+        # This guards against checking the pagecache twice and possibly
+        # modifying the request key when being redirected from one endpoint
+        # to the other in-request (i.e. when redirected to the error document)
+        if request.environ.get("TRIED_PAGECACHE", False):
+            return
+        request.environ["TRIED_PAGECACHE"] = True
+
+        if request.method.upper() == 'GET' and can_use_pagecache:
+            request.environ["REQUEST_KEY"] = self.request_key()
             try:
-                r = g.pagecache.get(c.request_key)
+                r = g.pagecache.get(request.environ["REQUEST_KEY"])
             except MemcachedError as e:
                 g.log.warning("pagecache error: %s", e)
                 return
@@ -1178,15 +1192,15 @@ class MinimalController(BaseController):
         # such as If-Modified-Since headers for 304s or requesting IP for 429s.
         if (g.page_cache_time
             and request.method.upper() == 'GET'
-            and c.can_use_pagecache
-            and c.request_key
+            and request.environ.get("CAN_USE_PAGECACHE", False)
+            and request.environ.get("REQUEST_KEY", None)
             and not c.used_cache
             and not would_poison
             and response.status_int not in (304, 429)
             and not response.status.startswith("5")
             and not c.is_exception_response):
             try:
-                g.pagecache.set(c.request_key,
+                g.pagecache.set(request.environ["REQUEST_KEY"],
                                 (response._current_obj(), c.cookies),
                                 g.page_cache_time)
             except MemcachedError as e:
@@ -1198,7 +1212,7 @@ class MinimalController(BaseController):
         pragmas = [p.strip() for p in
                    request.headers.get("Pragma", "").split(",")]
         if g.debug or "x-reddit-pagecache" in pragmas:
-            if c.can_use_pagecache:
+            if request.environ.get("CAN_USE_PAGECACHE", False):
                 pagecache_state = "hit" if c.used_cache else "miss"
             else:
                 pagecache_state = "disallowed"
