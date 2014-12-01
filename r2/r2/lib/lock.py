@@ -24,6 +24,7 @@ from __future__ import with_statement
 from time import sleep
 from datetime import datetime
 from threading import local
+from pylons import g
 import os
 import socket
 
@@ -65,7 +66,7 @@ class MemcacheLock(object):
     def acquire(self):
         start = datetime.now()
 
-        my_info = (reddit_host, reddit_pid, simple_traceback(limit=7))
+        self.nonce = (reddit_host, reddit_pid, simple_traceback(limit=7))
 
         #if this thread already has this lock, move on
         if self.key in self.locks:
@@ -75,7 +76,7 @@ class MemcacheLock(object):
         timer.start()
 
         #try and fetch the lock, looping until it's available
-        while not self.cache.add(self.key, my_info, time = self.time):
+        while not self.cache.add(self.key, self.nonce, time = self.time):
             if (datetime.now() - start).seconds > self.timeout:
                 if self.verbose:
                     info = self.cache.get(self.key)
@@ -102,8 +103,15 @@ class MemcacheLock(object):
     def release(self):
         #only release the lock if we gained it in the first place
         if self.have_lock:
-            self.cache.delete(self.key)
+            # verify that our lock did not expire before we could release it
+            if self.cache.get(self.key) == self.nonce:
+                self.cache.delete(self.key)
+            else:
+                g.log.error("Lock expired before completion at key %r: %s",
+                            self.key, self.nonce)
             self.locks.remove(self.key)
+            self.have_lock = False
+            self.nonce = None
 
 def make_lock_factory(cache, stats):
     def factory(group, key, **kw):
