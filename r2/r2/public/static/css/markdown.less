@@ -20,22 +20,31 @@
 @ads-blue: #6093BF;
 @ads-grey: #F8F8F8;
 @dark-grey: #808080;
+@text-grey: #706f6f;
 
+
+.md-margins(@font, @top, @bottom) {
+  margin-top: (@top / @font) * 1em;
+  margin-bottom: (@bottom / @font) * 1em;
+}
 
 .md-font-size(@font, @line, @top, @bottom) {
   // define a desired font size/line-height/margin-top/margin-bottom as ints
   // have converted to em-based definition
-  font-size: @font * 1px;
+  font-size: (@font / 10) * 1em;
   line-height: (@line / @font) * 1em;
-  margin-top: (@top / @font) * 1em;
-  margin-bottom: (@bottom / @font) * 1em;
+  .md-margins(@font, @top, @bottom);
 }
+
 .md-font-size(@font, @line) {
-  font-size: @font * 1px;
+  font-size: (@font / 10) * 1em;
   line-height: (@line / @font) * 1em;
 }
 
+
 .md {
+  font-size: x-small; // == 10px
+
   h1, h2, h3, h4, h5, h6 {
     &:extend(.md .-headers all);
   }
@@ -52,7 +61,13 @@
     &:extend(.md .-blocks all);
   }
 
-  max-width: 60em;
+  p, pre > code, th, td, li {
+    &:extend(.md .-text all);
+  }
+
+  // font-size is x-small, or 10px, but the default font-size for content is
+  // actually 14px;  84em at 10px === 60em at 14px.
+  max-width: 84em; 
 
   .-headers {
     border: 0;
@@ -70,7 +85,7 @@
 
   blockquote,
   del {
-    color: @dark-grey;
+    color: @text-grey;
   }
 
   a {
@@ -84,12 +99,14 @@
 
   em {
     font-style: italic;
+    font-weight: inherit;
   }
 
   th,
   strong,
   .-headers {
     font-weight: 600;
+    font-style: inherit;
   }
 
   h2,
@@ -107,22 +124,10 @@
     margin-right: 0;
   }
 
-  &,
-  .-cells,
-  .-blocks,
-  .-headers {
-    > :first-child {
-      margin-top: 0;
-    }
-
-    > :last-child {
-      margin-bottom: 0;
-    }
-  }
-
   tr,
   code,
   .-cells,
+  .-lists,
   .-blocks,
   .-headers {
     margin: 0;
@@ -220,14 +225,20 @@
     font-size: 0.86em;
     line-height: 0;
   }
+
+  li li,
+  li p {
+    font-size: 1em !important;
+  }
 }
 
+
 .link .usertext .md {
-  padding: 4px 8px;
+  padding: 5px 10px;
 }
 
 .commentarea .md {
-  margin: 4px 0;
+  margin: 5px 0;
 }
 
 
@@ -235,28 +246,24 @@
   // default font scale : font-size, line-height, margin-top, margin-bottom
   h1,
   h2 {
-    .md-font-size(18, 24, 16, 16);
+    .md-font-size(18, 25, 15, 15);
   }
 
   h3,
   h4 {
-    .md-font-size(16, 20, 12, 12);
+    .md-font-size(16, 20, 10, 10);
   }
 
   h5,
   h6 {
-    .md-font-size(14, 20, 12, 8);
+    .md-font-size(14, 20, 10, 5);
   }
 
   .-blocks {
-    .md-font-size(14, 20, 8, 8);
-  }
-
-  li {
-    .md-font-size(14, 20, 2, 2);
+    .md-margins(14, 5, 5);
   }
   
-  & {
+  .-text {
     .md-font-size(14, 20);
   }
 }
@@ -264,59 +271,47 @@
 .wiki-page-content .md {
   // font scale for wiki pages
   h1 {
-    .md-font-size(32, 40, 40, 24);
+    .md-font-size(32, 40, 40, 25);
   }
 
   h2 {
-    .md-font-size(24, 32, 32, 16);
+    .md-font-size(24, 30, 30, 15);
   }
 
   h3 {
-    .md-font-size(20, 24, 24, 12);
-  }
-
-  h4 {
-    .md-font-size(18, 24, 24, 12);
-  }
-
-  h5 {
-    .md-font-size(16, 24, 24, 8);
-  }
-
-  h6 {
-    .md-font-size(16, 24, 24, 8);
+    .md-font-size(20, 25, 20, 10);
   }
 
   .-blocks {
-    .md-font-size(16, 24, 8, 12);
+    .md-margins(14, 5, 10);
   }
 
-  li {
-    .md-font-size(16, 24, 4, 4);
-  }
-
-  & {
-    .md-font-size(16, 24);
+  .-text {
+    .md-font-size(14, 20);
   }
 }
 
 .side .md {
+  h1,
+  h2 {
+    .md-margins(18, 10, 10);
+  }
+
   // font scale for sidebar
   .-blocks {
-    .md-font-size(12, 16, 16, 8);
+    .md-margins(12, 10, 5);
   }
 
-  & {
-    .md-font-size(12, 16);
+  .-text {
+    .md-font-size(12, 15);
   }
 }
-
 
 .wiki-page-content .md {
   // Style changes for wiki pages
   h1,
   h6 {
-    color: @dark-grey;
+    color: @text-grey;
     font-weight: 300;
   }
 
@@ -346,6 +341,33 @@
     text-decoration: none;
     text-transform: uppercase;
     letter-spacing: 1px;
-    .md-font-size(14, 16, 24, 8);
+    .md-font-size(12, 15, 15, 5);
+  }
+}
+
+
+.md {
+  &,
+  .-cells,
+  .-lists,
+  .-blocks,
+  .-headers {
+    > :first-child {
+      margin-top: 0;
+    }
+
+    > :last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  li {
+    > :first-child {
+      margin-top: 0;
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
   }
 }
