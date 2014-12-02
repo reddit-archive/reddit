@@ -1612,8 +1612,8 @@ class RedditController(OAuth2ResourceController):
         self._embed_html_timing_data()
 
         # allow logged-out JSON requests to be read cross-domain
-        if (request.method.upper() == "GET" and not c.user_is_loggedin and
-            c.render_style == "api"):
+        if (not c.cors_checked and request.method.upper() == "GET" and
+                not c.user_is_loggedin and c.render_style == "api"):
             response.headers["Access-Control-Allow-Origin"] = "*"
 
             request_origin = request.headers.get('Origin')
