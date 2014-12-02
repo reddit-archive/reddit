@@ -572,7 +572,13 @@ class OAuth2AccessToken(Token):
 
     @classmethod
     def _new(cls, client_id, user_id, scope, refresh_token=None, device_id=None):
+        try:
+            user_id_prefix = int(user_id, 36)
+        except (ValueError, TypeError):
+            user_id_prefix = ""
+        _id = "%s-%s" % (user_id_prefix, cls._generate_unique_token())
         return super(OAuth2AccessToken, cls)._new(
+                     _id=_id,
                      client_id=client_id,
                      user_id=user_id,
                      scope=str(scope),
