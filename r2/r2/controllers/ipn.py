@@ -1227,7 +1227,7 @@ class RedditGiftsController(GoldPaymentController):
         if goldtype == 'gift':
             gift_kw = {
                 'recipient': Account._by_name(data['recipient']),
-                'giftmessage': _force_utf8(data.get('giftmessage', None)),
+                'giftmessage': _force_unicode(data.get('giftmessage', None)),
                 'signed': data.get('signed') == 'True',
             }
         else:
