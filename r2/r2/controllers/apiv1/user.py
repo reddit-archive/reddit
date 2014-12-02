@@ -19,7 +19,7 @@
 # All portions of the code written by reddit are Copyright (c) 2006-2014 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
-from pylons import c, response
+from pylons import c, request, response
 from r2.controllers.api_docs import api_doc, api_section
 from r2.controllers.oauth2 import require_oauth2_scope
 from r2.controllers.reddit_base import (
@@ -62,8 +62,9 @@ class APIv1UserController(OAuth2ResourceController):
 
     def pre(self):
         OAuth2ResourceController.pre(self)
-        self.authenticate_with_token()
-        self.set_up_user_context()
+	if request.method != "OPTIONS":
+            self.authenticate_with_token()
+            self.set_up_user_context()
         self.run_sitewide_ratelimits()
 
     def try_pagecache(self):

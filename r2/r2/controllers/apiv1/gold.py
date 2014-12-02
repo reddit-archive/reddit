@@ -45,8 +45,9 @@ class APIv1GoldController(OAuth2ResourceController):
 
     def pre(self):
         OAuth2ResourceController.pre(self)
-        self.authenticate_with_token()
-        self.set_up_user_context()
+	if request.method != "OPTIONS":
+            self.authenticate_with_token()
+            self.set_up_user_context()
         self.run_sitewide_ratelimits()
 
     def try_pagecache(self):
