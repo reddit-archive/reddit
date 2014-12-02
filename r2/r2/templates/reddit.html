@@ -183,15 +183,6 @@
               </div>
             </div>
           </div>
-          <div class="lang-popup cover-overlay" style="display: none">
-            <div class="cover" onclick="return hidecover(this)"></div>
-            <div class="popup">
-              <a href="#" onclick="return hidecover(this)" class="hidecover">
-                ${_("close this window")}
-              </a>
-              <%include file="prefoptions.html" />
-            </div>
-          </div>
         %else:
           <div class="login-popup cover-overlay" style="display: none">
             <div class="cover" onclick="return hidecover(this)"></div>
@@ -203,17 +194,17 @@
               ${Login(is_popup=True)}
             </div>
           </div>
-          <div class="lang-popup cover-overlay" style="display: none">
-            <div class="cover" onclick="return hidecover(this)"></div>
-            <div class="popup">
-              <a href="#" onclick="return hidecover(this)" class="hidecover">
-                ${_("close this window")}
-              </a>
-              <%include file="prefoptions.html" />
-            </div>
-          </div>
         %endif
       %endif
+      <div class="lang-popup cover-overlay" style="display: none">
+        <div class="cover" onclick="return hidecover(this)"></div>
+        <div class="popup">
+          <a href="#" onclick="return hidecover(this)" class="hidecover">
+            ${_("close this window")}
+          </a>
+          <%include file="prefoptions.html" />
+        </div>
+      </div>
     %endif
   %endif
   ${framebuster()}
