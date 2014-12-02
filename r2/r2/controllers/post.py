@@ -69,8 +69,8 @@ class PostController(ApiController):
         return self.redirect(u.unparse())
 
     def GET_over18(self):
-        return BoringPage(_("over 18?"),
-                          content = Over18()).render()
+        return BoringPage(_("over 18?"), content=Over18(),
+                          show_sidebar=False).render()
 
     @validate(VModhash(fatal=False),
               over18 = nop('over18'),
