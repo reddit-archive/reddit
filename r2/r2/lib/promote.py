@@ -296,6 +296,8 @@ def edit_campaign(link, campaign, dates, bid, cpm, target, priority, location):
          # if the bid amount changed, cancel any pending transactions
         void_campaign(link, campaign, reason='changed_bid')
         changed['bid'] = ("$%0.2f" % campaign.bid, "$%0.2f" % bid)
+        hooks.get_hook('promote.edit_bid').call(
+            link=link,campaign=campaign, previous=campaign.bid, current=bid)
         campaign.bid = bid
     if dates[0] != campaign.start_date or dates[1] != campaign.end_date:
         original = '%s to %s' % (campaign.start_date, campaign.end_date)
