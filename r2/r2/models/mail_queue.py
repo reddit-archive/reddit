@@ -417,7 +417,10 @@ class Email(object):
             self.fr_addr.replace('>', ''),
         )
 
-        if not fr.startswith('-') and not self.to_addr.startswith('-'): # security
+        # Addresses that start with a dash could confuse poorly-written
+        # software's argument parsers, and thus are disallowed by default in
+        # Postfix: http://www.postfix.org/postconf.5.html#allow_min_user
+        if not fr.startswith('-') and not self.to_addr.startswith('-'):
             msg = MIMEText(utf8(self.body, reject_newlines=False))
             msg.set_charset('utf8')
             msg['To']      = utf8(self.to_addr)
