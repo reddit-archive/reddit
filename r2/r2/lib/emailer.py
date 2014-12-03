@@ -56,6 +56,13 @@ def _fraud_email(body, kind):
     Email.handler.add_to_queue(None, g.fraud_email, g.domain, g.fraud_email,
                                kind, body=body)
 
+def _community_email(body, kind):
+    """
+    For sending email to the community mailbox
+    """
+    Email.handler.add_to_queue(c.user, g.community_email, g.domain, g.community_email,
+                               kind, body=body)
+
 def verify_email(user, dest=None):
     """
     For verifying an email address
@@ -118,6 +125,9 @@ def email_change_email(user):
     return _system_email(user.email,
                          EmailChangeEmail(user=user).render(style='email'),
                          Email.Kind.EMAIL_CHANGE)
+
+def community_email(body, kind):
+    return _community_email(body, kind)
 
 
 def nerds_email(body, from_name=g.domain):
