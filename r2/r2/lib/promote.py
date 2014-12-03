@@ -485,6 +485,12 @@ def accept_promotion(link):
         all_live_promo_srnames(_update=True)
 
 
+def flag_payment(link, reason="Unknown reason."):
+    link.payment_flagged = reason
+    link._commit()
+    PromotionLog.add(link, "payment flagged: %s" % reason)
+
+
 def reject_promotion(link, reason=None):
     was_live = is_promoted(link)
     update_promote_status(link, PROMOTE_STATUS.rejected)
@@ -905,27 +911,14 @@ def get_spent_amount(campaign):
     return spent
 
 
-PAYMENT_METHODS_ALERT_LIMIT = 3
-FAILED_PAYMENTS_ALERT_LIMIT = 5
-
-def new_payment_method(user, link):
+def new_payment_method(user, ip, address, link):
     user._incr('num_payment_methods')
-    if (user.num_payment_methods > PAYMENT_METHODS_ALERT_LIMIT and
-            not user.payment_flagged):
-        payment_flag_user(user, link)
+    hooks.get_hook('promote.new_payment_method').call(user=user, ip=ip, address=address, link=link)
 
 
 def failed_payment_method(user, link):
     user._incr('num_failed_payments')
-    if (user.num_failed_payments > FAILED_PAYMENTS_ALERT_LIMIT and
-            not user.payment_flagged):
-        payment_flag_user(user, link)
-
-
-def payment_flag_user(user, link):
-    user.payment_flagged = True
-    user._commit()
-    emailer.suspicious_payment(user, link)
+    hooks.get_hook('promote.failed_payment').call(user=user, link=link)
 
 
 def Run(verbose=True):

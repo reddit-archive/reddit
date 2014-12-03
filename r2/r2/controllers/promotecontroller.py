@@ -1036,7 +1036,7 @@ class PromoteApiController(ApiController):
             pay_id = edit_profile(c.user, address, creditcard, pay_id)
 
             if pay_id:
-                promote.new_payment_method(c.user, link)
+                promote.new_payment_method(user=c.user, ip=request.ip, address=address, link=link)
 
         if pay_id:
             success, reason = promote.auth_campaign(link, campaign, c.user,
