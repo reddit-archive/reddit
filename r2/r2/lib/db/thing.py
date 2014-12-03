@@ -829,7 +829,7 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
                         cls.__name__,
                         rel._thing1_id,
                         rel._thing2_id,
-                        rel._name
+                        str(rel._name)
                     )] = rel._id
 
                 for cache_key in uncached_keys:
@@ -842,7 +842,7 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
             thing1_dict = dict((t._id, t) for t in tup(thing1s))
             thing2_dict = dict((t._id, t) for t in tup(thing2s))
 
-            names = tup(name)
+            names = map(str, tup(name))
 
             # permute all of the pairs via cartesian product
             rel_tuples = itertools.product(
