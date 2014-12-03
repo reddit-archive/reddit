@@ -56,7 +56,7 @@
 
   %if thing.show_report:
     <li class="report-button">
-      <a href="javascript:void(0)" class="report-thing">
+      <a href="javascript:void(0)" class="action-thing" data-action-form="#report-action-form">
         ${_("report")}
       </a>
     </li>
@@ -290,6 +290,13 @@
       %if thing.promote_status in (PROMOTE_STATUS.unpaid, PROMOTE_STATUS.unseen, PROMOTE_STATUS.rejected):
         <li>
           ${ynbutton(_("accept"), _("accepted"), "promote")}
+        </li>
+      %endif
+      %if thing.is_awaiting_fraud_review:
+        <li class="fraud-button">
+          <a href="javascript:void(0)" class="action-thing" data-action-form="#fraud-action-form">
+            ${_("fraud")}
+          </a>
         </li>
       %endif
     %endif

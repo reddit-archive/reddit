@@ -794,6 +794,23 @@ def get_all_accepted_links():
 
 
 @cached_query(UserQueryCache)
+def get_payment_flagged_links():
+    return FakeQuery(sort=[desc("_date")])
+
+
+def set_payment_flagged_link(link):
+    with CachedQueryMutator() as m:
+        q = get_payment_flagged_links()
+        m.insert(q, [link])
+
+
+def unset_payment_flagged_link(link):
+    with CachedQueryMutator() as m:
+        q = get_payment_flagged_links()
+        m.delete(q, [link])
+
+
+@cached_query(UserQueryCache)
 def get_underdelivered_campaigns():
     return FakeQuery(sort=[desc("_date")])
 

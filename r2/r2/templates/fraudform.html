@@ -20,45 +20,21 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%namespace file="utils.html" import="error_field" />
-
-<form id="report-action-form" class="action-form report-action-form rounded" data-form-action="report">
+<form id="fraud-action-form" class="action-form fraud-action-form rounded" data-form-action="review_fraud">
   <input type="hidden" name="thing_id" value="thing-fullname">
   <span class="reason-prompt">
-    ${_('why are you reporting this?')}
+    ${_('is this fraud?')}
   </span>
   <ol>
     <li>
       <label>
-        <input type="radio" name="reason" value="spam">${_("spam")}
+        <input type="radio" name="fraud" value="True">${_("yes")}
       </label>
     </li>
     <li>
       <label>
-        <input type="radio" name="reason" value="vote manipulation">${_("vote manipulation")}
+        <input type="radio" name="fraud" value="False">${_("no")}
       </label>
-    </li>
-    <li>
-      <label>
-        <input type="radio" name="reason" value="personal information">${_("personal information")}
-      </label>
-    </li>
-    <li>
-      <label>
-        <input type="radio" name="reason" value="sexualizing minors">${_("sexualizing minors")}
-      </label>
-    </li>
-    <li>
-      <label>
-        <input type="radio" name="reason" value="breaking reddit">${_("breaking reddit")}
-      </label>
-    </li>
-    <li>
-      <label>
-        <input type="radio" name="reason" value="other">
-        ${_("other (max %(num)s characters):") % dict(num=100)}
-      </label>
-      <input name="other_reason" value="" maxlength="100" type="text" disabled>
     </li>
   </ol>
   <button type="submit" class="btn submit-action-thing" disabled>
@@ -68,5 +44,4 @@
     ${_("cancel")}
   </button>
   <span class="status"></span>
-  ${error_field("TOO_LONG", "reason", "span")}
 </form>

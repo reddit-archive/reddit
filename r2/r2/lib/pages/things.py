@@ -112,8 +112,12 @@ class LinkButtons(PrintableButtons):
             kw = dict(promo_url = promo_edit_url(thing),
                       promote_status = getattr(thing, "promote_status", 0),
                       user_is_sponsor = c.user_is_sponsor,
-                      traffic_url = promo_traffic_url(thing), 
-                      is_author = thing.is_author)
+                      traffic_url = promo_traffic_url(thing),
+                      is_author = thing.is_author,
+                      )
+
+            if c.user_is_sponsor:
+                kw["is_awaiting_fraud_review"] = is_awaiting_fraud_review(thing)
 
         PrintableButtons.__init__(self, 'linkbuttons', thing, 
                                   # user existence and preferences

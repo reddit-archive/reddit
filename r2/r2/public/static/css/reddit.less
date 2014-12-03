@@ -10414,7 +10414,7 @@ body.with-listing-chooser {
   }
 }
 
-.report-form {
+.action-form {
     display: none;
     background-color: #f6e69f;
     border: thin solid #d8bb3c;
@@ -10424,19 +10424,23 @@ body.with-listing-chooser {
     font-size: larger;
 
     input {
-        margin: 5px 0;
 
         &[type="radio"] {
             margin: 2px 0.5em 0 0;
         }
 
-        &[name="other_reason"] {
+        &[type="text"] {
+            margin-top: 5px;
             width: 95%;
         }
 
         &:disabled {
             background: #dddddd;
         }
+    }
+
+    ol {
+        margin-bottom: 5px;
     }
 }
 

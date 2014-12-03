@@ -373,6 +373,7 @@ class SponsorListingController(PromoteListingController):
         'underdelivered': N_('underdelivered promoted links'),
         'reported': N_('reported promoted links'),
         'house': N_('house promoted links'),
+        'fraud': N_('fraud suspected promoted links'),
     }.items())
     base_path = '/sponsor/promoted'
 
@@ -382,7 +383,7 @@ class SponsorListingController(PromoteListingController):
 
     @property
     def menus(self):
-        if self.sort in {'underdelivered', 'reported', 'house'}:
+        if self.sort in {'underdelivered', 'reported', 'house', 'fraud'}:
             menus = []
         else:
             menus = super(SponsorListingController, self).menus
@@ -465,6 +466,8 @@ class SponsorListingController(PromoteListingController):
             return [Link._fullname_from_id36(to36(id)) for id in link_ids]
         elif self.sort == 'reported':
             return queries.get_reported_links(Subreddit.get_promote_srid())
+        elif self.sort == 'fraud':
+            return queries.get_payment_flagged_links()
         elif self.sort == 'house':
             return self.get_house_link_names()
         elif self.sort == 'all':
@@ -548,6 +551,21 @@ class PromoteApiController(ApiController):
             form.find(".notes").children(":last").after(
                 "<p>" + websafe(text) + "</p>")
 
+    @validatedForm(
+        VSponsorAdmin(),
+        VModhash(),
+        thing = VByName("thing_id"),
+        is_fraud=VBoolean("fraud"),
+    )
+    def POST_review_fraud(self, form, jquery, thing, is_fraud):
+        if not promote.is_promo(thing):
+            return
+
+        promote.review_fraud(thing, is_fraud)
+
+        button = jquery(".id-%s .fraud-button" % thing._fullname)
+        button.text(_("fraud" if is_fraud else "not fraud"))
+        form.fadeOut()
 
     @noresponse(VSponsorAdmin(),
                 VModhash(),
