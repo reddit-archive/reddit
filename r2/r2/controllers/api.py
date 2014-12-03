@@ -2617,19 +2617,30 @@ class ApiController(RedditController):
         else: # From no to yes
             send_message = True
 
-        # Send a message if this is a top-level comment on a submission that
-        # does not have sendreplies set, if it's the first distinguish for this
-        # comment, and if the user isn't banned or blocked by the author
+        # Send a message if this is a top-level comment on a submission or
+        # comment that has disabled receiving inbox notifications of replies, if
+        # it's the first distinguish for this comment, and if the user isn't
+        # banned or blocked by the author (replying didn't generate an inbox
+        # notification, send one now upon distinguishing it)
         if isinstance(thing, Comment):
-            link = Link._byID(thing.link_id, data=True)
-            to = Account._byID(link.author_id, data=True)
+            if not thing.parent_id:
+                link = Link._byID(thing.link_id, data=True)
+                to = Account._byID(link.author_id, data=True)
+                replies_enabled = link.sendreplies
+            else:
+                parent = Comment._byID(thing.parent_id, data=True)
+                to = Account._byID(parent.author_id, data=True)
+                replies_enabled = parent.sendreplies
+
+            previously_distinguished = hasattr(thing, 'distinguished')
+            user_can_notify = (not c.user._spam and
+                               c.user._id not in to.enemies and
+                               to.name != c.user.name)
+
             if (send_message and
-                    thing.parent_id is None and
-                    not link.sendreplies and
-                    not hasattr(thing, 'distinguished') and
-                    not c.user._spam and
-                    c.user._id not in to.enemies and
-                    to.name != c.user.name):
+                    not replies_enabled and
+                    not previously_distinguished and
+                    user_can_notify):
                 inbox_rel = Inbox._add(to, thing, 'selfreply')
                 queries.new_comment(thing, inbox_rel)
 
