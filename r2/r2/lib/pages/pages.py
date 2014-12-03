@@ -1221,9 +1221,12 @@ class LoginPage(BoringPage):
         if c.render_style == "compact":
             title = self.short_title
         else:
-            title = _("login or register")
+            if feature.is_enabled('new_login_flow'):
+                title = _("create account or sign in")
+            else:
+                title = _("login or register")
 
-        BoringPage.__init__(self, "" if feature.is_enabled('new_login_flow') else title, **context)
+        BoringPage.__init__(self, title, **context)
 
         if self.dest:
             u = UrlParser(self.dest)
