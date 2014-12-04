@@ -47,7 +47,6 @@ ${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if
     ${"[%s]" % ("+" if thing.collapsed else "–")}
   </a>
 
-  <span class="head">
   <%
    author = WrappedUser(thing.author, thing.attribs, thing).render()
    if thing.sr_id:
@@ -55,6 +54,8 @@ ${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if
                                           thing.subreddit.path)
      if not thing.dest:
        thing.dest = subreddit
+     elif thing.to:
+       thing.dest = WrappedUser(thing.to, [], thing).render()
      author = websafe(thing.updated_author).replace(' ', '&#32;') % dict(
        author=author,
        subreddit=subreddit)
@@ -64,7 +65,9 @@ ${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if
      author=u"<b>%s</b>" % author,
      dest=u"<b>%s</b>" % thing.dest)
   %>
-  ${unsafe(taglinetext)}
+
+  <span class="head">
+    ${unsafe(taglinetext)}
   </span>
   %if c.user_is_admin:
     ${self.admintagline()}
