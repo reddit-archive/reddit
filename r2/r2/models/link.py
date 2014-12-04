@@ -1582,20 +1582,19 @@ class Message(Thing, Printable):
         for item in wrapped:
             item.to = tos.get(item.to_id)
             if item.sr_id:
-                item.recipient = (item.author_id != c.user._id)
+                item.recipient = (item.author_id != user._id)
             else:
-                item.recipient = (item.to_id == c.user._id)
+                item.recipient = (item.to_id == user._id)
 
-            if item.author_id == c.user._id:
+            if item.author_id == user._id:
                 item.new = False
             elif item._fullname in unread:
                 item.new = True
                 # wipe new messages if preferences say so, and this isn't a feed
                 # and it is in the user's personal inbox
-                if (item.new and c.user.pref_mark_messages_read
+                if (item.new and user.pref_mark_messages_read
                     and c.extension not in ("rss", "xml", "api", "json")):
-                    queries.set_unread(item.lookups[0],
-                                       c.user, False)
+                    queries.set_unread(item.lookups[0], user, False)
             else:
                 item.new = item._fullname in mod_unread
 
@@ -1617,13 +1616,13 @@ class Message(Thing, Printable):
                     item.parent = parent._fullname
                     item.parent_permalink = parent.make_permalink(link, sr)
 
-                    if parent.author_id == c.user._id:
+                    if parent.author_id == user._id:
                         item.subject = _('comment reply')
                     else:
                         item.subject = _('username mention')
                         item.is_mention = True
                 else:
-                    if link.author_id == c.user._id:
+                    if link.author_id == user._id:
                         item.subject = _('post reply')
                     else:
                         item.subject = _('username mention')
@@ -1635,14 +1634,14 @@ class Message(Thing, Printable):
                     item.author = Account._byID(item.display_author)
                 if item.display_to:
                     item.to = Account._byID(item.display_to)
-                    if item.to_id == c.user._id:
+                    if item.to_id == user._id:
                         item.body = (strings.anonymous_gilder_warning +
                             _force_unicode(item.body))
 
             item.hide_author = False
             item.is_collapsed = None
             if getattr(item, "from_sr", False):
-                if not (item.subreddit.is_moderator(c.user) or
+                if not (item.subreddit.is_moderator(user) or
                         c.user_is_admin):
                     item.author = item.subreddit
                     item.hide_author = True
@@ -1654,11 +1653,11 @@ class Message(Thing, Printable):
             if not item.new:
                 if item.recipient:
                     item.is_collapsed = item.to_collapse
-                if item.author_id == c.user._id:
+                if item.author_id == user._id:
                     item.is_collapsed = item.author_collapse
-                if c.user.pref_collapse_read_messages:
+                if user.pref_collapse_read_messages:
                     item.is_collapsed = (item.is_collapsed is not False)
-            if item.author_id in c.user.enemies and not item.was_comment:
+            if item.author_id in user.enemies and not item.was_comment:
                 item.is_collapsed = True
                 if not c.user_is_admin:
                     item.subject = _('[message from blocked user]')
@@ -1667,14 +1666,14 @@ class Message(Thing, Printable):
             taglinetext = ''
             if item.hide_author:
                 taglinetext = _("subreddit message %(author)s sent %(when)s")
-            elif (item.author_id == c.user._id and
+            elif (item.author_id == user._id and
                   not getattr(item, "display_author", None)):
                 taglinetext = _("to %(dest)s sent %(when)s")
             elif (item._id in mod_message_authors and
-                    (item.subreddit.is_moderator(c.user) or c.user_is_admin)):
+                    (item.subreddit.is_moderator(user) or c.user_is_admin)):
                 item.to = mod_message_authors[item._id]
                 taglinetext = _("to %(dest)s from %(author)s sent %(when)s")
-            elif item.to_id == c.user._id or item.to_id is None:
+            elif item.to_id == user._id or item.to_id is None:
                 taglinetext = _("from %(author)s sent %(when)s")
             else:
                 taglinetext = _("to %(dest)s from %(author)s sent %(when)s")
