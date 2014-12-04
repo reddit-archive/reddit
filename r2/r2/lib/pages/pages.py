@@ -308,8 +308,7 @@ class Reddit(Templated):
         if srbar and not c.cname and not is_api():
             self.srtopbar = SubredditTopBar()
 
-        if (c.user_is_loggedin and self.show_sidebar
-            and not is_api() and not self.show_wiki_actions):
+        if c.user_is_loggedin and not is_api() and not self.show_wiki_actions:
             # insert some form templates for js to use
             # TODO: move these to client side templates
             gold_link = GoldPayment("gift",
@@ -335,8 +334,11 @@ class Reddit(Templated):
                                        thing_type="comment",
                                       )
             report_form = ReportForm()
-            self._content = PaneStack([ShareLink(), content,
-                                       gold_comment, gold_link, report_form])
+
+            panes = [ShareLink(), content, report_form]
+            if self.show_sidebar:
+                panes.extend([gold_comment, gold_link])
+            self._content = PaneStack(panes)
         else:
             self._content = content
 

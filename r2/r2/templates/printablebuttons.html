@@ -56,13 +56,9 @@
 
   %if thing.show_report:
     <li class="report-button">
-      %if thing.style in ("linkbuttons", "commentbuttons"):
-        <a href="javascript:void(0)" class="report-thing">
-          ${_("report")}
-        </a>
-      %else:
-        ${ynbutton(_("report"), _("reported"), "report", "hide_thing")}
-      %endif
+      <a href="javascript:void(0)" class="report-thing">
+        ${_("report")}
+      </a>
     </li>
   %endif
   %if thing.show_marknsfw:
@@ -386,7 +382,7 @@
     %endif
 
     %if thing.show_reports and not thing.show_spam:
-     ${reports_button()}
+      ${reports_button()}
     %endif
 
     %if getattr(thing.thing, "use_big_modbuttons", False):
