@@ -1521,29 +1521,24 @@ class Message(Thing, Printable):
             if not hasattr(w, "sr_id"):
                 w.sr_id = None
 
-        # load the to fields if one exists
-        to_ids = set(w.to_id for w in wrapped if w.to_id is not None)
-        tos = Account._byID(to_ids, True) if to_ids else {}
+        to_ids = {w.to_id for w in wrapped if w.to_id}
+        to_accounts = Account._byID(to_ids, data=True)
 
-        # load the subreddit field if one exists:
-        sr_ids = set(w.sr_id for w in wrapped if w.sr_id is not None)
-        m_subreddits = Subreddit._byID(sr_ids, data=True, return_dict=True)
+        sr_ids = {w.sr_id for w in wrapped if w.sr_id}
+        srs = Subreddit._byID(sr_ids, data=True)
 
-        # load the links and their subreddits (if comment-as-message)
-        link_ids = {item.link_id for item in wrapped if item.was_comment}
-        links = Link._byID(link_ids, data=True, return_dict=True)
+        link_ids = {w.link_id for w in wrapped if w.was_comment}
+        links = Link._byID(link_ids, data=True)
 
-        # subreddits of the links (for comment-as-message)
-        link_srids = {link.sr_id for link in links.itervalues()}
-        l_subreddits = Subreddit._byID(link_srids, data=True, return_dict=True)
+        link_sr_ids = {link.sr_id for link in links.itervalues()}
+        link_srs = Subreddit._byID(link_sr_ids, data=True)
 
-        parent_ids = {item.parent_id for item in wrapped
-            if item.parent_id and item.was_comment}
-        parents = Comment._byID(parent_ids, data=True, return_dict=True)
+        parent_ids = {w.parent_id for w in wrapped
+            if w.parent_id and w.was_comment}
+        parents = Comment._byID(parent_ids, data=True)
 
         # load full modlist for all subreddit messages
-        mods_by_srid = {
-            sr._id: sr.moderator_ids() for sr in m_subreddits.itervalues()}
+        mods_by_srid = {sr_id: srs[sr_id].moderator_ids() for sr_id in sr_ids}
 
         # special handling for mod replies to mod PMs
         mod_message_authors = {}
@@ -1568,19 +1563,18 @@ class Message(Thing, Printable):
         # load the unread list to determine message newness
         unread = set(queries.get_unread_inbox(user))
 
-        msg_srs = set(m_subreddits[x.sr_id]
-                      for x in wrapped if x.sr_id is not None
-                      and isinstance(x.lookups[0], Message))
+        msg_srs = {srs[w.sr_id] for w in wrapped
+            if w.sr_id and isinstance(w.lookups[0], Message)}
+
         # load the unread mod list for the same reason
         mod_unread = set(queries.get_unread_subreddit_messages_multi(msg_srs))
 
         # load blocked subreddits
-        sr_blocks = BlockedSubredditsByAccount.fast_query(
-            user, m_subreddits.values())
+        sr_blocks = BlockedSubredditsByAccount.fast_query(user, srs.values())
         blocked_srids = {sr._id for _user, sr in sr_blocks.iterkeys()}
 
         for item in wrapped:
-            item.to = tos.get(item.to_id)
+            item.to = to_accounts.get(item.to_id)
             if item.sr_id:
                 item.recipient = (item.author_id != user._id)
             else:
@@ -1604,7 +1598,7 @@ class Message(Thing, Printable):
             item.is_mention = False
             if item.was_comment:
                 link = links[item.link_id]
-                sr = l_subreddits[link.sr_id]
+                sr = link_srs[link.sr_id]
                 item.to_collapse = False
                 item.author_collapse = False
                 item.link_title = link.title
@@ -1628,7 +1622,7 @@ class Message(Thing, Printable):
                         item.subject = _('username mention')
                         item.is_mention = True
             elif item.sr_id is not None:
-                item.subreddit = m_subreddits[item.sr_id]
+                item.subreddit = srs[item.sr_id]
             else:
                 if item.display_author:
                     item.author = Account._byID(item.display_author)
