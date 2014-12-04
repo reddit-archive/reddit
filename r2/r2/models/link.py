@@ -1522,7 +1522,11 @@ class Message(Thing, Printable):
                 w.sr_id = None
 
         to_ids = {w.to_id for w in wrapped if w.to_id}
-        to_accounts = Account._byID(to_ids, data=True)
+        other_account_ids = {w.display_author or w.display_to for w in wrapped
+            if not (w.was_comment or w.sr_id) and
+                (w.display_author or w.display_to)}
+        account_ids = to_ids | other_account_ids
+        accounts = Account._byID(account_ids, data=True)
 
         sr_ids = {w.sr_id for w in wrapped if w.sr_id}
         srs = Subreddit._byID(sr_ids, data=True)
@@ -1574,7 +1578,7 @@ class Message(Thing, Printable):
         blocked_srids = {sr._id for _user, sr in sr_blocks.iterkeys()}
 
         for item in wrapped:
-            item.to = to_accounts.get(item.to_id)
+            item.to = accounts.get(item.to_id)
             if item.sr_id:
                 item.recipient = (item.author_id != user._id)
             else:
@@ -1625,9 +1629,9 @@ class Message(Thing, Printable):
                 item.subreddit = srs[item.sr_id]
             else:
                 if item.display_author:
-                    item.author = Account._byID(item.display_author)
+                    item.author = accounts[item.display_author]
                 if item.display_to:
-                    item.to = Account._byID(item.display_to)
+                    item.to = accounts[item.display_to]
                     if item.to_id == user._id:
                         item.body = (strings.anonymous_gilder_warning +
                             _force_unicode(item.body))
