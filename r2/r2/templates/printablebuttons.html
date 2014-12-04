@@ -414,7 +414,7 @@
   %if thing.recipient:
     %if thing.can_block:
       ${self.banbuttons()}
-        %if (not thing.was_comment or thing.thing.message_style == "mention") and thing.thing.author_id != c.user._id and thing.thing.author_id not in c.user.enemies:
+        %if (not thing.was_comment or thing.thing.is_mention) and thing.thing.author_id != c.user._id and thing.thing.author_id not in c.user.enemies:
           <li>
             %if getattr(thing.thing, "from_sr", False):
               %if getattr(thing.thing, "sr_blocked", False):

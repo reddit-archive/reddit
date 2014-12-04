@@ -1601,8 +1601,8 @@ class Message(Thing, Printable):
 
             item.score_fmt = Score.none
 
-            item.message_style = ""
             # comment as message:
+            item.is_mention = False
             if item.was_comment:
                 link = links[item.link_id]
                 sr = l_subreddits[link.sr_id]
@@ -1619,17 +1619,15 @@ class Message(Thing, Printable):
 
                     if parent.author_id == c.user._id:
                         item.subject = _('comment reply')
-                        item.message_style = "comment-reply"
                     else:
                         item.subject = _('username mention')
-                        item.message_style = "mention"
+                        item.is_mention = True
                 else:
                     if link.author_id == c.user._id:
                         item.subject = _('post reply')
-                        item.message_style = "post-reply"
                     else:
                         item.subject = _('username mention')
-                        item.message_style = "mention"
+                        item.is_mention = True
             elif item.sr_id is not None:
                 item.subreddit = m_subreddits[item.sr_id]
             else:

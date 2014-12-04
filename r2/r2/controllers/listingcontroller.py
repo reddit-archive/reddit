@@ -966,7 +966,7 @@ class MessageController(ListingController):
                 and (item.author_id == c.user._id or not item.new)):
                 return False
 
-            if (item.message_style == "mention" and
+            if (item.is_mention and
                 c.user.name.lower() not in extract_user_mentions(item.body)):
                 return False
 
