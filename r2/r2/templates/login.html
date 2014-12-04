@@ -29,7 +29,7 @@
    import random
  %>
 <%namespace file="captcha.html" import="captchagen"/>
-<%namespace file="utils.html" import="error_field, plain_link, img_link, form_group"/>
+<%namespace file="utils.html" import="error_field, img_link, form_group, text_with_links"/>
 
 ## default content 
 %if c.user_is_loggedin:
@@ -256,10 +256,12 @@
         ${lf(user = user_login, dest = dest, autofocus=autofocus)}
       </div>
     </div>
-    <p>
-      ${_("we are super-serious about privacy and never spam.")}
-      &#32;
-      ${plain_link(_("learn more."), "/help/privacypolicy")}
+    <p class="login-disclaimer">
+      ${text_with_links(
+        _("We care about your privacy, and we never spam. By creating an account, you agree to reddit's %(user_agreement)s and %(privacy_policy)s. We're proud of them, and you should read them."),
+          user_agreement=dict(link_text=_("User Agreement"), path="/help/useragreement"),
+          privacy_policy=dict(link_text=_("Privacy Policy"), path="/help/privacypolicy"),
+      )}
     </p>
   %else:
     <div class="login-form-section divide register">
