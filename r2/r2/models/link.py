@@ -60,6 +60,7 @@ from datetime import datetime, timedelta
 from hashlib import md5
 
 import random, re
+from collections import defaultdict
 
 class LinkExists(Exception): pass
 
@@ -1577,6 +1578,10 @@ class Message(Thing, Printable):
         sr_blocks = BlockedSubredditsByAccount.fast_query(user, srs.values())
         blocked_srids = {sr._id for _user, sr in sr_blocks.iterkeys()}
 
+        can_set_unread = (user.pref_mark_messages_read and
+                            c.extension not in ("rss", "xml", "api", "json"))
+        to_set_unread = []
+
         for item in wrapped:
             item.to = accounts.get(item.to_id)
             if item.sr_id:
@@ -1588,11 +1593,9 @@ class Message(Thing, Printable):
                 item.new = False
             elif item._fullname in unread:
                 item.new = True
-                # wipe new messages if preferences say so, and this isn't a feed
-                # and it is in the user's personal inbox
-                if (item.new and user.pref_mark_messages_read
-                    and c.extension not in ("rss", "xml", "api", "json")):
-                    queries.set_unread(item.lookups[0], user, False)
+
+                if can_set_unread:
+                    to_set_unread.append(item.lookups[0])
             else:
                 item.new = item._fullname in mod_unread
 
@@ -1693,6 +1696,15 @@ class Message(Thing, Printable):
 
             if item.sr_id and item.dest and item.to:
                 item.to_is_moderator = item.to._id in mods_by_srid[item.sr_id]
+
+        if to_set_unread:
+            unread_by_class = defaultdict(list)
+            for thing in to_set_unread:
+                unread_by_class[thing.__class__.__name__].append(thing)
+
+            for things in unread_by_class.itervalues():
+                # Inbox.set_unread can only handle one type of thing at a time
+                queries.set_unread(things, user, unread=False)
 
         # Run this last
         Printable.add_props(user, wrapped)
