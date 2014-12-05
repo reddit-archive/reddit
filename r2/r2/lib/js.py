@@ -420,6 +420,7 @@ module["reddit-init-base"] = LocalizedModule("reddit-init-base.js",
     "jquery.reddit.js",
     "stateify.js",
     "validator.js",
+    "strength-meter.js",
     "reddit.js",
     "spotlight.js",
     localized_appendices=[

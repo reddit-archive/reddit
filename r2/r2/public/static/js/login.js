@@ -287,6 +287,33 @@ r.ui.RegisterForm = function() {
     }
 
     this.$el.find('[name="passwd2"]').on('keyup', $.proxy(this, 'checkPasswordMatch'));
+    this.$el.find('[name="passwd"]')
+        .strengthMeter({
+            username: '#user_reg',
+            delay: 0,
+            trigger: 'loaded.validator',
+        })
+        .on('score.strengthMeter', function(e, score) {
+            var $el = $(this);
+
+            if ($el.stateify('getCurrentState') === 'error') {
+                return;
+            }
+
+            var message;
+
+            if (score > 90) {
+                message = r._('Password is strong');
+            } else if (score > 70) {
+                message = r._('Password is good');
+            } else if (score > 30) {
+                message = r._('Password is fair');
+            } else {
+                message = r._('Password is weak');
+            }
+
+            $el.stateify('showMessage', message);
+        });
 
     this.$submit = this.$el.find('.submit button');
 }

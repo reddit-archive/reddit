@@ -5,13 +5,18 @@
   var GROUP_CLASS = 'c-form-group';
   var CONTROL_CLASS = 'c-form-control';
   var CONTROL_SELECTOR = '.' + CONTROL_CLASS;
-  var ERROR_FEEDBACK_CLASS = 'c-form-control-feedback-error';
-  var ERROR_FEEDBACK_SELECTOR = '.' + ERROR_FEEDBACK_CLASS;
+  var CONTROL_FEEDBACK_CLASS_PREFIX = 'c-form-control-feedback-';
+  var CONTROL_FEEDBACK_SELECTOR_PREFIX = '.' + CONTROL_FEEDBACK_CLASS_PREFIX;
   var FEEDBACK_CLASS = 'c-has-feedback';
   var STATE_CLASSES = {
     loading: 'c-has-throbber',
     success: 'c-has-success',
     error:  'c-has-error',
+  };
+  var FEEDBACK_SUFFIX = {
+    loading: 'throbber',
+    success: 'success',
+    error: 'error',
   };
 
   function rightPosition($el) {
@@ -42,6 +47,12 @@
 
     _currentState: null,
 
+    _getFeedbackSelector: function() {
+      var state = this.getCurrentState();
+
+      return CONTROL_FEEDBACK_SELECTOR_PREFIX + FEEDBACK_SUFFIX[state];
+    },
+
     initialize: function(element, options) {
       this.$el = $(element).closest('.' + GROUP_CLASS);
 
@@ -60,35 +71,38 @@
         this.$el.addClass(getClassNames(state));
       }
 
-      if (state === 'error') {
-        this.showError.apply(this, _.toArray(arguments).slice(1));
+      if (arguments.length > 1) {
+        this.showMessage.apply(this, _.toArray(arguments).slice(1));
       }
 
       return this;
     },
 
-    showError: function(errorMessage) {
+    showMessage: function(message) {
+      if (!message) {
+        return;
+      }
+
+      var feedbackSelector = this._getFeedbackSelector();
       var $control = this.$el.find(CONTROL_SELECTOR);
-      var $feedback = this.$el.find(ERROR_FEEDBACK_SELECTOR);
+      var $feedback = this.$el.find(feedbackSelector);
 
-      if (errorMessage) {
-        // Message already set.
-        if (errorMessage === $feedback.attr('data-original-title')) {
-          return;
+      // Message already set.
+      if (message === $feedback.attr('data-original-title')) {
+        return;
+      }
+
+      $feedback.attr('title', message);
+
+      // If a tooltip is already attached just change the title
+      if (hasTooltip($feedback)) {
+        $feedback.tooltip('fixTitle');
+
+        if ($control.is(':focus')) {
+          $feedback.tooltip('show');
         }
 
-        $feedback.attr('title', errorMessage);
-
-        // If a tooltip is already attached just change the title
-        if (hasTooltip($feedback)) {
-          $feedback.tooltip('fixTitle');
-
-          if ($control.is(':focus')) {
-            $feedback.tooltip('show');
-          }
-
-          return;
-        }
+        return;
       }
 
       $feedback
@@ -116,7 +130,7 @@
       $control
         .on('focus.c.stateify', function() {
           $control.parents('form')
-            .find(ERROR_FEEDBACK_SELECTOR)
+            .find(feedbackSelector)
               .not($feedback)
                 .tooltip('hide');
 
@@ -147,7 +161,7 @@
     },
 
     clear: function() {
-      var $feedback = this.$el.find(ERROR_FEEDBACK_SELECTOR);
+      var $feedback = this.$el.find(this._getFeedbackSelector());
       var $control = this.$el.find(CONTROL_SELECTOR);
 
       $feedback

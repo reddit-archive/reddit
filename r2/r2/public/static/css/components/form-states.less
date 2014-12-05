@@ -27,6 +27,31 @@
 
 }
 
+.c-has-success {
+
+    .c-tooltip.right .tooltip-arrow {
+        border-right-color: @tooltip-success-arrow-color;
+    }
+
+    .c-tooltip.left .tooltip-arrow {
+        border-left-color: @tooltip-success-arrow-color;
+    }
+
+    .c-tooltip.top-right .tooltip-arrow,
+    .c-tooltip.top .tooltip-arrow {
+        border-top-color: @tooltip-success-arrow-color;
+    }
+
+    .c-tooltip.bottom .tooltip-arrow {
+        border-bottom-color: @tooltip-success-arrow-color;
+    }
+
+    .tooltip-inner {
+        background-color: @tooltip-success-bg;
+    }
+
+}
+
 .c-form-control-feedback-wrapper {
     width: calc(100% + 25px);
     width: 110%;
@@ -54,7 +79,7 @@
         background: none;
         .box-sizing(border-box);
         .animation(spin .75s linear infinite);
-        border: 2px solid #606060;
+        border: 2px solid @throbber-color;
         border-bottom-color: transparent;
         border-left-color: transparent;
         border-radius: 100%;
