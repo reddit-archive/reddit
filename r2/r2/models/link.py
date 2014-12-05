@@ -1313,8 +1313,8 @@ class MoreMessages(Printable):
         return self.parent.author
 
     @property
-    def recipient(self):
-        return self.parent.recipient
+    def user_is_recipient(self):
+        return self.parent.user_is_recipient
 
     @property
     def sr_id(self):
@@ -1584,13 +1584,111 @@ class Message(Thing, Printable):
         to_set_unread = []
 
         for item in wrapped:
-            item.to = accounts.get(item.to_id)
-            if item.sr_id:
-                item.recipient = (item.author_id != user._id)
-            else:
-                item.recipient = (item.to_id == user._id)
+            user_is_recipient = item.to_id == user._id
+            user_is_sender = (item.author_id == user._id and
+                not getattr(item, "display_author", None))
+            sent_by_sr = item.sr_id and getattr(item, 'from_sr', None)
+            sent_to_sr = item.sr_id and not item.to_id
 
-            if item.author_id == user._id:
+            item.to = accounts[item.to_id] if item.to_id else None
+            item.is_mention = False
+            item.is_collapsed = None
+            item.score_fmt = Score.none
+            item.hide_author = False
+
+            if item.was_comment:
+                item.user_is_recipient = user_is_recipient
+                link = links[item.link_id]
+                sr = srs[link.sr_id]
+                item.to_collapse = False
+                item.author_collapse = False
+                item.link_title = link.title
+                item.permalink = item.lookups[0].make_permalink(link, sr=sr)
+                item.link_permalink = link.make_permalink(sr)
+                item.full_comment_count = link.num_comments
+                parent = parents[item.parent_id] if item.parent_id else None
+
+                if parent:
+                    item.parent = parent._fullname
+                    item.parent_permalink = parent.make_permalink(link, sr)
+
+                if parent and parent.author_id == user._id:
+                    item.subject = _('comment reply')
+                elif not parent and link.author_id == user._id:
+                    item.subject = _('post reply')
+                else:
+                    item.subject = _('username mention')
+                    item.is_mention = True
+
+                item.taglinetext = _(
+                    "from %(author)s via %(subreddit)s sent %(when)s")
+            elif item.sr_id:
+                item.user_is_recipient = not user_is_sender
+                item.subreddit = srs[item.sr_id]
+                user_is_moderator = item.sr_id in user_mod_sr_ids
+
+                if sent_by_sr:
+                    if item.sr_id in blocked_srids:
+                        item.subject = _('[message from blocked subreddit]')
+                        item.sr_blocked = True
+                        item.is_collapsed = True
+
+                    if not user_is_moderator and not c.user_is_admin:
+                        item.author = item.subreddit
+                        item.hide_author = True
+                        item.taglinetext = _(
+                            "subreddit message via %(subreddit)s sent %(when)s")
+                    elif user_is_sender:
+                        item.taglinetext = _(
+                            "to %(dest)s sent %(when)s")
+                    else:
+                        item.taglinetext = _(
+                            "to %(dest)s from %(author)s via %(subreddit)s sent"
+                            " %(when)s")
+                else:
+                    if item._id in mod_message_authors:
+                        # let moderators see the original author when a regular
+                        # user responds to a modmail message from subreddit.
+                        # item.to_id is not set, but we found the original
+                        # sender by inspecting the parent message
+                        item.to = mod_message_authors[item._id]
+
+                    if user_is_recipient:
+                        item.taglinetext = _(
+                            "from %(author)s via %(subreddit)s sent %(when)s")
+                    elif user_is_sender and sent_to_sr:
+                        item.taglinetext = _("to %(subreddit)s sent %(when)s")
+                    elif user_is_sender:
+                        item.taglinetext = _(
+                            "to %(dest)s via %(subreddit)s sent %(when)s")
+                    elif sent_to_sr:
+                        item.taglinetext = _(
+                            "to %(subreddit)s from %(author)s sent %(when)s")
+                    else:
+                        item.taglinetext = _(
+                            "to %(dest)s from %(author)s via %(subreddit)s sent"
+                            " %(when)s")
+            else:
+                item.user_is_recipient = user_is_recipient
+
+                if item.display_author:
+                    item.author = accounts[item.display_author]
+
+                if item.display_to:
+                    item.to = accounts[item.display_to]
+                    if item.to_id == user._id:
+                        item.body = (strings.anonymous_gilder_warning +
+                            _force_unicode(item.body))
+
+                if user_is_recipient:
+                    item.taglinetext = _("from %(author)s sent %(when)s")
+                elif user_is_sender:
+                    item.taglinetext = _("to %(dest)s sent %(when)s")
+                else:
+                    item.taglinetext = _(
+                        "to %(dest)s from %(author)s sent %(when)s")
+
+            if user_is_sender:
                 item.new = False
             elif item._fullname in unread:
                 item.new = True
@@ -1600,102 +1698,21 @@ class Message(Thing, Printable):
             else:
                 item.new = item._fullname in mod_unread
 
-            item.score_fmt = Score.none
-
-            # comment as message:
-            item.is_mention = False
-            if item.was_comment:
-                link = links[item.link_id]
-                sr = srs[link.sr_id]
-                item.to_collapse = False
-                item.author_collapse = False
-                item.link_title = link.title
-                item.permalink = item.lookups[0].make_permalink(link, sr=sr)
-                item.link_permalink = link.make_permalink(sr)
-                item.full_comment_count = link.num_comments
-                if item.parent_id:
-                    parent = parents[item.parent_id]
-                    item.parent = parent._fullname
-                    item.parent_permalink = parent.make_permalink(link, sr)
-
-                    if parent.author_id == user._id:
-                        item.subject = _('comment reply')
-                    else:
-                        item.subject = _('username mention')
-                        item.is_mention = True
-                else:
-                    if link.author_id == user._id:
-                        item.subject = _('post reply')
-                    else:
-                        item.subject = _('username mention')
-                        item.is_mention = True
-            elif item.sr_id is not None:
-                item.subreddit = srs[item.sr_id]
-            else:
-                if item.display_author:
-                    item.author = accounts[item.display_author]
-                if item.display_to:
-                    item.to = accounts[item.display_to]
-                    if item.to_id == user._id:
-                        item.body = (strings.anonymous_gilder_warning +
-                            _force_unicode(item.body))
-
-            item.hide_author = False
-            item.is_collapsed = None
-            if getattr(item, "from_sr", False):
-                if not (item.subreddit._id in user_mod_sr_ids or
-                        c.user_is_admin):
-                    item.author = item.subreddit
-                    item.hide_author = True
-                if item.subreddit._id in blocked_srids:
-                    item.subject = _('[message from blocked subreddit]')
-                    item.sr_blocked = True
-                    item.is_collapsed = True
-
             if not item.new:
-                if item.recipient:
+                if item.user_is_recipient:
                     item.is_collapsed = item.to_collapse
                 if item.author_id == user._id:
                     item.is_collapsed = item.author_collapse
                 if user.pref_collapse_read_messages:
                     item.is_collapsed = (item.is_collapsed is not False)
+
             if item.author_id in user.enemies and not item.was_comment:
                 item.is_collapsed = True
                 if not c.user_is_admin:
                     item.subject = _('[message from blocked user]')
                     item.body = _('[unblock user to see this message]')
 
-            taglinetext = ''
-            if item.hide_author:
-                taglinetext = _("subreddit message %(author)s sent %(when)s")
-            elif (item.author_id == user._id and
-                  not getattr(item, "display_author", None)):
-                taglinetext = _("to %(dest)s sent %(when)s")
-            elif (item._id in mod_message_authors and
-                    (item.subreddit._id in user_mod_sr_ids or c.user_is_admin)):
-                item.to = mod_message_authors[item._id]
-                taglinetext = _("to %(dest)s from %(author)s sent %(when)s")
-            elif item.to_id == user._id or item.to_id is None:
-                taglinetext = _("from %(author)s sent %(when)s")
-            else:
-                taglinetext = _("to %(dest)s from %(author)s sent %(when)s")
-            item.taglinetext = taglinetext
-            if item.to:
-                if item.to._deleted:
-                    item.dest = "[deleted]"
-                else:
-                    item.dest = item.to.name
-            else:
-                item.dest = ""
-            if item.sr_id:
-                if item.hide_author:
-                    item.updated_author = _("via %(subreddit)s")
-                else:
-                    item.updated_author = _("%(author)s via %(subreddit)s")
-            else:
-                item.updated_author = ''
-
-            if item.sr_id and item.dest and item.to:
+            if item.sr_id and item.to:
                 item.to_is_moderator = item.to._id in mods_by_srid[item.sr_id]
 
         if to_set_unread:
@@ -1707,7 +1724,6 @@ class Message(Thing, Printable):
                 # Inbox.set_unread can only handle one type of thing at a time
                 queries.set_unread(things, user, unread=False)
 
-        # Run this last
         Printable.add_props(user, wrapped)
 
     @property

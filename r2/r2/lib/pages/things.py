@@ -206,7 +206,7 @@ class MessageButtons(PrintableButtons):
                                   permalink = permalink,
                                   was_comment = was_comment,
                                   unread = thing.new,
-                                  recipient = thing.recipient,
+                                  user_is_recipient = thing.user_is_recipient,
                                   can_reply = can_reply,
                                   parent_id = getattr(thing, "parent_id", None),
                                   show_report = True,

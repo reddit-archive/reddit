@@ -25,7 +25,9 @@
    from r2.lib.pages.things import MessageButtons
    from r2.lib.pages import WrappedUser
    from r2.lib.template_helpers import static, add_attr
+   from r2.models import Account
 %>
+
 <%inherit file="comment_skeleton.html"/>
 <%namespace file="utils.html" import="thing_timestamp" />
 
@@ -39,7 +41,7 @@
 </%def>
 
 <%def name="thing_css_class(what)" buffered="True">
-${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if thing.was_comment else ""} ${"recipient" if thing.recipient else ""} ${"message-reply" if getattr(thing, "is_child", False) else ""} ${"message-parent" if getattr(thing, "is_parent", False) else ""} ${"focal" if getattr(thing, "focal", False) else ""} ${"gold" if getattr(thing, "distinguished", "") == "gold" else ""} ${"gold-auto" if getattr(thing, "distinguished", "") == "gold-auto" else ""}
+${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if thing.was_comment else ""} ${"recipient" if thing.user_is_recipient else ""} ${"message-reply" if getattr(thing, "is_child", False) else ""} ${"message-parent" if getattr(thing, "is_parent", False) else ""} ${"focal" if getattr(thing, "focal", False) else ""} ${"gold" if getattr(thing, "distinguished", "") == "gold" else ""} ${"gold-auto" if getattr(thing, "distinguished", "") == "gold-auto" else ""}
 </%def>
 
 <%def name="tagline()">
@@ -48,35 +50,38 @@ ${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if
   </a>
 
   <%
-   author = WrappedUser(thing.author, thing.attribs, thing).render()
-   if thing.sr_id:
-     subreddit = '<a href="%s">%s</a>' % (thing.subreddit.path,
-                                          thing.subreddit.path)
-     if not thing.dest:
-       thing.dest = subreddit
-     elif thing.to:
-       to_attribs = []
-       if thing.to.name in g.admins:
-         add_attr(to_attribs, 'A')
-       elif thing.to_is_moderator:
-         link = '/r/%s/about/moderators' % thing.subreddit.name
-         label = _('moderator of /r/%(reddit)s, speaking officially')
-         label %= {'reddit': thing.subreddit.name}
-         add_attr(to_attribs, 'M', label=label, link=link)
-       thing.dest = WrappedUser(thing.to, to_attribs, thing).render()
-     author = websafe(thing.updated_author).replace(' ', '&#32;') % dict(
-       author=author,
-       subreddit=subreddit)
+    substitutions = {}
 
-   taglinetext = mako_websafe(thing.taglinetext).replace(' ', '&#32;') % dict(
-     when=capture(thing_timestamp, thing, thing.timesince, include_tense=True),
-     author=u"<b>%s</b>" % author,
-     dest=u"<b>%s</b>" % thing.dest)
+    if thing.sr_id:
+        substitutions['subreddit'] = u'<b><a href="%(path)s">%(path)s</a></b>' % dict(path=thing.subreddit.path)
+
+    substitutions['author'] = u"<b>%s</b>" % WrappedUser(thing.author, thing.attribs, thing).render()
+
+    if isinstance(thing.to, Account):
+        to_attribs = []
+        if thing.sr_id:
+            if thing.to.name in g.admins:
+                # distinguish admins in admin modmail
+                add_attr(to_attribs, 'A')
+            elif thing.to_is_moderator:
+                link = '/r/%s/about/moderators' % thing.subreddit.name
+                label = _('moderator of /r/%(reddit)s, speaking officially')
+                label %= {'reddit': thing.subreddit.name}
+                add_attr(to_attribs, 'M', label=label, link=link)
+        substitutions['dest'] = u"<b>%s</b>" % WrappedUser(thing.to, to_attribs, thing).render()
+    elif thing.sr_id:
+        substitutions['dest'] = substitutions['subreddit']
+
+    substitutions['when'] = capture(thing_timestamp, thing, thing.timesince, include_tense=True)
+
+    taglinetext = mako_websafe(thing.taglinetext).replace(' ', '&#32;')
+    taglinetext %= substitutions
   %>
 
   <span class="head">
     ${unsafe(taglinetext)}
   </span>
+
   %if c.user_is_admin:
     ${self.admintagline()}
   %endif
@@ -94,7 +99,7 @@ ${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if
        %else:
          <span class="correspondent rounded">
            <%
-              corr = thing.author if thing.recipient else thing.to
+              corr = thing.author if thing.user_is_recipient else thing.to
             %>
            ${WrappedUser(corr)}
          </span>

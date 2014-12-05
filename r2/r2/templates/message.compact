@@ -23,6 +23,7 @@
 <%!
     from r2.lib.pages import WrappedUser 
     from r2.lib.filters import safemarkdown, websafe, mako_websafe
+    from r2.models import Account
 %>
 <%namespace file="printable.html" import="arrow, score"/>
 <%namespace file="utils.html" import="plain_link" />
@@ -55,19 +56,24 @@
 
   <div class="entry">
   <%
-   author = WrappedUser(thing.author, thing.attribs, thing).render()
-   if thing.sr_id:
-     subreddit = '&nbsp;<a href="%s.compact">%s</a>&nbsp;' % \
-                   (thing.subreddit.path, thing.subreddit.path)
-     if not thing.dest:
-       thing.dest = subreddit
-     author = websafe(thing.updated_author) % dict(author=author, subreddit=subreddit)
-   
-   taglinetext = mako_websafe(thing.taglinetext).replace(' ', '&nbsp;')
-   taglinetext = taglinetext % dict(when=thing.timesince,
-                                    author=u"<b>%s</b>" % author,
-                                    dest=u"<b>%s</b>" % thing.dest)
+    substitutions = {}
+
+    if thing.sr_id:
+        substitutions['subreddit'] = u'<b>&nbsp;<a href="%(path)s.compact">%(path)s</a>&nbsp;</b>' % dict(path=thing.subreddit.path)
+
+    substitutions['author'] = u"<b>%s</b>" % WrappedUser(thing.author, thing.attribs, thing).render()
+
+    if isinstance(thing.to, Account):
+        substitutions['dest'] = u"<b>%s</b>" % WrappedUser(thing.to, [], thing).render()
+    elif thing.sr_id:
+        substitutions['dest'] = substitutions['subreddit']
+
+    substitutions['when'] = thing.timesince
+
+    taglinetext = mako_websafe(thing.taglinetext).replace(' ', '&nbsp;')
+    taglinetext %= substitutions
   %>
+
     <div class="tagline">
       ${unsafe(taglinetext)}
     </div>
