@@ -970,8 +970,8 @@ class BlockedSubredditsByAccount(tdb_cassandra.DenormalizedRelation):
 
 
 @trylater_hooks.on("trylater.account_deletion")
-def on_account_deletion(mature_items):
-    for account_id36 in mature_items.itervalues():
+def on_account_deletion(data):
+    for account_id36 in data.itervalues():
         account = Account._byID36(account_id36, data=True)
 
         if not account._deleted:

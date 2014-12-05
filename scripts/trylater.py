@@ -34,10 +34,10 @@ def run_trylater():
     our_hooks = (key[len(PREFIX):] for key in all_hooks().keys()
                  if key.startswith(PREFIX))
     with TryLater.multi_handle(our_hooks) as handleable:
-        for system, mature_items in handleable.iteritems():
+        for system, data in handleable.iteritems():
             hook_name = "trylater.%s" % system
             g.log.info("Trying %s", system)
 
-            get_hook(hook_name).call(mature_items=mature_items)
+            get_hook(hook_name).call(data=data)
 
     amqp.worker.join()

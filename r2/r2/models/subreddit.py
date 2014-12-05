@@ -2174,9 +2174,9 @@ class SubredditTempBan(object):
 
 
 @trylater_hooks.on('trylater.srunban')
-def on_subreddit_unban(mature_items):
+def on_subreddit_unban(data):
     from r2.models.modaction import ModAction
-    for blob in mature_items.itervalues():
+    for blob in data.itervalues():
         baninfo = json.loads(blob)
         container = Subreddit._byID36(baninfo['sr'], data=True)
         victim = Account._byID36(baninfo['who'], data=True)
