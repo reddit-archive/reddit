@@ -215,10 +215,11 @@ var CampaignCreator = React.createClass({
 
   getDefaultProps: function() {
     return {
+      bid: 0,
       targetName: '',
       cpm: 0,
-      minValidRequest: 0,
-      maxValidRequest: 0,
+      maxValidBid: 0,
+      minValidBid: 0,
       dates: [],
       inventory: [],
       requested: 0,
@@ -230,8 +231,8 @@ var CampaignCreator = React.createClass({
   getInitialState: function() {
     var totalAvailable = this.getAvailable(this.props);
     var available = totalAvailable;
-    if (this.props.maxValidRequest) {
-      available = Math.min(available, this.props.maxValidRequest);
+    if (this.props.maxValidBid) {
+      available = Math.min(available, this.getImpressions(this.props.maxValidBid));
     }
     return {
       totalAvailable: totalAvailable,
@@ -249,8 +250,8 @@ var CampaignCreator = React.createClass({
   componentWillReceiveProps: function(nextProps) {
     var totalAvailable = this.getAvailable(nextProps);
     var available = totalAvailable;
-    if (this.props.maxValidRequest) {
-      available = Math.min(available, this.props.maxValidRequest);
+    if (this.props.maxValidBid) {
+      available = Math.min(available, this.getImpressions(this.props.maxValidBid));
     }
     this.setState({
       totalAvailable: totalAvailable,
@@ -304,7 +305,7 @@ var CampaignCreator = React.createClass({
         );
       }
     }
-    else if (requested.impressions >= this.props.minValidRequest &&
+    else if (requested.bid >= this.props.minValidBid &&
              requested.impressions <= this.state.available) {
       var result = CampaignSet(null,
         InfoText(null, r._('the campaign you requested is available!')),
@@ -329,7 +330,7 @@ var CampaignCreator = React.createClass({
       }
       return result;
     }
-    else if (requested.impressions < this.props.minValidRequest) {
+    else if (requested.bid < this.props.minValidBid) {
       var minimal = this.getMinimizedOption();
       if (minimal.impressions <= this.state.available) {
         return CampaignSet(null,
@@ -347,7 +348,7 @@ var CampaignCreator = React.createClass({
     }
     else if (requested.impressions > this.state.available &&
              this.state.totalAvailable > this.state.available &&
-             maximized.impressions > this.props.minValidRequest) {
+             maximized.bid > this.props.minValidBid) {
       return CampaignSet(null,
         InfoText(null, 
           r._('the campaign you requested is too big! the largest campaign ' +
@@ -359,11 +360,11 @@ var CampaignCreator = React.createClass({
     else if (requested.impressions > this.state.available) {
 
       var options = [];
-      if (maximized.impressions >= this.props.minValidRequest) {
+      if (maximized.bid >= this.props.minValidBid) {
         options.push(CampaignOption(maximized));
       }
       var reduced = this.getReducedWindowOption();
-      if (reduced && reduced.impressions >= this.props.minValidRequest) {
+      if (reduced && reduced.bid >= this.props.minValidBid) {
         if (reduced.impressions > requested.impressions) {
           reduced.impressions = requested.impressions;
           reduced.bid = requested.bid;
@@ -399,18 +400,26 @@ var CampaignCreator = React.createClass({
     return $.datepicker.formatDate('mm/dd/yy', date);
   },
 
-  getBid: function(impressions) {
-    return Math.floor((impressions / 1000) * this.props.cpm) / 100;
+  getBid: function(impressions, requestedBid) {
+    if (this.getImpressions(requestedBid) === impressions) {
+      return requestedBid; 
+    } else {
+      return Math.floor((impressions / 1000) * this.props.cpm) / 100;
+    }
   },
 
-  getOptionData: function(startDate, duration, impressions) {
+  getImpressions: function(bid) {
+    return Math.floor(bid / this.props.cpm * 1000 * 100);
+  },
+
+  getOptionData: function(startDate, duration, impressions, requestedBid) {
     var endDate = new Date();
     endDate.setTime(startDate.getTime());
     endDate.setDate(startDate.getDate() + duration);
     return {
       start: this.formatDate(startDate),
       end: this.formatDate(endDate),
-      bid: this.getBid(impressions),
+      bid: this.getBid(impressions, requestedBid),
       impressions: Math.floor(impressions),
       isNew: this.props.isNew,
     };
@@ -420,7 +429,8 @@ var CampaignCreator = React.createClass({
     return this.getOptionData(
       this.props.dates[0],
       this.props.dates.length,
-      this.props.requested
+      this.props.requested,
+      this.props.bid
     );
   },
 
@@ -428,7 +438,8 @@ var CampaignCreator = React.createClass({
     return this.getOptionData(
       this.props.dates[0],
       this.props.dates.length,
-      this.state.available
+      this.state.available,
+      this.props.bid
     );
   },
 
@@ -436,7 +447,8 @@ var CampaignCreator = React.createClass({
     return this.getOptionData(
       this.props.dates[0],
       this.props.dates.length,
-      this.props.minValidRequest
+      this.getImpressions(this.props.minValidBid),
+      this.props.minValidBid
     );
   },
 
@@ -445,7 +457,7 @@ var CampaignCreator = React.createClass({
     var maxOffset = (this.state.maxTime - this.props.dates[0].getTime()) / days | 0;
     var res =  r.sponsored.getMaximumRequest(
       this.props.inventory,
-      this.props.minValidRequest,
+      this.getImpressions(this.props.minValidBid),
       this.props.requested,
       maxOffset
     );
@@ -453,7 +465,8 @@ var CampaignCreator = React.createClass({
       return this.getOptionData(
         this.props.dates[res.offset],
         res.days.length,
-        res.maxRequest.toString()
+        res.maxRequest,
+        this.props.bid
       );
     }
     else {
@@ -770,12 +783,13 @@ var exports = r.sponsored = {
                 });
                 React.renderComponent(
                   CampaignCreator({
+                    bid: bid,
                     cpm: cpm,
                     dates: dates,
                     inventory: availableByDay,
                     isNew: !$("#campaign").parents('tr:first').length,
-                    maxValidRequest: ((maxbid_amt / (cpm / 100)) * 1000) | 0,
-                    minValidRequest: ((minbid_amt / (cpm / 100)) * 1000) | 0,
+                    maxValidBid: parseFloat(maxbid_amt),
+                    minValidBid: parseFloat(minbid_amt),
                     override: isOverride,
                     requested: requested,
                     targetName: targeting.displayName,
@@ -1179,7 +1193,7 @@ var exports = r.sponsored = {
     },
 
     calc_impressions: function(bid, cpm_pennies) {
-        return bid / cpm_pennies * 1000 * 100
+        return Math.floor(bid / cpm_pennies * 1000 * 100);
     },
 
     calc_bid: function(impressions, cpm_pennies) {
