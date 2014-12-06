@@ -31,7 +31,7 @@ rmf $OUTPUT
  ****************************************************/
 
 log_raw = LOAD '$LOGFILE' USING TextLoader() AS (line);
-log_parsed = STREAM log_raw THROUGH PARSE_HOUR AS (ip, path:chararray, query, unique_id);
+log_parsed = STREAM log_raw THROUGH PARSE_HOUR AS (ip, path:chararray, query, response_code, unique_id);
 
 SPLIT log_parsed INTO
     pageviews_with_path IF path == '$URL_USERINFO',

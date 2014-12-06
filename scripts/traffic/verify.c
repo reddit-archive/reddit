@@ -28,13 +28,14 @@ int main(int argc, char** argv)
 
     while (fgets(input_line, MAX_LINE, stdin) != NULL) {
         /* get the fields */
-        char *ip, *path, *query, *unique_id;
+        char *ip, *path, *query, *response_code, *unique_id;
 
         split_fields(
             input_line, 
             &ip, 
             &path, 
             &query, 
+            &response_code, 
             &unique_id, 
             NO_MORE_FIELDS
         );
@@ -73,37 +74,42 @@ int main(int argc, char** argv)
                 continue;
         }
 
-        /* turn the expected hash into bytes */
-        bool bad_hash = false;
-        for (int i = 0; i < hash_length; i++) {
-            int count = sscanf(&hash[i*2], "%2hhx", &input_hash[i]);
-            if (count != 1) {
-                bad_hash = true;
-                break;
+        /* validation:
+            * for clicks just check the response code--validation was done in
+              the click redirect app
+            * for impression pixels check the hash
+        */
+        if (strcmp("/click", path) == 0) {
+            if (strcmp(response_code, "302") != 0) {
+                continue;
             }
+        } else {
+            /* turn the expected hash into bytes */
+            bool bad_hash = false;
+            for (int i = 0; i < hash_length; i++) {
+                int count = sscanf(&hash[i*2], "%2hhx", &input_hash[i]);
+                if (count != 1) {
+                    bad_hash = true;
+                    break;
+                }
+            }
+
+            if (bad_hash)
+                continue;
+
+            /* generate the expected hash */
+            HMAC_CTX ctx;
+
+            // NOTE: EMR has openssl <1.0, so these HMAC methods don't return
+            // error codes -- see https://www.openssl.org/docs/crypto/hmac.html
+            HMAC_Init(&ctx, secret, secret_length, EVP_sha1());
+            HMAC_Update(&ctx, id, id_length);
+            HMAC_Final(&ctx, expected_hash, &hash_length);
+
+            /* check that the hashes match */
+            if (memcmp(input_hash, expected_hash, SHA_DIGEST_LENGTH) != 0)
+                continue;
         }
-
-        if (bad_hash)
-            continue;
-
-        /* generate the expected hash */
-        HMAC_CTX ctx;
-
-        // NOTE: EMR has openssl <1.0, so these HMAC methods don't return
-        // error codes -- see https://www.openssl.org/docs/crypto/hmac.html
-        HMAC_Init(&ctx, secret, secret_length, EVP_sha1());
-
-        if (strcmp("/click", path) == 0 && url != NULL) {
-            /* the url is only for click hashes */
-            HMAC_Update(&ctx, url, url_length);
-        }
-
-        HMAC_Update(&ctx, id, id_length);
-        HMAC_Final(&ctx, expected_hash, &hash_length);
-
-        /* check that the hashes match */
-        if (memcmp(input_hash, expected_hash, SHA_DIGEST_LENGTH) != 0)
-            continue;
 
         /* split out the fullname and subreddit if necessary */
         char *fullname = id;

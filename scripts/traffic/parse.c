@@ -21,7 +21,7 @@
 #define RE  "(?:[0-9.]+,\\ )*([0-9.]+)"\
             "[^\"]+"\
             "\"GET\\s([^\\s?]+)\\?([^\\s]+)\\s[^\"]+\""\
-            "[^\"]+"\
+            "\\s([^\\s]+)[^\"]+"\
             "\"[^\"]+\""\
             "[^\"]+"\
             "\"([^\"]+)\""
@@ -29,7 +29,8 @@
 #define GROUP_IP    1
 #define GROUP_PATH  2
 #define GROUP_QUERY 3
-#define GROUP_UA    4
+#define GROUP_CODE  4
+#define GROUP_UA    5
 
 int main(int argc, char** argv) 
 {
@@ -110,6 +111,7 @@ int main(int argc, char** argv)
 
                 /* fall through so it gets written out as well */
             case GROUP_PATH:
+            case GROUP_CODE:
             case GROUP_QUERY:
                 /* write them out verbatim */
                 (void)fwrite(
