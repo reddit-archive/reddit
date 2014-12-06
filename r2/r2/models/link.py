@@ -1640,7 +1640,7 @@ class Message(Thing, Printable):
                             "subreddit message via %(subreddit)s sent %(when)s")
                     elif user_is_sender:
                         item.taglinetext = _(
-                            "to %(dest)s sent %(when)s")
+                            "to %(dest)s via %(subreddit)s sent %(when)s")
                     else:
                         item.taglinetext = _(
                             "to %(dest)s from %(author)s via %(subreddit)s sent"
