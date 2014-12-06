@@ -24,7 +24,7 @@
    from r2.lib.filters import safemarkdown, websafe, mako_websafe
    from r2.lib.pages.things import MessageButtons
    from r2.lib.pages import WrappedUser
-   from r2.lib.template_helpers import static
+   from r2.lib.template_helpers import static, add_attr
 %>
 <%inherit file="comment_skeleton.html"/>
 <%namespace file="utils.html" import="thing_timestamp" />
@@ -55,7 +55,13 @@ ${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if
      if not thing.dest:
        thing.dest = subreddit
      elif thing.to:
-       thing.dest = WrappedUser(thing.to, [], thing).render()
+       to_attribs = []
+       if thing.to_is_moderator:
+         link = '/r/%s/about/moderators' % thing.subreddit.name
+         label = _('moderator of /r/%(reddit)s, speaking officially')
+         label %= {'reddit': thing.subreddit.name}
+         add_attr(to_attribs, 'M', label=label, link=link)
+       thing.dest = WrappedUser(thing.to, to_attribs, thing).render()
      author = websafe(thing.updated_author).replace(' ', '&#32;') % dict(
        author=author,
        subreddit=subreddit)
