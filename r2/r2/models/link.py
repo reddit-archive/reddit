@@ -1529,14 +1529,13 @@ class Message(Thing, Printable):
         account_ids = to_ids | other_account_ids
         accounts = Account._byID(account_ids, data=True)
 
-        sr_ids = {w.sr_id for w in wrapped if w.sr_id}
-        srs = Subreddit._byID(sr_ids, data=True)
-
         link_ids = {w.link_id for w in wrapped if w.was_comment}
         links = Link._byID(link_ids, data=True)
 
+        sr_ids = {w.sr_id for w in wrapped if w.sr_id}
         link_sr_ids = {link.sr_id for link in links.itervalues()}
-        link_srs = Subreddit._byID(link_sr_ids, data=True)
+        all_sr_ids = sr_ids | link_sr_ids
+        srs = Subreddit._byID(all_sr_ids, data=True)
 
         parent_ids = {w.parent_id for w in wrapped
             if w.parent_id and w.was_comment}
@@ -1544,6 +1543,8 @@ class Message(Thing, Printable):
 
         # load full modlist for all subreddit messages
         mods_by_srid = {sr_id: srs[sr_id].moderator_ids() for sr_id in sr_ids}
+        user_mod_sr_ids = {sr_id for sr_id, mod_ids in mods_by_srid.iteritems()
+            if user._id in mod_ids}
 
         # special handling for mod replies to mod PMs
         mod_message_authors = {}
@@ -1552,7 +1553,7 @@ class Message(Thing, Printable):
             if (item.to_id is None and
                     item.sr_id and
                     item.parent_id and
-                    (c.user_is_admin or item.subreddit.is_moderator(user)))
+                    (c.user_is_admin or item.sr_id in user_mod_sr_ids))
         ]
         if mod_messages:
             parent_ids = [item.parent_id for item in mod_messages]
@@ -1568,11 +1569,11 @@ class Message(Thing, Printable):
         # load the unread list to determine message newness
         unread = set(queries.get_unread_inbox(user))
 
-        msg_srs = {srs[w.sr_id] for w in wrapped
-            if w.sr_id and isinstance(w.lookups[0], Message)}
-
         # load the unread mod list for the same reason
-        mod_unread = set(queries.get_unread_subreddit_messages_multi(msg_srs))
+        mod_msg_srs = {srs[w.sr_id] for w in wrapped
+            if w.sr_id and not w.was_comment and w.sr_id in user_mod_sr_ids}
+        mod_unread = set(
+            queries.get_unread_subreddit_messages_multi(mod_msg_srs))
 
         # load blocked subreddits
         sr_blocks = BlockedSubredditsByAccount.fast_query(user, srs.values())
@@ -1605,7 +1606,7 @@ class Message(Thing, Printable):
             item.is_mention = False
             if item.was_comment:
                 link = links[item.link_id]
-                sr = link_srs[link.sr_id]
+                sr = srs[link.sr_id]
                 item.to_collapse = False
                 item.author_collapse = False
                 item.link_title = link.title
@@ -1642,7 +1643,7 @@ class Message(Thing, Printable):
             item.hide_author = False
             item.is_collapsed = None
             if getattr(item, "from_sr", False):
-                if not (item.subreddit.is_moderator(user) or
+                if not (item.subreddit._id in user_mod_sr_ids or
                         c.user_is_admin):
                     item.author = item.subreddit
                     item.hide_author = True
@@ -1671,7 +1672,7 @@ class Message(Thing, Printable):
                   not getattr(item, "display_author", None)):
                 taglinetext = _("to %(dest)s sent %(when)s")
             elif (item._id in mod_message_authors and
-                    (item.subreddit.is_moderator(user) or c.user_is_admin)):
+                    (item.subreddit._id in user_mod_sr_ids or c.user_is_admin)):
                 item.to = mod_message_authors[item._id]
                 taglinetext = _("to %(dest)s from %(author)s sent %(when)s")
             elif item.to_id == user._id or item.to_id is None:
