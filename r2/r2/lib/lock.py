@@ -27,6 +27,7 @@ from threading import local
 from pylons import g
 import os
 import socket
+import random
 
 from r2.lib.utils import simple_traceback
 
@@ -91,7 +92,8 @@ class MemcacheLock(object):
                     msg = "Timed out waiting for %s" % self.key
                 raise TimeoutExpired(msg)
 
-            sleep(.01)
+            #this should prevent unnecessary spam on highly contended locks.
+            sleep(random.uniform(0.1, 1))
 
         timer.stop(subname=self.group)
 
