@@ -562,8 +562,10 @@ class Reddit(Templated):
                               collapsible=True)
 
     def sr_moderators(self):
-        accounts = Account._byID(c.site.moderators,
-                                 data=True, return_dict=False)
+        moderator_ids = c.site.moderator_ids()
+        allow_stale = not c.user_is_loggedin or c.user._id not in moderator_ids
+        accounts = Account._byID(
+            moderator_ids, data=True, return_dict=False, stale=allow_stale)
         return [WrappedUser(a) for a in accounts if not a._deleted]
 
     def rightbox(self):
