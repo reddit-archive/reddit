@@ -561,13 +561,6 @@ class Reddit(Templated):
                               _id="moderation_tools",
                               collapsible=True)
 
-    def sr_moderators(self):
-        moderator_ids = c.site.moderator_ids()
-        allow_stale = not c.user_is_loggedin or c.user._id not in moderator_ids
-        accounts = Account._byID(
-            moderator_ids, data=True, return_dict=False, stale=allow_stale)
-        return [WrappedUser(a) for a in accounts if not a._deleted]
-
     def rightbox(self):
         """generates content in <div class="rightbox">"""
 
@@ -743,17 +736,20 @@ class Reddit(Templated):
                 ps.append(extra_sidebox)
 
         if not isinstance(c.site, FakeSubreddit) and not c.cname:
-            moderators = self.sr_moderators()
-            if moderators:
-                more_text = mod_href = ""
+            moderator_ids = c.site.moderator_ids()
+            if moderator_ids:
                 sidebar_list_length = 10
-                num_not_shown = len(moderators) - sidebar_list_length
+                allow_stale = (not c.user_is_loggedin or
+                    c.user._id not in moderator_ids)
+                moderators = Account._byID(
+                    moderator_ids[:sidebar_list_length], data=True,
+                    return_dict=False, stale=allow_stale)
+                num_not_shown = len(moderator_ids) - sidebar_list_length
 
                 if num_not_shown > 0:
                     more_text = _("...and %d more") % (num_not_shown)
                 else:
                     more_text = _("about moderation team")
-                mod_href = c.site.path + 'about/moderators'
 
                 is_admin_sr = '/r/%s' % c.site.name == g.admin_message_acct
 
@@ -761,10 +757,14 @@ class Reddit(Templated):
                     label = _('message the admins')
                 else:
                     label = _('message the moderators')
+
+                wrapped_moderators = [WrappedUser(mod) for mod in moderators
+                    if not mod._deleted]
                 helplink = ("/message/compose?to=%%2Fr%%2F%s" % c.site.name,
                             label, is_admin_sr)
+                mod_href = c.site.path + 'about/moderators'
                 ps.append(SideContentBox(_('moderators'),
-                                         moderators[:sidebar_list_length],
+                                         wrapped_moderators,
                                          helplink = helplink,
                                          more_href = mod_href,
                                          more_text = more_text))
