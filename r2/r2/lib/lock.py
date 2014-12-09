@@ -29,6 +29,8 @@ import os
 import socket
 import random
 
+from _pylibmc import MemcachedError
+
 from r2.lib.utils import simple_traceback
 
 # thread-local storage for detection of recursive locks
@@ -77,23 +79,37 @@ class MemcacheLock(object):
         timer.start()
 
         #try and fetch the lock, looping until it's available
-        while not self.cache.add(self.key, self.nonce, time = self.time):
-            if (datetime.now() - start).seconds > self.timeout:
-                if self.verbose:
-                    info = self.cache.get(self.key)
-                    if info:
-                        info = "%s %s\n%s" % info
-                    else:
-                        info = "(nonexistent)"
-                    msg = ("\nSome jerk is hogging %s:\n%s" %
-                                         (self.key, info))
-                    msg += "^^^ that was the stack trace of the lock hog, not me."
-                else:
-                    msg = "Timed out waiting for %s" % self.key
-                raise TimeoutExpired(msg)
+        lock = None
+        while not lock:
+            # catch all exceptions here because we can't trust the memcached
+            # protocol. The add for the lock may have actually succeeded.
+            try:
+                lock = self.cache.add(self.key, self.nonce, time = self.time)
+            except MemcachedError as e:
+                if self.cache.get(self.key) == self.nonce:
+                    g.log.error(
+                        'Memcached add succeeded, but threw an exception for key %r %s',
+                        self.key, e)
+                    break
 
-            #this should prevent unnecessary spam on highly contended locks.
-            sleep(random.uniform(0.1, 1))
+            if not lock:
+                if (datetime.now() - start).seconds > self.timeout:
+                    if self.verbose:
+                        info = self.cache.get(self.key)
+                        if info:
+                            info = "%s %s\n%s" % info
+                        else:
+                            info = "(nonexistent)"
+                        msg = ("\nSome jerk is hogging %s:\n%s" %
+                                         (self.key, info))
+                        msg += "^^^ that was the stack trace of the lock hog, not me."
+                    else:
+                        msg = "Timed out waiting for %s" % self.key
+                    raise TimeoutExpired(msg)
+                else:
+                    # this should prevent unnecessary spam on highly contended locks.
+                    sleep(random.uniform(0.1, 1))
+
 
         timer.stop(subname=self.group)
 
