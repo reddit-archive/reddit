@@ -51,6 +51,12 @@ r.fraud = {
 
   init: function() {
     $('div.content').on(
+      'click',
+      '.action-thing',
+      this.showReason.bind(this)
+    );
+
+    $('div.content').on(
       'change',
       '.fraud-action-form input',
       this.validate.bind(this)
@@ -76,7 +82,18 @@ r.fraud = {
     } else {
       $submit.attr('disabled', 'disabled');
     }
-  }
+  },
+
+  showReason: function(e) {
+    var $el = $(e.target);
+    var $thing = $el.thing();
+    var $form = $thing.find('> .entry .action-form');
+    var $reason = $form.find('.fraud-reason');
+    var reason = $el.attr('title');
+
+    $reason.text('"' + reason + '"');
+  },
+
 };
 
 r.report = {

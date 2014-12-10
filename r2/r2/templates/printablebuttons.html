@@ -294,7 +294,7 @@
       %endif
       %if thing.is_awaiting_fraud_review:
         <li class="fraud-button">
-          <a href="javascript:void(0)" class="action-thing" data-action-form="#fraud-action-form">
+          <a href="javascript:void(0)" class="action-thing" data-action-form="#fraud-action-form" title="${thing.payment_flagged_reason}">
             ${_("fraud")}
           </a>
         </li>

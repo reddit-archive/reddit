@@ -10414,6 +10414,22 @@ body.with-listing-chooser {
   }
 }
 
+.fraud-reason {
+    display: none;
+
+    &:not(:empty) {
+        display: block;
+        padding-bottom: 5px;
+        margin-bottom: 5px;
+        border-bottom: 1px solid #d8bb3c;
+    }
+
+    &:before {
+        content: 'reason: ';
+        display: inline;
+    }
+}
+
 .action-form {
     display: none;
     background-color: #f6e69f;
