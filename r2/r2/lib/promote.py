@@ -504,6 +504,7 @@ def review_fraud(link, is_fraud):
     queries.unset_payment_flagged_link(link)
 
     if is_fraud:
+        reject_promotion(link, "fraud")
         hooks.get_hook("promote.fraud_identified").call(link=link, sponsor=c.user)
 
 
