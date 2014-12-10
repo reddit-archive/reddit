@@ -56,7 +56,9 @@ ${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if
        thing.dest = subreddit
      elif thing.to:
        to_attribs = []
-       if thing.to_is_moderator:
+       if thing.to.name in g.admins:
+         add_attr(to_attribs, 'A')
+       elif thing.to_is_moderator:
          link = '/r/%s/about/moderators' % thing.subreddit.name
          label = _('moderator of /r/%(reddit)s, speaking officially')
          label %= {'reddit': thing.subreddit.name}
