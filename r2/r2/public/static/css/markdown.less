@@ -1,14 +1,17 @@
-@red: #F2142F;
+@warning-red: #EA0027;
 @orangered: #FF4500;
-@orange: #FF912E;
+@orange: #FF8717;
 @yellow: #FFD635;
 @highlight: #FFF03E;
 @gold: #D8C161;
 @lime: #C7E223;
-@green: #80D654;
-@teal: #52C0B1;
-@dark-teal: #0BA08E;
-@link-blue: #218bb2;
+@green: #7CD344;
+@teal: #25B79F;
+@dark-teal: #008985;
+// @link-blue: #218BB2;
+// style guide @link-blue is #24A0ED, but that's too zesty for reddit.com
+// using the @alien-blue color for links here instead
+@link-blue: #0079D3;
 @periwinkle: #9494FF;
 @white: #FFFFFF;
 @off-white: #FCFCF7;
@@ -16,6 +19,8 @@
 @pale-grey: #E5E3DA;
 @grey: #B5B3AC;
 @semi-black: #222222;
+
+// non-styleguide colors:
 @ui-blue: #336699;
 @ads-blue: #6093BF;
 @ads-grey: #F8F8F8;
@@ -164,7 +169,7 @@
 
   code,
   pre {
-    border: 1px solid @pale-grey;
+    border: 1px solid darken(@off-white, 10%);
     background-color: @off-white;
     border-radius: 2px;
   }
