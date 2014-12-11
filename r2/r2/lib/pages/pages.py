@@ -1226,7 +1226,7 @@ class LoginPage(BoringPage):
             title = self.short_title
         else:
             if feature.is_enabled('new_login_flow'):
-                title = _("create account or sign in")
+                title = _("create an account or sign in")
             else:
                 title = _("login or register")
 
