@@ -22,6 +22,9 @@
 @dark-grey: #808080;
 @text-grey: #706f6f;
 
+@base-font-keyword: small;
+@base-font-keyword-size: 13; // small == 13px;
+@base-font-size: 14;
 
 .md-margins(@font, @top, @bottom) {
   margin-top: (@top / @font) * 1em;
@@ -31,20 +34,27 @@
 .md-font-size(@font, @line, @top, @bottom) {
   // define a desired font size/line-height/margin-top/margin-bottom as ints
   // have converted to em-based definition
-  font-size: (@font / 10) * 1em;
+  font-size: (@font / @base-font-size) * 1em;
   line-height: (@line / @font) * 1em;
   .md-margins(@font, @top, @bottom);
 }
 
 .md-font-size(@font, @line) {
-  font-size: (@font / 10) * 1em;
+  font-size: (@font / @base-font-size) * 1em;
   line-height: (@line / @font) * 1em;
 }
 
 
-.md {
-  font-size: x-small; // == 10px
+.usertext-body, 
+.wiki-page-content {
+  font-size: @base-font-keyword;
+}
 
+.md {
+  font-size: (@base-font-size / @base-font-keyword-size) * 1em;
+}
+
+.md {
   h1, h2, h3, h4, h5, h6 {
     &:extend(.md .-headers all);
   }
@@ -65,9 +75,7 @@
     &:extend(.md .-text all);
   }
 
-  // font-size is x-small, or 10px, but the default font-size for content is
-  // actually 14px;  84em at 10px === 60em at 14px.
-  max-width: 84em; 
+  max-width: 60em; 
 
   .-headers {
     border: 0;
