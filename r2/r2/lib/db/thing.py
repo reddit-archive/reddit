@@ -361,6 +361,8 @@ class DataThing(object):
         prefix = thing_prefix(cls.__name__)
 
         for x in ids:
+            if not isinstance(x, (int, long)):
+                raise ValueError('non-integer thing_id in %r' % ids)
             if x > tdb.MAX_THING_ID:
                 raise NotFound('huge thing_id in %r' % ids)
             elif x < tdb.MIN_THING_ID:
