@@ -131,7 +131,9 @@ ${self.subject()}
       </a>
     </p>
  %endif
-${unsafe(safemarkdown(thing.body))}
+ <div class="md-container">
+   ${unsafe(safemarkdown(thing.body))}
+ </div>
 </%def>
 
 <%def name="buttons()">
