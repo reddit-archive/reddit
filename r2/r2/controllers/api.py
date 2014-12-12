@@ -1637,6 +1637,9 @@ class ApiController(RedditController):
                 form.has_errors("thing_id", errors.NOT_AUTHOR)):
             return
 
+        if isinstance(item, Link) and not item.is_self:
+            return abort(403, "forbidden")
+
         if isinstance(item, Comment):
             max_length = 10000
             admin_override = False
