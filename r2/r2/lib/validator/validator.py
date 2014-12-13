@@ -1145,12 +1145,10 @@ class VSrCanBan(VByName):
             return True
         elif c.user_is_loggedin:
             item = VByName.run(self, thing_name)
-            # will throw a legitimate 500 if this isn't a link or
-            # comment, because this should only be used on links and
-            # comments
-            subreddit = item.subreddit_slow
-            if subreddit.is_moderator_with_perms(c.user, 'posts'):
-                return True
+            if isinstance(item, (Link, Comment, Message)):
+                sr = item.subreddit_slow
+                if sr and sr.is_moderator_with_perms(c.user, 'posts'):
+                    return True
         abort(403,'forbidden')
 
 class VSrSpecial(VByName):
