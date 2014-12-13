@@ -1638,7 +1638,8 @@ class Message(Thing, Printable):
                 if item.display_to:
                     item.to = Account._byID(item.display_to)
                     if item.to_id == c.user._id:
-                        item.body = strings.anonymous_gilder_warning + item.body
+                        item.body = (strings.anonymous_gilder_warning +
+                            _force_unicode(item.body))
 
             item.hide_author = False
             item.is_collapsed = None
