@@ -95,7 +95,6 @@ from r2.models import (
     DomainSR,
     FakeAccount,
     FakeSubreddit,
-    Friends,
     Frontpage,
     get_request_location,
     LabeledMulti,
@@ -369,19 +368,14 @@ def set_subreddit():
     elif '+' in sr_name:
         sr_names = sr_name.split('+')
         srs = Subreddit._by_name(sr_names, stale=can_stale).values()
-        if All in srs:
-            c.site = All
-        elif Friends in srs:
-            c.site = Friends
+        srs = [sr for sr in srs if not isinstance(sr, FakeSubreddit)]
+        multi_path = '/r/' + sr_name
+        if not srs:
+            c.site = MultiReddit(multi_path, [])
+        elif len(srs) == 1:
+            c.site = srs[0]
         else:
-            srs = [sr for sr in srs if not isinstance(sr, FakeSubreddit)]
-            multi_path = '/r/' + sr_name
-            if not srs:
-                c.site = MultiReddit(multi_path, [])
-            elif len(srs) == 1:
-                c.site = srs[0]
-            else:
-                c.site = MultiReddit(multi_path, srs)
+            c.site = MultiReddit(multi_path, srs)
     elif '-' in sr_name:
         sr_names = sr_name.split('-')
         base_sr_name, exclude_sr_names = sr_names[0], sr_names[1:]
