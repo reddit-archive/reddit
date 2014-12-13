@@ -366,16 +366,19 @@ def set_subreddit():
         #reddits
         c.site = Sub
     elif '+' in sr_name:
-        sr_names = sr_name.split('+')
+        sr_names = filter(chksrname, sr_name.split('+'))
         srs = Subreddit._by_name(sr_names, stale=can_stale).values()
         srs = [sr for sr in srs if not isinstance(sr, FakeSubreddit)]
-        multi_path = '/r/' + sr_name
-        if not srs:
-            c.site = MultiReddit(multi_path, [])
-        elif len(srs) == 1:
+        if len(srs) == 1:
             c.site = srs[0]
-        else:
+        elif srs:
+            found = {sr.name.lower() for sr in srs}
+            sr_names = filter(lambda name: name.lower() in found, sr_names)
+            sr_name = '+'.join(sr_names)
+            multi_path = '/r/' + sr_name
             c.site = MultiReddit(multi_path, srs)
+        elif not c.error_page:
+            abort(404)
     elif '-' in sr_name:
         sr_names = sr_name.split('-')
         base_sr_name, exclude_sr_names = sr_names[0], sr_names[1:]
