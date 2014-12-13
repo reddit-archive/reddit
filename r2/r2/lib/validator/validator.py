@@ -527,12 +527,12 @@ class VCssMeasure(Validator):
 subreddit_rx = re.compile(r"\A[A-Za-z0-9][A-Za-z0-9_]{2,20}\Z")
 language_subreddit_rx = re.compile(r"\A[a-z]{2}\Z")
 
-def chksrname(x, allow_language_srs=False):
+def chksrname(x, allow_language_srs=False, allow_special_srs=False):
     if not x:
         return None
 
     #notice the space before reddit.com
-    if x in ('friends', 'all', ' reddit.com'):
+    if not allow_special_srs and x in ('friends', 'all', ' reddit.com'):
         return False
 
     try:
