@@ -1145,9 +1145,13 @@ class VSrCanBan(VByName):
             return True
         elif c.user_is_loggedin:
             item = VByName.run(self, thing_name)
-            if isinstance(item, (Link, Comment, Message)):
+            if isinstance(item, (Link, Comment)):
                 sr = item.subreddit_slow
-                if sr and sr.is_moderator_with_perms(c.user, 'posts'):
+                if sr.is_moderator_with_perms(c.user, 'posts'):
+                    return True
+            elif isinstance(item, Message):
+                sr = item.subreddit_slow
+                if sr and sr.is_moderator_with_perms(c.user, 'mail'):
                     return True
         abort(403,'forbidden')
 
