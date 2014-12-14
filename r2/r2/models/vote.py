@@ -194,7 +194,7 @@ class VoteDetailsByDay(tdb_cassandra.View):
 
     @classmethod
     def count_votes(cls, date):
-        return cls._cf.get_count(cls._rowkey(date))
+        return sum(1 for x in cls._cf.xget(cls._rowkey(date)))
 
 
 @tdb_cassandra.view_of(LinkVotesByAccount)
