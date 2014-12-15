@@ -1643,7 +1643,7 @@ class Message(Thing, Printable):
                             "to %(dest)s via %(subreddit)s sent %(when)s")
                     else:
                         item.taglinetext = _(
-                            "to %(dest)s from %(author)s via %(subreddit)s sent"
+                            "from %(author)s via %(subreddit)s to %(dest)s sent"
                             " %(when)s")
                 else:
                     if item._id in mod_message_authors:
@@ -1663,10 +1663,10 @@ class Message(Thing, Printable):
                             "to %(dest)s via %(subreddit)s sent %(when)s")
                     elif sent_to_sr:
                         item.taglinetext = _(
-                            "to %(subreddit)s from %(author)s sent %(when)s")
+                            "from %(author)s to %(subreddit)s sent %(when)s")
                     else:
                         item.taglinetext = _(
-                            "to %(dest)s from %(author)s via %(subreddit)s sent"
+                            "from %(author)s via %(subreddit)s to %(dest)s sent"
                             " %(when)s")
             else:
                 item.user_is_recipient = user_is_recipient
