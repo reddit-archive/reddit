@@ -108,7 +108,7 @@ class BaseController(WSGIController):
         else:
             request.ip = environ['REMOTE_ADDR']
 
-        #if x-dont-decode is set, pylons won't unicode all the paramters
+        #if x-dont-decode is set, pylons won't unicode all the parameters
         if environ.get('HTTP_X_DONT_DECODE'):
             request.charset = None
 
@@ -169,7 +169,7 @@ class BaseController(WSGIController):
             if not kw.has_key('port'):
                 kw['port'] = request.port
 
-            # disentagle the cname (for urls that would have
+            # disentangle the cname (for urls that would have
             # cnameframe=1 in them)
             u.mk_cname(**kw)
 
