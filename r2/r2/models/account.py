@@ -132,6 +132,10 @@ class Account(Thing):
                      pref_hide_locationbar=False,
                      pref_creddit_autorenew=False,
                      update_sent_messages=True,
+                     num_payment_methods=0,
+                     num_failed_payments=0,
+                     pref_show_snoovatar=False,
+                     gild_reveal_username=False,
                      )
     _preference_attrs = tuple(k for k in _defaults.keys()
                               if k.startswith("pref_"))

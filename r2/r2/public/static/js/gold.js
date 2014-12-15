@@ -4,9 +4,24 @@ r.gold = {
     init: function () {
         $('div.content').on(
             'click',
+            '[name="message"]',
+            this._toggleGiftMessage.bind(this)
+        );
+
+        $('div.content').on(
+            'click',
             'a.give-gold, .gold-payment .close-button',
-            $.proxy(this, '_toggleThingGoldForm')
-        )
+            this._toggleThingGoldForm.bind(this)
+        );
+
+        // this fires when any of the checkout buttons are clicked
+        // updates the signed and giftmessage properties in the payment_blob
+        // failures should be rare and it's probably safe for any updates to be lost
+        $('div.content').on(
+            'click',
+            '.gold-button',
+            this._setGildingProperties.bind(this)
+        );
 
         $('.stripe-gold').click(function(){
             $("#stripe-payment").slideToggle()
@@ -47,6 +62,15 @@ r.gold = {
         })
     },
 
+    _toggleGiftMessage: function(e){
+        var messageCheckbox = e.target;
+        var includeMsg = messageCheckbox.checked;
+        var giftmessage_id = $(e.target).parents('.gold-form').find('[name="giftmessage"]').attr('id');
+        var $form = $('#' + giftmessage_id);
+
+        $form.toggleClass('hidden', !includeMsg);
+    },
+    
     _toggleThingGoldForm: function (e) {
         var $link = $(e.target)
         var $thing = $link.thing()
@@ -85,6 +109,7 @@ r.gold = {
         var authorName = $link.thing().find('.entry .author:first').text()
         var passthroughs = form.find('.passthrough')
         var cbBaseUrl = form.find('[name="cbbaseurl"]').val()
+        var signed = !(form.find('[name="signed"]')).is(':checked');
 
         goldwrap
           .removeClass(cloneClass)
@@ -103,7 +128,7 @@ r.gold = {
             form.find('button').addClass('disabled')
         }, 200)
 
-        $.request('generate_payment_blob.json', {thing: thingFullname}, function (token) {
+        $.request('generate_payment_blob.json', {thing: thingFullname, signed: signed}, function (token) {
             clearTimeout(workingTimer)
             form.removeClass('working')
             passthroughs.val(token)
@@ -113,6 +138,30 @@ r.gold = {
         })
 
         return false
+    },
+
+    _setGildingProperties: function (e) {
+        var $button = $(e.target);
+        var thingFullname = $button.thing_id();
+
+        // If /gold, then don't set signed and message properties
+        if (!thingFullname) {
+          return;
+        }
+
+        var wrapId = 'gold_wrap_' + thingFullname;
+        var $goldwrap = $('#' + wrapId);
+        var passthroughs = $goldwrap.find('.passthrough');
+        var code = passthroughs.val();
+        var signed = !$goldwrap.find('[name="signed"]').is(':checked');
+        var includeMsg = $goldwrap.find('[name="message"]').is(':checked');
+        var giftmessage = "";
+
+        if (includeMsg) {
+          giftmessage = ($goldwrap.find('[name="giftmessage"]')).val();
+        }
+
+        $.request('modify_payment_blob.json', {code: code, signed: signed, message: giftmessage})
     },
 
     // When spending creddits, update the templates we use to generate the gilding form to display the

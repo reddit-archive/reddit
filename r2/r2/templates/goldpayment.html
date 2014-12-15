@@ -63,7 +63,21 @@
               %endif
             </div>
           </div>
-          <div class="buttons">
+
+          %if thing.clone_template:
+            <ul class="indent">
+              <li>
+                <input type="checkbox" id="signed-false" name="signed" ${'checked' if not c.user.gild_reveal_username else ''}>${_('make my gift anonymous')}
+              </li>
+              <li>
+                <input type="checkbox" id="message" name="message">${_('include a message')}
+              </li>
+              <li>
+                <textarea rows="3" cols="50" id="giftmessage" name="giftmessage" placeholder="${_('enter your message')}" class="hidden giftmessage" maxlength="500">${thing.giftmessage}</textarea>
+              </li>
+            </ul>
+          %endif
+            <div class="buttons">
               <p>${_("Please select a payment method.")}</p>
 
               %if thing.can_use_creddits:
@@ -133,6 +147,7 @@
 <%def name="stripe_button()">
   <span class="gold-checkout">
     <button class="btn stripe-gold gold-button">${_('Credit Card')}</button>
+    <input type="hidden" name="custom" value="${thing.passthrough}" class="passthrough">
   </span>
 </%def>
 
@@ -232,6 +247,7 @@
           %endif
           >${_('Bitcoin')}</button>
   <input type="hidden" name="cbbaseurl" value="https://coinbase.com/checkouts/${thing.coinbase_button_id}">
+  <input type="hidden" name="custom" value="${thing.passthrough}" class="passthrough">
 </%def>
 
 % if not thing.clone_template:

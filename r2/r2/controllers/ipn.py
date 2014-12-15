@@ -77,13 +77,15 @@ from r2.models import (
     generate_token,
 )
 
+BLOB_TTL = 86400 * 30
 stripe.api_key = g.secrets['stripe_secret_key']
+
 
 def generate_blob(data):
     passthrough = generate_token(15)
 
     g.hardcache.set("payment_blob-" + passthrough,
-                    data, 86400 * 30)
+                    data, BLOB_TTL)
     g.log.info("just set payment_blob-%s", passthrough)
     return passthrough
 
@@ -98,8 +100,22 @@ def get_blob(code):
             raise ValueError("payment_blob %s has status = %s" %
                              (code, blob.get('status', None)))
         blob['status'] = "locked"
-        g.hardcache.set(key, blob, 86400 * 30)
+        g.hardcache.set(key, blob, BLOB_TTL)
     return key, blob
+
+
+def update_blob(code, updates=None):
+    blob = g.hardcache.get("payment_blob-%s" % code)
+    if not blob:
+        raise NotFound("No payment_blob-" + code)
+    if blob.get('account_id', None) != c.user._id:
+        raise ValueError("%s doesn't have access to payment_blob %s" %
+                         (c.user._id, code))
+
+    for item, value in updates.iteritems():
+        blob[item] = value
+    g.hardcache.set("payment_blob-%s" % code, blob, BLOB_TTL)
+
 
 def has_blob(custom):
     if not custom:
@@ -271,17 +287,20 @@ def send_gift(buyer, recipient, months, days, signed, giftmessage,
     if not thing:
         subject = _('Let there be gold! %s just sent you reddit gold!') % sender
         message = strings.youve_got_gold % dict(sender=md_sender, amount=amount)
-
-        if giftmessage and giftmessage.strip():
-            message += "\n\n" + strings.giftgold_note + giftmessage + '\n\n----'
     else:
         url = thing.make_permalink_slow()
         if isinstance(thing, Comment):
             subject = _('Your comment has been gilded!')
-            message = strings.youve_been_gilded_comment % {'url': url}
+            message = strings.youve_been_gilded_comment 
+            message %= {'sender': md_sender, 'url': url}
         else:
             subject = _('Your submission has been gilded!')
-            message = strings.youve_been_gilded_link % {'url': url}
+            message = strings.youve_been_gilded_link 
+            message %= {'sender': md_sender, 'url': url}
+
+    if giftmessage and giftmessage.strip():
+        message += ("\n\n" + strings.giftgold_note + 
+                    _force_unicode(giftmessage) + '\n\n----')
 
     message += '\n\n' + strings.gold_benefits_msg
     if g.lounge_reddit:
@@ -424,7 +443,7 @@ class IpnController(RedditController):
         form.find("button").hide()
 
         payment_blob["status"] = "processed"
-        g.hardcache.set(blob_key, payment_blob, 86400 * 30)
+        g.hardcache.set(blob_key, payment_blob, BLOB_TTL)
 
         if thing:
             gilding_message = make_gold_message(thing, user_gilded=True)
@@ -626,7 +645,7 @@ class IpnController(RedditController):
                 g.log.error('finish: could not send system message')
 
         payment_blob["status"] = "processed"
-        g.hardcache.set(blob_key, payment_blob, 86400 * 30)
+        g.hardcache.set(blob_key, payment_blob, BLOB_TTL)
 
 
 class Webhook(object):

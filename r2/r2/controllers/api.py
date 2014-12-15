@@ -97,7 +97,7 @@ from r2.lib.search import SearchQuery
 from r2.controllers.oauth2 import require_oauth2_scope, allow_oauth2_access
 from r2.lib.template_helpers import add_sr, get_domain, make_url_protocol_relative
 from r2.lib.system_messages import notify_user_added
-from r2.controllers.ipn import generate_blob
+from r2.controllers.ipn import generate_blob, update_blob
 from r2.lib.lock import TimeoutExpired
 from r2.lib.csrf import csrf_exempt
 
@@ -4129,10 +4129,13 @@ class ApiController(RedditController):
                 jquery('#developed-app-%s .edit-app-icon-button'
                        % client._id).toggleClass('collapsed')
 
-    @json_validate(VUser(),
-                   VModhash(),
-                   thing=VByName("thing"))
-    def POST_generate_payment_blob(self, responder, thing):
+    @json_validate(
+        VUser(),
+        VModhash(),
+        thing=VByName("thing"),
+        signed=VBoolean("signed")
+    )
+    def POST_generate_payment_blob(self, responder, thing, signed):
         if not thing:
             abort(400, "Bad Request")
 
@@ -4157,11 +4160,30 @@ class ApiController(RedditController):
             account_id=c.user._id,
             account_name=c.user.name,
             status="initialized",
-            signed=False,
+            signed=signed,
             recipient=recipient.name,
             giftmessage=None,
             thing=thing._fullname,
         ))
+
+    @json_validate(
+        VUser(),
+        VModhash(),
+        code=nop("code"),
+        signed=VBoolean("signed", default=False),
+        message=nop("message")
+    )
+    def POST_modify_payment_blob(self, responder, code, signed, message):
+        if c.user.gild_reveal_username != signed:
+            c.user.gild_reveal_username = signed
+            c.user._commit()
+
+        updates = {}
+        updates["signed"] = signed
+        if message and message.strip() != "":
+            updates["giftmessage"] = message
+
+        update_blob(str(code), updates)
 
     @csrf_exempt
     @validate(srnames=VPrintable("srnames", max_length=2100))
