@@ -1557,7 +1557,7 @@ class ApiController(RedditController):
             Report.new(c.user, thing, reason)
             admintools.report(thing)
 
-        if isinstance(thing, Link):
+        if isinstance(thing, (Link, Message)):
             button = jquery(".id-%s .report-button" % thing._fullname)
         elif isinstance(thing, Comment):
             button = jquery(".id-%s .entry:first .report-button" % thing._fullname)
