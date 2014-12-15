@@ -4736,7 +4736,7 @@ class SubredditSelector(Templated):
 
         if include_user_subscriptions:
             self.subreddits.append((
-                _('popular choices'),
+                _('your subscribed subreddits'),
                 Subreddit.user_subreddits(c.user, ids=False)
             ))
 
