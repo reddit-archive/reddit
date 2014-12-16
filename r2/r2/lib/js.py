@@ -498,7 +498,7 @@ module["policies"] = Module("policies.js",
 module["sponsored"] = LocalizedModule("sponsored.js",
     "lib/ui.core.js",
     "lib/ui.datepicker.js",
-    "lib/react-0.11.2.js",
+    "lib/react-with-addons-0.11.2.js",
     "sponsored.js"
 )
 
