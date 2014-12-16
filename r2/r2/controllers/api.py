@@ -1536,7 +1536,11 @@ class ApiController(RedditController):
         # if it is a message that is being reported, ban it.
         # every user is admin over their own personal inbox
         if isinstance(thing, Message):
-            if c.user._id != thing.to_id:
+            # Ensure the message is either to them directly or indirectly
+            # (through modmail), to prevent unauthorized banning through
+            # spoofing.
+            if (c.user._id != thing.to_id and
+                    not (sr and c.user._id in sr.moderator_ids())):
                 abort(403)
             admintools.spam(thing, False, True, c.user.name)
         # auto-hide links that are reported
