@@ -223,7 +223,7 @@ def default_thing_wrapper(**params):
             if thing.promoted is not None:
                 w.render_class = PromotedLink
             elif style == 'htmllite':
-                w.score_fmt = Score.points
+                w.score_fmt = Score.safepoints
             w.should_incr_counts = style != 'htmllite'
         return w
     params['parent_wrapper'] = _default_thing_wrapper

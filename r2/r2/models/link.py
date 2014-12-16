@@ -426,11 +426,11 @@ class Link(Thing, Printable):
             if not hasattr(item, "score_fmt"):
                 item.score_fmt = Score.number_only
             if c.render_style == 'compact':
-                item.score_fmt = Score.points
+                item.score_fmt = Score.safepoints
             item.pref_compress = user.pref_compress
             if user.pref_compress:
                 item.extra_css_class = "compressed"
-                item.score_fmt = Score.points
+                item.score_fmt = Score.safepoints
             elif pref_media == 'on' and not user.pref_compress:
                 show_media = True
             elif pref_media == 'subreddit' and item.subreddit.show_media:
@@ -658,7 +658,7 @@ class Link(Thing, Printable):
             else:
                 author_text = " <span>" + _ws("by %(author)s") + "</span>"
             if item.editted:
-                if item.score_fmt == Score.points:
+                if item.score_fmt in (Score.points, Score.safepoints):
                     taglinetext = ("<span>" +
                                    _ws("%(score)s submitted %(when)s "
                                        "%(lastedited)s") +
@@ -671,7 +671,7 @@ class Link(Thing, Printable):
                     taglinetext = _("submitted %(when)s %(lastedited)s "
                                     "by %(author)s")
             else:
-                if item.score_fmt == Score.points:
+                if item.score_fmt in (Score.points, Score.safepoints):
                     taglinetext = ("<span>" +
                                    _ws("%(score)s submitted %(when)s") +
                                    "</span>")

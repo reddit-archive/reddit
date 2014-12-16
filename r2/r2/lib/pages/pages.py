@@ -2892,7 +2892,7 @@ class FrameToolbar(Wrapped):
         nonempty = [w for w in wrapped if hasattr(w, "_fullname")]
         Link.add_props(user, nonempty)
         for w in wrapped:
-            w.score_fmt = Score.points
+            w.score_fmt = Score.safepoints
             if not hasattr(w, '_fullname'):
                 w._fullname = None
                 w.tblink = add_sr("/s/"+quote(w.url))
