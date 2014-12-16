@@ -425,7 +425,7 @@ class Link(Thing, Printable):
             show_media = False
             if not hasattr(item, "score_fmt"):
                 item.score_fmt = Score.number_only
-            if c.render_style == 'compact':
+            if c.render_style in ('compact', extensions.api_type("compact")):
                 item.score_fmt = Score.safepoints
             item.pref_compress = user.pref_compress
             if user.pref_compress:
