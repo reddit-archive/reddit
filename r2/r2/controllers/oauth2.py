@@ -244,8 +244,8 @@ class OAuth2AccessController(MinimalController):
         * ``authorization_code`` for the initial access token ("standard" OAuth2 flow)
         * ``refresh_token`` for renewing the access token.
         * ``password`` for script-type apps using password auth
-        * ``client_credentials`` for application-only (logged out) access - confidential clients
-        * ``https://oauth.reddit.com/grants/installed_client`` extension grant for application-only (logged out)
+        * ``client_credentials`` for application-only (signed out) access - confidential clients
+        * ``https://oauth.reddit.com/grants/installed_client`` extension grant for application-only (signed out)
                 access - non-confidential (installed) clients
 
         **redirect_uri** must exactly match the value that was used in the call

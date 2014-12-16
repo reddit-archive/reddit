@@ -69,11 +69,11 @@ string_dict = dict(
 
     user_deleted = _("your account has been deleted, but we won't judge you for it."),
 
-    cover_msg      = _("you'll need to login or register to do that"),
+    cover_msg      = _("you'll need to sign in or create an account to do that"),
     cover_disclaim = _("(don't worry, it only takes a few seconds)"),
 
     oauth_login_msg = _(
-        "Log in or register to connect your reddit account with %(app)s."),
+        "Sign in or create an account to connect your reddit account with %(app)s."),
 
     legal = _("I understand and agree that registration on or use of this site constitutes agreement to its %(user_agreement)s and %(privacy_policy)s."),
 
@@ -115,7 +115,7 @@ string_dict = dict(
     verify_email_submit = _("you'll be able to submit more frequently once you verify your email address"),
     email_verified =  _("your email address has been verified"),
     email_verify_failed = _("Verification failed.  Please try that again"),
-    email_verify_wrong_user = _("The email verification link you've followed is for a different user. Please log out and switch to that user or try again below."),
+    email_verify_wrong_user = _("The email verification link you've followed is for a different user. Please sign out and switch to that user or try again below."),
     search_failed = _("Our search machines are under too much load to handle your request right now. :( Sorry for the inconvenience. Try again in a little bit -- but please don't mash reload; that only makes the problem worse."),
     invalid_search_query = _("I couldn't understand your query, so I simplified it and searched for \"%(clean_query)s\" instead."),
     completely_invalid_search_query = _("I couldn't understand your search query. Please try again."),
@@ -124,7 +124,7 @@ string_dict = dict(
     generic_quota_msg = _("You've submitted too many links recently. Please try again in an hour."),
     verified_quota_msg = _("Looks like you're either a brand new user or your posts have not been doing well recently. You may have to wait a bit to post again. In the meantime feel free to [check out the reddiquette](%(reddiquette)s) or join the conversation in a different thread."),
     unverified_quota_msg = _("Looks like you're either a brand new user or your posts have not been doing well recently. You may have to wait a bit to post again. In the meantime feel free to [check out the reddiquette](%(reddiquette)s), join the conversation in a different thread, or [verify your email address](%(verify)s)."),
-    read_only_msg = _("reddit is in \"emergency read-only mode\" right now. :( you won't be able to log in. we're sorry, and are working frantically to fix the problem."),
+    read_only_msg = _("reddit is in \"emergency read-only mode\" right now. :( you won't be able to sign in. we're sorry, and are working frantically to fix the problem."),
     heavy_load_msg = _("this page is temporarily in read-only mode due to heavy traffic."),
     gold_benefits_msg = _("reddit gold is reddit's premium membership program. Here are the benefits:\n\n* [Extra site features](/gold/about)\n* [Extra perks](/gold/partners)\n* Discuss and get help on the features and perks at /r/goldbenefits"),
     lounge_msg = _("Grab a drink and join us in /r/lounge, the super-secret members-only community that may or may not exist."),
@@ -154,7 +154,7 @@ string_dict = dict(
     account_activity_blurb = _("This page shows a history of recent activity on your account. If you notice unusual activity, you should change your password immediately. Location information is guessed from your computer's IP address and may be wildly wrong, especially for visits from mobile devices. Note: due to a bug, private-use addresses (starting with 10.) sometimes show up erroneously in this list after regular use of the site."),
     your_current_ip_is = _("You are currently accessing reddit from this IP address: %(address)s."),
     account_activity_apps_blurb = _("""
-These apps are authorized to access your account. Logging out of all sessions
+These apps are authorized to access your account. Signing out of all sessions
 will revoke access from all apps. You may also revoke access from individual
 apps below.
 """),
@@ -168,7 +168,7 @@ apps below.
 Below are the traffic statistics for your subreddit. Each graph represents one of the following over the interval specified.
 
 * **pageviews** are all hits to %(subreddit)s, including both listing pages and comment pages.
-* **uniques** are the total number of unique visitors (determined by a combination of their IP address and User Agent string) that generate the above pageviews. This is independent of whether or not they are logged in.
+* **uniques** are the total number of unique visitors (determined by a combination of their IP address and User Agent string) that generate the above pageviews. This is independent of whether or not they are signed in.
 * **subscriptions** is the number of new subscriptions that have been generated in a given day. This number is less accurate than the first two metrics, as, though we can track new subscriptions, we have no way to track unsubscriptions.
 
 Note: there are a couple of places outside of your subreddit where someone can click "subscribe", so it is possible (though unlikely) that the subscription count can exceed the unique count on a given day.

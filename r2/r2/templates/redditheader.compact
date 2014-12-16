@@ -99,10 +99,10 @@
     % endif
    %else:
     <div class="menuitem">
-      ${plain_link("login", "/login", _sr_path=False)}
+      ${plain_link("sign in", "/login", _sr_path=False)}
     </div>
     <div class="menuitem bottm-bar">
-      ${plain_link("register", "/register", _sr_path=False)}
+      ${plain_link("create an account", "/register", _sr_path=False)}
     </div>
     <div class="menuitem">
       ${plain_link("subreddits", "/subreddits/", _sr_path=False)}

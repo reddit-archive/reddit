@@ -33,7 +33,7 @@
 
 ## default content 
 %if c.user_is_loggedin:
-  <p class="error">${_("you are logged in. go use the site!")}</p>
+  <p class="error">${_("you are signed in. go use the site!")}</p>
 %else:
   %if feature.is_enabled('new_login_flow'):
     <div id="login-v2">
