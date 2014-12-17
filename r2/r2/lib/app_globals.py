@@ -135,6 +135,12 @@ class PermissionFilteredEmployeeList(object):
         return "<PermissionFilteredEmployeeList %r>" % (list(self),)
 
 
+SHUTDOWN_CALLBACKS = []
+def on_app_shutdown(arbiter, worker):
+    for callback in SHUTDOWN_CALLBACKS:
+        callback()
+
+
 class Globals(object):
     spec = {
 
@@ -522,6 +528,9 @@ class Globals(object):
             self.throttles = LiveList(self.zookeeper, "/throttles",
                                       map_fn=ipaddress.ip_network,
                                       reduce_fn=ipaddress.collapse_addresses)
+
+            # close our zk connection when the app shuts down
+            SHUTDOWN_CALLBACKS.append(self.zookeeper.stop)
         else:
             self.zookeeper = None
             parser = ConfigParser.RawConfigParser()
