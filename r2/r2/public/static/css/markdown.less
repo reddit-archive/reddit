@@ -29,33 +29,52 @@
 
 @base-font-keyword: small;
 @base-font-keyword-size: 13; // small == 13px;
-@base-font-size: 14;
+
+// all of the font sizes used between comments, sidebar, and wiki
+@font-x-small: 12;
+@font-small: 14;
+@font-medium: 16;
+@font-large: 18;
+@font-x-large: 20;
+@font-xx-large: 24;
+@font-xxx-large: 32;
+
+// line heights to go with the font sizes
+@line-x-small: 15;
+@line-small: 20;
+@line-medium: 20;
+@line-large: 25;
+@line-x-large: 25;
+@line-xx-large: 30;
+@line-xxx-large: 40;
+
+// margins used, don't necessarily correlate directly with font sizes
+@margin-x-small: 5;
+@margin-small: 10;
+@margin-medium: 15;
+@margin-large: 20;
+@margin-x-large: 25;
+@margin-xx-large: 30;
+@margin-xxx-large: 40;
+
+
+.md-font-size(@base, @font, @line) {
+  font-size: (@font / @base) * 1em;
+  line-height: (@line / @font) * 1em;
+}
 
 .md-margins(@font, @top, @bottom) {
   margin-top: (@top / @font) * 1em;
   margin-bottom: (@bottom / @font) * 1em;
 }
 
-.md-font-size(@font, @line, @top, @bottom) {
-  // define a desired font size/line-height/margin-top/margin-bottom as ints
-  // have converted to em-based definition
-  font-size: (@font / @base-font-size) * 1em;
-  line-height: (@line / @font) * 1em;
-  .md-margins(@font, @top, @bottom);
-}
-
-.md-font-size(@font, @line) {
-  font-size: (@font / @base-font-size) * 1em;
-  line-height: (@line / @font) * 1em;
+.md-base-font-size(@font-size) {
+  font-size: (@font-size / @base-font-keyword-size) * 1em;
 }
 
 
 .md-container {
   font-size: @base-font-keyword;
-}
-
-.md {
-  font-size: (@base-font-size / @base-font-keyword-size) * 1em;
 }
 
 .md {
@@ -86,7 +105,7 @@
     border: 0;
     color: inherit;
     -webkit-font-smoothing: antialiased;
-    
+
     code {
       font-size: inherit;
     }
@@ -206,20 +225,22 @@
   }
 
   blockquote {
-    padding: 0 8px;
+    // -2 to compensate for border
+    padding: 0 ((@margin-small - 2) * 1px);
   }
 
   code {
-    padding: 0 4px;
+
+    padding: 0 ((@margin-x-small - 1) * 1px);
   }
 
   pre,
   .-cells {
-    padding: 4px 8px;
+    padding: ((@margin-x-small - 1) * 1px) ((@margin-small - 1) * 1px);
   }
 
   .-lists {
-    padding-left: 24px;
+    padding-left: (@margin-large * 1px);
   }
 
   sup {
@@ -235,80 +256,103 @@
 
 
 .link .usertext .md {
-  padding: 5px 10px;
+  padding: @margin-x-small @margin-small;
 }
 
 .commentarea .md {
-  margin: 5px 0;
+  margin: @margin-x-small 0;
 }
 
 
 .md {
-  // default font scale : font-size, line-height, margin-top, margin-bottom
+  @font-base: @font-small;
+  @line-base: @line-small;
+
+  .md-base-font-size(@font-base);
+
   h1,
   h2 {
-    .md-font-size(18, 25, 15, 15);
+    .md-font-size(@font-base, @font-large, @line-large);
+    .md-margins(@font-large, @margin-medium, @margin-medium);
   }
 
   h3,
   h4 {
-    .md-font-size(16, 20, 10, 10);
+    .md-font-size(@font-base, @font-medium, @line-medium);
+    .md-margins(@font-medium, @margin-small, @margin-small);
   }
 
   h5,
   h6 {
-    .md-font-size(14, 20, 10, 5);
+    .md-font-size(@font-base, @font-base, @line-base);
+    .md-margins(@font-base, @margin-small, @margin-x-small);
   }
 
   .-blocks {
-    .md-margins(14, 5, 5);
-  }
-  
-  .-text {
-    .md-font-size(14, 20);
-  }
-}
-
-.wiki-page-content .md {
-  // font scale for wiki pages
-  h1 {
-    .md-font-size(32, 40, 40, 25);
-  }
-
-  h2 {
-    .md-font-size(24, 30, 30, 15);
-  }
-
-  h3 {
-    .md-font-size(20, 25, 20, 10);
-  }
-
-  .-blocks {
-    .md-margins(14, 5, 10);
+    .md-margins(@font-base, @margin-x-small, @margin-x-small);
   }
 
   .-text {
-    .md-font-size(14, 20);
+    .md-font-size(@font-base, @font-base, @line-base);
   }
 }
 
 .side .md {
+  @font-base: @font-x-small;
+  @line-base: @line-x-small;
+
+  .md-base-font-size(@font-base);
+
   h1,
   h2 {
-    .md-margins(18, 10, 10);
+    .md-font-size(@font-base, @font-large, @line-large);
+    .md-margins(@font-large, @margin-small, @margin-small);
   }
 
-  // font scale for sidebar
+  h3,
+  h4 {
+    .md-font-size(@font-base, @font-medium, @line-medium);
+    .md-margins(@font-medium, @margin-small, @margin-small);
+  }
+
+  h5,
+  h6 {
+    .md-font-size(@font-base, @font-small, @line-small);
+    .md-margins(@font-small, @margin-small, @margin-x-small);
+  }
+
   .-blocks {
-    .md-margins(12, 10, 5);
+    .md-margins(@font-base, @margin-x-small, @margin-x-small);
   }
 
   .-text {
-    .md-font-size(12, 15);
+    .md-font-size(@font-base, @font-base, @line-base);
   }
 }
 
 .wiki-page-content .md {
+  @font-base: @font-small;
+  @line-base: @line-small;
+
+  h1 {
+    .md-font-size(@font-base, @font-xxx-large, @line-xxx-large);
+    .md-margins(@font-xxx-large, @margin-xxx-large, @margin-x-large);
+  }
+
+  h2 {
+    .md-font-size(@font-base, @font-xx-large, @line-xx-large);
+    .md-margins(@font-xx-large, @margin-xx-large, @margin-medium);
+  }
+
+  h3 {
+    .md-font-size(@font-base, @font-x-large, @line-x-large);
+    .md-margins(@font-x-large, @margin-large, @margin-small);
+  }
+
+  .-blocks {
+    .md-margins(@font-base, @margin-x-small, @margin-small);
+  }
+
   // Style changes for wiki pages
   h1,
   h6 {
@@ -339,10 +383,12 @@
   }
 
   h6 {
+    .md-font-size(@font-base, @font-base, @line-base);
+    .md-margins(@font-base, @margin-medium, @margin-x-small);
+
     text-decoration: none;
     text-transform: uppercase;
     letter-spacing: 1px;
-    .md-font-size(12, 15, 15, 5);
   }
 }
 
