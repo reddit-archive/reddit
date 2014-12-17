@@ -8,7 +8,7 @@ This is the primary codebase that powers [reddit.com](http://www.reddit.com).
 
 For notices about major changes and general discussion of reddit development, subscribe to the [/r/redditdev](http://www.reddit.com/r/redditdev) and [/r/changelog](http://www.reddit.com/r/changelog) subreddits. 
 
-You can also chat with us via IRC in [#reddit-dev on FreeNode](http://webchat.freenode.net/?channels=reddit-dev).
+You can also chat with us via IRC in [#reddit-dev on freenode](http://webchat.freenode.net/?channels=reddit-dev).
 
 ---
 
