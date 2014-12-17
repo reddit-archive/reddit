@@ -21,6 +21,7 @@
 ###############################################################################
 
 from r2.lib.db import tdb_cassandra
+from r2.lib.db.thing import NotFound
 from r2.lib.errors import MessageError
 from r2.lib.utils import tup, fetch_things2
 from r2.lib.filters import websafe
@@ -420,7 +421,10 @@ def filter_quotas(unfiltered):
 def wiki_template(template_slug, sr=None):
     """Pull content from a subreddit's wiki page for internal use."""
     if not sr:
-        sr = Subreddit._by_name(g.default_sr)
+        try:
+            sr = Subreddit._by_name(g.default_sr)
+        except NotFound:
+            return None
 
     try:
         wiki = WikiPage.get(sr, "templates/%s" % template_slug)
