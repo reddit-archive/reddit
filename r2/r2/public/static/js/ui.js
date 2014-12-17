@@ -33,11 +33,18 @@ r.ui.init = function() {
     /* Open links in new tabs if they have the preference set or are logged out
      * and on a "large" screen. */
     if (r.config.new_window && (r.config.logged || !smallScreen)) {
-        $(document.body).on('click', 'a.may-blank, .may-blank-within a', function() {
+        $(document.body).on('click', 'a.may-blank, .may-blank-within a', function(e) {
             if (!this.target) {
-                this.target = '_blank'
+                // nullify `window.opener` so the new tab can't navigate us
+                var href = $(this).attr('href');
+                var w = window.open(null, '_blank');
+                w.opener = null;
+                w.location.href = href;
+                // suppress normal link opening behaviour
+                e.preventDefault();
+                return false;
             }
-            return true // continue bubbling
+            return true; // continue bubbling
         })
     }
 
