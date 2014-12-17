@@ -35,14 +35,18 @@ r.ui.init = function() {
     if (r.config.new_window && (r.config.logged || !smallScreen)) {
         $(document.body).on('click', 'a.may-blank, .may-blank-within a', function(e) {
             if (!this.target) {
-                // nullify `window.opener` so the new tab can't navigate us
-                var href = $(this).attr('href');
-                var w = window.open(null, '_blank');
-                w.opener = null;
-                w.location.href = href;
-                // suppress normal link opening behaviour
-                e.preventDefault();
-                return false;
+                var proto = this.protocol;
+                if (this.href && (proto === "http:" || proto === "https:")) {
+                    // nullify `window.opener` so the new tab can't navigate us
+                    var href = $(this).attr('href');
+                    var w = window.open(null, '_blank');
+                    w.opener = null;
+                    w.location.href = href;
+                    // suppress normal link opening behaviour
+                    e.preventDefault();
+                    return false;
+                }
+                this.target = "_blank";
             }
             return true; // continue bubbling
         })
