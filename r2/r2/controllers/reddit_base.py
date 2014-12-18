@@ -367,8 +367,8 @@ def set_subreddit():
         #reddits
         c.site = Sub
     elif '+' in sr_name:
-        sr_names = filter(lambda name: chksrname(name, allow_special_srs=True),
-            sr_name.split('+'))
+        sr_names = filter(lambda name: chksrname(name, allow_language_srs=True,
+            allow_special_srs=True), sr_name.split('+'))
         srs = Subreddit._by_name(sr_names, stale=can_stale).values()
         if All in srs:
             c.site = All
