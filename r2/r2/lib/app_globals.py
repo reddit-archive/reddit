@@ -555,7 +555,7 @@ class Globals(object):
         num_mc_clients = self.num_mc_clients
 
         # the main memcache pool. used for most everything.
-        self.memcache = CMemcache(
+        memcache = CMemcache(
             self.memcaches,
             min_compress_len=50 * 1024,
             num_clients=num_mc_clients,
@@ -679,10 +679,10 @@ class Globals(object):
             self.cache = StaleCacheChain(
                 localcache_cls(),
                 stalecaches,
-                self.memcache,
+                memcache,
             )
         else:
-            self.cache = MemcacheChain((localcache_cls(), self.memcache))
+            self.cache = MemcacheChain((localcache_cls(), memcache))
         cache_chains.update(cache=self.cache)
 
         if stalecaches:
@@ -749,7 +749,7 @@ class Globals(object):
         # hardcache is used for various things that tend to expire
         # TODO: replace hardcache w/ cassandra stuff
         self.hardcache = HardcacheChain(
-            (localcache_cls(), self.memcache, HardCache(self)),
+            (localcache_cls(), memcache, HardCache(self)),
             cache_negative_results=True,
         )
         cache_chains.update(hardcache=self.hardcache)

@@ -1806,7 +1806,7 @@ class VDelay(Validator):
             seconds = g.RL_RESET_SECONDS
 
         key = "VDelay-%s-%s" % (category, request.ip)
-        prev_violations = g.memcache.get(key)
+        prev_violations = g.cache.get(key)
         if prev_violations is None:
             prev_violations = dict(count=0)
 
@@ -1828,7 +1828,7 @@ class VDelay(Validator):
         prev_violations["count"] += 1
 
         with g.make_lock("record_violation", "lock-" + key, timeout=5, verbose=False):
-            existing = g.memcache.get(key)
+            existing = g.cache.get(key)
             if existing and existing["count"] > prev_violations["count"]:
                 g.log.warning("Tried to set %s to count=%d, but found existing=%d"
                              % (key, prev_violations["count"], existing["count"]))

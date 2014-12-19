@@ -341,7 +341,7 @@ def delete_expired(expiration="now", limit=5000):
 
         # Delete them from memcache
         mc_keys = [ "%s-%s" % (c, i) for e, c, i in rows ]
-        g.memcache.delete_multi(mc_keys)
+        g.cache.delete_multi(mc_keys)
 
         # Now delete them from the backend.
         engine.delete(expiration_clause).execute()
