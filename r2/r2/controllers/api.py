@@ -1822,24 +1822,24 @@ class ApiController(RedditController):
         # remove any null listings that may be present
         jquery("#noresults").hide()
 
-    @validatedForm(VUser(),
-                   VModhash(),
-                   VCaptcha(),
-                   VRatelimit(rate_user = True, rate_ip = True,
-                              prefix = "rate_share_"),
-                   share_from = VLength('share_from', max_length = 100),
-                   emails = ValidEmailsOrExistingUnames("share_to"),
-                   reply_to = ValidEmails("replyto", num = 1), 
-                   message = VLength("message", max_length = 1000), 
-                   thing = VByName('parent'),
-                   )
-    def POST_share(self, shareform, jquery, emails, thing, share_from, reply_to,
+    @validatedForm(
+        VUser(),
+        VModhash(),
+        VCaptcha(),
+        VRatelimit(rate_user=True, rate_ip=True, prefix="rate_share_"),
+        share_from=VLength('share_from', max_length=100),
+        emails=ValidEmailsOrExistingUnames("share_to"),
+        reply_to=ValidEmails("replyto", num=1), 
+        message=VLength("message", max_length=1000), 
+        link=VByName('parent', thing_cls=Link),
+    )
+    def POST_share(self, shareform, jquery, emails, link, share_from, reply_to,
                    message):
-        if not thing:
+        if not link:
             abort(404, 'not found')
 
         # remove the ratelimit error if the user's karma is high
-        sr = thing.subreddit_slow
+        sr = link.subreddit_slow
         should_ratelimit = sr.should_ratelimit(c.user, 'link')
         if not should_ratelimit:
             c.errors.remove((errors.RATELIMIT, 'ratelimit'))
@@ -1869,42 +1869,41 @@ class ApiController(RedditController):
             emails, users = emails
             c.user.add_share_emails(emails)
             c.user._commit()
-            link = jquery.things(thing._fullname)
-            link.set_text(".share", _("shared"))
+            jquery.things(link._fullname).set_text(".share", _("shared"))
             shareform.html("<div class='clearleft'></div>"
                            "<p class='error'>%s</p>" % 
                            websafe(_("your link has been shared.")))
             
             # Set up the parts that are common between e-mail and PMs
             urlparts = (get_domain(cname=c.cname, subreddit=False),
-                        thing._id36)
+                        link._id36)
             url = "http://%s/tb/%s" % urlparts
             
             if message:
                 message = message + "\n\n"
             else:
                 message = ""
-            message = message + '\n%s\n\n%s\n\n' % (thing.title,url)
+            message = message + '\n%s\n\n%s\n\n' % (link.title, url)
             
             # Deliberately not translating this, as it'd be in the
             # sender's language
-            if thing.num_comments:
+            if link.num_comments:
                 count = ("There are currently %(num_comments)s comments on " +
                          "this link.  You can view them here:")
-                if thing.num_comments == 1:
+                if link.num_comments == 1:
                     count = ("There is currently %(num_comments)s comment " +
                              "on this link.  You can view it here:")
                 
-                numcom = count % {'num_comments':thing.num_comments}
+                numcom = count % {'num_comments':link.num_comments}
                 message = message + "%s\n\n" % numcom
             else:
                 message = message + "You can leave a comment here:\n\n"
                 
-            url = add_sr(thing.make_permalink_slow(), force_hostname=True)
+            url = add_sr(link.make_permalink_slow(), force_hostname=True)
             message = message + url
             
             # E-mail everyone
-            emailer.share(thing, emails, from_name = share_from or "",
+            emailer.share(link, emails, from_name = share_from or "",
                           body = message or "", reply_to = reply_to or "")
 
             # Send the PMs
