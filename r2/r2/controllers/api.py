@@ -1867,8 +1867,6 @@ class ApiController(RedditController):
             return abort(403, 'forbidden')
         else:
             emails, users = emails
-            c.user.add_share_emails(emails)
-            c.user._commit()
             jquery.things(link._fullname).set_text(".share", _("shared"))
             shareform.html("<div class='clearleft'></div>"
                            "<p class='error'>%s</p>" % 
