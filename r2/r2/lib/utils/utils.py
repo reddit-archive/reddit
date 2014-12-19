@@ -1279,6 +1279,9 @@ def constant_time_compare(actual, expected):
 
     The time taken is dependent on the number of characters provided
     instead of the number of characters that match.
+
+    When we upgrade to Python 2.7.7 or newer, we should use hmac.compare_digest
+    instead.
     """
     actual_len   = len(actual)
     expected_len = len(expected)

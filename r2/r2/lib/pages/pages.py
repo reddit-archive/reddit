@@ -2781,6 +2781,11 @@ class MessageNotificationEmail(Templated):
     """Notification e-mail that a user has received a new message."""
     pass
 
+class MessageNotificationEmailsUnsubscribe(Templated):
+    """The page we show users when they unsubscribe from notification
+    emails."""
+    pass
+
 class PasswordChangeEmail(Templated):
     """Notification e-mail that a user's password has changed."""
     pass

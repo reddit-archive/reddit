@@ -36,7 +36,7 @@ from r2 import config
 from r2.models import *
 from r2.models.recommend import ExploreSettings
 from r2.config.extensions import is_api
-from r2.lib import recommender, embeds
+from r2.lib import hooks, recommender, embeds
 from r2.lib.pages import *
 from r2.lib.pages.things import hot_links_by_url_listing
 from r2.lib.pages import trafficpages
@@ -47,7 +47,7 @@ from r2.lib.utils import to36, sanitize_url, title_to_url
 from r2.lib.utils import query_string, UrlParser, url_links_builder
 from r2.lib.template_helpers import get_domain
 from r2.lib.filters import unsafe, _force_unicode, _force_utf8
-from r2.lib.emailer import Email
+from r2.lib.emailer import Email, generate_notification_email_unsubscribe_token
 from r2.lib.db.operators import desc
 from r2.lib.db import queries
 from r2.lib.db.tdb_cassandra import MultiColumnQuery
@@ -1354,6 +1354,28 @@ class FormsController(RedditController):
                 username=token_user.name,
             )
         ).render()
+
+    @validate(
+        user_id36=nop('user'),
+        provided_mac=nop('key')
+    )
+    def GET_unsubscribe_emails(self, user_id36, provided_mac):
+        from r2.lib.utils import constant_time_compare
+
+        expected_mac = generate_notification_email_unsubscribe_token(user_id36)
+        if not constant_time_compare(provided_mac or '', expected_mac):
+            error_page = pages.RedditError(
+                title=_('incorrect message token'),
+                message='',
+            )
+            request.environ["usable_error_content"] = error_page.render()
+            self.abort404()
+        user = Account._byID36(user_id36, data=True)
+        user.pref_email_messages = False
+        user._commit()
+
+        return BoringPage(_('emails unsubscribed'),
+                          content=MessageNotificationEmailsUnsubscribe()).render()
 
     @disable_subreddit_css()
     @validate(VUser(),

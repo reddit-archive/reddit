@@ -142,9 +142,16 @@ def message_notification_email(data):
             raise Exception(
                     'Message notification emails: safety limit exceeded!')
 
+        mac = generate_notification_email_unsubscribe_token(
+                datum['to'], user_email=user.email,
+                user_password_hash=user.password)
+        base = g.https_endpoint or g.origin
+        unsubscribe_link = base + '/mail/unsubscribe/%s/%s' % (datum['to'], mac)
+
         templateData = {
             'comment': comment,
             'permalink': datum['permalink'],
+            'unsubscribe_link': unsubscribe_link,
         }
         _system_email(user.email,
                       MessageNotificationEmail(**templateData).render(style='email'),
@@ -153,6 +160,31 @@ def message_notification_email(data):
 
         g.stats.simple_event('email.message_notification.queued')
         g.cache.incr(MESSAGE_THROTTLE_KEY)
+
+def generate_notification_email_unsubscribe_token(user_id36, user_email=None,
+                                                  user_password_hash=None):
+    """Generate a token used for one-click unsubscribe links for notification
+    emails.
+
+    user_id36: A base36-encoded user id.
+    user_email: The user's email.  Looked up if not provided.
+    user_password_hash: The hash of the user's password.  Looked up if not
+                        provided.
+    """
+    import hashlib
+    import hmac
+
+    if (not user_email) or (not user_password_hash):
+        user = Account._byID36(user_id36, data=True)
+        if not user_email:
+            user_email = user.email
+        if not user_password_hash:
+            user_password_hash = user.password
+
+    return hmac.new(
+        g.secrets['email_notifications'],
+        user_id36 + user_email + user_password_hash,
+        hashlib.sha256).hexdigest()
 
 def password_change_email(user):
     """Queues a system email for a password change notification."""

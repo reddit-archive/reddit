@@ -16,18 +16,10 @@
 ## The Original Developer is the Initial Developer.  The Initial Developer of
 ## the Original Code is reddit Inc.
 ##
-## All portions of the code written by reddit are Copyright (c) 2006-2014
+## All portions of the code written by reddit are Copyright (c) 2006-2015
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%!
-  from r2.lib.template_helpers import get_domain
-%>
-
-${_("You've received a new message!")}
-
-${unsafe(thing.comment.body)}
-
-${_("View on the web")}: ${thing.permalink}
-
-${_("Unsubscribe")}: ${thing.unsubscribe_link}
+<div style="text-align: center">
+    <p>${_("Thanks! You're unsubscribed from all message notification emails.")}</p>
+</div>

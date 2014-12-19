@@ -217,6 +217,8 @@ def make_map():
 
     mc('/mail/optout', controller='forms', action='optout')
     mc('/mail/optin', controller='forms', action='optin')
+    mc('/mail/unsubscribe/:user/:key', controller='forms',
+       action='unsubscribe_emails')
     mc('/stylesheet', controller='front', action='stylesheet')
     mc('/frame', controller='front', action='frame')
     mc('/framebuster/:blah', controller='front', action='framebuster')
