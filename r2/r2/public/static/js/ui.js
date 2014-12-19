@@ -42,14 +42,22 @@ r.ui.init = function() {
                 var isWebLink = _.contains(['http:', 'https:'], this.protocol);
                 if (this.href && isWebLink && !r.utils.onIEMobile()) {
                     var w = window.open('', '_blank');
-                    w.opener = null;
-                    w.location.href = href;
-                    // suppress normal link opening behaviour
-                    e.preventDefault();
-                    return false;
+                    // some popup blockers appear to return null for
+                    // `window.open` even inside click handlers.
+                    if (w !== null) {
+                        // try to nullify `window.opener` so the new tab can't
+                        // navigate us
+                        w.opener = null;
+                        w.location.href = this.href;
+                        // suppress normal link opening behaviour
+                        e.preventDefault();
+                        return false;
+                    }
                 }
+
                 this.target = "_blank";
             }
+
             return true; // continue bubbling
         })
     }
