@@ -1873,34 +1873,32 @@ class ApiController(RedditController):
             shareform.html("<div class='clearleft'></div>"
                            "<p class='error'>%s</p>" % 
                            websafe(_("your link has been shared.")))
-            
-            # Set up the parts that are common between e-mail and PMs
-            urlparts = (get_domain(cname=c.cname, subreddit=False),
-                        link._id36)
-            url = "http://%s/tb/%s" % urlparts
-            
-            if message:
-                message = message + "\n\n"
+
+            if getattr(link, "promoted", None) and link.disable_comments:
+                message = message + "\n\n" if message else ""
+                message += '\n%s\n\n%s\n\n' % (link.title, link.url)
             else:
-                message = ""
-            message = message + '\n%s\n\n%s\n\n' % (link.title, url)
-            
-            # Deliberately not translating this, as it'd be in the
-            # sender's language
-            if link.num_comments:
-                count = ("There are currently %(num_comments)s comments on " +
-                         "this link.  You can view them here:")
-                if link.num_comments == 1:
-                    count = ("There is currently %(num_comments)s comment " +
-                             "on this link.  You can view it here:")
-                
-                numcom = count % {'num_comments':link.num_comments}
-                message = message + "%s\n\n" % numcom
-            else:
-                message = message + "You can leave a comment here:\n\n"
-                
-            url = add_sr(link.make_permalink_slow(), force_hostname=True)
-            message = message + url
+                urlparts = (get_domain(cname=c.cname, subreddit=False),
+                            link._id36)
+                url = "http://%s/tb/%s" % urlparts
+                message = message + "\n\n" if message else ""
+                message += '\n%s\n\n%s\n\n' % (link.title, url)
+
+                # Deliberately not translating this, as it'd be in the
+                # sender's language
+                if link.num_comments:
+                    count = ("There are currently %(num_comments)s comments " +
+                             "on this link.  You can view them here:")
+                    if link.num_comments == 1:
+                        count = ("There is currently %(num_comments)s " +
+                                 "comment on this link.  You can view it here:")
+                    numcom = count % {'num_comments': link.num_comments}
+                    message = message + "%s\n\n" % numcom
+                else:
+                    message = message + "You can leave a comment here:\n\n"
+
+                url = add_sr(link.make_permalink_slow(), force_hostname=True)
+                message = message + url
             
             # E-mail everyone
             emailer.share(link, emails, from_name = share_from or "",
