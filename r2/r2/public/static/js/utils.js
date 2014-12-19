@@ -181,7 +181,14 @@ r.utils = {
             message: message,
             field: field,
         }
-    }
+    },
+
+    onIEMobile: function() {
+        if ('ActiveXObject' in window) {
+            return !!navigator.userAgent.match(/IEMobile\/(\d+\.?(\d+)?)/);
+        }
+        return false;
+    },
 
 }
 

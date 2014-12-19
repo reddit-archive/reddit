@@ -35,11 +35,13 @@ r.ui.init = function() {
     if (r.config.new_window && (r.config.logged || !smallScreen)) {
         $(document.body).on('click', 'a.may-blank, .may-blank-within a', function(e) {
             if (!this.target) {
-                var proto = this.protocol;
-                if (this.href && (proto === "http:" || proto === "https:")) {
-                    // nullify `window.opener` so the new tab can't navigate us
-                    var href = $(this).attr('href');
-                    var w = window.open(null, '_blank');
+                // IE Mobile will navigate to the first arg of `window.open`
+                // as soon as we call it... in the same tab! Fall back to the
+                // old behaviour if it's detected.
+                // http://stackoverflow.com/q/17021903
+                var isWebLink = _.contains(['http:', 'https:'], this.protocol);
+                if (this.href && isWebLink && !r.utils.onIEMobile()) {
+                    var w = window.open('', '_blank');
                     w.opener = null;
                     w.location.href = href;
                     // suppress normal link opening behaviour
