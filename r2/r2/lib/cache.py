@@ -386,6 +386,16 @@ class TransitionalCache(CacheUtils):
         else:
             return self.replacement.stats
 
+    @stats.setter
+    def stats(self, value):
+        """No-op.
+
+        TransitionCache is designed to wrap two cache chains. We can ignore
+        the set (which happens at the end of reset_caches in app_globals.py)
+        because each chain will separately get dealt with on its own.
+        """
+        pass
+
     def transform_memcache_key(self, args):
         if self.key_transform:
             old_key = args[0]
