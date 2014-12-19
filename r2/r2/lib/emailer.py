@@ -120,6 +120,12 @@ def message_notification_email(data):
     """Queues a system email for a new message notification."""
     from r2.lib.pages import MessageNotificationEmail
 
+    MAX_EMAILS_PER_DAY = 1000
+    MESSAGE_THROTTLE_KEY = 'message_notification_emails'
+
+    # If our counter's expired, initialize it again.
+    g.cache.add(MESSAGE_THROTTLE_KEY, 0, time=24*60*60)
+
     for datum in data.itervalues():
         datum = json.loads(datum)
         user = Account._byID36(datum['to'], data=True)
@@ -131,7 +137,9 @@ def message_notification_email(data):
         if not feature.is_enabled_for('orangereds_as_emails', user):
             continue
 
-        g.stats.simple_event('email.message_notification.queued')
+        if g.cache.get(MESSAGE_THROTTLE_KEY) > MAX_EMAILS_PER_DAY:
+            raise Exception(
+                    'Message notification emails: safety limit exceeded!')
 
         templateData = {
             'comment': comment,
@@ -140,6 +148,9 @@ def message_notification_email(data):
         _system_email(user.email,
                       MessageNotificationEmail(**templateData).render(style='email'),
                       Email.Kind.MESSAGE_NOTIFICATION)
+
+        g.stats.simple_event('email.message_notification.queued')
+        g.cache.incr(MESSAGE_THROTTLE_KEY)
 
 def password_change_email(user):
     """Queues a system email for a password change notification."""
