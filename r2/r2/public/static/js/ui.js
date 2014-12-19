@@ -34,7 +34,10 @@ r.ui.init = function() {
      * and on a "large" screen. */
     if (r.config.new_window && (r.config.logged || !smallScreen)) {
         $(document.body).on('click', 'a.may-blank, .may-blank-within a', function(e) {
-            if (!this.target) {
+            // Don't handle ctrl-clicks, a few browsers use them as a shortcut
+            // for opening a new tab, and it doesn't have the same issues with
+            // window.opener as `target="_blank"` does.
+            if (!this.target && !e.ctrlKey) {
                 // IE Mobile will navigate to the first arg of `window.open`
                 // as soon as we call it... in the same tab! Fall back to the
                 // old behaviour if it's detected.
