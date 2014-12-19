@@ -396,6 +396,13 @@ class TransitionalCache(CacheUtils):
         """
         pass
 
+    @property
+    def caches(self):
+        if self.read_original:
+            return self.original.caches
+        else:
+            return self.replacement.caches
+
     def transform_memcache_key(self, args):
         if self.key_transform:
             old_key = args[0]
