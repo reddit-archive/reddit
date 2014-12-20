@@ -344,9 +344,9 @@ def set_obey_over18():
 
 valid_ascii_domain = re.compile(r'\A(\w[-\w]*\.)+[\w]+\Z')
 def set_subreddit():
-    #the r parameter gets added by javascript for POST requests so we
+    #the r parameter gets added by javascript for API requests so we
     #can reference c.site in api.py
-    sr_name = request.environ.get("subreddit", request.POST.get('r'))
+    sr_name = request.environ.get("subreddit", request.params.get('r'))
     domain = request.environ.get("domain")
 
     can_stale = request.method.upper() in ('GET', 'HEAD')
