@@ -59,7 +59,7 @@ ${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if
 
     if isinstance(thing.to, Account):
         to_attribs = []
-        if thing.sr_id:
+        if thing.sr_id and not thing.was_comment:
             if thing.to.name in g.admins:
                 # distinguish admins in admin modmail
                 add_attr(to_attribs, 'A')
