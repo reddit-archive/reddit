@@ -183,11 +183,8 @@ r.utils = {
         }
     },
 
-    onIEMobile: function() {
-        if ('ActiveXObject' in window) {
-            return !!navigator.userAgent.match(/IEMobile\/(\d+\.?(\d+)?)/);
-        }
-        return false;
+    onTrident: function() {
+        return 'ActiveXObject' in window;
     },
 
 }

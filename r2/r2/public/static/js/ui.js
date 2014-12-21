@@ -34,31 +34,28 @@ r.ui.init = function() {
      * and on a "large" screen. */
     if (r.config.new_window && (r.config.logged || !smallScreen)) {
         $(document.body).on('click', 'a.may-blank, .may-blank-within a', function(e) {
-            // Don't handle ctrl-clicks, a few browsers use them as a shortcut
-            // for opening a new tab, and it doesn't have the same issues with
-            // window.opener as `target="_blank"` does.
-            if (!this.target && !e.ctrlKey) {
-                // IE Mobile will navigate to the first arg of `window.open`
-                // as soon as we call it... in the same tab! Fall back to the
-                // old behaviour if it's detected.
-                // http://stackoverflow.com/q/17021903
+
+            if (!this.target) {
+                // Trident doesn't support `rel="noreferrer"` and requires a
+                // fallback to make sure `window.opener` is unset
                 var isWebLink = _.contains(['http:', 'https:'], this.protocol);
-                if (this.href && isWebLink && !r.utils.onIEMobile()) {
-                    var w = window.open('', '_blank');
+                if (this.href && isWebLink && r.utils.onTrident()) {
+                    var w = window.open(this.href, '_blank');
                     // some popup blockers appear to return null for
                     // `window.open` even inside click handlers.
                     if (w !== null) {
                         // try to nullify `window.opener` so the new tab can't
                         // navigate us
                         w.opener = null;
-                        w.location.href = this.href;
                         // suppress normal link opening behaviour
                         e.preventDefault();
                         return false;
                     }
                 }
 
-                this.target = "_blank";
+                this.target = '_blank';
+                // Required so the tabs can't navigate us via `window.opener`
+                this.rel = 'noreferrer';
             }
 
             return true; // continue bubbling
