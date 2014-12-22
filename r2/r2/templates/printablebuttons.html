@@ -346,20 +346,16 @@
       </li>
     %endif
 
-    %if not thing.profilepage:
-      %if thing.parent_permalink:
-        <li>
-          ${self.bylink_button(_("parent"), thing.parent_permalink)}
-        </li>
-      %endif
-      %if thing.is_author:
-        <li>
-          ${self.simple_button(_("edit"), "edit_usertext", css_class="edit-usertext")}
-        </li>
-      %endif
+    %if thing.parent_permalink and not thing.profilepage:
+      <li>
+        ${self.bylink_button(_("parent"), thing.parent_permalink)}
+      </li>
     %endif
 
     %if thing.is_author:
+      <li>
+        ${self.simple_button(_("edit"), "edit_usertext", css_class="edit-usertext")}
+      </li>
       <li>
         %if thing.thing.inbox_replies_enabled:
           ${ynbutton(_("disable inbox replies"), _("inbox replies disabled"), "sendreplies",
