@@ -435,7 +435,7 @@ class TransitionalCache(CacheUtils):
         def transitional_cache_set_fn(self, *args, **kwargs):
             getattr(self.original, fn_name)(*args, **kwargs)
             args = self.transform_memcache_key(args)
-            getattr(self.replacement, fn_name)(*args, **kwargs)
+            return getattr(self.replacement, fn_name)(*args, **kwargs)
         return transitional_cache_set_fn
 
     add = make_set_fn("add")
