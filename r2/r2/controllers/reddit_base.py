@@ -1667,6 +1667,7 @@ class RedditController(OAuth2ResourceController):
         body_parts = list(content.rpartition("</body>"))
         if body_parts[1]:
             script = ('<script type="text/javascript">'
+                      'window.r = window.r || {};'
                       'r.timings = %s'
                       '</script>') % simplejson.dumps(timings)
             body_parts.insert(1, script)
