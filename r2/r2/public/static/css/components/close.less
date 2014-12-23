@@ -1,0 +1,18 @@
+.c-close {
+    height: 18px;
+    width: 18px;
+    .hdpi-bg-image(@1x: data-uri('../close_x.png'); @2x: data-uri('../close_x_2x.png'));
+    float: right;
+
+    &:hover {
+        .hdpi-bg-image(@1x: data-uri('../close_x_hover.png'); @2x: data-uri('../close_x_hover_2x.png'));
+    }
+
+    button& {
+        padding: 0;
+        cursor: pointer;
+        background: transparent;
+        border: 0;
+        -webkit-appearance: none;
+    }
+}

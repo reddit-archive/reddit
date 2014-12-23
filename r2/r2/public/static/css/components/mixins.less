@@ -12,6 +12,20 @@
     transition: @arguments;
 }
 
+.translate(@x; @y) {
+    -webkit-transform: translate(@x, @y);
+    -ms-transform: translate(@x, @y);
+    -o-transform: translate(@x, @y);
+    transform: translate(@x, @y);
+}
+
+.transition-transform(@transition) {
+    -webkit-transition: -webkit-transform @transition;
+    -moz-transition: -moz-transform @transition;
+    -o-transition: -o-transform @transition;
+    transition: transform @transition;
+}
+
 .transition-shorthand(@transition) {
     -webkit-transition: @transition;
     -moz-transition: @transition;
@@ -28,6 +42,11 @@
     background: -o-linear-gradient(top,  @color1 0%, @color2 100%);
     background: -ms-linear-gradient(top,  @color1 0%, @color2 100%);
     background: linear-gradient(to bottom,  @color1 0%, @color2 100%);
+}
+
+.box-shadow(@shadow) {
+    -webkit-box-shadow: @shadow; // iOS <4.3 & Android <4.1
+    box-shadow: @shadow;
 }
 
 .box-sizing(@sizing) {
