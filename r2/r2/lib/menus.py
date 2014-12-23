@@ -269,7 +269,7 @@ class NavButton(Styled):
     _style = "plain"
 
     def __init__(self, title, dest, sr_path=True, nocname=False, aliases=None,
-                 target="", use_params=False, css_class=''):
+                 target="", use_params=False, css_class='', data=None):
         aliases = aliases or []
         aliases = set(_force_unicode(a.rstrip('/')) for a in aliases)
         if dest:
@@ -284,6 +284,7 @@ class NavButton(Styled):
         self.aliases = aliases
         self.target = target
         self.use_params = use_params
+        self.data = data
 
         Styled.__init__(self, self._style, css_class=css_class)
 
@@ -328,16 +329,17 @@ class NavButton(Styled):
             ('target', self.target), 
             ('css_class', self.css_class),
             ('_id', self._id),
+            ('data', self.data),
         ]
 
 
 class QueryButton(NavButton):
     def __init__(self, title, dest, query_param, sr_path=True, aliases=None,
-                 target="", css_class=''):
+                 target="", css_class='', data=None):
         self.query_param = query_param
         NavButton.__init__(self, title, dest, sr_path=sr_path, nocname=True,
                            aliases=aliases, target=target, use_params=False,
-                           css_class=css_class)
+                           css_class=css_class, data=data)
 
     def build(self, base_path=''):
         params = dict(request.GET)
@@ -360,11 +362,11 @@ class PostButton(NavButton):
     _style = "post"
 
     def __init__(self, title, dest, input_name, sr_path=True, aliases=None,
-                 target="", css_class=''):
+                 target="", css_class='', data=None):
         self.input_name = input_name
         NavButton.__init__(self, title, dest, sr_path=sr_path, nocname=True,
                            aliases=aliases, target=target, use_params=False,
-                           css_class=css_class)
+                           css_class=css_class, data=data)
 
     def build(self, base_path=''):
         self.base_path = base_path
@@ -380,6 +382,7 @@ class PostButton(NavButton):
             ('target', self.target),
             ('css_class', self.css_class),
             ('_id', self._id),
+            ('data', self.data),
         ]
 
     def is_selected(self):
@@ -418,13 +421,13 @@ class SubredditButton(NavButton):
     # TRANSLATORS: Gold feature, "myrandom", a random subreddit from your subscriptions
                       RandomSubscription: N_("myrandom")}
 
-    def __init__(self, sr, css_class=''):
+    def __init__(self, sr, css_class='', data=None):
         self.path = sr.path
         name = self.name_overrides.get(sr)
         name = _(name) if name else sr.name
         self.isselected = (c.site == sr)
         NavButton.__init__(self, name, sr.path, sr_path=False, nocname=True,
-                           css_class=css_class)
+                           css_class=css_class, data=data)
 
     def build(self, base_path=''):
         self.bare_path = ""
@@ -438,6 +441,7 @@ class SubredditButton(NavButton):
             ('title', self.title),
             ('isselected', self.isselected),
             ('css_class', self.css_class),
+            ('data', self.data),
         ]
 
 
@@ -448,13 +452,15 @@ class NamedButton(NavButton):
     separately)."""
 
     def __init__(self, name, sr_path=True, nocname=False, aliases=None,
-                 dest=None, fmt_args={}, use_params=False, css_class=''):
+                 dest=None, fmt_args={}, use_params=False, css_class='',
+                 data=None):
         self.name = name.strip('/')
         menutext = menu[self.name] % fmt_args
         dest = dest if dest is not None else name
         NavButton.__init__(self, menutext, dest, sr_path=sr_path,
                            nocname=nocname, aliases=aliases,
-                           use_params=use_params, css_class=css_class)
+                           use_params=use_params, css_class=css_class,
+                           data=data)
 
 
 class JsButton(NavButton):
@@ -463,12 +469,13 @@ class JsButton(NavButton):
 
     _style = "js"
 
-    def __init__(self, title, tab_name=None, onclick='', css_class=''):
+    def __init__(self, title, tab_name=None, onclick='', css_class='',
+                 data=None):
         self.tab_name = tab_name
         self.onclick = onclick
         dest = '#'
         NavButton.__init__(self, title, dest, sr_path=False, nocname=True,
-                           css_class=css_class)
+                           css_class=css_class, data=data)
 
     def build(self, base_path=''):
         if self.tab_name:
@@ -488,6 +495,7 @@ class JsButton(NavButton):
             ('_id', self._id),
             ('tab_name', self.tab_name),
             ('onclick', self.onclick),
+            ('data', self.data),
         ]
 
 

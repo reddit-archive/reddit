@@ -32,7 +32,11 @@
 <%def name="tags(**kw)">
 %for k, v in kw.iteritems():
   %if v:
-    ${k.strip('_')}="${v}" \
+    %if k == "data":
+      ${data(**v)}
+    %else:
+      ${k.strip('_')}="${v}" \
+    %endif
   %endif
 %endfor
 </%def>
