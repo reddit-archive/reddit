@@ -36,7 +36,7 @@ from r2 import config
 from r2.models import *
 from r2.models.recommend import ExploreSettings
 from r2.config.extensions import is_api
-from r2.lib import recommender
+from r2.lib import recommender, embeds
 from r2.lib.pages import *
 from r2.lib.pages.things import hot_links_by_url_listing
 from r2.lib.pages import trafficpages
@@ -212,12 +212,16 @@ class FrontController(RedditController):
                   docs={"limit": "(optional) an integer"}),
               depth=VInt('depth',
                   docs={"depth": "(optional) an integer"}),
+              showedits=VBoolean("showedits"),
+              showmore=VBoolean("showmore"),
              )
     @api_doc(api_section.listings,
              uri='/comments/{article}',
              uses_site=True,
              extensions=['json', 'xml'])
-    def GET_comments(self, article, comment, context, sort, limit, depth):
+    def GET_comments(
+        self, article, comment, context, sort, limit, depth,
+        showedits=True, showmore=True):
         """Get the comment tree for a given Link `article`.
 
         If supplied, `comment` is the ID36 of a comment in the comment tree for
@@ -249,6 +253,8 @@ class FrontController(RedditController):
 
         #check for 304
         self.check_modified(article, 'comments')
+
+        embeds.setup_embed()
 
         # If there is a focal comment, communicate down to
         # comment_skeleton.html who that will be. Also, skip
@@ -289,6 +295,9 @@ class FrontController(RedditController):
             kw['max_depth'] = depth
         elif c.render_style == "compact":
             kw['max_depth'] = 5
+
+        kw["edits_visible"] = showedits
+        kw["load_more"] = kw["continue_this_thread"] = showmore
 
         displayPane = PaneStack()
 

@@ -42,7 +42,7 @@ import math
 import time
 from pylons import g, c, request
 from pylons.i18n import _, ungettext
-
+import pytz
 
 static_text_extensions = {
     '.js': 'js',
@@ -100,6 +100,19 @@ def static(path):
         query,
         None
     ))
+
+
+def edited_after(thing, iso_datetime):
+    if not (thing or isinstance(thing.editted, datetime)):
+        return False
+
+    try:
+        date = datetime.strptime(iso_datetime, "%Y-%m-%dT%H:%M:%S.%fZ")
+        date = date.replace(tzinfo=pytz.utc)
+
+        return date < thing.editted
+    except:
+        return False
 
 
 def make_url_protocol_relative(url):

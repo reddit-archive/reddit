@@ -1,0 +1,124 @@
+@import "components/variables.less";
+@import "components/mixins.less";
+@import "markdown.less";
+
+@embed-border-radius: 5px;
+
+* {
+    .box-sizing(border-box)
+}
+
+body {
+    font: normal 14px verdana, arial, helvetica, sans-serif;
+    margin: 0;
+    padding: 5px;
+}
+
+a {
+    color: #369;
+    text-decoration: none;
+}
+
+p {
+    margin: 0 0 .5em;
+}
+
+.reddit-embed {
+    background: #fff;
+    border-radius: @embed-border-radius;
+    .box-shadow(0 0 3px rgba(0,0,0,0.15));
+    max-width: 60em;
+}
+
+.reddit-embed-content {
+    padding: 36px;
+}
+
+.reddit-embed-footer {
+    @snoo-height: 32px;
+    @snoo-width: 90px;
+    @snoo-padding: 12px;
+
+    background: #f7f7f7;
+    border-bottom-left-radius: @embed-border-radius;
+    border-bottom-right-radius: @embed-border-radius;
+    display: table;
+    font-size: 12px;
+    min-height: (@snoo-height + (@snoo-padding * 2));
+    padding: @snoo-padding 18px;
+    padding-right: (@snoo-width + (@snoo-padding * 2));
+    position: relative;
+    width: 100%;
+
+    p {
+        display: table-cell; 
+        margin: 0;
+        padding: 0;
+        vertical-align: middle; 
+    }
+
+    &:after {
+        content: '';
+        display: block;
+        position: absolute;
+        right: @snoo-padding;
+        bottom: @snoo-padding;
+        width: @snoo-width;
+        height: @snoo-height;
+        .hdpi-bg-image(@1x: url(../reddit-embed-logo.png); @2x: url(../reddit-embed-logo_2x.png););
+    }
+}
+
+.reddit-embed-list {
+    margin: 0;
+    padding: 0;
+
+    .reddit-embed-list {
+        margin-left: 36px;
+    }
+}
+
+.reddit-embed-list-item {
+    list-style: none;
+    margin-top: 36px;
+
+    .reddit-embed-content > .reddit-embed-list > & {
+        margin-top: 0;
+    }
+}
+
+// Comment embeds
+.reddit-embed-comment-header {
+    position: relative;
+}
+
+.reddit-embed-comment-meta {
+    font-size: 12px;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+}
+
+.reddit-embed-comment-meta-item {
+    color: #6f6f6f;
+
+    &:after {
+        content: '•';
+        display: inline-block;
+        margin: 0 5px;
+    }
+
+    &:last-child:after {
+        content: '';
+    }
+}
+
+.reddit-embed-comment-body {
+    margin: 10px 0 0;
+}
+
+.reddit-embed-comment-edited,
+.reddit-embed-comment-deleted {
+    background: #f7f7f7;
+    padding: 12px 18px;
+}

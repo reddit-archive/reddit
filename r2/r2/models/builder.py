@@ -756,7 +756,7 @@ def make_wrapper(parent_wrapper = Wrapped, **params):
 class CommentBuilder(Builder):
     def __init__(self, link, sort, comment=None, children=None, context=None,
                  load_more=True, continue_this_thread=True,
-                 max_depth=MAX_RECURSION, num=None, **kw):
+                 max_depth=MAX_RECURSION, edits_visible=True, num=None, **kw):
         Builder.__init__(self, **kw)
         self.link = link
         self.comment = comment
@@ -764,6 +764,7 @@ class CommentBuilder(Builder):
         self.context = context or 0
         self.load_more = load_more
         self.max_depth = max_depth
+        self.edits_visible = edits_visible
         self.num = num
         self.continue_this_thread = continue_this_thread
         self.sort = sort
@@ -887,6 +888,7 @@ class CommentBuilder(Builder):
                 continue
 
             comment.num_children = num_children[comment._id]
+            comment.edits_visible = self.edits_visible
 
             if comment.collapsed and comment._id in dont_collapse:
                 comment.collapsed = False

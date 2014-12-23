@@ -1649,6 +1649,7 @@ class CommentPane(Templated):
             c.user.pref_show_link_flair,
             c.can_save,
             self.max_depth,
+            self.edits_visible,
             c.user.pref_highlight_controversial,
         )
 
@@ -1667,6 +1668,7 @@ class CommentPane(Templated):
         self.article = article
 
         self.max_depth = kw.get('max_depth')
+        self.edits_visible = kw.get("edits_visible")
 
         # don't cache on permalinks or contexts, and keep it to html
         try_cache = not comment and not context and (c.render_style == "html")
