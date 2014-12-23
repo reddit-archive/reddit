@@ -4,56 +4,46 @@
 
       return '<script ' + attrs + ' src="' + src + '"></script>';
     }).join('');
-    var commentModalTemplate = _.template(
-      '<div class="modal fade" tabindex="-1" role="dialog">' +
-          '<div class="modal-dialog modal-dialog-lg">' +
-              '<div class="modal-content">' +
-                  '<div class="modal-header">' +
-                      '<a href="javascript: void 0;" class="c-close c-hide-text" data-dismiss="modal">' +
-                          _.escape(r._('close this window')) +
-                      '</a>' +
-                  '</div>' +
-                  '<div class="modal-body">' +
-                      '<h4  class="modal-title">' +
-                        _.escape(r._('Embed preview:')) +
-                      '</h4>' +
-                      '<div id="embed-preview">' +
-                          '<%= html %>' +
-                      '</div>' +
-                      '<% if (!root) { %>' +
-                          '<div class="c-checkbox">' +
-                              '<label class="remember">' +
-                                  '<input type="checkbox" name="parent" <% if (parent) { %> checked <% } %>>' +
-                                  _.escape(r._('Include parent comment.')) +
-                              '</label>' +
-                          '</div>' +
-                      '<% } %>' +
-                      '<div class="c-checkbox">' +
-                          '<label>' +
-                              '<input type="checkbox" name="live" <% if (!live) { %> checked <% } %> data-rerender="false">' +
-                              _.escape(r._('Do not show comment if edited.')) +
-                              '&nbsp;' +
-                              '<a href="/help/embed#live-update">' +
-                                _.escape(r._('Learn more')) +
-                              '</a>' +
-                          '</label>' +
-                      '</div>' +
-                  '</div>' +
-                  '<div class="modal-footer">' +
-                      '<div class="c-form-group">' +
-                          '<label for="embed-code" class="modal-title">' +
-                              _.escape(r._('Copy this code and paste it into your website:')) +
-                          '</label>' +
-                          '<textarea class="c-form-control" id="embed-code" rows="3" readonly>' +
-                              '<%= html %>' +
-                              '<%- scripts %>' +
-                          '</textarea>' +
-                      '</div>' +
-                  '</div>' +
-              '</div>' +
+
+    var embedBodyTemplate = _.template(
+      '<h4  class="modal-title">' +
+        _.escape(r._('Embed preview:')) +
+      '</h4>' +
+      '<div id="embed-preview">' +
+          '<%= html %>' +
+      '</div>' +
+      '<% if (!root) { %>' +
+          '<div class="c-checkbox">' +
+              '<label class="remember">' +
+                  '<input type="checkbox" name="parent" <% if (parent) { %> checked <% } %>>' +
+                  _.escape(r._('Include parent comment.')) +
+              '</label>' +
           '</div>' +
+      '<% } %>' +
+      '<div class="c-checkbox">' +
+          '<label>' +
+              '<input type="checkbox" name="live" <% if (!live) { %> checked <% } %> data-rerender="false">' +
+              _.escape(r._('Do not show comment if edited.')) +
+              '&nbsp;' +
+              '<a href="/help/embed#live-update">' +
+                _.escape(r._('Learn more')) +
+              '</a>' +
+          '</label>' +
       '</div>'
     );
+
+    var embedFooterTemplate = _.template(
+      '<div class="c-form-group">' +
+          '<label for="embed-code" class="modal-title">' +
+              _.escape(r._('Copy this code and paste it into your website:')) +
+          '</label>' +
+          '<textarea class="c-form-control" id="embed-code" rows="3" readonly>' +
+              '<%= html %>' +
+              '<%- scripts %>' +
+          '</textarea>' +
+      '</div>'
+    );
+
     var embedCodeTemplate = _.template(
       '<div class="reddit-embed" ' +
          ' data-embed-media="<%- media %>" ' +
@@ -92,11 +82,15 @@
     $('body').on('click', '.embed-comment', function(e) {
       var $el = $(e.target);
       var data = $el.data();
-      var $dialog = $(commentModalTemplate(getEmbedOptions(data)));
-      var $textarea = $dialog.find('textarea');
-      var $preview = $dialog.find('#embed-preview');
+      var embedOptions = getEmbedOptions(data);
+      var popup = new r.ui.Popup({
+        content: embedBodyTemplate(embedOptions),
+        footer: embedFooterTemplate(embedOptions),
+      });
+      var $textarea = popup.$.find('textarea');
+      var $preview = popup.$.find('#embed-preview');
 
-      $dialog.on('change', '[type="checkbox"]', function(e) {
+      popup.$.on('change', '[type="checkbox"]', function(e) {
         var option = e.target.name;
         var $option = $(e.target);
         var prev = $el.data(option);
@@ -127,15 +121,15 @@
         $(this).select();
       });
 
-      $dialog.on('hidden.bs.modal', function() {
-        $dialog.remove();
+      popup.on('closed.r.popup', function() {
+        popup.$.remove();
       });
 
-      $dialog.on('shown.bs.modal', function() {
+      popup.on('opened.r.popup', function() {
         window.rembeddit.init();
       });
 
-      $dialog.modal();
+      popup.show();
 
     });
 

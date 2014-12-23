@@ -170,19 +170,9 @@
               r.config.https_endpoint = 'https://' + BETA_HOST;
             }
           </script>
-          <div id="login-popup-v2" class="login-popup cover-overlay" tabindex="-1" style="display: none">
-            <div class="cover"></div>
-            <div class="popup-v2">
-              <a href="javascript: void 0;" class="hidecover c-hide-text">
-                ${_("close this window")}
-              </a>
-              <div class="clear"></div>
-              <div class="popup-v2-body">
-                <h2 class="cover-msg">${strings.cover_msg}</h2>
-                ${Login(is_popup=True)}
-              </div>
-            </div>
-          </div>
+          <script id="login-popup" type="text/template">
+            ${Login(is_popup=True)}
+          </script>
         %else:
           <div class="login-popup cover-overlay" style="display: none">
             <div class="cover" onclick="return hidecover(this)"></div>
@@ -196,15 +186,9 @@
           </div>
         %endif
       %endif
-      <div class="lang-popup cover-overlay" style="display: none">
-        <div class="cover" onclick="return hidecover(this)"></div>
-        <div class="popup">
-          <a href="#" onclick="return hidecover(this)" class="hidecover">
-            ${_("close this window")}
-          </a>
-          <%include file="prefoptions.html" />
-        </div>
-      </div>
+      <script id="lang-popup" type="text/template">
+        <%include file="prefoptions.html" />
+      </script>
     %endif
   %endif
   ${framebuster()}

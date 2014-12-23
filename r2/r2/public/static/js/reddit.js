@@ -152,7 +152,13 @@ function emptyInput(elem, msg) {
 
 
 function showlang() {
-    $(".lang-popup:first").show();
+    var content = $('#lang-popup').prop('innerHTML');
+    var popup = new r.ui.Popup({
+        content: content,
+    });
+
+    popup.show();
+
     return false;
 };
 

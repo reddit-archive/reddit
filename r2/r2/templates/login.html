@@ -36,6 +36,11 @@
   <p class="error">${_("you are signed in. go use the site!")}</p>
 %else:
   %if feature.is_enabled('new_login_flow'):
+    %if thing.is_popup:
+      <h3 id="cover-msg" class="modal-title">
+        ${_('You need to login to do that.')}
+      </h3>
+    %endif
     <div id="login-v2">
       ${login_panel(login_form, 
                     user_reg = thing.user_reg, user_login = thing.user_login, 
@@ -119,7 +124,7 @@
                  data-validate-on="change blur">
         </%call>
       %endif
-      <div class="c-checkbox">
+      <div class="c-checkbox c-input-height">
         <label for="rem_${op}" class="remember">
           <input type="checkbox" name="rem" id="rem_${op}"
                tabindex="${tabindex}">
@@ -248,11 +253,11 @@
     <% autofocus = (not thing.is_popup) %>
     <div class="split-panel">
       <div class="split-panel-section split-panel-divider">
-        <h3>${_("create a new account")}</h3>
+        <h4 class="modal-title">${_("create a new account")}</h4>
         ${lf(register=True, user=user_reg, dest=dest, autofocus=autofocus)}
       </div>
       <div class="split-panel-section">
-        <h3>${_("sign in")}</h3>
+        <h4 class="modal-title">${_("sign in")}</h4>
         ${lf(user = user_login, dest = dest, autofocus=autofocus)}
       </div>
     </div>

@@ -100,7 +100,7 @@ r.login.ui = {
                 new r.ui.RegisterForm(el)
             })
 
-            this.popup = new r.ui.LoginPopup($('.login-popup')[0])
+            this.popup = new r.ui.LoginPopup();
 
             $(document).delegate('.login-required', 'click', $.proxy(this, 'loginRequiredAction'))
         }
@@ -182,7 +182,6 @@ r.login.ui = {
             }
 
             this.popup.showLogin(actionDetails.description, dest && $.proxy(function(result) {
-                this.popup.loginForm.$el.addClass('working')
                 var hsts_redir = result.json.data.hsts_redir
                 if(hsts_redir) {
                     dest = hsts_redir + encodeURIComponent(dest)
@@ -392,47 +391,48 @@ r.ui.RegisterForm.prototype = $.extend(new r.ui.Form(), {
     focus: r.ui.LoginForm.prototype.focus
 })
 
-r.ui.LoginPopup = function(el) {
-    r.ui.Base.call(this, el)
-    this.loginForm = new r.ui.LoginForm(this.$el.find('#login-form'))
-    this.registerForm = new r.ui.RegisterForm(this.$el.find('#register-form'))
+r.ui.LoginPopup = function() {
+    var content = $('#login-popup').prop('innerHTML');
 
-    this.$el.on('keydown', this.shortcuts.bind(this));
-    this.$el.on('click', '.cover, .hidecover', this.hide.bind(this));
-}
-r.ui.LoginPopup.prototype = $.extend(new r.ui.Base(), {
+    r.ui.Popup.call(this, {
+        size: 'large',
+        content: content,
+        className: 'login-modal',
+    });
+
+    this.login = new r.ui.LoginForm(this.$.find('#login-form'));
+    this.register = new r.ui.RegisterForm(this.$.find('#register-form'));
+};
+
+r.ui.LoginPopup.prototype = _.extend({}, r.ui.Popup.prototype, {
+
     show: function(notice, callback) {
-        this.loginForm.successCallback = callback
-        this.registerForm.successCallback = callback
-        $.request("new_captcha", {id: this.$el.attr('id')})
-        this.$el
-            .find(".cover-msg").text(notice).toggle(!!notice).end()
-            .find('.popup').css('top', $(document).scrollTop()).end()
-            .show()
+        this.login.successCallback = callback;
+        this.register.successCallback = callback;
 
-        this.shown = true;
-    },
+        this.$.find('#cover-msg').text(notice).toggle(!!notice);
 
-    hide: function () {
-        this.$el.hide();
+        r.ui.Popup.prototype.show.call(this);
 
-        this.shown = false;
+        return false;
     },
 
     showLogin: function() {
-        this.show.apply(this, arguments)
-        this.loginForm.focus()
+        var login = this.login;
+
+        this.show.apply(this, arguments);
+        this.once('opened.r.popup', function() {
+            login.focus();
+        });
     },
 
     showRegister: function() {
-        this.show.apply(this, arguments)
-        this.registerForm.focus()
-    },
+        var register = this.register;
 
-    shortcuts: function (e) {
-        if (e.which === 27 && this.shown) {
-            this.hide();
-        }
+        this.show.apply(this, arguments);
+        this.once('opened.r.popup', function() {
+            register.focus();
+        });
     },
 
 });

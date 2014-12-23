@@ -3147,15 +3147,38 @@ li.searchfacet {
     }
 }
 
+.login-modal {
+    .modal-body {
+        @media (min-width: @screen-sm-min) {
+            // horizontal padding - (header height + body padding + borders)
+            margin: (@modal-inner-padding-md-horizontal - 
+                    (@modal-inner-padding-vertical +
+                        ((@modal-title-padding * 3) + @modal-title-line-height)) +
+                        2) 0;
+        }
+
+        @media (min-width: @screen-md-min) {
+            // horizontal padding - (header height + body padding + borders)
+            margin: (@modal-inner-padding-lg-horizontal - 
+                    (@modal-inner-padding-vertical +
+                        ((@modal-title-padding * 3) + @modal-title-line-height)) +
+                        2) 0;
+        }
+    }
+}
+
+#cover-msg {
+    line-height: normal;
+    margin: 0 0 40px;
+}
+
 #login-v2 {
     h2,
     h3 {
         color: #4270a2;
     }
 
-    h3 {
-        font-size: 12px;
-        text-transform: uppercase;
+    .modal-title {
         margin: 25px 0;
     }
 

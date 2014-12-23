@@ -52,6 +52,8 @@
     position: relative;
     background-color: @modal-content-bg;
     border-radius: @modal-border-radius;
+    border: 1px solid @modal-content-fallback-border-color; //old browsers fallback (ie8 etc)
+    border: 1px solid @modal-content-border-color;
     .box-shadow(3px 3px 13px rgba(0,0,0,0.35));
     background-clip: padding-box;
     // Remove focus outline from opened modal
@@ -66,6 +68,7 @@
     bottom: 0;
     left: 0;
     background-color: @modal-backdrop-bg;
+    z-index: (@zindex-modal - 1);
     // Fade for backdrop
     &.fade { .opacity(0); }
     &.in { .opacity(@modal-backdrop-opacity); }
@@ -87,24 +90,52 @@
 .modal-title {
     color: @modal-title-color;
     display: block;
-    font-weight: bold;
-    font-size: 12px;
-    margin: 4px 0 6px;
     line-height: @modal-title-line-height;
-    text-transform: uppercase;
+
+    h1&,
+    h2&,
+    h3& {
+        font-size: 18px;
+        font-weight: normal;
+        margin: 12px 0 18px;
+    }
+
+    h4&,
+    h5&,
+    h6& {
+        font-size: 12px;
+        font-weight: bold;
+        margin: 4px 0 6px;
+        text-transform: uppercase;
+    }
 }
 
 // Modal body
 // Where all modal content resides (sibling of .modal-header and .modal-footer)
 .modal-body {
     position: relative;
-    padding: @modal-inner-padding;
+
+    &:last-child {
+        // default padding + header height + header border
+        padding-bottom: (@modal-inner-padding-vertical +
+                       ((@modal-title-padding * 3) + @modal-title-line-height) +
+                         1px);
+    }
+}
+
+.modal-body,
+.modal-footer {
+    padding: @modal-inner-padding-vertical @modal-inner-padding-sm-horizontal;
+
+    @media (min-width: @screen-sm-min) {
+        padding-left: @modal-inner-padding-md-horizontal;
+        padding-right: @modal-inner-padding-md-horizontal;
+    }
 }
 
 // Footer (for actions)
 .modal-footer {
     background: #E9F0F7;
-    padding: @modal-inner-padding;
     border-bottom-left-radius: @modal-border-radius;
     border-bottom-right-radius: @modal-border-radius;
     border-top: 1px solid @modal-footer-border-color;
@@ -145,7 +176,15 @@
         &.modal-dialog-sm { width: @modal-sm; }
 
         @media (min-width: @screen-md-min) {
-            &.modal-dialog-lg { width: @modal-lg; }
+            &.modal-dialog-lg {
+                width: @modal-lg;
+
+                .modal-body,
+                .modal-footer {
+                    padding-left: @modal-inner-padding-lg-horizontal;
+                    padding-right: @modal-inner-padding-lg-horizontal;
+                }
+            }
         }
     }
 
