@@ -604,7 +604,7 @@ class ApiController(RedditController):
                 from r2.lib.errors import reddit_http_error
                 abort(reddit_http_error(409, errors.LOGGED_IN))
 
-        if not (responder.has_errors("vdelay", errors.RATELIMIT) or
+        if not (responder.has_errors("ratelimit", errors.RATELIMIT) or
                 responder.has_errors("passwd", errors.WRONG_PASSWORD)):
             self._login(responder, user, rem)
 
@@ -1314,7 +1314,7 @@ class ApiController(RedditController):
         if not confirm:
             c.errors.add(errors.CONFIRM, field="confirm")
 
-        if not (form.has_errors('vdelay', errors.RATELIMIT) or
+        if not (form.has_errors('ratelimit', errors.RATELIMIT) or
                 form.has_errors("user", errors.NOT_USER) or
                 form.has_errors("passwd", errors.WRONG_PASSWORD) or
                 form.has_errors("delete_message", errors.TOO_LONG) or
@@ -3104,6 +3104,12 @@ class ApiController(RedditController):
             emailer.password_change_email(user)
         g.log.warning("%s did a password reset for %s via %s",
                       request.ip, user.name, token._id)
+
+        # add this ip to the user's account so they can sign in even if
+        # their account is being brute forced by a third party.
+        if config['r2.import_private']:
+            from r2admin.lib.ip_events import renew_ref_account_ip
+            renew_ref_account_ip(user._id, request.ip, c.start_time)
 
         # if the token is for the current user, their cookies will be
         # invalidated and they'll have to log in again.

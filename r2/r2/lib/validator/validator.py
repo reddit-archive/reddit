@@ -27,7 +27,7 @@ from pylons import c, g, request, response
 from pylons.i18n import _
 from pylons.controllers.util import abort
 from r2.config.extensions import api_type
-from r2.lib import utils, captcha, promote, totp
+from r2.lib import utils, captcha, promote, totp, ratelimit
 from r2.lib.filters import unkeep_space, websafe, _force_unicode
 from r2.lib.filters import markdown_souptest
 from r2.lib.db import tdb_cassandra
@@ -308,12 +308,9 @@ def _validatedForm(self, self_method, responder, simple_vals, param_vals,
             (form.has_errors('captcha', errors.BAD_CAPTCHA) or
              (form.has_error() and c.user.needs_captcha()))):
             form.new_captcha()
-        elif (isinstance(validator, VRatelimit) and
+        elif (isinstance(validator, (VRatelimit, VThrottledLogin)) and
               form.has_errors('ratelimit', errors.RATELIMIT)):
             form.ratelimit(validator.seconds)
-        elif (isinstance(validator, VThrottledLogin) and
-                form.has_errors('vdelay', errors.RATELIMIT)):
-            form.ratelimit(validator.vdelay.seconds)
     if val:
         return val
     else:
@@ -1402,51 +1399,92 @@ class VLoggedOut(Validator):
         if c.user_is_loggedin:
             self.set_error(errors.LOGGED_IN)
 
-class VLogin(VRequired):
-    def __init__(self, item, *a, **kw):
-        VRequired.__init__(self, item, errors.WRONG_PASSWORD, *a, **kw)
 
-    def run(self, user_name, password):
-        user_name = chkuser(user_name)
-        user = None
-        if user_name:
+class AuthenticationFailed(Exception):
+    pass
+
+
+class VThrottledLogin(VRequired):
+    def __init__(self, params):
+        VRequired.__init__(self, params, error=errors.WRONG_PASSWORD)
+        self.vlength = VLength("user", max_length=100)
+        self.seconds = None
+
+    def run(self, username, password):
+        if config["r2.import_private"]:
+            from r2admin.lib.ip_events import ip_used_by_account
+        else:
+            def ip_used_by_account(account_id, ip):
+                return False
+
+        ratelimit_key = None
+
+        try:
+            if username:
+                username = username.strip()
+                username = self.vlength.run(username)
+                username = chkuser(username)
+
+            if not username:
+                raise AuthenticationFailed
+
+            try:
+                account = Account._by_name(username)
+            except NotFound:
+                raise AuthenticationFailed
+
+            hooks.get_hook("account.spotcheck").call(account=account)
+            if account._banned:
+                raise AuthenticationFailed
+
+            # if already logged in, you're exempt from your own ratelimit
+            # (e.g. to allow account deletion regardless of DoS)
+            ratelimit_exempt = (account == c.user)
+            if not ratelimit_exempt:
+                time_slice = ratelimit.get_timeslice(g.RL_RESET_SECONDS)
+                is_previously_seen_ip = ip_used_by_account(account._id, request.ip)
+                if is_previously_seen_ip:
+                    ratelimit_key = "rl-login-familiar-%d" % account._id
+                else:
+                    ratelimit_key = "rl-login-unknown-%d" % account._id
+
+                try:
+                    failed_logins = ratelimit.get_usage(ratelimit_key, time_slice)
+                    if failed_logins >= g.RL_LOGIN_MAX_REQS:
+                        self.seconds = time_slice.remaining
+                        period_end = datetime.utcfromtimestamp(
+                            time_slice.end).replace(tzinfo=pytz.UTC)
+                        time = utils.timeuntil(period_end)
+                        self.set_error(
+                            errors.RATELIMIT, {'time': time},
+                            field='ratelimit', code=429)
+                        return False
+                except ratelimit.RatelimitError as e:
+                    g.log.info("ratelimitcache error (login): %s", e)
+
             try:
                 str(password)
             except UnicodeEncodeError:
-                password = password.encode('utf8')
-            user = valid_login(user_name, password)
-        if not user:
+                password = password.encode("utf8")
+
+            if not valid_password(account, password):
+                raise AuthenticationFailed
+            return account
+        except AuthenticationFailed:
+            if ratelimit_key:
+                try:
+                    ratelimit.record_usage(ratelimit_key, time_slice)
+                except ratelimit.RatelimitError as e:
+                    g.log.info("ratelimitcache error (login): %s", e)
             self.error()
             return False
-        return user
-
-class VThrottledLogin(VLogin):
-    def __init__(self, *args, **kwargs):
-        VLogin.__init__(self, *args, **kwargs)
-        self.vdelay = VDelay("login")
-        self.vlength = VLength("user", max_length=100)
-
-    def run(self, username, password):
-        if username:
-            username = username.strip()
-        username = self.vlength.run(username)
-
-        self.vdelay.run()
-        if (errors.RATELIMIT, "vdelay") in c.errors:
-            return False
-
-        user = VLogin.run(self, username, password)
-        if not user:
-            VDelay.record_violation("login", seconds=1, growfast=True)
-            c.errors.add(errors.WRONG_PASSWORD, field=self.param[1])
-        else:
-            return user
 
     def param_docs(self):
         return {
             self.param[0]: "a username",
             self.param[1]: "the user's password",
         }
+
 
 class VSanitizedUrl(Validator):
     def run(self, url):

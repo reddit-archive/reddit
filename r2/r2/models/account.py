@@ -763,20 +763,6 @@ def make_feedurl(user, path, ext = "rss"):
     u.set_extension(ext)
     return u.unparse()
 
-def valid_login(name, password):
-    try:
-        a = Account._by_name(name)
-    except NotFound:
-        return False
-
-    if not a._loaded: a._load()
-
-    hooks.get_hook("account.spotcheck").call(account=a)
-
-    if a._banned:
-        return False
-    return valid_password(a, password)
-
 def valid_password(a, password, compare_password=None):
     # bail out early if the account or password's invalid
     if not hasattr(a, 'name') or not hasattr(a, 'password') or not password:

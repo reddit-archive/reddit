@@ -201,6 +201,7 @@ class Globals(object):
             'querycache_prune_chance',
             'RL_AVG_REQ_PER_SEC',
             'RL_OAUTH_AVG_REQ_PER_SEC',
+            'RL_LOGIN_AVG_PER_SEC',
         ],
 
         ConfigValue.bool: [
@@ -508,6 +509,9 @@ class Globals(object):
         self.RL_OAUTH_RESET_SECONDS = self.config["RL_OAUTH_RESET_MINUTES"] * 60
         self.RL_OAUTH_MAX_REQS = int(self.config["RL_OAUTH_AVG_REQ_PER_SEC"] *
                                      self.RL_OAUTH_RESET_SECONDS)
+
+        self.RL_LOGIN_MAX_REQS = int(self.config["RL_LOGIN_AVG_PER_SEC"] *
+                                     self.RL_RESET_SECONDS)
 
         self.startup_timer.intermediate("configuration")
 

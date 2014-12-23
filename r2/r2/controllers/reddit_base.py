@@ -25,7 +25,6 @@ import json
 import re
 import simplejson
 import socket
-import time
 
 from Cookie import CookieError
 from copy import copy
@@ -45,7 +44,7 @@ from pylons.i18n.translation import LanguageError
 
 from r2.config import feature
 from r2.config.extensions import is_api, set_extension
-from r2.lib import filters, pages, utils, hooks
+from r2.lib import filters, pages, utils, hooks, ratelimit
 from r2.lib.authentication import authenticate_user
 from r2.lib.base import BaseController, abort
 from r2.lib.cache import make_key, MemcachedError
@@ -587,21 +586,14 @@ def set_colors():
         c.bordercolor = request.GET.get('bordercolor')
 
 
-def _get_ratelimit_timeslice(slice_seconds):
-    slice_start, secs_since = divmod(time.time(), slice_seconds)
-    slice_start = time.gmtime(int(slice_start * slice_seconds))
-    secs_to_next = slice_seconds - int(secs_since)
-    return slice_start, secs_to_next
-
-
 def ratelimit_agent(agent, limit=10, slice_size=10):
     slice_size = min(slice_size, 60)
-    time_slice, retry_after = _get_ratelimit_timeslice(slice_size)
-    key = "rate_agent_" + agent + time.strftime("_%S", time_slice)
-    g.cache.add(key, 0, time=slice_size + 1)
-    if g.cache.incr(key) > limit:
-        request.environ['retry_after'] = retry_after
+    time_slice = ratelimit.get_timeslice(slice_size)
+    usage = ratelimit.record_usage("rl-agent-" + agent, time_slice)
+    if usage > limit:
+        request.environ['retry_after'] = time_slice.remaining
         abort(429)
+
 
 appengine_re = re.compile(r'AppEngine-Google; \(\+http://code.google.com/appengine; appid: (?:dev|s)~([a-z0-9-]{6,30})\)\Z')
 def ratelimit_agents():
@@ -1000,31 +992,20 @@ class MinimalController(BaseController):
             # * CDN requests (logged out via www.reddit.com)
             return
 
-        period_start, retry_after = _get_ratelimit_timeslice(period)
-        key += time.strftime("-%H%M%S", period_start)
+        time_slice = ratelimit.get_timeslice(period)
 
         try:
-            g.ratelimitcache.add(key, 0, time=retry_after + 1)
-
-            try:
-                # Increment the key to track the current request
-                recent_reqs = g.ratelimitcache.incr(key)
-            except pylibmc.NotFound:
-                # Previous round of ratelimiting fell out in the
-                # time between calling `add` and calling `incr`.
-                g.ratelimitcache.add(key, 1, time=retry_after + 1)
-                recent_reqs = 1
-        except pylibmc.Error as e:
-            # Ratelimiting is non-critical; if the caches are
+            recent_reqs = ratelimit.record_usage(key, time_slice)
+        except ratelimit.RatelimitError as e:
+            # Ratelimiting is non-critical; if the system is
             # having issues, just skip adding the headers
-            g.log.info("ratelimitcache error: %s", e)
+            g.log.info("ratelimit error: %s", e)
             return
-
         reqs_remaining = max(0, max_reqs - recent_reqs)
 
         c.ratelimit_headers = {
             "X-Ratelimit-Used": str(recent_reqs),
-            "X-Ratelimit-Reset": str(retry_after),
+            "X-Ratelimit-Reset": str(time_slice.remaining),
             "X-Ratelimit-Remaining": str(reqs_remaining),
         }
 
@@ -1036,7 +1017,7 @@ class MinimalController(BaseController):
             if g.ENFORCE_RATELIMIT:
                 # For non-abort situations, the headers will be added in post(),
                 # to avoid including them in a pagecache
-                request.environ['retry_after'] = retry_after
+                request.environ['retry_after'] = time_slice.remaining
                 response.headers.update(c.ratelimit_headers)
                 abort(429)
         elif reqs_remaining < (0.1 * max_reqs):
