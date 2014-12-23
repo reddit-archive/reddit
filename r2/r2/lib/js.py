@@ -76,7 +76,7 @@ class Source(object):
         """Return the full JavaScript source code."""
         raise NotImplementedError
 
-    def use(self):
+    def use(self, **kwargs):
         """Return HTML to insert the JavaScript source inside a template."""
         raise NotImplementedError
 
@@ -117,12 +117,16 @@ class FileSource(Source):
 
         return os.path.join(STATIC_ROOT, "static", "js", self.name)
 
-    def use(self):
+    def url(self, absolute=False):
         from r2.lib.template_helpers import static
         path = [g.static_path, self.name]
         if g.uncompressedJS:
             path.insert(1, "js")
-        return script_tag.format(src=static(os.path.join(*path)))
+
+        return static(os.path.join(*path), absolute)
+
+    def use(self, **kwargs):
+        return script_tag.format(src=self.url(**kwargs))
 
     @property
     def dependencies(self):
@@ -169,12 +173,18 @@ class Module(Source):
                 out.write(source)
         print >> sys.stderr, " done."
 
-    def use(self):
+    def url(self, absolute=False):
         from r2.lib.template_helpers import static
         if g.uncompressedJS:
-            return "".join(source.use() for source in self.sources)
+            return [source.url(absolute=absolute) for source in self.sources]
         else:
-            return script_tag.format(src=static(self.name))
+            return static(self.name, absolute=absolute)
+
+    def use(self, **kwargs):
+        if g.uncompressedJS:
+            return "".join(source.use(**kwargs) for source in self.sources)
+        else:
+            return script_tag.format(src=self.url(**kwargs))
 
     @property
     def dependencies(self):
@@ -363,7 +373,7 @@ class LocalizedModule(Module):
                 for appendix in localized_appendices:
                     out.write(appendix.get_localized_source(lang) + ";")
 
-    def use(self):
+    def use(self, **kwargs):
         from pylons.i18n import get_lang
         from r2.lib.template_helpers import static
         from r2.lib.filters import SC_OFF, SC_ON
@@ -372,12 +382,12 @@ class LocalizedModule(Module):
             if c.lang == "en" or c.lang not in g.all_languages:
                 # in this case, the msgids *are* the translated strings and we
                 # can save ourselves the pricey step of lexing the js source
-                return Module.use(self)
+                return Module.use(self, **kwargs)
 
             msgids = extract_javascript_msgids(Module.get_source(self))
             localized_appendices = self.localized_appendices + [StringsSource(msgids)]
 
-            lines = [Module.use(self)]
+            lines = [Module.use(self, **kwargs)]
             for appendix in localized_appendices:
                 line = SC_OFF + inline_script_tag.format(
                     content=appendix.get_localized_source(c.lang)) + SC_ON
@@ -386,7 +396,7 @@ class LocalizedModule(Module):
         else:
             langs = get_lang() or [g.lang]
             url = LocalizedModule.languagize_path(self.name, langs[0])
-            return script_tag.format(src=static(url))
+            return script_tag.format(src=static(url), **kwargs)
 
     @property
     def outputs(self):
@@ -560,8 +570,25 @@ module["less"] = Module('less.js',
     should_compile=False,
 )
 
-def use(*names):
-    return "\n".join(module[name].use() for name in names)
+def src(*names, **kwargs):
+    sources = []
+
+    for name in names:
+        urls = module[name].url(**kwargs)
+
+        if isinstance(urls, str) or isinstance(urls, unicode):
+            sources.append(urls)
+        else:
+            for url in list(urls):
+                if isinstance(url, list):
+                    sources.extend(url)
+                else:
+                    sources.append(url)
+
+    return sources
+
+def use(*names, **kwargs):
+    return "\n".join(module[name].use(**kwargs) for name in names)
 
 
 def load_plugin_modules(plugins=None):

@@ -49,7 +49,7 @@ static_text_extensions = {
     '.css': 'css',
     '.less': 'css'
 }
-def static(path):
+def static(path, absolute=False):
     """
     Simple static file maintainer which automatically paths and
     versions files being served out of static.
@@ -79,7 +79,7 @@ def static(path):
             should_cache_bust = True
             actual_filename = filename
 
-        domain = None
+        domain = g.domain if absolute else None
 
     path_components.append(dirname)
     if not actual_filename:
