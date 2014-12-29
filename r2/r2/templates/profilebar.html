@@ -91,8 +91,8 @@
 
   %if feature.is_enabled("snoovatars") and thing.user.gold:
     %if thing.show_private_info or thing.user.pref_show_snoovatar:
-      <div>
-        <a href="/user/${thing.user.name}/snoo" class="snoovatar">
+      <div class="gold-accent snoovatar-link">
+        <a href="/user/${thing.user.name}/snoo">
           %if thing.viewing_self:
             ${_("View/edit my snoovatar")}
           %else:
