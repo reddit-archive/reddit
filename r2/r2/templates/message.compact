@@ -42,7 +42,7 @@
        %else:
          <span class="correspondent rounded">
            <%
-              corr = thing.author if thing.recipient else thing.to
+              corr = thing.author if thing.user_is_recipient else thing.to
             %>
            ${WrappedUser(corr)}
          </span>
