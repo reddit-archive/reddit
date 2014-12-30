@@ -1554,17 +1554,14 @@ class Message(Thing, Printable):
         link_ids = {w.link_id for w in wrapped if w.was_comment}
         links = Link._byID(link_ids, data=True)
 
-        sr_ids = {w.sr_id for w in wrapped if w.sr_id}
-        link_sr_ids = {link.sr_id for link in links.itervalues()}
-        all_sr_ids = sr_ids | link_sr_ids
-        srs = Subreddit._byID(all_sr_ids, data=True)
+        srs = {w.subreddit._id: w.subreddit for w in wrapped if w.sr_id}
 
         parent_ids = {w.parent_id for w in wrapped
             if w.parent_id and w.was_comment}
         parents = Comment._byID(parent_ids, data=True)
 
         # load full modlist for all subreddit messages
-        mods_by_srid = {sr_id: srs[sr_id].moderator_ids() for sr_id in sr_ids}
+        mods_by_srid = {sr._id: sr.moderator_ids() for sr in srs.itervalues()}
         user_mod_sr_ids = {sr_id for sr_id, mod_ids in mods_by_srid.iteritems()
             if user._id in mod_ids}
 
@@ -1646,7 +1643,6 @@ class Message(Thing, Printable):
                     "from %(author)s via %(subreddit)s sent %(when)s")
             elif item.sr_id:
                 item.user_is_recipient = not user_is_sender
-                item.subreddit = srs[item.sr_id]
                 user_is_moderator = item.sr_id in user_mod_sr_ids
 
                 if sent_by_sr:
