@@ -33,8 +33,6 @@ User-Agent: *
 Disallow: /*.json
 Disallow: /*.json-compact
 Disallow: /*.json-html
-Disallow: /*.mobile
-Disallow: /*.compact
 Disallow: /*.xml
 Disallow: /*.rss
 Disallow: /*.i
