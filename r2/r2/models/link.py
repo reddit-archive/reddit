@@ -1429,6 +1429,8 @@ class Message(Thing, Printable):
 
         m._commit()
 
+        hooks.get_hook('message.new').call(message=m)
+
         MessagesByAccount.add_message(author, m)
 
         if sr_id and not sr:
@@ -1487,8 +1489,6 @@ class Message(Thing, Printable):
                         first_recipient != to and
                         not first_recipient_modmail):
                     inbox_rel.append(Inbox._add(first_recipient, m, 'inbox'))
-
-        hooks.get_hook('message.new').call(message=m)
 
         return (m, inbox_rel)
 
