@@ -1189,12 +1189,18 @@ class CoinbaseController(GoldPaymentController):
         'cancelled': 'cancelled',
         'mispaid': 'noop',
         'expired': 'noop',
+        'payout': 'noop',
     }
     abort_on_error = False
 
     @classmethod
     def process_response(cls):
         event_dict = json.loads(request.body)
+
+        # handle non-payment events we can ignore
+        if 'payout' in event_dict:
+            return 'payout', None
+
         order = event_dict['order']
         transaction_id = 'C%s' % order['id']
         status = order['status']    # new/completed/cancelled
