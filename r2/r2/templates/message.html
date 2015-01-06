@@ -53,9 +53,9 @@ ${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if
     substitutions = {}
 
     if thing.sr_id:
-        substitutions['subreddit'] = u'<b><a href="%(path)s">%(path)s</a></b>' % dict(path=thing.subreddit.path)
+        substitutions['subreddit'] = u'<span class="subreddit"><a href="%(path)s">%(path)s</a></span>' % dict(path=thing.subreddit.path)
 
-    substitutions['author'] = u"<b>%s</b>" % WrappedUser(thing.author, thing.attribs, thing).render()
+    substitutions['author'] = u'<span class="sender">%s</span>' % WrappedUser(thing.author, thing.attribs, thing).render()
 
     if isinstance(thing.to, Account):
         to_attribs = []
@@ -68,9 +68,9 @@ ${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if
                 label = _('moderator of /r/%(reddit)s, speaking officially')
                 label %= {'reddit': thing.subreddit.name}
                 add_attr(to_attribs, 'M', label=label, link=link)
-        substitutions['dest'] = u"<b>%s</b>" % WrappedUser(thing.to, to_attribs, thing).render()
+        substitutions['dest'] = u'<span class="recipient">%s</span>' % WrappedUser(thing.to, to_attribs, thing).render()
     elif thing.sr_id:
-        substitutions['dest'] = substitutions['subreddit']
+        substitutions['dest'] = u'<span class="recipient subreddit"><a href="%(path)s">%(path)s</a></span>' % dict(path=thing.subreddit.path)
 
     substitutions['when'] = capture(thing_timestamp, thing, thing.timesince, include_tense=True)
 
@@ -105,7 +105,7 @@ ${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if
          </span>
        %endif
     %endif
-    ${thing.subject}
+    <span class="subject-text">${thing.subject}</span>
   %if thing.was_comment:
     <a href="${thing.link_permalink}" class="title">${thing.link_title}</a>
   %elif getattr(thing, "is_parent", False):
