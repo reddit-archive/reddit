@@ -34,21 +34,6 @@
       ${thing.content()}
     </div>
   %endif
-  %if not c.user_is_loggedin:
-    %if thing.enable_login_cover:
-    <div class="login-popup cover-overlay" style="display: none">
-      <div class="cover" onclick="return hidecover(this)"></div>
-      <div class="popup">
-        <%
-           from r2.lib.utils import UrlParser
-           path = UrlParser(request.fullpath)
-           path.set_extension(c.extension)
-         %>
-        ${login_form(dest = path.unparse())}
-      </div>
-    </div>
-    %endif
-  %endif
   %if g.tracker_url and thing.site_tracking and not c.secure:
     <img alt="" src="${tracking.get_pageview_pixel_url()}"/>
   %endif

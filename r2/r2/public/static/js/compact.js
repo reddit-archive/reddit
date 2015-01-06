@@ -132,19 +132,6 @@ $(function() {
 
 });
 
-function showcover() {
-    $.request("new_captcha");
-    $(".login-popup:first").fadeIn()
-            .find(".popup").css("top", $(window).scrollTop() + 75).end()
-            .find(".cover").css("height", $(document).height()).end()
-    return false;
-}
-
-function hidecover(where) {
-    $(where).parents(".cover-overlay").fadeOut();
-    return false;
-}
-
 function show_edit_usertext(form) {
     var edit = form.find(".usertext-edit");
     var body = form.find(".usertext-body");
