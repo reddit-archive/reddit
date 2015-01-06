@@ -22,7 +22,7 @@
 
 <%!
    from r2.lib.template_helpers import display_link_karma, header_url
-   from r2.models.subreddit import DefaultSR
+   from r2.models.subreddit import DefaultSR, FakeSubreddit
    from r2.lib import authentication
    
  %>
@@ -111,6 +111,11 @@
     <div class="menuitem">
       ${plain_link("search", "/search")}
     </div>
+    %if not isinstance(c.site, FakeSubreddit):
+    <div class="menuitem">
+      ${plain_link("sidebar", "/about/sidebar")}
+    </div>
+    %endif
   </div>
 </div>
 %if toolbars:
