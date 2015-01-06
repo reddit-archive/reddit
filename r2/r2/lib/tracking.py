@@ -152,7 +152,7 @@ def get_srpath():
 def get_pageview_pixel_url():
     """Return a URL to use for tracking pageviews for the current request."""
     data = [
-        c.user.name if c.user_is_loggedin else "",
+        c.user._id36 if c.user_is_loggedin else "",
         get_srpath(),
         c.lang or "",
         c.cname,

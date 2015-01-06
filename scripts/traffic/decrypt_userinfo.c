@@ -125,7 +125,7 @@ int main(int argc, char** argv)
 
             switch (field_index) {
             case FIELD_USER:
-                /* we don't use the username; skip it */
+                /* we don't use the user id; skip it */
                 break;
             case FIELD_SRPATH:
                 fputc('\t', stdout);
