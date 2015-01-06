@@ -891,12 +891,15 @@ class PromoteApiController(ApiController):
         campaign = None
         if campaign_id36:
             try:
-                campaign = PromoCampaign._byID36(campaign_id36)
+                campaign = PromoCampaign._byID36(campaign_id36, data=True)
             except NotFound:
                 pass
 
-        if campaign and link._id != campaign.link_id:
-            return abort(404, 'not found')
+            if campaign and (campaign._deleted or link._id != campaign.link_id):
+                campaign = None
+
+            if not campaign:
+                return abort(404, 'not found')
 
         if priority.cpm:
             min_bid = 0 if c.user_is_sponsor else g.min_promote_bid
