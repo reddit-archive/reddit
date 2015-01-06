@@ -105,7 +105,6 @@ def filter_prefs(prefs, user):
                      'pref_show_sponsors',
                      'pref_show_sponsorships',
                      'pref_highlight_new_comments',
-                     'pref_monitor_mentions',
                      'pref_creddit_autorenew',
                     ):
             prefs[pref] = True

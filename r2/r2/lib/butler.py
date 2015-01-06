@@ -78,8 +78,8 @@ def monitor_mentions(comment):
         if account == sender:
             continue
 
-        # bail out if that user doesn't have gold or has the feature turned off
-        if not account.gold or not account.pref_monitor_mentions:
+        # bail out if that user has the feature turned off
+        if not account.pref_monitor_mentions:
             continue
 
         # don't notify users of things they can't see

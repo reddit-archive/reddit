@@ -237,6 +237,8 @@
       &#32;<span class="little gray">
         ${_("(otherwise, they will be marked as read when you click them)")}
       </span>
+      <br>
+      ${checkbox(_("notify me when people say my username"), "monitor_mentions")}
     </td>
   </tr>
   <tr>
@@ -321,8 +323,6 @@
         &#32;<span class="little gray">
           (${_("we'll remember your visits for 48 hours and show you which comments you haven't seen yet")})
         </span>
-        <br/>
-        ${checkbox(_("notify me when people say my username"), "monitor_mentions")}
         <br><br>
         <% creddit_link = '&#32;<a href="/creddits">creddit</a>&#32;' %>
         ${checkbox(unsafe(_ws("use a %(creddit_link)s to automatically renew my gold if it expires") % dict(creddit_link=creddit_link)), "creddit_autorenew")}

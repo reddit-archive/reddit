@@ -928,12 +928,9 @@ class MessageController(ListingController):
                        NavButton(_("unread"), "unread"),
                        NavButton(plurals.messages, "messages"),
                        NavButton(_("comment replies"), 'comments'),
-                       NavButton(_("post replies"), 'selfreply')]
-
-            if c.user.gold:
-                buttons += [NavButton(_("username mentions"),
-                                      "mentions",
-                                      css_class="gold")]
+                       NavButton(_("post replies"), 'selfreply'),
+                       NavButton(_("username mentions"), "mentions"),
+            ]
 
             return [NavMenu(buttons, base_path = '/message/',
                             default = 'inbox', type = "flatlist")]
