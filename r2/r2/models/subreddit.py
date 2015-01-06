@@ -1352,6 +1352,10 @@ class DefaultSR(_DefaultSR):
 class MultiReddit(FakeSubreddit):
     name = 'multi'
     header = ""
+    _defaults = dict(
+        FakeSubreddit._defaults,
+        normalized_age_weight=0.0,
+    )
 
     def __init__(self, path=None, srs=None):
         FakeSubreddit.__init__(self)
@@ -1542,6 +1546,9 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
             "date": pycassa.system_manager.DATE_TYPE,
         },
     }
+    _float_props = (
+        "base_normalized_age_weight",
+    )
     _compare_with = tdb_cassandra.UTF8_TYPE
     _read_consistency_level = tdb_cassandra.CL.ONE
     _write_consistency_level = tdb_cassandra.CL.QUORUM
