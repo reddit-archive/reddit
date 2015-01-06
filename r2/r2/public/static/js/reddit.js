@@ -162,11 +162,6 @@ function showlang() {
     return false;
 };
 
-function hidecover(where) {
-    $(where).parents(".cover-overlay").hide();
-    return false;
-};
-
 /* table handling */
 
 function deleteRow(elem) {

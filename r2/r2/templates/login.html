@@ -35,33 +35,21 @@
 %if c.user_is_loggedin:
   <p class="error">${_("you are signed in. go use the site!")}</p>
 %else:
-  %if feature.is_enabled('new_login_flow'):
-    %if thing.is_popup:
-      <h3 id="cover-msg" class="modal-title">
-        ${_('You need to login to do that.')}
-      </h3>
-    %endif
-    <div id="login-v2">
-      ${login_panel(login_form, 
-                    user_reg = thing.user_reg, user_login = thing.user_login, 
-                    dest=thing.dest,
-                    registration_info=thing.registration_info)}
-    </div>
-  %else:
+  %if thing.is_popup:
+    <h3 id="cover-msg" class="modal-title">
+      ${_('You need to login to do that.')}
+    </h3>
+  %endif
+  <div id="login">
     ${login_panel(login_form, 
                   user_reg = thing.user_reg, user_login = thing.user_login, 
                   dest=thing.dest,
                   registration_info=thing.registration_info)}
-    %if not thing.is_popup and not g.disable_captcha:
-    <script type="text/javascript">
-      $.request("new_captcha");
-    </script>
-    %endif
-  %endif
+  </div>
 %endif
 
 <%def name="login_form(register=False, user='', dest='', compact=False, autofocus=True)">
-  %if feature.is_enabled('new_login_flow') and not compact:
+  %if not compact:
     <%
       op = "reg" if register else "login"
       base = g.https_endpoint if not c.cname else ''
@@ -249,50 +237,22 @@
 
 
 <%def name="login_panel(lf, user_reg = '', user_login = '', dest='', registration_info=None)">
-  %if feature.is_enabled('new_login_flow'):
-    <% autofocus = (not thing.is_popup) %>
-    <div class="split-panel">
-      <div class="split-panel-section split-panel-divider">
-        <h4 class="modal-title">${_("create a new account")}</h4>
-        ${lf(register=True, user=user_reg, dest=dest, autofocus=autofocus)}
-      </div>
-      <div class="split-panel-section">
-        <h4 class="modal-title">${_("sign in")}</h4>
-        ${lf(user = user_login, dest = dest, autofocus=autofocus)}
-      </div>
+  <% autofocus = (not thing.is_popup) %>
+  <div class="split-panel">
+    <div class="split-panel-section split-panel-divider">
+      <h4 class="modal-title">${_("create a new account")}</h4>
+      ${lf(register=True, user=user_reg, dest=dest, autofocus=autofocus)}
     </div>
-    <p class="login-disclaimer">
-      ${text_with_links(
-        _("We care about your privacy, and we never spam. By creating an account, you agree to reddit's %(user_agreement)s and %(privacy_policy)s. We're proud of them, and you should read them."),
-          user_agreement=dict(link_text=_("User Agreement"), path="/help/useragreement"),
-          privacy_policy=dict(link_text=_("Privacy Policy"), path="/help/privacypolicy"),
-      )}
-    </p>
-  %else:
-    <div class="login-form-section divide register">
-      <h3>${_("create a new account")}</h3>
-      <p class="tagline">
-        ${_("all it takes is a username and password")}
-      </p>
-      %if registration_info:
-        <div class="registration-info">
-          ${registration_info}
-        </div>
-      %endif
-      ${lf(register=True, user=user_reg, dest=dest)}
-      <p>
-        <span class="orangered">
-          ${_("is it really that easy? only one way to find out...")}
-        </span>
-      </p>
+    <div class="split-panel-section">
+      <h4 class="modal-title">${_("sign in")}</h4>
+      ${lf(user = user_login, dest = dest, autofocus=autofocus)}
     </div>
-    <div class="login-form-section login">
-      <h3>${_("login")}</h3>
-      <p class="tagline">
-        ${_("already have an account and just want to login?")}
-      </p>
-      ${lf(user = user_login, dest = dest)}
-    </div>
-    <div class="clear"></div>
-  %endif
+  </div>
+  <p class="login-disclaimer">
+    ${text_with_links(
+      _("We care about your privacy, and we never spam. By creating an account, you agree to reddit's %(user_agreement)s and %(privacy_policy)s. We're proud of them, and you should read them."),
+        user_agreement=dict(link_text=_("User Agreement"), path="/help/useragreement"),
+        privacy_policy=dict(link_text=_("Privacy Policy"), path="/help/privacypolicy"),
+    )}
+  </p>
 </%def>

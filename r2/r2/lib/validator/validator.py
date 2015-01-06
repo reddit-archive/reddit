@@ -914,12 +914,6 @@ class VCaptcha(Validator):
         }
 
 
-class VRegistrationCaptcha(VCaptcha):
-    def run(self, iden, solution):
-        if not feature.is_enabled('new_login_flow'):
-            return VCaptcha.run(self, iden, solution)
-
-
 class VUser(Validator):
     def run(self, password = None):
         if not c.user_is_loggedin:
