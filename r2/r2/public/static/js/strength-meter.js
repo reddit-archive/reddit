@@ -40,8 +40,10 @@
   var NUMERIC_ORDERED = '01234567890';
   var SYMBOLS_ORDERED = '!@#$%^&*()';
 
-  function isWeak(username, password) {
-    return (username && password.indexOf(username) !== -1) ||
+  function isWeak(password, related) {
+    return _.any(related, function(string) {
+        return (string && password.indexOf(string) !== -1);
+      }) ||
       _.any(KNOWN_WEAK, function(regex) {
         return regex.test(password);
       });
@@ -170,11 +172,10 @@
     }
   }
 
-  function getScore(username, password) {
-    username = username || '';
+  function getScore(password, related) {
     password = password || '';
 
-    if (isWeak(username, password)) {
+    if (isWeak(password, related)) {
       return 0;
     }
 
@@ -191,7 +192,6 @@
       this.options = $.extend({}, StrengthMeter.DEFAULTS, options);
 
       var $el = this.$el = $(element);
-      var $username = this.$username = $(this.options.username);
       var $meter = this.$meter = $(this.options.template);
       var trigger = this.options.trigger;
 
@@ -212,8 +212,10 @@
 
     score: function() {
       var value = this.$el.val();
-      var username = this.$username.val();
-      var score = getScore(username, value);
+      var related = _.map(this.options.related, function(related) {
+        return $(related).val() || '';
+      });
+      var score = getScore(value, related);
       var displayScore = Math.min(100, Math.max(this.options.minimumDisplay, score));
 
       this.$el.trigger('score.strengthMeter', displayScore);

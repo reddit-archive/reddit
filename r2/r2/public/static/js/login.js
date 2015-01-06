@@ -288,7 +288,10 @@ r.ui.RegisterForm = function() {
     this.$el.find('[name="passwd2"]').on('keyup', $.proxy(this, 'checkPasswordMatch'));
     this.$el.find('[name="passwd"][data-validate-url]')
         .strengthMeter({
-            username: '#user_reg',
+            related: [
+                '#user_reg',
+                '#email_reg',
+            ],
             delay: 0,
             trigger: 'loaded.validator',
         })
