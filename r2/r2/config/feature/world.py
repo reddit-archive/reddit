@@ -37,7 +37,8 @@ class World(object):
             return default
 
     def current_user(self):
-        return self.get_safe(c, 'user')
+        if c.user_is_loggedin:
+            return self.get_safe(c, 'user')
 
     def current_subreddit(self):
         site = self.get_safe(c, 'site')
