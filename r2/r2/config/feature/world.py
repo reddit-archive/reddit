@@ -63,6 +63,12 @@ class World(object):
             return False
         return user.employee
 
+    def has_gold(self, user):
+        if not user:
+            return False
+
+        return user.gold
+
     def url_features(self):
         return set(request.GET.getall('feature'))
 

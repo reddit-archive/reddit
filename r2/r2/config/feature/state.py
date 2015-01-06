@@ -95,6 +95,9 @@ class FeatureState(object):
         if cfg.get('employee') and world.is_employee(user):
             return True
 
+        if cfg.get('gold') and world.has_gold(user):
+            return True
+
         users = [u.lower() for u in cfg.get('users', [])]
         if users and user and user.name.lower() in users:
             return True

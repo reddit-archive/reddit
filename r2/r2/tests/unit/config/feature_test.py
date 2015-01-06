@@ -96,6 +96,20 @@ class TestFeature(unittest.TestCase):
         feature_state = self._make_state(cfg, mock_world)
         self.assertFalse(feature_state.is_enabled(user=gary))
 
+    def test_gold_enabled(self):
+        cfg = {'gold': True}
+        mock_world = self.world()
+        mock_world.has_gold = mock.Mock(return_value=True)
+        feature_state = self._make_state(cfg, mock_world)
+        self.assertTrue(feature_state.is_enabled(user=gary))
+
+    def test_gold_disabled(self):
+        cfg = {'gold': True}
+        mock_world = self.world()
+        mock_world.has_gold = mock.Mock(return_value=False)
+        feature_state = self._make_state(cfg, mock_world)
+        self.assertFalse(feature_state.is_enabled(user=gary))
+
     def test_url_enabled(self):
         mock_world = self.world()
 
