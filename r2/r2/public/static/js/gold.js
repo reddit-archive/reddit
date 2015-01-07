@@ -79,12 +79,6 @@ r.gold = {
         var oldWrap = $('#' + wrapId)
         var cloneClass
 
-        if ($thing.hasClass('user-gilded') ||
-            $thing.hasClass('deleted') ||
-            $thing.find('.author:first').text() == r.config.logged) {
-            return false
-        }
-
         if (oldWrap.length) {
             oldWrap.toggle()
             return false
