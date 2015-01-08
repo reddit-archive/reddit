@@ -905,6 +905,14 @@ class UserController(ListingController):
             dest += "?" + query_string
         return self.redirect(dest)
 
+    @validate(VUser())
+    def GET_rel_user_redirect(self, rest=""):
+        url = "/user/%s/%s" % (c.user.name, rest)
+        if request.query_string:
+            url += "?" + request.query_string
+        return self.redirect(url, code=302)
+
+
 class MessageController(ListingController):
     show_nums = False
     render_cls = MessagePage

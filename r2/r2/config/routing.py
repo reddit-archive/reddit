@@ -131,6 +131,10 @@ def make_map():
 
     mc('/admin/errors', controller='errorlog')
 
+    # Username-relative userpage redirects
+    mc('/user/me', controller='user', action='rel_user_redirect')
+    mc('/user/me/*rest', controller='user', action='rel_user_redirect')
+
     mc('/user/:username/about', controller='user', action='about',
        where='overview')
     mc('/user/:username/:where', controller='user', action='listing',
