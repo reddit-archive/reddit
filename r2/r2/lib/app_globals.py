@@ -704,7 +704,7 @@ class Globals(object):
                                          self.permacache_memcaches,
                                          min_compress_len=1400,
                                          num_clients=num_mc_clients,
-                                         validators=[validate_size_warn],)
+                                         validators=[],)
 
         # the stalecache is a memcached local to the current app server used
         # for data that's frequently fetched but doesn't need to be fresh.
@@ -725,7 +725,7 @@ class Globals(object):
             no_block=True,
             num_clients=num_mc_clients,
             min_compress_len=480,
-            validators=[validate_size_warn],
+            validators=[],
         )
 
         # pagecaches hold fully rendered pages
@@ -736,7 +736,7 @@ class Globals(object):
             no_block=True,
             num_clients=num_mc_clients,
             min_compress_len=1400,
-            validators=[validate_size_warn],
+            validators=[],
         )
 
         self.startup_timer.intermediate("memcache")
