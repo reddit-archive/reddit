@@ -26,6 +26,6 @@
 
 ${_("You've received a new message!")}
 
-${thing.comment.body}
+${unsafe(thing.comment.body)}
 
 ${_("View on the web")}: ${thing.permalink}
