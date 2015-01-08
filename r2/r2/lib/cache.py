@@ -112,6 +112,7 @@ def validate_size_error(**kwargs):
         size = sys.getsizeof(kwargs["value"])
         if size >= MEMCACHED_MAX_VALUE_SIZE:
             raise MemcachedValueSizeException(
+                kwargs.get("cache_name", "unknown"),
                 kwargs.get("caller", "unknown"),
                 kwargs.get("prefix", ""),
                 kwargs.get("key", "undefined"),
