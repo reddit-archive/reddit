@@ -37,13 +37,14 @@ from r2.models.token import EmailVerificationToken, PasswordResetToken
 
 trylater_hooks = hooks.HookRegistrar()
 
-def _system_email(email, body, kind, reply_to = "", thing = None):
+def _system_email(email, body, kind, reply_to = "", thing = None,
+                  from_address = g.feedback_email):
     """
     For sending email from the system to a user (reply address will be
     feedback and the name will be reddit.com)
     """
     Email.handler.add_to_queue(c.user if c.user_is_loggedin else None,
-                               email, g.domain, g.feedback_email,
+                               email, g.domain, from_address,
                                kind, body = body, reply_to = reply_to,
                                thing = thing)
 
@@ -147,7 +148,8 @@ def message_notification_email(data):
         }
         _system_email(user.email,
                       MessageNotificationEmail(**templateData).render(style='email'),
-                      Email.Kind.MESSAGE_NOTIFICATION)
+                      Email.Kind.MESSAGE_NOTIFICATION,
+                      from_address=g.notification_email)
 
         g.stats.simple_event('email.message_notification.queued')
         g.cache.incr(MESSAGE_THROTTLE_KEY)
