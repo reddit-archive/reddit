@@ -85,7 +85,7 @@ class MemcachedValueSizeException(Exception):
 
 
 # validation functions to be used by memcached pools
-MEMCACHED_MAX_VALUE_SIZE = 1024 * 1024 # 1MB
+MEMCACHED_MAX_VALUE_SIZE = 1200 * 1024 # 1.2MB
 
 def validate_size_warn(**kwargs):
     if 'value' in kwargs:
