@@ -46,7 +46,13 @@ from r2.config import feature
 from r2.lib import amqp, hooks
 from r2.lib.memoize import memoize
 from r2.lib.nymph import optimize_png
-from r2.lib.utils import TimeoutFunction, TimeoutFunctionException, domain
+from r2.lib.utils import (
+    TimeoutFunction,
+    TimeoutFunctionException,
+    UrlParser,
+    coerce_url_to_protocol,
+    domain,
+)
 from r2.models.link import Link
 from r2.models.media_cache import (
     ERROR_MEDIA,
@@ -457,9 +463,17 @@ class Scraper(object):
 class _ThumbnailOnlyScraper(Scraper):
     def __init__(self, url):
         self.url = url
+        # Having the source document's protocol on hand makes it easier to deal
+        # with protocol-relative urls we extract from it.
+        self.protocol = UrlParser(url).scheme
 
     def scrape(self):
         thumbnail_url = self._find_thumbnail_image()
+        # When isolated from the context of a webpage, protocol-relative URLs
+        # are ambiguous, so let's absolutify them now.
+        if thumbnail_url and thumbnail_url.startswith('//'):
+            thumbnail_url = coerce_url_to_protocol(thumbnail_url, self.protocol)
+
         thumbnail = _make_thumbnail_from_url(thumbnail_url, referer=self.url)
         return thumbnail, None, None
 
@@ -496,6 +510,10 @@ class _ThumbnailOnlyScraper(Scraper):
         max_area = 0
         max_url = None
         for image_url in self._extract_image_urls(soup):
+            # When isolated from the context of a webpage, protocol-relative
+            # URLs are ambiguous, so let's absolutify them now.
+            if image_url.startswith('//'):
+                image_url = coerce_url_to_protocol(image_url, self.protocol)
             size = _fetch_image_size(image_url, referer=self.url)
             if not size:
                 continue
