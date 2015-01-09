@@ -75,6 +75,7 @@ from r2.lib.validator import (
     validate,
     validatedForm,
     ValidCard,
+    ValidEmail,
     VBoolean,
     VByName,
     VCollection,
@@ -105,6 +106,7 @@ from r2.lib.validator import (
 )
 from r2.models import (
     Account,
+    AccountsByCanonicalEmail,
     calc_impressions,
     Collection,
     Frontpage,
@@ -290,11 +292,14 @@ class SponsorController(PromoteController):
 
     @validate(
         VSponsorAdmin(),
-        user=VByName('name', thing_cls=Account),
+        id_user=VByName('name', thing_cls=Account),
+        email=ValidEmail("email"),
     )
-    def GET_lookup_user(self, user):
-        content = SponsorLookupUser(user=user)
-        return PromotePage(title=_("lookup user"), content=content).render()
+    def GET_lookup_user(self, id_user, email):
+        email_users = AccountsByCanonicalEmail.get_accounts(email)
+        content = SponsorLookupUser(
+            id_user=id_user, email=email, email_users=email_users)
+        return PromotePage(title="look up user", content=content).render()
 
 
 class PromoteListingController(ListingController):

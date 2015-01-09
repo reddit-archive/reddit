@@ -4003,8 +4003,9 @@ class Roadblocks(PromoteLinkBase):
 
 
 class SponsorLookupUser(PromoteLinkBase):
-    def __init__(self, user=None):
-        PromoteLinkBase.__init__(self, user=user)
+    def __init__(self, id_user=None, email=None, email_users=None):
+        PromoteLinkBase.__init__(
+            self, id_user=id_user, email=email, email_users=email_users or [])
 
 
 class TabbedPane(Templated):
