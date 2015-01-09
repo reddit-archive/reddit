@@ -648,7 +648,7 @@ class ApiController(RedditController):
 
             #anything else we know (email, languages)?
             if email:
-                user.email = email
+                user.set_email(email)
                 emailer.verify_email(user)
 
             user.pref_lang = c.lang
@@ -1157,7 +1157,7 @@ class ApiController(RedditController):
                 if c.user.email:
                     emailer.email_change_email(c.user)
 
-                c.user.email = email
+                c.user.set_email(email)
                 c.user.email_verified = None
                 c.user._commit()
                 Award.take_away("verified_email", c.user)
@@ -1178,7 +1178,7 @@ class ApiController(RedditController):
             c.errors.remove((errors.NO_EMAILS, 'email'))
             if c.user.email:
                 emailer.email_change_email(c.user)
-            c.user.email = ''
+            c.user.set_email('')
             c.user.email_verified = None
             c.user._commit()
             Award.take_away("verified_email", c.user)
@@ -1245,7 +1245,7 @@ class ApiController(RedditController):
             if (not hasattr(c.user,'email') or c.user.email != email):
                 if c.user.email:
                     emailer.email_change_email(c.user)
-                c.user.email = email
+                c.user.set_email(email)
                 # unverified email for now
                 c.user.email_verified = None
                 c.user._commit()
@@ -1266,7 +1266,7 @@ class ApiController(RedditController):
         if (not email and c.user.email and 
             (errors.NO_EMAILS, 'email') in c.errors):
             c.errors.remove((errors.NO_EMAILS, 'email'))
-            c.user.email = ''
+            c.user.set_email('')
             c.user.email_verified = None
             c.user._commit()
             Award.take_away("verified_email", c.user)

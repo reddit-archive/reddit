@@ -556,6 +556,12 @@ class Account(Thing):
 
         return rv
 
+    def set_email(self, email):
+        old_email = self.email
+        self.email = email
+        self._commit()
+        AccountsByCanonicalEmail.update_email(self, old_email, email)
+
     def has_banned_email(self):
         canon = self.canonical_email()
         which = self.which_emails_are_banned((canon,))
@@ -937,3 +943,34 @@ def on_account_deletion(mature_items):
 
         account.password = ""
         account._commit()
+
+
+class AccountsByCanonicalEmail(tdb_cassandra.View):
+    __metaclass__ = tdb_cassandra.ThingMeta
+
+    _use_db = True
+    _compare_with = tdb_cassandra.UTF8_TYPE
+    _extra_schema_creation_args = dict(
+        key_validation_class=tdb_cassandra.UTF8_TYPE,
+    )
+
+    @classmethod
+    def update_email(cls, account, old, new):
+        old, new = map(canonicalize_email, (old, new))
+
+        if old == new:
+            return
+
+        with cls._cf.batch() as b:
+            if old:
+                b.remove(old, {account._id36: ""})
+            if new:
+                b.insert(new, {account._id36: ""})
+
+    @classmethod
+    def get_accounts(cls, email_address):
+        canonical = canonicalize_email(email_address)
+        if not canonical:
+            return []
+        account_id36s = cls.get_time_sorted_columns(canonical).keys()
+        return Account._byID36(account_id36s, data=True, return_dict=False)
