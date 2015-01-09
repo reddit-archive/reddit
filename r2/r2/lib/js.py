@@ -399,7 +399,6 @@ catch_errors = "try {{ {content} }} catch (err) {{ r.sendError('Error running mo
 
 
 module["reddit-init-base"] = LocalizedModule("reddit-init-base.js",
-    "lib/es5-shim.js",
     "lib/modernizr.js",
     "lib/json2.js",
     "lib/underscore-1.4.4.js",
@@ -432,11 +431,14 @@ module["reddit-init-base"] = LocalizedModule("reddit-init-base.js",
 module["reddit-init-legacy"] = LocalizedModule("reddit-init-legacy.js",
     "lib/html5shiv.js",
     "lib/jquery-1.11.1.js",
+    "lib/es5-shim.js",
+    "lib/es5-sham.js",
     module["reddit-init-base"],
 )
 
 module["reddit-init"] = LocalizedModule("reddit-init.js",
     "lib/jquery-2.1.1.js",
+    "lib/es5-shim.js",
     module["reddit-init-base"],
 )
 
