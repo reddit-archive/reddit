@@ -677,6 +677,13 @@ class UrlParser(object):
                            u.path, u.params, u.query, fragment))
 
 
+def coerce_url_to_protocol(url, protocol='http'):
+    '''Given an absolute (but potentially protocol-relative) url, coerce it to
+    a protocol.'''
+    parsed_url = UrlParser(url)
+    parsed_url.scheme = protocol
+    return parsed_url.unparse()
+
 def url_is_embeddable_image(url):
     """The url is on an oembed-friendly domain and looks like an image."""
     parsed_url = UrlParser(url)

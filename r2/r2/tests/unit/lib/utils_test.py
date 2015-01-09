@@ -70,6 +70,31 @@ class UtilsTest(unittest.TestCase):
             utils.extract_subdomain('internet-frontpage.com', 'reddit.com'),
             '')
 
+    def test_coerce_url_to_protocol(self):
+        self.assertEquals(
+            utils.coerce_url_to_protocol('http://example.com/foo'),
+            'http://example.com/foo')
+
+        self.assertEquals(
+            utils.coerce_url_to_protocol('https://example.com/foo'),
+            'http://example.com/foo')
+
+        self.assertEquals(
+            utils.coerce_url_to_protocol('//example.com/foo'),
+            'http://example.com/foo')
+
+        self.assertEquals(
+            utils.coerce_url_to_protocol('http://example.com/foo', 'https'),
+            'https://example.com/foo')
+
+        self.assertEquals(
+            utils.coerce_url_to_protocol('https://example.com/foo', 'https'),
+            'https://example.com/foo')
+
+        self.assertEquals(
+            utils.coerce_url_to_protocol('//example.com/foo', 'https'),
+            'https://example.com/foo')
+
 
 class TestCanonicalizeEmail(unittest.TestCase):
     def test_empty_string(self):
