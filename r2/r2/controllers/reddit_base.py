@@ -59,7 +59,7 @@ from r2.lib.filters import _force_utf8, _force_unicode
 from r2.lib.require import RequirementException, require, require_split
 from r2.lib.strings import strings
 from r2.lib.template_helpers import add_sr, JSPreload
-from r2.lib.tracking import encrypt, decrypt
+from r2.lib.tracking import encrypt, decrypt, get_pageview_pixel_url
 from r2.lib.translation import set_lang
 from r2.lib.utils import (
     Enum,
@@ -1614,6 +1614,10 @@ class RedditController(OAuth2ResourceController):
             if request_origin and request_origin != g.origin:
                 g.stats.simple_event('cors.api_request')
                 g.stats.count_string('origins', request_origin)
+
+        if request.method.upper() == "GET" and is_api():
+            tracking_url = make_url_https(get_pageview_pixel_url())
+            response.headers["X-Reddit-Tracking"] = tracking_url
 
     def _embed_html_timing_data(self):
         timings = g.stats.end_logging_timings()
