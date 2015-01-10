@@ -143,6 +143,14 @@ class OAuth2Scope:
             "name": _("My Identity"),
             "description": _("Access my reddit username and signup date."),
         },
+        "modcontributors": {
+            "id": "modcontributors",
+            "name": _("Approve submitters and ban users"),
+            "description": _(
+                "Add/remove users to approved submitter lists and "
+                "ban/unban users from subreddits I moderate."
+            ),
+        },
         "modflair": {
             "id": "modflair",
             "name": _("Moderate Flair"),
@@ -168,6 +176,13 @@ class OAuth2Scope:
             "name": _("Moderation Log"),
             "description": _(
                 "Access the moderation log in subreddits I moderate."),
+        },
+        "modothers": {
+            "id": "modothers",
+            "name": _("Invite or remove other moderators"),
+            "description": _(
+                "Invite or remove other moderators from subreddits I moderate."
+            ),
         },
         "modtraffic": {
             "id": "modtraffic",

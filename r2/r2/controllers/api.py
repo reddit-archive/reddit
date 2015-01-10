@@ -725,6 +725,32 @@ class ApiController(RedditController):
         'moderator_invite',
     )
 
+    # Changes to this dict should also update docstrings for
+    # POST_friend and POST_unfriend
+    api_friend_scope_map = {
+        'moderator': {"modothers"},
+        'moderator_invite': {"modothers"},
+        'contributor': {"modcontributors"},
+        'banned': {"modcontributors"},
+        'wikibanned': {"modcontributors", "modwiki"},
+        'wikicontributor': {"modcontributors", "modwiki"},
+        'friend': None,  # Handled with API v1 endpoint
+        'enemy': {"privatemessages"},  # Only valid for POST_unfriend
+    }
+
+    def check_api_friend_oauth_scope(self, type_):
+        if c.oauth_user:
+            needed_scopes = self.api_friend_scope_map[type_]
+            if needed_scopes is None:
+                # OAuth2 access not allowed for this friend rel type
+                # via /api/friend
+                self._auth_error(400, "invalid_request")
+            if not c.oauth_scope.has_access(c.site.name, needed_scopes):
+                # Token does not have the necessary scope to complete
+                # this request.
+                self._auth_error(403, "insufficient_scope")
+
+    @allow_oauth2_access
     @noresponse(VUser(),
                 VModhash(),
                 nuser = VExistingUname('name'),
@@ -732,15 +758,33 @@ class ApiController(RedditController):
                 container = nop('container'),
                 type = VOneOf('type', ('friend', 'enemy') +
                                       _sr_friend_types))
-    @api_doc(api_section.users)
+    @api_doc(api_section.users, uses_site=True)
     def POST_unfriend(self, nuser, iuser, container, type):
+        """Remove a relationship between a user and another user or subreddit
+
+        The user can either be passed in by name (nuser)
+        or by [fullname](#fullnames) (iuser).  If type is friend or enemy,
+        'container' MUST be the current user's fullname;
+        for other types, the subreddit must be set
+        via URL (e.g., /r/funny/api/unfriend)
+
+        OAuth2 use requires appropriate scope based
+        on the 'type' of the relationship:
+
+        * moderator: `modothers`
+        * moderator_invite: `modothers`
+        * contributor: `modcontributors`
+        * banned: `modcontributors`
+        * wikibanned: `modcontributors` and `modwiki`
+        * wikicontributor: `modcontributors` and `modwiki`
+        * friend: Use [/api/v1/me/friends/{username}](#DELETE_api_v1_me_friends_{username})
+        * enemy: `privatemessages`
+
+        Complement to [POST_friend](#POST_api_friend)
+
         """
-        Handles removal of a friend (a user-user relation) or removal
-        of a user's privileges from a subreddit (a user-subreddit
-        relation).  The user can either be passed in by name (nuser)
-        or by fullname (iuser).  If type is friend or enemy, 'container'
-        will be the current user, otherwise the subreddit must be set.
-        """
+        self.check_api_friend_oauth_scope(type)
+
         if type in self._sr_friend_types:
             if isinstance(c.site, FakeSubreddit):
                 abort(403, 'forbidden')
@@ -834,6 +878,7 @@ class ApiController(RedditController):
             editor = row.find('.permissions').data('PermissionEditor')
             editor.onCommit(update)
 
+    @allow_oauth2_access
     @validatedForm(VUser(),
                    VModhash(),
                    friend = VExistingUname('name'),
@@ -845,14 +890,29 @@ class ApiController(RedditController):
                    ban_message = VMarkdownLength('ban_message', max_length=1000,
                                                  empty_error=None),
     )
-    @api_doc(api_section.users)
+    @api_doc(api_section.users, uses_site=True)
     def POST_friend(self, form, jquery, friend,
                     container, type, type_and_permissions, note, duration,
                     ban_message):
+        """Create a relationship between a user and another user or subreddit
+
+        OAuth2 use requires appropriate scope based
+        on the 'type' of the relationship:
+
+        * moderator: Use "moderator_invite"
+        * moderator_invite: `modothers`
+        * contributor: `modcontributors`
+        * banned: `modcontributors`
+        * wikibanned: `modcontributors` and `modwiki`
+        * wikicontributor: `modcontributors` and `modwiki`
+        * friend: Use [/api/v1/me/friends/{username}](#PUT_api_v1_me_friends_{username})
+        * enemy: Use [/api/block](#POST_api_block)
+
+        Complement to [POST_unfriend](#POST_api_unfriend)
+
         """
-        Complement to POST_unfriend: handles friending as well as
-        privilege changes on subreddits.
-        """
+        self.check_api_friend_oauth_scope(type)
+
         if type in self._sr_friend_types:
             if isinstance(c.site, FakeSubreddit):
                 abort(403, 'forbidden')
