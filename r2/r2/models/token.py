@@ -265,14 +265,14 @@ class OAuth2Scope:
         else:
             self.subreddit_only = False
             self.subreddits = set()
-        self.scopes = set(scopes.split(','))
+        self.scopes = set(scopes.replace(',', ' ').split(' '))
 
     def __str__(self):
         if self.subreddit_only:
             sr_part = '+'.join(sorted(self.subreddits)) + ':'
         else:
             sr_part = ''
-        return sr_part + ','.join(sorted(self.scopes))
+        return sr_part + ' '.join(sorted(self.scopes))
 
     def has_access(self, subreddit, required_scopes):
         if self.FULL_ACCESS in self.scopes:
