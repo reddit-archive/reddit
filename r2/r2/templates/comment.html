@@ -129,7 +129,9 @@ ${parent.midcol(cls = cls)}
 %else:
   <div class="child">
 %endif
+  %if thing.childlisting:
     ${thing.childlisting}
+  %endif
   </div>
 </%def>
 

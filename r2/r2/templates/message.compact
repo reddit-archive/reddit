@@ -95,7 +95,9 @@
   </div>
   <div style="clear: both;"></div>
   <div class="child">
-    ${thing.childlisting}
+    %if thing.childlisting:
+      ${thing.childlisting}
+    %endif
   </div>
 </div>
 

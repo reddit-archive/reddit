@@ -107,5 +107,8 @@
   %else:
     <div class="child">
   %endif
-  ${thing.childlisting}</div>
+  %if thing.childlisting:
+    ${thing.childlisting}
+  %endif
+  </div>
 </div>
