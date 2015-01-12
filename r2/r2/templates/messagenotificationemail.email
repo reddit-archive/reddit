@@ -24,7 +24,7 @@
   from r2.lib.template_helpers import get_domain
 %>
 
-${_("You've received a new message!")}
+${_("You've received a new message from %(username)s!") % dict(username=thing.sender_username)}
 
 ${unsafe(thing.comment.body)}
 

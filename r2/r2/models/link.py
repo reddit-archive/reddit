@@ -917,6 +917,7 @@ class Comment(Thing, Printable):
             if orangered and to.pref_email_messages:
                 data = {
                     'to': to._id36,
+                    'from': '/u/%s' % author.name,
                     'comment': c._fullname,
                     'permalink': c.make_permalink_slow(force_domain=True),
                 }
@@ -1520,12 +1521,17 @@ class Message(Thing, Printable):
 
                 if orangered and to.pref_email_messages:
                     from r2.lib.template_helpers import get_domain
+                    if from_sr:
+                        sender_name = '/r/%s' % sr.name
+                    else:
+                        sender_name = '/u/%s' % author.name
                     permalink = 'http://%(domain)s%(path)s' % {
                         'domain': get_domain(),
                         'path': m.permalink,
                     }
                     data = {
                         'to': to._id36,
+                        'from': sender_name,
                         'comment': m._fullname,
                         'permalink': permalink,
                     }
