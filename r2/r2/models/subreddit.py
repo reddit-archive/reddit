@@ -791,23 +791,21 @@ class Subreddit(Thing, Printable, BaseSite):
         """Select a random subset from sr_ids.
 
         Used for limiting the number of subscribed subreddits shown on a user's
-        front page. Subreddits that are automatically subscribed aren't counted
-        against the limit. Selection is cached for a while so the front page
-        doesn't jump around.
+        front page. Selection is cached for a while so the front page doesn't
+        jump around.
 
         """
 
         if not limit:
             return sr_ids
 
-        if g.automatic_reddits and len(sr_ids) > limit:
+        # if the user is subscribed to them, the automatic subreddits should
+        # always be in the front page set and not count towards the limit
+        if g.automatic_reddits:
             automatics = Subreddit._by_name(g.automatic_reddits).values()
-            automatic_ids = [sr._id for sr in automatics]
+            automatic_ids = [sr._id for sr in automatics if sr._id in sr_ids]
             for sr_id in automatic_ids:
-                try:
-                    sr_ids.remove(sr_id)
-                except ValueError:
-                    automatic_ids.remove(sr_id)
+                sr_ids.remove(sr_id)
         else:
             automatic_ids = []
 
