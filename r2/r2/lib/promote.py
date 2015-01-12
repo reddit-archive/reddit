@@ -273,8 +273,7 @@ def get_transactions(link, campaigns):
 def new_campaign(link, dates, bid, cpm, target, priority, location):
     campaign = PromoCampaign.create(link, target, bid, cpm, dates[0], dates[1],
                                     priority, location)
-    PromotionWeights.add(link, campaign._id, target.subreddit_names, dates[0],
-                         dates[1], bid)
+    PromotionWeights.add(link, campaign)
     PromotionLog.add(link, 'campaign %s created' % campaign._id)
 
     if campaign.priority.cpm:
@@ -323,9 +322,7 @@ def edit_campaign(link, campaign, dates, bid, cpm, target, priority, location):
     campaign._commit()
 
     # update the index
-    PromotionWeights.reschedule(link, campaign._id,
-                                campaign.target.subreddit_names, dates[0],
-                                dates[1], bid)
+    PromotionWeights.reschedule(link, campaign)
 
     if campaign.priority.cpm:
         # make it a freebie, if applicable
@@ -365,7 +362,7 @@ def terminate_campaign(link, campaign):
 
 
 def delete_campaign(link, campaign):
-    PromotionWeights.delete_unfinished(link, campaign._id)
+    PromotionWeights.delete(link, campaign)
     void_campaign(link, campaign, reason='deleted_campaign')
     campaign.delete()
     PromotionLog.add(link, 'deleted campaign %s' % campaign._id)

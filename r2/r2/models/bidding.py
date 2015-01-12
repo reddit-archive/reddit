@@ -380,8 +380,8 @@ class PromotionWeights(Sessionized, Base):
     # bid and weight should always be the same, but they don't have to be
     bid        = Column(Float, nullable = False)
     weight     = Column(Float, nullable = False)
-
     finished   = Column(Boolean)
+    # NOTE: bid, weight, finished columns are not used
 
     @classmethod
     def filter_sr_name(cls, sr_name):
@@ -389,39 +389,42 @@ class PromotionWeights(Sessionized, Base):
         return '' if sr_name == Frontpage.name else sr_name
 
     @classmethod
-    def reschedule(cls, thing, idx, sr_names, start_date, end_date, total_weight,
-                   finished = False):
-        cls.delete_unfinished(thing, idx)
-        cls.add(thing, idx, sr_names, start_date, end_date, total_weight,
-                finished = finished)
+    def reschedule(cls, link, campaign):
+        cls.delete(link, campaign)
+        cls.add(link, campaign)
 
     @classmethod
-    def add(cls, thing, idx, sr_names, start_date, end_date, total_weight,
-            finished = False):
-        start_date = to_date(start_date)
-        end_date   = to_date(end_date)
+    def add(cls, link, campaign):
+        start_date = to_date(campaign.start_date)
+        end_date = to_date(campaign.end_date)
+        ndays = (end_date - start_date).days
+        # note that end_date is not included
+        dates = [start_date + datetime.timedelta(days=i) for i in xrange(ndays)]
 
-        # anything set by the user will be uniform weighting
-        duration = max((end_date - start_date).days, 1)
-        weight = total_weight / duration
+        sr_names = campaign.target.subreddit_names
+        sr_names = set(filter(cls.filter_sr_name, sr_names))
 
-        for sr_name in tup(sr_names):
-            sr_name = cls.filter_sr_name(sr_name)
-            d = start_date
-            while d < end_date:
-                cls._new(thing, idx, sr_name, d,
-                         thing.author_id, weight, weight, finished = finished)
-                d += datetime.timedelta(days=1)
+        with cls.session.begin():
+            for sr_name in sr_names:
+                for date in dates:
+                    obj = cls(
+                        thing_name=link._fullname,
+                        promo_idx=campaign._id,
+                        sr_name=sr_name,
+                        date=date,
+                        account_id=link.author_id,
+                        bid=0.,
+                        weight=0.,
+                        finished=False,
+                    )
+                    cls.session.add(obj)
 
     @classmethod
-    def delete_unfinished(cls, thing, idx):
-        #TODO: do this the right (fast) way before release.  I don't
-        #have the inclination to figure out the proper delete method
-        #now
-        for item in cls.query(thing_name = thing._fullname,
-                              promo_idx = idx,
-                              finished = False):
-            item._delete()
+    def delete(cls, link, campaign):
+        query = cls.query(thing_name=link._fullname, promo_idx=campaign._id)
+        with cls.session.begin():
+            for item in query:
+                cls.session.delete(item)
 
     @classmethod
     def _filter_query(cls, query, start, end=None, link=None,
