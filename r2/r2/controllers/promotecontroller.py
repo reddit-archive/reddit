@@ -328,13 +328,19 @@ class PromoteListingController(ListingController):
     @property
     def menus(self):
         filters = [
-            NamedButton('all_promos', dest='', use_params=True,
+            NamedButton('all_promos', dest='',
+                        use_params=False,
                         aliases=['/sponsor']),
-            NamedButton('future_promos', use_params=True),
-            NamedButton('unpaid_promos', use_params=True),
-            NamedButton('rejected_promos', use_params=True),
-            NamedButton('pending_promos', use_params=True),
-            NamedButton('live_promos', use_params=True),
+            NamedButton('future_promos',
+                        use_params=False),
+            NamedButton('unpaid_promos',
+                        use_params=False),
+            NamedButton('rejected_promos',
+                        use_params=False),
+            NamedButton('pending_promos',
+                        use_params=False),
+            NamedButton('live_promos',
+                        use_params=False),
         ]
         menus = [NavMenu(filters, base_path=self.base_path, title='show',
                          type='lightdrop')]
