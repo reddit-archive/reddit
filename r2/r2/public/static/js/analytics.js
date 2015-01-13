@@ -87,7 +87,8 @@ r.analytics = {
 
         if (_gat && _gat._getTracker){
           // GA is loaded; form will submit via the _gaq.push'ed function
-          event.preventDefault()
+          event.preventDefault();
+          event.stopPropagation();
         }
     }
 }
