@@ -682,6 +682,7 @@ class ApiController(RedditController):
         """
         return self._handle_register(*args, **kwargs)
 
+    @require_oauth2_scope("modself")
     @noresponse(VUser(),
                 VModhash(),
                 container = VByName('id'))
@@ -697,6 +698,7 @@ class ApiController(RedditController):
             ModAction.create(container, c.user, 'removemoderator', target=c.user, 
                              details='remove_self')
 
+    @require_oauth2_scope("modself")
     @noresponse(VUser(),
                 VModhash(),
                 container = VByName('id'))
@@ -836,6 +838,7 @@ class ApiController(RedditController):
         if type in ('banned', 'wikibanned'):
             container.unschedule_unban(victim, type)
 
+    @require_oauth2_scope("modothers")
     @validatedForm(VSrModerator(), VModhash(),
                    target=VExistingUname('name'),
                    type_and_permissions=VPermissions('type', 'permissions'))
@@ -1096,6 +1099,7 @@ class ApiController(RedditController):
             return
         c.site.add_rel_note(type[:-4], user, note)
 
+    @require_oauth2_scope("modself")
     @validatedForm(VUser(),
                    VModhash())
     @api_doc(api_section.moderation, uses_site=True)

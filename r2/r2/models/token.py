@@ -184,6 +184,16 @@ class OAuth2Scope:
                 "Invite or remove other moderators from subreddits I moderate."
             ),
         },
+        "modself": {
+            "id": "modself",
+            "name": _("Make changes to your subreddit moderator "
+                      "and contributor status"),
+            "description": _(
+                "Accept invitations to moderate a subreddit. Remove myself as "
+                "a moderator or contributor of subreddits I moderate or "
+                "contribute to."
+            ),
+        },
         "modtraffic": {
             "id": "modtraffic",
             "name": _("Subreddit Traffic"),
