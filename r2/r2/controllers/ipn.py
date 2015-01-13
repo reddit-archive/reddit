@@ -56,7 +56,7 @@ from r2.models import (
     Account,
     account_by_payingid,
     account_from_stripe_customer_id,
-    accountid_from_paypalsubscription,
+    accountid_from_subscription,
     admintools,
     append_random_bottlecap_phrase,
     cancel_subscription,
@@ -201,7 +201,7 @@ def existing_subscription(subscr_id, paying_id, custom):
     if subscr_id is None:
         return None
 
-    account_id = accountid_from_paypalsubscription(subscr_id)
+    account_id = accountid_from_subscription(subscr_id)
 
     if not account_id and has_blob(custom):
         # New subscription contains the user info in hardcache
@@ -626,6 +626,11 @@ class IpnController(RedditController):
             # Reuse the old "secret" column as a place to record the goldtype
             # and "custom", just in case we need to debug it later or something
             secret = payment_blob['goldtype'] + "-" + custom
+
+            if payment_blob['goldtype'] == 'autorenew':
+                existing = existing_subscription(subscr_id, paying_id, custom)
+                if existing:
+                    secret = None
 
             if instagift:
                 status="instagift"

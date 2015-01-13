@@ -247,7 +247,7 @@ def all_gold_users():
                        data=True, sort="_id")
     return fetch_things2(q)
 
-def accountid_from_paypalsubscription(subscr_id):
+def accountid_from_subscription(subscr_id):
     if subscr_id is None:
         return None
 
