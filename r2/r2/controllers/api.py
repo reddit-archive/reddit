@@ -3963,7 +3963,6 @@ class ApiController(RedditController):
     @noresponse(VUser(),
                 VModhash(),
                 client=VOAuth2ClientID())
-    @api_doc(api_section.apps)
     def POST_revokeapp(self, client):
         if client:
             client.revoke(c.user)
@@ -3976,7 +3975,6 @@ class ApiController(RedditController):
                    icon_url=VSanitizedUrl('icon_url'),
                    redirect_uri=VRedirectUri('redirect_uri'),
                    app_type=VOneOf('app_type', OAuth2Client.APP_TYPES))
-    @api_doc(api_section.apps)
     def POST_updateapp(self, form, jquery, name, about_url, icon_url,
                        redirect_uri, app_type):
         if (form.has_errors('name', errors.NO_TEXT) |
@@ -4042,7 +4040,6 @@ class ApiController(RedditController):
                    VModhash(),
                    client=VOAuth2ClientDeveloper(),
                    account=VExistingUname('name'))
-    @api_doc(api_section.apps)
     def POST_adddeveloper(self, form, jquery, client, account):
         if not client:
             return
@@ -4069,7 +4066,6 @@ class ApiController(RedditController):
                    VModhash(),
                    client=VOAuth2ClientDeveloper(),
                    account=VExistingUname('name'))
-    @api_doc(api_section.apps)
     def POST_removedeveloper(self, form, jquery, client, account):
         if client and account and not form.has_errors('name'):
             client.remove_developer(account)
@@ -4081,7 +4077,6 @@ class ApiController(RedditController):
     @noresponse(VUser(),
                 VModhash(),
                 client=VOAuth2ClientDeveloper())
-    @api_doc(api_section.apps)
     def POST_deleteapp(self, client):
         if client:
             client.deleted = True
@@ -4093,7 +4088,6 @@ class ApiController(RedditController):
                             icon_file=VUploadLength(
                                 'file', max_length=1024*128,
                                 docs=dict(file="an icon (72x72)")))
-    @api_doc(api_section.apps)
     def POST_setappicon(self, form, jquery, client, icon_file):
         if not icon_file:
             form.set_error(errors.TOO_LONG, 'file')

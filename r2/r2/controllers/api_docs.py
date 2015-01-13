@@ -39,9 +39,6 @@ section_info = {
     'account': {
         'title': 'account',
     },
-    'apps': {
-        'title': 'apps',
-    },
     'flair': {
         'title': 'flair',
     },
