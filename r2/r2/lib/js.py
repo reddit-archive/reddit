@@ -117,13 +117,13 @@ class FileSource(Source):
 
         return os.path.join(STATIC_ROOT, "static", "js", self.name)
 
-    def url(self, absolute=False):
+    def url(self, absolute=False, mangle_name=False):
         from r2.lib.template_helpers import static
         path = [g.static_path, self.name]
         if g.uncompressedJS:
             path.insert(1, "js")
 
-        return static(os.path.join(*path), absolute)
+        return static(os.path.join(*path), absolute, mangle_name)
 
     def use(self, **kwargs):
         return script_tag.format(src=self.url(**kwargs))
@@ -173,12 +173,12 @@ class Module(Source):
                 out.write(source)
         print >> sys.stderr, " done."
 
-    def url(self, absolute=False):
+    def url(self, absolute=False, mangle_name=True):
         from r2.lib.template_helpers import static
         if g.uncompressedJS:
-            return [source.url(absolute=absolute) for source in self.sources]
+            return [source.url(absolute=absolute, mangle_name=mangle_name) for source in self.sources]
         else:
-            return static(self.name, absolute=absolute)
+            return static(self.name, absolute=absolute, mangle_name=mangle_name)
 
     def use(self, **kwargs):
         if g.uncompressedJS:

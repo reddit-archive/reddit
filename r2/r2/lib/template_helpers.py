@@ -49,7 +49,7 @@ static_text_extensions = {
     '.css': 'css',
     '.less': 'css'
 }
-def static(path, absolute=False):
+def static(path, absolute=False, mangle_name=True):
     """
     Simple static file maintainer which automatically paths and
     versions files being served out of static.
@@ -64,7 +64,7 @@ def static(path, absolute=False):
     should_cache_bust = False
 
     path_components = []
-    actual_filename = None
+    actual_filename = None if mangle_name else filename
 
     if g.static_domain:
         domain = g.static_domain
@@ -184,7 +184,7 @@ def js_config(extra_config=None):
         "adtracker_url": g.adtracker_url,
         "clicktracker_url": g.clicktracker_url,
         "uitracker_url": g.uitracker_url,
-        "comment_embed_scripts": js.src("comment-embed", absolute=True),
+        "comment_embed_scripts": js.src("comment-embed", absolute=True, mangle_name=False),
         "static_root": static(''),
         "over_18": bool(c.over18),
         "new_window": bool(c.user.pref_newwindow),
