@@ -945,9 +945,9 @@ def Run(verbose=True):
     """
 
     if verbose:
-        print "promote.py:Run() - make_daily_promotions()"
+        print "%s promote.py:Run() - make_daily_promotions()" % datetime.now(g.tz)
 
     make_daily_promotions()
 
     if verbose:
-        print "promote.py:Run() - finished"
+        print "%s promote.py:Run() - finished" % datetime.now(g.tz)
