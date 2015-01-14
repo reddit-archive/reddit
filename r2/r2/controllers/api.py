@@ -2413,24 +2413,6 @@ class ApiController(RedditController):
         else:
             jquery.refresh()
 
-    @csrf_exempt
-    @noresponse(q = VPrintable('q', max_length=500),
-                sort = VPrintable('sort', max_length=10),
-                t = VPrintable('t', max_length=10),
-                approval = VBoolean('approval'))
-    def POST_searchfeedback(self, q, sort, t, approval):
-        timestamp = c.start_time.strftime("%Y/%m/%d-%H:%M:%S")
-        if c.user_is_loggedin:
-            username = c.user.name
-        else:
-            username = None
-        d = dict(username=username, q=q, sort=sort, t=t)
-        hex = hashlib.md5(repr(d)).hexdigest()
-        key = "searchfeedback-%s-%s-%s" % (timestamp[:10], request.ip, hex)
-        d['timestamp'] = timestamp
-        d['approval'] = approval
-        g.hardcache.set(key, d, time=86400 * 7)
-
     @require_oauth2_scope("modposts")
     @noresponse(VUser(), VModhash(),
                 VSrCanBan('id'),

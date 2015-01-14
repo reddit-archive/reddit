@@ -32,16 +32,6 @@
 
 %if thing.prev_search and thing.elapsed_time > 0:
   <div class="search-summary">
-    %if thing.show_feedback:
-    <div>
-      ${_("satisfied?")}
-      ${pretty_button("yes", "search_feedback", "'y'", "positive")}
-      ${pretty_button("no", "search_feedback", "'n'", "negative")}
-      <div class="thanks red" style="display: none">
-        ${_("thanks for your feedback!")}
-      </div>
-    </div>
-    %endif
     <div>
     %if thing.converted_data:
     <p class="debuginfo">
