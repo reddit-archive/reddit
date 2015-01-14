@@ -333,15 +333,20 @@ def total_by_codename(cls, codenames):
     return list(q)
 
 
-def promotion_history(cls, codename, start, stop):
+def promotion_history(cls, count_column, codename, start, stop):
     """Get hourly traffic for a self-serve promotion.
 
     Traffic stats are summed over all targets for classes that include a target.
 
+    count_column should be cls.pageview_count or cls.unique_count.
+
+    NOTE: when retrieving uniques the counts for ALL targets are summed, which
+    isn't strictly correct but is the best we can do for now.
+
     """
 
     time_points = get_time_points('hour', start, stop)
-    q = (Session.query(cls.date, sum(cls.pageview_count))
+    q = (Session.query(cls.date, sum(count_column))
                 .filter(cls.interval == "hour")
                 .filter(cls.codename == codename)
                 .filter(cls.date.in_(time_points))
@@ -499,7 +504,7 @@ class ClickthroughsByCodename(Base):
     @classmethod
     @memoize_traffic(time=3600)
     def promotion_history(cls, codename, start, stop):
-        return promotion_history(cls, codename, start, stop)
+        return promotion_history(cls, cls.unique_count, codename, start, stop)
 
     @classmethod
     @memoize_traffic(time=3600)
@@ -527,7 +532,7 @@ class TargetedClickthroughsByCodename(Base):
     @classmethod
     @memoize_traffic(time=3600)
     def promotion_history(cls, codename, start, stop):
-        return promotion_history(cls, codename, start, stop)
+        return promotion_history(cls, cls.unique_count, codename, start, stop)
 
     @classmethod
     @memoize_traffic(time=3600)
@@ -560,7 +565,7 @@ class AdImpressionsByCodename(Base):
     @classmethod
     @memoize_traffic(time=3600)
     def promotion_history(cls, codename, start, stop):
-        return promotion_history(cls, codename, start, stop)
+        return promotion_history(cls, cls.pageview_count, codename, start, stop)
 
     @classmethod
     @memoize_traffic(time=3600)
@@ -608,7 +613,7 @@ class TargetedImpressionsByCodename(Base):
     @classmethod
     @memoize_traffic(time=3600)
     def promotion_history(cls, codename, start, stop):
-        return promotion_history(cls, codename, start, stop)
+        return promotion_history(cls, cls.pageview_count, codename, start, stop)
 
     @classmethod
     @memoize_traffic(time=3600)

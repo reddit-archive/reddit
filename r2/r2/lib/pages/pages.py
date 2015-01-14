@@ -4410,7 +4410,7 @@ class PromoteReport(PromoteLinkBase):
         self.link_report = link_report
 
     @classmethod
-    def _get_hits(cls, traffic_cls, campaigns, start, end):
+    def _get_hits(cls, traffic_cls, campaigns, start, end, use_uniques=False):
         campaigns_by_name = {camp._fullname: camp for camp in campaigns}
         codenames = campaigns_by_name.keys()
         start = (start - promote.timezone_offset).replace(tzinfo=None)
@@ -4432,9 +4432,9 @@ class PromoteReport(PromoteLinkBase):
                 continue
             if sr == '':
                 # LEGACY: traffic uses '' to indicate Frontpage
-                fp_hits[codename] += pageviews
+                fp_hits[codename] += uniques if use_uniques else pageviews
             else:
-                sr_hits[codename] += pageviews
+                sr_hits[codename] += uniques if use_uniques else pageviews
         return fp_hits, sr_hits
 
     @classmethod
@@ -4445,7 +4445,7 @@ class PromoteReport(PromoteLinkBase):
     @classmethod
     def get_clicks(cls, campaigns, start, end):
         return cls._get_hits(traffic.TargetedClickthroughsByCodename, campaigns,
-                             start, end)
+                             start, end, use_uniques=True)
 
     def make_campaign_report(self):
         campaigns = PromoCampaign._by_link([link._id for link in self.links])
