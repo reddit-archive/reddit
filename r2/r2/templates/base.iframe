@@ -46,7 +46,7 @@
                 ${text_with_links(
                 _("from discussion %(link)s on %(subreddit)s"),
                     link=dict(link_text=thing.link.title, path=thing.link.permalink),
-                    subreddit=dict(link_text=("/r/%s" % c.site.name), path=get_domain()),
+                    subreddit=dict(link_text=("/r/%s" % c.site.name), path=c.site.path),
                 )}
             </p>
           </footer>
