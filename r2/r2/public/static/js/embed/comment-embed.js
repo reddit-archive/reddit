@@ -59,6 +59,7 @@
         return;
       }
 
+      iframe.height = 0;
       iframe.width = '100%';
       iframe.scrolling = 'no';
       iframe.frameBorder = 0;
@@ -68,6 +69,8 @@
 
       App.receiveMessageOnce(iframe, 'loaded', function(e) {
         embed.parentNode.removeChild(embed);
+        iframe.style.display = 'block';
+
         callback && callback(e);
       });
 
@@ -79,7 +82,6 @@
         }
 
         iframe.height = (e.detail + 'px');
-        iframe.style.display = 'block';
       });
 
 

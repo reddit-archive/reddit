@@ -80,6 +80,39 @@
       }, data);
     }
 
+    function serializeOptions(options) {
+      return JSON.stringify(_.pick(options, 'live', 'parent'));
+    }
+
+    function initFrame(popup, options) {
+      var $preview = popup.$.find('#embed-preview');
+      var serializedOptions = typeof options !== 'string' ?
+        serializeOptions(options) : options;
+
+      window.rembeddit.init(function() {
+        var height = 0;
+
+        var reflow = setInterval(function() {
+          var $next = $preview.find('iframe:last-child')
+          var newHeight = $next.height();
+
+          if (height !== newHeight) {
+            height = newHeight;
+          } else {
+            clearInterval(reflow);
+
+            $preview.find('iframe')
+                    .hide()
+                  .last()
+                    .show()
+                    .attr('data-options', serializedOptions);
+
+            $preview.css('height', 'auto');
+          }
+        }, 100);
+      });
+    }
+
     $('body').on('click', '.embed-comment', function(e) {
       var $el = $(e.target);
       var data = $el.data();
@@ -104,17 +137,23 @@
 
         var data = $el.data();
         var options = getEmbedOptions(data);
+        var serializedOptions = serializeOptions(options);
         var html = options.html;
         var height = $preview.height();
 
         $textarea.val(html + options.scripts);
 
         if ($option.data('rerender') !== false) {
-          $preview.height(height).html(html);
+          var selector = '[data-options="' + r.utils.escapeSelector(serializedOptions) + '"]';
+          var $cached = $preview.find(selector);
 
-          window.rembeddit.init(function () {
-            $preview.css({height: 'auto'});
-          });
+          if ($cached.length) {
+            $cached.show().siblings().hide();
+          } else {
+            $preview.height(height).append($(html).hide());
+
+            initFrame(popup, serializedOptions);
+          }
         }
       });
 
@@ -126,8 +165,12 @@
         popup.$.remove();
       });
 
+      popup.on('show.r.popup', function() {
+        $preview.find('.reddit-embed').hide();
+      });
+
       popup.on('opened.r.popup', function() {
-        window.rembeddit.init();
+        initFrame(popup, embedOptions);
       });
 
       popup.show();

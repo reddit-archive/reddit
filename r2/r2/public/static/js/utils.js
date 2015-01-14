@@ -1,4 +1,9 @@
 r.utils = {
+
+    escapeSelector: function(str) {
+        return str.replace(/([ #;?%&,.+*~\':"!^$[\]()=>|\/@])/g,'\\$1');
+    },
+
     clamp: function(val, min, max) {
         return Math.max(min, Math.min(max, val))
     },
