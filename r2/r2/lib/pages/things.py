@@ -20,6 +20,9 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+import hashlib
+import hmac
+
 from r2.lib.db.thing import NotFound
 from r2.lib.menus import (
   JsButton,
@@ -180,6 +183,8 @@ class CommentButtons(PrintableButtons):
                 data={
                     "media": g.media_domain or g.domain,
                     "comment": thing.permalink,
+                    "token": hmac.new(g.secrets['comment_embed'], thing._id36,
+                                hashlib.sha1).hexdigest(),
                     "link": thing.link.make_permalink(thing.subreddit),
                     "title": thing.link.title,
                     "root": ("true" if thing.parent_id is None else "false"),

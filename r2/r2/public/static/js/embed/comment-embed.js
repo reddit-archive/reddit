@@ -31,7 +31,7 @@
       context++;
     }
 
-    var query = 'embed=true' +
+    var query = 'embed=' + data.embedToken +
                 '&context=' + context +
                 '&depth=' + (++context) +
                 '&showedits=' + data.embedLive +

@@ -46,6 +46,7 @@
 
     var embedCodeTemplate = _.template(
       '<div class="reddit-embed" ' +
+         ' data-embed-token="<%- token %>"' +
          ' data-embed-media="<%- media %>" ' +
          '<% if (parent) { %> data-embed-parent="true" <% } %>' +
          '<% if (live) { %> data-embed-live="true" <% } %>' +

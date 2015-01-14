@@ -1,7 +1,11 @@
+import hashlib
+import hmac
+
 from pylons import c, g, request
 from pylons.controllers.util import abort
 
 from r2.controllers.reddit_base import UnloggedUser
+from r2.lib.utils import constant_time_compare
 from r2.models.subreddit import Subreddit
 
 
@@ -18,7 +22,8 @@ def can_embed(thing):
 
 
 def setup_embed(thing):
-    if request.GET.get("embed") == "true":
+    embed_key = request.GET.get('embed')
+    if embed_key:
         if request.host != g.media_domain:
             # don't serve up untrusted content except on our
             # specifically untrusted domain
@@ -26,6 +31,11 @@ def setup_embed(thing):
 
         if not can_embed(thing):
             abort(404)
+
+        expected_mac = hmac.new(g.secrets['comment_embed'], thing._id36,
+                                hashlib.sha1).hexdigest()
+        if not constant_time_compare(embed_key or '', expected_mac):
+            abort(401)
 
         c.render_style = "iframe"
         c.user = UnloggedUser([c.lang])
