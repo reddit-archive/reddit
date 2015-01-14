@@ -212,8 +212,8 @@ class FrontController(RedditController):
                   docs={"limit": "(optional) an integer"}),
               depth=VInt('depth',
                   docs={"depth": "(optional) an integer"}),
-              showedits=VBoolean("showedits"),
-              showmore=VBoolean("showmore"),
+              showedits=VBoolean("showedits", default=True),
+              showmore=VBoolean("showmore", default=True),
              )
     @api_doc(api_section.listings,
              uri='/comments/{article}',
