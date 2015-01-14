@@ -401,7 +401,7 @@ catch_errors = "try {{ {content} }} catch (err) {{ r.sendError('Error running mo
 module["reddit-init-base"] = LocalizedModule("reddit-init-base.js",
     "lib/modernizr.js",
     "lib/json2.js",
-    "lib/underscore-1.4.4.js",
+    "lib/underscore-1.4.4-1.js",
     "lib/store.js",
     "lib/jed.js",
     "lib/bootstrap.transition.js",

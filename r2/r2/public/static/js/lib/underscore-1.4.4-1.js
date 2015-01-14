@@ -1,3 +1,7 @@
+// This file has been modified to include
+// https://github.com/jashkenas/underscore/commit/14c3f9a11fe4711876148c31f9eafba947611477
+// If updated, please be sure to use at least 1.5.2 or backport this patch.
+
 //     Underscore.js 1.4.4
 //     http://underscorejs.org
 //     (c) 2009-2013 Jeremy Ashkenas, DocumentCloud Inc.
@@ -1034,7 +1038,12 @@
       '>': '&gt;',
       '"': '&quot;',
       "'": '&#x27;',
+      /* This isn't needed and is causing problems.
+         See https://github.com/jashkenas/underscore/commit/14c3f9a11fe4711876148c31f9eafba947611477
+
       '/': '&#x2F;'
+
+      */
     }
   };
   entityMap.unescape = _.invert(entityMap.escape);
