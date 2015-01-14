@@ -45,6 +45,12 @@
     var embeds = document.querySelectorAll('.reddit-embed');
 
     [].forEach.call(embeds, function(embed) {
+      if (embed.dataset.initialized) {
+        return;
+      }
+
+      embed.dataset.initialized = true;
+
       var iframe = document.createElement('iframe');
       var anchors = embed.getElementsByTagName('a');
       var commentUrl = getCommentUrl(anchors, embed.dataset.embedMedia);
