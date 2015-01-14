@@ -336,7 +336,7 @@ class Subreddit(Thing, Printable, BaseSite):
                             for sr in srs)
 
             srs = {}
-            srids = sgm(g.cache, to_fetch.keys(), _fetch, prefix='subreddit.byname', stale=stale)
+            srids = sgm(g.cache, to_fetch.keys(), _fetch, prefix='subreddit.byname', stale=True)
             if srids:
                 srs = cls._byID(srids.values(), data=True, return_dict=False, stale=stale)
 
