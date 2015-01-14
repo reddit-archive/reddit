@@ -60,12 +60,12 @@
       iframe.style.display = 'none';
       iframe.src = getEmbedUrl(commentUrl, embed.dataset);
 
-      App.receiveMessageOnce('loaded', function() {
+      App.receiveMessageOnce(iframe, 'loaded', function(e) {
         embed.parentNode.removeChild(embed);
         callback && callback(e);
       });
 
-      var resizer = App.receiveMessage('resize', function(e) {
+      var resizer = App.receiveMessage(iframe, 'resize', function(e) {
         if (!iframe.parentNode) {
           resizer.off();
 

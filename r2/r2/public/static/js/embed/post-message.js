@@ -13,8 +13,11 @@
 
     try {
       var message = JSON.parse(e.data);
+      var customEvent = new CustomEvent(message.type, {detail: message.data});
 
-      window.dispatchEvent(new CustomEvent(message.type, {detail: message.data}));
+      customEvent.source = e.source;
+
+      window.dispatchEvent(customEvent);
     } catch (x) {}
   }
 
@@ -41,21 +44,37 @@
       target.postMessage(JSON.stringify({type: type, data: data}), options.targetOrigin);
     },
 
-    receiveMessage: function(type, callback, context) {
+    receiveMessage: function(source, type, callback, context) {
+      if (typeof source === 'string') {
+        type = source;
+        callback = type;
+        context = callback;
+        source = null;
+      }
+
       type += '.postMessage';
+      context = context || this;
 
-      var bound = callback.bind(context || this);
+      var scoped = function(e) {
+        if (source &&
+            source !== e.source &&
+            source.contentWindow !== e.source) {
+          return;
+        }
 
-      window.addEventListener(type, bound);
+        callback.apply(context, arguments);
+      }
+
+      window.addEventListener(type, scoped);
 
       return {
-        off: function () { window.removeEventListener(type, bound); }
+        off: function () { window.removeEventListener(type, scoped); }
       };
     },
 
-    receiveMessageOnce: function(type, callback, context) {
-      var listener = App.receiveMessage(type, function() {
-        callback && callback();
+    receiveMessageOnce: function(source, type, callback, context) {
+      var listener = App.receiveMessage(source, type, function() {
+        callback && callback.apply(this, arguments);
 
         listener.off();
       }, context);
