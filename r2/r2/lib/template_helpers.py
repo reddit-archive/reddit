@@ -460,11 +460,8 @@ def add_sr(
         u.path_add_subreddit(c.site)
 
     if not u.hostname or force_hostname:
-        if c.secure:
-            u.hostname = request.host
-        else:
-            u.hostname = get_domain(cname = (c.cname and not nocname),
-                                    subreddit = False)
+        u.hostname = get_domain(cname = (c.cname and not nocname),
+                                subreddit = False)
 
     if (c.secure and u.is_reddit_url()) or force_https:
         u.scheme = "https"
