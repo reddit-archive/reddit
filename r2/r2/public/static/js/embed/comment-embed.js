@@ -1,10 +1,11 @@
 ;(function(App, window, undefined) {
 
-  var RE_COMMENT = /(?:https?\:)?(\/\/(?:www\.)?reddit\.(?:com|local)(?:\:\d+)?\/r\/[\w_]+\/comments\/(?:[\w_]+\/){2,}[\w_]+\/?)/i;
+  var RE_ABS = /^https?:\/\//i;
+  var RE_COMMENT = /\/?r\/[\w_]+\/comments\/(?:[\w_]+\/){2,}[\w_]+\/?/i;
   var PROTOCOL = location.protocol === 'file:' ? 'https:' : '';
 
-  function isComment(url) {
-    return typeof url === 'string' && RE_COMMENT.test(url);
+  function isComment(anchor) {
+    return RE_ABS.test(anchor.href) && RE_COMMENT.test(anchor.pathname);
   }
 
   function getCommentPathname(anchor) {
@@ -30,13 +31,14 @@
       context++;
     }
 
-    var query = 'context=' + context +
+    var query = 'embed=true' +
+                '&context=' + context +
                 '&depth=' + (++context) +
                 '&showedits=' + data.embedLive +
                 '&created=' + data.embedCreated +
                 '&showmore=false';
 
-    return PROTOCOL + (commentUrl.replace(/\/$/,'')) + '.iframe?' + query;
+    return PROTOCOL + (commentUrl.replace(/\/$/,'')) + '?' + query;
   }
 
   App.init = function(callback) {
@@ -46,7 +48,6 @@
       var iframe = document.createElement('iframe');
       var anchors = embed.getElementsByTagName('a');
       var commentUrl = getCommentUrl(anchors, embed.dataset.embedMedia);
-      var loaded = false;
 
       if (!commentUrl) {
         return;
@@ -59,18 +60,24 @@
       iframe.style.display = 'none';
       iframe.src = getEmbedUrl(commentUrl, embed.dataset);
 
-      App.receiveMessage('resize', function(e) {
-        iframe.height = (e.detail + 'px');
-        iframe.style.display = 'block';
-
-        if (!loaded) {
-          loaded = true;
-
-          callback && callback(e);
-        }
+      App.receiveMessageOnce('loaded', function() {
+        embed.parentNode.removeChild(embed);
+        callback && callback(e);
       });
 
-      embed.parentNode.replaceChild(iframe, embed);
+      var resizer = App.receiveMessage('resize', function(e) {
+        if (!iframe.parentNode) {
+          resizer.off();
+
+          return;
+        }
+
+        iframe.height = (e.detail + 'px');
+        iframe.style.display = 'block';
+      });
+
+
+      embed.parentNode.insertBefore(iframe, embed);
     });
   };
 

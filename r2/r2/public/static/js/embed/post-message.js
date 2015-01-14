@@ -19,7 +19,7 @@
   }
 
   function compileOriginRegExp(origins) {
-    return new RegExp('http(s)?:\\/\\/' + origins.join('|'), 'i');
+    return new RegExp('^http(s)?:\\/\\/' + origins.join('|'), 'i');
   }
 
   function isWildcard(origin) {
@@ -51,6 +51,16 @@
       return {
         off: function () { window.removeEventListener(type, bound); }
       };
+    },
+
+    receiveMessageOnce: function(type, callback, context) {
+      var listener = App.receiveMessage(type, function() {
+        callback && callback();
+
+        listener.off();
+      }, context);
+
+      return listener;
     },
 
     addPostMessageOrigin: function(origin) {

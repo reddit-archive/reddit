@@ -254,7 +254,7 @@ class FrontController(RedditController):
         #check for 304
         self.check_modified(article, 'comments')
 
-        embeds.setup_embed()
+        embeds.setup_embed(thing=comment)
 
         # If there is a focal comment, communicate down to
         # comment_skeleton.html who that will be. Also, skip

@@ -10551,3 +10551,24 @@ body.banned.deleted div#header {
 #compose-message select {
     font-size: 100%;
 }
+
+#embed-preview {
+    margin: -5px;
+    margin-bottom: 0;
+    overflow-y: hidden;
+
+    // re-add margin to non-iframed version
+    .reddit-embed {
+        margin: 5px;
+    }
+}
+
+.more-actions {
+    .title {
+        color: #888;
+
+        &:hover {
+            cursor: pointer;
+        }
+    }
+}

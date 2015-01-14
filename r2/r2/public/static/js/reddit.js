@@ -9,6 +9,11 @@ function open_menu(menu) {
         .addClass("active inuse");
 };
 
+function close_menu(item) {
+    $(item).closest('.drop-choices')
+        .removeClass('active inuse');
+}
+
 function close_menus(event) {
     $(".drop-choices.inuse").not(".active")
         .removeClass("inuse");

@@ -310,6 +310,8 @@ class Reddit(Templated):
         if srbar and not c.cname and not is_api():
             self.srtopbar = SubredditTopBar()
 
+        panes = [content]
+
         if c.user_is_loggedin and not is_api() and not self.show_wiki_actions:
             # insert some form templates for js to use
             # TODO: move these to client side templates
@@ -337,16 +339,15 @@ class Reddit(Templated):
                                       )
             report_form = ReportForm()
 
-            panes = [ShareLink(), content, report_form]
+            panes.extend([ShareLink(), report_form])
+
             if self.show_sidebar:
                 panes.extend([gold_comment, gold_link])
 
             if c.user_is_sponsor:
                 panes.append(FraudForm())
 
-            self._content = PaneStack(panes)
-        else:
-            self._content = content
+        self._content = PaneStack(panes)
 
         self.show_chooser = (
             show_chooser and

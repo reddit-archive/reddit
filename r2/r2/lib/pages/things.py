@@ -21,7 +21,12 @@
 ###############################################################################
 
 from r2.lib.db.thing import NotFound
-from r2.lib.menus import Styled
+from r2.lib.menus import (
+  JsButton,
+  NavButton,
+  NavMenu,
+  Styled,
+)
 from r2.lib.wrapped import Wrapped
 from r2.models import LinkListing, Link, PromotedLink, Report
 from r2.models import make_wrapper, IDBuilder, Thing
@@ -166,6 +171,22 @@ class CommentButtons(PrintableButtons):
 
         show_givegold = thing.can_gild
 
+        embed_button = False
+
+        from r2.lib import embeds
+        if embeds.can_embed(thing):
+            embed_button = JsButton("embed",
+                css_class="embed-comment",
+                data={
+                    "media": g.media_domain or g.domain,
+                    "comment": thing.permalink,
+                    "link": thing.link.make_permalink(thing.subreddit),
+                    "title": thing.link.title,
+                    "root": ("true" if thing.parent_id is None else "false"),
+                })
+
+            embed_button.build()
+
         PrintableButtons.__init__(self, "commentbuttons", thing,
                                   can_save=thing.can_save,
                                   is_author = is_author, 
@@ -179,12 +200,13 @@ class CommentButtons(PrintableButtons):
                                   parent_permalink = thing.parent_permalink, 
                                   can_reply = thing.can_reply,
                                   suppress_reply_buttons = suppress_reply_buttons,
-                                  show_report = show_report,
+                                  show_report=show_report,
                                   mod_reports=thing.mod_reports,
                                   user_reports=thing.user_reports,
                                   show_distinguish = show_distinguish,
                                   show_delete = show_delete,
                                   show_givegold=show_givegold,
+                                  embed_button=embed_button,
         )
 
 class MessageButtons(PrintableButtons):

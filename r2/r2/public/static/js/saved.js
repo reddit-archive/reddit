@@ -171,7 +171,7 @@ r.saved.SaveButton = {
 r.saved.categories = new r.saved.SaveCategories()
 
 r.saved.init = function() {
-    $('body').on('click', '.save-button a', function(e) {
+    $('body').on('click', '.save-button a, a.save-button', function(e) {
         e.stopPropagation()
         e.preventDefault()
         r.saved.SaveButton.toggleSaved($(this))

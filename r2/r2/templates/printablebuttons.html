@@ -333,16 +333,21 @@
     <li class="first">
       ${self.bylink_button(_("permalink"), thing.permalink)}
     </li>
+    %if thing.embed_button:
+      <li>
+        ${thing.embed_button.render()}
+      </li>
+    %endif
     %if thing.can_save:
-        %if thing.saved:
-          <li class="comment-unsave-button save-button">
-            <a href="javascript:void(0)">${_("unsave")}</a>
-          </li>
-        %else:
-          <li class="comment-save-button save-button">
-            <a href="javascript:void(0)">${_("save")}</a>
-          </li>
-        %endif
+      %if thing.saved:
+        <li class="comment-unsave-button save-button">
+          <a href="javascript:void(0)">${_("unsave")}</a>
+        </li>
+      %else:
+        <li class="comment-save-button save-button">
+          <a href="javascript:void(0)">${_("save")}</a>
+        </li>
+      %endif
     %endif
 
     %if c.profilepage:
