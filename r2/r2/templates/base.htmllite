@@ -24,7 +24,7 @@
 
 <%!
    from pylons.i18n import _
-   from r2.lib.template_helpers import get_domain, style_line, _ws
+   from r2.lib.template_helpers import get_domain, style_line, format_html, _ws
    from r2.models.subreddit import FakeSubreddit, DefaultSR
 %>
 
@@ -49,16 +49,16 @@
            ${optionalstyle("border:none")} />
     </a>
     <%
-       style = capture(optionalstyle, "text-decoration:none;color:#336699")
+       style = unsafe(capture(optionalstyle, "text-decoration:none;color:#336699"))
        name = c.site.name
        if not isinstance(c.site, FakeSubreddit):
            name += ".%s" % g.domain
        if c.link_target:
-          link = ('<a %s href="http://%s/" target="%s">%s</a></h3>' % 
-                  (style, get_domain(), c.link_target, name))
+          link = format_html('<a %s href="http://%s/" target="%s">%s</a></h3>',
+                             style, get_domain(), c.link_target, name)
        else:
-          link = ('<a %s href="http://%s/">%s</a></h3>' % 
-                 (style, get_domain(), name))
+          link = format_html('<a %s href="http://%s/">%s</a></h3>',
+                             style, get_domain(), name)
      %>
     ${self.titlebar(link)}
   </h4>

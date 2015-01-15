@@ -82,6 +82,7 @@ from r2.lib.menus import CommentSortMenu
 from r2.lib.captcha import get_iden
 from r2.lib.strings import strings
 from r2.lib.filters import _force_unicode, websafe_json, websafe, spaceCompress
+from r2.lib.template_helpers import format_html
 from r2.lib.db import queries
 from r2.lib.db.queries import changed
 from r2.lib import media
@@ -1858,9 +1859,9 @@ class ApiController(RedditController):
         else:
             emails, users = emails
             jquery.things(link._fullname).set_text(".share", _("shared"))
-            shareform.html("<div class='clearleft'></div>"
-                           "<p class='error'>%s</p>" % 
-                           websafe(_("your link has been shared.")))
+            shareform.html(format_html("<div class='clearleft'></div>"
+                                       "<p class='error'>%s</p>",
+                                       _("your link has been shared.")))
 
             if getattr(link, "promoted", None) and link.disable_comments:
                 message = message + "\n\n" if message else ""
@@ -3679,9 +3680,10 @@ class ApiController(RedditController):
 
             # TODO: move this to a template
             if flair_template:
-                flair = '<span class="linkflairlabel %s">%s</span>' % (
-                    ' '.join('linkflair-' + c for c in css_class.split()),
-                    websafe(text))
+                classes = ' '.join('linkflair-' + c for c in css_class.split())
+                flair = format_html('<span class="linkflairlabel %s">%s</span>',
+                                    classes, text)
+
                 if site.link_flair_position == 'left':
                     jquery(title_path).before(flair)
                 elif site.link_flair_position == 'right':

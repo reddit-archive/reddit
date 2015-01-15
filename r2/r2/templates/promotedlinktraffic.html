@@ -26,7 +26,7 @@
 <%!
     from r2.lib.strings import strings
     from r2.lib.filters import safemarkdown
-    from r2.lib.template_helpers import format_number, js_timestamp, _ws
+    from r2.lib.template_helpers import format_number, js_timestamp, format_html
 %>
 
 <%def name="make_traffic_table()">
@@ -83,13 +83,13 @@
   %if thing.prev or thing.next:
     <p class="nextprev"> ${_("view more:")}&#32;
     %if thing.prev:
-      ${plain_link(unsafe("&lsaquo; " + _ws("prev")), thing.prev, _sr_path=False, rel="nofollow prev")}
+      ${plain_link(format_html("&lsaquo; %s", _("prev")), thing.prev, _sr_path=False, rel="nofollow prev")}
     %endif
     %if thing.prev and thing.next:
       <span class="separator"></span>
     %endif
     %if thing.next:
-      ${plain_link(unsafe(_ws("next") + " &rsaquo;"), thing.next,  _sr_path=False, rel="nofollow next")}
+      ${plain_link(format_html("%s &rsaquo;", _("next")), thing.next,  _sr_path=False, rel="nofollow next")}
     %endif
     </p>
   %endif

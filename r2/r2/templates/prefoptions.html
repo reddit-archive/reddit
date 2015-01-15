@@ -21,7 +21,7 @@
 ###############################################################################
 
 <%!
-   from r2.lib.template_helpers import add_sr, _ws
+   from r2.lib.template_helpers import add_sr, _wsf, format_html
    from r2.lib.utils import UrlParser
    import random
 %>
@@ -171,15 +171,14 @@
          <span class="little gray">${_("(except my own)")}</span>
       </p>
       <p>
-        ${unsafe(_ws("display %(num)s links at once") % \
-        dict(num=capture(link_options)))}
+        ${_wsf("display %(num)s links at once", num=unsafe(capture(link_options)))}
       </p>
       <%
-         input = capture(num_input, c.user.pref_min_link_score,
-         'min_link_score')
+         input = unsafe(capture(num_input, c.user.pref_min_link_score,
+         'min_link_score'))
          %>
       <p>
-      ${unsafe(_ws("don't show me submissions with a score less than %(num)s") % dict(num = input))}
+      ${_wsf("don't show me submissions with a score less than %(num)s", num=input)}
       &#32;<span class="little gray">${_("(leave blank to show all submissions)")}</span>
       </p>
     </td>
@@ -188,21 +187,20 @@
     <th>${_("comment options")}</th>
     <td class="prefright">
     <% 
-       input = capture(num_input, c.user.pref_min_comment_score,
-                       'min_comment_score')
+       input = unsafe(capture(num_input, c.user.pref_min_comment_score,
+                              'min_comment_score'))
        %>
     <p>
-      ${unsafe(_ws("don't show me comments with a score less than %(num)s") % dict(num = input))}
+      ${_wsf("don't show me comments with a score less than %(num)s", num=input)}
       &#32;<span class="little gray">${_("(leave blank to show all comments)")}</span>
     </p>
     <p>
       <% 
-       input = capture(num_input, c.user.pref_num_comments,
-       'num_comments')
+       input = unsafe(capture(num_input, c.user.pref_num_comments,
+                              'num_comments'))
        %>
     <% s = c.user.pref_num_comments %>
-    ${unsafe(_ws("display %(num)s comments by default") % \
-    dict(num = input))}
+    ${_wsf("display %(num)s comments by default", num=input)}
     &#32;
     <span class="little gray">
       (1 - ${g.max_comments});
@@ -275,10 +273,10 @@
       &#32;
       <span class="little gray">
         <%
-           link1 = "&#32;<a href='/user/%s/liked'>/user/%s/liked</a>&#32;" % (c.user.name, c.user.name)
-           link2 = "&#32;<a href='/user/%s/disliked'>/user/%s/disliked</a>" % (c.user.name, c.user.name)
+           link1 = format_html('&#32;<a href="/user/%s/liked">/user/%s/liked</a>&#32;', c.user.name, c.user.name)
+           link2 = format_html('&#32;<a href="/user/%s/disliked">/user/%s/disliked</a>', c.user.name, c.user.name)
            %>
-        (${unsafe(_ws("let everyone see %(link1)s and %(link2)s") % dict(link1=link1, link2=link2))})
+        (${_wsf("let everyone see %(link1)s and %(link2)s", link1=link1, link2=link2)})
       </span>
       <br/>
       ${checkbox(_("allow my data to be used for research purposes"), "research")}
@@ -324,8 +322,8 @@
           (${_("we'll remember your visits for 48 hours and show you which comments you haven't seen yet")})
         </span>
         <br><br>
-        <% creddit_link = '&#32;<a href="/creddits">creddit</a>&#32;' %>
-        ${checkbox(unsafe(_ws("use a %(creddit_link)s to automatically renew my gold if it expires") % dict(creddit_link=creddit_link)), "creddit_autorenew")}
+        <% creddit_link = unsafe('&#32;<a href="/creddits">creddit</a>&#32;') %>
+        ${checkbox(_wsf("use a %(creddit_link)s to automatically renew my gold if it expires", creddit_link=creddit_link), "creddit_autorenew")}
     </td>
   </tr>
   %endif

@@ -24,6 +24,7 @@
     from r2.lib.pages import WrappedUser
     from r2.lib.filters import safemarkdown, websafe, conditional_websafe
     from r2.models import Account
+    from r2.lib.template_helpers import format_html
 %>
 <%namespace file="printable.html" import="arrow, score"/>
 <%namespace file="utils.html" import="plain_link" />
@@ -59,23 +60,23 @@
     substitutions = {}
 
     if thing.sr_id:
-        substitutions['subreddit'] = u'<b>&nbsp;<a href="%(path)s.compact">%(path)s</a>&nbsp;</b>' % dict(path=thing.subreddit.path)
+        substitutions['subreddit'] = format_html(u'<b>&nbsp;<a href="%(path)s.compact">%(path)s</a>&nbsp;</b>', path=thing.subreddit.path)
 
-    substitutions['author'] = u"<b>%s</b>" % WrappedUser(thing.author, thing.attribs, thing).render()
+    substitutions['author'] = format_html(u"<b>%s</b>", WrappedUser(thing.author, thing.attribs, thing))
 
     if isinstance(thing.to, Account):
-        substitutions['dest'] = u"<b>%s</b>" % WrappedUser(thing.to, [], thing).render()
+        substitutions['dest'] = format_html(u"<b>%s</b>", WrappedUser(thing.to, [], thing))
     elif thing.sr_id:
         substitutions['dest'] = substitutions['subreddit']
 
     substitutions['when'] = thing.timesince
 
     taglinetext = conditional_websafe(thing.taglinetext).replace(' ', '&nbsp;')
-    taglinetext %= substitutions
+    taglinetext = format_html(taglinetext, **substitutions)
   %>
 
     <div class="tagline">
-      ${unsafe(taglinetext)}
+      ${taglinetext}
     </div>
     <a href="javascript:void(0)" class="options_link"></a>
     ${unsafe(safemarkdown(thing.body))}

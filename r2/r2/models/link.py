@@ -368,7 +368,7 @@ class Link(Thing, Printable):
         from r2.lib.count import incr_counts
         from r2.lib import media
         from r2.lib.utils import timeago
-        from r2.lib.template_helpers import get_domain, _ws, unsafe
+        from r2.lib.template_helpers import get_domain, unsafe, format_html
         from r2.models.report import Report
         from r2.models.subreddit import FakeSubreddit
         from r2.lib.wrapped import CachedVariable
@@ -655,16 +655,16 @@ class Link(Thing, Printable):
 
             taglinetext = ''
             if item.different_sr:
-                author_text = (" <span>" + _ws("by %(author)s to %(reddit)s") +
-                               "</span>")
+                author_text = format_html(" <span>%s</span>",
+                                          _("by %(author)s to %(reddit)s"))
             else:
-                author_text = " <span>" + _ws("by %(author)s") + "</span>"
+                author_text = format_html(" <span>%s</span>",
+                                          _("by %(author)s"))
             if item.editted:
                 if item.score_fmt in (Score.points, Score.safepoints):
-                    taglinetext = ("<span>" +
-                                   _ws("%(score)s submitted %(when)s "
-                                       "%(lastedited)s") +
-                                   "</span>")
+                    taglinetext = format_html("<span>%s</span>",
+                                              _("%(score)s submitted %(when)s "
+                                                "%(lastedited)s"))
                     taglinetext = unsafe(taglinetext + author_text)
                 elif item.different_sr:
                     taglinetext = _("submitted %(when)s %(lastedited)s "
@@ -674,9 +674,8 @@ class Link(Thing, Printable):
                                     "by %(author)s")
             else:
                 if item.score_fmt in (Score.points, Score.safepoints):
-                    taglinetext = ("<span>" +
-                                   _ws("%(score)s submitted %(when)s") +
-                                   "</span>")
+                    taglinetext = format_html("<span>%s</span>",
+                                              _("%(score)s submitted %(when)s"))
                     taglinetext = unsafe(taglinetext + author_text)
                 elif item.different_sr:
                     taglinetext = _("submitted %(when)s by %(author)s "

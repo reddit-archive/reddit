@@ -21,7 +21,7 @@
 ###############################################################################
 
 <%!
-   from r2.lib.template_helpers import get_domain, _ws
+   from r2.lib.template_helpers import get_domain, _wsf
 %>
 
 <% 
@@ -157,11 +157,11 @@ function update() {
          </p>
          <p>
           <input type="radio" name="which" value="one" onclick="update()" /> 
-           ${unsafe(_ws("links %(submitted_by)s the user %(who)s") % dict(submitted_by = where2(), who = text_input("who")))}
+           ${_wsf("links %(submitted_by)s the user %(who)s", submitted_by=unsafe(where2()), who=unsafe(text_input("who")))}
          </p>
          <p>
            <input type="radio" name="which" value="two" onclick="update()" /> 
-          ${unsafe(_ws("links from the domain %(domain)s") % dict(domain = text_input("domain")))}
+          ${_wsf("links from the domain %(domain)s", domain=unsafe(text_input("domain")))}
          </p>
        </td>
      </tr>
@@ -178,10 +178,10 @@ function update() {
              <option value="top">${_("top")}</option>
            </select>
            </%def>
-           ${unsafe(_ws("sort links by %(what)s") % dict(what = what()))}
+           ${_wsf("sort links by %(what)s", what=unsafe(what()))}
          </p>
          <p>
-           ${unsafe(_ws("date range includes %(when)s") % dict(when = when()))}
+           ${_wsf("date range includes %(when)s", when=unsafe(when()))}
          </p>
          <p>
            ${_("number of links to show")}:

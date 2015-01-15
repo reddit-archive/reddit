@@ -23,7 +23,7 @@
 <%!
    import datetime
    from r2.models import OAuth2AccessToken
-   from r2.lib.template_helpers import static, make_url_protocol_relative, _ws
+   from r2.lib.template_helpers import static, make_url_protocol_relative, _wsf, format_html
 %>
 <%namespace file="clientinfobar.html" import="app_link" />
 <%namespace file="prefapps.html" import="scope_details" />
@@ -32,8 +32,8 @@
      icon = make_url_protocol_relative(thing.client.icon_url)
    else:
      icon = static("defaultapp.png")
-   app_name = (
-       "<!-- SC_OFF --> <b>%s</b> <!-- SC_ON -->" % websafe(thing.client.name))
+   app_name = format_html(
+       "<!-- SC_OFF --> <b>%s</b> <!-- SC_ON -->", thing.client.name)
 %>
 <div class="content oauth2-authorize">
   <div class="icon">
@@ -42,18 +42,16 @@
     &nbsp;
   </div>
   <h1>
-    ${unsafe(_ws("%(app)s requests to connect with your reddit account.")
-             % dict(app=app_link(thing.client)))}
+    ${_wsf("%(app)s requests to connect with your reddit account.",
+           app=unsafe(app_link(thing.client)))}
   </h1>
   <div class="access">
     <div class="access-permissions">
-        <h2>${unsafe(_ws("Allow %(app)s to:") % dict(app=app_name))}</h2>
+        <h2>${_wsf("Allow %(app)s to:", app=app_name)}</h2>
         ${scope_details(thing.scope, expiration=thing.expiration)}
     </div>
     <p class="notice">
-        ${unsafe(
-            _ws("%(app)s will not be able to access your reddit password.")
-            % dict(app=app_name))}
+        ${_wsf("%(app)s will not be able to access your reddit password.", app=app_name)}
     </p>
     <form method="post" action="/api/v1/authorize" class="pretty-form">
       <input type="hidden" name="client_id" value="${thing.client._id}" />

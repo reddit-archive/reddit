@@ -24,7 +24,7 @@
    from r2.lib.filters import safemarkdown, websafe, conditional_websafe
    from r2.lib.pages.things import MessageButtons
    from r2.lib.pages import WrappedUser
-   from r2.lib.template_helpers import static, add_attr
+   from r2.lib.template_helpers import static, add_attr, format_html
    from r2.models import Account
 %>
 
@@ -53,9 +53,9 @@ ${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if
     substitutions = {}
 
     if thing.sr_id:
-        substitutions['subreddit'] = u'<span class="subreddit"><a href="%(path)s">%(path)s</a></span>' % dict(path=thing.subreddit.path)
+        substitutions['subreddit'] = format_html(u'<span class="subreddit"><a href="%(path)s">%(path)s</a></span>', path=thing.subreddit.path)
 
-    substitutions['author'] = u'<span class="sender">%s</span>' % WrappedUser(thing.author, thing.attribs, thing).render()
+    substitutions['author'] = format_html(u'<span class="sender">%s</span>', WrappedUser(thing.author, thing.attribs, thing))
 
     if isinstance(thing.to, Account):
         to_attribs = []
@@ -68,18 +68,18 @@ ${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if
                 label = _('moderator of /r/%(reddit)s, speaking officially')
                 label %= {'reddit': thing.subreddit.name}
                 add_attr(to_attribs, 'M', label=label, link=link)
-        substitutions['dest'] = u'<span class="recipient">%s</span>' % WrappedUser(thing.to, to_attribs, thing).render()
+        substitutions['dest'] = format_html(u'<span class="recipient">%s</span>', WrappedUser(thing.to, to_attribs, thing))
     elif thing.sr_id:
-        substitutions['dest'] = u'<span class="recipient subreddit"><a href="%(path)s">%(path)s</a></span>' % dict(path=thing.subreddit.path)
+        substitutions['dest'] = format_html(u'<span class="recipient subreddit"><a href="%(path)s">%(path)s</a></span>', path=thing.subreddit.path)
 
-    substitutions['when'] = capture(thing_timestamp, thing, thing.timesince, include_tense=True)
+    substitutions['when'] = unsafe(capture(thing_timestamp, thing, thing.timesince, include_tense=True))
 
     taglinetext = conditional_websafe(thing.taglinetext).replace(' ', '&#32;')
-    taglinetext %= substitutions
+    taglinetext = format_html(taglinetext, **substitutions)
   %>
 
   <span class="head">
-    ${unsafe(taglinetext)}
+    ${taglinetext}
   </span>
 
   %if c.user_is_admin:

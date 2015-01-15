@@ -23,7 +23,7 @@
 <%!
    from r2.lib.strings import strings, Score
    from r2.lib.pages import WrappedUser, UserText
-   from r2.lib.template_helpers import _ws
+   from r2.lib.template_helpers import _ws, _wsf, format_html
  %>
 
 <%namespace file="utils.html" import="plain_link, thing_timestamp, text_with_links"/>
@@ -84,7 +84,8 @@
     %endif
   </div>
 
-  <h3>${unsafe(_ws('%(count)s subreddits in this multi:') % dict(count='<span class="count">%d</span>&#32;' % len(thing.srs)))}</h3>
+  <% sr_count = format_html('<span class="count">%s</span>&#32;', len(thing.srs)) %>
+  <h3>${_wsf('%(count)s subreddits in this multi:', count=sr_count)}</h3>
   <ul class="subreddits">
   %for sr in thing.srs:
     <li data-name="${sr.name}">

@@ -21,7 +21,7 @@
 ###############################################################################
 
 <%!
-   from r2.lib.template_helpers import _ws
+   from r2.lib.template_helpers import format_html
 %>
 <%namespace file="utils.html" import="plain_link" />
 <%
@@ -63,7 +63,7 @@
       %endfor
       <div class="nav-buttons">
         <span class="nextprev">${_("view more:")}&#32;
-          ${plain_link(unsafe(_ws("reload suggestions") + " &rsaquo;"), request.url, _sr_path=False, nocname=True)}
+          ${plain_link(format_html("%s &rsaquo;", _("reload suggestions")), request.url, _sr_path=False, nocname=True)}
         </span>
       </div>
   %else:
@@ -74,7 +74,7 @@
     </div>
     <div class="nav-buttons">
       <span class="nextprev">
-        ${plain_link(unsafe(_ws("try again") + " &rsaquo;"), "/explore", _sr_path=False, nocname=True)}
+        ${plain_link(format_html("%s &rsaquo;", _("try again")), "/explore", _sr_path=False, nocname=True)}
       </span>
     </div>
   %endif
