@@ -132,7 +132,12 @@
 
       <section id="onetime" class="tab ${'active' if active_tab == 'onetime' else ''}">
         <h3>${_('How many months?')}</h3>
-        ${gold_dropdown("months", thing.months)}
+        <%
+          append_or_somethings = None
+          if c.user_is_loggedin and c.user.gold_creddits > 0:
+              append_or_somethings = "creddits"
+        %>
+        ${gold_dropdown("months", thing.months, append_or_somethings=append_or_somethings)}
 
         <section id="give-as-gift">
           <ul>

@@ -24,7 +24,7 @@
 from r2.lib.strings import Score
 %>
 
-<%def name="gold_dropdown(what, chosen_months, somethings=None)">
+<%def name="gold_dropdown(what, chosen_months, somethings=None, append_or_somethings=None)">
   <%
     if not somethings:
       somethings = what
@@ -37,11 +37,13 @@ from r2.lib.strings import Score
     %for i in month_options:
        <option value="${i}" ${"selected" if chosen_months == i else ""}>
          ${Score.somethings(i, somethings)}: ${g.gold_month_price * i}
+         ${" or %s" % Score.somethings(i, append_or_somethings) if append_or_somethings else ""}
        </option>
     %endfor
     %for i in year_options:
        <option value="${i * 12}" ${"selected" if (chosen_months == (i * 12) or (not chosen_months and i == 1)) else ""}>
          ${Score.somethings(i * 12, somethings)} &#32; (special price!): ${g.gold_year_price * i}
+         ${" or %s" % Score.somethings(i * 12, append_or_somethings) if append_or_somethings else ""}
        </option>
     %endfor
   </select>
