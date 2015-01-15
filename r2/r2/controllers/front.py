@@ -299,7 +299,10 @@ class FrontController(RedditController):
         # check if we just came from the submit page
         infotext = None
         if request.GET.get('already_submitted'):
-            infotext = strings.already_submitted % article.resubmit_link()
+            submit_url = request.GET.get('submit_url') or article.url
+            resubmit_url = Link.resubmit_link(submit_url)
+            sr_resubmit_url = add_sr(resubmit_url)
+            infotext = strings.already_submitted % sr_resubmit_url
 
         check_cheating('comments')
 
@@ -1007,13 +1010,17 @@ class FrontController(RedditController):
             links = listing.things
 
             if links and len(links) == 1:
-                return self.redirect(links[0].already_submitted_link)
+                # redirect the user to the existing link's comments
+                existing_submission_url = links[0].already_submitted_link(url)
+                return self.redirect(existing_submission_url)
             elif links:
-                infotext = (strings.multiple_submitted
-                            % links[0].resubmit_link())
-                res = BoringPage(_("seen it"),
-                                 content=listing,
-                                 infotext=infotext).render()
+                # show the user a listing of all the other links with this url
+                # an infotext to resubmit it
+                resubmit_url = Link.resubmit_link(url)
+                sr_resubmit_url = add_sr(resubmit_url)
+                infotext = strings.multiple_submitted % sr_resubmit_url
+                res = BoringPage(
+                    _("seen it"), content=listing, infotext=infotext).render()
                 return res
 
         if not c.user_is_loggedin:

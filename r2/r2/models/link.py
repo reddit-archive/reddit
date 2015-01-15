@@ -146,15 +146,17 @@ class Link(Thing, Printable):
             LinksByUrl._set_values(LinksByUrl._key_from_url(self.url),
                                    {self._id36: ''})
 
-    @property
-    def already_submitted_link(self):
-        return self.make_permalink_slow() + '?already_submitted=true'
+    def already_submitted_link(self, url):
+        permalink = self.make_permalink_slow()
+        p = UrlParser(permalink)
+        p.update_query(already_submitted="true", submit_url=url)
+        return p.unparse()
 
-    def resubmit_link(self, sr_url=False):
-        submit_url = self.subreddit_slow.path if sr_url else '/'
-        submit_url += 'submit?resubmit=true&url='
-        submit_url += url_escape(_force_unicode(self.url))
-        return submit_url
+    @classmethod
+    def resubmit_link(cls, url):
+        p = UrlParser("/submit")
+        p.update_query(resubmit="true", url=url)
+        return p.unparse()
 
     @classmethod
     def _choose_comment_tree_version(cls):
