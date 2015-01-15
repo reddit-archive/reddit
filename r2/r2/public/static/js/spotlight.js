@@ -45,8 +45,42 @@ r.spotlight.setup = function(organic_links, interest_prob, show_promo, srnames) 
     this.interest_prob = interest_prob
     this.show_promo = show_promo
     this.srnames = srnames
+    this.lastPromoTimestamp = Date.now();
+    this.MIN_PROMO_TIME = 1500;
 
     this.init()
+
+    $(window).on('focus', r.spotlight.requestNewPromo.bind(this));
+}
+
+r.spotlight.requestNewPromo = function() {
+    // the ad will be stored as a promise
+    if (!this.lineup[this.lineup.pos].promise) {
+        return;
+    }
+    
+    var $organicListing = $('.organic-listing');
+    var $promotedLink = $organicListing.find('.promotedlink');
+    var $clearLeft = $promotedLink.next('.clearleft');
+
+    if ($promotedLink.is(':hidden')||
+            $promotedLink.offset().top < window.scrollY ||
+            Date.now() - this.lastPromoTimestamp < this.MIN_PROMO_TIME) {
+        return;
+    }
+
+    var newPromo = this.requestPromo();
+    newPromo.then(function($promo) {
+        if (!$promo || !$promo.length) { return }
+
+        var $link = $promo.eq(0);
+        var fullname = $link.data('fullname');
+
+        this.organics[this.lineup.pos] = fullname;
+        this.lineup[this.lineup.pos] = newPromo;
+        $promotedLink.add($clearLeft).remove();
+        $promo.show();
+    }.bind(this));
 }
 
 r.spotlight.requestPromo = function() {
@@ -60,6 +94,7 @@ r.spotlight.requestPromo = function() {
         }
     }).pipe(function(promo) {
         if (promo) {
+            r.spotlight.lastPromoTimestamp = Date.now();
             $item = $(promo)
             $item.hide().appendTo($('.organic-listing'))
             return $item
@@ -149,7 +184,12 @@ r.spotlight._advance = function(dir) {
         listing.removeClass('loading')
 
         // match the listing background to that of the displayed thing
-        listing.css('background-color', $next.css('background-color'))
+        if ($next) {
+            var nextColor = $next.css('background-color');
+            if (nextColor) {
+                listing.css('background-color', nextColor);
+            }
+        }
 
         visible.hide()
         $next.show()
