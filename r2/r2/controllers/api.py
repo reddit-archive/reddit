@@ -3525,11 +3525,28 @@ class ApiController(RedditController):
         jquery('.tagline .id-%s' % user._fullname).parent().html(unflair)
 
     @require_oauth2_scope("modflair")
-    @validate(VSrModerator(perms='flair'),
-              VModhash(),
-              flair_csv = nop('flair_csv'))
+    @validate(
+        VSrModerator(perms='flair'),
+        VModhash(),
+        flair_csv=nop("flair_csv",
+            docs={"flair_csv": "comma-seperated flair information"}),
+    )
     @api_doc(api_section.flair, uses_site=True)
     def POST_flaircsv(self, flair_csv):
+        """Change the flair of multiple users in the same subreddit with a
+        single API call.
+
+        Requires a string 'flair_csv' which has up to 100 lines of the form
+        '`user`,`flairtext`,`cssclass`' (Lines beyond the 100th are ignored).
+
+        If both `cssclass` and `flairtext` are the empty string for a given
+        `user`, instead clears that user's flair.
+
+        Returns an array of objects indicating if each flair setting was 
+        applied, or a reason for the failure.
+
+        """
+        
         limit = 100  # max of 100 flair settings per call
         results = FlairCsv()
         # encode to UTF-8, since csv module doesn't fully support unicode
