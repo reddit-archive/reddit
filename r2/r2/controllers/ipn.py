@@ -62,11 +62,12 @@ from r2.models import (
     cancel_subscription,
     Comment,
     creddits_lock,
-    Email,
     create_claimed_gold,
     create_gift_gold,
     create_gold_code,
+    Email,
     get_discounted_price,
+    has_prev_subscr_payments,
     Link,
     make_gold_message,
     NotFound,
@@ -827,6 +828,12 @@ class GoldPaymentController(RedditController):
         with gold_lock(gold_recipient):
             gold_recipient._sync_latest()
 
+            secret_pieces = [goldtype]
+            if goldtype == 'gift':
+                secret_pieces.append(recipient.name)
+            secret_pieces.append(secret or transaction_id)
+            secret = '-'.join(secret_pieces)
+
             if goldtype in ('onetime', 'autorenew'):
                 admintools.adjust_gold_expiration(buyer, days=days)
                 if goldtype == 'onetime':
@@ -840,9 +847,8 @@ class GoldPaymentController(RedditController):
                     message = ("see the details of your subscription on "
                                "[your userpage](/u/%s)" % buyer.name)
 
-                    if payment_blob['goldtype'] == 'autorenew':
-                        if existing_subscription(subscr_id, paying_id, custom):
-                            secret = None
+                    if has_prev_subscr_payments(subscr_id):
+                        secret = None
 
             elif goldtype == 'creddits':
                 buyer._incr('gold_creddits', months)
@@ -856,18 +862,11 @@ class GoldPaymentController(RedditController):
                 subject = "thanks for giving reddit gold!"
                 message = "Your gift to %s has been delivered." % recipient.name
 
-            status = 'processed'
-            secret_pieces = [goldtype]
-            if goldtype == 'gift':
-                secret_pieces.append(recipient.name)
-            secret_pieces.append(secret or transaction_id)
-            secret = '-'.join(secret_pieces)
-
             try:
                 create_claimed_gold(transaction_id, payer_email, payer_id,
                                     pennies, days, secret, buyer._id,
                                     c.start_time, subscr_id=subscr_id,
-                                    status=status)
+                                    status='processed')
             except IntegrityError:
                 g.log.error('gold: got duplicate gold transaction')
 

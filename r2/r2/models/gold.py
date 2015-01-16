@@ -379,6 +379,11 @@ def check_by_email(email):
     return s.execute().fetchall()
 
 
+def has_prev_subscr_payments(subscr_id):
+    s = sa.select([gold_table], gold_table.c.subscr_id == subscr_id)
+    return bool(s.execute().fetchall())
+
+
 def retrieve_gold_transaction(transaction_id):
     s = sa.select([gold_table], gold_table.c.trans_id == transaction_id)
     res = s.execute().fetchall()
