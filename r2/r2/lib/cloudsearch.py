@@ -226,11 +226,11 @@ class LinkFields(FieldsBase):
 
     @field
     def author_fullname(self):
-        return self.author._fullname
+        return None if self.author._deleted else self.author._fullname
 
     @field(name="author")
     def author_field(self):
-        return '[deleted]' if self.author._deleted else self.author.name
+        return None if self.author._deleted else self.author.name
 
     @field(cloudsearch_type=int)
     def type_id(self):
@@ -296,7 +296,7 @@ class SubredditFields(FieldsBase):
 
     @field
     def header_title(self):
-        return self.sr.header_title
+        return None if self.sr.type == 'private' else self.sr.header_title
 
     @field
     def description(self):
@@ -304,7 +304,7 @@ class SubredditFields(FieldsBase):
 
     @field
     def sidebar(self):
-        return self.sr.description
+        return None if self.sr.type == 'private' else self.sr.description
 
     @field(cloudsearch_type=int)
     def over18(self):
