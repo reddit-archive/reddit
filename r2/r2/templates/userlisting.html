@@ -70,6 +70,7 @@
     ${error_field("USER_DOESNT_EXIST", "name")}
     ${error_field("ALREADY_MODERATOR", "name")}
     ${error_field("BANNED_FROM_SUBREDDIT", "name")}
+    ${error_field("USER_BAN_NO_MESSAGE", "ban_message")}
     %if caller:
       ${caller.body()}
     %endif
