@@ -666,7 +666,10 @@ class PromotionPrices(tdb_cassandra.View):
         return columns.get(column_name)
 
     @classmethod
-    def get_price(cls, target, location):
+    def get_price(cls, user, target, location):
+        if user.selfserve_cpm_override_pennies:
+            return user.selfserve_cpm_override_pennies
+
         prices = []
 
         # set location specific prices or use defaults
@@ -695,48 +698,60 @@ class PromotionPrices(tdb_cassandra.View):
         return max(prices)
 
     @classmethod
-    def get_price_dict(cls):
-        r = {
-            "COLLECTION": {},
-            "SUBREDDIT": {},
-            "COUNTRY": {},
-            "METRO": {},
-            "COLLECTION_DEFAULT": g.cpm_selfserve_collection.pennies,
-            "SUBREDDIT_DEFAULT": g.cpm_selfserve.pennies,
-            "COUNTRY_DEFAULT": g.cpm_selfserve_collection.pennies,
-            "METRO_DEFAULT": g.cpm_selfserve_geotarget_metro.pennies,
-        }
+    def get_price_dict(cls, user):
+        if user.selfserve_cpm_override_pennies:
+            r = {
+                "COLLECTION": {},
+                "SUBREDDIT": {},
+                "COUNTRY": {},
+                "METRO": {},
+                "COLLECTION_DEFAULT": user.selfserve_cpm_override_pennies,
+                "SUBREDDIT_DEFAULT": user.selfserve_cpm_override_pennies,
+                "COUNTRY_DEFAULT": user.selfserve_cpm_override_pennies,
+                "METRO_DEFAULT": user.selfserve_cpm_override_pennies,
+            }
+        else:
+            r = {
+                "COLLECTION": {},
+                "SUBREDDIT": {},
+                "COUNTRY": {},
+                "METRO": {},
+                "COLLECTION_DEFAULT": g.cpm_selfserve_collection.pennies,
+                "SUBREDDIT_DEFAULT": g.cpm_selfserve.pennies,
+                "COUNTRY_DEFAULT": g.cpm_selfserve_collection.pennies,
+                "METRO_DEFAULT": g.cpm_selfserve_geotarget_metro.pennies,
+            }
 
-        try:
-            collections = cls._cf.get("COLLECTION")
-        except tdb_cassandra.NotFoundException:
-            collections = {}
+            try:
+                collections = cls._cf.get("COLLECTION")
+            except tdb_cassandra.NotFoundException:
+                collections = {}
 
-        try:
-            subreddits = cls._cf.get("SUBREDDIT")
-        except tdb_cassandra.NotFoundException:
-            subreddits = {}
+            try:
+                subreddits = cls._cf.get("SUBREDDIT")
+            except tdb_cassandra.NotFoundException:
+                subreddits = {}
 
-        try:
-            countries = cls._cf.get("COUNTRY")
-        except tdb_cassandra.NotFoundException:
-            countries = {}
+            try:
+                countries = cls._cf.get("COUNTRY")
+            except tdb_cassandra.NotFoundException:
+                countries = {}
 
-        try:
-            metros = cls._cf.get("METRO")
-        except tdb_cassandra.NotFoundException:
-            metros = {}
+            try:
+                metros = cls._cf.get("METRO")
+            except tdb_cassandra.NotFoundException:
+                metros = {}
 
-        for name, cpm in collections.iteritems():
-            r["COLLECTION"][name] = cpm
+            for name, cpm in collections.iteritems():
+                r["COLLECTION"][name] = cpm
 
-        for name, cpm in subreddits.iteritems():
-            r["SUBREDDIT"][name] = cpm
+            for name, cpm in subreddits.iteritems():
+                r["SUBREDDIT"][name] = cpm
 
-        for name, cpm in countries.iteritems():
-            r["COUNTRY"][name] = cpm
+            for name, cpm in countries.iteritems():
+                r["COUNTRY"][name] = cpm
 
-        for name, cpm in metros.iteritems():
-            r["METRO"][name] = cpm
+            for name, cpm in metros.iteritems():
+                r["METRO"][name] = cpm
 
         return r

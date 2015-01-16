@@ -883,7 +883,7 @@ class PromoteApiController(ApiController):
         if not allowed_location_and_target(location, target):
             return abort(403, 'forbidden')
 
-        cpm = PromotionPrices.get_price(target, location)
+        cpm = PromotionPrices.get_price(c.user, target, location)
 
         if (form.has_errors('startdate', errors.BAD_DATE,
                             errors.DATE_TOO_EARLY, errors.DATE_TOO_LATE) or
