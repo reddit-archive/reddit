@@ -2162,7 +2162,7 @@ class ApiController(RedditController):
                 # this may also fail if a sponsored image was added and the user is not an admin
                 errors['BAD_CSS_NAME'] = _("bad image name")
         
-        if add_image_to_sr:
+        if add_image_to_sr and not c.user_is_admin:
             image_count = wiki.ImagesByWikiPage.get_image_count(
                 c.site, "config/stylesheet")
             if image_count >= g.max_sr_images:
