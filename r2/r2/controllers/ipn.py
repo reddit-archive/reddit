@@ -627,11 +627,6 @@ class IpnController(RedditController):
             # and "custom", just in case we need to debug it later or something
             secret = payment_blob['goldtype'] + "-" + custom
 
-            if payment_blob['goldtype'] == 'autorenew':
-                existing = existing_subscription(subscr_id, paying_id, custom)
-                if existing:
-                    secret = None
-
             if instagift:
                 status="instagift"
             else:
@@ -844,6 +839,10 @@ class GoldPaymentController(RedditController):
                     subject = "your reddit gold has been renewed!"
                     message = ("see the details of your subscription on "
                                "[your userpage](/u/%s)" % buyer.name)
+
+                    if payment_blob['goldtype'] == 'autorenew':
+                        if existing_subscription(subscr_id, paying_id, custom):
+                            secret = None
 
             elif goldtype == 'creddits':
                 buyer._incr('gold_creddits', months)
