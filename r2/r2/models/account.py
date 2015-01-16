@@ -31,7 +31,7 @@ from r2.lib.utils        import randstr, timefromnow
 from r2.lib.utils        import UrlParser
 from r2.lib.utils        import constant_time_compare, canonicalize_email
 from r2.lib.cache        import sgm
-from r2.lib import filters, hooks
+from r2.lib import amqp, filters, hooks
 from r2.lib.log import log_text
 from r2.models.last_modified import LastModified
 from r2.models.trylater import TryLater
@@ -456,7 +456,10 @@ class Account(Thing):
             Account._by_name(self.name, _update = True)
         except NotFound:
             pass
-        
+
+        # Mark this account for scrubbing
+        amqp.add_item('account_deleted', self._fullname)
+
         #remove from friends lists
         q = Friend._query(Friend.c._thing2_id == self._id,
                           Friend.c._name == 'friend',

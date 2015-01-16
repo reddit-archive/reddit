@@ -731,6 +731,7 @@ function set_consumer_count {
 
 set_consumer_count log_q 0
 set_consumer_count cloudsearch_q 0
+set_consumer_count del_account_q 1
 set_consumer_count scraper_q 1
 set_consumer_count markread_q 1
 set_consumer_count commentstree_q 1

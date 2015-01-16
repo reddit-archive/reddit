@@ -20,7 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from r2.models import Account, Link, Comment, Report
+from r2.models import Account, Link, Comment, Report, LinksByAccount
 from r2.models.vote import cast_vote, get_votes
 from r2.models import Message, Inbox, Subreddit, ModContribSR, ModeratorInbox, MultiReddit
 from r2.lib.db.thing import Thing, Merge
@@ -1268,15 +1268,20 @@ def unnotify(thing, possible_recipients=None):
 
 
 def changed(things, boost_only=False):
-    """Indicate to search that a given item should be updated in the index"""
+    """Indicate to search that `things` should be updated in the index"""
     for thing in tup(things):
-        msg = {'fullname': thing._fullname}
-        if boost_only:
-            msg['boost_only'] = True
+        changed_fullname(thing._fullname, boost_only)
 
-        amqp.add_item('search_changes', pickle.dumps(msg),
-                      message_id = thing._fullname,
-                      delivery_mode = amqp.DELIVERY_TRANSIENT)
+
+def changed_fullname(fullname, boost_only=False):
+    msg = {'fullname': fullname}
+    if boost_only:
+        msg['boost_only'] = True
+
+    amqp.add_item('search_changes', pickle.dumps(msg),
+                  message_id=fullname,
+                  delivery_mode=amqp.DELIVERY_TRANSIENT)
+
 
 def _by_srid(things, srs=True):
     """Takes a list of things and returns them in a dict separated by
@@ -1825,3 +1830,17 @@ def consume_mark_all_read():
             unread_handler(things, user, unread=False)
 
     amqp.consume_items('markread_q', process_mark_all_read)
+
+
+def consume_deleted_accounts():
+    @g.stats.amqp_processor('del_account_q')
+    def process_deleted_accounts(msg):
+        account = Thing._by_fullname(msg.body)
+        assert isinstance(account, Account)
+
+        # Mark their link submissions for updating on cloudsearch
+        query = LinksByAccount._cf.xget(account._id36)
+        for link_id36, unused in query:
+            changed_fullname(Link._fullname_from_id36(link_id36))
+
+    amqp.consume_items('del_account_q', process_deleted_accounts)

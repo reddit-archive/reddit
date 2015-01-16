@@ -84,6 +84,7 @@ def declare_queues(g):
         "cloudsearch_changes": MessageQueue(bind_to_self=True),
         "butler_q": MessageQueue(),
         "markread_q": MessageQueue(),
+        "del_account_q": MessageQueue(),
     })
 
     if g.shard_link_vote_queues:
@@ -104,5 +105,6 @@ def declare_queues(g):
     queues.butler_q << ("new_comment",
                         "usertext_edited")
     queues.markread_q << "mark_all_read"
+    queues.del_account_q << "account_deleted"
 
     return queues
