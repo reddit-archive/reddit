@@ -36,27 +36,32 @@
     <input type="hidden" name="action" value="add">
     <input type="hidden" name="container" value="${container_name}">
     <input type="hidden" name="type" value="${add_type}">
+    %if add_type == "banned":
+      <div class="note">
+        ${_("note: the banned user will only receive a message notifying them of their ban if they are subscribed to the subreddit or have previously gained or lost any karma (either link or comment) in the subreddit.")}
+      </div>
+    %endif
     %if add_type in ("banned", "wikibanned"):
         <label for="name">${_('who to ban?')} &nbsp;</label>
-        <input type="text" onfocus="$(this).parent('form').addClass('edited')" class="friend-name" name="name" id="name">
-        <span class="ban-details">
+        <input type="text" class="friend-name" name="name" id="name">
+        <div>
             <label for="note">${_('why the ban?')}</label>
             <input type="text" maxlength="300" name="note" id="note">
             <span>${_('(will not be visible to user)')}</span>
-        </span>
-        <span class="ban-details">
+        </div>
+        <div>
             <label for="duration">${_('how long?')}</label>
             <input type="number" min="1" max="999" name="duration" id="duration">
             <span>${_('days (leave blank for permanent)')}</span>
-        </span>
+        </div>
     %else:
         <input type="text" name="name" id="name">
     %endif
     %if add_type == "banned":
-      <span class="ban-details">
+      <div>
           <label for="note">${_('note to include in ban PM')}</label>
           <textarea name="ban_message" id="ban_message"></textarea>
-      </span>
+      </div>
     %endif
     %if permissions_form:
       ${permissions_form}
