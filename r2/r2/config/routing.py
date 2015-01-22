@@ -376,7 +376,7 @@ def make_map():
                                  "edit_campaign|delete_campaign|"
                                  "add_roadblock|rm_roadblock|check_inventory|"
                                  "refund_campaign|terminate_campaign|"
-                                 "review_fraud")))
+                                 "review_fraud|create_promo")))
     mc('/api/:action', controller='apiminimal',
        requirements=dict(action="new_captcha"))
     mc('/api/:type', controller='api',

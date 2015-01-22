@@ -75,6 +75,7 @@ from r2.lib.validator import (
     VAccountByName,
     ValidAddress,
     validate,
+    validatedMultipartForm,
     validatedForm,
     ValidCard,
     ValidEmail,
@@ -634,7 +635,7 @@ class PromoteApiController(ApiController):
         else:
             form.set_text('.status', _('refund not needed'))
 
-    @validatedForm(
+    @validatedMultipartForm(
         VSponsor('link_id36'),
         VModhash(),
         VRatelimit(rate_user=True,
@@ -642,7 +643,6 @@ class PromoteApiController(ApiController):
                    prefix='create_promo_'),
         VShamedDomain('url'),
         username=VLength('username', 100, empty_error=None),
-        l=VLink('link_id36'),
         title=VTitle('title'),
         url=VUrl('url', allow_self=False),
         selftext=VMarkdownLength('text', max_length=40000),
@@ -658,13 +658,60 @@ class PromoteApiController(ApiController):
         media_override=VBoolean("media-override"),
         domain_override=VLength("domain", 100),
         is_managed=VBoolean("is_managed"),
+        thumbnail_file=VUploadLength('file', 500*1024),
     )
-    def POST_edit_promo(self, form, jquery, username, l, title, url,
+    def POST_create_promo(self, form, jquery, username, title, url,
+                          selftext, kind, disable_comments, sendreplies,
+                          media_url, media_autoplay, media_override,
+                          gifts_embed_url, media_url_type, domain_override,
+                          is_managed, thumbnail_file):
+        return self._edit_promo(form, jquery, username, title, url,
+                                selftext, kind, disable_comments, sendreplies,
+                                media_url, media_autoplay, media_override,
+                                gifts_embed_url, media_url_type, domain_override,
+                                is_managed, thumbnail_file=thumbnail_file)
+
+    @validatedForm(
+        VSponsor('link_id36'),
+        VModhash(),
+        VRatelimit(rate_user=True,
+                   rate_ip=True,
+                   prefix='create_promo_'),
+        VShamedDomain('url'),
+        username=VLength('username', 100, empty_error=None),
+        title=VTitle('title'),
+        url=VUrl('url', allow_self=False),
+        selftext=VMarkdownLength('text', max_length=40000),
+        kind=VOneOf('kind', ['link', 'self']),
+        disable_comments=VBoolean("disable_comments"),
+        sendreplies=VBoolean("sendreplies"),
+        media_url=VUrl("media_url", allow_self=False,
+                       valid_schemes=('http', 'https')),
+        gifts_embed_url=VUrl("gifts_embed_url", allow_self=False,
+                             valid_schemes=('http', 'https')),
+        media_url_type=VOneOf("media_url_type", ("redditgifts", "scrape")),
+        media_autoplay=VBoolean("media_autoplay"),
+        media_override=VBoolean("media-override"),
+        domain_override=VLength("domain", 100),
+        is_managed=VBoolean("is_managed"),
+        l=VLink('link_id36'),
+    )
+    def POST_edit_promo(self, form, jquery, username, title, url,
                         selftext, kind, disable_comments, sendreplies,
                         media_url, media_autoplay, media_override,
                         gifts_embed_url, media_url_type, domain_override,
-                        is_managed):
+                        is_managed, l):
+        return self._edit_promo(form, jquery, username, title, url,
+                                selftext, kind, disable_comments, sendreplies,
+                                media_url, media_autoplay, media_override,
+                                gifts_embed_url, media_url_type, domain_override,
+                                is_managed, l=l)
 
+    def _edit_promo(self, form, jquery, username, title, url,
+                    selftext, kind, disable_comments, sendreplies,
+                    media_url, media_autoplay, media_override,
+                    gifts_embed_url, media_url_type, domain_override,
+                    is_managed, l=None, thumbnail_file=None):
         should_ratelimit = False
         if not c.user_is_sponsor:
             should_ratelimit = True
@@ -730,6 +777,15 @@ class PromoteApiController(ApiController):
             if c.user_is_sponsor:
                 l.managed_promo = is_managed
             l._commit()
+
+            # only set the thumbnail when creating a link
+            if thumbnail_file:
+                try:
+                    force_thumbnail(l, thumbnail_file)
+                    l._commit()
+                except IOError:
+                    pass
+
             form.redirect(promote.promo_edit_url(l))
 
         elif not promote.is_promo(l):

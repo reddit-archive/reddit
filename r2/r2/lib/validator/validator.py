@@ -333,8 +333,7 @@ def validatedMultipartForm(self, self_method, responder, simple_vals,
             data = json.dumps(responder.make_response())
             response.content_type = "text/html"
             return ('<html><head><script type="text/javascript">\n'
-                    'parent.$.handleResponse().call('
-                    'parent.$("#" + window.frameElement.id).parent(), %s)\n'
+                    'parent.$.handleResponse()(%s)\n'
                     '</script></head></html>') % filters.websafe_json(data)
     return _validatedForm(self, wrapped_self_method, responder, simple_vals,
                           param_vals, *a, **kw)

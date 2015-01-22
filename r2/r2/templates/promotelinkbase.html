@@ -144,32 +144,43 @@
   </%utils:line_field>
 </%def>
 
-<%def name="image_field(link)">
-  <% current_image = getattr(link, 'thumbnail_url', '') %>
+<%def name="image_field(link=None)">
+  <% 
+    if link:
+        current_image = getattr(link, 'thumbnail_url', '')
+        link_name = link._fullname
+    else:
+        current_image = ''
+        link_name = ''
+  %>
   <%utils:line_field title="${_('thumbnail')}" 
                      css_class="rounded image-field ${'has-image' if current_image else ''}">
     <div class="infotext">
       ${_('images will be resized if larger than 140x140 pixels (displayed at 70x70)')}
     </div>
     <div class="delete-field">
-      <%utils:image_upload post_target="/api/link_thumb" 
-                           current_image="${current_image}"
-                           label="${_('upload header image:')}"
-                           ask_type="True">
-        <input type="hidden" name="link_name" value="${link._fullname}" />
+      %if link_name:
+        <%utils:image_upload post_target="/api/link_thumb" 
+                             current_image="${current_image}"
+                             label="${_('upload header image:')}"
+                             ask_type="True">
+          <input type="hidden" name="link_name" value="${link_name}" />
 
-        ## overwrite the completed image function
-        <script type="text/javascript">
-          completedUploadImage = (function(cu) {
-            return function(status, img_src, name, errors) {
-              cu(status, "", "", errors);
-              $.things('${link._fullname}').find(".thumbnail img")
-                .attr("src", img_src + "?v=" + Math.random());
-            }
-          })(completedUploadImage);
-        </script>
+          ## overwrite the completed image function
+          <script type="text/javascript">
+            completedUploadImage = (function(cu) {
+              return function(status, img_src, name, errors) {
+                cu(status, "", "", errors);
+                $.things('${link_name}').find(".thumbnail img")
+                  .attr("src", img_src + "?v=" + Math.random());
+              }
+            })(completedUploadImage);
+          </script>
+        </%utils:image_upload>
+      %else:
+        <input type="file" name="file" id="file"/>
+      %endif
 
-      </%utils:image_upload>
       <div class="clearleft"></div>
     </div>
   </%utils:line_field>
