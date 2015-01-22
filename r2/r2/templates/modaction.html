@@ -32,7 +32,7 @@
 
 <tr class="modactions" style="background-color: ${thing.bgcolor}" data-fullname="${thing.fullname}">
   <td class="timestamp whitespace:nowrap">${timestamp(thing.date, live=True, include_tense=True)}</td>
-  %if is_multi:
+  %if thing.is_multi:
     <td class="subreddit">${plain_link('/r/' + thing.subreddit.name, thing.subreddit.path + 'about/log', title=thing.subreddit.name)}</td>
   %endif
   <td class="whitespace:nowrap">${thing.mod_button}</td>
