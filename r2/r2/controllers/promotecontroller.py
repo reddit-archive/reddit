@@ -1104,23 +1104,19 @@ class PromoteApiController(ApiController):
             promote.failed_payment_method(c.user, link)
             form.set_text(".status", _("failed to authenticate card. sorry."))
 
-    @validate(VSponsor("link_name"),
-              VModhash(),
-              link=VByName('link_name'),
-              file=VUploadLength('file', 500*1024),
-              img_type=VImageType('img_type'))
+    @validate(
+        VSponsor("link_name"),
+        VModhash(),
+        link=VByName('link_name'),
+        file=VUploadLength('file', 500*1024),
+        img_type=VImageType('img_type'),
+    )
     def POST_link_thumb(self, link=None, file=None, img_type='jpg'):
-        if link and (not promote.is_promoted(link) or c.user_is_sponsor):
-            errors = dict(BAD_CSS_NAME="", IMAGE_ERROR="")
+        if not link or (promote.is_promoted(link) and not c.user_is_sponsor):
+            # only let sponsors edit thumbnails of live promos
+            return abort(403, 'forbidden')
 
-            # thumnails for promoted links can change and therefore expire
-            force_thumbnail(link, file, file_type=".%s" % img_type)
-
-            if any(errors.values()):
-                return UploadedImage("", "", "upload", errors=errors,
-                                     form_id="image-upload").render()
-            else:
-                link._commit()
-                return UploadedImage(_('saved'), thumbnail_url(link), "",
-                                     errors=errors,
-                                     form_id="image-upload").render()
+        force_thumbnail(link, file, file_type=".%s" % img_type)
+        link._commit()
+        return UploadedImage(_('saved'), thumbnail_url(link), "", errors=errors,
+                             form_id="image-upload").render()
