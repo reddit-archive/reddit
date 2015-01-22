@@ -915,6 +915,7 @@ class StripeController(GoldPaymentController):
         'charge.dispute.funds_withdrawn': 'noop',
         'customer.created': 'noop',
         'customer.card.created': 'noop',
+        'customer.card.updated': 'noop',
         'customer.card.deleted': 'noop',
         'transfer.created': 'noop',
         'transfer.paid': 'noop',
