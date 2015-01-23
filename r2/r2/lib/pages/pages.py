@@ -137,7 +137,7 @@ from r2.lib.utils import precise_format_timedelta
 
 from babel.numbers import format_currency
 from babel.dates import format_date
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 import csv
 import hmac
 import hashlib
@@ -4333,16 +4333,23 @@ class PromoteInventory(PromoteLinkBase):
         self.get_collections()
 
 
+ReportKey = namedtuple("ReportKey", ["date", "link", "campaign"])
+ReportItem = namedtuple("ReportItem",
+    ["bid", "fp_imps", "sr_imps", "fp_clicks", "sr_clicks"])
+
+
 class PromoteReport(PromoteLinkBase):
-    def __init__(self, links, link_text, owner_name, bad_links, start, end):
+    def __init__(self, links, link_text, owner_name, bad_links, start, end,
+                 group_by_date=False):
         self.links = links
         self.start = start
         self.end = end
         self.default_start = start.strftime('%m/%d/%Y')
         self.default_end = end.strftime('%m/%d/%Y')
+        self.group_by_date = group_by_date
 
         if links:
-            self.make_reports()
+            self.make_report()
             p = request.GET.copy()
             self.csv_url = '%s.csv?%s' % (request.path, urlencode(p))
         else:
@@ -4361,69 +4368,57 @@ class PromoteReport(PromoteLinkBase):
         writer.writerow((_("end date"), self.end.strftime('%m/%d/%Y')))
         writer.writerow([])
         writer.writerow((_("links"),))
-        writer.writerow((
-            _("id"),
-            _("owner"),
-            _("url"),
-            _("comments"),
-            _("upvotes"),
-            _("downvotes"),
-            _("clicks"),
-            _("impressions"),
-        ))
+        if self.group_by_date:
+            outrow = [_("date")]
+        else:
+            outrow = []
+        outrow.extend([_("id"), _("owner"), _("url"), _("comments"),
+            _("upvotes"), _("downvotes"), _("clicks"), _("impressions")])
+        writer.writerow(outrow)
         for row in self.link_report:
-            writer.writerow((row['id36'], row['owner'], row['url'],
-                             row['comments'], row['upvotes'], row['downvotes'],
-                             row['clicks'], row['impressions']))
+            if self.group_by_date:
+                outrow = [row['date']]
+            else:
+                outrow = []
+            outrow.extend([row['id36'], row['owner'], row['url'],
+                row['comments'], row['upvotes'], row['downvotes'],
+                row['clicks'], row['impressions']])
+            writer.writerow(outrow)
 
         writer.writerow([])
         writer.writerow((_("campaigns"),))
-        writer.writerow((
-            _("link id"),
-            _("owner"),
-            _("campaign id"),
-            _("target"),
-            _("bid"),
-            _("frontpage clicks"), _("frontpage impressions"),
+        if self.group_by_date:
+            outrow = [_("date")]
+        else:
+            outrow = []
+        outrow.extend([_("link id"), _("owner"), _("campaign id"), _("target"),
+            _("bid"), _("frontpage clicks"), _("frontpage impressions"),
             _("subreddit clicks"), _("subreddit impressions"),
-            _("total clicks"), _("total impressions"),
-        ))
+            _("total clicks"), _("total impressions")])
+        writer.writerow(outrow)
         for row in self.campaign_report:
-            writer.writerow(
-                (row['link'], row['owner'], row['campaign'], row['target'],
-                 row['bid'], row['fp_clicks'], row['fp_impressions'],
-                 row['sr_clicks'], row['sr_impressions'], row['total_clicks'],
-                 row['total_impressions'])
-            )
+            if self.group_by_date:
+                outrow = [row['date']]
+            else:
+                outrow = []
+            outrow.extend([row['link'], row['owner'], row['campaign'],
+                row['target'], row['bid'], row['fp_clicks'],
+                row['fp_impressions'], row['sr_clicks'], row['sr_impressions'],
+                row['total_clicks'], row['total_impressions']])
+            writer.writerow(outrow)
         return out.getvalue()
 
-    def make_reports(self):
-        self.make_campaign_report()
-        self.make_link_report()
-
-    def make_link_report(self):
-        link_report = []
-        owners = Account._byID([link.author_id for link in self.links],
-                               data=True)
-
-        for link in self.links:
-            row = {
-                'id36': link._id36,
-                'owner': owners[link.author_id].name,
-                'comments': link.num_comments,
-                'upvotes': link._ups,
-                'downvotes': link._downs,
-                'clicks': self.clicks_by_link.get(link._id36, 0),
-                'impressions': self.impressions_by_link.get(link._id36, 0),
-                'url': link.url,
-            }
-            link_report.append(row)
-        self.link_report = link_report
-
     @classmethod
-    def _get_hits(cls, traffic_cls, campaigns, start, end, use_uniques=False):
+    def get_traffic(self, campaigns, start, end):
         campaigns_by_name = {camp._fullname: camp for camp in campaigns}
         codenames = campaigns_by_name.keys()
+
+        start_date = start.date()
+        ndays = (end - start).days
+        dates = {start_date + datetime.timedelta(days=i) for i in xrange(ndays)}
+
+        # traffic database uses datetimes with no timezone, also need to shift
+        # start, end to account for campaigns launching at 12:00 EST
         start = (start - promote.timezone_offset).replace(tzinfo=None)
         end = (end - promote.timezone_offset).replace(tzinfo=None)
 
@@ -4431,74 +4426,133 @@ class PromoteReport(PromoteLinkBase):
         # only include 24 hours per day
         end -= datetime.timedelta(hours=1)
 
-        hits = traffic_cls.campaign_history(codenames, start, end)
-        sr_hits = defaultdict(int)
-        fp_hits = defaultdict(int)
-        for date, codename, sr, (uniques, pageviews) in hits:
-            campaign = campaigns_by_name[codename]
-            campaign_start = campaign.start_date - promote.timezone_offset
-            campaign_end = campaign.end_date - promote.timezone_offset
-            date = date.replace(tzinfo=g.tz)
-            if not (campaign_start <= date < campaign_end):
-                continue
+        fp_imps_by_date = {d: defaultdict(int) for d in dates}
+        sr_imps_by_date = {d: defaultdict(int) for d in dates}
+        fp_clicks_by_date = {d: defaultdict(int) for d in dates}
+        sr_clicks_by_date = {d: defaultdict(int) for d in dates}
+
+        imps = traffic.TargetedImpressionsByCodename.campaign_history(
+            codenames, start, end)
+        clicks = traffic.TargetedClickthroughsByCodename.campaign_history(
+            codenames, start, end)
+
+        for date, codename, sr, (uniques, pageviews) in imps:
+            # convert from utc hour to campaign date
+            traffic_date = (date + promote.timezone_offset).date()
+
             if sr == '':
                 # LEGACY: traffic uses '' to indicate Frontpage
-                fp_hits[codename] += uniques if use_uniques else pageviews
+                fp_imps_by_date[traffic_date][codename] += pageviews
             else:
-                sr_hits[codename] += uniques if use_uniques else pageviews
-        return fp_hits, sr_hits
+                sr_imps_by_date[traffic_date][codename] += pageviews
 
-    @classmethod
-    def get_imps(cls, campaigns, start, end):
-        return cls._get_hits(traffic.TargetedImpressionsByCodename, campaigns,
-                             start, end)
+        for date, codename, sr, (uniques, pageviews) in clicks:
+            traffic_date = (date + promote.timezone_offset).date()
 
-    @classmethod
-    def get_clicks(cls, campaigns, start, end):
-        return cls._get_hits(traffic.TargetedClickthroughsByCodename, campaigns,
-                             start, end, use_uniques=True)
+            if sr == '':
+                # NOTE: clicks use hourly uniques
+                fp_clicks_by_date[traffic_date][codename] += uniques
+            else:
+                sr_clicks_by_date[traffic_date][codename] += uniques
 
-    def make_campaign_report(self):
+        traffic_by_key = {}
+        for camp in campaigns:
+            fullname = camp._fullname
+            bid = camp.bid / max(camp.ndays, 1)
+            camp_ndays = max(1, (camp.end_date - camp.start_date).days)
+            camp_start = camp.start_date.date()
+            days = xrange(camp_ndays)
+            camp_dates = {camp_start + datetime.timedelta(days=i) for i in days}
+
+            for date in camp_dates.intersection(dates):
+                fp_imps = fp_imps_by_date[date][fullname]
+                sr_imps = sr_imps_by_date[date][fullname]
+                fp_clicks = fp_clicks_by_date[date][fullname]
+                sr_clicks = sr_clicks_by_date[date][fullname]
+                key = ReportKey(date, camp.link_id, camp._fullname)
+                item = ReportItem(bid, fp_imps, sr_imps, fp_clicks, sr_clicks)
+                traffic_by_key[key] = item
+        return traffic_by_key
+
+    def make_report(self):
         campaigns = PromoCampaign._by_link([link._id for link in self.links])
+        campaigns = filter(promote.charged_or_not_needed, campaigns)
+        traffic_by_key = self.get_traffic(campaigns, self.start, self.end)
 
-        def keep_camp(camp):
-            return not (camp.start_date.date() >= self.end.date() or
-                        camp.end_date.date() <= self.start.date() or
-                        not promote.charged_or_not_needed(camp))
+        def group_and_combine(items_by_key, group_on=None):
+            # combine all items whose keys have the same value for the
+            # attributes in group_on, and create new keys with None values for
+            # the attributes we aren't grouping on.
+            by_group = defaultdict(list)
+            for item_key, item in items_by_key.iteritems():
+                attrs = [getattr(item_key, a) if a in group_on else None
+                    for a in ReportKey._fields]
+                group_key = ReportKey(*attrs)
+                by_group[group_key].append(item)
 
-        campaigns = [camp for camp in campaigns if keep_camp(camp)]
-        fp_imps, sr_imps = self.get_imps(campaigns, self.start, self.end)
-        fp_clicks, sr_clicks = self.get_clicks(campaigns, self.start, self.end)
+            new_items_by_key = {}
+            for group_key, items in by_group.iteritems():
+                bid = fp_imps = sr_imps = fp_clicks = sr_clicks = 0
+                for item in items:
+                    bid += item.bid
+                    fp_imps += item.fp_imps
+                    sr_imps += item.sr_imps
+                    fp_clicks += item.fp_clicks
+                    sr_clicks += item.sr_clicks
+                item = ReportItem(bid, fp_imps, sr_imps, fp_clicks, sr_clicks)
+                new_items_by_key[group_key] = item
+            return new_items_by_key
+ 
+        # make the campaign report
+        if not self.group_by_date:
+            traffic_by_key = group_and_combine(
+                traffic_by_key, group_on=["link", "campaign"])
+
         owners = Account._byID([link.author_id for link in self.links],
                                data=True)
         links_by_id = {link._id: link for link in self.links}
-        campaign_report = []
-        self.clicks_by_link = Counter()
-        self.impressions_by_link = Counter()
+        camps_by_name = {camp._fullname: camp for camp in campaigns}
 
-        for camp in campaigns:
-            link = links_by_id[camp.link_id]
-            fullname = camp._fullname
-            effective_duration = (min(camp.end_date, self.end)
-                                  - max(camp.start_date, self.start)).days
-            bid = camp.bid * (float(effective_duration) / camp.ndays)
-            row = {
+        self.campaign_report = []
+        for rk in sorted(traffic_by_key):
+            item = traffic_by_key[rk]
+            link = links_by_id[rk.link]
+            camp = camps_by_name[rk.campaign]
+            self.campaign_report.append({
+                'date': rk.date,
                 'link': link._id36,
                 'owner': owners[link.author_id].name,
                 'campaign': camp._id36,
                 'target': camp.target.pretty_name,
-                'bid': format_currency(bid, 'USD', locale=c.locale),
-                'fp_impressions': fp_imps[fullname],
-                'sr_impressions': sr_imps[fullname],
-                'fp_clicks': fp_clicks[fullname],
-                'sr_clicks': sr_clicks[fullname],
-                'total_impressions': fp_imps[fullname] + sr_imps[fullname],
-                'total_clicks': fp_clicks[fullname] + sr_clicks[fullname],
-            }
-            self.clicks_by_link[link._id36] += row['total_clicks']
-            self.impressions_by_link[link._id36] += row['total_impressions']
-            campaign_report.append(row)
-        self.campaign_report = sorted(campaign_report, key=lambda r: r['link'])
+                'bid': format_currency(item.bid, 'USD', locale=c.locale),
+                'fp_impressions': item.fp_imps,
+                'sr_impressions': item.sr_imps,
+                'fp_clicks': item.fp_clicks,
+                'sr_clicks': item.sr_clicks,
+                'total_impressions': item.fp_imps + item.sr_imps,
+                'total_clicks': item.fp_clicks + item.sr_clicks,
+            })
+ 
+        # make the link report
+        traffic_by_key = group_and_combine(
+                traffic_by_key, group_on=["link", "date"])
+
+        self.link_report = []
+        for rk in sorted(traffic_by_key):
+            item = traffic_by_key[rk]
+            link = links_by_id[rk.link]
+            self.link_report.append({
+                'date': rk.date,
+                'owner': owners[link.author_id].name,
+                'id36': link._id36,
+                'comments': link.num_comments,
+                'upvotes': link._ups,
+                'downvotes': link._downs,
+                'clicks': item.fp_clicks + item.sr_clicks,
+                'impressions': item.fp_imps + item.sr_imps,
+                'url': link.url,
+            })
+
 
 class InnerToolbarFrame(Templated):
     def __init__(self, link, url, expanded=False):

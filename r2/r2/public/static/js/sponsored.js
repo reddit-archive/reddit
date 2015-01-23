@@ -1254,13 +1254,15 @@ var exports = r.sponsored = {
     submit_reporting_form: function() {
         var $form = $('.reporting-dashboard'),
             timing = this.get_timing($form),
-            reporting = this.get_reporting($form);
+            reporting = this.get_reporting($form),
+            grouping = $form.find("[name='grouping']").val();
 
         var data = {
             startdate: timing.startdate,
             enddate: timing.enddate,
             link_text: reporting.link_text,
             owner: reporting.owner,
+            grouping: grouping,
         };
 
         this.reload_with_params(data);

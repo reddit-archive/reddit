@@ -219,8 +219,9 @@ class SponsorController(PromoteController):
               start=VDate('startdate'),
               end=VDate('enddate'),
               link_text=nop('link_text'),
-              owner=VAccountByName('owner'))
-    def GET_report(self, start, end, link_text=None, owner=None):
+              owner=VAccountByName('owner'),
+              grouping=VOneOf("grouping", ("total", "day"), default="total"))
+    def GET_report(self, start, end, grouping, link_text=None, owner=None):
         now = datetime.now(g.tz).replace(hour=0, minute=0, second=0,
                                          microsecond=0)
         if not start or not end:
@@ -253,7 +254,7 @@ class SponsorController(PromoteController):
             links.extend(links_from_text.values())
 
         content = PromoteReport(links, link_text, owner_name, bad_links, start,
-                                end)
+                                end, group_by_date=grouping == "day")
         if c.render_style == 'csv':
             return content.as_csv()
         else:
