@@ -2930,49 +2930,6 @@ class ApiController(RedditController):
         """Wrapper around `GET_morechildren` for backwards-compatibility"""
         return self.GET_morechildren()
 
-    @validate(uh = nop('uh'), # VModHash() will raise, check manually
-              action = VOneOf('what', ('like', 'dislike', 'save')),
-              url=VUrl('u'))
-    def GET_bookmarklet(self, action, uh, url):
-        '''Controller for the functionality of the bookmarklets (not
-        the distribution page)'''
-
-        # the redirect handler will clobber the extension if not told otherwise
-        c.extension = "png"
-
-        if not c.user_is_loggedin:
-            return self.redirect("/static/css_login.png")
-        # check the modhash (or force them to get new bookmarlets)
-        elif not c.user.valid_hash(uh) or not action:
-            return self.redirect("/static/css_update.png")
-        # unlike most cases, if not already submitted, error.
-        elif url:
-            sr = c.site if not isinstance(c.site, FakeSubreddit) else None
-            try:
-                links_for_url = Link._by_url(url, sr)
-            except NotFound:
-                links_for_url = []
-
-            # check permissions on those links to make sure votes will count
-            Subreddit.load_subreddits(links_for_url, return_dict = False)
-            user = c.user if c.user_is_loggedin else None
-            links = [link for link in links_for_url
-                          if link.subreddit_slow.can_view(user)]
-
-            if links:
-                if action in ['like', 'dislike']:
-                    #vote up all of the links
-                    for link in links:
-                        queries.queue_vote(c.user, link,
-                                           action == 'like', request.ip,
-                                           cheater=c.cheater)
-                elif action == 'save':
-                    link = max(links, key = lambda x: x._score)
-                    link._save(c.user)
-                return self.redirect("/static/css_%sd.png" % action)
-        return self.redirect("/static/css_submit.png")
-
-
     @validatedForm(VUser(),
                    VModhash(),
                    code=VPrintable("code", 30))

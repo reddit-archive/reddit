@@ -332,8 +332,6 @@ def make_map():
     mc('/s/*urloid', controller='toolbar', action='s')
     # additional toolbar-related rules just above the catchall
 
-    mc('/d/:what', controller='api', action='bookmarklet')
-
     mc('/resetpassword/:key', controller='forms',
        action='resetpassword')
     mc('/verification/:key', controller='forms',
