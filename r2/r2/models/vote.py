@@ -227,12 +227,6 @@ class VoterIPByThing(tdb_cassandra.View):
         cls._set_values(votee_fullname, {voter_id36: ip})
 
 
-class Vote(MultiRelation('vote',
-                         Relation(Account, Link),
-                         Relation(Account, Comment))):
-    pass
-
-
 def cast_vote(sub, obj, dir, ip, vote_info, cheater, timer, date):
     from r2.models.admintools import valid_user, valid_thing, update_score
     from r2.lib.count import incr_sr_count
@@ -296,25 +290,6 @@ def cast_vote(sub, obj, dir, ip, vote_info, cheater, timer, date):
 
     g.stats.simple_event("vote.valid_thing." + str(vote.valid_thing).lower())
     g.stats.simple_event("vote.valid_user." + str(vote.valid_user).lower())
-
-    # TEMPORARY: write out the new/modified vote to postgres
-    pgrel = Vote.rel(sub, obj)
-    pgoldvotes = pgrel._fast_query(sub, obj, ["-1", "0", "1"]).values()
-    try:
-        pgoldvote = filter(None, pgoldvotes)[0]
-    except IndexError:
-        pgoldvote = None
-    timer.intermediate("pg_read_vote")
-
-    if pgoldvote:
-        pgvote = pgoldvote
-        pgvote._name = vote._name
-    else:
-        pgvote = pgrel(sub, obj, vote._name, date=vote._date, ip=ip)
-    pgvote.valid_thing = vote.valid_thing
-    pgvote.valid_user = vote.valid_user
-    pgvote._commit()
-    timer.intermediate("pg_write_vote")
 
     # update various score/karma/vote counts
     if not (not old_vote and obj.author_id == sub._id and vote._name == "1"):
