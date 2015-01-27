@@ -3911,10 +3911,15 @@ class PromoteLinkEdit(PromoteLinkBase):
 
 class RenderableCampaign(Templated):
     def __init__(self, link, campaign, transaction, is_pending, is_live,
-                 is_complete):
+                 is_complete, full_details=True):
         self.link = link
         self.campaign = campaign
-        self.spent = promote.get_spent_amount(campaign)
+
+        if full_details:
+            self.spent = promote.get_spent_amount(campaign)
+        else:
+            self.spent = 0.
+
         self.paid = bool(transaction and not transaction.is_void())
         self.free = campaign.is_freebie()
         self.is_pending = is_pending
@@ -3946,10 +3951,16 @@ class RenderableCampaign(Templated):
         Templated.__init__(self)
 
     @classmethod
-    def from_campaigns(cls, link, campaigns):
+    def from_campaigns(cls, link, campaigns, full_details=True):
         campaigns, is_single = tup(campaigns, ret_is_single=True)
-        transactions = promote.get_transactions(link, campaigns)
-        live_campaigns = promote.live_campaigns_by_link(link)
+
+        if full_details:
+            transactions = promote.get_transactions(link, campaigns)
+            live_campaigns = promote.live_campaigns_by_link(link)
+        else:
+            transactions = {}
+            live_campaigns = []
+
         today = promote.promo_datetime_now().date()
 
         ret = []
@@ -3960,7 +3971,8 @@ class RenderableCampaign(Templated):
             is_complete = (transaction and (transaction.is_charged() or
                                             transaction.is_refund()) and
                            not (is_live or is_pending))
-            rc = cls(link, camp, transaction, is_pending, is_live, is_complete)
+            rc = cls(link, camp, transaction, is_pending, is_live, is_complete,
+                     full_details)
             ret.append(rc)
         if is_single:
             return ret[0]

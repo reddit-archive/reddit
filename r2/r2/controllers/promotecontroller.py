@@ -19,6 +19,7 @@
 # All portions of the code written by reddit are Copyright (c) 2006-2015 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
+from collections import defaultdict
 from datetime import datetime, timedelta
 
 from babel.dates import format_date
@@ -478,6 +479,25 @@ class SponsorListingController(PromoteListingController):
             return self.get_house_link_names()
         elif self.sort == 'all':
             return queries.get_all_promoted_links()
+
+    def listing(self):
+        """For sponsors, update wrapped links to include their campaigns."""
+        pane = super(self.__class__, self).listing()
+
+        if c.user_is_sponsor:
+            link_ids = {item._id for item in pane.things}
+            campaigns = PromoCampaign._by_link(link_ids)
+            campaigns_by_link = defaultdict(list)
+            for camp in campaigns:
+                campaigns_by_link[camp.link_id].append(camp)
+
+            for item in pane.things:
+                campaigns = campaigns_by_link[item._id]
+                item.campaigns = RenderableCampaign.from_campaigns(
+                    item, campaigns, full_details=False)
+                item.cachable = False
+                item.show_campaign_summary = True
+        return pane
 
     @validate(
         VSponsorAdmin(),
