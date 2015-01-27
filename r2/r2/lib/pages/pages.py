@@ -791,7 +791,7 @@ class Reddit(Templated):
     def page_classes(self):
         classes = set()
 
-        if not feature.is_enabled('new_markdown_style'):
+        if feature.is_enabled('old_markdown_style'):
             classes.add('old-markdown')
 
         if c.user_is_loggedin:

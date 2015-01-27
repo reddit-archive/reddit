@@ -34,7 +34,7 @@
        }
     </script>
     ${less_stylesheet("reddit.less")}
-    %if feature.is_enabled('new_markdown_style'):
+    %if not feature.is_enabled('old_markdown_style'):
       ${less_stylesheet("markdown.less")}
     %else:
       ${less_stylesheet("old-markdown.less")}
