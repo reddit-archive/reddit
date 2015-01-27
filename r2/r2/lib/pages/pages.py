@@ -66,9 +66,10 @@ from r2.models import (
 from r2.models.bidding import Bid
 from r2.models.gold import (
     calculate_server_seconds,
+    days_to_pennies,
+    paypal_subscription_url,
     gold_payments_by_user,
     gold_received_by_user,
-    days_to_pennies,
     get_current_value_of_month,
     gold_goal_on,
     gold_revenue_steady,
@@ -1104,7 +1105,12 @@ class PrefApps(Templated):
 
 class PrefDelete(Templated):
     """Preference form for deleting a user's own account."""
-    pass
+    def __init__(self):
+        self.has_paypal_subscription = c.user.has_paypal_subscription
+        if self.has_paypal_subscription:
+            self.paypal_subscr_id = c.user.gold_subscr_id
+            self.paypal_url = paypal_subscription_url()
+        Templated.__init__(self)
 
 
 class MessagePage(Reddit):
@@ -2042,6 +2048,7 @@ class ProfileBar(Templated):
 
                 if user.has_paypal_subscription:
                     self.paypal_subscr_id = user.gold_subscr_id
+                    self.paypal_url = paypal_subscription_url()
                 if user.has_stripe_subscription:
                     self.stripe_customer_id = user.gold_subscr_id
 
@@ -2711,7 +2718,7 @@ class GoldSubscription(Templated):
         if user.has_paypal_subscription:
             self.has_paypal_subscription = True
             self.paypal_subscr_id = user.gold_subscr_id
-            self.paypal_url = "https://www.paypal.com/cgi-bin/webscr?cmd=_subscr-find&alias=%s" % g.goldthanks_email
+            self.paypal_url = paypal_subscription_url()
         else:
             self.has_paypal_subscription = False
 

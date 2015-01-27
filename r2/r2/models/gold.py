@@ -513,6 +513,10 @@ def get_subscription_details(user):
     return _get_subscription_details(user.gold_subscr_id)
 
 
+def paypal_subscription_url():
+    return "https://www.paypal.com/cgi-bin/webscr?cmd=_subscr-find&alias=%s" % g.goldthanks_email
+
+
 def get_discounted_price(gold_price):
     discount = float(getattr(g, 'BTC_DISCOUNT', '0'))
     price = (gold_price.pennies * (1 - discount)) / 100.

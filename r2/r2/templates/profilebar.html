@@ -101,11 +101,8 @@
           <a href="/gold/about">${_("view gold features/benefits")}</a>
         </div>
         %if hasattr(thing, "paypal_subscr_id"):
-          <%  
-            paypal_link = ("https://www.paypal.com/cgi-bin/webscr?cmd=_subscr-find&alias=%s" % g.goldthanks_email)
-           %>
            <div>
-            <a href=${paypal_link}>
+            <a href=${thing.paypal_url}>
               ${_("Recurring Paypal subscription")}
             </a>
             &#32;

@@ -953,8 +953,7 @@ class StripeController(GoldPaymentController):
                 # to cancel the charge
                 g.log.error('no account for stripe invoice: %s', invoice)
                 try:
-                    customer = stripe.Customer.retrieve(customer_id)
-                    customer.delete()
+                    cancel_stripe_subscription(customer_id)
                 except stripe.InvalidRequestError:
                     pass
         elif status == 'customer.subscription.deleted':
@@ -1075,8 +1074,7 @@ class StripeController(GoldPaymentController):
         if not user.has_stripe_subscription:
             return
 
-        customer = stripe.Customer.retrieve(user.gold_subscr_id)
-        customer.delete()
+        cancel_stripe_subscription(user.gold_subscr_id)
 
         user.gold_subscr_id = None
         user._commit()
@@ -1389,3 +1387,8 @@ def reverse_gold_purchase(transaction_id):
             message = 'sorry, but the payment was reversed'
             send_system_message(recipient, subject, message)
     update_gold_transaction(transaction_id, 'reversed')
+
+
+def cancel_stripe_subscription(user):
+    customer = stripe.Customer.retrieve(user.gold_subscr_id)
+    customer.delete()
