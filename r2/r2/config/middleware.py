@@ -180,19 +180,27 @@ class DomainMiddleware(object):
                                     json="json")
 
         sr_redirect = None
+        prefix_parts = []
         for subdomain in subdomains[:]:
-            if subdomain in g.reserved_subdomains:
-                continue
-
             extension = extension_subdomains.get(subdomain)
-            if extension:
+            # These subdomains have special meanings, don't treat them as a SR
+            # or language subdomains.
+            if subdomain in g.reserved_subdomains:
+                if subdomain == g.domain_prefix:
+                    continue
+                prefix_parts.append(subdomain)
+            elif extension:
                 environ['reddit-domain-extension'] = extension
             elif self.lang_re.match(subdomain):
                 environ['reddit-prefer-lang'] = subdomain
-                environ['reddit-domain-prefix'] = subdomain
             else:
                 sr_redirect = subdomain
                 subdomains.remove(subdomain)
+
+        if 'reddit-prefer-lang' in environ:
+            prefix_parts.insert(0, environ['reddit-prefer-lang'])
+        if prefix_parts:
+            environ['reddit-domain-prefix'] = '.'.join(prefix_parts)
 
         # if there was a subreddit subdomain, redirect
         if sr_redirect and environ.get("FULLPATH"):
