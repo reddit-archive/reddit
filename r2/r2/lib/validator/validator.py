@@ -405,6 +405,11 @@ class VThing(Validator):
                 else:
                     return None
 
+    def param_docs(self):
+        return {
+            self.param: "The base 36 ID of a " + self.thingclass.__name__
+        }
+
 class VLink(VThing):
     def __init__(self, param, redirect = True, *a, **kw):
         VThing.__init__(self, param, Link, redirect=redirect, *a, **kw)

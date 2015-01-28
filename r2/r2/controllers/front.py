@@ -779,12 +779,20 @@ class FrontController(RedditController):
         return Reddit(content=Wrapped(c.site)).render()
 
     @require_oauth2_scope("read")
+    @api_doc(api_section.subreddits, uses_site=True)
     def GET_sidebar(self):
+        """Get the sidebar for the current subreddit"""
         usertext = UserText(c.site, c.site.description)
         return Reddit(content=usertext).render()
 
     @require_oauth2_scope("read")
+    @api_doc(api_section.subreddits, uses_site=True)
     def GET_sticky(self):
+        """Get the post stickied to the current subreddit
+
+        Will 404 if there is not currently a sticky post in this subreddit
+
+        """
         if c.site.sticky_fullname:
             sticky = Link._by_fullname(c.site.sticky_fullname, data=True)
             self.redirect(sticky.make_permalink_slow())
@@ -802,6 +810,7 @@ class FrontController(RedditController):
     @base_listing
     @require_oauth2_scope("read")
     @validate(article=VLink('article'))
+    @api_doc(api_section.listings, uri="/{article}/related")
     def GET_related(self, num, article, after, reverse, count):
         """Related page: performs a search using title of article as
         the search query.
@@ -833,7 +842,9 @@ class FrontController(RedditController):
     @base_listing
     @require_oauth2_scope("read")
     @validate(article=VLink('article'))
+    @api_doc(api_section.listings, uri="/{article}/duplicates")
     def GET_duplicates(self, article, num, after, reverse, count):
+        """Return a list of other submissions of the same URL"""
         if not can_view_link_comments(article):
             abort(403, 'forbidden')
 
