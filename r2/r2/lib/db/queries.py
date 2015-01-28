@@ -1838,6 +1838,10 @@ def consume_deleted_accounts():
         account = Thing._by_fullname(msg.body)
         assert isinstance(account, Account)
 
+        if account.has_stripe_subscription:
+            from r2.controllers.ipn import cancel_stripe_subscription
+            cancel_stripe_subscription(account)
+
         # Mark their link submissions for updating on cloudsearch
         query = LinksByAccount._cf.xget(account._id36)
         for link_id36, unused in query:
