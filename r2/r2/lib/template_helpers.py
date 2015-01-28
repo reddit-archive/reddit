@@ -42,7 +42,6 @@ import math
 import time
 from pylons import g, c, request
 from pylons.i18n import _, ungettext
-import pytz
 
 static_text_extensions = {
     '.js': 'js',
@@ -102,19 +101,6 @@ def static(path, absolute=False, mangle_name=True):
     ))
 
 
-def edited_after(thing, iso_datetime):
-    if not (thing or isinstance(thing.editted, datetime)):
-        return False
-
-    try:
-        date = datetime.strptime(iso_datetime, "%Y-%m-%dT%H:%M:%S.%fZ")
-        date = date.replace(tzinfo=pytz.utc)
-
-        return date < thing.editted
-    except:
-        return False
-
-
 def make_url_protocol_relative(url):
     if not url or url.startswith("//"):
         return url
@@ -140,6 +126,7 @@ def header_url(url):
 
 def js_config(extra_config=None):
     logged = c.user_is_loggedin and c.user.name
+    user_id = c.user_is_loggedin and c.user._id
     gold = bool(logged and c.user.gold)
 
     controller_name = request.environ['pylons.routes_dict']['controller']
@@ -150,6 +137,8 @@ def js_config(extra_config=None):
     config = {
         # is the user logged in?
         "logged": logged,
+        # logged in user's id
+        "user_id": user_id,
         # the subreddit's name (for posts)
         "post_site": c.site.name if not c.default_sr else "",
         # the user's voting hash

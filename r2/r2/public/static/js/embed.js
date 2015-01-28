@@ -65,6 +65,10 @@
       '</div>'
     );
 
+    var tracker = new Metron.Tracker({
+      domain: r.config.stats_domain,
+    });
+
     function absolute(url) {
       if (/^https?:\/\//.test(url)) {
         return url;
@@ -99,11 +103,11 @@
       var serializedOptions = typeof options !== 'string' ?
         serializeOptions(options) : options;
 
-      window.rembeddit.init(function() {
+      window.rembeddit.init({track: false}, function() {
         var height = 0;
 
         var reflow = setInterval(function() {
-          var $next = $preview.find('iframe:last-child')
+          var $next = $preview.find('iframe:last-child');
           var newHeight = $next.height();
 
           if (height !== newHeight) {
@@ -133,6 +137,7 @@
       });
       var $textarea = popup.$.find('textarea');
       var $preview = popup.$.find('#embed-preview');
+      var created = false;
 
       popup.$.find('[data-toggle]').togglable();
 
@@ -142,7 +147,7 @@
         var prev = $el.data(option);
 
         if (prev === undefined) {
-          prev = embedOptions[option]
+          prev = embedOptions[option];
         }
 
         $el.data(e.target.name, !prev);
@@ -171,6 +176,31 @@
 
       $textarea.on('focus', function() {
         $(this).select();
+
+        if (!created) {
+          var data = $el.data();
+          var options = getEmbedOptions(data);
+          var now = new Date();
+
+          tracker.send({
+            embed: {
+              type: 'comment',
+              action: 'create',
+              timestamp: now.getTime(),
+              utcOffset: now.getTimezoneOffset() / -60,
+              userAgent: navigator.userAgent,
+              user: r.config.user_id,
+              logged: !!r.config.logged,
+              id: $el.thing_id(),
+              subredditId: r.config.cur_site,
+              subredditName: r.config.post_site,
+              showedits: options.live,
+              hostUrl: location.href,
+            },
+          });
+
+          created = true;
+        }
       });
 
       popup.on('closed.r.popup', function() {

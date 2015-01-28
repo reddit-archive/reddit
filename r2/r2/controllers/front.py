@@ -260,7 +260,7 @@ class FrontController(RedditController):
         # only show embed button on permalinked comments
         c.can_embed = c.can_embed and comment
 
-        embeds.setup_embed(thing=comment)
+        embeds.setup_embed(thing=comment, showedits=showedits)
 
         # If there is a focal comment, communicate down to
         # comment_skeleton.html who that will be. Also, skip

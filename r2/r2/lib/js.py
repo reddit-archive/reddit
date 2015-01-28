@@ -418,6 +418,7 @@ module["reddit-embed-base"] = Module("reddit-embed-base.js",
 
 module["reddit-embed"] = Module("reddit-embed.js",
     module["reddit-embed-base"],
+    "lib/metron-client.js",
     "embed/embed.js",
 )
 
@@ -437,6 +438,7 @@ module["reddit-init-base"] = LocalizedModule("reddit-init-base.js",
     "lib/bootstrap.modal.js",
     "lib/bootstrap.transition.js",
     "lib/bootstrap.tooltip.js",
+    "lib/metron-client.js",
     "bootstrap.tooltip.extension.js",
     "base.js",
     "preload.js",

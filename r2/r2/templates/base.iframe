@@ -21,12 +21,19 @@
 ###############################################################################
 
 <%!
+    import json
+
+    from r2.lib.filters import unsafe
     from r2.lib import js
     from r2.lib.template_helpers import get_domain, static
 %>
 <%namespace file="less.html" import="less_js, less_stylesheet"/>
 <%namespace file="utils.html" import="text_with_links"/>
 
+<%
+    link_data = {"redirect-type": "link", "redirect-thing": thing.link._id}
+    sr_data = {"redirect-type": "subreddit"}
+%>
 
 <!doctype html>
 <html>
@@ -45,13 +52,16 @@
             <p>
                 ${text_with_links(
                 _("from discussion %(link)s on %(subreddit)s"),
-                    link=dict(link_text=thing.link.title, path=thing.link.permalink),
-                    subreddit=dict(link_text=("/r/%s" % c.site.name), path=c.site.path),
+                    link=dict(link_text=thing.link.title, path=thing.link.permalink, data=link_data),
+                    subreddit=dict(link_text=("/r/%s" % c.site.name), path=c.site.path, data=sr_data),
                 )}
             </p>
           </footer>
         </div>
     </body>
+    <script>
+        window.REDDIT_EMBED_CONFIG = ${unsafe(json.dumps(c.embed_config))};
+    </script>
     ${unsafe(js.use('reddit-embed'))}
     ${less_js()}
 </html>

@@ -177,7 +177,7 @@ class CommentButtons(PrintableButtons):
         embed_button = False
 
         from r2.lib import embeds
-        if c.can_embed and embeds.can_embed(thing):
+        if c.can_embed and embeds.embeddable_sr(thing):
             embed_button = JsButton("embed",
                 css_class="embed-comment",
                 data={

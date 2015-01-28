@@ -24,36 +24,39 @@
     return '//' + host + '/' + pathname;
   }
 
-  function getEmbedUrl(commentUrl, data) {
+  function getEmbedUrl(commentUrl, el) {
     var context = 0;
 
-    if (data.embedParent === 'true') {
+    if (el.getAttribute('data-embed-parent') === 'true') {
       context++;
     }
 
-    var query = 'embed=' + data.embedToken +
+    var query = 'embed=' + el.getAttribute('data-embed-token') +
                 '&context=' + context +
                 '&depth=' + (++context) +
-                '&showedits=' + data.embedLive +
-                '&created=' + data.embedCreated +
+                '&showedits=' + el.getAttribute('data-embed-live') +
+                '&created=' + el.getAttribute('data-embed-created') +
                 '&showmore=false';
 
     return PROTOCOL + (commentUrl.replace(/\/$/,'')) + '?' + query;
   }
 
-  App.init = function(callback) {
+  App.init = function(options, callback) {
+    options = options || {};
+    callback = callback || function() {};
+
     var embeds = document.querySelectorAll('.reddit-embed');
 
     [].forEach.call(embeds, function(embed) {
-      if (embed.dataset.initialized) {
+      if (embed.getAttribute('data-initialized')) {
         return;
       }
 
-      embed.dataset.initialized = true;
+      embed.setAttribute('data-initialized', true);
 
       var iframe = document.createElement('iframe');
       var anchors = embed.getElementsByTagName('a');
-      var commentUrl = getCommentUrl(anchors, embed.dataset.embedMedia);
+      var commentUrl = getCommentUrl(anchors, embed.getAttribute('data-embed-media'));
 
       if (!commentUrl) {
         return;
@@ -65,13 +68,18 @@
       iframe.frameBorder = 0;
       iframe.allowTransparency = true;
       iframe.style.display = 'none';
-      iframe.src = getEmbedUrl(commentUrl, embed.dataset);
+      iframe.src = getEmbedUrl(commentUrl, embed);
 
-      App.receiveMessageOnce(iframe, 'loaded', function(e) {
+      App.receiveMessageOnce(iframe, 'ping', function(e) {
         embed.parentNode.removeChild(embed);
         iframe.style.display = 'block';
 
-        callback && callback(e);
+        callback(e);
+        App.postMessage(iframe.contentWindow, 'pong', {
+          type: 'comment',
+          location: location,
+          options: options,
+        });
       });
 
       var resizer = App.receiveMessage(iframe, 'resize', function(e) {

@@ -24,7 +24,7 @@
    import simplejson
    from pylons.i18n import _, ungettext
    from r2.lib.filters import safemarkdown
-   from r2.lib.template_helpers import get_domain, add_sr, edited_after
+   from r2.lib.template_helpers import get_domain, add_sr
 %>
 <%inherit file="printable.iframe" />
 <%namespace file="utils.html" import="thing_timestamp" />
@@ -46,7 +46,7 @@
 
 <%def name="entry()">
   <%
-    edited_recently = edited_after(thing, request.GET.get('created'))
+    edited_recently = c.embed_config.get("thing").get("edited")
     hide_edits = (not thing.edits_visible) and edited_recently
   %>
   <article class="reddit-embed-comment ${comment_css_class(thing, hide_edits)}">
@@ -54,7 +54,10 @@
       This comment was deleted.
     %else:
       <header class="reddit-embed-comment-header">
-        <a class="reddit-embed-author" href="http://${get_domain()}/user/${thing.author.name}">
+        <a class="reddit-embed-author"
+           href="http://${get_domain()}/user/${thing.author.name}"
+           data-redirect-type="user"
+           data-redirect-thing="${thing.author._id}">
           ${thing.author.name}
         </a>
         %if hide_edits:
@@ -67,13 +70,20 @@
           %if thing.edits_visible and edited_recently:
             <span class="reddit-embed-comment-meta-item reddit-embed-edited">edited</span>
           %endif
-          <a href="${add_sr(thing.permalink)}?context=3" class="reddit-embed-comment-meta-item reddit-embed-permalink">
+          <a href="${add_sr(thing.permalink)}?context=3"
+             class="reddit-embed-comment-meta-item reddit-embed-permalink"
+             data-redirect-type="timestamp"
+             data-redirect-thing="${thing._id}">
             ${thing_timestamp(thing, thing.timesince, live=True, include_tense=True)}
           </a>
         </div>
       </header>
       %if hide_edits:
-        <a href="${add_sr(thing.permalink)}?context=3">View the current version on reddit.</a>
+        <a href="${add_sr(thing.permalink)}?context=3"
+           data-redirect-type="hidden_comment"
+           data-redirect-thing="${thing._id}">
+          View the current version on reddit.
+        </a>
       %else:
         <blockquote class="reddit-embed-comment-body">
           ${unsafe(safemarkdown(thing.body, nofollow=thing.nofollow))}
