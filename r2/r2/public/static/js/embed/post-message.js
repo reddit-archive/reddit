@@ -46,9 +46,9 @@
 
     receiveMessage: function(source, type, callback, context) {
       if (typeof source === 'string') {
-        type = source;
-        callback = type;
         context = callback;
+        callback = type;
+        type = source;
         source = null;
       }
 
