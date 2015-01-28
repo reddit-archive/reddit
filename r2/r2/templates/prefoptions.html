@@ -326,6 +326,17 @@
         ${checkbox(_wsf("use a %(creddit_link)s to automatically renew my gold if it expires", creddit_link=creddit_link), "creddit_autorenew")}
     </td>
   </tr>
+  %elif c.user.is_moderator_somewhere:
+  <tr class="gold-accent">
+    <th>${_("gold options")}</th>
+    <td class="prefright">
+      ${checkbox(_("highlight new comments"), "highlight_new_comments")}
+      <% gold_link = unsafe('&#32;<a href="/gold/about">' + _("reddit gold") + '</a>') %>
+      &#32;<span class="little gray">
+        (${_wsf("since you don't have %(gold_link)s, this will only apply in subreddits you moderate", gold_link=gold_link)})
+      </span>
+    </td>
+  </tr>
   %endif
 
   <tr>

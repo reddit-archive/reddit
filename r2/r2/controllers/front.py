@@ -292,8 +292,9 @@ class FrontController(RedditController):
         previous_visits = None
         if comment:
             c.focal_comment = comment._id36
-        elif (c.user_is_loggedin and c.user.gold and
-              c.user.pref_highlight_new_comments):
+        elif (c.user_is_loggedin and
+                (c.user.gold or sr.is_moderator(c.user)) and
+                c.user.pref_highlight_new_comments):
             previous_visits = self._comment_visits(article, c.user, c.start_time)
 
         # check if we just came from the submit page
