@@ -7,7 +7,7 @@
   var re_postMessageAllowedOrigin = compileOriginRegExp(allowedOrigins);
 
   function receiveMessage(e) {
-    if (!re_postMessageAllowedOrigin.test(e.origin)) {
+    if (!re_postMessageAllowedOrigin.test(e.origin) && e.origin !== 'null') {
       return;
     }
 
