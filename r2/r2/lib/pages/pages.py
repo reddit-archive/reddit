@@ -865,7 +865,7 @@ class RedditFooter(CachedTemplate):
                     NamedButton("team", False, nocname=True, dest="/about/team"),
                     NamedButton("code", False, nocname=True),
                     NamedButton("advertising", False, nocname=True),
-                    NamedButton("jobs", False, nocname=True, dest="/r/redditjobs"),
+                    NamedButton("jobs", False, nocname=True),
                 ],
                 title = _("about"),
                 type = "flat_vert",

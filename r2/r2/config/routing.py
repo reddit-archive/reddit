@@ -121,6 +121,8 @@ def make_map():
     mc('/feedback', controller='redirect', action='redirect',
        dest='/contact')
     mc('/contact', controller='front', action='contact_us')
+    mc('/jobs', controller='redirect', action='redirect',
+       dest='https://jobs.lever.co/reddit')
 
     mc('/admin/awards', controller='awards')
     mc('/admin/awards/:awardcn/:action', controller='awards',
