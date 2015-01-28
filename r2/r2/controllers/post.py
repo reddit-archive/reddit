@@ -121,9 +121,7 @@ class PostController(ApiController):
             return LoginPage(user_login = request.POST.get('user'),
                              dest = dest).render()
 
-        if hsts_eligible():
-            dest = hsts_modify_redirect(dest)
-        return self.redirect(dest)
+        return self.hsts_redirect(dest)
 
     @csrf_exempt
     @validate(dest = VDestination(default = "/"))
@@ -136,9 +134,7 @@ class PostController(ApiController):
             return LoginPage(user_reg = request.POST.get('user'),
                              dest = dest).render()
 
-        if hsts_eligible():
-            dest = hsts_modify_redirect(dest)
-        return self.redirect(dest)
+        return self.hsts_redirect(dest)
 
     def GET_login(self, *a, **kw):
         return self.redirect('/login' + query_string(dict(dest="/")))

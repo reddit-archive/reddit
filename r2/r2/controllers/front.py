@@ -1412,10 +1412,12 @@ class FormsController(RedditController):
               dest=VDestination())
     def POST_logout(self, dest):
         """wipe login cookie and redirect to referer."""
-        if hsts_eligible():
-            dest = hsts_modify_redirect(dest)
+
+        # Check eligibility before calling logout(), as logout() changes
+        # cookies that hsts_eligible() looks at
+        is_hsts_eligible = hsts_eligible()
         self.logout()
-        return self.redirect(dest)
+        self.hsts_redirect(dest, is_hsts_eligible=is_hsts_eligible)
 
 
     @validate(VUser(),

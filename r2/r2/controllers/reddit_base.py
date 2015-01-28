@@ -1308,6 +1308,17 @@ class MinimalController(BaseController):
 
         return request.method.upper() != "POST"
 
+    @classmethod
+    def hsts_redirect(cls, dest, is_hsts_eligible=None):
+        """Redirect to `dest` via the HSTS grant endpoint"""
+        if is_hsts_eligible is None:
+            is_hsts_eligible = hsts_eligible()
+        if is_hsts_eligible:
+            dest = hsts_modify_redirect(dest)
+            return cls.redirect(dest, preserve_extension=False)
+        else:
+            return cls.redirect(dest)
+
 
 class OAuth2ResourceController(MinimalController):
     defer_ratelimiting = True

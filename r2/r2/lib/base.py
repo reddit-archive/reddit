@@ -157,6 +157,7 @@ class BaseController(WSGIController):
         Node: for development purposes, also checks that the port
         matches the request port
         """
+        preserve_extension = kw.pop("preserve_extension", True)
         u = UrlParser(url)
 
         if u.is_reddit_url():
@@ -169,7 +170,7 @@ class BaseController(WSGIController):
             u.mk_cname(**kw)
 
             # make sure the extensions agree with the current page
-            if c.extension:
+            if preserve_extension and c.extension:
                 u.set_extension(c.extension)
 
         # unparse and encode it un utf8
@@ -197,14 +198,16 @@ class BaseController(WSGIController):
         abort(302, location=path)
 
     @classmethod
-    def redirect(cls, dest, code = 302):
+    def redirect(cls, dest, code=302, preserve_extension=True):
         """
         Reformats the new Location (dest) using format_output_url and
         sends the user to that location with the provided HTTP code.
         """
-        dest = cls.format_output_url(dest or "/")
+        dest = cls.format_output_url(dest or "/",
+                                     preserve_extension=preserve_extension)
         response.status_int = code
         response.headers['Location'] = dest
+
 
 class EmbedHandler(urllib2.BaseHandler, urllib2.HTTPHandler,
                    urllib2.HTTPErrorProcessor, urllib2.HTTPDefaultErrorHandler):
