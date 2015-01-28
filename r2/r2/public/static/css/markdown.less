@@ -25,7 +25,7 @@
 @ads-blue: #6093BF;
 @ads-grey: #F8F8F8;
 @dark-grey: #808080;
-@text-grey: #706f6f;
+@text-grey: #4F4F4F;
 
 @base-font-keyword: small;
 @base-font-keyword-size: 13; // small == 13px;
@@ -165,13 +165,13 @@
   hr {
     border: 0;
     color: transparent;
-    background: @pale-grey;
+    background: darken(@pale-grey, 15%);
     height: 2px;
     padding: 0;
   }
 
   blockquote {
-    border-left: 2px solid @pale-grey;
+    border-left: 2px solid darken(@pale-grey, 15%);
   }
 
   code,
@@ -184,6 +184,12 @@
   code {
     margin: 0 2px;
     white-space: nowrap;
+  }
+
+  p {
+    code {
+      line-height: 1em;
+    }
   }
 
   pre {
@@ -227,10 +233,10 @@
   blockquote {
     // -2 to compensate for border
     padding: 0 ((@margin-small - 2) * 1px);
+    margin-left: (@margin-x-small * 1px);
   }
 
   code {
-
     padding: 0 ((@margin-x-small - 1) * 1px);
   }
 
@@ -240,7 +246,7 @@
   }
 
   .-lists {
-    padding-left: (@margin-x-large * 1px);
+    padding-left: (@margin-xxx-large * 1px);
   }
 
   sup {
@@ -259,8 +265,35 @@
   padding: (@margin-x-small * 1px) (@margin-small * 1px);
 }
 
+.new-comment .md,
+.link .md,
+.usertext.border .md {
+  :not(pre) > code,
+  pre {
+    background-color: @white;
+  }
+}
+
+.linklisting .md,
 .commentarea .md {
-  margin: (@margin-x-small * 1px) 0;
+  @vertical-margin: (@margin-x-small * 1px);
+  margin-top: @vertical-margin;
+  margin-bottom: @vertical-margin;
+}
+
+.usertext-edit {
+  &:extend(.md-container all);
+
+  textarea {
+    &:extend(.md all);
+  }
+}
+
+
+code {
+  // this hack fixes browsers automatically shrinking monospace fonts.  weird.
+  // http://code.stephenmorley.org/html-and-css/fixing-browsers-broken-monospace-font-handling/
+  font-family:monospace,monospace;
 }
 
 

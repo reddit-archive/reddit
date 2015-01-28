@@ -2176,6 +2176,12 @@ textarea.gray { color: gray; }
 .message.message-parent > .entry,
 .message.message-reply  > .entry {
     color: #485;
+    
+    .md,
+    blockquote,
+    del {
+      color: inherit;
+    }
 }
 
 .message.recipient > .entry {
@@ -8142,6 +8148,7 @@ div.usertable .note {
     background-color: #e5efff;
     border: solid 1px #cddaf3;
     margin: -1px 0;
+    padding: 0 4px;
 }
 
 .role {
