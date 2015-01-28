@@ -221,7 +221,6 @@ class ApiController(RedditController):
         return BoringPage(_("API"), content=listing).render()
 
     @json_validate()
-    @api_doc(api_section.account, extensions=["json"])
     def GET_me(self, responder):
         """Get info about the currently authenticated user.
 
@@ -611,7 +610,6 @@ class ApiController(RedditController):
 
     @csrf_exempt
     @cross_domain(allow_credentials=True)
-    @api_doc(api_section.account, extends=_handle_login)
     def POST_login(self, *args, **kwargs):
         """Log into an account.
 
@@ -671,7 +669,6 @@ class ApiController(RedditController):
 
     @csrf_exempt
     @cross_domain(allow_credentials=True)
-    @api_doc(api_section.account, extends=_handle_register)
     def POST_register(self, *args, **kwargs):
         """Create a new account.
 
@@ -1141,7 +1138,6 @@ class ApiController(RedditController):
                         docs=dict(curpass="the user's current password")
                    ),
                    dest = VDestination())
-    @api_doc(api_section.account)
     def POST_clear_sessions(self, form, jquery, password, dest):
         """Clear all session cookies and replace the current one.
 
@@ -1173,7 +1169,6 @@ class ApiController(RedditController):
                        ["curpass", "curpass"],
                        docs=dict(curpass="the user's current password"),
                    ))
-    @api_doc(api_section.account)
     def POST_set_force_https(self, form, jquery, password, force_https):
         """Toggle HTTPS-only sessions, invalidating other sessions.
 
@@ -1213,7 +1208,6 @@ class ApiController(RedditController):
         verify=VBoolean("verify"),
         dest=VDestination(),
     )
-    @api_doc(api_section.account)
     def POST_update_email(self, form, jquery, email, verify, dest):
         """Update account email address.
 
@@ -1261,7 +1255,6 @@ class ApiController(RedditController):
         VModhash(),
         password=VPasswordChange(['newpass', 'verpass']),
     )
-    @api_doc(api_section.account)
     def POST_update_password(self, form, jquery, password):
         """Update account password.
 
@@ -1295,7 +1288,6 @@ class ApiController(RedditController):
                    username = VRequired("user", errors.NOT_USER),
                    user = VThrottledLogin(["user", "passwd"]),
                    confirm = VBoolean("confirm"))
-    @api_doc(api_section.account)
     def POST_delete_user(self, form, jquery, delete_message, username, user, confirm):
         """Delete the currently signed in account.
 
