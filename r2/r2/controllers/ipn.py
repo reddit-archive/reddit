@@ -1074,7 +1074,7 @@ class StripeController(GoldPaymentController):
         if not user.has_stripe_subscription:
             return
 
-        cancel_stripe_subscription(user.gold_subscr_id)
+        cancel_stripe_subscription(user)
 
         user.gold_subscr_id = None
         user._commit()
