@@ -953,7 +953,7 @@ class StripeController(GoldPaymentController):
                 # to cancel the charge
                 g.log.error('no account for stripe invoice: %s', invoice)
                 try:
-                    cancel_stripe_subscription(customer_id)
+                    cancel_stripe_subscription(account)
                 except stripe.InvalidRequestError:
                     pass
         elif status == 'customer.subscription.deleted':
