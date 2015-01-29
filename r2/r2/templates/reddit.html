@@ -46,11 +46,6 @@
 
 <%def name="global_stylesheets()">
   ${less_stylesheet("reddit.less")}
-  %if not feature.is_enabled('old_markdown_style'):
-    ${less_stylesheet("markdown.less")}
-  %else:
-    ${less_stylesheet("old-markdown.less")}
-  %endif
   %if c.site.stylesheet:
     <link rel="stylesheet" href="${static(c.site.stylesheet)}" type="text/css" >
   %endif
@@ -185,5 +180,3 @@
 <%def name="sidebar(content=None)">
   ${content}
 </%def>
-
-

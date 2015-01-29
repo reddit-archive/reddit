@@ -29,11 +29,6 @@
 <%def name="global_stylesheets()">
     ${parent.global_stylesheets()}
     ${less_stylesheet('wiki.less')}
-    %if not feature.is_enabled('old_markdown_style'):
-      ${less_stylesheet("markdown.less")}
-    %else:
-      ${less_stylesheet("old-markdown.less")}
-    %endif
 </%def>
 
 <%def name="actionsbar(actions)">
