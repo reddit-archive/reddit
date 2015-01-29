@@ -739,8 +739,8 @@ class UserController(ListingController):
                   'comments': _("comments by %(user)s"),
                   'submitted': _("submitted by %(user)s"),
                   'gilded': _("gilded by %(user)s"),
-                  'liked': _("liked by %(user)s"),
-                  'disliked': _("disliked by %(user)s"),
+                  'upvoted': _("upvoted by %(user)s"),
+                  'downvoted': _("downvoted by %(user)s"),
                   'saved': _("saved by %(user)s"),
                   'hidden': _("hidden by %(user)s"),
                   'promoted': _("promoted by %(user)s")}
@@ -760,10 +760,10 @@ class UserController(ListingController):
                 return False
 
             if c.user == self.vuser:
-                if not item.likes and self.where == 'liked':
+                if not item.likes and self.where == 'upvoted':
                     g.stats.simple_event("vote.missing_votes_by_account")
                     return False
-                if item.likes is not False and self.where == 'disliked':
+                if item.likes is not False and self.where == 'downvoted':
                     g.stats.simple_event("vote.missing_votes_by_account")
                     return False
                 if self.where == 'saved' and not item.saved:
@@ -810,10 +810,10 @@ class UserController(ListingController):
             else:
                 q = queries.get_gilded_user(self.vuser)
 
-        elif self.where in ('liked', 'disliked'):
+        elif self.where in ('upvoted', 'downvoted'):
             sup.set_sup_header(self.vuser, self.where)
             self.check_modified(self.vuser, self.where)
-            if self.where == 'liked':
+            if self.where == 'upvoted':
                 q = queries.get_liked(self.vuser)
             else:
                 q = queries.get_disliked(self.vuser)
@@ -851,9 +851,22 @@ class UserController(ListingController):
     @listing_api_doc(section=api_section.users, uri='/user/{username}/{where}',
                      uri_variants=['/user/{username}/' + where for where in [
                                        'overview', 'submitted', 'comments',
-                                       'liked', 'disliked', 'hidden', 'saved',
-                                       'gilded']])
+                                       'upvoted', 'downvoted', 'hidden',
+                                       'saved', 'gilded']])
     def GET_listing(self, where, vuser, sort, time, show, **env):
+        # continue supporting /liked and /disliked paths for API clients
+        # but 301 redirect non-API users to the new location
+        changed_wheres = {"liked": "upvoted", "disliked": "downvoted"}
+        new_where = changed_wheres.get(where)
+        if new_where:
+            where = new_where
+            if not is_api():
+                path = "/".join(("/user", vuser.name, where))
+                query_string = request.environ.get('QUERY_STRING')
+                if query_string:
+                    path += "?" + query_string
+                return self.redirect(path, code=301)
+        
         self.where = where
         self.sort = sort
         self.time = time
@@ -881,7 +894,7 @@ class UserController(ListingController):
                          c.user_is_sponsor and where == "promoted")):
                 return self.abort404()
 
-        if where in ('liked', 'disliked') and not votes_visible(vuser):
+        if where in ('upvoted', 'downvoted') and not votes_visible(vuser):
             return self.abort403()
 
         if ((where in ('saved', 'hidden') or

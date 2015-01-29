@@ -186,11 +186,11 @@
           ${_("(such as the source subreddit or the content author's url/name)")}
         </span>
       </p>
-      <p>${checkbox(_("don't show links after I've liked them"), "hide_ups")}
+      <p>${checkbox(_("don't show me submissions after I've upvoted them"), "hide_ups")}
          &#32;
          <span class="details">${_("(except my own)")}</span>
       </p>
-      <p>${checkbox(_("don't show links after I've disliked them"), "hide_downs")}
+      <p>${checkbox(_("don't show me submissions after I've downvoted them"), "hide_downs")}
          &#32;
          <span class="details">${_("(except my own)")}</span>
       </p>
@@ -315,8 +315,8 @@
       &#32;
       <span class="details">
         <%
-           link1 = format_html('&#32;<a href="/user/%s/liked">/user/%s/liked</a>&#32;', c.user.name, c.user.name)
-           link2 = format_html('&#32;<a href="/user/%s/disliked">/user/%s/disliked</a>', c.user.name, c.user.name)
+           link1 = format_html('&#32;<a href="/user/%s/upvoted">/user/%s/upvoted</a>&#32;', c.user.name, c.user.name)
+           link2 = format_html('&#32;<a href="/user/%s/downvoted">/user/%s/downvoted</a>', c.user.name, c.user.name)
            %>
         (${_wsf("let everyone see %(link1)s and %(link2)s", link1=link1, link2=link2)})
       </span>

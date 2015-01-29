@@ -178,8 +178,8 @@
     </%def>
 
     %if getattr(thing, "votable", True):
-      ${arrow("up",   thing.upstyle,   _("like"))}
-      ${arrow("down", thing.downstyle, _("dislike"))}
+      ${arrow("up",   thing.upstyle,   _("upvote"))}
+      ${arrow("down", thing.downstyle, _("downvote"))}
     %endif
   </span>
 

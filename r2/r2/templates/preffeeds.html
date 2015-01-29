@@ -61,11 +61,11 @@ ${unsafe(safemarkdown(_("All feeds are invalidated if you change your password, 
   <tr>
     <th>private profile pages</th>
     <td class="prefright">
-      <%self:feedbuttons path="/user/${c.user.name}/liked"></%self:feedbuttons>
-      ${_("links you've liked")}
+      <%self:feedbuttons path="/user/${c.user.name}/upvoted"></%self:feedbuttons>
+      ${_("links you've upvoted")}
       <br/>
-      <%self:feedbuttons path="/user/${c.user.name}/disliked"></%self:feedbuttons>
-      ${_("links you've disliked")}
+      <%self:feedbuttons path="/user/${c.user.name}/downvoted"></%self:feedbuttons>
+      ${_("links you've downvoted")}
       <br/>
       <%self:feedbuttons path="/user/${c.user.name}/hidden"></%self:feedbuttons>
       ${_("links you've hidden")}
