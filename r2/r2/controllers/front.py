@@ -189,39 +189,28 @@ class FrontController(RedditController):
             abort(403, 'forbidden')
         return self.abort404()
 
-    def _comment_visits(self, article, user, new_visit=None):
+    def _get_comment_visits(self, article, user, new_visit):
         timer = g.stats.get_timer("gold.comment_visits")
         timer.start()
 
         hc_key = "comment_visits-%s-%s" % (user.name, article._id36)
         old_visits = g.hardcache.get(hc_key, [])
 
-        append = False
-
-        if new_visit is None:
-            pass
-        elif len(old_visits) == 0:
-            append = True
-        else:
+        if old_visits:
             last_visit = max(old_visits)
             time_since_last = new_visit - last_visit
-            if (time_since_last.days > 0
-                or time_since_last.seconds > g.comment_visits_period):
-                append = True
-            else:
-                # They were just here a few seconds ago; consider that
-                # the same "visit" as right now
+            if time_since_last.seconds <= g.comment_visits_period:
+                # they were here recently; consider that the same visit as now
                 old_visits.pop()
+                timer.stop()
+                return old_visits
 
-        if append:
-            copy = list(old_visits) # make a copy
-            copy.append(new_visit)
-            if len(copy) > 10:
-                copy.pop(0)
-            g.hardcache.set(hc_key, copy, 86400 * 2)
-
+        copy = list(old_visits)
+        copy.append(new_visit)
+        if len(copy) > 10:
+            copy.pop(0)
+        g.hardcache.set(hc_key, copy, 86400 * 2)
         timer.stop()
-
         return old_visits
 
 
@@ -295,7 +284,8 @@ class FrontController(RedditController):
         elif (c.user_is_loggedin and
                 (c.user.gold or sr.is_moderator(c.user)) and
                 c.user.pref_highlight_new_comments):
-            previous_visits = self._comment_visits(article, c.user, c.start_time)
+            previous_visits = self._get_comment_visits(
+                article, c.user, c.start_time)
 
         # check if we just came from the submit page
         infotext = None
