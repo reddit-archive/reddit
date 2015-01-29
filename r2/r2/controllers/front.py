@@ -264,7 +264,7 @@ class FrontController(RedditController):
 
         `limit` is the maximum number of comments to return.
 
-        See also: [/api/morechildren](#POST_api_morechildren) and
+        See also: [/api/morechildren](#GET_api_morechildren) and
         [/api/comment](#POST_api_comment).
 
         """
