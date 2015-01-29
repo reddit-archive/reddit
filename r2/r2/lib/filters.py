@@ -21,6 +21,7 @@
 ###############################################################################
 
 import cgi
+import json
 import re
 
 from collections import Counter
@@ -168,8 +169,28 @@ def jssafe(text=u''):
     """Prevents text from breaking outside of string literals in JS"""
     if text.__class__ != unicode:
         text = _force_unicode(text)
-    #wrap the response in _Unsafe so make_websafe doesn't unescape it
+    # wrap the response in _Unsafe so conditional_websafe doesn't touch it
     return _Unsafe(text.translate(_js_escapes))
+
+
+_json_escapes = _js_escapes.copy()
+# JSON requires these not be escaped
+_json_escapes.pop(ord('\\'))
+_json_escapes.pop(ord('"'))
+_json_escapes.pop(ord('\n'))
+_json_escapes.pop(ord('\t'))
+
+
+def jssafe_dumps(obj, **kwargs):
+    """
+    Like `json.dumps()`, but safe for use in `<script>` blocks.
+
+    If you want to use this in an HTML attribute, make sure the attribute is
+    single quoted, or you run the output from `websafe()`!
+    """
+    text = _force_unicode(json.dumps(obj, **kwargs))
+    # wrap the response in _Unsafe so conditional_websafe doesn't touch it
+    return _Unsafe(text.translate(_json_escapes))
 
 
 def markdown_souptest(text, nofollow=False, target=None, renderer='reddit'):
