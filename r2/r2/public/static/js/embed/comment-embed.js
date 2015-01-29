@@ -26,6 +26,7 @@
 
   function getEmbedUrl(commentUrl, el) {
     var context = 0;
+    var showedits = el.getAttribute('data-embed-live');
 
     if (el.getAttribute('data-embed-parent') === 'true') {
       context++;
@@ -34,7 +35,7 @@
     var query = 'embed=' + el.getAttribute('data-embed-token') +
                 '&context=' + context +
                 '&depth=' + (++context) +
-                '&showedits=' + el.getAttribute('data-embed-live') +
+                '&showedits=' + (showedits === 'true') +
                 '&created=' + el.getAttribute('data-embed-created') +
                 '&showmore=false';
 
