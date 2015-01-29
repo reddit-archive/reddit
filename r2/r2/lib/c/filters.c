@@ -54,6 +54,10 @@ filters_uwebsafe(PyObject * self, PyObject *args)
   len = PyUnicode_GetSize(com);
 
   buffer = (Py_UNICODE*)malloc(6*len*sizeof(Py_UNICODE));
+  if (buffer == NULL) {
+    return PyErr_NoMemory();
+  }
+
   for(ic = 0, ib = 0; ic < len; ic++, ib++) {
     c = input_buffer[ic];
     if (c == '&') {
@@ -108,6 +112,10 @@ filters_uwebsafe_json(PyObject * self, PyObject *args)
   len = PyUnicode_GetSize(com);
 
   buffer = (Py_UNICODE*)malloc(6*len*sizeof(Py_UNICODE));
+  if (buffer == NULL) {
+    return PyErr_NoMemory();
+  }
+
   for(ic = 0, ib = 0; ic < len; ic++, ib++) {
     c = input_buffer[ic];
     if (c == '&') {
@@ -153,6 +161,10 @@ filters_websafe(PyObject * self, PyObject *args)
     return NULL;
   len = strlen(input_buffer);
   buffer = (char*)malloc(6*len);
+  if (buffer == NULL) {
+    return PyErr_NoMemory();
+  }
+
   for(ic = 0, ib = 0; ic <= len; ic++, ib++) {
     c = input_buffer[ic];
     if (c == '&') {
@@ -231,6 +243,9 @@ filters_uspace_compress(PyObject * self, PyObject *args) {
   input_buffer = PyUnicode_AS_UNICODE(com);
   len = PyUnicode_GetSize(com);
   buffer = (Py_UNICODE*)malloc(len * sizeof(Py_UNICODE));
+  if (buffer == NULL) {
+    return PyErr_NoMemory();
+  }
 
   /* ic -> input buffer index, ib -> output buffer */
   for(ic = 0, ib = 0; ic <= len; ic++) {
@@ -295,6 +310,11 @@ static PyMethodDef FilterMethods[] = {
 
 Py_UNICODE *to_unicode(const char *c, int len) {
   Py_UNICODE *x = (Py_UNICODE *)malloc((len+1) * sizeof(Py_UNICODE));
+  if (x == NULL) {
+    PyErr_NoMemory();
+    return NULL;
+  }
+
   int i;
   for(i = 0; i < len; i++) {
     x[i] = (Py_UNICODE)c[i];

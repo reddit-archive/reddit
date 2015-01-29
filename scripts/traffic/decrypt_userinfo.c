@@ -68,12 +68,24 @@ int main(int argc, char** argv)
 
         /* base 64 decode and decrypt the ciphertext */
         BIO* bio = BIO_new_mem_buf(ciphertext, b64_size);
+        if (bio == NULL) {
+            fprintf(stderr, "Failed to allocate buffer for b64 ciphertext\n");
+            return 1;
+        }
 
         BIO* b64 = BIO_new(BIO_f_base64());
+        if (b64 == NULL) {
+            fprintf(stderr, "Failed to allocate base64 filter\n");
+            return 1;
+        }
         BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
         bio = BIO_push(b64, bio);
 
         BIO* aes = BIO_new(BIO_f_cipher());
+        if (aes == NULL) {
+            fprintf(stderr, "Failed to allocate AES cipher\n");
+            return 1;
+        }
         BIO_set_cipher(
             aes,
             cipher,

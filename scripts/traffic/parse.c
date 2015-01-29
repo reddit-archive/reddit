@@ -57,6 +57,10 @@ int main(int argc, char** argv)
     pcre_fullinfo(re, extra, PCRE_INFO_CAPTURECOUNT, &group_count);
     int match_vector_size = (group_count + 1) * 3;
     int *matches = malloc(sizeof(int) * match_vector_size);
+    if (matches == NULL) {
+        fprintf(stderr, "Couldn't allocate memory for regex groups!\n");
+        return 1;
+    }
 
     /* iterate through the input */
     char input_line[MAX_LINE];
