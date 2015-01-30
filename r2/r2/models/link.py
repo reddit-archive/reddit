@@ -1119,6 +1119,7 @@ class Comment(Thing, Printable):
                     item.can_reply = True
 
             item.can_save = c.can_save or False
+            item.can_embed = c.can_embed or False
 
             if user_is_loggedin:
                 item.user_gilded = (user, item) in user_gildings

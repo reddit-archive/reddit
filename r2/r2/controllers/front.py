@@ -258,7 +258,7 @@ class FrontController(RedditController):
         c.can_embed = feature.is_enabled("comment_embeds")
 
         # only show embed button on permalinked comments
-        c.can_embed = c.can_embed and comment
+        c.can_embed = c.can_embed and bool(comment)
 
         embeds.setup_embed(thing=comment, showedits=showedits)
 
