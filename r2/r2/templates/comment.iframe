@@ -62,21 +62,23 @@
         </a>
         %if hide_edits:
           ${_("%(name)s's comment was changed.") % dict(name="")}
-        %endif
+        %else:
         <div class="reddit-embed-comment-meta">
-          %if not thing.score_hidden:
-            <span class="reddit-embed-comment-meta-item reddit-embed-score">${thing.score} ${ungettext("point", "points", thing.score)}</span>
-          %endif
-          %if thing.edits_visible and edited_recently:
-            <span class="reddit-embed-comment-meta-item reddit-embed-edited">edited</span>
-          %endif
           <a href="${add_sr(thing.permalink)}?context=3"
-             class="reddit-embed-comment-meta-item reddit-embed-permalink"
-             data-redirect-type="timestamp"
+             data-redirect-type="meta"
              data-redirect-thing="${thing._id}">
-            ${thing_timestamp(thing, thing.timesince, live=True, include_tense=True)}
+            %if not thing.score_hidden:
+              <span class="reddit-embed-comment-meta-item reddit-embed-score">${thing.score} ${ungettext("point", "points", thing.score)}</span>
+            %endif
+            %if thing.edits_visible and edited_recently:
+              <span class="reddit-embed-comment-meta-item reddit-embed-edited">edited</span>
+            %endif
+            <span class="reddit-embed-comment-meta-item reddit-embed-permalink">
+              ${thing_timestamp(thing, thing.timesince, live=True, include_tense=True)}
+            </span>
           </a>
         </div>
+        %endif
       </header>
       %if hide_edits:
         <a href="${add_sr(thing.permalink)}?context=3"

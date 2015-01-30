@@ -44,9 +44,11 @@
 
     var embedFooterTemplate = _.template(
       '<div class="c-form-group">' +
-          '<label for="embed-code" class="modal-title">' +
-              _.escape(r._('Copy this code and paste it into your website:')) +
-          '</label>' +
+          '<h4 class="modal-title">' +
+            '<label for="embed-code">' +
+                _.escape(r._('Copy this code and paste it into your website:')) +
+            '</label>' +
+          '</h4>' +
           '<textarea class="c-form-control" id="embed-code" rows="3" readonly>' +
               '<%= html %>' +
               '<%- scripts %>' +
