@@ -28,7 +28,7 @@
     from r2.lib.template_helpers import get_domain, static
 %>
 <%namespace file="less.html" import="less_js, less_stylesheet"/>
-<%namespace file="utils.html" import="text_with_links"/>
+<%namespace file="utils.html" import="text_with_links, plain_link"/>
 
 <%
     link_data = {"redirect-type": "link", "redirect-thing": thing.link._id}
@@ -56,6 +56,7 @@
                     subreddit=dict(link_text=("/r/%s" % c.site.name), path=c.site.path, data=sr_data),
                 )}
             </p>
+            ${plain_link("reddit", "/", _sr_path=False, _class="reddit-embed-footer-img")}
           </footer>
         </div>
     </body>

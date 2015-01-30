@@ -57,8 +57,7 @@ p {
         vertical-align: middle; 
     }
 
-    &:after {
-        content: '';
+    .reddit-embed-footer-img {
         display: block;
         position: absolute;
         right: @snoo-padding;
@@ -66,6 +65,9 @@ p {
         width: @snoo-width;
         height: @snoo-height;
         .hdpi-bg-image(@1x: url(../reddit-embed-logo.png); @2x: url(../reddit-embed-logo_2x.png););
+        text-indent: 100%;
+        white-space: nowrap;
+        overflow: hidden;
     }
 }
 
