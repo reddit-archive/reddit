@@ -55,7 +55,7 @@
     %else:
       <header class="reddit-embed-comment-header">
         <a class="reddit-embed-author"
-           href="http://${get_domain()}/user/${thing.author.name}"
+           href="http://${get_domain(subreddit=False)}/user/${thing.author.name}"
            data-redirect-type="user"
            data-redirect-thing="${thing.author._id}">
           ${thing.author.name}
