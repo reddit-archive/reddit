@@ -1074,7 +1074,7 @@ class StripeController(GoldPaymentController):
         if not user.has_stripe_subscription:
             return
 
-        cancel_stripe_subscription(user)
+        customer = cancel_stripe_subscription(user)
 
         user.gold_subscr_id = None
         user._commit()
@@ -1392,3 +1392,4 @@ def reverse_gold_purchase(transaction_id):
 def cancel_stripe_subscription(user):
     customer = stripe.Customer.retrieve(user.gold_subscr_id)
     customer.delete()
+    return customer
