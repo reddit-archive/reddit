@@ -211,6 +211,7 @@ class FrontController(RedditController):
             copy.pop(0)
         g.hardcache.set(hc_key, copy, 86400 * 2)
         timer.stop()
+        CommentVisitsByUser.add_visit(user, article, new_visit)
         return old_visits
 
 
