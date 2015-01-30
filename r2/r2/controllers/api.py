@@ -2220,7 +2220,7 @@ class ApiController(RedditController):
                    spam_links = VOneOf('spam_links', ('low', 'high', 'all')),
                    spam_selfposts = VOneOf('spam_selfposts', ('low', 'high', 'all')),
                    spam_comments = VOneOf('spam_comments', ('low', 'high', 'all')),
-                   type = VOneOf('type', ('public', 'private', 'restricted', 'gold_restricted', 'archived')),
+                   type = VOneOf('type', Subreddit.valid_types),
                    link_type = VOneOf('link_type', ('any', 'link', 'self')),
                    submit_link_label=VLength('submit_link_label', max_length=60),
                    submit_text_label=VLength('submit_text_label', max_length=60),
@@ -2327,8 +2327,18 @@ class ApiController(RedditController):
         if kw['type'] == 'gold_restricted' and not can_set_gold_restricted:
             c.errors.add(errors.INVALID_OPTION, field='type')
 
+        can_set_employees_only = c.user.employee
+        if kw['type'] == 'employees_only' and not can_set_employees_only:
+            c.errors.add(errors.INVALID_OPTION, field='type')
+
         if not sr and form.has_errors("ratelimit", errors.RATELIMIT):
             pass
+        # if existing subreddit is employees_only and trying to change type,
+        # require that admin mode is on
+        elif (sr and sr.type == 'employees_only' and kw['type'] != sr.type and
+                not c.user_is_admin):
+            form.set_error(errors.ADMIN_REQUIRED, 'type')
+            c.errors.add(errors.ADMIN_REQUIRED, field='type')
         elif not sr and form.has_errors("name", errors.SUBREDDIT_EXISTS,
                                         errors.BAD_SR_NAME):
             form.find('#example_name').hide()
@@ -2361,7 +2371,8 @@ class ApiController(RedditController):
             if sr.add_subscriber(c.user):
                 sr._incr('_ups', 1)
             sr.add_moderator(c.user)
-            sr.add_contributor(c.user)
+            if sr.type != 'employees_only':
+                sr.add_contributor(c.user)
             redir = sr.path + "about/edit/?created=true"
             if not c.user_is_admin:
                 VRatelimit.ratelimit(rate_user=True,

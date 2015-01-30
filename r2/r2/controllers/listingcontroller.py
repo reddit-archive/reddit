@@ -1201,6 +1201,7 @@ class MessageController(ListingController):
 
         return MessagePage(content=content, title=self.title()).render()
 
+
 class RedditsController(ListingController):
     render_cls = SubredditsPage
 
@@ -1227,6 +1228,14 @@ class RedditsController(ListingController):
                                             read_cache = True,
                                             cache_time = 5 * 60)
                 reddits._sort = desc('_date')
+            elif self.where == 'employee':
+                reddits = Subreddit._query(
+                    Subreddit.c.type=='employees_only',
+                    write_cache=True,
+                    read_cache=True,
+                    cache_time=5 * 60,
+                )
+                reddits._sort = desc('_downs')
             else:
                 reddits = Subreddit._query( write_cache = True,
                                             read_cache = True,
@@ -1245,7 +1254,7 @@ class RedditsController(ListingController):
     @require_oauth2_scope("read")
     @listing_api_doc(section=api_section.subreddits,
                      uri='/subreddits/{where}',
-                     uri_variants=['/subreddits/popular', '/subreddits/new'])
+                     uri_variants=['/subreddits/popular', '/subreddits/new', '/subreddits/employee'])
     def GET_listing(self, where, **env):
         """Get all subreddits.
 

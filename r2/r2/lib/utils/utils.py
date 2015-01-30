@@ -999,7 +999,7 @@ def url_links_builder(url, exclude=None, num=None, after=None, reverse=None,
     if public_srs_only and not c.user_is_admin:
         subreddits = Subreddit._byID([link.sr_id for link in links], data=True)
         links = [link for link in links
-                 if subreddits[link.sr_id].type != "private"]
+                 if subreddits[link.sr_id].type not in Subreddit.private_types]
 
     links.sort(key=attrgetter('num_comments'), reverse=True)
 

@@ -153,6 +153,7 @@ error_list = dict((
         ('NO_SR_TO_SR_MESSAGE', _("can't send a message from a subreddit to another subreddit")),
         ('USER_BLOCKED_MESSAGE', _("can't send message to that user")),
         ('USER_BAN_NO_MESSAGE', _("that user will not be sent a ban notification, remove note to be able to ban")),
+        ('ADMIN_REQUIRED', _("you must be in admin mode for this")),
     ))
 
 errors = Storage([(e, e) for e in error_list.keys()])

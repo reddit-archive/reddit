@@ -129,8 +129,16 @@
                            _("anyone can view, but only reddit gold members can submit or comment"),
                            is_gold_restricted)}
       %endif
+
+      <% is_employees_only = thing.site and thing.site.type == 'employees_only' %>
+      %if c.user.employee:
+        ${utils.radio_type('type', "employees_only", _("employees only"),
+                           _("only reddit employees can view; the employee list is pulled from live config"),
+                           is_employees_only)}
+      %endif
       </table>
       ${error_field("INVALID_OPTION", "type")}
+      ${error_field("ADMIN_REQUIRED", "type")}
     </div>
   </%utils:line_field>
 

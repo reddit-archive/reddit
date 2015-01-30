@@ -263,6 +263,22 @@ class Subreddit(Thing, Printable, BaseSite):
     BASE_SELFTEXT_LENGTH = 15000
     ONLY_SELFTEXT_LENGTH = 40000
 
+    valid_types = {
+        'archived',
+        'employees_only',
+        'gold_restricted',
+        'private',
+        'public',
+        'restricted',
+    }
+
+    # this holds the subreddit types where content is not accessible
+    # unless you are a contributor or mod
+    private_types = {
+        'employees_only',
+        'private',
+    }
+
     # note: for purposely unrenderable reddits (like promos) set author_id = -1
     @classmethod
     def _new(cls, name, title, author_id, ip, lang = g.lang, type = 'public',
@@ -494,6 +510,8 @@ class Subreddit(Thing, Printable, BaseSite):
     def is_contributor(self, user):
         if self.name.lower() == g.lounge_reddit.lower():
             return user.gold or user.gold_charter
+        elif self.type == 'employees_only':
+            return user.employee
         else:
             return super(Subreddit, self).is_contributor(user)
 

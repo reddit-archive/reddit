@@ -12,9 +12,6 @@ from r2.models import Account, NotFound
 from r2.models.subreddit import Subreddit
 
 
-DISALLOWED_SR_TYPES = {"private", "gold_restricted"}
-
-
 def embeddable_sr(thing):
     if isinstance(thing, Subreddit):
         sr = thing
@@ -24,7 +21,7 @@ def embeddable_sr(thing):
         except NotFound:
             sr = None
 
-    return sr if (sr is not None and sr.type not in DISALLOWED_SR_TYPES) else False
+    return sr if (sr is not None and sr.type not in Subreddit.private_types) else False
 
 
 def edited_after(thing, iso_timestamp, showedits):

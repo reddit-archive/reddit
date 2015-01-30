@@ -260,7 +260,7 @@ def random_sample(items, count):
 
 def is_visible(sr):
     """True if sr is visible to regular users, false if private or banned."""
-    return sr.type != 'private' and not sr._spam
+    return sr.type not in Subreddit.private_types and not sr._spam
 
 
 class SRRecommendation(tdb_cassandra.View):

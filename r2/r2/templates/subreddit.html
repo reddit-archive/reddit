@@ -79,7 +79,7 @@
     />
   %endif 
 
-  %if sr.type == "private":
+  %if sr.type in sr.private_types:
     <img class="sr-type-img" title="${_('private')}" alt="${_('private')}" src="${static('eye.png')}" />
   %endif
 

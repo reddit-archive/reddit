@@ -1853,7 +1853,8 @@ class SubredditsPage(Reddit):
                     NamedButton("new")]
         if c.user_is_admin:
             buttons.append(NamedButton("banned"))
-
+        if c.user.employee:
+            buttons.append(NamedButton("employee"))
         if c.user_is_loggedin:
             #add the aliases to "my reddits" stays highlighted
             buttons.append(NamedButton("mine",
@@ -4089,7 +4090,7 @@ def make_link_child(item):
 
             if media_embed:
                 if media_embed.sandbox:
-                    should_authenticate = (item.subreddit.type == "private")
+                    should_authenticate = (item.subreddit.type in Subreddit.private_types)
                     media_embed = MediaEmbed(
                         media_domain=g.media_domain,
                         height=media_embed.height + 10,
