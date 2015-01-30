@@ -30,6 +30,8 @@
     import babel.dates
 %>
 
+<%namespace file="utils.html" import="_md"/>
+
 <%def name="load_timeseries_js()">
   <!--[if lte IE 8]>
   ${unsafe(js.use('timeseries-ie'))}
@@ -39,13 +41,17 @@
   <!--<![endif]-->
 </%def>
 
-% if thing.place:
-<h1>${_("traffic statistics for %(place)s") % dict(place=thing.place)}</h1>
-% endif
+<div class="md-container wiki-page-content">
+  % if thing.place:
+    ${_md(("# traffic statistics for %(place)s") % dict(place=thing.place), wrap=True)}
+  % endif
 
-${self.preamble()}
+  ${self.preamble()}
 
-${self.last_modified_message()}
+  ${self.last_modified_message()}
+
+  ${self.top_content()}
+</div>
 
 <%def name="last_modified_message()">
     <p id="timeseries-unprocessed" data-last-processed="${js_timestamp(thing.traffic_last_modified)}">
@@ -58,7 +64,6 @@ ${self.last_modified_message()}
 </%def>
 
 <%def name="top_content()"></%def>
-${self.top_content()}
 
 <div id="charts"></div>
 
