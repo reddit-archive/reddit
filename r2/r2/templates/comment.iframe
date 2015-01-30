@@ -51,16 +51,22 @@
     hide_edits = (not thing.edits_visible) and edited_recently
   %>
   <article class="reddit-embed-comment ${comment_css_class(thing, hide_edits)}">
-    %if thing.deleted or thing.author._deleted:
+    %if thing.deleted:
       ${_("This comment was deleted.")}
     %else:
       <header class="reddit-embed-comment-header">
-        <a class="reddit-embed-author"
-           href="http://${get_domain(subreddit=False)}/user/${thing.author.name}"
-           data-redirect-type="user"
-           data-redirect-thing="${thing.author._id}">
-          ${thing.author.name}
-        </a>
+        %if thing.author._deleted:
+          <span class="reddit-embed-author reddit-embed-author-deleted">
+            ${_("[account deleted]")}
+          </span>
+        %else:
+          <a class="reddit-embed-author"
+             href="http://${get_domain(subreddit=False)}/user/${thing.author.name}"
+             data-redirect-type="user"
+             data-redirect-thing="${thing.author._id}">
+            ${thing.author.name}
+          </a>
+        %endif
         %if hide_edits:
           ${_("%(name)s's comment was changed.") % dict(name="")}
         %else:
