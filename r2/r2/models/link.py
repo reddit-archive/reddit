@@ -43,7 +43,7 @@ from r2.lib.log import log_text
 from mako.filters import url_escape
 from r2.lib.strings import strings, Score
 from r2.lib.db import tdb_cassandra
-from r2.lib.db.tdb_cassandra import NotFoundException, view_of
+from r2.lib.db.tdb_cassandra import view_of
 from r2.lib.utils import sanitize_url
 from r2.models.gold import (
     GildedCommentsByAccount,
@@ -61,6 +61,8 @@ from hashlib import md5
 
 import random, re
 from collections import defaultdict
+from pycassa.cassandra.ttypes import NotFoundException
+import pytz
 
 class LinkExists(Exception): pass
 
@@ -2203,3 +2205,52 @@ class MessagesByAccount(tdb_cassandra.DenormalizedRelation):
     @classmethod
     def add_message(cls, account, message):
         cls.create(account, [message])
+
+
+class CommentVisitsByUser(tdb_cassandra.View):
+    _use_db = True
+    _connection_pool = 'main'
+    _read_consistency_level = tdb_cassandra.CL.ONE
+    _write_consistency_level = tdb_cassandra.CL.ONE
+    _ttl = timedelta(days=2)
+    _compare_with = tdb_cassandra.DateType()
+    _extra_schema_creation_args = {
+        "key_validation_class": tdb_cassandra.ASCII_TYPE,
+    }
+    MAX_VISITS = 10
+
+    @classmethod
+    def _rowkey(cls, user, link):
+        return "%s-%s" % (user._id36, link._id36)
+
+    @classmethod
+    def get_previous_visits(cls, user, link):
+        rowkey = cls._rowkey(user, link)
+        try:
+            columns = cls._cf.get(
+                rowkey, column_count=cls.MAX_VISITS, column_reversed=True)
+        except NotFoundException:
+            return []
+        # NOTE: dates return from pycassa are UTC but missing their timezone
+        dates = [date.replace(tzinfo=pytz.UTC) for date in columns.keys()]
+        return sorted(dates)
+
+    @classmethod
+    def add_visit(cls, user, link, visit_time):
+        rowkey = cls._rowkey(user, link)
+        column = {visit_time: ''}
+        cls._set_values(rowkey, column)
+
+    @classmethod
+    def get_and_update(cls, user, link, visit_time):
+        visits = cls.get_previous_visits(user, link)
+        if visits:
+            previous_visit = visits[-1]
+            time_since_previous = visit_time - previous_visit
+
+            if time_since_previous.total_seconds() <= g.comment_visits_period:
+                visits.pop()
+                return visits
+
+        cls.add_visit(user, link, visit_time)
+        return visits
