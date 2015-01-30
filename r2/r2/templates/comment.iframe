@@ -64,18 +64,27 @@
           ${_("%(name)s's comment was changed.") % dict(name="")}
         %else:
         <div class="reddit-embed-comment-meta">
+          %if not thing.score_hidden:
+            <a href="${add_sr(thing.permalink)}?context=3"
+               class="reddit-embed-comment-meta-item reddit-embed-score"
+               data-redirect-type="score"
+               data-redirect-thing="${thing._id}">
+              ${thing.score} ${ungettext("point", "points", thing.score)}
+            </a>
+          %endif
+          %if thing.edits_visible and edited_recently:
+            <a href="${add_sr(thing.permalink)}?context=3"
+               class="reddit-embed-comment-meta-item reddit-embed-edited"
+               data-redirect-type="edited"
+               data-redirect-thing="${thing._id}">
+              edited
+            </a>
+          %endif
           <a href="${add_sr(thing.permalink)}?context=3"
-             data-redirect-type="meta"
+             class="reddit-embed-comment-meta-item reddit-embed-permalink"
+             data-redirect-type="timestamp"
              data-redirect-thing="${thing._id}">
-            %if not thing.score_hidden:
-              <span class="reddit-embed-comment-meta-item reddit-embed-score">${thing.score} ${ungettext("point", "points", thing.score)}</span>
-            %endif
-            %if thing.edits_visible and edited_recently:
-              <span class="reddit-embed-comment-meta-item reddit-embed-edited">edited</span>
-            %endif
-            <span class="reddit-embed-comment-meta-item reddit-embed-permalink">
-              ${thing_timestamp(thing, thing.timesince, live=True, include_tense=True)}
-            </span>
+            ${thing_timestamp(thing, thing.timesince, live=True, include_tense=True)}
           </a>
         </div>
         %endif

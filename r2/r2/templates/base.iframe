@@ -33,6 +33,7 @@
 <%
     link_data = {"redirect-type": "link", "redirect-thing": thing.link._id}
     sr_data = {"redirect-type": "subreddit"}
+    reddit_data = {"redirect-type": "logo"}
 %>
 
 <!doctype html>
@@ -57,7 +58,7 @@
                     _sr_path=True,
                 )}
             </p>
-            ${plain_link("reddit", "/", _sr_path=False, _class="reddit-embed-footer-img")}
+            ${plain_link("reddit", "/", _sr_path=False, _class="reddit-embed-footer-img", data=reddit_data)}
           </footer>
         </div>
     </body>
