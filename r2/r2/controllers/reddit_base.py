@@ -439,30 +439,45 @@ _FILTER_SRS = {"mod": ModFiltered, "all": AllFiltered}
 def set_multireddit():
     routes_dict = request.environ["pylons.routes_dict"]
     if "multipath" in routes_dict:
-        multipath = routes_dict["multipath"].lower()
-        multi_id = None
+        fullpath = routes_dict["multipath"].lower()
+        multipaths = fullpath.split("+")
+        multi_ids = None
+        username = None
+        logged_in_username = None
 
         if c.user_is_loggedin and routes_dict.get("my_multi"):
-            multi_id = "/user/%s/m/%s" % (c.user.name.lower(), multipath)
+            logged_in_username = c.user.name.lower()
+            username = logged_in_username
+            multi_ids = ["/user/%s/m/%s" % (logged_in_username, multipath)
+                         for multipath in multipaths]
         elif "username" in routes_dict:
             username = routes_dict["username"].lower()
 
             if c.user_is_loggedin:
+                logged_in_username = c.user.name.lower()
                 # redirect /user/foo/m/... to /me/m/... for user foo.
-                if username == c.user.name.lower():
+                if username == logged_in_username:
                     # trim off multi id
                     url_parts = request.path_qs.split("/")[5:]
-                    url_parts.insert(0, "/me/m/%s" % multipath)
+                    url_parts.insert(0, "/me/m/%s" % fullpath)
                     path = "/".join(url_parts)
                     abort(302, location=BaseController.format_output_url(path))
 
-            multi_id = "/user/%s/m/%s" % (username, multipath)
+            multi_ids = ["/user/%s/m/%s" % (username, multipath)
+                        for multipath in multipaths]
 
-        if multi_id:
-            try:
-                c.site = LabeledMulti._byID(multi_id)
-            except tdb_cassandra.NotFound:
+        if multi_ids is not None:
+            multis = LabeledMulti._byID(multi_ids, return_dict=False) or []
+            multis = [m for m in multis if m.can_view(c.user)]
+            if not multis:
                 abort(404)
+            elif len(multis) == 1:
+                c.site = multis[0]
+            else:
+                srs = []
+                for multi in multis:
+                    srs.extend(multi.srs)
+                c.site = MultiReddit(fullpath, list(set(srs)))
     elif "filtername" in routes_dict:
         if not c.user_is_loggedin:
             abort(404)
