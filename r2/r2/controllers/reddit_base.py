@@ -588,8 +588,10 @@ def set_iface_lang():
         c.locale = babel.core.Locale.parse(g.lang, sep='-')
 
 def set_cnameframe():
+    hostname = request.host.split(":")[0]
     if (bool(request.params.get(utils.UrlParser.cname_get))
-        or not request.host.split(":")[0].endswith(g.domain)):
+        or not (utils.is_subdomain(hostname, g.domain) or
+                utils.is_subdomain(hostname, g.media_domain))):
         c.cname = True
         request.environ['REDDIT_CNAME'] = 1
     c.frameless_cname = request.environ.get('frameless_cname', False)
