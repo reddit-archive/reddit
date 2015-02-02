@@ -67,10 +67,6 @@
       '</div>'
     );
 
-    var tracker = new Metron.Tracker({
-      domain: r.config.stats_domain,
-    });
-
     function absolute(url) {
       if (/^https?:\/\//.test(url)) {
         return url;
@@ -105,7 +101,7 @@
       var serializedOptions = typeof options !== 'string' ?
         serializeOptions(options) : options;
 
-      window.rembeddit.init({track: false}, function() {
+      window.rembeddit.init({}, function() {
         var height = 0;
 
         var reflow = setInterval(function() {
@@ -178,31 +174,6 @@
 
       $textarea.on('focus', function() {
         $(this).select();
-
-        if (!created) {
-          var data = $el.data();
-          var options = getEmbedOptions(data);
-          var now = new Date();
-
-          tracker.send({
-            embed: {
-              type: 'comment',
-              action: 'create',
-              timestamp: now.getTime(),
-              utcOffset: now.getTimezoneOffset() / -60,
-              userAgent: navigator.userAgent,
-              user: r.config.user_id,
-              logged: !!r.config.logged,
-              id: $el.thing_id(),
-              subredditId: r.config.cur_site,
-              subredditName: r.config.post_site,
-              showedits: options.live,
-              hostUrl: location.href,
-            },
-          });
-
-          created = true;
-        }
       });
 
       popup.on('closed.r.popup', function() {
