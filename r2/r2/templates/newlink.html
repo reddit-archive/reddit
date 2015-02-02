@@ -108,7 +108,7 @@ ${thing.formtabs_menu}
 <div class="spacer">
     <div class="submit_text roundfield">
         <h1>${_wsf('submitting to %(sr)s', sr=unsafe('/r/<span class="sr"></span>'))}</h1>
-        <span class="content">
+        <span class="content md-container">
             %if thing.default_sr and thing.default_sr.submit_text:
                 ${unsafe(safemarkdown(thing.default_sr.submit_text))}
             %endif
