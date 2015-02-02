@@ -1840,7 +1840,7 @@ def consume_deleted_accounts():
 
         if account.has_stripe_subscription:
             from r2.controllers.ipn import cancel_stripe_subscription
-            cancel_stripe_subscription(account)
+            cancel_stripe_subscription(account.gold_subscr_id)
 
         # Mark their link submissions for updating on cloudsearch
         query = LinksByAccount._cf.xget(account._id36)
