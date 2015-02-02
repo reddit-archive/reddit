@@ -25,7 +25,7 @@
 
     from r2.lib.filters import unsafe
     from r2.lib import js
-    from r2.lib.template_helpers import get_domain, static
+    from r2.lib.template_helpers import add_sr, get_domain, static
 %>
 <%namespace file="less.html" import="less_js, less_stylesheet"/>
 <%namespace file="utils.html" import="text_with_links, plain_link"/>
@@ -40,7 +40,7 @@
 <html>
     <head>
         <meta charset=utf-8>
-        <base target="_blank">
+        <base target="_blank" href="${add_sr("/", sr_path=False, force_hostname=True)}">
         <title></title>
         ${less_stylesheet("reddit-embed.less")}
     </head>
