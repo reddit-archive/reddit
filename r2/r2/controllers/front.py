@@ -304,6 +304,7 @@ class FrontController(RedditController):
 
         kw["edits_visible"] = showedits
         kw["load_more"] = kw["continue_this_thread"] = showmore
+        kw["show_deleted"] = embeds.is_embed()
 
         displayPane = PaneStack()
 

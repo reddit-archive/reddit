@@ -756,7 +756,8 @@ def make_wrapper(parent_wrapper = Wrapped, **params):
 class CommentBuilder(Builder):
     def __init__(self, link, sort, comment=None, children=None, context=None,
                  load_more=True, continue_this_thread=True,
-                 max_depth=MAX_RECURSION, edits_visible=True, num=None, **kw):
+                 max_depth=MAX_RECURSION, edits_visible=True, num=None,
+                 show_deleted=False, **kw):
         Builder.__init__(self, **kw)
         self.link = link
         self.comment = comment
@@ -764,6 +765,7 @@ class CommentBuilder(Builder):
         self.context = context or 0
         self.load_more = load_more
         self.max_depth = max_depth
+        self.show_deleted = show_deleted or c.user_is_admin
         self.edits_visible = edits_visible
         self.num = num
         self.continue_this_thread = continue_this_thread
@@ -884,7 +886,7 @@ class CommentBuilder(Builder):
         for comment in wrapped:
             # skip deleted comments with no children
             if (comment.deleted and not cid_tree.has_key(comment._id)
-                and not c.user_is_admin):
+                and not self.show_deleted):
                 continue
 
             comment.num_children = num_children[comment._id]

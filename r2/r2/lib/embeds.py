@@ -84,3 +84,7 @@ def setup_embed(thing, showedits):
         c.user_is_loggedin = False
         c.forced_loggedout = True
         c.allow_framing = True
+
+
+def is_embed():
+    return c.render_style == "iframe"
