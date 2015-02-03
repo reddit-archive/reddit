@@ -1,5 +1,12 @@
 r.utils = {
 
+    fullnameToId: function(fullname) {
+        var parts = fullname.split('_');
+        var id36 = parts && parts[1];
+
+        return id36 && parseInt(id36, 36);
+    },
+
     escapeSelector: function(str) {
         return str.replace(/([ #;?%&,.+*~\':"!^$[\]()=>|\/@])/g,'\\$1');
     },

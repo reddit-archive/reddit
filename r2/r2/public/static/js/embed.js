@@ -101,7 +101,7 @@
       var serializedOptions = typeof options !== 'string' ?
         serializeOptions(options) : options;
 
-      window.rembeddit.init({}, function() {
+      window.rembeddit.init({track: false}, function() {
         var height = 0;
 
         var reflow = setInterval(function() {
@@ -124,6 +124,10 @@
         }, 100);
       });
     }
+
+    var tracker = new window.rembeddit.PixelTracker({
+      url: r.config.eventtracker_url,
+    });
 
     $('body').on('click', '.embed-comment', function(e) {
       var $el = $(e.target);
@@ -174,6 +178,33 @@
 
       $textarea.on('focus', function() {
         $(this).select();
+
+        if (!created) {
+          var data = $el.data();
+          var options = getEmbedOptions(data);
+          var now = new Date();
+          var ts = now.getTime();
+
+          tracker.send({
+            'event_topic': 'embed',
+            'event_name': 'embed_create',
+            'event_ts': ts,
+            'event_ts_utc_offset': now.getTimezoneOffset() / -60,
+            'embed_type': options.parent ? 'comment_and_parent' : 'comment',
+            'user_agent': navigator.userAgent,
+            'user_id': r.config.user_id,
+            'logged_in_status': !!r.config.logged,
+            'sr_id': r.utils.fullnameToId(r.config.cur_site),
+            'sr_name': r.config.post_site,
+            'embed_id': r.utils.fullnameToId($el.thing_id()),
+            'embed_created_ts': ts,
+            'embed_control': options.live,
+            'embed_host_url': location.href,
+            'embed_version': window.rembeddit.VERSION,
+          });
+
+          created = true;
+        }
       });
 
       popup.on('closed.r.popup', function() {

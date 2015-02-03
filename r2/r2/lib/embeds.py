@@ -82,7 +82,7 @@ def set_up_embed(embed_key, sr, thing, showedits):
 
     c.embed_config = {
         "logged": c.user_is_loggedin,
-        "stats_domain": g.stats_domain or "",
+        "eventtracker_url": g.eventtracker_url or "",
         "created": iso_timestamp,
         "showedits": showedits,
         "thing": {

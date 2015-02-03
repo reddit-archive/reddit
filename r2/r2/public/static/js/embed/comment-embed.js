@@ -63,6 +63,8 @@
         return;
       }
 
+      App.addPostMessageOrigin(embed.getAttribute('data-embed-media'));
+
       iframe.height = 0;
       iframe.width = '100%';
       iframe.scrolling = 'no';
@@ -85,7 +87,8 @@
 
         callback(e);
         App.postMessage(iframe.contentWindow, 'pong', {
-          type: 'comment',
+          type: embed.getAttribute('data-embed-parent') === 'true' ?
+            'comment_and_parent' : 'comment',
           location: location,
           options: options,
         });
