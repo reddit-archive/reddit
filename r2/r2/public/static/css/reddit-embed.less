@@ -2,7 +2,6 @@
 @import "components/mixins.less";
 @import "markdown.less";
 
-@embed-border-radius: 5px;
 
 * {
     .box-sizing(border-box)
@@ -11,7 +10,6 @@
 body {
     font: normal 14px verdana, arial, helvetica, sans-serif;
     margin: 0;
-    padding: 5px;
 }
 
 a {
@@ -29,9 +27,6 @@ p {
 
 .reddit-embed {
     background: #fff;
-    border-radius: @embed-border-radius;
-    .box-shadow(0 0 3px rgba(0,0,0,0.15));
-    max-width: 60em;
 }
 
 .reddit-embed-content {
@@ -44,8 +39,6 @@ p {
     @snoo-padding: 12px;
 
     background: #f7f7f7;
-    border-bottom-left-radius: @embed-border-radius;
-    border-bottom-right-radius: @embed-border-radius;
     display: table;
     font-size: 12px;
     height: (@snoo-height + (@snoo-padding * 2));
