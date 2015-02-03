@@ -427,13 +427,11 @@ class Reddit(Templated):
                 buttons.append(NamedButton("moderators",
                                            css_class="reddit-moderators"))
 
-                if c.site.type != "public":
-                    buttons.append(NamedButton("contributors",
-                                               css_class="reddit-contributors"))
-                else:
-                    buttons.append(NavButton(menu.contributors,
-                                             "contributors",
-                                             css_class="reddit-contributors"))
+                if not c.site.hide_contributors:
+                    buttons.append(NavButton(
+                            menu.contributors,
+                            "contributors",
+                            css_class="reddit-contributors"))
 
             buttons.append(NamedButton("traffic", css_class="reddit-traffic"))
 
@@ -604,7 +602,11 @@ class Reddit(Templated):
                                       show_cover=True))
 
         no_ads_yet = True
-        show_adbox = (c.user.pref_show_adbox or not c.user.gold) and not g.disable_ads
+        user_disabled_ads = c.user.gold and not c.user.pref_show_adbox
+        sr_disabled_ads = (not isinstance(c.site, FakeSubreddit) and
+            c.site.type == "gold_only" and
+            c.site.hide_ads)
+        show_adbox = not (user_disabled_ads or sr_disabled_ads or g.disable_ads)
 
         # don't show the subreddit info bar on cnames unless the option is set
         if not isinstance(c.site, FakeSubreddit) and (not c.cname or c.site.show_cname_sidebar):
@@ -823,6 +825,9 @@ class Reddit(Templated):
         if c.user_is_loggedin and c.user.pref_compress:
             classes.add('compressed-display')
 
+        if getattr(c.site, 'type', None) == 'gold_only':
+            classes.add('gold-only')
+
         if self.extra_page_classes:
             classes.update(self.extra_page_classes)
         if self.supplied_page_classes:
@@ -984,23 +989,6 @@ class SubredditInfoBar(CachedTemplate):
                 return self.sr.author.name
         return None
 
-    def nav(self):
-        buttons = [NavButton(plurals.moderators, 'moderators')]
-        if self.type != 'public':
-            buttons.append(NavButton(getattr(plurals, "approved submitters"), 'contributors'))
-
-        if self.is_moderator or self.is_admin:
-            buttons.extend([
-                    NamedButton('spam'),
-                    NamedButton('reports'),
-                    NavButton(menu.banusers, 'banned'),
-                    NamedButton('traffic'),
-                    NavButton(menu.community_settings, 'edit'),
-                    NavButton(menu.flair, 'flair'),
-                    NavButton(menu.modactions, 'modactions'),
-                    ])
-        return [NavMenu(buttons, type = "flat_vert", base_path = "/about/",
-                        separator = '')]
 
 class SponsorshipBox(Templated):
     pass
@@ -1855,6 +1843,8 @@ class SubredditsPage(Reddit):
             buttons.append(NamedButton("banned"))
         if c.user.employee:
             buttons.append(NamedButton("employee"))
+        if c.user.gold or c.user.gold_charter:
+            buttons.append(NamedButton("gold"))
         if c.user_is_loggedin:
             #add the aliases to "my reddits" stays highlighted
             buttons.append(NamedButton("mine",

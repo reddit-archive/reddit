@@ -495,7 +495,7 @@ ${unsafe(txt)}
   </%call>
 </%def>
 
-<%def name="radio_type(field_name, val_name, title, text=None, checked=False)">
+<%def name="radio_type(field_name, val_name, title, text=None, checked=False, disabled=False, hover_title='[?]', hover_text=None)">
   <% full_name = field_name + "_" + val_name %>
   <tr>
     <td class="nowrap nopadding">
@@ -504,8 +504,19 @@ ${unsafe(txt)}
              %if checked:
                checked="checked"
              %endif
+             %if disabled:
+               disabled="disabled"
+             %endif
              />
       <label for="${full_name}">${title}</label>
+    %if hover_text:
+      <span class="help help-hoverable">
+        <sup>${hover_title}</sup>
+        <div class="hover-bubble help-bubble anchor-top-left">
+          <p>${hover_text}</p>
+        </div>
+      </span>
+    %endif
     </td>
     %if text:
       <td class="leftpad"><span class="gray">${text}</span></td>

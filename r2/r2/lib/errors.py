@@ -22,7 +22,7 @@
 
 from webob.exc import HTTPBadRequest, HTTPForbidden, status_map
 from r2.lib.utils import Storage, tup
-from pylons import request
+from pylons import g, request
 from pylons.i18n import _
 from copy import copy
 
@@ -74,6 +74,7 @@ error_list = dict((
         ('SUBREDDIT_NOEXIST', _('that subreddit doesn\'t exist')),
         ('SUBREDDIT_NOTALLOWED', _("you aren't allowed to post there.")),
         ('SUBREDDIT_REQUIRED', _('you must specify a subreddit')),
+        ('SUBREDDIT_DISABLED_ADS', _('this subreddit has chosen to disable their ads at this time')),
         ('BAD_SR_NAME', _('that name isn\'t going to work')),
         ('COLLECTION_NOEXIST', _('that collection doesn\'t exist')),
         ('INVALID_TARGET', _('that target type is not valid')),
@@ -155,6 +156,9 @@ error_list = dict((
         ('USER_BLOCKED_MESSAGE', _("can't send message to that user")),
         ('USER_BAN_NO_MESSAGE', _("that user will not be sent a ban notification, remove note to be able to ban")),
         ('ADMIN_REQUIRED', _("you must be in admin mode for this")),
+        ('CANT_CONVERT_TO_GOLD_ONLY', _("to convert an existing subreddit to gold only, send a message to %(admin_modmail)s") 
+            % dict(admin_modmail=g.admin_message_acct)),
+        ('GOLD_ONLY_SR_REQUIRED', _("this subreddit must be 'gold only' to select this")),
     ))
 
 errors = Storage([(e, e) for e in error_list.keys()])

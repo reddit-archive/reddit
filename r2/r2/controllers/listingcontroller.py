@@ -1236,6 +1236,14 @@ class RedditsController(ListingController):
                     cache_time=5 * 60,
                 )
                 reddits._sort = desc('_downs')
+            elif self.where == 'gold':
+                reddits = Subreddit._query(
+                    Subreddit.c.type=='gold_only',
+                    write_cache=True,
+                    read_cache=True,
+                    cache_time=5 * 60,
+                )
+                reddits._sort = desc('_downs')
             else:
                 reddits = Subreddit._query( write_cache = True,
                                             read_cache = True,
@@ -1254,7 +1262,12 @@ class RedditsController(ListingController):
     @require_oauth2_scope("read")
     @listing_api_doc(section=api_section.subreddits,
                      uri='/subreddits/{where}',
-                     uri_variants=['/subreddits/popular', '/subreddits/new', '/subreddits/employee'])
+                     uri_variants=[
+                         '/subreddits/popular',
+                         '/subreddits/new',
+                         '/subreddits/employee',
+                         '/subreddits/gold',
+                     ])
     def GET_listing(self, where, **env):
         """Get all subreddits.
 
@@ -1590,6 +1603,9 @@ class UserListListingController(ListingController):
                 abort(403)
             # Used for subreddits like /r/lounge
             if c.site.hide_subscribers:
+                abort(403)
+            # used for subreddits that don't allow access to approved submitters
+            if c.site.hide_contributors:
                 abort(403)
             self.listing_cls = ContributorListing
             self.editable = has_mod_access

@@ -25,7 +25,7 @@
    from r2.lib.pages import UserText
    from r2.lib.strings import strings
 %>
-<%namespace file="utils.html" import="error_field, language_tool, plain_link"/>
+<%namespace file="utils.html" import="_md, error_field, language_tool, plain_link"/>
 <%namespace file="utils.html" import="image_upload"/>
 <%namespace file="printablebuttons.html" import="toggle_button, simple_button" />
 
@@ -136,9 +136,27 @@
                            _("only reddit employees can view; the employee list is pulled from live config"),
                            is_employees_only)}
       %endif
+
+      <% 
+          is_gold_only = thing.site and thing.site.type == 'gold_only'
+          can_set_gold_only = (is_gold_only or c.user_is_admin or
+                  (not thing.site and (c.user.gold or c.user.gold_charter)))
+          if is_gold_only:
+              hover_title = "[!]"
+              hover_text = _('If you switch this subreddit to another type, you will not be able to switch back to "gold only" without the assistance of an admin')
+          else:
+              hover_title = "[?]"
+              hover_text = unsafe(capture(_md, 'BETA: Subreddits can be created as "gold only" during creation by a user that has gold. You can find more info about this feature [here](/gold/about#gold-only-subreddits)'))
+      %>
+      ${utils.radio_type('type', "gold_only", _("gold only"),
+              _("only reddit gold members can view and submit"),
+              checked=is_gold_only, disabled=not can_set_gold_only, hover_title=hover_title,
+              hover_text=hover_text)}
       </table>
       ${error_field("INVALID_OPTION", "type")}
       ${error_field("ADMIN_REQUIRED", "type")}
+      ${error_field("GOLD_REQUIRED", "type")}
+      ${error_field("CANT_CONVERT_TO_GOLD_ONLY", "type")}
     </div>
   </%utils:line_field>
 
@@ -322,6 +340,20 @@
             ${_("collapse deleted and removed comments")}
           </label>
         </li>
+        %if thing.site and thing.site.type == 'gold_only':
+          <li>
+            <input class="nomargin" type="checkbox"
+                   name="hide_ads" id="hide_ads"
+                   %if thing.site.hide_ads:
+                     checked="checked"
+                   %endif
+            >
+            <label class="buygold" for="hide_ads">
+              ${_("hide ads (only available for gold only subreddits)")}
+            </label>
+          </li>
+        %endif
+        ${error_field("GOLD_ONLY_SR_REQUIRED", "hide_ads")}
       </ul>
     </div>
     <div class="usertext-edit">

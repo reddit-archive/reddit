@@ -81,7 +81,7 @@ def make_map():
     mc('/subreddits/search', controller='front', action='search_reddits')
     mc('/subreddits/login', controller='forms', action='login')
     mc('/subreddits/:where', controller='reddits', action='listing',
-       where='popular', requirements=dict(where="popular|new|banned|employee"))
+       where='popular', requirements=dict(where="popular|new|banned|employee|gold"))
     # If no subreddit is specified, might as well show a list of 'em.
     mc('/r', controller='redirect', action='redirect', dest='/subreddits')
 

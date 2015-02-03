@@ -1600,6 +1600,16 @@ class RedditController(OAuth2ResourceController):
                 if isinstance(c.site, LabeledMulti):
                     # do not leak the existence of multis via 403.
                     self.abort404()
+                elif c.site.type == 'gold_only' and not (c.user.gold or c.user.gold_charter):
+                    public_description = c.site.public_description
+                    errpage = pages.RedditError(
+                        strings.gold_only_subreddit_title,
+                        strings.gold_only_subreddit_message,
+                        image="subreddit-gold-only.png",
+                        sr_description=public_description,
+                    )
+                    request.environ['usable_error_content'] = errpage.render()
+                    self.abort403()
                 else:
                     public_description = c.site.public_description
                     errpage = pages.RedditError(

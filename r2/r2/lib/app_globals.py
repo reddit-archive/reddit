@@ -254,6 +254,7 @@ class Globals(object):
             'timed_templates',
             'autoexpand_media_types',
             'multi_icons',
+            'hide_subscribers_srs',
         ],
 
         ConfigValue.tuple_of(ConfigValue.int): [

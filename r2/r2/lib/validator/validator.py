@@ -1232,6 +1232,10 @@ class VSubmitSR(Validator):
             self.set_error(errors.SUBREDDIT_NOTALLOWED)
             return
 
+        if sr.hide_ads:
+            self.set_error(errors.SUBREDDIT_DISABLED_ADS)
+            return
+
         if self.require_linktype:
             if link_type not in ('link', 'self'):
                 self.set_error(errors.INVALID_OPTION)
