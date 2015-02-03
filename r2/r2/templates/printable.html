@@ -28,7 +28,7 @@
    from r2.lib.utils import long_datetime
 %>
 
-<%namespace file="utils.html" import="plain_link" />
+<%namespace file="utils.html" import="classes, plain_link" />
 
 ${self.RenderPrintable()}
 
@@ -198,11 +198,12 @@ ${self.RenderPrintable()}
 
 <%def name="arrow(this, dir, mod)">
 <% 
-   _type = "up" if dir > 0 else "down"
-   _class = _type + ("mod" if mod else "")
-   fullname = this._fullname
+   arrow_type = "up" if dir > 0 else "down"
+   arrow_class = arrow_type + ("mod" if mod else "")
+   login_class = "login-required" if not g.read_only_mode else ""
 %>
-  <div class="arrow ${_class} login-required"
+  <div ${classes("arrow", arrow_class, login_class)}
+    %if not g.read_only_mode:
        %if getattr(thing, "votable", True):
          onclick="$(this).vote(r.config.vote_hash, null, event)"
        %else:
@@ -215,7 +216,8 @@ ${self.RenderPrintable()}
        aria-label="${_("downvote")}"
        % endif
        tabindex="0"
-       >
+    %endif
+    >
   </div>
 </%def>
 
