@@ -198,7 +198,7 @@
   %if thing.mod_reports:
     <li class="report-reason-title">${_("moderator reports:")}</li>
     %for reason, user in thing.mod_reports:
-      <li class="report-reason mod-report" title="${_(reason)}">${user}:
+      <li class="report-reason mod-report" title="${reason}">${user}:
       %if reason:
         ${reason}
       %else:
