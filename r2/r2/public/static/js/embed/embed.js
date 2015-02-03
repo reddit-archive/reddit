@@ -7,7 +7,7 @@
   function checkHeight() {
     var height = document.body.clientHeight;
 
-    if (App.height !== height) {
+    if (height && App.height !== height) {
       App.height = height;
 
       App.postMessage(window.parent, 'resize', height, '*');
