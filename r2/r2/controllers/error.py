@@ -196,6 +196,9 @@ class ErrorController(RedditController):
             if srname:
                 c.site = Subreddit._by_name(srname)
 
+            if request.GET.has_key('allow_framing'):
+                c.allow_framing = bool(request.GET['allow_framing'] == '1')
+
             if code in (204, 304):
                 # NEVER return a content body on 204/304 or downstream
                 # caches may become very confused.

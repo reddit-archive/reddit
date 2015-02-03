@@ -251,16 +251,16 @@ class FrontController(RedditController):
         if not can_view_link_comments(article):
             abort(403, 'forbidden')
 
-        #check for 304
+        # Determine if we should show the embed link for comments
+        c.can_embed = feature.is_enabled("comment_embeds") and bool(comment)
+
+        embed_key = embeds.prepare_embed_request(sr)
+
+        # check for 304
         self.check_modified(article, 'comments')
 
-        # `CommentPane` needs this for caching
-        c.can_embed = feature.is_enabled("comment_embeds")
-
-        # only show embed button on permalinked comments
-        c.can_embed = c.can_embed and bool(comment)
-
-        embeds.setup_embed(thing=comment, showedits=showedits)
+        if embed_key:
+            embeds.set_up_embed(embed_key, sr, comment, showedits=showedits)
 
         # If there is a focal comment, communicate down to
         # comment_skeleton.html who that will be. Also, skip

@@ -100,8 +100,10 @@ def error_mapper(code, message, environ, global_conf=None, **kw):
         if environ.get('REDDIT_TAKEDOWN'):
             d['takedown'] = environ.get('REDDIT_TAKEDOWN')
 
-        #preserve x-sup-id when 304ing
+        #preserve x-sup-id and x-frame-options when 304ing
         if code == 304:
+            d['allow_framing'] = 1 if c.allow_framing else 0
+
             try:
                 # make sure that we're in a context where we can use SOP
                 # objects (error page statics appear to not be in this context)
