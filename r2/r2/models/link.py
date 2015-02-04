@@ -76,6 +76,7 @@ class Link(Thing, Printable):
     _data_int_props = Thing._data_int_props + (
         'num_comments', 'reported', 'comment_tree_id', 'gildings')
     _defaults = dict(is_self=False,
+                     default_sort=None,
                      over_18=False,
                      over_18_override=False,
                      nsfw_str=False,

@@ -58,8 +58,8 @@ class ModAction(tdb_cassandra.UuidThing):
                'editsettings', 'editflair', 'distinguish', 'marknsfw', 
                'wikibanned', 'wikicontributor', 'wikiunbanned', 'wikipagelisted',
                'removewikicontributor', 'wikirevise', 'wikipermlevel',
-               'ignorereports', 'unignorereports', 'setpermissions', 'sticky',
-               'unsticky')
+               'ignorereports', 'unignorereports', 'setpermissions',
+               'setdefaultsort', 'sticky', 'unsticky')
 
     _menu = {'banuser': _('ban user'),
              'unbanuser': _('unban user'),
@@ -88,6 +88,7 @@ class ModAction(tdb_cassandra.UuidThing):
              'ignorereports': _('ignore reports'),
              'unignorereports': _('unignore reports'),
              'setpermissions': _('permissions'),
+             'setdefaultsort': _('set default sort'),
              'sticky': _('sticky post'),
              'unsticky': _('unsticky post'),
             }
@@ -119,6 +120,7 @@ class ModAction(tdb_cassandra.UuidThing):
              'ignorereports': _('ignored reports'),
              'unignorereports': _('unignored reports'),
              'setpermissions': _('changed permissions on'),
+             'setdefaultsort': _('set default sort'),
              'sticky': _('stickied'),
              'unsticky': _('unstickied'),
             }

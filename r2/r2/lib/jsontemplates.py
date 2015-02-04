@@ -25,6 +25,7 @@ import calendar
 from utils import to36, tup, iters
 from wrapped import Wrapped, StringTemplate, CacheStub, CachedVariable, Templated
 from mako.template import Template
+from r2.config import feature
 from r2.config.extensions import get_api_subtype
 from r2.lib.filters import spaceCompress, safemarkdown
 from r2.models import Account, Report
@@ -523,6 +524,11 @@ class LinkJsonTemplate(ThingJsonTemplate):
         ups="upvotes",
         url="url",
     )
+
+    def __init__(self):
+        super(LinkJsonTemplate, self).__init__()
+        if feature.is_enabled('default_sort'):
+            self._data_attrs_['default_sort'] = 'default_sort'
 
     def thing_attr(self, thing, attr):
         from r2.lib.media import get_media_embed

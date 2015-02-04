@@ -1439,6 +1439,31 @@ class ApiController(RedditController):
     @require_oauth2_scope("modposts")
     @validatedForm(VUser(),
                    VModhash(),
+                   VSrCanAlter('id'),
+                   thing=VByName('id', thing_cls=Link),
+                   sort=VOneOf('sort', CommentSortMenu._options))
+    def POST_set_default_sort(self, form, jquery, thing, sort):
+        """Set a default sort for a link.
+
+        Default sorts are useful to display comments in a certain preferred way
+        for posts. For example, casual conversation may be better sorted by new
+        by default, or threads where voting is less important may be sorted by
+        random. A sort of an empty string clears the default sort.
+        """
+        if not feature.is_enabled('default_sort'):
+            return abort(403, "This feature is not yet enabled")
+
+        if c.user._id != thing.author_id:
+            ModAction.create(thing.subreddit_slow, c.user, target=thing,
+                             action='setdefaultsort')
+
+        thing.default_sort = sort
+        thing._commit()
+        jquery.refresh()
+
+    @require_oauth2_scope("modposts")
+    @validatedForm(VUser(),
+                   VModhash(),
                    VSrCanBan('id'),
                    thing=VByName('id'),
                    state=VBoolean('state'))
