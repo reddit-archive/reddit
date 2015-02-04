@@ -527,7 +527,8 @@ class SortMenu(NavMenu):
         options = self.make_buttons()
         default = default or self._default
         base_path = base_path or request.path
-        NavMenu.__init__(self, options, default=default, title=_(self._title),
+        title = title or _(self._title)
+        NavMenu.__init__(self, options, default=default, title=title,
                          type=self._type, base_path=base_path,
                          separator=separator, _id=_id, css_class=css_class)
 
