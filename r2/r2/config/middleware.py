@@ -170,8 +170,17 @@ class DomainMiddleware(object):
             environ['legacy-cname'] = domain
             return self.app(environ, start_response)
 
-        # figure out what subdomain we're on if any
-        subdomains = domain[:-len(g.domain) - 1].split('.')
+        # How many characters to chop off the end of the hostname before
+        # we start looking at subdomains
+        ignored_suffix_len = len(g.domain)
+
+        # OAuth is a bit of a special case. `foo.oauth.domain.com` should be
+        # treated like `foo.domain.com` when generating links
+        if g.oauth_domain and is_subdomain(domain, g.oauth_domain):
+            ignored_suffix_len = len(g.oauth_domain)
+
+        # figure out what subdomain we're on, if any
+        subdomains = domain[:-ignored_suffix_len - 1].split('.')
         extension_subdomains = dict(m="mobile",
                                     i="compact",
                                     api="api",
@@ -183,7 +192,7 @@ class DomainMiddleware(object):
         prefix_parts = []
         for subdomain in subdomains[:]:
             extension = extension_subdomains.get(subdomain)
-            # These subdomains have special meanings, don't treat them as a SR
+            # These subdomains have special meanings, don't treat them as SR
             # or language subdomains.
             if subdomain in g.reserved_subdomains:
                 if subdomain == g.domain_prefix:
