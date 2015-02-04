@@ -96,7 +96,7 @@
           %if thing.viewing_self:
             ${_("View/edit my snoovatar")}
           %else:
-            ${_("Check out %(username)s's snoovatar") % dict(username=thing.user.name)}
+            ${_("%(username)s's snoovatar") % dict(username=thing.user.name)}
           %endif
         </a>
       </div>
