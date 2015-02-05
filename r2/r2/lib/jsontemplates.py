@@ -422,6 +422,7 @@ class PrefsJsonTemplate(ThingJsonTemplate):
 class LinkJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = ThingJsonTemplate.data_attrs(
         approved_by="approved_by",
+        archived="archived",
         author="author",
         author_flair_css_class="author_flair_css_class",
         author_flair_text="author_flair_text",
@@ -496,6 +497,8 @@ class LinkJsonTemplate(ThingJsonTemplate):
                 return safemarkdown(thing.selftext)
             else:
                 return safemarkdown(_("[removed]"))
+        elif attr == "archived":
+            return not thing.votable
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
     def raw_data(self, thing):
@@ -521,6 +524,7 @@ class PromotedLinkJsonTemplate(LinkJsonTemplate):
 class CommentJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = ThingJsonTemplate.data_attrs(
         approved_by="approved_by",
+        archived="archived",
         author="author",
         author_flair_css_class="author_flair_css_class",
         author_flair_text="author_flair_text",
@@ -570,6 +574,8 @@ class CommentJsonTemplate(ThingJsonTemplate):
             return spaceCompress(safemarkdown(thing.body))
         elif attr == "gilded":
             return thing.gildings
+        elif attr == "archived":
+            return not thing.votable
 
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
