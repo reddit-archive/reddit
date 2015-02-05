@@ -955,6 +955,8 @@ class MessageController(ListingController):
         return _('messages') + ': ' + _(self.where)
 
     def keep_fn(self):
+        # does not apply to /message/messages or /message/moderator/inbox
+        # these endpoints use MessageBuilder rather than QueryBuilder
         def keep(item):
             wouldkeep = item.keep_item(item)
 
@@ -967,9 +969,12 @@ class MessageController(ListingController):
                 return False
             if item.author_id in c.user.enemies:
                 return False
-            # don't show user their own unread stuff
+            # don't show user their own stuff
+            if item.author_id == c.user._id:
+                return False
+            # don't show user their unread stuff
             if ((self.where == 'unread' or self.subwhere == 'unread')
-                and (item.author_id == c.user._id or not item.new)):
+                and not item.new):
                 return False
 
             if (item.is_mention and
