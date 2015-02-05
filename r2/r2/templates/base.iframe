@@ -60,10 +60,10 @@
             ${plain_link("reddit", "/", _sr_path=False, _class="reddit-embed-footer-img", data=reddit_data)}
           </footer>
         </div>
+        <script>
+            window.REDDIT_EMBED_CONFIG = ${unsafe(json.dumps(c.embed_config))};
+        </script>
+        ${unsafe(js.use('reddit-embed'))}
+        ${less_js()}
     </body>
-    <script>
-        window.REDDIT_EMBED_CONFIG = ${unsafe(json.dumps(c.embed_config))};
-    </script>
-    ${unsafe(js.use('reddit-embed'))}
-    ${less_js()}
 </html>
