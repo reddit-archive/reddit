@@ -116,6 +116,10 @@ Pin: release o=LP-PPA-reddit
 Pin-Priority: 600
 HERE
 
+# add the datastax cassandra repos
+echo deb http://debian.datastax.com/community stable main > /etc/apt/sources.list.d/cassandra.sources.list
+curl -L https://debian.datastax.com/debian/repo_key | sudo apt-key add -
+
 # grab the new ppas' package listings
 apt-get update
 
@@ -168,7 +172,7 @@ memcached
 postgresql
 postgresql-client
 rabbitmq-server
-cassandra
+cassandra=1.2.19
 haproxy
 nginx
 stunnel
@@ -176,9 +180,6 @@ gunicorn
 sutro
 libpcre3-dev
 PACKAGES
-
-# paper over stack size issues with cassandra
-sed -i s/-Xss128k/-Xss228k/ /etc/cassandra/cassandra-env.sh
 
 ###############################################################################
 # Wait for all the services to be up
@@ -232,14 +233,20 @@ done
 ###############################################################################
 # Configure Cassandra
 ###############################################################################
-if ! echo | cassandra-cli -h localhost -k reddit &> /dev/null; then
-    echo "create keyspace reddit;" | cassandra-cli -h localhost -B
-fi
+python <<END
+import pycassa
+sys = pycassa.SystemManager("localhost:9160")
 
-cat <<CASS | cassandra-cli -B -h localhost -k reddit || true
-create column family permacache with column_type = 'Standard' and
-                                     comparator = 'BytesType';
-CASS
+if "reddit" not in sys.list_keyspaces():
+    print "creating keyspace 'reddit'"
+    sys.create_keyspace("reddit", "SimpleStrategy", {"replication_factor": "1"})
+    print "done"
+
+if "permacache" not in sys.get_keyspace_column_families("reddit"):
+    print "creating column family 'permacache'"
+    sys.create_column_family("reddit", "permacache")
+    print "done"
+END
 
 ###############################################################################
 # Configure PostgreSQL
