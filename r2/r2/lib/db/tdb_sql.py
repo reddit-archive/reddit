@@ -269,7 +269,7 @@ def check_type(table, name, insert_vals):
     r = table.select(table.c.name == name).execute().fetchone()
     if not r:
         r = table.insert().execute(**insert_vals)
-        type_id = r.last_inserted_ids()[0]
+        type_id = r.inserted_primary_key[0]
     else:
         type_id = r.id
     return type_id
@@ -423,7 +423,7 @@ def make_thing(type_id, ups, downs, date, deleted, spam, id=None):
     def do_insert(t):
         transactions.add_engine(t.bind)
         r = t.insert().execute(**params)
-        new_id = r.last_inserted_ids()[0]
+        new_id = r.inserted_primary_key[0]
         new_r = r.last_inserted_params()
         for k, v in params.iteritems():
             if new_r[k] != v:
@@ -484,7 +484,7 @@ def make_relation(rel_type_id, thing1_id, thing2_id, name, date=None):
                                    name = name, 
                                    date = date)
         g.stats.event_count('rel.create', table.rel_name)
-        return r.last_inserted_ids()[0]
+        return r.inserted_primary_key[0]
     except sa.exc.DBAPIError, e:
         if not 'IntegrityError' in e.message:
             raise
