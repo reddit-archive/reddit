@@ -221,7 +221,8 @@ def add_message(message, update_recipient=True, update_modmail=True,
     with g.make_lock("message_tree", messages_lock_key(message.author_id)):
         add_message_nolock(message.author_id, message)
 
-    if update_recipient and message.to_id:
+    if (update_recipient and message.to_id and
+            message.to_id != message.author_id):
         with g.make_lock("message_tree", messages_lock_key(message.to_id)):
             add_message_nolock(message.to_id, message)
 
