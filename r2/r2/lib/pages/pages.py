@@ -866,10 +866,10 @@ class RedditFooter(CachedTemplate):
     def __init__(self):
         self.nav = [
             NavMenu([
-                    NamedButton("blog", False, nocname=True, dest="/r/blog"),
+                    NamedButton("blog", False, nocname=True, dest="/blog"),
                     NamedButton("about", False, nocname=True),
                     NamedButton("team", False, nocname=True, dest="/about/team"),
-                    OffsiteButton(_("source code"), "https://github.com/reddit"),
+                    NamedButton("source_code", False, nocname=True, dest="/code"),
                     NamedButton("advertising", False, nocname=True),
                     NamedButton("jobs", False, nocname=True),
                 ],
@@ -882,6 +882,7 @@ class RedditFooter(CachedTemplate):
                     NamedButton("faq", False, nocname=True, dest="/wiki/faq"),
                     NamedButton("wiki", False, nocname=True),
                     NamedButton("reddiquette", False, nocname=True, dest="/wiki/reddiquette"),
+                    NamedButton("transparency", False, nocname=True, dest="/wiki/transparency"),
                     NamedButton("contact", False),
                 ],
                 title = _("help"),
@@ -889,22 +890,20 @@ class RedditFooter(CachedTemplate):
                 separator = ""),
 
             NavMenu([
-                    OffsiteButton(_("mobile site"), "http://i.reddit.com"),
+                    OffsiteButton(_("Alien Blue iOS app"), "//alienblue.org"),
+                    OffsiteButton(_("mobile site"), "//i.reddit.com"),
                     NamedButton("buttons", True),
-                    NamedButton("widget", True),
                 ],
-                title = _("tools"),
+                title = _("apps & tools"),
                 type = "flat_vert",
                 separator = ""),
 
             NavMenu([
                     NamedButton("gold", False, nocname=True, dest="/gold/about", css_class="buygold"),
-                    OffsiteButton(_("redditgifts marketplace"), "http://redditgifts.com"),
-                    OffsiteButton(_("redditmade"), "https://redditmade.com"),
-                    OffsiteButton(_("Alien Blue iOS app"), "https://alienblue.org"),
-                    OffsiteButton(_("reddit AMA app"), "https://redditama.reddit.com"),
-                    OffsiteButton(_("reddit.tv"), "http://reddit.tv"),
-                    OffsiteButton(_("radio reddit"), "http://radioreddit.com"),
+                    OffsiteButton(_("reddit store"), "http://redditmarket.com"),
+                    OffsiteButton(_("redditgifts"), "//redditgifts.com"),
+                    OffsiteButton(_("reddit.tv"), "//reddit.tv"),
+                    OffsiteButton(_("radio reddit"), "//radioreddit.com"),
                 ],
                 title = _("<3"),
                 type = "flat_vert",

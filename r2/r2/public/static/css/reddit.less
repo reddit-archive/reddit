@@ -2520,17 +2520,22 @@ textarea.gray { color: gray; }
 .footer {
     color: gray;
     padding: 5px;
-    margin: 15px;
+    margin: 15px auto;
     border:1px solid #F0F0F0;
-    display: inline-block;
+    display: flex;
+    display: -webkit-flex;
+    max-width: 600px;
 }
 
 .footer .col {
-    float: left;
+    display: inline-block;
+    vertical-align: top;
+    -webkit-flex: 0 0 25%;
+    flex: 0 0 25%;
     margin: 10px 0;
     padding: 0 15px;
     border-left: 1px solid #E0E0E0;
-    height: 9.5em;
+    box-sizing: border-box;
  }
 
 .footer .col:first-child {border: none;}

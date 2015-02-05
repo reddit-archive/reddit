@@ -81,7 +81,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      logout       = _("logout"),
                      
                      #reddit footer strings
-                     faq          = _("faq"),
+                     faq          = _("FAQ"),
                      reddiquette  = _("reddiquette"),
                      contact      = _("contact us"),
                      buttons      = _("buttons"),
@@ -93,6 +93,8 @@ menu =   MenuHandler(hot          = _('hot'),
                      team         = _('team'),
                      rules        = _('site rules'),
                      jobs         = _('jobs'),
+                     transparency = _("transparency"),
+                     source_code  = _("source code"),
 
                      #preferences
                      options      = _('options'),
