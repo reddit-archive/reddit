@@ -8,7 +8,7 @@ import pytz
 
 from r2.controllers.reddit_base import UnloggedUser
 from r2.lib.utils import constant_time_compare
-from r2.models import Account
+from r2.models import Account, NotFound
 from r2.models.subreddit import Subreddit
 
 
