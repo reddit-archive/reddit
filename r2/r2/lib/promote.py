@@ -484,11 +484,15 @@ def accept_promotion(link):
 
 
 def flag_payment(link, reason):
-    # already determined to be fraud.
-    if link.payment_flagged_reason and link.fraud:
+    # already determined to be fraud or already flagged for that reason.
+    if link.fraud or reason in link.payment_flagged_reason:
         return
 
-    link.payment_flagged_reason = reason
+    if link.payment_flagged_reason:
+        link.payment_flagged_reason += (", %s" % reason)
+    else:
+        link.payment_flagged_reason = reason
+
     link._commit()
     PromotionLog.add(link, "payment flagged: %s" % reason)
     queries.set_payment_flagged_link(link)

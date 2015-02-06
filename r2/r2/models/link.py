@@ -84,7 +84,7 @@ class Link(Thing, Printable):
                      media_autoplay=False,
                      domain_override=None,
                      promoted=None,
-                     payment_flagged_reason=None,
+                     payment_flagged_reason="",
                      fraud=None,
                      managed_promo=False,
                      pending=False,
