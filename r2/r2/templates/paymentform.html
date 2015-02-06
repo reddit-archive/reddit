@@ -94,7 +94,15 @@
        if (val == "" || inputs.find("[name=edit]").val() == "on") 
             enable_all(inputs);
     }
-    
+
+    (function($) {
+      $.payment_redirect = function(url, isNewCard, amount) {
+        r.analytics.fireFunnelEvent('ads', isNewCard ? 'checkout-new' : 'checkout-existing');
+        r.analytics.fireFunnelEvent('ads', 'checkout-pay', {value: amount}, function() {
+          window.location.href = url;
+        });
+      };
+    })(window.jQuery);
   </script>
 </div>
 

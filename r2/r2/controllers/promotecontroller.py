@@ -162,7 +162,10 @@ class PromoteController(RedditController):
     @validate(VSponsor())
     def GET_new_promo(self):
         return PromotePage(title=_("create sponsored link"),
-                           content=PromoteLinkNew()).render()
+                           content=PromoteLinkNew(),
+                           extra_js_config={
+                            "ads_virtual_page": "new-promo",
+                           }).render()
 
     @validate(VSponsor('link'),
               link=VLink('link'))
@@ -206,7 +209,10 @@ class PromoteController(RedditController):
             content = None
         res = LinkInfoPage(link=link,
                             content=content,
-                            show_sidebar=False)
+                            show_sidebar=False,
+                            extra_js_config={
+                              "ads_virtual_page": "checkout",
+                            })
         return res.render()
 
 
@@ -1130,7 +1136,9 @@ class PromoteApiController(ApiController):
             form.set_text(".status", msg)
             return
 
-        address_modified = not pay_id or edit
+        new_payment = not pay_id
+
+        address_modified = new_payment or edit
         if address_modified:
             address_fields = ["firstName", "lastName", "company", "address",
                               "city", "state", "zip", "country", "phoneNumber"]
@@ -1151,7 +1159,7 @@ class PromoteApiController(ApiController):
 
             if success:
                 hooks.get_hook("promote.campaign_paid").call(link=link, campaign=campaign)
-                form.redirect(promote.promo_edit_url(link))
+                jquery.payment_redirect(promote.promo_edit_url(link), new_payment, campaign.bid)
                 return
             else:
                 promote.failed_payment_method(c.user, link)

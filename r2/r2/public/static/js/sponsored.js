@@ -384,6 +384,8 @@ var CampaignCreator = React.createClass({
         );
       }
       else {
+        r.analytics.fireFunnelEvent('ads', 'inventory-error');
+
         return InfoText({
             className: 'error',
             target: this.props.targetName
@@ -1556,6 +1558,9 @@ function create_campaign() {
     if (check_number_of_campaigns()){
         return;
     }
+
+    r.analytics.fireFunnelEvent('ads', 'new-campaign');
+
     cancel_edit(function() {
             cancel_edit_promotion();
             var defaultBid = $("#bid").data("default_bid");

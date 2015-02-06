@@ -11,6 +11,36 @@ r.analytics = {
 
         $('.promotedlink.promoted:visible').trigger('onshow')
         $('form.gold-checkout').one('submit', this.fireGoldCheckout)
+
+        // virtual page tracking for ads funnel
+        if (r.config.ads_virtual_page) {
+            r.analytics.fireFunnelEvent('ads', r.config.ads_virtual_page);
+        }
+    },
+
+    fireFunnelEvent: function(category, action, options, callback) {
+        options = options || {};
+
+        if (!window._gaq) {
+            if (callback) {
+                callback();
+            }
+
+            return;
+        }
+
+        // Virtual page views are needed for a funnel to work with GA.
+        // see: http://gatipoftheday.com/you-can-use-events-for-goals-but-not-for-funnels/
+        _gaq.push(['_trackPageview', '/' + category + '-' + action]);
+
+        // The goal can have a conversion value in GA.
+        if (options.value) {
+            _gaq.push(['_trackEvent', category, action, options.label, options.value]);
+        }
+
+        if (callback) {
+            _gaq.push(callback);
+        }
     },
 
     fireGAEvent: function(category, action, opt_label, opt_value, opt_noninteraction) {
