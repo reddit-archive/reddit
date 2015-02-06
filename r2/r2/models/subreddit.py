@@ -534,9 +534,7 @@ class Subreddit(Thing, Printable, BaseSite):
         return self._spam
 
     def is_contributor(self, user):
-        if self.name.lower() == g.lounge_reddit.lower():
-            return user.gold or user.gold_charter
-        elif self.type == 'employees_only':
+        if self.type == 'employees_only':
             return user.employee
         else:
             return super(Subreddit, self).is_contributor(user)
