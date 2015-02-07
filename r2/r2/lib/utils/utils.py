@@ -1632,3 +1632,14 @@ def roundrobin(*iterables):
         except StopIteration:
             pending -= 1
             nexts = itertools.cycle(itertools.islice(nexts, pending))
+
+
+def lowercase_keys_recursively(subject):
+    """Return a dict with all keys lowercased (recursively)."""
+    lowercased = dict()
+    for key, val in subject.iteritems():
+        if isinstance(val, dict):
+            val = lowercase_keys_recursively(val)
+        lowercased[key.lower()] = val
+
+    return lowercased

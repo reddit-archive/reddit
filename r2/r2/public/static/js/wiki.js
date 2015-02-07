@@ -148,7 +148,7 @@ r.wiki = {
                         ,specials = special.children('#specials')
                     specials.empty()
                     for(i in errors) {
-                        specials.append($('<p>').text(errors[i]))
+                        specials.append($('<pre>').text($.unsafe(errors[i])))
                     }
                     special.fadeIn('slow')
                 },

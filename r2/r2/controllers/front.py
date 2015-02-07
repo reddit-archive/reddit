@@ -572,6 +572,16 @@ class FrontController(RedditController):
             mod = mods[mod_id]
             mod_buttons.append(QueryButton(mod.name, mod.name,
                                            query_param='mod'))
+        # add a choice for the automoderator account if it's not a mod
+        if (g.automoderator_account and
+                all(mod.name != g.automoderator_account
+                    for mod in mods.values())):
+            automod_button = QueryButton(
+                g.automoderator_account,
+                g.automoderator_account,
+                query_param="mod",
+            )
+            mod_buttons.append(automod_button)
         mod_buttons.append(QueryButton(_('admins*'), 'a', query_param='mod'))
         base_path = request.path
         menus = [NavMenu(action_buttons, base_path=base_path,

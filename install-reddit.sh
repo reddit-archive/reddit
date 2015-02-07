@@ -156,6 +156,7 @@ python-stripe
 python-tinycss2
 python-unidecode
 python-mock
+python-yaml
 
 python-flask
 geoip-bin
@@ -741,6 +742,7 @@ set_consumer_count commentstree_q 1
 set_consumer_count newcomments_q 1
 set_consumer_count vote_link_q 1
 set_consumer_count vote_comment_q 1
+set_consumer_count automoderator_q 0
 
 chown -R $REDDIT_USER:$REDDIT_GROUP $CONSUMER_CONFIG_ROOT/
 

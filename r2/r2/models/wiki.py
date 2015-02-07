@@ -54,8 +54,25 @@ impossible_namespaces = ('edit/', 'revisions/', 'settings/', 'discussions/',
 restricted_namespaces = ('reddit/', 'config/', 'special/')
 
 # Pages which may only be edited by mods, must be within restricted namespaces
-special_pages = ('config/stylesheet', 'config/sidebar',
-                 'config/submit_text', 'config/description')
+special_pages = {
+    'config/automoderator',
+    'config/description',
+    'config/sidebar',
+    'config/stylesheet',
+    'config/submit_text',
+}
+
+special_page_view_permlevels = {
+    "config/automoderator": 2,
+}
+
+# Pages that get created automatically from the subreddit settings page
+automatically_created_pages = {
+    'config/description',
+    'config/sidebar',
+    'config/stylesheet',
+    'config/submit_text',
+}
 
 # Pages which have a special length restrictions (In bytes)
 special_length_restrictions_bytes = {
@@ -65,9 +82,12 @@ special_length_restrictions_bytes = {
     'config/description': 500
 }
 
-modactions = {'config/sidebar': "Updated subreddit sidebar",
-              'config/submit_text': "Updated submission text",
-              'config/description': "Updated subreddit description"}
+modactions = {
+    "config/automoderator": "Updated AutoModerator configuration",
+    "config/description": "Updated subreddit description",
+    "config/sidebar": "Updated subreddit sidebar",
+    "config/submit_text": "Updated submission text",
+}
 
 # Page "index" in the subreddit "reddit.com" and a seperator of "\t" becomes:
 #   "reddit.com\tindex"
@@ -254,6 +274,14 @@ class WikiPage(tdb_cassandra.Thing):
     @classmethod
     def is_special(cls, page):
         return page in special_pages
+
+    @classmethod
+    def get_special_view_permlevel(cls, page):
+        return special_page_view_permlevels.get(page, 0)
+
+    @classmethod
+    def is_automatically_created(cls, page):
+        return page in automatically_created_pages
     
     @property
     def special(self):

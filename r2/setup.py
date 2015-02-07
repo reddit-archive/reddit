@@ -86,6 +86,7 @@ setup(
         "requests<1.0.0",
         "tinycss2",
         "unidecode",
+        "PyYAML",
     ],
     # Extra dependencies that aren't needed for running the app.
     # * https://pythonhosted.org/setuptools/setuptools.html#declaring-extras-optional-features-with-their-own-dependencies

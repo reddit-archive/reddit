@@ -85,6 +85,7 @@ def declare_queues(g):
         "butler_q": MessageQueue(),
         "markread_q": MessageQueue(),
         "del_account_q": MessageQueue(),
+        "automoderator_q": MessageQueue(),
     })
 
     if g.shard_link_vote_queues:
@@ -106,5 +107,12 @@ def declare_queues(g):
                         "usertext_edited")
     queues.markread_q << "mark_all_read"
     queues.del_account_q << "account_deleted"
+    queues.automoderator_q << (
+        "new_link",
+        "new_comment",
+        "new_media_embed",
+        "new_report",
+        "usertext_edited",
+    )
 
     return queues
