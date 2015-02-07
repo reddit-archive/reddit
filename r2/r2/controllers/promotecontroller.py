@@ -34,7 +34,7 @@ from r2.controllers.api import ApiController
 from r2.controllers.listingcontroller import ListingController
 from r2.controllers.reddit_base import RedditController
 
-from r2.lib import inventory, promote
+from r2.lib import hooks, inventory, promote
 from r2.lib.authorize import get_account_info, edit_profile, PROFILE_LIMIT
 from r2.lib.base import abort
 from r2.lib.db import queries
@@ -1150,6 +1150,7 @@ class PromoteApiController(ApiController):
                                                     pay_id)
 
             if success:
+                hooks.get_hook("promote.campaign_paid").call(link=link, campaign=campaign)
                 form.redirect(promote.promo_edit_url(link))
                 return
             else:
