@@ -1206,6 +1206,13 @@ $(function() {
             $("#searchexpando").slideDown();
         });
 
+        // Store the user's choice for restrict_sr
+        $('#search input[name="restrict_sr"]')
+          .change(function() {
+            store.set('search.restrict_sr.checked', this.checked)
+          })
+          .prop("checked", !!store.get('search.restrict_sr.checked'));
+
         $("#search_showmore").click(function(event) {
             $("#search_showmore").parent().hide();
             $("#moresearchinfo").slideDown();
