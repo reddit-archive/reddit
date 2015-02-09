@@ -225,7 +225,6 @@ class CachedQuery(_CachedQueryBase):
             oldest_keep = min(self.timestamps[_id] for _id in to_keep)
             fast_prunable = [_id for _id in to_prune
                 if self.timestamps[_id] < oldest_keep]
-            newest_prune = max(self.timestamps[_id] for _id in fast_prunable)
 
             num_to_prune = len(to_prune)
             num_fast_prunable = len(fast_prunable)
@@ -234,6 +233,7 @@ class CachedQuery(_CachedQueryBase):
                     num_unpruned_if_fast < MAX_CACHED_ITEMS * 0.5):
                 # do a fast prune if we can remove a good number of items but
                 # don't let the cached query grow too large
+                newest_prune = max(self.timestamps[_id] for _id in fast_prunable)
                 self.model.remove_older_than(mutator, self.key, newest_prune)
                 event_name = 'fast_pruned'
                 num_pruned = num_fast_prunable
