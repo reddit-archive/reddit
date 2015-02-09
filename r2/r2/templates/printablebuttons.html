@@ -289,7 +289,9 @@
        </li>
       %if thing.promote_status in (PROMOTE_STATUS.unpaid, PROMOTE_STATUS.unseen, PROMOTE_STATUS.rejected):
         <li>
-          ${ynbutton(_("accept"), _("accepted"), "promote")}
+          ${ynbutton(_("accept"), \
+                     _("accepted"), "promote", \
+                     callback="hide_thing" if getattr(thing, "hide_after_approval", False) else "null")}
         </li>
       %endif
       %if thing.is_awaiting_fraud_review:

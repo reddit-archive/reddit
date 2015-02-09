@@ -59,7 +59,7 @@ from r2.lib.pages import (
     SponsorLookupUser,
     UploadedImage,
 )
-from r2.lib.pages.things import wrap_links
+from r2.lib.pages.things import default_thing_wrapper, wrap_links
 from r2.lib.system_messages import user_added_messages
 from r2.lib.utils import (
     is_subdomain,
@@ -352,6 +352,13 @@ class PromoteListingController(ListingController):
         menus = [NavMenu(filters, base_path=self.base_path, title='show',
                          type='lightdrop')]
         return menus
+
+    def builder_wrapper(self, thing):
+        builder_wrapper = default_thing_wrapper()
+        w = builder_wrapper(thing)
+        w.hide_after_approval = self.sort == "future_promos"
+
+        return w
 
     def keep_fn(self):
         def keep(item):
