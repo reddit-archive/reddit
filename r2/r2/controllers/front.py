@@ -820,7 +820,11 @@ class FrontController(RedditController):
     @base_listing
     @require_oauth2_scope("read")
     @validate(article=VLink('article'))
-    @api_doc(api_section.listings, uri="/{article}/duplicates")
+    @api_doc(
+        api_section.listings,
+        uri="/duplicates/{article}",
+        extensions=['json', 'xml'],
+    )
     def GET_duplicates(self, article, num, after, reverse, count):
         """Return a list of other submissions of the same URL"""
         if not can_view_link_comments(article):
