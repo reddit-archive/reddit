@@ -180,12 +180,20 @@ class MultiApiController(RedditController):
     @validate(
         VUser(),
         VModhash(),
-        path_info=VMultiPath("multipath"),
+        path_info=VMultiPath("multipath", required=False),
         data=VValidatedJSON("model", multi_json_spec),
     )
     @api_doc(api_section.multis, extends=GET_multi)
     def POST_multi(self, path_info, data):
         """Create a multi. Responds with 409 Conflict if it already exists."""
+
+        if not path_info and "path" in data:
+            path_info = VMultiPath("").run(data["path"])
+        elif 'display_name' in data:
+                path_info = LabeledMulti.slugify(c.user, data['display_name'])
+
+        if not path_info:
+            raise RedditError('BAD_MULTI_PATH', code=400)
 
         self._check_new_multi_path(path_info)
 
@@ -253,15 +261,17 @@ class MultiApiController(RedditController):
         VUser(),
         VModhash(),
         from_multi=VMultiByPath("from", require_view=True, kinds='m'),
-        to_path_info=VMultiPath("to",
+        to_path_info=VMultiPath("to", required=False,
             docs={"to": "destination multireddit url path"},
         ),
+        display_name=VLength("display_name", max_length=MAX_DISP_NAME,
+                             empty_error=None),
     )
     @api_doc(
         api_section.multis,
         uri="/api/multi/{multipath}/copy",
     )
-    def POST_multi_copy(self, from_multi, to_path_info):
+    def POST_multi_copy(self, from_multi, to_path_info, display_name):
         """Copy a multi.
 
         Responds with 409 Conflict if the target already exists.
@@ -270,7 +280,14 @@ class MultiApiController(RedditController):
         description.
 
         """
+        if not to_path_info:
+            if display_name:
+                to_path_info = LabeledMulti.slugify(c.user, display_name)
+            else:
+                raise RedditError('BAD_MULTI_PATH', code=400)
+
         to_multi = self._copy_multi(from_multi, to_path_info)
+
         from_path = from_multi.path
         to_multi.copied_from = from_path
         if to_multi.description_md:
@@ -280,7 +297,10 @@ class MultiApiController(RedditController):
             'source': '[%s](%s)' % (from_path, from_path)
         }
         to_multi.visibility = 'private'
+        if display_name:
+            to_multi.display_name = display_name
         to_multi._commit()
+
         return self._format_multi(to_multi)
 
     @require_oauth2_scope("subscribe")
@@ -288,19 +308,31 @@ class MultiApiController(RedditController):
         VUser(),
         VModhash(),
         from_multi=VMultiByPath("from", require_edit=True, kinds='m'),
-        to_path_info=VMultiPath("to",
+        to_path_info=VMultiPath("to", required=False,
             docs={"to": "destination multireddit url path"},
         ),
+        display_name=VLength("display_name", max_length=MAX_DISP_NAME,
+                             empty_error=None),
     )
     @api_doc(
         api_section.multis,
         uri="/api/multi/{multipath}/rename",
     )
-    def POST_multi_rename(self, from_multi, to_path_info):
+    def POST_multi_rename(self, from_multi, to_path_info, display_name):
         """Rename a multi."""
+        if not to_path_info:
+            if display_name:
+                to_path_info = LabeledMulti.slugify(c.user, display_name)
+            else:
+                raise RedditError('BAD_MULTI_PATH', code=400)
 
         to_multi = self._copy_multi(from_multi, to_path_info)
+
+        if display_name:
+            to_multi.display_name = display_name
+            to_multi._commit()
         from_multi.delete()
+
         return self._format_multi(to_multi)
 
     def _get_multi_subreddit(self, multi, sr):

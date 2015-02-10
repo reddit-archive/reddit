@@ -2744,8 +2744,9 @@ multi_name_rx = re.compile(r"\A[A-Za-z0-9][A-Za-z0-9_]{1,20}\Z")
 multi_name_chars_rx = re.compile(r"[^A-Za-z0-9_]")
 
 class VMultiPath(Validator):
-    def __init__(self, param, kinds=None, **kw):
+    def __init__(self, param, kinds=None, required=True, **kw):
         Validator.__init__(self, param, **kw)
+        self.required = required
         self.kinds = tup(kinds or ('f', 'm'))
 
     @classmethod
@@ -2756,6 +2757,8 @@ class VMultiPath(Validator):
         return path
 
     def run(self, path):
+        if not path and not self.required:
+            return None
         try:
             require(path)
             path = self.normalize(path)

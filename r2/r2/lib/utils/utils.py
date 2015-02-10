@@ -948,6 +948,14 @@ def title_to_url(title, max_length = 50):
             title = title[:last_word]
     return title or "_"
 
+
+def unicode_title_to_ascii(title, max_length=50):
+    title = _force_unicode(title)
+    # TODO: use unidecode
+    title = title.encode("ascii", "ignore")
+    return title_to_url(title, max_length)
+
+
 def dbg(s):
     import sys
     sys.stderr.write('%s\n' % (s,))

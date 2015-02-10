@@ -382,6 +382,11 @@ def make_map():
     mc('/api/:type', controller='api',
        requirements=dict(type='wikibannednote|bannednote'),
        action='relnote')
+
+    # Route /api/multi here to prioritize it over the /api/:action rule
+    mc("/api/multi", controller="multiapi", action="multi",
+       conditions={"method": ["POST"]})
+
     mc('/api/:action', controller='api')
     
     mc('/api/recommend/sr/:srnames', controller='api',

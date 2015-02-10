@@ -42,7 +42,8 @@ from r2.lib.errors import UserRequiredException
 from r2.lib.geoip import location_by_ips
 from r2.lib.memoize import memoize
 from r2.lib.permissions import ModeratorPermissionSet
-from r2.lib.utils import tup, last_modified_multi, fuzz_activity
+from r2.lib.utils import tup, last_modified_multi, fuzz_activity, \
+    unicode_title_to_ascii
 from r2.lib.utils import timeago, summarize_markdown
 from r2.lib.cache import sgm, TransitionalCache
 from r2.lib.strings import strings, Score
@@ -1801,6 +1802,18 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         obj._commit()
         obj._owner = owner
         return obj
+
+    @classmethod
+    def slugify(cls, owner, display_name, type_="m"):
+        slug = unicode_title_to_ascii(display_name)
+        prefix = "/user/" + owner.name + "/" + type_ + "/"
+        new_path = prefix + slug
+        existing = LabeledMultiByOwner._byID(owner._fullname)._t.keys()
+        count = 0
+        while new_path in existing:
+            count += 1
+            new_path = prefix + slug + str(count)
+        return {'path': new_path, 'username': owner.name, 'name': slug}
 
     @classmethod
     def sr_props_to_columns(cls, sr_props):
