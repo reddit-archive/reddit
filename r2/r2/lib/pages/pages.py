@@ -4267,6 +4267,8 @@ class PromoteInventory(PromoteLinkBase):
         self.default_end = end.strftime('%m/%d/%Y')
         self.target = target
         self.display_name = target.pretty_name
+        p = request.GET.copy()
+        self.csv_url = '%s.csv?%s' % (request.path, urlencode(p))
         if target.is_collection:
             self.sr_input = None
             self.collection_input = target.collection.name
@@ -4276,6 +4278,22 @@ class PromoteInventory(PromoteLinkBase):
             self.collection_input = None
             self.targeting_type = "collection" if target.subreddit_name == Frontpage.name else "one"
         self.setup()
+
+    def as_csv(self):
+        out = cStringIO.StringIO()
+        writer = csv.writer(out)
+
+        writer.writerow(tuple(self.header))
+
+        for row in self.rows:
+            if not row.is_total:
+                outrow = [row.info['author']]
+            else:
+                outrow = [row.info['title']]
+            outrow.extend(row.columns)
+            writer.writerow(outrow)
+
+        return out.getvalue()
 
     def setup(self):
         srs = self.target.subreddits_slow

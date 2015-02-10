@@ -295,8 +295,12 @@ class SponsorController(PromoteController):
                 target = Target(collection)
 
         content = PromoteInventory(start, end, target)
-        return PromotePage(title=_("sponsored link inventory"),
-                           content=content).render()
+
+        if c.render_style == 'csv':
+            return content.as_csv()
+        else:
+            return PromotePage(title=_("sponsored link inventory"),
+                               content=content).render()
 
     @validate(
         VSponsorAdmin(),

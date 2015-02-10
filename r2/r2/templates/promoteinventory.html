@@ -81,6 +81,12 @@ ${unsafe(js.use('sponsored'))}
     </tbody>
 </table>
 
+%if thing.csv_url:
+<div class="promote-report-csv">
+  ${plain_link(_("download as csv"), thing.csv_url)}
+</div>
+%endif
+
 <script type="text/javascript">
     r.sponsored.set_form_render_fnc(r.sponsored.fill_inventory_form);
     r.sponsored.setup_geotargeting(${unsafe(simplejson.dumps(thing.regions))},
