@@ -42,7 +42,7 @@ from r2.lib import hooks, utils
 from r2.lib.log import log_text
 from mako.filters import url_escape
 from r2.lib.strings import strings, Score
-from r2.lib.db import tdb_cassandra
+from r2.lib.db import tdb_cassandra, sorts
 from r2.lib.db.tdb_cassandra import view_of
 from r2.lib.utils import sanitize_url
 from r2.models.gold import (
@@ -732,6 +732,15 @@ class Link(Thing, Printable):
         # If available, that should be used instead of calling this
         return Account._byID(self.author_id, data=True, return_dict=False)
 
+    @property
+    def responder_ids(self):
+        """Returns an iterable of the OP and other official responders in a
+        thread.
+
+        Designed for Q&A-type threads (eg /r/iama).
+        """
+        return (self.author_id,)
+
     def can_flair_slow(self, user):
         """Returns whether the specified user can flair this link"""
         site = self.subreddit_slow
@@ -1039,6 +1048,31 @@ class Comment(Thing, Printable):
             pids.insert(0, -1)
 
         return pids
+
+    def _qa(self, children, responder_ids):
+        """Sort a comment according to the Q&A-type sort.
+
+        Arguments:
+
+        * children -- a list of the children of this comment.
+        * responder_ids -- a set of ids of users categorized as "answerers" for
+          this thread.
+        """
+        # This sort type only makes sense for comments, unlike the other sorts
+        # that can be applied to any Things, which is why it's defined here
+        # instead of in Thing.
+
+        op_children = [c for c in children if c.author_id in responder_ids]
+        score = sorts.qa(self._ups, self._downs, len(self.body), op_children)
+
+        # When replies to a question, we want to rank OP replies higher than
+        # non-OP replies (generally).  This is a rough way to do so.
+        # Don't add extra scoring when we've already added it due to replies,
+        # though (because an OP responds to themselves).
+        if self.author_id in responder_ids and not op_children:
+            score *= 2
+
+        return score
 
     @classmethod
     def add_props(cls, user, wrapped):

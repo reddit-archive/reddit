@@ -21,4 +21,4 @@
 ###############################################################################
 
 from r2.lib.db._sorts import epoch_seconds, score, hot, _hot
-from r2.lib.db._sorts import controversy, confidence
+from r2.lib.db._sorts import controversy, confidence, qa

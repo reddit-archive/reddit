@@ -20,6 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+import math
 from datetime import datetime, timedelta
 from pylons import g
 
@@ -95,3 +96,36 @@ def confidence(int ups, int downs):
         return _confidences[downs + ups * down_range]
     else:
         return _confidence(ups, downs)
+
+cpdef double qa(int question_ups, int question_downs, int question_length,
+                op_children):
+    """The Q&A-type sort.
+
+    Similar to the "best" (confidence) sort, but specially designed for
+    Q&A-type threads to highlight good question/answer pairs.
+    """
+    question_score = confidence(question_ups, question_downs)
+
+    if not op_children:
+        return _qa(question_score, question_length)
+
+    # Only take into account the "best" answer from OP.
+    best_score = None
+    for answer in op_children:
+        score = confidence(answer._ups, answer._downs)
+        if best_score is None or score > best_score:
+            best_score = score
+            answer_length = len(answer.body)
+    return _qa(question_score, question_length, best_score, answer_length)
+
+cpdef double _qa(double question_score, int question_length,
+                 double answer_score=0, int answer_length=1):
+    score_modifier = question_score + answer_score
+
+    # Give more weight to longer posts, but count longer text less and less to
+    # avoid artificially high rankings for long-spam posts.
+    length_modifier = log10(question_length + answer_length)
+
+    # Add together the weighting from the scores and lengths, but emphasize
+    # score more.
+    return score_modifier + (length_modifier / 5)

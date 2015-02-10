@@ -23,11 +23,12 @@
 from pylons import c, request
 from pylons.i18n import _, N_
 
+from r2.config import feature
 from r2.lib.db import operators
 from r2.lib.filters import _force_unicode
 from r2.lib.search import sorts as search_sorts
 from r2.lib.strings import StringHandler, plurals
-from r2.lib.utils import  query_string, timeago
+from r2.lib.utils import  class_property, query_string, timeago
 from r2.lib.wrapped import Styled
 
 
@@ -56,6 +57,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      gilded       = _('gilded'),
                      confidence   = _('best'),
                      random       = _('random'),
+                     qa           = _('q & a'),
                      saved        = _('saved {toolbar}'),
                      recommended  = _('recommended'),
                      rising       = _('rising'), 
@@ -549,6 +551,7 @@ class SortMenu(NavMenu):
         "controversial": operators.desc('_controversy'),
         "confidence": operators.desc('_confidence'),
         "random": operators.shuffled('_confidence'),
+        "qa": operators.desc('_qa'),
     }
     _reverse_mapping = {v: k for k, v in _mapping.iteritems()}
 
@@ -570,9 +573,15 @@ class CommentSortMenu(SortMenu):
     """Sort menu for comments pages"""
     _default = 'confidence'
     _options = ('confidence', 'top', 'new', 'hot', 'controversial', 'old',
-                 'random')
-    hidden_options = ('random',)
+                 'random', 'qa',)
     button_cls = PostButton
+
+    @class_property
+    def hidden_options(cls):
+        if feature.is_enabled('qa_sort'):
+            return ('random',)
+        else:
+            return ('random', 'qa',)
 
 
 class SearchSortMenu(SortMenu):

@@ -112,6 +112,17 @@ class Enum(Storage):
             return Storage.__contains__(self, item)
 
 
+class class_property(object):
+    """A decorator that combines @classmethod and @property.
+
+    http://stackoverflow.com/a/8198300/120999
+    """
+    def __init__(self, function):
+        self.function = function
+    def __get__(self, instance, cls):
+        return self.function(cls)
+
+
 class Results():
     def __init__(self, sa_ResultProxy, build_fn, do_batch=False):
         self.rp = sa_ResultProxy
