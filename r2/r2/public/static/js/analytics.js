@@ -43,14 +43,19 @@ r.analytics = {
         }
     },
 
-    fireGAEvent: function(category, action, opt_label, opt_value, opt_noninteraction) {
+    fireGAEvent: function(category, action, opt_label, opt_value, opt_noninteraction, callback) {
       opt_label = opt_label || '';
       opt_value = opt_value || 0;
       opt_noninteraction = !!opt_noninteraction;
+      callback = callback || function() {};
 
-      if (window._gaq) {
-        _gaq.push(['_trackEvent', category, action, opt_label, opt_value, opt_noninteraction]);
+      if (!window._gaq) {
+        callback();
+        return;
       }
+
+      _gaq.push(['_trackEvent', category, action, opt_label, opt_value, opt_noninteraction]);
+      _gaq.push(callback);
     },
 
     fireTrackingPixel: function(el) {
