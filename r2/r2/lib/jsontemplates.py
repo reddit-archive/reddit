@@ -568,6 +568,9 @@ class LinkJsonTemplate(ThingJsonTemplate):
         if c.permalink_page:
             d["upvote_ratio"] = thing.upvote_ratio
 
+        if feature.is_enabled('default_sort'):
+            d['default_sort'] = thing.default_sort
+
         return d
 
     def rendered_data(self, thing):
