@@ -283,31 +283,6 @@ class SubredditJsonTemplate(ThingJsonTemplate):
         else:
             return ThingJsonTemplate.thing_attr(self, thing, attr)
 
-class LabeledMultiJsonTemplate(ThingJsonTemplate):
-    _data_attrs_ = ThingJsonTemplate.data_attrs(
-        can_edit="can_edit",
-        name="name",
-        path="path",
-        subreddits="srs",
-        visibility="visibility",
-    )
-    del _data_attrs_["id"]
-
-    def kind(self, wrapped):
-        return "LabeledMulti"
-
-    @classmethod
-    def sr_props(cls, thing, srs):
-        sr_props = thing.sr_props
-        return [dict(sr_props[sr._id], name=sr.name) for sr in srs]
-
-    def thing_attr(self, thing, attr):
-        if attr == "srs":
-            return self.sr_props(thing, thing.srs)
-        elif attr == "can_edit":
-            return c.user_is_loggedin and thing.can_edit(c.user)
-        else:
-            return ThingJsonTemplate.thing_attr(self, thing, attr)
 
 class LabeledMultiDescriptionJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = dict(
@@ -325,6 +300,49 @@ class LabeledMultiDescriptionJsonTemplate(ThingJsonTemplate):
             return description_html
         else:
             return ThingJsonTemplate.thing_attr(self, thing, attr)
+
+
+class LabeledMultiJsonTemplate(LabeledMultiDescriptionJsonTemplate):
+    _data_attrs_ = ThingJsonTemplate.data_attrs(
+        can_edit="can_edit",
+        copied_from="copied_from",
+        description_html="description_html",
+        description_md="description_md",
+        display_name="display_name",
+        key_color="key_color",
+        icon_url="icon_url",
+        name="name",
+        path="path",
+        subreddits="srs",
+        visibility="visibility",
+        weighting_scheme="weighting_scheme",
+    )
+    del _data_attrs_["id"]
+
+    def kind(self, wrapped):
+        return "LabeledMulti"
+
+    @classmethod
+    def sr_props(cls, thing, srs):
+        sr_props = thing.sr_props
+        return [dict(sr_props[sr._id], name=sr.name) for sr in srs]
+
+    def thing_attr(self, thing, attr):
+        if attr == "srs":
+            return self.sr_props(thing, thing.srs)
+        elif attr == "can_edit":
+            return c.user_is_loggedin and thing.can_edit(c.user)
+        elif attr == "copied_from":
+            if thing.can_edit(c.user):
+                return thing.copied_from
+            else:
+                return None
+        elif attr == "display_name":
+            return thing.display_name or thing.name
+        else:
+            super_ = super(LabeledMultiJsonTemplate, self)
+            return super_.thing_attr(thing, attr)
+
 
 class IdentityJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = ThingJsonTemplate.data_attrs(

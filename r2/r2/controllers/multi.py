@@ -20,7 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from pylons import c, request, response
+from pylons import c, g, request, response
 from pylons.i18n import _
 
 from r2.config.extensions import set_extension
@@ -34,41 +34,51 @@ from r2.models.subreddit import (
     LabeledMulti,
     TooManySubredditsError,
 )
-from r2.lib.db import tdb_cassandra, thing
-from r2.lib.wrapped import Wrapped
+from r2.lib.db import tdb_cassandra
 from r2.lib.validator import (
     validate,
-    VUser,
+    VColor,
+    VLength,
+    VMarkdownLength,
     VModhash,
+    VMultiPath,
+    VMultiByPath,
     VOneOf,
     VSubredditName,
     VSRByName,
+    VUser,
     VValidatedJSON,
-    VMarkdownLength,
-    VMultiPath,
-    VMultiByPath,
 )
 from r2.lib.pages.things import wrap_things
 from r2.lib.jsontemplates import (
     LabeledMultiJsonTemplate,
     LabeledMultiDescriptionJsonTemplate,
 )
-from r2.lib.errors import errors, RedditError
+from r2.lib.errors import RedditError
 
 
 multi_sr_data_json_spec = VValidatedJSON.Object({
     'name': VSubredditName('name', allow_language_srs=True),
 })
 
+MAX_DESC = 10000
+MAX_DISP_NAME = 50
+WRITABLE_MULTI_FIELDS = ('visibility', 'description_md', 'display_name',
+                         'key_color', 'weighting_scheme')
 
-multi_json_spec = VValidatedJSON.Object({
-    'visibility': VOneOf('visibility', ('private', 'public')),
+multi_json_spec = VValidatedJSON.PartialObject({
+    'description_md': VMarkdownLength('description_md', max_length=MAX_DESC,
+                                      empty_error=None),
+    'display_name': VLength('display_name', max_length=MAX_DISP_NAME),
+    'key_color': VColor('key_color'),
+    'visibility': VOneOf('visibility', ('private', 'public', 'hidden')),
+    'weighting_scheme': VOneOf('weighting_scheme', ('classic', 'fresh')),
     'subreddits': VValidatedJSON.ArrayOf(multi_sr_data_json_spec),
 })
 
 
 multi_description_json_spec = VValidatedJSON.Object({
-    'body_md': VMarkdownLength('body_md', max_length=10000, empty_error=None),
+    'body_md': VMarkdownLength('body_md', max_length=MAX_DESC, empty_error=None),
 })
 
 
@@ -138,14 +148,25 @@ class MultiApiController(RedditController):
         return sr_props
 
     def _write_multi_data(self, multi, data):
-        multi.visibility = data['visibility']
+        srs = data.pop('subreddits', None)
+        if srs is not None:
+            multi.clear_srs()
+            try:
+                self._add_multi_srs(multi, srs)
+            except:
+                multi._revert()
+                raise
 
-        multi.clear_srs()
-        try:
-            self._add_multi_srs(multi, data['subreddits'])
-        except:
-            multi._revert()
-            raise
+        if 'icon_name' in data:
+            try:
+                multi.set_icon_by_name(data.pop('icon_name'))
+            except:
+                multi._revert()
+                raise
+
+        for key, val in data.iteritems():
+            if key in WRITABLE_MULTI_FIELDS:
+                setattr(multi, key, val)
 
         multi._commit()
         return multi

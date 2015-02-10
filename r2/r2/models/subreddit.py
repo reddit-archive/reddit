@@ -279,6 +279,21 @@ class Subreddit(Thing, Printable, BaseSite):
         'private',
     }
 
+    KEY_COLORS = {
+        '': N_('default'),
+        '#ff4500': N_('orangered'),
+        '#ffd635': N_('yellow'),
+        '#fff03e': N_('highlight'),
+        '#7cd344': N_('green'),
+        '#25b79f': N_('teal'),
+        '#24a0ed': N_('blue'),
+        '#ea0027': N_('red'),
+        '#ff8717': N_('orange'),
+        '#c7e223': N_('lime'),
+        '#46a508': N_('dark green'),
+        '#008985': N_('dark teal'),
+        '#0079d3': N_('alien blue'),
+    }
     # note: for purposely unrenderable reddits (like promos) set author_id = -1
     @classmethod
     def _new(cls, name, title, author_id, ip, lang = g.lang, type = 'public',
@@ -1554,7 +1569,12 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
     _defaults = dict(MultiReddit._defaults,
         visibility='private',
         description_md='',
-        copied_from=None,  # for internal analysis/bookkeeping purposes
+        display_name='',
+        copied_from=None,
+        key_color=None,
+        icon_id=None,
+        icon_url=None,
+        weighting_scheme="classic",
     )
     _extra_schema_creation_args = {
         "key_validation_class": tdb_cassandra.UTF8_TYPE,
@@ -1677,7 +1697,7 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
 
     @property
     def allows_referrers(self):
-        if self.visibility != 'public':
+        if not self.is_public():
             return False
         return super(LabeledMulti, self).allows_referrers
 
@@ -1687,11 +1707,17 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
             return _('%s subreddits curated by /u/%s') % (self.name, self.owner.name)
         return _('%s subreddits') % self.name
 
+    def is_public(self):
+        return self.visibility == "public"
+
+    def is_hidden(self):
+        return self.visibility == "hidden"
+
     def can_view(self, user):
         if c.user_is_admin:
             return True
 
-        return user == self.owner or self.visibility == 'public'
+        return user == self.owner or self.is_public()
 
     def can_edit(self, user):
         if c.user_is_admin and self.owner == Account.system_user():

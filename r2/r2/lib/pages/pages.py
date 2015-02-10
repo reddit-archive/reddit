@@ -1964,11 +1964,18 @@ class ProfilePage(Reddit):
 
         rb.push(scb)
 
-        multis = [m for m in LabeledMulti.by_owner(self.user)
-                  if m.visibility == "public"]
-        if multis:
+        public_multis = [m for m in LabeledMulti.by_owner(self.user)
+                         if m.is_public()]
+        if public_multis:
             scb = SideContentBox(title=_("public multireddits"), content=[
-                SidebarMultiList(multis)
+                SidebarMultiList(public_multis)
+            ])
+            rb.push(scb)
+
+        hidden_multis = [m for m in multis if m.is_hidden()]
+        if c.user == self.user and hidden_multis:
+            scb = SideContentBox(title=_("hidden multireddits"), content=[
+                SidebarMultiList(hidden_multis)
             ])
             rb.push(scb)
 
@@ -4742,7 +4749,8 @@ class ListingChooser(Templated):
             multis = LabeledMulti.by_owner(c.user)
             multis.sort(key=lambda multi: multi.name.lower())
             for multi in multis:
-                self.add_item("multi", multi.name, site=multi)
+                if not multi.is_hidden():
+                    self.add_item("multi", multi.name, site=multi)
 
             explore_sr = g.live_config["listing_chooser_explore_sr"]
             if explore_sr:
