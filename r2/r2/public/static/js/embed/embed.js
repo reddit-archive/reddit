@@ -28,7 +28,6 @@
         'event_ts': now.getTime(),
         'event_ts_utc_offset': now.getTimezoneOffset() / -60,
         'user_agent': navigator.userAgent,
-        'logged_in_status': !!config.logged,
         'embed_ts_created': config.created,
         'sr_id': thing.sr_id,
         'sr_name': thing.sr_name,

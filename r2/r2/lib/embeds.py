@@ -81,7 +81,6 @@ def set_up_embed(embed_key, sr, thing, showedits):
     iso_timestamp = request.GET.get("created", "")
 
     c.embed_config = {
-        "logged": c.user_is_loggedin,
         "eventtracker_url": g.eventtracker_url or "",
         "created": iso_timestamp,
         "showedits": showedits,
