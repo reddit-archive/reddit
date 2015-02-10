@@ -33,6 +33,7 @@ from pylons import g, c, request
 from urllib import unquote
 
 from r2.models import Account, NotFound
+from r2.models.account import register
 from r2.lib.utils import constant_time_compare, parse_http_basic
 from r2.lib.require import RequirementException
 
@@ -78,8 +79,7 @@ def cookie():
     return account
 
 
-@authentication_provider(allow_logout=False)
-def http_basic():
+def _http_basic(create_account=False):
     """Authenticate the user based on their HTTP "Authorization" header."""
     import crypt
 
@@ -92,7 +92,13 @@ def http_basic():
     try:
         account = Account._by_name(username)
     except NotFound:
-        return None
+        if create_account:
+            account = register(username, password, request.ip)
+        else:
+            return None
+    if create_account:
+        # credentials are managed elsewhere, don't try to match password
+        return account
 
     # not all systems support bcrypt in the standard crypt
     if account.password.startswith("$2a$"):
@@ -103,6 +109,22 @@ def http_basic():
     if not constant_time_compare(expected_hash, account.password):
         return None
     return account
+
+
+@authentication_provider(allow_logout=False)
+def http_basic():
+    """Authenticate the user based on their HTTP "Authorization" header.
+
+    DON'T create a reddit account"""
+    return _http_basic()
+
+
+@authentication_provider(allow_logout=False)
+def http_basic_autoregister():
+    """Authenticate the user based on their HTTP "Authorization" header.
+
+    Create a reddit account if existing account is not found."""
+    return _http_basic(create_account=True)
 
 
 def _get_authenticator():
