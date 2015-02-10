@@ -62,9 +62,10 @@
 
     var tracker = new App.PixelTracker({
       url: config.eventtracker_url,
+      anonymousUrl: config.anon_eventtracker_url,
     });
 
-    tracker.send(createPayload(type, 'view'));
+    tracker.send(createPayload(type, 'view'), {anonymous: true});
   
     function trackLink(e) {
       var el = this;

@@ -174,6 +174,7 @@ def js_config(extra_config=None):
         "clicktracker_url": g.clicktracker_url,
         "uitracker_url": g.uitracker_url,
         "eventtracker_url": g.eventtracker_url,
+        "anon_eventtracker_url": g.anon_eventtracker_url,
         "comment_embed_scripts": js.src("comment-embed", absolute=True, mangle_name=False),
         "static_root": static(''),
         "over_18": bool(c.over18),
