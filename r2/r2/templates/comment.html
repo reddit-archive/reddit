@@ -37,33 +37,34 @@
 ${parent.midcol(cls = cls)}
 </%def>
 
+<%def name="subreddit()" buffered="True">
+  ${plain_link(thing.subreddit.name, thing.subreddit_path, sr_path=False,
+               cname=False, _class="subreddit hover")}
+</%def>
+
+<%def name="link()" buffered="True">
+  <a href="${thing.link.url}" class="title"
+     %if thing.nofollow:
+       rel="nofollow"
+     %endif
+     >
+    ${thing.link.title}
+  </a>
+</%def>
+
 <%def name="ParentDiv()">
   ${parent.ParentDiv()}
   %if not thing.deleted:
     <a name="${thing._id36}"></a>
   %endif
   %if c.profilepage:
-    %if thing.link: 
-      %if thing.link.title:
-        <a href="${thing.link.url}" class="title"
-           %if thing.nofollow:
-             rel="nofollow"
-           %endif
-           >
-          ${thing.link.title}
-        </a>
-      %else:
-          ${thing.link.url}
-      %endif
-    %endif
-    &#32;
-    ${_("by")}
-    &#32;
-    ${thing.link_author}
-    ${_("in")}
-    &#32;
-    ${plain_link(thing.subreddit.name, thing.subreddit_path, sr_path = False,
-                 cname = False, _class = "subreddit hover")}
+    <%
+      tagline_text = conditional_websafe(thing.taglinetext).replace(" ", "&#32;")
+      tagline_attrs = dict(link=self.link(),
+                   subreddit=self.subreddit(),
+                   author=thing.link_author.render())
+    %>
+    ${unsafe(tagline_text % tagline_attrs)}
   %endif
 </%def>
 
