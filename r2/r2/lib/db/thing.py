@@ -26,7 +26,7 @@ import sys
 import itertools
 
 from copy import copy, deepcopy
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from pylons import g
 
@@ -34,6 +34,9 @@ from r2.lib import hooks
 from r2.lib.cache import sgm
 from r2.lib.db import tdb_sql as tdb, sorts, operators
 from r2.lib.utils import Results, tup, to36
+
+
+THING_CACHE_TTL = int(timedelta(days=7).total_seconds())
 
 
 class NotFound(Exception): pass
@@ -183,7 +186,7 @@ class DataThing(object):
 
     def _cache_myself(self):
         ck = self._cache_key()
-        self._cache.set(ck, self)
+        self._cache.set(ck, self, time=THING_CACHE_TTL)
 
     def _sync_latest(self):
         """Load myself from the cache to and re-apply the .dirties
@@ -299,7 +302,7 @@ class DataThing(object):
         prefix = thing_prefix(cls.__name__)
 
         #write the data to the cache
-        cls._cache.set_multi(to_save, prefix=prefix)
+        cls._cache.set_multi(to_save, prefix=prefix, time=THING_CACHE_TTL)
 
     def _load(self):
         self._load_multi(self)
@@ -384,8 +387,8 @@ class DataThing(object):
 
             return items
 
-        bases = sgm(cls._cache, ids, items_db, prefix, stale=stale,
-                    found_fn=count_found)
+        bases = sgm(cls._cache, ids, items_db, prefix, time=THING_CACHE_TTL,
+                    stale=stale, found_fn=count_found)
 
         # Check to see if we found everything we asked for
         missing = []
