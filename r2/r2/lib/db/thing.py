@@ -37,6 +37,7 @@ from r2.lib.utils import Results, tup, to36
 
 
 THING_CACHE_TTL = int(timedelta(days=7).total_seconds())
+QUERY_CACHE_TTL = int(timedelta(days=7).total_seconds())
 
 
 class NotFound(Exception): pass
@@ -905,13 +906,15 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
 Relation._type_prefix = 'r'
 
 class Query(object):
+    _cache = g.cache
+
     def __init__(self, kind, *rules, **kw):
         self._rules = []
         self._kind = kind
 
         self._read_cache = kw.get('read_cache')
         self._write_cache = kw.get('write_cache')
-        self._cache_time = kw.get('cache_time', 0)
+        self._cache_time = kw.get('cache_time', QUERY_CACHE_TTL)
         self._limit = kw.get('limit')
         self._offset = kw.get('offset')
         self._data = kw.get('data')
@@ -1026,7 +1029,7 @@ class Query(object):
 
         names = lst = []
 
-        names = g.cache.get(self._iden()) if self._read_cache else None
+        names = self._cache.get(self._iden()) if self._read_cache else None
         if names is None and not self._write_cache:
             # it wasn't in the cache, and we're not going to
             # replace it, so just hit the db
@@ -1038,13 +1041,15 @@ class Query(object):
             with g.make_lock("thing_query", "lock_%s" % self._iden()):
                 # see if it was set while we were waiting for our
                 # lock
-                names = g.cache.get(self._iden(), allow_local = False) \
-                                  if self._read_cache else None
+                if self._read_cache:
+                    names = self._cache.get(self._iden(), allow_local=False)
+                else:
+                    names = None
+
                 if names is None:
                     lst = _retrieve()
-                    g.cache.set(self._iden(),
-                              [ x._fullname for x in lst ],
-                              self._cache_time)
+                    _names = [x._fullname for x in lst]
+                    self._cache.set(self._iden(), _names, self._cache_time)
 
         if names and not lst:
             # we got our list of names from the cache, so we need to
