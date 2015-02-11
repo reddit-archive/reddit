@@ -103,7 +103,12 @@ class CMemcache(CacheUtils):
         ex = None
         for i in xrange(times):
             try:
-                return fn()
+                val = fn()
+                if i != 0:
+                    event_name = "cache.retry.%s" % fn.__name__
+                    name = "success_on_retry_%s" % i
+                    g.stats.event_count(event_name, name)
+                return val
             except (pylibmc.NotFound,
                     pylibmc.BadKeyProvided,
                     pylibmc.UnknownStatKey,
@@ -113,6 +118,8 @@ class CMemcache(CacheUtils):
             except MemcachedError as e:
                 ex = e
 
+        event_name = "cache.retry.%s" % fn.__name__
+        g.stats.event_count(event_name, "fail")
         raise MemcachedMaximumRetryException(ex)
 
     def get(self, key, default = None):
