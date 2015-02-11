@@ -423,6 +423,15 @@ class Globals(object):
     def setup(self):
         self.queues = queues.declare_queues(self)
 
+        self.extension_subdomains = dict(
+            m="mobile",
+            i="compact",
+            api="api",
+            rss="rss",
+            xml="xml",
+            json="json",
+        )
+
         ################# PROVIDERS
         self.media_provider = select_provider(
             self.config,

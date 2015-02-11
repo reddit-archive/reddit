@@ -178,17 +178,11 @@ class DomainMiddleware(object):
 
         # figure out what subdomain we're on, if any
         subdomains = domain[:-ignored_suffix_len - 1].split('.')
-        extension_subdomains = dict(m="mobile",
-                                    i="compact",
-                                    api="api",
-                                    rss="rss",
-                                    xml="xml",
-                                    json="json")
 
         sr_redirect = None
         prefix_parts = []
         for subdomain in subdomains[:]:
-            extension = extension_subdomains.get(subdomain)
+            extension = g.extension_subdomains.get(subdomain)
             # These subdomains are reserved, don't treat them as SR
             # or language subdomains.
             if subdomain in g.reserved_subdomains:

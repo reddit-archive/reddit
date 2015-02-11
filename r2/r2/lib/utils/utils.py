@@ -508,6 +508,34 @@ class UrlParser(object):
         self.path =  '/'.join(dirs)
         return self
 
+    def switch_subdomain_by_extension(self, extension=None):
+        """Change the subdomain to the one that fits an extension.
+
+        This should only be used on reddit URLs.
+
+        Arguments:
+
+        * extension: the template extension to which the middleware hints when
+          parsing the subdomain resulting from this function.
+
+        >>> u = UrlParser('http://www.reddit.com/r/redditdev')
+        >>> u.switch_subdomain_by_extension('compact')
+        >>> u.unparse()
+        'http://i.reddit.com/r/redditdev'
+
+        If `extension` is not provided or does not match any known extensions,
+        the default subdomain (`g.domain_prefix`) will be used.
+
+        Note that this will not remove any existing extensions; if you want to
+        ensure the explicit extension does not override the subdomain hint, you
+        should call `set_extension('')` first.
+        """
+        new_subdomain = g.domain_prefix
+        for subdomain, subdomain_extension in g.extension_subdomains.iteritems():
+            if extension == subdomain_extension:
+                new_subdomain = subdomain
+                break
+        self.hostname = '%s.%s' % (new_subdomain, g.domain)
 
     def unparse(self):
         """

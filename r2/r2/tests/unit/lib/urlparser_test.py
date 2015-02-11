@@ -138,3 +138,37 @@ class TestIsRedditURL(unittest.TestCase):
         self.assertIsNotSafeRedditUrl("\xa0http://%s/" % g.domain)
         self.assertIsSafeRedditUrl("http://%s/\xa0" % g.domain)
         self.assertIsSafeRedditUrl("/foo/bar/\xa0baz")
+
+
+class TestSwitchSubdomainByExtension(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls._old_domain = g.domain
+        g.domain = 'reddit.com'
+        cls._old_domain_prefix = g.domain_prefix
+        g.domain_prefix = 'www'
+
+    @classmethod
+    def tearDownClass(cls):
+        g.domain = cls._old_domain
+        g.domain_prefix = cls._old_domain_prefix
+
+    def test_normal_urls(self):
+        u = UrlParser('http://www.reddit.com/r/redditdev')
+        u.switch_subdomain_by_extension('compact')
+        result = u.unparse()
+        self.assertEquals('http://i.reddit.com/r/redditdev', result)
+
+        u = UrlParser(result)
+        u.switch_subdomain_by_extension('mobile')
+        result = u.unparse()
+        self.assertEquals('http://m.reddit.com/r/redditdev', result)
+
+    def test_default_prefix(self):
+        u = UrlParser('http://i.reddit.com/r/redditdev')
+        u.switch_subdomain_by_extension()
+        self.assertEquals('http://www.reddit.com/r/redditdev', u.unparse())
+
+        u = UrlParser('http://i.reddit.com/r/redditdev')
+        u.switch_subdomain_by_extension('does-not-exist')
+        self.assertEquals('http://www.reddit.com/r/redditdev', u.unparse())
