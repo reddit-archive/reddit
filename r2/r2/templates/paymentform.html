@@ -147,6 +147,20 @@
            <textarea ${disabled} id="input-${field}-${prof_id}" name="${field}">
              ${getattr(data, field, '')}
            </textarea>
+         %elif field == "country":
+           <%
+            selected_country = getattr(data, field, thing.default_country)
+            selected_insensitive = selected_country.lower()
+           %>
+           %if any(map(lambda country: country.lower() == selected_insensitive, thing.countries)):
+            <select ${disabled} id="input-${field}-${prof_id}" name="${field}">
+              %for country in thing.countries:
+                <option ${"selected" if selected_insensitive == country.lower() else ""}>${country}</option>
+              %endfor
+            </select>
+           %else:
+            <input type="text" ${disabled} id="input-${field}-${prof_id}" name="${field}" value="${selected_country}">
+           %endif
          %else:
            <input ${disabled}
                   id="input-${field}-${prof_id}" type="text" name="${field}" 
