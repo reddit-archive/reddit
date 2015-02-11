@@ -272,6 +272,10 @@ class Reddit(Templated):
             if g.domain_prefix:
                 u.hostname = "%s.%s" % (g.domain_prefix, u.hostname)
             self.canonical_link = u.unparse()
+        # Generate a mobile link for Google.
+        u = UrlParser(request.fullpath)
+        u.hostname = 'i.%s' % g.domain
+        self.mobile_link = u.unparse()
 
         if self.show_infobar:
             if not infotext:
