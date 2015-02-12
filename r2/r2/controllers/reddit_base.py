@@ -1661,7 +1661,7 @@ class RedditController(OAuth2ResourceController):
                 g.stats.simple_event('cors.api_request')
                 g.stats.count_string('origins', request_origin)
 
-        if request.method.upper() == "GET" and is_api():
+        if g.tracker_url and request.method.upper() == "GET" and is_api():
             tracking_url = make_url_https(get_pageview_pixel_url())
             response.headers["X-Reddit-Tracking"] = tracking_url
 
