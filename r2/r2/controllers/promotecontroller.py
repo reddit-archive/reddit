@@ -356,7 +356,7 @@ class PromoteListingController(ListingController):
     def builder_wrapper(self, thing):
         builder_wrapper = default_thing_wrapper()
         w = builder_wrapper(thing)
-        w.hide_after_approval = self.sort == "future_promos"
+        w.hide_after_seen = self.sort == "future_promos"
 
         return w
 

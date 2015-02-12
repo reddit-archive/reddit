@@ -381,8 +381,14 @@ function cancel_reject_promo(elem) {
 }
 
 function complete_reject_promo(elem) {
-    $(elem).thing().removeClass("accepted").addClass("rejected")
+    var $el = $(elem);
+
+    $el.thing().removeClass("accepted").addClass("rejected")
         .find(".reject_promo").remove();
+
+    if ($el.data('hide-after-seen')) {
+        hide_thing(elem);
+    }
 }
 
 /* Comment generation */
