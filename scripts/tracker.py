@@ -38,6 +38,7 @@ use on Amazon Elastic Beanstalk (and possibly other systems).
 
 
 import cStringIO
+import os
 import hashlib
 import hmac
 import time
@@ -65,7 +66,8 @@ class ApplicationConfig(object):
     """
     def __init__(self):
         self.input = RawConfigParser()
-        with open("production.ini") as f:
+        config_filename = os.environ.get("CONFIG", "production.ini")
+        with open(config_filename) as f:
             self.input.readfp(f)
         self.output = RawConfigParser()
 
