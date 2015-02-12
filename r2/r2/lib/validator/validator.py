@@ -1719,6 +1719,23 @@ class VCssName(Validator):
             self.param: "a valid subreddit image name",
         }
 
+class VColor(Validator):
+    """Validate a string as being a 6 digit hex color starting with #"""
+    color = re.compile(r"\A#[a-f0-9]{6}\Z", re.IGNORECASE)
+
+    def run(self, color):
+        if color:
+            if self.color.match(color):
+                return color.lower()
+            else:
+                self.set_error(errors.BAD_COLOR)
+        return ''
+
+    def param_docs(self):
+        return {
+            self.param: "a 6-digit rgb hex color, e.g. `#AABBCC`",
+        }
+
 
 class VMenu(Validator):
 

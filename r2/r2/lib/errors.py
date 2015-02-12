@@ -109,6 +109,7 @@ error_list = dict((
         ('TOO_OLD', _("that's a piece of history now; it's too late to reply to it")),
         ('BAD_CSS_NAME', _('invalid css name')),
         ('BAD_CSS', _('invalid css')),
+        ('BAD_COLOR', _('invalid color')),
         ('BAD_REVISION', _('invalid revision ID')),
         ('TOO_MUCH_FLAIR_CSS', _('too many flair css classes')),
         ('BAD_FLAIR_TARGET', _('not a valid flair target')),
