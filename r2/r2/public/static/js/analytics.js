@@ -12,20 +12,43 @@ r.analytics = {
         $('.promotedlink.promoted:visible').trigger('onshow')
         $('form.gold-checkout').one('submit', this.fireGoldCheckout)
 
+
+        // dont track sponsor's activity
+        r.analytics.addEventPredicate('ads', function() {
+            return !r.config.is_sponsor;
+        });
+
         // virtual page tracking for ads funnel
         if (r.config.ads_virtual_page) {
             r.analytics.fireFunnelEvent('ads', r.config.ads_virtual_page);
         }
     },
 
+    _eventPredicates: {},
+
+    addEventPredicate: function(category, predicate) {
+        var predicates = this._eventPredicates[category] || [];
+
+        predicates.push(predicate);
+
+        this._eventPredicates[category] = predicates;
+    },
+
+    shouldFireEvent: function(category/*, arguments*/) {
+        var args = _.rest(arguments);
+
+        return !this._eventPredicates[category] ||
+                this._eventPredicates[category].every(function(fn) {
+                    return fn.apply(this, args);
+                });
+    },
+
     fireFunnelEvent: function(category, action, options, callback) {
         options = options || {};
+        callback = callback || function() {};
 
-        if (!window._gaq) {
-            if (callback) {
-                callback();
-            }
-
+        if (!window._gaq || !this.shouldFireEvent.apply(this, arguments)) {
+            callback();
             return;
         }
 
@@ -38,9 +61,7 @@ r.analytics = {
             _gaq.push(['_trackEvent', category, action, options.label, options.value]);
         }
 
-        if (callback) {
-            _gaq.push(callback);
-        }
+        _gaq.push(callback);
     },
 
     fireGAEvent: function(category, action, opt_label, opt_value, opt_noninteraction, callback) {
@@ -49,7 +70,7 @@ r.analytics = {
       opt_noninteraction = !!opt_noninteraction;
       callback = callback || function() {};
 
-      if (!window._gaq) {
+      if (!window._gaq || !this.shouldFireEvent.apply(this, arguments)) {
         callback();
         return;
       }

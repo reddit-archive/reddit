@@ -177,6 +177,7 @@ def js_config(extra_config=None):
         "vote_hash": c.vote_hash,
         "gold": gold,
         "has_subscribed": logged and c.user.has_subscribed,
+        "is_sponsor": logged and c.user_is_sponsor,
         "pageInfo": {
           "verification": verification,
           "actionName": controller_name + '.' + action_name,
