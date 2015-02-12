@@ -54,7 +54,7 @@ r.analytics = {
 
         // Virtual page views are needed for a funnel to work with GA.
         // see: http://gatipoftheday.com/you-can-use-events-for-goals-but-not-for-funnels/
-        _gaq.push(['_trackPageview', '/' + category + '-' + action]);
+        _gaq.push(['_trackPageview', '/' + _.compact([category, action, options.label]).join('-')]);
 
         // The goal can have a conversion value in GA.
         if (options.value) {

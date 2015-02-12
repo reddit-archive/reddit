@@ -119,7 +119,8 @@
 
 <%def name="creddits_button()">
   <form id="giftgold" action="/api/spendcreddits" method="post"
-        class="gold-checkout creddits-gold">
+        class="gold-checkout creddits-gold"
+        data-vendor="creddits">
     <input type="hidden" name="months" value="${thing.months}">
     <input type="hidden" name="passthrough" value="${thing.passthrough}" class="passthrough">
     <button class="btn gold-button"><span class="snoo-head"></span>${_("creddits")}</button>
@@ -146,7 +147,7 @@
 
 <%def name="stripe_button()">
   <span class="gold-checkout">
-    <button class="btn stripe-gold gold-button">${_('Credit Card')}</button>
+    <button data-vendor="credit card" class="btn stripe-gold gold-button">${_('Credit Card')}</button>
     <input type="hidden" name="custom" value="${thing.passthrough}" class="passthrough">
   </span>
 </%def>
