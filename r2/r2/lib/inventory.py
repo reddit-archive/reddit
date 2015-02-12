@@ -115,7 +115,10 @@ def get_campaigns_by_date(srs, start, end, ignore=None):
 
     if transaction_ids:
         transactions = Bid.query().filter(Bid.transaction.in_(transaction_ids))
-        transaction_by_id = {bid.transaction: bid for bid in transactions}
+        # index transactions by transaction and campaign id because freebies
+        # reuse the same transaction id (they always use -link id)
+        transaction_by_id = {
+            (bid.transaction, bid.campaign): bid for bid in transactions}
     else:
         transaction_by_id = {}
 
@@ -129,7 +132,7 @@ def get_campaigns_by_date(srs, start, end, ignore=None):
             # pre-CPM campaign
             continue
 
-        transaction = transaction_by_id[camp.trans_id]
+        transaction = transaction_by_id[(camp.trans_id, camp._id)]
         if not (transaction.is_auth() or transaction.is_charged()):
             continue
 
