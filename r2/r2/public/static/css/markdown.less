@@ -281,6 +281,12 @@
   margin-bottom: @vertical-margin;
 }
 
+textarea {
+  // prevent background color from using system default, since this can cause
+  // problems on systems with dark color schemes
+  background-color: white;
+}
+
 code {
   // this hack fixes browsers automatically shrinking monospace fonts.  weird.
   // http://code.stephenmorley.org/html-and-css/fixing-browsers-broken-monospace-font-handling/
