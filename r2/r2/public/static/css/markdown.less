@@ -281,15 +281,6 @@
   margin-bottom: @vertical-margin;
 }
 
-.usertext-edit {
-  &:extend(.md-container all);
-
-  textarea {
-    &:extend(.md all);
-  }
-}
-
-
 code {
   // this hack fixes browsers automatically shrinking monospace fonts.  weird.
   // http://code.stephenmorley.org/html-and-css/fixing-browsers-broken-monospace-font-handling/
@@ -325,6 +316,7 @@ code {
     .md-margins(@font-base, @margin-x-small, @margin-x-small);
   }
 
+  textarea,
   .-text {
     .md-font-size(@font-base, @font-base, @line-base);
   }

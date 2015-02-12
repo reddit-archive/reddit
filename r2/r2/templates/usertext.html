@@ -138,10 +138,9 @@
 
   %if thing.editable or thing.creating:
     ##keep this on one line so we don't add extra spaces
-    <div class="usertext-edit"
+    <div class="usertext-edit md-container"
          style="${"" if thing.creating else 'display: none'}">
-      ##this div prevents IE7 from adding extra margin to the textarea.
-      <div>
+      <div class="md">
         <textarea rows="1" cols="1"
                   name="${thing.name}"
                   class="${thing.textarea_class}"
