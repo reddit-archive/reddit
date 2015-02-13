@@ -104,10 +104,35 @@ def update_comment_votes(comments, write_consistency_level = None):
 
 
 def _comment_sorter_from_cids(cids, sort):
+    """Retrieve sort values for comments.
+
+    Useful to fill in any gaps in CommentSortsCache.
+
+    Arguments:
+
+    * comments -- an iterable of Comments to retrieve sort values for.
+    * sort -- a string representing the type of sort to use.
+    * cid_tree -- a mapping from parent id to children ids, as created by
+      CommentTree.
+    * by_36 -- a boolean indicating if the resultant map keys off of base 36
+      ids instead of integer ids.
+
+    Returns a dictionary from cid to a numeric sort value.
+    """
     comments = Comment._byID(cids, data = False, return_dict = False)
     return dict((x._id, _get_sort_value(x, sort)) for x in comments)
 
 def _get_comment_sorter(link_id, sort):
+    """Retrieve cached sort values for all comments on a post.
+
+    Arguments:
+
+    * link_id -- id of the Link containing the comments.
+    * sort -- a string indicating the attribute on the comments to use for
+      generating sort values.
+
+    Returns a dictionary from cid to a numeric sort value.
+    """
     from r2.models import CommentSortsCache
     from r2.lib.db.tdb_cassandra import NotFound
 
@@ -124,6 +149,25 @@ def _get_comment_sorter(link_id, sort):
     return sorter
 
 def link_comments_and_sort(link, sort):
+    """Fetch and sort the comments on a post.
+
+    Arguments:
+
+    * link -- the Link whose comments we want to sort.
+    * sort -- a string indicating the attribute on the comments to use for
+      generating sort values.
+
+    Returns a tuple in the form (cids, cid_tree, depth, parents, sorter), where
+    the values are as follows:
+
+    * cids -- a list of the ids of all comments in the thread.
+    * cid_tree -- a dictionary from parent cid to children cids.
+    * depth -- a dictionary from cid to the depth that comment resides in the
+      tree. A top-level comment has depth 0.
+    * parents -- a dictionary from child cid to parent cid.
+    * sorter -- a dictionary from cid to a numeric value to be used for
+      sorting.
+    """
     from r2.models import CommentSortsCache
 
     # This has grown sort of organically over time. Right now the
@@ -153,6 +197,7 @@ def link_comments_and_sort(link, sort):
     # load the sorter
     sorter = _get_comment_sorter(link_id, sort)
 
+    # find comments for which the sort values weren't in the cache
     sorter_needed = []
     if cids and not sorter:
         sorter_needed = cids
