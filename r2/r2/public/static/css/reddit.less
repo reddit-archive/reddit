@@ -10360,6 +10360,75 @@ body.with-listing-chooser {
   }
 }
 
+/* Gold only subreddits */
+
+.gold-only {
+  @gold: #9a7d2e;
+  @light-gold: #faf1b3;
+
+  #header {
+    border-bottom-color: @gold;
+    .linear-gradient(#d7cc7e, #e2ce3e);
+
+    #header-bottom-right {
+      background-color: @light-gold;
+
+      a { 
+        color: @gold; 
+      }
+
+      .message-count { 
+        background-color: #e2ce3e;
+      }
+
+      #mail.havemail {
+        background-image: url(../gold/gold-only-mail-havemail.png); /* SPRITE */
+      }
+
+      #modmail.havemail {
+        background-image: url(../gold/gold-only-modmail-havemail.png); /* SPRITE */
+      }
+    }
+
+    .tabmenu li a {
+      background-color: @light-gold;
+      color: @gold;
+    }
+
+    .tabmenu li.selected a {
+      background-color: #ffffff;
+      border-color: @gold;
+      border-bottom-color: #ffffff;
+    }
+
+    #sr-header-area {
+      background-color: transparent;
+      border: none;
+      opacity: 0.5;
+
+      &:hover {
+        opacity: 1;
+      }
+    }
+  }
+
+  .arrow.upmod { 
+    background-image: url(../gold/gold-only-upvote-mod.png); /* SPRITE */
+  }
+
+  .arrow.downmod { 
+    background-image: url(../gold/gold-only-downvote-mod.png); /* SPRITE */
+  }
+
+  .link .score.dislikes {
+    color: #a98d79;
+  }
+
+  .link .score.likes {
+    color: #dec145;
+  }
+}
+
 .fraud-reason {
     display: none;
 
