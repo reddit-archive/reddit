@@ -561,7 +561,7 @@ class Globals(object):
         # the main memcache pool. used for most everything.
         memcache = CMemcache(
             self.memcaches,
-            min_compress_len=50 * 1024,
+            min_compress_len=1400,
             num_clients=num_mc_clients,
             binary=True,
         )
