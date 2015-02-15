@@ -466,6 +466,28 @@ class TransitionalCache(CacheUtils):
     reset = make_set_fn("reset")
 
 
+def cache_timer_decorator(fn_name):
+    """Use to decorate CacheChain operations so timings will be recorded."""
+    def wrap(fn):
+        def timed_fn(self, *a, **kw):
+            if self.stats:
+                publish = random.random() < g.stats.CACHE_SAMPLE_RATE
+                cache_name = self.stats.cache_name
+                timer_name = "cache.%s.%s" % (cache_name, fn_name)
+                timer = g.stats.get_timer(timer_name, publish)
+                timer.start()
+            else:
+                timer = None
+
+            result = fn(self, *a, **kw)
+            if timer:
+                timer.stop()
+
+            return result
+        return timed_fn
+    return wrap
+
+
 class CacheChain(CacheUtils, local):
     def __init__(self, caches, cache_negative_results=False):
         self.caches = caches
@@ -473,6 +495,7 @@ class CacheChain(CacheUtils, local):
         self.stats = None
 
     def make_set_fn(fn_name):
+        @cache_timer_decorator(fn_name)
         def fn(self, *a, **kw):
             ret = None
             for c in self.caches:
@@ -501,6 +524,7 @@ class CacheChain(CacheUtils, local):
     flush_all = make_set_fn('flush_all')
     cache_negative_results = False
 
+    @cache_timer_decorator("get")
     def get(self, key, default = None, allow_local = True, stale=None):
         stat_outcome = False  # assume a miss until a result is found
         try:
@@ -541,6 +565,7 @@ class CacheChain(CacheUtils, local):
         l = lambda ks: self.simple_get_multi(ks, allow_local = allow_local, **kw)
         return prefix_keys(keys, prefix, l)
 
+    @cache_timer_decorator("get_multi")
     def simple_get_multi(self, keys, allow_local = True, stale=None):
         out = {}
         need = set(keys)
@@ -655,6 +680,7 @@ class StaleCacheChain(CacheChain):
                                               # CacheChain machinery
         self.stats = None
 
+    @cache_timer_decorator("get")
     def get(self, key, default=None, stale = False, **kw):
         if kw.get('allow_local', True) and key in self.caches[0]:
             return self.caches[0][key]
@@ -676,6 +702,7 @@ class StaleCacheChain(CacheChain):
 
         return value
 
+    @cache_timer_decorator("get_multi")
     def simple_get_multi(self, keys, stale = False, **kw):
         if not isinstance(keys, set):
             keys = set(keys)
