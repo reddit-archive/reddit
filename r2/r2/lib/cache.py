@@ -682,23 +682,34 @@ class StaleCacheChain(CacheChain):
 
     @cache_timer_decorator("get")
     def get(self, key, default=None, stale = False, **kw):
-        if kw.get('allow_local', True) and key in self.caches[0]:
-            return self.caches[0][key]
+        if kw.get('allow_local', True) and key in self.localcache:
+            if self.stats:
+                self.stats.cache_hit()
+            return self.localcache[key]
 
         if stale:
             stale_value = self._getstale([key]).get(key, None)
             if stale_value is not None:
+                if self.stats:
+                    self.stats.cache_hit()
                 return stale_value # never return stale data into the
                                    # LocalCache, or people that didn't
                                    # say they'll take stale data may
                                    # get it
 
-        value = CacheChain.get(self, key, **kw)
+        value = self.realcache.get(key)
         if value is None:
+            if self.stats:
+                self.stats.cache_miss()
             return default
 
-        if value is not None and stale:
+        if stale:
             self.stalecache.set(key, value, time=self.staleness)
+
+        self.localcache.set(key, value)
+
+        if self.stats:
+            self.stats.cache_hit()
 
         return value
 
@@ -728,6 +739,12 @@ class StaleCacheChain(CacheChain):
                 self.stalecache.set_multi(values, time=self.staleness)
             self.localcache.update(values)
             ret.update(values)
+
+        if self.stats:
+            misses = len(keys - set(ret.keys()))
+            hits = len(ret)
+            self.stats.cache_hit(hits)
+            self.stats.cache_miss(misses)
 
         return ret
 
