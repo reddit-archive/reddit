@@ -174,11 +174,6 @@ class DomainMiddleware(object):
         # we start looking at subdomains
         ignored_suffix_len = len(g.domain)
 
-        # OAuth is a bit of a special case. `foo.oauth.domain.com` should be
-        # treated like `foo.domain.com` when generating links
-        if g.oauth_domain and is_subdomain(domain, g.oauth_domain):
-            ignored_suffix_len = len(g.oauth_domain)
-
         # figure out what subdomain we're on, if any
         subdomains = domain[:-ignored_suffix_len - 1].split('.')
         extension_subdomains = dict(m="mobile",
@@ -192,10 +187,13 @@ class DomainMiddleware(object):
         prefix_parts = []
         for subdomain in subdomains[:]:
             extension = extension_subdomains.get(subdomain)
-            # These subdomains have special meanings, don't treat them as SR
+            # These subdomains are reserved, don't treat them as SR
             # or language subdomains.
             if subdomain in g.reserved_subdomains:
-                if subdomain == g.domain_prefix:
+                # Some subdomains are reserved, but also can't be mixed into
+                # the domain prefix for various reasons (permalinks will be
+                # broken, etc.)
+                if subdomain in g.ignored_subdomains:
                     continue
                 prefix_parts.append(subdomain)
             elif extension:
