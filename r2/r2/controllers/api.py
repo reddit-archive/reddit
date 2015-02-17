@@ -2101,6 +2101,53 @@ class ApiController(RedditController):
         # reset the status boxes
         form.set_text('.img-status', _("deleted"))
         
+    @require_oauth2_scope("modconfig")
+    @validatedForm(VSrModerator(perms='config'),
+                   VModhash())
+    @api_doc(api_section.subreddits, uses_site=True)
+    def POST_delete_sr_icon(self, form, jquery):
+        """Remove the subreddit's custom mobile icon.
+
+        See also: [/api/upload_sr_img](#POST_api_upload_sr_img).
+
+        """
+        if c.site.icon_img:
+            c.site.icon_img = None
+            c.site.icon_size = None
+            c.site._commit()
+            ModAction.create(c.site, c.user, action='editsettings',
+                             details='del_icon')
+
+        # hide the button which started this
+        form.find('.delete-img').hide()
+        # hide the preview box
+        form.find('.img-preview-container').hide()
+        # reset the status boxes
+        form.set_text('.img-status', _("deleted"))
+
+    @require_oauth2_scope("modconfig")
+    @validatedForm(VSrModerator(perms='config'),
+                   VModhash())
+    @api_doc(api_section.subreddits, uses_site=True)
+    def POST_delete_sr_banner(self, form, jquery):
+        """Remove the subreddit's custom mobile banner.
+
+        See also: [/api/upload_sr_img](#POST_api_upload_sr_img).
+
+        """
+        if c.site.banner_img:
+            c.site.banner_img = None
+            c.site.banner_size = None
+            c.site._commit()
+            ModAction.create(c.site, c.user, action='editsettings',
+                             details='del_banner')
+
+        # hide the button which started this
+        form.find('.delete-img').hide()
+        # hide the preview box
+        form.find('.img-preview-container').hide()
+        # reset the status boxes
+        form.set_text('.img-status', _("deleted"))
 
     def GET_upload_sr_img(self, *a, **kw):
         """
@@ -2121,15 +2168,29 @@ class ApiController(RedditController):
               img_type = VImageType('img_type'),
               form_id = VLength('formid', max_length = 100,
                                 docs={"formid": "(optional) can be ignored"}),
+              upload_type = VOneOf('upload_type',
+                                   ('img', 'header', 'icon', 'banner')),
               header = VInt('header', max=1, min=0))
     @api_doc(api_section.subreddits, uses_site=True)
-    def POST_upload_sr_img(self, file, header, name, form_id, img_type):
-        """Add or replace a subreddit image or custom header logo.
+    def POST_upload_sr_img(self, file, header, name, form_id, img_type,
+                           upload_type=None):
+        """Add or replace a subreddit image, custom header logo, custom mobile
+        icon, or custom mobile banner.
 
-        If the `header` value is `0`, an image for use in the subreddit
-        stylesheet is uploaded with the name specified in `name`. If the value
-        of `header` is `1` then the image uploaded will be the subreddit's new
-        logo and `name` will be ignored.
+        * If the `upload_type` value is `img`, an image for use in the
+        subreddit stylesheet is uploaded with the name specified in `name`.
+        * If the `upload_type` value is `header` then the image uploaded will
+        be the subreddit's new logo and `name` will be ignored.
+        * If the `upload_type` value is `icon` then the image uploaded will be
+        the subreddit's new mobile icon and `name` will be ignored.
+        * If the `upload_type` value is `banner` then the image uploaded will
+        be the subreddit's new mobile banner and `name` will be ignored.
+
+        For backwards compatibility, if `upload_type` is not specified, the
+        `header` field will be used instead:
+
+        * If the `header` field has value `0`, then `upload_type` is `img`.
+        * If the `header` field has value `1`, then `upload_type` is `header`.
 
         The `img_type` field specifies whether to store the uploaded image as a
         PNG or JPEG.
@@ -2142,29 +2203,48 @@ class ApiController(RedditController):
         replaced.  This does not affect the stylesheet immediately, but will
         take effect the next time the stylesheet is saved.
 
-        See also: [/api/delete_sr_img](#POST_api_delete_sr_img) and
-        [/api/delete_sr_header](#POST_api_delete_sr_header).
+        See also: [/api/delete_sr_img](#POST_api_delete_sr_img),
+        [/api/delete_sr_header](#POST_api_delete_sr_header),
+        [/api/delete_sr_icon](#POST_api_delete_sr_icon), and
+        [/api/delete_sr_banner](#POST_api_delete_sr_banner).
 
         """
 
         # default error list (default values will reset the errors in
         # the response if no error is raised)
         errors = dict(BAD_CSS_NAME = "", IMAGE_ERROR = "")
-        add_image_to_sr = False
         size = None
+
+        # for backwards compatibility, map header to upload_type
+        if upload_type is None:
+            upload_type = 'header' if header else 'img'
         
-        if not header:
-            add_image_to_sr = True
-            if not name:
-                # error if the name wasn't specified and the image was not for a sponsored link or header
-                # this may also fail if a sponsored image was added and the user is not an admin
-                errors['BAD_CSS_NAME'] = _("bad image name")
+        if upload_type == 'img' and not name:
+            # error if the name wasn't specified and the image was not for a sponsored link or header
+            # this may also fail if a sponsored image was added and the user is not an admin
+            errors['BAD_CSS_NAME'] = _("bad image name")
         
-        if add_image_to_sr and not c.user_is_admin:
+        if upload_type == 'img' and not c.user_is_admin:
             image_count = wiki.ImagesByWikiPage.get_image_count(
                 c.site, "config/stylesheet")
             if image_count >= g.max_sr_images:
                 errors['IMAGE_ERROR'] = _("too many images (you only get %d)") % g.max_sr_images
+
+        size = str_to_image(file).size
+        if upload_type == 'icon':
+            if size != Subreddit.ICON_EXACT_SIZE:
+                errors['IMAGE_ERROR'] = (
+                    _('must be %dx%d pixels') % Subreddit.ICON_EXACT_SIZE)
+        elif upload_type == 'banner':
+            if size[0] * 10 / 16 != size[1] * 10 / 9:
+                # require precision to one decimal point for aspect ratio
+                errors['IMAGE_ERROR'] = _('16:9 aspect ratio required')
+            elif size > Subreddit.BANNER_MAX_SIZE:
+                errors['IMAGE_ERROR'] = (
+                    _('max %dx%d pixels') % Subreddit.BANNER_MAX_SIZE)
+            elif size < Subreddit.BANNER_MIN_SIZE:
+                errors['IMAGE_ERROR'] = (
+                    _('min %dx%d pixels') % Subreddit.BANNER_MIN_SIZE)
 
         if any(errors.values()):
             return UploadedImage("", "", "", errors=errors, form_id=form_id).render()
@@ -2176,19 +2256,26 @@ class ApiController(RedditController):
                 errors['IMAGE_ERROR'] = _("Invalid image or general image error")
                 return UploadedImage("", "", "", errors=errors, form_id=form_id).render()
 
-            size = str_to_image(file).size
-            if header:
+            if upload_type == 'img':
+                wiki.ImagesByWikiPage.add_image(c.site, "config/stylesheet",
+                                                name, new_url)
+                kw = dict(details='upload_image', description=name)
+            elif upload_type == 'header':
                 c.site.header = new_url
                 c.site.header_size = size
                 c.site._commit()
-            if add_image_to_sr:
-                wiki.ImagesByWikiPage.add_image(c.site, "config/stylesheet",
-                                                name, new_url)
-
-            if header:
                 kw = dict(details='upload_image_header')
-            else:
-                kw = dict(details='upload_image', description=name)
+            elif upload_type == 'icon':
+                c.site.icon_img = new_url
+                c.site.icon_size = size
+                c.site._commit()
+                kw = dict(details='upload_image_icon')
+            elif upload_type == 'banner':
+                c.site.banner_img = new_url
+                c.site.banner_size = size
+                c.site._commit()
+                kw = dict(details='upload_image_banner')
+
             ModAction.create(c.site, c.user, action='editsettings', **kw)
 
             return UploadedImage(_('saved'), new_url, name, 

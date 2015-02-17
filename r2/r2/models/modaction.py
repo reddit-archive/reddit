@@ -164,7 +164,11 @@ class ModAction(tdb_cassandra.UuidThing):
                      'stylesheet': _('stylesheet'),
                      'del_header': _('delete header image'),
                      'del_image': _('delete image'),
+                     'del_icon': _('delete icon image'),
+                     'del_banner': _('delete banner image'),
                      'upload_image_header': _('upload header image'),
+                     'upload_image_icon': _('upload icon image'),
+                     'upload_image_banner': _('upload banner image'),
                      'upload_image': _('upload image'),
                      # editflair
                      'flair_edit': _('add/edit flair'),

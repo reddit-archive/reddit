@@ -249,6 +249,10 @@ class Subreddit(Thing, Printable, BaseSite):
         gilding_server_seconds=0,
         contest_mode_upvotes_only=False,
         collapse_deleted_comments=False,
+        icon_img='',
+        icon_size=None,
+        banner_img='',
+        banner_size=None,
         hide_ads=False,
     )
     _essentials = ('type', 'name', 'lang')
@@ -263,6 +267,10 @@ class Subreddit(Thing, Printable, BaseSite):
     MAX_SRNAME_LENGTH = 200 # must be less than max memcached key length
     BASE_SELFTEXT_LENGTH = 15000
     ONLY_SELFTEXT_LENGTH = 40000
+
+    ICON_EXACT_SIZE = (240, 240)
+    BANNER_MIN_SIZE = (640, 360)
+    BANNER_MAX_SIZE = (1280, 720)
 
     valid_types = {
         'archived',

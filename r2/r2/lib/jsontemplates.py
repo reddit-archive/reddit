@@ -202,6 +202,8 @@ class ThingJsonTemplate(JsonTemplate):
 class SubredditJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = ThingJsonTemplate.data_attrs(
         accounts_active="accounts_active",
+        banner_img="banner_img",
+        banner_size="banner_size",
         collapse_deleted_comments="collapse_deleted_comments",
         comment_score_hide_mins="comment_score_hide_mins",
         description="description",
@@ -210,6 +212,8 @@ class SubredditJsonTemplate(ThingJsonTemplate):
         header_img="header",
         header_size="header_size",
         header_title="header_title",
+        icon_img="icon_img",
+        icon_size="icon_size",
         over18="over_18",
         public_description="public_description",
         public_description_html="public_description_html",
