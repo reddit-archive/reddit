@@ -42,6 +42,50 @@ r.analytics = {
         });
   },
 
+  _isGALoaded: false,
+
+  isGALoaded: function() {
+    // We've already passed this test, just return `true`
+    if (this._isGALoaded) {
+      return true;
+    }
+
+    // GA hasn't tried to load yet, so we can't know if it
+    // will succeed.
+    if (_.isArray(_gaq)) {
+      return undefined;
+    }
+
+    var test = false;
+
+    _gaq.push(function() {
+      test = true;
+    });
+
+    // Remember the result, so we only have to run this test once
+    // if it passes.
+    this._isGALoaded = test;
+
+    return test;
+  },
+
+  _wrapCallback: function(callback) {
+    var original = callback;
+
+    original.called = false;
+    callback = function() {
+      if (!original.called) {
+        original();
+        original.called = true;
+      }
+    };
+
+    // GA may timeout.  ensure the callback is called.
+    setTimeout(callback, 500);
+
+    return callback;
+  },
+
   fireFunnelEvent: function(category, action, options, callback) {
     options = options || {};
     callback = callback || function() {};
@@ -49,6 +93,12 @@ r.analytics = {
     if (!window._gaq || !this.shouldFireEvent.apply(this, arguments)) {
       callback();
       return;
+    }
+
+    var isGALoaded = this.isGALoaded();
+
+    if (!isGALoaded) {
+      callback = this._wrapCallback(callback);
     }
 
     // Virtual page views are needed for a funnel to work with GA.
@@ -72,6 +122,12 @@ r.analytics = {
     if (!window._gaq || !this.shouldFireEvent.apply(this, arguments)) {
       callback();
       return;
+    }
+
+    var isGALoaded = this.isGALoaded();
+
+    if (!isGALoaded) {
+      callback = this._wrapCallback(callback);
     }
 
     _gaq.push(['_trackEvent', category, action, opt_label, opt_value, opt_noninteraction]);
