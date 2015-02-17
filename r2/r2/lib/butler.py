@@ -23,13 +23,20 @@
 from pylons import g, c
 
 from r2.lib.db import queries
+from r2.lib.db.tdb_sql import CreationError
 from r2.lib import amqp
 from r2.lib.utils import extract_user_mentions
 from r2.models import query_cache, Thing, Comment, Account, Inbox, NotFound
 
 
 def notify_mention(user, thing):
-    inbox_rel = Inbox._add(user, thing, "mention")
+    try:
+        inbox_rel = Inbox._add(user, thing, "mention")
+    except CreationError:
+        # this mention was already inserted, ignore it
+        g.log.error("duplicate mention for (%s, %s)", user, thing)
+        return
+
     with query_cache.CachedQueryMutator() as m:
         m.insert(queries.get_inbox_comment_mentions(user), [inbox_rel])
         queries.set_unread(thing, user, unread=True, mutator=m)
