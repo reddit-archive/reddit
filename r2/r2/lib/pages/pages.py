@@ -4224,8 +4224,7 @@ class MediaEmbedBody(CachedTemplate):
 
 
 class PaymentForm(Templated):
-    countries = sorted(list(set(map(lambda c: c.get("name"),
-                                    g.locations.values()))))
+    countries = sorted({c['name'] for c in g.locations.values()})
 
     default_country = g.locations.get("US").get("name")
 

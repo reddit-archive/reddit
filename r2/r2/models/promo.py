@@ -287,6 +287,10 @@ class PromoCampaign(Thing):
     _defaults = dict(
         priority_name=PROMOTE_DEFAULT_PRIORITY.name,
         trans_id=NO_TRANSACTION,
+        trans_ip=None,
+        trans_ip_country=None,
+        trans_billing_country=None,
+        trans_country_match=None,
         location_code=None,
     )
 

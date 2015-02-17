@@ -43,6 +43,7 @@ from r2.lib import (
 from r2.lib.db.operators import not_
 from r2.lib.db import queries
 from r2.lib.cache import sgm
+from r2.lib.geoip import location_by_ips
 from r2.lib.memoize import memoize
 from r2.lib.strings import strings
 from r2.lib.utils import to_date, weighted_lottery
@@ -927,6 +928,25 @@ def get_spent_amount(campaign):
         billable_impressions = get_billable_impressions(campaign)
         spent = get_billable_amount(campaign, billable_impressions)
     return spent
+
+
+def successful_payment(link, campaign, ip, address):
+    if not address:
+        return
+
+    campaign.trans_ip = ip
+    campaign.trans_billing_country = address.country
+
+    location = location_by_ips(ip)
+
+    if location:
+        campaign.trans_ip_country = location.get("country_name")
+
+        countries_match = (campaign.trans_billing_country.lower() ==
+            campaign.trans_ip_country.lower())
+        campaign.trans_country_match = countries_match
+
+    campaign._commit()
 
 
 def new_payment_method(user, ip, address, link):

@@ -145,6 +145,9 @@ ${pr.javascript_setup()}
                 <th class="campaign-spent">${_("spent")}</th>
                 <th class="campaign-target" title="${targeting_title}">${_("targeting")}</th>
                 <th class="campaign-location">${_("location")}</th>
+                %if c.user_is_sponsor:
+                  <th class="campaign-payment-mismatch">${_("payment mismatch")}</th>
+                %endif
                 <th class="campaign-buttons" style="align:right"></th>
               </tr>
             </thead>

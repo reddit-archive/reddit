@@ -1166,6 +1166,14 @@ class PromoteApiController(ApiController):
 
             if success:
                 hooks.get_hook("promote.campaign_paid").call(link=link, campaign=campaign)
+                if not address and g.authorizenetapi:
+                    profiles = get_account_info(c.user).paymentProfiles
+                    profile = {p.customerPaymentProfileId: p for p in profiles}[pay_id]
+
+                    address = profile.billTo
+
+                promote.successful_payment(link, campaign, request.ip, address)
+
                 jquery.payment_redirect(promote.promo_edit_url(link), new_payment, campaign.bid)
                 return
             else:
