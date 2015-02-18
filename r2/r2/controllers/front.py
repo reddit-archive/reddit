@@ -790,7 +790,7 @@ class FrontController(RedditController):
     @base_listing
     @require_oauth2_scope("read")
     @validate(article=VLink('article'))
-    @api_doc(api_section.listings, uri="/{article}/related")
+    @api_doc(api_section.listings, uri="/related/{article}")
     def GET_related(self, num, article, after, reverse, count):
         """Related page: performs a search using title of article as
         the search query.
