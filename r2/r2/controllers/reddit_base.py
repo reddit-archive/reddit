@@ -25,6 +25,7 @@ import json
 import re
 import simplejson
 import socket
+import itertools
 
 from Cookie import CookieError
 from copy import copy
@@ -474,10 +475,14 @@ def set_multireddit():
             elif len(multis) == 1:
                 c.site = multis[0]
             else:
-                srs = []
-                for multi in multis:
-                    srs.extend(multi.srs)
-                c.site = MultiReddit(fullpath, list(set(srs)))
+                srs = Subreddit.random_reddits(
+                    logged_in_username,
+                    list(set(itertools.chain.from_iterable(
+                        multi.srs for multi in multis
+                    ))),
+                    LabeledMulti.MAX_SR_COUNT
+                )
+                c.site = MultiReddit(fullpath, srs)
     elif "filtername" in routes_dict:
         if not c.user_is_loggedin:
             abort(404)
