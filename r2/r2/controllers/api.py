@@ -2309,11 +2309,6 @@ class ApiController(RedditController):
                 public_description,
                 'public_description',
             )
-        
-        #if a user is banned, return rate-limit errors
-        if c.user._spam:
-            time = timeuntil(datetime.now(g.tz) + timedelta(seconds=600))
-            c.errors.add(errors.RATELIMIT, {'time': time})
 
         domain = kw['domain']
         cname_sr = domain and Subreddit._by_domain(domain)
