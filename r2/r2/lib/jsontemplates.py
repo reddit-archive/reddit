@@ -337,6 +337,7 @@ class IdentityJsonTemplate(ThingJsonTemplate):
         hide_from_robots="pref_hide_from_robots",
     )
     _private_data_attrs = dict(
+        inbox_count="inbox_count",
         over_18="pref_over_18",
         gold_creddits="gold_creddits",
         gold_expiration="gold_expiration",
