@@ -2432,8 +2432,8 @@ class AllInfoBar(Templated):
 
 class CreateSubreddit(Templated):
     """reddit creation form."""
-    def __init__(self, site = None, name = ''):
-        Templated.__init__(self, site = site, name = name)
+    def __init__(self, site=None, name='', captcha=None):
+        Templated.__init__(self, site=site, name=name, captcha=captcha)
 
 class SubredditStylesheet(Templated):
     """form for editing or creating subreddit stylesheets"""

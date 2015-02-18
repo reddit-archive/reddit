@@ -2197,6 +2197,7 @@ class ApiController(RedditController):
 
     @require_oauth2_scope("modconfig")
     @validatedForm(VUser(),
+                   VCaptcha(),
                    VModhash(),
                    VRatelimit(rate_user = True,
                               rate_ip = True,
@@ -2309,6 +2310,10 @@ class ApiController(RedditController):
                 public_description,
                 'public_description',
             )
+        
+        # only care about captcha if this is creating a subreddit
+        if not sr and form.has_errors("captcha", errors.BAD_CAPTCHA):
+            return
 
         domain = kw['domain']
         cname_sr = domain and Subreddit._by_domain(domain)

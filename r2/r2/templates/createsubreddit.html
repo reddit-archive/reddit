@@ -419,6 +419,9 @@
     </%utils:line_field>
 %endif
 
+%if not thing.site:
+  ${thing.captcha}
+%endif
 
   <div class="save-button">
   <%
