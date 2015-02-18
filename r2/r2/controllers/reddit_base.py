@@ -457,7 +457,7 @@ def set_multireddit():
             if c.user_is_loggedin:
                 logged_in_username = c.user.name.lower()
                 # redirect /user/foo/m/... to /me/m/... for user foo.
-                if username == logged_in_username:
+                if username == logged_in_username and not is_api():
                     # trim off multi id
                     url_parts = request.path_qs.split("/")[5:]
                     url_parts.insert(0, "/me/m/%s" % fullpath)
