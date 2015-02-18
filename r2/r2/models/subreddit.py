@@ -253,6 +253,9 @@ class Subreddit(Thing, Printable, BaseSite):
         icon_size=None,
         banner_img='',
         banner_size=None,
+        community_rules='',
+        related_subreddits='',
+        key_color='',
         hide_ads=False,
     )
     _essentials = ('type', 'name', 'lang')
@@ -290,21 +293,23 @@ class Subreddit(Thing, Printable, BaseSite):
         'private',
     }
 
-    KEY_COLORS = {
-        '': N_('default'),
-        '#ff4500': N_('orangered'),
-        '#ffd635': N_('yellow'),
-        '#fff03e': N_('highlight'),
-        '#7cd344': N_('green'),
-        '#25b79f': N_('teal'),
-        '#24a0ed': N_('blue'),
-        '#ea0027': N_('red'),
-        '#ff8717': N_('orange'),
-        '#c7e223': N_('lime'),
-        '#46a508': N_('dark green'),
-        '#008985': N_('dark teal'),
-        '#0079d3': N_('alien blue'),
-    }
+    # in "rainbow" order
+    KEY_COLORS = collections.OrderedDict([
+        ('', N_('default')),
+        ('#ea0027', N_('red')),
+        ('#ff4500', N_('orangered')),
+        ('#ff8717', N_('orange')),
+        ('#ffd635', N_('yellow')),
+        ('#fff03e', N_('highlight')),
+        ('#c7e223', N_('lime')),
+        ('#7cd344', N_('green')),
+        ('#46a508', N_('dark green')),
+        ('#008985', N_('dark teal')),
+        ('#25b79f', N_('teal')),
+        ('#24a0ed', N_('blue')),
+        ('#0079d3', N_('alien blue')),
+    ])
+
     # note: for purposely unrenderable reddits (like promos) set author_id = -1
     @classmethod
     def _new(cls, name, title, author_id, ip, lang = g.lang, type = 'public',

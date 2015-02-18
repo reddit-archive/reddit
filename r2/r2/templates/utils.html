@@ -296,6 +296,7 @@ ${unsafe(txt)}
         action="${post_target}" method="post">
       %if label:
          <label for="file">${label}</label>
+         <br>
       %endif
           <input type="hidden" name="uh" value="${c.modhash}" />
           %if not c.default_sr:
@@ -307,7 +308,6 @@ ${unsafe(txt)}
               <input type="hidden" name="${name}" value="${value}" />
             %endfor
           %endif
-          <br/>
           %if ask_type:
             <label for="img_type">${_("Type: ")}</label>
             <label><input type="radio" name="img_type" value="jpg" />JPEG</label>

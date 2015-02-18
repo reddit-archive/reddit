@@ -22,6 +22,7 @@
 
 import cgi
 import json
+from collections import OrderedDict
 
 from pylons import c, g, request, response
 from pylons.i18n import _
@@ -2822,4 +2823,39 @@ class VMultiByPath(Validator):
     def param_docs(self):
         return {
             self.param: "multireddit url path",
+        }
+
+
+sr_path_rx = re.compile(r"\A(/?r/)?(?P<name>.*?)/?\Z")
+class VSubredditList(Validator):
+
+    def __init__(self, param, limit=20, allow_language_srs=True):
+        Validator.__init__(self, param)
+        self.limit = limit
+        self.allow_language_srs = allow_language_srs
+
+    def run(self, subreddits):
+        if not subreddits:
+            return ''
+
+        # extract subreddit name if path provided
+        subreddits = [sr_path_rx.sub('\g<name>', sr.strip())
+                      for sr in subreddits.lower().splitlines()]
+
+        for name in subreddits:
+            if name and not chksrname(name, self.allow_language_srs):
+                return self.set_error(errors.BAD_SR_NAME, code=400)
+
+        # unique nonempty subreddits, preserve order
+        subreddits = list(OrderedDict.fromkeys([''] + subreddits))[1:]
+
+        if len(subreddits) > self.limit:
+            return self.set_error(
+                errors.TOO_MANY_SUBREDDITS, {'max': self.limit}, code=400)
+
+        return '\n'.join(subreddits)
+
+    def param_docs(self):
+        return {
+            self.param: 'a list of subreddit names, line break delimited',
         }

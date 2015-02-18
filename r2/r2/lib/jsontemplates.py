@@ -206,6 +206,7 @@ class SubredditJsonTemplate(ThingJsonTemplate):
         banner_size="banner_size",
         collapse_deleted_comments="collapse_deleted_comments",
         comment_score_hide_mins="comment_score_hide_mins",
+        # community_rules="community_rules",
         description="description",
         description_html="description_html",
         display_name="name",
@@ -214,10 +215,12 @@ class SubredditJsonTemplate(ThingJsonTemplate):
         header_title="header_title",
         icon_img="icon_img",
         icon_size="icon_size",
+        # key_color="key_color",
         over18="over_18",
         public_description="public_description",
         public_description_html="public_description_html",
         public_traffic="public_traffic",
+        # related_subreddits="related_subreddits",
         hide_ads="hide_ads",
         submission_type="link_type",
         submit_link_label="submit_link_label",
@@ -258,10 +261,17 @@ class SubredditJsonTemplate(ThingJsonTemplate):
 
     def raw_data(self, thing):
         data = ThingJsonTemplate.raw_data(self, thing)
+
+        # XXX remove this when feature is enabled and use _data_attrs instead
+        if feature.is_enabled('mobile_settings'):
+            for attr in ('community_rules', 'key_color', 'related_subreddits'):
+                data[attr] = self.thing_attr(thing, attr)
+
         permissions = getattr(thing, 'mod_permissions', None)
         if permissions:
             permissions = [perm for perm, has in permissions.iteritems() if has]
             data['mod_permissions'] = permissions
+
         return data
 
     def thing_attr(self, thing, attr):
@@ -285,6 +295,14 @@ class SubredditJsonTemplate(ThingJsonTemplate):
             return None
         elif attr == 'submit_text_html':
             return safemarkdown(thing.submit_text)
+        elif attr == 'community_rules':
+            if thing.community_rules:
+                return thing.community_rules.split('\n')
+            return []
+        elif attr == 'related_subreddits':
+            if thing.related_subreddits:
+                return thing.related_subreddits.split('\n')
+            return []
         else:
             return ThingJsonTemplate.thing_attr(self, thing, attr)
 
@@ -1051,6 +1069,7 @@ class SubredditSettingsTemplate(ThingJsonTemplate):
     _data_attrs_ = dict(
         collapse_deleted_comments='site.collapse_deleted_comments',
         comment_score_hide_mins='site.comment_score_hide_mins',
+        # community_rules='site.community_rules',
         content_options='site.link_type',
         default_set='site.allow_top',
         description='site.description',
@@ -1059,10 +1078,12 @@ class SubredditSettingsTemplate(ThingJsonTemplate):
         domain_sidebar='site.show_cname_sidebar',
         exclude_banned_modqueue='site.exclude_banned_modqueue',
         header_hover_text='site.header_title',
+        # key_color='site.key_color',
         language='site.lang',
         over_18='site.over_18',
         public_description='site.public_description',
         public_traffic='site.public_traffic',
+        # related_subreddits='site.related_subreddits',
         hide_ads="site.hide_ads",
         show_media='site.show_media',
         submit_link_label='site.submit_link_label',
@@ -1086,6 +1107,16 @@ class SubredditSettingsTemplate(ThingJsonTemplate):
         if attr.startswith('site.') and thing.site:
             return getattr(thing.site, attr[5:])
         return ThingJsonTemplate.thing_attr(self, thing, attr)
+
+    def raw_data(self, thing):
+        data = ThingJsonTemplate.raw_data(self, thing)
+
+        # XXX remove this when feature is enabled and use _data_attrs instead
+        if feature.is_enabled('mobile_settings'):
+            for attr in ('community_rules', 'key_color', 'related_subreddits'):
+                data[attr] = self.thing_attr(thing.site, attr)
+
+        return data
 
 
 class UploadedImageJsonTemplate(JsonTemplate):

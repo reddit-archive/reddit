@@ -4470,6 +4470,26 @@ ul#image-preview-list .description pre {
     float: left;
 }
 
+#image-upload #img-preview-container img {
+  max-width: 160px;
+}
+#icon-upload #img-preview-container img {
+  width: 60px;
+  height: 60px;
+  margin: 0;
+}
+#banner-upload #img-preview-container img {
+  width: 160px;
+  height: 90px;
+  margin: 0;
+}
+
+.linefield.mobile {
+  width: 512px;
+  background-color: #EFF7FF;
+  border: 1px solid #CEE3F8;
+}
+
 .private-feeds.instructions .prefright { 
     line-height: 2em;
 }
@@ -4995,6 +5015,23 @@ ul.tabmenu.formtab {
     margin-left: 10px; 
 }
 
+ul.colors {
+  overflow: auto;
+
+  li {
+    float: left;
+    width: 140px;
+    padding: 5px 10px;
+  }
+
+  .swatch {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    margin-right: 0.5em;
+    vertical-align: middle;
+  }
+}
 
 .campaign .linefield span + span {
     margin-left: 0;
@@ -5055,7 +5092,7 @@ ul.tabmenu.formtab {
 .linefield.captcha .capimage {
     margin-bottom: 10px;
 }
-.linefield label { font-size: smaller; padding-right: 2px;  }
+.linefield label { font-size: smaller; margin-right: 0.5em; }
 .linefield span{ font-size: smaller; }
 
 .linefield input[type="text"].small-text { 

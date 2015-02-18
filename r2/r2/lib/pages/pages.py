@@ -2439,6 +2439,9 @@ class CreateSubreddit(Templated):
     def __init__(self, site=None, name='', captcha=None):
         Templated.__init__(self, site=site, name=name, captcha=captcha)
 
+        self.color_options = Subreddit.KEY_COLORS
+
+
 class SubredditStylesheet(Templated):
     """form for editing or creating subreddit stylesheets"""
     def __init__(self, site = None,

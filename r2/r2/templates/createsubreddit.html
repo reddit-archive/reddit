@@ -21,6 +21,7 @@
 ###############################################################################
 
 <%!
+   from r2.config import feature
    from r2.lib.filters import keep_space
    from r2.lib.pages import UserText
    from r2.lib.strings import strings
@@ -214,7 +215,7 @@
     <label for="wiki_edit_karma">${_('Subreddit karma required to edit and create wiki pages:')}</label>
         %if thing.site:
             <input id="wiki_edit_karma" type="text" name="wiki_edit_karma" 
-                   value = "${thing.site.wiki_edit_karma}"/>
+                   value="${thing.site.wiki_edit_karma}"/>
         %else:
             <input id="wiki_edit_karma" type="text" name="wiki_edit_karma" value="100" />
         %endif
@@ -224,7 +225,7 @@
     <label for="wiki_edit_age">${_('Account age (days) required to edit and create wiki pages:')}</label>
         %if thing.site:
             <input id="wiki_edit_age" type="text" name="wiki_edit_age" 
-                   value = "${thing.site.wiki_edit_age}"/>
+                   value="${thing.site.wiki_edit_age}"/>
         %else:
             <input id="wiki_edit_age" type="text" name="wiki_edit_age" value="0" />
         %endif
@@ -361,7 +362,7 @@
         <label for="comment_score_hide_mins">${_('Minutes to hide comment scores:')}</label>
             %if thing.site:
                 <input id="comment_score_hide_mins" type="text" name="comment_score_hide_mins" placeholder="0" 
-                       value = "${thing.site.comment_score_hide_mins}" />
+                       value="${thing.site.comment_score_hide_mins}" />
             %else:
                 <input id="comment_score_hide_mins" type="text" name="comment_score_hide_mins" value="0" placeholder="0" />
             %endif
@@ -458,6 +459,102 @@
       </ul>
     </%utils:line_field>
 %endif
+
+%if feature.is_enabled('mobile_settings'):  # begin feature flag
+
+%if thing.site:
+  <%utils:line_field title="${_('related subreddits')}">
+    <div class="delete-field">
+      <p class="little gray">${_('similar or related subreddits. one subreddit per line.')}</p>
+      <div class="usertext-edit">
+        <textarea name="related_subreddits" rows="1" cols="1">
+          ${keep_space(thing.site.related_subreddits)}
+        </textarea>
+        <span class="error BAD_SR_NAME field-related_subreddits" style="display:none"></span>
+        <span class="error TOO_MANY_SUBREDDITS field-related_subreddits" style="display:none"></span>
+      </div>
+    </div>
+  </%utils:line_field>
+%endif
+
+%if thing.site:
+  <%utils:line_field title="${_('mobile look and feel')}" css_class="mobile">
+    <ul class="upload">
+      <li>
+        <p><label>${_('icon image')}</label> <span class="gray">${_('icon must be 240x240 pixels. PNG or JPG only.')}</span></p>
+        <%utils:image_upload post_target="/api/upload_sr_img"
+                             current_image="${thing.site.icon_img}"
+                             form_id='icon-upload'>
+          <button id="delete-icon" class="delete-img"
+                  %if not thing.site.icon_img:
+                    style="display: none;"
+                  %endif
+                  onclick="return post_form(this.form, 'delete_sr_icon');">
+            ${_('remove custom icon image')}
+          </button>
+          <div class="clearleft"></div>
+          <input type="hidden" name="uh" value="${c.modhash}">
+          <input type="hidden" name="r"  value="${c.site.name}">
+          <input type="hidden" name="upload_type" value="icon">
+        </%utils:image_upload>
+      </li>
+      <li>
+        <p><label>${_('banner image')}</label> <span class="gray">${_('banner should have 16:9 aspect ratio. PNG or JPG only.')}</span></p>
+        <p class="little gray">${_('minimum size: 640x360px')} / ${_('maximum size: 1280x720px')}</span></p>
+        <%utils:image_upload post_target="/api/upload_sr_img"
+                             current_image="${thing.site.banner_img}"
+                             form_id='banner-upload'>
+          <button id="delete-banner" class="delete-img"
+                  %if not thing.site.banner_img:
+                    style="display: none;"
+                  %endif
+                  onclick="return post_form(this.form, 'delete_sr_banner');">
+            ${_('remove custom banner image')}
+          </button>
+          <div class="clearleft"></div>
+          <input type="hidden" name="uh" value="${c.modhash}">
+          <input type="hidden" name="r"  value="${c.site.name}">
+          <input type="hidden" name="upload_type" value="banner">
+        </%utils:image_upload>
+      </li>
+      <li>
+        <p><label>${_('color')}</label> <span class="gray">${_('used as a thematic color for your subreddit in the app')}</span></p>
+        <ul class="colors">
+          %for color, color_name in thing.color_options.iteritems():
+            %if color:
+            <li>
+              <label>
+                <input type="radio" name="key_color" value="${color}"
+                       %if c.site.key_color == color:
+                       checked="checked"
+                       %endif
+                >
+                <div class="swatch" style="background-color: ${color}"></div>
+                ${_(color_name)}
+              </label>
+            </li>
+            %endif
+          %endfor
+        </ul>
+      </li>
+    </ul>
+  </%utils:line_field>
+%endif
+
+%if thing.site:
+  <%utils:line_field title="${_('mobile community rules')}" css_class="mobile">
+    <div class="delete-field">
+      <p class="little gray">${_("a concise summary of community rules for mobile.  one rule per line.")}</p>
+      <div class="usertext-edit">
+        <textarea name="community_rules" rows="1" cols="1">
+          ${keep_space(thing.site.community_rules)}
+        </textarea>
+      </div>
+    </div>
+  </%utils:line_field>
+%endif
+
+%endif  # end feature flag
 
 %if not thing.site:
   ${thing.captcha}
