@@ -781,12 +781,8 @@ CL_QUORUM = ConsistencyLevel.QUORUM
 CL_ALL = ConsistencyLevel.ALL
 
 class CassandraCacheChain(CacheChain):
-    def __init__(self, localcache, cassa, lock_factory, memcache=None, **kw):
-        if memcache:
-            caches = (localcache, memcache, cassa)
-        else:
-            caches = (localcache, cassa)
-
+    def __init__(self, localcache, cassa, lock_factory, memcache, **kw):
+        caches = (localcache, memcache, cassa)
         self.cassa = cassa
         self.memcache = memcache
         self.make_lock = lock_factory
@@ -810,12 +806,9 @@ class CassandraCacheChain(CacheChain):
             rcl = wcl = self.cassa.write_consistency_level
             if willread:
                 try:
-                    value = None
-                    if self.memcache:
-                        value = self.memcache.get(key)
+                    value = self.memcache.get(key)
                     if value is None:
-                        value = self.cassa.get(key,
-                                               read_consistency_level = rcl)
+                        value = self.cassa.get(key, read_consistency_level=rcl)
                 except CassandraNotFound:
                     value = default
 
