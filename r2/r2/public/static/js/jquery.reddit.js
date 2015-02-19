@@ -579,7 +579,7 @@ $.fn.captcha = function(iden) {
     var c = this.find(".capimage");
     if(iden) {
         c.attr("src", "/captcha/" + iden + ".png")
-            .parents("form").find('input[name="iden"]').val(iden);
+            .siblings('input[name="iden"]').val(iden);
     }
     return c;
 };
