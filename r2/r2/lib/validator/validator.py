@@ -342,7 +342,7 @@ def validatedMultipartForm(self, self_method, responder, simple_vals,
                           param_vals, *a, **kw)
 
 
-jsonp_callback_rx = re.compile(r"""\A[\w$\."'[\]]+\Z""")
+jsonp_callback_rx = re.compile("\\A[\\w$\\.\"'[\\]]+\\Z")
 def valid_jsonp_callback(callback):
     return jsonp_callback_rx.match(callback)
 
