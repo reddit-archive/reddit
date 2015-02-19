@@ -475,7 +475,9 @@ class Globals(object):
         self.log = logging.LoggerAdapter(log, {"pool": pool})
 
         # set locations
-        self.locations = {}
+        locations = pkg_resources.resource_stream(__name__,
+                                                  "../data/locations.json")
+        self.locations = json.loads(locations.read())
 
         if not self.media_domain:
             self.media_domain = self.domain
