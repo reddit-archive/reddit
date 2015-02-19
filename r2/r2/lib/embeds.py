@@ -17,7 +17,7 @@ def embeddable_sr(thing):
         sr = thing
     else:
         try:
-            sr = Subreddit._byID(thing.sr_id) if thing.sr_id else None
+            sr = Subreddit._byID(thing.sr_id, data=True) if thing.sr_id else None
         except NotFound:
             sr = None
 
