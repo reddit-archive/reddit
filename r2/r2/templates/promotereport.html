@@ -157,6 +157,22 @@ ${unsafe(js.use('sponsored'))}
       <td>${format_number(row['total_impressions'])}</td>
     </tr>
     %endfor
+    <tr class="total">
+      %if thing.group_by_date:
+        <td></td>
+      %endif
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td>${thing.campaign_report_totals['bid']}</td>
+      <td>${format_number(thing.campaign_report_totals['fp_clicks'])}</td>
+      <td>${format_number(thing.campaign_report_totals['fp_imps'])}</td>
+      <td>${format_number(thing.campaign_report_totals['sr_clicks'])}</td>
+      <td>${format_number(thing.campaign_report_totals['sr_imps'])}</td>
+      <td>${format_number(thing.campaign_report_totals['total_clicks'])}</td>
+      <td>${format_number(thing.campaign_report_totals['total_imps'])}</td>
+    </tr>
   </tbody>
 </table>
 %endif

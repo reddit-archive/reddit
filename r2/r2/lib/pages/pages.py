@@ -4530,7 +4530,7 @@ class PromoteReport(PromoteLinkBase):
                 item = ReportItem(bid, fp_imps, sr_imps, fp_clicks, sr_clicks)
                 new_items_by_key[group_key] = item
             return new_items_by_key
- 
+
         # make the campaign report
         if not self.group_by_date:
             traffic_by_key = group_and_combine(
@@ -4541,11 +4541,27 @@ class PromoteReport(PromoteLinkBase):
         links_by_id = {link._id: link for link in self.links}
         camps_by_name = {camp._fullname: camp for camp in campaigns}
 
+        self.campaign_report_totals = {
+            'fp_clicks': 0,
+            'fp_imps': 0,
+            'sr_clicks': 0,
+            'sr_imps': 0,
+            'total_clicks': 0,
+            'total_imps': 0,
+            'bid': 0,
+        }
         self.campaign_report = []
         for rk in sorted(traffic_by_key):
             item = traffic_by_key[rk]
             link = links_by_id[rk.link]
             camp = camps_by_name[rk.campaign]
+
+            self.campaign_report_totals['fp_clicks'] += item.fp_clicks
+            self.campaign_report_totals['fp_imps'] += item.fp_imps
+            self.campaign_report_totals['sr_clicks'] += item.sr_clicks
+            self.campaign_report_totals['sr_imps'] += item.sr_imps
+            self.campaign_report_totals['bid'] += item.bid
+
             self.campaign_report.append({
                 'date': rk.date,
                 'link': link._id36,
@@ -4560,7 +4576,10 @@ class PromoteReport(PromoteLinkBase):
                 'total_impressions': item.fp_imps + item.sr_imps,
                 'total_clicks': item.fp_clicks + item.sr_clicks,
             })
- 
+        crt = self.campaign_report_totals
+        crt['total_clicks'] = crt['sr_clicks'] + crt['fp_clicks']
+        crt['total_imps'] = crt['sr_imps'] + crt['fp_imps']   
+        crt['bid'] = format_currency(crt['bid'], 'USD', locale=c.locale)
         # make the link report
         traffic_by_key = group_and_combine(
                 traffic_by_key, group_on=["link", "date"])
