@@ -63,7 +63,6 @@ from r2.lib.pages.things import default_thing_wrapper, wrap_links
 from r2.lib.system_messages import user_added_messages
 from r2.lib.utils import (
     is_subdomain,
-    make_offset_date,
     to_date,
     to36,
     UrlParser,

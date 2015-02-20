@@ -40,7 +40,7 @@ from r2.lib.permissions import ModeratorPermissionSet
 from r2.models import *
 from r2.models.promo import Location
 from r2.lib.authorize import Address, CreditCard
-from r2.lib.utils import constant_time_compare, make_offset_date
+from r2.lib.utils import constant_time_compare
 from r2.lib.require import require, require_split, RequirementException
 
 from r2.lib.errors import errors, RedditError, UserRequiredException
@@ -2182,55 +2182,19 @@ class VDate(Validator):
     """
     Date checker that accepts string inputs.
 
-    Optional parameters 'earliest' and 'latest' specify the acceptable timedelta
-    offsets (offsets are inclusive).
-
     Error conditions:
        * BAD_DATE on mal-formed date strings (strptime parse failure)
-       * DATE_TOO_EARLY and DATE_TOO_LATE on range errors.
 
     """
-    def __init__(self, param, earliest=None, latest=None,
-                 sponsor_override = False,
-                 reference_date = lambda : datetime.now(g.tz),
-                 business_days = False,
-                 format = "%m/%d/%Y"):
-        self.earliest = earliest
-        self.latest = latest
 
-        # are weekends to be exluded from the interval?
-        self.business_days = business_days
-
+    def __init__(self, param, format="%m/%d/%Y"):
         self.format = format
-
-        # function for generating "now"
-        self.reference_date = reference_date
-
-        # do we let admins and sponsors override date range checking?
-        self.override = sponsor_override
         Validator.__init__(self, param)
 
-    def run(self, date):
-        now = self.reference_date()
-        earliest = latest = None
-        if self.earliest:
-            earliest = make_offset_date(now, self.earliest.days,
-                                        business_days=self.business_days)
-        if self.latest:
-            latest = make_offset_date(now, self.latest.days,
-                                      business_days=self.business_days)
-        override = c.user_is_sponsor and self.override
+    def run(self, datestr):
         try:
-            date = datetime.strptime(date, self.format)
-            if not override:
-                if earliest and not date.date() >= earliest.date():
-                    self.set_error(errors.DATE_TOO_EARLY,
-                                   {'day': earliest.strftime(self.format)})
-
-                if latest and not date.date() <= latest.date():
-                    self.set_error(errors.DATE_TOO_LATE,
-                                   {'day': latest.strftime(self.format)})
-            return date.replace(tzinfo=g.tz)
+            dt = datetime.strptime(datestr, self.format)
+            return dt.replace(tzinfo=g.tz)
         except (ValueError, TypeError):
             self.set_error(errors.BAD_DATE)
 
