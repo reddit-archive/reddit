@@ -43,6 +43,7 @@ from r2.models import (Account, Link, Subreddit, Thing, All, DefaultSR,
                        FakeSubreddit, NotFound)
 
 
+_TIMEOUT = 5 # seconds for http requests to cloudsearch
 _CHUNK_SIZE = 4000000 # Approx. 4 MB, to stay under the 5MB limit
 _VERSION_OFFSET = 13257906857
 ILLEGAL_XML = re.compile(u'[\x00-\x08\x0b\x0c\x0e-\x1F\uD800-\uDFFF\uFFFE\uFFFF]')
@@ -482,7 +483,8 @@ class CloudSearchUploader(object):
         Raises CloudSearchHTTPError if the endpoint indicates a failure
         '''
         responses = []
-        connection = httplib.HTTPConnection(self.doc_api, 80)
+        connection = httplib.HTTPConnection(
+            self.doc_api, port=80, timeout=_TIMEOUT)
         chunker = chunk_xml(docs)
         try:
             for data in chunker:
@@ -748,7 +750,7 @@ def basic_query(query=None, bq=None, faceting=None, size=1000,
     if record_stats:
         timer = g.stats.get_timer("cloudsearch_timer")
         timer.start()
-    connection = httplib.HTTPConnection(search_api, 80)
+    connection = httplib.HTTPConnection(search_api, port=80, timeout=_TIMEOUT)
     try:
         connection.request('GET', path)
         resp = connection.getresponse()
