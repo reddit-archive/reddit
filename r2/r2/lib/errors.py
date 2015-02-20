@@ -95,7 +95,6 @@ error_list = dict((
         ('OVERSOLD_DETAIL', _("We have insufficient inventory to fulfill your requested budget, target, and dates. Only %(available)s impressions available on %(target)s from %(start)s to %(end)s.")),
         ('BAD_DATE', _('please provide a date of the form mm/dd/yyyy')),
         ('BAD_DATE_RANGE', _('the dates need to be in order and not identical')),
-        ('DATE_RANGE_TOO_LARGE', _('you must choose a date range of less than %(days)s days')),
         ('DATE_TOO_LATE', _('please enter a date %(day)s or earlier')),
         ('DATE_TOO_EARLY', _('please enter a date %(day)s or later')),
         ('BAD_ADDRESS', _('address problem: %(message)s')),

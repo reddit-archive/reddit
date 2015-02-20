@@ -83,7 +83,6 @@ from r2.lib.validator import (
     VByName,
     VCollection,
     VDate,
-    VDateRange,
     VExistingUname,
     VFloat,
     VImageType,
@@ -915,44 +914,66 @@ class PromoteApiController(ApiController):
         l._commit()
         form.redirect(promote.promo_edit_url(l))
 
-    @validatedForm(VSponsorAdmin(),
-                   VModhash(),
-                   dates=VDateRange(['startdate', 'enddate'],
-                                    reference_date=promote.promo_datetime_now),
-                   sr=VSubmitSR('sr', promotion=True))
-    def POST_add_roadblock(self, form, jquery, dates, sr):
+    @validatedForm(
+        VSponsorAdmin(),
+        VModhash(),
+        start=VDate('startdate', reference_date=promote.promo_datetime_now),
+        end=VDate('enddate', reference_date=promote.promo_datetime_now),
+        sr=VSubmitSR('sr', promotion=True),
+    )
+    def POST_add_roadblock(self, form, jquery, start, end, sr):
         if (form.has_errors('startdate', errors.BAD_DATE) or
-            form.has_errors('enddate', errors.BAD_DATE, errors.BAD_DATE_RANGE)):
+                form.has_errors('enddate', errors.BAD_DATE)):
             return
+
+        if end < start:
+            c.errors.add(errors.BAD_DATE_RANGE, field='enddate')
+            form.has_errors('enddate', errors.BAD_DATE_RANGE)
+            return
+
         if form.has_errors('sr', errors.SUBREDDIT_NOEXIST,
                            errors.SUBREDDIT_NOTALLOWED,
                            errors.SUBREDDIT_REQUIRED):
             return
-        if dates and sr:
-            sd, ed = dates
-            PromotedLinkRoadblock.add(sr, sd, ed)
-            jquery.refresh()
 
-    @validatedForm(VSponsorAdmin(),
-                   VModhash(),
-                   dates=VDateRange(['startdate', 'enddate'],
-                                    reference_date=promote.promo_datetime_now),
-                   sr=VSubmitSR('sr', promotion=True))
-    def POST_rm_roadblock(self, form, jquery, dates, sr):
-        if dates and sr:
-            sd, ed = dates
-            PromotedLinkRoadblock.remove(sr, sd, ed)
+        PromotedLinkRoadblock.add(sr, start, end)
+        jquery.refresh()
+
+    @validatedForm(
+        VSponsorAdmin(),
+        VModhash(),
+        start=VDate('startdate', reference_date=promote.promo_datetime_now),
+        end=VDate('enddate', reference_date=promote.promo_datetime_now),
+        sr=VSubmitSR('sr', promotion=True),
+    )
+    def POST_rm_roadblock(self, form, jquery, start, end, sr):
+        if end < start:
+            c.errors.add(errors.BAD_DATE_RANGE, field='enddate')
+            form.has_errors('enddate', errors.BAD_DATE_RANGE)
+            return
+
+        if start and end and sr:
+            PromotedLinkRoadblock.remove(sr, start, end)
             jquery.refresh()
 
     @validatedForm(
         VSponsor('link_id36'),
         VModhash(),
-        dates=VDateRange(['startdate', 'enddate'],
+        start=VDate(
+            'startdate',
             earliest=timedelta(days=g.min_promote_future),
             latest=timedelta(days=g.max_promote_future),
             reference_date=promote.promo_datetime_now,
             business_days=True,
-            sponsor_override=True),
+            sponsor_override=True,
+        ),
+        end=VDate(
+            'enddate',
+            earliest=timedelta(days=g.min_promote_future),
+            latest=timedelta(days=g.max_promote_future),
+            reference_date=promote.promo_datetime_now,
+            sponsor_override=True,
+        ),
         link=VLink('link_id36'),
         bid=VFloat('bid', coerce=False),
         target=VPromoTarget(),
@@ -961,7 +982,7 @@ class PromoteApiController(ApiController):
         location=VLocation(),
     )
     def POST_edit_campaign(self, form, jquery, link, campaign_id36,
-                           dates, bid, target, priority, location):
+                           start, end, bid, target, priority, location):
         if not link:
             return
 
@@ -974,8 +995,6 @@ class PromoteApiController(ApiController):
             form.has_errors('targeting', errors.INVALID_TARGET)
             return
 
-        start, end = dates or (None, None)
-
         if not allowed_location_and_target(location, target):
             return abort(403, 'forbidden')
 
@@ -985,6 +1004,11 @@ class PromoteApiController(ApiController):
                             errors.DATE_TOO_EARLY, errors.DATE_TOO_LATE) or
             form.has_errors('enddate', errors.BAD_DATE, errors.DATE_TOO_EARLY,
                             errors.DATE_TOO_LATE, errors.BAD_DATE_RANGE)):
+            return
+
+        if end < start:
+            c.errors.add(errors.BAD_DATE_RANGE, field='enddate')
+            form.has_errors('enddate', errors.BAD_DATE_RANGE)
             return
 
         # check that start is not so late that authorization hold will expire
@@ -1066,6 +1090,7 @@ class PromoteApiController(ApiController):
             if oversold:
                 return
 
+        dates = (start, end)
         if campaign:
             promote.edit_campaign(link, campaign, dates, bid, cpm, target,
                                   priority, location)
