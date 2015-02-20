@@ -1737,21 +1737,6 @@ class VColor(Validator):
         }
 
 
-class VColor(Validator):
-    """Validate a string as being a 6 digit hex color starting with #"""
-    color_re = re.compile(r"\A#[a-zA-Z0-9]{6}\Z")
-
-    def run(self, color):
-        if color and self.color_re.match(color):
-            return color
-        else:
-            return None
-
-    def param_docs(self):
-        return {
-            self.param: "A 6-digit rgb hex color, e.g. `#AABBCC`"
-        }
-
 class VMenu(Validator):
 
     def __init__(self, param, menu_cls, remember = True, **kw):

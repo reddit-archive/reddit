@@ -310,6 +310,7 @@ class LabeledMultiJsonTemplate(LabeledMultiDescriptionJsonTemplate):
         description_md="description_md",
         display_name="display_name",
         key_color="key_color",
+        icon_name="icon_id",
         icon_url="icon_url",
         name="name",
         path="path",

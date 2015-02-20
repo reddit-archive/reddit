@@ -70,6 +70,7 @@ multi_json_spec = VValidatedJSON.PartialObject({
     'description_md': VMarkdownLength('description_md', max_length=MAX_DESC,
                                       empty_error=None),
     'display_name': VLength('display_name', max_length=MAX_DISP_NAME),
+    'icon_name': VOneOf('icon_name', g.multi_icons + ("", None)),
     'key_color': VColor('key_color'),
     'visibility': VOneOf('visibility', ('private', 'public', 'hidden')),
     'weighting_scheme': VOneOf('weighting_scheme', ('classic', 'fresh')),

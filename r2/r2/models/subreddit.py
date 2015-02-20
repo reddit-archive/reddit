@@ -27,10 +27,11 @@ import collections
 import datetime
 import itertools
 import json
+import struct
 
 from pycassa.util import convert_uuid_to_time
 from pylons import c, g, request
-from pylons.i18n import _
+from pylons.i18n import _, N_
 
 from r2.lib.db.thing import Thing, Relation, NotFound
 from account import Account, AccountsActiveBySR
@@ -1571,9 +1572,8 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         description_md='',
         display_name='',
         copied_from=None,
-        key_color=None,
-        icon_id=None,
-        icon_url=None,
+        key_color="#cee3f8",  # A lovely shade of blue
+        icon_id='',
         weighting_scheme="classic",
     )
     _extra_schema_creation_args = {
@@ -1724,6 +1724,29 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
             return True
 
         return user == self.owner
+
+    @property
+    def icon_url(self):
+        from r2.lib.template_helpers import static
+        if self.icon_id:
+            path = "multi_icons/{}.png".format(self.icon_id.replace(" ", "_"))
+            return static(path)
+        else:
+            return None
+
+    def set_icon_by_name(self, name):
+        """Set this multi's icon information by icon name
+
+        Note: tdb_cassandra.Thing doesn't support property.setter properly;
+        it appears to write through directly to self._t['icon_name'].
+
+        """
+        if not name:
+            self.icon_id = ''
+        elif name in g.multi_icons:
+            self.icon_id = name
+        else:
+            raise ValueError("invalid multi icon name")
 
     @classmethod
     def by_owner(cls, owner, kinds=None):

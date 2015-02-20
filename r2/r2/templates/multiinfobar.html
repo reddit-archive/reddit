@@ -21,6 +21,7 @@
 ###############################################################################
 
 <%!
+   from r2.config import feature
    from r2.lib.strings import strings, Score
    from r2.lib.pages import WrappedUser, UserText
    from r2.lib.template_helpers import _ws, _wsf, format_html
@@ -28,7 +29,6 @@
 
 <%namespace file="utils.html" import="plain_link, thing_timestamp, text_with_links"/>
 <%namespace file="printablebuttons.html" import="ynbutton, state_button" />
-
 <div class="titlebox multi-details" data-path="${thing.multi.path}">
   <h1 class="hover redditname">
     <a href="${thing.multi.path}">${_('%s subreddits') % thing.multi.name}</a><div class="throbber"></div>
@@ -39,15 +39,37 @@
       <div class="visibility-group">
         <label><input type="radio" name="visibility" value="private" ${'checked' if thing.multi.visibility == 'private' else ''}>${_('private')}</label>
         <label><input type="radio" name="visibility" value="public" ${'checked' if thing.multi.visibility == 'public' else ''}>${_('public')}</label>
-        <label><input type="radio" name="visibility" value="hidden" ${'checked' if thing.multi.visibility == 'hidden' else ''}>${_('hidden')}</label>
+        %if feature.is_enabled('multireddit_customizations') or thing.multi.visibility == 'hidden':
+          <label><input type="radio" name="visibility" value="hidden" ${'checked' if thing.multi.visibility == 'hidden' else ''}>${_('hidden')}</label>
+        %endif
       </div>
-      %if thing.can_copy:
-        <button class="show-copy">${_('copy')}</button>
+      <div class="spacer gray-buttons settings">
+        %if thing.can_copy:
+          <button class="show-copy">${_('copy')}</button>
+        %endif
+        %if thing.can_rename:
+          <button class="show-rename">${_('rename')}</button>
+        %endif
+        <button class="delete">${_('delete')}</button>
+      </div>
+      %if feature.is_enabled('multireddit_customizations'):
+      <div>
+        <select name="key_color">
+          %if thing.multi.key_color not in thing.color_options:
+            <option selected value="${thing.multi.key_color}">${_('custom')}</option>
+          %endif
+          %for color, name in thing.color_options.iteritems():
+            <option ${'selected' if color == thing.multi.key_color else ''} value="${color}">${_(name)}</option>
+          %endfor
+        </select>
+        <select name="icon_name">
+          <option ${'' if thing.multi.icon_id else 'selected'} value="">${_('default')}</option>
+          %for icon_name in thing.icon_options:
+            <option ${'selected' if icon_name == thing.multi.icon_id else ''} value="${icon_name}">${icon_name}</option>
+          %endfor
+        </select>
+      </div>
       %endif
-      %if thing.can_rename:
-        <button class="show-rename">${_('rename')}</button>
-      %endif
-      <button class="delete">${_('delete')}</button>
     %else:
       %if thing.can_copy:
         <button class="show-copy">${_('create a copy')}</button>

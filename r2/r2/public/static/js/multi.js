@@ -61,16 +61,6 @@ r.multi.MultiRedditList = Backbone.Collection.extend({
     }
 })
 
-r.multi.MultiRedditDescription = Backbone.Model.extend({
-    parse: function(response) {
-        return response.data
-    },
-
-    isNew: function() {
-        return false
-    }
-})
-
 r.multi.MultiReddit = Backbone.Model.extend({
     idAttribute: 'path',
     url: function() {
@@ -86,9 +76,6 @@ r.multi.MultiReddit = Backbone.Model.extend({
         this.subreddits = new r.multi.MultiRedditList(this.get('subreddits'), {
             url: this.url() + '/r/',
             parse: true
-        })
-        this.description = new r.multi.MultiRedditDescription(null, {
-            url: this.url() + '/description'
         })
         this.on('change:subreddits', function(model, value) {
             this.subreddits.set(value, {parse: true})
@@ -344,6 +331,8 @@ r.multi.SubredditList = Backbone.View.extend({
 r.multi.MultiDetails = Backbone.View.extend({
     events: {
         'change [name="visibility"]': 'setVisibility',
+        'change [name="key_color"]': 'setKeyColor',
+        'change [name="icon_name"]': 'setIconName',
         'click .show-copy': 'showCopyMulti',
         'click .show-rename': 'showRenameMulti',
         'click .edit-description': 'editDescription',
@@ -354,7 +343,6 @@ r.multi.MultiDetails = Backbone.View.extend({
     initialize: function() {
         this.listenTo(this.model, 'change', this.render)
         this.listenTo(this.model.subreddits, 'add remove reset', this.render)
-        this.listenTo(this.model.description, 'change', this.render)
 
         this.addBubble = new r.multi.MultiAddNoticeBubble({
             parent: this.$('.add-sr .sr-name'),
@@ -401,9 +389,9 @@ r.multi.MultiDetails = Backbone.View.extend({
         this.$el.toggleClass('readonly', !canEdit)
         this.$el.toggleClass('public', this.model.get('visibility') == 'public')
 
-        if (this.model.description.has('body_html')) {
+        if (this.model.has('description_html')) {
             this.$('.description .usertext-body').html(
-                this.model.description.get('body_html')
+                this.model.get('description_html')
             )
         }
 
@@ -415,6 +403,18 @@ r.multi.MultiDetails = Backbone.View.extend({
     setVisibility: function() {
         this.model.save({
             visibility: this.$('[name="visibility"]:checked').val()
+        })
+    },
+
+    setKeyColor: function() {
+        this.model.save({
+            key_color: this.$('[name="key_color"]').val()
+        })
+    },
+
+    setIconName: function() {
+        this.model.save({
+            icon_name: this.$('[name="icon_name"]').val()
         })
     },
 
@@ -474,8 +474,8 @@ r.multi.MultiDetails = Backbone.View.extend({
 
     saveDescription: function(ev) {
         ev.preventDefault()
-        this.model.description.save({
-            'body_md': this.$('.description textarea').val()
+        this.model.save({
+            'description_md': this.$('.description textarea').val()
         }, {
             success: _.bind(function() {
                 hide_edit_usertext(this.$el)

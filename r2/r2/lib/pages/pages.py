@@ -2356,6 +2356,10 @@ class MultiInfoBar(Templated):
                 show_add=True,
             )
 
+        self.color_options = Subreddit.KEY_COLORS
+
+        self.icon_options = g.multi_icons
+
         explore_sr = g.live_config["listing_chooser_explore_sr"]
         if explore_sr:
             self.share_url = "/r/%(sr)s/submit?url=%(url)s" % {
