@@ -269,8 +269,8 @@ class SponsorController(PromoteController):
 
     @validate(
         VSponsorAdmin(),
-        start=VDate('startdate', reference_date=promote.promo_datetime_now),
-        end=VDate('enddate', reference_date=promote.promo_datetime_now),
+        start=VDate('startdate'),
+        end=VDate('enddate'),
         sr_name=nop('sr_name'),
         collection_name=nop('collection_name'),
     )
@@ -917,8 +917,8 @@ class PromoteApiController(ApiController):
     @validatedForm(
         VSponsorAdmin(),
         VModhash(),
-        start=VDate('startdate', reference_date=promote.promo_datetime_now),
-        end=VDate('enddate', reference_date=promote.promo_datetime_now),
+        start=VDate('startdate'),
+        end=VDate('enddate'),
         sr=VSubmitSR('sr', promotion=True),
     )
     def POST_add_roadblock(self, form, jquery, start, end, sr):
@@ -942,8 +942,8 @@ class PromoteApiController(ApiController):
     @validatedForm(
         VSponsorAdmin(),
         VModhash(),
-        start=VDate('startdate', reference_date=promote.promo_datetime_now),
-        end=VDate('enddate', reference_date=promote.promo_datetime_now),
+        start=VDate('startdate'),
+        end=VDate('enddate'),
         sr=VSubmitSR('sr', promotion=True),
     )
     def POST_rm_roadblock(self, form, jquery, start, end, sr):
@@ -959,21 +959,8 @@ class PromoteApiController(ApiController):
     @validatedForm(
         VSponsor('link_id36'),
         VModhash(),
-        start=VDate(
-            'startdate',
-            earliest=timedelta(days=g.min_promote_future),
-            latest=timedelta(days=g.max_promote_future),
-            reference_date=promote.promo_datetime_now,
-            business_days=True,
-            sponsor_override=True,
-        ),
-        end=VDate(
-            'enddate',
-            earliest=timedelta(days=g.min_promote_future),
-            latest=timedelta(days=g.max_promote_future),
-            reference_date=promote.promo_datetime_now,
-            sponsor_override=True,
-        ),
+        start=VDate('startdate'),
+        end=VDate('enddate'),
         link=VLink('link_id36'),
         bid=VFloat('bid', coerce=False),
         target=VPromoTarget(),
@@ -1000,26 +987,37 @@ class PromoteApiController(ApiController):
 
         cpm = PromotionPrices.get_price(c.user, target, location)
 
-        if (form.has_errors('startdate', errors.BAD_DATE,
-                            errors.DATE_TOO_EARLY, errors.DATE_TOO_LATE) or
-            form.has_errors('enddate', errors.BAD_DATE, errors.DATE_TOO_EARLY,
-                            errors.DATE_TOO_LATE, errors.BAD_DATE_RANGE)):
+        if (form.has_errors('startdate', errors.BAD_DATE) or
+                form.has_errors('enddate', errors.BAD_DATE)):
+            return
+
+        min_start, max_start, max_end = promote.get_date_limits(
+            link, c.user_is_sponsor)
+        if start.date() < min_start:
+            c.errors.add(errors.DATE_TOO_EARLY,
+                         msg_params={'day': min_start.strftime("%m/%d/%Y")},
+                         field='startdate')
+            form.has_errors('startdate', errors.DATE_TOO_EARLY)
+            return
+
+        if start.date() > max_start:
+            c.errors.add(errors.DATE_TOO_LATE,
+                         msg_params={'day': max_start.strftime("%m/%d/%Y")},
+                         field='startdate')
+            form.has_errors('startdate', errors.DATE_TOO_LATE)
+            return
+
+        if end.date() > max_end:
+            c.errors.add(errors.DATE_TOO_LATE,
+                         msg_params={'day': max_end.strftime("%m/%d/%Y")},
+                         field='enddate')
+            form.has_errors('enddate', errors.DATE_TOO_LATE)
             return
 
         if end < start:
             c.errors.add(errors.BAD_DATE_RANGE, field='enddate')
             form.has_errors('enddate', errors.BAD_DATE_RANGE)
             return
-
-        # check that start is not so late that authorization hold will expire
-        if not c.user_is_sponsor:
-            max_start = promote.get_max_startdate()
-            if start > max_start:
-                c.errors.add(errors.DATE_TOO_LATE,
-                             msg_params={'day': max_start.strftime("%m/%d/%Y")},
-                             field='startdate')
-                form.has_errors('startdate', errors.DATE_TOO_LATE)
-                return
 
         # Limit the number of PromoCampaigns a Link can have
         # Note that the front end should prevent the user from getting
@@ -1148,20 +1146,19 @@ class PromoteApiController(ApiController):
         if campaign_has_oversold_error(form, campaign):
             return
 
-        # check that start is not so late that authorization hold will expire
-        max_start = promote.get_max_startdate()
-        if campaign.start_date > max_start:
+        # check the campaign dates are still valid (user may have created
+        # the campaign a few days ago)
+        min_start, max_start, max_end = promote.get_date_limits(
+            link, c.user_is_sponsor)
+
+        if campaign.start_date.date() > max_start:
             msg = _("please change campaign start date to %(date)s or earlier")
             date = format_date(max_start, format="short", locale=c.locale)
             msg %= {'date': date}
             form.set_text(".status", msg)
             return
 
-        # check the campaign start date is still valid (user may have created
-        # the campaign a few days ago)
-        now = promote.promo_datetime_now()
-        min_start = now + timedelta(days=g.min_promote_future)
-        if campaign.start_date.date() < min_start.date():
+        if campaign.start_date.date() < min_start:
             msg = _("please change campaign start date to %(date)s or later")
             date = format_date(min_start, format="short", locale=c.locale)
             msg %= {'date': date}

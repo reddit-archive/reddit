@@ -117,7 +117,7 @@ from r2.lib.menus import OffsiteButton, menu, JsNavMenu
 from r2.lib.normalized_hot import normalized_hot
 from r2.lib.strings import plurals, rand_strings, strings, Score
 from r2.lib.utils import is_subdomain, title_to_url, query_string, UrlParser
-from r2.lib.utils import url_links_builder, make_offset_date, median, to36
+from r2.lib.utils import url_links_builder, median, to36
 from r2.lib.utils import trunc_time, timesince, timeuntil, weighted_lottery
 from r2.lib.template_helpers import (
     add_sr,
@@ -144,7 +144,6 @@ import csv
 import hmac
 import hashlib
 import cStringIO
-import pytz
 import sys, random, datetime, calendar, simplejson, re, time
 import time
 from itertools import chain, product
@@ -3868,26 +3867,8 @@ class PromoteLinkEdit(PromoteLinkBase):
                     )
                     self.bids.append(row)
 
-        # determine date range
-        now = promote.promo_datetime_now()
-
-        if c.user_is_sponsor:
-            min_start = now
-        elif promote.is_accepted(link):
-            min_start = make_offset_date(now, 1, business_days=True)
-        else:
-            min_start = make_offset_date(now, g.min_promote_future,
-                                         business_days=True)
-
-        if c.user_is_sponsor:
-            max_end = now + datetime.timedelta(days=366)
-        else:
-            max_end = now + datetime.timedelta(days=g.max_promote_future)
-
-        if c.user_is_sponsor:
-            max_start = max_end - datetime.timedelta(days=1)
-        else:
-            max_start = promote.get_max_startdate()
+        min_start, max_start, max_end = promote.get_date_limits(
+            link, c.user_is_sponsor)
 
         default_end = min_start + datetime.timedelta(days=2)
         default_start = min_start

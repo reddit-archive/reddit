@@ -41,7 +41,7 @@ and choose "frontpage" or "targeted" and click "save":
 
 Please note that we can't approve your ad until you have authorized your credit
 card payment, and that your ad must be approved before it goes live on your
-selected dates. We require ${g.min_promote_future} ${ungettext("business day", "business days", g.min_promote_future)} as a grace period for the approval
+selected dates. We require one business day as a grace period for the approval
 process before the ad can go live. To pay for your campaign, click the "pay"
 button within the campaign dashboard on the link above.
 
