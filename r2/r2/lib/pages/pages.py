@@ -1964,8 +1964,9 @@ class ProfilePage(Reddit):
 
         rb.push(scb)
 
-        public_multis = [m for m in LabeledMulti.by_owner(self.user)
-                         if m.is_public()]
+        multis = LabeledMulti.by_owner(self.user)
+
+        public_multis = [m for m in multis if m.is_public()]
         if public_multis:
             scb = SideContentBox(title=_("public multireddits"), content=[
                 SidebarMultiList(public_multis)

@@ -36,10 +36,11 @@
   <h2><a href="/user/${thing.multi.owner.name}">${_('curated by /u/%s') % thing.multi.owner.name}</a></h2>
   <div class="gray-buttons settings">
     %if thing.can_edit:
-      <span class="visibility-group">
+      <div class="visibility-group">
         <label><input type="radio" name="visibility" value="private" ${'checked' if thing.multi.visibility == 'private' else ''}>${_('private')}</label>
         <label><input type="radio" name="visibility" value="public" ${'checked' if thing.multi.visibility == 'public' else ''}>${_('public')}</label>
-      </span>
+        <label><input type="radio" name="visibility" value="hidden" ${'checked' if thing.multi.visibility == 'hidden' else ''}>${_('hidden')}</label>
+      </div>
       %if thing.can_copy:
         <button class="show-copy">${_('copy')}</button>
       %endif
