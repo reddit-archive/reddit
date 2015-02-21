@@ -33,6 +33,7 @@ from r2.lib.filters import unkeep_space, websafe, _force_unicode
 from r2.lib.filters import markdown_souptest
 from r2.lib.db import tdb_cassandra
 from r2.lib.db.operators import asc, desc
+from r2.lib.souptest import SoupError, SoupUnsupportedEntityError
 from r2.lib.template_helpers import add_sr
 from r2.lib.jsonresponse import JQueryResponse, JsonResponse
 from r2.lib.log import log_text
@@ -639,7 +640,14 @@ class VMarkdown(Validator):
         try:
             markdown_souptest(text, renderer=self.renderer)
             return text
-        except ValueError:
+        except SoupError as e:
+            # Could happen if someone does `&#00;`. It's not a security issue,
+            # it's just unacceptable.
+            # TODO: give a better indication to the user of what happened
+            if isinstance(e, SoupUnsupportedEntityError):
+                abort(400)
+                return
+
             import sys
             user = "???"
             if c.user_is_loggedin:

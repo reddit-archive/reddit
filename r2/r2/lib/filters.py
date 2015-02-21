@@ -21,23 +21,21 @@
 ###############################################################################
 
 import cgi
-import os
-import urllib
 import re
 
 from collections import Counter
 
 import snudown
-from cStringIO import StringIO
 
-from xml.sax.handler import ContentHandler
-from lxml.sax import saxify
-import lxml.etree
 from BeautifulSoup import BeautifulSoup, Tag
-
 from pylons import g, c
 
 from wrapped import Templated, CacheStub
+from r2.lib.souptest import (
+    souptest_fragment,
+    SoupError,
+    SoupUnsupportedEntityError,
+)
 
 SC_OFF = "<!-- SC_OFF -->"
 SC_ON = "<!-- SC_ON -->"
@@ -174,68 +172,6 @@ def jssafe(text=u''):
     return _Unsafe(text.translate(_js_escapes))
 
 
-valid_link_schemes = (
-    '/',
-    '#',
-    'http://',
-    'https://',
-    'ftp://',
-    'mailto:',
-    'steam://',
-    'irc://',
-    'ircs://',
-    'news://',
-    'mumble://',
-    'ssh://',
-    'git://',
-    'ts3server://',
-)
-
-class SouptestSaxHandler(ContentHandler):
-    def __init__(self, ok_tags):
-        self.ok_tags = ok_tags
-
-    def startElementNS(self, tagname, qname, attrs):
-        if qname not in self.ok_tags:
-            raise ValueError('HAX: Unknown tag: %r' % qname)
-
-        for (ns, name), val in attrs.items():
-            if ns is not None:
-                raise ValueError('HAX: Unknown namespace? Seriously? %r' % ns)
-
-            if name not in self.ok_tags[qname]:
-                raise ValueError('HAX: Unknown attribute-name %r' % name)
-
-            if qname == 'a' and name == 'href':
-                lv = val.lower()
-                if not any(lv.startswith(scheme) for scheme in valid_link_schemes):
-                    raise ValueError('HAX: Unsupported link scheme %r' % val)
-
-markdown_ok_tags = {
-    'div': ('class'),
-    'a': set(('href', 'title', 'target', 'nofollow', 'rel')),
-    'img': set(('src', 'alt')),
-    }
-
-markdown_boring_tags =  ('p', 'em', 'strong', 'br', 'ol', 'ul', 'hr', 'li',
-                         'pre', 'code', 'blockquote', 'center',
-                          'sup', 'del', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',)
-
-markdown_user_tags = ('table', 'th', 'tr', 'td', 'tbody',
-                     'tbody', 'thead', 'tr', 'tfoot', 'caption')
-
-for bt in markdown_boring_tags:
-    markdown_ok_tags[bt] = ('id', 'class')
-
-for bt in markdown_user_tags:
-    markdown_ok_tags[bt] = ('colspan', 'rowspan', 'cellspacing', 'cellpadding', 'align', 'scope')
-
-markdown_xhtml_dtd_path = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)),
-    'contrib/dtds/xhtml.dtd')
-
-markdown_dtd = '<!DOCTYPE div- SYSTEM "file://%s">' % markdown_xhtml_dtd_path
-
 def markdown_souptest(text, nofollow=False, target=None, renderer='reddit'):
     if not text:
         return text
@@ -245,15 +181,7 @@ def markdown_souptest(text, nofollow=False, target=None, renderer='reddit'):
     elif renderer == 'wiki':
         smd = wikimarkdown(text)
 
-    # Prepend a DTD reference so we can load up definitions of all the standard
-    # XHTML entities (&nbsp;, etc.).
-    smd_with_dtd = markdown_dtd + smd
-
-    s = StringIO(smd_with_dtd)
-    parser = lxml.etree.XMLParser(load_dtd=True)
-    tree = lxml.etree.parse(s, parser)
-    handler = SouptestSaxHandler(markdown_ok_tags)
-    saxify(tree, handler)
+    souptest_fragment(smd)
 
     return smd
 
