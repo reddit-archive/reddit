@@ -10,7 +10,6 @@ r.analytics = {
     );
 
     $('.promotedlink.promoted:visible').trigger('onshow');
-    $('form.gold-checkout').one('submit', this.fireGoldCheckout);
 
     // dont track sponsor's activity
     r.analytics.addEventPredicate('ads', function() {
@@ -175,35 +174,6 @@ r.analytics = {
     );
   },
 
-  fireGoldCheckout: function(event) {
-    var form = $(this);
-    var vendor = form.data('vendor');
-
-    form.parent().addClass('working');
-
-    // If we don't have _gaq, just return and let the event bubble and
-    // call its own submit.
-    if (!window._gaq) {
-      return;
-    }
-    
-    // Track a virtual pageview indicating user went off-site to "vendor."
-    // If GA is loaded, have GA process form submission after firing
-    // (and cancel the default).
-    _gaq.push(['_trackPageview', '/gold/external/' + vendor]);
-    _gaq.push(function() {
-      // Give GA half a second to send out its pixel.
-      setTimeout(function() {
-        form.submit();
-      }, 500);
-    });
-
-    if (_gat && _gat._getTracker){
-      // GA is loaded; form will submit via the _gaq.push'ed function
-      event.preventDefault();
-      event.stopPropagation();
-    }
-  },
 };
 
 r.analytics.breadcrumbs = {
