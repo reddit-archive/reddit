@@ -51,4 +51,17 @@
     return uuid;
   };
 
+  // Given an object, serialize it into a set of urlencoded query parameters
+  App.utils.serialize = function(obj) {
+    var params = [];
+
+    for (var p in obj) {
+      if (obj.hasOwnProperty(p)) {
+        params.push(encodeURIComponent(p) + '=' + encodeURIComponent(obj[p]));
+      }
+    }
+
+    return params.join('&');
+  }
+
 })((window.rembeddit = window.rembeddit || {}), this);

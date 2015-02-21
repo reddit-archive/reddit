@@ -73,18 +73,28 @@
       var base = document.getElementsByTagName('base');
       var target = el.target || (base && base[0] && base[0].target);
       var newTab = target === '_blank';
-      var payload = {
+      var payload = createPayload(type, 'click', {
         'redirect_url': el.href,
         'redirect_type': el.getAttribute('data-redirect-type'),
         'redirect_dest': el.host,
         'redirect_thing_id': el.getAttribute('data-redirect-thing'),
+      });
+      var redirectParams = {
+        "data": JSON.stringify(payload),
+        "url": el.href,
       };
 
-      tracker.send(createPayload(type, 'click', payload), function() {
-        if (!newTab) {
-          window.top.location.href = el.href;
-        }
-      });
+      // Use a DOM object for easier query manipulation
+      var tmpLink = document.createElement('a')
+      tmpLink.href = config.event_clicktracker_url;
+      tmpLink.search = '?' + App.utils.serialize(redirectParams);
+
+      // Rewrite our URL to our event-driven URL
+      el.href = tmpLink.href;
+
+      if (!newTab) {
+        window.top.location.href = el.href;
+      }
 
       return newTab;
     }

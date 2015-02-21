@@ -80,6 +80,7 @@ def set_up_embed(embed_key, sr, thing, showedits):
     c.embed_config = {
         "eventtracker_url": g.eventtracker_url or "",
         "anon_eventtracker_url": g.anon_eventtracker_url or "",
+        "event_clicktracker_url": g.event_clicktracker_url or "",
         "created": iso_timestamp,
         "showedits": showedits,
         "thing": {
