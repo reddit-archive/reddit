@@ -84,13 +84,15 @@
         "url": el.href,
       };
 
-      // Use a DOM object for easier query manipulation
-      var tmpLink = document.createElement('a')
-      tmpLink.href = config.event_clicktracker_url;
-      tmpLink.search = '?' + App.utils.serialize(redirectParams);
+      if (el.href.indexOf(config.event_clicktracker_url) === -1) {
+        // Use a DOM object for easier query manipulation
+        var tmpLink = document.createElement('a')
+        tmpLink.href = config.event_clicktracker_url;
+        tmpLink.search = '?' + App.utils.serialize(redirectParams);
 
-      // Rewrite our URL to our event-driven URL
-      el.href = tmpLink.href;
+        // Rewrite our URL to our event-driven URL
+        el.href = tmpLink.href;
+      }
 
       if (!newTab) {
         window.top.location.href = el.href;
