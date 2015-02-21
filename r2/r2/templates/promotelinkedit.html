@@ -190,12 +190,9 @@ ${pr.javascript_setup()}
         </div>
       %endif
       <div class="editor-group">
+        <% is_link = not thing.link.is_self %>
         ${pr.title_field(thing.link, editable=editable)}
-        %if thing.link.is_self:
-          ${pr.text_field(thing.link.selftext)}
-        %else:
-          ${pr.url_field(thing.link, editable=editable, enable_override=c.user_is_sponsor)}
-        %endif
+        ${pr.content_field(thing.link, editable=editable, enable_override=c.user_is_sponsor)}
         ${utils.error_field("NO_CHANGE_KIND", "kind", "div")}
         
         %if editable:

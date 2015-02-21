@@ -82,14 +82,19 @@
   </%utils:line_field>
 </%def>
 
-<%def name="post_type_field(link_selected=True)">
+<%def name="content_field(link, editable=False, enable_override=False)">
+  <%
+    is_link = not link or not link.is_self
+    text = link.selftext if link else ''
+    url = link and link.url
+  %>
   <%utils:line_field title="${_('post type')}" id="kind-selector" css_class="rounded post-type-field">
     <div class="radio-group">
       <label class="form-group">
         <input id="url_link" class="nomargin" 
                type="radio" value="link" name="kind"
                onclick="$('#text-field').hide(); $('#url-field').show()"
-               ${"checked='checked'" if link_selected else ""}>
+               ${"checked='checked'" if is_link else ""}>
         <div class="label-group">
           <span class="label">${_("link")}</span>
           <small class="label">${_("clicks through to your URL")}</small>
@@ -99,7 +104,7 @@
         <input id="self_link" class="nomargin" 
                type="radio" value="self" name="kind"
                onclick="$('#url-field').hide(); $('#text-field').show()"
-               ${"" if link_selected else "checked='checked'"}>
+               ${"" if is_link else "checked='checked'"}>
         <div class="label-group">
           <span class="label">${_("text")}</span>
           <small class="label">${_("clicks through to text you customize")}</small>  
@@ -107,14 +112,16 @@
       </label>
     </div>
   </%utils:line_field>
-</%def>
-
-<%def name="url_field(link, editable=False, enable_override=False)">
-  <%utils:line_field title="${_('url')}" id="url-field" css_class="rounded url-field">
+  <%utils:line_field title="${_('text')}" id="text-field" css_class="rounded text-field"
+                     style="${('' if not is_link else 'display:none')}">
+    ${UserText(None, text=text, textarea_class='rounded', have_form=False, creating=True)}
+  </%utils:line_field>
+  <%utils:line_field title="${_('url')}" id="url-field" css_class="rounded url-field"
+                     style="${('' if is_link else 'display:none')}">
     <input id="url" name="url" type="text" 
            ${"disabled" if not editable else ""}
-           value="${('self' if link.is_self else link.url) if link else ""}"
-           class="rounded"/>
+           value="${(url if is_link else '') if link else ""}"
+           class="rounded">
     ${error_field("NO_URL", "url", "div")}
     ${error_field("BAD_URL", "url", "div")}
     ${error_field("DOMAIN_BANNED", "url", "div")}
@@ -125,7 +132,7 @@
 
     %if enable_override:
       <label style="display:block; text-align:right" for="domain">${_("Override display domain:")}</label>
-      <input id="domain" name="domain" type="text" 
+      <input id="domain" name="domain" type="text"
              %if link and link.domain_override:
                value="${link.domain_override}" class="rounded"
              %else:
@@ -160,13 +167,6 @@
         <p>${_("Enter a second 3rd-party impression tracking URL (not common)")}</p>
       </div>
     %endif
-  </%utils:line_field>
-</%def>
-
-<%def name="text_field(text='', visible=True)">
-  <%utils:line_field title="${_('text')}" id="text-field" css_class="rounded text-field"
-                     style="${('' if visible else 'display:none')}">
-    ${UserText(None, text=text, textarea_class='rounded', have_form=False, creating=True)}
   </%utils:line_field>
 </%def>
 

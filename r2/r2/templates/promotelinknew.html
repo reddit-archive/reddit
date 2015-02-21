@@ -20,7 +20,7 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%namespace file="promotelinkbase.html" import="title_field, url_field, text_field, post_type_field, managed_field, image_field" />
+<%namespace file="promotelinkbase.html" import="title_field, content_field, managed_field, image_field" />
 <%namespace file="utils.html" import="error_field" />
 <%namespace name="utils" file="utils.html"/>
 
@@ -49,10 +49,7 @@
          ${managed_field(None)}
         %endif
         ${title_field(None, editable=True)}
-        ${post_type_field()}
-        ${url_field(None, editable=True, enable_override=c.user_is_sponsor)}
-        ${text_field(visible=False)}
-
+        ${content_field(None, editable=True, enable_override=c.user_is_sponsor)}
         <footer class="buttons">
           <div class="rules">
             By clicking "next" you agree to the&#32;<a href="https://www.reddit.com/wiki/selfserve#wiki_online_self_serve_advertising_rules" target="_blank">Self Serve Advertising Rules.</a>

@@ -825,7 +825,7 @@ class PromoteApiController(ApiController):
              jquery.has_errors('ratelimit', errors.RATELIMIT))):
             return
 
-        if kind == 'self' and form.has_errors('text', errors.TOO_LONG):
+        if is_self and form.has_errors('text', errors.TOO_LONG):
             return
 
         if not l:
@@ -858,13 +858,6 @@ class PromoteApiController(ApiController):
         elif not promote.is_promo(l):
             return
 
-        # changing link type is not allowed
-        if ((l.is_self and kind == 'link') or
-            (not l.is_self and kind == 'self')):
-            c.errors.add(errors.NO_CHANGE_KIND, field="kind")
-            form.set_error(errors.NO_CHANGE_KIND, "kind")
-            return
-
         changed = False
         # live items can only be changed by a sponsor, and also
         # pay the cost of de-approving the link
@@ -878,12 +871,12 @@ class PromoteApiController(ApiController):
                 l.set_content(is_self, selftext if is_self else url)
                 changed = True
 
-        # only trips if the title and url are changed by a non-sponsor
-        if changed:
+        # only trips if changed by a non-sponsor
+        if changed and not c.user_is_sponsor:
             promote.unapprove_promotion(l)
 
         # selftext can be changed at any time
-        if kind == 'self':
+        if is_self:
             l.selftext = selftext
 
         # comment disabling and sendreplies is free to be changed any time.
