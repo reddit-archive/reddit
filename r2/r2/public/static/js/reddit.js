@@ -965,6 +965,18 @@ function set_distinguish(elem, value) {
   $(elem).children().toggle();
 }
 
+function toggle_clear_suggested_sort(elem) {
+  var form = $(elem).parents("form")[0];
+  $(form).children().toggle();
+}
+
+function set_suggested_sort(elem, value) {
+  $(elem).parents('form').first().find('input[name="sort"]').val(value);
+  change_state(elem, "set_default_sort");
+  $(elem).children().toggle();
+}
+
+
 function populate_click_gadget() {
     /* if we can find the click-gadget, populate it */
     if($('.click-gadget').length) {

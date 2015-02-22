@@ -20,7 +20,71 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
+<%!
+  from r2.config import feature
+  from r2.lib.filters import jssafe
+%>
+
 <%namespace file="printablebuttons.html" import="ynbutton" />
+
+
+<%def name="suggested_clear_type(name, value=None)">
+  <a href="javascript:void(0)"
+     onclick="return set_suggested_sort(this, '${jssafe(value or name)}')">${_(name)}</a>
+</%def>
+
+<%def name="clear_suggested_sort()">
+  <li class="toggle">
+    <form method="post" action="/api/set_default_sort">
+      <input type="hidden" name="id" value="${thing.link._fullname}" />
+      <input type="hidden" name="sort" value="" />
+      <input type="hidden" value="${_('suggested sort cleared')}" name="executed"/>
+      <a href="javascript:void(0)"
+         onclick="return toggle_clear_suggested_sort(this)">${_("clear suggested sort")}</a>
+      <span class="option error">
+         ${_("clear suggested sort?")}
+
+         %if thing.sr.default_comment_sort:
+
+           &#32;
+           ## Set to explicitly "blank", which will disallow using the subreddit setting and use the user's setting
+           ${suggested_clear_type('clear', 'blank')}
+           &#32;/
+
+           ## Show "use subreddit setting" only if a link's suggested sort is explicitly set
+           %if thing.link.default_sort is not None:
+           &#32;
+           ## Set back to default, which will be the subreddit's suggested sort
+           ${suggested_clear_type('use subreddit setting', '')}
+           &#32;/
+           %endif
+
+         %else:
+
+           &#32;
+           ## Set back to "default" in case they explicitly set a subreddit suggested sort in the future
+           ${suggested_clear_type('clear', '')}
+           &#32;/
+
+         %endif
+
+         &#32;
+         <a href="javascript:void(0)"
+            onclick="return toggle_clear_suggested_sort(this)">${_('cancel')}</a>
+         &#32;
+      </span>
+    </form>
+  </li>
+</%def>
+
+%if feature.is_enabled('default_sort') and thing.can_edit:
+  %if thing.suggested_sort == thing.sort:
+    <% clear_suggested_sort() %>
+  %else:
+    ${ynbutton(_("set as suggested sort"), _("suggested sort set"), "set_default_sort",
+      hidden_data=dict(id=thing.link._fullname, sort=thing.sort))}
+  %endif
+%endif
 
 %if thing.is_author:
   %if thing.sendreplies:

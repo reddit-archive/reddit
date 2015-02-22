@@ -745,6 +745,10 @@ class Link(Thing, Printable):
     def sort_if_suggested(self):
         """Returns a sort, if the link or its subreddit has suggested one."""
         if self.default_sort:
+            # A default sort of "blank" means explicitly empty: Do not obey
+            # the subreddit's default sort, either.
+            if self.default_sort == 'blank':
+                return None
             return self.default_sort
 
         sr = self.subreddit_slow

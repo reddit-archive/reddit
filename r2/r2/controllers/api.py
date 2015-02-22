@@ -1441,7 +1441,7 @@ class ApiController(RedditController):
                    VModhash(),
                    VSrCanAlter('id'),
                    thing=VByName('id', thing_cls=Link),
-                   sort=VOneOf('sort', CommentSortMenu._options))
+                   sort=VOneOf('sort', CommentSortMenu.suggested_sort_options))
     def POST_set_default_sort(self, form, jquery, thing, sort):
         """Set a default sort for a link.
 

@@ -577,6 +577,10 @@ class CommentSortMenu(SortMenu):
                  'random', 'qa',)
     button_cls = PostButton
 
+    # Links may have a suggested sort of 'blank', which is an explicit None -
+    # that is, do not check the subreddit for a suggested sort, either.
+    suggested_sort_options = _options + ('blank',)
+
     def __init__(self, *args, **kwargs):
         self.suggested_sort = kwargs.pop('suggested_sort', None)
         super(CommentSortMenu, self).__init__(*args, **kwargs)
