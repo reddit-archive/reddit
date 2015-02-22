@@ -226,6 +226,7 @@ class Subreddit(Thing, Printable, BaseSite):
         show_cname_sidebar=False,
         css_on_cname=True,
         domain=None,
+        default_comment_sort=None,
         wikimode="disabled",
         wiki_edit_karma=100,
         wiki_edit_age=0,

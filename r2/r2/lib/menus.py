@@ -584,6 +584,10 @@ class CommentSortMenu(SortMenu):
         else:
             return ('random', 'qa',)
 
+    @classmethod
+    def visible_options(cls):
+        return set(cls._options) - set(cls.hidden_options)
+
 
 class SearchSortMenu(SortMenu):
     """Sort menu for search pages."""

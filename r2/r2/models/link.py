@@ -742,6 +742,17 @@ class Link(Thing, Printable):
         """
         return (self.author_id,)
 
+    def sort_if_suggested(self):
+        """Returns a sort, if the link or its subreddit has suggested one."""
+        if self.default_sort:
+            return self.default_sort
+
+        sr = self.subreddit_slow
+        if sr.default_comment_sort:
+            return sr.default_comment_sort
+
+        return None
+
     def can_flair_slow(self, user):
         """Returns whether the specified user can flair this link"""
         site = self.subreddit_slow

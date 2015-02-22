@@ -2403,22 +2403,56 @@ class ApiController(RedditController):
                 value = request.params.get(key)
                 kw[key] = validator.run(value)
 
+        if feature.is_enabled('default_sort'):
+            vsort = VOneOf('default_comment_sort',
+                           CommentSortMenu._options,
+                           default=None,
+                           )
+            sort_param = request.params.get('default_comment_sort')
+            kw['default_comment_sort'] = vsort.run(sort_param)
+
         # the status button is outside the form -- have to reset by hand
         form.parent().set_html('.status', "")
 
         redir = False
-        kw = dict((k, v) for k, v in kw.iteritems()
-                  if k in ('name', 'title', 'domain', 'description',
-                           'show_media', 'exclude_banned_modqueue',
-                           'show_cname_sidebar', 'type', 'public_traffic',
-                           'collapse_deleted_comments', 'link_type',
-                           'submit_link_label', 'comment_score_hide_mins',
-                           'submit_text_label', 'lang', 'css_on_cname',
-                           'header_title', 'over_18', 'wikimode', 'wiki_edit_karma',
-                           'wiki_edit_age', 'allow_top', 'public_description',
-                           'spam_links', 'spam_selfposts', 'spam_comments',
-                           'submit_text', 'community_rules', 'related_subreddits',
-                           'key_color', 'hide_ads'))
+        keyword_fields = [
+            'allow_top',
+            'collapse_deleted_comments',
+            'comment_score_hide_mins',
+            'community_rules',
+            'css_on_cname',
+            'description',
+            'domain',
+            'exclude_banned_modqueue',
+            'header_title',
+            'hide_ads',
+            'key_color',
+            'lang',
+            'link_type',
+            'name',
+            'over_18',
+            'public_description',
+            'public_traffic',
+            'related_subreddits',
+            'show_cname_sidebar',
+            'show_media',
+            'spam_comments',
+            'spam_links',
+            'spam_selfposts',
+            'submit_link_label',
+            'submit_text',
+            'submit_text_label',
+            'title',
+            'type',
+            'wiki_edit_age',
+            'wiki_edit_karma',
+            'wikimode',
+        ]
+
+        if feature.is_enabled('default_sort'):
+            keyword_fields.append('default_comment_sort')
+
+        kw = {k: v for k, v in kw.iteritems() if k in keyword_fields}
 
         public_description = kw.pop('public_description')
         description = kw.pop('description')
