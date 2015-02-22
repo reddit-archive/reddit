@@ -367,7 +367,7 @@ try participating in other communities on reddit for a little while first before
       </ul>
       %if feature.is_enabled('default_sort'):
       <div class="usertext-edit">
-        <label for="default_comment_sort">${_('suggested comment sort')} <span class="gray">${_('(all comment threads will use this sorting method by default)')}</span></label>
+        <label for="default_comment_sort">${_('suggested comment sort')}&#32;<span class="gray">${_('(all comment threads will use this sorting method by default)')}</span></label>
         <select class="nomargin" name="default_comment_sort" id="default_comment_sort">
            <option value="">${_('none (recommended for most subreddits)')}</option>
            %for sort in thing.comment_sorts:
