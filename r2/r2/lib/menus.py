@@ -577,6 +577,14 @@ class CommentSortMenu(SortMenu):
                  'random', 'qa',)
     button_cls = PostButton
 
+    def __init__(self, *args, **kwargs):
+        self.suggested_sort = kwargs.pop('suggested_sort', None)
+        super(CommentSortMenu, self).__init__(*args, **kwargs)
+
+    @classmethod
+    def visible_options(cls):
+        return set(cls._options) - set(cls.hidden_options)
+
     @class_property
     def hidden_options(cls):
         if feature.is_enabled('qa_sort'):
@@ -584,9 +592,12 @@ class CommentSortMenu(SortMenu):
         else:
             return ('random', 'qa',)
 
-    @classmethod
-    def visible_options(cls):
-        return set(cls._options) - set(cls.hidden_options)
+    def make_title(self, attr):
+        title = super(CommentSortMenu, self).make_title(attr)
+        if attr == self.suggested_sort:
+            return title + ' ' + _('(suggested)')
+        else:
+            return title
 
 
 class SearchSortMenu(SortMenu):
