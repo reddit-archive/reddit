@@ -343,17 +343,25 @@ class LabeledMultiJsonTemplate(LabeledMultiDescriptionJsonTemplate):
     )
     del _data_attrs_["id"]
 
+    def __init__(self, expand_srs=False):
+        super(LabeledMultiJsonTemplate, self).__init__()
+        self.expand_srs = expand_srs
+
     def kind(self, wrapped):
         return "LabeledMulti"
 
     @classmethod
-    def sr_props(cls, thing, srs):
-        sr_props = thing.sr_props
+    def sr_props(cls, thing, srs, expand=False):
+        sr_props = dict(thing.sr_props)
+        if expand:
+            for sr in srs:
+                sr_props[sr._id].update(
+                    TrimmedSubredditJsonTemplate().data(sr))
         return [dict(sr_props[sr._id], name=sr.name) for sr in srs]
 
     def thing_attr(self, thing, attr):
         if attr == "srs":
-            return self.sr_props(thing, thing.srs)
+            return self.sr_props(thing, thing.srs, expand=self.expand_srs)
         elif attr == "can_edit":
             return c.user_is_loggedin and thing.can_edit(c.user)
         elif attr == "copied_from":
@@ -366,6 +374,21 @@ class LabeledMultiJsonTemplate(LabeledMultiDescriptionJsonTemplate):
         else:
             super_ = super(LabeledMultiJsonTemplate, self)
             return super_.thing_attr(thing, attr)
+
+
+class TrimmedSubredditJsonTemplate(SubredditJsonTemplate):
+    _data_attrs_ = dict(
+        name="name",
+        fullname="_fullname",
+        header_img="header",
+        header_size="header_size",
+        icon_img="icon_img",
+        icon_size="icon_size",
+        key_color="key_color",
+        user_is_banned="is_banned",
+        user_is_contributor="is_contributor",
+        user_is_moderator="is_moderator",
+    )
 
 
 class IdentityJsonTemplate(ThingJsonTemplate):

@@ -37,6 +37,7 @@ from r2.models.subreddit import (
 from r2.lib.db import tdb_cassandra
 from r2.lib.validator import (
     validate,
+    VBoolean,
     VColor,
     VLength,
     VMarkdownLength,
@@ -91,29 +92,32 @@ class MultiApiController(RedditController):
         RedditController.pre(self)
 
     @require_oauth2_scope("read")
-    @validate(VUser())
+    @validate(VUser(), expand_srs=VBoolean("expand_srs"))
     @api_doc(api_section.multis, uri="/api/multi/mine")
-    def GET_my_multis(self):
+    def GET_my_multis(self, expand_srs):
         """Fetch a list of multis belonging to the current user."""
         multis = LabeledMulti.by_owner(c.user)
-        wrapped = wrap_things(*multis)
-        resp = [w.render() for w in wrapped]
+        templ = LabeledMultiJsonTemplate(expand_srs)
+        resp = [templ.render(multi).finalize() for multi in multis]
         return self.api_wrapper(resp)
 
-    def _format_multi(self, multi):
-        resp = wrap_things(multi)[0].render()
-        return self.api_wrapper(resp)
+    def _format_multi(self, multi, expand_sr_info=False):
+        multi_info = LabeledMultiJsonTemplate(expand_sr_info).render(multi)
+        return self.api_wrapper(multi_info.finalize())
 
     @require_oauth2_scope("read")
-    @validate(multi=VMultiByPath("multipath", require_view=True))
+    @validate(
+        multi=VMultiByPath("multipath", require_view=True),
+        expand_srs=VBoolean("expand_srs"),
+    )
     @api_doc(
         api_section.multis,
         uri="/api/multi/{multipath}",
         uri_variants=['/api/filter/{filterpath}'],
     )
-    def GET_multi(self, multi):
+    def GET_multi(self, multi, expand_srs):
         """Fetch a multi's data and subreddit list by name."""
-        return self._format_multi(multi)
+        return self._format_multi(multi, expand_srs)
 
     def _check_new_multi_path(self, path_info):
         if path_info['username'].lower() != c.user.name.lower():
