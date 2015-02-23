@@ -168,7 +168,9 @@ r.gold = {
           r.analytics.fireFunnelEvent('gold', 'checkout', vendor);
         }
 
-        $.request('modify_payment_blob.json', {code: code, signed: signed, message: giftmessage})
+        $.request('modify_payment_blob.json', {code: code, signed: signed, message: giftmessage}, function() {
+          $button.parents('form').submit();
+        });
     },
 
     // When spending creddits, update the templates we use to generate the gilding form to display the

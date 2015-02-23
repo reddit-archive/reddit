@@ -123,7 +123,7 @@
         data-vendor="creddits">
     <input type="hidden" name="months" value="${thing.months}">
     <input type="hidden" name="passthrough" value="${thing.passthrough}" class="passthrough">
-    <button class="btn gold-button"><span class="snoo-head"></span>${_("creddits")}</button>
+    <button class="btn gold-button" type="button"><span class="snoo-head"></span>${_("creddits")}</button>
     <span class="status">
       <span class="remaining" data-current="${thing.months}" data-total="${thing.user_creddits}" data-template="${websafe(_ws('(use %(current)s of your %(total)s creddits)')) % dict(current='<%- current %>', total='<%- total %>')}">
       </span>
@@ -141,7 +141,7 @@
       <input type="hidden" name="quantity" value="${thing.quantity}">
     %endif
     <input type="hidden" name="hosted_button_id" value="${thing.paypal_buttonid}">
-    <button type="submit" class="btn gold-button">${_("PayPal")}</button>
+    <button type="submit" class="btn gold-button" type="button">${_("PayPal")}</button>
   </form>
 </%def>
 
