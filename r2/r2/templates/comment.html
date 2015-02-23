@@ -90,7 +90,7 @@ ${parent.midcol(cls = cls)}
      <em>${_("[deleted]")}</em>&#32;
   %endif
 
-  %if thing.collapsed and show:
+  %if thing.collapsed and show and hasattr(thing, "collapsed_reason"):
     <span class="collapsed-reason">${thing.collapsed_reason}</span>
   %endif
 

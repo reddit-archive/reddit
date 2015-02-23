@@ -883,17 +883,82 @@ class CommentBuilder(Builder):
         wrapped_by_id = {comment._id: comment for comment in wrapped}
         final = []
 
+        # We have some special collapsing rules for the Q&A sort type.
+        # However, we want to show everything when we're building a specific
+        # set of children (like from "load more" links).
+        qa_sort_hiding = (self.sort.col == '_qa') and not self.children
+        if qa_sort_hiding:
+            special_responder_ids = self.link.responder_ids
+        else:
+            special_responder_ids = ()
+
+        max_relation_walks = g.max_comment_parent_walk
         for comment in wrapped:
             # skip deleted comments with no children
             if (comment.deleted and not cid_tree.has_key(comment._id)
                 and not self.show_deleted):
+                comment.hidden_completely = True
                 continue
 
             comment.num_children = num_children[comment._id]
             comment.edits_visible = self.edits_visible
 
+            # In the Q&A sort type, we want to collapse all comments other than
+            # those that are:
+            #
+            # 1. Top-level comments,
+            # 2. Responses from the OP(s),
+            # 3. Responded to by the OP(s) (dealt with below), or
+            # 4. Otherwise normally prevented from collapse (eg distinguished
+            #    comments).
+            if (qa_sort_hiding and
+                   depth[comment._id] != 0 and # (1)
+                   comment.author_id not in special_responder_ids and # (2)
+                   not comment.prevent_collapse): # (4)
+                comment.hidden = True
+
             if comment.collapsed and comment._id in dont_collapse:
                 comment.collapsed = False
+                comment.hidden = False
+
+            parent = wrapped_by_id.get(comment.parent_id)
+            if parent:
+                if (qa_sort_hiding and
+                        comment.author_id in special_responder_ids):
+                    # Un-collapse parents as necessary.  It's a lot easier to
+                    # do this here, upwards, than to check through all the
+                    # children when we were iterating at the parent.
+                    ancestor = parent
+                    counter = 0
+                    while (ancestor and
+                            not getattr(ancestor, 'walked', False) and
+                            counter < max_relation_walks):
+                        ancestor.hidden = False
+                        # In case we haven't processed this comment yet.
+                        ancestor.prevent_collapse = True
+                        # This allows us to short-circuit when the rest of the
+                        # tree has already been uncollapsed.
+                        ancestor.walked = True
+
+                        ancestor = wrapped_by_id.get(ancestor.parent_id)
+                        counter += 1
+
+        # One more time through to actually add things to the final list.  We
+        # couldn't do that the first time because in the Q&A sort we don't know
+        # if a comment should be visible until after we've processed all its
+        # children.
+        for comment in wrapped:
+            if getattr(comment, 'hidden_completely', False):
+                # Don't add it to the tree, don't put it in "load more", don't
+                # acknowledge its existence at all.
+                continue
+
+            if getattr(comment, 'hidden', False):
+                # Remove it from the list of visible comments so it'll
+                # automatically be a candidate for the "load more" links.
+                del wrapped_by_id[comment._id]
+                # And don't add it to the tree.
+                continue
 
             # add the comment as a child of its parent or to the top level of
             # the tree if it has no parent

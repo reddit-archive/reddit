@@ -1263,12 +1263,12 @@ class Comment(Thing, Printable):
 
             item.collapsed = False
             distinguished = item.distinguished and item.distinguished != "no"
-            prevent_collapse = profilepage or user_is_admin or distinguished
+            item.prevent_collapse = profilepage or user_is_admin or distinguished
 
             if (item.deleted and item.subreddit.collapse_deleted_comments and
-                    not prevent_collapse):
+                    not item.prevent_collapse):
                 item.collapsed = True
-            elif item.score < min_score and not prevent_collapse:
+            elif item.score < min_score and not item.prevent_collapse:
                 item.collapsed = True
                 item.collapsed_reason = _("comment score below threshold")
             elif user_is_loggedin and item.author_id in c.user.enemies:
