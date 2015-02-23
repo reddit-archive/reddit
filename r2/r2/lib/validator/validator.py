@@ -2211,7 +2211,7 @@ class VDestination(Validator):
         if ld.startswith(('/', 'http://', 'https://')):
             u = UrlParser(dest)
 
-            if u.is_reddit_url(c.site):
+            if u.is_reddit_url(c.site) and u.is_web_safe_url():
                 return dest
 
         ip = getattr(request, "ip", "[unknown]")

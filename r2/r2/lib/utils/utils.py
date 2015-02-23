@@ -405,6 +405,26 @@ def query_string(dict):
     else:
         return ''
 
+
+# Characters that might cause parsing differences in different implementations
+# Spaces only seem to cause parsing differences when occurring directly before
+# the scheme
+URL_PROBLEMATIC_RE = re.compile(
+    ur'(\A\x20|[\x00-\x19\xA0\u1680\u180E\u2000-\u2029\u205f\u3000\\])',
+    re.UNICODE
+)
+
+
+def paranoid_urlparser_method(check):
+    """
+    Decorator for checks on `UrlParser` instances that need to be paranoid
+    """
+    def check_wrapper(parser, *args, **kwargs):
+        return UrlParser.perform_paranoid_check(parser, check, *args, **kwargs)
+
+    return check_wrapper
+
+
 class UrlParser(object):
     """
     Wrapper for urlparse and urlunparse for making changes to urls.
@@ -425,8 +445,8 @@ class UrlParser(object):
     """
 
     __slots__ = ['scheme', 'path', 'params', 'query',
-                 'fragment', 'username', 'password', 'hostname',
-                 'port', '_url_updates', '_orig_url', '_query_dict']
+                 'fragment', 'username', 'password', 'hostname', 'port',
+                 '_url_updates', '_orig_url', '_orig_netloc', '_query_dict']
 
     valid_schemes = ('http', 'https', 'ftp', 'mailto')
     cname_get = "cnameframe"
@@ -438,6 +458,7 @@ class UrlParser(object):
                 setattr(self, s, getattr(u, s))
         self._url_updates = {}
         self._orig_url    = url
+        self._orig_netloc = getattr(u, 'netloc', '')
         self._query_dict  = None
 
     def update_query(self, **updates):
@@ -554,7 +575,64 @@ class UrlParser(object):
             pass
         return None
 
-    def is_reddit_url(self, subreddit = None):
+    def perform_paranoid_check(self, check, *args, **kwargs):
+        """
+        Perform a check on a URL that needs to account for bugs in `unparse()`
+
+        If you need to account for quirks in browser URL parsers, you should
+        use this along with `is_web_safe_url()`. Trying to parse URLs like
+        a browser would just makes things really hairy.
+        """
+        variants_to_check = (
+            self,
+            UrlParser(self.unparse())
+        )
+        # If the check doesn't pass on *every* variant, it's a fail.
+        return all(
+            check(variant, *args, **kwargs) for variant in variants_to_check
+        )
+
+    @paranoid_urlparser_method
+    def is_web_safe_url(self):
+        """Determine if this URL could cause issues with different parsers"""
+
+        # There's no valid reason for this, and just serves to confuse UAs.
+        # and urllib2.
+        if self._orig_url.startswith("///"):
+            return False
+
+        # Double-checking the above
+        if not self.hostname and self.path.startswith('//'):
+            return False
+
+        # A host-relative link with a scheme like `https:/baz` or `https:?quux`
+        if self.scheme and not self.hostname:
+            return False
+
+        # Credentials in the netloc? Not on reddit!
+        if "@" in self._orig_netloc:
+            return False
+
+        # `javascript://www.reddit.com/%0D%Aalert(1)` is not safe, obviously
+        if self.scheme and self.scheme.lower() not in self.valid_schemes:
+            return False
+
+        # Reject any URLs that contain characters known to cause parsing
+        # differences between parser implementations
+        for match in re.finditer(URL_PROBLEMATIC_RE, self._orig_url):
+            # XXX: Yuck. We have non-breaking spaces in title slugs! They
+            # should be safe enough to allow after three slashes. Opera 12's the
+            # only browser that trips over them, and it doesn't fall for
+            # `http:///foo.com/`.
+            if match.group(0) == '\xa0':
+                if match.string[0:match.start(0)].count('/') < 3:
+                    return False
+            else:
+                return False
+
+        return True
+
+    def is_reddit_url(self, subreddit=None):
         """utility method for seeing if the url is associated with
         reddit as we don't necessarily want to mangle non-reddit
         domains
@@ -562,22 +640,19 @@ class UrlParser(object):
         returns true only if hostname is nonexistant, a subdomain of
         g.domain, or a subdomain of the provided subreddit's cname.
         """
+
         from pylons import g
-        subdomain = (
+        valid_subdomain = (
             not self.hostname or
             is_subdomain(self.hostname, g.domain) or
             (subreddit and subreddit.domain and
                 is_subdomain(self.hostname, subreddit.domain))
         )
-        # Handle backslash trickery like /\example.com/ being treated as
-        # equal to //example.com/ by some browsers
-        if not self.hostname and not self.scheme and self.path:
-            if self.path.startswith("/\\"):
-                return False
-        if not subdomain or not self.hostname or not g.offsite_subdomains:
-            return subdomain
+
+        if not valid_subdomain or not self.hostname or not g.offsite_subdomains:
+            return valid_subdomain
         return not any(
-            self.hostname.startswith(subdomain + '.')
+            is_subdomain(self.hostname, "%s.%s" % (subdomain, g.domain))
             for subdomain in g.offsite_subdomains
         )
 

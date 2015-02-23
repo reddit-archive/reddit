@@ -540,7 +540,8 @@ class Link(Thing, Printable):
             item.domain_str = None
             if c.user.pref_domain_details:
                 urlparser = UrlParser(item.url)
-                if not item.is_self and urlparser.is_reddit_url():
+                if (not item.is_self and urlparser.is_reddit_url() and
+                        urlparser.is_web_safe_url()):
                     url_subreddit = urlparser.get_subreddit()
                     if (url_subreddit and
                             not isinstance(url_subreddit, DefaultSR)):
