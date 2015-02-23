@@ -2686,11 +2686,14 @@ class VMultiPath(Validator):
         try:
             require(path)
             path = self.normalize(path)
-            require(path.startswith('/user/'))
-            user, username, kind, name = require_split(path, 5, sep='/')[1:]
+            require(path.startswith('/user/') or path.startswith('/r/'))
+            prefix, owner, kind, name = require_split(path, 5, sep='/')[1:]
             require(kind in self.kinds)
-            username = chkuser(username)
-            require(username)
+            if prefix == 'r':
+                owner = owner if Subreddit.is_valid_name(owner) else None
+            else:
+                owner = chkuser(owner)
+            require(owner)
         except RequirementException:
             self.set_error('BAD_MULTI_PATH', code=400)
             return
@@ -2717,7 +2720,7 @@ class VMultiPath(Validator):
             self.set_error('BAD_MULTI_NAME', {'reason': reason}, code=400)
             return
 
-        return {'path': path, 'username': username, 'name': name}
+        return {'path': path, 'prefix': prefix, 'owner': owner, 'name': name}
 
     def param_docs(self):
         return {

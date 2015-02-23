@@ -1740,6 +1740,12 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
                 'kind': self.kind,
                 'multiname': self.name,
             }
+        if isinstance(self.owner, Subreddit):
+            return '/r/%(srname)s/%(kind)s/%(multiname)s' % {
+                'srname': self.owner.name,
+                'kind': self.kind,
+                'multiname': self.name,
+            }
 
     @property
     def user_path(self):
@@ -1780,9 +1786,21 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         if c.user_is_admin:
             return True
 
-        return user == self.owner or self.is_public()
+        if self.is_public():
+            return True
+
+        # subreddit multireddit (mod can view)
+        if isinstance(self.owner, Subreddit):
+            return self.owner.is_moderator_with_perms(user, 'config')
+
+        return user == self.owner
 
     def can_edit(self, user):
+        # subreddit multireddit (admin can edit)
+        if isinstance(self.owner, Subreddit):
+            return (c.user_is_admin or
+                    self.owner.is_moderator_with_perms(user, 'config'))
+
         if c.user_is_admin and self.owner == Account.system_user():
             return True
 
@@ -1835,8 +1853,12 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
 
     @classmethod
     def slugify(cls, owner, display_name, type_="m"):
+        """Generate user multi path from display name."""
         slug = unicode_title_to_ascii(display_name)
-        prefix = "/user/" + owner.name + "/" + type_ + "/"
+        if isinstance(owner, Subreddit):
+            prefix = "/r/" + owner.name + "/" + type_ + "/"
+        else:
+            prefix = "/user/" + owner.name + "/" + type_ + "/"
         new_path = prefix + slug
         try:
             existing = LabeledMultiByOwner._byID(owner._fullname)._t.keys()
@@ -1846,7 +1868,7 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         while new_path in existing:
             count += 1
             new_path = prefix + slug + str(count)
-        return {'path': new_path, 'username': owner.name, 'name': slug}
+        return new_path
 
     @classmethod
     def sr_props_to_columns(cls, sr_props):

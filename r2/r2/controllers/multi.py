@@ -110,6 +110,16 @@ class MultiApiController(RedditController):
         return self._format_multi_list(multis, c.user, expand_srs)
 
     @require_oauth2_scope("read")
+    @validate(
+        sr=VSRByName('srname'),
+        expand_srs=VBoolean("expand_srs"),
+    )
+    def GET_list_sr_multis(self, sr, expand_srs):
+        """Fetch a list of public multis belonging to subreddit `srname`"""
+        multis = LabeledMulti.by_owner(sr)
+        return self._format_multi_list(multis, sr, expand_srs)
+
+    @require_oauth2_scope("read")
     @validate(VUser(), expand_srs=VBoolean("expand_srs"))
     @api_doc(api_section.multis, uri="/api/multi/mine")
     def GET_my_multis(self, expand_srs):
@@ -136,9 +146,29 @@ class MultiApiController(RedditController):
         return self._format_multi(multi, expand_srs)
 
     def _check_new_multi_path(self, path_info):
-        if path_info['username'].lower() != c.user.name.lower():
+        if path_info['prefix'] == 'r':
+            return self._check_sr_multi_path(path_info)
+
+        return self._check_user_multi_path(path_info)
+
+    def _check_user_multi_path(self, path_info):
+        if path_info['owner'].lower() != c.user.name.lower():
             raise RedditError('MULTI_CANNOT_EDIT', code=403,
                               fields='multipath')
+        return c.user
+
+    def _check_sr_multi_path(self, path_info):
+        try:
+            sr = Subreddit._by_name(path_info['owner'])
+        except NotFound:
+            raise RedditError('SUBREDDIT_NOEXIST', code=404)
+
+        if (not sr.is_moderator_with_perms(c.user, 'config') and not
+                c.user_is_admin):
+            raise RedditError('MULTI_CANNOT_EDIT', code=403,
+                              fields='multipath')
+
+        return sr
 
     def _add_multi_srs(self, multi, sr_datas):
         srs = Subreddit._by_name(sr_data['name'] for sr_data in sr_datas)
@@ -206,17 +236,19 @@ class MultiApiController(RedditController):
         if not path_info and "path" in data:
             path_info = VMultiPath("").run(data["path"])
         elif 'display_name' in data:
-                path_info = LabeledMulti.slugify(c.user, data['display_name'])
+            # if path not provided, create multi for user
+            path = LabeledMulti.slugify(c.user, data['display_name'])
+            path_info = VMultiPath("").run(path)
 
         if not path_info:
             raise RedditError('BAD_MULTI_PATH', code=400)
 
-        self._check_new_multi_path(path_info)
+        owner = self._check_new_multi_path(path_info)
 
         try:
             LabeledMulti._byID(path_info['path'])
         except tdb_cassandra.NotFound:
-            multi = LabeledMulti.create(path_info['path'], c.user)
+            multi = LabeledMulti.create(path_info['path'], owner)
             response.status = 201
         else:
             raise RedditError('MULTI_EXISTS', code=409, fields='multipath')
@@ -235,12 +267,12 @@ class MultiApiController(RedditController):
     def PUT_multi(self, path_info, data):
         """Create or update a multi."""
 
-        self._check_new_multi_path(path_info)
+        owner = self._check_new_multi_path(path_info)
 
         try:
             multi = LabeledMulti._byID(path_info['path'])
         except tdb_cassandra.NotFound:
-            multi = LabeledMulti.create(path_info['path'], c.user)
+            multi = LabeledMulti.create(path_info['path'], owner)
             response.status = 201
 
         self._write_multi_data(multi, data)
@@ -257,10 +289,14 @@ class MultiApiController(RedditController):
         """Delete a multi."""
         multi.delete()
 
-    def _copy_multi(self, from_multi, to_path_info):
-        self._check_new_multi_path(to_path_info)
+    def _copy_multi(self, from_multi, to_path_info, rename=False):
+        """Copy a multi to a user account."""
 
-        to_owner = Account._by_name(to_path_info['username'])
+        to_owner = self._check_new_multi_path(to_path_info)
+
+        # rename requires same owner
+        if rename and from_multi.owner != to_owner:
+            raise RedditError('MULTI_CANNOT_EDIT', code=400)
 
         try:
             LabeledMulti._byID(to_path_info['path'])
@@ -298,7 +334,9 @@ class MultiApiController(RedditController):
         """
         if not to_path_info:
             if display_name:
-                to_path_info = LabeledMulti.slugify(c.user, display_name)
+                # if path not provided, copy multi to same owner
+                path = LabeledMulti.slugify(from_multi.owner, display_name)
+                to_path_info = VMultiPath("").run(path)
             else:
                 raise RedditError('BAD_MULTI_PATH', code=400)
 
@@ -338,11 +376,12 @@ class MultiApiController(RedditController):
         """Rename a multi."""
         if not to_path_info:
             if display_name:
-                to_path_info = LabeledMulti.slugify(c.user, display_name)
+                path = LabeledMulti.slugify(from_multi.owner, display_name)
+                to_path_info = VMultiPath("").run(path)
             else:
                 raise RedditError('BAD_MULTI_PATH', code=400)
 
-        to_multi = self._copy_multi(from_multi, to_path_info)
+        to_multi = self._copy_multi(from_multi, to_path_info, rename=True)
 
         if display_name:
             to_multi.display_name = display_name
