@@ -1439,7 +1439,7 @@ class ApiController(RedditController):
     @require_oauth2_scope("modposts")
     @validatedForm(VUser(),
                    VModhash(),
-                   VSrCanAlter('id'),
+                   VSrCanBan('id'),
                    thing=VByName('id', thing_cls=Link),
                    sort=VOneOf('sort', CommentSortMenu.suggested_sort_options))
     def POST_set_suggested_sort(self, form, jquery, thing, sort):
