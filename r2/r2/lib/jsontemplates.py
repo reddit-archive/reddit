@@ -575,7 +575,7 @@ class LinkJsonTemplate(ThingJsonTemplate):
             d["upvote_ratio"] = thing.upvote_ratio
 
         if feature.is_enabled('default_sort'):
-            d['default_sort'] = thing.sort_if_suggested()
+            d['suggested_sort'] = thing.sort_if_suggested()
 
         return d
 

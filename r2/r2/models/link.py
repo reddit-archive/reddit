@@ -76,7 +76,7 @@ class Link(Thing, Printable):
     _data_int_props = Thing._data_int_props + (
         'num_comments', 'reported', 'comment_tree_id', 'gildings')
     _defaults = dict(is_self=False,
-                     default_sort=None,
+                     suggested_sort=None,
                      over_18=False,
                      over_18_override=False,
                      nsfw_str=False,
@@ -744,16 +744,16 @@ class Link(Thing, Printable):
 
     def sort_if_suggested(self):
         """Returns a sort, if the link or its subreddit has suggested one."""
-        if self.default_sort:
-            # A default sort of "blank" means explicitly empty: Do not obey
-            # the subreddit's default sort, either.
-            if self.default_sort == 'blank':
+        if self.suggested_sort:
+            # A suggested sort of "blank" means explicitly empty: Do not obey
+            # the subreddit's suggested sort, either.
+            if self.suggested_sort == 'blank':
                 return None
-            return self.default_sort
+            return self.suggested_sort
 
         sr = self.subreddit_slow
-        if sr.default_comment_sort:
-            return sr.default_comment_sort
+        if sr.suggested_comment_sort:
+            return sr.suggested_comment_sort
 
         return None
 

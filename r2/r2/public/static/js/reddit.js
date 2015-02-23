@@ -972,7 +972,7 @@ function toggle_clear_suggested_sort(elem) {
 
 function set_suggested_sort(elem, value) {
   $(elem).parents('form').first().find('input[name="sort"]').val(value);
-  change_state(elem, "set_default_sort");
+  change_state(elem, "set_suggested_sort");
   $(elem).children().toggle();
 }
 

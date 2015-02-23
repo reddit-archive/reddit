@@ -35,7 +35,7 @@
 
 <%def name="clear_suggested_sort()">
   <li class="toggle">
-    <form method="post" action="/api/set_default_sort">
+    <form method="post" action="/api/set_suggested_sort">
       <input type="hidden" name="id" value="${thing.link._fullname}" />
       <input type="hidden" name="sort" value="" />
       <input type="hidden" value="${_('suggested sort cleared')}" name="executed"/>
@@ -44,7 +44,7 @@
       <span class="option error">
          ${_("clear suggested sort?")}
 
-         %if thing.sr.default_comment_sort:
+         %if thing.sr.suggested_comment_sort:
 
            &#32;
            ## Set to explicitly "blank", which will disallow using the subreddit setting and use the user's setting
@@ -52,7 +52,7 @@
            &#32;/
 
            ## Show "use subreddit setting" only if a link's suggested sort is explicitly set
-           %if thing.link.default_sort is not None:
+           %if thing.link.suggested_sort is not None:
            &#32;
            ## Set back to default, which will be the subreddit's suggested sort
            ${suggested_clear_type('use subreddit setting', '')}
@@ -81,7 +81,7 @@
   %if thing.suggested_sort == thing.sort:
     <% clear_suggested_sort() %>
   %else:
-    ${ynbutton(_("set as suggested sort"), _("suggested sort set"), "set_default_sort",
+    ${ynbutton(_("set as suggested sort"), _("suggested sort set"), "set_suggested_sort",
       hidden_data=dict(id=thing.link._fullname, sort=thing.sort))}
   %endif
 %endif

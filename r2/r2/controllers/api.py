@@ -1442,7 +1442,7 @@ class ApiController(RedditController):
                    VSrCanAlter('id'),
                    thing=VByName('id', thing_cls=Link),
                    sort=VOneOf('sort', CommentSortMenu.suggested_sort_options))
-    def POST_set_default_sort(self, form, jquery, thing, sort):
+    def POST_set_suggested_sort(self, form, jquery, thing, sort):
         """Set a default sort for a link.
 
         Default sorts are useful to display comments in a certain preferred way
@@ -1455,9 +1455,9 @@ class ApiController(RedditController):
 
         if c.user._id != thing.author_id:
             ModAction.create(thing.subreddit_slow, c.user, target=thing,
-                             action='setdefaultsort')
+                             action='setsuggestedsort')
 
-        thing.default_sort = sort
+        thing.suggested_sort = sort
         thing._commit()
         jquery.refresh()
 
@@ -2404,12 +2404,12 @@ class ApiController(RedditController):
                 kw[key] = validator.run(value)
 
         if feature.is_enabled('default_sort'):
-            vsort = VOneOf('default_comment_sort',
+            vsort = VOneOf('suggested_comment_sort',
                            CommentSortMenu._options,
                            default=None,
                            )
-            sort_param = request.params.get('default_comment_sort')
-            kw['default_comment_sort'] = vsort.run(sort_param)
+            sort_param = request.params.get('suggested_comment_sort')
+            kw['suggested_comment_sort'] = vsort.run(sort_param)
 
         # the status button is outside the form -- have to reset by hand
         form.parent().set_html('.status', "")
@@ -2450,7 +2450,7 @@ class ApiController(RedditController):
         ]
 
         if feature.is_enabled('default_sort'):
-            keyword_fields.append('default_comment_sort')
+            keyword_fields.append('suggested_comment_sort')
 
         kw = {k: v for k, v in kw.iteritems() if k in keyword_fields}
 
