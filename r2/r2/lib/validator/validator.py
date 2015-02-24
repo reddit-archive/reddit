@@ -1233,7 +1233,7 @@ class VSubmitSR(Validator):
             self.set_error(errors.SUBREDDIT_NOTALLOWED)
             return
 
-        if sr.hide_ads:
+        if sr.hide_ads and self.promotion:
             self.set_error(errors.SUBREDDIT_DISABLED_ADS)
             return
 
