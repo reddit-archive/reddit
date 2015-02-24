@@ -310,6 +310,23 @@ class Account(Thing):
 
         return True
 
+    @property
+    def can_create_subreddit(self):
+        hook = hooks.get_hook("account.can_create_subreddit")
+        can_create = hook.call_until_return(account=self)
+        if can_create is not None:
+            return can_create
+
+        min_age = timedelta(days=g.live_config["create_sr_account_age_days"])
+        if self._age < min_age:
+            return False
+
+        if (self.link_karma < g.live_config["create_sr_link_karma"] and
+                self.comment_karma < g.live_config["create_sr_comment_karma"]):
+            return False
+
+        return True
+
     def modhash(self, rand=None, test=False):
         if c.oauth_user:
             # OAuth clients should never receive a modhash of any kind

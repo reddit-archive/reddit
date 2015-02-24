@@ -2416,6 +2416,10 @@ class ApiController(RedditController):
                 'public_description',
             )
         
+        if not sr and not c.user.can_create_subreddit:
+            form.set_error(errors.CANT_CREATE_SR, "")
+            c.errors.add(errors.CANT_CREATE_SR, field="")
+
         # only care about captcha if this is creating a subreddit
         if not sr and form.has_errors("captcha", errors.BAD_CAPTCHA):
             return
@@ -2450,6 +2454,8 @@ class ApiController(RedditController):
             c.errors.add(errors.INVALID_OPTION, field='type')
 
         if not sr and form.has_errors("ratelimit", errors.RATELIMIT):
+            pass
+        if not sr and form.has_errors("", errors.CANT_CREATE_SR):
             pass
         # if existing subreddit is employees_only and trying to change type,
         # require that admin mode is on

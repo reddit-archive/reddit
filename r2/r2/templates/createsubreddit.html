@@ -32,6 +32,14 @@
 
 <%namespace name="utils" file="utils.html"/>
  
+%if not thing.site and not c.user.can_create_subreddit:
+<div class="infobar">${_md("""
+# your account is too new to create a subreddit
+    
+try participating in other communities on reddit for a little while first before creating your own. please post to /r/help if you need more information about this restriction, or if you require a specific exemption you can [contact the admins](/contact) to request one.
+""")}</div>
+%else:
+
 <div class="create-reddit fancy-settings thing"
      %if thing.site:
        id="${thing.site._fullname}"
@@ -575,7 +583,9 @@
   &#32;
   <span class="status error"></span>
   ${error_field("RATELIMIT", "ratelimit")}
+  ${error_field("CANT_CREATE_SR", "")}
   </div>
 </div>
 </div>
 
+%endif

@@ -303,6 +303,9 @@ class Globals(object):
         ConfigValue.int: [
             'captcha_exempt_comment_karma',
             'captcha_exempt_link_karma',
+            'create_sr_account_age_days',
+            'create_sr_comment_karma',
+            'create_sr_link_karma',
             'cflag_min_votes',
         ],
         ConfigValue.float: [

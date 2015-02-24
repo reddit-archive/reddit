@@ -160,6 +160,7 @@ error_list = dict((
         ('CANT_CONVERT_TO_GOLD_ONLY', _("to convert an existing subreddit to gold only, send a message to %(admin_modmail)s") 
             % dict(admin_modmail=g.admin_message_acct)),
         ('GOLD_ONLY_SR_REQUIRED', _("this subreddit must be 'gold only' to select this")),
+        ('CANT_CREATE_SR', _("your account is too new to create a subreddit. please contact the admins to request an exemption.")),
     ))
 
 errors = Storage([(e, e) for e in error_list.keys()])
