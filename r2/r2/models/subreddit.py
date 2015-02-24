@@ -684,10 +684,12 @@ class Subreddit(Thing, Printable, BaseSite):
         return self.is_special(user)
 
     def should_ratelimit(self, user, kind):
-        from r2.models.admintools import admin_ratelimit
-        if (c.user_is_admin or
-            self.is_special(user) or
-            not admin_ratelimit(user)):
+        if self.is_special(user):
+            return False
+
+        hook = hooks.get_hook("account.is_ratelimit_exempt")
+        ratelimit_exempt = hook.call_until_return(account=c.user)
+        if ratelimit_exempt:
             return False
 
         if kind == 'comment':

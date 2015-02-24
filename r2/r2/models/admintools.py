@@ -308,9 +308,6 @@ def update_gold_users():
                                     distinguished='gold-auto')
 
 
-def admin_ratelimit(user):
-    return True
-
 def is_banned_domain(dom):
     return None
 

@@ -1792,12 +1792,12 @@ class VRatelimit(Validator):
         Validator.__init__(self, *a, **kw)
 
     def run (self):
-        from r2.models.admintools import admin_ratelimit
-
         if g.disable_ratelimit:
             return
 
-        if c.user_is_loggedin and not admin_ratelimit(c.user):
+        hook = hooks.get_hook("account.is_ratelimit_exempt")
+        ratelimit_exempt = hook.call_until_return(account=c.user)
+        if ratelimit_exempt:
             return
 
         to_check = []
