@@ -20,35 +20,37 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-import os
 import base64
-import traceback
-import ConfigParser
 import codecs
+import ConfigParser
+import cPickle as pickle
 import itertools
+import math
+import os
+import random
+import re
+import signal
+import traceback
 
-from babel.dates import TIMEDELTA_UNITS
+from copy import deepcopy
+from datetime import date, datetime, timedelta
+from decimal import Decimal
 from urllib import unquote_plus
 from urllib2 import urlopen, Request
 from urlparse import urlparse, urlunparse
-import signal
-from copy import deepcopy
-import cPickle as pickle
-import re, math, random
+
 import boto
-from decimal import Decimal
-
-from BeautifulSoup import BeautifulSoup, SoupStrainer
-
-from datetime import date, datetime, timedelta
-from pylons import c, g, request
-from pylons.i18n import ungettext, _
-from r2.lib.filters import _force_unicode, _force_utf8
-from mako.filters import url_escape
-from r2.lib.contrib import ipaddress
-from r2.lib.require import require, require_split, RequirementException
 import snudown
 
+from babel.dates import TIMEDELTA_UNITS
+from BeautifulSoup import BeautifulSoup, SoupStrainer
+from mako.filters import url_escape
+from pylons import c, g, request
+from pylons.i18n import ungettext, _
+
+from r2.lib.contrib import ipaddress
+from r2.lib.filters import _force_unicode, _force_utf8
+from r2.lib.require import require, require_split, RequirementException
 from r2.lib.utils._utils import *
 
 iters = (list, tuple, set)
