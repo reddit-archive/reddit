@@ -2437,6 +2437,7 @@ class ApiController(RedditController):
         can_set_gold_only = (c.user.gold or c.user.gold_charter or
                 (sr and sr.type == 'gold_only'))
         if kw['type'] == 'gold_only' and not can_set_gold_only:
+            form.set_error(errors.GOLD_REQUIRED, 'type')
             c.errors.add(errors.GOLD_REQUIRED, field='type')
 
         can_set_hide_ads = can_set_gold_only and kw['type'] == 'gold_only'
