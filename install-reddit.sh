@@ -154,6 +154,7 @@ python-zope.interface
 python-kazoo
 python-stripe
 python-tinycss2
+python-unidecode
 
 python-flask
 geoip-bin

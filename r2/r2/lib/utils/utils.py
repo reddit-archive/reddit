@@ -41,6 +41,7 @@ from urlparse import urlparse, urlunparse
 
 import boto
 import snudown
+import unidecode
 
 from babel.dates import TIMEDELTA_UNITS
 from BeautifulSoup import BeautifulSoup, SoupStrainer
@@ -953,8 +954,7 @@ def title_to_url(title, max_length = 50):
 
 def unicode_title_to_ascii(title, max_length=50):
     title = _force_unicode(title)
-    # TODO: use unidecode
-    title = title.encode("ascii", "ignore")
+    title = unidecode.unidecode(title)
     return title_to_url(title, max_length)
 
 
