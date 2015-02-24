@@ -2213,7 +2213,6 @@ class ApiController(RedditController):
         # default error list (default values will reset the errors in
         # the response if no error is raised)
         errors = dict(BAD_CSS_NAME = "", IMAGE_ERROR = "")
-        size = None
 
         # for backwards compatibility, map header to upload_type
         if upload_type is None:
@@ -2230,21 +2229,25 @@ class ApiController(RedditController):
             if image_count >= g.max_sr_images:
                 errors['IMAGE_ERROR'] = _("too many images (you only get %d)") % g.max_sr_images
 
-        size = str_to_image(file).size
-        if upload_type == 'icon':
-            if size != Subreddit.ICON_EXACT_SIZE:
-                errors['IMAGE_ERROR'] = (
-                    _('must be %dx%d pixels') % Subreddit.ICON_EXACT_SIZE)
-        elif upload_type == 'banner':
-            if size[0] * 10 / 16 != size[1] * 10 / 9:
-                # require precision to one decimal point for aspect ratio
-                errors['IMAGE_ERROR'] = _('16:9 aspect ratio required')
-            elif size > Subreddit.BANNER_MAX_SIZE:
-                errors['IMAGE_ERROR'] = (
-                    _('max %dx%d pixels') % Subreddit.BANNER_MAX_SIZE)
-            elif size < Subreddit.BANNER_MIN_SIZE:
-                errors['IMAGE_ERROR'] = (
-                    _('min %dx%d pixels') % Subreddit.BANNER_MIN_SIZE)
+        try:
+            size = str_to_image(file).size
+        except (IOError, TypeError):
+            errors['IMAGE_ERROR'] = _('Invalid image or general image error')
+        else:
+            if upload_type == 'icon':
+                if size != Subreddit.ICON_EXACT_SIZE:
+                    errors['IMAGE_ERROR'] = (
+                        _('must be %dx%d pixels') % Subreddit.ICON_EXACT_SIZE)
+            elif upload_type == 'banner':
+                if size[0] * 10 / 16 != size[1] * 10 / 9:
+                    # require precision to one decimal point for aspect ratio
+                    errors['IMAGE_ERROR'] = _('16:9 aspect ratio required')
+                elif size > Subreddit.BANNER_MAX_SIZE:
+                    errors['IMAGE_ERROR'] = (
+                        _('max %dx%d pixels') % Subreddit.BANNER_MAX_SIZE)
+                elif size < Subreddit.BANNER_MIN_SIZE:
+                    errors['IMAGE_ERROR'] = (
+                        _('min %dx%d pixels') % Subreddit.BANNER_MIN_SIZE)
 
         if any(errors.values()):
             return UploadedImage("", "", "", errors=errors, form_id=form_id).render()
