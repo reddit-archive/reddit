@@ -445,12 +445,14 @@ def set_multireddit():
         multi_ids = None
         username = None
         logged_in_username = None
+        multiurl = None
 
         if c.user_is_loggedin and routes_dict.get("my_multi"):
             logged_in_username = c.user.name.lower()
             username = logged_in_username
             multi_ids = ["/user/%s/m/%s" % (logged_in_username, multipath)
                          for multipath in multipaths]
+            multiurl = "/me/m/" + fullpath
         elif "username" in routes_dict:
             username = routes_dict["username"].lower()
 
@@ -464,6 +466,7 @@ def set_multireddit():
                     path = "/".join(url_parts)
                     abort(302, location=BaseController.format_output_url(path))
 
+            multiurl = "/user/" + username + "/m/" + fullpath
             multi_ids = ["/user/%s/m/%s" % (username, multipath)
                         for multipath in multipaths]
 
@@ -482,7 +485,7 @@ def set_multireddit():
                     ))),
                     LabeledMulti.MAX_SR_COUNT
                 )
-                c.site = MultiReddit(fullpath, srs)
+                c.site = MultiReddit(multiurl, srs)
     elif "filtername" in routes_dict:
         if not c.user_is_loggedin:
             abort(404)
