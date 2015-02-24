@@ -294,7 +294,21 @@ class Account(Thing):
         return ",".join((timestamp, signature))
 
     def needs_captcha(self):
-        return not g.disable_captcha and self.link_karma < 1
+        if g.disable_captcha:
+            return False
+
+        hook = hooks.get_hook("account.is_captcha_exempt")
+        captcha_exempt = hook.call_until_return(account=self)
+        if captcha_exempt:
+            return False
+
+        if self.link_karma >= g.live_config["captcha_exempt_link_karma"]:
+            return False
+
+        if self.comment_karma >= g.live_config["captcha_exempt_comment_karma"]:
+            return False
+
+        return True
 
     def modhash(self, rand=None, test=False):
         if c.oauth_user:

@@ -301,6 +301,8 @@ class Globals(object):
             'frontend_logging',
         ],
         ConfigValue.int: [
+            'captcha_exempt_comment_karma',
+            'captcha_exempt_link_karma',
             'cflag_min_votes',
         ],
         ConfigValue.float: [
