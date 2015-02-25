@@ -90,6 +90,7 @@ class Link(Thing, Printable):
                      banned_before_moderator=False,
                      media_object=None,
                      secure_media_object=None,
+                     preview_object=None,
                      media_url=None,
                      gifts_embed_url=None,
                      media_autoplay=False,
@@ -228,6 +229,17 @@ class Link(Thing, Printable):
 
     def _unhide(self, user):
         LinkHidesByAccount._unhide(user, self)
+
+    def _commit(self, *a, **kw):
+        # If we've updated the (denormalized) preview object, we also need to
+        # update the metadata that keeps track of the denormalizations.
+        if 'preview_object' in self._dirties:
+            (old_val, val) = self._dirties['preview_object']
+            if old_val:
+                LinksByImage.remove_link(old_val['uid'], self)
+            if val:
+                LinksByImage.add_link(val['uid'], self)
+        Thing._commit(self, *a, **kw)
 
     def link_domain(self):
         if self.is_self:
@@ -2269,6 +2281,13 @@ class LinksByImage(tdb_cassandra.View):
         rowkey = cls._rowkey(image_uid)
         column = {link._id36: ''}
         cls._set_values(rowkey, column)
+
+    @classmethod
+    def remove_link(cls, image_uid, link):
+        """A weakly-guaranteed removal of the record tying a Link to an image."""
+        rowkey = cls._rowkey(image_uid)
+        columns = (link._id36,)
+        cls._remove(rowkey, columns)
 
     @classmethod
     def get_link_id36s(cls, image_uid):

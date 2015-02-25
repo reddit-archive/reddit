@@ -34,7 +34,7 @@ from pylons import g
 from r2.lib import amqp, hooks
 from r2.lib.cache import sgm
 from r2.lib.db import tdb_sql as tdb, sorts, operators
-from r2.lib.utils import Results, tup, to36
+from r2.lib.utils import class_property, Results, tup, to36
 
 
 THING_CACHE_TTL = int(timedelta(days=1).total_seconds())
@@ -351,9 +351,13 @@ class DataThing(object):
     def _id36(self):
         return to36(self._id)
 
+    @class_property
+    def _fullname_prefix(cls):
+        return cls._type_prefix + to36(cls._type_id)
+
     @classmethod
     def _fullname_from_id36(cls, id36):
-        return cls._type_prefix + to36(cls._type_id) + '_' + id36
+        return cls._fullname_prefix + '_' + id36
 
     @property
     def _fullname(self):

@@ -102,7 +102,7 @@ def declare_queues(g):
         queues.declare(sharded_commentstree_queues)
 
     queues.cloudsearch_changes << "search_changes"
-    queues.scraper_q << "new_link"
+    queues.scraper_q << ("new_link", "usertext_edited")
     queues.newcomments_q << "new_comment"
     queues.butler_q << ("new_comment",
                         "usertext_edited")
