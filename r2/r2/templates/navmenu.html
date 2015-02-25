@@ -46,7 +46,9 @@
 
     <div class="drop-choices ${css_class}">
       %for option in thing:
-        ${option}
+        %if option != thing.selected:
+          ${option}
+        %endif
       %endfor
     </div>
 
