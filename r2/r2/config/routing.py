@@ -396,6 +396,7 @@ def make_map():
        action='server_seconds_visibility')
 
     mc("/api/multi/mine", controller="multiapi", action="my_multis")
+    mc("/api/multi/user/:username", controller="multiapi", action="list_multis")
     mc("/api/multi/copy", controller="multiapi", action="multi_copy")
     mc("/api/multi/rename", controller="multiapi", action="multi_rename")
     mc("/api/multi/*multipath/r/:srname", controller="multiapi", action="multi_subreddit")

@@ -37,6 +37,7 @@ from r2.models.subreddit import (
 from r2.lib.db import tdb_cassandra
 from r2.lib.validator import (
     validate,
+    VAccountByName,
     VBoolean,
     VColor,
     VLength,
@@ -91,15 +92,30 @@ class MultiApiController(RedditController):
         set_extension(request.environ, "json")
         RedditController.pre(self)
 
+    def _format_multi_list(self, multis, viewer, expand_srs):
+        templ = LabeledMultiJsonTemplate(expand_srs)
+        resp = [templ.render(multi).finalize() for multi in multis
+                if multi.can_view(viewer)]
+        return self.api_wrapper(resp)
+
+    @require_oauth2_scope("read")
+    @validate(
+        user=VAccountByName("username"),
+        expand_srs=VBoolean("expand_srs"),
+    )
+    @api_doc(api_section.multis, uri="/api/multi/user/{username}")
+    def GET_list_multis(self, user, expand_srs):
+        """Fetch a list of public multis belonging to `username`"""
+        multis = LabeledMulti.by_owner(user)
+        return self._format_multi_list(multis, c.user, expand_srs)
+
     @require_oauth2_scope("read")
     @validate(VUser(), expand_srs=VBoolean("expand_srs"))
     @api_doc(api_section.multis, uri="/api/multi/mine")
     def GET_my_multis(self, expand_srs):
         """Fetch a list of multis belonging to the current user."""
         multis = LabeledMulti.by_owner(c.user)
-        templ = LabeledMultiJsonTemplate(expand_srs)
-        resp = [templ.render(multi).finalize() for multi in multis]
-        return self.api_wrapper(resp)
+        return self._format_multi_list(multis, c.user, expand_srs)
 
     def _format_multi(self, multi, expand_sr_info=False):
         multi_info = LabeledMultiJsonTemplate(expand_sr_info).render(multi)
