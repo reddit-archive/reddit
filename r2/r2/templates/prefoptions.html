@@ -348,16 +348,18 @@
         <br><br>
         <% creddit_link = unsafe('&#32;<a href="/creddits">creddit</a>&#32;') %>
         ${checkbox(_wsf("use a %(creddit_link)s to automatically renew my gold if it expires", creddit_link=creddit_link), "creddit_autorenew")}
-        <br><br>
-        <p>
-        <%
-          input = capture(text_input, c.user.pref_stylesheet_override, 'stylesheet_override')
-          s = c.user.pref_stylesheet_override
-        %>
-        ${unsafe(_("use stylesheet from /r/%(sr)s by default") % dict(sr=input))}
-        &#32;<span class="little gray">${_("(blank for standard reddit style)")}</span>
-        <br>
-        <span class="little gray">${_("(used anywhere there isn't another custom style - front page, multireddits, or everywhere if you have custom styles disabled)")}</span>
+        %if feature.is_enabled('stylesheets_everywhere'):
+          <br><br>
+          <p>
+          <%
+            input = unsafe(capture(text_input, c.user.pref_stylesheet_override, 'stylesheet_override'))
+            s = c.user.pref_stylesheet_override
+          %>
+          ${_wsf("use stylesheet from /r/%(sr)s by default", sr=input)}
+          &#32;<span class="little gray">${_("(blank for standard reddit style)")}</span>
+          <br>
+          <span class="little gray">${_("(used anywhere there isn't another custom style - front page, multireddits, or everywhere if you have custom styles disabled)")}</span>
+        %endif
     </td>
   </tr>
   %elif c.user.is_moderator_somewhere:

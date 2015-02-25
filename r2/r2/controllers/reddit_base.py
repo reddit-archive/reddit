@@ -1692,7 +1692,8 @@ class RedditController(OAuth2ResourceController):
         c.allow_styles = True
         c.can_apply_styles = self.allow_stylesheets
         #if the preference is set and we're not at a cname
-        has_style_override = c.user.gold and c.user.pref_stylesheet_override
+        has_style_override = (c.user.pref_stylesheet_override and
+                feature.is_enabled('stylesheets_everywhere'))
         if (not c.user.pref_show_stylesheets and
                 not has_style_override and
                 not c.cname):

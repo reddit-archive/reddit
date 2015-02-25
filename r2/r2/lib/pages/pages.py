@@ -367,7 +367,8 @@ class Reddit(Templated):
 
         # use override stylesheet if they have custom styles disabled or
         # this subreddit has no custom stylesheet (or is the front page)
-        has_override_enabled = c.user.gold and c.user.pref_stylesheet_override
+        has_style_override = (c.user.pref_stylesheet_override and
+                feature.is_enabled('stylesheets_everywhere'))
         no_sr_styles = (isinstance(c.site, DefaultSR) or
                         not c.user.pref_show_stylesheets or
                         not self.subreddit_stylesheet_url)
