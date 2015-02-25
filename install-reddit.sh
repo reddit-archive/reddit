@@ -118,7 +118,7 @@ HERE
 
 # add the datastax cassandra repos
 echo deb http://debian.datastax.com/community stable main > /etc/apt/sources.list.d/cassandra.sources.list
-curl -L https://debian.datastax.com/debian/repo_key | sudo apt-key add -
+wget -qO- -L https://debian.datastax.com/debian/repo_key | sudo apt-key add -
 
 # grab the new ppas' package listings
 apt-get update
