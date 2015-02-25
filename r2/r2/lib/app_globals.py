@@ -190,8 +190,6 @@ class Globals(object):
             'wiki_max_page_length_bytes',
             'wiki_max_page_name_length',
             'wiki_max_page_separators',
-            'min_promote_future',
-            'max_promote_future',
             'RL_RESET_MINUTES',
             'RL_OAUTH_RESET_MINUTES',
             'comment_karma_display_floor',
