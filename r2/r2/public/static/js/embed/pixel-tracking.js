@@ -24,7 +24,7 @@
       return;
     }
 
-    payload.uuid = App.utils.uuid();
+    payload.uuid = payload.uuid || App.utils.uuid();
 
     var image = new Image();
     var buster = Math.round(Math.random() * 2147483647);

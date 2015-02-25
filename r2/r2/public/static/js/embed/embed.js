@@ -38,6 +38,7 @@
         'embed_host_url': location.href,
         'comment_edited': thing.edited,
         'comment_deleted': thing.deleted,
+        'uuid': App.utils.uuid(),
       };
   
       for (var name in payload) {
