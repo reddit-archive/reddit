@@ -495,6 +495,9 @@ def set_multireddit():
                     LabeledMulti.MAX_SR_COUNT
                 )
                 c.site = MultiReddit(multiurl, srs)
+                if any(m.weighting_scheme == "fresh" for m in multis):
+                    c.site.weighting_scheme = "fresh"
+
     elif "filtername" in routes_dict:
         if not c.user_is_loggedin:
             abort(404)
