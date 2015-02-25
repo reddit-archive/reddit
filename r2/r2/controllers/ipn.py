@@ -1391,5 +1391,7 @@ def reverse_gold_purchase(transaction_id):
 
 def cancel_stripe_subscription(customer_id):
     customer = stripe.Customer.retrieve(customer_id)
+    if hasattr(customer, 'deleted'):
+        return customer
     customer.delete()
     return customer
