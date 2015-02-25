@@ -4996,12 +4996,42 @@ ul.colors {
     padding: 5px 10px;
   }
 
+  label {
+    display: block;
+  }
+
   .swatch {
     display: inline-block;
     width: 20px;
     height: 20px;
     margin-right: 0.5em;
     vertical-align: middle;
+  }
+
+  li.custom-color {
+    clear: left;
+    width: auto;
+
+    p {
+      margin: 0 -10px 5px;
+    }
+
+    .swatch {
+      border: 1px solid #CEE3F8;
+    }
+
+    input[type=color] {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      cursor: default;
+      opacity: 0;
+    }
+
+    input[type=text] {
+      width: 60px;
+      vertical-align: middle;
+    }
   }
 }
 
