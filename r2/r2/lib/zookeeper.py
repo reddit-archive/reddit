@@ -24,6 +24,7 @@ import os
 import json
 import urllib
 import functools
+import zlib
 
 from kazoo.client import KazooClient
 from kazoo.security import make_digest_acl
@@ -66,6 +67,8 @@ class LiveConfig(object):
 
         @client.DataWatch(key)
         def watcher(data, stat):
+            if data.startswith("gzip"):
+                data = zlib.decompress(data[len("gzip"):])
             self.data = json.loads(data)
             hooks.get_hook("worker.live_config.update").call()
 
