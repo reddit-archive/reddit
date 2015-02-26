@@ -38,6 +38,7 @@ def upload(static_root, bucket_url):
     bucket = s3.get_bucket(bucket_url.netloc, validate=False)
 
     # build a list of files already in the bucket
+    print "checking existing files on s3..."
     remote_files = {key.name : key.etag.strip('"') for key in bucket.list()}
 
     # upload local files not already in the bucket
@@ -71,6 +72,8 @@ def upload(static_root, bucket_url):
                     policy='public-read',
                     md5=(etag, base64_tag),
                 )
+
+    print "all done"
 
 
 def s3_url(text):
