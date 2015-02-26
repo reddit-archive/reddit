@@ -886,7 +886,6 @@ class CassandraCache(CacheUtils):
         ret = self.cf.insert(key, {'value': pickle.dumps(val)},
                               write_consistency_level = wcl,
                              ttl = time)
-        self._warm([key])
         return ret
 
     def set_multi(self, keys, prefix='',
@@ -906,14 +905,7 @@ class CassandraCache(CacheUtils):
                                               {'value': pickle.dumps(val)},
                                               ttl = time or None)
 
-        self._warm(keys.keys())
-
         return ret
-
-    def _warm(self, keys):
-        if False and random.random() > 0.98:
-            print 'Warming', keys
-            self.cf.multiget(keys)
 
     def delete(self, key, write_consistency_level = None):
         wcl = self._wcl(write_consistency_level)
