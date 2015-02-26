@@ -346,7 +346,7 @@ class Stats:
         if counter and random.random() < sample_rate:
             counter.increment(name, delta=delta)
 
-    def cache_count_multi(self, data, cache_name=None, sample_rate=None):
+    def cache_count_multi(self, data, sample_rate=None):
         if sample_rate is None:
             sample_rate = self.CACHE_SAMPLE_RATE
         counter = self.get_counter('cache')
@@ -447,8 +447,7 @@ class CacheStats:
                 miss_stat_name: misses,
                 total_stat_name: hits + misses,
             }
-            self.parent.cache_count_multi(data, cache_name=cache_name,
-                                          sample_rate=sample_rate)
+            self.parent.cache_count_multi(data, sample_rate=sample_rate)
 
 
 class StatsCollectingConnectionPool(pool.ConnectionPool):
