@@ -61,6 +61,17 @@ class TestValidEmail(unittest.TestCase):
 
     def test_blank_email(self):
         self._test_failure('', errors.NO_EMAIL)
+        self.setUp()
+        self._test_failure(' ', errors.NO_EMAIL)
+
+    def test_no_whitespace(self):
+        self._test_failure('test @example.com')
+        self.setUp()
+        self._test_failure('test@ example.com')
+        self.setUp()
+        self._test_failure('test@example. com')
+        self.setUp()
+        self._test_failure("test@\texample.com")
 
     def test_no_hostname(self):
         self._test_failure('example')

@@ -2050,6 +2050,11 @@ class ValidEmail(Validator):
     """Validates a single email. Returns the email on success."""
 
     def run(self, email):
+        # Strip out leading/trailing whitespace, since the inclusion of that is
+        # a common and easily-fixable user error.
+        if email is not None:
+            email = email.strip()
+
         if not email:
             self.set_error(errors.NO_EMAIL)
         elif not ValidEmails.email_re.match(email):
@@ -2065,7 +2070,7 @@ class ValidEmails(Validator):
     success"""
 
     separator = re.compile(r'[^\s,;]+')
-    email_re  = re.compile(r'.+@.+\..+')
+    email_re  = re.compile(r'[^\s]+@[^\s]+\.[^\s]+')
 
     def __init__(self, param, num = 20, **kw):
         self.num = num
