@@ -1795,10 +1795,11 @@ class VRatelimit(Validator):
         if g.disable_ratelimit:
             return
 
-        hook = hooks.get_hook("account.is_ratelimit_exempt")
-        ratelimit_exempt = hook.call_until_return(account=c.user)
-        if ratelimit_exempt:
-            return
+        if c.user_is_loggedin:
+            hook = hooks.get_hook("account.is_ratelimit_exempt")
+            ratelimit_exempt = hook.call_until_return(account=c.user)
+            if ratelimit_exempt:
+                return
 
         to_check = []
         if self.rate_user and c.user_is_loggedin:
