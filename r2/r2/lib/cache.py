@@ -832,23 +832,6 @@ class CassandraCacheChain(CacheChain):
                 ca.set(key, new_value)
         return new_value
 
-    def bulk_load(self, start='', end='', chunk_size = 100):
-        """Try to load everything out of Cassandra and put it into
-           memcached"""
-        cf = self.cassa.cf
-        for rows in in_chunks(cf.get_range(start=start,
-                                           finish=end,
-                                           columns=['value']),
-                              chunk_size):
-            print rows[0][0]
-            rows = dict((key, pickle.loads(cols['value']))
-                        for (key, cols)
-                        in rows
-                        if (cols
-                            # hack
-                            and len(key) < 250))
-            self.memcache.set_multi(rows)
-
 
 class CassandraCache(CacheUtils):
     permanent = True
