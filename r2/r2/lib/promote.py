@@ -876,7 +876,7 @@ def _get_live_promotions(sr_names):
 
 def get_live_promotions(sr_names):
     promos_by_srname = sgm(g.cache, sr_names, miss_fn=_get_live_promotions,
-                           prefix='live_promotions', time=60)
+                           prefix='live_promotions', time=60, stale=True)
     return itertools.chain.from_iterable(promos_by_srname.itervalues())
 
 
