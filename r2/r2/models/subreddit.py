@@ -1538,7 +1538,7 @@ class LocalizedDefaultSubreddits(tdb_cassandra.View):
 
         id36s_by_location = sgm(
             g.cache, keys, miss_fn=_lookup, prefix=cls.CACHE_PREFIX,
-            _update=update,
+            stale=True, _update=update,
         )
         ids_by_location = {location: [int(id36, 36) for id36 in id36s]
                            for location, id36s in id36s_by_location.iteritems()}
