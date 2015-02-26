@@ -694,10 +694,13 @@ class StaleCacheChain(CacheChain):
             if stale_value is not None:
                 if self.stats:
                     self.stats.cache_hit()
+                    self.stats.stale_hit()
                 return stale_value # never return stale data into the
                                    # LocalCache, or people that didn't
                                    # say they'll take stale data may
                                    # get it
+            else:
+                self.stats.stale_miss()
 
         value = self.realcache.get(key)
         if value is None:
@@ -734,6 +737,12 @@ class StaleCacheChain(CacheChain):
             for k, v in stale_values.iteritems():
                 ret[k] = v
                 keys.remove(k)
+
+            stale_hits = len(stale_values)
+            stale_misses = len(keys)
+            if self.stats:
+                self.stats.stale_hit(stale_hits)
+                self.stats.stale_miss(stale_misses)
 
         if keys:
             values = self.realcache.simple_get_multi(keys)

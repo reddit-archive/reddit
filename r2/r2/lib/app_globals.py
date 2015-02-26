@@ -61,7 +61,12 @@ from r2.lib.lock import make_lock_factory
 from r2.lib.manager import db_manager
 from r2.lib.plugin import PluginLoader
 from r2.lib.providers import select_provider
-from r2.lib.stats import Stats, CacheStats, StatsCollectingConnectionPool
+from r2.lib.stats import (
+    CacheStats,
+    StaleCacheStats,
+    Stats,
+    StatsCollectingConnectionPool,
+)
 from r2.lib.translation import get_active_langs, I18N_PATH
 from r2.lib.utils import config_gold_price, thread_dump
 
@@ -774,7 +779,10 @@ class Globals(object):
         def reset_caches():
             for name, chain in cache_chains.iteritems():
                 chain.reset()
-                chain.stats = CacheStats(self.stats, name)
+                if isinstance(chain, StaleCacheChain):
+                    chain.stats = StaleCacheStats(self.stats, name)
+                else:
+                    chain.stats = CacheStats(self.stats, name)
         self.cache_chains = cache_chains
 
         self.reset_caches = reset_caches

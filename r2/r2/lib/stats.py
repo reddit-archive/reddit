@@ -449,6 +449,30 @@ class CacheStats:
             self.parent.cache_count_multi(data, sample_rate=sample_rate)
 
 
+class StaleCacheStats(CacheStats):
+    def __init__(self, parent, cache_name):
+        CacheStats.__init__(self, parent, cache_name)
+        self.stale_hit_name = '%s.stale.hit' % self.cache_name
+        self.stale_miss_name = '%s.stale.miss' % self.cache_name
+        self.stale_total_name = '%s.stale.total' % self.cache_name
+
+    def stale_hit(self, delta=1):
+        if delta:
+            data = {
+                self.stale_hit_name: delta,
+                self.stale_total_name: delta,
+            }
+            self.parent.cache_count_multi(data)
+
+    def stale_miss(self, delta=1):
+        if delta:
+            data = {
+                self.stale_miss_name: delta,
+                self.stale_total_name: delta,
+            }
+            self.parent.cache_count_multi(data)
+
+
 class StatsCollectingConnectionPool(pool.ConnectionPool):
     def __init__(self, keyspace, stats=None, *args, **kwargs):
         pool.ConnectionPool.__init__(self, keyspace, *args, **kwargs)
