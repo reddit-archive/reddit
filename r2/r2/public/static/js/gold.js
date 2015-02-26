@@ -147,6 +147,7 @@ r.gold = {
 
         // If /gold, then don't set signed and message properties
         if (!thingFullname) {
+          $button.parents('form').submit();
           return;
         }
 
