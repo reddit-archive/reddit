@@ -27,6 +27,7 @@ import sys
 import json
 import getpass
 import ConfigParser
+import zlib
 
 import kazoo.client
 from kazoo.security import make_acl, make_digest_acl
@@ -67,13 +68,15 @@ def write_config_to_zookeeper(node, username, password, config, live_config):
 
     # create or update the config node ensuring that only we can write to it.
     json_data = json.dumps(live_config)
+    compressed_data = "gzip" + zlib.compress(json_data)
+
     try:
-        client.create(node, json_data, acl=[
+        client.create(node, compressed_data, acl=[
             make_digest_acl(username, password, read=True, write=True),
             make_digest_acl(app_username, app_password, read=True),
         ])
     except kazoo.exceptions.NodeExistsException:
-        client.set(node, json_data)
+        client.set(node, compressed_data)
 
 
 def confirm_config(live_config):
