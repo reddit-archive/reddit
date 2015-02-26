@@ -30,6 +30,7 @@ from r2.lib.validator.validator import (
     VOneOf,
     VSRByName,
 )
+from r2.lib.errors import errors
 
 # Validators that map directly to Account._preference_attrs
 # The key MUST be the same string as the value in _preference_attrs
@@ -134,6 +135,7 @@ def filter_prefs(prefs, user):
             prefs['pref_stylesheet_override'] = override_sr.name
         else:
             # don't update if they can't view the chosen subreddit
+            c.errors.add(errors.SUBREDDIT_NO_ACCESS, field='stylesheet_override')
             del prefs['pref_stylesheet_override']
     else:
         # if it was blank, unset the error from VSRByName

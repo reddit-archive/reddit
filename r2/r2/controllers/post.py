@@ -59,13 +59,20 @@ class PostController(ApiController):
               all_langs=VOneOf('all-langs', ('all', 'some'), default='all'),
               **PREFS_VALIDATORS)
     def POST_options(self, all_langs, **prefs):
+        u = UrlParser(c.site.path + "prefs")
+
         filter_prefs(prefs, c.user)
         if c.errors.errors:
-            return abort(BadRequestError(errors.INVALID_PREF))
+            for error in c.errors.errors:
+                if error[1] == 'stylesheet_override':
+                    u.update_query(error_style_override=error[0])
+                else:
+                    u.update_query(generic_error=error[0])
+            return self.redirect(u.unparse())
+
         set_prefs(c.user, prefs)
         c.user._commit()
-        u = UrlParser(c.site.path + "prefs")
-        u.update_query(done = 'true')
+        u.update_query(done='true')
         if c.cname:
             u.put_in_frame()
         return self.redirect(u.unparse())

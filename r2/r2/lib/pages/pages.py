@@ -372,7 +372,7 @@ class Reddit(Templated):
         no_sr_styles = (isinstance(c.site, DefaultSR) or
                         not c.user.pref_show_stylesheets or
                         not self.subreddit_stylesheet_url)
-        if has_override_enabled and no_sr_styles:
+        if has_style_override and no_sr_styles:
             sr = Subreddit._by_name(c.user.pref_stylesheet_override)
             # make sure they can still view their override subreddit
             if sr.can_view(c.user):
@@ -1074,8 +1074,10 @@ class PrefsPage(Reddit):
 
 class PrefOptions(Templated):
     """Preference form for updating language and display options"""
-    def __init__(self, done = False):
-        Templated.__init__(self, done = done)
+    def __init__(self, done=False, error_style_override=None, generic_error=None):
+        Templated.__init__(self, done=done,
+                error_style_override=error_style_override,
+                generic_error=generic_error)
 
 class PrefFeeds(Templated):
     pass

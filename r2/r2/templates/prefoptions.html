@@ -22,12 +22,13 @@
 
 <%!
    from r2.config import feature
+   from r2.lib.errors import error_list
    from r2.lib.menus import CommentSortMenu
    from r2.lib.template_helpers import add_sr, _wsf, format_html
    from r2.lib.utils import UrlParser
    import random
 %>
-<%namespace file="utils.html" import="language_tool, plain_link"/>
+<%namespace file="utils.html" import="error_field, language_tool, plain_link"/>
 
 <%def name="checkbox(text, name, disabled = False, disabled_text = '', prefix = 'pref_')">
     <input name="${name}" id="${name}" type="checkbox"
@@ -86,8 +87,14 @@
          name="${name}" value="${s if s is not None else ''}">
 </%def>
 
-%if c.user_is_loggedin and thing.done:
-  <p class="error">${_("your preferences have been updated")}</p>
+%if c.user_is_loggedin:
+  %if thing.done:
+    <p class="error">${_("your preferences have been updated")}</p>
+  %elif thing.error_style_override:
+    <p class="error">${_("we couldn't save the custom stylesheet preference. please see the error below")}</p>
+  %elif thing.generic_error:
+    <p class="error">${_("your preferences couldn't be saved")}</p>
+  %endif
 %endif
 
 <%
@@ -359,6 +366,10 @@
           &#32;<span class="little gray">${_("(blank for standard reddit style)")}</span>
           <br>
           <span class="little gray">${_("(used anywhere there isn't another custom style - front page, multireddits, or everywhere if you have custom styles disabled)")}</span>
+
+          %if thing.error_style_override:
+            <p class="error">${_(error_list[thing.error_style_override])}</p>
+          %endif
         %endif
     </td>
   </tr>

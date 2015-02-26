@@ -73,6 +73,7 @@ error_list = dict((
         ('SUBREDDIT_EXISTS', _('that subreddit already exists')),
         ('SUBREDDIT_NOEXIST', _('that subreddit doesn\'t exist')),
         ('SUBREDDIT_NOTALLOWED', _("you aren't allowed to post there.")),
+        ('SUBREDDIT_NO_ACCESS', _("you aren't allowed access to this subreddit")),
         ('SUBREDDIT_REQUIRED', _('you must specify a subreddit')),
         ('SUBREDDIT_DISABLED_ADS', _('this subreddit has chosen to disable their ads at this time')),
         ('BAD_SR_NAME', _('that name isn\'t going to work')),
