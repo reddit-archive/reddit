@@ -23,28 +23,31 @@
 
 
 import os
+import argparse
 import mimetypes
+import urlparse
 
-from r2.lib.utils import read_static_file_config
+import boto
 
 
 NEVER = 'Thu, 31 Dec 2037 23:59:59 GMT'
 
 mimetypes.encodings_map['.gzip'] = 'gzip'
 
-def upload(config_file):
-    bucket, config = read_static_file_config(config_file)
+
+def upload(static_root, bucket_url):
+    s3 = boto.connect_s3()
+    bucket = s3.get_bucket(bucket_url.netloc, validate=False)
 
     # build a list of files already in the bucket
     remote_files = {key.name : key.etag.strip('"') for key in bucket.list()}
 
     # upload local files not already in the bucket
-    for root, dirs, files in os.walk(config["static_root"]):
+    for root, dirs, files in os.walk(static_root):
         for file in files:
             absolute_path = os.path.join(root, file)
-
-            key_name = os.path.relpath(absolute_path,
-                                       start=config["static_root"])
+            relative_path = os.path.relpath(absolute_path, start=static_root)
+            key_name = os.path.join(bucket_url.path, relative_path).lstrip("/")
 
             type, encoding = mimetypes.guess_type(file)
             if not type:
@@ -72,11 +75,22 @@ def upload(config_file):
                 )
 
 
+def s3_url(text):
+    parsed = urlparse.urlparse(text)
+    if parsed.scheme != "s3":
+        raise ValueError("not an s3 url")
+    if parsed.params or parsed.query or parsed.fragment:
+        raise ValueError("params, query, and fragment not supported")
+    return parsed
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("root")
+    parser.add_argument("bucket", type=s3_url)
+    args = parser.parse_args()
+    upload(args.root, args.bucket)
+
+
 if __name__ == "__main__":
-    import sys
-
-    if len(sys.argv) != 2:
-        print >> sys.stderr, "USAGE: %s /path/to/config-file.ini" % sys.argv[0]
-        sys.exit(1)
-
-    upload(sys.argv[1])
+    main()

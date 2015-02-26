@@ -39,7 +39,6 @@ from urllib import unquote_plus
 from urllib2 import urlopen, Request
 from urlparse import urlparse, urlunparse
 
-import boto
 import snudown
 import unidecode
 
@@ -1401,18 +1400,6 @@ def weighted_lottery(weights, _random=random.random):
     # this point should never be reached
     raise ValueError(
         "weighted_lottery messed up: r=%r, t=%r, total=%r" % (r, t, total))
-
-
-def read_static_file_config(config_file):
-    with open(config_file) as f:
-        parser = parse_ini_file(f)
-    config = dict(parser.items("static_files"))
-
-    s3 = boto.connect_s3(config["aws_access_key_id"],
-                         config["aws_secret_access_key"])
-    bucket = s3.get_bucket(config["bucket"])
-
-    return bucket, config
 
 
 class GoldPrice(object):
