@@ -112,18 +112,18 @@ class CachedResults(object):
     def sort(self):
         return self.query._sort
 
-    def fetch(self, force=False):
+    def fetch(self, force=False, stale=False):
         """Loads the query from the cache."""
-        self.fetch_multi([self], force=force)
+        self.fetch_multi([self], force=force, stale=stale)
 
     @classmethod
-    def fetch_multi(cls, crs, force=False):
+    def fetch_multi(cls, crs, force=False, stale=False):
         unfetched = filter(lambda cr: force or not cr._fetched, crs)
         if not unfetched:
             return
 
-        cached = query_cache.get_multi([cr.iden for cr in unfetched],
-                                       allow_local = not force)
+        keys = [cr.iden for cr in unfetched]
+        cached = query_cache.get_multi(keys, allow_local=not force, stale=stale)
         for cr in unfetched:
             cr.data = cached.get(cr.iden) or []
             cr._fetched = True
