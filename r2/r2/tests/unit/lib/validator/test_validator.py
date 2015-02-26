@@ -83,3 +83,6 @@ class TestValidEmail(unittest.TestCase):
         self.setUp()
         self._test_failure('@example.com')
 
+    def test_two_hostnames(self):
+        self._test_failure('test@example.com@example.com')
+

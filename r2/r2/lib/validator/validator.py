@@ -2070,7 +2070,7 @@ class ValidEmails(Validator):
     success"""
 
     separator = re.compile(r'[^\s,;]+')
-    email_re  = re.compile(r'[^\s]+@[^\s]+\.[^\s]+')
+    email_re  = re.compile(r'\A[^\s@]+@[^\s@]+\.[^\s@]+\Z')
 
     def __init__(self, param, num = 20, **kw):
         self.num = num
