@@ -32,7 +32,6 @@ from pylons.i18n import _
 from r2.lib.wrapped import Wrapped, CachedVariable
 from r2.lib import utils
 from r2.lib.db import operators
-from r2.lib.cache import sgm
 
 from collections import namedtuple
 from copy import deepcopy, copy

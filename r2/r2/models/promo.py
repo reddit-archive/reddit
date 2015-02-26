@@ -28,7 +28,6 @@ from pylons import g, c
 from pylons.i18n import _, N_
 
 from r2.lib import filters
-from r2.lib.cache import sgm
 from r2.lib.db import tdb_cassandra
 from r2.lib.db.thing import Thing, NotFound
 from r2.lib.memoize import memoize
