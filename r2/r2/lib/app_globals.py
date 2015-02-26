@@ -316,6 +316,7 @@ class Globals(object):
             'spotlight_interest_sub_p',
             'spotlight_interest_nosub_p',
             'gold_revenue_goal',
+            'invalid_key_sample_rate',
         ],
         ConfigValue.tuple: [
             'fastlane_links',
@@ -746,7 +747,7 @@ class Globals(object):
         cache_chains.update(pagecache=self.pagecache)
 
         # the thing_cache is used in tdb_cassandra.
-        self.thing_cache = CacheChain((localcache_cls(),))
+        self.thing_cache = CacheChain((localcache_cls(),), check_keys=False)
         cache_chains.update(thing_cache=self.thing_cache)
 
         if stalecaches:
@@ -767,6 +768,7 @@ class Globals(object):
             permacache_cache,
             permacache_cf,
             lock_factory=self.make_lock,
+            check_keys=False,
         )
 
         # hardcache is used for various things that tend to expire

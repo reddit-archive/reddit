@@ -24,6 +24,8 @@ from threading import local
 from hashlib import md5
 import cPickle as pickle
 from copy import copy
+from curses.ascii import isgraph
+import logging
 
 from pylons import g
 
@@ -33,7 +35,7 @@ from _pylibmc import MemcachedError
 from pycassa import ColumnFamily
 from pycassa.cassandra.ttypes import ConsistencyLevel
 
-from r2.lib.utils import in_chunks, prefix_keys, trace
+from r2.lib.utils import in_chunks, prefix_keys, trace, tup
 from r2.lib.hardcachebackend import HardCacheBackend
 
 from r2.lib.sgm import sgm # get this into our namespace so that it's
@@ -497,14 +499,58 @@ def cache_timer_decorator(fn_name):
     return wrap
 
 
+def log_invalid_keys(fn):
+    """Use to decorate CacheChain operations to log invalid memcache keys."""
+    def wrapped(self, *args, **kw):
+        try:
+            getattr(g, "log")
+        except TypeError:
+            # don't have access to g, maybe in a thread?
+            return fn(self, *args, **kw)
+
+        if self.check_keys and getattr(g, "log"):
+            keys = args[0]
+            prefix = kw.get("prefix", "")
+            if self.stats:
+                cache_name = self.stats.cache_name
+            else:
+                cache_name = "unknown"
+
+            live_config = getattr(g, "live_config", {})
+            log_chance = live_config.get("invalid_key_sample_rate", 1)
+            will_log = random.random() < log_chance
+
+            for key in tup(keys):
+                # map_keys will coerce keys to str but we need to do
+                # it for non multi operations so the `isgraph` checks
+                # don't fail
+                # any key that's not a valid str will end up
+                # triggering a ValueError when it hits memcache
+                key = str(key)
+
+                if prefix:
+                    key = prefix + key
+
+                for c in key:
+                    if will_log and not isgraph(c):
+                        g.log.warning(
+                            "%s: keyname is invalid: %r", cache_name, key)
+                        break
+        return fn(self, *args, **kw)
+    return wrapped
+
+
 class CacheChain(CacheUtils, local):
-    def __init__(self, caches, cache_negative_results=False):
+    def __init__(self, caches, cache_negative_results=False,
+                 check_keys=True):
         self.caches = caches
         self.cache_negative_results = cache_negative_results
         self.stats = None
+        self.check_keys = check_keys
 
     def make_set_fn(fn_name):
         @cache_timer_decorator(fn_name)
+        @log_invalid_keys
         def fn(self, *a, **kw):
             ret = None
             for c in self.caches:
@@ -534,6 +580,7 @@ class CacheChain(CacheUtils, local):
     cache_negative_results = False
 
     @cache_timer_decorator("get")
+    @log_invalid_keys
     def get(self, key, default = None, allow_local = True, stale=None):
         stat_outcome = False  # assume a miss until a result is found
         try:
@@ -575,6 +622,7 @@ class CacheChain(CacheUtils, local):
         return prefix_keys(keys, prefix, l)
 
     @cache_timer_decorator("get_multi")
+    @log_invalid_keys
     def simple_get_multi(self, keys, allow_local = True, stale=None):
         out = {}
         need = set(keys)
@@ -642,6 +690,7 @@ class MemcacheChain(CacheChain):
     pass
 
 class HardcacheChain(CacheChain):
+    @log_invalid_keys
     def add(self, key, val, time=0):
         authority = self.caches[-1] # the authority is the hardcache
                                     # itself
@@ -653,6 +702,7 @@ class HardcacheChain(CacheChain):
 
         return added_val
 
+    @log_invalid_keys
     def accrue(self, key, time=0, delta=1):
         auth_value = self.caches[-1].get(key)
 
@@ -681,14 +731,16 @@ class StaleCacheChain(CacheChain):
        cache. Probably doesn't play well with NoneResult cacheing"""
     staleness = 30
 
-    def __init__(self, localcache, stalecache, realcache):
+    def __init__(self, localcache, stalecache, realcache, check_keys=True):
         self.localcache = localcache
         self.stalecache = stalecache
         self.realcache = realcache
         self.caches = (localcache, realcache) # for the other
                                               # CacheChain machinery
         self.stats = None
+        self.check_keys = check_keys
 
+    @log_invalid_keys
     @cache_timer_decorator("get")
     def get(self, key, default=None, stale = False, **kw):
         if kw.get('allow_local', True) and key in self.localcache:
@@ -726,6 +778,7 @@ class StaleCacheChain(CacheChain):
         return value
 
     @cache_timer_decorator("get_multi")
+    @log_invalid_keys
     def simple_get_multi(self, keys, stale = False, **kw):
         if not isinstance(keys, set):
             keys = set(keys)
