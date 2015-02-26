@@ -785,7 +785,6 @@ class StaleCacheChain(CacheChain):
 
 CL_ONE = ConsistencyLevel.ONE
 CL_QUORUM = ConsistencyLevel.QUORUM
-CL_ALL = ConsistencyLevel.ALL
 
 
 class Permacache(object):
@@ -855,26 +854,23 @@ class Permacache(object):
         wcl = self._wcl(write_consistency_level)
         self.cf.remove(key, write_consistency_level=wcl)
 
-    def get(self, key, default=None, read_consistency_level=None,
-            allow_local=True, stale=False):
+    def get(self, key, default=None, allow_local=True, stale=False):
         val = self.cache_chain.get(
             key, default=None, allow_local=allow_local, stale=stale)
 
         if val is None:
-            val = self._backend_get(key, read_consistency_level)
+            val = self._backend_get(key)
             if val:
                 self.cache_chain.set(key, val)
         return val
 
-    def set(self, key, val, write_consistency_level=None):
-        self._backend_set(key, val, write_consistency_level)
+    def set(self, key, val):
+        self._backend_set(key, val)
         self.cache_chain.set(key, val)
 
-    def set_multi(self, keys, prefix='', time=None,
-                  write_consistency_level=None):
+    def set_multi(self, keys, prefix='', time=None):
         # time is sent by sgm but will be ignored
-        self._backend_set_multi(keys, prefix=prefix,
-                                write_consistency_level=write_consistency_level)
+        self._backend_set_multi(keys, prefix=prefix)
         self.cache_chain.set_multi(keys, prefix=prefix)
 
     def get_multi(self, keys, prefix='', allow_local=True, stale=False):
@@ -882,19 +878,18 @@ class Permacache(object):
                                                   stale=stale)
         return prefix_keys(keys, prefix, call_fn)
 
-    def simple_get_multi(self, keys, read_consistency_level=None,
-                         allow_local=True, stale=False):
+    def simple_get_multi(self, keys, allow_local=True, stale=False):
         ret = self.cache_chain.simple_get_multi(
             keys, allow_local=allow_local, stale=stale)
         still_need = {key for key in keys if key not in ret}
         if still_need:
-            from_cass = self._backend_get(keys, read_consistency_level)
+            from_cass = self._backend_get(keys)
             self.cache_chain.set_multi(from_cass)
             ret.update(from_cass)
         return ret
 
-    def delete(self, key, write_consistency_level=None):
-        self._backend_delete(key, write_consistency_level)
+    def delete(self, key):
+        self._backend_delete(key)
         self.cache_chain.delete(key)
 
     def mutate(self, key, mutation_fn, default=None, willread=True):
@@ -904,7 +899,7 @@ class Permacache(object):
             # read rather than a QUORUM one just before running this. We could
             # avoid this by not using memcached at all for these mutations,
             # which would require some more row-cache performance testing.
-            read_consistency_level = write_consistency_level = self._wcl()
+            read_consistency_level = write_consistency_level = CL_QUORUM
             if willread:
                 value = self.cache_chain.get(key, allow_local=False)
                 if value is None:
