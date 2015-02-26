@@ -2049,12 +2049,10 @@ class VImageType(Validator):
 class ValidEmail(Validator):
     """Validates a single email. Returns the email on success."""
 
-    email_re  = re.compile(r'.+@.+\..+')
-
     def run(self, email):
         if not email:
             self.set_error(errors.NO_EMAIL)
-        elif not self.email_re.match(email):
+        elif not ValidEmails.email_re.match(email):
             self.set_error(errors.BAD_EMAIL)
         else:
             return email
