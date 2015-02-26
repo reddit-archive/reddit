@@ -788,13 +788,55 @@ CL_ONE = ConsistencyLevel.ONE
 CL_QUORUM = ConsistencyLevel.QUORUM
 CL_ALL = ConsistencyLevel.ALL
 
-class CassandraCacheChain(CacheChain):
-    def __init__(self, localcache, cassa, lock_factory, memcache, **kw):
-        caches = (localcache, memcache, cassa)
+
+class Permacache(object):
+    def __init__(self, cache_chain, cassa, lock_factory):
+        self.cache_chain = cache_chain
         self.cassa = cassa
-        self.memcache = memcache
         self.make_lock = lock_factory
-        CacheChain.__init__(self, caches, **kw)
+
+    def get(self, key, default=None, read_consistency_level=None,
+            allow_local=True, stale=False):
+        val = self.cache_chain.get(
+            key, default=None, allow_local=allow_local, stale=stale)
+
+        if val is None:
+            val = self.cassa.get(key, default=default,
+                read_consistency_level=read_consistency_level)
+            if val:
+                self.cache_chain.set(key, val)
+        return val
+
+    def set(self, key, val, write_consistency_level=None):
+        self.cassa.set(key, val, write_consistency_level=None)
+        self.cache_chain.set(key, val)
+
+    def set_multi(self, keys, prefix='', time=None,
+                  write_consistency_level=None):
+        # time is sent by sgm but will be ignored
+        self.cassa.set_multi(keys, prefix=prefix,
+                             write_consistency_level=write_consistency_level)
+        self.cache_chain.set_multi(keys, prefix=prefix)
+
+    def get_multi(self, keys, prefix='', allow_local=True, stale=False):
+        call_fn = lambda k: self.simple_get_multi(k, allow_local=allow_local,
+                                                  stale=stale)
+        return prefix_keys(keys, prefix, call_fn)
+
+    def simple_get_multi(self, keys, read_consistency_level=None,
+                         allow_local=True, stale=False):
+        ret = self.cache_chain.simple_get_multi(
+            keys, allow_local=allow_local, stale=stale)
+        still_need = {key for key in keys if key not in ret}
+        if still_need:
+            from_cass = self.cassa.simple_get_multi(keys, read_consistency_level)
+            self.cache_chain.set_multi(from_cass)
+            ret.update(from_cass)
+        return ret
+
+    def delete(self, key, write_consistency_level=None):
+        self.cassa.delete(key, write_consistency_level=write_consistency_level)
+        self.cache_chain.delete(key)
 
     def mutate(self, key, mutation_fn, default = None, willread=True):
         """Mutate a Cassandra key as atomically as possible"""
@@ -812,9 +854,10 @@ class CassandraCacheChain(CacheChain):
             # which would require some more row-cache performace
             # testing)
             rcl = wcl = self.cassa.write_consistency_level
+
             if willread:
                 try:
-                    value = self.memcache.get(key)
+                    value = self.cache_chain.get(key, allow_local=False)
                     if value is None:
                         value = self.cassa.get(key, read_consistency_level=rcl)
                 except CassandraNotFound:
@@ -832,13 +875,13 @@ class CassandraCacheChain(CacheChain):
             new_value = mutation_fn(copy(value))
 
             if not willread or value != new_value:
-                self.cassa.set(key, new_value,
-                               write_consistency_level = wcl)
-            for ca in self.caches[:-1]:
-                # and update the rest of the chain; assumes that
-                # Cassandra is always the last entry
-                ca.set(key, new_value)
+                self.cassa.set(key, new_value, write_consistency_level=wcl)
+            self.cache_chain.set(key, new_value, use_timer=False)
         return new_value
+
+    def __repr__(self):
+        return '<%s %r %r>' % (self.__class__.__name__,
+                            self.cache_chain, self.cassa.cf.column_family)
 
 
 class CassandraCache(CacheUtils):

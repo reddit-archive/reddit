@@ -44,7 +44,6 @@ from r2.config import queues
 from r2.lib.cache import (
     CacheChain,
     CassandraCache,
-    CassandraCacheChain,
     CL_ONE,
     CL_QUORUM,
     CMemcache,
@@ -52,6 +51,7 @@ from r2.lib.cache import (
     HardcacheChain,
     LocalCache,
     MemcacheChain,
+    Permacache,
     SelfEmptyingCache,
     StaleCacheChain,
 )
@@ -752,13 +752,25 @@ class Globals(object):
         self.thing_cache = CacheChain((localcache_cls(),))
         cache_chains.update(thing_cache=self.thing_cache)
 
-        self.permacache = CassandraCacheChain(
-            localcache_cls(),
+        if stalecaches:
+            permacache_cache = StaleCacheChain(
+                localcache_cls(),
+                stalecaches,
+                permacache_memcaches,
+                check_keys=False,
+            )
+        else:
+            permacache_cache = CacheChain(
+                (localcache_cls(), permacache_memcaches),
+                check_keys=False,
+            )
+        cache_chains.update(permacache=permacache_cache)
+
+        self.permacache = Permacache(
+            permacache_cache,
             permacache_cf,
-            memcache=permacache_memcaches,
             lock_factory=self.make_lock,
         )
-        cache_chains.update(permacache=self.permacache)
 
         # hardcache is used for various things that tend to expire
         # TODO: replace hardcache w/ cassandra stuff
