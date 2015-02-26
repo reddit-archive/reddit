@@ -339,13 +339,6 @@ class Stats:
             counter.increment(name)
             counter.increment('total')
 
-    def cache_count(self, name, delta=1, sample_rate=None):
-        if sample_rate is None:
-            sample_rate = self.CACHE_SAMPLE_RATE
-        counter = self.get_counter('cache')
-        if counter and random.random() < sample_rate:
-            counter.increment(name, delta=delta)
-
     def cache_count_multi(self, data, sample_rate=None):
         if sample_rate is None:
             sample_rate = self.CACHE_SAMPLE_RATE
