@@ -43,7 +43,6 @@ import pytz
 from r2.config import queues
 from r2.lib.cache import (
     CacheChain,
-    CassandraCache,
     CL_ONE,
     CL_QUORUM,
     CMemcache,
@@ -668,7 +667,7 @@ class Globals(object):
                 ),
         }
 
-        permacache_cf = CassandraCache(
+        permacache_cf = Permacache._setup_column_family(
             'permacache',
             self.cassandra_pools[self.cassandra_default_pool],
             read_consistency_level=self.cassandra_rcl,

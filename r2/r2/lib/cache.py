@@ -32,7 +32,6 @@ from _pylibmc import MemcachedError
 
 from pycassa import ColumnFamily
 from pycassa.cassandra.ttypes import ConsistencyLevel
-from pycassa.cassandra.ttypes import NotFoundException as CassandraNotFound
 
 from r2.lib.utils import in_chunks, prefix_keys, trace
 from r2.lib.hardcachebackend import HardCacheBackend
@@ -790,10 +789,71 @@ CL_ALL = ConsistencyLevel.ALL
 
 
 class Permacache(object):
-    def __init__(self, cache_chain, cassa, lock_factory):
+    """Cassandra key/value column family backend with a cachechain in front.
+    
+    Probably best to not think of this as a cache but rather as a key/value
+    datastore that's faster to access than cassandra because of the cache.
+
+    """
+
+    COLUMN_NAME = 'value'
+
+    def __init__(self, cache_chain, column_family, lock_factory):
         self.cache_chain = cache_chain
-        self.cassa = cassa
         self.make_lock = lock_factory
+        self.cf = column_family
+
+    @classmethod
+    def _setup_column_family(cls, column_family_name, client,
+                             read_consistency_level=CL_ONE,
+                             write_consistency_level=CL_QUORUM):
+        cf = ColumnFamily(client, column_family_name,
+                          read_consistency_level=read_consistency_level,
+                          write_consistency_level=write_consistency_level)
+        return cf
+
+    def _rcl(self, rcl=None):
+        return rcl or self.cf.read_consistency_level
+
+    def _wcl(self, wcl=None):
+        return wcl or self.cf.write_consistency_level
+
+    def _backend_get(self, keys, read_consistency_level=None):
+        rcl = self._rcl(read_consistency_level)
+        keys, is_single = tup(keys, ret_is_single=True)
+        rows = self.cf.multiget(
+            keys, columns=[self.COLUMN_NAME], read_consistency_level=rcl)
+        ret = {
+            key: pickle.loads(columns[self.COLUMN_NAME])
+            for key, columns in rows.iteritems()
+        }
+        if is_single:
+            if ret:
+                return ret.values()[0]
+            else:
+                return None
+        else:
+            return ret
+
+    def _backend_set(self, key, val, write_consistency_level=None):
+        keys = {key: val}
+        ret = self._backend_set_multi(
+            keys, write_consistency_level=write_consistency_level)
+        return ret.get(key)
+
+    def _backend_set_multi(self, keys, prefix='', write_consistency_level=None):
+        wcl = self._wcl(write_consistency_level)
+        ret = {}
+        with self.cf.batch(write_consistency_level=wcl):
+            for key, val in keys.iteritems():
+                rowkey = "%s%s" % (prefix, key)
+                column = {self.COLUMN_NAME: pickle.dumps(val)}
+                ret[key] = self.cf.insert(rowkey, column)
+        return ret
+
+    def _backend_delete(self, key, write_consistency_level=None):
+        wcl = self._wcl(write_consistency_level)
+        self.cf.remove(key, write_consistency_level=wcl)
 
     def get(self, key, default=None, read_consistency_level=None,
             allow_local=True, stale=False):
@@ -801,21 +861,20 @@ class Permacache(object):
             key, default=None, allow_local=allow_local, stale=stale)
 
         if val is None:
-            val = self.cassa.get(key, default=default,
-                read_consistency_level=read_consistency_level)
+            val = self._backend_get(key, read_consistency_level)
             if val:
                 self.cache_chain.set(key, val)
         return val
 
     def set(self, key, val, write_consistency_level=None):
-        self.cassa.set(key, val, write_consistency_level=None)
+        self._backend_set(key, val, write_consistency_level)
         self.cache_chain.set(key, val)
 
     def set_multi(self, keys, prefix='', time=None,
                   write_consistency_level=None):
         # time is sent by sgm but will be ignored
-        self.cassa.set_multi(keys, prefix=prefix,
-                             write_consistency_level=write_consistency_level)
+        self._backend_set_multi(keys, prefix=prefix,
+                                write_consistency_level=write_consistency_level)
         self.cache_chain.set_multi(keys, prefix=prefix)
 
     def get_multi(self, keys, prefix='', allow_local=True, stale=False):
@@ -829,45 +888,27 @@ class Permacache(object):
             keys, allow_local=allow_local, stale=stale)
         still_need = {key for key in keys if key not in ret}
         if still_need:
-            from_cass = self.cassa.simple_get_multi(keys, read_consistency_level)
+            from_cass = self._backend_get(keys, read_consistency_level)
             self.cache_chain.set_multi(from_cass)
             ret.update(from_cass)
         return ret
 
     def delete(self, key, write_consistency_level=None):
-        self.cassa.delete(key, write_consistency_level=write_consistency_level)
+        self._backend_delete(key, write_consistency_level)
         self.cache_chain.delete(key)
 
-    def mutate(self, key, mutation_fn, default = None, willread=True):
+    def mutate(self, key, mutation_fn, default=None, willread=True):
         """Mutate a Cassandra key as atomically as possible"""
-        with self.make_lock("permacache_mutate", 'mutate_%s' % key):
-            # we have to do some of the the work of the cache chain
-            # here so that we can be sure that if the value isn't in
-            # memcached (an atomic store), we fetch it from Cassandra
-            # with CL_QUORUM (because otherwise it's not an atomic
-            # store). This requires us to know the structure of the
-            # chain, which means that changing the chain will probably
-            # require changing this function. (This has an edge-case
-            # where memcached was populated by a ONE read rather than
-            # a QUORUM one just before running this. We could avoid
-            # this by not using memcached at all for these mutations,
-            # which would require some more row-cache performace
-            # testing)
-            rcl = wcl = self.cassa.write_consistency_level
-
+        with self.make_lock("permacache_mutate", "mutate_%s" % key):
+            # This has an edge-case where the cache chain was populated by a ONE
+            # read rather than a QUORUM one just before running this. We could
+            # avoid this by not using memcached at all for these mutations,
+            # which would require some more row-cache performance testing.
+            read_consistency_level = write_consistency_level = self._wcl()
             if willread:
-                try:
-                    value = self.cache_chain.get(key, allow_local=False)
-                    if value is None:
-                        value = self.cassa.get(key, read_consistency_level=rcl)
-                except CassandraNotFound:
-                    value = default
-
-                # due to an old bug in NoneResult caching, we still
-                # have some of these around
-                if value == NoneResult:
-                    value = default
-
+                value = self.cache_chain.get(key, allow_local=False)
+                if value is None:
+                    value = self._backend_get(key, read_consistency_level)
             else:
                 value = None
 
@@ -875,87 +916,13 @@ class Permacache(object):
             new_value = mutation_fn(copy(value))
 
             if not willread or value != new_value:
-                self.cassa.set(key, new_value, write_consistency_level=wcl)
+                self._backend_set(key, new_value, write_consistency_level)
             self.cache_chain.set(key, new_value, use_timer=False)
         return new_value
 
     def __repr__(self):
         return '<%s %r %r>' % (self.__class__.__name__,
-                            self.cache_chain, self.cassa.cf.column_family)
-
-
-class CassandraCache(CacheUtils):
-    permanent = True
-
-    """A cache that uses a Cassandra ColumnFamily. Uses only the
-       column-name 'value'"""
-    def __init__(self, column_family, client,
-                 read_consistency_level = CL_ONE,
-                 write_consistency_level = CL_QUORUM):
-        self.column_family = column_family
-        self.client = client
-        self.read_consistency_level = read_consistency_level
-        self.write_consistency_level = write_consistency_level
-        self.cf = ColumnFamily(self.client,
-                               self.column_family,
-                               read_consistency_level = read_consistency_level,
-                               write_consistency_level = write_consistency_level)
-
-    def _rcl(self, alternative):
-        return (alternative if alternative is not None
-                else self.cf.read_consistency_level)
-
-    def _wcl(self, alternative):
-        return (alternative if alternative is not None
-                else self.cf.write_consistency_level)
-
-    def get(self, key, default = None, read_consistency_level = None):
-        try:
-            rcl = self._rcl(read_consistency_level)
-            row = self.cf.get(key, columns=['value'],
-                              read_consistency_level = rcl)
-            return pickle.loads(row['value'])
-        except (CassandraNotFound, KeyError):
-            return default
-
-    def simple_get_multi(self, keys, read_consistency_level = None):
-        rcl = self._rcl(read_consistency_level)
-        rows = self.cf.multiget(list(keys),
-                                columns=['value'],
-                                read_consistency_level = rcl)
-        return dict((key, pickle.loads(row['value']))
-                    for (key, row) in rows.iteritems())
-
-    def set(self, key, val, write_consistency_level = None):
-        if val == NoneResult:
-            # NoneResult caching is for other parts of the chain
-            return
-
-        wcl = self._wcl(write_consistency_level)
-        ret = self.cf.insert(key, {'value': pickle.dumps(val)},
-                              write_consistency_level = wcl)
-        return ret
-
-    def set_multi(self, keys, prefix='',
-                  write_consistency_level = None):
-        if not isinstance(keys, dict):
-            # allow iterables yielding tuples
-            keys = dict(keys)
-
-        wcl = self._wcl(write_consistency_level)
-        ret = {}
-
-        with self.cf.batch(write_consistency_level = wcl):
-            for key, val in keys.iteritems():
-                if val != NoneResult:
-                    ret[key] = self.cf.insert('%s%s' % (prefix, key),
-                                              {'value': pickle.dumps(val)})
-
-        return ret
-
-    def delete(self, key, write_consistency_level = None):
-        wcl = self._wcl(write_consistency_level)
-        self.cf.remove(key, write_consistency_level = wcl)
+                            self.cache_chain, self.cf.column_family)
 
 
 def test_cache(cache, prefix=''):
