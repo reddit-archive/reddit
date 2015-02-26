@@ -427,13 +427,19 @@ class CacheStats:
 
     def cache_hit(self, delta=1):
         if delta:
-            self.parent.cache_count(self.hit_stat_name, delta=delta)
-            self.parent.cache_count(self.total_stat_name, delta=delta)
+            data = {
+                self.hit_stat_name: delta,
+                self.total_stat_name: delta,
+            }
+            self.parent.cache_count_multi(data)
 
     def cache_miss(self, delta=1):
         if delta:
-            self.parent.cache_count(self.miss_stat_name, delta=delta)
-            self.parent.cache_count(self.total_stat_name, delta=delta)
+            data = {
+                self.miss_stat_name: delta,
+                self.total_stat_name: delta,
+            }
+            self.parent.cache_count_multi(data)
 
     def cache_report(self, hits=0, misses=0, cache_name=None, sample_rate=None):
         if hits or misses:
