@@ -39,7 +39,7 @@ MAX_LINKS = 1000
 def get_hot_tuples(sr_ids, ageweight=None):
     queries_by_sr_id = {sr_id: _get_links(sr_id, sort='hot', time='all')
                         for sr_id in sr_ids}
-    CachedResults.fetch_multi(queries_by_sr_id.values())
+    CachedResults.fetch_multi(queries_by_sr_id.values(), stale=True)
     tuples_by_srid = {sr_id: [] for sr_id in sr_ids}
 
     now_seconds = epoch_seconds(datetime.now(g.tz))
