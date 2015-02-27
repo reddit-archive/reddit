@@ -63,6 +63,7 @@ from hashlib import md5
 import simplejson as json
 
 import random, re
+import pycassa
 from collections import defaultdict
 from pycassa.cassandra.ttypes import NotFoundException
 from pycassa.system_manager import (
@@ -742,6 +743,46 @@ class Link(Thing, Printable):
         Printable.add_props(user, wrapped)
 
     @property
+    def post_hint(self):
+        """Returns a string that suggests the content of this link.
+
+        As a hint, this is lossy and may be inaccurate in some cases.
+
+        Currently one of:
+            * self
+            * video (a video file, like an mp4)
+            * image (an image file, like a gif or png)
+            * rich:video (a video embedded in HTML - like youtube or vimeo)
+            * link (catch-all)
+        """
+        if self.is_self:
+            return 'self'
+
+        try:
+            oembed_type = self.media_object['oembed']['type']
+        except (KeyError, TypeError):
+            oembed_type = None
+
+        if oembed_type == 'photo':
+            return 'image'
+
+        if oembed_type == 'video':
+            return 'rich:video'
+
+        if oembed_type in {'link', 'rich'}:
+            return 'link'
+
+        p = UrlParser(self.url)
+        extension = p.path_extension().lower()
+        if extension in {'gif', 'jpeg', 'jpg', 'png', 'tiff'}:
+            return 'image'
+
+        if extension in {'mp4', 'webm'}:
+            return 'video'
+
+        return 'link'
+
+    @property
     def subreddit_slow(self):
         """Returns the link's subreddit."""
         # The subreddit is often already on the wrapped link as .subreddit
@@ -822,6 +863,9 @@ class Link(Thing, Printable):
 
     def set_secure_media_object(self, value):
         self.secure_media_object = Link._utf8_encode(value)
+
+    def set_preview_object(self, value):
+        self.preview_object = Link._utf8_encode(value)
 
 
 class LinksByUrl(tdb_cassandra.View):
@@ -2204,6 +2248,37 @@ class CommentSavesByCategory(_ThingSavesByCategory):
     def _get_query_fn(cls):
         from r2.lib.db import queries
         return queries.get_categorized_saved_comments
+
+class LinksByImage(tdb_cassandra.View):
+    _use_db = True
+
+    # If a popular site uses the same oembed image everywhere (*cough* reddit),
+    # we may have a shitton of links pointing to the same image.
+    _fetch_all_columns = True
+
+    _extra_schema_creation_args = {
+        'key_validation_class': tdb_cassandra.ASCII_TYPE,
+    }
+
+    @classmethod
+    def _rowkey(cls, image_uid):
+        return image_uid
+
+    @classmethod
+    def add_link(cls, image_uid, link):
+        rowkey = cls._rowkey(image_uid)
+        column = {link._id36: ''}
+        cls._set_values(rowkey, column)
+
+    @classmethod
+    def get_link_id36s(cls, image_uid):
+        rowkey = cls._rowkey(image_uid)
+        try:
+            columns = cls._byID(rowkey)._values()
+        except NotFoundException:
+            return []
+        return columns.iterkeys()
+
 
 class Inbox(MultiRelation('inbox',
                           Relation(Account, Comment),

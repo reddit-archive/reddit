@@ -477,6 +477,12 @@ class Globals(object):
             # instead of:
             "zendesk",
         )
+        self.image_resizing_provider = select_provider(
+            self.config,
+            self.pkg_resources_working_set,
+            "r2.provider.image_resizing",
+            self.image_resizing_provider,
+        )
         self.startup_timer.intermediate("providers")
 
         ################# CONFIGURATION

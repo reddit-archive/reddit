@@ -22,11 +22,7 @@
 ###############################################################################
 
 import unittest
-from collections import namedtuple
 
-import mock
-
-from r2.lib.comment_tree import _comment_sorter_from_cids
 from r2.models.link import Comment
 
 TINY_COMMENT = 'rekt'

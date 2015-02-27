@@ -130,5 +130,9 @@ setup(
     [r2.provider.search]
     cloudsearch = r2.lib.providers.search.cloudsearch:CloudSearchProvider
     solr = r2.lib.providers.search.solr:SolrSearchProvider
+    [r2.provider.image_resizing]
+    imgix = r2.lib.providers.image_resizing.imgix:ImgixImageResizingProvider
+    no_op = r2.lib.providers.image_resizing.no_op:NoOpImageResizingProvider
+    unsplashit = r2.lib.providers.image_resizing.unsplashit:UnsplashitImageResizingProvider
     """,
 )
