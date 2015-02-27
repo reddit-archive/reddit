@@ -584,8 +584,13 @@ class LinkJsonTemplate(ThingJsonTemplate):
 class PromotedLinkJsonTemplate(LinkJsonTemplate):
     _data_attrs_ = LinkJsonTemplate.data_attrs(
         promoted="promoted",
+        imp_pixel="imp_pixel",
+        adserver_imp_pixel="adserver_imp_pixel",
+        adserver_click_url="adserver_click_url",
     )
-    del _data_attrs_['author']
+    del _data_attrs_['subreddit']
+    del _data_attrs_['subreddit_id']
+
 
 class CommentJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = ThingJsonTemplate.data_attrs(
