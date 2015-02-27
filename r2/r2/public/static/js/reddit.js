@@ -154,6 +154,7 @@ function emptyInput(elem, msg) {
 function showlang() {
     var content = $('#lang-popup').prop('innerHTML');
     var popup = new r.ui.Popup({
+        className: 'lang-modal',
         content: content,
     });
 

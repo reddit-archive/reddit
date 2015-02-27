@@ -39,8 +39,6 @@
     margin-bottom: 10px;
 
     label {
-        padding-left: 20px;
-        margin-bottom: 0;
         font-weight: normal;
         cursor: pointer;
     }
@@ -52,11 +50,8 @@
 
 .c-radio input[type="radio"],
 .c-checkbox input[type="checkbox"] {
+    margin-right: .5em;
     line-height: normal;
-    position: absolute;
-    margin-left: -21px;
-    margin-top: 0;
-    margin-top: 4px \9; // ie hack
 
     &:focus {
         outline: thin dotted;
@@ -69,7 +64,7 @@
     display: block;
 
     .c-checkbox & {
-        margin-left: 20px;
+        margin-top: 5px;
     }
 
     &.c-help-block-toggle {

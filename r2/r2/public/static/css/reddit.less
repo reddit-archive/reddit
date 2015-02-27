@@ -10559,8 +10559,45 @@ body.banned.deleted div#header {
     font-size: 100%;
 }
 
-#embed-preview {
+.embed-modal {
+  .modal-header {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    min-height: 0;
+    border-bottom: none;
+    padding: 0;
+
+    .c-close {
+      float: none;
+      display: block;
+      width: 12px;
+      height: 12px;
+      background-size: 100% 100%;
+    }
+  }
+
+  .modal-body {
+    position: static;
+    padding: 35px 60px 10px;
+  }
+
+  .modal-footer {
+    padding: 25px 60px 40px;
+
+    .c-form-control {
+      margin-top: 10px;
+    }
+  }
+
+  .modal-title {
+    margin: 0;
+    line-height: normal;
+  }
+
+  #embed-preview {
     overflow-y: hidden;
+  }
 }
 
 .more-actions {

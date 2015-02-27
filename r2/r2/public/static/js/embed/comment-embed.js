@@ -71,14 +71,14 @@
       iframe.frameBorder = 0;
       iframe.allowTransparency = true;
       iframe.style.display = 'none';
-      iframe.style.maxWidth = '60em';
       iframe.style.minWidth = '220px';
       iframe.style.margin = '10px 0';
       iframe.style.borderRadius = '5px';
-      iframe.style.boxShadow = '0 0 3px rgba(0, 0, 0, 0.14)';
-      iframe.style.borderColor = '#f4f4f4 #e4e4e4 #d4d4d4';
+      iframe.style.boxShadow = '0 0 5px 0.5px rgba(0, 0, 0, 0.05)';
+      iframe.style.borderColor = 'rgba(199,199,199, 0.55)';
       iframe.style.borderWidth = '1px';
       iframe.style.borderStyle = 'solid';
+      iframe.style.boxSizing = 'border-box';
       iframe.src = getEmbedUrl(commentUrl, embed);
 
       App.receiveMessageOnce(iframe, 'ping', function(e) {
