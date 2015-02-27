@@ -1416,6 +1416,9 @@ class LinkInfoPage(Reddit):
         promote.add_trackers(things, c.site)
         self.link = things[0]
 
+        if promote.is_promo(self.link) and not promote.is_promoted(self.link):
+            self.link.votable = False
+
         link_title = ((self.link.title) if hasattr(self.link, 'title') else '')
 
         # defaults whether or not there is a comment

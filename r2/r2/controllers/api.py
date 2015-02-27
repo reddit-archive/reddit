@@ -1947,6 +1947,10 @@ class ApiController(RedditController):
         if not isinstance(thing, (Link, Comment)):
             return
 
+        if isinstance(thing, Link) and promote.is_promo(thing):
+            if not promote.is_promoted(thing):
+                return      
+
         if vote_info == 'rejected':
             reject_vote(thing)
             store = False
