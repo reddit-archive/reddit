@@ -388,8 +388,8 @@ class FrontController(RedditController):
             else:
                 sort = "random"
         elif suggested_sort and 'sort' not in request.params:
-                sort = suggested_sort
-                suggested_sort_active = True
+            sort = suggested_sort
+            suggested_sort_active = True
 
         # finally add the comment listing
         displayPane.append(CommentPane(article, CommentSortMenu.operator(sort),
