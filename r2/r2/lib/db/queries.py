@@ -26,6 +26,7 @@ from r2.models import Message, Inbox, Subreddit, ModContribSR, ModeratorInbox, M
 from r2.lib.db.thing import Thing, Merge
 from r2.lib.db.operators import asc, desc, timeago
 from r2.lib.db.sorts import epoch_seconds
+from r2.lib.db import tdb_cassandra
 from r2.lib.utils import fetch_things2, tup, UniqueIterator, set_last_modified
 from r2.lib import utils
 from r2.lib import amqp, sup, filters
@@ -1663,11 +1664,15 @@ vote_link_q = 'vote_link_q'
 vote_comment_q = 'vote_comment_q'
 vote_fastlane_q = 'vote_fastlane_q'
 
+vote_names_by_dir = {True: "1", None: "0", False: "-1"}
+vote_dirs_by_name = {v: k for k, v in vote_names_by_dir.iteritems()}
+
 def queue_vote(user, thing, dir, ip, vote_info=None,
                cheater = False, store = True):
     # set the vote in memcached so the UI gets updated immediately
     key = prequeued_vote_key(user, thing)
-    g.cache.set(key, '1' if dir is True else '0' if dir is None else '-1')
+    grace_period = int(g.vote_queue_grace_period.total_seconds())
+    g.cache.set(key, vote_names_by_dir[dir], time=grace_period+1)
 
     # update LastModified immediately to help us cull prequeued_vote lookups
     rel_cls = VotesByAccount.rel(user.__class__, thing.__class__)
@@ -1701,32 +1706,68 @@ def queue_vote(user, thing, dir, ip, vote_info=None,
 def prequeued_vote_key(user, item):
     return 'registered_vote_%s_%s' % (user._id, item._fullname)
 
-def get_likes(user, items):
-    if not user or not items:
+
+def _by_type(items):
+    by_type = collections.defaultdict(list)
+    for item in items:
+        by_type[item.__class__].append(item)
+    return by_type
+
+
+def get_likes(user, requested_items):
+    if not user or not requested_items:
         return {}
 
     res = {}
 
-    # check the prequeued_vote_keys
-    keys = {}
-    for item in items:
-        # we can only vote on links and comments
-        if isinstance(item, (Comment, Link)):
-            key = prequeued_vote_key(user, item)
-            keys[key] = (user, item)
+    last_modified = LastModified._byID(user._fullname)
+    items_in_grace_period = {}
+    items_by_type = _by_type(requested_items)
+    for type_, items in items_by_type.iteritems():
+        try:
+            rel_cls = VotesByAccount.rel(user.__class__, type_)
+        except tdb_cassandra.TdbException:
+            # these items can't be voted on. just mark 'em as None and skip.
+            for item in items:
+                res[(user, item)] = None
+            continue
+
+        last_vote = getattr(last_modified, rel_cls._last_modified_name, None)
+        if last_vote:
+            time_since_last_vote = datetime.now(pytz.UTC) - last_vote
+
+        # only do prequeued_vote lookups if we've voted within the grace period
+        # and therefore might have votes in flight in the queues.
+        if last_vote and time_since_last_vote < g.vote_queue_grace_period:
+            too_new = 0
+
+            for item in items:
+                if item._age > time_since_last_vote:
+                    key = prequeued_vote_key(user, item)
+                    items_in_grace_period[key] = (user, item)
+                else:
+                    # the item is newer than our last vote, we can't have
+                    # possibly voted on it.
+                    res[(user, item)] = None
+                    too_new += 1
+
+            if too_new:
+                g.stats.simple_event("vote.prequeued.too-new", delta=too_new)
         else:
-            res[(user, item)] = None
-    if keys:
-        g.stats.simple_event("vote.prequeued.fetch", delta=len(keys))
-        r = g.cache.get_multi(keys.keys())
+            g.stats.simple_event("vote.prequeued.graceless", delta=len(items))
+
+    # look up votes in memcache for items that could have been voted on
+    # but not processed by a queue processor yet.
+    if items_in_grace_period:
+        g.stats.simple_event(
+            "vote.prequeued.fetch", delta=len(items_in_grace_period))
+        r = g.cache.get_multi(items_in_grace_period.keys())
         for key, v in r.iteritems():
-            res[keys[key]] = (True if v == '1'
-                              else False if v == '-1'
-                              else None)
+            res[items_in_grace_period[key]] = vote_dirs_by_name[v]
 
-    likes = get_votes(user, [i for i in items if (user, i) not in res])
-
-    res.update(likes)
+    cassavotes = get_votes(
+        user, [i for i in requested_items if (user, i) not in res])
+    res.update(cassavotes)
 
     return res
 
