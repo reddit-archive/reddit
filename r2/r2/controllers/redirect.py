@@ -23,7 +23,8 @@ from pylons import request, c
 from pylons.controllers.util import abort
 
 from r2.lib.base import BaseController
-from r2.lib.validator import chkuser, chksrname
+from r2.lib.validator import chkuser
+from r2.models import Subreddit
 
 
 class RedirectController(BaseController):
@@ -46,11 +47,11 @@ class RedirectController(BaseController):
         return self.redirect(str(url), code=301)
 
     def GET_timereddit_redirect(self, timereddit, rest=None):
-        tr_name = chksrname(timereddit)
-        if not tr_name:
+        sr_name = "t:" + timereddit
+        if not Subreddit.is_valid_name(sr_name, allow_time_srs=True):
             abort(400)
         if rest:
             rest = str(rest)
         else:
             rest = ''
-        return self.redirect("/r/t:%s/%s" % (tr_name, rest), code=301)
+        return self.redirect("/r/%s/%s" % (sr_name, rest), code=301)

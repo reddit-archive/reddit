@@ -528,26 +528,6 @@ class VCssMeasure(Validator):
     def run(self, value):
         return value if value and self.measure.match(value) else ''
 
-subreddit_rx = re.compile(r"\A[A-Za-z0-9][A-Za-z0-9_]{2,20}\Z")
-language_subreddit_rx = re.compile(r"\A[a-z]{2}\Z")
-
-def chksrname(x, allow_language_srs=False, allow_special_srs=False):
-    if not x:
-        return None
-
-    #notice the space before reddit.com
-    if not allow_special_srs and x in ('friends', 'all', ' reddit.com'):
-        return False
-
-    try:
-        valid = subreddit_rx.match(x)
-        if allow_language_srs:
-            valid = valid or language_subreddit_rx.match(x)
-
-        return str(x) if valid else None
-    except UnicodeEncodeError:
-        return None
-
 
 class VLength(Validator):
     only_whitespace = re.compile(r"\A\s*\Z", re.UNICODE)
@@ -708,8 +688,9 @@ class VSubredditName(VRequired):
         self.allow_language_srs = allow_language_srs
 
     def run(self, name):
-        name = chksrname(name, self.allow_language_srs)
-        if not name:
+        valid_name = Subreddit.is_valid_name(
+            name, allow_language_srs=self.allow_language_srs)
+        if not valid_name:
             self.set_error(self._error, code=400)
         return name
 
@@ -2789,7 +2770,9 @@ class VSubredditList(Validator):
                       for sr in subreddits.lower().splitlines()]
 
         for name in subreddits:
-            if name and not chksrname(name, self.allow_language_srs):
+            valid_name = Subreddit.is_valid_name(
+                name, allow_language_srs=self.allow_language_srs)
+            if not valid_name:
                 return self.set_error(errors.BAD_SR_NAME, code=400)
 
         # unique nonempty subreddits, preserve order

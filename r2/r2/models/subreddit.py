@@ -27,6 +27,7 @@ import collections
 import datetime
 import itertools
 import json
+import re
 import struct
 
 from pycassa.util import convert_uuid_to_time
@@ -108,6 +109,11 @@ def get_request_location():
         timer.stop()
 
     return c.location
+
+
+subreddit_rx = re.compile(r"\A[A-Za-z0-9][A-Za-z0-9_]{2,20}\Z")
+language_subreddit_rx = re.compile(r"\A[a-z]{2}\Z")
+time_subreddit_rx = re.compile(r"\At:[A-Za-z0-9][A-Za-z0-9_]{2,22}\Z")
 
 
 class BaseSite(object):
@@ -268,7 +274,6 @@ class Subreddit(Thing, Printable, BaseSite):
     gold_limit = 100
     DEFAULT_LIMIT = object()
 
-    MAX_SRNAME_LENGTH = 200 # must be less than max memcached key length
     BASE_SELFTEXT_LENGTH = 15000
     ONLY_SELFTEXT_LENGTH = 40000
 
@@ -315,6 +320,8 @@ class Subreddit(Thing, Printable, BaseSite):
     @classmethod
     def _new(cls, name, title, author_id, ip, lang = g.lang, type = 'public',
              over_18 = False, **kw):
+        if not cls.is_valid_name(name):
+            raise ValueError("bad subreddit name")
         with g.make_lock("create_sr", 'create_sr_' + name.lower()):
             try:
                 sr = Subreddit._by_name(name)
@@ -336,6 +343,24 @@ class Subreddit(Thing, Printable, BaseSite):
                 Subreddit._by_name(name, _update = True)
                 return sr
 
+    @classmethod
+    def is_valid_name(cls, name, allow_language_srs=False, allow_time_srs=False,
+                      allow_reddit_dot_com=False):
+        if not name:
+            return False
+
+        if allow_reddit_dot_com and name.lower() == "reddit.com":
+            return True
+
+        valid = bool(subreddit_rx.match(name))
+
+        if not valid and allow_language_srs:
+            valid = bool(language_subreddit_rx.match(name))
+
+        if not valid and allow_time_srs:
+            valid = bool(time_subreddit_rx.match(name))
+
+        return valid
 
     _specials = {}
 
@@ -363,10 +388,14 @@ class Subreddit(Thing, Printable, BaseSite):
 
             if lname in cls._specials:
                 ret[name] = cls._specials[lname]
-            elif len(lname) > Subreddit.MAX_SRNAME_LENGTH:
-                g.log.debug("Subreddit._by_name() ignoring invalid srname (too long): %s", lname)
             else:
-                to_fetch[lname] = name
+                valid_name = cls.is_valid_name(lname, allow_language_srs=True,
+                                               allow_time_srs=True,
+                                               allow_reddit_dot_com=True)
+                if valid_name:
+                    to_fetch[lname] = name
+                else:
+                    g.log.debug("Subreddit._by_name() ignoring invalid srname: %s", lname)
 
         if to_fetch:
             def _fetch(lnames):

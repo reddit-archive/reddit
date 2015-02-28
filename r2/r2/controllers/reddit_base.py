@@ -75,7 +75,6 @@ from r2.lib.utils import (
 )
 from r2.lib.validator import (
     build_arg_list,
-    chksrname,
     fullname_regex,
     valid_jsonp_callback,
     validate,
@@ -367,8 +366,9 @@ def set_subreddit():
         #reddits
         c.site = Sub
     elif '+' in sr_name:
-        sr_names = filter(lambda name: chksrname(name, allow_language_srs=True,
-            allow_special_srs=True), sr_name.split('+'))
+        name_filter = lambda name: Subreddit.is_valid_name(name,
+            allow_language_srs=True)
+        sr_names = filter(name_filter, sr_name.split('+'))
         srs = Subreddit._by_name(sr_names, stale=can_stale).values()
         if All in srs:
             c.site = All
@@ -411,8 +411,7 @@ def set_subreddit():
         try:
             c.site = Subreddit._by_name(sr_name, stale=can_stale)
         except NotFound:
-            sr_name = chksrname(sr_name)
-            if sr_name:
+            if Subreddit.is_valid_name(sr_name):
                 path = "/subreddits/search?q=%s" % sr_name
                 abort(302, location=BaseController.format_output_url(path))
             elif not c.error_page and not request.path.startswith("/api/login/") :
