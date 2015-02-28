@@ -75,6 +75,8 @@ class LinkVotesByAccount(VotesByAccount):
     _thing2_cls = Link
     _views = []
     _last_modified_name = "LinkVote"
+    # this is taken care of in r2.lib.db.queries:queue_vote
+    _write_last_modified = False
 
 
 class CommentVotesByAccount(VotesByAccount):
@@ -82,6 +84,8 @@ class CommentVotesByAccount(VotesByAccount):
     _thing2_cls = Comment
     _views = []
     _last_modified_name = "CommentVote"
+    # this is taken care of in r2.lib.db.queries:queue_vote
+    _write_last_modified = False
 
 
 class VoteDetailsByThing(tdb_cassandra.View):

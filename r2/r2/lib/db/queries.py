@@ -21,7 +21,7 @@
 ###############################################################################
 
 from r2.models import Account, Link, Comment, Report, LinksByAccount
-from r2.models.vote import cast_vote, get_votes
+from r2.models.vote import cast_vote, get_votes, VotesByAccount
 from r2.models import Message, Inbox, Subreddit, ModContribSR, ModeratorInbox, MultiReddit
 from r2.lib.db.thing import Thing, Merge
 from r2.lib.db.operators import asc, desc, timeago
@@ -1668,6 +1668,11 @@ def queue_vote(user, thing, dir, ip, vote_info=None,
     # set the vote in memcached so the UI gets updated immediately
     key = prequeued_vote_key(user, thing)
     g.cache.set(key, '1' if dir is True else '0' if dir is None else '-1')
+
+    # update LastModified immediately to help us cull prequeued_vote lookups
+    rel_cls = VotesByAccount.rel(user.__class__, thing.__class__)
+    LastModified.touch(user._fullname, rel_cls._last_modified_name)
+
     # queue the vote to be stored unless told not to
     if store:
         if isinstance(thing, Link):
