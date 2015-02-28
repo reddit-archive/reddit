@@ -112,17 +112,29 @@
                  data-validate-on="change blur">
         </%call>
       %endif
-      <div class="c-checkbox c-input-height">
-        <label for="rem_${op}" class="remember">
-          <input type="checkbox" name="rem" id="rem_${op}"
-               tabindex="${tabindex}">
+      <div class="c-checkbox">
+        <input type="checkbox" name="rem" id="rem_${op}" tabindex="${tabindex}">
+        <label for="rem_${op}">
           ${_('remember me')}
         </label>
         %if not register:
           <a href="/password" class="c-pull-right">${_('reset password')}</a>
         %endif
       </div>
-      <div class="c-clearfix">
+      %if register and feature.is_enabled('newsletter'):
+      <div class="c-checkbox">
+        <input type="checkbox" name="newsletter_subscribe" id="newsletter_subscribe" tabindex="${tabindex}"
+          data-validate-url="/api/check_email.json"
+          data-validate-on="change blur"
+          data-validate-with="email"
+        >
+        <label for="newsletter_subscribe">
+          ${_('get the best of reddit emailed to you once a week.')}&#32;
+          <a href="/newsletter" target="_blank">${_('learn more')}</a>
+        </label>
+      </div>
+      %endif
+      <div class="c-clearfix c-submit-group">
         <span class="c-form-throbber"></span>
         <button type="submit" class="c-btn c-btn-primary c-pull-right" tabindex="${tabindex}">
           ${register and _("create account") or _("sign in")}

@@ -97,7 +97,7 @@ from r2.lib.db import queries
 from r2.lib import media
 from r2.lib.db import tdb_cassandra
 from r2.lib import promote
-from r2.lib import tracking, emailer
+from r2.lib import tracking, emailer, newsletter
 from r2.lib.subreddit_search import search_reddits
 from r2.lib.log import log_text
 from r2.lib.filters import safemarkdown
@@ -278,11 +278,19 @@ class ApiController(RedditController):
             return {}
 
     @csrf_exempt
-    @json_validate(email=ValidEmail("email"))
-    def POST_check_email(self, responder, email):
+    @json_validate(email=ValidEmail("email"),
+                   newsletter_subscribe=VBoolean("newsletter_subscribe", default=False))
+    def POST_check_email(self, responder, email, newsletter_subscribe):
         """
-        Check whether an email is valid.
+        Check whether an email is valid. Allows blank emails.
+
+        Additionally checks if a newsletter is requested, and will be strict
+        on blank emails if so.
         """
+        if feature.is_enabled('newsletter') and newsletter_subscribe and not email:
+            c.errors.add(errors.NEWSLETTER_NO_EMAIL, field="email")
+            responder.has_errors("email", errors.NEWSLETTER_NO_EMAIL)
+            return
 
         if not (responder.has_errors("email", errors.BAD_EMAIL)):
             # Pylons does not handle 204s correctly.
@@ -650,6 +658,16 @@ class ApiController(RedditController):
                 responder.has_errors('ratelimit', errors.RATELIMIT) or
                 (not g.disable_captcha and bad_captcha)):
             
+            newsletter_subscribe = False
+            if feature.is_enabled('newsletter'):
+                # Todo: add to validatedForm when feature is released
+                vnewsletter = VBoolean('newsletter_subscribe', default=False)
+                newsletter_subscribe = vnewsletter.run(request.params.get('newsletter_subscribe'))
+                if newsletter_subscribe and not email:
+                    c.errors.add(errors.NEWSLETTER_NO_EMAIL, field="email")
+                    form.has_errors("email", errors.NEWSLETTER_NO_EMAIL)
+                    return
+
             user = register(name, password, request.ip)
             VRatelimit.ratelimit(rate_ip = True, prefix = "rate_register_")
 
@@ -672,6 +690,13 @@ class ApiController(RedditController):
             reject = hooks.get_hook("account.spotcheck").call(account=user)
             if any(reject):
                 return
+
+            if feature.is_enabled('newsletter'):
+                if newsletter_subscribe and email:
+                    try:
+                        newsletter.add_subscriber(email, source="register")
+                    except newsletter.NewsletterError as e:
+                        g.log.warning("Failed to subscribe: %r" % e)
 
             self._login(responder, user, rem)
 
