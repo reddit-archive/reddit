@@ -1200,7 +1200,7 @@ class FrontController(RedditController):
             claim_msg = _("Thanks for buying reddit gold! Your transaction is "
                           "being processed. If you have any questions please "
                           "email us at %(gold_email)s")
-            claim_msg = claim_msg % {'gold_email': g.goldthanks_email}
+            claim_msg = claim_msg % {'gold_email': g.goldsupport_email}
         else:
             abort(404)
 

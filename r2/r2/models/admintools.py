@@ -269,7 +269,7 @@ def update_gold_users():
                   "rants, suggestions about reddit gold, please write "
                   "to us at %(gold_email)s. Your feedback would be "
                   "much appreciated.\n\nThank you for your past "
-                  "patronage.") % {'gold_email': g.goldthanks_email}
+                  "patronage.") % {'gold_email': g.goldsupport_email}
 
     for account in all_gold_users():
         days_left = (account.gold_expiration - now).days

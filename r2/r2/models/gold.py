@@ -514,7 +514,7 @@ def get_subscription_details(user):
 
 
 def paypal_subscription_url():
-    return "https://www.paypal.com/cgi-bin/webscr?cmd=_subscr-find&alias=%s" % g.goldthanks_email
+    return "https://www.paypal.com/cgi-bin/webscr?cmd=_subscr-find&alias=%s" % g.goldpurchase_email
 
 
 def get_discounted_price(gold_price):
