@@ -32,9 +32,7 @@
         text = $.unsafe_orig(text);
         if (typeof(text) == "string") {
             /* space compress the result */
-            text = text.replace(/[\s]+/g, " ")
-                    .replace(/> +/g, ">")
-                    .replace(/ +</g, "<");
+            text = r.utils.spaceCompress(text);
         }
         return (text || "");
     }
