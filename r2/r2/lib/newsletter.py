@@ -63,7 +63,7 @@ def add_subscriber(email, source=""):
             timeout=3,
             auth=(API_KEY, 'x'),
         )
-    except requests.exception.Timeout:
+    except requests.exceptions.Timeout:
         raise NewsletterError("Unable to subscribe user %s to newsletter. "
                               "Request timed out." % email)
     else:
