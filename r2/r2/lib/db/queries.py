@@ -1707,6 +1707,7 @@ def get_likes(user, items):
         else:
             res[(user, item)] = None
     if keys:
+        g.stats.simple_event("vote.prequeued.fetch", delta=len(keys))
         r = g.cache.get_multi(keys.keys())
         for key, v in r.iteritems():
             res[keys[key]] = (True if v == '1'
