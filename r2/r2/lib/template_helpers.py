@@ -603,11 +603,11 @@ def simplified_timesince(date, include_tense=True):
     if date > timeago("1 minute"):
         return _("just now")
 
-    since = []
-    since.append(timesince(date))
+    since = timesince(date)
     if include_tense:
-        since.append(_("ago"))
-    return " ".join(since)
+        return _("%s ago") % since
+    else:
+        return since
 
 
 def display_link_karma(karma):
