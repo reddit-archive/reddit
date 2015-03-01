@@ -815,8 +815,8 @@ steps:
 
 * To populate the database with test data, run:
 
-    cd $REDDIT_HOME/src/reddit/r2
-    reddit-run r2/models/populatedb.py -c 'populate()'
+    cd $REDDIT_HOME/src/reddit
+    reddit-run scripts/inject_test_data.py -c 'inject_test_data()'
 
 * Manually run reddit-job-update_reddits immediately after populating the db
   or adding your own subreddits.
