@@ -255,9 +255,13 @@ r.ui.Form = function(el) {
             $(this).stateify('set', 'success');
         })
         .on('invalid.validator', function(e, resp) {
-            var error = r.utils.parseError(resp.errors[0]);
+            // resp may not always be set if client side validation triggered, like
+            // from input type=email
+            if (resp) {
+              var error = r.utils.parseError(resp.errors[0]);
 
-            $(this).stateify('set', 'error', error.message);
+              $(this).stateify('set', 'error', error.message);
+            }
         })
         .on('loading.validator', function(e) {
             $(this).stateify('set', 'loading');

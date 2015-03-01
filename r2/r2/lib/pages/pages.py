@@ -262,6 +262,7 @@ class Reddit(Templated):
 
         #add the infobar
         self.welcomebar = None
+        self.newsletterbar = None
         self.locationbar = None
         self.infobar = None
         # generate a canonical link for google
@@ -304,6 +305,8 @@ class Reddit(Templated):
 
             if not c.user_is_loggedin:
                 self.welcomebar = WelcomeBar()
+                if feature.is_enabled('newsletter') and getattr(self, "show_newsletterbar", True):
+                    self.newsletterbar = NewsletterBar()
 
             show_locationbar &= not c.user.pref_hide_locationbar
             if (show_locationbar and c.used_localized_defaults and
@@ -824,9 +827,17 @@ class Reddit(Templated):
 
     def content(self):
         """returns a Wrapped (or renderable) item for the main content div."""
+        if self.newsletterbar:
+            self.welcomebar = None
+
         return self.content_stack((
-            self.welcomebar, self.infobar, self.locationbar, self.nav_menu,
-            self._content))
+            self.welcomebar,
+            self.newsletterbar,
+            self.infobar,
+            self.locationbar,
+            self.nav_menu,
+            self._content,
+        ))
 
     def is_gold_page(self):
         return "gold-page-ga-tracking" in self.supplied_page_classes
@@ -2293,6 +2304,9 @@ class WelcomeBar(InfoBar):
             message = (_("reddit is a platform for internet communities"),
                        _("where your votes shape what the world is talking about."))
         InfoBar.__init__(self, message=message)
+
+class NewsletterBar(InfoBar):
+    pass
 
 class ClientInfoBar(InfoBar):
     """Draws the message the top of a login page before OAuth2 authorization"""

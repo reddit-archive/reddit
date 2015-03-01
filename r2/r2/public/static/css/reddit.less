@@ -126,6 +126,9 @@ h3 { font-size:110%; /*text-transform:uppercase;*/ }
 a img { border: 0 none; }
 a { text-decoration: none; color: #369; }
 
+/* Polyfill for HTML5 hidden attribute: http://caniuse.com/#feat=hidden */
+[hidden] { display: none; }
+
 /*
 a:active { border: 0 none;}
 a:focus { -moz-outline-style: none; }
@@ -1845,6 +1848,104 @@ body.with-listing-chooser.explore-page #header .pagename {
     top: 1px;
     background: #df531f;
     border-bottom: 1px solid #a73a11;
+}
+
+.infobar.newsletterbar {
+    .box-sizing(border-box);
+    position: relative;
+    overflow: hidden;
+    min-height: 80px;
+    padding: 15px 20px 20px;
+    border: none;
+    border-radius: 2px;
+    background-color: #30659B;
+
+    header {
+        float: left;
+        height: 45px;
+        width: 325px;
+    }
+
+    a.newsletter-close {
+        position: absolute;
+        right: 3px;
+        top: 0;
+        font-size: 11px;
+        color: #CCC;
+    }
+
+    form {
+        margin-left: 340px;
+        margin-right: 150px;
+        max-width: 400px;
+        min-width: 150px;
+        line-height: 45px;
+        white-space: nowrap;
+    }
+
+    &.success {
+        header {
+            padding-left: 65px;
+
+            &:before {
+                content: "✓";
+                color: #80d654;
+                font-weight: bold;
+                font-size: 60px;
+                position: absolute;
+                top: 0;
+                left: 15px;
+            }
+        }
+    }
+
+    h1 {
+        margin: 0;
+
+        a:hover {
+            border-bottom: 1px dotted #999;
+        }
+    }
+
+    h2 {
+        color: white;
+        font-weight: normal;
+        font-size: 14px;
+    }
+
+    .c-form-group {
+        display: inline-block;
+        width: 100%;
+    }
+
+    /* Display error-feedback indicator inside the input */
+    .c-form-control-feedback-wrapper {
+        margin-left: -30px;
+        top: 5px;
+    }
+
+    input[type="email"] {
+        display: inline-block;
+    }
+
+    button {
+        .button-size(@padding-base-vertical; @padding-base-horizontal; 12px; 20px; 3px);
+        margin-left: 10px;
+    }
+
+    @media screen and (max-width: @screen-md-min) {
+        header {
+            float: none;
+        }
+
+        form {
+            margin: 10px 0 0;
+        }
+
+        .c-form-group {
+            max-width: 50%;
+        }
+    }
 }
 
 .locationbar {

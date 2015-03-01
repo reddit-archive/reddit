@@ -296,6 +296,23 @@ class ApiController(RedditController):
             # Pylons does not handle 204s correctly.
             return {}
 
+    @json_validate(
+        VModhashIfLoggedIn(),
+        VRatelimit(rate_ip=True, prefix="rate_newsletter_"),
+        email=ValidEmail("email"),
+    )
+    def POST_newsletter(self, responder, email):
+        """Add an email to our newsletter."""
+
+        VRatelimit.ratelimit(rate_ip=True,
+                             prefix="rate_newsletter_")
+
+        try:
+            newsletter.add_subscriber(email, source="newsletterbar")
+        except newsletter.NewsletterError as e:
+            g.log.warning("Failed to subscribe: %r" % e)
+            abort(500)
+
     @allow_oauth2_access
     @json_validate()
     @api_doc(api_section.captcha)
