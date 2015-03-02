@@ -1,61 +1,15 @@
-@warning-red: #EA0027;
-@orangered: #FF4500;
-@orange: #FF8717;
-@yellow: #FFD635;
-@highlight: #FFF03E;
-@gold: #D8C161;
-@lime: #C7E223;
-@green: #7CD344;
-@teal: #25B79F;
-@dark-teal: #008985;
-// @link-blue: #218BB2;
-// style guide @link-blue is #24A0ED, but that's too zesty for reddit.com
-// using the @alien-blue color for links here instead
-@link-blue: #0079D3;
-@periwinkle: #9494FF;
-@white: #FFFFFF;
-@off-white: #FCFCF7;
-@eggshell: #F2F1E9;
-@pale-grey: #E5E3DA;
-@grey: #B5B3AC;
-@semi-black: #222222;
+// markdown colors
+@markdown-color-link: @color-alien-blue;
+@markdown-color-code: @color-off-white;
+@markdown-color-code-alt: @color-white;
+@markdown-color-border-light: @color-pale-grey;
+@markdown-color-border-heavy: darken(@color-pale-grey, 15%);
+@markdown-color-font: @color-semi-black;
+@markdown-color-font-light: @color-text-grey;
 
-// non-styleguide colors:
-@ui-blue: #336699;
-@ads-blue: #6093BF;
-@ads-grey: #F8F8F8;
-@dark-grey: #808080;
-@text-grey: #4F4F4F;
-
-@base-font-keyword: small;
-@base-font-keyword-size: 13; // small == 13px;
-
-// all of the font sizes used between comments, sidebar, and wiki
-@font-x-small: 12;
-@font-small: 14;
-@font-medium: 16;
-@font-large: 18;
-@font-x-large: 20;
-@font-xx-large: 24;
-@font-xxx-large: 32;
-
-// line heights to go with the font sizes
-@line-x-small: 15;
-@line-small: 20;
-@line-medium: 20;
-@line-large: 25;
-@line-x-large: 25;
-@line-xx-large: 30;
-@line-xxx-large: 40;
-
-// margins used, don't necessarily correlate directly with font sizes
-@margin-x-small: 5;
-@margin-small: 10;
-@margin-medium: 15;
-@margin-large: 20;
-@margin-x-large: 25;
-@margin-xx-large: 30;
-@margin-xxx-large: 40;
+// wiki page styles
+@markdown-color-wiki-header: @color-text-grey;
+@markdown-color-wiki-header-alt: @color-ui-blue;
 
 
 .md-font-size(@base, @font, @line) {
@@ -99,7 +53,7 @@
   }
 
   max-width: 60em;
-  color: @semi-black;
+  color: @markdown-color-font;
 
   .-headers {
     border: 0;
@@ -113,11 +67,11 @@
 
   blockquote,
   del {
-    color: @text-grey;
+    color: @markdown-color-font-light;
   }
 
   a {
-    color: @link-blue;
+    color: @markdown-color-link;
     text-decoration: none;
   }
 
@@ -165,19 +119,19 @@
   hr {
     border: 0;
     color: transparent;
-    background: darken(@pale-grey, 15%);
+    background: @markdown-color-border-heavy;
     height: 2px;
     padding: 0;
   }
 
   blockquote {
-    border-left: 2px solid darken(@pale-grey, 15%);
+    border-left: 2px solid @markdown-color-border-heavy;
   }
 
   code,
   pre {
-    border: 1px solid darken(@off-white, 10%);
-    background-color: @off-white;
+    border: 1px solid darken(@markdown-color-code, 10%);
+    background-color: @markdown-color-code;
     border-radius: 2px;
   }
 
@@ -206,7 +160,7 @@
 
   // can't rely on &:extend here, doesn't apply the align rules
   td, th {
-    border: 1px solid @pale-grey;
+    border: 1px solid @markdown-color-border-light;
     text-align: left;
 
     &[align=center] {
@@ -270,7 +224,7 @@
 .usertext.border .md {
   :not(pre) > code,
   pre {
-    background-color: @white;
+    background-color: @markdown-color-code-alt;
   }
 }
 
@@ -388,12 +342,12 @@ code {
   // Style changes for wiki pages
   h1,
   h6 {
-    color: @text-grey;
+    color: @markdown-color-wiki-header;
     font-weight: 300;
   }
 
   h2 {
-    color: @ui-blue;
+    color: @markdown-color-wiki-header-alt;
   }
 
   h2,
