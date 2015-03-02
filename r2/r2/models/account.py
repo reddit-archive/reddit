@@ -33,6 +33,7 @@ from r2.lib.utils        import constant_time_compare, canonicalize_email
 from r2.lib import amqp, filters, hooks
 from r2.lib.log import log_text
 from r2.models.last_modified import LastModified
+from r2.models.modaction import ModAction
 from r2.models.trylater import TryLater
 
 from pylons import c, g, request
@@ -658,6 +659,31 @@ class Account(Thing):
 
     def flair_css_class(self, sr_id):
         return getattr(self, 'flair_%s_css_class' % sr_id, None)
+
+    def can_flair_in_sr(self, user, sr):
+        """Return whether a user can set this one's flair in a subreddit."""
+        can_assign_own = self._id == user._id and sr.flair_self_assign_enabled
+
+        return can_assign_own or sr.is_moderator_with_perms(user, "flair")
+
+    def set_flair(self, subreddit, text=None, css_class=None, set_by=None,
+            log_details="edit"):
+        log_details = "flair_%s" % log_details
+        if not text and not css_class:
+            # set to None instead of potentially empty strings
+            text = css_class = None
+            subreddit.remove_flair(self)
+            log_details = "flair_delete"
+        elif not subreddit.is_flair(self):
+            subreddit.add_flair(self)
+
+        setattr(self, 'flair_%s_text' % subreddit._id, text)
+        setattr(self, 'flair_%s_css_class' % subreddit._id, css_class)
+        self._commit()
+
+        if set_by and set_by != self:
+            ModAction.create(subreddit, set_by, action='editflair',
+                target=self, details=log_details)
 
     def update_sr_activity(self, sr):
         if not self._spam:

@@ -50,6 +50,7 @@ from r2.models.gold import (
     GildedLinksByAccount,
     make_gold_message,
 )
+from r2.models.modaction import ModAction
 from r2.models.subreddit import MultiReddit
 from r2.models.trylater import TryLater
 from r2.models.query_cache import CachedQueryMutator
@@ -738,6 +739,16 @@ class Link(Thing, Printable):
                           site.link_flair_self_assign_enabled)
 
         return site.is_moderator_with_perms(user, 'flair') or can_assign_own
+
+    def set_flair(self, text=None, css_class=None, set_by=None):
+        self.flair_text = text
+        self.flair_css_class = css_class
+        self._commit()
+        changed(self)
+
+        if set_by and set_by._id != self.author_id:
+            ModAction.create(self.subreddit_slow, set_by, action='editflair',
+                target=self, details='flair_edit')
 
     @classmethod
     def _utf8_encode(cls, value):

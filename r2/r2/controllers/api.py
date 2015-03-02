@@ -3344,22 +3344,6 @@ class ApiController(RedditController):
                    css_class = VFlairCss("css_class"))
     @api_doc(api_section.flair, uses_site=True)
     def POST_flair(self, form, jquery, user, link, text, css_class):
-        if link:
-            flair_type = LINK_FLAIR
-            if hasattr(c.site, '_id') and c.site._id == link.sr_id:
-                site = c.site
-            else:
-                site = Subreddit._byID(link.sr_id, data=True)
-                # make sure c.user has permission to set flair on this link
-                if not (c.user_is_admin 
-                        or site.is_moderator_with_perms(c.user, 'flair')):
-                    abort(403, 'forbidden')
-        else:
-            flair_type = USER_FLAIR
-            site = c.site
-            if form.has_errors('name', errors.BAD_FLAIR_TARGET):
-                return
-
         if form.has_errors('css_class', errors.BAD_CSS_NAME):
             form.set_text(".status:first", _('invalid css class'))
             return
@@ -3367,48 +3351,32 @@ class ApiController(RedditController):
             form.set_text(".status:first", _('too many css classes'))
             return
 
-        if flair_type == LINK_FLAIR:
+        if link:
+            if form.has_errors("link", errors.BAD_FLAIR_TARGET):
+                return
+
+            link.set_flair(text, css_class, set_by=c.user)
+        else:
+            if form.has_errors("name", errors.BAD_FLAIR_TARGET):
+                return
+
+            user.set_flair(c.site, text, css_class, set_by=c.user)
+
+            # XXX: this is still gross with all the UI code in here
             if not text and not css_class:
-                text = css_class = None
-            link.flair_text = text
-            link.flair_css_class = css_class
-            link._commit()
-            changed(link)
-            ModAction.create(site, c.user, action='editflair', target=link,
-                             details='flair_edit')
-        elif flair_type == USER_FLAIR:
-            if not text and not css_class:
-                # empty text and css is equivalent to unflairing
-                text = css_class = None
-                c.site.remove_flair(user)
                 jquery('#flairrow_%s' % user._id36).hide()
-                new = False
             elif not c.site.is_flair(user):
-                c.site.add_flair(user)
-                new = True
-            else:
-                new = False
-
-            # Save the flair details in the account data.
-            setattr(user, 'flair_%s_text' % c.site._id, text)
-            setattr(user, 'flair_%s_css_class' % c.site._id, css_class)
-            user._commit()
-
-            if c.user != user:
-                ModAction.create(site, c.user, action='editflair',
-                                 target=user, details='flair_edit')
-
-            if new:
                 jquery.redirect('?name=%s' % user.name)
-            else:
-                flair = WrappedUser(
-                    user, force_show_flair=True,
-                    include_flair_selector=True).render(style='html')
-                jquery('.tagline .flairselectable.id-%s'
-                    % user._fullname).parent().html(flair)
-                jquery('input[name="text"]').data('saved', text)
-                jquery('input[name="css_class"]').data('saved', css_class)
-                form.set_text('.status', _('saved'))
+                return
+
+            wrapped_user = WrappedUser(
+                user, force_show_flair=True, include_flair_selector=True)
+            rendered = wrapped_user.render(style='html')
+            jquery('.tagline .flairselectable.id-%s'
+                % user._fullname).parent().html(rendered)
+            jquery('input[name="text"]').data('saved', text)
+            jquery('input[name="css_class"]').data('saved', css_class)
+            form.set_text('.status', _('saved'))
 
     @require_oauth2_scope("modflair")
     @validatedForm(VSrModerator(perms='flair'),
@@ -3416,16 +3384,10 @@ class ApiController(RedditController):
                    user = VFlairAccount("name"))
     @api_doc(api_section.flair, uses_site=True)
     def POST_deleteflair(self, form, jquery, user):
-        # Check validation.
         if form.has_errors('name', errors.USER_DOESNT_EXIST, errors.NO_USER):
             return
-        c.site.remove_flair(user)
-        setattr(user, 'flair_%s_text' % c.site._id, None)
-        setattr(user, 'flair_%s_css_class' % c.site._id, None)
-        user._commit()
 
-        ModAction.create(c.site, c.user, action='editflair', target=user,
-                         details='flair_delete')
+        user.set_flair(None, None, set_by=c.user)
 
         jquery('#flairrow_%s' % user._id36).remove()
         unflair = WrappedUser(
@@ -3463,11 +3425,6 @@ class ApiController(RedditController):
                                   % name)
                 continue
 
-            if not text and not css_class:
-                # this is equivalent to unflairing
-                text = None
-                css_class = None
-
             orig_text = text
             text = VFlairText('text').run(orig_text)
             if text and orig_text and len(text) < len(orig_text):
@@ -3482,21 +3439,15 @@ class ApiController(RedditController):
                 continue
 
             # all validation passed, enflair the user
+            user.set_flair(
+                c.site, text, css_class, set_by=c.user, log_details="csv")
+
             if text or css_class:
                 mode = 'added'
-                c.site.add_flair(user)
             else:
                 mode = 'removed'
-                c.site.remove_flair(user)
-            setattr(user, 'flair_%s_text' % c.site._id, text)
-            setattr(user, 'flair_%s_css_class' % c.site._id, css_class)
-            user._commit()
-
             line_result.status = '%s flair for user %s' % (mode, user.name)
             line_result.ok = True
-
-        ModAction.create(c.site, c.user, action='editflair',
-                         details='flair_csv')
 
         return BoringPage(_("API"), content = results).render()
 
@@ -3701,61 +3652,67 @@ class ApiController(RedditController):
                          text):
         if link:
             flair_type = LINK_FLAIR
-            if hasattr(c.site, '_id') and c.site._id == link.sr_id:
-                site = c.site
-            else:
-                site = Subreddit._byID(link.sr_id, data=True)
-            self_assign_enabled = site.link_flair_self_assign_enabled
+            subreddit = link.subreddit_slow
+            if not (c.user_is_admin or link.can_flair_slow(c.user)):
+                abort(403)
         else:
             flair_type = USER_FLAIR
-            site = c.site
-            self_assign_enabled = site.flair_self_assign_enabled
+            subreddit = c.site
+            if not (c.user_is_admin or user.can_flair_in_sr(c.user, subreddit)):
+                abort(403)
 
         if flair_template_id:
             try:
                 flair_template = FlairTemplateBySubredditIndex.get_template(
-                    site._id, flair_template_id, flair_type=flair_type)
+                    subreddit._id, flair_template_id, flair_type=flair_type)
             except NotFound:
                 # TODO: serve error to client
-                g.log.debug('invalid flair template for subreddit %s', site._id)
-                return
-        else:
-            flair_template = None
-            text = None
-
-        if not (c.user_is_admin
-                or site.is_moderator_with_perms(c.user, 'flair')):
-            if not self_assign_enabled:
-                # TODO: serve error to client
-                g.log.debug('flair self-assignment not permitted')
+                g.log.debug('invalid flair template for subreddit %s', subreddit._id)
                 return
 
-            # Ignore user choice if not an admin or mod.
-            user = c.user
+            text_editable = flair_template.text_editable
 
             # Ignore given text if user doesn't have permission to customize it.
-            if not (flair_template and flair_template.text_editable):
+            if not (text_editable or
+                        c.user_is_admin or
+                        subreddit.is_moderator_with_perms(c.user, "flair")):
                 text = None
 
-        if not text:
-            text = flair_template.text if flair_template else None
+            if not text:
+                text = flair_template.text
 
-        css_class = flair_template.css_class if flair_template else None
-        text_editable = (
-            flair_template.text_editable if flair_template else False)
+            css_class = flair_template.css_class
+        else:
+            flair_template = None
+            text_editable = False
+            text = None
+            css_class = None
 
-        if flair_type == USER_FLAIR:
-            site.add_flair(user)
-            setattr(user, 'flair_%s_text' % site._id, text)
-            setattr(user, 'flair_%s_css_class' % site._id, css_class)
-            user._commit()
+        if flair_type == LINK_FLAIR:
+            link.set_flair(text, css_class, set_by=c.user)
 
-            if ((c.user_is_admin
-                 or site.is_moderator_with_perms(c.user, 'flair'))
-                and c.user != user):
-                ModAction.create(site, c.user, action='editflair',
-                                 target=user, details='flair_edit')
+            # XXX: gross UI code
+            # Push some client-side updates back to the browser.
+            jquery('.id-%s .entry .linkflairlabel' % link._fullname).remove()
+            title_path = '.id-%s .entry > .title > .title' % link._fullname
 
+            # TODO: move this to a template
+            if flair_template:
+                classes = ' '.join('linkflair-' + c for c in css_class.split())
+                flair = format_html('<span class="linkflairlabel %s">%s</span>',
+                                    classes, text)
+
+                if subreddit.link_flair_position == 'left':
+                    jquery(title_path).before(flair)
+                elif subreddit.link_flair_position == 'right':
+                    jquery(title_path).after(flair)
+
+            # TODO: close the selector popup more gracefully
+            jquery('body').click()
+        else:
+            user.set_flair(subreddit, text, css_class, set_by=c.user)
+
+            # XXX: gross UI code
             # Push some client-side updates back to the browser.
             u = WrappedUser(user, force_show_flair=True,
                             flair_text_editable=text_editable,
@@ -3767,34 +3724,6 @@ class ApiController(RedditController):
                 'saved', text).val(text)
             jquery('#flairrow_%s input[name="css_class"]' % user._id36).data(
                 'saved', css_class).val(css_class)
-        elif flair_type == LINK_FLAIR:
-            link.flair_text = text
-            link.flair_css_class = css_class
-            link._commit()
-            changed(link)
-
-            if c.user_is_admin or site.is_moderator_with_perms(c.user, 'flair'):
-                ModAction.create(site, c.user, action='editflair',
-                                 target=link, details='flair_edit')
-
-            # Push some client-side updates back to the browser.
-
-            jquery('.id-%s .entry .linkflairlabel' % link._fullname).remove()
-            title_path = '.id-%s .entry > .title > .title' % link._fullname
-
-            # TODO: move this to a template
-            if flair_template:
-                classes = ' '.join('linkflair-' + c for c in css_class.split())
-                flair = format_html('<span class="linkflairlabel %s">%s</span>',
-                                    classes, text)
-
-                if site.link_flair_position == 'left':
-                    jquery(title_path).before(flair)
-                elif site.link_flair_position == 'right':
-                    jquery(title_path).after(flair)
-
-            # TODO: close the selector popup more gracefully
-            jquery('body').click()
 
     @validatedForm(secret_used=VAdminOrAdminSecret("secret"),
                    award=VByName("fullname"),
