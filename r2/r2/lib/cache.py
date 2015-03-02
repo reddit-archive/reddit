@@ -472,7 +472,15 @@ def cache_timer_decorator(fn_name):
     """Use to decorate CacheChain operations so timings will be recorded."""
     def wrap(fn):
         def timed_fn(self, *a, **kw):
-            if self.stats:
+            use_timer = kw.pop("use_timer", True)
+
+            try:
+                getattr(g, "log")
+            except TypeError:
+                # don't have access to g, maybe in a thread?
+                return fn(self, *a, **kw)
+
+            if use_timer and self.stats:
                 publish = random.random() < g.stats.CACHE_SAMPLE_RATE
                 cache_name = self.stats.cache_name
                 timer_name = "cache.%s.%s" % (cache_name, fn_name)
