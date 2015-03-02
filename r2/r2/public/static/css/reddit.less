@@ -3007,10 +3007,6 @@ li.searchfacet {
 .login-page {
     #login {
         margin-right: 300px;
-
-        .modal-title {
-            margin-top: 0;
-        }
     }
 
     @media (max-width: @screen-sm-min) {
@@ -3024,34 +3020,14 @@ li.searchfacet {
     }
 }
 
-.login-modal {
-    .modal-body {
-        @media (min-width: @screen-sm-min) {
-            // horizontal padding - (header height + body padding + borders)
-            margin: (@modal-inner-padding-md-horizontal - 
-                    (@modal-inner-padding-vertical +
-                        ((@modal-title-padding * 3) + @modal-title-line-height)) +
-                        2) 0;
-        }
-
-        @media (min-width: @screen-md-min) {
-            // horizontal padding - (header height + body padding + borders)
-            margin: (@modal-inner-padding-lg-horizontal - 
-                    (@modal-inner-padding-vertical +
-                        ((@modal-title-padding * 3) + @modal-title-line-height)) +
-                        2) 0;
-        }
-    }
-}
-
 #cover-msg {
     line-height: normal;
-    margin: 0 0 40px;
+    margin: 0 0 50px;
 }
 
 #login {
     .modal-title {
-        margin: 25px 0;
+        margin: 0 0 25px;
     }
 
     .c-alert {
@@ -10560,30 +10536,21 @@ body.banned.deleted div#header {
 }
 
 .embed-modal {
-  .modal-header {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    min-height: 0;
-    border-bottom: none;
-    padding: 0;
-
-    .c-close {
-      float: none;
-      display: block;
-      width: 12px;
-      height: 12px;
-      background-size: 100% 100%;
-    }
+  .modal-body,
+  .modal-footer {
+    padding: 40px;
   }
 
   .modal-body {
-    position: static;
-    padding: 35px 60px 10px;
+    padding-bottom: 10px;
+
+    .c-checkbox {
+      margin: 8px 0;
+    }
   }
 
   .modal-footer {
-    padding: 25px 60px 40px;
+    padding-top: 20px;
 
     .c-form-control {
       margin-top: 10px;
@@ -10592,7 +10559,6 @@ body.banned.deleted div#header {
 
   .modal-title {
     margin: 0;
-    line-height: normal;
   }
 
   #embed-preview {
