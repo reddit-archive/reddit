@@ -68,7 +68,7 @@ ${unsafe(taglinetext % dict(author=author))}
       %elif promote.is_unpaid(thing):
         ${_('unpaid sponsored link')}
       %elif promote.is_unapproved(thing):
-        ${_('unapproved sponsored link')}
+        ${_('waiting approval')}
       %elif promote.is_rejected(thing):
         ${_('rejected sponsored link')}
       %elif promote.is_promoted(thing):
