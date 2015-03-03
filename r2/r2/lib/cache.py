@@ -875,22 +875,18 @@ class CassandraCache(CacheUtils):
         return dict((key, pickle.loads(row['value']))
                     for (key, row) in rows.iteritems())
 
-    def set(self, key, val,
-            write_consistency_level = None,
-            time = None):
+    def set(self, key, val, write_consistency_level = None):
         if val == NoneResult:
             # NoneResult caching is for other parts of the chain
             return
 
         wcl = self._wcl(write_consistency_level)
         ret = self.cf.insert(key, {'value': pickle.dumps(val)},
-                              write_consistency_level = wcl,
-                             ttl = time)
+                              write_consistency_level = wcl)
         return ret
 
     def set_multi(self, keys, prefix='',
-                  write_consistency_level = None,
-                  time = None):
+                  write_consistency_level = None):
         if not isinstance(keys, dict):
             # allow iterables yielding tuples
             keys = dict(keys)
@@ -902,8 +898,7 @@ class CassandraCache(CacheUtils):
             for key, val in keys.iteritems():
                 if val != NoneResult:
                     ret[key] = self.cf.insert('%s%s' % (prefix, key),
-                                              {'value': pickle.dumps(val)},
-                                              ttl = time or None)
+                                              {'value': pickle.dumps(val)})
 
         return ret
 
