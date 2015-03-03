@@ -2462,7 +2462,7 @@ class ApiController(RedditController):
 
         if not sr and form.has_errors("ratelimit", errors.RATELIMIT):
             pass
-        if not sr and form.has_errors("", errors.CANT_CREATE_SR):
+        elif not sr and form.has_errors("", errors.CANT_CREATE_SR):
             pass
         # if existing subreddit is employees_only and trying to change type,
         # require that admin mode is on
