@@ -84,7 +84,6 @@ from r2.lib.strings import strings
 from r2.lib.filters import _force_unicode, websafe_json, websafe, spaceCompress
 from r2.lib.template_helpers import format_html
 from r2.lib.db import queries
-from r2.lib.db.queries import changed
 from r2.lib import media
 from r2.lib.db import tdb_cassandra
 from r2.lib import promote
@@ -531,7 +530,7 @@ class ApiController(RedditController):
                                  prefix = "rate_submit_")
 
         queries.new_link(l)
-        changed(l)
+        l.update_search_index()
 
         if then == 'comments':
             path = add_sr(l.make_permalink_slow())
@@ -1335,8 +1334,7 @@ class ApiController(RedditController):
             promote.reject_promotion(thing)
         thing._commit()
 
-        # flag search indexer that something has changed
-        changed(thing)
+        thing.update_search_index()
 
         #expire the item from the sr cache
         if isinstance(thing, Link):
@@ -1371,8 +1369,7 @@ class ApiController(RedditController):
             ModAction.create(thing.subreddit_slow, c.user, target=thing,
                              action='marknsfw')
 
-        # flag search indexer that something has changed
-        changed(thing)
+        thing.update_search_index()
 
     @require_oauth2_scope("modposts")
     @noresponse(VUser(),
@@ -1402,8 +1399,7 @@ class ApiController(RedditController):
             ModAction.create(thing.subreddit_slow, c.user, target=thing,
                              action='marknsfw', details='remove')
 
-        # flag search indexer that something has changed
-        changed(thing)
+        thing.update_search_index()
 
     @require_oauth2_scope("edit")
     @noresponse(VUser(),
@@ -1683,7 +1679,7 @@ class ApiController(RedditController):
         if hasattr(item, "editted"):
             queries.edit(item)
 
-        changed(item)
+        item.update_search_index()
 
         amqp.add_item('usertext_edited', item._fullname)
 
@@ -2528,7 +2524,7 @@ class ApiController(RedditController):
                                      prefix = "create_reddit_")
 
             queries.new_subreddit(sr)
-            changed(sr)
+            sr.update_search_index()
 
         #editting an existing reddit
         elif sr.is_moderator_with_perms(c.user, 'config') or c.user_is_admin:
@@ -2559,8 +2555,7 @@ class ApiController(RedditController):
                 Subreddit._by_domain(old_domain, _update = True)
                 Subreddit._by_domain(sr.domain, _update = True)
 
-            # flag search indexer that something has changed
-            changed(sr)
+            sr.update_search_index()
             form.parent().set_text('.status', _("saved"))
 
         if form.has_error():
@@ -3250,7 +3245,7 @@ class ApiController(RedditController):
                 else:
                     # tried to unsubscribe but user was not subscribed
                     return abort(404, 'not found')
-            changed(sr, True)
+            sr.update_search_index(boost_only=True)
         except CreationError:
             # This only seems to happen when someone is pounding on the
             # subscribe button or the DBs are really lagged; either way,

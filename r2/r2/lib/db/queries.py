@@ -1268,22 +1268,6 @@ def unnotify(thing, possible_recipients=None):
         raise ValueError("Unable to unnotify thing of type: %r" % thing)
 
 
-def changed(things, boost_only=False):
-    """Indicate to search that `things` should be updated in the index"""
-    for thing in tup(things):
-        changed_fullname(thing._fullname, boost_only)
-
-
-def changed_fullname(fullname, boost_only=False):
-    msg = {'fullname': fullname}
-    if boost_only:
-        msg['boost_only'] = True
-
-    amqp.add_item('search_changes', pickle.dumps(msg),
-                  message_id=fullname,
-                  delivery_mode=amqp.DELIVERY_TRANSIENT)
-
-
 def _by_srid(things, srs=True):
     """Takes a list of things and returns them in a dict separated by
        sr_id, in addition to the looked-up subreddits"""
@@ -1379,7 +1363,9 @@ def delete(things):
             m.insert(q, inserts)
         for q, deletes in query_cache_deletes:
             m.delete(q, deletes)
-    changed(things)
+
+    for thing in tup(things):
+        thing.update_search_index()
 
 
 def edit(thing):
@@ -1444,7 +1430,9 @@ def ban(things, filtered=True):
             m.insert(q, inserts)
         for q, deletes in query_cache_deletes:
             m.delete(q, deletes)
-    changed(things)
+
+    for thing in tup(things):
+        thing.update_search_index()
 
 
 def _common_del_ban(things):
@@ -1523,7 +1511,8 @@ def unban(things, insert=True):
         for q, deletes in query_cache_deletes:
             m.delete(q, deletes)
 
-    changed(things)
+    for thing in tup(things):
+        thing.update_search_index()
 
 def new_report(thing, report_rel):
     reporter_id = report_rel._thing1_id
@@ -1891,6 +1880,9 @@ def consume_deleted_accounts():
         # Mark their link submissions for updating on cloudsearch
         query = LinksByAccount._cf.xget(account._id36)
         for link_id36, unused in query:
-            changed_fullname(Link._fullname_from_id36(link_id36))
+            fullname = Link._fullname_from_id36(link_id36)
+            msg = pickle.dumps({"fullname": fullname})
+            amqp.add_item("search_changes", msg, message_id=fullname,
+                delivery_mode=amqp.DELIVERY_TRANSIENT)
 
     amqp.consume_items('del_account_q', process_deleted_accounts)

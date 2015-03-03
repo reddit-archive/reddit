@@ -20,6 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+import cPickle as pickle
 import hashlib
 import new
 import sys
@@ -30,7 +31,7 @@ from datetime import datetime, timedelta
 
 from pylons import g
 
-from r2.lib import hooks
+from r2.lib import amqp, hooks
 from r2.lib.cache import sgm
 from r2.lib.db import tdb_sql as tdb, sorts, operators
 from r2.lib.utils import Results, tup, to36
@@ -645,6 +646,15 @@ class Thing(DataThing):
             rules.append(cls.c._spam == False)
 
         return Things(cls, *rules, **kw)
+
+    def update_search_index(self, boost_only=False):
+        msg = {'fullname': self._fullname}
+        if boost_only:
+            msg['boost_only'] = True
+
+        amqp.add_item('search_changes', pickle.dumps(msg),
+                      message_id=self._fullname,
+                      delivery_mode=amqp.DELIVERY_TRANSIENT)
 
 
 class RelationMeta(type):

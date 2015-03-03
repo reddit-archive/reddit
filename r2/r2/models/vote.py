@@ -234,7 +234,6 @@ class VoterIPByThing(tdb_cassandra.View):
 def cast_vote(sub, obj, dir, ip, vote_info, cheater, timer, date):
     from r2.models.admintools import valid_user, valid_thing, update_score
     from r2.lib.count import incr_sr_count
-    from r2.lib.db import queries
 
     names_by_dir = {True: "1", None: "0", False: "-1"}
 
@@ -317,9 +316,8 @@ def cast_vote(sub, obj, dir, ip, vote_info, cheater, timer, date):
     VotesByAccount.copy_from(vote, vote_info)
     timer.intermediate("cassavotes")
 
-    # update the search index
-    queries.changed(vote._thing2, boost_only=True)
-    timer.intermediate("changed")
+    vote._thing2.update_search_index(boost_only=True)
+    timer.intermediate("update_search_index")
 
     return vote
 

@@ -249,9 +249,8 @@ def get_comment_tree(link, _update=False, timer=None):
         timer.intermediate('rebuild')
         # the tree rebuild updated the link's comment count, so schedule it for
         # search reindexing
-        from r2.lib.db.queries import changed
-        changed([link])
-        timer.intermediate('changed')
+        link.update_search_index()
+        timer.intermediate('update_search_index')
         return cache
 
 # message conversation functions

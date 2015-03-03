@@ -744,7 +744,7 @@ class Link(Thing, Printable):
         self.flair_text = text
         self.flair_css_class = css_class
         self._commit()
-        changed(self)
+        self.update_search_index()
 
         if set_by and set_by._id != self.author_id:
             ModAction.create(self.subreddit_slow, set_by, action='editflair',
@@ -843,7 +843,6 @@ class Comment(Thing, Printable):
 
     @classmethod
     def _new(cls, author, link, parent, body, ip):
-        from r2.lib.db.queries import changed
         from r2.lib.emailer import message_notification_email
 
         kw = {}
@@ -892,7 +891,8 @@ class Comment(Thing, Printable):
 
         c._commit()
 
-        changed(link, True)  # link's number of comments changed
+        # link's number of comments changed
+        link.update_search_index(boost_only=True)
 
         CommentsByAccount.add_comment(author, c)
 
