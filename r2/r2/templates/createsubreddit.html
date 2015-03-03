@@ -472,14 +472,76 @@ try participating in other communities on reddit for a little while first before
 %if thing.site:
   <%utils:line_field title="${_('related subreddits')}">
     <div class="delete-field">
-      <p class="little gray">${_('similar or related subreddits. one subreddit per line.')}</p>
-      <div class="usertext-edit">
-        <textarea name="related_subreddits" rows="1" cols="1">
-          ${keep_space(thing.site.related_subreddits)}
-        </textarea>
-        <span class="error BAD_SR_NAME field-related_subreddits" style="display:none"></span>
-        <span class="error TOO_MANY_SUBREDDITS field-related_subreddits" style="display:none"></span>
-      </div>
+      <p class="little gray">${_('similar or related subreddits.')}</p>
+      <ul id="related-srs" class="subreddits">
+        <li id="sr-template" style="display:none">
+          <a href=""></a>
+          <button class="remove-sr" onclick="remove_related_sr(this.parentNode)">${_('remove')}</button>
+        </li>
+        %for sr in thing.site.related_subreddits.split('\n'):
+          %if sr:
+            <li data-name="${sr.lower()}">
+              <a href="/r/${sr}">/r/${sr}</a>
+              <button class="remove-sr" onclick="remove_related_sr(this.parentNode)">${_('remove')}</button>
+            </li>
+          %endif
+        %endfor
+      </ul>
+      %if hasattr(thing, 'subreddit_selector'):
+      <form id="add-related-sr" onsubmit="return add_related_sr(this)">
+        ${thing.subreddit_selector}
+      </form>
+      %endif
+      <textarea id="related_subreddits" name="related_subreddits" style="display:none;">
+        ${keep_space(thing.site.related_subreddits)}
+      </textarea>
+      ${error_field("BAD_SR_NAME", "related_subreddits")}
+      ${error_field("TOO_MANY_SUBREDDITS", "related_subreddits")}
+      <script type="text/javascript">
+        function add_related_sr(form) {
+          $('.SUBREDDIT_NOEXIST.field-sr').hide();
+
+          var sr_name = form.sr.value.trim();
+          if (sr_name) {
+            $.post('/api/search_reddit_names.json', { query: sr_name, exact: true }, 'json')
+            .done(function(r) {
+              var sr_name = r.names[0];
+              var sr_path = '/r/' + sr_name;
+
+              var $sr_list = $('#related-srs');
+              var $sr_item = $sr_list.find('[data-name=' + sr_name.toLowerCase() + ']');
+              if (!$sr_item.length) {
+                $sr_item = $('#sr-template').clone().removeAttr('id');
+                $sr_item.data('name', sr_name.toLowerCase()).show();
+                $sr_item.find('a').attr('href', sr_path).text(sr_path);
+              }
+              $sr_item.appendTo($sr_list);
+
+              var re = new RegExp('(^|\n)' + sr_name + '(\n|$)', 'gim');
+              var $input = $('#related_subreddits');
+              $input.val($input.val().replace(re, '').trim() + '\n' + sr_name);
+
+              $('#sr-autocomplete').val('');
+            })
+            .fail(function() {
+              $('.SUBREDDIT_NOEXIST.field-sr').text(r._("that subreddit doesn't exist")).show();
+            });
+          }
+
+          return false;
+        }
+
+        function remove_related_sr(item) {
+          var $sr_item = $(item);
+          var sr_name = $sr_item.data('name');
+
+          $sr_item.remove();
+
+          var re = new RegExp('(^|\n)' + sr_name + '(\n|$)', 'gim');
+          var $input = $('#related_subreddits');
+          $input.val($input.val().replace(re, '').trim());
+        }
+      </script>
     </div>
   </%utils:line_field>
 %endif
