@@ -30,18 +30,31 @@ class World(object):
     """
 
     @staticmethod
-    def get_safe(o, key, default=None):
+    def stacked_proxy_safe_get(stacked_proxy, key, default=None):
+        """Get a field from a StackedObjectProxy
+
+        Always succeeds, even if the proxy has not yet been initialized.
+        Normally, if the proxy hasn't been initialized, a `TypeError` is
+        raised to indicate a programming error. To avoid crashing on feature
+        checks that are done too early (e.g., during initial DB set-up of
+        the pylons environment), this function will instead return `default`
+        for an uninitialized proxy.
+
+        (Initialized proxies ALWAYS return a value, either a set value
+        or an empty string)
+
+        """
         try:
-            return getattr(o, key)
+            return getattr(stacked_proxy, key)
         except TypeError:
             return default
 
     def current_user(self):
         if c.user_is_loggedin:
-            return self.get_safe(c, 'user')
+            return self.stacked_proxy_safe_get(c, 'user')
 
     def current_subreddit(self):
-        site = self.get_safe(c, 'site')
+        site = self.stacked_proxy_safe_get(c, 'site')
         if not site:
             # In non-request code (eg queued jobs), there isn't necessarily a
             # site name (or other request-type data).  In those cases, we don't
@@ -50,17 +63,17 @@ class World(object):
         return site.name
 
     def current_subdomain(self):
-        return self.get_safe(c, 'subdomain')
+        return self.stacked_proxy_safe_get(c, 'subdomain')
 
     def current_oauth_client(self):
-        client = self.get_safe(c, 'oauth_client', None)
-        return self.get_safe(client, '_id', None)
+        client = self.stacked_proxy_safe_get(c, 'oauth_client', None)
+        return getattr(client, '_id', None)
 
     def is_admin(self, user):
         if not user or not hasattr(user, 'name'):
             return False
 
-        return user.name in self.get_safe(g, 'admins', [])
+        return user.name in self.stacked_proxy_safe_get(g, 'admins', [])
 
     def is_employee(self, user):
         if not user:
@@ -77,5 +90,5 @@ class World(object):
         return set(request.GET.getall('feature'))
 
     def live_config(self, name):
-        live = self.get_safe(g, 'live_config', {})
+        live = self.stacked_proxy_safe_get(g, 'live_config', {})
         return live.get(name)
