@@ -75,7 +75,8 @@ class FeatureState(object):
 
         return config
 
-    def is_enabled(self, user=None, subreddit=None, subdomain=None):
+    def is_enabled(self, user=None, subreddit=None, subdomain=None,
+                   oauth_client=None):
         cfg = self.config
         world = self.world
 
@@ -108,6 +109,10 @@ class FeatureState(object):
 
         subdomains = [s.lower() for s in cfg.get('subdomains', [])]
         if subdomains and subdomain and subdomain.lower() in subdomains:
+            return True
+
+        clients = set(cfg.get('oauth_clients', []))
+        if clients and oauth_client and oauth_client in clients:
             return True
 
         # Unknown value, default to off.

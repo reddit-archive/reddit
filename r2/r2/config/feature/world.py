@@ -52,6 +52,10 @@ class World(object):
     def current_subdomain(self):
         return self.get_safe(c, 'subdomain')
 
+    def current_oauth_client(self):
+        client = self.get_safe(c, 'oauth_client', None)
+        return self.get_safe(client, '_id', None)
+
     def is_admin(self, user):
         if not user or not hasattr(user, 'name'):
             return False
