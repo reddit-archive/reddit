@@ -321,6 +321,7 @@ disable_require_admin_otp = true
 page_cache_time = 0
 
 domain = $REDDIT_DOMAIN
+oauth_domain = $REDDIT_DOMAIN
 
 plugins = $plugin_str
 
@@ -335,6 +336,7 @@ DEVELOPMENT
 else
     sed -i "s/^plugins = .*$/plugins = $plugin_str/" $REDDIT_HOME/src/reddit/r2/development.update
     sed -i "s/^domain = .*$/domain = $REDDIT_DOMAIN/" $REDDIT_HOME/src/reddit/r2/development.update
+    sed -i "s/^oauth_domain = .*$/oauth_domain = $REDDIT_DOMAIN/" $REDDIT_HOME/src/reddit/r2/development.update
 fi
 
 sudo -u $REDDIT_USER make ini
