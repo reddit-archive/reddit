@@ -30,15 +30,6 @@ from pylons.i18n import _
 
 from r2.lib.db import tdb_cassandra
 from r2.lib.utils import tup
-from r2.models import (
-    Account,
-    Comment,
-    DefaultSR,
-    Link,
-    ModSR,
-    MultiReddit,
-    Subreddit,
-)
 
 
 class ModAction(tdb_cassandra.UuidThing):
@@ -194,6 +185,8 @@ class ModAction(tdb_cassandra.UuidThing):
 
     @classmethod
     def create(cls, sr, mod, action, details=None, target=None, description=None):
+        from r2.models import DefaultSR
+
         # Split this off into separate function to check for valid actions?
         if not action in cls.actions:
             raise ValueError("Invalid ModAction: %s" % action)
@@ -279,6 +272,13 @@ class ModAction(tdb_cassandra.UuidThing):
         from r2.lib.db.thing import Thing
         from r2.lib.menus import QueryButton
         from r2.lib.pages import WrappedUser
+        from r2.models import (
+            Account,
+            Link,
+            ModSR,
+            MultiReddit,
+            Subreddit,
+        )
 
         target_names = {item.target_fullname for item in wrapped
                             if hasattr(item, "target_fullname")}
