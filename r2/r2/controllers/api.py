@@ -784,12 +784,18 @@ class ApiController(RedditController):
         """
         self.check_api_friend_oauth_scope(type)
 
+        victim = iuser or nuser
+        
         if type in self._sr_friend_types:
             if isinstance(c.site, FakeSubreddit):
                 abort(403, 'forbidden')
             container = c.site
             if c.user._spam:
-                return
+                # The requesting user is marked as spam, and is trying to
+                # do a mod action. The only action they should be allowed to do
+                # and have it stick is demodding themself
+                if not (c.user == victim and type == 'moderator'):
+                    return
         else:
             container = VByName('container').run(container)
             if not container:
@@ -798,7 +804,6 @@ class ApiController(RedditController):
         # The user who made the request must be an admin or a moderator
         # for the privilege change to succeed.
         # (Exception: a user can remove privilege from oneself)
-        victim = iuser or nuser
         required_perms = []
         if c.user != victim:
             if type.startswith('wiki'):
