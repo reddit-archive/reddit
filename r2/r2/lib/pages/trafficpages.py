@@ -548,7 +548,7 @@ class PromotedLinkTraffic(Templated):
 
     @classmethod
     def make_campaign_table_row(cls, id, start, end, target, location, budget,
-                                spent, impressions, clicks, is_live, is_active,
+                                spent, paid_impressions, impressions, clicks, is_live, is_active,
                                 url, is_total):
 
         if impressions:
@@ -573,7 +573,8 @@ class PromotedLinkTraffic(Templated):
             'location': location,
             'budget': format_currency(budget, 'USD', locale=c.locale),
             'spent': format_currency(spent, 'USD', locale=c.locale),
-            'impressions': format_number(impressions),
+            'impressions_purchased': format_number(paid_impressions),
+            'impressions_delivered': format_number(impressions),
             'cpm': cpm,
             'clicks': format_number(clicks),
             'cpc': cpc,
@@ -590,6 +591,7 @@ class PromotedLinkTraffic(Templated):
 
         total_budget = 0
         total_spent = 0
+        total_paid_impressions = 0
         total_impressions = 0
         total_clicks = 0
 
@@ -618,12 +620,14 @@ class PromotedLinkTraffic(Templated):
             is_total = False
             row = self.make_campaign_table_row(camp._id36, start, end, target,
                                                location, camp.bid, spent,
+                                               camp.impressions,
                                                impressions, clicks, is_live,
                                                is_active, url, is_total)
             self.campaign_table.append(row)
 
             total_budget += camp.bid
             total_spent += spent
+            total_paid_impressions += camp.impressions
             total_impressions += impressions
             total_clicks += clicks
 
@@ -638,8 +642,9 @@ class PromotedLinkTraffic(Templated):
         is_total = True
         row = self.make_campaign_table_row(_('total'), start, end, target,
                                            location, total_budget, total_spent,
-                                           total_impressions, total_clicks,
-                                           is_live, is_active, url, is_total)
+                                           total_paid_impressions, total_impressions,
+                                           total_clicks, is_live, is_active, url,
+                                           is_total)
         self.campaign_table.append(row)
 
     def check_dates(self, thing):
