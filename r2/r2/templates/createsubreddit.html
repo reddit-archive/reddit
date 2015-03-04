@@ -692,11 +692,48 @@ try participating in other communities on reddit for a little while first before
     ${text}
   </button>
   &#32;
-  <span class="status error"></span>
+  <span class="status error" style="display:none"></span>
   ${error_field("RATELIMIT", "ratelimit")}
   ${error_field("CANT_CREATE_SR", "")}
   </div>
 </div>
 </div>
 
+%endif
+
+%if thing.site:
+<script type="text/javascript">
+(function(){
+  var dirty = {};
+
+  $(window).on('beforeunload', function(e) {
+    if ($('#sr-form .status:visible').length) {
+      return;
+    }
+    for (field in dirty) {
+      if (dirty[field]) {
+        return r._('There are unsaved changes. Are you sure you want to leave this page?');
+      }
+    }
+  });
+
+  $('#sr-form').on('change', function(e) {
+    var input = e.target;
+    if (input.tagName == 'SELECT') {
+      var $default = $('option[selected]', input);
+      var $current = $('option:selected', input);
+      dirty[input.name] = !$default.is($current);
+    } else if (input.type == 'checkbox' || input.type == 'radio') {
+      dirty[input.name] = input.checked ? !input.defaultChecked : input.defaultChecked;
+    } else if (input.type == 'file') {
+      /* ignore */
+    } else {
+      dirty[input.name] = input.value != input.defaultValue;
+    }
+    if (!dirty[input.name]) {
+      delete dirty[input.name];
+    }
+  });
+})();
+</script>
 %endif
