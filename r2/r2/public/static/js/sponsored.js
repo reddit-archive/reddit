@@ -763,6 +763,14 @@ var exports = r.sponsored = {
 
     },
 
+    getAvailableImpsByDay: function(dates, booked, inventoryKey) {
+       return _.map(dates, function(date) {
+            var datestr = $.datepicker.formatDate('mm/dd/yy', date);
+            var daily_booked = booked[datestr] || 0;
+            return r.sponsored.inventory[inventoryKey][datestr] + daily_booked;
+        });
+    },
+
     check_inventory: function($form, targeting, timing, budget, isOverride) {
         var bid = budget.bid,
             cpm = budget.cpm,
@@ -778,11 +786,7 @@ var exports = r.sponsored = {
         $.when(r.sponsored.get_check_inventory(targeting, timing)).then(
             function() {
                 var dates = timing.dates;
-                var availableByDay = _.map(dates, function(date) {
-                  var datestr = $.datepicker.formatDate('mm/dd/yy', date);
-                  var daily_booked = booked[datestr] || 0;
-                  return r.sponsored.inventory[inventoryKey][datestr] + daily_booked
-                });
+                var availableByDay = this.getAvailableImpsByDay(dates, booked, inventoryKey)
                 React.renderComponent(
                   CampaignCreator({
                     bid: bid,
@@ -798,7 +802,7 @@ var exports = r.sponsored = {
                   }),
                   document.getElementById('campaign-creator')
                 );
-            },
+            }.bind(this),
             function () {
                 React.renderComponent(
                   CampaignSet(null,
@@ -1042,20 +1046,31 @@ var exports = r.sponsored = {
 
         if (checkInventory) {
             this.check_inventory($form, targeting, timing, budget, priority.isOverride)
-        }
-        else if (!priority.isCpm) {
+        } else if (!priority.isCpm) {
+          var booked = this.get_booked_inventory($form, targeting.sr, 
+                                                 targeting.geotarget, priority.isOverride);
+          var availableByDate = this.getAvailableImpsByDay(timing.dates, booked,
+                                                           targeting.inventoryKey);
+          var totalImpsAvailable = _.reduce(availableByDate, sum, 0);    
+
+
           React.renderComponent(
-            CampaignSet(null,
-              InfoText(null, r._('house campaigns, man.')),
-              CampaignOptionTable(null,
-                CampaignOption({
-                  bid: null,
-                  end: timing.enddate,
-                  impressions: 'unsold ',
-                  isNew: !$("#campaign").parents('tr:first').length,
-                  primary: true,
-                  start: timing.startdate,
-                })
+            React.DOM.div(null,
+              CampaignSet(null,
+                InfoText(null, r._('house campaigns, man.')),
+                CampaignOptionTable(null,
+                  CampaignOption({
+                    bid: null,
+                    end: timing.enddate,
+                    impressions: 'unsold ',
+                    isNew: !$("#campaign").parents('tr:first').length,
+                    primary: true,
+                    start: timing.startdate,
+                  })
+                )
+              ),
+              InfoText({impressions: totalImpsAvailable},
+                  r._('maximum possible impressions: %(impressions)s')
               )
             ),
             document.getElementById('campaign-creator')
