@@ -3914,18 +3914,28 @@ class ApiController(RedditController):
     @csrf_exempt
     @require_oauth2_scope("read")
     @json_validate(query=VPrintable('query', max_length=50),
-                   include_over_18=VBoolean('include_over_18', default=True))
+                   include_over_18=VBoolean('include_over_18', default=True),
+                   exact=VBoolean('exact', default=False))
     @api_doc(api_section.subreddits)
-    def POST_search_reddit_names(self, responder, query, include_over_18):
+    def POST_search_reddit_names(self, responder, query, include_over_18, exact):
         """List subreddit names that begin with a query string.
 
         Subreddits whose names begin with `query` will be returned. If
         `include_over_18` is false, subreddits with over-18 content
         restrictions will be filtered from the results.
 
+        If `exact` is true, only an exact match will be returned.
         """
         names = []
-        if query:
+        if query and exact:
+            try:
+                sr = Subreddit._by_name(query.strip())
+            except NotFound:
+                self.abort404()
+            else:
+                # not respecting include_over_18 for exact match
+                names = [sr.name]
+        elif query:
             names = search_reddits(query, include_over_18)
 
         return {'names': names}
