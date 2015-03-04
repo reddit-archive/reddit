@@ -803,25 +803,15 @@ class Permacache(object):
         self.cf = column_family
 
     @classmethod
-    def _setup_column_family(cls, column_family_name, client,
-                             read_consistency_level=CL_ONE,
-                             write_consistency_level=CL_QUORUM):
+    def _setup_column_family(cls, column_family_name, client):
         cf = ColumnFamily(client, column_family_name,
-                          read_consistency_level=read_consistency_level,
-                          write_consistency_level=write_consistency_level)
+                          read_consistency_level=CL_QUORUM,
+                          write_consistency_level=CL_QUORUM)
         return cf
 
-    def _rcl(self, rcl=None):
-        return rcl or self.cf.read_consistency_level
-
-    def _wcl(self, wcl=None):
-        return wcl or self.cf.write_consistency_level
-
-    def _backend_get(self, keys, read_consistency_level=None):
-        rcl = self._rcl(read_consistency_level)
+    def _backend_get(self, keys):
         keys, is_single = tup(keys, ret_is_single=True)
-        rows = self.cf.multiget(
-            keys, columns=[self.COLUMN_NAME], read_consistency_level=rcl)
+        rows = self.cf.multiget(keys, columns=[self.COLUMN_NAME])
         ret = {
             key: pickle.loads(columns[self.COLUMN_NAME])
             for key, columns in rows.iteritems()
@@ -834,25 +824,22 @@ class Permacache(object):
         else:
             return ret
 
-    def _backend_set(self, key, val, write_consistency_level=None):
+    def _backend_set(self, key, val):
         keys = {key: val}
-        ret = self._backend_set_multi(
-            keys, write_consistency_level=write_consistency_level)
+        ret = self._backend_set_multi(keys)
         return ret.get(key)
 
-    def _backend_set_multi(self, keys, prefix='', write_consistency_level=None):
-        wcl = self._wcl(write_consistency_level)
+    def _backend_set_multi(self, keys, prefix=''):
         ret = {}
-        with self.cf.batch(write_consistency_level=wcl):
+        with self.cf.batch():
             for key, val in keys.iteritems():
                 rowkey = "%s%s" % (prefix, key)
                 column = {self.COLUMN_NAME: pickle.dumps(val)}
                 ret[key] = self.cf.insert(rowkey, column)
         return ret
 
-    def _backend_delete(self, key, write_consistency_level=None):
-        wcl = self._wcl(write_consistency_level)
-        self.cf.remove(key, write_consistency_level=wcl)
+    def _backend_delete(self, key):
+        self.cf.remove(key)
 
     def get(self, key, default=None, allow_local=True, stale=False):
         val = self.cache_chain.get(
@@ -896,14 +883,12 @@ class Permacache(object):
         """Mutate a Cassandra key as atomically as possible"""
         with self.make_lock("permacache_mutate", "mutate_%s" % key):
             # This has an edge-case where the cache chain was populated by a ONE
-            # read rather than a QUORUM one just before running this. We could
-            # avoid this by not using memcached at all for these mutations,
-            # which would require some more row-cache performance testing.
-            read_consistency_level = write_consistency_level = CL_QUORUM
+            # read rather than a QUORUM one just before running this. All reads
+            # should use consistency level QUORUM.
             if willread:
                 value = self.cache_chain.get(key, allow_local=False)
                 if value is None:
-                    value = self._backend_get(key, read_consistency_level)
+                    value = self._backend_get(key)
             else:
                 value = None
 
@@ -911,7 +896,7 @@ class Permacache(object):
             new_value = mutation_fn(copy(value))
 
             if not willread or value != new_value:
-                self._backend_set(key, new_value, write_consistency_level)
+                self._backend_set(key, new_value)
             self.cache_chain.set(key, new_value, use_timer=False)
         return new_value
 

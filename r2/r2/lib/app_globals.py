@@ -670,8 +670,6 @@ class Globals(object):
         permacache_cf = Permacache._setup_column_family(
             'permacache',
             self.cassandra_pools[self.cassandra_default_pool],
-            read_consistency_level=self.cassandra_rcl,
-            write_consistency_level=self.cassandra_wcl
         )
 
         self.startup_timer.intermediate("cassandra")
