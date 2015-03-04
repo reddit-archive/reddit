@@ -1846,6 +1846,18 @@ class Message(Thing, Printable):
     def permalink(self):
         return "/message/messages/%s" % self._id36
 
+    def make_permalink(self, force_domain=False):
+        from r2.lib.template_helpers import get_domain
+        p = self.permalink
+        if force_domain:
+            res = "http://%s/%s" % (get_domain(cname=False, subreddit=False), p)
+        else:
+            res = p
+        return res
+
+    def make_permalink_slow(self, context=None, anchor=False, force_domain=False):
+        return self.make_permalink(force_domain)
+
     def can_view_slow(self):
         if c.user_is_loggedin:
             # simple case from before:
