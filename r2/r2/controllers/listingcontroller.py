@@ -593,7 +593,12 @@ class AdsController(SubredditListingController):
 
     def keep_fn(self):
         def keep(item):
-            return item.promoted and not item._deleted
+            if item._fullname in self.promos:
+                return False
+            if item.promoted and not item._deleted:
+                self.promos.add(item._fullname)
+                return True
+            return False
         return keep
 
     def query(self):
@@ -606,6 +611,10 @@ class AdsController(SubredditListingController):
         listing = ListingController.listing(self)
         promote.add_trackers(listing.things, c.site)
         return listing
+
+    def GET_listing(self, *a, **kw):
+        self.promos = set()
+        return SubredditListingController.GET_listing(self, *a, **kw)
 
 
 class RandomrisingController(ListingWithPromos):
