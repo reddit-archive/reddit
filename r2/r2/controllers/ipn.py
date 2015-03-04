@@ -44,6 +44,7 @@ from r2.lib.validator import (
     textresponse,
     validatedForm,
     VByName,
+    VDecimal,
     VFloat,
     VInt,
     VLength,
@@ -459,7 +460,7 @@ class IpnController(RedditController):
                   paying_id = VPrintable('payer_id', 50),
                   payer_email = VPrintable('payer_email', 250),
                   mc_currency = VPrintable('mc_currency', 20),
-                  mc_gross = VFloat('mc_gross'),
+                  mc_gross = VDecimal('mc_gross'),
                   custom = VPrintable('custom', 50))
     def POST_ipn(self, paypal_secret, payment_status, txn_id, paying_id,
                  payer_email, mc_currency, mc_gross, custom):

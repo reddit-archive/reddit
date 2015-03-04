@@ -23,6 +23,7 @@
 import cgi
 import json
 from collections import OrderedDict
+from decimal import Decimal
 
 from pylons import c, g, request, response
 from pylons.i18n import _
@@ -1707,9 +1708,16 @@ class VInt(VNumber):
 
         return {self.param: description}
 
+
 class VFloat(VNumber):
     def cast(self, val):
         return float(val)
+
+
+class VDecimal(VNumber):
+    def cast(self, val):
+        return Decimal(val)
+
 
 class VCssName(Validator):
     """
