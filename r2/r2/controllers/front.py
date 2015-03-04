@@ -218,7 +218,7 @@ class FrontController(RedditController):
     @api_doc(api_section.listings,
              uri='/comments/{article}',
              uses_site=True,
-             extensions=['json', 'xml'])
+             supports_rss=True)
     def GET_comments(
         self, article, comment, context, sort, limit, depth,
         showedits=True, showmore=True):
@@ -475,7 +475,7 @@ class FrontController(RedditController):
         action=VOneOf('type', ModAction.actions),
     )
     @api_doc(api_section.moderation, uses_site=True,
-             uri="/about/log", extensions=["json", "xml"])
+             uri="/about/log", supports_rss=True)
     def GET_moderationlog(self, num, after, reverse, count, mod, action):
         """Get a list of recent moderation actions.
 
@@ -748,8 +748,7 @@ class FrontController(RedditController):
     @validate(location=nop('location'),
               created=VOneOf('created', ('true','false'),
                              default='false'))
-    @api_doc(api_section.subreddits, uri="/r/{subreddit}/about/edit",
-             extensions=["json"])
+    @api_doc(api_section.subreddits, uri="/r/{subreddit}/about/edit")
     def GET_editreddit(self, location, created):
         """Get the current settings of a subreddit.
 
@@ -765,7 +764,7 @@ class FrontController(RedditController):
             return self._edit_normal_reddit(location, created)
 
     @require_oauth2_scope("read")
-    @api_doc(api_section.subreddits, uri='/r/{subreddit}/about', extensions=['json'])
+    @api_doc(api_section.subreddits, uri='/r/{subreddit}/about')
     def GET_about(self):
         """Return information about the subreddit.
 
@@ -841,7 +840,7 @@ class FrontController(RedditController):
     @api_doc(
         api_section.listings,
         uri="/duplicates/{article}",
-        extensions=['json', 'xml'],
+        supports_rss=True,
     )
     def GET_duplicates(self, article, num, after, reverse, count):
         """Return a list of other submissions of the same URL"""
@@ -869,7 +868,7 @@ class FrontController(RedditController):
     @base_listing
     @require_oauth2_scope("read")
     @validate(query=nop('q', docs={"q": "a search query"}))
-    @api_doc(api_section.subreddits, uri='/subreddits/search', extensions=['json', 'xml'])
+    @api_doc(api_section.subreddits, uri='/subreddits/search', supports_rss=True)
     def GET_search_reddits(self, query, reverse, after, count, num):
         """Search subreddits by title and description."""
         q = SubredditSearchQuery(query)
@@ -896,7 +895,7 @@ class FrontController(RedditController):
               recent=VMenu('t', TimeMenu, remember=False),
               restrict_sr=VBoolean('restrict_sr', default=False),
               syntax=VOneOf('syntax', options=SearchQuery.known_syntaxes))
-    @api_doc(api_section.search, extensions=['json', 'xml'], uses_site=True)
+    @api_doc(api_section.search, supports_rss=True, uses_site=True)
     def GET_search(self, query, num, reverse, after, count, sort, recent,
                    restrict_sr, syntax):
         """Search links page."""

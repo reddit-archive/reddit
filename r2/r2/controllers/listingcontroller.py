@@ -236,7 +236,7 @@ listing_api_doc = partial(
     section=api_section.listings,
     extends=ListingController.GET_listing,
     notes=[paginated_listing.doc_note],
-    extensions=["json", "xml"],
+    supports_rss=True,
 )
 
 
@@ -892,8 +892,7 @@ class UserController(ListingController):
 
     @require_oauth2_scope("read")
     @validate(vuser = VExistingUname('username'))
-    @api_doc(section=api_section.users, uri='/user/{username}/about',
-             extensions=['json'])
+    @api_doc(section=api_section.users, uri='/user/{username}/about')
     def GET_about(self, vuser):
         """Return information about the user, including karma and gold status."""
         if (not is_api() or

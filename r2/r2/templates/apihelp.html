@@ -229,17 +229,19 @@ example, `t3_15bfi0`.
             <h3>
               <span class="method">${method}&nbsp;</span>
               ${api_uri_with_sr_maybe(uri, in_subreddit)}
-              %if 'extensions' in docs:
-                <span class="extensions">
-                  [ ${' | '.join('.'+extension for extension in docs['extensions'])} ]
-                </span>
-              %endif
               %if docs['oauth_scopes']:
                 <span class="oauth-scope-list">
                   %for scope in docs['oauth_scopes']:
-                    <span class="oauth-scope">${scope or "any"}</span>
+                    <a href="https://github.com/reddit/reddit/wiki/OAuth2">
+                        <span class="api-badge oauth-scope">${scope or "any"}</span>
+                    </a>
                   %endfor
                 </span>
+              %endif
+              %if docs['supports_rss']:
+                <a href="https://www.reddit.com/wiki/rss">
+                    <span class="api-badge rss-support">rss support</span>
+                </a>
               %endif
             </h3>
             %if 'uri_variants' in docs:

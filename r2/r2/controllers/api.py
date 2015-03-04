@@ -233,7 +233,7 @@ class ApiController(RedditController):
             return {}
 
     @json_validate(user=VUname(("user",)))
-    @api_doc(api_section.users, extensions=["json"])
+    @api_doc(api_section.users)
     def GET_username_available(self, responder, user):
         """
         Check whether a username is available for registration.
@@ -281,7 +281,7 @@ class ApiController(RedditController):
 
     @allow_oauth2_access
     @json_validate()
-    @api_doc(api_section.captcha, extensions=["json"])
+    @api_doc(api_section.captcha)
     def GET_needs_captcha(self, responder):
         """
         Check whether CAPTCHAs are needed for API methods that define the
@@ -344,7 +344,7 @@ class ApiController(RedditController):
 
     @require_oauth2_scope("submit")
     @json_validate()
-    @api_doc(api_section.subreddits, uses_site=True, extensions=["json"])
+    @api_doc(api_section.subreddits, uses_site=True)
     def GET_submit_text(self, responder):
         """Get the submission text for the subreddit.
 
@@ -2796,7 +2796,7 @@ class ApiController(RedditController):
 
     @require_oauth2_scope("save")
     @json_validate(VUser())
-    @api_doc(api_section.links_and_comments, extensions=["json"])
+    @api_doc(api_section.links_and_comments)
     def GET_saved_categories(self, responder):
         """Get a list of categories in which things are currently saved.
 
@@ -3915,7 +3915,7 @@ class ApiController(RedditController):
     @require_oauth2_scope("read")
     @json_validate(query=VPrintable('query', max_length=50),
                    include_over_18=VBoolean('include_over_18', default=True))
-    @api_doc(api_section.subreddits, extensions=["json"])
+    @api_doc(api_section.subreddits)
     def POST_search_reddit_names(self, responder, query, include_over_18):
         """List subreddit names that begin with a query string.
 
@@ -4037,7 +4037,7 @@ class ApiController(RedditController):
 
     @require_oauth2_scope("read")
     @json_validate(query=VLength("query", max_length=50))
-    @api_doc(api_section.subreddits, extensions=["json"])
+    @api_doc(api_section.subreddits)
     def GET_subreddits_by_topic(self, responder, query):
         """Return a list of subreddits that are relevant to a search query."""
         if not g.CLOUDSEARCH_SEARCH_API:
