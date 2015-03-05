@@ -80,6 +80,8 @@ r.spotlight.requestNewPromo = function() {
         this.lineup[this.lineup.pos] = newPromo;
         $promotedLink.add($clearLeft).remove();
         $promo.show();
+        // force a redraw to prevent showing duplicate ads
+        $organicListing.hide().show();
     }.bind(this));
 }
 
