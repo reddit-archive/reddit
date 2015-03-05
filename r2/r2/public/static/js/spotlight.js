@@ -51,7 +51,7 @@ r.spotlight.setup = function(organic_links, interest_prob, show_promo, srnames) 
     this.init()
 
     if ('hidden' in document) {
-        $(window).on('visibilitychange', function(e) {
+        $(document).on('visibilitychange', function(e) {
             if (!document.hidden) {
                 this.requestNewPromo();
             }
