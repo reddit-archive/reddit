@@ -50,7 +50,15 @@ r.spotlight.setup = function(organic_links, interest_prob, show_promo, srnames) 
 
     this.init()
 
-    $(window).on('focus', r.spotlight.requestNewPromo.bind(this));
+    if ('hidden' in document) {
+        $(window).on('visibilitychange', function(e) {
+            if (!document.hidden) {
+                this.requestNewPromo();
+            }
+        }.bind(this));
+    } else {
+        $(window).on('focus', this.requestNewPromo.bind(this));
+    }
 }
 
 r.spotlight.requestNewPromo = function() {
