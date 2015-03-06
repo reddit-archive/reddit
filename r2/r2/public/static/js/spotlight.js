@@ -1,85 +1,86 @@
-r.spotlight = {}
+!function(r, _, $) {
+  r.spotlight = {
+    setup: function(organicLinks, interestProb, showPromo, srnames) {
+      this.organics = [];
+      this.lineup = [];
+      this.interestProb = interestProb;
+      this.showPromo = showPromo;
+      this.srnames = srnames;
+      this.lastPromoTimestamp = Date.now();
+      this.MIN_PROMO_TIME = 1500;
+      this.next = this._advance.bind(this, 1);
+      this.prev = this._advance.bind(this, -1);
+      this.$listing = $('.organic-listing');
 
-r.spotlight.init = function() {
-    var listing = $('.organic-listing')
-    if (!listing.length) {
-        return
-    }
+      organicLinks.forEach(function(name) {
+        this.organics.push(name);
+        this.lineup.push({ fullname: name, });
+      }, this);
 
-    $('.organic-listing .arrow.prev').on('click', $.proxy(this, 'prev'))
-    $('.organic-listing .arrow.next').on('click', $.proxy(this, 'next'))
+      if (interestProb) {
+        this.lineup.push('.interestbar');
+      }
 
-    var selectedThing,
-        lastClickFullname = r.analytics.breadcrumbs.lastClickFullname(),
-        lastClickThing = $(lastClickFullname ? '.id-' + lastClickFullname : null)
-    if (lastClickThing.length && listing.has(lastClickThing).length) {
-        r.debug('restoring spotlight selection to last click')
-        selectedThing = {fullname: lastClickFullname}
-    } else {
-        selectedThing = this.chooseRandom()
-    }
+      if (!this.$listing.length) {
+        return;
+      }
 
-    this.lineup = _.chain(this.lineup)
-        .reject(function(el) { return _.isEqual(selectedThing, el) })
+      this.$listing.find('.arrow.prev').on('click', this.prev);
+      this.$listing.find('.arrow.next').on('click', this.next);
+
+      var selectedThing;
+      var lastClickFullname = r.analytics.breadcrumbs.lastClickFullname();
+      var $lastClickThing = $(lastClickFullname ? '.id-' + lastClickFullname : null);
+
+      if ($lastClickThing.length && this.$listing.has($lastClickThing).length) {
+        r.debug('restoring spotlight selection to last click');
+        selectedThing = { fullname: lastClickFullname, };
+      } else {
+        selectedThing = this.chooseRandom();
+      }
+
+      this.lineup = _.chain(this.lineup)
+        .reject(function(el) {
+          return _.isEqual(selectedThing, el);
+        })
         .shuffle()
         .unshift(selectedThing)
-        .value()
+        .value();
 
-    this.lineup.pos = 0
-    r.spotlight._advance(0)
-}
+      this.lineup.pos = 0;
+      this._advance(0);
 
-r.spotlight.setup = function(organic_links, interest_prob, show_promo, srnames) {
-    this.organics = []
-    this.lineup = []
-
-    _.each(organic_links, function (name) {
-        this.organics.push(name)
-        this.lineup.push({fullname: name})
-    }, this)
-
-    if (interest_prob) {
-        this.lineup.push('.interestbar')
-    }
-
-    this.interest_prob = interest_prob
-    this.show_promo = show_promo
-    this.srnames = srnames
-    this.lastPromoTimestamp = Date.now();
-    this.MIN_PROMO_TIME = 1500;
-
-    this.init()
-
-    if ('hidden' in document) {
+      if ('hidden' in document) {
         $(document).on('visibilitychange', function(e) {
-            if (!document.hidden) {
-                this.requestNewPromo();
-            }
+          if (!document.hidden) {
+            this.requestNewPromo();
+          }
         }.bind(this));
-    } else {
+      } else {
         $(window).on('focus', this.requestNewPromo.bind(this));
-    }
-}
+      }
+    },
 
-r.spotlight.requestNewPromo = function() {
-    // the ad will be stored as a promise
-    if (!this.lineup[this.lineup.pos].promise) {
+    requestNewPromo: function() {
+      // the ad will be stored as a promise
+      if (!this.lineup[this.lineup.pos].promise) {
         return;
-    }
-    
-    var $organicListing = $('.organic-listing');
-    var $promotedLink = $organicListing.find('.promotedlink');
-    var $clearLeft = $promotedLink.next('.clearleft');
+      }
 
-    if ($promotedLink.is(':hidden')||
-            $promotedLink.offset().top < window.scrollY ||
-            Date.now() - this.lastPromoTimestamp < this.MIN_PROMO_TIME) {
+      var $promotedLink = this.$listing.find('.promotedlink');
+      var $clearLeft = $promotedLink.next('.clearleft');
+
+      if ($promotedLink.is(':hidden') ||
+          $promotedLink.offset().top < window.scrollY ||
+          Date.now() - this.lastPromoTimestamp < this.MIN_PROMO_TIME) {
         return;
-    }
+      }
 
-    var newPromo = this.requestPromo();
-    newPromo.then(function($promo) {
-        if (!$promo || !$promo.length) { return }
+      var newPromo = this.requestPromo();
+      newPromo.then(function($promo) {
+        if (!$promo || !$promo.length) {
+          return;
+        }
 
         var $link = $promo.eq(0);
         var fullname = $link.data('fullname');
@@ -89,152 +90,148 @@ r.spotlight.requestNewPromo = function() {
         $promotedLink.add($clearLeft).remove();
         $promo.show();
         // force a redraw to prevent showing duplicate ads
-        $organicListing.hide().show();
-    }.bind(this));
-}
+        this.$listing.hide().show();
+      }.bind(this));
+    },
 
-r.spotlight.requestPromo = function() {
-    return $.ajax({
-        type: "POST",
+    requestPromo: function() {
+      return $.ajax({
+        type: 'POST',
         url: '/api/request_promo',
         timeout: 1000,
         data: {
-            'srnames': this.srnames,
-            'r': r.config.post_site
-        }
-    }).pipe(function(promo) {
+          srnames: this.srnames,
+          r: r.config.post_site,
+        },
+      }).pipe(function(promo) {
         if (promo) {
-            r.spotlight.lastPromoTimestamp = Date.now();
-            $item = $(promo)
-            $item.hide().appendTo($('.organic-listing'))
-            return $item
+          this.lastPromoTimestamp = Date.now();
+          var $item = $(promo);
+          $item.hide().appendTo(this.$listing);
+          return $item;
         } else {
-            return false
+          return false;
         }
-    })
-}
+      }.bind(this));
+    },
 
-r.spotlight.chooseRandom = function() {
-    var listing = $('.organic-listing')
-    if (this.show_promo) {
-        return this.requestPromo()
-    } else if (Math.random() < this.interest_prob) {
-        return '.interestbar'
-    } else {
-        var name = this.organics[Math.floor(Math.random() * this.organics.length)]
-        return {fullname: name}
-    }
-}
+    chooseRandom: function() {
+      if (this.showPromo) {
+        return this.requestPromo();
+      } else if (Math.random() < this.interestProb) {
+        return '.interestbar';
+      } else {
+        var name = this.organics[Math.floor(Math.random() * this.organics.length)];
+        return { fullname: name, };
+      }
+    },
 
-r.spotlight._materialize = function(item) {
-    if (!item || item instanceof $ || item.promise) {
-        return item
-    }
+    _materialize: function(item) {
+      if (!item || item instanceof $ || item.promise) {
+        return item;
+      }
 
-    var listing = $('.organic-listing'),
-        itemSel
+      var itemSel;
 
-    if (_.isString(item)) {
-        itemSel = item
-    } else if (item.campaign) {
-        itemSel = '[data-cid="' + item.campaign + '"]'
-    } else {
-        itemSel = '[data-fullname="' + item.fullname + '"]'
-    }
-    var $item = listing.find(itemSel)
+      if (typeof item === 'string') {
+        itemSel = item;
+      } else if (item.campaign) {
+        itemSel = '[data-cid="' + item.campaign + '"]';
+      } else {
+        itemSel = '[data-fullname="' + item.fullname + '"]';
+      }
 
-    if ($item.length) {
-        return $item
-    } else {
-        r.error('unable to locate spotlight item', itemSel, item)
-    }
-}
+      var $item = this.$listing.find(itemSel);
 
-r.spotlight._advancePos = function(dir) {
-    return (this.lineup.pos + dir + this.lineup.length) % this.lineup.length
-}
+      if ($item.length) {
+        return $item;
+      } else {
+        r.error('unable to locate spotlight item', itemSel, item);
+      }
+    },
 
-r.spotlight._materializePos = function(pos) {
-    return this.lineup[pos] = this._materialize(this.lineup[pos])
-}
+    _advancePos: function(dir) {
+      return (this.lineup.pos + dir + this.lineup.length) % this.lineup.length;
+    },
 
-r.spotlight._advance = function(dir) {
-    var listing = $('.organic-listing'),
-        $nextprev = listing.find('.nextprev'),
-        visible = listing.find('.thing:visible'),
-        nextPos = this._advancePos(dir),
-        $next = this._materializePos(nextPos)
+    _materializePos: function(pos) {
+      return this.lineup[pos] = this._materialize(this.lineup[pos]);
+    },
 
-    var showWorking = setTimeout(function() {
-        $nextprev.toggleClass('working', $next.state && $next.state() == 'pending')
-    }, 200)
+    _advance: function(dir) {
+      var $nextprev = this.$listing.find('.nextprev');
+      var $visible = this.$listing.find('.thing:visible');
+      var nextPos = this._advancePos(dir);
+      var $next = this._materializePos(nextPos);
 
-    this.lineup.pos = nextPos
+      var showWorking = setTimeout(function() {
+        $nextprev.toggleClass('working', $next.state && $next.state() == 'pending');
+      }, 200);
 
-    var $nextLoad = $.when($next)
-    $nextLoad.always(_.bind(function($next) {
-        clearTimeout(showWorking)
+      this.lineup.pos = nextPos;
+      var $nextLoad = $.when($next);
+
+      $nextLoad.always(function($next) {
+        clearTimeout(showWorking);
 
         if (this.lineup.pos != nextPos) {
-            // we've been passed!
-            return
+          // we've been passed!
+          return;
         }
 
-        if ($nextLoad.state() == "rejected" || !$next) {
-            if (this.lineup.length > 1) {
-                this._advance(dir || 1)
-                return
-            } else {
-                listing.hide()
-                return
-            }
+        if ($nextLoad.state() == 'rejected' || !$next) {
+          if (this.lineup.length > 1) {
+            this._advance(dir || 1);
+            return;
+          } else {
+            this.$listing.hide();
+            return;
+          }
         }
 
-        $nextprev.removeClass('working')
-        listing.removeClass('loading')
+        $nextprev.removeClass('working');
+        this.$listing.removeClass('loading');
 
         // match the listing background to that of the displayed thing
         if ($next) {
-            var nextColor = $next.css('background-color');
-            if (nextColor) {
-                listing.css('background-color', nextColor);
-            }
+          var nextColor = $next.css('background-color');
+          if (nextColor) {
+            this.$listing.css('background-color', nextColor);
+          }
         }
 
-        visible.hide()
-        $next.show()
-
-        this.help($next)
+        $visible.hide();
+        $next.show();
+        this.help($next);
 
         // prefetch forward and backward if advanced beyond default state
         if (this.lineup.pos != 0) {
-            this._materializePos(this._advancePos(1))
-            this._materializePos(this._advancePos(-1))
+          this._materializePos(this._advancePos(1));
+          this._materializePos(this._advancePos(-1));
         }
-    }, this))
-}
+      }.bind(this));
+    },
 
-r.spotlight.next = $.proxy(r.spotlight, '_advance', 1)
-r.spotlight.prev = $.proxy(r.spotlight, '_advance', -1)
+    help: function($thing) {
+      var $help = $('#spotlight-help');
 
-r.spotlight.help = function(thing) {
-    var help = $('#spotlight-help')
+      if (!$help.length) {
+        return;
+      }
 
-    if (!help.length) {
-        return
-    }
-
-    // this function can be called before the help bubble has initialized
-    $(function() {
-        help.data('HelpBubble').hide(function() {
-            help.find('.help-section').hide()
-            if (thing.hasClass('promoted')) {
-                help.find('.help-promoted').show()
-            } else if (thing.hasClass('interestbar')) {
-                help.find('.help-interestbar').show()
-            } else {
-                help.find('.help-organic').show()
-            }
-        })
-    })
-}
+      // this function can be called before the help bubble has initialized
+      $(function() {
+        $help.data('HelpBubble').hide(function() {
+          $help.find('.help-section').hide();
+          if ($thing.hasClass('promoted')) {
+            $help.find('.help-promoted').show();
+          } else if ($thing.hasClass('interestbar')) {
+            $help.find('.help-interestbar').show();
+          } else {
+            $help.find('.help-organic').show();
+          }
+        });
+      });
+    },
+  };
+}(r, _, jQuery);
