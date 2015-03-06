@@ -539,7 +539,7 @@ try participating in other communities on reddit for a little while first before
 
           var re = new RegExp('(^|\n)' + sr_name + '(\n|$)', 'gim');
           var $input = $('#related_subreddits');
-          $input.val($input.val().replace(re, '').trim());
+          $input.val($input.val().replace(re, '\n').trim());
         }
       </script>
     </div>
@@ -568,7 +568,7 @@ try participating in other communities on reddit for a little while first before
         </%utils:image_upload>
       </li>
       <li>
-        <p><label>${_('banner image')}</label> <span class="gray">${_('banner should have 16:9 aspect ratio. PNG or JPG only.')}</span></p>
+        <p><label>${_('header image')}</label> <span class="gray">${_('header should have 16:9 aspect ratio. PNG or JPG only.')}</span></p>
         <p class="little gray">${_('minimum size: 640x360px')} / ${_('maximum size: 1280x720px')}</span></p>
         <%utils:image_upload post_target="/api/upload_sr_img"
                              current_image="${thing.site.banner_img}"
@@ -578,7 +578,7 @@ try participating in other communities on reddit for a little while first before
                     style="display: none;"
                   %endif
                   onclick="return post_form(this.form, 'delete_sr_banner');">
-            ${_('remove custom banner image')}
+            ${_('remove custom header image')}
           </button>
           <div class="clearleft"></div>
           <input type="hidden" name="uh" value="${c.modhash}">
@@ -587,7 +587,7 @@ try participating in other communities on reddit for a little while first before
         </%utils:image_upload>
       </li>
       <li>
-        <p><label>${_('color')}</label> <span class="gray">${_('used as a thematic color for your subreddit in the app')}</span></p>
+        <p><label>${_('color')}</label> <span class="gray">${_('used as a thematic color for your subreddit on mobile')}</span></p>
         <ul class="colors">
           %for color, color_name in thing.color_options.iteritems():
             %if color:
@@ -607,7 +607,7 @@ try participating in other communities on reddit for a little while first before
           <li class="custom-color">
             <% has_custom_color = c.site.key_color and c.site.key_color not in thing.color_options %>
             <label>
-              <p>${_('or pick a custom color:')}</p>
+              <p class="little">${_('or pick a custom color:')}</p>
               <input id="custom-color" type="radio" name="key_color" value=""
                      %if has_custom_color:
                        checked="checked"
