@@ -742,8 +742,10 @@ class UserController(ListingController):
 
             if c.user == self.vuser:
                 if not item.likes and self.where == 'liked':
+                    g.stats.simple_event("vote.missing_votes_by_account")
                     return False
                 if item.likes is not False and self.where == 'disliked':
+                    g.stats.simple_event("vote.missing_votes_by_account")
                     return False
                 if self.where == 'saved' and not item.saved:
                     return False
