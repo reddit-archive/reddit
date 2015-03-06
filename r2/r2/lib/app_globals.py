@@ -54,6 +54,7 @@ from r2.lib.cache import (
     Permacache,
     SelfEmptyingCache,
     StaleCacheChain,
+    TransitionalCache,
     validate_size_error,
     validate_size_warn,
 )
@@ -873,6 +874,9 @@ class Globals(object):
         # 'g'
         def reset_caches():
             for name, chain in cache_chains.iteritems():
+                if isinstance(chain, TransitionalCache):
+                    chain = chain.read_chain
+
                 chain.reset()
                 if isinstance(chain, StaleCacheChain):
                     chain.stats = StaleCacheStats(self.stats, name)

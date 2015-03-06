@@ -488,15 +488,12 @@ class TransitionalCache(CacheUtils):
         else:
             return self.replacement.stats
 
-    @stats.setter
-    def stats(self, value):
-        """No-op.
-
-        TransitionCache is designed to wrap two cache chains. We can ignore
-        the set (which happens at the end of reset_caches in app_globals.py)
-        because each chain will separately get dealt with on its own.
-        """
-        pass
+    @property
+    def read_chain(self):
+        if self.read_original:
+            return self.original
+        else:
+            return self.replacement
 
     @property
     def caches(self):
@@ -558,7 +555,6 @@ class TransitionalCache(CacheUtils):
     delete = make_set_fn("delete")
     delete_multi = make_set_fn("delete_multi")
     flush_all = make_set_fn("flush_all")
-    reset = make_set_fn("reset")
 
 
 def cache_timer_decorator(fn_name):
