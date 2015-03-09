@@ -81,7 +81,7 @@
       var $promotedLink = this.$listing.find('.promotedlink');
       var $clearLeft = $promotedLink.next('.clearleft');
 
-      if ($promotedLink.is(':hidden') ||
+      if (!$promotedLink.length || $promotedLink.is(':hidden') ||
           $promotedLink.offset().top < window.scrollY ||
           Date.now() - this.lastPromoTimestamp < this.MIN_PROMO_TIME) {
         return;
