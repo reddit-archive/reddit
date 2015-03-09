@@ -118,5 +118,8 @@ setup(
     [r2.provider.media]
     s3 = r2.lib.providers.media.s3:S3MediaProvider
     filesystem = r2.lib.providers.media.filesystem:FileSystemMediaProvider
+    [r2.provider.cdn]
+    cloudflare = r2.lib.providers.cdn.cloudflare:CloudFlareCdnProvider
+    null = r2.lib.providers.cdn.null:NullCdnProvider
     """,
 )

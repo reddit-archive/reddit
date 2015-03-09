@@ -439,6 +439,12 @@ class Globals(object):
             "r2.provider.media",
             self.media_provider,
         )
+        self.cdn_provider = select_provider(
+            self.config,
+            self.pkg_resources_working_set,
+            "r2.provider.cdn",
+            self.cdn_provider,
+        )
         self.startup_timer.intermediate("providers")
 
         ################# CONFIGURATION
