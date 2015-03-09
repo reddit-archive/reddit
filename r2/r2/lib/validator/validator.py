@@ -87,7 +87,7 @@ class Validator(object):
     notes = None
     default_param = None
     def __init__(self, param=None, default=None, post=True, get=True, url=True,
-                 body=False, docs=None):
+                 get_multiple=False, body=False, docs=None):
         if param:
             self.param = param
         else:
@@ -95,6 +95,7 @@ class Validator(object):
 
         self.default = default
         self.post, self.get, self.url, self.docs = post, get, url, docs
+        self.get_multiple = get and get_multiple
         self.body = body
         self.has_errors = False
 
@@ -126,6 +127,9 @@ class Validator(object):
                 if self.post and (post_val or
                                   isinstance(post_val, cgi.FieldStorage)):
                     val = request.POST[p]
+                elif (self.get_multiple and
+                      request.GET.getall(p)):
+                    val = request.GET.getall(p)
                 elif self.get and request.GET.get(p):
                     val = request.GET[p]
                 elif self.url and url.get(p):
