@@ -51,17 +51,28 @@
       this._advance(0);
 
       if ('hidden' in document) {
+        this.readyForNewPromo = !document.hidden;
+
         $(document).on('visibilitychange', function(e) {
           if (!document.hidden) {
             this.requestNewPromo();
           }
         }.bind(this));
       } else {
+        this.readyForNewPromo = document.hasFocus();
+
         $(window).on('focus', this.requestNewPromo.bind(this));
       }
     },
 
     requestNewPromo: function() {
+      // if the page loads in a background tab, this should be false.  In that
+      // case, we don't want to load a new ad, as this will be the first view
+      if (!this.readyForNewPromo) {
+        this.readyForNewPromo = true;
+        return;
+      }
+
       // the ad will be stored as a promise
       if (!this.lineup[this.lineup.pos].promise) {
         return;
