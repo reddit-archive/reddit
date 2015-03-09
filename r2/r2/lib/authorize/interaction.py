@@ -29,170 +29,80 @@ from r2.lib.db.thing import NotFound
 from r2.lib.utils import Storage
 from r2.lib.export import export
 from r2.models.bidding import Bid, CustomerID, PayID
-
 from r2.lib.authorize.api import (
-    Address,
-    AuthorizeNetException,
-    CreateCustomerPaymentProfileRequest,
-    CreateCustomerProfileRequest,
-    CreateCustomerProfileTransactionRequest,
-    CreditCard,
-    GetCustomerProfileRequest,
-    Order,
-    ProfileTransAuthOnly,
-    ProfileTransPriorAuthCapture,
-    ProfileTransRefund,
-    ProfileTransVoid,
-    UpdateCustomerPaymentProfileRequest,
+    AuthorizationHoldNotFound,
+    capture_authorization_hold,
+    create_authorization_hold,
+    create_customer_profile,
+    create_payment_profile,
+    delete_payment_profile,
+    DuplicateTransactionError,
+    get_customer_profile,
+    refund_transaction as _refund_transaction,
+    TRANSACTION_NOT_FOUND,
+    TransactionError,
+    update_payment_profile,
+    void_authorization_hold,
 )
 
-__all__ = ['TRANSACTION_NOT_FOUND']
 
-TRANSACTION_NOT_FOUND = 16
+__all__ = []
 
-# useful test data:
-test_card = dict(AMEX       = ("370000000000002"  , 1234),
-                 DISCOVER   = ("6011000000000012" , 123),
-                 MASTERCARD = ("5424000000000015" , 123),
-                 VISA       = ("4007000000027"    , 123),
-                 # visa card which generates error codes based on the amount
-                 ERRORCARD  = ("4222222222222"    , 123))
 
-test_card = Storage((k, CreditCard(cardNumber=x,
-                                   expirationDate="2011-11",
-                                   cardCode=y)) for k, (x, y) in
-                    test_card.iteritems())
-
-test_address = Address(firstName="John",
-                       lastName="Doe",
-                       address="123 Fake St.",
-                       city="Anytown",
-                       state="MN",
-                       zip="12346")
+FREEBIE_PAYMENT_METHOD_ID = -1
 
 
 @export
-def get_account_info(user, recursed=False): 
-    # if we don't have an ID for the user, try to make one
-    if not CustomerID.get_id(user):
-        cust_id = CreateCustomerProfileRequest(user).make_request()
+def get_or_create_customer_profile(user):
+    profile_id = CustomerID.get_id(user)
+    if not CustomerID.get_id(user._id):
+        profile_id = create_customer_profile(
+            merchant_customer_id=user._fullname, description=user.name)
+        CustomerID.set(user, profile_id)
 
-    # if we do have a customerid, we should be able to fetch it from authorize
-    try:
-        u, data = GetCustomerProfileRequest(user).make_request()
-    except AuthorizeNetException:
-        u = None
+    profile = get_customer_profile(profile_id)
 
-    # if the user and the returned user don't match, delete the
-    # current customer_id and recurse
-    if u != user:
-        if not recursed:
-            CustomerID.delete(user)
-            return get_account_info(user, True)
-        else:
-            raise AuthorizeNetException, "error creating user"
-    return data
+    if not profile or profile.merchantCustomerId != user._fullname:
+        raise ValueError("error getting customer profile")
+
+    for payment_profile in profile.paymentProfiles:
+        PayID.add(user, payment_profile.customerPaymentProfileId)
+
+    return profile
+
+
+def add_payment_method(user, address, credit_card, validate=False):
+    profile_id = CustomerID.get_id(user._id)
+    payment_method_id = create_payment_profile(
+        profile_id, address, credit_card, validate)
+
+    if payment_method_id:
+        PayID.add(user, payment_method_id)
+        return payment_method_id
+
+
+def update_payment_method(user, payment_method_id, address, credit_card,
+                          validate=False):
+    profile_id = CustomerID.get_id(user._id)
+    payment_method_id = update_payment_profile(
+        profile_id, payment_method_id, address, credit_card, validate)
+    return payment_method_id
 
 
 @export
-def edit_profile(user, address, creditcard, pay_id=None):
+def delete_payment_method(user, payment_method_id):
+    profile_id = CustomerID.get_id(user._id)
+    success = delete_payment_profile(profile_id, payment_method_id)
+    if success:
+        PayID.delete(user, payment_method_id)
+
+
+@export
+def add_or_update_payment_method(user, address, credit_card, pay_id=None):
     if pay_id:
-        request = UpdateCustomerPaymentProfileRequest(user, pay_id, address,
-                                                      creditcard)
+        return update_payment_method(user, pay_id, address, credit_card)
     else:
-        request = CreateCustomerPaymentProfileRequest(user, address, creditcard)
-
-    try:
-        pay_id = request.make_request()
-        return pay_id
-    except AuthorizeNetException:
-        return None
-
-
-def _make_transaction(trans_cls, amount, user, pay_id, order=None,
-                      trans_id=None, test=None, include_request_ip=False):
-    """
-    private function for handling transactions (since the data is
-    effectively the same regardless of trans_cls)
-    """
-    # format the amount
-    if amount:
-        amount = "%.2f" % amount
-    # lookup customer ID
-    cust_id = CustomerID.get_id(user)
-    # create a new transaction
-    trans = trans_cls(amount, cust_id, pay_id, trans_id=trans_id,
-                      order=order)
-    extra = {}
-
-    # the optional test field makes the transaction a test, and will
-    # make the response be the error code corresponding to int(test).
-    if isinstance(test, int):
-        extra.update({
-            "x_test_request": "TRUE",
-            "x_card_num": test_card.ERRORCARD.cardNumber,
-            "x_amount": test,
-        })
-
-    if include_request_ip:
-        extra.update({"x_customer_ip": request.ip})
-
-    # using the transaction, generate a transaction request and make it
-    req = CreateCustomerProfileTransactionRequest(transaction=trans,
-                                                  extraOptions=extra)
-    return req.make_request()
-
-
-@export
-def auth_transaction(amount, user, payid, thing, campaign):
-    # use negative pay_ids to identify freebies, coupons, or anything
-    # that doesn't require a CC.
-    if payid < 0:
-        trans_id = -thing._id
-        # update previous freebie transactions if we can
-        try:
-            bid = Bid.one(thing_id=thing._id,
-                          transaction=trans_id,
-                          campaign=campaign)
-            bid.bid = amount
-            bid.auth()
-        except NotFound:
-            bid = Bid._new(trans_id, user, payid, thing._id, amount, campaign)
-        return bid.transaction, ""
-
-    elif int(payid) in PayID.get_ids(user):
-        order = Order(invoiceNumber="T%dC%d" % (thing._id, campaign))
-        success, res = _make_transaction(
-            ProfileTransAuthOnly, amount, user, payid, order=order,
-            include_request_ip=True)
-
-        if success:
-            Bid._new(res.trans_id, user, payid, thing._id, amount, campaign)
-            return res.trans_id, ""
-
-        elif (res.trans_id and
-              (res.response_code, res.response_reason_code) == (3, 11)):
-            # duplicate transaction, which is bad, but not horrible.  Log
-            # the transaction id, creating a new bid if necessary.
-            g.log.error("Authorize.net duplicate trans %d on campaign %d" % 
-                        (res.trans_id, campaign))
-            try:
-                Bid.one(res.trans_id, campaign=campaign)
-            except NotFound:
-                Bid._new(res.trans_id, user, payid, thing._id, amount, campaign)
-
-        return res.trans_id, res.response_reason_text
-
-
-@export
-def void_transaction(user, trans_id, campaign, test=None):
-    bid =  Bid.one(transaction=trans_id, campaign=campaign)
-    bid.void()
-    if trans_id > 0:
-        res = _make_transaction(ProfileTransVoid,
-                                None, user, None, trans_id=trans_id,
-                                test=test)
-        return res
+        return add_payment_method(user, address, credit_card)
 
 
 @export
@@ -210,44 +120,115 @@ def is_charged_transaction(trans_id, campaign):
 
 
 @export
-def charge_transaction(user, trans_id, campaign, test=None):
-    bid = Bid.one(transaction=trans_id, campaign=campaign)
-    if bid.is_charged():
-        return True
+def auth_freebie_transaction(amount, user, link, campaign_id):
+    transaction_id = -link._id
 
-    if trans_id < 0:
-        success = True
-        response_reason_code = None
+    try:
+        # attempt to update existing freebie transaction
+        bid = Bid.one(thing_id=link._id, transaction=transaction_id,
+                      campaign=campaign_id)
+    except NotFound:
+        bid = Bid._new(transaction_id, user, FREEBIE_PAYMENT_METHOD_ID,
+                       link._id, amount, campaign_id)
     else:
-        success, res = _make_transaction(ProfileTransPriorAuthCapture,
-                                         bid.bid, user,
-                                         bid.pay_id, trans_id=trans_id,
-                                         test=test)
-        response_reason_code = res.get("response_reason_code")
+        bid.bid = amount
+        bid.auth()
 
-    if success:
-        bid.charged()
-    elif response_reason_code == TRANSACTION_NOT_FOUND:
-        # authorization hold has expired
-        bid.void()
-
-    return success, response_reason_code
+    return transaction_id, ""
 
 
 @export
-def refund_transaction(user, trans_id, campaign_id, amount, test=None):
-    # refund will only work if charge has settled
-    bid =  Bid.one(transaction=trans_id, campaign=campaign_id)
-    if trans_id < 0:
+def auth_transaction(amount, user, payment_method_id, link, campaign_id):
+    if payment_method_id not in PayID.get_ids(user):
+        return None, "invalid payment method"
+
+    profile_id = CustomerID.get_id(user)
+    invoice = "T%dC%d" % (link._id, campaign_id)
+
+    try:
+        transaction_id = create_authorization_hold(
+            profile_id, payment_method_id, amount, invoice, request.ip)
+    except DuplicateTransactionError as e:
+        transaction_id = e.transaction_id
+        try:
+            bid = Bid.one(transaction_id, campaign=campaign_id)
+        except NotFound:
+            bid = Bid._new(transaction_id, user, payment_method_id, link._id,
+                           amount, campaign_id)
+        return transaction_id, None
+    except TransactionError as e:
+        return None, e.message
+
+    bid = Bid._new(transaction_id, user, payment_method_id, link._id, amount,
+                   campaign_id)
+    return transaction_id, None
+
+
+@export
+def charge_transaction(user, transaction_id, campaign_id):
+    bid = Bid.one(transaction=transaction_id, campaign=campaign_id)
+    if bid.is_charged():
+        return True, None
+
+    if transaction_id < 0:
+        bid.charged()
+        return True, None
+
+    profile_id = CustomerID.get_id(user)
+
+    try:
+        capture_authorization_hold(
+            customer_id=profile_id,
+            payment_profile_id=bid.pay_id,
+            amount=bid.bid,
+            transaction_id=transaction_id,
+        )
+    except AuthorizationHoldNotFound:
+        # authorization hold has expired
+        bid.void()
+        return False, TRANSACTION_NOT_FOUND
+    except TransactionError as e:
+        return False, e.message
+
+    bid.charged()
+    return True, None
+
+
+@export
+def void_transaction(user, transaction_id, campaign_id):
+    bid = Bid.one(transaction=transaction_id, campaign=campaign_id)
+
+    if transaction_id < 0:
+        bid.void()
+        return True, None
+
+    profile_id = CustomerID.get_id(user)
+    try:
+        void_authorization_hold(profile_id, bid.pay_id, transaction_id)
+    except TransactionError as e:
+        return False, e.message
+
+    bid.void()
+    return True, None
+
+
+@export
+def refund_transaction(user, transaction_id, campaign_id, amount):
+    bid =  Bid.one(transaction=transaction_id, campaign=campaign_id)
+    if transaction_id < 0:
         bid.refund(amount)
-        return True
-    else:
-        success, res = _make_transaction(ProfileTransRefund, amount, user,
-                                         bid.pay_id, trans_id=trans_id,
-                                         test=test)
-        if success:
-            bid.refund(amount)
-        elif success == False:
-            msg = "Refund failed, response: %r" % res
-            raise AuthorizeNetException(msg)
-        return True
+        return True, None
+
+    profile_id = CustomerID.get_id(user)
+    try:
+        _refund_transaction(
+            customer_id=profile_id,
+            payment_profile_id=bid.pay_id,
+            amount=amount,
+            transaction_id=transaction_id,
+        )
+    except TransactionError as e:
+        return False, e.message
+
+    bid.refund(amount)
+    return True, None

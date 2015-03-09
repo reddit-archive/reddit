@@ -35,9 +35,18 @@ from pylons.i18n import _, N_
 from r2.controllers.api import ApiController
 from r2.controllers.listingcontroller import ListingController
 from r2.controllers.reddit_base import RedditController
-
-from r2.lib import hooks, inventory, promote
-from r2.lib.authorize import get_account_info, edit_profile, PROFILE_LIMIT
+from r2.lib import (
+    hooks,
+    inventory,
+    media,
+    promote,
+    s3_helpers,
+)
+from r2.lib.authorize import (
+    get_or_create_customer_profile,
+    add_or_update_payment_method,
+    PROFILE_LIMIT,
+)
 from r2.lib.base import abort
 from r2.lib.db import queries
 from r2.lib.errors import errors
@@ -212,7 +221,7 @@ class PromoteController(RedditController):
             return self.abort404()
 
         if g.authorizenetapi:
-            data = get_account_info(c.user)
+            data = get_or_create_customer_profile(c.user)
             content = PaymentForm(link, campaign,
                                   customer_id=data.customerProfileId,
                                   profiles=data.paymentProfiles,
@@ -1296,7 +1305,8 @@ class PromoteApiController(ApiController):
                     form.has_errors(card_fields, errors.BAD_CARD)):
                 return
 
-            pay_id = edit_profile(c.user, address, creditcard, pay_id)
+            pay_id = add_or_update_payment_method(
+                c.user, address, creditcard, pay_id)
 
             if pay_id:
                 promote.new_payment_method(user=c.user, ip=request.ip, address=address, link=link)
@@ -1308,7 +1318,7 @@ class PromoteApiController(ApiController):
             if success:
                 hooks.get_hook("promote.campaign_paid").call(link=link, campaign=campaign)
                 if not address and g.authorizenetapi:
-                    profiles = get_account_info(c.user).paymentProfiles
+                    profiles = get_or_create_customer_profile(c.user).paymentProfiles
                     profile = {p.customerPaymentProfileId: p for p in profiles}[pay_id]
 
                     address = profile.billTo

@@ -350,7 +350,8 @@ def new_campaign(link, dates, bid, cpm, target, frequency_cap, frequency_cap_dur
 
 
 def free_campaign(link, campaign, user):
-    auth_campaign(link, campaign, user, -1)
+    auth_campaign(link, campaign, user, freebie=True)
+
 
 def edit_campaign(link, campaign, dates, bid, cpm, target, frequency_cap,
                   frequency_cap_duration, priority, location, platform='desktop',
@@ -481,7 +482,7 @@ def void_campaign(link, campaign, reason):
             emailer.void_payment(link, campaign, reason)
 
 
-def auth_campaign(link, campaign, user, pay_id):
+def auth_campaign(link, campaign, user, pay_id=None, freebie=False):
     """
     Authorizes (but doesn't charge) a bid with authorize.net.
     Args:
@@ -496,8 +497,13 @@ def auth_campaign(link, campaign, user, pay_id):
     Returns: (True, "") if successful or (False, error_msg) if not. 
     """
     void_campaign(link, campaign, reason='changed_payment')
-    trans_id, reason = authorize.auth_transaction(campaign.bid, user, pay_id,
-                                                  link, campaign._id)
+
+    if freebie:
+        trans_id, reason = authorize.auth_freebie_transaction(
+            campaign.bid, user, link, campaign._id)
+    else:
+        trans_id, reason = authorize.auth_transaction(
+            campaign.bid, user, pay_id, link, campaign._id)
 
     if trans_id and not reason:
         text = ('updated payment and/or bid for campaign %s: '
@@ -898,13 +904,12 @@ def refund_campaign(link, camp, billable_amount, billable_impressions):
         return
 
     owner = Account._byID(camp.owner_id, data=True)
-    try:
-        success = authorize.refund_transaction(owner, camp.trans_id,
-                                               camp._id, refund_amount)
-    except authorize.AuthorizeNetException as e:
+    success, reason = authorize.refund_transaction(
+        owner, camp.trans_id, camp._id, refund_amount)
+    if not success:
         text = ('%s $%s refund failed' % (camp, refund_amount))
         PromotionLog.add(link, text)
-        g.log.debug(text + ' (response: %s)' % e)
+        g.log.debug(text + ' (reason: %s)' % reason)
         return
 
     text = ('%s completed with $%s billable (%s impressions @ $%s).'
