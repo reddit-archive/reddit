@@ -23,7 +23,6 @@
 <%!
    from r2.lib.template_helpers import display_link_karma, header_url
    from r2.models.subreddit import DefaultSR, FakeSubreddit
-   from r2.lib import authentication
    
  %>
 <%namespace file="utils.html" import="plain_link, img_link, separator, logout"/>
@@ -92,7 +91,7 @@
     <div class="menuitem">
       ${plain_link("submit", "/submit", _sr_path=False)}
     </div>
-    %if authentication.user_can_log_out():
+    %if g.auth_provider.is_logout_allowed():
     <div class="menuitem bottm-bar">
       ${logout(dest=request.fullpath)}
     </div>

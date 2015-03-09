@@ -433,6 +433,12 @@ class Globals(object):
         )
 
         ################# PROVIDERS
+        self.auth_provider = select_provider(
+            self.config,
+            self.pkg_resources_working_set,
+            "r2.provider.auth",
+            self.authentication_provider,
+        )
         self.media_provider = select_provider(
             self.config,
             self.pkg_resources_working_set,

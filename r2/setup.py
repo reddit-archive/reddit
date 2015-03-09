@@ -121,5 +121,8 @@ setup(
     [r2.provider.cdn]
     cloudflare = r2.lib.providers.cdn.cloudflare:CloudFlareCdnProvider
     null = r2.lib.providers.cdn.null:NullCdnProvider
+    [r2.provider.auth]
+    cookie = r2.lib.providers.auth.cookie:CookieAuthenticationProvider
+    http = r2.lib.providers.auth.http:HttpAuthenticationProvider
     """,
 )

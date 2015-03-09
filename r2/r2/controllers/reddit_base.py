@@ -46,7 +46,6 @@ from pylons.i18n.translation import LanguageError
 from r2.config import feature
 from r2.config.extensions import is_api, set_extension
 from r2.lib import filters, pages, utils, hooks, ratelimit
-from r2.lib.authentication import authenticate_user
 from r2.lib.base import BaseController, abort
 from r2.lib.cache import make_key, MemcachedError
 from r2.lib.errors import (
@@ -1518,7 +1517,14 @@ class RedditController(OAuth2ResourceController):
         # no logins for RSS feed unless valid_feed has already been called
         if not c.user:
             if c.extension != "rss":
-                authenticate_user()
+                if not g.read_only_mode:
+                    c.user = g.auth_provider.get_authenticated_account()
+
+                    if c.user and c.user._deleted:
+                        c.user = None
+                else:
+                    c.user = None
+                c.user_is_loggedin = bool(c.user)
 
                 admin_cookie = c.cookies.get(g.admin_cookie)
                 if c.user_is_loggedin and admin_cookie:
