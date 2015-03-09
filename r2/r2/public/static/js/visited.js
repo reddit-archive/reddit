@@ -4,7 +4,7 @@ r.visited = {
     init: function() {
         this.sendVisits = _.throttle(this._sendVisits, 100)
         if (r.config.logged && r.config.store_visits) {
-            $('.content').on('click keydown', '.link:not(.visited) a.title, .link:not(.visited) a.thumbnail', _.bind(this.onVisit, this))
+            $('.content').on('click mousedown keydown', '.link:not(.visited) a.title, .link:not(.visited) a.thumbnail', _.bind(this.onVisit, this))
 
             // listen for custom "visit" event for third-party extensions to trigger in a non-UI specific way
             $('.content').on('visit', '.link:not(.visited)', _.bind(this.onVisit, this))
@@ -15,10 +15,22 @@ r.visited = {
     },
 
     onVisit: function(ev) {
-        if ((ev.type == 'keydown' && ev.which != 13) || ev.which === 3) {
-            // only handle enter key presses and/or non-right clicks
-            return
+        if (ev.type === 'keydown' && ev.which !== 13) {
+            // only handle enter key presses
+            return;
         }
+        if (ev.type === 'mousedown') {
+            // Hold out for a "click" event for left clicks (so we can ignore
+            // dragging,) and throw out right clicks.
+            if(ev.which === 1 || ev.which === 3) {
+                return;
+            }
+        }
+        // IE might generate a `click` event for middle click as well!
+        if (ev.type === 'click' && ev.which !== 1) {
+            return;
+        }
+
         this.storeVisit($(ev.target).closest('.thing').data('fullname'))
         this.sendVisits()
     },
