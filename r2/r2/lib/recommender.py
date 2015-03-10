@@ -200,7 +200,7 @@ def get_recommended_content(prefs, src, settings):
 def get_hot_items(srs, item_type, src):
     """Get hot links from specified srs."""
     hot_srs = {sr._id: sr for sr in srs}  # for looking up sr by id
-    hot_link_fullnames = normalized_hot(sr._id for sr in srs)
+    hot_link_fullnames = normalized_hot([sr._id for sr in srs])
     hot_links = Link._by_fullname(hot_link_fullnames, return_dict=False)
     hot_items = []
     for l in hot_links:
