@@ -478,7 +478,7 @@ try participating in other communities on reddit for a little while first before
           <a href=""></a>
           <button class="remove-sr" onclick="remove_related_sr(this.parentNode)">${_('remove')}</button>
         </li>
-        %for sr in thing.site.related_subreddits.split('\n'):
+        %for sr in thing.site.related_subreddits:
           %if sr:
             <li data-name="${sr.lower()}">
               <a href="/r/${sr}">/r/${sr}</a>
@@ -493,10 +493,11 @@ try participating in other communities on reddit for a little while first before
       </form>
       %endif
       <textarea id="related_subreddits" name="related_subreddits" style="display:none;">
-        ${keep_space(thing.site.related_subreddits)}
+        ${keep_space('\n'.join(thing.site.related_subreddits))}
       </textarea>
       ${error_field("BAD_SR_NAME", "related_subreddits")}
       ${error_field("TOO_MANY_SUBREDDITS", "related_subreddits")}
+      ${error_field("SUBREDDIT_NOEXIST", "related_subreddits")}
       <script type="text/javascript">
         function add_related_sr(form) {
           $('.SUBREDDIT_NOEXIST.field-sr').hide();

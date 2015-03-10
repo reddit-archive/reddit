@@ -2766,11 +2766,11 @@ class VSubredditList(Validator):
 
     def run(self, subreddits):
         if not subreddits:
-            return ''
+            return []
 
         # extract subreddit name if path provided
         subreddits = [sr_path_rx.sub('\g<name>', sr.strip())
-                      for sr in subreddits.lower().splitlines()]
+                      for sr in subreddits.lower().strip().splitlines() if sr]
 
         for name in subreddits:
             valid_name = Subreddit.is_valid_name(
@@ -2778,14 +2778,19 @@ class VSubredditList(Validator):
             if not valid_name:
                 return self.set_error(errors.BAD_SR_NAME, code=400)
 
-        # unique nonempty subreddits, preserve order
-        subreddits = list(OrderedDict.fromkeys([''] + subreddits))[1:]
+        unique_srs = set(subreddits)
 
-        if len(subreddits) > self.limit:
+        if subreddits:
+            valid_srs = set(Subreddit._by_name(subreddits).keys())
+            if unique_srs - valid_srs:
+                return self.set_error(errors.SUBREDDIT_NOEXIST, code=400)
+
+        if len(unique_srs) > self.limit:
             return self.set_error(
                 errors.TOO_MANY_SUBREDDITS, {'max': self.limit}, code=400)
 
-        return '\n'.join(subreddits)
+        # return list of subreddit names as entered
+        return subreddits
 
     def param_docs(self):
         return {

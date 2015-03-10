@@ -299,10 +299,6 @@ class SubredditJsonTemplate(ThingJsonTemplate):
             if thing.community_rules:
                 return thing.community_rules.split('\n')
             return []
-        elif attr == 'related_subreddits':
-            if thing.related_subreddits:
-                return thing.related_subreddits.split('\n')
-            return []
         else:
             return ThingJsonTemplate.thing_attr(self, thing, attr)
 
@@ -1133,6 +1129,9 @@ class SubredditSettingsTemplate(ThingJsonTemplate):
     def thing_attr(self, thing, attr):
         if attr.startswith('site.') and thing.site:
             return getattr(thing.site, attr[5:])
+        if attr == 'related_subreddits':
+            # string used for form input
+            return '\n'.join(thing.related_subreddits)
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
     def raw_data(self, thing):

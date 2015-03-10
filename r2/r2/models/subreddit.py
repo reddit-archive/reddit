@@ -261,10 +261,16 @@ class Subreddit(Thing, Printable, BaseSite):
         banner_img='',
         banner_size=None,
         community_rules='',
-        related_subreddits='',
         key_color='',
         hide_ads=False,
     )
+
+    # special attributes that shouldn't set Thing data attributes because they
+    # have special setters that set other data attributes
+    _derived_attrs = (
+        'related_subreddits',
+    )
+
     _essentials = ('type', 'name', 'lang')
     _data_int_props = Thing._data_int_props + ('mod_actions', 'reported',
                                                'wiki_edit_karma', 'wiki_edit_age',
@@ -315,6 +321,12 @@ class Subreddit(Thing, Printable, BaseSite):
         ('#24a0ed', N_('blue')),
         ('#0079d3', N_('alien blue')),
     ])
+
+    def __setattr__(self, attr, val, make_dirty=True):
+        if attr in self._derived_attrs:
+            object.__setattr__(self, attr, val)
+        else:
+            Thing.__setattr__(self, attr, val, make_dirty=make_dirty)
 
     # note: for purposely unrenderable reddits (like promos) set author_id = -1
     @classmethod
@@ -556,6 +568,40 @@ class Subreddit(Thing, Printable, BaseSite):
     @property
     def hide_contributors(self):
         return self.type in {'employees_only', 'gold_only'}
+
+    @property
+    def _related_multipath(self):
+        return '/r/%s/m/related' % self.name.lower()
+
+    @property
+    def related_subreddits(self):
+        try:
+            multi = LabeledMulti._byID(self._related_multipath)
+        except tdb_cassandra.NotFound:
+            multi = None
+        return  [sr.name for sr in multi.srs] if multi else []
+
+    @related_subreddits.setter
+    def related_subreddits(self, related_subreddits):
+        try:
+            multi = LabeledMulti._byID(self._related_multipath)
+        except tdb_cassandra.NotFound:
+            if not related_subreddits:
+                return
+            multi = LabeledMulti.create(self._related_multipath, self)
+
+        if related_subreddits:
+            srs = Subreddit._by_name(related_subreddits)
+            try:
+                sr_props = {srs[sr_name]: {} for sr_name in related_subreddits}
+            except KeyError as e:
+                raise NotFound, 'Subreddit %s' % e.args[0]
+
+            multi.clear_srs()
+            multi.add_srs(sr_props)
+            multi._commit()
+        else:
+            multi.delete()
 
     def get_accounts_active(self):
         fuzzed = False
