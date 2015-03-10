@@ -1837,7 +1837,10 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         slug = unicode_title_to_ascii(display_name)
         prefix = "/user/" + owner.name + "/" + type_ + "/"
         new_path = prefix + slug
-        existing = LabeledMultiByOwner._byID(owner._fullname)._t.keys()
+        try:
+            existing = LabeledMultiByOwner._byID(owner._fullname)._t.keys()
+        except tdb_cassandra.NotFound:
+            existing = []
         count = 0
         while new_path in existing:
             count += 1
