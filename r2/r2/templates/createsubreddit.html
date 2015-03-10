@@ -603,55 +603,6 @@ try participating in other communities on reddit for a little while first before
             </li>
             %endif
           %endfor
-          <li class="custom-color">
-            <% has_custom_color = c.site.key_color and c.site.key_color not in thing.color_options %>
-            <label>
-              <p class="little">${_('or pick a custom color:')}</p>
-              <input id="custom-color" type="radio" name="key_color" value=""
-                     %if has_custom_color:
-                       checked="checked"
-                     %endif
-                     onfocus="select_custom_hex()"
-              >
-              <div id="custom-swatch" class="swatch"
-                   %if has_custom_color:
-                     style="background-color: ${c.site.key_color}"
-                   %endif
-              >
-                <input type="color"
-                       %if c.site.key_color:
-                         value="${c.site.key_color}"
-                       %else:  # color input default is black
-                         value="#ffffff"
-                       %endif
-                       onchange="update_custom_color(this.value)"
-                       onfocus="select_custom_color()"
-                >
-              </div>
-              <input id="custom-hex" type="text" placeholder="#cee3f8"
-                     %if has_custom_color:
-                       value="${c.site.key_color}"
-                     %endif
-                     onfocus="select_custom_color()"
-                     onchange="update_custom_color(this.value)"
-              >
-              <script type="text/javascript">
-                function select_custom_hex() {
-                  $('#custom-hex').select();
-                }
-                function select_custom_color() {
-                 $('#custom-color').prop('checked', true);
-                }
-                function update_custom_color(color) {
-                  $('#custom-color, #custom-swatch input, #custom-hex').val(color);
-                  $('#custom-swatch').css('background-color', color);
-                  if (!color) {
-                    $('#custom-color').prop('checked', false);
-                  }
-                }
-              </script>
-            </label>
-          </li>
         </ul>
       </li>
     </ul>
