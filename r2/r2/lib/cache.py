@@ -834,7 +834,7 @@ class Permacache(object):
         with self.cf.batch():
             for key, val in keys.iteritems():
                 rowkey = "%s%s" % (prefix, key)
-                column = {self.COLUMN_NAME: pickle.dumps(val)}
+                column = {self.COLUMN_NAME: pickle.dumps(val, protocol=2)}
                 ret[key] = self.cf.insert(rowkey, column)
         return ret
 
