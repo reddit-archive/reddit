@@ -692,7 +692,7 @@ class VSubredditName(VRequired):
             name, allow_language_srs=self.allow_language_srs)
         if not valid_name:
             self.set_error(self._error, code=400)
-        return name
+        return str(name)
 
     def param_docs(self):
         return {
