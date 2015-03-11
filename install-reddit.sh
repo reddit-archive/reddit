@@ -155,6 +155,7 @@ python-kazoo
 python-stripe
 python-tinycss2
 python-unidecode
+python-mock
 
 python-flask
 geoip-bin

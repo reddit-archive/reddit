@@ -87,6 +87,12 @@ setup(
         "tinycss2",
         "unidecode",
     ],
+    # Extra dependencies that aren't needed for running the app.
+    # * https://pythonhosted.org/setuptools/setuptools.html#declaring-extras-optional-features-with-their-own-dependencies
+    # * https://github.com/pypa/sampleproject/blob/300f04dc44df51492deb859ac98ba521d2c7a17a/setup.py#L71-L77
+    extras_require = {
+        'test': ['mock'],
+    },
     dependency_links=[
         "https://github.com/reddit/snudown/archive/v1.1.3.tar.gz#egg=snudown-1.1.3",
         "https://s3.amazonaws.com/code.reddit.com/pycaptcha-0.4.tar.gz#egg=pycaptcha-0.4",
