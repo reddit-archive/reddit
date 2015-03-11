@@ -41,7 +41,12 @@ from r2.lib.db import queries
 from r2.lib.errors import errors
 from r2.lib.filters import websafe
 from r2.lib.template_helpers import format_html
-from r2.lib.media import force_thumbnail, thumbnail_url, _scrape_media
+from r2.lib.media import (
+    force_mobile_ad_image,
+    force_thumbnail,
+    thumbnail_url,
+    _scrape_media,
+)
 from r2.lib.memoize import memoize
 from r2.lib.menus import NamedButton, NavButton, NavMenu, QueryButton
 from r2.lib.pages import (
@@ -88,6 +93,7 @@ from r2.lib.validator import (
     VInt,
     VLength,
     VLink,
+    VList,
     VLocation,
     VModhash,
     VOneOf,
@@ -988,11 +994,30 @@ class PromoteApiController(ApiController):
         campaign_id36=nop("campaign_id36"),
         priority=VPriority("priority"),
         location=VLocation(),
+        platform=VOneOf("platform", ("mobile", "desktop", "all"), default="desktop"),
+        mobile_os=VList("mobile_os", choices=["iOS", "Android"]),
     )
     def POST_edit_campaign(self, form, jquery, link, campaign_id36,
-                           start, end, bid, target, priority, location):
+                           start, end, bid, target, priority, location,
+                           platform, mobile_os):
         if not link:
             return
+
+        if platform in ('mobile', 'all') and not mobile_os:
+            c.errors.add(errors.BAD_PROMO_MOBILE_OS, field='mobile_os')
+            form.set_error(errors.BAD_PROMO_MOBILE_OS, 'mobile_os')
+            return
+
+        if platform == 'mobile' and priority.cpm:
+            c.errors.add(errors.BAD_PROMO_MOBILE_PRIORITY, field='priority')
+            form.set_error(errors.BAD_PROMO_MOBILE_PRIORITY, 'priority')
+            return
+
+        if not (c.user_is_sponsor or platform == 'desktop'):
+            return abort(403, 'forbidden')
+
+        if platform == 'desktop':
+            mobile_os = None
 
         if not target:
             # run form.has_errors to populate the errors in the response
@@ -1112,10 +1137,10 @@ class PromoteApiController(ApiController):
         dates = (start, end)
         if campaign:
             promote.edit_campaign(link, campaign, dates, bid, cpm, target,
-                                  priority, location)
+                                  priority, location, platform, mobile_os)
         else:
             campaign = promote.new_campaign(link, dates, bid, cpm, target,
-                                            priority, location)
+                                            priority, location, platform, mobile_os)
         rc = RenderableCampaign.from_campaigns(link, campaign)
         jquery.update_campaign(campaign._fullname, rc.render_html())
 
@@ -1243,3 +1268,20 @@ class PromoteApiController(ApiController):
         link._commit()
         return UploadedImage(_('saved'), thumbnail_url(link), "", errors=errors,
                              form_id="image-upload").render()
+
+    @validate(
+        VSponsor("link_name"),
+        VModhash(),
+        link=VByName('link_name'),
+        file=VUploadLength('file', 500*1024),
+        img_type=VImageType('img_type'),
+    )
+    def POST_link_mobile_ad_image(self, link=None, file=None, img_type='jpg'):
+        if not (link and c.user_is_sponsor and file):
+            # only sponsors can set the mobile img
+            return abort(403, 'forbidden')
+
+        force_mobile_ad_image(link, file, file_type=".%s" % img_type)
+        link._commit()
+        return UploadedImage(_('saved'), link.mobile_ad_url, "", errors=errors,
+                             form_id="mobile-ad-image-upload").render()

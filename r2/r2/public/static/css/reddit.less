@@ -6916,6 +6916,9 @@ div #campaign-field {
     .editor {
         @background-color: #CEE3F8;
         .image-field {
+            position: relative;
+            overflow: auto;
+
             input[type=file] {
                 margin-top: 10px;
                 margin-left: 0;
@@ -6925,6 +6928,9 @@ div #campaign-field {
                 bottom: 10px;
                 right: 20px;
             }
+            img {
+                max-width: 600px;
+            }
         }
         .image-field.has-image {
             .linefield-content {
@@ -6932,7 +6938,7 @@ div #campaign-field {
             }
             .img-preview-container {
                 position: absolute;
-                left: 20px;
+                left: 0;
                 top: 45px;
                 margin: 0;
                 padding: 5px;

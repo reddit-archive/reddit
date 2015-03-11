@@ -278,9 +278,10 @@ def get_transactions(link, campaigns):
     bids_by_campaign = {c._id: bid_dict[(c._id, c.trans_id)] for c in campaigns}
     return bids_by_campaign
 
-def new_campaign(link, dates, bid, cpm, target, priority, location):
+def new_campaign(link, dates, bid, cpm, target, priority, location,
+                 platform, mobile_os):
     campaign = PromoCampaign.create(link, target, bid, cpm, dates[0], dates[1],
-                                    priority, location)
+                                    priority, location, platform, mobile_os)
     PromotionWeights.add(link, campaign)
     PromotionLog.add(link, 'campaign %s created' % campaign._id)
 
@@ -324,6 +325,12 @@ def edit_campaign(link, campaign, dates, bid, cpm, target, priority, location,
     if location != campaign.location:
         changed['location'] = (campaign.location, location)
         campaign.location = location
+    if platform != campaign.platform:
+        changed["platform"] = (campaign.platform, platform)
+        campaign.platform = platform
+    if mobile_os != campaign.mobile_os:
+        changed["mobile_os"] = (campaign.mobile_os, mobile_os)
+        campaign.mobile_os = mobile_os
 
     change_strs = map(lambda t: '%s: %s -> %s' % (t[0], t[1][0], t[1][1]),
                       changed.iteritems())

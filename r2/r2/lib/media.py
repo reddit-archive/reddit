@@ -20,6 +20,8 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+import sys
+
 import base64
 import cStringIO
 import hashlib
@@ -102,13 +104,14 @@ def _image_entropy(img):
     return -sum(p * math.log(p, 2) for p in hist if p != 0)
 
 
-def _square_image(img):
-    """if the image is taller than it is wide, square it off. determine
+def _crop_image_vertically(img, target_height):
+    """crop image vertically the the specified height. determine
     which pieces to cut off based on the entropy pieces."""
     x,y = img.size
-    while y > x:
+
+    while y > target_height:
         #slice 10px at a time until square
-        slice_height = min(y - x, 10)
+        slice_height = min(y - target_height, 10)
 
         bottom = img.crop((0, y - slice_height, x, y))
         top = img.crop((0, 0, x, slice_height))
@@ -122,6 +125,12 @@ def _square_image(img):
         x,y = img.size
 
     return img
+
+
+def _square_image(img):
+    """if the image is taller than it is wide, square it off."""
+    width = img.size[0]
+    return _crop_image_vertically(img, width)
 
 
 def _prepare_image(image):
@@ -401,6 +410,20 @@ def force_thumbnail(link, image_data, file_type=".jpg"):
 
     link.thumbnail_url = thumb_url
     link.thumbnail_size = image.size
+    link._commit()
+
+
+def force_mobile_ad_image(link, image_data, file_type=".jpg"):
+    image = str_to_image(image_data)
+    image_width = image.size[0]
+    x,y = g.mobile_ad_image_size
+    max_height = image_width * y / x
+    image = _crop_image_vertically(image, max_height)
+    image.thumbnail(g.mobile_ad_image_size, Image.ANTIALIAS)
+    image_url = upload_media(image, file_type=file_type)
+
+    link.mobile_ad_url = image_url
+    link.mobile_ad_size = image.size
     link._commit()
 
 

@@ -319,10 +319,12 @@ class PromoCampaign(Thing):
         "location",
         "priority",
         "target",
+        "mobile_os",
     )
 
     SR_NAMES_DELIM = '|'
     SUBREDDIT_TARGET = "subreddit"
+    MOBILE_OS_NAMES_DELIM = ','
 
     def __getattr__(self, attr):
         val = Thing.__getattr__(self, attr)
@@ -375,7 +377,7 @@ class PromoCampaign(Thing):
 
     @classmethod
     def create(cls, link, target, bid, cpm, start_date, end_date, priority,
-             location):
+             location, platform, mobile_os):
         pc = PromoCampaign(
             link_id=link._id,
             bid=bid,
@@ -388,6 +390,8 @@ class PromoCampaign(Thing):
         pc.priority = priority
         pc.location = location
         pc.target = target
+        pc.platform = platform
+        pc.mobile_os = mobile_os
         pc._commit()
         return pc
 
@@ -461,6 +465,20 @@ class PromoCampaign(Thing):
 
         # set _target so we don't need to lookup on subsequent access
         self._target = target
+
+    @property
+    def mobile_os(self):
+        if not self.mobile_os_names:
+            return None
+        else:
+            return self.mobile_os_names.split(self.MOBILE_OS_NAMES_DELIM)
+
+    @mobile_os.setter
+    def mobile_os(self, mobile_os_names):
+        if not mobile_os_names:
+            self.mobile_os_names = None
+        else:
+            self.mobile_os_names = self.MOBILE_OS_NAMES_DELIM.join(mobile_os_names)
 
     @property
     def location_str(self):

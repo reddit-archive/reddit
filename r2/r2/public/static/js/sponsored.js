@@ -497,8 +497,19 @@ var exports = r.sponsored = {
     setup: function(inventory_by_sr, priceDict, isEmpty, userIsSponsor) {
         this.inventory = inventory_by_sr
         this.priceDict = priceDict
+
+        this.ALL_PLATFORMS = ['desktop', 'mobile'];
+
+        var $platformField = $('.platform-field');
+        this.$platformInputs = $platformField.find('input[name=platform]');
+        this.$mobileOSInputs = $platformField.find('.mobile-os-group input');
+
+        var render = this.render.bind(this);
+        this.$platformInputs.on('change', render);
+        this.$mobileOSInputs.on('change', render);
+
         if (isEmpty) {
-            this.render()
+            this.render();
             init_startdate()
             init_enddate()
             $("#campaign").find("button[name=create]").show().end()
@@ -860,6 +871,25 @@ var exports = r.sponsored = {
         return _.max(prices);
     },
 
+    getPlatformTargeting: function() {
+      var platform = this.$platformInputs.filter(':checked').val();
+      var isMobile = platform === 'mobile' || platform === 'all';
+
+      if (isMobile) {
+        os = this.$mobileOSInputs.filter(':checked').map(function() {
+          return $(this).attr('value');
+        }).toArray().join(',');
+      } else {
+        os = null;
+      }
+
+      return {
+        platform: platform,
+        os: os,
+        isMobile: isMobile,
+      };
+    },
+
     get_targeting: function($form) {
         var isSubreddit = $form.find('input[name="targeting"][value="one"]').is(':checked'),
             collectionVal = $form.find('input[name="collection"]:checked').val(),
@@ -869,7 +899,6 @@ var exports = r.sponsored = {
             sr = isSubreddit ? $form.find('*[name="sr"]').val() : '',
             collection = isCollection ? collectionVal : null,
             displayName = isFrontpage ? 'the frontpage' : isCollection ? collection : sr,
-            priority = this.get_priority($form),
             canGeotarget = isFrontpage || this.userIsSponsor,
             country = canGeotarget && $('#country').val() || '',
             region = canGeotarget && $('#region').val() || '',
@@ -1060,6 +1089,24 @@ var exports = r.sponsored = {
         $form.find('*[name="impressions"]').val(r.utils.prettyNumber(impressions))
         $(".OVERSOLD").hide()
 
+        var $mobileOSGroup = $('.mobile-os-group');
+        var $mobileOSHiddenInput = $('#mobile_os');
+
+        if (platformTargeting.isMobile) {
+          var $mobileOSError = $mobileOSGroup.find('.error');
+
+          $mobileOSGroup.show();
+          $mobileOSHiddenInput.val(platformTargeting.os || '');
+
+          if (!platformTargeting.os) {
+            $mobileOSError.show();
+          } else {
+            $mobileOSError.hide();
+          }
+        } else {
+          $mobileOSGroup.hide();
+          $mobileOSHiddenInput.val('');
+        }
 
         if (targeting.isValid) {
             this.enable_form($form)
@@ -1530,6 +1577,18 @@ function edit_campaign($campaign_row) {
                         $input = campaign.find('*[name="' + input + '"]')
                     $input.val(val)
             })
+
+            var platform = $campaign_row.data('platform');
+            campaign.find('*[name="platform"][value="' + platform + '"]').prop("checked", "checked");
+
+            campaign.find('.mobile_os_group input').prop("checked", false);
+
+            var mobile_os_names = $campaign_row.data('mobile-os');
+            if (mobile_os_names) {
+              mobile_os_names.forEach(function(name) {
+                campaign.find('#mobile_os_' + name).prop("checked", "checked");
+              });
+            }
 
             /* set priority */
             var priorities = campaign.find('*[name="priority"]'),

@@ -42,6 +42,8 @@
     data-campaign_name="${thing.campaign._fullname}"
     data-priority="${thing.campaign.priority.name}"
     data-override="${json.dumps(thing.campaign.priority.inventory_override)}"
+    data-platform="${thing.platform}"
+    data-mobile-os="${json.dumps(thing.mobile_os)}"
     data-paid="${json.dumps(thing.paid)}">
   <td class="campaign-start-date">
     ${thing.campaign.start_date.strftime("%m/%d/%Y")}

@@ -4184,6 +4184,9 @@ class RenderableCampaign(Templated):
             # targeted to the frontpage
             self.targeting_data = '' if sr_name == Frontpage.name else sr_name
 
+        self.platform = campaign.platform
+        self.mobile_os = campaign.mobile_os
+
         Templated.__init__(self)
 
     @classmethod
