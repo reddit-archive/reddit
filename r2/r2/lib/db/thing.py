@@ -389,7 +389,8 @@ class DataThing(object):
             return items
 
         bases = sgm(cls._cache, ids, items_db, prefix, time=THING_CACHE_TTL,
-                    stale=stale, found_fn=count_found)
+                    stale=stale, found_fn=count_found,
+                    stat_subname=cls.__name__)
 
         # Check to see if we found everything we asked for
         missing = []

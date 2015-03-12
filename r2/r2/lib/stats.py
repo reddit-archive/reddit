@@ -417,21 +417,34 @@ class CacheStats:
         self.hit_stat_name = '%s.hit' % self.cache_name
         self.miss_stat_name = '%s.miss' % self.cache_name
         self.total_stat_name = '%s.total' % self.cache_name
+        self.hit_stat_template = '%s.%%s.hit' % self.cache_name
+        self.miss_stat_template = '%s.%%s.miss' % self.cache_name
+        self.total_stat_template = '%s.%%s.total' % self.cache_name
 
-    def cache_hit(self, delta=1):
+    def cache_hit(self, delta=1, subname=None):
         if delta:
             data = {
                 self.hit_stat_name: delta,
                 self.total_stat_name: delta,
             }
+            if subname:
+                data.update({
+                    self.hit_stat_template % subname: delta,
+                    self.total_stat_template % subname: delta,
+                })
             self.parent.cache_count_multi(data)
 
-    def cache_miss(self, delta=1):
+    def cache_miss(self, delta=1, subname=None):
         if delta:
             data = {
                 self.miss_stat_name: delta,
                 self.total_stat_name: delta,
             }
+            if subname:
+                data.update({
+                    self.miss_stat_template % subname: delta,
+                    self.total_stat_template % subname: delta,
+                })
             self.parent.cache_count_multi(data)
 
     def cache_report(self, hits=0, misses=0, cache_name=None, sample_rate=None):
@@ -455,21 +468,34 @@ class StaleCacheStats(CacheStats):
         self.stale_hit_name = '%s.stale.hit' % self.cache_name
         self.stale_miss_name = '%s.stale.miss' % self.cache_name
         self.stale_total_name = '%s.stale.total' % self.cache_name
+        self.stale_hit_stat_template = '%s.stale.%%s.hit' % self.cache_name
+        self.stale_miss_stat_template = '%s.stale.%%s.miss' % self.cache_name
+        self.stale_total_stat_template = '%s.stale.%%s.total' % self.cache_name
 
-    def stale_hit(self, delta=1):
+    def stale_hit(self, delta=1, subname=None):
         if delta:
             data = {
                 self.stale_hit_name: delta,
                 self.stale_total_name: delta,
             }
+            if subname:
+                data.update({
+                    self.stale_hit_stat_template % subname: delta,
+                    self.stale_total_stat_template % subname: delta,
+                })
             self.parent.cache_count_multi(data)
 
-    def stale_miss(self, delta=1):
+    def stale_miss(self, delta=1, subname=None):
         if delta:
             data = {
                 self.stale_miss_name: delta,
                 self.stale_total_name: delta,
             }
+            if subname:
+                data.update({
+                    self.stale_miss_stat_template % subname: delta,
+                    self.stale_total_stat_template % subname: delta,
+                })
             self.parent.cache_count_multi(data)
 
 

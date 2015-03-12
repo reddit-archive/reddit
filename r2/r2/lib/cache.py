@@ -623,7 +623,8 @@ class CacheChain(CacheUtils, local):
 
     @cache_timer_decorator("get_multi")
     @log_invalid_keys
-    def simple_get_multi(self, keys, allow_local = True, stale=None):
+    def simple_get_multi(self, keys, allow_local = True, stale=None,
+                         stat_subname=None):
         out = {}
         need = set(keys)
         hits = 0
@@ -667,8 +668,8 @@ class CacheChain(CacheUtils, local):
                 # If this chain contains no permanent caches, then we need to
                 # count the misses here.
                 misses = len(need)
-            self.stats.cache_hit(hits)
-            self.stats.cache_miss(misses)
+            self.stats.cache_hit(hits, subname=stat_subname)
+            self.stats.cache_miss(misses, subname=stat_subname)
 
         return out
 
@@ -779,7 +780,7 @@ class StaleCacheChain(CacheChain):
 
     @cache_timer_decorator("get_multi")
     @log_invalid_keys
-    def simple_get_multi(self, keys, stale = False, **kw):
+    def simple_get_multi(self, keys, stale=False, stat_subname=None, **kw):
         if not isinstance(keys, set):
             keys = set(keys)
 
@@ -801,8 +802,8 @@ class StaleCacheChain(CacheChain):
             stale_hits = len(stale_values)
             stale_misses = len(keys)
             if self.stats:
-                self.stats.stale_hit(stale_hits)
-                self.stats.stale_miss(stale_misses)
+                self.stats.stale_hit(stale_hits, subname=stat_subname)
+                self.stats.stale_miss(stale_misses, subname=stat_subname)
 
         if keys:
             values = self.realcache.simple_get_multi(keys)
@@ -814,8 +815,8 @@ class StaleCacheChain(CacheChain):
         if self.stats:
             misses = len(keys - set(ret.keys()))
             hits = len(ret)
-            self.stats.cache_hit(hits)
-            self.stats.cache_miss(misses)
+            self.stats.cache_hit(hits, subname=stat_subname)
+            self.stats.cache_miss(misses, subname=stat_subname)
 
         return ret
 
