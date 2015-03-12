@@ -4695,11 +4695,8 @@ class Goldvertisement(Templated):
     def __init__(self):
         now = datetime.datetime.now(GOLD_TIMEZONE)
         today = now.date()
-        tomorrow = today + datetime.timedelta(days=1)
-        end_time = datetime.datetime(tomorrow.year,
-                                     tomorrow.month,
-                                     tomorrow.day,
-                                     tzinfo=GOLD_TIMEZONE)
+        tomorrow = now + datetime.timedelta(days=1)
+        end_time = tomorrow.replace(hour=0, minute=0, second=0, microsecond=0)
         revenue_today = gold_revenue_volatile(today)
         yesterday = today - datetime.timedelta(days=1)
         revenue_yesterday = gold_revenue_steady(yesterday)
