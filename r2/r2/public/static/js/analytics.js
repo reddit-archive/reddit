@@ -87,7 +87,24 @@ r.analytics = {
 
   fireFunnelEvent: function(category, action, options, callback) {
     options = options || {};
-    callback = callback || function() {};
+    callback = callback || window.Function.prototype;
+
+    var page = '/' + _.compact([category, action, options.label]).join('-');
+
+    // if it's for Gold tracking and we have new _ga available
+    // then use it to track the event; otherwise, fallback to old version
+    if (options.tracker && '_ga' in window && window._ga.getByName(options.tracker)) {
+      window._ga(options.tracker + '.send', 'pageview', {
+        'page': page,
+        'hitCallback': callback
+      });
+
+      if (options.value) {
+        window._ga(options.tracker + '.send', 'event', category, action, options.label, options.value);
+      }
+
+      return;
+    }
 
     if (!window._gaq || !this.shouldFireEvent.apply(this, arguments)) {
       callback();
@@ -102,7 +119,7 @@ r.analytics = {
 
     // Virtual page views are needed for a funnel to work with GA.
     // see: http://gatipoftheday.com/you-can-use-events-for-goals-but-not-for-funnels/
-    _gaq.push(['_trackPageview', '/' + _.compact([category, action, options.label]).join('-')]);
+    _gaq.push(['_trackPageview', page]);
 
     // The goal can have a conversion value in GA.
     if (options.value) {

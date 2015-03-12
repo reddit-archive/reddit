@@ -99,7 +99,7 @@ reddit, reddit.com, vote, comment, submit
 </script>
 %endif
 
-${googleanalytics('web')}
+${googleanalytics('web', thing.is_gold_page() if hasattr(thing, 'is_gold_page') else False)}
 </%def>
 
 <%def name="pagemeta()">

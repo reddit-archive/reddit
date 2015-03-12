@@ -791,6 +791,9 @@ class Reddit(Templated):
             self.welcomebar, self.infobar, self.locationbar, self.nav_menu,
             self._content))
 
+    def is_gold_page(self):
+        return "gold-page-ga-tracking" in self.supplied_page_classes
+
     def page_classes(self):
         classes = set()
 

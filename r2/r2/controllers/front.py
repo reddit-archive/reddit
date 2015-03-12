@@ -35,8 +35,9 @@ from r2.controllers.reddit_base import (
 from r2 import config
 from r2.models import *
 from r2.models.recommend import ExploreSettings
+from r2.config import feature
 from r2.config.extensions import is_api
-from r2.lib import hooks, recommender, embeds
+from r2.lib import hooks, recommender, embeds, pages
 from r2.lib.pages import *
 from r2.lib.pages.things import hot_links_by_url_listing
 from r2.lib.pages import trafficpages
@@ -262,6 +263,16 @@ class FrontController(RedditController):
         if embed_key:
             embeds.set_up_embed(embed_key, sr, comment, showedits=showedits)
 
+        # Temporary hook until IAMA app "OP filter" is moved from partners
+        # Not to be open-sourced
+        page = hooks.get_hook("comments_page.override").call_until_return(
+            controller=self,
+            article=article,
+            limit=limit,
+        )
+        if page:
+            return page
+
         # If there is a focal comment, communicate down to
         # comment_skeleton.html who that will be. Also, skip
         # comment_visits check
@@ -365,11 +376,16 @@ class FrontController(RedditController):
         if c.site.allows_referrers:
             c.referrer_policy = "always"
 
+        suggested_sort_active = False
+        suggested_sort = article.sort_if_suggested() if feature.is_enabled('default_sort') else None
         if article.contest_mode:
             if c.user_is_loggedin and sr.is_moderator(c.user):
                 sort = "top"
             else:
                 sort = "random"
+        elif suggested_sort and 'sort' not in request.params:
+                sort = suggested_sort
+                suggested_sort_active = True
 
         # finally add the comment listing
         displayPane.append(CommentPane(article, CommentSortMenu.operator(sort),
@@ -396,13 +412,24 @@ class FrontController(RedditController):
                 self._add_show_comments_link(subtitle_buttons, article, num,
                                              g.max_comments_gold, gold=True)
 
+        sort_menu = CommentSortMenu(
+            default=sort,
+            css_class='suggested' if suggested_sort_active else '',
+            suggested_sort=suggested_sort,
+        )
+
+        link_settings = LinkCommentsSettings(
+            article,
+            sort=sort,
+            suggested_sort=suggested_sort,
+        )
+
         res = LinkInfoPage(link=article, comment=comment,
                            content=displayPane,
                            page_classes=['comments-page'],
                            subtitle=subtitle,
                            subtitle_buttons=subtitle_buttons,
-                           nav_menus=[CommentSortMenu(default=sort),
-                                        LinkCommentsSettings(article)],
+                           nav_menus=[sort_menu, link_settings],
                            infotext=infotext).render()
         return res
 
@@ -1206,7 +1233,9 @@ class FrontController(RedditController):
         return BoringPage(_("thanks"), show_sidebar=False,
                           content=GoldThanks(claim_msg=claim_msg,
                                              vendor_url=vendor_url,
-                                             lounge_md=lounge_md)).render()
+                                             lounge_md=lounge_md),
+                          page_classes=["gold-page-ga-tracking"]
+                         ).render()
 
     @validate(VUser(),
               token=VOneTimeToken(AwardClaimToken, "code"))
@@ -1385,7 +1414,11 @@ class FormsController(RedditController):
         content = None
         infotext = None
         if not location or location == 'options':
-            content = PrefOptions(done=request.GET.get('done'))
+            content = PrefOptions(
+                done=request.GET.get('done'),
+                error_style_override=request.GET.get('error_style_override'),
+                generic_error=request.GET.get('generic_error'),
+            )
         elif location == 'update':
             if verified:
                 infotext = strings.email_verified
@@ -1550,7 +1583,9 @@ class FormsController(RedditController):
 
         return BoringPage(_("reddit gold"),
                           show_sidebar=False,
-                          content=content).render()
+                          content=content,
+                          page_classes=["gold-page-ga-tracking"]
+                         ).render()
 
     @validate(is_payment=VBoolean("is_payment"),
               goldtype=VOneOf("goldtype",
@@ -1639,7 +1674,7 @@ class FormsController(RedditController):
                                            giftmessage,
                                            can_subscribe=can_subscribe,
                                            edit=edit),
-                              page_classes=["gold-page", "gold-signup"],
+                              page_classes=["gold-page", "gold-signup", "gold-page-ga-tracking"],
                               ).render()
         else:
             # If we have a validating form, and we're not yet on the payment
@@ -1667,7 +1702,7 @@ class FormsController(RedditController):
 
             passthrough = generate_blob(payment_blob)
 
-            page_classes = ["gold-page", "gold-payment"]
+            page_classes = ["gold-page", "gold-payment", "gold-page-ga-tracking"]
             if goldtype == "creddits":
                 page_classes.append("creddits-payment")
 
@@ -1684,12 +1719,19 @@ class FormsController(RedditController):
         return BoringPage(_("purchase creddits"),
                           show_sidebar=False,
                           content=Creddits(),
-                          page_classes=["gold-page", "creddits-purchase"],
+                          page_classes=["gold-page", "creddits-purchase", "gold-page-ga-tracking"],
                           ).render()
 
     @validate(VUser())
     def GET_subscription(self):
         user = c.user
         content = GoldSubscription(user)
-        return BoringPage(_("reddit gold subscription"), show_sidebar=False,
-                          content=content).render()
+        return BoringPage(_("reddit gold subscription"),
+                          show_sidebar=False,
+                          content=content,
+                          page_classes=["gold-page-ga-tracking"]
+                         ).render()
+
+
+class FrontUnstyledController(FrontController):
+    allow_stylesheets = False
