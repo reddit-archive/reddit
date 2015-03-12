@@ -355,8 +355,7 @@ class LabeledMultiJsonTemplate(LabeledMultiDescriptionJsonTemplate):
         sr_props = dict(thing.sr_props)
         if expand:
             for sr in srs:
-                sr_props[sr._id].update(
-                    TrimmedSubredditJsonTemplate().data(sr))
+                sr_props[sr._id]["data"] = TrimmedSubredditJsonTemplate().data(sr)
         return [dict(sr_props[sr._id], name=sr.name) for sr in srs]
 
     def thing_attr(self, thing, attr):
@@ -378,8 +377,8 @@ class LabeledMultiJsonTemplate(LabeledMultiDescriptionJsonTemplate):
 
 class TrimmedSubredditJsonTemplate(SubredditJsonTemplate):
     _data_attrs_ = dict(
-        name="name",
-        fullname="_fullname",
+        name="_fullname",
+        display_name="name",
         header_img="header",
         header_size="header_size",
         icon_img="icon_img",
