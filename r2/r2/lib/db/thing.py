@@ -36,8 +36,8 @@ from r2.lib.db import tdb_sql as tdb, sorts, operators
 from r2.lib.utils import Results, tup, to36
 
 
-THING_CACHE_TTL = int(timedelta(days=5).total_seconds())
-QUERY_CACHE_TTL = int(timedelta(days=5).total_seconds())
+THING_CACHE_TTL = int(timedelta(days=1).total_seconds())
+QUERY_CACHE_TTL = int(timedelta(days=1).total_seconds())
 
 
 class NotFound(Exception): pass
