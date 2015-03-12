@@ -310,6 +310,7 @@ class Email(object):
                 "FRAUD_ALERT",
                 "USER_FRAUD",
                 "MESSAGE_NOTIFICATION",
+                "ADS_ALERT",
                 )
 
     # Do not remove anything from this dictionary!  See above comment.
@@ -339,6 +340,7 @@ class Email(object):
         Kind.FRAUD_ALERT: _("[selfserve] fraud alert"),
         Kind.USER_FRAUD: _("[selfserve] a user has committed fraud"),
         Kind.MESSAGE_NOTIFICATION: _("[reddit] message notification"),
+        Kind.ADS_ALERT: _("[reddit] Ads Alert"),
         }
 
     def __init__(self, user, thing, email, from_name, date, ip,

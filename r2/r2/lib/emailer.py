@@ -55,6 +55,13 @@ def _nerds_email(body, from_name, kind):
     Email.handler.add_to_queue(None, g.nerds_email, from_name, g.nerds_email,
                                kind, body = body)
 
+def _ads_email(body, from_name, kind):
+    """
+    For sending email to ads
+    """
+    Email.handler.add_to_queue(None, g.ads_email, from_name, g.ads_email,
+                               kind, body=body)
+
 def _fraud_email(body, kind):
     """
     For sending email to the fraud mailbox
@@ -210,6 +217,10 @@ def community_email(body, kind):
 def nerds_email(body, from_name=g.domain):
     """Queues a feedback email to the nerds running this site."""
     return _nerds_email(body, from_name, Email.Kind.NERDMAIL)
+
+def ads_email(body, from_name=g.domain):
+    """Queues an email to the Sales team."""
+    return _ads_email(body, from_name, Email.Kind.ADS_ALERT)
 
 def share(link, emails, from_name = "", reply_to = "", body = ""):
     """Queues a 'share link' email."""

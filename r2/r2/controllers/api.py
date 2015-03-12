@@ -2606,6 +2606,19 @@ class ApiController(RedditController):
             if not sr.domain:
                 del kw['css_on_cname']
 
+            #notify ads if sr in a collection changes over_18 to true
+            if kw.get('over_18', False) and not sr.over_18:
+                collections = []
+                for collection in Collection.get_all():
+                    if (sr.name in collection.sr_names
+                            and not collection.over_18):
+                        collections.append(collection.name)
+
+                if collections:
+                    msg = "%s now NSFW, in collection(s) %s"
+                    msg %= (sr.name, ', '.join(collections))
+                    emailer.sales_email(msg)
+
             # do not clobber these fields if absent in request
             no_clobber = ('community_rules', 'key_color', 'related_subreddits')
 
