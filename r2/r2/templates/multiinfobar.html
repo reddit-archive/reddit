@@ -25,6 +25,7 @@
    from r2.lib.strings import strings, Score
    from r2.lib.pages import WrappedUser, UserText
    from r2.lib.template_helpers import _ws, _wsf, format_html
+   from r2.models.subreddit import Subreddit
  %>
 
 <%namespace file="utils.html" import="plain_link, thing_timestamp, text_with_links"/>
@@ -33,7 +34,11 @@
   <h1 class="hover redditname">
     <a href="${thing.multi.path}">${_('%s subreddits') % thing.multi.name}</a><div class="throbber"></div>
   </h1>
-  <h2><a href="/user/${thing.multi.owner.name}">${_('curated by /u/%s') % thing.multi.owner.name}</a></h2>
+  %if isinstance(thing.multi.owner, Subreddit):
+    <h2><a href="/r/${thing.multi.owner.name}">${_('curated by /r/%s') % thing.multi.owner.name}</a></h2>
+  %else:
+    <h2><a href="/user/${thing.multi.owner.name}">${_('curated by /u/%s') % thing.multi.owner.name}</a></h2>
+  %endif
   <div class="gray-buttons settings">
     %if thing.can_edit:
       <div class="visibility-group">

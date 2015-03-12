@@ -468,6 +468,16 @@ def set_multireddit():
             multiurl = "/user/" + username + "/m/" + fullpath
             multi_ids = ["/user/%s/m/%s" % (username, multipath)
                         for multipath in multipaths]
+        elif 'sr_multi' in routes_dict:
+            if isinstance(c.site, FakeSubreddit):
+                abort(404)
+            if (not is_api() and
+                     not feature.is_enabled('multireddit_customizations')):
+                abort(404)
+
+            multiurl = "/r/" + c.site.name + "/m/" + fullpath
+            multi_ids = ["/r/%s/m/%s" % (c.site.name, multipath)
+                        for multipath in multipaths]
 
         if multi_ids is not None:
             multis = LabeledMulti._byID(multi_ids, return_dict=False) or []

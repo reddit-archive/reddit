@@ -148,6 +148,7 @@ def make_map():
        partial_connect(mc, path_prefix='/user/:username/m/:multipath'),
        partial_connect(mc, path_prefix='/me/m/:multipath', my_multi=True),
        partial_connect(mc, path_prefix='/me/f/:filtername'),
+       partial_connect(mc, path_prefix='/m/:multipath', sr_multi=True),
     )
 
     for connect in multi_prefixes:
