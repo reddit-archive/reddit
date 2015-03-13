@@ -117,7 +117,7 @@ class MultiApiController(RedditController):
     def GET_list_sr_multis(self, sr, expand_srs):
         """Fetch a list of public multis belonging to subreddit `srname`"""
         multis = LabeledMulti.by_owner(sr)
-        return self._format_multi_list(multis, sr, expand_srs)
+        return self._format_multi_list(multis, c.user, expand_srs)
 
     @require_oauth2_scope("read")
     @validate(VUser(), expand_srs=VBoolean("expand_srs"))
