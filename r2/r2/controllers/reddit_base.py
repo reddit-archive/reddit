@@ -475,8 +475,8 @@ def set_multireddit():
                      not feature.is_enabled('multireddit_customizations')):
                 abort(404)
 
-            multiurl = "/r/" + c.site.name + "/m/" + fullpath
-            multi_ids = ["/r/%s/m/%s" % (c.site.name, multipath)
+            multiurl = "/r/" + c.site.name.lower() + "/m/" + fullpath
+            multi_ids = ["/r/%s/m/%s" % (c.site.name.lower(), multipath)
                         for multipath in multipaths]
 
         if multi_ids is not None:
