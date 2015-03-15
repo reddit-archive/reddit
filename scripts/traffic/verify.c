@@ -10,6 +10,7 @@
 #include "utils.h"
 
 #define MAX_LINE 2048
+#define SHA1_HASH_LENGTH 40
 
 int main(int argc, char** argv)
 {
@@ -64,7 +65,7 @@ int main(int argc, char** argv)
         if (id_length < 0)
             continue;
 
-        if (url_decode(hash) != 40)
+        if (url_decode(hash) != SHA1_HASH_LENGTH)
             continue;
 
         int url_length = 0;
