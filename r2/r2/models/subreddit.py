@@ -1474,9 +1474,9 @@ class DefaultSR(_DefaultSR):
         return self._base.stylesheet_url_https if self._base else ""
 
     def get_all_comments(self):
-        from r2.lib.db.queries import get_sr_comments, merge_results
-        srs = Subreddit.user_subreddits(c.user, ids=False)
-        results = [get_sr_comments(sr) for sr in srs]
+        from r2.lib.db.queries import _get_sr_comments, merge_results
+        sr_ids = Subreddit.user_subreddits(c.user)
+        results = [_get_sr_comments(sr_id) for sr_id in sr_ids]
         return merge_results(*results)
 
     def get_gilded(self):
