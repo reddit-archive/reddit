@@ -19,6 +19,33 @@
     }
   }
 
+  function clipComments() {
+    var height = config.comment_max_height;
+    var flex = 30;
+
+    if (!height) {
+      return;
+    }
+
+    function expandComment(e) {
+      var el = this;
+
+      el.previousSibling.style.maxHeight = '';
+      el.parentNode.className =
+        el.parentNode.className.replace(' reddit-embed-comment-fade', '');
+    }
+
+    var blockquotes = document.getElementsByTagName('blockquote');
+
+    for (var i = 0, l = blockquotes.length; i < l; i++) {
+      if (blockquotes[i].clientHeight > height + flex) {
+        blockquotes[i].style.maxHeight = height + 'px';
+        blockquotes[i].parentNode.className += ' reddit-embed-comment-fade';
+        blockquotes[i].nextSibling.addEventListener('click', expandComment, false);
+      }
+    }
+  }
+
   function createPayloadFactory(location) {
     return function payloadFactory(type, action, payload) {
       var now = new Date();
@@ -57,6 +84,8 @@
     var location = e.detail.location;
     var createPayload = createPayloadFactory(location);
 
+    clipComments();
+
     if (options.track === false) {
       return;
     }
@@ -86,7 +115,7 @@
 
       if (el.href.indexOf(config.event_clicktracker_url) === -1) {
         // Use a DOM object for easier query manipulation
-        var tmpLink = document.createElement('a')
+        var tmpLink = document.createElement('a');
         tmpLink.href = config.event_clicktracker_url;
         tmpLink.search = '?' + App.utils.serialize(redirectParams);
 
@@ -101,6 +130,15 @@
       return newTab;
     }
 
+    function trackAction(e) {
+      var el = this;
+      var action = el.getAttribute('data-track-action');
+
+      tracker.send(createPayload(type, action), {anonymous: true});
+
+      return false;
+    }
+
     var trackLinks = document.getElementsByTagName('a');
 
     for (var i = 0, l = trackLinks.length; i < l; i++) {
@@ -108,6 +146,8 @@
   
       if (link.getAttribute('data-redirect-type')) {
         trackLinks[i].addEventListener('click', trackLink, false);
+      } else if (link.getAttribute('data-track-action')) {
+        trackLinks[i].addEventListener('click', trackAction, false);
       }
     }
 

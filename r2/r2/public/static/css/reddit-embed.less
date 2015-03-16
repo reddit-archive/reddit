@@ -127,3 +127,30 @@ p {
     padding: 48px 18px;
     text-align: center;
 }
+
+.reddit-embed-comment-more {
+    display: none;
+}
+
+.reddit-embed-comment-fade {
+    .reddit-embed-comment-body {
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 8px;
+
+        &:before {
+            content:'';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            height: 40px;
+
+            .linear-gradient(rgba(255, 255, 255, 0), rgba(255, 255, 255, 1));
+        }
+    }
+
+    .reddit-embed-comment-more {
+        display: inline;
+    }
+}

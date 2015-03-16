@@ -106,6 +106,10 @@
         <blockquote class="reddit-embed-comment-body">
           ${unsafe(safemarkdown(thing.body, nofollow=thing.nofollow))}
         </blockquote>
+        <a class="reddit-embed-comment-more" href="javascript:;" target="_self"
+           data-track-action="read_more">
+          ${_("Read more")}
+        </a>
       %endif
     %endif
   </article>

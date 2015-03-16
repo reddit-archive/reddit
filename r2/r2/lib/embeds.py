@@ -90,6 +90,7 @@ def set_up_embed(embed_key, sr, thing, showedits):
             "edited": edited_after(thing, iso_timestamp, showedits),
             "deleted": thing.deleted or author._deleted,
         },
+        "comment_max_height": 200,
     }
 
     c.render_style = "iframe"
