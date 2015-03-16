@@ -72,11 +72,8 @@ def get_links_sr_ids(sr_ids, sort, time):
 
     if not sr_ids:
         return []
-    else:
-        srs = Subreddit._byID(sr_ids, data=True, return_dict = False)
 
-    results = [queries.get_links(sr, sort, time)
-               for sr in srs]
+    results = [queries._get_links(sr_id, sort, time) for sr_id in sr_ids]
     return queries.merge_results(*results)
 
 
