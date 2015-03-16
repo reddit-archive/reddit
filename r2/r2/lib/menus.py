@@ -591,10 +591,12 @@ class CommentSortMenu(SortMenu):
 
     @class_property
     def hidden_options(cls):
-        if feature.is_enabled('qa_sort'):
-            return ('random',)
-        else:
-            return ('random', 'qa',)
+        sorts = ['random']
+        if not feature.is_enabled('qa_sort'):
+            sorts.append('qa')
+        if feature.is_enabled('remove_hot_comments'):
+            sorts.append('hot')
+        return sorts
 
     def make_title(self, attr):
         title = super(CommentSortMenu, self).make_title(attr)
