@@ -618,8 +618,7 @@ class Globals(object):
         # memcaches used in front of the permacache CF in cassandra.
         # XXX: this is a legacy thing; permacache was made when C* didn't have
         # a row cache.
-        permacache_memcaches = CMemcache("perma",
-                                         self.permacache_memcaches,
+        permacache_memcaches = CMemcache(self.permacache_memcaches,
                                          min_compress_len=1400,
                                          num_clients=num_mc_clients)
 
@@ -768,7 +767,6 @@ class Globals(object):
             permacache_cache,
             permacache_cf,
             lock_factory=self.make_lock,
-            check_keys=False,
         )
 
         # hardcache is used for various things that tend to expire
