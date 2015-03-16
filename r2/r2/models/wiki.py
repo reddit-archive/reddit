@@ -25,6 +25,7 @@ from datetime import datetime, timedelta
 from r2.lib.db import tdb_cassandra
 from r2.lib.db.thing import NotFound
 from r2.lib.merge import *
+from r2.models.last_modified import LastModified
 from pycassa.system_manager import TIME_UUID_TYPE
 from pylons import c, g
 from pylons.controllers.util import abort
@@ -364,6 +365,9 @@ class WikiPage(tdb_cassandra.Thing):
         self.last_edit_date = wr.date
         self.revision = str(wr._id)
         self._commit()
+
+        LastModified.touch(self._fullname, "Edit")
+
         return wr
     
     def change_permlevel(self, permlevel, force=False):
