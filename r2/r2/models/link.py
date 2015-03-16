@@ -914,17 +914,6 @@ class Comment(Thing, Printable):
                 TryLater.schedule('message_notification_email', data,
                                   NOTIFICATION_EMAIL_DELAY)
 
-            if orangered and to.pref_email_messages:
-                data = {
-                    'to': to._id36,
-                    'from': '/u/%s' % author.name,
-                    'comment': c._fullname,
-                    'permalink': c.make_permalink_slow(force_domain=True),
-                }
-                data = json.dumps(data)
-                TryLater.schedule('message_notification_email', data,
-                                  NOTIFICATION_EMAIL_DELAY)
-
         hooks.get_hook('comment.new').call(comment=c)
 
         return (c, inbox_rel)
