@@ -2249,9 +2249,7 @@ class SubredditTopBar(CachedTemplate):
     @property
     def my_reddits(self):
         if self._my_reddits is None:
-            self._my_reddits = Subreddit.user_subreddits(c.user,
-                                                         ids=False,
-                                                         stale=True)
+            self._my_reddits = Subreddit.user_subreddits(c.user, ids=False)
         return self._my_reddits
 
     @property

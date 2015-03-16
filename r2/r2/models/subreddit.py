@@ -906,17 +906,17 @@ class Subreddit(Thing, Printable, BaseSite):
         return s
 
     @classmethod
-    def default_subreddits(cls, ids=True, stale=True):
+    def default_subreddits(cls, ids=True):
         """Return the subreddits a user with no subscriptions would see."""
         if g.automatic_reddits:
-            auto_srs = cls._by_name(g.automatic_reddits, stale=stale).values()
+            auto_srs = cls._by_name(g.automatic_reddits, stale=True).values()
         else:
             auto_srs = set()
 
         location = get_request_location()
         srids = LocalizedDefaultSubreddits.get_defaults(location)
 
-        srs = Subreddit._byID(srids, data=True, return_dict=False, stale=stale)
+        srs = Subreddit._byID(srids, data=True, return_dict=False, stale=True)
         srs = list(set(srs) | set(auto_srs))
         srs = filter(lambda sr: sr.allow_top, srs)
 
@@ -1004,7 +1004,7 @@ class Subreddit(Thing, Printable, BaseSite):
                 if srs else Subreddit._by_name(g.default_sr))
 
     @classmethod
-    def user_subreddits(cls, user, ids=True, limit=DEFAULT_LIMIT, stale=False):
+    def user_subreddits(cls, user, ids=True, limit=DEFAULT_LIMIT):
         """
         subreddits that appear in a user's listings. If the user has
         subscribed, returns the stored set of subscriptions.
@@ -1034,9 +1034,9 @@ class Subreddit(Thing, Printable, BaseSite):
             return sr_ids if ids else Subreddit._byID(sr_ids,
                                                       data=True,
                                                       return_dict=False,
-                                                      stale=stale)
+                                                      stale=True)
         else:
-            return cls.default_subreddits(ids=ids, stale=stale)
+            return cls.default_subreddits(ids=ids)
 
 
     # Used to pull all of the SRs a given user moderates or is a contributor
