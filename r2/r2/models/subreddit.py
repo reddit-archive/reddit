@@ -1755,7 +1755,8 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
             if needs_srs:
                 sr_ids = set(
                     itertools.chain.from_iterable(t.sr_ids for t in needs_srs))
-                srs = Subreddit._byID(sr_ids, data=True, return_dict=True)
+                srs = Subreddit._byID(
+                    sr_ids, data=True, return_dict=True, stale=True)
                 for t in things:
                     if t in needs_srs:
                         t._srs = [srs[sr_id] for sr_id in t.sr_ids]
@@ -1988,7 +1989,8 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
             raise TooManySubredditsError
 
         new_sr_ids = set(sr_ids) - set(self.sr_ids)
-        new_srs = Subreddit._byID(new_sr_ids, data=True, return_dict=False)
+        new_srs = Subreddit._byID(
+            new_sr_ids, data=True, return_dict=False, stale=True)
         self._srs.extend(new_srs)
 
         for attr, val in sr_columns.iteritems():
