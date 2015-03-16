@@ -1572,9 +1572,8 @@ class MultiReddit(FakeSubreddit):
         return get_links_sr_ids(self.kept_sr_ids, sort, time)
 
     def get_all_comments(self):
-        from r2.lib.db.queries import get_sr_comments, merge_results
-        srs = Subreddit._byID(self.kept_sr_ids, return_dict=False)
-        results = [get_sr_comments(sr) for sr in srs]
+        from r2.lib.db.queries import _get_sr_comments, merge_results
+        results = [_get_sr_comments(sr_id) for sr_id in self.kept_sr_ids]
         return merge_results(*results)
 
     def get_gilded(self):
