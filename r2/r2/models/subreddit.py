@@ -946,7 +946,8 @@ class Subreddit(Thing, Printable, BaseSite):
         # if the user is subscribed to them, the automatic subreddits should
         # always be in the front page set and not count towards the limit
         if g.automatic_reddits:
-            automatics = Subreddit._by_name(g.automatic_reddits).values()
+            automatics = Subreddit._by_name(
+                g.automatic_reddits, stale=True).values()
             automatic_ids = [sr._id for sr in automatics if sr._id in sr_ids]
             for sr_id in automatic_ids:
                 sr_ids.remove(sr_id)
