@@ -1230,13 +1230,15 @@ class RedditsController(ListingController):
                                        sort = desc('_date'),
                                        write_cache = True,
                                        read_cache = True,
-                                       cache_time = 5 * 60)
+                                       cache_time = 5 * 60,
+                                       stale = True)
         else:
             reddits = None
             if self.where == 'new':
                 reddits = Subreddit._query( write_cache = True,
                                             read_cache = True,
-                                            cache_time = 5 * 60)
+                                            cache_time = 5 * 60,
+                                            stale = True)
                 reddits._sort = desc('_date')
             elif self.where == 'employee':
                 reddits = Subreddit._query(
@@ -1244,6 +1246,7 @@ class RedditsController(ListingController):
                     write_cache=True,
                     read_cache=True,
                     cache_time=5 * 60,
+                    stale=True,
                 )
                 reddits._sort = desc('_downs')
             elif self.where == 'gold':
@@ -1252,12 +1255,14 @@ class RedditsController(ListingController):
                     write_cache=True,
                     read_cache=True,
                     cache_time=5 * 60,
+                    stale=True,
                 )
                 reddits._sort = desc('_downs')
             else:
                 reddits = Subreddit._query( write_cache = True,
                                             read_cache = True,
-                                            cache_time = 60 * 60)
+                                            cache_time = 60 * 60,
+                                            stale = True)
                 reddits._sort = desc('_downs')
 
             if g.domain != 'reddit.com':
@@ -1322,7 +1327,8 @@ class MyredditsController(ListingController):
                                   #adding it's own date
                                   sort = (desc('_t1_ups'), desc('_t1_date')),
                                   eager_load = True,
-                                  thing_data = True)
+                                  thing_data = True,
+                                  thing_stale = True)
         reddits.prewrap_fn = lambda x: x._thing1
         return reddits
 
