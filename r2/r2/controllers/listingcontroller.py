@@ -418,7 +418,7 @@ class HotController(ListingWithPromos):
             return normalized_hot(sr_ids)
         elif isinstance(c.site, MultiReddit):
             return normalized_hot(c.site.kept_sr_ids, obey_age_limit=False,
-                                  ageweight=c.site.normalized_age_weight)
+                                  ageweight=c.site.ageweight)
         else:
             if c.site.sticky_fullname:
                 link_list = [c.site.sticky_fullname]

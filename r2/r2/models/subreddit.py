@@ -1498,8 +1498,14 @@ class MultiReddit(FakeSubreddit):
     header = ""
     _defaults = dict(
         FakeSubreddit._defaults,
-        normalized_age_weight=0.0,
+        weighting_scheme="classic",
     )
+
+    # See comment in normalized_hot before adding new values here.
+    AGEWEIGHTS = {
+        "classic": 0.0,
+        "fresh": 0.15,
+    }
 
     def __init__(self, path=None, srs=None):
         FakeSubreddit.__init__(self)
@@ -1559,6 +1565,10 @@ class MultiReddit(FakeSubreddit):
     @property
     def over_18(self):
         return any(sr.over_18 for sr in self.srs)
+
+    @property
+    def ageweight(self):
+        return self.AGEWEIGHTS.get(self.weighting_scheme, 0.0)
 
     def get_links(self, sort, time):
         return get_links_sr_ids(self.kept_sr_ids, sort, time)
