@@ -483,6 +483,9 @@ class _ThumbnailOnlyScraper(Scraper):
         if not image_data:
             _, image_data = _fetch_url(thumbnail_url, referer=self.url)
 
+        if not image_data:
+            return None, None, None, None
+
         uid = _filename_from_content(image_data)
         image = str_to_image(image_data)
         storage_url = upload_media(image)
@@ -510,7 +513,6 @@ class _ThumbnailOnlyScraper(Scraper):
         None for the latter just means we haven't already fetched the image.
         """
         content_type, content = _fetch_url(self.url)
-        uid = _filename_from_content(content)
 
         # if it's an image, it's pretty easy to guess what we should thumbnail.
         if content_type and "image" in content_type and content:
