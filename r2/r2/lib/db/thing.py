@@ -929,6 +929,7 @@ class Query(object):
         self._limit = kw.get('limit')
         self._offset = kw.get('offset')
         self._data = kw.get('data')
+        self._stale = kw.get('stale', False)
         self._sort = kw.get('sort', ())
         self._filter_primary_sort_only = kw.get('filter_primary_sort_only', False)
 
@@ -1065,7 +1066,8 @@ class Query(object):
         if names and not lst:
             # we got our list of names from the cache, so we need to
             # turn them back into Things
-            lst = Thing._by_fullname(names, data = self._data, return_dict = False)
+            lst = Thing._by_fullname(names, data=self._data, return_dict=False,
+                                     stale=self._stale)
 
         for item in lst:
             yield item
@@ -1114,7 +1116,8 @@ class Things(Query):
             else:
                 _ids = rows
                 extra_props = {}
-            return self._kind._byID(_ids, self._data, False, extra_props)
+            return self._kind._byID(_ids, data=self._data, return_dict=False,
+                                    stale=self._stale, extra_props=extra_props)
 
         return Results(c, row_fn, True)
 
