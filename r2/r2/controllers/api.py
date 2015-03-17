@@ -3441,7 +3441,7 @@ class ApiController(RedditController):
         if form.has_errors('name', errors.USER_DOESNT_EXIST, errors.NO_USER):
             return
 
-        user.set_flair(None, None, set_by=c.user)
+        user.set_flair(c.site, None, None, set_by=c.user)
 
         jquery('#flairrow_%s' % user._id36).remove()
         unflair = WrappedUser(
