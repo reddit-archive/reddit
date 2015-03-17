@@ -701,7 +701,7 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
         # immediately. It calls _byID(xxx, data=thing_data).
         @classmethod
         def _byID_rel(cls, ids, data=False, return_dict=True, extra_props=None,
-                      eager_load=False, thing_data=False):
+                      eager_load=False, thing_data=False, thing_stale=False):
 
             ids, single = tup(ids, True)
 
@@ -713,7 +713,7 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
             if values and eager_load:
                 for base in bases.values():
                     base._eagerly_loaded_data = True
-                load_things(values, thing_data)
+                load_things(values, load_data=thing_data, stale=thing_stale)
 
             if single:
                 return bases[ids[0]]
@@ -816,7 +816,7 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
 
         @classmethod
         def _fast_query(cls, thing1s, thing2s, name, data=True, eager_load=True,
-                        thing_data=False):
+                        thing_data=False, thing_stale=False):
             """looks up all the relationships between thing1_ids and
                thing2_ids and caches them"""
 
@@ -888,7 +888,8 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
                 rel_ids,
                 data=data,
                 eager_load=eager_load,
-                thing_data=thing_data)
+                thing_data=thing_data,
+                thing_stale=thing_stale)
 
             # Takes aggregated results from cache and db (res) and transforms
             # the values from ids to Relations.
@@ -1121,7 +1122,7 @@ class Things(Query):
 
         return Results(c, row_fn, True)
 
-def load_things(rels, load_data=False):
+def load_things(rels, load_data=False, stale=False):
     rels = tup(rels)
     kind = rels[0].__class__
 
@@ -1130,15 +1131,16 @@ def load_things(rels, load_data=False):
     for rel in rels:
         t1_ids.add(rel._thing1_id)
         t2_ids.add(rel._thing2_id)
-    kind._type1._byID(t1_ids, data=load_data)
+    kind._type1._byID(t1_ids, data=load_data, stale=stale)
     if not kind._gay():
-        t2_items = kind._type2._byID(t2_ids, data=load_data)
+        t2_items = kind._type2._byID(t2_ids, data=load_data, stale=stale)
 
 class Relations(Query):
     #params are thing1, thing2, name, date
     def __init__(self, kind, *rules, **kw):
         self._eager_load = kw.get('eager_load')
         self._thing_data = kw.get('thing_data')
+        self._thing_stale = kw.get('thing_stale')
         Query.__init__(self, kind, *rules, **kw)
 
     def _filter(self, *rules):
@@ -1157,7 +1159,8 @@ class Relations(Query):
         if rels and self._eager_load:
             for rel in rels:
                 rel._eagerly_loaded_data = True
-            load_things(rels, self._thing_data)
+            load_things(rels, load_data=self._thing_data,
+                        stale=self._thing_stale)
         return rels
 
     def _cursor(self):
