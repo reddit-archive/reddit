@@ -71,6 +71,7 @@
       iframe.frameBorder = 0;
       iframe.allowTransparency = true;
       iframe.style.display = 'none';
+      iframe.style.maxWidth = '800px';
       iframe.style.minWidth = '220px';
       iframe.style.margin = '10px 0';
       iframe.style.borderRadius = '5px';
