@@ -35,7 +35,7 @@ from pylons import c, g, request
 from pylons.i18n import _, N_
 
 from r2.lib.db.thing import Thing, Relation, NotFound
-from account import Account, AccountsActiveBySR
+from account import Account, AccountsActiveBySR, FakeAccount
 from printable import Printable
 from r2.lib.db.userrel import UserRel
 from r2.lib.db.operators import lower, or_, and_, not_, desc
@@ -1846,6 +1846,9 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         if self.is_public():
             return True
 
+        if isinstance(user, FakeAccount):
+            return False
+
         # subreddit multireddit (mod can view)
         if isinstance(self.owner, Subreddit):
             return self.owner.is_moderator_with_perms(user, 'config')
@@ -1853,6 +1856,9 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         return user == self.owner
 
     def can_edit(self, user):
+        if isinstance(user, FakeAccount):
+            return False
+
         # subreddit multireddit (admin can edit)
         if isinstance(self.owner, Subreddit):
             return (c.user_is_admin or
