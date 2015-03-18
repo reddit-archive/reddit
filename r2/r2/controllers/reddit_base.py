@@ -1191,10 +1191,6 @@ class MinimalController(BaseController):
             wrapped_content = c.response_wrapper(content)
             response.content = wrapped_content
 
-        if c.user_is_loggedin:
-            response.headers['Cache-Control'] = 'no-cache'
-            response.headers['Pragma'] = 'no-cache'
-
         # pagecache stores headers. we need to not add X-Frame-Options to
         # cached requests (such as media embeds) that intend to allow framing.
         if not c.allow_framing and not c.used_cache:
@@ -1207,6 +1203,10 @@ class MinimalController(BaseController):
         # Don't poison the cache with uncacheable cookies
         dirty_cookies = (k for k, v in c.cookies.iteritems() if v.dirty)
         would_poison = any((k not in CACHEABLE_COOKIES) for k in dirty_cookies)
+
+        if c.user_is_loggedin or would_poison:
+            response.headers['Cache-Control'] = 'no-cache'
+            response.headers['Pragma'] = 'no-cache'
 
         # save the result of this page to the pagecache if possible.  we
         # mustn't cache things that rely on state not tracked by request_key
