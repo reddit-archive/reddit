@@ -1938,14 +1938,13 @@ class ApiController(RedditController):
                 VRatelimit.ratelimit(rate_user=True, rate_ip = True,
                                      prefix = "rate_share_")
 
-
     @require_oauth2_scope("vote")
     @noresponse(VUser(),
                 VModhash(),
                 vote_info=VVotehash('vh'),
                 dir=VInt('dir', min=-1, max=1, docs={"dir":
-                    "vote direction. one of (1, 0, -1)"}),
-                thing = VByName('id'))
+                         "vote direction. one of (1, 0, -1)"}),
+                thing=VByName('id'))
     @api_doc(api_section.links_and_comments)
     def POST_vote(self, dir, thing, vote_info):
         """Cast a vote on a thing.
@@ -1967,16 +1966,16 @@ class ApiController(RedditController):
         store = True
 
         if not thing or thing._deleted:
-            return
+            return self.abort404()
 
         hooks.get_hook("vote.validate").call(thing=thing)
 
         if not isinstance(thing, (Link, Comment)):
-            return
+            return self.abort404()
 
         if isinstance(thing, Link) and promote.is_promo(thing):
             if not promote.is_promoted(thing):
-                return      
+                return abort(400, "Bad Request")
 
         if vote_info == 'rejected':
             reject_vote(thing)
