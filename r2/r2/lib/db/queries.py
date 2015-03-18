@@ -1709,7 +1709,11 @@ def get_likes(user, requested_items):
 
     res = {}
 
-    last_modified = LastModified._byID(user._fullname)
+    try:
+        last_modified = LastModified._byID(user._fullname)
+    except tdb_cassandra.NotFound:
+        last_modified = None
+
     items_in_grace_period = {}
     items_by_type = _by_type(requested_items)
     for type_, items in items_by_type.iteritems():
