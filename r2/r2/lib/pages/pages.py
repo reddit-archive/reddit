@@ -1962,7 +1962,7 @@ class ProfilePage(Reddit):
 
         rb.push(scb)
 
-        multis = LabeledMulti.by_owner(self.user)
+        multis = LabeledMulti.by_owner(self.user, load_subreddits=False)
 
         public_multis = [m for m in multis if m.is_public()]
         if public_multis:
@@ -4789,7 +4789,7 @@ class ListingChooser(Templated):
 
         self.show_samples = False
         if c.user_is_loggedin:
-            multis = LabeledMulti.by_owner(c.user)
+            multis = LabeledMulti.by_owner(c.user, load_subreddits=False)
             multis.sort(key=lambda multi: multi.name.lower())
             for multi in multis:
                 if not multi.is_hidden():
@@ -4925,7 +4925,10 @@ class ListingSuggestions(Templated):
                 self.suggestion_type = "explore"
                 return
 
-            multis = c.user_is_loggedin and LabeledMulti.by_owner(c.user)
+            if c.user_is_loggedin:
+                multis = LabeledMulti.by_owner(c.user, load_subreddits=False)
+            else:
+                multis = []
 
             if multis and c.site in multis:
                 multis.remove(c.site)
