@@ -438,17 +438,14 @@ def set_subreddit():
 _FILTER_SRS = {"mod": ModFiltered, "all": AllFiltered}
 def set_multireddit():
     routes_dict = request.environ["pylons.routes_dict"]
-    if "multipath" in routes_dict:
-        fullpath = routes_dict["multipath"].lower()
+    if "multipath" in routes_dict or ("m" in request.GET and is_api()):
+        fullpath = routes_dict.get("multipath", "").lower()
         multipaths = fullpath.split("+")
         multi_ids = None
-        username = None
-        logged_in_username = None
+        logged_in_username = c.user.name.lower() if c.user_is_loggedin else None
         multiurl = None
 
         if c.user_is_loggedin and routes_dict.get("my_multi"):
-            logged_in_username = c.user.name.lower()
-            username = logged_in_username
             multi_ids = ["/user/%s/m/%s" % (logged_in_username, multipath)
                          for multipath in multipaths]
             multiurl = "/me/m/" + fullpath
@@ -456,7 +453,6 @@ def set_multireddit():
             username = routes_dict["username"].lower()
 
             if c.user_is_loggedin:
-                logged_in_username = c.user.name.lower()
                 # redirect /user/foo/m/... to /me/m/... for user foo.
                 if username == logged_in_username and not is_api():
                     # trim off multi id
@@ -478,6 +474,12 @@ def set_multireddit():
             multiurl = "/r/" + c.site.name.lower() + "/m/" + fullpath
             multi_ids = ["/r/%s/m/%s" % (c.site.name.lower(), multipath)
                         for multipath in multipaths]
+        elif "m" in request.GET and is_api():
+            # Only supported via API as we don't have a valid non-query
+            # parameter equivalent for cross-user multis, which means
+            # we can't generate proper links to /new, /top, etc in HTML
+            multi_ids = request.GET.getall("m")
+            multiurl = ""
 
         if multi_ids is not None:
             multis = LabeledMulti._byID(multi_ids, return_dict=False) or []
