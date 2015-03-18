@@ -583,9 +583,11 @@ class CacheChain(CacheUtils, local):
     @log_invalid_keys
     def get(self, key, default = None, allow_local = True, stale=None):
         stat_outcome = False  # assume a miss until a result is found
+        is_localcache = False
         try:
             for c in self.caches:
-                if not allow_local and isinstance(c,LocalCache):
+                is_localcache = isinstance(c, LocalCache)
+                if not allow_local and is_localcache:
                     continue
 
                 val = c.get(key)
@@ -613,7 +615,8 @@ class CacheChain(CacheUtils, local):
         finally:
             if self.stats:
                 if stat_outcome:
-                    self.stats.cache_hit()
+                    if not is_localcache:
+                        self.stats.cache_hit()
                 else:
                     self.stats.cache_miss()
 
@@ -628,9 +631,11 @@ class CacheChain(CacheUtils, local):
         out = {}
         need = set(keys)
         hits = 0
+        local_hits = 0
         misses = 0
         for c in self.caches:
-            if not allow_local and isinstance(c, LocalCache):
+            is_localcache = isinstance(c, LocalCache)
+            if not allow_local and is_localcache:
                 continue
 
             if c.permanent and not misses:
@@ -641,11 +646,15 @@ class CacheChain(CacheUtils, local):
             if len(out) == len(keys):
                 # we've found them all
                 break
+
             r = c.simple_get_multi(need)
             #update other caches
             if r:
-                if not c.permanent:
+                if is_localcache:
+                    local_hits += len(r)
+                elif not c.permanent:
                     hits += len(r)
+
                 for d in self.caches:
                     if c is d:
                         break # so we don't set caches later in the chain
@@ -745,8 +754,6 @@ class StaleCacheChain(CacheChain):
     @cache_timer_decorator("get")
     def get(self, key, default=None, stale = False, **kw):
         if kw.get('allow_local', True) and key in self.localcache:
-            if self.stats:
-                self.stats.cache_hit()
             return self.localcache[key]
 
         if stale:
@@ -785,12 +792,14 @@ class StaleCacheChain(CacheChain):
             keys = set(keys)
 
         ret = {}
+        local_hits = 0
 
         if kw.get('allow_local'):
             for k in list(keys):
                 if k in self.localcache:
                     ret[k] = self.localcache[k]
                     keys.remove(k)
+                    local_hits += 1
 
         if keys and stale:
             stale_values = self._getstale(keys)
@@ -814,7 +823,7 @@ class StaleCacheChain(CacheChain):
 
         if self.stats:
             misses = len(keys - set(ret.keys()))
-            hits = len(ret)
+            hits = len(ret) - local_hits
             self.stats.cache_hit(hits, subname=stat_subname)
             self.stats.cache_miss(misses, subname=stat_subname)
 
