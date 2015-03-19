@@ -624,6 +624,8 @@ class _EmbedlyScraper(Scraper):
             thumbnail_url = oembed.get("url")
         else:
             thumbnail_url = oembed.get("thumbnail_url")
+        if not thumbnail_url:
+            return None, None, None, None
 
         content_type, content = _fetch_url(thumbnail_url, referer=self.url)
         uid = _filename_from_content(content)
