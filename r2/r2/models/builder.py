@@ -885,8 +885,10 @@ class CommentBuilder(Builder):
 
         # We have some special collapsing rules for the Q&A sort type.
         # However, we want to show everything when we're building a specific
-        # set of children (like from "load more" links).
-        qa_sort_hiding = (self.sort.col == '_qa') and not self.children
+        # set of children (like from "load more" links) or when viewing a
+        # comment permalink.
+        qa_sort_hiding = ((self.sort.col == '_qa') and not self.children and
+                          self.comment is None)
         if qa_sort_hiding:
             special_responder_ids = self.link.responder_ids
         else:
