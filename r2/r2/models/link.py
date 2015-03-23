@@ -1118,9 +1118,8 @@ class Comment(Thing, Printable):
         parent_ids = set(cm.parent_id for cm in wrapped
                          if getattr(cm, 'parent_id', None)
                          and cm.parent_id not in cids)
-        parents = {}
-        if parent_ids:
-            parents = Comment._byID(parent_ids, data=True, stale=True)
+        parents = Comment._byID(
+            parent_ids, data=True, stale=True, ignore_missing=True)
 
         can_reply_srs = set(s._id for s in subreddits if s.can_comment(user)) \
                         if c.user_is_loggedin else set()
@@ -1168,18 +1167,20 @@ class Comment(Thing, Printable):
                          link=item.link.make_permalink(item.subreddit))
             if not hasattr(item, 'target'):
                 item.target = "_top" if cname else None
+
+            parent = None
             if item.parent_id:
                 if item.parent_id in parents:
                     parent = parents[item.parent_id]
-                else:
+                elif item.parent_id in cids:
                     parent = cids[item.parent_id]
-                if not parent.deleted:
-                    if item.parent_id in cids:
-                        item.parent_permalink = '#' + utils.to36(item.parent_id)
-                    else:
-                        item.parent_permalink = parent.make_permalink(item.link, item.subreddit)
+
+            if parent and not parent.deleted:
+                if item.parent_id in cids:
+                    # parent is displayed on the page, use an anchor tag
+                    item.parent_permalink = '#' + utils.to36(item.parent_id)
                 else:
-                    item.parent_permalink = None
+                    item.parent_permalink = parent.make_permalink(item.link, item.subreddit)
             else:
                 item.parent_permalink = None
 
