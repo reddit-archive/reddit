@@ -255,13 +255,13 @@ class FrontController(RedditController):
         # Determine if we should show the embed link for comments
         c.can_embed = feature.is_enabled("comment_embeds") and bool(comment)
 
-        embed_key = embeds.prepare_embed_request(sr)
+        is_embed = embeds.prepare_embed_request(sr)
 
         # check for 304
         self.check_modified(article, 'comments')
 
-        if embed_key:
-            embeds.set_up_embed(embed_key, sr, comment, showedits=showedits)
+        if is_embed:
+            embeds.set_up_embed(sr, comment, showedits=showedits)
 
         # Temporary hook until IAMA app "OP filter" is moved from partners
         # Not to be open-sourced

@@ -32,7 +32,7 @@
       context++;
     }
 
-    var query = 'embed=' + el.getAttribute('data-embed-token') +
+    var query = 'embed=true' +
                 '&context=' + context +
                 '&depth=' + (++context) +
                 '&showedits=' + (showedits === 'true') +

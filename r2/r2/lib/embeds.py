@@ -1,13 +1,10 @@
 from datetime import datetime
-import hashlib
-import hmac
 import math
 from pylons import c, g, request
 from pylons.controllers.util import abort
 import pytz
 
 from r2.controllers.reddit_base import UnloggedUser
-from r2.lib.utils import constant_time_compare
 from r2.models import Account, NotFound
 from r2.models.subreddit import Subreddit
 
@@ -43,12 +40,11 @@ def edited_after(thing, iso_timestamp, showedits):
 
 def prepare_embed_request(sr):
     """Given a request, determine if we are embedding. If so, ensure the
-       subreddit is embeddable, prepare the request for embedding, and return
-       the key.
+       subreddit is embeddable and prepare the request for embedding.
     """
-    embed_key = request.GET.get('embed')
+    is_embed = request.GET.get('embed')
 
-    if not embed_key:
+    if not is_embed:
         return None
 
     if request.host != g.media_domain:
@@ -61,15 +57,10 @@ def prepare_embed_request(sr):
 
     c.allow_framing = True
 
-    return embed_key
+    return is_embed
 
 
-def set_up_embed(embed_key, sr, thing, showedits):
-    expected_mac = hmac.new(g.secrets['comment_embed'], thing._id36,
-                            hashlib.sha1).hexdigest()
-    if not constant_time_compare(embed_key or '', expected_mac):
-        abort(401)
-
+def set_up_embed(sr, thing, showedits):
     try:
         author = Account._byID(thing.author_id) if thing.author_id else None
     except NotFound:
