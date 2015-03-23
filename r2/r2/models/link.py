@@ -1377,16 +1377,6 @@ class Comment(Thing, Printable):
         # Run this last
         Printable.add_props(user, wrapped)
 
-class CommentSortsCache(tdb_cassandra.View):
-    """A cache of the sort-values of comments to avoid looking up all
-       of the comments in a big tree at render-time just to determine
-       the candidate order"""
-    _use_db = True
-    _value_type = 'float'
-    _connection_pool = 'main'
-    _read_consistency_level = tdb_cassandra.CL.ONE
-    _fetch_all_columns = True
-
 
 class CommentScoresByLink(tdb_cassandra.View):
     _use_db = True

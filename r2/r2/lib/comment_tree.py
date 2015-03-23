@@ -39,9 +39,6 @@ def lock_key(link_id):
 def parent_comments_key(link_id):
     return 'comments_parents_' + str(link_id)
 
-def sort_comments_key(link_id, sort):
-    assert sort.startswith('_')
-    return '%s%s' % (to36(link_id), sort)
 
 def _get_sort_value(comment, sort, link=None, children=None):
     if sort == "_date":
@@ -88,8 +85,8 @@ def add_comments(comments):
         timer.stop()
         update_comment_votes(coms)
 
-def update_comment_votes(comments, write_consistency_level = None):
-    from r2.models import CommentSortsCache, CommentScoresByLink
+def update_comment_votes(comments):
+    from r2.models import CommentScoresByLink
 
     comments = tup(comments)
 
@@ -109,19 +106,11 @@ def update_comment_votes(comments, write_consistency_level = None):
             cid_tree = comment_trees[link_id].tree
             scores_by_comment = _comment_sorter_from_cids(
                 coms, sort, link, cid_tree, by_36=True)
-
-            # Cassandra always uses the id36 instead of the integer
-            # ID, so we'll map that first before sending it
-            c_key = sort_comments_key(link_id, sort)
-            CommentSortsCache._set_values(c_key, scores_by_comment,
-                write_consistency_level=write_consistency_level)
             CommentScoresByLink.set_scores(link, sort, scores_by_comment)
 
 
 def _comment_sorter_from_cids(comments, sort, link, cid_tree, by_36=False):
     """Retrieve sort values for comments.
-
-    Useful to fill in any gaps in CommentSortsCache.
 
     Arguments:
 
@@ -215,7 +204,6 @@ def link_comments_and_sort(link, sort):
     * sorter -- a dictionary from cid to a numeric value to be used for
       sorting.
     """
-    from r2.models import CommentSortsCache
 
     # This has grown sort of organically over time. Right now the
     # cache of the comments tree consists in three keys:
@@ -228,7 +216,7 @@ def link_comments_and_sort(link, sort):
     # 2. The parent_comments_key =:= dict(comment_id -> parent_id)
     # 3. The comments_sorts keys =:= dict(comment_id36 -> float).
     #    These are represented by a Cassandra model
-    #    (CommentSortsCache) rather than a permacache key. One of
+    #    (CommentScoresByLink) rather than a permacache key. One of
     #    these exists for each sort (hot, new, etc)
 
     timer = g.stats.get_timer('comment_tree.get.%s' % link.comment_tree_version)
@@ -518,7 +506,7 @@ def tree_sort_fn(tree):
     return threads[-1] if threads else root
 
 def _populate(after_id = None, estimate=54301242):
-    from r2.models import CommentSortsCache, desc
+    from r2.models import desc
     from r2.lib.db import tdb_cassandra
     from r2.lib import utils
 
@@ -538,4 +526,4 @@ def _populate(after_id = None, estimate=54301242):
 
     for chunk in utils.in_chunks(q, chunk_size):
         chunk = filter(lambda x: hasattr(x, 'link_id'), chunk)
-        update_comment_votes(chunk, write_consistency_level = tdb_cassandra.CL.ONE)
+        update_comment_votes(chunk)
