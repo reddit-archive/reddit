@@ -89,7 +89,7 @@ def add_comments(comments):
         update_comment_votes(coms)
 
 def update_comment_votes(comments, write_consistency_level = None):
-    from r2.models import CommentSortsCache
+    from r2.models import CommentSortsCache, CommentScoresByLink
 
     comments = tup(comments)
 
@@ -107,14 +107,15 @@ def update_comment_votes(comments, write_consistency_level = None):
         for sort in ("_controversy", "_hot", "_confidence", "_score", "_date",
                      "_qa"):
             cid_tree = comment_trees[link_id].tree
-            sorter = _comment_sorter_from_cids(coms, sort, link, cid_tree,
-                                               by_36=True)
+            scores_by_comment = _comment_sorter_from_cids(
+                coms, sort, link, cid_tree, by_36=True)
 
             # Cassandra always uses the id36 instead of the integer
             # ID, so we'll map that first before sending it
             c_key = sort_comments_key(link_id, sort)
-            CommentSortsCache._set_values(c_key, sorter,
-                                          write_consistency_level = write_consistency_level)
+            CommentSortsCache._set_values(c_key, scores_by_comment,
+                write_consistency_level=write_consistency_level)
+            CommentScoresByLink.set_scores(link, sort, scores_by_comment)
 
 
 def _comment_sorter_from_cids(comments, sort, link, cid_tree, by_36=False):
