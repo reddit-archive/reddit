@@ -65,6 +65,10 @@ import simplejson as json
 import random, re
 from collections import defaultdict
 from pycassa.cassandra.ttypes import NotFoundException
+from pycassa.system_manager import (
+    ASCII_TYPE,
+    DOUBLE_TYPE,
+)
 import pytz
 
 NOTIFICATION_EMAIL_DELAY = timedelta(hours=1)
@@ -1367,6 +1371,40 @@ class CommentSortsCache(tdb_cassandra.View):
     _connection_pool = 'main'
     _read_consistency_level = tdb_cassandra.CL.ONE
     _fetch_all_columns = True
+
+
+class CommentScoresByLink(tdb_cassandra.View):
+    _use_db = True
+    _connection_pool = 'main'
+    _read_consistency_level = tdb_cassandra.CL.ONE
+    _fetch_all_columns = True
+
+    _extra_schema_creation_args = {
+        "column_name_class": ASCII_TYPE,
+        "default_validation_class": DOUBLE_TYPE,
+        "key_validation_class": ASCII_TYPE,
+    }
+    _value_type = "bytes"
+    _compare_with = ASCII_TYPE
+
+    @classmethod
+    def _rowkey(cls, link, sort):
+        assert sort.startswith('_')
+        return '%s%s' % (link._id36, sort)
+
+    @classmethod
+    def set_scores(cls, link, sort, scores_by_comment):
+        rowkey = cls._rowkey(link, sort)
+        cls._set_values(rowkey, scores_by_comment)
+
+    @classmethod
+    def get_scores(cls, link, sort):
+        rowkey = cls._rowkey(link, sort)
+        try:
+            return CommentScoresByLink._byID(rowkey)._values()
+        except tdb_cassandra.NotFound:
+            return {}
+
 
 class StarkComment(Comment):
     """Render class for the comments in the top-comments display in
