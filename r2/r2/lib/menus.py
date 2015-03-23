@@ -64,11 +64,11 @@ menu =   MenuHandler(hot          = _('hot'),
                      admin        = _('admin'), 
                                  
                      # time sort words
-                     hour         = _('this hour'),
-                     day          = _('today'),
-                     week         = _('this week'),
-                     month        = _('this month'),
-                     year         = _('this year'),
+                     hour         = _('past hour'),
+                     day          = _('past 24 hours'),
+                     week         = _('past week'),
+                     month        = _('past month'),
+                     year         = _('past year'),
                      all          = _('all time'),
                                   
                      # "kind" words
