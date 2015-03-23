@@ -2906,7 +2906,7 @@ class SearchBar(Templated):
                  subreddit_search=False, converted_data=None, facets={},
                  sort=None, recent=None, **kw):
         if header is None:
-            header = _("previous search")
+            header = _("search")
         self.header = header
 
         self.prev_search  = prev_search
