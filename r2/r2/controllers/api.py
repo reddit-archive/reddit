@@ -81,7 +81,7 @@ from r2.models.last_modified import LastModified
 from r2.lib.menus import CommentSortMenu
 from r2.lib.captcha import get_iden
 from r2.lib.strings import strings
-from r2.lib.filters import _force_unicode, websafe_json, websafe, spaceCompress
+from r2.lib.filters import _force_unicode, _force_utf8, websafe_json, websafe, spaceCompress
 from r2.lib.template_helpers import format_html
 from r2.lib.db import queries
 from r2.lib import media
@@ -4281,7 +4281,7 @@ class ApiController(RedditController):
         updates = {}
         updates["signed"] = signed
         if message and message.strip() != "":
-            updates["giftmessage"] = message
+            updates["giftmessage"] = _force_utf8(message)
 
         update_blob(str(code), updates)
 
