@@ -462,11 +462,12 @@ class HotController(ListingWithPromos):
             stack = None
             if isinstance(c.site, DefaultSR) and not self.listing_obj.prev:
                 trending_info = self.trending_info()
-                stack = [
-                    self.spotlight,
-                    TrendingSubredditsBar(**trending_info),
-                    self.listing_obj,
-                ]
+                if trending_info:
+                    stack = [
+                        self.spotlight,
+                        TrendingSubredditsBar(**trending_info),
+                        self.listing_obj,
+                    ]
             else:
                 hot_hook = hooks.get_hook("hot.get_content")
                 hot_pane = hot_hook.call_until_return(controller=self)
