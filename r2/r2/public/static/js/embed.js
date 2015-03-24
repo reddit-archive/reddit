@@ -49,7 +49,7 @@
           '</label>' +
       '</h4>' +
       '<textarea class="c-form-control" id="embed-code" rows="3" readonly>' +
-          '<%= html %>' +
+          '<%- html %>' +
           '<%- scripts %>' +
       '</textarea>'
     );
