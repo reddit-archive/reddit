@@ -207,7 +207,7 @@ r.ui.Form = function(el) {
     }, this))
 
     this.$el.find('[data-validate-url]')
-        .validator()
+        .validator({ https: !!r.config.https_endpoint })
         .on('initialize.validator', function(e) {
             var $el = $(this);
 
