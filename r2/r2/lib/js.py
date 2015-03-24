@@ -342,6 +342,10 @@ class LocalizedModule(Module):
         self.localized_appendices = kwargs.pop("localized_appendices", [])
         Module.__init__(self, *args, **kwargs)
 
+        for source in self.sources:
+            if isinstance(source, LocalizedModule):
+                self.localized_appendices.extend(source.localized_appendices)
+
     @staticmethod
     def languagize_path(path, lang):
         path_name, path_ext = os.path.splitext(path)
