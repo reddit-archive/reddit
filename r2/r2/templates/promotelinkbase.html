@@ -128,10 +128,21 @@
              %else:
                class="rounded" placeholder="optional"
              %endif
-      />
-
+      >
       <div class="infotext rounded">
         <p>${_("Choose a different domain name to display on the site (the small grey text next to a link)")}</p>
+      </div>
+
+      <label style="display:block; text-align:right" for="third_party_tracking">${_("Impression tracking URL:")}</label>
+      <input id="third_party_tracking" name="third_party_tracking" type="text"
+             %if link and link.third_party_tracking:
+               value="${link.third_party_tracking}" class="rounded"
+             %else:
+               class="rounded" placeholder="optional"
+             %endif
+      >
+      <div class="infotext rounded">
+        <p>${_("Enter a URL to insert into a 3rd-party impression tracking code snippet")}</p>
       </div>
     %endif
   </%utils:line_field>

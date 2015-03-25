@@ -165,6 +165,12 @@ r.analytics = {
       pixel.src = impPixel;
     }
 
+    var thirdPartyTrackingUrl = $el.data('thirdPartyTrackingUrl');
+    if (thirdPartyTrackingUrl) {
+      var thirdPartyTrackingImage = new Image();
+      thirdPartyTrackingImage.src = thirdPartyTrackingUrl;
+    }
+
     var adServerPixel = new Image();
     var adServerImpPixel = $el.data('adserverImpPixel');
     var adServerClickUrl = $el.data('adserverClickUrl');

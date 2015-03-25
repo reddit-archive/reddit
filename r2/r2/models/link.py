@@ -93,6 +93,7 @@ class Link(Thing, Printable):
                      gifts_embed_url=None,
                      media_autoplay=False,
                      domain_override=None,
+                     third_party_tracking=None,
                      promoted=None,
                      payment_flagged_reason="",
                      fraud=None,

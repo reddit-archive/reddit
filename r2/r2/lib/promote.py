@@ -196,6 +196,9 @@ def add_trackers(items, sr):
             "r": random.randint(0, 2147483647), # cachebuster
         }
         item.imp_pixel = update_query(g.adtracker_url, pixel_query)
+        
+        if item.third_party_tracking:
+            item.third_party_tracking_url = item.third_party_tracking
 
         # construct the click redirect url
         url = urllib.unquote(item.url.encode("utf-8"))
