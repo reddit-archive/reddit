@@ -1724,12 +1724,6 @@ class CommentPane(Templated):
         )
 
     def __init__(self, article, sort, comment, context, num, **kw):
-        # keys: lang, num, can_reply, render_style
-        # disable: admin
-
-        timer = g.stats.get_timer("service_time.CommentPaneCache")
-        timer.start()
-
         from r2.models import CommentBuilder, NestedListing
         from r2.controllers.reddit_base import UnloggedUser
 
@@ -1740,8 +1734,17 @@ class CommentPane(Templated):
         self.max_depth = kw.get('max_depth')
         self.edits_visible = kw.get("edits_visible")
 
+        is_html = c.render_style == "html"
+
+        if is_html:
+            timer = g.stats.get_timer("service_time.CommentPaneCache")
+        else:
+            timer = g.stats.get_timer(
+                "service_time.CommentPaneCache.%s" % c.render_style)
+        timer.start()
+
         # don't cache on permalinks or contexts, and keep it to html
-        try_cache = not comment and not context and (c.render_style == "html")
+        try_cache = not comment and not context and is_html
         self.can_reply = False
         if c.user_is_admin:
             try_cache = False
