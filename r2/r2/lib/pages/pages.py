@@ -1743,25 +1743,30 @@ class CommentPane(Templated):
                 "service_time.CommentPaneCache.%s" % c.render_style)
         timer.start()
 
-        # don't cache on permalinks or contexts, and keep it to html
-        try_cache = not comment and not context and is_html
-        self.can_reply = False
-        if c.user_is_admin:
-            try_cache = False
+        try_cache = (
+            not comment and
+            not context and
+            is_html and
+            not c.user_is_admin and
+            not (c.user_is_loggedin and c.user._id == article.author_id)
+        )
 
-        # don't cache if the current user is the author of the link
-        if c.user_is_loggedin and c.user._id == article.author_id:
-            try_cache = False
-
-        if try_cache and c.user_is_loggedin:
+        if c.user_is_loggedin:
             sr = article.subreddit_slow
-            c.can_reply = self.can_reply = sr.can_comment(c.user)
+            can_reply = sr.can_comment(c.user)
+            self.can_reply = can_reply
+            c.can_reply = can_reply
             c.can_save = True
-            # don't cache if the current user can ban comments in the listing
-            try_cache = not sr.can_ban(c.user)
-            # don't cache for users with custom hide threshholds
-            try_cache &= (c.user.pref_min_comment_score ==
-                         Account._defaults["pref_min_comment_score"])
+
+            try_cache &= bool(sr.can_ban(c.user))
+
+            user_threshold = c.user.pref_min_comment_score
+            default_threshold = Account._defaults["pref_min_comment_score"]
+            try_cache &= user_threshold == default_threshold
+        else:
+            self.can_reply = False
+            c.can_reply = False
+            c.can_save = False
 
         def renderer():
             builder = CommentBuilder(article, sort, comment=comment,
