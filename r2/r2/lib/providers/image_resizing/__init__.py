@@ -24,7 +24,7 @@ class ImageResizingProvider(object):
     """Provider for generating resizable image urls.
 
     """
-    def resize_image(self, image, width=None, censor_nsfw=False):
+    def resize_image(self, image, width=None, censor_nsfw=False, max_ratio=None):
         """Turn a url of an image in storage into one that will produce a
         resized image.
 
@@ -38,6 +38,10 @@ class ImageResizingProvider(object):
 
         `censor_nsfw` is a boolean indicating whether the resizer should
         attempt to censor the image (e.g. by blurring it) due to it being NSFW.
+
+        `max_ratio` is the maximum value of the height of the resultant image
+        divided by the width; if not specified, the aspect ratio will be the
+        same as the source image.
 
         The return value should be an absolute URL with the `https` scheme if
         supported, but should also work if accessed with `http`.

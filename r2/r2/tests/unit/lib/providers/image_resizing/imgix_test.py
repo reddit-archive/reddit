@@ -33,6 +33,9 @@ from r2.lib.providers.image_resizing.imgix import ImgixImageResizingProvider
 from r2.lib.utils import UrlParser
 
 
+URLENCODED_COMMA = '%2C'
+
+
 class TestImgixResizer(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -66,7 +69,21 @@ class TestImgixResizer(unittest.TestCase):
             url = self.provider.resize_image(image, width)
             self.assertEqual(url, 'https://example.com/a.jpg?w=%d' % width)
 
-        # TODO: test acceptable aspect ratios per spec!
+    def test_cropping(self):
+        image = dict(url='http://s3.amazonaws.com/a.jpg', width=1200,
+                      height=800)
+        max_ratio = 0.5
+        url = self.provider.resize_image(image, max_ratio=max_ratio)
+        crop = URLENCODED_COMMA.join(('faces', 'entropy'))
+        self.assertEqual(url,
+                ('https://example.com/a.jpg?fit=crop&crop=%s&arh=%s'
+                    % (crop, max_ratio)))
+
+        width = 108
+        url = self.provider.resize_image(image, width, max_ratio=max_ratio)
+        self.assertEqual(url,
+                ('https://example.com/a.jpg?fit=crop&crop=%s&arh=%s&w=%s'
+                    % (crop, max_ratio, width)))
 
     def test_sign_url(self):
         u = UrlParser('http://examples.imgix.net/frog.jpg?w=100')

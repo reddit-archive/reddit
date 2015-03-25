@@ -39,12 +39,19 @@ class ImgixImageResizingProvider(ImageResizingProvider):
         ],
     }
 
-    def resize_image(self, image, width=None, censor_nsfw=False):
+    def resize_image(self, image, width=None, censor_nsfw=False, max_ratio=None):
         url = UrlParser(image['url'])
         url.hostname = g.imgix_domain
         # Let's encourage HTTPS; it's cool, works just fine on HTTP pages, and
         # will prevent insecure content warnings on HTTPS pages.
         url.scheme = 'https'
+
+        if max_ratio:
+            url.update_query(fit='crop')
+            # http://www.imgix.com/docs/reference/size#param-crop
+            url.update_query(crop='faces,entropy')
+            url.update_query(arh=max_ratio)
+
         if width:
             if width > image['width']:
                 raise NotLargeEnough()
