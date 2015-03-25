@@ -1134,13 +1134,19 @@ class ApiController(RedditController):
         notify_user_added("accept_moderator_invite", c.user, c.user, c.site)
         jquery.refresh()
 
-    @validatedForm(VUser('curpass', default=''),
-                   VModhash(),
-                   password=VPasswordChange(
-                        ['curpass', 'curpass'],
-                        docs=dict(curpass="the user's current password")
-                   ),
-                   dest = VDestination())
+    @validatedForm(
+        VUser(),
+        VModhash(),
+        VVerifyPassword("curpass", fatal=False),
+        # XXX: Is this necessary? Seems like it won't let people with
+        # passwords that would be invalid by current password rules clear
+        # their sessions.
+        password=VPasswordChange(
+            ['curpass', 'curpass'],
+            docs=dict(curpass="the user's current password")
+        ),
+        dest=VDestination(),
+    )
     def POST_clear_sessions(self, form, jquery, password, dest):
         """Clear all session cookies and replace the current one.
 
@@ -1165,13 +1171,16 @@ class ApiController(RedditController):
         # invalidated.  drop a new cookie.
         self.login(c.user)
 
-    @validatedForm(VUser("curpass", default=""),
-                   VModhash(),
-                   force_https=VBoolean("force_https"),
-                   password=VPasswordChange(
-                       ["curpass", "curpass"],
-                       docs=dict(curpass="the user's current password"),
-                   ))
+    @validatedForm(
+        VUser(),
+        VModhash(),
+        VVerifyPassword("curpass", fatal=False),
+        force_https=VBoolean("force_https"),
+        password=VPasswordChange(
+            ["curpass", "curpass"],
+            docs=dict(curpass="the user's current password"),
+        ),
+    )
     def POST_set_force_https(self, form, jquery, password, force_https):
         """Toggle HTTPS-only sessions, invalidating other sessions.
 
@@ -1205,8 +1214,9 @@ class ApiController(RedditController):
         form.redirect(hsts_modify_redirect("/prefs/security"))
 
     @validatedForm(
-        VUser('curpass', default=''),
+        VUser(),
         VModhash(),
+        VVerifyPassword("curpass", fatal=False),
         email=ValidEmails("email", num=1),
         verify=VBoolean("verify"),
         dest=VDestination(),
@@ -1255,8 +1265,9 @@ class ApiController(RedditController):
             form.set_text('.status', _('your email has been updated'))
 
     @validatedForm(
-        VUser('curpass', default=''),
+        VUser(),
         VModhash(),
+        VVerifyPassword("curpass", fatal=False),
         password=VPasswordChange(['newpass', 'verpass']),
     )
     def POST_update_password(self, form, jquery, password):
@@ -3949,12 +3960,15 @@ class ApiController(RedditController):
     def POST_expando(self):
         return self.GET_expando()
 
-    @validatedForm(VUser('password', default=''),
-                   VModhash(),
-                   VOneTimePassword("otp",
-                                    required=not g.disable_require_admin_otp),
-                   remember=VBoolean("remember"),
-                   dest=VDestination())
+    @validatedForm(
+        VUser(),
+        VModhash(),
+        VVerifyPassword("password", fatal=False),
+        VOneTimePassword("otp",
+                         required=not g.disable_require_admin_otp),
+        remember=VBoolean("remember"),
+        dest=VDestination(),
+    )
     def POST_adminon(self, form, jquery, remember, dest):
         if c.user.name not in g.admins:
             self.abort403()
@@ -3973,8 +3987,11 @@ class ApiController(RedditController):
         self.enable_admin_mode(c.user)
         form.redirect(dest)
 
-    @validatedForm(VUser("password", default=""),
-                   VModhash())
+    @validatedForm(
+        VUser(),
+        VModhash(),
+        VVerifyPassword("password", fatal=False),
+    )
     def POST_generate_otp_secret(self, form, jquery):
         if form.has_errors("password", errors.WRONG_PASSWORD):
             return
@@ -4016,9 +4033,12 @@ class ApiController(RedditController):
 
         form.redirect("/prefs/security")
 
-    @validatedForm(VUser("password", default=""),
-                   VOneTimePassword("otp", required=True),
-                   VModhash())
+    @validatedForm(
+        VUser(),
+        VModhash(),
+        VVerifyPassword("password", fatal=False),
+        VOneTimePassword("otp", required=True),
+    )
     def POST_disable_otp(self, form, jquery):
         if form.has_errors("password", errors.WRONG_PASSWORD):
             return
