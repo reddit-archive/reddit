@@ -1511,7 +1511,10 @@ class LinkInfoPage(Reddit):
             # thumbnails.
             return self.link.thumbnail
 
-        return static('icon.png')
+        # Default to the reddit icon if we've got nothing else.  Force it to be
+        # absolute because not all scrapers handle relative protocols or paths
+        # well.
+        return static('icon.png', absolute=True)
 
     def _build_og_description(self, meta_description):
         if self.link.selftext:
