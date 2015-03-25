@@ -477,7 +477,7 @@ def set_multireddit():
             # Only supported via API as we don't have a valid non-query
             # parameter equivalent for cross-user multis, which means
             # we can't generate proper links to /new, /top, etc in HTML
-            multi_ids = request.GET.getall("m")
+            multi_ids = [m.lower() for m in request.GET.getall("m")]
             multiurl = ""
 
         if multi_ids is not None:
