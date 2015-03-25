@@ -1414,11 +1414,7 @@ class FormsController(RedditController):
         content = None
         infotext = None
         if not location or location == 'options':
-            content = PrefOptions(
-                done=request.GET.get('done'),
-                error_style_override=request.GET.get('error_style_override'),
-                generic_error=request.GET.get('generic_error'),
-            )
+            content = PrefOptions(done=request.GET.get('done'))
         elif location == 'update':
             if verified:
                 infotext = strings.email_verified
