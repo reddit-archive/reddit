@@ -1768,30 +1768,42 @@ class CommentPane(Templated):
             c.can_reply = False
             c.can_save = False
 
-        def renderer():
-            builder = CommentBuilder(article, sort, comment=comment,
-                                     context=context, num=num, **kw)
+        def build_listing():
+            builder = CommentBuilder(
+                article, sort, comment=comment, context=context, num=num, **kw)
             listing = NestedListing(builder, parent_name=article._fullname)
             return listing.listing()
 
+        if c.user_is_loggedin:
+            listing_for_user = build_listing()
+            timer.intermediate("build_listing")
+        else:
+            listing_for_user = None
+
         # disable the cache if the user is the author of anything in the
         # thread because of edit buttons etc.
-        my_listing = None
         if try_cache and c.user_is_loggedin:
-            my_listing = renderer()
-            for t in self.listing_iter(my_listing):
+            for t in self.listing_iter(listing_for_user):
                 if getattr(t, "is_author", False):
                     try_cache = False
                     break
 
-        timer.intermediate("try_cache")
-        cache_hit = False
-
-        if try_cache:
-            # try to fetch the comment tree from the cache
+        if not try_cache:
+            if not listing_for_user:
+                listing_for_user = build_listing()
+                timer.intermediate("build_listing")
+            self.rendered = listing_for_user.render()
+            timer.intermediate("render_listing")
+        else:
+            g.log.debug("using comment page cache")
             key = self.cache_key()
             self.rendered = g.pagecache.get(key)
-            if not self.rendered:
+
+            if self.rendered:
+                cache_hit = True
+            else:
+                cache_hit = False
+
                 # spoof an unlogged in user
                 user = c.user
                 logged_in = c.user_is_loggedin
@@ -1805,19 +1817,28 @@ class CommentPane(Templated):
                     c.user_is_loggedin = False
 
                     # render as if not logged in (but possibly with reply buttons)
-                    self.rendered = renderer().render()
+                    # NOTE: might have already run build_listing for the
+                    # logged in user, but we need to run it again for the
+                    # spoofed user
+                    generic_listing = build_listing()
+
+                    # log the possible duplicate retrieval
+                    if listing_for_user:
+                        timer.intermediate("build_listing_for_render")
+                    else:
+                        timer.intermediate("build_listing")
+
+                    self.rendered = generic_listing.render()
+                    timer.intermediate("render_listing")
                     g.pagecache.set(
                         key,
                         self.rendered,
                         time=g.commentpane_cache_time
                     )
-
                 finally:
                     # undo the spoofing
                     c.user = user
                     c.user_is_loggedin = logged_in
-            else:
-                cache_hit = True
 
             # figure out what needs to be updated on the listing
             if c.user_is_loggedin:
@@ -1826,7 +1847,7 @@ class CommentPane(Templated):
                 is_friend = set()
                 gildings = {}
                 saves = set()
-                for t in self.listing_iter(my_listing):
+                for t in self.listing_iter(listing_for_user):
                     if not hasattr(t, "likes"):
                         # this is for MoreComments and MoreRecursion
                         continue
@@ -1845,10 +1866,7 @@ class CommentPane(Templated):
                                               is_friend = is_friend,
                                               gildings = gildings,
                                               saves = saves).render()
-            g.log.debug("using comment page cache")
-        else:
-            my_listing = my_listing or renderer()
-            self.rendered = my_listing.render()
+                timer.intermediate("thingupdater")
 
         if try_cache:
             if cache_hit:
