@@ -2882,10 +2882,12 @@ class ApiController(RedditController):
         return {'categories': categories}
 
     @require_oauth2_scope("save")
-    @noresponse(VUser(),
-                VModhash(),
-                category = VSavedCategory('category'),
-                thing = VByName('id'))
+    @noresponse(
+        VUser(),
+        VModhash(),
+        category=VSavedCategory('category'),
+        thing=VByName('id'),
+    )
     @api_doc(api_section.links_and_comments)
     def POST_save(self, thing, category):
         """Save a link or comment.
@@ -2895,17 +2897,23 @@ class ApiController(RedditController):
         See also: [/api/unsave](#POST_api_unsave).
 
         """
-        if not thing: return
+        if not thing or not isinstance(thing, (Link, Comment)):
+            abort(400)
+
         if category and not c.user.gold:
             category = None
+
         if ('BAD_SAVE_CATEGORY', 'category') in c.errors:
             abort(403)
+
         thing._save(c.user, category=category)
 
     @require_oauth2_scope("save")
-    @noresponse(VUser(),
-                VModhash(),
-                thing = VByName('id'))
+    @noresponse(
+        VUser(),
+        VModhash(),
+        thing=VByName('id'),
+    )
     @api_doc(api_section.links_and_comments)
     def POST_unsave(self, thing):
         """Unsave a link or comment.
@@ -2915,7 +2923,9 @@ class ApiController(RedditController):
         See also: [/api/save](#POST_api_save).
 
         """
-        if not thing: return
+        if not thing or not isinstance(thing, (Link, Comment)):
+            abort(400)
+
         thing._unsave(c.user)
 
     def collapse_handler(self, things, collapse):
