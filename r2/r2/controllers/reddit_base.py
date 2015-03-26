@@ -490,9 +490,9 @@ def set_multireddit():
             else:
                 sr_ids = Subreddit.random_reddits(
                     logged_in_username,
-                    set(itertools.chain.from_iterable(
+                    list(set(itertools.chain.from_iterable(
                         multi.sr_ids for multi in multis
-                    )),
+                    ))),
                     LabeledMulti.MAX_SR_COUNT,
                 )
                 srs = Subreddit._byID(sr_ids, data=True, return_dict=False)
