@@ -1630,7 +1630,8 @@ class ApiController(RedditController):
                 return
 
         block_acct = Account._byID(thing.author_id)
-        if block_acct.name in g.admins or thing.display_author:
+        display_author = getattr(thing, "display_author", None)
+        if block_acct.name in g.admins or display_author:
             return
         c.user.add_enemy(block_acct)
 
