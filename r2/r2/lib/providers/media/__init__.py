@@ -28,7 +28,6 @@ class MediaProvider(object):
     users to be able to view those objects over HTTP.
 
     """
-
     def make_inaccessible(self, url):
         """Make the content unavaiable, but do not remove. Content could
         be recovered at a later time.

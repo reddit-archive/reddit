@@ -64,6 +64,7 @@ class S3MediaProvider(MediaProvider):
         ],
         ConfigValue.tuple: [
             "s3_media_buckets",
+            "s3_image_buckets",
         ],
     }
 
@@ -114,8 +115,8 @@ class S3MediaProvider(MediaProvider):
         buckets = getattr(g, self.buckets[category])
         # choose a bucket based on the filename
         name_without_extension = os.path.splitext(name)[0]
-        index = ord(name_without_extension[-1]) % len(g.s3_media_buckets)
-        bucket_name = g.s3_media_buckets[index]
+        index = ord(name_without_extension[-1]) % len(buckets)
+        bucket_name = buckets[index]
 
         # guess the mime type
         mime_type, encoding = mimetypes.guess_type(name)
