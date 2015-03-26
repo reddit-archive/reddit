@@ -1758,7 +1758,7 @@ class CommentPane(Templated):
             c.can_reply = can_reply
             c.can_save = True
 
-            try_cache &= bool(sr.can_ban(c.user))
+            try_cache &= not bool(sr.can_ban(c.user))
 
             user_threshold = c.user.pref_min_comment_score
             default_threshold = Account._defaults["pref_min_comment_score"]
