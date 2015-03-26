@@ -905,16 +905,10 @@ class Subreddit(Thing, Printable, BaseSite):
     @classmethod
     def default_subreddits(cls, ids=True):
         """Return the subreddits a user with no subscriptions would see."""
-        if g.automatic_reddits:
-            auto_srs = cls._by_name(g.automatic_reddits, stale=True).values()
-        else:
-            auto_srs = set()
-
         location = get_request_location()
         srids = LocalizedDefaultSubreddits.get_defaults(location)
 
         srs = Subreddit._byID(srids, data=True, return_dict=False, stale=True)
-        srs = list(set(srs) | set(auto_srs))
         srs = filter(lambda sr: sr.allow_top, srs)
 
         if ids:
