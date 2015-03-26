@@ -488,13 +488,14 @@ def set_multireddit():
             elif len(multis) == 1:
                 c.site = multis[0]
             else:
-                srs = Subreddit.random_reddits(
+                sr_ids = Subreddit.random_reddits(
                     logged_in_username,
-                    list(set(itertools.chain.from_iterable(
-                        multi.srs for multi in multis
-                    ))),
-                    LabeledMulti.MAX_SR_COUNT
+                    set(itertools.chain.from_iterable(
+                        multi.sr_ids for multi in multis
+                    )),
+                    LabeledMulti.MAX_SR_COUNT,
                 )
+                srs = Subreddit._byID(sr_ids, data=True, return_dict=False)
                 c.site = MultiReddit(multiurl, srs)
                 if any(m.weighting_scheme == "fresh" for m in multis):
                     c.site.weighting_scheme = "fresh"
