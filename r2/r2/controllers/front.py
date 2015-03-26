@@ -380,7 +380,11 @@ class FrontController(RedditController):
         suggested_sort = article.sort_if_suggested() if feature.is_enabled('default_sort') else None
         if article.contest_mode:
             if c.user_is_loggedin and sr.is_moderator(c.user):
-                sort = "top"
+                # Default to top for contest mode to make determining winners
+                # easier, but allow them to override it for moderation
+                # purposes.
+                if 'sort' not in request.params:
+                    sort = "top"
             else:
                 sort = "random"
         elif suggested_sort and 'sort' not in request.params:
