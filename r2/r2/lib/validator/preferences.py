@@ -105,7 +105,6 @@ def filter_prefs(prefs, user):
         for pref in ('pref_show_adbox',
                      'pref_show_sponsors',
                      'pref_show_sponsorships',
-                     'pref_creddit_autorenew',
                     ):
             prefs[pref] = True
 
