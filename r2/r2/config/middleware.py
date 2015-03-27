@@ -28,6 +28,7 @@ import tempfile
 import urlparse
 from threading import Lock
 import itertools
+import simplejson
 
 from paste.cascade import Cascade
 from paste.registry import RegistryManager
@@ -43,7 +44,7 @@ from r2.config import hooks
 from r2.config.environment import load_environment
 from r2.config.extensions import extension_mapping, set_extension
 from r2.lib.utils import is_subdomain
-from r2.lib import csrf
+from r2.lib import csrf, filters
 
 
 # patch in WebOb support for HTTP 429 "Too Many Requests"
@@ -303,6 +304,22 @@ class StaticTestMiddleware(object):
             return self.app(environ, start_response)
         raise webob.exc.HTTPNotFound()
 
+
+def _wsgi_json(start_response, status_int, message=""):
+    status_message = webob.util.status_reasons[status_int]
+    message = message or status_message
+
+    start_response(
+        "%s %s" % (status_int, status_message),
+        [("Content-Type", "application/json")])
+
+    data = simplejson.dumps({
+        "error": status_int,
+        "message": message
+    })
+    return filters.websafe_json(data)
+
+
 class LimitUploadSize(object):
     """
     Middleware for restricting the size of uploaded files (such as
@@ -315,30 +332,42 @@ class LimitUploadSize(object):
     def __call__(self, environ, start_response):
         cl_key = 'CONTENT_LENGTH'
         is_error = environ.get("pylons.error_call", False)
+        is_api = environ.get("render_style").startswith("api")
         if not is_error and environ['REQUEST_METHOD'] == 'POST':
             if cl_key not in environ:
-                start_response("411 Length Required", [])
-                return ['<html><body>length required</body></html>']
+
+                if is_api:
+                    return _wsgi_json(start_response, 411)
+                else:
+                    start_response("411 Length Required", [])
+                    return ['<html><body>length required</body></html>']
 
             try:
                 cl_int = int(environ[cl_key])
             except ValueError:
-                start_response("400 Bad Request", [])
-                return ['<html><body>bad request</body></html>']
+                if is_api:
+                    return _wsgi_json(start_response, 400)
+                else:
+                    start_response("400 Bad Request", [])
+                    return ['<html><body>bad request</body></html>']
 
             if cl_int > self.max_size:
                 error_msg = "too big. keep it under %d KiB" % (
                     self.max_size / 1024)
-                start_response("413 Too Big", [])
-                return ["<html>"
-                        "<head>"
-                        "<script type='text/javascript'>"
-                        "parent.completedUploadImage('failed',"
-                        "'',"
-                        "'',"
-                        "[['BAD_CSS_NAME', ''], ['IMAGE_ERROR', '", error_msg,"']],"
-                        "'image-upload');"
-                        "</script></head><body>you shouldn\'t be here</body></html>"]
+
+                if is_api:
+                    return _wsgi_json(start_response, 413, error_msg)
+                else:
+                    start_response("413 Too Big", [])
+                    return ["<html>"
+                            "<head>"
+                            "<script type='text/javascript'>"
+                            "parent.completedUploadImage('failed',"
+                            "'',"
+                            "'',"
+                            "[['BAD_CSS_NAME', ''], ['IMAGE_ERROR', '", error_msg,"']],"
+                            "'image-upload');"
+                            "</script></head><body>you shouldn\'t be here</body></html>"]
 
         return self.app(environ, start_response)
 
