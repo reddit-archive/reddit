@@ -95,7 +95,7 @@ ${first_defined(kw[1:])}
   <div class="c-form-group ${'c-has-feedback c-has-error' if (error and kwargs['show_errors']) else ''}">
     ${caller.body()}
     %if kwargs['show_errors']:
-      <div class="c-form-control-feedback-wrapper">
+      <div class="c-form-control-feedback-wrapper ${'inside-input' if kwargs.get('feedback_inside_input') else ''}">
         <span class="c-form-control-feedback c-form-control-feedback-throbber"></span>
         <span class="c-form-control-feedback c-form-control-feedback-error" title="${_(error.message) if error else ''}"></span>
         <span class="c-form-control-feedback c-form-control-feedback-success"></span>

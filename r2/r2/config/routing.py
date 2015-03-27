@@ -166,6 +166,8 @@ def make_map():
     mc('/explore', controller='front', action='explore')
     mc('/api/recommend/feedback', controller='api', action='rec_feedback')
 
+    mc("/newsletter", controller="newsletter", action="newsletter")
+
     mc('/oembed', controller='oembed', action='oembed')
 
     mc('/about/sidebar', controller='front', action='sidebar')

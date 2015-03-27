@@ -5012,6 +5012,14 @@ class PolicyPage(BoringPage):
         return toolbars
 
 
+class Newsletter(BoringPage):
+    extra_page_classes = ['newsletter']
+
+    def __init__(self, pagename=None, content=None, **kw):
+        BoringPage.__init__(self, pagename=pagename, show_sidebar=False,
+                            content=content, **kw)
+
+
 class SubscribeButton(Templated):
     def __init__(self, sr, bubble_class=None):
         Templated.__init__(self)

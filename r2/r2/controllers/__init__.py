@@ -68,6 +68,7 @@ def load_controllers():
     from toolbar import ToolbarController
     from awards import AwardsController
     from errorlog import ErrorlogController
+    from newsletter import NewsletterController
     from promotecontroller import PromoteController
     from promotecontroller import SponsorController
     from promotecontroller import PromoteApiController

@@ -19,24 +19,27 @@ r.newsletter = {
 };
 
 r.newsletter.ui = {
-  init: function() {
+  _setupNewsletterBar: function() {
     var newsletterBarSeen = !!store.get('newsletterbar.seen');
-
-    if (newsletterBarSeen || $('.newsletterbar').length === 0) {
+    if (newsletterBarSeen) {
       return;
     }
 
     $('.newsletterbar').show();
-
-    $('.newsletter-signup').each(function(i, el) {
-      new r.newsletter.ui.NewsletterForm(el)
-    })
 
     $('.newsletter-close').on('click', function() {
       $('.newsletterbar').addClass('c-hidden');
     });
 
     store.set('newsletterbar.seen', true);
+  },
+
+  init: function() {
+    $('.newsletter-signup').each(function(i, el) {
+      new r.newsletter.ui.NewsletterForm(el)
+    });
+
+    this._setupNewsletterBar();
   },
 };
 
@@ -56,7 +59,7 @@ r.newsletter.ui.NewsletterForm.prototype = $.extend(new r.ui.Form(), {
   },
 
   _showSuccess: function() {
-      var parentEl = this.$el.parents('.newsletterbar');
+      var parentEl = this.$el.parents('.newsletter-container');
       parentEl.find('.result-message').text(r._('you\'ll get your first newsletter soon'));
       parentEl.addClass('success');
       parentEl.find('header').fadeTo(250, 1);
@@ -67,18 +70,9 @@ r.newsletter.ui.NewsletterForm.prototype = $.extend(new r.ui.Form(), {
       r.ui.Form.prototype._handleResult.call(this, result);
     }
 
-    var parentEl = this.$el.parents('.newsletterbar');
-    var calloutImg = parentEl.find('.subscribe-callout img');
-    var thanksImg = $('<img />').attr('src', calloutImg.data('thanks-src'))
-                                .attr('alt', r._('thanks for subscribing'));
-
+    var parentEl = this.$el.parents('.newsletter-container');
     parentEl.find('header, form').fadeTo(250, 0, function() {
-      calloutImg.hide().after(thanksImg);
-      if (thanksImg.get(0).complete) {
-        this._showSuccess();
-      } else {
-        thanksImg.one("load", this._showSuccess);
-      }
+      this._showSuccess();
     }.bind(this));
   }
 })
