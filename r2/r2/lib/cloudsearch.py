@@ -802,7 +802,7 @@ def _encode_query(query, bq, faceting, size, start, rank, return_fields):
     params = {}
     if bq:
         params["bq"] = bq
-    else:
+    if query:
         params["q"] = query
     params["results-type"] = "json"
     params["size"] = size
@@ -832,7 +832,7 @@ class CloudSearchQuery(object):
     lucene_parser = None
 
     def __init__(self, query, sr=None, sort=None, syntax=None, raw_sort=None,
-                 faceting=None, recent=None):
+                 faceting=None, recent=None, include_over18=True):
         if syntax is None:
             syntax = self.default_syntax
         elif syntax not in self.known_syntaxes:
@@ -848,6 +848,7 @@ class CloudSearchQuery(object):
             self.sort = self.sorts[sort]
         self._recent = recent
         self.recent = self.recents[recent]
+        self.include_over18 = include_over18
         self.faceting = faceting
         self.bq = u''
         self.results = None
@@ -874,14 +875,24 @@ class CloudSearchQuery(object):
             self.bq = self.customize_query(bq)
         elif self.syntax == "plain":
             q = self.query.encode('utf-8')
+            self.bq = self.customize_query()
         if g.sqlprinting:
             g.log.info("%s", self)
         return self._run_cached(q, self.bq.encode('utf-8'), self.sort,
                                 self.faceting, start=start, num=num,
                                 _update=_update)
 
-    def customize_query(self, bq):
+    def customize_query(self, bq=u''):
         return bq
+
+    @classmethod
+    def create_boolean_query(cls, queries):
+        '''Return an AND clause combining all queries'''
+        if len(queries) > 1:
+            return '(and ' + ' '.join(queries) + ')'
+        elif queries:
+            return queries[0]
+        return u''
 
     def __repr__(self):
         '''Return a string representation of this query'''
@@ -984,24 +995,19 @@ class LinkSearchQuery(CloudSearchQuery):
     known_syntaxes = ("cloudsearch", "lucene", "plain")
     default_syntax = "lucene"
 
-    def customize_query(self, bq):
-        queries = [bq]
+    def customize_query(self, bq=u''):
+        queries = []
+        if bq:
+            queries = [bq]
         subreddit_query = self._get_sr_restriction(self.sr)
         if subreddit_query:
             queries.append(subreddit_query)
         if self.recent:
             recent_query = self._restrict_recent(self.recent)
             queries.append(recent_query)
+        if not self.include_over18:
+            queries.append('over18:0')
         return self.create_boolean_query(queries)
-
-    @classmethod
-    def create_boolean_query(cls, queries):
-        '''Return an AND clause combining all queries'''
-        if len(queries) > 1:
-            bq = '(and ' + ' '.join(queries) + ')'
-        else:
-            bq = queries[0]
-        return bq
 
     @staticmethod
     def _restrict_recent(recent):
@@ -1058,3 +1064,11 @@ class SubredditSearchQuery(CloudSearchQuery):
 
     known_syntaxes = ("plain",)
     default_syntax = "plain"
+
+    def customize_query(self, bq=u''):
+        queries = []
+        if bq:
+            queries = [bq]
+        if not self.include_over18:
+            queries.append('over18:0')
+        return self.create_boolean_query(queries)

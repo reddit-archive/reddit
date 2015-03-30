@@ -36,7 +36,7 @@ from r2 import config
 from r2.models import *
 from r2.models.recommend import ExploreSettings
 from r2.config import feature
-from r2.config.extensions import is_api
+from r2.config.extensions import is_api, API_TYPES, RSS_TYPES
 from r2.lib import hooks, recommender, embeds, pages
 from r2.lib.pages import *
 from r2.lib.pages.things import hot_links_by_url_listing
@@ -905,7 +905,15 @@ class FrontController(RedditController):
     @api_doc(api_section.subreddits, uri='/subreddits/search', supports_rss=True)
     def GET_search_reddits(self, query, reverse, after, count, num):
         """Search subreddits by title and description."""
-        q = SubredditSearchQuery(query)
+        # show NSFW to API and RSS users unless obey_over18=true
+        is_api_or_rss = (c.render_style in API_TYPES
+                         or c.render_style in RSS_TYPES)
+        if is_api_or_rss and c.obey_over18 and not c.over18:
+            include_over18 = False
+        else:
+            include_over18 = True
+
+        q = SubredditSearchQuery(query, include_over18=include_over18)
 
         results, etime, spane = self._search(q, num=num, reverse=reverse,
                                              after=after, count=count,
@@ -946,10 +954,19 @@ class FrontController(RedditController):
         if not syntax:
             syntax = SearchQuery.default_syntax
 
+        # show NSFW to API and RSS users unless obey_over18=true
+        is_api_or_rss = (c.render_style in API_TYPES
+                         or c.render_style in RSS_TYPES)
+        if is_api_or_rss and c.obey_over18 and not c.over18:
+            include_over18 = False
+        else:
+            include_over18 = True
+
         try:
             cleanup_message = None
             try:
-                q = SearchQuery(query, site, sort,
+                q = SearchQuery(query, site, sort=sort,
+                                include_over18=include_over18,
                                 recent=recent, syntax=syntax)
                 results, etime, spane = self._search(q, num=num, after=after,
                                                      reverse=reverse,
@@ -962,7 +979,9 @@ class FrontController(RedditController):
                 cleaned = re.sub("[^\w\s]+", " ", query)
                 cleaned = cleaned.lower().strip()
 
-                q = SearchQuery(cleaned, site, sort, recent=recent)
+                q = SearchQuery(cleaned, site, sort=sort,
+                                include_over18=include_over18,
+                                recent=recent)
                 results, etime, spane = self._search(q, num=num,
                                                      after=after,
                                                      reverse=reverse,

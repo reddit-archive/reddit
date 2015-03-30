@@ -31,6 +31,7 @@ import time
 from pylons import c, g, request
 from pylons.i18n import _
 
+from r2.config.extensions import API_TYPES, RSS_TYPES
 from r2.lib.comment_tree import (
     conversation,
     link_comments_and_sort,
@@ -687,8 +688,18 @@ class SearchBuilder(IDBuilder):
         elif (self.skip_deleted_authors and
               getattr(item, "author", None) and item.author._deleted):
             return False
-        else:
-            return True
+
+        # show NSFW to API and RSS users unless obey_over18=true
+        is_api_or_rss = (c.render_style in API_TYPES
+                         or c.render_style in RSS_TYPES)
+        if is_api_or_rss and c.obey_over18 and not c.over18:
+            is_nsfw = (item.over_18 or
+                       (hasattr(item, 'subreddit') and item.subreddit.over_18))
+            if is_nsfw:
+                return False
+
+        # currently showing NSFW content by default in search
+        return True
 
 class WikiRevisionBuilder(QueryBuilder):
     show_extended = True
