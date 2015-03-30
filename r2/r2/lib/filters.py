@@ -182,12 +182,25 @@ _json_escapes.pop(ord('\n'))
 _json_escapes.pop(ord('\t'))
 
 
-def jssafe_dumps(obj, **kwargs):
+def scriptsafe_dumps(obj, **kwargs):
     """
     Like `json.dumps()`, but safe for use in `<script>` blocks.
 
-    If you want to use this in an HTML attribute, make sure the attribute is
-    single quoted, or you run the output from `websafe()`!
+    You should avoid using this to template data into inline event handlers.
+    When possible, you should do something like this instead:
+    ```
+    <button
+      onclick="console.log($(this).data('json-thing'))"
+      data-json-thing="${json_thing}">
+    </button>
+    ```
+
+    If you *really* want to, make sure you run the output through `websafe()`:
+    ```
+    <button
+      onclick="console.log(${websafe(scriptsafe_dumps(json_thing))})">
+    </button>
+    ```
     """
     text = _force_unicode(json.dumps(obj, **kwargs))
     # wrap the response in _Unsafe so conditional_websafe doesn't touch it
