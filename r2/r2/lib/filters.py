@@ -31,7 +31,6 @@ import snudown
 from BeautifulSoup import BeautifulSoup, Tag
 from pylons import g, c
 
-from wrapped import Templated, CacheStub
 from r2.lib.souptest import (
     souptest_fragment,
     SoupError,
@@ -122,6 +121,8 @@ def websafe_json(text=""):
 
 
 def conditional_websafe(text = ''):
+    from wrapped import Templated, CacheStub
+
     if text.__class__ == _Unsafe:
         return text
     elif isinstance(text, Templated):
