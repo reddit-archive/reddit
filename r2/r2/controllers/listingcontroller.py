@@ -1240,11 +1240,15 @@ class MessageController(ListingController):
             content = MessageCompose(to=to, subject=subject, captcha=captcha,
                                      message=message)
 
-        return MessagePage(content=content, title=self.title()).render()
+        return MessagePage(content=content, 
+            title=self.title(), 
+            page_classes=self.extra_page_classes + ['compose-page'],
+        ).render()
 
 
 class RedditsController(ListingController):
     render_cls = SubredditsPage
+    extra_page_classes = ListingController.extra_page_classes + ['subreddits-page']
 
     def title(self):
         return _('subreddits')
