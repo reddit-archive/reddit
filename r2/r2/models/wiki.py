@@ -367,6 +367,8 @@ class WikiPage(tdb_cassandra.Thing):
         return bool(self.get_editors(properties=[editor]))
     
     def revise(self, content, previous = None, author=None, force=False, reason=None):
+        if content is None:
+            content = ""
         if self.content == content:
             return
         force = True if previous is None else force
