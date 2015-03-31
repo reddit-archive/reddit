@@ -528,6 +528,11 @@ def _get_submitted(user_id, sort, time):
 def get_submitted(user, sort, time):
     return _get_submitted(user._id, sort, time)
 
+def get_user_actions(user, sort, time):
+    return merge_results(get_comments(user, sort, time),
+                         get_submitted(user, sort, time),
+                         get_liked(user))
+
 def get_overview(user, sort, time):
     return merge_results(get_comments(user, sort, time),
                          get_submitted(user, sort, time))

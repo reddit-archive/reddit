@@ -822,6 +822,13 @@ class UserController(ListingController):
             sr_id = self.savedsr._id if self.savedsr else None
             q = queries.get_saved(self.vuser, sr_id,
                                   category=self.savedcategory)
+        elif self.where == 'actions':
+            self.check_modified(self.vuser, 'actions')
+            if not votes_visible(self.vuser):
+                q = queries.get_overview(self.vuser, self.sort, self.time)
+            else:
+                q = queries.get_user_actions(self.vuser, 'new', 'all')
+
         elif c.user_is_sponsor and self.where == 'promoted':
             q = queries.get_promoted_links(self.vuser._id)
 
@@ -857,9 +864,8 @@ class UserController(ListingController):
         if c.user_is_admin:
             c.referrer_policy = "always"
 
-        if self.sort in  ('hot', 'new'):
+        if self.sort in ('hot', 'new'):
             self.time = 'all'
-
 
         # hide spammers profile pages
         if vuser._spam and not vuser.banned_profile_visible:
@@ -872,7 +878,7 @@ class UserController(ListingController):
         if where in ('liked', 'disliked') and not votes_visible(vuser):
             return self.abort403()
 
-        if ((where in ('saved', 'hidden') or 
+        if ((where in ('saved', 'hidden') or
                 (where == 'gilded' and show == 'given')) and
                 not (c.user_is_loggedin and c.user._id == vuser._id) and
                 not c.user_is_admin):
