@@ -67,7 +67,7 @@ r.newsletter.ui.NewsletterForm.prototype = $.extend(new r.ui.Form(), {
 
   _handleResult: function(result) {
     if (result.json.errors.length) {
-      r.ui.Form.prototype._handleResult.call(this, result);
+      return r.ui.Form.prototype._handleResult.call(this, result);
     }
 
     var parentEl = this.$el.parents('.newsletter-container');

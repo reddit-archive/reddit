@@ -93,6 +93,7 @@ error_list = dict((
         ('NO_EMAILS', _('please enter at least one email address')),
         ('TOO_MANY_EMAILS', _('please only share to %(num)s emails at a time.')),
         ('NEWSLETTER_NO_EMAIL', _('where should we send that weekly newsletter?')),
+        ('NEWSLETTER_EMAIL_UNACCEPTABLE', _('That email could not be added. Check your email for an existing confirmation email.')),
         ('OVERSOLD', _('that subreddit has already been oversold on %(start)s to %(end)s. Please pick another subreddit or date.')),
         ('OVERSOLD_DETAIL', _("We have insufficient inventory to fulfill your requested budget, target, and dates. Only %(available)s impressions available on %(target)s from %(start)s to %(end)s.")),
         ('BAD_DATE', _('please provide a date of the form mm/dd/yyyy')),

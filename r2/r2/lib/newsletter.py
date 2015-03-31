@@ -34,6 +34,10 @@ class NewsletterError(Exception):
     pass
 
 
+class EmailUnacceptableError(NewsletterError):
+    pass
+
+
 def add_subscriber(email, source=""):
     """Given an email, add this user to our upvoted newsletter.
 
@@ -69,6 +73,11 @@ def add_subscriber(email, source=""):
     else:
         if r.status_code == 201:
             return True
+        elif r.status_code == 400:
+            raise EmailUnacceptableError("Could not subscribe user %s to"
+                                         "newsletter. Email was unacceptable, "
+                                         "likely due to subscription status." %
+                                         email)
         else:
             raise NewsletterError("Could not subscribe user %s to "
                                   "newsletter. Status code: %s" %

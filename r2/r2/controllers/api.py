@@ -310,6 +310,10 @@ class ApiController(RedditController):
 
         try:
             newsletter.add_subscriber(email, source=source)
+        except newsletter.EmailUnacceptableError as e:
+            c.errors.add(errors.NEWSLETTER_EMAIL_UNACCEPTABLE, field="email")
+            responder.has_errors("email", errors.NEWSLETTER_EMAIL_UNACCEPTABLE)
+            return
         except newsletter.NewsletterError as e:
             g.log.warning("Failed to subscribe: %r" % e)
             abort(500)
