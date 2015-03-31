@@ -34,6 +34,7 @@
     <h2 class="result-message">${_('get the best of reddit, delivered once a week')}</h2>
   </header>
   <form class="newsletter-signup form-v2 c-form-inline" method="post" action="/api/newsletter.json">
+    <input type="hidden" name="source" value="newsletterbar">
     <%call expr="form_group('email', 'BAD_EMAIL', show_errors=True, feedback_inside_input=True)">
       <label for="email" class="screenreader-only">${_('email')}:</label>
       <input value=""

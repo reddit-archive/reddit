@@ -47,6 +47,7 @@ ${_('reddit newsletter - upvoted weekly')}
     </h2>
   </header>
   <form class="newsletter-signup form-v2 c-form-inline" method="post" action="/api/newsletter.json">
+    <input type="hidden" name="source" value="standalone">
     <%call expr="form_group('email', 'BAD_EMAIL', show_errors=True, feedback_inside_input=True)">
       <label for="email" class="screenreader-only">${_('email')}:</label>
       <input value=""

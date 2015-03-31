@@ -300,15 +300,16 @@ class ApiController(RedditController):
         VModhashIfLoggedIn(),
         VRatelimit(rate_ip=True, prefix="rate_newsletter_"),
         email=ValidEmail("email"),
+        source=VOneOf('source', ['newsletterbar', 'standalone'])
     )
-    def POST_newsletter(self, responder, email):
+    def POST_newsletter(self, responder, email, source):
         """Add an email to our newsletter."""
 
         VRatelimit.ratelimit(rate_ip=True,
                              prefix="rate_newsletter_")
 
         try:
-            newsletter.add_subscriber(email, source="newsletterbar")
+            newsletter.add_subscriber(email, source=source)
         except newsletter.NewsletterError as e:
             g.log.warning("Failed to subscribe: %r" % e)
             abort(500)
