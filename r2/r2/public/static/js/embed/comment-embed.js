@@ -65,8 +65,8 @@
 
       App.addPostMessageOrigin(embed.getAttribute('data-embed-media'));
 
-      iframe.height = 0;
-      iframe.width = '100%';
+      iframe.height = iframe.style.height = 0;
+      iframe.width = iframe.style.width = '100%';
       iframe.scrolling = 'no';
       iframe.frameBorder = 0;
       iframe.allowTransparency = true;
@@ -102,9 +102,8 @@
           return;
         }
 
-        iframe.height = (e.detail + 'px');
+        iframe.height = iframe.style.height = (e.detail + 'px');
       });
-
 
       embed.parentNode.insertBefore(iframe, embed);
     });
