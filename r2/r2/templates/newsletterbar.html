@@ -21,7 +21,7 @@
 ###############################################################################
 
 <%!
-  from r2.lib.template_helpers import static
+  from r2.lib.template_helpers import make_url_https, static
 %>
 <%namespace file="utils.html" import="form_group" />
 
@@ -33,7 +33,8 @@
     <div class="subscribe-thanks"><img src="${static('subscribe-header-thanks.svg')}" alt="_('thanks for subscribing')" /></div>
     <h2 class="result-message">${_('get the best of reddit, delivered once a week')}</h2>
   </header>
-  <form class="newsletter-signup form-v2 c-form-inline" method="post" action="/api/newsletter.json">
+  <form class="newsletter-signup form-v2 c-form-inline" method="post" action="${make_url_https('/api/newsletter.json')}">
+    <input type="hidden" name="uh" value="${c.modhash}" />
     <input type="hidden" name="source" value="newsletterbar">
     <%call expr="form_group('email', 'BAD_EMAIL', show_errors=True, feedback_inside_input=True)">
       <label for="email" class="screenreader-only">${_('email')}:</label>

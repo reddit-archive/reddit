@@ -296,6 +296,7 @@ class ApiController(RedditController):
             # Pylons does not handle 204s correctly.
             return {}
 
+    @cross_domain(allow_credentials=True)
     @json_validate(
         VModhashIfLoggedIn(),
         VRatelimit(rate_ip=True, prefix="rate_newsletter_"),
