@@ -322,6 +322,9 @@ class ModAction(tdb_cassandra.UuidThing):
                     parent_link_name = item.target.link_id
                     item.parent_link = parent_links[parent_link_name]
 
+                if isinstance(item.target, Account):
+                    item.target_author = item.target
+
         if c.render_style == "html":
             request_path = request.path
 
