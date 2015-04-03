@@ -34,12 +34,27 @@ r.newsletter.ui = {
     store.set('newsletterbar.seen', true);
   },
 
+  _setupNewsletter: function() {
+    if (!$('body').hasClass('newsletter')) {
+      return;
+    }
+
+    $('.faq-toggle').click(function(e) {
+      e.preventDefault();
+      $(this).toggleClass('active');
+      $('.faq').slideToggle();
+      r.analytics.fireGAEvent('newsletter-form', 'faq-toggle');
+    });
+  },
+
   init: function() {
     $('.newsletter-signup').each(function(i, el) {
       new r.newsletter.ui.NewsletterForm(el)
     });
 
     this._setupNewsletterBar();
+
+    this._setupNewsletter();
   },
 };
 

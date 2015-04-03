@@ -22,9 +22,10 @@
 
 <%!
   from r2.lib.template_helpers import make_url_https, static
+  from r2.models.admintools import wiki_template
 %>
 <%namespace file="less.html" import="less_stylesheet"/>
-<%namespace file="utils.html" import="form_group" />
+<%namespace file="utils.html" import="form_group, md" />
 
 <%inherit file="reddit.html"/>
 
@@ -62,6 +63,14 @@ ${_('reddit newsletter - upvoted weekly')}
     </%call>
     <button type="submit" class="c-btn c-btn-primary">${_('subscribe')}</button>
   </form>
+
+  <a class="faq-toggle" href="#">${_('More Info')}&#32;</a>
+
+  <div class="faq md">
+  <%
+    md(wiki_template('newsletter_faq'))
+  %>
+  </div>
 </section>
 
 <div class="upvoted-gradient" role="presentation"></div>

@@ -2786,14 +2786,12 @@ textarea.gray { color: gray; }
 
 body.newsletter {
     background: #EEF7FF;
+    font-size: 12px;
 }
 
 .newsletter-box {
     .box-shadow(0 3px 10px 4px rgba(0,0,0,0.1));
-    .transform(translate(-50%, -70%));
-    position: absolute;
-    top: 50%;
-    left: 50%;
+    margin: 10% auto;
     background-color: white;
     width: 90%;
     max-width: 600px;
@@ -2872,10 +2870,37 @@ body.newsletter {
         .button-size(@padding-base-vertical; @padding-base-horizontal; 12px; 20px; 3px);
         margin-left: 10px;
     }
+
+    .faq-toggle {
+        font-size: 11px;
+        font-weight: bold;
+        color: #79a6d2;
+
+        &:after {
+            content: "▾";
+            display: inline-block;
+            height: 15px;
+            width: 15px;
+            text-align: center;
+            position: absolute;
+        }
+
+        &.active:after {
+            .transform(rotate(180deg));
+        }
+    }
+
+    .faq {
+        display: none;
+
+        h3 {
+            margin-top: 1.5em;
+        }
+    }
 }
 
 .upvoted-gradient {
-    position: absolute;
+    position: fixed;
     bottom: 0;
     width: 100%;
     height: 25%;
@@ -2901,17 +2926,14 @@ body.newsletter {
         padding: 15px;
         max-width: 85%;
 
-        .upvoted-weekly-logo {
-            min-height: 30px;
-        }
-
-        h1 {
-            background-size: 60px;
-            padding-left: 80px;
-        }
-
         h1, p {
-            font-size: 14px;
+            font-size: 13px;
+        }
+
+        .faq-toggle {
+            margin-top: 20px;
+            display: block;
+            font-size: 13px;
         }
     }
 
