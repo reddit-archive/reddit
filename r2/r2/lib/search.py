@@ -30,3 +30,4 @@ SearchQuery = cloudsearch.LinkSearchQuery
 SubredditSearchQuery = cloudsearch.SubredditSearchQuery
 
 sorts = cloudsearch.LinkSearchQuery.sorts_menu_mapping
+sr_sorts = cloudsearch.SubredditSearchQuery.sorts_menu_mapping

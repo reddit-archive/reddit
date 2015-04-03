@@ -27,6 +27,7 @@ from r2.config import feature
 from r2.lib.db import operators
 from r2.lib.filters import _force_unicode
 from r2.lib.search import sorts as search_sorts
+from r2.lib.search import sr_sorts as sr_search_sorts
 from r2.lib.strings import StringHandler, plurals
 from r2.lib.utils import  class_property, query_string, timeago
 from r2.lib.wrapped import Styled
@@ -610,6 +611,17 @@ class SearchSortMenu(SortMenu):
     """Sort menu for search pages."""
     _default = 'relevance'
     mapping = search_sorts
+    _options = mapping.keys()
+
+    @classmethod
+    def operator(cls, sort):
+        return cls.mapping.get(sort, cls.mapping[cls.default])
+
+
+class SubredditSearchSortMenu(SortMenu):
+    """Sort menu for subreddit search pages."""
+    _default = 'relevance'
+    mapping = sr_search_sorts
     _options = mapping.keys()
 
     @classmethod

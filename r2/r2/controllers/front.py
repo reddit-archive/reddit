@@ -909,6 +909,11 @@ class FrontController(RedditController):
     @api_doc(api_section.subreddits, uri='/subreddits/search', supports_rss=True)
     def GET_search_reddits(self, query, reverse, after, count, num):
         """Search subreddits by title and description."""
+
+        # do not officially expose sort api yet
+        vsort = VMenu('sort', SubredditSearchSortMenu, remember=False)
+        sort = vsort.run(request.GET.get('sort'), '')
+
         # show NSFW to API and RSS users unless obey_over18=true
         is_api_or_rss = (c.render_style in API_TYPES
                          or c.render_style in RSS_TYPES)
@@ -917,7 +922,8 @@ class FrontController(RedditController):
         else:
             include_over18 = True
 
-        q = SubredditSearchQuery(query, include_over18=include_over18)
+        q = SubredditSearchQuery(query, sort=sort,
+                                 include_over18=include_over18)
 
         results, etime, spane = self._search(q, num=num, reverse=reverse,
                                              after=after, count=count,

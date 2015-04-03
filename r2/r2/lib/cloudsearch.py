@@ -1063,11 +1063,16 @@ class LinkSearchQuery(CloudSearchQuery):
 
 class SubredditSearchQuery(CloudSearchQuery):
     search_api = g.CLOUDSEARCH_SUBREDDIT_SEARCH_API
-    sorts = {'relevance': '-activity',
-             None: '-activity',
-             }
-    sorts_menu_mapping = {'relevance': 1,
-                          }
+    sorts = {
+        'relevance': '-activity',
+        'rel1': '-rel1',
+        'rel2': '-rel2',
+    }
+    sorts_menu_mapping = {
+        'relevance': 1,
+        'rel1': 2,
+        'rel2': 3,
+    }
 
     known_syntaxes = ("plain",)
     default_syntax = "plain"
