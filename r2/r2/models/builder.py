@@ -31,6 +31,7 @@ import time
 from pylons import c, g, request
 from pylons.i18n import _
 
+from r2.config import feature
 from r2.config.extensions import API_TYPES, RSS_TYPES
 from r2.lib.comment_tree import (
     conversation,
@@ -692,13 +693,18 @@ class SearchBuilder(IDBuilder):
         # show NSFW to API and RSS users unless obey_over18=true
         is_api_or_rss = (c.render_style in API_TYPES
                          or c.render_style in RSS_TYPES)
-        if is_api_or_rss and c.obey_over18 and not c.over18:
-            is_nsfw = (item.over_18 or
-                       (hasattr(item, 'subreddit') and item.subreddit.over_18))
-            if is_nsfw:
-                return False
+        if is_api_or_rss:
+            include_over18 = not c.obey_over18 or c.over18
+        elif feature.is_enabled('safe_search'):
+            include_over18 = c.over18
+        else:
+            include_over18 = True
 
-        # currently showing NSFW content by default in search
+        is_nsfw = (item.over_18 or
+            (hasattr(item, 'subreddit') and item.subreddit.over_18))
+        if is_nsfw and not include_over18:
+            return False
+
         return True
 
 class WikiRevisionBuilder(QueryBuilder):

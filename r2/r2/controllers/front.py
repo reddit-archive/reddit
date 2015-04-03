@@ -917,8 +917,10 @@ class FrontController(RedditController):
         # show NSFW to API and RSS users unless obey_over18=true
         is_api_or_rss = (c.render_style in API_TYPES
                          or c.render_style in RSS_TYPES)
-        if is_api_or_rss and c.obey_over18 and not c.over18:
-            include_over18 = False
+        if is_api_or_rss:
+            include_over18 = not c.obey_over18 or c.over18
+        elif feature.is_enabled('safe_search'):
+            include_over18 = c.over18
         else:
             include_over18 = True
 
@@ -967,8 +969,10 @@ class FrontController(RedditController):
         # show NSFW to API and RSS users unless obey_over18=true
         is_api_or_rss = (c.render_style in API_TYPES
                          or c.render_style in RSS_TYPES)
-        if is_api_or_rss and c.obey_over18 and not c.over18:
-            include_over18 = False
+        if is_api_or_rss:
+            include_over18 = not c.obey_over18 or c.over18
+        elif feature.is_enabled('safe_search'):
+            include_over18 = c.over18
         else:
             include_over18 = True
 
