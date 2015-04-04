@@ -2005,7 +2005,7 @@ class ApiController(RedditController):
                            cheater=c.cheater)
 
     @require_oauth2_scope("modconfig")
-    @validatedForm(VUser(),
+    @validatedForm(VSrModerator(perms='config'),
                    VModhash(),
                    # nop is safe: handled after auth checks below
                    stylesheet_contents=nop('stylesheet_contents',
