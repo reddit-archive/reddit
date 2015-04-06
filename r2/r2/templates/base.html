@@ -93,13 +93,15 @@ reddit, reddit.com, vote, comment, submit
 %if g.tracker_url and thing.site_tracking:
 <script type="text/javascript">
     (function() {
-        var tracker = new redditlib.Tracker();
-        var loggedOutData = tracker.getTrackingData();
         var loggedOutParams = '';
-        if (loggedOutData && loggedOutData.loid) {
-            loggedOutParams = '&loid=' + loggedOutData.loid
-                + '&loidcreated=' + loggedOutData.loidcreated;
-        }
+        %if not c.user_is_loggedin:
+            var tracker = new redditlib.Tracker();
+            var loggedOutData = tracker.getTrackingData();
+            if (loggedOutData && loggedOutData.loid) {
+                loggedOutParams = '&loid=' + loggedOutData.loid
+                    + '&loidcreated=' + loggedOutData.loidcreated;
+            }
+        %endif
         var url = '${tracking.get_pageview_pixel_url()}' + loggedOutParams;
         var cachebuster = Math.round(Math.random() * 2147483647);
         var cachebustedUrl = url + "&r=" + cachebuster;
