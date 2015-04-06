@@ -195,7 +195,8 @@ class OAuth2AccessController(MinimalController):
         set_extension(request.environ, "json")
         MinimalController.pre(self)
         require_https()
-        c.oauth2_client = self._get_client_auth()
+        if request.method != "OPTIONS":
+            c.oauth2_client = self._get_client_auth()
 
     def _get_client_auth(self):
         auth = request.headers.get("Authorization")
