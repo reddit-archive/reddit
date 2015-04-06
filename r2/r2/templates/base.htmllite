@@ -44,7 +44,7 @@
          target="${c.link_target}"
       %endif
        >
-      <img src="http://${get_domain(subreddit=False)}/static/spreddit1.gif" 
+      <img src="https://${get_domain(subreddit=False)}/static/spreddit1.gif"
            alt="" 
            ${optionalstyle("border:none")} />
     </a>
