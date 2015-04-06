@@ -1433,6 +1433,27 @@ class OAuth2ResourceController(MinimalController):
         c.user_special_distinguish = c.user.special_distinguish()
 
 
+class OAuth2OnlyController(OAuth2ResourceController):
+    """Base controller for endpoints that may only be accessed via OAuth 2"""
+
+    # OAuth2 doesn't rely on ambient credentials for authentication,
+    # so CSRF prevention is unnecessary.
+    handles_csrf = True
+
+    def pre(self):
+        OAuth2ResourceController.pre(self)
+        if request.method != "OPTIONS":
+            self.authenticate_with_token()
+            self.set_up_user_context()
+            self.run_sitewide_ratelimits()
+
+    def can_use_pagecache(self):
+        return False
+
+    def on_validation_error(self, error):
+        abort_with_error(error, error.code or 400)
+
+
 class RedditController(OAuth2ResourceController):
 
     @staticmethod

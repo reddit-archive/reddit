@@ -22,10 +22,7 @@
 from pylons import c, request, response
 from r2.controllers.api_docs import api_doc, api_section
 from r2.controllers.oauth2 import require_oauth2_scope
-from r2.controllers.reddit_base import (
-    abort_with_error,
-    OAuth2ResourceController,
-)
+from r2.controllers.reddit_base import OAuth2OnlyController
 from r2.lib.jsontemplates import (
     FriendTableItemJsonTemplate,
     IdentityJsonTemplate,
@@ -55,25 +52,7 @@ PREFS_JSON_SPEC = VValidatedJSON.PartialObject({
 })
 
 
-class APIv1UserController(OAuth2ResourceController):
-    # OAuth2 doesn't rely on ambient credentials for authentication,
-    # so CSRF prevention is unnecessary.
-    handles_csrf = True
-
-    def pre(self):
-        OAuth2ResourceController.pre(self)
-	if request.method != "OPTIONS":
-            self.authenticate_with_token()
-            self.set_up_user_context()
-        self.run_sitewide_ratelimits()
-
-    def try_pagecache(self):
-        pass
-
-    @staticmethod
-    def on_validation_error(error):
-        abort_with_error(error, error.code or 400)
-
+class APIv1UserController(OAuth2OnlyController):
     @require_oauth2_scope("identity")
     @validate(
         VUser(),
