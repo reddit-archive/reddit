@@ -52,6 +52,7 @@ from r2.lib.utils import (
     UrlParser,
     coerce_url_to_protocol,
     domain,
+    get_requests_resp_json,
 )
 from r2.models.link import Link
 from r2.models.media_cache import (
@@ -626,7 +627,8 @@ class _EmbedlyScraper(Scraper):
 
 @memoize("media.embedly_services2", time=3600)
 def _fetch_embedly_service_data():
-    return requests.get("https://api.embed.ly/1/services/python").json
+    resp = requests.get("https://api.embed.ly/1/services/python")
+    return get_requests_resp_json(resp)
 
 
 def _fetch_embedly_services():
