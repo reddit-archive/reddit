@@ -1855,7 +1855,7 @@ body.with-listing-chooser.explore-page #header .pagename {
     position: relative;
     overflow: hidden;
     min-height: 80px;
-    padding: 15px 20px 20px;
+    padding: 15px 20px 20px 25px;
     border: none;
     border-radius: 2px;
     background-color: #30659B;
@@ -1875,8 +1875,7 @@ body.with-listing-chooser.explore-page #header .pagename {
     }
 
     form {
-        margin-left: 340px;
-        margin-right: 150px;
+        margin: 2px 150px 0 340px;
         max-width: 400px;
         min-width: 150px;
         line-height: 45px;
@@ -1923,6 +1922,7 @@ body.with-listing-chooser.explore-page #header .pagename {
         color: white;
         font-weight: normal;
         font-size: 14px;
+        margin-top: 5px;
     }
 
     .c-form-group {
@@ -2802,17 +2802,14 @@ body.newsletter {
 
     h1 {
         margin: 0;
-        background: transparent url(../mail-icon.svg) 0 center no-repeat;
-        background-size: 75px;
-        padding-left: 100px;
         min-height: 50px;
         font-size: 15px;
     }
 
     .upvoted-weekly-logo {
         display: block;
-        margin-top: 3px;
-        min-height: 38px;
+        margin-top: 15px;
+        min-height: 53px;
         background: transparent url(../upvoted-weekly-logo.svg) 0 0 no-repeat;
         background-size: contain;
     }
@@ -2822,19 +2819,20 @@ body.newsletter {
     }
 
     &.success {
+        &:before {
+            content: "✓";
+            display: block;
+            text-align: center;
+            color: #80d654;
+            font-weight: bold;
+            font-size: 60px;
+            line-height: 1;
+        }
+
         .result-message {
             display: block;
             margin: 0 auto;
             text-align: center;
-
-            &:before {
-                content: "✓";
-                display: block;
-                text-align: center;
-                color: #80d654;
-                font-weight: bold;
-                font-size: 60px;
-            }
         }
 
         .subscribe-callout {
@@ -2844,6 +2842,7 @@ body.newsletter {
         .subscribe-thanks {
           display: block;
           text-align: center;
+          margin-top: 25px;
         }
 
         form {
