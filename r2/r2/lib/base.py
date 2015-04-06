@@ -201,17 +201,16 @@ class BaseController(WSGIController):
             abort(400)
         return rv
 
-
     @classmethod
-    def intermediate_redirect(cls, form_path, sr_path=True):
+    def intermediate_redirect(cls, form_path, sr_path=True, fullpath=None):
         """
-        Generates a /login or /over18 redirect from the current
+        Generates a /login or /over18 redirect from the specified or current
         fullpath, after having properly reformated the path via
         format_output_url.  The reformatted original url is encoded
         and added as the "dest" parameter of the new url.
         """
         from r2.lib.template_helpers import add_sr
-        params = dict(dest=cls.format_output_url(request.fullurl))
+        params = dict(dest=cls.format_output_url(fullpath or request.fullurl))
         if c.extension == "widget" and request.GET.get("callback"):
             params['callback'] = request.GET.get("callback")
 

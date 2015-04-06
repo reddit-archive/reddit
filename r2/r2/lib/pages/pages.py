@@ -1400,11 +1400,30 @@ class SearchPage(BoringPage):
                                    syntax=syntax, converted_data=converted_data,
                                    facets=facets, sort=sort, recent=recent)
         self.subreddits = subreddits
+
+        # generate the over18 redirect url for the current search if needed
+        if not c.over18 and feature.is_enabled('safe_search'):
+            u = UrlParser(add_sr('/search'))
+            if prev_search:
+                u.update_query(q=prev_search)
+            if restrict_sr:
+                u.update_query(restrict_sr='on')
+            u.update_query(**search_params)
+            u.update_query(over18='yes')
+            over18_url = u.unparse()
+            kw['nav_menus'].append(MenuLink(title=_('enable NSFW results'),
+                                            url=over18_url))
+
         BoringPage.__init__(self, pagename, robots='noindex', *a, **kw)
 
     def content(self):
         return self.content_stack((self.searchbar, self.infobar,
                                    self.nav_menu, self.subreddits, self._content))
+
+
+class MenuLink(Templated):
+    pass
+
 
 class TakedownPage(BoringPage):
     def __init__(self, link):
@@ -2938,6 +2957,19 @@ class SearchForm(Templated):
                            search_params=search_params, site=site,
                            simple=simple, restrict_sr=restrict_sr,
                            subreddit_search=subreddit_search, syntax=syntax)
+
+        # generate the over18 redirect url for the current search if needed
+        if not c.over18 and feature.is_enabled('safe_search'):
+            u = UrlParser(add_sr('/search'))
+            if prev_search:
+                u.update_query(q=prev_search)
+            if restrict_sr:
+                u.update_query(restrict_sr='on')
+            u.update_query(**search_params)
+            u.update_query(over18='yes')
+            self.over18_url = u.unparse()
+        else:
+            self.over18_url = None
 
 
 class SearchBar(Templated):

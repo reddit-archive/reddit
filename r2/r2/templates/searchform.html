@@ -61,21 +61,22 @@
          %endif
          name="q" placeholder="${_('search')}" tabindex="20">
   <input type="submit" value="" tabindex="22">
+
   %if thing.subreddit_search:
-    
+    %if thing.over18_url and thing.prev_search:
+      <p><a id="search_over18" href="${thing.over18_url}" rel="nofollow">${_('enable NSFW results')}</a></p>
+    %endif
   %elif thing.simple:
   <div id="searchexpando" class="infobar">
-      % if not isinstance(c.site, DefaultSR):
+    %if not isinstance(c.site, DefaultSR):
       <label><input type="checkbox" name="restrict_sr" tabindex="21">${_('limit my search to %(path)s') % dict(path=c.site.path.rstrip('/'))}</label>
-      % endif
-
-      ${search_faq()}
+    % endif
+    ${search_faq()}
   </div>
   %else:
     %if not thing.site or isinstance(thing.site, DefaultSR):
-      <input type="hidden" name="restrict_sr" value="off" tabindex="21">
+      <input type="hidden" name="restrict_sr">
     %else:
-      <br><br>
       <label><input type="checkbox" ${'checked="checked"' if thing.restrict_sr else ''} name="restrict_sr" tabindex="21">
       ${_('limit my search to %(path)s') % dict(path=thing.site.path.rstrip('/'))}</label>
     %endif

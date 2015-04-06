@@ -892,13 +892,20 @@ class FrontController(RedditController):
                            subtitle=_('other discussions')).render()
         return res
 
-
     @base_listing
     @require_oauth2_scope("read")
     @validate(query=nop('q', docs={"q": "a search query"}))
     @api_doc(api_section.subreddits, uri='/subreddits/search', supports_rss=True)
     def GET_search_reddits(self, query, reverse, after, count, num):
         """Search subreddits by title and description."""
+
+        # trigger redirect to /over18
+        if request.GET.get('over18') == 'yes':
+            u = UrlParser(request.fullurl)
+            del u.query_dict['over18']
+            search_url = u.unparse()
+            return self.intermediate_redirect('/over18', sr_path=False,
+                                              fullpath=search_url)
 
         # do not officially expose sort api yet
         vsort = VMenu('sort', SubredditSearchSortMenu, remember=False)
@@ -947,6 +954,15 @@ class FrontController(RedditController):
     def GET_search(self, query, num, reverse, after, count, sort, recent,
                    restrict_sr, include_facets, syntax):
         """Search links page."""
+
+        # trigger redirect to /over18
+        if request.GET.get('over18') == 'yes':
+            u = UrlParser(request.fullurl)
+            del u.query_dict['over18']
+            search_url = u.unparse()
+            return self.intermediate_redirect('/over18', sr_path=False,
+                                              fullpath=search_url)
+
         if query and '.' in query:
             url = sanitize_url(query, require_scheme=True)
             if url:
