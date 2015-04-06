@@ -313,6 +313,9 @@ if [ ! -f development.update ]; then
 # generate a new development.ini
 
 [DEFAULT]
+# global debug flag -- displays pylons stacktrace rather than 500 page on error when true
+# WARNING: a pylons stacktrace allows remote code execution. Make sure this is false
+# if your server is publicly accessible.
 debug = true
 
 disable_ads = true
