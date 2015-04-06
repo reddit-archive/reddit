@@ -180,6 +180,18 @@
   </span>
 </%def>
 
+<%def name="show_admin_context()">
+  % if thing.show_admin_context:
+    <li>
+      <form onsubmit="return post_form(this, 'admin/fullcontext');" method="post">
+        <input type="hidden" name="thing" id="thing" value="${thing.thing._fullname}" />
+        <input type="hidden" name="author" id="author" value="${thing.thing.author_slow._fullname}" />
+        <a href="#" onclick="$(this).closest('form').submit(); return false">full context</a>
+       </form>
+    </li>
+  % endif
+</%def>
+
 <%def name="reports_button()">
 <li 
     %if thing.mod_reports or thing.user_reports:
@@ -387,6 +399,7 @@
     ${self.banbuttons()}
     ${self.distinguish()}
     ${self.give_gold()}
+    ${self.show_admin_context()}
 
     %if not getattr(thing, "suppress_reply_buttons", False) and thing.can_reply:
       <li class="reply-button">

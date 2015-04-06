@@ -137,8 +137,48 @@ ${parent.midcol(cls = cls)}
   </div>
 </%def>
 
+<%def name="fullContext()">
+  <div class="md-container full-context-info full-context-info-${thing._fullname}" style="display:none;">
+    <div class="md md-small">
+      <table>
+        <tbody>
+          <tr>
+            <td>${thing.author_slow.name}</td>
+            <td>
+              <div class="arrow full-context-vote-${thing._fullname}"></div>
+            </td>
+            <td><a href="" class="full-context-op-${thing._fullname}"></a></td>
+            <td class="full-context-vote-time-${thing._fullname}"></td>
+          </tr>
+          <tr>
+            <td>${thing.author_slow.name}</td>
+            <td>replied to</td>
+            <td><a href="" class="full-context-op-${thing._fullname}"></a></td>
+            <td class="full-context-comment-time-${thing._fullname}"></td>
+          </tr>
+          <tr>
+            <td><a href="" class="full-context-op-${thing._fullname}"></a></td>
+            <td>
+              <div class="arrow full-op-vote-${thing._fullname}"></div>
+            </td>
+            <td>${thing.author_slow.name}</td>
+            <td class="full-op-vote-time-${thing._fullname}"></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="parent">
+        <strong>full context:</strong>
+        <p class="full-context-comment-${thing._fullname}"></p>
+      </div>
+    </div>
+  </div>
+</%def>
+
 <%def name="commentBody()">
   ${parent.commentBody()}
+  %if getattr(thing, 'show_admin_context', None):
+    ${self.fullContext()}
+  %endif
 </%def>
 
 <%def name="arrows()">

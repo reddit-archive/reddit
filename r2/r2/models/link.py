@@ -1355,6 +1355,7 @@ class Comment(Thing, Printable):
             # for caching:
             item.profilepage = c.profilepage
             item.link = links.get(item.link_id)
+            item.show_admin_context = user_is_admin
 
             if (item.link._score <= 1 or item.score < 3 or
                 item.link._spam or item._spam or item.author._spam):
