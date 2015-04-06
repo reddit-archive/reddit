@@ -1617,7 +1617,10 @@ class RedditController(OAuth2ResourceController):
                 self.abort404()
 
             # check if the user has access to this subreddit
-            if not c.site.can_view(c.user) and not c.error_page:
+            # Allow OPTIONS requests through, as no response body
+            # is sent in those cases - just a set of headers
+            if (not c.site.can_view(c.user) and not c.error_page and
+                    request.method != "OPTIONS"):
                 if isinstance(c.site, LabeledMulti):
                     # do not leak the existence of multis via 403.
                     self.abort404()
