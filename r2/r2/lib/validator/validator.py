@@ -34,7 +34,11 @@ from r2.lib.filters import unkeep_space, websafe, _force_unicode
 from r2.lib.filters import markdown_souptest
 from r2.lib.db import tdb_cassandra
 from r2.lib.db.operators import asc, desc
-from r2.lib.souptest import SoupError, SoupUnsupportedEntityError
+from r2.lib.souptest import (
+    SoupError,
+    SoupHostnameLengthError,
+    SoupUnsupportedEntityError,
+)
 from r2.lib.template_helpers import add_sr
 from r2.lib.jsonresponse import JQueryResponse, JsonResponse
 from r2.lib.log import log_text
@@ -634,6 +638,15 @@ class VMarkdown(Validator):
             user = "???"
             if c.user_is_loggedin:
                 user = c.user.name
+
+            # work around CRBUG-464270
+            if isinstance(e, SoupHostnameLengthError):
+                # We want a general idea of how often this is triggered, and
+                # by what
+                g.log.warning("CHROME HAX by %s: %s" % (user, text))
+                abort(400)
+                return
+
             g.log.error("HAX by %s: %s" % (user, text))
             s = sys.exc_info()
             # reraise the original error with the original stack trace

@@ -351,6 +351,9 @@ def sanitize_url(url, require_scheme=False, valid_schemes=VALID_SCHEMES):
     # if there is a scheme and no hostname, it is a bad url.
     if not u.hostname:
         return None
+    # work around CRBUG-464270
+    if len(u.hostname) > 255:
+        return None
     if u.username is not None or u.password is not None:
         return None
 

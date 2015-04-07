@@ -27,6 +27,7 @@ Tools to check if arbitrary HTML fragments would be safe to embed inline
 import os
 import re
 import sys
+import urlparse
 
 import lxml.etree
 
@@ -96,6 +97,10 @@ def souptest_sniff_node(node):
                 lv = val.lower()
                 if not lv.startswith(valid_link_schemes):
                     raise SoupUnsupportedSchemeError(val)
+                # work around CRBUG-464270
+                parsed_url = urlparse.urlparse(lv)
+                if parsed_url.hostname and len(parsed_url.hostname) > 255:
+                    raise SoupHostnameLengthError(parsed_url.hostname)
     else:
         # Processing instructions and friends fall down here.
         raise SoupUnsupportedNodeError(node)
@@ -215,6 +220,10 @@ class SoupUnsupportedAttrError(SoupReprError):
 class SoupUnsupportedTagError(SoupReprError):
     """Found an element that hasn't been explicitly whitelisted"""
     HUMAN_MESSAGE = "Unsupported tag"
+
+
+class SoupHostnameLengthError(SoupReprError):
+    HUMAN_MESSAGE = "Hostname too long"
 
 
 class SoupUnsupportedEntityError(SoupReprError):
