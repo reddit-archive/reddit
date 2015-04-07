@@ -588,6 +588,11 @@ class RuleTarget(object):
     def parse_match_fields_key(self, key):
         """Parse a key defining a match against fields into its components."""
         matches = self._match_field_key_regex.match(key)
+        if not matches:
+            raise AutoModeratorSyntaxError(
+                "Invalid search check: `%s`" % key,
+                self.parent.yaml,
+            )
         parsed = {}
         name = matches.group(1)
 
