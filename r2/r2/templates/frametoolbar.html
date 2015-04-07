@@ -158,7 +158,7 @@
     });
   </script>
   <span class="entry ${'likes' if thing.likes else 'dislikes' if thing.likes is False else 'unvoted'}">
-    ${score(thing, thing.likes, tag='b')}
+    ${score(thing, tag='b')}
   </span>
   <span class="arrows">
     <%def name="arrow(direction, style, message)">

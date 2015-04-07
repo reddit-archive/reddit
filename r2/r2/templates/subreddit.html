@@ -55,7 +55,7 @@
 </%def>
 
 <%def name="tagline()">
-  ${self.score(thing, thing.subscriber)},
+  ${self.score(thing)},
   ${_("a community for %(time)s") % dict(time=timesince(thing._date))}
 </%def>
 

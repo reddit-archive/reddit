@@ -221,12 +221,8 @@ ${self.RenderPrintable()}
   </div>
 </%def>
 
-<%def name="score(this, likes=None, scores = None, tag='span')" >
-  <%
-     if scores is None:
-        scores = this.display_score
-   %>
-  %for cls, score in zip(["dislikes", "unvoted", "likes"], scores):
+<%def name="score(thing, tag='span')" >
+  %for cls, score in zip(["dislikes", "unvoted", "likes"], thing.display_score):
     <${tag} class="score ${cls}">
       ${score}
     </${tag}>

@@ -48,6 +48,6 @@
     </span>
     <a class="close" onclick="$('.thing').fadeOut(function(){$.redirect($('iframe').attr('src'));});return false;" href="#">x</a>
     <span class="entry ${'likes' if thing.likes else 'dislikes' if thing.likes is False else 'unvoted'}">
-      ${score(thing, thing.likes, tag='b')}
+      ${score(thing, tag='b')}
     </span>
   </div>

@@ -99,7 +99,7 @@ ${parent.midcol(cls = cls)}
       [${_("score hidden")}]
     </span>&#32;
   %elif show and not thing.score_hidden:
-    ${unsafe(self.score(thing, likes = thing.likes))}&#32;
+    ${unsafe(self.score(thing))}&#32;
   %endif
 
   ${thing_timestamp(thing, thing.timesince, live=True, include_tense=True)}

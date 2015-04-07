@@ -179,7 +179,7 @@ ${parent.thing_css_class(what)} ${"over18" if thing.over_18 else ""} ${thing.vis
       <div class="score unvoted">&bull;</div> 
       <div class="score dislikes">&bull;</div> 
     %else:
-      ${self.score(thing, thing.likes, tag='div')}
+      ${self.score(thing, tag='div')}
     %endif
     ${self.arrow(thing, 0, thing.likes == False)}
   </div>
@@ -202,7 +202,7 @@ ${parent.thing_css_class(what)} ${"over18" if thing.over_18 else ""} ${thing.vis
     taglinetext = conditional_websafe(thing.taglinetext).replace(" ", "&#32;")
   %>
   ${unsafe(taglinetext % dict(reddit=self.subreddit(),
-                              score=capture(self.score, thing, thing.likes, tag='span'),
+                              score=capture(self.score, thing, tag='span'),
                               when=capture(thing_timestamp, thing, thing.timesince, live=True, include_tense=True),
                               author=WrappedUser(thing.author, thing.attribs, thing).render(),
                               lastedited=capture(edited, thing, thing.lastedited)

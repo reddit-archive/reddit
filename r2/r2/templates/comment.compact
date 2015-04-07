@@ -63,7 +63,7 @@
      %if thing.score_hidden:
        [${_("score hidden")}]
      %else:
-       ${score(thing, thing.likes, tag='span')}
+       ${score(thing, tag='span')}
      %endif
      &#32;
      ## thing.timesince is a cache stub
