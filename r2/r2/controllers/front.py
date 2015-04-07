@@ -190,21 +190,6 @@ class FrontController(RedditController):
             abort(403, 'forbidden')
         return self.abort404()
 
-    @csrf_exempt
-    @validate(article=VLink('article'),
-              comment=VCommentID('comment'),
-              context=VInt('context', min=0, max=8),
-              sort=VOneOf('sort', CommentSortMenu.visible_options()),
-              limit=VInt('limit'),
-              depth=VInt('depth'))
-    def POST_comments(self, article, comment, context, sort, limit, depth):
-        if not sort:
-            if c.user_is_loggedin:
-                sort = c.user.pref_default_comment_sort
-            else:
-                sort = CommentSortMenu._default
-        return self.redirect(request.fullpath + query_string(dict(sort=sort)))
-
     @require_oauth2_scope("read")
     @validate(article=VLink('article',
                   docs={"article": "ID36 of a link"}),

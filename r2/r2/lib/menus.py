@@ -576,7 +576,6 @@ class CommentSortMenu(SortMenu):
     _default = 'confidence'
     _options = ('confidence', 'top', 'new', 'hot', 'controversial', 'old',
                  'random', 'qa',)
-    button_cls = PostButton
 
     # Links may have a suggested sort of 'blank', which is an explicit None -
     # that is, do not check the subreddit for a suggested sort, either.
