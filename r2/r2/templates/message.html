@@ -72,7 +72,7 @@ ${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if
     elif thing.sr_id:
         substitutions['dest'] = format_html(u'<span class="recipient subreddit"><a href="%(path)s">%(path)s</a></span>', path=thing.subreddit.path)
 
-    substitutions['when'] = unsafe(capture(thing_timestamp, thing, thing.timesince, include_tense=True))
+    substitutions['when'] = unsafe(capture(thing_timestamp, thing, thing.timesince, live=True, include_tense=True))
 
     taglinetext = conditional_websafe(thing.taglinetext).replace(' ', '&#32;')
     taglinetext = format_html(taglinetext, **substitutions)
