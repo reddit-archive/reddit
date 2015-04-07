@@ -22,6 +22,7 @@
 
 <%!
    from r2.config import feature
+   from r2.lib.menus import CommentSortMenu
    from r2.lib.template_helpers import add_sr, _wsf, format_html
    from r2.lib.utils import UrlParser
    import random
@@ -46,10 +47,22 @@
 </%def>
 
 <%def name="link_options()">
-  <select name="numsites" style="margin: 0 .5em 0 .5em">
+  <select name="numsites">
         %for x in [10, 25, 50, 100]:
         <option ${x == c.user.pref_numsites and "selected='selected'" or ""}>
           ${x}
+        </option>
+        %endfor
+  </select>
+</%def>
+
+<%def name="comment_sort_options()">
+  <% menu = CommentSortMenu() %>
+  <select name="default_comment_sort">
+        %for sort in menu.visible_options():
+        <option ${'selected="selected"' if sort == c.user.pref_default_comment_sort else ""}
+                value="${sort}">
+          ${menu.make_title(sort)}
         </option>
         %endfor
   </select>
@@ -211,6 +224,9 @@
     <p>
     ${checkbox(_(u"show a dagger (†) on comments voted controversial"), "highlight_controversial")}
     &#32;<span class="little gray">${_("(a controversial comment is one that's been both upvoted and downvoted significantly)")}</span>
+    </p>
+    <p>
+      ${_wsf("sort comments by %(sort)s", sort=unsafe(capture(comment_sort_options)))}
     </p>
     </td>
   </tr>

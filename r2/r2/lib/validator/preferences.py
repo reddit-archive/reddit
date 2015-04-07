@@ -20,6 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 from pylons import g
+from r2.lib.menus import CommentSortMenu
 from r2.lib.validator.validator import (
     VBoolean,
     VInt,
@@ -52,6 +53,8 @@ PREFS_VALIDATORS = dict(
     pref_num_comments=VInt('num_comments', 1, g.max_comments,
                            default=g.num_comments),
     pref_highlight_controversial=VBoolean('highlight_controversial'),
+    pref_default_comment_sort=VOneOf('default_comment_sort',
+                                     CommentSortMenu.visible_options()),
     pref_show_stylesheets=VBoolean('show_stylesheets'),
     pref_show_flair=VBoolean('show_flair'),
     pref_show_link_flair=VBoolean('show_link_flair'),

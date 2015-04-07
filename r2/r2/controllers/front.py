@@ -194,12 +194,15 @@ class FrontController(RedditController):
     @validate(article=VLink('article'),
               comment=VCommentID('comment'),
               context=VInt('context', min=0, max=8),
-              sort=VMenu('controller', CommentSortMenu),
+              sort=VOneOf('sort', CommentSortMenu.visible_options()),
               limit=VInt('limit'),
               depth=VInt('depth'))
     def POST_comments(self, article, comment, context, sort, limit, depth):
-        # VMenu validator will save the value of sort before we reach this
-        # point. Now just redirect to GET mode.
+        if not sort:
+            if c.user_is_loggedin:
+                sort = c.user.pref_default_comment_sort
+            else:
+                sort = CommentSortMenu._default
         return self.redirect(request.fullpath + query_string(dict(sort=sort)))
 
     @require_oauth2_scope("read")
@@ -208,7 +211,7 @@ class FrontController(RedditController):
               comment=VCommentID('comment',
                   docs={"comment": "(optional) ID36 of a comment"}),
               context=VInt('context', min=0, max=8),
-              sort=VMenu('controller', CommentSortMenu),
+              sort=VOneOf('sort', CommentSortMenu.visible_options()),
               limit=VInt('limit',
                   docs={"limit": "(optional) an integer"}),
               depth=VInt('depth',
@@ -237,6 +240,8 @@ class FrontController(RedditController):
         [/api/comment](#POST_api_comment).
 
         """
+        if not sort:
+            sort = c.user.pref_default_comment_sort
         if comment and comment.link_id != article._id:
             return self.abort404()
 
