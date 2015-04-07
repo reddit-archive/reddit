@@ -868,6 +868,8 @@ class Subreddit(Thing, Printable, BaseSite):
             if item.hide_subscribers and not c.user_is_admin:
                 item._ups = 0
 
+            item.score_hidden = not item.can_view(user)
+
             item.score = item._ups
 
             # override "voting" score behavior (it will override the use of
