@@ -3057,16 +3057,12 @@ class ApiController(RedditController):
         link=VByName('link_id'),
         sort=VMenu('morechildren', CommentSortMenu, remember=False),
         children=VCommentIDs('children'),
-        pv_hex=VPrintable(
-            "pv_hex", 40,
-            docs={"pv_hex": "(optional) a previous-visits token"}),
         mc_id=nop(
             "id",
             docs={"id": "(optional) id of the associated MoreChildren object"}),
     )
     @api_doc(api_section.links_and_comments)
-    def GET_morechildren(self, form, jquery, link, sort, children,
-                          pv_hex, mc_id):
+    def GET_morechildren(self, form, jquery, link, sort, children, mc_id):
         """Retrieve additional comments omitted from a base comment tree.
 
         When a comment tree is rendered, the most relevant comments are
@@ -3081,9 +3077,6 @@ class ApiController(RedditController):
         If `id` is passed, it should be the ID of the MoreComments object this
         call is replacing. This is needed only for the HTML UI's purposes and
         is optional otherwise.
-
-        `pv_hex` is part of the reddit gold "previous visits" feature. It is
-        optional and deprecated.
 
         **NOTE:** you may only make one request at a time to this API endpoint.
         Higher concurrency will result in an error being returned.
@@ -3104,9 +3097,6 @@ class ApiController(RedditController):
         try:
             if not link or not link.subreddit_slow.can_view(c.user):
                 return abort(403,'forbidden')
-
-            if pv_hex:
-                c.previous_visits = g.cache.get(pv_hex)
 
             if children:
                 builder = CommentBuilder(link, CommentSortMenu.operator(sort),
@@ -3139,9 +3129,6 @@ class ApiController(RedditController):
                 # morechildren link
                 jquery.things(str(mc_id)).remove()
                 jquery.insert_things(a, append = True)
-
-                if pv_hex:
-                    jquery.rehighlight_new_comments()
         finally:
             if lock:
                 lock.release()

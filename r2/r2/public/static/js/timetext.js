@@ -47,16 +47,9 @@
         }
 
         var $el = $(el)
-        var timestamp = $el.data('timestamp')
-        var isoTimestamp
+        var timestamp = r.utils.parseTimestamp($el)
         var text
         var age
-
-        if (!timestamp) {
-            isoTimestamp = $el.attr('datetime')
-            timestamp = Date.parse(isoTimestamp)
-            $el.data('timestamp', timestamp)
-        }
 
         age = (now - timestamp) / 1000
 

@@ -20,22 +20,24 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
+<%!
+
+from r2.lib.utils import timesince
+
+%>
+
 <div class="rounded gold-accent comment-visits-box">
   <div class="title">
     ${_("Highlight comments posted since previous visit:")}&#32;
-    <select id="comment-visits" onchange="highlight_new_comments(this.value)">
-      %for i, visit in enumerate(thing.visits, start=1):
-        <option value="${len(thing.visits) - i}"
-          %if i == 1:
+    <select id="comment-visits">
+      %for i, visit in enumerate(thing.visits):
+        <option value="${visit.isoformat()}"
+          %if i == 0:
             selected="selected"
           %endif
-        >${visit} ${_("ago")}</option>
+        >${timesince(visit, precision=60)} ${_("ago")}</option>
       %endfor
-      <option value="-1">${_("no highlighting")}</option>
+      <option value="">${_("no highlighting")}</option>
     </select>
   </div>
 </div>
-
-<script type="text/javascript">
-  $(function() { highlight_new_comments(${len(thing.visits) - 1}) })
-</script>

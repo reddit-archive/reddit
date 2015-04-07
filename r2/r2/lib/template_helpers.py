@@ -238,19 +238,6 @@ def class_dict():
     res = ', '.join(classes)
     return unsafe('{ %s }' % res)
 
-def calc_time_period(comment_time):
-    # Set in front.py:GET_comments()
-    previous_visits = c.previous_visits
-
-    if not previous_visits:
-        return ""
-
-    rv = ""
-    for i, visit in enumerate(previous_visits):
-        if comment_time > visit:
-            rv = "comment-period-%d" % i
-
-    return rv
 
 def comment_label(num_comments=None):
     if not num_comments:
@@ -327,14 +314,9 @@ def replace_render(listing, item, render_func):
             else:
                 replacements['timesince'] = simplified_timesince(item._date)
 
-            replacements['time_period'] = calc_time_period(item._date)
-
         # compute the last edited time here so we don't end up caching it
         if hasattr(item, "editted") and not isinstance(item.editted, bool):
             replacements['lastedited'] = simplified_timesince(item.editted)
-
-        # Set in front.py:GET_comments()
-        replacements['previous_visits_hex'] = c.previous_visits_hex
 
         renderer = render_func or item.render
         res = renderer(style = style, **replacements)

@@ -365,13 +365,6 @@ class FrontController(RedditController):
 
         if previous_visits:
             displayPane.append(CommentVisitsBox(previous_visits))
-            # Used in later "more comments" renderings
-            pv_hex = md5(repr(previous_visits)).hexdigest()
-            g.cache.set(pv_hex, previous_visits, time=g.comment_visits_period)
-            c.previous_visits_hex = pv_hex
-
-        # Used in template_helpers
-        c.previous_visits = previous_visits
 
         if c.site.allows_referrers:
             c.referrer_policy = "always"

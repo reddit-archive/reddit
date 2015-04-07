@@ -689,14 +689,6 @@ $.apply_stylesheet = function(cssText) {
     
 };
 
-$.rehighlight_new_comments = function() {
-  checked = $(".comment-visits-box input:checked");
-  if (checked.length > 0) {
-    var v = checked[0].value;
-    highlight_new_comments(v);
-  }
-}
-
 /* namespace globals for cookies -- default prefix, security and domain */
 var default_cookie_domain
 $.default_cookie_domain = function(domain) {

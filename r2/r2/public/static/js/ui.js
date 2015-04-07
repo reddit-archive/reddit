@@ -66,6 +66,8 @@ r.ui.init = function() {
 
     r.ui.initLiveTimestamps()
 
+    r.ui.initNewCommentHighlighting()
+
     r.ui.initTimings()
 }
 
@@ -104,6 +106,40 @@ r.ui.initLiveTimestamps = function() {
           listener.restart()
       })
     }
+}
+
+r.ui.initNewCommentHighlighting = function() {
+  if (!r.config.gold || !$('body').hasClass('comments-page')) {
+    return;
+  }
+
+  $visitSelector = $('#comment-visits');
+  if ($visitSelector.length === 0) {
+    return;
+  }
+
+  $(document).on('new_things_inserted', r.ui.highlightNewComments);
+  $visitSelector.on('change', r.ui.highlightNewComments);
+  r.ui.highlightNewComments();
+}
+
+r.ui.highlightNewComments = function() {
+  var $comments = $('.comment');
+  var selectedVisitTimestamp = $('#comment-visits').val();
+  var selectedVisit;
+
+  if (selectedVisitTimestamp) {
+    selectedVisit = Date.parse(selectedVisitTimestamp);
+  }
+
+  $comments.each(function() {
+    var $commentEl = $(this);
+    var $timeEl = $commentEl.find('.tagline time');
+    var commentTime = r.utils.parseTimestamp($timeEl);
+    var shouldHighlight = !!selectedVisit && commentTime > selectedVisit;
+
+    $commentEl.toggleClass('new-comment', shouldHighlight);
+  });
 }
 
 r.ui.initTimings = function() {

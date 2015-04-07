@@ -27,6 +27,19 @@ r.utils = {
         }
     },
 
+    parseTimestamp: function($el) {
+      var timestamp = $el.data('timestamp')
+      var isoTimestamp
+
+      if (!timestamp) {
+        isoTimestamp = $el.attr('datetime')
+        timestamp = Date.parse(isoTimestamp)
+        $el.data('timestamp', timestamp)
+      }
+
+      return timestamp
+    },
+
     joinURLs: function(/* arguments */) {
         return _.map(arguments, function(url, idx) {
             if (idx > 0 && url && url[0] != '/') {

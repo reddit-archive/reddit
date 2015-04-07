@@ -482,7 +482,7 @@ function togglemessage(elem) {
   }
 }
 
-function morechildren(form, link_id, sort, children, depth, pv_hex) {
+function morechildren(form, link_id, sort, children, depth) {
     $(form).html(reddit.status_msg.loading)
         .css("color", "red");
     var id = $(form).parents(".thing.morechildren:first").thing_id();
@@ -492,7 +492,6 @@ function morechildren(form, link_id, sort, children, depth, pv_hex) {
         children: children,
         depth: depth,
         id: id,
-        pv_hex: pv_hex,
     };
     $.request('morechildren', child_params, undefined, undefined,
               undefined, true);
@@ -1295,18 +1294,6 @@ function show_unfriend(account_fullname) {
                 $(this).html("");
             }
         });
-}
-
-function highlight_new_comments(period) {
-  var i;
-  for (i = 0 ; i <= 9; i++) {
-    items = $(".comment-period-" + i);
-    if (period >= 0 && i >= period) {
-      items.addClass("new-comment");
-    } else {
-      items.removeClass("new-comment");
-    }
-  }
 }
 
 function save_href(link) {
