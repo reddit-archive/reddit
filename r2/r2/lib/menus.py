@@ -309,6 +309,8 @@ class NavButton(Styled):
     def is_selected(self):
         stripped_path = _force_unicode(request.path.rstrip('/').lower())
 
+        if not (self.sr_path or c.default_sr):
+            return False
         if stripped_path == self.bare_path:
             return True
         site_path = c.site.user_path.lower() + self.bare_path
