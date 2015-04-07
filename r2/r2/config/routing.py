@@ -48,6 +48,11 @@ def make_map():
     map = Mapper()
     mc = map.connect
 
+    # Username-relative userpage redirects, need to be defined here in case
+    # a plugin defines a `/user/:name` handler.
+    mc('/user/me', controller='user', action='rel_user_redirect')
+    mc('/user/me/*rest', controller='user', action='rel_user_redirect')
+
     for plugin in reversed(config['r2.plugins']):
         plugin.add_routes(mc)
 
@@ -132,10 +137,6 @@ def make_map():
     mc('/admin/gold', controller='admintool', action='gold')
 
     mc('/admin/errors', controller='errorlog')
-
-    # Username-relative userpage redirects
-    mc('/user/me', controller='user', action='rel_user_redirect')
-    mc('/user/me/*rest', controller='user', action='rel_user_redirect')
 
     mc('/user/:username/about', controller='user', action='about',
        where='overview')
