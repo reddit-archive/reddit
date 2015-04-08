@@ -210,10 +210,12 @@ class Ruleset(object):
                 if standard_rules is None:
                     continue
 
-                standard_values = standard_rules.get(standard_name, None)
+                standard_values = None
+                if isinstance(standard_name, basestring):
+                    standard_values = standard_rules.get(standard_name, None)
                 if not standard_values:
                     raise AutoModeratorSyntaxError(
-                        "Invalid standard: %s" % standard_name,
+                        "Invalid standard: `%s`" % standard_name,
                         yaml.dump(orig_values),
                     )
 
