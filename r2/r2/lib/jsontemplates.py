@@ -52,7 +52,7 @@ class ObjectTemplate(StringTemplate):
     def update(self, kw):
         def _update(obj):
             if isinstance(obj, (str, unicode)):
-                return StringTemplate(obj).finalize(kw)
+                return _force_unicode(obj)
             elif isinstance(obj, dict):
                 return dict((k, _update(v)) for k, v in obj.iteritems())
             elif isinstance(obj, (list, tuple)):
