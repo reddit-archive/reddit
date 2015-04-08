@@ -653,6 +653,23 @@ class Account(Thing):
         except (NotFound, AttributeError):
             return None
 
+    def use_subreddit_style(self, sr):
+        """Return whether to show subreddit stylesheet depending on
+        individual selection if available, else use pref_show_stylesheets"""
+        # if FakeSubreddit, there is no stylesheet
+        if not hasattr(sr, '_id'):
+            return False
+        if not feature.is_enabled('stylesheets_everywhere'):
+            return self.pref_show_stylesheets
+        # if stylesheet isn't individually enabled/disabled, use global pref
+        return bool(getattr(self, "sr_style_%s_enabled" % sr._id,
+            self.pref_show_stylesheets))
+
+    def set_subreddit_style(self, sr, use_style):
+        if hasattr(sr, '_id'):
+            setattr(self, "sr_style_%s_enabled" % sr._id, use_style)
+            self._commit()
+
     def flair_enabled_in_sr(self, sr_id):
         return getattr(self, 'flair_%s_enabled' % sr_id, True)
 

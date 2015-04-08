@@ -365,18 +365,27 @@ class Reddit(Templated):
         self.toolbars = self.build_toolbars()
         self.subreddit_stylesheet_url = self.get_subreddit_stylesheet_url(c.site)
 
-        # use override stylesheet if they have custom styles disabled or
-        # this subreddit has no custom stylesheet (or is the front page)
         has_style_override = (c.user.pref_stylesheet_override and
                 feature.is_enabled('stylesheets_everywhere'))
-        no_sr_styles = (isinstance(c.site, DefaultSR) or
-                        not c.user.pref_show_stylesheets or
-                        not self.subreddit_stylesheet_url)
-        if has_style_override and no_sr_styles:
+        # if there is no style or the style is disabled for this subreddit
+        self.no_sr_styles = (isinstance(c.site, DefaultSR) or
+            not self.get_subreddit_stylesheet_url(c.site) or
+            (c.user and not c.user.use_subreddit_style(c.site)))
+
+        self.default_theme_sr = DefaultSR()
+        # use override stylesheet if they have custom styles disabled or
+        # this subreddit has no custom stylesheet (or is the front page)
+        if has_style_override and self.no_sr_styles:
             sr = Subreddit._by_name(c.user.pref_stylesheet_override)
             # make sure they can still view their override subreddit
-            if sr.can_view(c.user):
+            if sr.can_view(c.user) and sr.stylesheet_url:
                 self.subreddit_stylesheet_url = self.get_subreddit_stylesheet_url(sr)
+                if c.can_apply_styles and c.allow_styles and sr.header:
+                    self.default_theme_sr = sr
+            else:
+                self.subreddit_stylesheet_url = self.get_subreddit_stylesheet_url(
+                    self.default_theme_sr)
+
 
     @staticmethod
     def get_subreddit_stylesheet_url(sr):
@@ -1001,6 +1010,15 @@ class SubredditInfoBar(CachedTemplate):
             self.flair_prefs = FlairPrefs()
         else:
             self.flair_prefs = None
+
+        self.sr_style_toggle = False
+        self.use_subreddit_style = True
+
+        if (c.user_is_loggedin and self.sr.stylesheet_url and 
+                feature.is_enabled('stylesheets_everywhere')):
+            # defaults to c.user.pref_show_stylesheets if a match doesn't exist
+            self.sr_style_toggle = True
+            self.use_subreddit_style = c.user.use_subreddit_style(c.site)
 
         CachedTemplate.__init__(self)
 

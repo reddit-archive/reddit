@@ -1257,6 +1257,13 @@ $(function() {
             $(this).select();
         });
 
+        $(".sr_style_toggle").change(function() {
+            $('#sr_style_throbber')
+            .html('<img src="' + r.utils.staticURL('throbber.gif') + '" />')
+            .css("display", "inline-block");
+            return post_form($(this).parent(), "set_sr_style_enabled");
+        });
+
         /* ajax ynbutton */
         function toggleThis() { return toggle(this); }
         $("body")

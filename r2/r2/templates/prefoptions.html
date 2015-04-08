@@ -273,7 +273,12 @@
   <tr>
     <th>${_("display options")}</th>
     <td class="prefright">
-      ${checkbox(_("allow subreddits to show me custom styles"), "show_stylesheets")}
+      ${checkbox(_("allow subreddits to show me custom themes"), "show_stylesheets")}
+      %if feature.is_enabled('stylesheets_everywhere'):
+        &#32;<span class="little buygold">
+          ${_("(you can also choose which subreddit themes to disable on an individual level)")}
+        </span>
+      %endif
       <br/>
       ${checkbox(_("show user flair"), "show_flair")}
       <br/>
@@ -362,10 +367,10 @@
             input = unsafe(capture(text_input, c.user.pref_stylesheet_override, 'stylesheet_override'))
             s = c.user.pref_stylesheet_override
           %>
-          ${_wsf("use stylesheet from /r/%(sr)s by default", sr=input)}
-          &#32;<span class="little gray">${_("(blank for standard reddit style)")}</span>
+          ${_wsf("use theme from /r/%(sr)s by default", sr=input)}
+          &#32;<span class="little gray">${_("(blank for standard reddit theme)")}</span>
           <br>
-          <span class="little gray">${_("(used anywhere there isn't another custom style - front page, multireddits, or everywhere if you have custom styles disabled)")}</span>
+          <span class="little gray">${_("(used anywhere there isn't another custom themes - front page, multireddits, or everywhere if you have custom themes disabled)")}</span>
 
           %if thing.error_style_override:
             <p class="error">${_(error_list[thing.error_style_override])}</p>

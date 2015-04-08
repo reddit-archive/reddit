@@ -241,6 +241,7 @@ class SubredditJsonTemplate(ThingJsonTemplate):
         user_is_contributor="is_contributor",
         user_is_moderator="is_moderator",
         user_is_subscriber="is_subscriber",
+        user_sr_theme_enabled="user_sr_style_enabled",
     )
 
     # subreddit *attributes* (right side of the equals)
@@ -305,6 +306,11 @@ class SubredditJsonTemplate(ThingJsonTemplate):
             if thing.community_rules:
                 return thing.community_rules.split('\n')
             return []
+        elif attr == 'user_sr_style_enabled':
+            if c.user_is_loggedin:
+                return c.user.use_subreddit_style(thing)
+            else:
+                return True
         else:
             return ThingJsonTemplate.thing_attr(self, thing, attr)
 

@@ -55,8 +55,17 @@ from r2.lib.utils import (
     tup,
 )
 
-from r2.lib.pages import (BoringPage, FormPage, CssError, UploadedImage,
-                          ClickGadget, UrlParser, WrappedUser, responsive)
+from r2.lib.pages import (
+    BoringPage,
+    ClickGadget,
+    CssError,
+    FormPage,
+    Reddit,
+    responsive,
+    UploadedImage,
+    UrlParser,
+    WrappedUser,
+)
 from r2.lib.pages import FlairList, FlairCsv, FlairTemplateEditor, \
     FlairSelector
 from r2.lib.pages import PrefApps
@@ -82,7 +91,7 @@ from r2.lib.menus import CommentSortMenu
 from r2.lib.captcha import get_iden
 from r2.lib.strings import strings
 from r2.lib.filters import _force_unicode, _force_utf8, websafe_json, websafe, spaceCompress
-from r2.lib.template_helpers import format_html
+from r2.lib.template_helpers import format_html, header_url
 from r2.lib.db import queries
 from r2.lib import media
 from r2.lib.db import tdb_cassandra
@@ -3799,6 +3808,38 @@ class ApiController(RedditController):
                 'saved', text).val(text)
             jquery('#flairrow_%s input[name="css_class"]' % user._id36).data(
                 'saved', css_class).val(css_class)
+
+    @validatedForm(
+        VUser(),
+        VModhash(),
+        sr_style_enabled=VBoolean("sr_style_enabled")
+    )
+    def POST_set_sr_style_enabled(self, form, jquery, sr_style_enabled):
+        """Update enabling of individual sr themes; refresh the page style"""
+        if feature.is_enabled('stylesheets_everywhere'):
+            c.user.set_subreddit_style(c.site, sr_style_enabled)
+            c.can_apply_styles = True
+            sr = DefaultSR()
+
+            if sr_style_enabled:
+                sr = c.site
+            elif (c.user.pref_stylesheet_override and
+                    feature.is_enabled('stylesheets_everywhere')):
+                sr = Subreddit._by_name(c.user.pref_stylesheet_override)
+                if not sr.can_view(c.user):
+                    sr = DefaultSR()
+            sr_stylesheet_url = Reddit.get_subreddit_stylesheet_url(sr)
+            if not sr_stylesheet_url:
+                sr_stylesheet_url = ""
+                c.can_apply_styles = False
+
+            jquery.apply_stylesheet_url(sr_stylesheet_url, sr_style_enabled)
+
+            if not sr.header or header_url(sr.header) == g.default_header_url:
+                jquery.remove_header_image();
+            else:
+                jquery.apply_header_image(header_url(sr.header),
+                    sr.header_size, sr.header_title)
 
     @validatedForm(secret_used=VAdminOrAdminSecret("secret"),
                    award=VByName("fullname"),

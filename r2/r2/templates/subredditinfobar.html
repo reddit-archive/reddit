@@ -64,6 +64,18 @@
                  id=thing.sr._fullname))}
   %endif
 
+  %if thing.sr_style_toggle:
+    <form class="toggle sr_style_toggle">
+      <input id="sr_style_enabled" type="checkbox" name="sr_style_enabled"
+        ${'checked="checked"' if thing.use_subreddit_style else ""}
+      >
+      <label for="sr_style_enabled">
+        ${_("Use this subreddit's theme")}
+      </label>
+      <div id="sr_style_throbber" class="throbber"></div>
+    </form>
+  %endif
+
   %if thing.flair_prefs:
     ${thing.flair_prefs}
   %endif
