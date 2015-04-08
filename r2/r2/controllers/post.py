@@ -23,6 +23,8 @@ from r2.lib.pages import *
 from reddit_base import (
     hsts_eligible,
     hsts_modify_redirect,
+    set_over18_cookie,
+    delete_over18_cookie,
 )
 from api import ApiController
 from r2.lib.errors import BadRequestError, errors
@@ -81,11 +83,15 @@ class PostController(ApiController):
                 c.user.pref_over_18 = True
                 c.user._commit()
             else:
-                c.cookies.add("over18", "1")
+                set_over18_cookie()
             return self.redirect(dest)
         else:
+            if c.user_is_loggedin and not c.errors:
+                c.user.pref_over_18 = False
+                c.user._commit()
+            else:
+                delete_over18_cookie()
             return self.redirect('/')
-
 
     @csrf_exempt
     @validate(msg_hash = nop('x'))

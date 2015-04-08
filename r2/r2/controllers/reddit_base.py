@@ -335,7 +335,16 @@ def over18():
             if cookie == "1":
                 return True
             else:
-                c.cookies["over18"] = Cookie(value="", expires=DELETE)
+                delete_over18_cookie()
+
+
+def set_over18_cookie():
+    c.cookies.add("over18", "1")
+
+
+def delete_over18_cookie():
+    c.cookies["over18"] = Cookie(value="", expires=DELETE)
+
 
 def set_obey_over18():
     "querystring parameter for API to obey over18 filtering rules"
