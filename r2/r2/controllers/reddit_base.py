@@ -1529,17 +1529,12 @@ class RedditController(OAuth2ResourceController):
         # populate c.cookies unless we're on the unsafe media_domain
         if request.host != g.media_domain or g.media_domain == g.domain:
             cookie_counts = collections.Counter()
-            try:
-                for k, v in request.cookies.iteritems():
-                    # minimalcontroller can still set cookies
-                    if k not in c.cookies:
-                        # we can unquote even if it's not quoted
-                        c.cookies[k] = Cookie(value=unquote(v), dirty=False)
-                        cookie_counts[Cookie.classify(k)] += 1
-            except CookieError:
-                #pylons or one of the associated retarded libraries
-                #can't handle broken cookies
-                request.environ['HTTP_COOKIE'] = ''
+            for k, v in request.cookies.iteritems():
+                # minimalcontroller can still set cookies
+                if k not in c.cookies:
+                    # we can unquote even if it's not quoted
+                    c.cookies[k] = Cookie(value=unquote(v), dirty=False)
+                    cookie_counts[Cookie.classify(k)] += 1
 
             for cookietype, count in cookie_counts.iteritems():
                 g.stats.simple_event("cookie.%s" % cookietype, count)
