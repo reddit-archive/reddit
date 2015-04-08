@@ -129,6 +129,10 @@ class Link(Thing, Printable):
     def has_thumbnail(self):
         return self._t.get('has_thumbnail', hasattr(self, 'thumbnail_url'))
 
+    @property
+    def is_nsfw(self):
+        return self.over_18 or bool(self._nsfw.search(self.title))
+
     @classmethod
     def _by_url(cls, url, sr):
         from subreddit import FakeSubreddit

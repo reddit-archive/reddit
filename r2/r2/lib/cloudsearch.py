@@ -208,8 +208,7 @@ class LinkFields(FieldsBase):
 
     @field(cloudsearch_type=int, lucene_type="yesno")
     def over18(self):
-        nsfw = (self.sr.over_18 or self.link.over_18 or
-                Link._nsfw.findall(self.link.title))
+        nsfw = self.sr.over_18 or self.link.is_nsfw
         return (1 if nsfw else 0)
 
     @field(cloudsearch_type=None, lucene_type="yesno")
