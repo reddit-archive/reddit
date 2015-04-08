@@ -252,6 +252,10 @@ class FrontController(RedditController):
         if not can_view_link_comments(article):
             abort(403, 'forbidden')
 
+        # check over 18
+        if article.is_nsfw and not c.over18 and c.render_style == 'html':
+            return self.intermediate_redirect("/over18", sr_path=False)
+
         # Determine if we should show the embed link for comments
         c.can_embed = feature.is_enabled("comment_embeds") and bool(comment)
 
