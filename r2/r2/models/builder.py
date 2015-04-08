@@ -809,6 +809,7 @@ class CommentBuilder(Builder):
         self.continue_this_thread = continue_this_thread
         self.sort = sort
         self.rev_sort = isinstance(sort, operators.desc)
+        self.comments = None
 
     def update_candidates(self, candidates, sorter, to_add=None):
         for comment in (comment for comment in tup(to_add)
@@ -817,6 +818,11 @@ class CommentBuilder(Builder):
             heapq.heappush(candidates, (sort_val, comment))
 
     def get_items(self):
+        if self.comments is None:
+            self._get_comments()
+        return self._make_wrapped_tree()
+
+    def _get_comments(self):
         timer = g.stats.get_timer("CommentBuilder.get_items")
         timer.start()
         r = link_comments_and_sort(self.link, self.sort.col)
@@ -871,10 +877,6 @@ class CommentBuilder(Builder):
 
         timer.intermediate("pick_candidates")
 
-        if not candidates:
-            timer.stop()
-            return []
-
         # choose which comments to show
         items = []
         while (self.num is None or len(items) < self.num) and candidates:
@@ -906,16 +908,39 @@ class CommentBuilder(Builder):
 
         timer.intermediate("pick_comments")
 
+        self.top_level_candidates = [comment for sort_val, comment in candidates
+            if depth.get(comment, 0) == 0]
+        self.comments = Comment._byID(
+            items, data=True, return_dict=False, stale=self.stale)
+        timer.intermediate("lookup_comments")
+
+        self.timer = timer
+        self.cid_tree = cid_tree
+        self.depth = depth
+        self.more_recursions = more_recursions
+        self.offset_depth = offset_depth
+        self.dont_collapse = dont_collapse
+
+    def _make_wrapped_tree(self):
+        timer = self.timer
+        comments = self.comments
+        cid_tree = self.cid_tree
+        top_level_candidates = self.top_level_candidates
+        depth = self.depth
+        more_recursions = self.more_recursions
+        offset_depth = self.offset_depth
+        dont_collapse = self.dont_collapse
+        timer.intermediate("waiting")
+
+        if not comments and not top_level_candidates:
+            timer.stop()
+            return []
+
         # retrieve num_children for the visible comments
-        top_level_candidates = [comment for sort_val, comment in candidates
-                                        if depth.get(comment, 0) == 0]
-        needs_num_children = items + top_level_candidates
+        needs_num_children = [c._id for c in comments] + top_level_candidates
         num_children = get_num_children(needs_num_children, cid_tree)
         timer.intermediate("calc_num_children")
 
-        comments = Comment._byID(items, data=True, return_dict=False,
-                                 stale=self.stale)
-        timer.intermediate("lookup_comments")
         wrapped = self.wrap_items(comments)
         timer.intermediate("wrap_comments")
         wrapped_by_id = {comment._id: comment for comment in wrapped}
