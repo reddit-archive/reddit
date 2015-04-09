@@ -134,7 +134,7 @@ r.ui.highlightNewComments = function() {
 
   $comments.each(function() {
     var $commentEl = $(this);
-    var $timeEl = $commentEl.find('.tagline time');
+    var $timeEl = $commentEl.find('> .entry .tagline time:first-of-type');
     var commentTime = r.utils.parseTimestamp($timeEl);
     var shouldHighlight = !!selectedVisit && commentTime > selectedVisit;
 
