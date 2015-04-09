@@ -837,39 +837,46 @@ class CloudSearchQuery(object):
 
     def __init__(self, query, sr=None, sort=None, syntax=None, raw_sort=None,
                  faceting=None, recent=None, include_over18=True,
-                 rank_expressions=None):
+                 rank_expressions=None, start=0, num=1000):
         if syntax is None:
             syntax = self.default_syntax
         elif syntax not in self.known_syntaxes:
             raise ValueError("Unknown search syntax: %s" % syntax)
+        self.syntax = syntax
+
         self.query = filters._force_unicode(query or u'')
         self.converted_data = None
-        self.syntax = syntax
+        self.bq = u''
+
+        # filters
         self.sr = sr
+        self._recent = recent
+        self.recent = self.recents[recent]
+        self.include_over18 = include_over18
+
+        # rank / rank expressions
         self._sort = sort
         if raw_sort:
             self.sort = raw_sort
         else:
             self.sort = self.sorts[sort]
         self.rank_expressions = rank_expressions
-        self._recent = recent
-        self.recent = self.recents[recent]
-        self.include_over18 = include_over18
+
+        # pagination
+        self.start = start
+        self.num = num
+
+        # facets
         self.faceting = faceting
-        self.bq = u''
+
         self.results = None
 
-    def run(self, after=None, reverse=False, num=1000, _update=False):
+    def run(self, _update=False):
         results = self._run(_update=_update)
-
-        docs, hits, facets = results.docs, results.hits, results._facets
-
-        after_docs = r2utils.get_after(docs, after, num, reverse=reverse)
-
-        self.results = Results(after_docs, hits, facets)
+        self.results = Results(results.docs, results.hits, results._facets)
         return self.results
 
-    def _run(self, start=0, num=1000, _update=False):
+    def _run(self, _update=False):
         '''Run the search against self.query'''
         q = None
         if self.syntax == "cloudsearch":
@@ -886,7 +893,7 @@ class CloudSearchQuery(object):
             g.log.info("%s", self)
         return self._run_cached(q, self.bq.encode('utf-8'), self.sort,
                                 self.rank_expressions, self.faceting,
-                                start=start, num=num, _update=_update)
+                                start=self.start, num=self.num, _update=_update)
 
     def customize_query(self, bq=u''):
         return bq
