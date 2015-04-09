@@ -863,7 +863,7 @@ class FrontController(RedditController):
         end = int(time_module.mktime((article._date + rel_range).utctimetuple()))
         nsfw = u"nsfw:0" if not article.is_nsfw else u""
         query = u"(and %s timestamp:%s..%s %s)" % (query, start, end, nsfw)
-        q = SearchQuery(query, raw_sort="-text_relevance",
+        q = SearchQuery(query, raw_sort="-text_relevance", faceting={},
                         syntax="cloudsearch")
         pane = self._search(q, num=num, after=after, reverse=reverse,
                             count=count)[2]
@@ -924,7 +924,7 @@ class FrontController(RedditController):
         else:
             include_over18 = True
 
-        q = SubredditSearchQuery(query, sort=sort,
+        q = SubredditSearchQuery(query, sort=sort, faceting={},
                                  include_over18=include_over18)
 
         results, etime, spane = self._search(q, num=num, reverse=reverse,
