@@ -20,6 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+from r2.lib import amqp
 from r2.lib.db import tdb_cassandra
 from r2.lib.db.thing import NotFound
 from r2.lib.errors import MessageError
@@ -87,6 +88,9 @@ class AdminTools(object):
 
             t.ban_info = ban_info
             t._commit()
+
+            if auto:
+                amqp.add_item("auto_removed", t._fullname)
 
         if not auto:
             self.author_spammer(new_things, True)

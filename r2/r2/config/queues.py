@@ -108,6 +108,7 @@ def declare_queues(g):
     queues.markread_q << "mark_all_read"
     queues.del_account_q << "account_deleted"
     queues.automoderator_q << (
+        "auto_removed",
         "new_link",
         "new_comment",
         "new_media_embed",
