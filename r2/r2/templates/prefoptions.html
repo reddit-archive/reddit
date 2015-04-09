@@ -60,7 +60,7 @@
   <% menu = CommentSortMenu() %>
   <select name="default_comment_sort">
         %for sort in menu.visible_options():
-        <option ${'selected="selected"' if sort == c.user.pref_default_comment_sort else ""}
+        <option ${'selected="selected"' if sort == c.user.default_comment_sort else ""}
                 value="${sort}">
           ${menu.make_title(sort)}
         </option>

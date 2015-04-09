@@ -19,6 +19,8 @@
 # All portions of the code written by reddit are Copyright (c) 2006-2015 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
+from copy import copy
+
 from pylons import g
 from r2.lib.menus import CommentSortMenu
 from r2.lib.validator.validator import (
@@ -82,6 +84,14 @@ PREFS_VALIDATORS = dict(
 def set_prefs(user, prefs):
     for k, v in prefs.iteritems():
         setattr(user, k, v)
+        if k == 'pref_default_comment_sort':
+            # We have to do this copy-modify-assign shenanigans because if we
+            # just assign directly into `c.user.sort_options`, `Thing` doesn't
+            # know what happened and will wipe out our changes on save.
+            sort_options = copy(user.sort_options)
+            sort_options['front_sort'] = v
+            user.sort_options = sort_options
+            g.stats.simple_event('default_comment_sort.changed_in_prefs')
 
 
 def filter_prefs(prefs, user):
