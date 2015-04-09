@@ -22,6 +22,8 @@
 
 import datetime
 import hashlib
+import time
+import email.utils
 from email.MIMEText import MIMEText
 from email.errors import HeaderParseError
 
@@ -433,6 +435,8 @@ class Email(object):
             msg['To']      = utf8(self.to_addr)
             msg['From']    = utf8(fr)
             msg['Subject'] = utf8(self.subject)
+            timestamp = time.mktime(self.date.timetuple())
+            msg['Date'] = utf8(email.utils.formatdate(timestamp))
             if self.user:
                 msg['X-Reddit-username'] = utf8(self.user.name)
             msg['X-Reddit-ID'] = self.msg_hash
