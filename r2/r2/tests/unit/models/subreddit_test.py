@@ -83,5 +83,34 @@ class SRMemberTest(unittest.TestCase):
         self.rel.encoded_permissions = '+all'
         self.assertTrue(self.rel.is_superuser())
 
+
+class IsValidNameTest(unittest.TestCase):
+    def test_empty(self):
+        self.assertFalse(Subreddit.is_valid_name(None))
+
+    def test_short(self):
+        self.assertTrue(Subreddit.is_valid_name('aaa'))
+
+    def test_too_short(self):
+        self.assertFalse(Subreddit.is_valid_name('aa'))
+
+    def test_long(self):
+        self.assertTrue(Subreddit.is_valid_name('aaaaaaaaaaaaaaaaaaaaa'))
+
+    def test_too_long(self):
+        self.assertFalse(Subreddit.is_valid_name('aaaaaaaaaaaaaaaaaaaaaa'))
+
+    def test_underscore(self):
+        self.assertTrue(Subreddit.is_valid_name('a_a'))
+
+    def test_leading_underscore(self):
+        self.assertFalse(Subreddit.is_valid_name('_aa'))
+
+    def test_capitals(self):
+        self.assertTrue(Subreddit.is_valid_name('AZA'))
+
+    def test_numerics(self):
+        self.assertTrue(Subreddit.is_valid_name('090'))
+
 if __name__ == '__main__':
     unittest.main()
