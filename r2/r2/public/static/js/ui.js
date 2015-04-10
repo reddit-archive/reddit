@@ -109,7 +109,7 @@ r.ui.initLiveTimestamps = function() {
 }
 
 r.ui.initNewCommentHighlighting = function() {
-  if (!r.config.gold || !$('body').hasClass('comments-page')) {
+  if (!$('body').hasClass('comments-page')) {
     return;
   }
 
