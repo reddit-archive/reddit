@@ -28,10 +28,53 @@ stage_for_paste()
 
 from pylons import c
 from r2.lib.errors import errors, ErrorSet
-from r2.lib.validator import ValidEmail
+from r2.lib.validator import VSubredditName, ValidEmail
 
 
-class TestValidEmail(unittest.TestCase):
+class ValidatorTests(unittest.TestCase):
+    def _test_failure(self, input, error):
+        """Helper for testing bad inputs."""
+        self.validator.run(input)
+        self.assertTrue(self.validator.has_errors)
+        self.assertTrue(c.errors.get((error, None)))
+
+    def _test_success(self, input, assertEqual=True):
+        result = self.validator.run(input)
+        self.assertFalse(self.validator.has_errors)
+        self.assertEqual(len(c.errors), 0)
+        if assertEqual:
+            self.assertEqual(result, input)
+
+        return result
+
+
+class TestVSubredditName(ValidatorTests):
+    def setUp(self):
+        # Reset the validator state and errors before every test.
+        self.validator = VSubredditName(None)
+        c.errors = ErrorSet()
+
+    def _test_failure(self, input, error=errors.BAD_SR_NAME):
+        super(TestVSubredditName, self)._test_failure(input, error)
+
+    # Most of this validator's logic is already covered in `IsValidNameTest`.
+
+    def test_slash_r_slash(self):
+        result = self._test_success('/r/foo', assertEqual=False)
+        self.assertEqual(result, 'foo')
+
+    def test_r_slash(self):
+        result = self._test_success('r/foo', assertEqual=False)
+        self.assertEqual(result, 'foo')
+
+    def test_two_prefixes(self):
+        self._test_failure('/r/r/foo')
+
+    def test_slash_not_prefix(self):
+        self._test_failure('foo/r/')
+
+
+class TestValidEmail(ValidatorTests):
     """Lightly test email address ("addr-spec") validation against RFC 2822.
 
     http://www.faqs.org/rfcs/rfc2822.html
@@ -42,22 +85,12 @@ class TestValidEmail(unittest.TestCase):
         c.errors = ErrorSet()
 
     def test_valid_emails(self):
-        def test(email):
-            result = self.validator.run(email)
-            self.assertEqual(result, email)
-            self.assertFalse(self.validator.has_errors)
-            self.assertEqual(len(c.errors), 0)
-
-        test('test@example.com')
-        test('test@example.co.uk')
-        test('test+foo@example.com')
+        self._test_success('test@example.com')
+        self._test_success('test@example.co.uk')
+        self._test_success('test+foo@example.com')
 
     def _test_failure(self, email, error=errors.BAD_EMAIL):
-        """Helper for testing bad emails."""
-        result = self.validator.run(email)
-        self.assertEqual(result, None)
-        self.assertTrue(self.validator.has_errors)
-        self.assertTrue(c.errors.get((error, None)))
+        super(TestValidEmail, self)._test_failure(email, error)
 
     def test_blank_email(self):
         self._test_failure('', errors.NO_EMAIL)

@@ -688,6 +688,8 @@ class VSubredditName(VRequired):
         self.allow_language_srs = allow_language_srs
 
     def run(self, name):
+        if name:
+            name = sr_path_rx.sub('\g<name>', name.strip())
         valid_name = Subreddit.is_valid_name(
             name, allow_language_srs=self.allow_language_srs)
         if not valid_name:
@@ -716,6 +718,7 @@ class VSRByName(Validator):
         if not sr_name:
             self.set_error(errors.BAD_SR_NAME, code=400)
         else:
+            sr_name = sr_path_rx.sub('\g<name>', sr_name.strip())
             try:
                 sr = Subreddit._by_name(sr_name)
                 return sr
@@ -741,7 +744,8 @@ class VSRByNames(Validator):
 
     def run(self, sr_names_csv):
         if sr_names_csv:
-            sr_names = [s.strip() for s in sr_names_csv.split(',')]
+            sr_names = [sr_path_rx.sub('\g<name>', s.strip())
+                        for s in sr_names_csv.split(',')]
             return Subreddit._by_name(sr_names)
         elif self.required:
             self.set_error(errors.BAD_SR_NAME, code=400)
