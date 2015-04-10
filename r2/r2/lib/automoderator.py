@@ -342,7 +342,7 @@ class RuleComponent(object):
             if value not in self.valid_values:
                 return False
         if self.valid_regex:
-            if not self.valid_regex.search(value):
+            if not self.valid_regex.search(str(value)):
                 return False
 
         return True
