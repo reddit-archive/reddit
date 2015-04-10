@@ -290,6 +290,13 @@ class LinkListing(Listing):
         return wrapped
 
 
+class SearchListing(LinkListing):
+    def listing(self, *args, **kwargs):
+        wrapped = LinkListing.listing(self, *args, **kwargs)
+        self.subreddit_facets = self.builder.subreddit_facets
+        return wrapped
+
+
 class NestedListing(Listing):
     def __init__(self, *a, **kw):
         Listing.__init__(self, *a, **kw)

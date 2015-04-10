@@ -818,6 +818,23 @@ class ListingJsonTemplate(ThingJsonTemplate):
     def kind(self, wrapped):
         return "Listing"
 
+
+class SearchListingJsonTemplate(ListingJsonTemplate):
+    def raw_data(self, thing):
+        data = ThingJsonTemplate.raw_data(self, thing)
+
+        def format_sr(sr, count):
+            return {'name': sr.name, 'url': sr.path, 'count': count}
+
+        facets = {}
+        if thing.subreddit_facets:
+            facets['subreddits'] = [format_sr(sr, count)
+                                    for sr, count in thing.subreddit_facets]
+        data['facets'] = facets
+
+        return data
+
+
 class UserListingJsonTemplate(ListingJsonTemplate):
     def raw_data(self, thing):
         if not thing.nextprev:

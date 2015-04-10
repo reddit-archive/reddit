@@ -670,6 +670,7 @@ class SearchBuilder(IDBuilder):
         self.results = self.query.run()
         names = list(self.results.docs)
         self.total_num = self.results.hits
+        self.subreddit_facets = self.results.subreddit_facets
 
         after = self.after._fullname if self.after else None
 

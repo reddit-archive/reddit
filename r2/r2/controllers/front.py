@@ -948,10 +948,11 @@ class FrontController(RedditController):
               sort=VMenu('sort', SearchSortMenu, remember=False),
               recent=VMenu('t', TimeMenu, remember=False),
               restrict_sr=VBoolean('restrict_sr', default=False),
+              include_facets=VBoolean('include_facets', default=False),
               syntax=VOneOf('syntax', options=SearchQuery.known_syntaxes))
     @api_doc(api_section.search, supports_rss=True, uses_site=True)
     def GET_search(self, query, num, reverse, after, count, sort, recent,
-                   restrict_sr, syntax):
+                   restrict_sr, include_facets, syntax):
         """Search links page."""
         if query and '.' in query:
             url = sanitize_url(query, require_scheme=True)
@@ -976,10 +977,16 @@ class FrontController(RedditController):
         else:
             include_over18 = True
 
+        # do not request facets for api requests, unless specifically requested
+        if is_api():
+            faceting = None if include_facets else {}
+        else:
+            faceting = None
+
         try:
             cleanup_message = None
             try:
-                q = SearchQuery(query, site, sort=sort,
+                q = SearchQuery(query, site, sort=sort, faceting=faceting,
                                 include_over18=include_over18,
                                 recent=recent, syntax=syntax)
                 results, etime, spane = self._search(q, num=num, after=after,
@@ -993,7 +1000,7 @@ class FrontController(RedditController):
                 cleaned = re.sub("[^\w\s]+", " ", query)
                 cleaned = cleaned.lower().strip()
 
-                q = SearchQuery(cleaned, site, sort=sort,
+                q = SearchQuery(cleaned, site, sort=sort, faceting=faceting,
                                 include_over18=include_over18,
                                 recent=recent)
                 results, etime, spane = self._search(q, num=num,
@@ -1045,7 +1052,7 @@ class FrontController(RedditController):
             g.stats.event_count("listing.invalid_after", "search")
             self.abort403()
 
-        listing = LinkListing(builder, show_nums=True)
+        listing = SearchListing(builder, show_nums=True)
 
         # have to do it in two steps since total_num and timing are only
         # computed after fetch_more
