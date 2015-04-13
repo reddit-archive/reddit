@@ -30,6 +30,7 @@ from r2.models import *
 from r2.models.query_cache import CachedQuery, MergedCachedQuery
 from r2.config.extensions import is_api
 from r2.lib.filters import _force_unicode
+from r2.lib.jsontemplates import get_usertrophies
 from r2.lib.pages import *
 from r2.lib.pages.things import wrap_links
 from r2.lib.menus import TimeMenu, SortMenu, RecSortMenu, ProfileSortMenu
@@ -943,6 +944,15 @@ class UserController(ListingController):
         if request.query_string:
             url += "?" + request.query_string
         return self.redirect(url, code=302)
+
+    @validate(
+        user=VAccountByName('username'),
+    )
+    def GET_trophies(self, user):
+        """Return a list of trophies for the a given user."""
+        if not is_api():
+            return self.abort404()
+        return self.api_wrapper(get_usertrophies(user))
 
 
 class MessageController(ListingController):

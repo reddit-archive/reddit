@@ -25,10 +25,10 @@ from r2.controllers.oauth2 import require_oauth2_scope
 from r2.controllers.reddit_base import OAuth2OnlyController
 from r2.lib.jsontemplates import (
     FriendTableItemJsonTemplate,
+    get_usertrophies,
     IdentityJsonTemplate,
     KarmaListJsonTemplate,
     PrefsJsonTemplate,
-    TrophyListJsonTemplate,
 )
 from r2.lib.pages import FriendTableItem
 from r2.lib.validator import (
@@ -78,14 +78,6 @@ class APIv1UserController(OAuth2OnlyController):
         resp = PrefsJsonTemplate(fields).data(c.oauth_user)
         return self.api_wrapper(resp)
 
-    def _get_usertrophies(self, user):
-        trophies = Trophy.by_account(user)
-        def visible_trophy(trophy):
-            return trophy._thing2.awardtype != 'invisible'
-        trophies = filter(visible_trophy, trophies)
-        resp = TrophyListJsonTemplate().render(trophies)
-        return self.api_wrapper(resp.finalize())
-
     @require_oauth2_scope("read")
     @validate(
         user=VAccountByName('username'),
@@ -96,7 +88,7 @@ class APIv1UserController(OAuth2OnlyController):
     )
     def GET_usertrophies(self, user):
         """Return a list of trophies for the a given user."""
-        return self._get_usertrophies(user)
+        return self.api_wrapper(get_usertrophies(user))
 
     @require_oauth2_scope("identity")
     @validate(
@@ -108,7 +100,7 @@ class APIv1UserController(OAuth2OnlyController):
     )
     def GET_trophies(self):
         """Return a list of trophies for the current user."""
-        return self._get_usertrophies(c.oauth_user)
+        return self.api_wrapper(get_usertrophies(c.oauth_user))
 
     @require_oauth2_scope("mysubreddits")
     @validate(
