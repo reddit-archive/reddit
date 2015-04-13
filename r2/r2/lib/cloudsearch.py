@@ -748,7 +748,7 @@ def basic_query(query=None, bq=None, faceting=None, size=1000,
     path = _encode_query(query, bq, faceting, size, start, rank, return_fields)
     timer = None
     if record_stats:
-        timer = g.stats.get_timer("cloudsearch_timer")
+        timer = g.stats.get_timer("providers.cloudsearch")
         timer.start()
     connection = httplib.HTTPConnection(search_api, port=80, timeout=_TIMEOUT)
     try:

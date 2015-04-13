@@ -98,7 +98,7 @@ def get_request_location():
                 pass
     elif getattr(request, 'ip', None):
         g.stats.simple_event('geoip.non_cdn_request')
-        timer = g.stats.get_timer("geoip_service_timer")
+        timer = g.stats.get_timer("providers.geoip.location_by_ips")
         timer.start()
         location = location_by_ips(request.ip)
         if location:
