@@ -121,10 +121,11 @@ class BaseController(WSGIController):
             if meth == 'HEAD':
                 meth = 'GET'
 
-            if meth != 'OPTIONS':
-                handler_name = meth + '_' + action
-            else:
+            if (meth == 'OPTIONS' and
+                    self._get_action_handler(action, meth) is None):
                 handler_name = meth
+            else:
+                handler_name = meth + '_' + action
 
             request.environ['pylons.routes_dict']['action_name'] = action
             request.environ['pylons.routes_dict']['action'] = handler_name
