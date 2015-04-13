@@ -1288,6 +1288,13 @@ class MinimalController(BaseController):
     def abort403(self):
         abort(403, "forbidden")
 
+    COMMON_REDDIT_HEADERS = ", ".join((
+        "X-Ratelimit-Used",
+        "X-Ratelimit-Remaining",
+        "X-Ratelimit-Reset",
+        "X-Moose",
+    ))
+
     def check_cors(self):
         origin = request.headers.get("Origin")
         if c.cors_checked or not origin:
@@ -1308,12 +1315,8 @@ class MinimalController(BaseController):
             response.headers["Access-Control-Allow-Headers"] = \
                 "Authorization, "
             response.headers["Access-Control-Allow-Credentials"] = "false"
-            response.headers['Access-Control-Expose-Headers'] = (
-                "X-Ratelimit-Used"
-                ", X-Ratelimit-Remaining"
-                ", X-Ratelimit-Reset"
-                ", X-Moose"
-            )
+            response.headers['Access-Control-Expose-Headers'] = \
+                self.COMMON_REDDIT_HEADERS
         else:
             action = request.environ["pylons.routes_dict"]["action_name"]
 
