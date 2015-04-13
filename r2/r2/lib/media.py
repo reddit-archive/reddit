@@ -565,7 +565,12 @@ class _EmbedlyScraper(Scraper):
 
         param_dict.update(self.embedly_params)
         params = urllib.urlencode(param_dict)
+
+        timer = g.stats.get_timer("providers.embedly.oembed")
+        timer.start()
         content = requests.get(self.EMBEDLY_API_URL + "?" + params).content
+        timer.stop()
+
         return json.loads(content)
 
     def _make_media_object(self, oembed):
