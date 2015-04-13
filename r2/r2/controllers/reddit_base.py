@@ -1308,8 +1308,12 @@ class MinimalController(BaseController):
             response.headers["Access-Control-Allow-Headers"] = \
                 "Authorization, "
             response.headers["Access-Control-Allow-Credentials"] = "false"
-            response.headers['Access-Control-Expose-Headers'] = \
-                "X-Ratelimit-Used, X-Ratelimit-Remaining, X-Ratelimit-Reset"
+            response.headers['Access-Control-Expose-Headers'] = (
+                "X-Ratelimit-Used"
+                ", X-Ratelimit-Remaining"
+                ", X-Ratelimit-Reset"
+                ", X-Moose"
+            )
         else:
             action = request.environ["pylons.routes_dict"]["action_name"]
 
