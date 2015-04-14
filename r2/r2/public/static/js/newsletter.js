@@ -75,7 +75,7 @@ r.newsletter.ui.NewsletterForm.prototype = $.extend(new r.ui.Form(), {
 
   _showSuccess: function() {
       var parentEl = this.$el.parents('.newsletter-container');
-      parentEl.find('.result-message').text(r._('you\'ll get your first newsletter soon'));
+      parentEl.find('.result-message').text(r._('check your inbox to confirm your subscription'));
       parentEl.addClass('success');
       parentEl.find('header').fadeTo(250, 1);
   },
