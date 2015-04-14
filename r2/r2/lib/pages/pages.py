@@ -1341,7 +1341,7 @@ class SearchPage(BoringPage):
                  search_params={},
                  simple=False, restrict_sr=False, site=None,
                  syntax=None, converted_data=None, facets={}, sort=None,
-                 recent=None,
+                 recent=None, subreddits=None,
                  *a, **kw):
         self.searchbar = SearchBar(prev_search=prev_search,
                                    search_params=search_params,
@@ -1349,11 +1349,12 @@ class SearchPage(BoringPage):
                                    simple=simple, restrict_sr=restrict_sr,
                                    syntax=syntax, converted_data=converted_data,
                                    facets=facets, sort=sort, recent=recent)
+        self.subreddits = subreddits
         BoringPage.__init__(self, pagename, robots='noindex', *a, **kw)
 
     def content(self):
         return self.content_stack((self.searchbar, self.infobar,
-                                   self.nav_menu, self._content))
+                                   self.nav_menu, self.subreddits, self._content))
 
 class TakedownPage(BoringPage):
     def __init__(self, link):
