@@ -28,7 +28,7 @@ r.newsletter.ui = {
     $('.newsletterbar').show();
 
     $('.newsletter-close').on('click', function() {
-      $('.newsletterbar').addClass('c-hidden');
+      $('.newsletterbar').hide();
     });
 
     store.set('newsletterbar.seen', true);
