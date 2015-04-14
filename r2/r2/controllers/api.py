@@ -3935,6 +3935,9 @@ class ApiController(RedditController):
 
         If `exact` is true, only an exact match will be returned.
         """
+        if query:
+            query = sr_path_rx.sub('\g<name>', query.strip())
+
         names = []
         if query and exact:
             try:

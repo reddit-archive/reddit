@@ -305,7 +305,10 @@ r.multi.SubredditList = Backbone.View.extend({
 
         var nameEl = this.$('.add-sr .sr-name'),
             srNames = nameEl.val()
-        srNames = _.compact(srNames.split(/[\/+,\-\s]+(?:r\/)?/))
+        srNames = srNames.split(/[+,\-\s]+/)
+        // Strip any /r/ or r/ prefixes.
+        srNames = srNames.map(function(sr) { return sr.replace(/^\/?r\//, '') })
+        srNames = _.compact(srNames)
         if (!srNames.length) {
             return
         }
