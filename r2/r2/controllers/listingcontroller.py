@@ -828,6 +828,7 @@ class UserController(ListingController):
                 q = queries.get_overview(self.vuser, self.sort, self.time)
             else:
                 q = queries.get_user_actions(self.vuser, 'new', 'all')
+                self.builder_cls = ActionBuilder
 
         elif c.user_is_sponsor and self.where == 'promoted':
             q = queries.get_promoted_links(self.vuser._id)

@@ -116,15 +116,20 @@ class ThingJsonTemplate(JsonTemplate):
         res =  dict(id = thing._fullname,
                     content = thing.render(style=get_api_subtype()))
         return res
-        
+
     def raw_data(self, thing):
         """
         Complement to rendered_data.  Called when a dictionary of
         thing data attributes is to be sent across the wire.
         """
+        if hasattr(self, "_optional_data_attrs"):
+            for attr, attrv in self._optional_data_attrs.iteritems():
+                if hasattr(thing, attr):
+                    self._data_attrs_[attr] = attrv
+
         return dict((k, self.thing_attr(thing, v))
                     for k, v in self._data_attrs_.iteritems())
-            
+
     def thing_attr(self, thing, attr):
         """
         For the benefit of subclasses, to lookup attributes which may
@@ -482,6 +487,9 @@ class PrefsJsonTemplate(ThingJsonTemplate):
 
 
 class LinkJsonTemplate(ThingJsonTemplate):
+    _optional_data_attrs = dict(
+        action_type="action_type",
+        )
     _data_attrs_ = ThingJsonTemplate.data_attrs(
         approved_by="approved_by",
         archived="archived",
@@ -597,6 +605,9 @@ class PromotedLinkJsonTemplate(LinkJsonTemplate):
 
 
 class CommentJsonTemplate(ThingJsonTemplate):
+    _optional_data_attrs = dict(
+        action_type="action_type",
+        )
     _data_attrs_ = ThingJsonTemplate.data_attrs(
         approved_by="approved_by",
         archived="archived",

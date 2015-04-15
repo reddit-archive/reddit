@@ -540,6 +540,26 @@ class IDBuilder(QueryBuilder):
         return done, new_items
 
 
+class ActionBuilder(IDBuilder):
+    def init_query(self):
+        self.actions = {}
+        ids = []
+        for id, action in self.query:
+            ids.append(id)
+            self.actions[id] = action
+        self.query = ids
+
+        super(ActionBuilder, self).init_query()
+
+    def thing_lookup(self, names):
+        items = super(ActionBuilder, self).thing_lookup(names)
+
+        for item in items:
+            if item._fullname in self.actions:
+                item.action_type = self.actions[item._fullname]
+        return items
+
+
 class CampaignBuilder(IDBuilder):
     """Build on a list of PromoTuples."""
 
