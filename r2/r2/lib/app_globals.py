@@ -342,6 +342,10 @@ class Globals(object):
             'sidebar_message',
             'gold_sidebar_message',
         ],
+        ConfigValue.dict(ConfigValue.str, ConfigValue.int): [
+            'ticket_groups',
+            'ticket_user_fields', 
+        ],
         ConfigValue.dict(ConfigValue.str, ConfigValue.float): [
             'pennies_per_server_second',
         ],
@@ -454,6 +458,17 @@ class Globals(object):
             self.pkg_resources_working_set,
             "r2.provider.cdn",
             self.cdn_provider,
+        )
+        self.ticket_provider = select_provider(
+            self.config,
+            self.pkg_resources_working_set,
+            "r2.provider.support",
+            # TODO: fix this later, it refuses to pick up 
+            # g.config['ticket_provider'] value, so hardcoding for now.
+            # really, the next uncommented line should be:
+            #self.ticket_provider,
+            # instead of:
+            "zendesk",
         )
         self.startup_timer.intermediate("providers")
 

@@ -28,7 +28,18 @@ class MediaProvider(object):
     users to be able to view those objects over HTTP.
 
     """
-    def put(self, name, contents):
+
+    def make_inaccessible(self, url):
+        """Make the content unavaiable, but do not remove. Content could
+        be recovered at a later time.
+
+        `url` must be a url linking to the content
+
+        The return value should be a 
+        """
+        raise NotImplementedError
+
+    def put(self, category, name, contents):
         """Put a media object on the media server and return its HTTP URL.
 
         `name` must be a local filename including an extension.
@@ -39,4 +50,8 @@ class MediaProvider(object):
         should also work if accessed with `https`.
 
         """
+        raise NotImplementedError
+
+    def purge(self, url):
+        """Remove the content. Content can not be recovered."""
         raise NotImplementedError

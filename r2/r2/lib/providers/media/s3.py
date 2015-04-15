@@ -22,6 +22,7 @@
 
 import mimetypes
 import os
+import re
 
 import boto
 
@@ -66,7 +67,55 @@ class S3MediaProvider(MediaProvider):
         ],
     }
 
+<<<<<<< HEAD
     def put(self, name, contents):
+=======
+    buckets = {
+        'thumbs': 's3_media_buckets',
+        'stylesheets': 's3_media_buckets',
+        'icons': 's3_media_buckets',
+        'previews': 's3_image_buckets',
+    }
+ 
+    def _get_bucket(self, bucket_name, validate=False):
+     
+        s3 = boto.connect_s3(g.S3KEY_ID or None, g.S3SECRET_KEY or None)
+        bucket = s3.get_bucket(bucket_name, validate=validate)
+
+        return bucket
+
+    def _get_bucket_key_from_url(self, url):
+        if g.s3_media_domain in url:
+            r_bucket = re.compile('.*\://(?:%s.)?([^\/]+)' % g.s3_media_domain)
+        else:
+            r_bucket = re.compile('.*\://?([^\/]+)')
+
+        bucket_name = r_bucket.findall(url)[0]
+        key_name = url.split('/')[-1]
+
+        return bucket_name, key_name
+     
+    def make_inaccessible(self, url):
+        """Make the content unavailable, but do not remove."""
+        bucket_name, key_name = self._get_bucket_key_from_url(url)
+
+        timer = g.stats.get_timer("providers.s3.key_set_private")
+        timer.start()
+
+        bucket = self._get_bucket(bucket_name, validate=False)
+
+        key = bucket.get_key(key_name)
+        if key:
+            # set the file as private, but don't delete it, if it exists
+            key.set_acl('private')
+
+        timer.stop()
+
+        return True
+
+    def put(self, category, name, contents):
+        buckets = getattr(g, self.buckets[category])
+>>>>>>> 9f2a8e5... Takedown tool
         # choose a bucket based on the filename
         name_without_extension = os.path.splitext(name)[0]
         index = ord(name_without_extension[-1]) % len(g.s3_media_buckets)
@@ -76,8 +125,7 @@ class S3MediaProvider(MediaProvider):
         mime_type, encoding = mimetypes.guess_type(name)
 
         # send the key
-        s3 = boto.connect_s3(g.S3KEY_ID or None, g.S3SECRET_KEY or None)
-        bucket = s3.get_bucket(bucket_name, validate=False)
+        bucket = self._get_bucket(bucket_name, validate=False)
         key = bucket.new_key(name)
         key.set_contents_from_string(
             contents,
@@ -94,3 +142,22 @@ class S3MediaProvider(MediaProvider):
             return "http://%s/%s/%s" % (g.s3_media_domain, bucket_name, name)
         else:
             return "http://%s/%s" % (bucket_name, name)
+
+    def purge(self, url):
+        """Deletes the key as specified by the url"""
+        bucket_name, key_name = self._get_bucket_key_from_url(url)
+
+        timer = g.stats.get_timer("providers.s3.key_set_private")
+        timer.start()
+
+        bucket = self._get_bucket(bucket_name, validate=False)
+
+        key_name = url.split('/')[-1]
+        key = bucket.get_key(key_name)
+        if key:
+            # delete the key if it exists
+            key.delete()
+
+        timer.stop()
+
+        return True

@@ -20,27 +20,44 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-class CdnProvider(object):
-    """Provider for handling Content Delivery Network (CDN) interactions.
+class TicketProvider(object):
+    """Provider for handling support tickets interactions.
 
     """
+    
+    def build_ticket_url_from_id(self, ticket_id):
+        """
+        Creates a URL to access a ticket based on URL
 
-    def get_client_ip(self, environ):
-        """Verify and return the CDN-provided remote IP address.
+        `ticket_id` the unique identifier for the ticket
 
-        For requests coming through the CDN, the value of REMOTE_ADDR will be
-        the IP address of one of the CDN's edge nodes rather than that of the
-        client itself.  The CDN can provide the remote client's true IP as well
-        as verification that the provided IP is indeed accurate via extra
-        headers, the details of which vary with each CDN.
+        Returns a URL to the ticket
+        """
+        raise NotImplementedError
+        
+    def create(self):
+        """Creates a new support ticket with the provider. 
 
-        This function should analyze the request environment and return the
-        remote client's true IP address if it's present and validates. If it is
-        not present or does not validate, it should return None.
+        Parameters may vary depending on the provider you use.
 
+        The return value should be a JSON object of the created ticket.
         """
         raise NotImplementedError
 
-    def purge_content(self, url):
-        """Purge content from the CDN by URL"""
+    def get(self, ticket_id):
+        """Gets an existing ticket from the provider.
+
+        `ticket_id` is a unique identifier dor the ticket.
+
+        The return value should be a JSON object of the created ticket.
+        """
+        raise NotImplementedError
+
+    def update(self):
+        """Updates the ticket with the provider
+
+        Parameters may vary depending on the provider you use.
+
+        The return value should be a JSON object of the updated ticket.
+        """
         raise NotImplementedError

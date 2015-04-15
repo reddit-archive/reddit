@@ -83,6 +83,11 @@ class LinkButtons(PrintableButtons):
         # do we show the report button?
         show_report = not is_author and report
 
+        # if they are the author, can they edit it?
+        thing_editable = getattr(thing, 'editable', True)
+        thing_takendown = getattr(thing, 'admin_takedown', False)
+        editable = is_author and thing_editable and not thing_takendown
+
         show_marknsfw = show_unmarknsfw = False
         show_rescrape = False
         if thing.can_ban or is_author or (thing.promoted and c.user_is_sponsor):
@@ -135,7 +140,7 @@ class LinkButtons(PrintableButtons):
                                   permalink  = thing.permalink,
                                   # button visibility
                                   saved = thing.saved,
-                                  editable = thing.editable, 
+                                  editable = editable, 
                                   hidden = thing.hidden, 
                                   ignore_reports = thing.ignore_reports,
                                   show_delete = show_delete,
@@ -158,6 +163,12 @@ class CommentButtons(PrintableButtons):
     def __init__(self, thing, delete = True, report = True):
         # is the current user the author?
         is_author = thing.is_author
+
+        # if they are the author, can they edit it?
+        thing_editable = getattr(thing, 'editable', True)
+        thing_takendown = getattr(thing, 'admin_takedown', False)
+        editable = is_author and thing_editable and not thing_takendown
+
         # do we show the report button?
         show_report = not is_author and report and thing.can_reply
         # do we show the delete button?
@@ -193,6 +204,7 @@ class CommentButtons(PrintableButtons):
                                   profilepage = c.profilepage,
                                   permalink = thing.permalink,
                                   saved = thing.saved,
+                                  editable = editable,
                                   ignore_reports = thing.ignore_reports,
                                   full_comment_path = thing.full_comment_path,
                                   full_comment_count = thing.full_comment_count,

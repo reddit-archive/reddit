@@ -1720,6 +1720,12 @@ class ApiController(RedditController):
 
         if isinstance(item, Link) and not item.is_self:
             return abort(403, "forbidden")
+            
+        if getattr(item, 'admin_takedown', False):
+            # this item has been takendown by the admins,
+            # and not not be edited
+            # would love to use a 451 (legal) here, but pylons throws an error
+            return abort(403, "this content is locked and can not be edited")
 
         if isinstance(item, Comment):
             max_length = 10000

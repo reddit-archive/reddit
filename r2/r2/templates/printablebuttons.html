@@ -370,9 +370,11 @@
     %endif
 
     %if thing.is_author:
-      <li>
-        ${self.simple_button(_("edit"), "edit_usertext", css_class="edit-usertext")}
-      </li>
+      %if thing.editable:
+        <li>
+          ${self.simple_button(_("edit"), "edit_usertext", css_class="edit-usertext")}
+        </li>
+      %endif
       <li>
         %if thing.thing.inbox_replies_enabled:
           ${ynbutton(_("disable inbox replies"), _("inbox replies disabled"), "sendreplies",

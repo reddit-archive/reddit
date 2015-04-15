@@ -868,6 +868,14 @@ padding: 5px;
     font-size: 11px;
     padding-bottom: 2px; 
 }
+.comment > .admin_takedown {
+    background-color: #F7F7F7;
+    color: #888888;
+    
+    a:link {
+        color: #326699;
+    }
+}
 
 .child .comment { 
     margin: 4px; 

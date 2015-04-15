@@ -50,9 +50,28 @@ class FileSystemMediaProvider(MediaProvider):
         ],
     }
 
-    def put(self, name, contents):
+    def make_inaccessible(self, url):
+        # When it comes to file system, there isn't really the concept of
+        # "making a file inaccessible" separate from deletion without
+        # losing track of it. For the sake of not creating orphaned files, 
+        # not implementing this method
+        g.log.warning(
+            'FileSystemMediaProvider.make_inaccessible is consciously '
+            'not implemented and does not raise an error.'
+        )
+        return True
+
+    def put(self, category, name, contents):
         assert os.path.dirname(name) == ""
         path = os.path.join(g.media_fs_root, name)
         with open(path, "w") as f:
             f.write(contents)
         return urlparse.urljoin(g.media_fs_base_url_http, name)
+        
+    def purge(self, url):
+        """Remove the content from disk. Content can not be recovered."""
+
+        name = url.split('/')[-1]
+        path = os.path.join(g.media_fs_root, name)
+        os.remove(path)
+        return True

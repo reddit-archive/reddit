@@ -125,5 +125,7 @@ setup(
     [r2.provider.auth]
     cookie = r2.lib.providers.auth.cookie:CookieAuthenticationProvider
     http = r2.lib.providers.auth.http:HttpAuthenticationProvider
+    [r2.provider.support]
+    zendesk = r2.lib.providers.support.zendesk:ZenDeskProvider
     """,
 )

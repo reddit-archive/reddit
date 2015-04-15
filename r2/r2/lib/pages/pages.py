@@ -4373,6 +4373,7 @@ class UserText(CachedTemplate):
                  expunged=False,
                  include_errors=True,
                  show_embed_help=False,
+                 admin_takedown=False,
                 ):
 
         css_class = "usertext"
@@ -4383,6 +4384,10 @@ class UserText(CachedTemplate):
 
         if text is None:
             text = ''
+            
+        # set the attribute for admin takedowns
+        if getattr(item, 'admin_takedown', False):
+            admin_takedown = True
 
         fullname = ''
         # Do not pass fullname on deleted things, unless we're admin
@@ -4407,6 +4412,7 @@ class UserText(CachedTemplate):
                                 expunged=expunged,
                                 include_errors=include_errors,
                                 show_embed_help=show_embed_help,
+                                admin_takedown=admin_takedown,
                                )
 
 class MediaEmbedBody(CachedTemplate):

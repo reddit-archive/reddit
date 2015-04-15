@@ -21,17 +21,39 @@
 ###############################################################################
 
 import hashlib
+import json
+import requests
 
 from pylons import g
 
 from r2.lib.providers.cdn import CdnProvider
 from r2.lib.utils import constant_time_compare
 
-
 class CloudFlareCdnProvider(CdnProvider):
     """A provider for reddit's configuration of CloudFlare.
 
     """
+ 
+    def _do_content_purge(self, url):  
+        """Does the purge of the content from CloudFlare."""      
+        data = {
+            'files': [
+                url,
+            ]
+        }
+
+        timer = g.stats.get_timer("providers.cloudflare.content_purge")
+        timer.start()
+        response = requests.delete(
+            g.secrets['cloudflare_purge_key_url'],
+            headers={
+                'X-Auth-Email': g.secrets['cloudflare_email_address'],
+                'X-Auth-Key': g.secrets['cloudflare_api_key'],
+                'content-type': 'application/json',
+            },
+            data=json.dumps(data),
+        )
+        timer.stop()
 
     def get_client_ip(self, environ):
         try:
@@ -47,3 +69,32 @@ class CloudFlareCdnProvider(CdnProvider):
             return None
 
         return client_ip
+     
+    def purge_content(self, url):
+        """Purges the content specified by url from the cache."""
+        # You'll notice purge is being called multiple times. Our sysadmins
+        # say that it doesn't always fully clear the first time, so they are
+        # now in the habit of always running the purge API call 3 times.
+        # Replicating that less than ideal behaviour here
+
+        self._do_content_purge(url)
+        self._do_content_purge(url)
+        self._do_content_purge(url)
+
+        # per the CloudFlare docs:
+        #    https://www.cloudflare.com/docs/client-api.html#s4.5
+        #    The full URL of the file that needs to be purged from 
+        #    CloudFlare's  cache. Keep in mind, that if an HTTP and 
+        #    an HTTPS version of the file exists, then both versions 
+        #    will need to be purged independently
+        # create the "alternate" URL for http or https
+        if 'https://' in url:
+            url_altered = url.replace('https://', 'http://')
+        else:
+            url_altered = url.replace('http://', 'https://')
+
+        self._do_content_purge(url_altered)
+        self._do_content_purge(url_altered)
+        self._do_content_purge(url_altered)
+
+        return True
