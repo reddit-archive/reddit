@@ -1439,8 +1439,7 @@ class SearchPage(BoringPage):
                                    search_params=search_params,
                                    site=site,
                                    simple=simple, restrict_sr=restrict_sr,
-                                   syntax=syntax, converted_data=converted_data,
-                                   facets=facets, sort=sort, recent=recent)
+                                   syntax=syntax, converted_data=converted_data)
         self.subreddits = subreddits
 
         # generate the over18 redirect url for the current search if needed
@@ -1456,11 +1455,14 @@ class SearchPage(BoringPage):
             kw['nav_menus'].append(MenuLink(title=_('enable NSFW results'),
                                             url=over18_url))
 
+        self.sr_facets = SubredditFacets(prev_search=prev_search, facets=facets,
+                                         sort=sort, recent=recent)
         BoringPage.__init__(self, pagename, robots='noindex', *a, **kw)
 
     def content(self):
         return self.content_stack((self.searchbar, self.infobar,
-                                   self.nav_menu, self.subreddits, self._content))
+                                   self.nav_menu, self.subreddits, self._content,
+                                   self.sr_facets))
 
 
 class MenuLink(Templated):
@@ -3138,8 +3140,8 @@ class SearchBar(Templated):
     """
     def __init__(self, header=None, prev_search='', search_params={},
                  simple=False, restrict_sr=False, site=None, syntax=None,
-                 subreddit_search=False, converted_data=None, facets={},
-                 sort=None, recent=None, **kw):
+                 subreddit_search=False, converted_data=None,
+                 **kw):
         if header is None:
             header = _("search")
         self.header = header
@@ -3150,8 +3152,15 @@ class SearchBar(Templated):
                            simple=simple, restrict_sr=restrict_sr,
                            site=site, syntax=syntax,
                            converted_data=converted_data,
-                           subreddit_search=subreddit_search, facets=facets,
-                           sort=sort, recent=recent)
+                           subreddit_search=subreddit_search)
+
+
+class SubredditFacets(Templated):
+    def __init__(self, prev_search='', facets={}, sort=None, recent=None):
+        self.prev_search = prev_search
+
+        Templated.__init__(self, facets=facets, sort=sort, recent=recent)
+
 
 class Frame(Wrapped):
     """Frameset for the FrameToolbar used when a user hits /tb/. The

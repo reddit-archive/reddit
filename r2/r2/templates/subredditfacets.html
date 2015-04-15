@@ -20,35 +20,20 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%namespace file="utils.html" import="pretty_button" />
-
 <%!
-   from r2.lib.strings import strings
-   from r2.lib.pages import SearchForm
-   from r2.lib.template_helpers import static
+   from r2.lib.template_helpers import search_url
 %>
 
-<% isize = 60 %>
-
-%if thing.prev_search and thing.converted_data:
-  <div class="search-summary">
-    <div>
-    <p class="debuginfo">
-      <span class="icon">&delta;</span>&nbsp;
-      <span class="content">${_('converted query to %(syntax)s syntax: %(converted)s') % thing.converted_data}</span>
-    </p>
-    </div>
-  </div>
-%endif
-
-<div class="searchpane raisedbox">
-  <h4 style="color:gray">${thing.header}</h4>
-
-  <div id="previoussearch">
-    ${SearchForm(prev_search=thing.prev_search,
-                 search_params=thing.search_params,
-                 site=thing.site, subreddit_search=thing.subreddit_search,
-                 simple=thing.simple, restrict_sr=thing.restrict_sr,
-                 syntax=thing.syntax)}
-  </div>
+%if thing.facets and len(thing.facets) > 1:
+<div class="searchfacets">
+  <h4 class="title">${_("too many results? narrow it down to a subreddit!")}</h4>
+  <ol class="list">
+  %for subreddit, count in thing.facets:
+    <li class="searchfacet reddit">
+      <a class="facet title word" href="${search_url(thing.prev_search, subreddit.name, restrict_sr='on', sort=thing.sort, recent=thing.recent)}">/r/${subreddit.name}</a>&nbsp;
+      <span class="facet count number">(${count})</span>
+    </li>&nbsp;
+  %endfor
+  </ol>
 </div>
+%endif
