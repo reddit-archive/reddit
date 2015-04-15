@@ -1773,7 +1773,7 @@ class ApiController(RedditController):
 
         item.update_search_index()
 
-        amqp.add_item('usertext_edited', item._fullname)
+        amqp.add_item('%s_text_edited' % kind, item._fullname)
 
         hooks.get_hook("thing.edit").call(
             thing=item, original_text=original_text)

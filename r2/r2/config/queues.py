@@ -102,10 +102,11 @@ def declare_queues(g):
         queues.declare(sharded_commentstree_queues)
 
     queues.cloudsearch_changes << "search_changes"
-    queues.scraper_q << ("new_link", "usertext_edited")
+    queues.scraper_q << ("new_link", "usertext_edited", "link_text_edited")
     queues.newcomments_q << "new_comment"
     queues.butler_q << ("new_comment",
-                        "usertext_edited")
+                        "usertext_edited",
+                        "comment_text_edited")
     queues.markread_q << "mark_all_read"
     queues.del_account_q << "account_deleted"
     queues.automoderator_q << (
@@ -115,6 +116,8 @@ def declare_queues(g):
         "new_media_embed",
         "new_report",
         "usertext_edited",
+        "link_text_edited",
+        "comment_text_edited",
     )
 
     return queues
