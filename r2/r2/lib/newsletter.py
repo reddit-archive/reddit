@@ -29,6 +29,10 @@ BASE_URL = "https://api.createsend.com/api/v3.1/"
 API_KEY = g.secrets['newsletter_api_key']
 LIST_ID = g.newsletter_list_id
 
+# under providers even though this is not yet a provider because this will be
+# moved to become one, so we want the right stats namespace.
+STATS_NAMESPACE = "providers.campaignmonitor"
+
 
 class NewsletterError(Exception):
     pass
@@ -60,6 +64,8 @@ def add_subscriber(email, source=""):
     if source:
         params["CustomFields"] = [{"Key": "source", "Value": source}]
 
+    timer = g.stats.get_timer('%s.add_subscriber' % STATS_NAMESPACE)
+    timer.start()
     try:
         r = requests.post(
             "%s/subscribers/%s.json" % (BASE_URL, LIST_ID),
@@ -68,12 +74,19 @@ def add_subscriber(email, source=""):
             auth=(API_KEY, 'x'),
         )
     except requests.exceptions.Timeout:
+        g.stats.simple_event('%s.request.timeout' % STATS_NAMESPACE)
         raise NewsletterError("Unable to subscribe user %s to newsletter. "
                               "Request timed out." % email)
+    except requests.exceptions.SSLError:
+        g.stats.simple_event('%s.request.ssl_error' % STATS_NAMESPACE)
+        raise NewsletterError("Unable to subscribe user %s to newsletter. "
+                              "SSL Error." % email)
     else:
         if r.status_code == 201:
             return True
         elif r.status_code == 400:
+            g.stats.simple_event('%s.request.email_unacceptable' %
+                                 STATS_NAMESPACE)
             raise EmailUnacceptableError("Could not subscribe user %s to"
                                          "newsletter. Email was unacceptable, "
                                          "likely due to subscription status." %
@@ -82,3 +95,5 @@ def add_subscriber(email, source=""):
             raise NewsletterError("Could not subscribe user %s to "
                                   "newsletter. Status code: %s" %
                                   (email, r.status_code))
+    finally:
+        timer.stop()
