@@ -29,6 +29,10 @@
 <%
    _id = ("_%s" % thing.parent_name) if hasattr(thing, 'parent_name') else ''
    cls = thing.lookups[0].__class__.__name__.lower()
+
+   # this is a hack to restore linklisting for the search page
+   if cls == 'searchlisting':
+       cls = 'linklisting'
  %>
 <div id="siteTable${_id}" class="sitetable ${cls}">
   %for a in thing.things:
