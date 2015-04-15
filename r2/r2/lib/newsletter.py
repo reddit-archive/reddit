@@ -70,7 +70,7 @@ def add_subscriber(email, source=""):
         r = requests.post(
             "%s/subscribers/%s.json" % (BASE_URL, LIST_ID),
             json.dumps(params),
-            timeout=3,
+            timeout=5,
             auth=(API_KEY, 'x'),
         )
     except requests.exceptions.Timeout:
