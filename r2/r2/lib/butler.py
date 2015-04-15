@@ -51,9 +51,6 @@ def remove_mention_notification(mention):
 
 
 def monitor_mentions(comment):
-    if not isinstance(comment, Comment):
-        return
-
     if comment._spam or comment._deleted:
         return
 

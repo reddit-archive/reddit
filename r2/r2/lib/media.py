@@ -736,10 +736,6 @@ def run():
     @g.stats.amqp_processor('scraper_q')
     def process_link(msg):
         fname = msg.body
-        # We're only interested in self-post edits, not comment edits.
-        if not fname.startswith(Link._fullname_prefix):
-            return
-
         link = Link._by_fullname(fname, data=True)
 
         try:
