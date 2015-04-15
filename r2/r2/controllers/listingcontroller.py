@@ -1332,6 +1332,7 @@ class RedditsController(ListingController):
 
 class MyredditsController(ListingController):
     render_cls = MySubredditsPage
+    extra_page_classes = ListingController.extra_page_classes + ['subreddits-page']
 
     @property
     def menus(self):
