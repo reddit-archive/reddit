@@ -60,7 +60,12 @@
            value="${thing.prev_search}" style="color:black"
          %endif
          name="q" placeholder="${_('search')}" tabindex="20">
-  <input type="submit" value="" tabindex="22">
+
+  %if feature.is_enabled('subreddit_search') and not thing.simple:
+    <button class="search-submit-button c-btn c-btn-primary" type='submit'>${_("search")}</button>
+  %else:
+    <input type="submit" value="" tabindex="22">
+  %endif
 
   %if thing.subreddit_search:
     %if thing.over18_url and thing.prev_search:

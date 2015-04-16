@@ -25,10 +25,10 @@ from link import *
 from vote import *
 from report import *
 from subreddit import DefaultSR, AllSR, Frontpage
-
 from pylons import i18n, request, g
 from pylons.i18n import _
 
+from r2.config import feature
 from r2.lib.wrapped import Wrapped, CachedVariable
 from r2.lib import utils
 from r2.lib.db import operators
@@ -294,12 +294,21 @@ class LinkListing(Listing):
 
 
 class SearchListing(LinkListing):
-    def listing(self, *args, **kwargs):
+    def __init__(self, *a, **kw):
+        LinkListing.__init__(self, *a, **kw)
+
+        self.heading = kw.get('heading', None)
+
+    def listing(self, legacy_render_class=False, *args, **kwargs):
         wrapped = LinkListing.listing(self, *args, **kwargs)
         if hasattr(self.builder, 'subreddit_facets'):
             self.subreddit_facets = self.builder.subreddit_facets
         if hasattr(self.builder, 'start_time'):
             self.timing = time.time() - self.builder.start_time
+
+        if legacy_render_class:
+            wrapped.render_class = Listing
+
         return wrapped
 
 

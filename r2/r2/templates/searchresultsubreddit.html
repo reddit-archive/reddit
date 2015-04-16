@@ -1,0 +1,89 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be
+## consistent with Exhibit B.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is reddit.
+##
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is reddit Inc.
+##
+## All portions of the code written by reddit are Copyright (c) 2006-2015
+## reddit Inc. All Rights Reserved.
+###############################################################################
+
+<%inherit  file="searchresultbase.html"/>
+
+<%namespace file="utils.html" import="plain_link, nsfw_stamp" />
+<%namespace file="subscribebutton.html" import="subscribe_button" />
+
+<%!
+  from r2.lib.template_helpers import search_url
+  from r2.lib.utils import timesince
+%>
+
+<%def name="search_result_css_class()">
+  ${parent.search_result_css_class()} search-result-subreddit
+</%def>
+
+<%def name="search_result_header()">
+  <%parent:search_result_header>
+    ${plain_link(
+        thing.title,
+        thing.path,
+        sr_path=False,
+        cname=False,
+        _class='search-title',
+      )}
+  </%parent:search_result_header>
+</%def>
+
+<%def name="search_result_meta()">
+  <%parent:search_result_meta>
+    <% data_attrs = {"sr_name": thing.name} %>
+    ${subscribe_button(thing, data_attrs, css_class='search-subscribe-button')}
+    %if thing.over_18:
+      <span class="nsfw-stamp">${nsfw_stamp()}</span>&#32;
+    %endif
+    ${plain_link(
+        thing.path.rstrip('/'),
+        thing.path,
+        sr_path=False,
+        cname=False,
+        _class='search-subreddit-link',
+      )}&#32;
+    <span class="search-subscribers">${_("%(subscribers)s subscribers") % dict(subscribers=thing._ups)},</span>&#32;
+    <span class="search-time">${_("a community for %(time)s") % dict(time=timesince(thing._date))}</span>&#32;
+  </%parent:search_result_meta>
+</%def>
+
+<%def name="search_result_body()">
+  %if thing.public_description:
+    <%parent:search_result_body>
+      ${thing.public_description}
+    </%parent:search_result_body>
+  %endif
+</%def>
+
+<%def name="search_result_footer()">
+  <%parent:search_result_footer>
+    <% pretty_name = thing.path.rstrip('/') %>
+    ${self.search_result_icon('filter')}
+    ${plain_link(
+        pretty_name,
+        search_url(thing.prev_search, thing.name, restrict_sr='on', sort=thing.sort, recent=thing.recent),
+        sr_path=False,
+        cname=False,
+        _class='search-link',
+        title=_('search in %(subreddit)s' % dict(subreddit=pretty_name)),
+      )}
+  </%parent:search_result_footer>
+</%def>

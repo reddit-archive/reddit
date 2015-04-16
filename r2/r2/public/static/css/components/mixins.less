@@ -69,6 +69,21 @@
     filter: ~"alpha(opacity=@{opacity-ie})";
 }
 
+.flex(@props) {
+  -webkit-flex: @props;
+  flex: @props;
+}
+
+.flex-wrap(@props) {
+  -webkit-flex-wrap: @props;
+  flex-wrap: @props;
+}
+
+.display-flex() {
+  display: -webkit-flex;
+  display: flex;
+}
+
 .clearfix() {
     &:before,
     &:after {

@@ -939,6 +939,15 @@ class ReadNextLink(Link):
     _nodb = True
 
 
+class SearchResultLink(Link):
+    _nodb = True
+
+    @classmethod
+    def add_props(cls, user, wrapped):
+        Link.add_props(user, wrapped)
+        Printable.add_props(user, wrapped)
+
+
 class Comment(Thing, Printable):
     _data_int_props = Thing._data_int_props + ('reported', 'gildings')
     _defaults = dict(reported=0,

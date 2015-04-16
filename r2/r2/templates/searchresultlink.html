@@ -1,0 +1,102 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be
+## consistent with Exhibit B.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is reddit.
+##
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is reddit Inc.
+##
+## All portions of the code written by reddit are Copyright (c) 2006-2015
+## reddit Inc. All Rights Reserved.
+###############################################################################
+
+<%inherit  file="searchresultbase.html"/>
+
+<%namespace file="utils.html" import="plain_link, thing_timestamp, nsfw_stamp" />
+<%namespace file="link.html" import="thumbnail" />
+
+<%!
+  from r2.lib.pages import WrappedUser
+%>
+
+<%def name="search_result_css_class()">
+  <%
+    has_thumbnail_class = "has-thumbnail" if thing.thumbnail else ""
+  %>
+  ${parent.search_result_css_class()} search-result-link ${has_thumbnail_class}
+</%def>
+
+<%def name="search_result_content()">
+  %if thing.thumbnail:
+    ${thumbnail()}
+  %endif
+  <div>
+    ${parent.search_result_content()}
+  </div>
+</%def>
+
+<%def name="search_result_header()">
+  <%parent:search_result_header>
+    ${plain_link(
+        thing.title,
+        thing.permalink,
+        sr_path=False,
+        cname=False,
+        _class='search-title',
+      )}
+  </%parent:search_result_header>
+</%def>
+
+<%def name="search_result_meta()">
+  <%parent:search_result_meta>
+    %if thing.over_18:
+      <span class="nsfw-stamp">${nsfw_stamp()}</span>&#32;
+    %endif
+    ${plain_link(
+        '/r/%s' % thing.subreddit.name,
+        '/r/%s' % thing.subreddit.name,
+        sr_path=False,
+        cname=False,
+        _class='search-subreddit-link',
+      )}&#32;
+    <span class="search-score">${thing.score} points,</span>&#32;
+    %if thing.num_comments:
+      <span class="search-comments">${thing.comment_label},</span>&#32;
+    %endif
+    <span class="search-time">submitted&#32;${thing_timestamp(thing, thing.timesince, include_tense=True)}</span>&#32;
+    <span class="search-author">by&#32;${WrappedUser(thing.author, thing.attribs, thing)}</span>&#32;
+  </%parent:search_result_meta>
+</%def>
+
+<%def name="search_result_body()">
+  %if thing.selftext:
+    <%parent:search_result_body>
+      ${thing.selftext}
+    </%parent:search_result_body>
+  %endif
+</%def>
+
+<%def name="search_result_footer()">
+  %if not thing.is_self:
+    <%parent:search_result_footer>
+      ${self.search_result_icon('external')}
+      ${plain_link(
+          thing.url,
+          thing.url,
+          sr_path=False,
+          cname=False,
+          _class='search-link',
+        )}
+    </%parent:search_result_footer>
+  %endif
+</%def>

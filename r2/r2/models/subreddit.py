@@ -2210,6 +2210,14 @@ class DomainSR(FakeSubreddit):
         from r2.lib.db import queries
         return queries.get_domain_links(self.domain, sort, time)
 
+class SearchResultSubreddit(Subreddit):
+    _nodb = True
+
+    @classmethod
+    def add_props(cls, user, wrapped):
+        Subreddit.add_props(user, wrapped)
+        Printable.add_props(user, wrapped)
+
 Frontpage = DefaultSR()
 Sub = SubSR()
 Friends = FriendsSR()
