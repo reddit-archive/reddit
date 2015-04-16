@@ -161,30 +161,47 @@ class Results():
         else:
             raise StopIteration
 
+r_base_url = re.compile("(?i)(?:.+?://)?([^#]*[^#/])/?")
+r_domain = re.compile("(?i)(?:.+?://)?([^/:#?]*)")
+r_domain_prefix = re.compile('^www\d*\.')
+
+
 def strip_www(domain):
-    if domain.count('.') >= 2 and domain.startswith("www."):
-        return domain[4:]
-    else:
-        return domain
+    stripped = domain
+    if domain.count('.') > 1:
+        prefix = r_domain_prefix.findall(domain)
+        if domain.startswith("www") and len(prefix):
+            stripped = '.'.join(domain.split('.')[1:])
+    return stripped
+
 
 def is_subdomain(subdomain, base):
     """Check if a domain is equal to or a subdomain of a base domain."""
     return subdomain == base or (subdomain is not None and subdomain.endswith('.' + base))
 
-r_base_url = re.compile("(?i)(?:.+?://)?(?:www[\d]*\.)?([^#]*[^#/])/?")
+
 def base_url(url):
     res = r_base_url.findall(url)
-    return (res and res[0]) or url
+    if res and res[0]:
+        base = strip_www(res[0])
+    else:
+        base = url
+    return base.lower()
 
-r_domain = re.compile("(?i)(?:.+?://)?(?:www[\d]*\.)?([^/:#?]*)")
-def domain(s):
+
+def domain(url):
     """
         Takes a URL and returns the domain part, minus www., if
         present
     """
-    res = r_domain.findall(s)
-    domain = (res and res[0]) or s
+    res = r_domain.findall(url)
+    host = res and res[0]
+    if host:
+        domain = strip_www(host)
+    else:
+        domain = url
     return domain.lower()
+
 
 def extract_subdomain(host=None, base_domain=None):
     """Try to extract a subdomain from the request, as compared to g.domain.
