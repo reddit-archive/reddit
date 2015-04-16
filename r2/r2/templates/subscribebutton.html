@@ -22,15 +22,19 @@
 
 <%namespace file="printablebuttons.html" import="toggle_button"/>
 
-${toggle_button(
-    class_name="subscribe-button fancy-toggle-button",
-    title=_("subscribe"),
-    alt_title=_("unsubscribe"),
-    callback="subscribe('%s')" % thing.sr._fullname,
-    cancelback="unsubscribe('%s')" % thing.sr._fullname,
-    css_class="add",
-    alt_css_class="remove",
-    reverse=thing.sr.subscriber,
-    login_required=True,
-    data_attrs=thing.data_attrs,
-)}
+${self.subscribe_button(thing.sr, thing.data_attrs)}
+
+<%def name="subscribe_button(sr, data_attrs, css_class='subscribe-button')">
+    ${toggle_button(
+        class_name="fancy-toggle-button " + css_class,
+        title=_("subscribe"),
+        alt_title=_("unsubscribe"),
+        callback="subscribe('%s')" % sr._fullname,
+        cancelback="unsubscribe('%s')" % sr._fullname,
+        css_class="add",
+        alt_css_class="remove",
+        reverse=sr.subscriber,
+        login_required=True,
+        data_attrs=data_attrs,
+    )}
+</%def>
