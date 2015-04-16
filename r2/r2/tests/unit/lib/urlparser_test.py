@@ -172,3 +172,40 @@ class TestSwitchSubdomainByExtension(unittest.TestCase):
         u = UrlParser('http://i.reddit.com/r/redditdev')
         u.switch_subdomain_by_extension('does-not-exist')
         self.assertEquals('http://www.reddit.com/r/redditdev', u.unparse())
+
+
+class TestPathExtension(unittest.TestCase):
+    def test_no_path(self):
+        u = UrlParser('http://example.com')
+        self.assertEquals('', u.path_extension())
+
+    def test_directory(self):
+        u = UrlParser('http://example.com/')
+        self.assertEquals('', u.path_extension())
+
+        u = UrlParser('http://example.com/foo/')
+        self.assertEquals('', u.path_extension())
+
+    def test_no_extension(self):
+        u = UrlParser('http://example.com/a')
+        self.assertEquals('', u.path_extension())
+
+    def test_root_file(self):
+        u = UrlParser('http://example.com/a.jpg')
+        self.assertEquals('jpg', u.path_extension())
+
+    def test_nested_file(self):
+        u = UrlParser('http://example.com/foo/a.jpg')
+        self.assertEquals('jpg', u.path_extension())
+
+    def test_empty_extension(self):
+        u = UrlParser('http://example.com/a.')
+        self.assertEquals('', u.path_extension())
+
+    def test_two_extensions(self):
+        u = UrlParser('http://example.com/a.jpg.exe')
+        self.assertEquals('exe', u.path_extension())
+
+    def test_only_extension(self):
+        u = UrlParser('http://example.com/.bashrc')
+        self.assertEquals('bashrc', u.path_extension())

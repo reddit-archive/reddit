@@ -487,10 +487,17 @@ class UrlParser(object):
         return self._query_dict
 
     def path_extension(self):
+        """Fetches the current extension of the path.
+
+        If the url does not end in a file or the file has no extension, returns
+        an empty string.
         """
-        Fetches the current extension of the path.
-        """
-        return self.path.split('/')[-1].split('.')[-1]
+        filename = self.path.split('/')[-1]
+        filename_parts = filename.split('.')
+        if len(filename_parts) == 1:
+            return ''
+
+        return filename_parts[-1]
 
     def set_extension(self, extension):
         """
