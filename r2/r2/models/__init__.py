@@ -23,7 +23,6 @@
 from account import *
 from link import *
 from listing import *
-from builder import *
 from vote import *
 from report import *
 from subreddit import *
@@ -36,3 +35,9 @@ from admintools import *
 from token import *
 from modaction import *
 from promo import *
+from notification import *
+
+# r2.models.builder will import other models, so pulling its classes/vars into
+# r2.models needs to be done last to ensure that the models it depends
+# on are already loaded.
+from builder import *
