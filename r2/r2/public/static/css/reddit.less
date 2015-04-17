@@ -4266,6 +4266,111 @@ form input[type=radio] {margin: 2px .5em 0 0; }
 .preftable .spacer { margin-bottom: 5px; }
 .preftable .note { width: 100%; vertical-align: top; padding-top: 10px; }
 
+.preftable .details { 
+    font-size: smaller ;
+    color: gray;
+    margin: 0;
+
+    &.reddit-gold{
+        color: #9A7D2E;
+    }
+}
+
+/* Stylesheets everywhere prefs */
+.preftable {
+
+    @selected-theme-color: #a8c8ea;
+
+    .reddit-themes-description {
+        max-width: 800px;
+        margin-bottom: 10px;
+    }
+
+    .container.reddit-themes{
+        max-width: 800px;
+        margin: 5px 0;
+        display: flex;
+        display: -webkit-flex;
+        flex-wrap: wrap;
+        -webkit-flex-wrap: wrap;
+        flex-direction: row;
+        -webkit-flex-direction: row;
+        justify-content: flex-start;
+        -webkit-justify-content: flex-start;
+
+        .theme {
+            -webkit-flex: 1 0 250px;
+            flex: 1 0 250px;
+            padding: 7px 0 11px 0;
+            position: relative;
+            max-width: 270px;
+
+            &.selected {
+                background-color: @selected-theme-color;
+                font-weight: normal;
+            }
+
+            &.select-custom-theme {
+                -webkit-flex: 1 0 100%;
+                flex: 1 0 100%;
+                max-width: 100%;
+                width: 100%;
+                margin: 7px;
+                padding: 7px;
+
+                input {
+                    margin-left: 2px;
+                }
+            }
+
+            img {
+                margin: 0;
+            }
+
+            .theme-thumbnail {
+                display: block;
+                margin: 5px auto;
+            }
+
+            .theme-container {
+                max-width: 240px;
+                margin: 0 auto;
+
+                p {
+                    display: inline;
+                }
+            }
+
+            .theme-thumbnail {
+                margin: 5px auto;
+                
+            }
+
+            .theme-thumbnail:hover .theme-preview {
+                visibility: visible;
+                opacity: 1;
+            }
+
+            .theme-preview {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                .transform(translate(-50%, -50%));
+                visibility: hidden;
+                opacity: 0;
+                z-index: 100;
+                .transition(opacity, 0.2s, ease, 0.3s);
+                .box-shadow(0 0 5px #000);
+            }
+
+            .theme-preview img {
+                margin: 0;
+                display: block;
+            }
+        }
+    }
+}
+
 .over18 button { margin: 0 10px 0 10px; padding: 5px}
 
 .entry .buttons li.nsfw-stamp {
