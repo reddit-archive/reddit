@@ -3823,10 +3823,11 @@ class ApiController(RedditController):
 
             if sr_style_enabled:
                 sr = c.site
-            elif (c.user.pref_stylesheet_override and
+            elif (c.user.pref_default_theme_sr and
                     feature.is_enabled('stylesheets_everywhere')):
-                sr = Subreddit._by_name(c.user.pref_stylesheet_override)
-                if not sr.can_view(c.user):
+                sr = Subreddit._by_name(c.user.pref_default_theme_sr)
+                if (not sr.can_view(c.user) or
+                        not c.user.pref_enable_default_themes):
                     sr = DefaultSR()
             sr_stylesheet_url = Reddit.get_subreddit_stylesheet_url(sr)
             if not sr_stylesheet_url:

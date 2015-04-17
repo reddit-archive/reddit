@@ -55,6 +55,7 @@ from r2.models import (
     Random,
     RandomNSFW,
     RandomSubscription,
+    StylesheetsEverywhere,
     Sub,
     SubSR,
     Subreddit,
@@ -363,10 +364,10 @@ class Reddit(Templated):
         )
 
         self.toolbars = self.build_toolbars()
-        self.subreddit_stylesheet_url = self.get_subreddit_stylesheet_url(c.site)
 
-        has_style_override = (c.user.pref_stylesheet_override and
-                feature.is_enabled('stylesheets_everywhere'))
+        has_style_override = (c.user.pref_default_theme_sr and
+                feature.is_enabled('stylesheets_everywhere') and
+                c.user.pref_enable_default_themes)
         # if there is no style or the style is disabled for this subreddit
         self.no_sr_styles = (isinstance(c.site, DefaultSR) or
             not self.get_subreddit_stylesheet_url(c.site) or
@@ -375,16 +376,19 @@ class Reddit(Templated):
         self.default_theme_sr = DefaultSR()
         # use override stylesheet if they have custom styles disabled or
         # this subreddit has no custom stylesheet (or is the front page)
+        if self.no_sr_styles:
+            self.subreddit_stylesheet_url = self.get_subreddit_stylesheet_url(
+                self.default_theme_sr)
+        else:
+            self.subreddit_stylesheet_url = self.get_subreddit_stylesheet_url(c.site)
+
         if has_style_override and self.no_sr_styles:
-            sr = Subreddit._by_name(c.user.pref_stylesheet_override)
+            sr = Subreddit._by_name(c.user.pref_default_theme_sr)
             # make sure they can still view their override subreddit
             if sr.can_view(c.user) and sr.stylesheet_url:
                 self.subreddit_stylesheet_url = self.get_subreddit_stylesheet_url(sr)
                 if c.can_apply_styles and c.allow_styles and sr.header:
                     self.default_theme_sr = sr
-            else:
-                self.subreddit_stylesheet_url = self.get_subreddit_stylesheet_url(
-                    self.default_theme_sr)
 
 
     @staticmethod
@@ -1090,12 +1094,24 @@ class PrefsPage(Reddit):
         return [PageNameNav('nomenu', title = _("preferences")),
                 NavMenu(buttons, base_path = "/prefs", type="tabmenu")]
 
+
 class PrefOptions(Templated):
     """Preference form for updating language and display options"""
     def __init__(self, done=False, error_style_override=None, generic_error=None):
+        themes = []
+        use_other_theme = True
+        if feature.is_enabled('stylesheets_everywhere'):
+            for theme in StylesheetsEverywhere.get_all():
+                if theme.is_enabled:
+                    themes.append(theme)
+                if theme.id == c.user.pref_default_theme_sr:
+                    use_other_theme = False
+                    theme.checked = True
+
         Templated.__init__(self, done=done,
                 error_style_override=error_style_override,
-                generic_error=generic_error)
+                generic_error=generic_error, themes=themes, use_other_theme=use_other_theme)
+
 
 class PrefFeeds(Templated):
     pass

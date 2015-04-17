@@ -24,11 +24,11 @@
    from r2.config import feature
    from r2.lib.errors import error_list
    from r2.lib.menus import CommentSortMenu
-   from r2.lib.template_helpers import add_sr, _wsf, format_html
+   from r2.lib.template_helpers import add_sr, _wsf, format_html, make_url_protocol_relative
    from r2.lib.utils import UrlParser
    import random
 %>
-<%namespace file="utils.html" import="error_field, language_tool, plain_link"/>
+<%namespace file="utils.html" import="md, error_field, language_tool, plain_link"/>
 
 <%def name="checkbox(text, name, disabled = False, disabled_text = '', prefix = 'pref_')">
     <input name="${name}" id="${name}" type="checkbox"
@@ -360,22 +360,6 @@
         <br><br>
         <% creddit_link = unsafe('&#32;<a href="/creddits">creddit</a>&#32;') %>
         ${checkbox(_wsf("use a %(creddit_link)s to automatically renew my gold if it expires", creddit_link=creddit_link), "creddit_autorenew")}
-        %if feature.is_enabled('stylesheets_everywhere'):
-          <br><br>
-          <p>
-          <%
-            input = unsafe(capture(text_input, c.user.pref_stylesheet_override, 'stylesheet_override'))
-            s = c.user.pref_stylesheet_override
-          %>
-          ${_wsf("use theme from /r/%(sr)s by default", sr=input)}
-          &#32;<span class="little gray">${_("(blank for standard reddit theme)")}</span>
-          <br>
-          <span class="little gray">${_("(used anywhere there isn't another custom themes - front page, multireddits, or everywhere if you have custom themes disabled)")}</span>
-
-          %if thing.error_style_override:
-            <p class="error">${_(error_list[thing.error_style_override])}</p>
-          %endif
-        %endif
     </td>
   </tr>
   %elif c.user.is_moderator_somewhere:
@@ -391,6 +375,46 @@
   </tr>
   %endif
 
+  %if feature.is_enabled('stylesheets_everywhere'):
+    <tr class="gold-accent">
+      <th>${_("reddit themes")}</th>
+      <td class="prefright">
+        ${checkbox(_("use subreddit theme instead of the default reddit theme"), "enable_default_themes")}
+        &#32;<span class="little gray">
+          (${_("hover to preview")})
+        </span>
+
+      <div class="container reddit-themes">
+          % if thing.themes:
+            % for theme in thing.themes:
+              ${theme_item(
+                thumbnail_url=theme.thumbnail_url,
+                preview_url=theme.preview_url,
+                id=theme.id,
+                tagline=theme.tagline,
+                checked=theme.checked,
+              )}
+            % endfor
+          % endif
+          <div class="theme select-custom-theme ${'selected' if thing.use_other_theme else ''}">
+            <label><input type="radio" name="theme_selector" id="other_theme_selector" value="" ${"checked" if thing.use_other_theme else ""}>use theme from /r/</label>
+            <%
+              chosen_theme_sr =  c.user.pref_default_theme_sr if thing.use_other_theme and c.user.pref_default_theme_sr else ""
+            %>
+            <input type="text" class="text" size="20" maxlength="20" name="other_theme" placeholder="subreddit" value="${chosen_theme_sr}"> 
+            <span class="little gray">
+              (${_("warning: use non-featured themes at your own risk")})
+            </span>
+          </div>
+        </div>
+      </div>
+      %if thing.error_style_override:
+        <p class="error">${_(error_list[thing.error_style_override])}</p>
+      %endif
+      </td>
+    </tr>
+  %endif
+
   <tr>
     <td>
       <input type="submit" class="btn" value="${_('save options')}"/>
@@ -399,3 +423,16 @@
 </table>
 
 </form>
+
+ <%def name="theme_item(thumbnail_url, preview_url, id, tagline, checked)">
+  <div class="theme ${'selected' if checked else ''}" id="${id}">
+    <div class="theme-thumbnail">
+      <img src="${make_url_protocol_relative(thumbnail_url)}"/>
+      <div class="theme-preview">
+        <img src="${make_url_protocol_relative(preview_url)}"/>
+      </div>
+    </div>
+    <label><input type="radio" name="theme_selector" value="${id}" ${"checked" if checked else ""}>
+      ${md(tagline)}</label>
+  </div>
+</%def>

@@ -21,7 +21,8 @@
 ###############################################################################
 from copy import copy
 
-from pylons import c,g
+from pylons import c, g
+from r2.config import feature
 from r2.lib.menus import CommentSortMenu
 from r2.lib.validator.validator import (
     VBoolean,
@@ -60,7 +61,6 @@ PREFS_VALIDATORS = dict(
     pref_default_comment_sort=VOneOf('default_comment_sort',
                                      CommentSortMenu.visible_options()),
     pref_show_stylesheets=VBoolean('show_stylesheets'),
-    pref_stylesheet_override=VSRByName('stylesheet_override'),
     pref_show_flair=VBoolean('show_flair'),
     pref_show_link_flair=VBoolean('show_link_flair'),
     pref_no_profanity=VBoolean('no_profanity'),
@@ -81,6 +81,9 @@ PREFS_VALIDATORS = dict(
     pref_hide_locationbar=VBoolean("hide_locationbar"),
     pref_use_global_defaults=VBoolean("use_global_defaults"),
     pref_creddit_autorenew=VBoolean("creddit_autorenew"),
+    pref_enable_default_themes=VBoolean("enable_default_themes", False),
+    pref_default_theme_sr=VSRByName("theme_selector", False),
+    pref_other_theme=VSRByName("other_theme", False),
 )
 
 
@@ -98,6 +101,12 @@ def set_prefs(user, prefs):
 
 
 def filter_prefs(prefs, user):
+    # replace stylesheet_override with other_theme if it doesn't exist
+    if feature.is_enabled_for('stylesheets_everywhere', user):
+        if not prefs["pref_default_theme_sr"]:
+            if prefs["pref_other_theme"]:
+                prefs["pref_default_theme_sr"] = prefs["pref_other_theme"]
+
     for pref_key in prefs.keys():
         if pref_key not in user._preference_attrs:
             del prefs[pref_key]
@@ -128,15 +137,16 @@ def filter_prefs(prefs, user):
         prefs['pref_highlight_new_comments'] = True
 
     # check stylesheet override
-    override_sr = prefs.get('pref_stylesheet_override')
-    if override_sr:
-        if override_sr.can_view(user):
-            # convert back to name
-            prefs['pref_stylesheet_override'] = override_sr.name
+    if feature.is_enabled_for('stylesheets_everywhere', user):
+        override_sr = prefs['pref_default_theme_sr']
+        if not override_sr:
+            del prefs['pref_default_theme_sr']
+            if prefs['pref_enable_default_themes']:
+                c.errors.add(c.errors.add(errors.SUBREDDIT_REQUIRED, field="stylesheet_override"))
         else:
-            # don't update if they can't view the chosen subreddit
-            c.errors.add(errors.SUBREDDIT_NO_ACCESS, field='stylesheet_override')
-            del prefs['pref_stylesheet_override']
-    else:
-        # if it was blank, unset the error from VSRByName
-        c.errors.remove(('BAD_SR_NAME', 'stylesheet_override'))
+            if override_sr.can_view(user):
+                prefs['pref_default_theme_sr'] = override_sr.name
+            else:
+                # don't update if they can't view the chosen subreddit
+                c.errors.add(errors.SUBREDDIT_NO_ACCESS, field='stylesheet_override')
+                del prefs['pref_default_theme_sr']

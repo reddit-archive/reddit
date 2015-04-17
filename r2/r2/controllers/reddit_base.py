@@ -1695,9 +1695,9 @@ class RedditController(OAuth2ResourceController):
         # use override stylesheet if one exists and:
         #   this page has no custom stylesheet
         #   or the user disabled the stylesheet for this sr (indiv or global)
-        has_style_override = (c.user.pref_stylesheet_override and
+        has_style_override = (c.user.pref_default_theme_sr and
                 feature.is_enabled('stylesheets_everywhere') and
-                Subreddit._by_name(c.user.pref_stylesheet_override).can_view(c.user))
+                Subreddit._by_name(c.user.pref_default_theme_sr).can_view(c.user))
         sr_stylesheet_enabled = c.user.use_subreddit_style(c.site)
 
         if (not sr_stylesheet_enabled and

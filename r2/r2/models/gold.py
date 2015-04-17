@@ -48,7 +48,7 @@ from r2.lib.db import tdb_cassandra
 from r2.lib.db.tdb_cassandra import NotFound, view_of
 from r2.models import Account
 from r2.models.subreddit import Frontpage
-from r2.models.wiki import WikiPage
+from r2.models.wiki import WikiPage, WikiPageIniItem
 from r2.lib.memoize import memoize
 
 import stripe
@@ -620,3 +620,17 @@ def get_current_value_of_month():
     now = datetime.now(g.display_tz)
     seconds = calculate_server_seconds(price, now)
     return seconds
+
+
+class StylesheetsEverywhere(WikiPageIniItem):
+    @classmethod
+    def _get_wiki_config(cls):
+        return Frontpage, g.wiki_page_stylesheets_everywhere
+
+    def __init__(self, id, tagline, thumbnail_url, preview_url, is_enabled=True):
+        self.id = id
+        self.tagline = tagline
+        self.thumbnail_url = thumbnail_url
+        self.preview_url = preview_url
+        self.is_enabled = is_enabled
+        self.checked = False

@@ -715,9 +715,14 @@ class VAvailableSubredditName(VSubredditName):
 
 
 class VSRByName(Validator):
+    def __init__(self, sr_name, required=True):
+        self.required = required
+        Validator.__init__(self, sr_name)
+
     def run(self, sr_name):
         if not sr_name:
-            self.set_error(errors.BAD_SR_NAME, code=400)
+            if self.required:
+                self.set_error(errors.BAD_SR_NAME, code=400)
         else:
             sr_name = sr_path_rx.sub('\g<name>', sr_name.strip())
             try:

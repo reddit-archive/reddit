@@ -1264,6 +1264,19 @@ $(function() {
             return post_form($(this).parent(), "set_sr_style_enabled");
         });
 
+        $(".reddit-themes .theme").click(function() {
+          $("div.theme.selected").removeClass("selected");
+          $("input[name='enable_default_themes']").prop("checked", true);
+          // if other is selected
+          if ($(this).hasClass("select-custom-theme")) {
+            $("#other_theme_selector").prop("checked", true);
+          } else {
+            $("input[name='theme_selector'][value='" + $(this).attr("id") + "']")
+              .prop("checked", true);
+          }
+          $(this).addClass("selected");
+        });
+
         /* ajax ynbutton */
         function toggleThis() { return toggle(this); }
         $("body")
