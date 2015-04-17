@@ -26,6 +26,7 @@ import urllib
 
 from r2.models import *
 from filters import unsafe, websafe, _force_utf8, conditional_websafe
+from r2.lib.cache_poisoning import make_poisoning_report_mac
 from r2.lib.utils import UrlParser, timeago, timesince, is_subdomain
 
 from r2.lib import hooks
@@ -133,10 +134,30 @@ def js_config(extra_config=None):
     logged = c.user_is_loggedin and c.user.name
     user_id = c.user_is_loggedin and c.user._id
     gold = bool(logged and c.user.gold)
-
     controller_name = request.environ['pylons.routes_dict']['controller']
     action_name = request.environ['pylons.routes_dict']['action']
-    mac = hmac.new(g.secrets["action_name"], controller_name + '.' + action_name, hashlib.sha1)
+    route_name = controller_name + '.' + action_name
+
+    # In the future this will have names for different caching rules we're
+    # testing
+    cache_policy = "loggedin_www" if c.user_is_loggedin else "loggedout_www"
+
+    # Canary for detecting cache poisoning
+    poisoning_canary = None
+    poisoning_report_mac = None
+    if logged:
+        if "pc" in c.cookies and len(c.cookies["pc"].value) == 2:
+            poisoning_canary = c.cookies["pc"].value
+            poisoning_report_mac = make_poisoning_report_mac(
+                poisoner_canary=poisoning_canary,
+                poisoner_name=logged,
+                poisoner_id=user_id,
+                cache_policy=cache_policy,
+                source="web",
+                route_name=route_name,
+            )
+
+    mac = hmac.new(g.secrets["action_name"], route_name, hashlib.sha1)
     verification = mac.hexdigest()
     cur_subreddit = ""
     if isinstance(c.site, Subreddit) and not c.default_sr:
@@ -170,6 +191,9 @@ def js_config(extra_config=None):
         "https_forced": c.user.https_forced,
         # debugging?
         "debug": g.debug,
+        "poisoning_canary": poisoning_canary,
+        "poisoning_report_mac": poisoning_report_mac,
+        "cache_policy": cache_policy,
         "send_logs": g.live_config["frontend_logging"],
         "server_time": math.floor(time.time()),
         "status_msg": {
@@ -194,7 +218,7 @@ def js_config(extra_config=None):
         "is_sponsor": logged and c.user_is_sponsor,
         "pageInfo": {
           "verification": verification,
-          "actionName": controller_name + '.' + action_name,
+          "actionName": route_name,
         },
         "facebook_app_id": g.live_config["facebook_app_id"],
     }

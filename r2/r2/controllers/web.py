@@ -22,17 +22,22 @@
 
 import hashlib
 import hmac
+import json
+import re
 
-from pylons import g, c, request
+from pylons import g, c, request, response
 from pylons.i18n import _
 
 from r2.controllers.reddit_base import RedditController, abort_with_error
 from r2.lib.base import abort
+from r2.lib.cache_poisoning import make_poisoning_report_mac
 from r2.lib.csrf import csrf_exempt
-from r2.lib.utils import constant_time_compare
+from r2.lib.utils import constant_time_compare, UrlParser, is_subdomain
 from r2.lib.validator import (
+    nop,
     validate,
     VFloat,
+    VInt,
     VOneOf,
     VPrintable,
     VRatelimit,
@@ -87,3 +92,114 @@ class WebLogController(RedditController):
         VRatelimit.ratelimit(rate_user=False, rate_ip=True,
                              prefix="rate_weblog_", seconds=10)
 
+    def OPTIONS_report_cache_poisoning(self):
+        """Send CORS headers for cache poisoning reports."""
+        if "Origin" not in request.headers:
+            return
+        origin = request.headers["Origin"]
+        parsed_origin = UrlParser(origin)
+        if not is_subdomain(parsed_origin.hostname, g.domain):
+            return
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Methods"] = "POST"
+        response.headers["Access-Control-Allow-Headers"] = \
+            "Authorization, X-Loggit, "
+        response.headers["Access-Control-Allow-Credentials"] = "false"
+        response.headers['Access-Control-Expose-Headers'] = \
+            self.COMMON_REDDIT_HEADERS
+
+    @csrf_exempt
+    @validate(
+        VRatelimit(rate_user=False, rate_ip=True, prefix='rate_poison_'),
+        report_mac=VPrintable('report_mac', 255),
+        poisoner_name=VPrintable('poisoner_name', 255),
+        poisoner_id=VInt('poisoner_id'),
+        poisoner_canary=VPrintable('poisoner_canary', 2, min_length=2),
+        victim_canary=VPrintable('victim_canary', 2, min_length=2),
+        render_time=VInt('render_time'),
+        route_name=VPrintable('route_name', 255),
+        url=VPrintable('url', 2048),
+        # To differentiate between web and mweb in the future
+        source=VOneOf('source', ('web', 'mweb')),
+        cache_policy=VOneOf('cache_policy', ('loggedin_www', 'loggedin_mweb')),
+        # JSON-encoded response headers from when our script re-requested
+        # the poisoned page
+        resp_headers=nop('resp_headers'),
+    )
+    def POST_report_cache_poisoning(
+            self,
+            report_mac,
+            poisoner_name,
+            poisoner_id,
+            poisoner_canary,
+            victim_canary,
+            render_time,
+            route_name,
+            url,
+            source,
+            cache_policy,
+            resp_headers,
+    ):
+        """Report an instance of cache poisoning and its details"""
+
+        self.OPTIONS_report_cache_poisoning()
+
+        if c.errors:
+            abort(400)
+
+        # prevent simple CSRF by requiring a custom header
+        if not request.headers.get('X-Loggit'):
+            abort(403)
+
+        # Eh? Why are you reporting this if the canaries are the same?
+        if poisoner_canary == victim_canary:
+            abort(400)
+
+        expected_mac = make_poisoning_report_mac(
+            poisoner_canary=poisoner_canary,
+            poisoner_name=poisoner_name,
+            poisoner_id=poisoner_id,
+            cache_policy=cache_policy,
+            source=source,
+            route_name=route_name,
+        )
+        if not constant_time_compare(report_mac, expected_mac):
+            abort(403)
+
+        if resp_headers:
+            try:
+                resp_headers = json.loads(resp_headers)
+                # Verify this is a JSON map of `header_name => [value, ...]`
+                if not isinstance(resp_headers, dict):
+                    abort(400)
+                for hdr_name, hdr_vals in resp_headers.iteritems():
+                    if not isinstance(hdr_name, basestring):
+                        abort(400)
+                    if not all(isinstance(h, basestring) for h in hdr_vals):
+                        abort(400)
+            except ValueError:
+                abort(400)
+
+        if not resp_headers:
+            resp_headers = {}
+
+        poison_info = dict(
+            poisoner_name=poisoner_name,
+            poisoner_id=str(poisoner_id),
+            # Convert the JS timestamp to a standard one
+            render_time=render_time * 1000,
+            route_name=route_name,
+            url=url,
+            source=source,
+            cache_policy=cache_policy,
+            resp_headers=resp_headers,
+        )
+
+        # For immediate feedback when tracking the effects of caching changes
+        g.stats.simple_event("cache.poisoning.%s.%s" % (source, cache_policy))
+        # For longer-term diagnosing of caching issues
+        g.events.cache_poisoning_event(poison_info, request=request, context=c)
+
+        VRatelimit.ratelimit(rate_ip=True, prefix="rate_poison_", seconds=10)
+
+        return self.api_wrapper({})

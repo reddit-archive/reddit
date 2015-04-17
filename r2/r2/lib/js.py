@@ -511,6 +511,7 @@ module["reddit"] = LocalizedModule("reddit.js",
     "post-sharing.js",
     "expando.js",
     "saved.js",
+    "cache-poisoning-detection.js",
     "messages.js",
     PermissionsDataSource({
         "moderator": ModeratorPermissionSet,

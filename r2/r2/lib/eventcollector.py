@@ -34,6 +34,7 @@ from wsgiref.handlers import format_date_time
 
 import r2.lib.amqp
 from r2.lib import hooks
+from r2.lib.cache_poisoning import cache_headers_valid
 from r2.lib.utils import domain, epoch_timestamp, sampled, squelch_exceptions
 
 
@@ -170,6 +171,80 @@ class EventQueue(object):
         oversize = size_so_far - MAX_EVENT_SIZE
         if oversize > 0:
             event_base["text"] = event_base["text"][:-oversize]
+
+        self.save_event(event_base)
+
+    @squelch_exceptions
+    @sampled("events_collector_poison_sample_rate")
+    def cache_poisoning_event(self, poison_info, event_base=None, request=None,
+                              context=None):
+        """Create a 'cache_poisoning_server' event for event-collector
+
+        poison_info: Details from the client about the poisoning event
+        event_base: The base fields for an Event. If not given, caller MUST
+            supply a pylons.request and pylons.c object to build a base from
+        request, context: Should be pylons.request & pylons.c respectively;
+            used to build the base Event if event_base is not given
+
+        """
+        if event_base is None:
+            event_base = Event.base_from_request(request, context)
+
+        event_base["event_name"] = "cache_poisoning_server"
+        event_base["event_topic"] = "cache_poisoning"
+
+        submit_ts = epoch_timestamp(datetime.datetime.now(pytz.UTC))
+        event_base["event_ts"] = _epoch_to_millis(submit_ts)
+
+        poisoner_name = poison_info.pop("poisoner_name")
+        event_base.update(**poison_info)
+        event_base["poison_blame_guess"] = "proxy"
+
+        resp_headers = poison_info["resp_headers"]
+        if resp_headers:
+            # Check if the caching headers we got back match the current policy
+            cache_policy = poison_info["cache_policy"]
+            headers_valid = cache_headers_valid(cache_policy, resp_headers)
+            event_base["cache_headers_valid"] = headers_valid
+
+        # try to determine what kind of poisoning we're dealing with
+
+        if poison_info["source"] == "web":
+            # Do we think they logged in the usual way, or do we think they
+            # got poisoned with someone else's session cookie?
+            valid_login_hook = hooks.get_hook("poisoning.guess_valid_login")
+            if valid_login_hook.call_until_return(poisoner_name=poisoner_name):
+                # Maybe a misconfigured local Squid proxy + multiple
+                # clients?
+                event_base["poison_blame_guess"] = "local_proxy"
+                event_base["poison_credentialed_guess"] = False
+            elif (context.user_is_loggedin and
+                  context.user.name == poisoner_name):
+                # Guess we got poisoned with a cookie-bearing response.
+                event_base["poison_credentialed_guess"] = True
+            else:
+                event_base["poison_credentialed_guess"] = False
+        elif poison_info["source"] == "mweb":
+            # All mweb responses contain an OAuth token, so we have to assume
+            # whoever got this response can perform actions as the poisoner
+            event_base["poison_credentialed_guess"] = True
+        else:
+            raise Exception("Unsupported source in cache_poisoning_event")
+
+        # Check if the CF-Cache-Status header is present (this header is not
+        # present if caching is disallowed.) If it is, the CDN caching rules
+        # are all jacked up.
+        if resp_headers and "cf-cache-status" in resp_headers:
+            event_base["poison_blame_guess"] = "cdn"
+
+        size_so_far = len(json.dumps(event_base))
+        oversize = size_so_far - MAX_EVENT_SIZE
+        if oversize > 0:
+            # It's almost definitely the headers that are too large
+            event_base["resp_headers"] = {}
+
+        # No JSON support in the DBs we target
+        event_base["resp_headers"] = json.dumps(event_base["resp_headers"])
 
         self.save_event(event_base)
 

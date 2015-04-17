@@ -471,6 +471,8 @@ def make_map():
     mc("/web/log/:level", controller="weblog", action="message",
        requirements=dict(level="error"))
 
+    mc("/web/poisoning", controller="weblog", action="report_cache_poisoning")
+
     # This route handles displaying the error page and
     # graphics used in the 404/500
     # error pages. It should likely stay at the top
