@@ -855,10 +855,10 @@ class FrontController(RedditController):
         query = u"(and %s timestamp:%s..%s %s)" % (query, start, end, nsfw)
         q = SearchQuery(query, raw_sort="-text_relevance", faceting={},
                         syntax="cloudsearch")
-        pane = self._search(q, num=num, after=after, reverse=reverse,
-                            count=count)[2]
+        content = self._search(q, num=num, after=after, reverse=reverse,
+                               count=count)
 
-        return LinkInfoPage(link=article, content=pane,
+        return LinkInfoPage(link=article, content=content,
                             page_classes=['related-page'],
                             subtitle=_('related')).render()
 
@@ -919,12 +919,11 @@ class FrontController(RedditController):
 
         q = SubredditSearchQuery(query, sort=sort, faceting={},
                                  include_over18=include_over18)
+        content = self._search(q, num=num, reverse=reverse,
+                               after=after, count=count,
+                               skip_deleted_authors=False)
 
-        results, etime, spane = self._search(q, num=num, reverse=reverse,
-                                             after=after, count=count,
-                                             skip_deleted_authors=False)
-
-        res = SubredditsPage(content=spane,
+        res = SubredditsPage(content=content,
                              prev_search=query,
                              elapsed_time=etime,
                              # update if we ever add sorts
@@ -982,9 +981,8 @@ class FrontController(RedditController):
                 q = SearchQuery(query, site, sort=sort, faceting=faceting,
                                 include_over18=include_over18,
                                 recent=recent, syntax=syntax)
-                results, etime, spane = self._search(q, num=num, after=after,
-                                                     reverse=reverse,
-                                                     count=count)
+                content = self._search(q, num=num, after=after, reverse=reverse,
+                                       count=count)
             except InvalidQuery:
                 g.stats.simple_event('cloudsearch.error.invalidquery')
 
@@ -998,10 +996,8 @@ class FrontController(RedditController):
                 q = SearchQuery(cleaned, site, sort=sort, faceting=faceting,
                                 include_over18=include_over18,
                                 recent=recent)
-                results, etime, spane = self._search(q, num=num,
-                                                     after=after,
-                                                     reverse=reverse,
-                                                     count=count)
+                content = self._search(q, num=num, after=after, reverse=reverse,
+                                       count=count)
                 if cleaned:
                     cleanup_message = strings.invalid_search_query % {
                                                         "clean_query": cleaned
@@ -1014,8 +1010,8 @@ class FrontController(RedditController):
                     cleanup_message = strings.completely_invalid_search_query
 
             check_cheating("search")
-            res = SearchPage(_('search results'), query, etime,
-                             content=spane,
+            res = SearchPage(_('search results'), query,
+                             content=content,
                              nav_menus=[SearchSortMenu(default=sort),
                                         TimeMenu(default=recent)],
                              search_params=dict(sort=sort, t=recent),
@@ -1024,11 +1020,10 @@ class FrontController(RedditController):
                              restrict_sr=restrict_sr,
                              syntax=syntax,
                              converted_data=q.converted_data,
-                             facets=results.subreddit_facets,
+                             facets=content.subreddit_facets,
                              sort=sort,
                              recent=recent,
                              ).render()
-
             return res
         except SearchException + (socket.error,) as e:
             return self.search_fail(e)
@@ -1049,15 +1044,12 @@ class FrontController(RedditController):
 
         listing = SearchListing(builder, show_nums=True)
 
-        # have to do it in two steps since total_num and timing are only
-        # computed after fetch_more
         try:
             res = listing.listing()
         except SearchException + (socket.error,) as e:
             return self.search_fail(e)
-        timing = time_module.time() - builder.start_time
 
-        return builder.results, timing, res
+        return res
 
     @validate(VAdmin(),
               comment=VCommentByID('comment_id'))

@@ -35,6 +35,8 @@ from r2.lib.db import operators
 
 from collections import namedtuple
 from copy import deepcopy, copy
+import time
+
 
 class Listing(object):
     # class used in Javascript to manage these objects
@@ -294,6 +296,7 @@ class SearchListing(LinkListing):
     def listing(self, *args, **kwargs):
         wrapped = LinkListing.listing(self, *args, **kwargs)
         self.subreddit_facets = self.builder.subreddit_facets
+        self.timing = time.time() - self.builder.start_time
         return wrapped
 
 

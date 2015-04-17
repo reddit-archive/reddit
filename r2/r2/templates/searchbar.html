@@ -30,15 +30,13 @@
 
 <% isize = 60 %>
 
-%if thing.prev_search and thing.elapsed_time > 0:
+%if thing.prev_search and thing.converted_data:
   <div class="search-summary">
     <div>
-    %if thing.converted_data:
     <p class="debuginfo">
       <span class="icon">&delta;</span>&nbsp;
       <span class="content">${_('converted query to %(syntax)s syntax: %(converted)s') % thing.converted_data}</span>
     </p>
-    %endif
     </div>
   </div>
 %endif
