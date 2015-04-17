@@ -544,7 +544,7 @@ class ActionBuilder(IDBuilder):
     def init_query(self):
         self.actions = {}
         ids = []
-        for id, action in self.query:
+        for id, date, action in self.query:
             ids.append(id)
             self.actions[id] = action
         self.query = ids

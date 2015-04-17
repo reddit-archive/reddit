@@ -539,11 +539,15 @@ def get_user_actions(user, sort, time):
                        (get_comments(user, sort, time), 'comment'),
                        (get_liked(user), 'like'))
 
-    for ids, action_type in actions_by_type:
-        for thing_id in ids:
-            if thing_id not in unique_ids:
-                results.append((thing_id, action_type))
-                unique_ids.add(thing_id)
+    for cached_result, action_type in actions_by_type:
+        cached_result.fetch()
+        for thing in cached_result.data:
+            if thing[0] not in unique_ids:
+                results.append(thing + (action_type,))
+                unique_ids.add(thing[0])
+
+    comparator = ThingTupleComparator(actions_by_type[0][0])
+    results.sort(cmp=comparator)
 
     return results
 
