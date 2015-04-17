@@ -995,7 +995,7 @@ class FrontController(RedditController):
         converted_data = None
         subreddit_facets = None
 
-        try:
+        if num > 0:
             try:
                 q = SearchQuery(query, site, sort=sort, faceting=faceting,
                                 include_over18=include_over18,
@@ -1033,8 +1033,6 @@ class FrontController(RedditController):
                                                               }
                 else:
                     cleanup_message = strings.completely_invalid_search_query
-        except SearchException + (socket.error,) as e:
-            return self.search_fail(e)
 
         # extra search request for subreddit results
         if sr_num > 0:
