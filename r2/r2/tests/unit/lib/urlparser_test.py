@@ -209,3 +209,69 @@ class TestPathExtension(unittest.TestCase):
     def test_only_extension(self):
         u = UrlParser('http://example.com/.bashrc')
         self.assertEquals('bashrc', u.path_extension())
+
+
+class TestEquality(unittest.TestCase):
+    def test_different_objects(self):
+        u = UrlParser('http://example.com')
+        self.assertNotEquals(u, None)
+
+    def test_different_protocols(self):
+        u = UrlParser('http://example.com')
+        u2 = UrlParser('https://example.com')
+        self.assertNotEquals(u, u2)
+
+    def test_different_domains(self):
+        u = UrlParser('http://example.com')
+        u2 = UrlParser('http://example.org')
+        self.assertNotEquals(u, u2)
+
+    def test_different_ports(self):
+        u = UrlParser('http://example.com')
+        u2 = UrlParser('http://example.com:8000')
+        u3 = UrlParser('http://example.com:8008')
+        self.assertNotEquals(u, u2)
+        self.assertNotEquals(u2, u3)
+
+    def test_different_paths(self):
+        u = UrlParser('http://example.com')
+        u2 = UrlParser('http://example.com/a')
+        u3 = UrlParser('http://example.com/b')
+        self.assertNotEquals(u, u2)
+        self.assertNotEquals(u2, u3)
+
+    def test_different_params(self):
+        u = UrlParser('http://example.com/')
+        u2 = UrlParser('http://example.com/;foo')
+        u3 = UrlParser('http://example.com/;bar')
+        self.assertNotEquals(u, u2)
+        self.assertNotEquals(u2, u3)
+
+    def test_different_queries(self):
+        u = UrlParser('http://example.com/')
+        u2 = UrlParser('http://example.com/?foo')
+        u3 = UrlParser('http://example.com/?foo=bar')
+        self.assertNotEquals(u, u2)
+        self.assertNotEquals(u2, u3)
+
+    def test_different_fragments(self):
+        u = UrlParser('http://example.com/')
+        u2 = UrlParser('http://example.com/#foo')
+        u3 = UrlParser('http://example.com/#bar')
+        self.assertNotEquals(u, u2)
+        self.assertNotEquals(u2, u3)
+
+    def test_same_url(self):
+        u = UrlParser('http://example.com:8000/a;b?foo=bar&bar=baz#spam')
+        u2 = UrlParser('http://example.com:8000/a;b?bar=baz&foo=bar#spam')
+        self.assertEquals(u, u2)
+
+        u3 = UrlParser('')
+        u3.scheme = 'http'
+        u3.hostname = 'example.com'
+        u3.port = 8000
+        u3.path = '/a'
+        u3.params = 'b'
+        u3.update_query(foo='bar', bar='baz')
+        u3.fragment = 'spam'
+        self.assertEquals(u, u3)

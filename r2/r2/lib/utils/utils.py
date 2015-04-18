@@ -461,6 +461,25 @@ class UrlParser(object):
         self._orig_netloc = getattr(u, 'netloc', '')
         self._query_dict  = None
 
+    def __eq__(self, other):
+        if not isinstance(other, UrlParser):
+            return False
+
+        (s_scheme, s_netloc, s_path, s_params, s_query, s_fragment) = self._unparse()
+        (o_scheme, o_netloc, o_path, o_params, o_query, o_fragment) = other._unparse()
+        # Check all the parsed components for equality, except the query, which
+        # is easier to check in its pure-dictionary form.
+        if (s_scheme != o_scheme or
+                s_netloc != o_netloc or
+                s_path != o_path or
+                s_params != o_params or
+                s_fragment != o_fragment):
+            return False
+        if self.query_dict != other.query_dict:
+            return False
+
+        return True
+
     def update_query(self, **updates):
         """
         Can be used instead of self.query_dict.update() to add/change
@@ -547,7 +566,7 @@ class UrlParser(object):
     def unparse(self):
         """
         Converts the url back to a string, applying all updates made
-        to the feilds thereof.
+        to the fields thereof.
 
         Note: if a host name has been added and none was present
         before, will enforce scheme -> "http" unless otherwise
@@ -555,6 +574,9 @@ class UrlParser(object):
         path, and the query string is reconstructed only if the
         query_dict has been modified/updated.
         """
+        return urlunparse(self._unparse())
+
+    def _unparse(self):
         # only parse the query params if there is an update dict
         q = self.query
         if self._url_updates or self._query_dict is not None:
@@ -570,9 +592,9 @@ class UrlParser(object):
         if self.netloc and not self.scheme:
             self.scheme = "http"
 
-        return urlunparse((self.scheme, self.netloc,
-                           self.path.replace('//', '/'),
-                           self.params, q, self.fragment))
+        return (self.scheme, self.netloc,
+                self.path.replace('//', '/'),
+                self.params, q, self.fragment)
 
     def path_has_subreddit(self):
         """
