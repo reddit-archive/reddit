@@ -1072,13 +1072,15 @@ class SubredditSearchQuery(CloudSearchQuery):
     search_api = g.CLOUDSEARCH_SUBREDDIT_SEARCH_API
     sorts = {
         'relevance': '-activity',
+        'activity': '-activity',
         'rel1': '-rel1',
         'rel2': '-rel2',
     }
     sorts_menu_mapping = {
         'relevance': 1,
-        'rel1': 2,
-        'rel2': 3,
+        'activity': 2,
+        'rel1': 3,
+        'rel2': 4,
     }
 
     known_syntaxes = ("plain",)

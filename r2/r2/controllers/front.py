@@ -914,6 +914,9 @@ class FrontController(RedditController):
         else:
             include_over18 = True
 
+        if feature.is_enabled('subreddit_relevancy') and sort == 'relevance':
+            sort = 'rel1'
+
         q = SubredditSearchQuery(query, sort=sort, faceting={},
                                  include_over18=include_over18)
 
