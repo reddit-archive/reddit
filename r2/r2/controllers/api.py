@@ -56,7 +56,7 @@ from r2.lib.utils import (
 )
 
 from r2.lib.pages import (BoringPage, FormPage, CssError, UploadedImage,
-                          ClickGadget, UrlParser, WrappedUser)
+                          ClickGadget, UrlParser, WrappedUser, responsive)
 from r2.lib.pages import FlairList, FlairCsv, FlairTemplateEditor, \
     FlairSelector
 from r2.lib.pages import PrefApps
@@ -4343,7 +4343,7 @@ class ApiController(RedditController):
         if listing.things:
             w = listing.things[0]
             w.num = ""
-            return spaceCompress(w.render())
+            return responsive(w.render(), space_compress=True)
 
     @json_validate(
         VUser(),
