@@ -30,6 +30,7 @@ from pylons import g
 
 from r2.lib.providers.image_resizing import NotLargeEnough
 from r2.lib.providers.image_resizing.imgix import ImgixImageResizingProvider
+from r2.lib.utils import UrlParser
 
 
 class TestImgixResizer(unittest.TestCase):
@@ -38,10 +39,13 @@ class TestImgixResizer(unittest.TestCase):
         cls.provider = ImgixImageResizingProvider()
         cls.old_imgix_domain = g.imgix_domain
         g.imgix_domain = 'example.com'
+        cls.old_imgix_signing = g.imgix_signing
+        g.imgix_signing = False
 
     @classmethod
     def tearDownClass(cls):
         g.imgix_domain = cls.old_imgix_domain
+        g.imgix_signing = cls.old_imgix_signing
 
     def test_no_resize(self):
         image = dict(url='http://s3.amazonaws.com/a.jpg', width=1200,
@@ -63,3 +67,15 @@ class TestImgixResizer(unittest.TestCase):
             self.assertEqual(url, 'https://example.com/a.jpg?w=%d' % width)
 
         # TODO: test acceptable aspect ratios per spec!
+
+    def test_sign_url(self):
+        u = UrlParser('http://examples.imgix.net/frog.jpg?w=100')
+        signed_url = self.provider._sign_url(u, 'abcdef')
+        self.assertEqual(signed_url.unparse(),
+                'http://examples.imgix.net/frog.jpg?w=100&s=cd3bdf071108af73b15c21bdcee5e49c')
+
+        u = UrlParser('http://examples.imgix.net/frog.jpg')
+        u.update_query(w=100)
+        signed_url = self.provider._sign_url(u, 'abcdef')
+        self.assertEqual(signed_url.unparse(),
+                'http://examples.imgix.net/frog.jpg?w=100&s=cd3bdf071108af73b15c21bdcee5e49c')

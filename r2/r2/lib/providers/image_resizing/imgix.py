@@ -20,6 +20,8 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+import hashlib
+
 from pylons import g
 
 from r2.lib.configparse import ConfigValue
@@ -27,7 +29,7 @@ from r2.lib.providers.image_resizing import (
     ImageResizingProvider,
     NotLargeEnough,
 )
-from r2.lib.utils import UrlParser
+from r2.lib.utils import UrlParser, query_string
 
 class ImgixImageResizingProvider(ImageResizingProvider):
     """A provider that uses imgix to create on-the-fly resizings."""
@@ -48,4 +50,32 @@ class ImgixImageResizingProvider(ImageResizingProvider):
                 raise NotLargeEnough()
             # http://www.imgix.com/docs/reference/size#param-w
             url.update_query(w=width)
+        if g.imgix_signing:
+            url = self._sign_url(url, g.secrets['imgix_signing_token'])
         return url.unparse()
+
+    def _sign_url(self, url, token):
+        """Sign a url for imgix's secured sources.
+
+        Based very heavily on the example code in the docs:
+            http://www.imgix.com/docs/tutorials/securing-images
+
+        Arguments:
+
+        * url -- a UrlParser instance of the url to sign.  This object may be
+                 modified by the function, so make a copy beforehand if that is
+                 a concern.
+        * token -- a string token provided by imgix for request signing
+
+        Returns a UrlParser instance with signing parameters.
+        """
+        # Build the signing value
+        signvalue = token + url.path
+        if url.query_dict:
+          signvalue += query_string(url.query_dict)
+
+        # Calculate MD5 of the signing value.
+        signature = hashlib.md5(signvalue).hexdigest()
+
+        url.update_query(s=signature)
+        return url
