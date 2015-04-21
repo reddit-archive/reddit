@@ -301,6 +301,10 @@ class SearchListing(LinkListing):
         return wrapped
 
 
+class ReadNextListing(Listing):
+    pass
+
+
 class NestedListing(Listing):
     def __init__(self, *a, **kw):
         Listing.__init__(self, *a, **kw)

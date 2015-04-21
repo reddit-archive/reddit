@@ -932,6 +932,10 @@ class PromotedLink(Link):
         Printable.add_props(user, wrapped)
 
 
+class ReadNextLink(Link):
+    _nodb = True
+
+
 class Comment(Thing, Printable):
     _data_int_props = Thing._data_int_props + ('reported', 'gildings')
     _defaults = dict(reported=0,

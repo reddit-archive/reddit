@@ -45,6 +45,8 @@ from r2.models import (
     LINK_FLAIR,
     LabeledMulti,
     Link,
+    ReadNextLink,
+    ReadNextListing,
     Mod,
     ModSR,
     MultiReddit,
@@ -52,6 +54,7 @@ from r2.models import (
     Printable,
     PromoCampaign,
     PromotionPrices,
+    QueryBuilder,
     Random,
     RandomNSFW,
     RandomSubscription,
@@ -1728,6 +1731,27 @@ class LinkInfoPage(Reddit):
 
     def rightbox(self):
         rb = Reddit.rightbox(self)
+
+        if (c.site and not c.default_sr and c.render_style == 'html' and
+                feature.is_enabled('read_next')):
+            link = self.link
+
+            def wrapper_fn(thing):
+                w = Wrapped(thing)
+                w.render_class = ReadNextLink
+                return w
+
+            def keep_fn(thing):
+                return thing._fullname != link._fullname
+
+            query_obj = c.site.get_links('hot', 'all').query
+            builder = QueryBuilder(query_obj,
+                                   wrap=wrapper_fn, keep_fn=keep_fn,
+                                   skip=True, num=10)
+            listing = ReadNextListing(builder).listing()
+            if len(listing.things):
+                rb.append(ReadNext(c.site, listing.render()))
+
         if not (self.link.promoted and not c.user_is_sponsor):
             if c.user_is_admin:
                 from admin_pages import AdminLinkInfoBar
@@ -3444,6 +3468,13 @@ class Ads(Templated):
         Templated.__init__(self)
         self.ad_url = g.ad_domain + "/ads/"
         self.frame_id = "ad-frame"
+
+
+class ReadNext(Templated):
+    def __init__(self, sr, links):
+        Templated.__init__(self)
+        self.sr = sr
+        self.links = links
 
 
 class Embed(Templated):

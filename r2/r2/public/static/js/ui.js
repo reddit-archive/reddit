@@ -74,6 +74,8 @@ r.ui.init = function() {
 
     r.ui.initNewCommentHighlighting()
 
+    r.ui.initReadNext();
+
     r.ui.initTimings()
 }
 
@@ -147,6 +149,95 @@ r.ui.highlightNewComments = function() {
     $commentEl.toggleClass('new-comment', shouldHighlight);
   });
 }
+
+r.ui.initReadNext = function() {
+    var $readNextContainer = $('.read-next-container');
+
+    if ($readNextContainer.length) {
+        this.readNext = new r.ui.ReadNext({
+            el: $readNextContainer,
+        });
+    }
+};
+
+r.ui.ReadNext = Backbone.View.extend({
+    events: {
+        'click .read-next-button.next': 'next',
+        'click .read-next-button.prev': 'prev',
+        'click .read-next-dismiss': 'dismiss',
+    },
+
+    initialize: function() {
+        this.$readNext = this.$el.find('.read-next');
+        this.$links = this.$readNext.find('.read-next-link');
+        this.numLinks = this.$links.length;
+
+        this.state = new Backbone.Model({
+            fixed: false,
+            index: -1,
+        });
+
+        this.updateScroll = this.updateScroll.bind(this);
+        window.addEventListener('scroll', this.updateScroll);
+        this.state.on('change', this.render.bind(this));
+
+        this.updateScroll();
+        this.state.set({
+            index: 0,
+        });
+    },
+
+    next: function() {
+        var currentIndex = this.state.get('index');
+        var numLinks = this.numLinks;
+        this.state.set({
+            index: currentIndex = (currentIndex + 1) % numLinks,
+        });
+    },
+
+    prev: function() {
+        var currentIndex = this.state.get('index');
+        var numLinks = this.numLinks;
+        this.state.set({
+            index: currentIndex = (currentIndex + numLinks - 1) % numLinks,
+        });
+    },
+
+    dismiss: function() {
+        this.$el.fadeOut();
+        window.removeEventListener('scroll', this.updateScroll);
+    },
+
+    updateScroll: function() {
+        var scrollPosition = window.scrollY;
+        var nodePosition = this.$el.position().top;
+
+        // stick to bottom    
+        var scrollOffset = window.innerHeight;
+        var nodeOffset = this.$readNext.height();
+        scrollPosition += scrollOffset;
+        nodePosition += nodeOffset;
+
+        this.state.set({
+            fixed: scrollPosition >= nodePosition,
+        });
+    },
+
+    render: function() {
+        var currentIndex = this.state.get('index');
+        var fixedPosition = this.state.get('fixed');
+
+        this.$links.removeClass('active');
+        this.$links.eq(currentIndex).addClass('active');
+
+        if (fixedPosition) {
+            this.$readNext.addClass('fixed');
+        } else {
+            this.$readNext.removeClass('fixed');
+        } 
+    },
+});
+
 
 r.ui.initTimings = function() {
   // return if we're not configured for sending stats
