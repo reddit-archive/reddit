@@ -481,6 +481,10 @@ class UrlParser(object):
 
     def update_query(self, **updates):
         """Add or change query parameters."""
+        # Since in HTTP everything's a string, coercing values to strings now
+        # makes equality testing easier.  Python will throw an error if you try
+        # to pass in a non-string key, so that's already taken care of for us.
+        updates = {k: str(v) for k, v in updates.iteritems()}
         self.query_dict.update(updates)
 
     @property

@@ -275,3 +275,9 @@ class TestEquality(unittest.TestCase):
         u3.update_query(foo='bar', bar='baz')
         u3.fragment = 'spam'
         self.assertEquals(u, u3)
+
+    def test_integer_query_params(self):
+        u = UrlParser('http://example.com/?page=1234')
+        u2 = UrlParser('http://example.com/')
+        u2.update_query(page=1234)
+        self.assertEquals(u, u2)
