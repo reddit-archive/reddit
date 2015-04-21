@@ -23,6 +23,7 @@
 from r2.controllers.reddit_base import (
     cross_domain,
     hsts_modify_redirect,
+    is_trusted_origin,
     MinimalController,
     pagecache_policy,
     PAGECACHE_POLICY,
@@ -4361,9 +4362,24 @@ class ApiController(RedditController):
 
         update_blob(str(code), updates)
 
+    def OPTIONS_request_promo(self):
+        """Send CORS headers for request_promo requests."""
+        if "Origin" in request.headers:
+            origin = request.headers["Origin"]
+            if is_trusted_origin(origin):
+                response.headers["Access-Control-Allow-Origin"] = origin
+
+            response.headers["Access-Control-Allow-Methods"] = "POST"
+            response.headers["Access-Control-Allow-Headers"] = "Authorization, "
+            response.headers["Access-Control-Allow-Credentials"] = "false"
+            response.headers['Access-Control-Expose-Headers'] = \
+                self.COMMON_REDDIT_HEADERS
+
     @csrf_exempt
     @validate(srnames=VPrintable("srnames", max_length=2100))
     def POST_request_promo(self, srnames):
+        self.OPTIONS_request_promo()
+
         if not srnames:
             return
 
