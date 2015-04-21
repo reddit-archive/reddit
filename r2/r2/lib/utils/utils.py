@@ -428,6 +428,7 @@ def paranoid_urlparser_method(check):
 class UrlParser(object):
     """
     Wrapper for urlparse and urlunparse for making changes to urls.
+
     All attributes present on the tuple-like object returned by
     urlparse are present on this class, and are setable, with the
     exception of netloc, which is instead treated via a getter method
@@ -435,18 +436,17 @@ class UrlParser(object):
 
     Unlike urlparse, this class allows the query parameters to be
     converted to a dictionary via the query_dict method (and
-    correspondingly updated vi update_query).  The extension of the
+    correspondingly updated via update_query).  The extension of the
     path can also be set and queried.
 
     The class also contains reddit-specific functions for setting,
     checking, and getting a path's subreddit.  It also can convert
     paths between in-frame and out of frame cname'd forms.
-
     """
 
     __slots__ = ['scheme', 'path', 'params', 'query',
                  'fragment', 'username', 'password', 'hostname', 'port',
-                 '_url_updates', '_orig_url', '_orig_netloc', '_query_dict']
+                 '_orig_url', '_orig_netloc', '_query_dict']
 
     valid_schemes = ('http', 'https', 'ftp', 'mailto')
     cname_get = "cnameframe"
@@ -456,7 +456,6 @@ class UrlParser(object):
         for s in self.__slots__:
             if hasattr(u, s):
                 setattr(self, s, getattr(u, s))
-        self._url_updates = {}
         self._orig_url    = url
         self._orig_netloc = getattr(u, 'netloc', '')
         self._query_dict  = None
@@ -481,20 +480,18 @@ class UrlParser(object):
         return True
 
     def update_query(self, **updates):
-        """
-        Can be used instead of self.query_dict.update() to add/change
-        query params in situations where the original contents are not
-        required.
-        """
-        self._url_updates.update(updates)
+        """Add or change query parameters."""
+        self.query_dict.update(updates)
 
     @property
     def query_dict(self):
-        """
-        Parses the `params' attribute of the original urlparse and
-        generates a dictionary where both the keys and values have
-        been url_unescape'd.  Any updates or changes to the resulting
-        dict will be reflected in the updated query params
+        """A dictionary of the current query parameters.
+
+        Keys and values pulled from the original url are un-url-escaped.
+
+        Modifying this function's return value will result in changes to the
+        unparse()-d url, but it's recommended instead to make any changes via
+        `update_query()`.
         """
         if self._query_dict is None:
             def _split(param):
@@ -577,12 +574,7 @@ class UrlParser(object):
         return urlunparse(self._unparse())
 
     def _unparse(self):
-        # only parse the query params if there is an update dict
-        q = self.query
-        if self._url_updates or self._query_dict is not None:
-            q = self._query_dict or self.query_dict
-            q.update(self._url_updates)
-            q = query_string(q).lstrip('?')
+        q = query_string(self.query_dict).lstrip('?')
 
         # make sure the port is not doubly specified
         if getattr(self, 'port', None) and ":" in self.hostname:
