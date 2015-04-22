@@ -32,6 +32,7 @@ import re
 import signal
 import traceback
 
+from collections import OrderedDict
 from copy import deepcopy
 from datetime import date, datetime, timedelta
 from decimal import Decimal
@@ -461,6 +462,13 @@ class UrlParser(object):
         self._query_dict  = None
 
     def __eq__(self, other):
+        """A loose equality method for UrlParsers.
+
+        In particular, this returns true for UrlParsers whose resultant urls
+        have the same query parameters, but in a different order.  These are
+        treated the same most of the time, but if you need strict equality,
+        compare the string results of unparse().
+        """
         if not isinstance(other, UrlParser):
             return False
 
@@ -474,7 +482,9 @@ class UrlParser(object):
                 s_params != o_params or
                 s_fragment != o_fragment):
             return False
-        if self.query_dict != other.query_dict:
+        # Coerce query dicts from OrderedDicts to standard dicts to avoid an
+        # order-sensitive comparison.
+        if dict(self.query_dict) != dict(other.query_dict):
             return False
 
         return True
@@ -502,8 +512,8 @@ class UrlParser(object):
                 p = param.split('=')
                 return (unquote_plus(p[0]),
                         unquote_plus('='.join(p[1:])))
-            self._query_dict = dict(_split(p) for p in self.query.split('&')
-                                    if p)
+            self._query_dict = OrderedDict(
+                                 _split(p) for p in self.query.split('&') if p)
         return self._query_dict
 
     def path_extension(self):
