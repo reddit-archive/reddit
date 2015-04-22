@@ -370,7 +370,7 @@ class Reddit(Templated):
                 c.user.pref_enable_default_themes)
         # if there is no style or the style is disabled for this subreddit
         self.no_sr_styles = (isinstance(c.site, DefaultSR) or
-            not self.get_subreddit_stylesheet_url(c.site) or
+            (not self.get_subreddit_stylesheet_url(c.site) and not c.site.header) or
             (c.user and not c.user.use_subreddit_style(c.site)))
 
         self.default_theme_sr = DefaultSR()
@@ -1018,7 +1018,8 @@ class SubredditInfoBar(CachedTemplate):
         self.sr_style_toggle = False
         self.use_subreddit_style = True
 
-        if (c.user_is_loggedin and self.sr.stylesheet_url and 
+        if (c.user_is_loggedin and
+                (self.sr.stylesheet_url or self.sr.header) and
                 feature.is_enabled('stylesheets_everywhere')):
             # defaults to c.user.pref_show_stylesheets if a match doesn't exist
             self.sr_style_toggle = True
