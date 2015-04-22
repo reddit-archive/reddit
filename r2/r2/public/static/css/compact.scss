@@ -1639,14 +1639,11 @@ a.author { margin-right: 0.5em; }
 }
 
 .mobile-web-redirect-bar {
-    background: rgba(255,255,255,0.95);
-    bottom: 0;
-    box-shadow: 0 -2px 9px rgba(0,0,0,0.15);
+    background: white;
     box-sizing: border-box;
     font-family: sans-serif;
     font-size: 14px;
     padding: 20px;
-    position: fixed;
     width: 100%;
     z-index: 1000;
     

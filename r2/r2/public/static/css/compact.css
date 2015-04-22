@@ -577,7 +577,7 @@ a.author { margin-right: 0.5em; }
 
 .linkflair { font-weight: normal; max-width: 10em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.mobile-web-redirect-bar { background: rgba(255, 255, 255, 0.95); bottom: 0; box-shadow: 0 -2px 9px rgba(0, 0, 0, 0.15); box-sizing: border-box; font-family: sans-serif; font-size: 14px; padding: 20px; position: fixed; width: 100%; z-index: 1000; }
+.mobile-web-redirect-bar { background: white; box-sizing: border-box; font-family: sans-serif; font-size: 14px; padding: 20px; width: 100%; z-index: 1000; }
 .mobile-web-redirect-bar a { text-decoration: none; }
 .mobile-web-redirect-bar .mobile-web-redirect-header { font-size: 18px; line-height: 25px; margin-bottom: 20px; }
 .mobile-web-redirect-bar .mobile-web-redirect-optin { background-color: #4a7fc5; border-radius: 3px; box-shadow: inset 0 -3px 0 0 #3e6ab7; color: white; display: block; font-family: "Verdana", sans-serif; font-weight: bold; line-height: 20px; margin-bottom: 20px; padding: 10px 0; text-align: center; text-transform: uppercase; }
