@@ -1715,9 +1715,17 @@ def queue_vote(user, thing, dir, ip, vote_info=None,
                         user, thing)
             return
 
-        amqp.add_item(qname,
-                      pickle.dumps((user._id, thing._fullname,
-                                    dir, ip, vote_info, cheater)))
+        vote = {
+            "uid": user._id,
+            "tid": thing._fullname,
+            "dir": dir,
+            "ip": ip,
+            "info": vote_info,
+            "cheater": cheater,
+            "event": None,
+        }
+        amqp.add_item(qname, json.dumps(vote),
+                      headers={"format": "json"})
 
 def prequeued_vote_key(user, item):
     return 'registered_vote_%s_%s' % (user._id, item._fullname)
