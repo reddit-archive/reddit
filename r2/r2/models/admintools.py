@@ -357,8 +357,7 @@ def compute_votes(wrapper, item):
     wrapper.downvotes = item._downs
     total_votes = max(item._ups + item._downs, 1)
     wrapper.upvote_ratio = float(item._ups) / total_votes
-    wrapper.is_controversial = (c.user.pref_highlight_controversial and
-                                _is_controversial(wrapper, item))
+    wrapper.is_controversial = _is_controversial(wrapper, item)
 
 def ip_span(ip):
     ip = websafe(ip)

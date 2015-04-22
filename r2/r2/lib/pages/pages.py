@@ -865,6 +865,8 @@ class Reddit(Templated):
                 classes.add('moderator')
             if c.user.gold:
                 classes.add('gold')
+            if c.user.pref_highlight_controversial:
+                classes.add('show-controversial')
 
         if c.user_is_admin:
             if not isinstance(c.site, FakeSubreddit) and c.site._spam:
@@ -1748,7 +1750,6 @@ class CommentPane(Templated):
             c.can_embed,
             self.max_depth,
             self.edits_visible,
-            c.user.pref_highlight_controversial,
         )
 
     def __init__(self, article, sort, comment, context, num, **kw):
@@ -1836,7 +1837,6 @@ class CommentPane(Templated):
                     # Preserve the viewing user's flair preferences.
                     c.user.pref_show_flair = user.pref_show_flair
                     c.user.pref_show_link_flair = user.pref_show_link_flair
-                    c.user.pref_highlight_controversial = user.pref_highlight_controversial
 
                     c.user_is_loggedin = False
 
