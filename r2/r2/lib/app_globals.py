@@ -57,6 +57,7 @@ from r2.lib.cache import (
 )
 from r2.lib.configparse import ConfigValue, ConfigValueParser
 from r2.lib.contrib import ipaddress
+from r2.lib.eventcollector import EventQueue
 from r2.lib.lock import make_lock_factory
 from r2.lib.manager import db_manager
 from r2.lib.plugin import PluginLoader
@@ -280,6 +281,7 @@ class Globals(object):
             'nerds_email',
             'community_email',
             'smtp_server',
+            'events_collector_url',
         ],
 
         ConfigValue.choice(ONE=CL_ONE, QUORUM=CL_QUORUM): [
@@ -320,6 +322,7 @@ class Globals(object):
             'spotlight_interest_nosub_p',
             'gold_revenue_goal',
             'invalid_key_sample_rate',
+            'events_collector_sample_rate',
         ],
         ConfigValue.tuple: [
             'fastlane_links',
@@ -831,6 +834,8 @@ class Globals(object):
 
         # Initialize the amqp module globals, start the worker, etc.
         r2.lib.amqp.initialize(self)
+
+        self.events = EventQueue()
 
         self.startup_timer.intermediate("revisions")
 

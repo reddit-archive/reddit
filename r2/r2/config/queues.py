@@ -86,6 +86,7 @@ def declare_queues(g):
         "markread_q": MessageQueue(),
         "del_account_q": MessageQueue(),
         "automoderator_q": MessageQueue(),
+        "event_collector": MessageQueue(bind_to_self=True),
     })
 
     if g.shard_link_vote_queues:
