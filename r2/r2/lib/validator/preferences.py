@@ -72,9 +72,7 @@ PREFS_VALIDATORS = dict(
     pref_email_messages=VBoolean("email_messages"),
     pref_private_feeds=VBoolean("private_feeds"),
     pref_store_visits=VBoolean('store_visits'),
-    pref_show_adbox=VBoolean("show_adbox"),
-    pref_show_sponsors=VBoolean("show_sponsors"),
-    pref_show_sponsorships=VBoolean("show_sponsorships"),
+    pref_hide_ads=VBoolean("hide_ads"),
     pref_show_trending=VBoolean("show_trending"),
     pref_highlight_new_comments=VBoolean("highlight_new_comments"),
     pref_monitor_mentions=VBoolean("monitor_mentions"),
@@ -125,13 +123,9 @@ def filter_prefs(prefs, user):
     if prefs.get("pref_no_profanity") or user.pref_no_profanity:
         prefs['pref_label_nsfw'] = True
 
-    # default all the gold options to on if they don't have gold
+    # don't update the hide_ads pref if they don't have gold
     if not user.gold:
-        for pref in ('pref_show_adbox',
-                     'pref_show_sponsors',
-                     'pref_show_sponsorships',
-                    ):
-            prefs[pref] = True
+        del prefs['pref_hide_ads']
 
     if not (user.gold or user.is_moderator_somewhere):
         prefs['pref_highlight_new_comments'] = True

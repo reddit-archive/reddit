@@ -340,7 +340,7 @@ class ListingWithPromos(SubredditListingController):
 
         show_promo = False
         srnames = []
-        can_show_promo = c.user.pref_show_sponsors or not c.user.gold
+        can_show_promo = not c.user.pref_hide_ads or not c.user.gold
         try_show_promo = ((c.user_is_loggedin and random.random() > 0.5) or
                           not c.user_is_loggedin)
 
@@ -381,7 +381,7 @@ class ListingWithPromos(SubredditListingController):
         # only send a spotlight listing for HTML rendering
         if c.render_style == "html":
             spotlight = None
-            show_sponsors = not (not c.user.pref_show_sponsors and c.user.gold)
+            show_sponsors = not c.user.pref_hide_ads or not c.user.gold
             show_organic = self.show_organic and c.user.pref_organic
             on_frontpage = isinstance(c.site, DefaultSR)
             requested_ad = request.GET.get('ad')

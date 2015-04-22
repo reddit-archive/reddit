@@ -526,7 +526,7 @@ class Reddit(Templated):
             notebar = AdminNotesSidebar('subreddit', c.site.name)
             ps.append(notebar)
 
-        if c.user.pref_show_sponsorships or not c.user.gold:
+        if not c.user.pref_hide_ads or not c.user.gold:
             ps.append(SponsorshipBox())
 
         if (isinstance(c.site, Filtered) and not
@@ -631,7 +631,7 @@ class Reddit(Templated):
                                       show_cover=True))
 
         no_ads_yet = True
-        user_disabled_ads = c.user.gold and not c.user.pref_show_adbox
+        user_disabled_ads = c.user.gold and c.user.pref_hide_ads
         sr_disabled_ads = (not isinstance(c.site, FakeSubreddit) and
             c.site.type == "gold_only" and
             c.site.hide_ads)

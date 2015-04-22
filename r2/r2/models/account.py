@@ -102,9 +102,7 @@ class Account(Thing):
                      pref_email_messages = False,
                      pref_private_feeds = True,
                      pref_force_https = False,
-                     pref_show_adbox = True,
-                     pref_show_sponsors = True, # sponsored links
-                     pref_show_sponsorships = True,
+                     pref_hide_ads = False,
                      pref_show_trending=True,
                      pref_highlight_new_comments = True,
                      pref_monitor_mentions=True,
