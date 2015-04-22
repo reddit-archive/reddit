@@ -60,6 +60,7 @@ PREFS_VALIDATORS = dict(
     pref_highlight_controversial=VBoolean('highlight_controversial'),
     pref_default_comment_sort=VOneOf('default_comment_sort',
                                      CommentSortMenu.visible_options()),
+    pref_ignore_suggested_sort=VBoolean("ignore_suggested_sort"),
     pref_show_stylesheets=VBoolean('show_stylesheets'),
     pref_show_flair=VBoolean('show_flair'),
     pref_show_link_flair=VBoolean('show_link_flair'),

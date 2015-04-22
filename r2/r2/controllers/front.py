@@ -364,7 +364,11 @@ class FrontController(RedditController):
             c.referrer_policy = "always"
 
         suggested_sort_active = False
-        suggested_sort = article.sort_if_suggested() if feature.is_enabled('default_sort') else None
+        if not c.user.pref_ignore_suggested_sort and feature.is_enabled('default_sort'):
+            suggested_sort = article.sort_if_suggested()
+        else:
+            suggested_sort = None
+
         if article.contest_mode:
             if c.user_is_loggedin and sr.is_moderator(c.user):
                 # Default to top for contest mode to make determining winners
