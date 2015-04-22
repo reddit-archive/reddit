@@ -407,7 +407,7 @@
 
           <div class="theme select-custom-theme">
             <label><input type="radio" name="theme_selector" id="other_theme_selector" value="" ${"checked" if thing.use_other_theme else ""}>use theme from /r/</label>
-              <input type="text" class="text" size="20" maxlength="20" name="other_theme" placeholder="subreddit" ${"value=" + c.user.pref_default_theme_sr if thing.use_other_theme and c.user.pref_default_theme_sr else ""}> 
+              <input type="text" class="text" size="21" maxlength="21" name="other_theme" placeholder="subreddit" ${"value=" + c.user.pref_default_theme_sr if thing.use_other_theme and c.user.pref_default_theme_sr else ""}>
               <span class="details">
                   (${_("warning: use non-featured themes at your own risk")})
               </span>
