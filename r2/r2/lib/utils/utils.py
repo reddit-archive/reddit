@@ -46,7 +46,7 @@ import unidecode
 from babel.dates import TIMEDELTA_UNITS
 from BeautifulSoup import BeautifulSoup, SoupStrainer
 from mako.filters import url_escape
-from pylons import c, g, request
+from pylons import c, g, request, config
 from pylons.i18n import ungettext, _
 
 from r2.lib.contrib import ipaddress
@@ -865,6 +865,65 @@ def url_is_embeddable_image(url):
         return True
 
     return False
+
+
+def url_to_thing(url):
+    """Given a reddit URL, return the Thing to which it associates.
+
+    Examples:
+        /r/somesr - Subreddit
+        /r/somesr/comments/j2jx - Link
+        /r/somesr/comments/j2jx/slug/k2js - Comment
+    """
+    from r2.models import Comment, Link, Message, NotFound, Subreddit, Thing
+    from r2.config.middleware import SubredditMiddleware
+    sr_pattern = SubredditMiddleware.sr_pattern
+
+    urlparser = UrlParser(_force_utf8(url))
+    if not urlparser.is_reddit_url():
+        return None
+
+    try:
+        sr_name = sr_pattern.match(urlparser.path).group(1)
+    except AttributeError:
+        sr_name = None
+
+    path = sr_pattern.sub('', urlparser.path)
+    if not path:
+        if not sr_name:
+            return None
+
+        try:
+            return Subreddit._by_name(sr_name, data=True)
+        except NotFound:
+            return None
+
+    # potential TypeError raised here because of environ being None
+    # when calling outside of app context
+    try:
+        route_dict = config['routes.map'].match(path)
+    except TypeError:
+        return None
+
+    if not route_dict:
+        return None
+
+    try:
+        comment = route_dict.get('comment')
+        if comment:
+            return Comment._byID36(comment, data=True)
+
+        article = route_dict.get('article')
+        if article:
+            return Link._byID36(article, data=True)
+
+        msg = route_dict.get('mid')
+        if msg:
+            return Message._byID36(msg, data=True)
+    except (NotFound, ValueError):
+        return None
+
+    return None
 
 
 def pload(fname, default = None):
