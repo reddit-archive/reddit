@@ -24,6 +24,7 @@ import hashlib
 import hmac
 import json
 import time
+import uuid
 
 import pytz
 import requests
@@ -70,7 +71,7 @@ class EventQueue(object):
             event_base = Event.base_from_request(request, context)
         event_base["event_topic"] = "vote"
         event_base["event_name"] = "vote_server"
-        event_base["event_ts"] = epoch_timestamp(vote._date)
+        event_base["event_ts"] = str(epoch_timestamp(vote._date))
         event_base["vote_target"] = vote._thing2._fullname
         event_base["vote_direction"] = self.VOTES[vote._name]
         if old_vote:
@@ -80,7 +81,7 @@ class EventQueue(object):
         if event_base["vote_type"] == "link" and vote._thing2.is_self:
             event_base["vote_type"] = "self"
         event_base["sr"] = vote._thing2.subreddit_slow.name
-        event_base["sr_id"] = vote._thing2.subreddit_slow._id
+        event_base["sr_id"] = str(vote._thing2.subreddit_slow._id)
 
         self.save_event(event_base)
 
@@ -97,11 +98,12 @@ class Event(dict):
         "user_agent",
         "ip",
         "domain",
+        "uuid",
     )
     @classmethod
     def base_from_request(cls, request, context, **kw):
         if context.user_is_loggedin:
-            user_id = context.user._id
+            user_id = str(context.user._id)
             loid = None
         else:
             user_id = None
@@ -125,21 +127,27 @@ class Event(dict):
     @classmethod
     def base(cls, event_name=None, timestamp=None, user_agent=None, ip=None,
               domain=None, user_id=None, loid=None, oauth2_client_id=None,
-              **kw):
+              event_uuid=None, **kw):
         ret = cls(kw)
 
-        ret["event_name"] = event_name
-        ret["timestamp"] = timestamp
-        ret["user_agent"] = user_agent
-        ret["ip"] = ip
-        ret["domain"] = domain
+        if event_uuid is None:
+            ret["uuid"] = str(uuid.uuid4())
 
-        if user_id:
+        if event_name is not None:
+            ret["event_name"] = event_name
+        if timestamp is not None:
+            ret["event_ts"] = timestamp
+        if user_agent is not None:
+            ret["user_agent"] = user_agent
+        if ip is not None:
+            ret["ip"] = ip
+        if domain is not None:
+            ret["domain"] = domain
+        if user_id is not None:
             ret["user_id"] = user_id
-        if loid:
+        if loid is not None:
             ret["loid"] = loid
-
-        if oauth2_client_id:
+        if oauth2_client_id is not None:
             ret["oauth_client_id"] = oauth2_client_id
 
         return ret

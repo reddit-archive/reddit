@@ -563,7 +563,8 @@ class ApiController(RedditController):
             l._commit()
             l.set_url_cache()
 
-        queries.queue_vote(c.user, l, True, request.ip, cheater=c.cheater)
+        queries.queue_vote(c.user, l, True, request.ip, cheater=c.cheater,
+                           event_data=g.events.event_base(request, c))
 
         if sr.should_ratelimit(c.user, 'link'):
             c.user.clog_quota('link', l)
@@ -1884,7 +1885,8 @@ class ApiController(RedditController):
             item, inbox_rel = Comment._new(c.user, link, parent_comment,
                                            comment, request.ip)
             queries.queue_vote(c.user, item, True, request.ip,
-                               cheater=c.cheater)
+                               cheater=c.cheater,
+                               event_data=g.events.event_base(request, c))
 
         if is_message:
             queries.new_message(item, inbox_rel)
@@ -2060,8 +2062,8 @@ class ApiController(RedditController):
                else None)
 
         queries.queue_vote(user, thing, dir, request.ip, vote_info=vote_info,
-                           store=store,
-                           cheater=c.cheater)
+                           store=store, cheater=c.cheater,
+                           event_data=g.events.event_base(request, c))
 
     @require_oauth2_scope("modconfig")
     @validatedForm(VSrModerator(perms='config'),
