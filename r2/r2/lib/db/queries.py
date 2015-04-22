@@ -19,6 +19,7 @@
 # All portions of the code written by reddit are Copyright (c) 2006-2015 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
+import json
 
 from r2.models import Account, Link, Comment, Report, LinksByAccount
 from r2.models.vote import cast_vote, get_votes, VotesByAccount
@@ -1852,12 +1853,26 @@ def process_votes(qname, limit=0):
         timer = stats.get_timer("service_time." + stats_qname)
         timer.start()
 
-        #assert(len(msgs) == 1)
-        r = pickle.loads(msg.body)
+        # Temporary shim: During queue message format transition,
+        # JSON payloads will be explicitly marked as such.
+        msg_headers = msg.properties.get("application_headers", {})
+        if msg_headers.get("format", "pickle") == "json":
+            vote = json.loads(msg.body)
+        else:
+            uid, tid, dir, ip, info, cheater = pickle.loads(msg.body)
+            vote = {
+                "uid": uid,
+                "tid": tid,
+                "dir": dir,
+                "ip": ip,
+                "info": info,
+                "cheater": cheater,
+                "event": None,
+            }
+            del uid, tid, dir, ip, info, cheater
 
-        uid, tid, dir, ip, vote_info, cheater = r
-        voter = Account._byID(uid, data=True)
-        votee = Thing._by_fullname(tid, data = True)
+        voter = Account._byID(vote["uid"], data=True)
+        votee = Thing._by_fullname(vote["tid"], data=True)
         timer.intermediate("preamble")
 
         # Convert the naive timestamp we got from amqplib to a
@@ -1868,9 +1883,10 @@ def process_votes(qname, limit=0):
         # I don't know how, but somebody is sneaking in votes
         # for subreddits
         if isinstance(votee, (Link, Comment)):
-            print (voter, votee, dir, ip, vote_info, cheater)
-            handle_vote(voter, votee, dir, ip, vote_info,
-                        cheater = cheater, foreground=True, timer=timer,
+            print (voter, votee, vote["dir"], vote["ip"], vote["info"],
+                   vote["cheater"])
+            handle_vote(voter, votee, vote["dir"], vote["ip"], vote["info"],
+                        cheater=vote["cheater"], foreground=True, timer=timer,
                         date=date)
 
         if isinstance(votee, Comment):
@@ -1878,7 +1894,7 @@ def process_votes(qname, limit=0):
             timer.intermediate("update_comment_votes")
 
         stats.simple_event('vote.total')
-        if cheater:
+        if vote["cheater"]:
             stats.simple_event('vote.cheater')
         timer.flush()
 
