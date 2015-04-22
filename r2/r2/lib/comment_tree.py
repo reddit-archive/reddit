@@ -265,7 +265,10 @@ def link_comments_and_sort(link, sort):
         if not g.disallow_db_writes:
             update_comment_votes(Comment._byID(sorter_needed, data=True, return_dict=False))
 
-        comments = Comment._byID(sorter_needed, data = False, return_dict = False)
+        # The Q&A sort needs access to attributes the others don't, so save the
+        # extra lookups if we can.
+        data_needed = (sort == '_qa')
+        comments = Comment._byID(sorter_needed, data=data_needed, return_dict=False)
         sorter.update(_comment_sorter_from_cids(comments, sort, link, tree))
         timer.intermediate('sort')
 
