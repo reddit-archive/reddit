@@ -231,7 +231,7 @@ class VoterIPByThing(tdb_cassandra.View):
         cls._set_values(votee_fullname, {voter_id36: ip})
 
 
-def cast_vote(sub, obj, dir, ip, vote_info, cheater, timer, date):
+def cast_vote(sub, obj, vote_info, timer, date):
     from r2.models.admintools import valid_user, valid_thing, update_score
     from r2.lib.count import incr_sr_count
 
@@ -242,11 +242,11 @@ def cast_vote(sub, obj, dir, ip, vote_info, cheater, timer, date):
     vote = Storage(
         _thing1=sub,
         _thing2=obj,
-        _name=names_by_dir[dir],
+        _name=names_by_dir[vote_info["dir"]],
         _date=date,
         valid_thing=True,
         valid_user=True,
-        ip=ip,
+        ip=vote_info["ip"],
     )
 
     # these track how much ups/downs should change on `obj`
@@ -282,7 +282,8 @@ def cast_vote(sub, obj, dir, ip, vote_info, cheater, timer, date):
     karma = sub.karma(kind, sr)
 
     if vote.valid_thing:
-        vote.valid_thing = valid_thing(vote, karma, cheater, vote_info)
+        vote.valid_thing = valid_thing(vote, karma, vote_info["cheater"],
+                                       vote_info["info"])
 
     if vote.valid_user:
         vote.valid_user = vote.valid_thing and valid_user(vote, sr, karma)

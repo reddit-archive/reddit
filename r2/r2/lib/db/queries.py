@@ -1798,16 +1798,15 @@ def get_likes(user, requested_items):
 
     return res
 
-def handle_vote(user, thing, dir, ip, vote_info,
-                cheater=False, foreground=False, timer=None, date=None):
+
+def handle_vote(user, thing, vote, foreground=False, timer=None, date=None):
     if timer is None:
         timer = SimpleSillyStub()
 
     from r2.lib.db import tdb_sql
     from sqlalchemy.exc import IntegrityError
     try:
-        v = cast_vote(user, thing, dir, ip, vote_info=vote_info,
-                      cheater=cheater, timer=timer, date=date)
+        v = cast_vote(user, thing, vote, timer=timer, date=date)
     except (tdb_sql.CreationError, IntegrityError):
         g.log.error("duplicate vote for: %s" % str((user, thing, dir)))
         return
@@ -1876,8 +1875,7 @@ def process_votes(qname, limit=0):
         if isinstance(votee, (Link, Comment)):
             print (voter, votee, vote["dir"], vote["ip"], vote["info"],
                    vote["cheater"])
-            handle_vote(voter, votee, vote["dir"], vote["ip"], vote["info"],
-                        cheater=vote["cheater"], foreground=True, timer=timer,
+            handle_vote(voter, votee, vote, foreground=True, timer=timer,
                         date=date)
 
         if isinstance(votee, Comment):
