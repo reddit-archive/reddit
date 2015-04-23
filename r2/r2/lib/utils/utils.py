@@ -24,6 +24,7 @@ import base64
 import codecs
 import ConfigParser
 import cPickle as pickle
+import functools
 import itertools
 import math
 import os
@@ -1757,3 +1758,53 @@ def lowercase_keys_recursively(subject):
         lowercased[key.lower()] = val
 
     return lowercased
+
+
+def sampled(live_config_var):
+    """Wrap a function that should only actually run occasionally
+
+    The wrapped function will only actually execute at the rate
+    specified by the live_config sample rate given.
+
+    Example:
+
+    @sampled("foobar_sample_rate")
+    def foobar():
+        ...
+
+    If g.live_config["foobar_sample_rate"] is set to 0.5, foobar()
+    will only execute 50% of the time when it is called.
+
+    """
+    def sampled_decorator(fn):
+        @functools.wraps(fn)
+        def sampled_fn(*a, **kw):
+            if random.random() > g.live_config[live_config_var]:
+                return None
+            else:
+                return fn(*a, **kw)
+        return sampled_fn
+    return sampled_decorator
+
+
+def squelch_exceptions(fn):
+    """Wrap a function to log and suppress all internal exceptions
+
+    When running in debug mode, the exception will be propagated, but
+    in production environments, the function exception will be logged,
+    then suppressed.
+
+    Use of this decorator is not an excuse to not handle exceptions
+
+    """
+    @functools.wraps(fn)
+    def squelched_fn(*a, **kw):
+        try:
+            return fn(*a, **kw)
+        except BaseException:
+            if g.debug:
+                raise
+            else:
+                # log.exception will send a stack trace as well
+                g.log.exception("squelching exception")
+    return squelched_fn
