@@ -174,17 +174,18 @@ def jssafe(text=u''):
     return _Unsafe(text.translate(_js_escapes))
 
 
-_json_escapes = _js_escapes.copy()
-# JSON requires these not be escaped
-_json_escapes.pop(ord('\\'))
-_json_escapes.pop(ord('"'))
-_json_escapes.pop(ord('\n'))
-_json_escapes.pop(ord('\t'))
+_json_escapes = {
+    ord('>'): u'\\u003E',
+    ord('<'): u'\\u003C',
+    ord('&'): u'\\u0026',
+}
 
 
 def scriptsafe_dumps(obj, **kwargs):
     """
     Like `json.dumps()`, but safe for use in `<script>` blocks.
+
+    Also nice for response bodies that might be consumed by terrible browsers!
 
     You should avoid using this to template data into inline event handlers.
     When possible, you should do something like this instead:
@@ -194,16 +195,10 @@ def scriptsafe_dumps(obj, **kwargs):
       data-json-thing="${json_thing}">
     </button>
     ```
-
-    If you *really* want to, make sure you run the output through `websafe()`:
-    ```
-    <button
-      onclick="console.log(${websafe(scriptsafe_dumps(json_thing))})">
-    </button>
-    ```
     """
     text = _force_unicode(json.dumps(obj, **kwargs))
     # wrap the response in _Unsafe so conditional_websafe doesn't touch it
+    # TODO: this might be a hot path soon, C-ify it?
     return _Unsafe(text.translate(_json_escapes))
 
 
