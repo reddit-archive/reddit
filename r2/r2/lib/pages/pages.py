@@ -2119,25 +2119,30 @@ class SidebarModList(Templated):
 class ProfileBar(Templated):
     """Draws a right box for info about the user (karma, etc)"""
     def __init__(self, user):
-        Templated.__init__(self, user = user)
-        self.viewing_self = False
-        self.show_private_info = False
-
+        Templated.__init__(self, user=user)
         if c.user_is_loggedin:
             self.viewing_self = user._id == c.user._id
             self.show_private_info = self.viewing_self or c.user_is_admin
+        else:
+            self.viewing_self = False
+            self.show_private_info = False
+
+        self.show_users_gold_expiration = (self.show_private_info or
+            user.pref_show_gold_expiration)
+        if user.gold and self.show_users_gold_expiration:
+            gold_days_left = (user.gold_expiration -
+                              datetime.datetime.now(g.tz)).days
+
+            if gold_days_left < 1:
+                self.gold_remaining = _("less than a day")
+            else:
+                # Round remaining gold to number of days
+                precision = 60 * 60 * 24
+                self.gold_remaining = timeuntil(user.gold_expiration,
+                                                precision)
+
+        if c.user_is_loggedin:
             if user.gold and self.show_private_info:
-                gold_days_left = (user.gold_expiration -
-                                  datetime.datetime.now(g.tz)).days
-
-                if gold_days_left < 1:
-                    self.gold_remaining = _("less than a day")
-                else:
-                    # Round remaining gold to number of days
-                    precision = 60 * 60 * 24
-                    self.gold_remaining = timeuntil(user.gold_expiration,
-                                                    precision)
-
                 if user.has_paypal_subscription:
                     self.paypal_subscr_id = user.gold_subscr_id
                     self.paypal_url = paypal_subscription_url()

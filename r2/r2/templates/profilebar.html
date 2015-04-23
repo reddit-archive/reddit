@@ -103,7 +103,7 @@
     %endif
   %endif
 
-  %if thing.show_private_info and (thing.user.gold or thing.user.gold_creddits > 0):
+  %if thing.show_users_gold_expiration and (thing.user.gold or thing.user.gold_creddits > 0):
     <div class="rounded gold-accent gold-expiration-info">
       %if hasattr(thing, "gold_remaining"):
         <div class="gold-remaining" title="${thing.user.gold_expiration.strftime('%Y-%m-%d')}">
@@ -115,22 +115,24 @@
           <br>
           <a href="/gold/about">${_("view gold features/benefits")}</a>
         </div>
-        %if hasattr(thing, "paypal_subscr_id"):
-           <div>
-            <a href=${thing.paypal_url}>
-              ${_("Recurring Paypal subscription")}
-            </a>
-            &#32;
-            ${thing.paypal_subscr_id}
-          </div>
-        %endif
+        %if thing.show_private_info:
+          %if hasattr(thing, "paypal_subscr_id"):
+             <div>
+              <a href="${thing.paypal_url}">
+                ${_("Recurring Paypal subscription")}
+              </a>
+              &#32;
+              ${thing.paypal_subscr_id}
+            </div>
+          %endif
 
-        %if hasattr(thing, "stripe_customer_id"):
-           <div>
-            <a href="/gold/subscription">
-              ${_("manage recurring subscription")}
-            </a>
-          </div>
+          %if hasattr(thing, "stripe_customer_id"):
+             <div>
+              <a href="/gold/subscription">
+                ${_("manage recurring subscription")}
+              </a>
+            </div>
+          %endif
         %endif
       %endif
       %if hasattr(thing, "gold_creddit_message"):

@@ -350,6 +350,11 @@
           (${_("we'll remember your visits for 48 hours and show you which comments you haven't seen yet")})
         </span>
         <br>
+        ${checkbox(_("show gold expiration"), "show_gold_expiration")}
+        &#32;<span class="details">
+          (${_("show how much gold you have remaining on your userpage")})
+        </span>
+        <br>
         <% creddit_link = unsafe('&#32;<a href="/creddits">creddit</a>&#32;') %>
         ${checkbox(_wsf("use a %(creddit_link)s to automatically renew my gold if it expires", creddit_link=creddit_link), "creddit_autorenew")}
     </td>

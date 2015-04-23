@@ -141,6 +141,7 @@ class Account(Thing):
                      pref_show_snoovatar=False,
                      gild_reveal_username=False,
                      selfserve_cpm_override_pennies=None,
+                     pref_show_gold_expiration=False,
                      )
     _preference_attrs = tuple(k for k in _defaults.keys()
                               if k.startswith("pref_"))
