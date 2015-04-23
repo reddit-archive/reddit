@@ -41,6 +41,7 @@ import pkg_resources
 import pytz
 
 from r2.config import queues
+import r2.lib.amqp
 from r2.lib.cache import (
     CacheChain,
     CL_ONE,
@@ -827,6 +828,9 @@ class Globals(object):
         if I18N_PATH:
             i18n_git_path = os.path.join(os.path.dirname(I18N_PATH), ".git")
             self.record_repo_version("i18n", i18n_git_path)
+
+        # Initialize the amqp module globals, start the worker, etc.
+        r2.lib.amqp.initialize(self)
 
         self.startup_timer.intermediate("revisions")
 

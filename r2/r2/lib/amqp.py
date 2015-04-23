@@ -19,7 +19,20 @@
 # All portions of the code written by reddit are Copyright (c) 2006-2015 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
+"""Methods and classes for inserting/removing from reddit's queues
 
+There are three main ways of interacting with this module:
+
+add_item: Adds a single item to a queue*
+handle_items: For processing multiple items from a queue
+consume_items: For processing a queue one item at a time
+
+
+* _add_item (the internal function for adding items to amqp that are
+  added using add_item) might block for an arbitrary amount of time
+  while trying to get a connection to amqp.
+
+"""
 from Queue import Queue
 from threading import local, Thread
 from datetime import datetime
@@ -33,24 +46,33 @@ import cPickle as pickle
 
 from amqplib import client_0_8 as amqp
 
-from pylons import g
+cfg = None
+worker = None
+connection_manager = None
 
-amqp_host = g.amqp_host
-amqp_user = g.amqp_user
-amqp_pass = g.amqp_pass
-amqp_exchange = 'reddit_exchange'
-log = g.log
-amqp_virtual_host = g.amqp_virtual_host
-amqp_logging = g.amqp_logging
-stats = g.stats
-queues = g.queues
 
-#there are two ways of interacting with this module: add_item and
-#handle_items/consume_items. _add_item (the internal function for
-#adding items to amqp that are added using add_item) might block for
-#an arbitrary amount of time while trying to get a connection to amqp.
+def initialize(app_globals):
+    global cfg
+    cfg = Config(app_globals)
+    global worker
+    worker = Worker()
+    global connection_manager
+    connection_manager = ConnectionManager()
 
-reset_caches = g.reset_caches
+
+class Config(object):
+    def __init__(self, g):
+        self.amqp_host = g.amqp_host
+        self.amqp_user = g.amqp_user
+        self.amqp_pass = g.amqp_pass
+        self.amqp_exchange = 'reddit_exchange'
+        self.log = g.log
+        self.amqp_virtual_host = g.amqp_virtual_host
+        self.amqp_logging = g.amqp_logging
+        self.stats = g.stats
+        self.queues = g.queues
+        self.reset_caches = g.reset_caches
+
 
 class Worker:
     def __init__(self):
@@ -61,7 +83,7 @@ class Worker:
 
     def _handle(self):
         while True:
-            reset_caches()
+            cfg.reset_caches()
 
             fn = self.q.get()
             try:
@@ -78,7 +100,6 @@ class Worker:
     def join(self):
         self.q.join()
 
-worker = Worker()
 
 class ConnectionManager(local):
     # There should be only two threads that ever talk to AMQP: the
@@ -93,13 +114,16 @@ class ConnectionManager(local):
     def get_connection(self):
         while not self.connection:
             try:
-                self.connection = amqp.Connection(host = amqp_host,
-                                                  userid = amqp_user,
-                                                  password = amqp_pass,
-                                                  virtual_host = amqp_virtual_host,
-                                                  insist = False)
+                self.connection = amqp.Connection(
+                    host=cfg.amqp_host,
+                    userid=cfg.amqp_user,
+                    password=cfg.amqp_pass,
+                    virtual_host=cfg.amqp_virtual_host,
+                    insist=False,
+                )
             except (socket.error, IOError), e:
-                print 'error connecting to amqp %s @ %s (%r)' % (amqp_user, amqp_host, e)
+                print ('error connecting to amqp %s @ %s (%r)' %
+                       (cfg.amqp_user, cfg.amqp_host, e))
                 time.sleep(1)
 
         # don't run init_queue until someone actually needs it. this
@@ -116,7 +140,9 @@ class ConnectionManager(local):
         # connection object is still present, but appears to have been
         # closed.  This checks that the the connection is still open.
         if self.connection and self.connection.channels is None:
-            log.error("Error: amqp.py, connection object with no available channels.  Reconnecting...")
+            cfg.log.error(
+                "Error: amqp.py, connection object with no available channels."
+                "  Reconnecting...")
             self.connection = None
 
         if not self.connection or reconnect:
@@ -131,35 +157,37 @@ class ConnectionManager(local):
 
     def init_queue(self):
         chan = self.get_channel()
-        chan.exchange_declare(exchange=amqp_exchange,
+        chan.exchange_declare(exchange=cfg.amqp_exchange,
                               type="direct",
                               durable=True,
                               auto_delete=False)
 
-        for queue in queues:
+        for queue in cfg.queues:
             chan.queue_declare(queue=queue.name,
                                durable=queue.durable,
                                exclusive=queue.exclusive,
                                auto_delete=queue.auto_delete)
 
-        for queue, key in queues.bindings:
+        for queue, key in cfg.queues.bindings:
             chan.queue_bind(routing_key=key,
                             queue=queue,
-                            exchange=amqp_exchange)
+                            exchange=cfg.amqp_exchange)
 
-connection_manager = ConnectionManager()
+
 
 DELIVERY_TRANSIENT = 1
 DELIVERY_DURABLE = 2
 
 def _add_item(routing_key, body, message_id = None,
               delivery_mode=DELIVERY_DURABLE, headers=None,
-              exchange=amqp_exchange):
+              exchange=None, send_stats=True):
     """adds an item onto a queue. If the connection to amqp is lost it
     will try to reconnect and then call itself again."""
-    if not amqp_host:
-        log.error("Ignoring amqp message %r to %r" % (body, routing_key))
+    if not cfg.amqp_host:
+        cfg.log.error("Ignoring amqp message %r to %r" % (body, routing_key))
         return
+    if not exchange:
+        exchange = cfg.amqp_exchange
 
     chan = connection_manager.get_channel()
     msg = amqp.Message(body,
@@ -177,23 +205,29 @@ def _add_item(routing_key, body, message_id = None,
                            exchange=exchange,
                            routing_key = routing_key)
     except Exception as e:
-        stats.event_count(event_name, 'enqueue_failed')
+        if send_stats:
+            cfg.stats.event_count(event_name, 'enqueue_failed')
+
         if e.errno == errno.EPIPE:
             connection_manager.get_channel(True)
             add_item(routing_key, body, message_id)
         else:
             raise
     else:
-        stats.event_count(event_name, 'enqueue')
+        if send_stats:
+            cfg.stats.event_count(event_name, 'enqueue')
 
 def add_item(routing_key, body, message_id=None,
              delivery_mode=DELIVERY_DURABLE, headers=None,
-             exchange=amqp_exchange):
-    if amqp_host and amqp_logging:
-        log.debug("amqp: adding item %r to %r" % (body, routing_key))
+             exchange=None, send_stats=True):
+    if cfg.amqp_host and cfg.amqp_logging:
+        cfg.log.debug("amqp: adding item %r to %r", body, routing_key)
+    if exchange is None:
+        exchange = cfg.amqp_exchange
 
     worker.do(_add_item, routing_key, body, message_id = message_id,
-              delivery_mode=delivery_mode, headers=headers, exchange=exchange)
+              delivery_mode=delivery_mode, headers=headers, exchange=exchange,
+              send_stats=send_stats)
 
 def add_kw(routing_key, **kw):
     add_item(routing_key, pickle.dumps(kw))
@@ -230,7 +264,7 @@ def consume_items(queue, callback, verbose=True):
 
             print "%s: 1 item %s" % (queue, count_str)
 
-        g.reset_caches()
+        cfg.reset_caches()
         c.use_write_db = {}
 
         ret = callback(msg)
@@ -278,7 +312,7 @@ def handle_items(queue, callback, ack=True, limit=1, min_size=0,
         if countdown is None and drain and 'message_count' in msg.delivery_info:
             countdown = 1 + msg.delivery_info['message_count']
 
-        g.reset_caches()
+        cfg.reset_caches()
         c.use_write_db = {}
 
         items = [msg]
