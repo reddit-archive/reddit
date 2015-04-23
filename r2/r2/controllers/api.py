@@ -4366,9 +4366,7 @@ class ApiController(RedditController):
         """Send CORS headers for request_promo requests."""
         if "Origin" in request.headers:
             origin = request.headers["Origin"]
-            if is_trusted_origin(origin):
-                response.headers["Access-Control-Allow-Origin"] = origin
-
+            response.headers["Access-Control-Allow-Origin"] = "*"
             response.headers["Access-Control-Allow-Methods"] = "POST"
             response.headers["Access-Control-Allow-Headers"] = "Authorization, "
             response.headers["Access-Control-Allow-Credentials"] = "false"
