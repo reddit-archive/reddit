@@ -144,6 +144,18 @@
       <div class="infotext rounded">
         <p>${_("Enter a URL to insert into a 3rd-party impression tracking code snippet")}</p>
       </div>
+
+      <label style="display:block; text-align:right" for="third_party_tracking_2">${_("Secondary Impression tracking URL:")}</label>
+      <input id="third_party_tracking_2" name="third_party_tracking_2" type="text"
+             %if link and link.third_party_tracking_2:
+               value="${link.third_party_tracking_2}" class="rounded"
+             %else:
+               class="rounded" placeholder="optional (not common)"
+             %endif
+      >
+      <div class="infotext rounded">
+        <p>${_("Enter a second 3rd-party impression tracking URL (not common)")}</p>
+      </div>
     %endif
   </%utils:line_field>
 </%def>

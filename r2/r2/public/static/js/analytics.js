@@ -165,10 +165,18 @@ r.analytics = {
       pixel.src = impPixel;
     }
 
-    var thirdPartyTrackingUrl = $el.data('thirdPartyTrackingUrl');
-    if (thirdPartyTrackingUrl) {
-      var thirdPartyTrackingImage = new Image();
-      thirdPartyTrackingImage.src = thirdPartyTrackingUrl;
+    if (!adBlockIsEnabled) {
+      var thirdPartyTrackingUrl = $el.data('thirdPartyTrackingUrl');
+      if (thirdPartyTrackingUrl) {
+        var thirdPartyTrackingImage = new Image();
+        thirdPartyTrackingImage.src = thirdPartyTrackingUrl;
+      }
+
+      var thirdPartyTrackingUrl2 = $el.data('thirdPartyTrackingTwoUrl');
+      if (thirdPartyTrackingUrl2) {
+        var thirdPartyTrackingImage2 = new Image();
+        thirdPartyTrackingImage2.src = thirdPartyTrackingUrl2;
+      }
     }
 
     var adServerPixel = new Image();

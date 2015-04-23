@@ -136,6 +136,10 @@ ${self.RenderPrintable()}
     % if hasattr(what, 'third_party_tracking_url'):
       data-third-party-tracking-url="${what.third_party_tracking_url}"
     % endif
+
+    % if hasattr(what, 'third_party_tracking_url_2'):
+      data-third-party-tracking-two-url="${what.third_party_tracking_url_2}"
+    % endif
 </%def>
 
 <%def name="RenderPrintable()">

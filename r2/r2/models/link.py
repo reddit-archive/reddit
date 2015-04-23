@@ -94,6 +94,7 @@ class Link(Thing, Printable):
                      media_autoplay=False,
                      domain_override=None,
                      third_party_tracking=None,
+                     third_party_tracking_2=None,
                      promoted=None,
                      payment_flagged_reason="",
                      fraud=None,

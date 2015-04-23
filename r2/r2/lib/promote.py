@@ -199,6 +199,8 @@ def add_trackers(items, sr):
         
         if item.third_party_tracking:
             item.third_party_tracking_url = item.third_party_tracking
+        if item.third_party_tracking_2:
+            item.third_party_tracking_url_2 = item.third_party_tracking_2
 
         # construct the click redirect url
         url = urllib.unquote(item.url.encode("utf-8"))

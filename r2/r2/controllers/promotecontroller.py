@@ -673,20 +673,22 @@ class PromoteApiController(ApiController):
         media_override=VBoolean("media-override"),
         domain_override=VLength("domain", 100),
         third_party_tracking=VUrl("third_party_tracking"),
+        third_party_tracking_2=VUrl("third_party_tracking_2"),
         is_managed=VBoolean("is_managed"),
         thumbnail_file=VUploadLength('file', 500*1024),
     )
     def POST_create_promo(self, form, jquery, username, title, url,
                           selftext, kind, disable_comments, sendreplies,
                           media_url, media_autoplay, media_override,
-                          gifts_embed_url, media_url_type, domain_override,
-                          third_party_tracking, is_managed, thumbnail_file):
+                          iframe_embed_url, media_url_type, domain_override,
+                          third_party_tracking, third_party_tracking_2,
+                          is_managed, thumbnail_file):
         return self._edit_promo(form, jquery, username, title, url,
                                 selftext, kind, disable_comments, sendreplies,
                                 media_url, media_autoplay, media_override,
-                                gifts_embed_url, media_url_type, domain_override,
-                                third_party_tracking, is_managed,
-                                thumbnail_file=thumbnail_file)
+                                iframe_embed_url, media_url_type, domain_override,
+                                third_party_tracking, third_party_tracking_2,
+                                is_managed, thumbnail_file=thumbnail_file)
 
     @validatedForm(
         VSponsor('link_id36'),
@@ -711,27 +713,32 @@ class PromoteApiController(ApiController):
         media_override=VBoolean("media-override"),
         domain_override=VLength("domain", 100),
         third_party_tracking=VUrl("third_party_tracking"),
+        third_party_tracking_2=VUrl("third_party_tracking_2"),
         is_managed=VBoolean("is_managed"),
         l=VLink('link_id36'),
     )
     def POST_edit_promo(self, form, jquery, username, title, url,
                         selftext, kind, disable_comments, sendreplies,
                         media_url, media_autoplay, media_override,
-                        gifts_embed_url, media_url_type, domain_override,
-                        third_party_tracking, is_managed, l):
+                        iframe_embed_url, media_url_type, domain_override,
+                        third_party_tracking, third_party_tracking_2,
+                        is_managed, l):
         return self._edit_promo(form, jquery, username, title, url,
                                 selftext, kind, disable_comments, sendreplies,
                                 media_url, media_autoplay, media_override,
-                                gifts_embed_url, media_url_type, domain_override,
-                                third_party_tracking, is_managed, l=l)
+                                iframe_embed_url, media_url_type, domain_override,
+                                third_party_tracking, third_party_tracking_2,
+                                is_managed, l=l)
 
     def _edit_promo(self, form, jquery, username, title, url,
                     selftext, kind, disable_comments, sendreplies,
                     media_url, media_autoplay, media_override,
-                    gifts_embed_url, media_url_type, domain_override,
-                    third_party_tracking, is_managed, l=None,
-                    thumbnail_file=None):
+                    iframe_embed_url, media_url_type, domain_override,
+                    third_party_tracking, third_party_tracking_2,
+                    is_managed, l=None, thumbnail_file=None):
         should_ratelimit = False
+        is_self = kind == "self"
+        is_link = not is_self
         if not c.user_is_sponsor:
             should_ratelimit = True
 
@@ -796,6 +803,7 @@ class PromoteApiController(ApiController):
                 l.managed_promo = is_managed
                 l.domain_override = domain_override or None
                 l.third_party_tracking = third_party_tracking or None
+                l.third_party_tracking_2 = third_party_tracking_2 or None
             l._commit()
 
             # only set the thumbnail when creating a link
@@ -918,6 +926,7 @@ class PromoteApiController(ApiController):
             l.media_override = media_override
             l.domain_override = domain_override or None
             l.third_party_tracking = third_party_tracking or None
+            l.third_party_tracking_2 = third_party_tracking_2 or None
             l.managed_promo = is_managed
 
         l._commit()
