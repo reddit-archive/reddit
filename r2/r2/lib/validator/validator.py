@@ -127,7 +127,9 @@ class Validator(object):
                 if self.post and (post_val or
                                   isinstance(post_val, cgi.FieldStorage)):
                     val = request.POST[p]
-                elif (self.get_multiple and
+                elif ((self.get_multiple and
+                      (self.get_multiple == True or
+                       p in self.get_multiple)) and
                       request.GET.getall(p)):
                     val = request.GET.getall(p)
                 elif self.get and request.GET.get(p):
