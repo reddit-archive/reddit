@@ -128,7 +128,7 @@ class CMemcache(CacheUtils):
     def get(self, key, default = None):
         def do_get():
             with self.clients.reserve() as mc:
-                ret = mc.get(key)
+                ret = mc.get(str(key))
                 if ret is None:
                     return default
                 return ret
@@ -153,7 +153,7 @@ class CMemcache(CacheUtils):
     def set(self, key, val, time = 0):
         def do_set():
             with self.clients.reserve() as mc:
-                return mc.set(key, val, time = time,
+                return mc.set(str(key), val, time=time,
                                 min_compress_len = self.min_compress_len)
 
         return self.retry(self.timeout_retry, do_set)
@@ -187,24 +187,24 @@ class CMemcache(CacheUtils):
 
     def append(self, key, val, time=0):
         with self.clients.reserve() as mc:
-            return mc.append(key, val, time=time)
+            return mc.append(str(key), val, time=time)
 
     def incr(self, key, delta=1, time=0):
         # ignore the time on these
         with self.clients.reserve() as mc:
-            return mc.incr(key, delta)
+            return mc.incr(str(key), delta)
 
     def add(self, key, val, time=0):
         try:
             with self.clients.reserve() as mc:
-                return mc.add(key, val, time=time)
+                return mc.add(str(key), val, time=time)
         except pylibmc.DataExists:
             return None
 
     def delete(self, key, time=0):
         def do_delete():
             with self.clients.reserve() as mc:
-                return mc.delete(key)
+                return mc.delete(str(key))
 
         return self.retry(self.timeout_retry, do_delete)
 
