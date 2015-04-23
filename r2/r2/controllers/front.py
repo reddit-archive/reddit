@@ -924,11 +924,14 @@ class FrontController(RedditController):
         if feature.is_enabled('subreddit_relevancy') and sort == 'relevance':
             sort = 'rel1'
 
-        q = SubredditSearchQuery(query, sort=sort, faceting={},
-                                 include_over18=include_over18)
-        content = self._search(q, num=num, reverse=reverse,
-                               after=after, count=count,
-                               skip_deleted_authors=False)
+        if query:
+            q = SubredditSearchQuery(query, sort=sort, faceting={},
+                                     include_over18=include_over18)
+            content = self._search(q, num=num, reverse=reverse,
+                                   after=after, count=count,
+                                   skip_deleted_authors=False)
+        else:
+            content = None
 
         res = SubredditsPage(content=content,
                              prev_search=query,
@@ -973,6 +976,8 @@ class FrontController(RedditController):
         else:
             site = c.site
 
+        has_query = query or not isinstance(site, DefaultSR)
+
         if not syntax:
             syntax = SearchQuery.default_syntax
 
@@ -1008,11 +1013,13 @@ class FrontController(RedditController):
 
         content = None
         subreddits = None
+        nav_menus = None
         cleanup_message = None
         converted_data = None
         subreddit_facets = None
 
-        if num > 0:
+        if num > 0 and has_query:
+            nav_menus = [SearchSortMenu(default=sort), TimeMenu(default=recent)]
             try:
                 q = SearchQuery(query, site, sort=sort, faceting=faceting,
                                 include_over18=include_over18,
@@ -1052,7 +1059,7 @@ class FrontController(RedditController):
                     cleanup_message = strings.completely_invalid_search_query
 
         # extra search request for subreddit results
-        if sr_num > 0:
+        if sr_num > 0 and has_query:
             sr_q = SubredditSearchQuery(query, sort='relevance', faceting={},
                                         include_over18=include_over18)
             subreddits = self._search(sr_q, num=sr_num, reverse=reverse,
@@ -1066,8 +1073,7 @@ class FrontController(RedditController):
         res = SearchPage(_('search results'), query,
                          content=content,
                          subreddits=subreddits,
-                         nav_menus=[SearchSortMenu(default=sort),
-                                    TimeMenu(default=recent)],
+                         nav_menus=nav_menus,
                          search_params=dict(sort=sort, t=recent),
                          infotext=cleanup_message,
                          simple=False, site=c.site,
