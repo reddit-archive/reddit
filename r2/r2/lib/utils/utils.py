@@ -340,7 +340,13 @@ def sanitize_url(url, require_scheme=False, valid_schemes=VALID_SCHEMES):
         u = urlparse(url)
         # first pass: make sure a scheme has been specified
         if not require_scheme and not u.scheme:
-            url = 'http://' + url
+            # "//example.com/"
+            if u.hostname:
+                prepend = "https:" if c.secure else "http:"
+            # "example.com/"
+            else:
+                prepend = "http://"
+            url = prepend + url
             u = urlparse(url)
     except ValueError:
         return None
