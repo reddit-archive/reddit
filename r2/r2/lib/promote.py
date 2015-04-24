@@ -294,7 +294,8 @@ def new_campaign(link, dates, bid, cpm, target, priority, location):
 def free_campaign(link, campaign, user):
     auth_campaign(link, campaign, user, -1)
 
-def edit_campaign(link, campaign, dates, bid, cpm, target, priority, location):
+def edit_campaign(link, campaign, dates, bid, cpm, target, priority, location,
+                  platform='desktop', mobile_os=None):
     changed = {}
     if bid != campaign.bid:
          # if the bid amount changed, cancel any pending transactions

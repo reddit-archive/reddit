@@ -309,6 +309,8 @@ class PromoCampaign(Thing):
         trans_billing_country=None,
         trans_country_match=None,
         location_code=None,
+        platform='desktop',
+        mobile_os_names=None,
     )
 
     # special attributes that shouldn't set Thing data attributes because they
