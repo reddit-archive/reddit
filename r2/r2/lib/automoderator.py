@@ -874,7 +874,8 @@ class RuleTarget(object):
     def perform_actions(self, item, data):
         """Execute the defined actions on the item."""
         # only approve if it's currently removed or reported
-        if self.action == "approve" and (item._spam or item.reported):
+        should_approve = item._spam or (self.reports and item.reported)
+        if self.action == "approve" and should_approve:
             approvable_author = not data["author"]._spam or self.approve_banned
             if approvable_author:
                 # TODO: shouldn't need to set train_spam/insert values
