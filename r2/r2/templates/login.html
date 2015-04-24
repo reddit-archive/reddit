@@ -121,7 +121,7 @@
           <a href="/password" class="c-pull-right">${_('reset password')}</a>
         %endif
       </div>
-      %if register and feature.is_enabled('newsletter'):
+      %if register:
       <div class="c-checkbox">
         <input type="checkbox" name="newsletter_subscribe" id="newsletter_subscribe" tabindex="${tabindex}"
           data-validate-url="/api/check_email.json"

@@ -20,14 +20,10 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from r2.config import feature
 from r2.controllers.reddit_base import RedditController
 from r2.lib.pages import Newsletter
 
 
 class NewsletterController(RedditController):
     def GET_newsletter(self):
-        if feature.is_enabled('newsletter'):
-            return Newsletter().render()
-        else:
-            self.abort404()
+        return Newsletter().render()

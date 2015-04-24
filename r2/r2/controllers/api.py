@@ -287,7 +287,7 @@ class ApiController(RedditController):
         Additionally checks if a newsletter is requested, and will be strict
         on blank emails if so.
         """
-        if feature.is_enabled('newsletter') and newsletter_subscribe and not email:
+        if newsletter_subscribe and not email:
             c.errors.add(errors.NEWSLETTER_NO_EMAIL, field="email")
             responder.has_errors("email", errors.NEWSLETTER_NO_EMAIL)
             return
@@ -661,9 +661,12 @@ class ApiController(RedditController):
                    name = VUname(['user']),
                    email=ValidEmail("email"),
                    password = VPasswordChange(['passwd', 'passwd2']),
-                   rem = VBoolean('rem'))
+                   rem = VBoolean('rem'),
+                   newsletter_subscribe=VBoolean('newsletter_subscribe',
+                                                 default=False),
+                   )
     def _handle_register(self, form, responder, name, email,
-                      password, rem):
+                         password, rem, newsletter_subscribe):
         bad_captcha = responder.has_errors('captcha', errors.BAD_CAPTCHA)
         if not (responder.has_errors("user",
                                 errors.USERNAME_TOO_SHORT,
@@ -676,16 +679,11 @@ class ApiController(RedditController):
                 responder.has_errors("passwd2", errors.BAD_PASSWORD_MATCH) or
                 responder.has_errors('ratelimit', errors.RATELIMIT) or
                 (not g.disable_captcha and bad_captcha)):
-            
-            newsletter_subscribe = False
-            if feature.is_enabled('newsletter'):
-                # Todo: add to validatedForm when feature is released
-                vnewsletter = VBoolean('newsletter_subscribe', default=False)
-                newsletter_subscribe = vnewsletter.run(request.params.get('newsletter_subscribe'))
-                if newsletter_subscribe and not email:
-                    c.errors.add(errors.NEWSLETTER_NO_EMAIL, field="email")
-                    form.has_errors("email", errors.NEWSLETTER_NO_EMAIL)
-                    return
+
+            if newsletter_subscribe and not email:
+                c.errors.add(errors.NEWSLETTER_NO_EMAIL, field="email")
+                form.has_errors("email", errors.NEWSLETTER_NO_EMAIL)
+                return
 
             user = register(name, password, request.ip)
             VRatelimit.ratelimit(rate_ip = True, prefix = "rate_register_")
@@ -710,12 +708,11 @@ class ApiController(RedditController):
             if any(reject):
                 return
 
-            if feature.is_enabled('newsletter'):
-                if newsletter_subscribe and email:
-                    try:
-                        newsletter.add_subscriber(email, source="register")
-                    except newsletter.NewsletterError as e:
-                        g.log.warning("Failed to subscribe: %r" % e)
+            if newsletter_subscribe and email:
+                try:
+                    newsletter.add_subscriber(email, source="register")
+                except newsletter.NewsletterError as e:
+                    g.log.warning("Failed to subscribe: %r" % e)
 
             self._login(responder, user, rem)
 

@@ -316,7 +316,7 @@ class Reddit(Templated):
 
             if not c.user_is_loggedin:
                 self.welcomebar = WelcomeBar()
-                if feature.is_enabled('newsletter') and getattr(self, "show_newsletterbar", True):
+                if getattr(self, "show_newsletterbar", True):
                     self.newsletterbar = NewsletterBar()
 
             if c.render_style == "compact":
