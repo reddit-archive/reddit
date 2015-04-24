@@ -592,15 +592,16 @@ class CloudSearchQuery(object):
         return self.results
 
     def _parse(self):
+        query = self.preprocess_query(self.query)
+
         if self.syntax == "cloudsearch":
-            self.bq = self.customize_query(self.query)
+            self.bq = self.customize_query(query)
         elif self.syntax == "lucene":
-            bq = l2cs.convert(self.query, self.lucene_parser)
-            self.converted_data = {"syntax": "cloudsearch",
-                                   "converted": bq}
+            bq = l2cs.convert(query, self.lucene_parser)
+            self.converted_data = {"syntax": "cloudsearch", "converted": bq}
             self.bq = self.customize_query(bq)
         elif self.syntax == "plain":
-            self.q = self.query.encode('utf-8')
+            self.q = query.encode('utf-8')
             self.bq = self.customize_query()
 
         if not self.q and not self.bq:
@@ -619,6 +620,9 @@ class CloudSearchQuery(object):
         return self._run_cached(self.q, self.bq.encode('utf-8'), self.sort,
                                 self.rank_expressions, self.faceting,
                                 start=self.start, num=self.num, _update=_update)
+
+    def preprocess_query(self, query):
+        return query
 
     def customize_query(self, bq=u''):
         return bq
@@ -798,6 +802,13 @@ class CloudSearchSubredditSearchQuery(CloudSearchQuery):
 
     known_syntaxes = ("plain",)
     default_syntax = "plain"
+
+    def preprocess_query(self, query):
+        # Expand search for /r/subreddit to include subreddit name.
+        sr = query.strip('/').split('/')
+        if len(sr) == 2 and sr[0] == 'r' and Subreddit.is_valid_name(sr[1]):
+            query = '"%s" | %s' % (query, sr[1])
+        return query
 
     def customize_query(self, bq=u''):
         queries = []
