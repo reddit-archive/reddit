@@ -210,8 +210,6 @@ class UnloggedUser(FakeAccount):
         self._defaults['pref_lang'] = lang
         self._defaults['pref_hide_locationbar'] = False
         self._defaults['pref_use_global_defaults'] = False
-        if feature.is_enabled('new_user_new_window_preference'):
-            self._defaults['pref_newwindow'] = True
         self._load()
 
     @property
