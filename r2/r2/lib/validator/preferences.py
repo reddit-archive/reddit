@@ -102,7 +102,7 @@ def filter_prefs(prefs, user):
     # replace stylesheet_override with other_theme if it doesn't exist
     if feature.is_enabled_for('stylesheets_everywhere', user):
         if not prefs["pref_default_theme_sr"]:
-            if prefs["pref_other_theme"]:
+            if prefs.get("pref_other_theme", False):
                 prefs["pref_default_theme_sr"] = prefs["pref_other_theme"]
 
     for pref_key in prefs.keys():
