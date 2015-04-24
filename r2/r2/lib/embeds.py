@@ -5,8 +5,33 @@ from pylons.controllers.util import abort
 import pytz
 
 from r2.controllers.reddit_base import UnloggedUser
+from r2.lib import js
 from r2.models import Account, NotFound
 from r2.models.subreddit import Subreddit
+
+# Note: This template is shared between python and javascript. See underscore
+# templating in embed.js for more info. (Specific note: Only %()s is supported
+# presently to use underscore templating.)
+_COMMENT_EMBED_TEMPLATE = (
+    '<div class="reddit-embed" '
+        'data-embed-media="%(media)s" '
+        'data-embed-parent="%(parent)s" '
+        'data-embed-live="%(live)s" '
+        'data-embed-created="%(created)s">'
+        '<a href="%(comment)s">Comment</a> '
+        'from discussion '
+        '<a href="%(link)s">%(title)s</a>.'
+    '</div>'
+)
+
+
+def get_inject_template():
+    script_urls = js.src("comment-embed", absolute=True, mangle_name=False)
+    scripts = "".join('<script%s src="%s"></script>' % (
+        ' async' if len(script_urls) == 1 else '',
+        script_url
+    ) for script_url in script_urls)
+    return _COMMENT_EMBED_TEMPLATE + scripts
 
 
 def embeddable_sr(thing):

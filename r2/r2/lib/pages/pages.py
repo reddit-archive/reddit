@@ -1548,6 +1548,16 @@ class LinkInfoPage(Reddit):
 
         self.show_promote_button = show_promote_button
         robots = "noindex,nofollow" if link._deleted or link._spam else None
+
+        if c.can_embed:
+            from r2.lib import embeds
+            if 'extra_js_config' not in kw:
+                kw['extra_js_config'] = {}
+
+            kw['extra_js_config'].update({
+                "embed_inject_template": websafe(embeds.get_inject_template()),
+            })
+
         Reddit.__init__(self, title = title, short_description=short_description, robots=robots, *a, **kw)
 
     def _build_og_data(self, link_title, meta_description):

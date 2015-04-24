@@ -179,7 +179,6 @@ def js_config(extra_config=None):
         "uitracker_url": g.uitracker_url,
         "eventtracker_url": g.eventtracker_url,
         "anon_eventtracker_url": g.anon_eventtracker_url,
-        "comment_embed_scripts": js.src("comment-embed", absolute=True, mangle_name=False),
         "static_root": static(''),
         "over_18": bool(c.over18),
         "new_window": bool(c.user.pref_newwindow),

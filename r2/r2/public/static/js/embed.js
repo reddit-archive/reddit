@@ -1,9 +1,6 @@
 ;(function($, undefined) {
-    var COMMENT_EMBED_SCRIPTS = r.config.comment_embed_scripts.map(function (src) {
-      var attrs = r.config.comment_embed_scripts.length === 1 ? 'async' : '';
-
-      return '<script ' + attrs + ' src="' + src + '"></script>';
-    }).join('');
+    /* Special interpolation to allow python %-style substitution. Only strings like %(blah)s are allowed. */
+    var INJECT_TEMPLATE = _.template(_.unescape(r.config.embed_inject_template), false, { "escape": /%\(([^\n\)]+)\)s/g});
 
     var embedBodyTemplate = _.template(
       '<h4  class="modal-title">' +
@@ -50,7 +47,6 @@
       '</h4>' +
       '<textarea class="c-form-control" id="embed-code" rows="3" readonly>' +
           '<%- html %>' +
-          '<%- scripts %>' +
       '</textarea>'
     );
 
@@ -77,6 +73,7 @@
         live: true,
         parent: false,
         media: location.host,
+        created: (new Date()).toISOString(),
       };
 
       data = _.defaults({}, data, defaults);
@@ -84,8 +81,7 @@
       data.link = absolute(data.link);
 
       return _.extend({
-        html: embedCodeTemplate(data),
-        scripts: COMMENT_EMBED_SCRIPTS,
+        html: INJECT_TEMPLATE(data),
       }, data);
     }
 
@@ -158,7 +154,7 @@
         var html = options.html;
         var height = $preview.height();
 
-        $textarea.val(html + options.scripts);
+        $textarea.val(html);
 
         if ($option.data('rerender') !== false) {
           var selector = '[data-options="' + r.utils.escapeSelector(serializedOptions) + '"]';

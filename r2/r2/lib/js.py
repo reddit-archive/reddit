@@ -277,7 +277,7 @@ class TemplateFileSource(DataSource, FileSource):
             return [{
                 "name": name,
                 "style": style.lstrip('.'),
-                "template": f.read()
+                "template": f.read(),
             }]
 
 
