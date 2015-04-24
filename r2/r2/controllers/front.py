@@ -255,7 +255,7 @@ class FrontController(RedditController):
             return self.intermediate_redirect("/over18", sr_path=False)
 
         # Determine if we should show the embed link for comments
-        c.can_embed = feature.is_enabled("comment_embeds") and bool(comment)
+        c.can_embed = bool(comment)
 
         is_embed = embeds.prepare_embed_request(sr)
 
