@@ -1414,7 +1414,7 @@ class SearchPage(BoringPage):
         self.subreddits = subreddits
 
         # generate the over18 redirect url for the current search if needed
-        if not c.over18 and feature.is_enabled('safe_search'):
+        if kw['nav_menus'] and not c.over18 and feature.is_enabled('safe_search'):
             u = UrlParser(add_sr('/search'))
             if prev_search:
                 u.update_query(q=prev_search)
