@@ -1196,14 +1196,7 @@ class ApiController(RedditController):
     @validatedForm(
         VUser(),
         VModhash(),
-        VVerifyPassword("curpass", fatal=False),
-        # XXX: Is this necessary? Seems like it won't let people with
-        # passwords that would be invalid by current password rules clear
-        # their sessions.
-        password=VPasswordChange(
-            ['curpass', 'curpass'],
-            docs=dict(curpass="the user's current password")
-        ),
+        password=VVerifyPassword("curpass", fatal=False),
         dest=VDestination(),
     )
     def POST_clear_sessions(self, form, jquery, password, dest):
@@ -1233,12 +1226,8 @@ class ApiController(RedditController):
     @validatedForm(
         VUser(),
         VModhash(),
-        VVerifyPassword("curpass", fatal=False),
+        password=VVerifyPassword("curpass", fatal=False),
         force_https=VBoolean("force_https"),
-        password=VPasswordChange(
-            ["curpass", "curpass"],
-            docs=dict(curpass="the user's current password"),
-        ),
     )
     def POST_set_force_https(self, form, jquery, password, force_https):
         """Toggle HTTPS-only sessions, invalidating other sessions.

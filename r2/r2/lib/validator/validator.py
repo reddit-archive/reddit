@@ -30,7 +30,7 @@ from pylons.i18n import _
 from pylons.controllers.util import abort
 from r2.config.extensions import api_type
 from r2.lib import utils, captcha, promote, totp, ratelimit
-from r2.lib.filters import unkeep_space, websafe, _force_unicode
+from r2.lib.filters import unkeep_space, websafe, _force_unicode, _force_utf8
 from r2.lib.filters import markdown_souptest
 from r2.lib.db import tdb_cassandra
 from r2.lib.db.operators import asc, desc
@@ -951,6 +951,9 @@ class VVerifyPassword(Validator):
             if self.fatal:
                 abort(403)
             self.set_error(errors.WRONG_PASSWORD)
+            return None
+        # bcrypt wants a bytestring
+        return _force_utf8(password)
 
     def param_docs(self):
         return {
