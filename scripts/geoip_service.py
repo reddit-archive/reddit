@@ -66,32 +66,27 @@ def json_response(result):
 
 @application.route('/geoip/<ips>')
 def get_record(ips):
-    result = {}
-    ips = ips.split('+')
-
     if gi:
-        for ip in ips:
-            result[ip] = gi.record_by_addr(ip)
+        result = {ip: gi.record_by_addr(ip) for ip in ips.split('+')}
     elif gc:
-        for ip in ips:
-            result[ip] = {
+        result = {
+            ip : {
                 'country_code': gc.country_code_by_addr(ip),
                 'country_name': gc.country_name_by_addr(ip),
-            }
+            } for ip in ips.split('+')
+        }
+    else:
+        result = {}
 
     return json_response(result)
 
 
 @application.route('/org/<ips>')
 def get_organizations(ips):
-    result = {}
-    ips = ips.split('+')
-
     if go:
-        for ip in ips:
-             result[ip] = go.org_by_addr(ip)
-
-    return json_response(result)
+        return json_response({ip: go.org_by_addr(ip) for ip in ips.split('+')})
+    else:
+        return json_response({})
 
 
 if __name__ == "__main__":
