@@ -39,10 +39,21 @@ thingcls_by_name = {
     "link": Link,
     "comment": Comment,
 }
+data_fields_by_name = {
+    "link": {
+        "url": str,
+        "sr_id": int,
+        "author_id": int,
+    },
+    "comment": {
+        "sr_id": int,
+        "author_id": int,
+    },
+}
 
 
-def join_things():
-    mr_tools.join_things(('url', 'sr_id', 'author_id'))
+def join_things(thing_type):
+    mr_tools.join_things(data_fields_by_name[thing_type].keys())
 
 
 def _get_cutoffs(intervals):
@@ -56,14 +67,10 @@ def _get_cutoffs(intervals):
     return cutoffs
 
 
-def time_listings(intervals):
+def time_listings(intervals, thing_type):
     cutoff_by_interval = _get_cutoffs(intervals)
 
-    @mr_tools.dataspec_m_thing(
-        ("url", str),
-        ("sr_id", int),
-        ("author_id", int),
-    )
+    @mr_tools.dataspec_m_thing(*data_fields_by_name[thing_type].items())
     def process(thing):
         if thing.deleted:
             return

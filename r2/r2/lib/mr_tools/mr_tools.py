@@ -28,6 +28,13 @@ from r2.lib.mr_tools._mr_tools import stdin, emit
 
 def join_things(fields, deleted=False, spam=True):
     """A reducer that joins thing table dumps and data table dumps"""
+    # Because of how Python handles scope, if we want to modify these outside
+    # the closure function below, they need to be inside a mutable object.
+    # http://stackoverflow.com/a/23558809/120999
+    counters = {
+        'processed': 0,
+        'skipped': 0,
+    }
     def process(thing_id, vals):
         data = {}
         thing = None
@@ -63,11 +70,18 @@ def join_things(fields, deleted=False, spam=True):
             # data that we need
             and all(field in data for field in fields)):
 
+            counters['processed'] += 1
             yield ((thing_id, thing.thing_type, thing.ups, thing.downs,
                     thing.deleted, thing.spam, thing.timestamp)
                    + tuple(data[field] for field in fields))
+        else:
+            counters['skipped'] += 1
 
     mr_reduce(process)
+    # Print to stderr to avoid getting this caught up in the pipe of
+    # compute_time_listings.
+    print >> sys.stderr, '%s items processed, %s skipped' % (
+                         counters['processed'], counters['skipped'])
 
 class Mapper(object):
     def __init__(self):

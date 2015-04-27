@@ -42,6 +42,8 @@ export INTERVAL="$2"
 # formatted as python tuple of strings: e.g. '("hour",)' or ("week", "all",) etc
 export TIMES="$3"
 
+echo "Starting $THING_CLS processing"
+
 THING_DUMP=$TMPDIR/$THING_CLS-$INTERVAL-thing.dump
 DATA_DUMP=$TMPDIR/$THING_CLS-$INTERVAL-data.dump
 function clean_up {
@@ -102,7 +104,9 @@ run_query "\\copy (SELECT thing_id, 'data', '$THING_CLS', key, value
 
 cat $THING_DUMP $DATA_DUMP |
     mrsort |
-    reddit "join_things()" |
-    reddit "time_listings($TIMES)" |
+    reddit "join_things('$THING_CLS')" |
+    reddit "time_listings($TIMES, '$THING_CLS')" |
     mrsort |
     reddit "write_permacache()"
+
+echo 'Done.'
