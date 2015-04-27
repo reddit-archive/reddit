@@ -316,8 +316,7 @@ class VWikiPageRevise(VWikiPage):
         
         page = normalize_page(page)
         
-        if (c.is_wiki_mod and
-                WikiPage.is_automatically_created(page)):
+        if WikiPage.is_automatically_created(page):
             return {'reason': 'PAGE_CREATED_ELSEWHERE'}
         elif WikiPage.is_special(page):
             if not (c.user_is_admin or
