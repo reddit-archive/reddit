@@ -41,6 +41,7 @@ from urllib import unquote_plus
 from urllib2 import urlopen, Request
 from urlparse import urlparse, urlunparse
 
+import pytz
 import snudown
 import unidecode
 
@@ -1808,3 +1809,10 @@ def squelch_exceptions(fn):
                 # log.exception will send a stack trace as well
                 g.log.exception("squelching exception")
     return squelched_fn
+
+
+EPOCH = datetime(1970, 1, 1, tzinfo=pytz.UTC)
+
+def epoch_timestamp(dt):
+    """Returns the number of seconds from the epoch to date."""
+    return (dt - EPOCH).total_seconds()
