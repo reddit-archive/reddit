@@ -1463,13 +1463,14 @@ class ApiController(RedditController):
                    VSrCanBan('id'),
                    thing=VByName('id', thing_cls=Link),
                    sort=VOneOf('sort', CommentSortMenu.suggested_sort_options))
+    @api_doc(api_section.links_and_comments)
     def POST_set_suggested_sort(self, form, jquery, thing, sort):
-        """Set a default sort for a link.
+        """Set a suggested sort for a link.
 
-        Default sorts are useful to display comments in a certain preferred way
+        Suggested sorts are useful to display comments in a certain preferred way
         for posts. For example, casual conversation may be better sorted by new
-        by default, or threads where voting is less important may be sorted by
-        random. A sort of an empty string clears the default sort.
+        by default, or AMAs may be sorted by Q&A. A sort of an empty string
+        clears the default sort.
         """
         if not feature.is_enabled('default_sort'):
             return abort(403, "This feature is not yet enabled")
@@ -2373,6 +2374,9 @@ class ApiController(RedditController):
                    wiki_edit_age = VInt("wiki_edit_age", coerce=False, num_default=0, min=0),
                    css_on_cname = VBoolean("css_on_cname"),
                    hide_ads = VBoolean("hide_ads"),
+                   suggested_comment_sort=VOneOf('suggested_comment_sort',
+                                                 CommentSortMenu._options,
+                                                 default=None),
                    # community_rules = VLength('community_rules', max_length=1024),
                    # related_subreddits = VSubredditList('related_subreddits', limit=20),
                    # key_color = VColor('key_color'),
@@ -2423,14 +2427,6 @@ class ApiController(RedditController):
             for key, validator in mobile_fields.iteritems():
                 value = request.params.get(key)
                 kw[key] = validator.run(value)
-
-        if feature.is_enabled('default_sort'):
-            vsort = VOneOf('suggested_comment_sort',
-                           CommentSortMenu._options,
-                           default=None,
-                           )
-            sort_param = request.params.get('suggested_comment_sort')
-            kw['suggested_comment_sort'] = vsort.run(sort_param)
 
         # the status button is outside the form -- have to reset by hand
         form.parent().set_html('.status', "")
