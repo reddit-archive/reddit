@@ -358,7 +358,7 @@
 
 <%def name="platform_field()">
   <input type="hidden" id="mobile_os" name="mobile_os" value="">
-  <%def name="platform_field_content(default_checked='all')">
+  <%def name="platform_field_content(default_checked='desktop')">
     <div class="radio-group platform-group">
       <span class="label">platform</span>
       <label class="form-group">
@@ -416,11 +416,11 @@
 
   %if c.user_is_sponsor:
     <%utils:line_field title="${_('platform')}" css_class="rounded platform-field">
-      ${platform_field_content("all")}
+      ${platform_field_content()}
     </%utils:line_field>
   %else:
     <div class="platform-field" style="display:none">
-      ${platform_field_content("desktop")}
+      ${platform_field_content()}
     </div>
   %endif
 </%def>
