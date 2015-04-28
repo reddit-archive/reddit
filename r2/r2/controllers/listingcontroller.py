@@ -118,7 +118,7 @@ class ListingController(RedditController):
             return c.site.allows_referrers
         return False
 
-    def build_listing(self, num, after, reverse, count, **kwargs):
+    def build_listing(self, num, after, reverse, count, sr_detail=None, **kwargs):
         """uses the query() method to define the contents of the
         listing and renders the page self.render_cls(..).render() with
         the listing as contents"""
@@ -126,6 +126,7 @@ class ListingController(RedditController):
         self.count = count
         self.after = after
         self.reverse = reverse
+        self.sr_detail = sr_detail
 
         self.query_obj = self.query()
         self.builder_obj = self.builder()
@@ -180,6 +181,7 @@ class ListingController(RedditController):
                         count = self.count,
                         reverse = self.reverse,
                         keep_fn = self.keep_fn(),
+                        sr_detail=self.sr_detail,
                         wrap = self.builder_wrapper)
 
         return b

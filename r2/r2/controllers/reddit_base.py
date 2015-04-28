@@ -77,6 +77,7 @@ from r2.lib.validator import (
     fullname_regex,
     valid_jsonp_callback,
     validate,
+    VBoolean,
     VByName,
     VCount,
     VLang,
@@ -677,6 +678,7 @@ def paginated_listing(default_page_size=25, max_page_size=100, backend='sql'):
                   before=VByName('before', backend=backend),
                   count=VCount('count'),
                   target=VTarget("target"),
+                  sr_detail=VBoolean("sr_detail"),
                   show=VLength('show', 3, empty_error=None,
                                docs={"show": "(optional) the string `all`"}),
         )

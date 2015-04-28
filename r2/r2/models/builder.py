@@ -72,7 +72,7 @@ MAX_RECURSION = 10
 
 class Builder(object):
     def __init__(self, wrap=Wrapped, keep_fn=None, stale=True,
-                 spam_listing=False):
+                 spam_listing=False, **kw):
         self.stale = stale
         self.wrap = wrap
         self.keep_fn = keep_fn
@@ -356,6 +356,7 @@ class QueryBuilder(Builder):
         self.query = query
         self.skip = skip
         self.num = kw.get('num')
+        self.sr_detail = kw.get('sr_detail')
         self.start_count = kw.get('count', 0) or 0
         self.after = kw.get('after')
         self.reverse = kw.get('reverse')
@@ -461,6 +462,11 @@ class QueryBuilder(Builder):
         if self.num and num_have < self.num and not stopped_early:
             have_next = False
 
+        if getattr(self, 'sr_detail', False):
+            for item in items:
+                item.sr_detail = True
+
+
         # Make sure first_item and last_item refer to things in items
         # NOTE: could retrieve incorrect item if there were items with
         # duplicate _id
@@ -564,7 +570,7 @@ class CampaignBuilder(IDBuilder):
     """Build on a list of PromoTuples."""
 
     def __init__(self, query, wrap=Wrapped, keep_fn=None, prewrap_fn=None,
-                 skip=False, num=None, after=None, reverse=False, count=0):
+                 skip=False, num=None, after=None, reverse=False, count=0, **kw):
         Builder.__init__(self, wrap=wrap, keep_fn=keep_fn)
         self.query = query
         self.skip = skip
@@ -1279,7 +1285,7 @@ class MultiredditMessageBuilder(MessageBuilder):
 class TopCommentBuilder(CommentBuilder):
     """A comment builder to fetch only the top-level, non-spam,
        non-deleted comments"""
-    def __init__(self, link, sort, num=None, wrap=Wrapped):
+    def __init__(self, link, sort, num=None, wrap=Wrapped, **kw):
         CommentBuilder.__init__(self, link, sort,
                                 load_more = False,
                                 continue_this_thread = False,

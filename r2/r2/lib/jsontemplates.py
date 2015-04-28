@@ -122,13 +122,14 @@ class ThingJsonTemplate(JsonTemplate):
         Complement to rendered_data.  Called when a dictionary of
         thing data attributes is to be sent across the wire.
         """
+        attrs = dict(self._data_attrs_)
         if hasattr(self, "_optional_data_attrs"):
             for attr, attrv in self._optional_data_attrs.iteritems():
                 if hasattr(thing, attr):
-                    self._data_attrs_[attr] = attrv
+                    attrs[attr] = attrv
 
         return dict((k, self.thing_attr(thing, v))
-                    for k, v in self._data_attrs_.iteritems())
+                    for k, v in attrs.iteritems())
 
     def thing_attr(self, thing, attr):
         """
@@ -495,6 +496,7 @@ class PrefsJsonTemplate(ThingJsonTemplate):
 class LinkJsonTemplate(ThingJsonTemplate):
     _optional_data_attrs = dict(
         action_type="action_type",
+        sr_detail="sr_detail",
         )
     _data_attrs_ = ThingJsonTemplate.data_attrs(
         approved_by="approved_by",
@@ -546,6 +548,8 @@ class LinkJsonTemplate(ThingJsonTemplate):
 
     def thing_attr(self, thing, attr):
         from r2.lib.media import get_media_embed
+        if attr == "sr_detail":
+            return TrimmedSubredditJsonTemplate().data(thing.subreddit)
         if attr in ("media_embed", "secure_media_embed"):
             media_object = getattr(thing, attr.replace("_embed", "_object"))
             if media_object and not isinstance(media_object, basestring):
