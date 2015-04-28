@@ -607,6 +607,7 @@ class PromotedLinkJsonTemplate(LinkJsonTemplate):
     _data_attrs_ = LinkJsonTemplate.data_attrs(
         promoted="promoted",
         imp_pixel="imp_pixel",
+        href_url="href_url",
         adserver_imp_pixel="adserver_imp_pixel",
         adserver_click_url="adserver_click_url",
     )
