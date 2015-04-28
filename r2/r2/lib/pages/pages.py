@@ -276,6 +276,7 @@ class Reddit(Templated):
         # Generate a mobile link for Google.
         u = UrlParser(request.fullpath)
         u.switch_subdomain_by_extension('mobile')
+        u.scheme = 'https'
         self.mobile_link = u.unparse()
 
         if self.show_infobar:
