@@ -11086,6 +11086,58 @@ body.banned.deleted div#header {
     }
 }
 
+.full-context-info {
+    .md {
+        padding: 10px 5px 5px;
+        border: 1px solid @color-warning-red;
+        border-radius: 5px;
+        background: @color-pale-grey;
+    }
+
+    .parent {
+        padding: 0 (@margin-small - 1) * 1px;
+    }
+
+    td {
+        color: @color-text-grey;
+    }
+
+    .arrow {
+        display: inline-block;
+        margin-right: 100px;
+
+        &:after {
+            display: inline-block;
+            margin-left: 20px;
+            width: 100px;
+        }
+    }
+
+    .arrow.unvoted {
+        &:after {
+            content: "did not vote";
+            margin-left: 0;
+        }
+    }
+
+    .arrow.vote-changed {
+        background: data-uri('../close.png') no-repeat;
+        background-size: 13px 13px;
+
+        &:after {
+            content: "changed vote";
+        }
+    }
+
+    .arrow.upmod:after {
+        content: "upvoted";
+    }
+
+    .arrow.downmod:after {
+        content: "downvoted";
+    }
+}
+
 body:not(.loggedin) .comment-save-button,
 body:not(.loggedin) .give-gold-button,
 body:not(.loggedin) .reply-button,
