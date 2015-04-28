@@ -38,8 +38,8 @@ from r2.lib import amqp, filters
 from r2.lib.db.operators import desc
 from r2.lib.db.sorts import epoch_seconds
 import r2.lib.utils as r2utils
-from r2.models import (Account, Link, Subreddit, Thing, All, DefaultSR,
-                       MultiReddit, DomainSR, Friends, ModContribSR,
+from r2.models import (Account, Link, Subreddit, Thing,
+                       MultiReddit, DomainSR, FriendsSR,
                        FakeSubreddit, NotFound)
 
 
@@ -845,7 +845,10 @@ class CloudSearchQuery(object):
         self.syntax = syntax
 
         self.query = filters._force_unicode(query or u'')
+
+        # parsed query
         self.converted_data = None
+        self.q = u''
         self.bq = u''
 
         # filters
@@ -876,9 +879,7 @@ class CloudSearchQuery(object):
         self.results = Results(results.docs, results.hits, results._facets)
         return self.results
 
-    def _run(self, _update=False):
-        '''Run the search against self.query'''
-        q = None
+    def _parse(self):
         if self.syntax == "cloudsearch":
             self.bq = self.customize_query(self.query)
         elif self.syntax == "lucene":
@@ -887,11 +888,23 @@ class CloudSearchQuery(object):
                                    "converted": bq}
             self.bq = self.customize_query(bq)
         elif self.syntax == "plain":
-            q = self.query.encode('utf-8')
+            self.q = self.query.encode('utf-8')
             self.bq = self.customize_query()
+
+        if not self.q and not self.bq:
+            raise InvalidQuery
+
+    def _run(self, _update=False):
+        '''Run the search against self.query'''
+        try:
+            self._parse()
+        except InvalidQuery:
+            return Results([], 0, {})
+
         if g.sqlprinting:
             g.log.info("%s", self)
-        return self._run_cached(q, self.bq.encode('utf-8'), self.sort,
+
+        return self._run_cached(self.q, self.bq.encode('utf-8'), self.sort,
                                 self.rank_expressions, self.faceting,
                                 start=self.start, num=self.num, _update=_update)
 
@@ -956,8 +969,6 @@ class CloudSearchQuery(object):
                    u'rank': u'-text_relevance'}
         
         '''
-        if not query and not bq:
-            return Results([], 0, {})
         response = basic_query(query=query, bq=bq, size=num, start=start,
                                rank=sort, rank_expressions=rank_expressions,
                                search_api=cls.search_api,
@@ -1013,9 +1024,10 @@ class LinkSearchQuery(CloudSearchQuery):
         queries = []
         if bq:
             queries = [bq]
-        subreddit_query = self._get_sr_restriction(self.sr)
-        if subreddit_query:
-            queries.append(subreddit_query)
+        if self.sr:
+            subreddit_query = self._restrict_sr(self.sr)
+            if subreddit_query:
+                queries.append(subreddit_query)
         if self.recent:
             recent_query = self._restrict_recent(self.recent)
             queries.append(recent_query)
@@ -1030,42 +1042,32 @@ class LinkSearchQuery(CloudSearchQuery):
         return 'timestamp:%i..' % since
 
     @staticmethod
-    def _get_sr_restriction(sr):
+    def _restrict_sr(sr):
         '''Return a cloudsearch appropriate query string that restricts
         results to only contain results from self.sr
         
         '''
-        bq = []
-        if (not sr) or sr == All or isinstance(sr, DefaultSR):
-            return None
-        elif isinstance(sr, MultiReddit):
-            bq = ["(or"]
-            for sr_id in sr.sr_ids:
-                bq.append("sr_id:%s" % sr_id)
-            bq.append(")")
+        if isinstance(sr, MultiReddit):
+            if not sr.sr_ids:
+                raise InvalidQuery
+            srs = ["sr_id:%s" % sr_id for sr_id in sr.sr_ids]
+            return "(or %s)" % ' '.join(srs)
         elif isinstance(sr, DomainSR):
-            bq = ["site:'%s'" % sr.domain]
-        elif sr == Friends:
+            return "site:'%s'" % sr.domain
+        elif isinstance(sr, FriendsSR):
             if not c.user_is_loggedin or not c.user.friends:
-                return None
-            bq = ["(or"]
+                raise InvalidQuery
             # The query limit is roughly 8k bytes. Limit to 200 friends to
             # avoid getting too close to that limit
             friend_ids = c.user.friends[:200]
             friends = ["author_fullname:'%s'" %
                        Account._fullname_from_id36(r2utils.to36(id_))
                        for id_ in friend_ids]
-            bq.extend(friends)
-            bq.append(")")
-        elif isinstance(sr, ModContribSR):
-            bq = ["(or"]
-            for sr_id in sr.sr_ids:
-                bq.append("sr_id:%s" % sr_id)
-            bq.append(")")
+            return "(or %s)" % ' '.join(friends)
         elif not isinstance(sr, FakeSubreddit):
-            bq = ["sr_id:%s" % sr._id]
+            return "sr_id:%s" % sr._id
 
-        return ' '.join(bq)
+        return None
 
 
 class SubredditSearchQuery(CloudSearchQuery):
