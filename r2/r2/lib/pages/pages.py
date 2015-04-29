@@ -1757,7 +1757,6 @@ class CommentPane(Templated):
             c.domain_prefix,
             c.secure,
             c.user.pref_show_flair,
-            c.user.pref_show_link_flair,
             c.can_embed,
             self.max_depth,
             self.edits_visible,
@@ -1848,7 +1847,6 @@ class CommentPane(Templated):
                     c.user = UnloggedUser([c.lang])
                     # Preserve the viewing user's flair preferences.
                     c.user.pref_show_flair = user.pref_show_flair
-                    c.user.pref_show_link_flair = user.pref_show_link_flair
 
                     c.user_is_loggedin = False
 
