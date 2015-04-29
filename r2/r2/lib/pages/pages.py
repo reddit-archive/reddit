@@ -1758,7 +1758,6 @@ class CommentPane(Templated):
             c.secure,
             c.user.pref_show_flair,
             c.user.pref_show_link_flair,
-            c.can_save,
             c.can_embed,
             self.max_depth,
             self.edits_visible,
@@ -1797,7 +1796,6 @@ class CommentPane(Templated):
             can_reply = sr.can_comment(c.user)
             self.can_reply = can_reply
             c.can_reply = can_reply
-            c.can_save = True
 
             try_cache &= not bool(sr.can_ban(c.user))
 
@@ -1807,7 +1805,6 @@ class CommentPane(Templated):
         else:
             self.can_reply = False
             c.can_reply = False
-            c.can_save = False
 
         builder = CommentBuilder(
             article, sort, comment=comment, context=context, num=num, **kw)

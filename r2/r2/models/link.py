@@ -1212,24 +1212,17 @@ class Comment(Thing, Printable):
                 if item.link._age < item.subreddit.archive_age:
                     item.can_reply = True
 
-            item.can_save = c.can_save or False
             item.can_embed = c.can_embed or False
 
             if user_is_loggedin:
                 item.user_gilded = (user, item) in user_gildings
                 item.saved = (user, item) in saved
-                item.can_save = True
             else:
                 item.user_gilded = False
                 item.saved = False
             item.gilded_message = make_gold_message(item, item.user_gilded)
 
             item.can_gild = (
-                # this is a way of checking if the user is logged in that works
-                # both within CommentPane instances and without.  e.g. CommentPane
-                # explicitly sets user_is_loggedin = False but can_save will
-                # always be True if the user is logged in
-                item.can_save and
                 # you can't gild your own comment
                 not (c.user_is_loggedin and
                      item.author and

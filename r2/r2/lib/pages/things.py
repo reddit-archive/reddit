@@ -199,7 +199,6 @@ class CommentButtons(PrintableButtons):
             embed_button.build()
 
         PrintableButtons.__init__(self, "commentbuttons", thing,
-                                  can_save=thing.can_save,
                                   is_author = is_author, 
                                   profilepage = c.profilepage,
                                   permalink = thing.permalink,

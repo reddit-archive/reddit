@@ -130,7 +130,7 @@
 
 <%def name="give_gold()">
   % if thing.show_givegold:
-    <li>
+    <li class="give-gold-button">
     <a href="/gold?goldtype=gift&months=1&thing=${thing.thing._fullname}"
         title="${_("give reddit gold in appreciation of this post.")}"
         class="give-gold login-required"
@@ -338,16 +338,15 @@
         ${thing.embed_button.render()}
       </li>
     %endif
-    %if thing.can_save:
-      %if thing.saved:
-        <li class="comment-unsave-button save-button">
-          <a href="javascript:void(0)">${_("unsave")}</a>
-        </li>
-      %else:
-        <li class="comment-save-button save-button">
-          <a href="javascript:void(0)">${_("save")}</a>
-        </li>
-      %endif
+
+    %if thing.saved:
+      <li class="comment-unsave-button save-button">
+        <a href="javascript:void(0)">${_("unsave")}</a>
+      </li>
+    %else:
+      <li class="comment-save-button save-button">
+        <a href="javascript:void(0)">${_("save")}</a>
+      </li>
     %endif
 
     %if c.profilepage:
