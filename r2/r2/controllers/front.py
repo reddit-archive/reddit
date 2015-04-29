@@ -979,7 +979,7 @@ class FrontController(RedditController):
         else:
             site = c.site
 
-        has_query = query or not isinstance(site, DefaultSR)
+        has_query = query or not isinstance(site, (DefaultSR, AllSR))
 
         if not syntax:
             syntax = SearchQuery.default_syntax
