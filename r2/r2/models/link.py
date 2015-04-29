@@ -972,6 +972,15 @@ class Comment(Thing, Printable):
         CommentSavesByAccount._unsave(user, self)
 
     @property
+    def link_slow(self):
+        """Fetch a comment's Link and return it.
+
+        In most cases the Link is already on the wrapped comment (as .link),
+        and that should be used when possible.
+        """
+        return Link._byID(self.link_id, data=True, return_dict=False)
+
+    @property
     def subreddit_slow(self):
         from subreddit import Subreddit
         """return's a comments's subreddit. in most case the subreddit is already
