@@ -20,7 +20,10 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+from email import encoders
+from email.MIMEBase import MIMEBase
 from email.MIMEText import MIMEText
+from email.MIMEMultipart import MIMEMultipart
 from email.errors import HeaderParseError
 import datetime
 import traceback, sys, smtplib
@@ -375,12 +378,25 @@ def suspicious_payment(user, link):
     return _fraud_email(body, kind)
 
 
-def send_html_email(to_addr, from_addr, subject, html, subtype="html"):
+def send_html_email(to_addr, from_addr, subject, html,
+        subtype="html", attachments=None):
     from r2.lib.filters import _force_utf8
-    msg = MIMEText(_force_utf8(html), subtype)
+    if not attachments:
+        attachments = []
+
+    msg = MIMEMultipart()
+    msg.attach(MIMEText(_force_utf8(html), subtype))
     msg["Subject"] = subject
     msg["From"] = from_addr
     msg["To"] = to_addr
+
+    for attachment in attachments:
+        part = MIMEBase('application', "octet-stream")
+        part.set_payload(attachment['contents'])
+        encoders.encode_base64(part)
+        part.add_header('Content-Disposition', 'attachment',
+            filename=attachment['name'])
+        msg.attach(part)
 
     session = smtplib.SMTP(g.smtp_server)
     session.sendmail(from_addr, to_addr, msg.as_string())
