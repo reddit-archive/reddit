@@ -1793,18 +1793,21 @@ class CommentPane(Templated):
 
         if c.user_is_loggedin:
             sr = article.subreddit_slow
-            can_reply = sr.can_comment(c.user)
-            self.can_reply = can_reply
-            c.can_reply = can_reply
-
             try_cache &= not bool(sr.can_ban(c.user))
 
             user_threshold = c.user.pref_min_comment_score
             default_threshold = Account._defaults["pref_min_comment_score"]
             try_cache &= user_threshold == default_threshold
+
+        if c.user_is_loggedin:
+            sr = article.subreddit_slow
+            self.can_reply = sr.can_comment(c.user)
         else:
-            self.can_reply = False
-            c.can_reply = False
+            # assume that the common case is for loggedin users to see reply
+            # buttons and do the same for loggedout users so they can use the
+            # same cached page. reply buttons will be hidden client side for
+            # loggedout users
+            self.can_reply = article._age < article.subreddit_slow.archive_age
 
         builder = CommentBuilder(
             article, sort, comment=comment, context=context, num=num, **kw)

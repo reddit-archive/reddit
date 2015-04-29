@@ -1207,10 +1207,9 @@ class Comment(Thing, Printable):
             else:
                 item.parent_permalink = None
 
-            item.can_reply = False
-            if c.can_reply or (item.sr_id in can_reply_srs):
-                if item.link._age < item.subreddit.archive_age:
-                    item.can_reply = True
+            item.can_reply = item.link._age < item.subreddit.archive_age
+            if c.user_is_loggedin:
+                item.can_reply &= item.sr_id in can_reply_srs
 
             item.can_embed = c.can_embed or False
 

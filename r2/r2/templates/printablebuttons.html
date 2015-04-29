@@ -390,7 +390,7 @@
     ${self.give_gold()}
 
     %if not getattr(thing, "suppress_reply_buttons", False) and thing.can_reply:
-      <li>
+      <li class="reply-button">
         ${self.simple_button(_("reply {verb}"), "reply")}
       </li>
     %endif
