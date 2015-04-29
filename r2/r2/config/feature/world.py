@@ -66,7 +66,7 @@ class World(object):
         return self.stacked_proxy_safe_get(c, 'subdomain')
 
     def current_oauth_client(self):
-        client = self.stacked_proxy_safe_get(c, 'oauth_client', None)
+        client = self.stacked_proxy_safe_get(c, 'oauth2_client', None)
         return getattr(client, '_id', None)
 
     def is_admin(self, user):

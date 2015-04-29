@@ -1017,7 +1017,7 @@ class MinimalController(BaseController):
         if c.oauth_user and g.RL_OAUTH_SITEWIDE_ENABLED:
             type_ = "oauth"
             period = g.RL_OAUTH_RESET_SECONDS
-            max_reqs = c.oauth_client._max_reqs
+            max_reqs = c.oauth2_client._max_reqs
             # Convert client_id to ascii str for use as memcache key
             client_id = c.oauth2_access_token.client_id.encode("ascii")
             # OAuth2 ratelimits are per user-app combination
@@ -1400,7 +1400,7 @@ class OAuth2ResourceController(MinimalController):
             else:
                 c.user = UnloggedUser(get_browser_langs())
                 c.user_is_loggedin = False
-            c.oauth_client = OAuth2Client._byID(access_token.client_id)
+            c.oauth2_client = OAuth2Client._byID(access_token.client_id)
         except RequirementException:
             self._auth_error(401, "invalid_token")
 
