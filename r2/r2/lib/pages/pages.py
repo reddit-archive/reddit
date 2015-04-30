@@ -54,7 +54,7 @@ from r2.models import (
     Printable,
     PromoCampaign,
     PromotionPrices,
-    QueryBuilder,
+    IDBuilder,
     Random,
     RandomNSFW,
     RandomSubscription,
@@ -1742,12 +1742,12 @@ class LinkInfoPage(Reddit):
                 return w
 
             def keep_fn(thing):
-                return thing._fullname != link._fullname
+                return thing._fullname != link._fullname and thing.keep_item(thing)
 
-            query_obj = c.site.get_links('hot', 'all').query
-            builder = QueryBuilder(query_obj,
-                                   wrap=wrapper_fn, keep_fn=keep_fn,
-                                   skip=True, num=10)
+            query_obj = c.site.get_links('hot', 'all')
+            builder = IDBuilder(query_obj,
+                                wrap=wrapper_fn, keep_fn=keep_fn,
+                                skip=True, num=10)
             listing = ReadNextListing(builder).listing()
             if len(listing.things):
                 rb.append(ReadNext(c.site, listing.render()))
