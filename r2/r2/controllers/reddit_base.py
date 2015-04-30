@@ -866,7 +866,7 @@ def enforce_https():
             redirect_url = hsts_modify_redirect(dest)
 
     if redirect_url:
-        headers = {"Cache-Control": "no-cache", "Pragma": "no-cache"}
+        headers = {"Cache-Control": "private, no-cache", "Pragma": "no-cache"}
         abort(307, location=redirect_url, headers=headers)
 
 
@@ -1224,7 +1224,7 @@ class MinimalController(BaseController):
         would_poison = any((k not in CACHEABLE_COOKIES) for k in dirty_cookies)
 
         if c.user_is_loggedin or would_poison:
-            response.headers['Cache-Control'] = 'no-cache'
+            response.headers['Cache-Control'] = 'private, no-cache'
             response.headers['Pragma'] = 'no-cache'
 
         # save the result of this page to the pagecache if possible.  we
