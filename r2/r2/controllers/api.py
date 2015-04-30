@@ -3475,6 +3475,9 @@ class ApiController(RedditController):
             if form.has_errors("link", errors.BAD_FLAIR_TARGET):
                 return
 
+            if not c.user_is_admin and not link.can_flair_slow(c.user):
+                abort(403)
+
             link.set_flair(text, css_class, set_by=c.user)
         else:
             if form.has_errors("name", errors.BAD_FLAIR_TARGET):
