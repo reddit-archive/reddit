@@ -20,6 +20,8 @@ r.analytics = {
     if (r.config.ads_virtual_page) {
       r.analytics.fireFunnelEvent('ads', r.config.ads_virtual_page);
     }
+
+    r.analytics.stripAnalyticsParams();
   },
 
   _eventPredicates: {},
@@ -205,6 +207,23 @@ r.analytics = {
     );
   },
 
+  // If we passed along referring tags to this page, after it's loaded, remove them from the URL so that 
+  // the user can have a clean, copy-pastable URL. This will also help avoid erroneous analytics if they paste the URL
+  // in an email or something.
+  stripAnalyticsParams: function() {
+    var hasReplaceState = !!(window.history && window.history.replaceState);
+    var params = $.url().param();
+    var stripParams = ['ref'];
+    var strippedParams = _.omit(params, stripParams);
+
+    if (hasReplaceState && !_.isEqual(params, strippedParams)) {
+      var a = document.createElement('a');
+      a.href = window.location.href;
+      a.search = $.param(strippedParams);
+
+      window.history.replaceState({}, document.title, a.href);
+    }
+  }
 };
 
 r.analytics.breadcrumbs = {

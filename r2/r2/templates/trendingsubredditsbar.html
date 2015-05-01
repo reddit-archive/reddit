@@ -26,8 +26,8 @@
   <div class="trending-subreddits-content">
     <strong>${_('trending subreddits')}</strong>
     <ul>
-    %for subreddit_name in thing.subreddit_names:
-      <li><a href="/r/${subreddit_name}" target="_blank">/r/${subreddit_name}</a></li>
+    %for i, subreddit_name in enumerate(thing.subreddit_names):
+      <li><a href="/r/${subreddit_name}?ref=trending_sr_${i+1}" target="_blank">/r/${subreddit_name}</a></li>
     %endfor
     </ul>
     <a href="${thing.comment_url}" class="${thing.comment_label_cls}">${thing.comment_label}</a>
