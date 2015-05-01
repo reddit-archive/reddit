@@ -80,6 +80,11 @@ class World(object):
             return False
         return user.employee
 
+    def user_has_beta_enabled(self, user):
+        if not user:
+            return False
+        return user.pref_beta
+
     def has_gold(self, user):
         if not user:
             return False

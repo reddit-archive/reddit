@@ -96,6 +96,20 @@ class TestFeature(unittest.TestCase):
         feature_state = self._make_state(cfg, mock_world)
         self.assertFalse(feature_state.is_enabled(user=gary))
 
+    def test_beta_enabled(self):
+        cfg = {'beta': True}
+        mock_world = self.world()
+        mock_world.user_has_beta_enabled = mock.Mock(return_value=True)
+        feature_state = self._make_state(cfg, mock_world)
+        self.assertTrue(feature_state.is_enabled(user=gary))
+
+    def test_beta_disabled(self):
+        cfg = {'beta': True}
+        mock_world = self.world()
+        mock_world.user_has_beta_enabled = mock.Mock(return_value=False)
+        feature_state = self._make_state(cfg, mock_world)
+        self.assertFalse(feature_state.is_enabled(user=gary))
+
     def test_gold_enabled(self):
         cfg = {'gold': True}
         mock_world = self.world()

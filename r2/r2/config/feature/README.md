@@ -54,6 +54,9 @@ feature_some_flag = {"employee": true}
 # On for gold users
 feature_some_flag = {"gold": true}
 
+# On for users with the beta preference enabled
+feature_some_flag = {"beta": true}
+
 # On by URL, like ?feature=public_flag_name
 feature_some_flag = {"url": "public_flag_name"}
 

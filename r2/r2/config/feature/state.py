@@ -96,6 +96,9 @@ class FeatureState(object):
         if cfg.get('employee') and world.is_employee(user):
             return True
 
+        if cfg.get('beta') and world.user_has_beta_enabled(user):
+            return True
+
         if cfg.get('gold') and world.has_gold(user):
             return True
 
