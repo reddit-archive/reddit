@@ -337,6 +337,26 @@ ul.flat-vert {text-align: left;}
 .user .userkarma {
     font-weight: bold;
 }
+.beta-hint {
+    position: absolute;
+    margin-left: -22px;
+    width: 46px;
+    height: 25px;
+
+    opacity: 0.8;
+    &:hover {
+        opacity: 1;
+    }
+
+    a {
+        .c-hide-text();
+        display: inline-block;
+        width: 20px;
+        height: 13px;
+        background: transparent data-uri('../flask.svg') center left no-repeat;
+        background-size: contain;
+    }
+}
 
 .pagename {
     font-weight: bold;
@@ -1381,6 +1401,10 @@ body.with-listing-chooser.explore-page #header .pagename {
 
     p, form {
         margin: .5em;
+    }
+
+    a {
+      font-weight: bold;
     }
 
     a:hover {

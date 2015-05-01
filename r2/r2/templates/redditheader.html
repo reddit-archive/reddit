@@ -82,6 +82,22 @@
       ${separator("|")}
       %endif
     %else:
+      %if feature.is_enabled('beta_opt_in') and c.user.pref_beta:
+        <div class="beta-hint help help-hoverable">
+          <a class="beta-link" href="/r/${g.beta_sr}">beta</a>
+          <div id="beta-help" class="hover-bubble help-bubble anchor-top">
+            <div class="help-section">
+              <p>${_("You're in beta mode! Thanks for helping to test reddit.")}</p>
+              <p>
+              ${text_with_links(_("Please give feedback at %(beta_link)s, or %(learn_more_link)s."),
+                  beta_link = dict(link_text="/r/" + g.beta_sr, path="/r/" + g.beta_sr),
+                  learn_more_link = dict(link_text=_("learn more on the wiki"), path="/r/" + g.beta_sr + "/wiki")
+                )}
+              </p>
+            </div>
+          </div>
+        </div>
+      %endif
       <span class="user">
          ${plain_link(c.user.name, "/user/%s/" % c.user.name, _sr_path=False)}
          &nbsp;(<span class="userkarma" title="${_("link karma")}">${format_number(display_link_karma(c.user.link_karma))}</span>)

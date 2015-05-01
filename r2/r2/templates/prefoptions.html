@@ -340,6 +340,23 @@
       </span>
     </td>
   </tr>
+  % if feature.is_enabled('beta_opt_in'):
+  <tr>
+    <th>${_("beta options")}</th>
+    <td class="prefright">
+      ${checkbox(_("I would like to beta test features for reddit"), "beta")}
+      &#32;
+      <span class="details">
+        <%
+          beta_sr_link = format_html('&#32;<a href="/r/%s">/r/%s</a>&#32;', g.beta_sr, g.beta_sr)
+        %>
+        (${_wsf("by enabling you'll be subscribed to %(beta_sr_link)s automatically.", beta_sr_link=beta_sr_link)}
+          &#32;
+          <a href="/r/${g.beta_sr}/wiki">${_("details on the /r/{beta_sr} wiki").format(beta_sr=g.beta_sr)}</a>)
+      </span>
+    </td>
+  </tr>
+  %endif
   %endif
 
   %if c.user.gold:
