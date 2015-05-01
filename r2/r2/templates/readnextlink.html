@@ -20,9 +20,9 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%namespace file="utils.html" import="thumbnail_img" />
+<%namespace file="utils.html" import="thumbnail_img, nsfw_stamp" />
 
-<a class="read-next-link" href="${thing.permalink}">
+<a class="read-next-link" href="${thing.permalink}?ref=readnext">
   <div class="read-next-meta">
     <span class="score">${thing.score} points</span>&#32;
     %if thing.num_comments:
@@ -34,6 +34,9 @@
     ${self.thumbnail()}
   %endif
   <div class="read-next-title">
+    %if thing.over_18:
+      <span class="nsfw-stamp">${nsfw_stamp()}</span>&#32;
+    %endif
     ${thing.title}
   </div>
 </a>

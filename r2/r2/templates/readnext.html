@@ -26,14 +26,16 @@
   <aside class="read-next">
     <header class="read-next-header">
       <div class="read-next-header-title">
-        ${_("also in")}&#32;
-        ${plain_link(thing.sr.name, thing.sr.path, _sr_path=False)}
+        ${_("discussions in")}&#32;
+        ${plain_link('/r/%s' % thing.sr.name, thing.sr.path, _sr_path=False)}
       </div>
-      <nav class="read-next-nav">
+      <nav class="read-next-nav read-next-nav-left">
         <span class="read-next-button prev">&lt;</span>
         <span class="read-next-button next">&gt;</span>
-        <span class="read-next-dismiss">X</span>
       </nav>
+      <div class="read-next-nav read-next-nav-right">
+        <span class="read-next-dismiss">X</span>
+      </div>
     </header>
     <div class="read-next-list">
       ${unsafe(thing.links)}

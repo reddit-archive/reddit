@@ -193,6 +193,7 @@ r.ui.ReadNext = Backbone.View.extend({
         this.state.set({
             index: currentIndex = (currentIndex + 1) % numLinks,
         });
+        r.analytics.fireGAEvent('readnext', 'nav-next');
     },
 
     prev: function() {
@@ -201,11 +202,13 @@ r.ui.ReadNext = Backbone.View.extend({
         this.state.set({
             index: currentIndex = (currentIndex + numLinks - 1) % numLinks,
         });
+        r.analytics.fireGAEvent('readnext', 'nav-prev');
     },
 
     dismiss: function() {
         this.$el.fadeOut();
         window.removeEventListener('scroll', this.updateScroll);
+        r.analytics.fireGAEvent('readnext', 'dismiss');
     },
 
     updateScroll: function() {

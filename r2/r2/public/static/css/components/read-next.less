@@ -6,7 +6,7 @@
 @read-next-height: 100px;
 @read-next-width: 300px;
 @read-next-link-height: 60px;
-@read-next-thumbnail-size: 50px;
+@read-next-thumbnail-size: 45px;
 @zindex-read-next: @zindex-modal - 1;
 
 @read-next-font-base: @font-x-small;
@@ -51,6 +51,10 @@
 
   .read-next-header-title {
     .read-next-font-size(@read-next-font-base, @read-next-line-large);
+    margin-left: (@read-next-line-base + @margin-x-small) * 2px;
+    position: relative;
+    // magic number, but it looks better ;_;
+    top: -2px;
   }
 
   .read-next-title {
@@ -64,8 +68,23 @@
   .read-next-nav {
     .read-next-font-size(@read-next-font-small);
     position: absolute;
-    right: @margin-x-small * 1px;
     top: @margin-x-small * 1px;
+  }
+
+  .read-next-nav-right {
+    right: @margin-x-small * 1px;
+
+    > * {
+      margin-left: @margin-x-small * 1px;
+    }
+  }
+
+  .read-next-nav-left {
+    left: @margin-x-small * 1px;
+     
+    > * {
+      margin-right: @margin-x-small * 1px;
+    }
   }
 
   .read-next-dismiss,
@@ -75,7 +94,6 @@
     cursor: pointer;
     display: inline-block;
     height: @read-next-line-base * 1px;
-    margin-left: @margin-x-small * 1px;
     position: relative;
     text-align: center;
     width: @read-next-line-base * 1px;
