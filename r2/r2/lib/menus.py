@@ -97,6 +97,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      jobs         = _('jobs'),
                      transparency = _("transparency"),
                      source_code  = _("source code"),
+                     values       = _("values"),
 
                      #preferences
                      options      = _('options'),

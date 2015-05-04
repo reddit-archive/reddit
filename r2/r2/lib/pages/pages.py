@@ -1087,6 +1087,7 @@ class RedditFooter(CachedTemplate):
             NavMenu([
                     NamedButton("blog", False, dest="/blog"),
                     NamedButton("about", False),
+                    NamedButton("values", False, dest="/about/values"),
                     NamedButton("team", False, dest="/about/team"),
                     NamedButton("source_code", False, dest="/code"),
                     NamedButton("advertising", False),
