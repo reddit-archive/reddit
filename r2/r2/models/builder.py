@@ -983,25 +983,30 @@ class CommentBuilder(Builder):
             comment.num_children = num_children[comment._id]
             comment.edits_visible = self.edits_visible
 
+            parent = wrapped_by_id.get(comment.parent_id)
+
             # In the Q&A sort type, we want to collapse all comments other than
             # those that are:
             #
             # 1. Top-level comments,
             # 2. Responses from the OP(s),
-            # 3. Responded to by the OP(s) (dealt with below), or
-            # 4. Otherwise normally prevented from collapse (eg distinguished
+            # 3. Responded to by the OP(s) (dealt with below),
+            # 4. Within one level of an OP reply, or
+            # 5. Otherwise normally prevented from collapse (eg distinguished
             #    comments).
             if (qa_sort_hiding and
-                   depth[comment._id] != 0 and # (1)
-                   comment.author_id not in special_responder_ids and # (2)
-                   not comment.prevent_collapse): # (4)
+                    depth[comment._id] != 0 and  # (1)
+                    comment.author_id not in special_responder_ids and  # (2)
+                    not (parent and
+                         parent.author_id in special_responder_ids and
+                         feature.is_enabled('qa_show_replies')) and  # (4)
+                    not comment.prevent_collapse):  # (5)
                 comment.hidden = True
 
             if comment.collapsed and comment._id in dont_collapse:
                 comment.collapsed = False
                 comment.hidden = False
 
-            parent = wrapped_by_id.get(comment.parent_id)
             if parent:
                 if (qa_sort_hiding and
                         comment.author_id in special_responder_ids):
