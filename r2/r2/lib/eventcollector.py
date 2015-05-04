@@ -218,6 +218,9 @@ class EventPublisher(object):
     def publish(self, events):
         for some_events in self._chunk_events(events):
             resp = self._publish(some_events)
+            # read from resp.content, so that the connection can be re-used
+            # http://docs.python-requests.org/en/latest/user/advanced/#keep-alive
+            ignored = resp.content
             yield resp, some_events
 
 
