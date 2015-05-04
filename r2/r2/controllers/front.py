@@ -369,6 +369,14 @@ class FrontController(RedditController):
         else:
             suggested_sort = None
 
+        # Special override: if the suggested sort is Q&A, and a responder of
+        # the thread is viewing it, we don't want to suggest to them to view
+        # the thread in Q&A mode (as it hides many unanswered questions)
+        if (suggested_sort == "qa" and
+                c.user_is_loggedin and
+                c.user._id in article.responder_ids):
+            suggested_sort = None
+
         if article.contest_mode:
             if c.user_is_loggedin and sr.is_moderator(c.user):
                 # Default to top for contest mode to make determining winners
