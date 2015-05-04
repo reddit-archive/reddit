@@ -582,9 +582,14 @@ class RuleTarget(object):
                 setattr(self, key, None)
 
         # special handling for set_flair
-        if self.set_flair:
+        if self.set_flair is not None:
             if isinstance(self.set_flair, basestring):
                 self.set_flair = [self.set_flair, ""]
+
+            # handle 0 or 1 item lists
+            while len(self.set_flair) < 2:
+                self.set_flair.append("")
+
             self.set_flair = {
                 "text": self.set_flair[0],
                 "class": self.set_flair[1],
