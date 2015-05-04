@@ -536,6 +536,8 @@ class RuleTarget(object):
 
         if not values:
             values = {}
+        else:
+            values = values.copy()
 
         # determine patterns that will be matched against fields
         self.match_patterns = self.get_match_patterns(values)
