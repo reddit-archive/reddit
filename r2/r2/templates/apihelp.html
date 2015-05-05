@@ -198,6 +198,14 @@ example, `t3_15bfi0`.
       </tr>
       % endfor
     </table>
+
+    <h3 id="response_body_encoding">response body encoding</h3>
+
+    <%text filter="safemarkdown">
+For legacy reasons, all JSON response bodies currently have `<`, `>`, and `&`
+replaced with `&lt;`, `&gt;`, and `&amp;`, respectively. If you wish to opt out
+of this behaviour, add a `raw_json=1` parameter to your request.
+    </%text>
   </div>
 
   <div class="section methods">

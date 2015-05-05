@@ -42,7 +42,12 @@ try:
         PAGECACHE_POLICY,
     )
     from r2.lib.errors import ErrorSet
-    from r2.lib.filters import websafe_json, websafe, safemarkdown
+    from r2.lib.filters import (
+        safemarkdown,
+        scriptsafe_dumps,
+        websafe,
+        websafe_json,
+    )
     from r2.lib import log, pages
     from r2.lib.strings import rand_strings
     from r2.lib.template_helpers import static
@@ -211,6 +216,8 @@ class ErrorController(RedditController):
                 return str(code)
             elif c.render_style in extensions.API_TYPES:
                 data = request.environ.get('extra_error_data', {'error': code})
+                if request.environ.get("WANT_RAW_JSON"):
+                    return scriptsafe_dumps(data)
                 return websafe_json(json.dumps(data))
             elif takedown and code == 404:
                 link = Link._by_fullname(takedown)

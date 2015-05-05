@@ -55,7 +55,7 @@ from r2.lib.errors import (
     errors,
     reddit_http_error,
 )
-from r2.lib.filters import _force_utf8, _force_unicode
+from r2.lib.filters import _force_utf8, _force_unicode, scriptsafe_dumps
 from r2.lib.require import RequirementException, require, require_split
 from r2.lib.strings import strings
 from r2.lib.template_helpers import add_sr, JSPreload
@@ -989,6 +989,7 @@ class MinimalController(BaseController):
                         c.extension,
                         c.render_style,
                         location,
+                        request.environ.get("WANT_RAW_JSON"),
                         cookies_key)
 
     def cached_response(self):
@@ -1100,6 +1101,11 @@ class MinimalController(BaseController):
         if not c.error_page:
             ratelimit_throttled()
             ratelimit_agents()
+
+        # Allow opting out of the `websafe_json` madness
+        if "WANT_RAW_JSON" not in request.environ:
+            want_raw_json = request.params.get("raw_json", "") == "1"
+            request.environ["WANT_RAW_JSON"] = want_raw_json
 
         c.allow_framing = False
 
@@ -1351,8 +1357,9 @@ class MinimalController(BaseController):
         return request.path + utils.query_string(merged)
 
     def api_wrapper(self, kw):
-        data = simplejson.dumps(kw)
-        return filters.websafe_json(data)
+        if request.environ.get("WANT_RAW_JSON"):
+            return scriptsafe_dumps(kw)
+        return filters.websafe_json(simplejson.dumps(kw))
 
     def should_update_last_visit(self):
         if g.disallow_db_writes:

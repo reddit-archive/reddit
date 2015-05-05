@@ -102,6 +102,7 @@ from r2.lib import hooks, inventory, media
 from r2.lib import promote, tracking
 from r2.lib.captcha import get_iden
 from r2.lib.filters import (
+    scriptsafe_dumps,
     spaceCompress,
     _force_unicode,
     _force_utf8,
@@ -178,7 +179,12 @@ def responsive(res, space_compress=None):
         space_compress = not g.template_debug
 
     if is_api():
-        res = websafe_json(simplejson.dumps(res or ''))
+        res = res or u''
+        if not c.allowed_callback and request.environ.get("WANT_RAW_JSON"):
+            res = scriptsafe_dumps(res)
+        else:
+            res = websafe_json(simplejson.dumps(res))
+
         if c.allowed_callback:
             # Add a comment to the beginning to prevent the "Rosetta Flash"
             # XSS when an attacker controls the beginning of a resource
