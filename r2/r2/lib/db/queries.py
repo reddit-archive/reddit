@@ -547,10 +547,7 @@ def get_user_actions(user, sort, time):
                 results.append(thing + (action_type,))
                 unique_ids.add(thing[0])
 
-    comparator = ThingTupleComparator(actions_by_type[0][0])
-    results.sort(cmp=comparator)
-
-    return results
+    return sorted(results, key=lambda x: x[1], reverse=True)
 
 
 def get_overview(user, sort, time):
