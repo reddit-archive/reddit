@@ -625,8 +625,6 @@ class Globals(object):
             self.secrets = extract_secrets(parser)
             self.throttles = tuple()  # immutable since it's not real
 
-        self.startup_timer.intermediate("zookeeper")
-
         ################# PRIVILEGED USERS
         self.admins = PermissionFilteredEmployeeList(
             self.live_config, type="admin")
@@ -634,6 +632,8 @@ class Globals(object):
             self.live_config, type="sponsor")
         self.employees = PermissionFilteredEmployeeList(
             self.live_config, type="employee")
+
+        self.startup_timer.intermediate("zookeeper")
 
         ################# MEMCACHE
         num_mc_clients = self.num_mc_clients
