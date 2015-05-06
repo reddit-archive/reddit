@@ -339,9 +339,8 @@ ul.flat-vert {text-align: left;}
 }
 .beta-hint {
     position: absolute;
-    margin-left: -22px;
-    width: 46px;
-    height: 25px;
+    cursor: inherit;
+    height: 24px;
 
     opacity: 0.8;
     &:hover {
@@ -349,7 +348,11 @@ ul.flat-vert {text-align: left;}
     }
 
     a {
-        .c-hide-text();
+        position: absolute;
+        text-indent: 24px;
+        white-space: nowrap;
+        overflow: hidden;
+        margin-left: -24px;
         display: inline-block;
         width: 20px;
         height: 13px;
