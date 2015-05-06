@@ -788,22 +788,28 @@ class RuleTarget(object):
 
     def check_account_thresholds(self, account, data):
         """Check karma/age thresholds against an account."""
-        # don't check banned accounts
+        thresholds = ["comment_karma", "link_karma", "combined_karma",
+            "account_age"]
+        # figure out which thresholds/values we need to check against
+        checks = {}
+        for threshold in thresholds:
+            compare_value = getattr(self, threshold, None)
+            if compare_value is not None:
+                checks[threshold] = compare_value
+
+        # if we don't need to actually check anything, just return True
+        if not checks:
+            return True
+
+        # banned accounts should never satisfy threshold checks
         if account._spam:
             return False
 
-        checks = ["comment_karma", "link_karma", "combined_karma",
-            "account_age"]
-
-        for check in checks:
-            compare = getattr(self, check, None)
-            if not compare:
-                continue
-
-            match = re.match(self._operator_regex, compare)
+        for check, compare_value in checks.iteritems():
+            match = re.match(self._operator_regex, compare_value)
             if match:
                 operator = match.group(1)
-                compare = compare[len(operator):].strip()
+                compare_value = compare_value[len(operator):].strip()
             if not match or operator == "==":
                 operator = "="
 
@@ -811,23 +817,23 @@ class RuleTarget(object):
             if check == "account_age":
                 # if it's just a number, default to days
                 try:
-                    compare = int(compare)
-                    compare = "%s days" % compare
+                    compare_value = int(compare_value)
+                    compare_value = "%s days" % compare_value
                 except ValueError:
                     pass
 
-                compare = timeinterval_fromstr(compare)
+                compare_value = timeinterval_fromstr(compare_value)
             else:
-                compare = int(compare)
+                compare_value = int(compare_value)
 
             value = self.get_field_value_from_item(account, data, check)
 
             if operator == "<":
-                result = value < compare
+                result = value < compare_value
             elif operator == ">":
-                result = value > compare
+                result = value > compare_value
             elif operator == "=":
-                result = value == compare
+                result = value == compare_value
 
             # if satisfy_any_threshold is True, we can return True as soon
             # as a single check is successful. If it's False, they all need
