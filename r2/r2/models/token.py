@@ -30,6 +30,7 @@ from pycassa.system_manager import ASCII_TYPE, DATE_TYPE, UTF8_TYPE
 from pylons import g, c
 from pylons.i18n import _
 
+from r2.lib import hooks
 from r2.lib.db import tdb_cassandra
 from r2.lib.db.thing import NotFound
 from r2.models.account import Account
@@ -662,6 +663,8 @@ class OAuth2AccessToken(Token):
                 pass
             else:
                 tba._commit()
+
+        hooks.get_hook("oauth2.revoke_token").call(token=self)
 
     @classmethod
     def revoke_all_by_user(cls, account):
