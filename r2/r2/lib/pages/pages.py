@@ -2206,6 +2206,14 @@ class ProfileBar(Templated):
                 msg = msg % dict(creddits=user.gold_creddits)
                 self.gold_creddit_message = msg
 
+            if user.num_gildings > 0 and self.show_private_info:
+                gildings_msg = ungettext(
+                    "%(gildings)s gilding given out",
+                    "%(gildings)s gildings given out",
+                    user.num_gildings)
+                gildings_msg = gildings_msg % dict(gildings=user.num_gildings)
+                self.num_gildings_message = gildings_msg
+
             if not self.viewing_self:
                 self.goldlink = "/gold?goldtype=gift&recipient=" + user.name
                 self.giftmsg = _("give reddit gold to %(user)s to show "

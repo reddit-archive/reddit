@@ -140,6 +140,12 @@
           ${plain_link(thing.gold_creddit_message, "/gold?goldtype=gift")}
         </div>
       %endif
+      %if hasattr(thing, "num_gildings_message"):
+        <div>
+          <br>
+          ${thing.num_gildings_message}
+        </div>
+      %endif
     </div>
   %endif
 
