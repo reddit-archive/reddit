@@ -45,7 +45,7 @@ from r2.lib.memoize import memoize
 from r2.lib.permissions import ModeratorPermissionSet
 from r2.lib.utils import tup, last_modified_multi, fuzz_activity, \
     unicode_title_to_ascii
-from r2.lib.utils import timeago, summarize_markdown
+from r2.lib.utils import timeago, summarize_markdown, in_chunks
 from r2.lib.cache import sgm, TransitionalCache
 from r2.lib.strings import strings, Score
 from r2.lib.filters import _force_unicode
@@ -408,24 +408,26 @@ class Subreddit(Thing, Printable, BaseSite):
                     g.log.debug("Subreddit._by_name() ignoring invalid srname: %s", lname)
 
         if to_fetch:
-            def _fetch(lnames):
-                q = cls._query(lower(cls.c.name) == lnames,
-                               cls.c._spam == (True, False),
-                               limit = len(lnames),
-                               data=True)
-                try:
-                    srs = list(q)
-                except UnicodeEncodeError:
-                    print "Error looking up SRs %r" % (lnames,)
-                    raise
+            srids_by_name = g.cache.get_multi(
+                to_fetch.keys(), prefix='subreddit.byname', stale=True)
 
-                return dict((sr.name.lower(), sr._id)
-                            for sr in srs)
+            missing_srnames = set(to_fetch.keys()) - set(srids_by_name.keys())
+            if missing_srnames:
+                for srnames in in_chunks(missing_srnames, size=10):
+                    q = cls._query(
+                        lower(cls.c.name) == srnames,
+                        cls.c._spam == (True, False),
+                        limit=len(srnames),
+                        data=True,
+                    )
+                    fetched = {sr.name.lower(): sr._id for sr in q}
+                    srids_by_name.update(fetched)
+                    g.cache.set_multi(fetched, prefix='subreddit.byname')
 
             srs = {}
-            srids = sgm(g.cache, to_fetch.keys(), _fetch, prefix='subreddit.byname', stale=True)
+            srids = srids_by_name.values()
             if srids:
-                srs = cls._byID(srids.values(), data=True, return_dict=False, stale=stale)
+                srs = cls._byID(srids, data=True, return_dict=False, stale=stale)
 
             for sr in srs:
                 ret[to_fetch[sr.name.lower()]] = sr
