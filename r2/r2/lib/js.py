@@ -531,13 +531,6 @@ module["mobile"] = LocalizedModule("mobile.js",
 )
 
 
-module["button"] = Module("button.js",
-    "lib/jquery.cookie.js",
-    "jquery.reddit.js",
-    "blogbutton.js"
-)
-
-
 module["policies"] = Module("policies.js",
     "policies.js",
 )
