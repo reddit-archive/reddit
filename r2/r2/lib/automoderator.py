@@ -1140,8 +1140,11 @@ class Rule(object):
         if isinstance(not_author, (list, basestring)):
             author["~name"] = not_author
 
+        approve_banned = False
         if author:
             self.targets["author"] = RuleTarget(Account, author, self)
+            # only approve banned users' posts if an author name check is done
+            approve_banned = ("name" in self.targets["author"].match_fields)
 
         parent_submission = values.pop("parent_submission", None)
         if parent_submission:
@@ -1161,8 +1164,7 @@ class Rule(object):
             self.base_target_type,
             values,
             self,
-            # only approve banned users' posts if an author name check is done
-            approve_banned=("name" in author),
+            approve_banned=approve_banned,
         )
 
     @property
