@@ -103,7 +103,7 @@
     %endif
   %endif
 
-  %if thing.show_users_gold_expiration and (thing.user.gold or thing.user.gold_creddits > 0):
+  %if thing.show_users_gold_expiration and (thing.user.gold or thing.user.gold_creddits > 0 or thing.user.num_gildings > 0):
     <div class="rounded gold-accent gold-expiration-info">
       %if hasattr(thing, "gold_remaining"):
         <div class="gold-remaining" title="${thing.user.gold_expiration.strftime('%Y-%m-%d')}">
@@ -142,7 +142,6 @@
       %endif
       %if hasattr(thing, "num_gildings_message"):
         <div>
-          <br>
           ${thing.num_gildings_message}
         </div>
       %endif
