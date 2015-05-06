@@ -45,7 +45,7 @@ from r2.lib.comment_tree import (
 from r2.lib.wrapped import Wrapped
 from r2.lib.db import operators, tdb_cassandra
 from r2.lib.filters import _force_unicode
-from r2.lib.utils import Storage, timesince, tup
+from r2.lib.utils import Storage, timesince, tup, to36
 from r2.lib.utils.comment_tree_utils import get_num_children
 
 from r2.models import (
@@ -950,6 +950,15 @@ class CommentBuilder(Builder):
         wrapped = self.wrap_items(comments)
         timer.intermediate("wrap_comments")
         wrapped_by_id = {comment._id: comment for comment in wrapped}
+
+        if self.children:
+            # rewrite the parent links to use anchor tags
+            for comment_id in self.children:
+                if comment_id in wrapped_by_id:
+                    item = wrapped_by_id[comment_id]
+                    if item.parent_id:
+                        item.parent_permalink = '#' + to36(item.parent_id)
+
         final = []
 
         # We have some special collapsing rules for the Q&A sort type.
