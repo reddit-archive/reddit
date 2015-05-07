@@ -1009,6 +1009,10 @@ class FrontController(RedditController):
         else:
             result_types = {'link'}
 
+        # no subreddit results if fielded search or structured syntax
+        if syntax == 'cloudsearch' or (query and ':' in query):
+            result_types = result_types - {'sr'}
+
         # combined results on first page only
         if not after and not restrict_sr and result_types == {'link', 'sr'}:
             # hardcoded to 5 subreddits (or fewer)
@@ -1069,7 +1073,7 @@ class FrontController(RedditController):
 
         # extra search request for subreddit results
         if sr_num > 0 and has_query:
-            sr_q = SubredditSearchQuery(query, sort='relevance', faceting={},
+            sr_q = SubredditSearchQuery(query, sort='rel1', faceting={},
                                         include_over18=include_over18)
             subreddits = self._search(sr_q, num=sr_num, reverse=reverse,
                                       after=after, count=count, type='sr',
