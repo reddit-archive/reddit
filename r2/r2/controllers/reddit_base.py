@@ -678,7 +678,8 @@ def paginated_listing(default_page_size=25, max_page_size=100, backend='sql'):
                   before=VByName('before', backend=backend),
                   count=VCount('count'),
                   target=VTarget("target"),
-                  sr_detail=VBoolean("sr_detail"),
+                  sr_detail=VBoolean(
+                      "sr_detail", docs={"sr_detail": "(optional) expand subreddits"}),
                   show=VLength('show', 3, empty_error=None,
                                docs={"show": "(optional) the string `all`"}),
         )
