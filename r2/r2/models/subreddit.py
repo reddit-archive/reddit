@@ -39,7 +39,7 @@ from account import Account, AccountsActiveBySR, FakeAccount
 from printable import Printable
 from r2.lib.db.userrel import UserRel
 from r2.lib.db.operators import lower, or_, and_, not_, desc
-from r2.lib.errors import UserRequiredException
+from r2.lib.errors import UserRequiredException, RedditError
 from r2.lib.geoip import location_by_ips
 from r2.lib.memoize import memoize
 from r2.lib.permissions import ModeratorPermissionSet
@@ -1682,8 +1682,11 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
     """Thing with special columns that hold Subreddit ids and properties."""
     _use_db = True
     _views = []
-    _defaults = dict(MultiReddit._defaults,
+    _bool_props = ('is_symlink', )
+    _defaults = dict(
+        MultiReddit._defaults,
         visibility='private',
+        is_symlink=False,
         description_md='',
         display_name='',
         copied_from=None,
@@ -1715,13 +1718,15 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         self._owner = None
 
     @classmethod
-    def _byID(cls, ids, return_dict=True, properties=None, load_subreddits=True):
+    def _byID(cls, ids, return_dict=True, properties=None, load_subreddits=True,
+              load_linked_multis=True):
         ret = super(cls, cls)._byID(ids, return_dict=False,
                                     properties=properties)
         if not ret:
             return
 
-        ret = cls._load(ret, load_subreddits=load_subreddits)
+        ret = cls._load(ret, load_subreddits=load_subreddits,
+                        load_linked_multis=load_linked_multis)
         if isinstance(ret, cls):
             return ret
         elif return_dict:
@@ -1730,7 +1735,7 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
             return ret
 
     @classmethod
-    def _load(cls, things, load_subreddits=True):
+    def _load(cls, things, load_subreddits=True, load_linked_multis=True):
         things, single = tup(things, ret_is_single=True)
 
         # some objects are being loaded for the first time and need basic setup
@@ -1743,6 +1748,16 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
                 if t in never_loaded:
                     t._owner = owners[t.owner_fullname]
                     t._srs_loaded = False
+                    t._linked_multi = None
+
+        if load_linked_multis:
+            needs_linked_multis = [t.copied_from for t in things
+                                   if t.is_symlink and not t._linked_multi]
+            if needs_linked_multis:
+                multis = LabeledMulti._byID(needs_linked_multis, return_dict=True)
+                for t in things:
+                    if t.copied_from in needs_linked_multis:
+                        t._linked_multi = multis[t.copied_from]
 
         # some objects may have been retrieved from cache and need srs
         if load_subreddits:
@@ -1760,11 +1775,24 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         return things[0] if single else things
 
     @property
+    def linked_multi(self):
+        return self._linked_multi
+
+    @property
     def sr_ids(self):
         return self.sr_props.keys()
 
     @property
     def srs(self):
+        if self.is_symlink:
+            if (not self.copied_from or self.copied_from == self._id
+                    or not self.linked_multi):
+                raise RedditError("Upstream symlinked multi can't be retrieved.")
+            if not self.linked_multi.can_view(self.owner):
+                raise RedditError("Upstream symlinked multi is not visible.")
+
+            return self.linked_multi.srs
+
         if not self._srs_loaded:
             g.log.error("%s: accessed subreddits without loading", self)
             self._srs = Subreddit._byID(
@@ -1779,6 +1807,9 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
     def sr_columns(self):
         # limit to max subreddit count, allowing a little fudge room for
         # cassandra inconsistency
+        if self.is_symlink:
+            return self.linked_multi.sr_columns
+
         remaining = self.MAX_SR_COUNT + 10
         sr_columns = {}
         for k, v in self._t.iteritems():
@@ -1924,13 +1955,24 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         return obj
 
     @classmethod
-    def copy(cls, path, multi, owner):
-        obj = cls(_id=path, **multi._t)
-        obj.owner_fullname = owner._fullname
-        obj._commit()
-        obj._owner = owner
+    def copy(cls, path, multi, owner, symlink=False):
+        if symlink:
+            # remove all the sr_ids from the properties
+            props = {k: v for k, v in multi._t.iteritems()
+                     if k not in multi.sr_columns.keys()}
+            props["is_symlink"] = True
+        else:
+            props = multi._t
+
+        obj = cls(_id=path, **props)
         obj._srs = multi._srs
         obj._srs_loaded = multi._srs_loaded
+        obj.owner_fullname = owner._fullname
+        obj.copied_from = multi.path
+        obj._commit()
+        obj._linked_multi = multi if symlink else None
+        obj._owner = owner
+
         return obj
 
     @classmethod
@@ -1976,8 +2018,22 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         for view in self._views:
             view.add_object(self)
 
+    def unlink(self):
+        if not self.is_symlink:
+            return
+
+        self._srs = self.srs
+        sr_props = dict.fromkeys(self.srs, {})
+        sr_ids, sr_columns = self.sr_props_to_columns(sr_props)
+        for attr, val in sr_columns.iteritems():
+            self.__setattr__(attr, val)
+
+        self.is_symlink = False
+
     def add_srs(self, sr_props):
         """Add/overwrite subreddit(s)."""
+        if self.is_symlink:
+            self.unlink()
         sr_ids, sr_columns = self.sr_props_to_columns(sr_props)
 
         if len(set(sr_columns) | set(self.sr_columns)) > self.MAX_SR_COUNT:
@@ -1993,6 +2049,9 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
 
     def del_srs(self, sr_ids):
         """Delete subreddit(s)."""
+        if self.is_symlink:
+            self.unlink()
+
         sr_props = dict.fromkeys(tup(sr_ids), {})
         sr_ids, sr_columns = self.sr_props_to_columns(sr_props)
 
