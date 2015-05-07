@@ -152,12 +152,17 @@ r.ui.highlightNewComments = function() {
 
 r.ui.initReadNext = function() {
     var $readNextContainer = $('.read-next-container');
+    var isDismissed = !!store.get('readnext.dismissed');
 
-    if ($readNextContainer.length) {
-        this.readNext = new r.ui.ReadNext({
-            el: $readNextContainer,
-        });
+    if (r.ui.isSmallScreen() || isDismissed || !$readNextContainer.length) {
+        return;
     }
+
+    this.readNext = new r.ui.ReadNext({
+        el: $readNextContainer,
+    });
+
+    $readNextContainer.addClass('active');
 };
 
 r.ui.ReadNext = Backbone.View.extend({
@@ -209,6 +214,7 @@ r.ui.ReadNext = Backbone.View.extend({
         this.$el.fadeOut();
         window.removeEventListener('scroll', this.updateScroll);
         r.analytics.fireGAEvent('readnext', 'dismiss');
+        store.set('readnext.dismissed', true);
     },
 
     updateScroll: function() {
