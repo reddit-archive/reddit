@@ -25,6 +25,7 @@ from datetime import datetime, timedelta
 import functools
 import httplib
 import json
+import socket
 import time
 import urllib
 
@@ -42,6 +43,7 @@ from r2.lib.providers.search.common import (
         Results,
         safe_get, 
         safe_xml_str,
+        SearchError,
         SearchHTTPError, 
         SubredditFields, 
     )
@@ -99,9 +101,11 @@ def basic_query(query=None, bq=None, faceting=None, size=1000,
                 if 'error' in response_json:
                     message = response_json['error'].get('msg', 'Unknown error')
                     raise InvalidQuery(resp.status, resp.reason, message,
-                                       path, response_json)
-            raise SearchHTTPError(resp.status, resp.reason, path,
-                                       response)
+                                       search_api, path, reasons)
+            raise SearchHTTPError(resp.status, resp.reason,
+                                  search_api, path, response)
+    except socket.error as e:
+        raise SearchError(e, search_api, path)
     finally:
         connection.close()
         if timer is not None:
@@ -258,10 +262,13 @@ class SolrSearchQuery(object):
         '''
         if not query:
             return Results([], 0, {})
-        response = basic_query(query=query, bq=bq, size=num, start=start,
+        try:
+            response = basic_query(query=query, bq=bq, size=num, start=start,
                                rank=sort, search_api=cls.search_api,
                                faceting=faceting, record_stats=True)
-
+        except (SearchHTTPError, SearchError) as e:
+            g.log.error("Search Error: %r", e)
+            raise
 
         hits = response['response']['numFound']
         docs = [doc['id'] for doc in response['response']['docs']]
@@ -820,7 +827,7 @@ class SolrSearchProvider(SearchProvider):
     }    
 
     InvalidQuery = (InvalidQuery,)
-    SearchException = (SearchHTTPError,)
+    SearchException = (SearchHTTPError, SearchError)
 
     SearchQuery = LinkSearchQuery
 

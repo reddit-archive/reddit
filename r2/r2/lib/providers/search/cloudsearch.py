@@ -26,6 +26,7 @@ import httplib
 import json
 from lxml import etree
 from pylons import g, c
+import socket
 import time
 import urllib
 
@@ -42,6 +43,7 @@ from r2.lib.providers.search.common import (
     Results,
     safe_get,
     safe_xml_str,
+    SearchError,
     SearchHTTPError,
     SubredditFields,
 )
@@ -476,9 +478,11 @@ def basic_query(query=None, bq=None, faceting=None, size=1000,
                 for message in messages:
                     if message['code'] in INVALID_QUERY_CODES:
                         raise InvalidQuery(resp.status, resp.reason, message,
-                                           path, reasons)
-            raise SearchHTTPError(resp.status, resp.reason, path,
-                                       response)
+                                           search_api, path, reasons)
+            raise SearchHTTPError(resp.status, resp.reason,
+                                  search_api, path, response)
+    except socket.error as e:
+        raise SearchError(e, search_api, path)
     finally:
         connection.close()
         if timer is not None:
@@ -677,10 +681,14 @@ class CloudSearchQuery(object):
                    u'rank': u'-text_relevance'}
         
         '''
-        response = basic_query(query=query, bq=bq, size=num, start=start,
-                               rank=sort, rank_expressions=rank_expressions,
-                               search_api=cls.search_api,
-                               faceting=faceting, record_stats=True)
+        try:
+            response = basic_query(query=query, bq=bq, size=num, start=start,
+                                   rank=sort, rank_expressions=rank_expressions,
+                                   search_api=cls.search_api,
+                                   faceting=faceting, record_stats=True)
+        except (SearchHTTPError, SearchError) as e:
+            g.log.error("Search Error: %r", e)
+            raise
 
         warnings = response['info'].get('messages', [])
         for warning in warnings:
@@ -803,7 +811,7 @@ class CloudSearchSubredditSearchQuery(CloudSearchQuery):
 class CloudSearchProvider(SearchProvider):
     '''Provider implementation: wrap it all up as a SearchProvider'''
     InvalidQuery = (InvalidQuery,)
-    SearchException = (SearchHTTPError,)
+    SearchException = (SearchHTTPError, SearchError)
 
     SearchQuery = LinkSearchQuery
 

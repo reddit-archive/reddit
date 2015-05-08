@@ -4185,9 +4185,12 @@ class ApiController(RedditController):
         exclude = Subreddit.default_subreddits()
 
         faceting = {"reddit":{"sort":"-sum(text_relevance)", "count":20}}
-        results = g.search.SearchQuery(query, sort="relevance",
-                                       faceting=faceting, num=0,
-                                       syntax="plain").run()
+        try:
+            results = g.search.SearchQuery(query, sort="relevance",
+                                           faceting=faceting, num=0,
+                                           syntax="plain").run()
+        except g.search.SearchException:
+            abort(500)
 
         sr_results = []
         for sr, count in results.subreddit_facets:

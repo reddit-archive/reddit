@@ -30,8 +30,18 @@ import re
 import r2.lib.utils as r2utils
 from r2.models import (Link, NotFound, Subreddit)
 
-class InvalidQuery(Exception): pass
-class SearchHTTPError(httplib.HTTPException): pass
+
+class InvalidQuery(Exception):
+    pass
+
+
+class SearchError(Exception):
+    pass
+
+
+class SearchHTTPError(httplib.HTTPException):
+    pass
+
 
 def safe_xml_str(s, use_encoding="utf-8"):
     '''Replace invalid-in-XML unicode control characters with '\uFFFD'.
