@@ -224,7 +224,7 @@ class EventPublisher(object):
             yield resp, some_events
 
 
-def process_events(g, timeout=5.0, max_event_size=5120, **kw):
+def process_events(g, timeout=5.0, max_event_size=4096, **kw):
     publisher = EventPublisher(
         g.events_collector_url,
         g.secrets["events_collector_key"],
