@@ -620,6 +620,12 @@ class RuleTarget(object):
         valid_fields = self._match_fields_by_type[self.target_type]
         fields = {field for field in fields if field in valid_fields}
 
+        if not fields:
+            raise AutoModeratorRuleTypeError(
+                "Can't search `%s` on this type" % key,
+                self.parent.yaml,
+            )
+
         modifiers = matches.group(2)
         if modifiers:
             modifiers = [mod.strip() for mod in modifiers.split(",")]
