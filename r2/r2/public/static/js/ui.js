@@ -13,10 +13,16 @@ r.ui.init = function() {
     var smallScreen = r.ui.isSmallScreen(),
         onFrontPage = $.url().attr('path') == '/'
     if (smallScreen && onFrontPage && r.config.renderstyle != 'compact') {
+        var a = document.createElement('a');
+        a.href = window.location;
+        a.host = 'm.' + r.config.cur_domain;
+        a.search += (a.search ? '&' : '?') + 'ref=mobile_suggest&ref_source=desktop'
+        var url = a.href;
+
         var infobar = $('<div class="infobar mellow">')
             .html(r.utils.formatMarkdownLinks(
                 r._("Looks like you're browsing on a small screen. Would you like to try [reddit's mobile interface](%(url)s)?").format({
-                    url: location + '.compact'
+                    url: url
                 })
             ))
         $('body > .content > :not(.infobar):first').before(infobar)
