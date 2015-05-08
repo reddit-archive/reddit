@@ -137,6 +137,9 @@ def js_config(extra_config=None):
     action_name = request.environ['pylons.routes_dict']['action']
     mac = hmac.new(g.secrets["action_name"], controller_name + '.' + action_name, hashlib.sha1)
     verification = mac.hexdigest()
+    cur_subreddit = ""
+    if isinstance(c.site, Subreddit) and not c.default_sr:
+        cur_subreddit = c.site.name
 
     config = {
         # is the user logged in?
@@ -144,7 +147,7 @@ def js_config(extra_config=None):
         # logged in user's id
         "user_id": user_id,
         # the subreddit's name (for posts)
-        "post_site": c.site.name if not c.default_sr else "",
+        "post_site": cur_subreddit,
         # the user's voting hash
         "modhash": c.modhash or False,
         # the current rendering style
