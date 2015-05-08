@@ -388,14 +388,19 @@ class TrimmedSubredditJsonTemplate(SubredditJsonTemplate):
     _data_attrs_ = dict(
         name="_fullname",
         display_name="name",
+        banner_img="banner_img",
+        banner_size="banner_size",
         header_img="header",
         header_size="header_size",
         icon_img="icon_img",
         icon_size="icon_size",
         key_color="key_color",
+        subscribers="_ups",
+        url="path",
         user_is_banned="is_banned",
         user_is_contributor="is_contributor",
         user_is_moderator="is_moderator",
+        user_is_subscriber="is_subscriber",
     )
 
 
