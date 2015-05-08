@@ -1464,7 +1464,7 @@ class SearchPage(BoringPage):
     def content(self):
         if not feature.is_enabled('subreddit_search'):
             return self.content_stack((self.searchbar, self.sr_facets, self.infobar,
-                                   self.nav_menu, self._content))
+                                   self.nav_menu, self.subreddits, self._content))
 
         return self.content_stack((self.searchbar, self.infobar,
                                    self.nav_menu, self.subreddits, self._content,
