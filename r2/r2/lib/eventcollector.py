@@ -224,6 +224,11 @@ class EventPublisher(object):
             yield resp, some_events
 
 
+def _get_reason(response):
+    return (getattr(response, "reason", None) or
+            getattr(response.raw, "reason", "{unknown}"))
+
+
 def process_events(g, timeout=5.0, max_event_size=4096, **kw):
     publisher = EventPublisher(
         g.events_collector_url,
@@ -250,7 +255,7 @@ def process_events(g, timeout=5.0, max_event_size=4096, **kw):
                 g.log.warning(
                     "Event send failed %s - %s",
                     response.status_code,
-                    response.reason,
+                    _get_reason(response),
                 )
                 g.log.warning("Response headers: %r", response.headers)
                 response.raise_for_status()
