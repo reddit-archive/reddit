@@ -89,7 +89,7 @@
 
 %if c.user_is_loggedin:
   %if thing.done:
-    <p class="error">${_("your preferences have been updated")}</p>
+    <p class="green">${_("your preferences have been updated")}</p>
   %elif thing.error_style_override:
     <p class="error">${_("we couldn't save the custom stylesheet preference. please see the error below")}</p>
   %elif thing.generic_error:
