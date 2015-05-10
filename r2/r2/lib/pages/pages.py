@@ -1535,7 +1535,7 @@ class LinkInfoPage(Reddit):
         params = {'title':_force_unicode(link_title), 'site' : c.site.name}
         title = strings.link_info_title % params
         short_description = None
-        if link and link.selftext:
+        if link and link.selftext and not (link._spam or link._deleted):
             short_description = _truncate(link.selftext.strip(), MAX_DESCRIPTION_LENGTH)
         # only modify the title if the comment/author are neither deleted nor spam
         if comment and not comment._deleted and not comment._spam:
