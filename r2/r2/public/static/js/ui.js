@@ -161,8 +161,6 @@ r.ui.initReadNext = function() {
     this.readNext = new r.ui.ReadNext({
         el: $readNextContainer,
     });
-
-    $readNextContainer.addClass('active');
 };
 
 r.ui.ReadNext = Backbone.View.extend({
@@ -190,6 +188,8 @@ r.ui.ReadNext = Backbone.View.extend({
         this.state.set({
             index: 0,
         });
+
+        this.$readNext.addClass('active');
     },
 
     next: function() {

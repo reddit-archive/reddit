@@ -20,11 +20,6 @@
 
 .read-next-container {
   font-size: @base-font-keyword;
-  display: none;
-
-  &.active {
-    display: block;
-  }
 }
 
 .read-next {
@@ -33,11 +28,16 @@
   border: 1px solid darken(@read-next-color-background, 15%);
   box-sizing: border-box;
   color: @read-next-color-text;
+  display: none;
   height: @read-next-height;
   position: relative;
   -webkit-user-select: none;
   width: @read-next-width;
   z-index: @zindex-read-next;
+
+  &.active {
+    display: block;
+  }
 
   &.fixed {
     border-bottom-width: 0;
