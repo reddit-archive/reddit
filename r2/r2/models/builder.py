@@ -466,7 +466,6 @@ class QueryBuilder(Builder):
             for item in items:
                 item.sr_detail = True
 
-
         # Make sure first_item and last_item refer to things in items
         # NOTE: could retrieve incorrect item if there were items with
         # duplicate _id
@@ -687,6 +686,7 @@ class SearchBuilder(IDBuilder):
                  skip_deleted_authors=True, **kw):
         IDBuilder.__init__(self, query, wrap, keep_fn, skip, **kw)
         self.skip_deleted_authors = skip_deleted_authors
+        self.sr_detail = kw.get('sr_detail')
 
     def init_query(self):
         self.skip = True
