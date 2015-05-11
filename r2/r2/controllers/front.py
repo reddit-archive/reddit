@@ -999,13 +999,8 @@ class FrontController(RedditController):
             faceting = None
 
         # specify link or subreddit result types (when supported)
-        result_types = set(request.GET.getall('type'))
-        if is_api():
-            result_types = result_types or {'link'}
-        elif feature.is_enabled('subreddit_search'):
-            result_types = result_types or {'link', 'sr'}
-        else:
-            result_types = {'link'}
+        # do not officially expose search result type api yet
+        result_types = VResultTypes('type').run(request.GET.getall('type'))
 
         # no subreddit results if fielded search or structured syntax
         if syntax == 'cloudsearch' or (query and ':' in query):

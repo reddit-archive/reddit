@@ -28,7 +28,8 @@ from decimal import Decimal
 from pylons import c, g, request, response
 from pylons.i18n import _
 from pylons.controllers.util import abort
-from r2.config.extensions import api_type
+from r2.config import feature
+from r2.config.extensions import api_type, is_api
 from r2.lib import utils, captcha, promote, totp, ratelimit
 from r2.lib.filters import unkeep_space, websafe, _force_unicode, _force_utf8
 from r2.lib.filters import markdown_souptest
@@ -2871,4 +2872,37 @@ class VSubredditList(Validator):
     def param_docs(self):
         return {
             self.param: 'a list of subreddit names, line break delimited',
+        }
+
+
+class VResultTypes(Validator):
+    """
+    Validates a list of search result types, provided either as multiple
+    GET parameters or as a comma separated list.  Returns a set.
+    """
+    def __init__(self, param):
+        Validator.__init__(self, param, get_multiple=True)
+        self.options = ('link', 'sr')
+
+    def run(self, result_types):
+        if result_types and ',' in result_types[0]:
+            result_types = result_types[0].strip(',').split(',')
+
+        result_types = set(result_types) - {''}
+
+        if is_api():
+            result_types = result_types or {'link'}
+        elif feature.is_enabled('subreddit_search'):
+            result_types = result_types or {'link', 'sr'}
+        else:
+            result_types = {'link'}
+
+        return result_types
+
+    def param_docs(self):
+        return {
+            self.param: (
+                '(optional) comma-delimited list of result types '
+                '(`%s`)' % '`, `'.join(self.options)
+            ),
         }
