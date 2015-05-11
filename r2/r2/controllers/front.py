@@ -203,14 +203,16 @@ class FrontController(RedditController):
                   docs={"depth": "(optional) an integer"}),
               showedits=VBoolean("showedits", default=True),
               showmore=VBoolean("showmore", default=True),
-             )
+              sr_detail=VBoolean(
+                  "sr_detail", docs={"sr_detail": "(optional) expand subreddits"}),
+              )
     @api_doc(api_section.listings,
              uri='/comments/{article}',
              uses_site=True,
              supports_rss=True)
     def GET_comments(
         self, article, comment, context, sort, limit, depth,
-        showedits=True, showmore=True):
+            showedits=True, showmore=True, sr_detail=False):
         """Get the comment tree for a given Link `article`.
 
         If supplied, `comment` is the ID36 of a comment in the comment tree for
@@ -425,7 +427,8 @@ class FrontController(RedditController):
                            subtitle=subtitle,
                            subtitle_buttons=subtitle_buttons,
                            nav_menus=[sort_menu, link_settings],
-                           infotext=infotext).render()
+                           infotext=infotext,
+                           sr_detail=sr_detail).render()
         return res
 
     def _add_show_comments_link(self, array, article, num, max_comm, gold=False):

@@ -1492,7 +1492,7 @@ class LinkInfoPage(Reddit):
 
     def __init__(self, link = None, comment = None,
                  link_title = '', subtitle = None, num_duplicates = None,
-                 show_promote_button=False, *a, **kw):
+                 show_promote_button=False, sr_detail=False, *a, **kw):
 
         c.permalink_page = True
         expand_children = kw.get("expand_children", not bool(comment))
@@ -1500,7 +1500,7 @@ class LinkInfoPage(Reddit):
         wrapper = default_thing_wrapper(expand_children=expand_children)
 
         # link_listing will be the one-element listing at the top
-        self.link_listing = wrap_links(link, wrapper = wrapper)
+        self.link_listing = wrap_links(link, wrapper=wrapper, sr_detail=sr_detail)
 
         # add click tracker
         things = self.link_listing.things
