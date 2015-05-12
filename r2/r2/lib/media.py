@@ -346,7 +346,9 @@ def _set_media(link, force=False, **kwargs):
         link._commit()
 
         hooks.get_hook("scraper.set_media").call(link=link)
-        amqp.add_item("new_media_embed", link._fullname)
+
+        if media.media_object or media.secure_media_object:
+            amqp.add_item("new_media_embed", link._fullname)
 
 
 def force_thumbnail(link, image_data, file_type=".jpg"):
