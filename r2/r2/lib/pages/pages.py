@@ -3646,9 +3646,13 @@ class FlairList(Templated):
             # user lookup was requested, but no user was found, so abort
             return []
 
-        query = Flair._query(Flair.c._thing1_id == c.site._id,
-                             Flair.c._name == 'flair',
-                             sort=asc('_thing2_id'))
+        query = Flair._query(
+            Flair.c._thing1_id == c.site._id,
+            Flair.c._name == 'flair',
+            sort=asc('_thing2_id'),
+            eager_load=True,
+            thing_data=True,
+        )
 
         # To maintain API compatibility we can't use the `before` or `after`s
         # returned by Builder.get_items(), since we use different logic to
