@@ -47,6 +47,7 @@ from pylons import g
 
 from r2.lib import amqp
 from r2.lib.db import queries
+from r2.lib.menus import CommentSortMenu
 from r2.lib.utils import (
     TimeoutFunction,
     TimeoutFunctionException,
@@ -475,6 +476,11 @@ class RuleTarget(object):
             valid_targets=Link,
             component_type="action",
         ),
+        "set_suggested_sort": RuleComponent(
+            valid_values=CommentSortMenu.suggested_sort_options + ("best",),
+            valid_targets=Link,
+            component_type="action",
+        ),
         "comment_karma": RuleComponent(
             valid_regex=_oper_int_regex,
             valid_targets=Account,
@@ -594,6 +600,10 @@ class RuleTarget(object):
                 "text": self.set_flair[0],
                 "class": self.set_flair[1],
             }
+
+        # ugly hack to allow people to use "best" instead of "confidence"
+        if self.set_suggested_sort == "best":
+            self.set_suggested_sort = "confidence"
 
     _match_field_key_regex = re.compile(r"^(~?[^\s(]+)\s*(?:\((.+)\))?$")
     def parse_match_fields_key(self, key):
@@ -984,6 +994,15 @@ class RuleTarget(object):
                     log_action = "unsticky"
                 ModAction.create(
                     data["subreddit"], ACCOUNT, log_action, target=item)
+
+        if self.set_suggested_sort is not None:
+            if not item.suggested_sort:
+                item.suggested_sort = self.set_suggested_sort
+                item._commit()
+
+                # TODO: shouldn't need to do this here
+                ModAction.create(data["subreddit"], ACCOUNT,
+                    action="setsuggestedsort", target=item)
 
         if self.set_flair:
             # don't overwrite existing flair unless that was specified
