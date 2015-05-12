@@ -677,10 +677,14 @@ class Account(Thing):
     def flair_enabled_in_sr(self, sr_id):
         return getattr(self, 'flair_%s_enabled' % sr_id, True)
 
-    def flair_text(self, sr_id):
+    def flair_text(self, sr_id, obey_disabled=False):
+        if obey_disabled and not self.flair_enabled_in_sr(sr_id):
+            return None
         return getattr(self, 'flair_%s_text' % sr_id, None)
 
-    def flair_css_class(self, sr_id):
+    def flair_css_class(self, sr_id, obey_disabled=False):
+        if obey_disabled and not self.flair_enabled_in_sr(sr_id):
+            return None
         return getattr(self, 'flair_%s_css_class' % sr_id, None)
 
     def can_flair_in_sr(self, user, sr):
