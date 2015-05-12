@@ -1062,9 +1062,10 @@ class RuleTarget(object):
             comment = self.get_field_value_from_item(item, data, "comment_karma")
             value = link + comment
         elif field == "flair_text" and isinstance(item, Account):
-            value = item.flair_text(data["subreddit"]._id)
+            value = item.flair_text(data["subreddit"]._id, obey_disabled=True)
         elif field == "flair_css_class" and isinstance(item, Account):
-            value = item.flair_css_class(data["subreddit"]._id)
+            value = item.flair_css_class(
+                data["subreddit"]._id, obey_disabled=True)
         else:
             value = getattr(item, field, "")
 
