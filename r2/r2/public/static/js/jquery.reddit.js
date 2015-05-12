@@ -791,4 +791,19 @@ $.cookie_read = function(name, prefix) {
     return {name: name, data: data}
 }
 
+$.fn.highlight = function(text) {
+  if (!text) { return this; }
+
+  var escaped = $.websafe(text.trim()).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  var regex = new RegExp("\\b" + escaped + "\\b", "gi");
+
+  return this.each(function() {
+    if (this.children.length) { return; }
+
+    this.innerHTML = this.innerHTML.replace(regex, function(matched) {
+      return "<mark>" + matched + "</mark>";
+    });
+  });
+};
+
 })(jQuery);
