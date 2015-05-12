@@ -139,6 +139,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      unmoderated  = _("unmoderated links"),
                      edited       = _("edited"),
                      employee     = _("employee"),
+                     automod      = _("automoderator config"),
                      
                      wikibanned        = _("ban wiki contributors"),
                      wikicontributors  = _("add wiki contributors"),
