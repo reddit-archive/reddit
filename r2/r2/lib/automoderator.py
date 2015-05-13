@@ -47,6 +47,7 @@ from pylons import g
 
 from r2.lib import amqp
 from r2.lib.db import queries
+from r2.lib.filters import _force_unicode
 from r2.lib.menus import CommentSortMenu
 from r2.lib.utils import (
     TimeoutFunction,
@@ -122,7 +123,7 @@ def replace_placeholders(string, data, matches):
             })
 
     for placeholder, replacement in replacements.iteritems():
-        string = string.replace(placeholder, replacement)
+        string = string.replace(placeholder, _force_unicode(replacement))
 
     # do the {{match-XX}} and {{match-field-XX}} replacements
     field_replacements = {}
@@ -154,7 +155,7 @@ def replace_placeholders(string, data, matches):
             field_replacements[placeholder.group(0)] = replacement
 
     for placeholder, replacement in field_replacements.iteritems():
-        string = string.replace(placeholder, replacement)
+        string = string.replace(placeholder, _force_unicode(replacement))
 
     return string
 
