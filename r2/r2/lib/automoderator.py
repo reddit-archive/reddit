@@ -718,8 +718,10 @@ class RuleTarget(object):
     @property
     def needs_media_data(self):
         """Whether the component requires data from the media embed."""
-        if any(field.startswith("media_") for field in self.match_fields):
-            return True
+        for key in self.match_patterns:
+            fields = self.parse_match_fields_key(key)["fields"]
+            if all(field.startswith("media_") for field in fields):
+                return True
 
         # check if any of the fields that support placeholders have media ones
         potential_placeholders = [self.report_reason]
