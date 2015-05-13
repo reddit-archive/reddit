@@ -1406,49 +1406,50 @@ def run():
             return
 
         fullname = msg.body
-        item = Thing._by_fullname(fullname, data=True)
-        if not isinstance(item, (Link, Comment)):
-            return
-
-        subreddit = item.subreddit_slow
-        
-        wiki_page_id = wiki_id(subreddit._id36, "config/automoderator")
-        wiki_page_fullname = "WikiPage_%s" % wiki_page_id
-        last_edited = LastModified.get(wiki_page_fullname, "Edit")
-        if not last_edited:
-            return
-
-        # initialize rules for the subreddit if we haven't already
-        # or if the page has been edited since we last initialized
-        need_to_init = False
-        if subreddit._id not in rules_by_subreddit:
-            need_to_init = True
-        else:
-            rules = rules_by_subreddit[subreddit._id]
-            if last_edited > rules.init_time:
-                need_to_init = True
-
-        if need_to_init:
-            wp = WikiPage.get(subreddit, "config/automoderator")
-            try:
-                rules = Ruleset(wp.content)
-            except (AutoModeratorSyntaxError, AutoModeratorRuleTypeError):
-                print "ERROR: Invalid config in /r/%s" % subreddit.name
+        with g.make_lock("automoderator", "automod_" + fullname, timeout=5):
+            item = Thing._by_fullname(fullname, data=True)
+            if not isinstance(item, (Link, Comment)):
                 return
-            rules_by_subreddit[subreddit._id] = rules
 
-        if not rules:
-            return
+            subreddit = item.subreddit_slow
+            
+            wiki_page_id = wiki_id(subreddit._id36, "config/automoderator")
+            wiki_page_fullname = "WikiPage_%s" % wiki_page_id
+            last_edited = LastModified.get(wiki_page_fullname, "Edit")
+            if not last_edited:
+                return
 
-        try:
-            TimeoutFunction(rules.apply_to_item, 2)(item)
-            print "Checked %s from /r/%s" % (item, subreddit.name)
-        except TimeoutFunctionException:
-            print "Timed out on %s from /r/%s" % (item, subreddit.name)
-        except KeyboardInterrupt:
-            raise
-        except:
-            print "Error on %s from /r/%s" % (item, subreddit.name)
-            print traceback.format_exc()
+            # initialize rules for the subreddit if we haven't already
+            # or if the page has been edited since we last initialized
+            need_to_init = False
+            if subreddit._id not in rules_by_subreddit:
+                need_to_init = True
+            else:
+                rules = rules_by_subreddit[subreddit._id]
+                if last_edited > rules.init_time:
+                    need_to_init = True
+
+            if need_to_init:
+                wp = WikiPage.get(subreddit, "config/automoderator")
+                try:
+                    rules = Ruleset(wp.content)
+                except (AutoModeratorSyntaxError, AutoModeratorRuleTypeError):
+                    print "ERROR: Invalid config in /r/%s" % subreddit.name
+                    return
+                rules_by_subreddit[subreddit._id] = rules
+
+            if not rules:
+                return
+
+            try:
+                TimeoutFunction(rules.apply_to_item, 2)(item)
+                print "Checked %s from /r/%s" % (item, subreddit.name)
+            except TimeoutFunctionException:
+                print "Timed out on %s from /r/%s" % (item, subreddit.name)
+            except KeyboardInterrupt:
+                raise
+            except:
+                print "Error on %s from /r/%s" % (item, subreddit.name)
+                print traceback.format_exc()
 
     amqp.consume_items('automoderator_q', process_message, verbose=False)
