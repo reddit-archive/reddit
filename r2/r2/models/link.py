@@ -1373,6 +1373,10 @@ class Comment(Thing, Printable):
         # Run this last
         Printable.add_props(user, wrapped)
 
+    def update_search_index(self, boost_only=False):
+        # no-op because Comments are not indexed
+        return
+
 
 class CommentScoresByLink(tdb_cassandra.View):
     _use_db = True
