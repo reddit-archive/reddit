@@ -317,8 +317,12 @@ def cast_vote(sub, obj, vote_info, timer, date):
     VotesByAccount.copy_from(vote, vote_info["info"])
     timer.intermediate("cassavotes")
 
-    vote._thing2.update_search_index(boost_only=True)
-    timer.intermediate("update_search_index")
+    num_votes = vote._thing2._ups + vote._thing2._downs
+    if num_votes < 20 or num_votes % 10 == 0:
+        # always update the search index if the thing has fewer than 20 votes
+        # when the thing has more votes queue an update less often
+        vote._thing2.update_search_index(boost_only=True)
+        timer.intermediate("update_search_index")
 
     if "event" in vote_info and vote_info["event"]:
         g.events.vote_event(vote, old_vote, event_base=vote_info["event"])
