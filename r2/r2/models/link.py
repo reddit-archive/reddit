@@ -931,8 +931,10 @@ class Comment(Thing, Printable):
 
         c._commit()
 
-        # link's number of comments changed
-        link.update_search_index(boost_only=True)
+        if link.num_comments < 20 or link.num_comments % 10 == 0:
+            # link's number of comments changed so re-index it, but don't bother
+            # re-indexing so often when it gets many comments
+            link.update_search_index(boost_only=True)
 
         CommentsByAccount.add_comment(author, c)
 
