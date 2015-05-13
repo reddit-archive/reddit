@@ -154,12 +154,13 @@ r.ui.initReadNext = function() {
     var $readNextContainer = $('.read-next-container');
     var isDismissed = !!store.get('readnext.dismissed');
 
-    if (r.ui.isSmallScreen() || isDismissed || !$readNextContainer.length) {
+    if (isDismissed || !$readNextContainer.length) {
         return;
     }
 
     this.readNext = new r.ui.ReadNext({
         el: $readNextContainer,
+        fixToBottom: !r.ui.isSmallScreen(),
     });
 };
 
@@ -180,11 +181,14 @@ r.ui.ReadNext = Backbone.View.extend({
             index: -1,
         });
 
-        this.updateScroll = this.updateScroll.bind(this);
-        window.addEventListener('scroll', this.updateScroll);
         this.state.on('change', this.render.bind(this));
+        
+        if (this.options.fixToBottom) {
+            this.updateScroll = this.updateScroll.bind(this);
+            window.addEventListener('scroll', this.updateScroll);
+            this.updateScroll();
+        }
 
-        this.updateScroll();
         this.state.set({
             index: 0,
         });
