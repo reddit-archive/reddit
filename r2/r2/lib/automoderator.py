@@ -1430,7 +1430,11 @@ def run():
 
         if need_to_init:
             wp = WikiPage.get(subreddit, "config/automoderator")
-            rules = Ruleset(wp.content)
+            try:
+                rules = Ruleset(wp.content)
+            except (AutoModeratorSyntaxError, AutoModeratorRuleTypeError):
+                print "ERROR: Invalid config in /r/%s" % subreddit.name
+                return
             rules_by_subreddit[subreddit._id] = rules
 
         if not rules:
