@@ -67,9 +67,6 @@ class S3MediaProvider(MediaProvider):
         ],
     }
 
-<<<<<<< HEAD
-    def put(self, name, contents):
-=======
     buckets = {
         'thumbs': 's3_media_buckets',
         'stylesheets': 's3_media_buckets',
@@ -115,7 +112,6 @@ class S3MediaProvider(MediaProvider):
 
     def put(self, category, name, contents):
         buckets = getattr(g, self.buckets[category])
->>>>>>> 9f2a8e5... Takedown tool
         # choose a bucket based on the filename
         name_without_extension = os.path.splitext(name)[0]
         index = ord(name_without_extension[-1]) % len(g.s3_media_buckets)
