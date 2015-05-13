@@ -34,6 +34,7 @@ import l2cs
 from r2.lib import amqp, filters
 from r2.lib.db.operators import desc
 from r2.lib.db.sorts import epoch_seconds
+from r2.lib.filters import _force_unicode
 from r2.lib.providers.search import SearchProvider
 from r2.lib.providers.search.common import (
     InvalidQuery,
@@ -820,7 +821,7 @@ class CloudSearchProvider(SearchProvider):
     
     def get_related_query(self, query, article, start, end, nsfw):
         '''build related query in cloudsearch syntax'''
-
+        query = _force_unicode(query)
         query = query[:1024]
         query = u"|".join(query.split())
         query = u"title:'%s'" % query
