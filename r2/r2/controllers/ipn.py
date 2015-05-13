@@ -275,7 +275,7 @@ def send_gift(buyer, recipient, months, days, signed, giftmessage,
     if signed:
         sender = buyer.name
         md_sender = "[%s](/user/%s)" % (sender, sender)
-        repliable = False
+        repliable = True
     else:
         sender = _("An anonymous redditor")
         md_sender = _("An anonymous redditor")
@@ -323,7 +323,8 @@ def send_gift(buyer, recipient, months, days, signed, giftmessage,
 
     try:
         send_system_message(recipient, subject, message, author=buyer,
-                            distinguished='gold-auto', repliable=repliable)
+                            distinguished='gold-auto', repliable=repliable,
+                            signed=signed)
     except MessageError:
         g.log.error('send_gift: could not send system message')
 

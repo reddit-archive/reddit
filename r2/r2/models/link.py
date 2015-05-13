@@ -1517,6 +1517,7 @@ class Message(Thing, Printable):
                      from_sr=False,
                      display_author=None,
                      display_to=None,
+                     signed=True,
                      )
     _data_int_props = Thing._data_int_props + ('reported',)
     _essentials = ('author_id',)
