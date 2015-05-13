@@ -20,14 +20,28 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-import r2.lib.cloudsearch as cloudsearch
 
+class SearchProvider(object):
+    """Provider for search.
+    """
 
-InvalidQuery = (cloudsearch.InvalidQuery,)
-SearchException = (cloudsearch.CloudSearchHTTPError,)
+    def InvalidQuery(self):
+        raise NotImplementedError
 
-SearchQuery = cloudsearch.LinkSearchQuery
-SubredditSearchQuery = cloudsearch.SubredditSearchQuery
+    def SearchException(self):
+        raise NotImplementedError
 
-sorts = cloudsearch.LinkSearchQuery.sorts_menu_mapping
-sr_sorts = cloudsearch.SubredditSearchQuery.sorts_menu_mapping
+    def Query(self):
+        raise NotImplementedError
+
+    def SubredditSearchQuery(self):
+        raise NotImplementedError
+
+    def sorts(self):
+        raise NotImplementedError
+
+    def run_changed(self):
+        raise NotImplementedError
+
+    def get_related_query(self):
+        raise NotImplementedError

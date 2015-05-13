@@ -41,7 +41,6 @@ from r2.lib.normalized_hot import normalized_hot
 from r2.lib.db.thing import Query, Merge, Relations
 from r2.lib.db import queries
 from r2.lib.strings import Score
-import r2.lib.search as search
 from r2.lib.template_helpers import add_sr
 from r2.lib.admin_utils import check_cheating
 from r2.lib.csrf import csrf_exempt
@@ -59,6 +58,7 @@ import socket
 
 from api_docs import api_doc, api_section
 
+from pylons import g
 from pylons.i18n import _
 
 from datetime import timedelta
@@ -67,6 +67,7 @@ from functools import partial
 
 class ListingController(RedditController):
     """Generalized controller for pages with lists of links."""
+
 
     # toggle skipping of links based on the users' save/hide/vote preferences
     skip = True
@@ -165,7 +166,7 @@ class ListingController(RedditController):
             builder_cls = self.builder_cls
         elif isinstance(self.query_obj, Query):
             builder_cls = QueryBuilder
-        elif isinstance(self.query_obj, search.SearchQuery):
+        elif isinstance(self.query_obj, g.search.SearchQuery):
             builder_cls = SearchBuilder
         elif isinstance(self.query_obj, iters):
             builder_cls = IDBuilder

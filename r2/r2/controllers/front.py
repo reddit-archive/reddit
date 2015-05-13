@@ -53,8 +53,6 @@ from r2.lib.db.operators import desc
 from r2.lib.db import queries
 from r2.lib.db.tdb_cassandra import MultiColumnQuery
 from r2.lib.strings import strings
-from r2.lib.search import (SearchQuery, SubredditSearchQuery, SearchException,
-                           InvalidQuery)
 from r2.lib.validator import *
 from r2.lib import jsontemplates
 from r2.lib import sup
@@ -851,17 +849,14 @@ class FrontController(RedditController):
 
         query = self.related_replace_regex.sub(self.related_replace_with,
                                                article.title)
-        query = _force_unicode(query)
-        query = query[:1024]
-        query = u"|".join(query.split())
-        query = u"title:'%s'" % query
+
         rel_range = timedelta(days=3)
         start = int(time_module.mktime((article._date - rel_range).utctimetuple()))
         end = int(time_module.mktime((article._date + rel_range).utctimetuple()))
-        nsfw = u"nsfw:0" if not article.is_nsfw else u""
-        query = u"(and %s timestamp:%s..%s %s)" % (query, start, end, nsfw)
-        q = SearchQuery(query, raw_sort="-text_relevance", faceting={},
-                        syntax="cloudsearch")
+        nsfw = article.is_nsfw
+
+        q = g.search.get_related_query(query, article, start, end, nsfw)
+
         content = self._search(q, num=num, after=after, reverse=reverse,
                                count=count)
 
@@ -932,8 +927,8 @@ class FrontController(RedditController):
             sort = 'rel1'
 
         if query:
-            q = SubredditSearchQuery(query, sort=sort, faceting={},
-                                     include_over18=include_over18)
+            q = g.search.SubredditSearchQuery(query, sort=sort, faceting={},
+                                              include_over18=include_over18)
             content = self._search(q, num=num, reverse=reverse,
                                    after=after, count=count,
                                    skip_deleted_authors=False)
@@ -958,7 +953,7 @@ class FrontController(RedditController):
               recent=VMenu('t', TimeMenu, remember=False),
               restrict_sr=VBoolean('restrict_sr', default=False),
               include_facets=VBoolean('include_facets', default=False),
-              syntax=VOneOf('syntax', options=SearchQuery.known_syntaxes))
+              syntax=VOneOf('syntax', options=g.search_syntaxes))
     @api_doc(api_section.search, supports_rss=True, uses_site=True)
     def GET_search(self, query, num, reverse, after, count, sort, recent,
                    restrict_sr, include_facets, syntax):
@@ -985,7 +980,7 @@ class FrontController(RedditController):
         has_query = query or not isinstance(site, (DefaultSR, AllSR))
 
         if not syntax:
-            syntax = SearchQuery.default_syntax
+            syntax = g.search.SearchQuery.default_syntax
 
         # show NSFW to API and RSS users unless obey_over18=true
         is_api_or_rss = (c.render_style in API_TYPES
@@ -1037,15 +1032,16 @@ class FrontController(RedditController):
         if num > 0 and has_query:
             nav_menus = [SearchSortMenu(default=sort), TimeMenu(default=recent)]
             try:
-                q = SearchQuery(query, site, sort=sort, faceting=faceting,
-                                include_over18=include_over18,
-                                recent=recent, syntax=syntax)
+                q = g.search.SearchQuery(query, site, sort=sort,
+                                         faceting=faceting,
+                                         include_over18=include_over18,
+                                         recent=recent, syntax=syntax)
                 content = self._search(q, num=num, after=after, reverse=reverse,
                                        count=count)
                 converted_data = q.converted_data
                 subreddit_facets = content.subreddit_facets
 
-            except InvalidQuery:
+            except g.search.InvalidQuery:
                 g.stats.simple_event('cloudsearch.error.invalidquery')
 
                 # Clean the search of characters that might be causing the
@@ -1055,9 +1051,10 @@ class FrontController(RedditController):
                 cleaned = re.sub("[^\w\s]+", " ", query)
                 cleaned = cleaned.lower().strip()
 
-                q = SearchQuery(cleaned, site, sort=sort, faceting=faceting,
-                                include_over18=include_over18,
-                                recent=recent)
+                q = g.search.SearchQuery(cleaned, site, sort=sort,
+                                         faceting=faceting,
+                                         include_over18=include_over18,
+                                         recent=recent)
                 content = self._search(q, num=num, after=after, reverse=reverse,
                                        count=count)
                 converted_data = q.converted_data
@@ -1076,8 +1073,9 @@ class FrontController(RedditController):
 
         # extra search request for subreddit results
         if sr_num > 0 and has_query:
-            sr_q = SubredditSearchQuery(query, sort='rel1', faceting={},
-                                        include_over18=include_over18)
+            sr_q = g.search.SubredditSearchQuery(query, sort='rel1',
+                                                 faceting={},
+                                                 include_over18=include_over18)
             subreddits = self._search(sr_q, num=sr_num, reverse=reverse,
                                       after=after, count=count, type='sr',
                                       skip_deleted_authors=False)
@@ -1125,7 +1123,7 @@ class FrontController(RedditController):
 
         try:
             res = listing.listing()
-        except SearchException + (socket.error,) as e:
+        except g.search.SearchException + (socket.error,) as e:
             return self.search_fail(e)
 
         return res

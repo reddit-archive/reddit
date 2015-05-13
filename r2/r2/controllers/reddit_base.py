@@ -1798,8 +1798,7 @@ class RedditController(OAuth2ResourceController):
             abort(304, 'not modified')
 
     def search_fail(self, exception):
-        from r2.lib.search import SearchException
-        if isinstance(exception, SearchException + (socket.error,)):
+        if isinstance(exception, g.search.SearchException + (socket.error,)):
             g.log.error("Search Error: %s" % repr(exception))
 
         errpage = pages.RedditError(_("search failed"),

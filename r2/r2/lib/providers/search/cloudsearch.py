@@ -19,8 +19,6 @@
 # All portions of the code written by reddit are Copyright (c) 2006-2015 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
-
-import collections
 import cPickle as pickle
 from datetime import datetime, timedelta
 import functools
@@ -28,7 +26,6 @@ import httplib
 import json
 from lxml import etree
 from pylons import g, c
-import re
 import time
 import urllib
 
@@ -37,294 +34,42 @@ import l2cs
 from r2.lib import amqp, filters
 from r2.lib.db.operators import desc
 from r2.lib.db.sorts import epoch_seconds
+from r2.lib.providers.search import SearchProvider
+from r2.lib.providers.search.common import (
+    InvalidQuery,
+    LinkFields,
+    Results,
+    safe_get,
+    safe_xml_str,
+    SearchHTTPError,
+    SubredditFields,
+)
 import r2.lib.utils as r2utils
-from r2.models import (Account, Link, Subreddit, Thing,
-                       MultiReddit, DomainSR, FriendsSR,
-                       FakeSubreddit, NotFound)
-
+from r2.models import (
+    Account,
+    All,
+    DefaultSR,
+    DomainSR,
+    FakeSubreddit,
+    Friends,
+    Link,
+    ModContribSR,
+    MultiReddit,
+    NotFound,
+    Subreddit,
+    Thing,
+)
 
 _TIMEOUT = 5 # seconds for http requests to cloudsearch
 _CHUNK_SIZE = 4000000 # Approx. 4 MB, to stay under the 5MB limit
 _VERSION_OFFSET = 13257906857
-ILLEGAL_XML = re.compile(u'[\x00-\x08\x0b\x0c\x0e-\x1F\uD800-\uDFFF\uFFFE\uFFFF]')
 
-
-def _safe_xml_str(s, use_encoding="utf-8"):
-    '''Replace invalid-in-XML unicode control characters with '\uFFFD'.
-    Also, coerces result to unicode
-    
-    '''
-    if not isinstance(s, unicode):
-        if isinstance(s, str):
-            s = unicode(s, use_encoding, errors="replace")
-        else:
-            # ints will raise TypeError if the "errors" kwarg
-            # is passed, but since it's not a str no problem
-            s = unicode(s)
-    s = ILLEGAL_XML.sub(u"\uFFFD", s)
-    return s
-
-
-def safe_get(get_fn, ids, return_dict=True, **kw):
-    items = {}
-    for i in ids:
-        try:
-            item = get_fn(i, **kw)
-        except NotFound:
-            g.log.info("%s failed for %r", get_fn.__name__, i)
-        else:
-            items[i] = item
-    if return_dict:
-        return items
-    else:
-        return items.values()
-
-
-class CloudSearchHTTPError(httplib.HTTPException): pass
-class InvalidQuery(Exception): pass
-
-
-Field = collections.namedtuple("Field", "name cloudsearch_type "
-                               "lucene_type function")
-SAME_AS_CLOUDSEARCH = object()
-FIELD_TYPES = (int, str, datetime, SAME_AS_CLOUDSEARCH, "yesno")
-
-def field(name=None, cloudsearch_type=str, lucene_type=SAME_AS_CLOUDSEARCH):
-    if lucene_type is SAME_AS_CLOUDSEARCH:
-        lucene_type = cloudsearch_type
-    if cloudsearch_type not in FIELD_TYPES + (None,):
-        raise ValueError("cloudsearch_type %r not in %r" %
-                         (cloudsearch_type, FIELD_TYPES))
-    if lucene_type not in FIELD_TYPES + (None,):
-        raise ValueError("lucene_type %r not in %r" %
-                         (lucene_type, FIELD_TYPES))
-    if callable(name):
-        # Simple case; decorated as '@field'; act as a decorator instead
-        # of a decorator factory
-        function = name
-        name = None
-    else:
-        function = None
-
-    def field_inner(fn):
-        fn.field = Field(name or fn.func_name, cloudsearch_type,
-                         lucene_type, fn)
-        return fn
-
-    if function:
-        return field_inner(function)
-    else:
-        return field_inner
-
-
-class FieldsMeta(type):
-    def __init__(cls, name, bases, attrs):
-        type.__init__(cls, name, bases, attrs)
-        fields = []
-        for attr in attrs.itervalues():
-            if hasattr(attr, "field"):
-                fields.append(attr.field)
-        cls._fields = tuple(fields)
-
-
-class FieldsBase(object):
-    __metaclass__ = FieldsMeta
-
-    def fields(self):
-        data = {}
-        for field in self._fields:
-            if field.cloudsearch_type is None:
-                continue
-            val = field.function(self)
-            if val is not None:
-                data[field.name] = val
-        return data
-
-    @classmethod
-    def all_fields(cls):
-        return cls._fields
-
-    @classmethod
-    def cloudsearch_fields(cls, type_=None, types=FIELD_TYPES):
-        types = (type_,) if type_ else types
-        return [f for f in cls._fields if f.cloudsearch_type in types]
-
-    @classmethod
-    def lucene_fields(cls, type_=None, types=FIELD_TYPES):
-        types = (type_,) if type_ else types
-        return [f for f in cls._fields if f.lucene_type in types]
-
-    @classmethod
-    def cloudsearch_fieldnames(cls, type_=None, types=FIELD_TYPES):
-        return [f.name for f in cls.cloudsearch_fields(type_=type_,
-                                                       types=types)]
-
-    @classmethod
-    def lucene_fieldnames(cls, type_=None, types=FIELD_TYPES):
-        return [f.name for f in cls.lucene_fields(type_=type_, types=types)]
-
-
-class LinkFields(FieldsBase):
-    def __init__(self, link, author, sr):
-        self.link = link
-        self.author = author
-        self.sr = sr
-
-    @field(cloudsearch_type=int, lucene_type=None)
-    def ups(self):
-        return max(0, self.link._ups)
-
-    @field(cloudsearch_type=int, lucene_type=None)
-    def downs(self):
-        return max(0, self.link._downs)
-
-    @field(cloudsearch_type=int, lucene_type=None)
-    def num_comments(self):
-        return max(0, getattr(self.link, 'num_comments', 0))
-
-    @field
-    def fullname(self):
-        return self.link._fullname
-
-    @field
-    def subreddit(self):
-        return self.sr.name
-
-    @field
-    def reddit(self):
-        return self.sr.name
-
-    @field
-    def title(self):
-        return self.link.title
-
-    @field(cloudsearch_type=int)
-    def sr_id(self):
-        return self.link.sr_id
-
-    @field(cloudsearch_type=int, lucene_type=datetime)
-    def timestamp(self):
-        return int(time.mktime(self.link._date.utctimetuple()))
-
-    @field(cloudsearch_type=int, lucene_type="yesno")
-    def over18(self):
-        nsfw = self.sr.over_18 or self.link.is_nsfw
-        return (1 if nsfw else 0)
-
-    @field(cloudsearch_type=None, lucene_type="yesno")
-    def nsfw(self):
-        return NotImplemented
-
-    @field(cloudsearch_type=int, lucene_type="yesno")
-    def is_self(self):
-        return (1 if self.link.is_self else 0)
-
-    @field(name="self", cloudsearch_type=None, lucene_type="yesno")
-    def self_(self):
-        return NotImplemented
-
-    @field
-    def author_fullname(self):
-        return None if self.author._deleted else self.author._fullname
-
-    @field(name="author")
-    def author_field(self):
-        return None if self.author._deleted else self.author.name
-
-    @field(cloudsearch_type=int)
-    def type_id(self):
-        return self.link._type_id
-
-    @field
-    def site(self):
-        if self.link.is_self:
-            return g.domain
-        else:
-            try:
-                url = r2utils.UrlParser(self.link.url)
-                return list(url.domain_permutations())
-            except ValueError:
-                return None
-
-    @field
-    def selftext(self):
-        if self.link.is_self and self.link.selftext:
-            return self.link.selftext
-        else:
-            return None
-
-    @field
-    def url(self):
-        if not self.link.is_self:
-            return self.link.url
-        else:
-            return None
-
-    @field
-    def flair_css_class(self):
-        return self.link.flair_css_class
-
-    @field
-    def flair_text(self):
-        return self.link.flair_text
-
-    @field(cloudsearch_type=None, lucene_type=str)
-    def flair(self):
-        return NotImplemented
-
-
-class SubredditFields(FieldsBase):
-    def __init__(self, sr):
-        self.sr = sr
-
-    @field
-    def name(self):
-        return self.sr.name
-
-    @field
-    def title(self):
-        return self.sr.title
-
-    @field(name="type")
-    def type_(self):
-        return self.sr.type
-
-    @field
-    def language(self):
-        return self.sr.lang
-
-    @field
-    def header_title(self):
-        return None if self.sr.type == 'private' else self.sr.header_title
-
-    @field
-    def description(self):
-        return self.sr.public_description
-
-    @field
-    def sidebar(self):
-        return None if self.sr.type == 'private' else self.sr.description
-
-    @field(cloudsearch_type=int)
-    def over18(self):
-        return 1 if self.sr.over_18 else 0
-
-    @field
-    def link_type(self):
-        return self.sr.link_type
-
-    @field
-    def activity(self):
-        return self.sr._downs
-
-    @field
-    def subscribers(self):
-        return self.sr._ups
-
-    @field
-    def type_id(self):
-        return self.sr._type_id
-
+SORTS_MENU_MAPPING = {'relevance': 1,
+                      'hot': 2,
+                      'new': 3,
+                      'top': 4,
+                      'comments': 5,
+                      }
 
 class CloudSearchUploader(object):
     use_safe_get = False
@@ -366,7 +111,7 @@ class CloudSearchUploader(object):
 
         for field_name, value in self.fields(thing).iteritems():
             field = etree.SubElement(add, "field", name=field_name)
-            field.text = _safe_xml_str(value)
+            field.text = safe_xml_str(value)
 
         return add
 
@@ -479,7 +224,7 @@ class CloudSearchUploader(object):
         for indexing. Multiple requests are sent if a large number of documents
         are being sent (see chunk_xml())
         
-        Raises CloudSearchHTTPError if the endpoint indicates a failure
+        Raises SearchHTTPError if the endpoint indicates a failure
         '''
         responses = []
         connection = httplib.HTTPConnection(
@@ -496,7 +241,7 @@ class CloudSearchUploader(object):
                 if 200 <= response.status < 300:
                     responses.append(response.read())
                 else:
-                    raise CloudSearchHTTPError(response.status,
+                    raise SearchHTTPError(response.status,
                                                response.reason,
                                                response.read())
         finally:
@@ -698,40 +443,6 @@ def test_run_srs(*sr_names):
 
 
 ### Query Code ###
-class Results(object):
-    def __init__(self, docs, hits, facets):
-        self.docs = docs
-        self.hits = hits
-        self._facets = facets
-        self._subreddits = []
-
-    def __repr__(self):
-        return '%s(%r, %r, %r)' % (self.__class__.__name__,
-                                   self.docs,
-                                   self.hits,
-                                   self._facets)
-
-    @property
-    def subreddit_facets(self):
-        '''Filter out subreddits that the user isn't allowed to see'''
-        if not self._subreddits and 'reddit' in self._facets:
-            sr_facets = [(sr['value'], sr['count']) for sr in
-                         self._facets['reddit']]
-
-            # look up subreddits
-            srs_by_name = Subreddit._by_name([name for name, count
-                                              in sr_facets])
-
-            sr_facets = [(srs_by_name[name], count) for name, count
-                         in sr_facets if name in srs_by_name]
-
-            # filter by can_view
-            self._subreddits = [(sr, count) for sr, count in sr_facets
-                                if sr.can_view(c.user)]
-
-        return self._subreddits
-
-
 _SEARCH = "/2011-02-01/search?"
 INVALID_QUERY_CODES = ('CS-UnknownFieldInMatchExpression',
                        'CS-IncorrectFieldTypeInMatchExpression',
@@ -768,7 +479,7 @@ def basic_query(query=None, bq=None, faceting=None, size=1000,
                     if message['code'] in INVALID_QUERY_CODES:
                         raise InvalidQuery(resp.status, resp.reason, message,
                                            path, reasons)
-            raise CloudSearchHTTPError(resp.status, resp.reason, path,
+            raise SearchHTTPError(resp.status, resp.reason, path,
                                        response)
     finally:
         connection.close()
@@ -831,7 +542,6 @@ class CloudSearchQuery(object):
     sorts = {}
     sorts_menu_mapping = {}
     recents = {None: None}
-    known_syntaxes = ("cloudsearch", "lucene", "plain")
     default_syntax = "plain"
     lucene_parser = None
 
@@ -991,12 +701,7 @@ class CloudSearchQuery(object):
 
 class LinkSearchQuery(CloudSearchQuery):
     search_api = g.CLOUDSEARCH_SEARCH_API
-    sorts = {'relevance': '-relevance',
-             'hot': '-hot2',
-             'top': '-top',
-             'new': '-timestamp',
-             'comments': '-num_comments',
-             }
+    sorts = g.search_sorts 
     sorts_menu_mapping = {'relevance': 1,
                           'hot': 2,
                           'new': 3,
@@ -1017,7 +722,7 @@ class LinkSearchQuery(CloudSearchQuery):
              int_fields=LinkFields.lucene_fieldnames(type_=int),
              yesno_fields=LinkFields.lucene_fieldnames(type_="yesno"),
              schema=schema)
-    known_syntaxes = ("cloudsearch", "lucene", "plain")
+    known_syntaxes = g.search_syntaxes
     default_syntax = "lucene"
 
     def customize_query(self, bq=u''):
@@ -1070,7 +775,7 @@ class LinkSearchQuery(CloudSearchQuery):
         return None
 
 
-class SubredditSearchQuery(CloudSearchQuery):
+class CloudSearchSubredditSearchQuery(CloudSearchQuery):
     search_api = g.CLOUDSEARCH_SUBREDDIT_SEARCH_API
     sorts = {
         'relevance': '-activity',
@@ -1095,3 +800,35 @@ class SubredditSearchQuery(CloudSearchQuery):
         if not self.include_over18:
             queries.append('over18:0')
         return self.create_boolean_query(queries)
+
+
+class CloudSearchProvider(SearchProvider):
+    '''Provider implementation: wrap it all up as a SearchProvider'''
+    InvalidQuery = (InvalidQuery,)
+    SearchException = (SearchHTTPError,)
+
+    SearchQuery = LinkSearchQuery
+
+    SubredditSearchQuery = CloudSearchSubredditSearchQuery
+
+    def run_changed(self, drain=False, min_size=int(getattr(g, 'SOLR_MIN_BATCH', 500)), limit=1000, sleep_time=10, 
+            use_safe_get=False, verbose=False):
+        '''Run by `cron` (through `paster run`) on a schedule to send Things to Cloud
+        '''
+        if use_safe_get:
+            CloudSearchUploader.use_safe_get = True
+        amqp.handle_items('cloudsearch_changes', _run_changed, min_size=min_size,
+                          limit=limit, drain=drain, sleep_time=sleep_time,
+                          verbose=verbose)
+    
+    def get_related_query(self, query, article, start, end, nsfw):
+        '''build related query in cloudsearch syntax'''
+
+        query = query[:1024]
+        query = u"|".join(query.split())
+        query = u"title:'%s'" % query
+        nsfw = nsfw and u"nsfw:0" or u""
+        query = u"(and %s timestamp:%s..%s %s)" % (query, start, end, nsfw)
+        return g.search.SearchQuery(query, 
+                                    raw_sort="-text_relevance",
+                                    syntax="cloudsearch")
