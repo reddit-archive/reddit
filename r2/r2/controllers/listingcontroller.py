@@ -1297,6 +1297,12 @@ class RedditsController(ListingController):
                     stale=True,
                 )
                 reddits._sort = desc('_downs')
+            elif self.where == 'default':
+                return [
+                    sr._fullname
+                    for sr in Subreddit.default_subreddits(ids=False)
+                    if sr.author_id is not -1
+                ]
             else:
                 reddits = Subreddit._query( write_cache = True,
                                             read_cache = True,
@@ -1321,6 +1327,7 @@ class RedditsController(ListingController):
                          '/subreddits/new',
                          '/subreddits/employee',
                          '/subreddits/gold',
+                         '/subreddits/default',
                      ])
     def GET_listing(self, where, **env):
         """Get all subreddits.
