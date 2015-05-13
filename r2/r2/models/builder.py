@@ -147,14 +147,20 @@ class Builder(object):
 
             try:
                 w.author = authors.get(item.author_id)
-                if user and item.author_id in user.friends:
+                author_id = item.author_id
+
+                # if display_author exists, then author_id is unknown to the
+                # receiver, so don't display friend relationship details
+                if hasattr(item, 'display_author') and item.display_author:
+                    author_id = item.display_author
+                if user and author_id in user.friends:
                     # deprecated old way:
                     w.friend = True
 
                     # new way:
                     label = None
                     if friend_rels:
-                        rel = friend_rels[item.author_id]
+                        rel = friend_rels[author_id]
                         note = getattr(rel, "note", None)
                         if note:
                             label = u"%s (%s)" % (_("friend"), 
