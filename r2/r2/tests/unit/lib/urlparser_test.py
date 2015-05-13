@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# coding=utf-8
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
@@ -138,6 +139,12 @@ class TestIsRedditURL(unittest.TestCase):
         self.assertIsNotSafeRedditUrl("\xa0http://%s/" % g.domain)
         self.assertIsSafeRedditUrl("http://%s/\xa0" % g.domain)
         self.assertIsSafeRedditUrl("/foo/bar/\xa0baz")
+        # Make sure this works if the URL is unicode
+        self.assertIsNotSafeRedditUrl(u"http://\xa0.%s/" % g.domain)
+        self.assertIsNotSafeRedditUrl(u"\xa0http://%s/" % g.domain)
+        self.assertIsSafeRedditUrl(u"http://%s/\xa0" % g.domain)
+        self.assertIsSafeRedditUrl(u"/foo/bar/\xa0baz")
+
 
 
 class TestSwitchSubdomainByExtension(unittest.TestCase):
@@ -280,4 +287,10 @@ class TestEquality(unittest.TestCase):
         u = UrlParser('http://example.com/?page=1234')
         u2 = UrlParser('http://example.com/')
         u2.update_query(page=1234)
+        self.assertEquals(u, u2)
+
+    def test_unicode_query_params(self):
+        u = UrlParser(u'http://example.com/?page=ｕｎｉｃｏｄｅ：（')
+        u2 = UrlParser('http://example.com/')
+        u2.update_query(page=u'ｕｎｉｃｏｄｅ：（')
         self.assertEquals(u, u2)

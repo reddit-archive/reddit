@@ -522,7 +522,7 @@ class UrlParser(object):
         # Since in HTTP everything's a string, coercing values to strings now
         # makes equality testing easier.  Python will throw an error if you try
         # to pass in a non-string key, so that's already taken care of for us.
-        updates = {k: str(v) for k, v in updates.iteritems()}
+        updates = {k: _force_unicode(v) for k, v in updates.iteritems()}
         self.query_dict.update(updates)
 
     @property
@@ -715,7 +715,8 @@ class UrlParser(object):
             # should be safe enough to allow after three slashes. Opera 12's the
             # only browser that trips over them, and it doesn't fall for
             # `http:///foo.com/`.
-            if match.group(0) == '\xa0':
+            # Check both in case unicode promotion fails
+            if match.group(0) in {u'\xa0', '\xa0'}:
                 if match.string[0:match.start(0)].count('/') < 3:
                     return False
             else:
