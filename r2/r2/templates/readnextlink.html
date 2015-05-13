@@ -22,7 +22,7 @@
 
 <%namespace file="utils.html" import="thumbnail_img, nsfw_stamp" />
 
-<a class="read-next-link may-blank" href="${thing.permalink}?ref=readnext">
+<a id="read-next-link-${thing._fullname}" class="read-next-link may-blank" href="${thing.permalink}?ref=readnext">
   <div class="read-next-meta">
     <span class="score">${thing.score} points</span>&#32;
     %if thing.num_comments:

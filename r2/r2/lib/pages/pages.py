@@ -1591,11 +1591,15 @@ class LinkInfoPage(Reddit):
         self.show_promote_button = show_promote_button
         robots = "noindex,nofollow" if link._deleted or link._spam else None
 
+        if 'extra_js_config' not in kw:
+            kw['extra_js_config'] = {}
+
+        kw['extra_js_config'].update({
+            "cur_link": link._fullname,
+        });
+
         if c.can_embed:
             from r2.lib import embeds
-            if 'extra_js_config' not in kw:
-                kw['extra_js_config'] = {}
-
             kw['extra_js_config'].update({
                 "embed_inject_template": websafe(embeds.get_inject_template()),
             })
@@ -1741,12 +1745,9 @@ class LinkInfoPage(Reddit):
                 w.render_class = ReadNextLink
                 return w
 
-            def keep_fn(thing):
-                return thing._fullname != link._fullname and thing.keep_item(thing)
-
             query_obj = c.site.get_links('hot', 'all')
             builder = IDBuilder(query_obj,
-                                wrap=wrapper_fn, keep_fn=keep_fn,
+                                wrap=wrapper_fn,
                                 skip=True, num=10)
             listing = ReadNextListing(builder).listing()
             if len(listing.things):

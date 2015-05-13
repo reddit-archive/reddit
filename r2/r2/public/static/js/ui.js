@@ -153,6 +153,7 @@ r.ui.highlightNewComments = function() {
 r.ui.initReadNext = function() {
     var $readNextContainer = $('.read-next-container');
     var isDismissed = !!store.get('readnext.dismissed');
+    var currentLinkFullname = r.config.cur_link;
 
     if (isDismissed || !$readNextContainer.length) {
         return;
@@ -161,6 +162,7 @@ r.ui.initReadNext = function() {
     this.readNext = new r.ui.ReadNext({
         el: $readNextContainer,
         fixToBottom: !r.ui.isSmallScreen(),
+        currentLinkFullname: currentLinkFullname,
     });
 };
 
@@ -189,8 +191,11 @@ r.ui.ReadNext = Backbone.View.extend({
             this.updateScroll();
         }
 
+        var currentLinkId = '#read-next-link-' + this.options.currentLinkFullname;
+        var startingIndex = this.$links.index(currentLinkId) + 1;
+
         this.state.set({
-            index: 0,
+            index: startingIndex,
         });
 
         this.$readNext.addClass('active');
