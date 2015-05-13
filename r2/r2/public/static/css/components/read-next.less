@@ -24,6 +24,7 @@
 
 .read-next {
   .md-base-font-size(@read-next-font-base);
+  .no-select();
   background: @read-next-color-background;
   border: 1px solid darken(@read-next-color-background, 15%);
   box-sizing: border-box;
@@ -31,7 +32,6 @@
   display: none;
   height: @read-next-height;
   position: relative;
-  -webkit-user-select: none;
   width: @read-next-width;
   z-index: @zindex-read-next;
 
