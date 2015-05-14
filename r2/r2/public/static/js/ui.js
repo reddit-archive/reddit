@@ -192,7 +192,7 @@ r.ui.ReadNext = Backbone.View.extend({
         }
 
         var currentLinkId = '#read-next-link-' + this.options.currentLinkFullname;
-        var startingIndex = this.$links.index(currentLinkId) + 1;
+        var startingIndex = this.$links.index($(currentLinkId)) + 1;
 
         this.state.set({
             index: startingIndex,
