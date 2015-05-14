@@ -201,6 +201,7 @@ class ApidocsController(RedditController):
         from r2.controllers.api import ApiController, ApiminimalController
         from r2.controllers.apiv1.user import APIv1UserController
         from r2.controllers.apiv1.gold import APIv1GoldController
+        from r2.controllers.apiv1.scopes import APIv1ScopesController
         from r2.controllers.captcha import CaptchaController
         from r2.controllers.front import FrontController
         from r2.controllers.wiki import WikiApiController, WikiController
@@ -210,6 +211,7 @@ class ApidocsController(RedditController):
         api_controllers = [
             (APIv1UserController, '/api/v1'),
             (APIv1GoldController, '/api/v1'),
+            (APIv1ScopesController, '/api/v1'),
             (ApiController, '/api'),
             (ApiminimalController, '/api'),
             (WikiApiController, '/api/wiki'),
