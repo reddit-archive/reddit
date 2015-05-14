@@ -441,9 +441,10 @@ class RuleTarget(object):
             valid_targets=(Link, Comment),
             component_type="action",
         ),
-        "report_reason": RuleComponent(
+        "action_reason": RuleComponent(
             valid_types=basestring,
             valid_targets=(Link, Comment),
+            aliases=["report_reason"],
         ),
         "set_flair": RuleComponent(
             valid_types=(basestring, list),
@@ -734,7 +735,7 @@ class RuleTarget(object):
                 return True
 
         # check if any of the fields that support placeholders have media ones
-        potential_placeholders = [self.report_reason]
+        potential_placeholders = [self.action_reason]
         if self.set_flair:
             potential_placeholders.extend(self.set_flair.values())
         if any(text and "{{media_" in text for text in potential_placeholders):
@@ -921,6 +922,7 @@ class RuleTarget(object):
             approvable_author = not data["author"]._spam or self.approve_banned
             if approvable_author:
                 # TODO: shouldn't need to set train_spam/insert values
+                was_removed = item._spam
                 admintools.unspam(item, moderator_unbanned=True,
                     unbanner=ACCOUNT.name, train_spam=True, insert=item._spam)
 
@@ -931,8 +933,13 @@ class RuleTarget(object):
                     log_action = "approvecomment"
 
                 if log_action:
+                    if self.action_reason:
+                        reason = replace_placeholders(
+                            self.action_reason, data, self.parent.matches)
+                    else:
+                        reason = "unspam" if was_removed else "approved"
                     ModAction.create(data["subreddit"], ACCOUNT, log_action,
-                        target=item, details="unspam")
+                        target=item, details=reason)
 
                 g.stats.simple_event("automoderator.approve")
 
@@ -957,16 +964,20 @@ class RuleTarget(object):
                 LastModified.touch(modified_thing._fullname, "Comments")
 
             if log_action:
-                log_details = "spam" if spam else "remove"
+                if self.action_reason:
+                    reason = replace_placeholders(
+                        self.action_reason, data, self.parent.matches)
+                else:
+                    reason = "spam" if spam else "remove"
                 ModAction.create(data["subreddit"], ACCOUNT, log_action,
-                    target=item, details=log_details)
+                    target=item, details=reason)
 
             g.stats.simple_event("automoderator.%s" % self.action)
 
         if self.action == "report":
-            if self.report_reason:
+            if self.action_reason:
                 reason = replace_placeholders(
-                    self.report_reason, data, self.parent.matches)
+                    self.action_reason, data, self.parent.matches)
             else:
                 reason = None
             Report.new(ACCOUNT, item, reason)
