@@ -102,6 +102,13 @@ class FeatureState(object):
         if cfg.get('gold') and world.has_gold(user):
             return True
 
+        loggedin = world.is_user_loggedin()
+        if cfg.get('loggedin') and loggedin:
+            return True
+
+        if cfg.get('loggedout') and not loggedin:
+            return True
+
         users = [u.lower() for u in cfg.get('users', [])]
         if users and user and user.name.lower() in users:
             return True

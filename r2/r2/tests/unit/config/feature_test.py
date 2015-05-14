@@ -124,6 +124,34 @@ class TestFeature(unittest.TestCase):
         feature_state = self._make_state(cfg, mock_world)
         self.assertFalse(feature_state.is_enabled(user=gary))
 
+    def test_loggedin_enabled(self):
+        cfg = {'loggedin': True}
+        mock_world = self.world()
+        mock_world.is_user_loggedin = mock.Mock(return_value=True)
+        feature_state = self._make_state(cfg, mock_world)
+        self.assertTrue(feature_state.is_enabled(user=gary))
+
+    def test_loggedin_disabled(self):
+        cfg = {'loggedin': True}
+        mock_world = self.world()
+        mock_world.is_user_loggedin = mock.Mock(return_value=True)
+        feature_state = self._make_state(cfg, mock_world)
+        self.assertFalse(feature_state.is_enabled(user=gary))
+
+    def test_loggedout_enabled(self):
+        cfg = {'loggedout': True}
+        mock_world = self.world()
+        mock_world.is_user_loggedin = mock.Mock(return_value=False)
+        feature_state = self._make_state(cfg, mock_world)
+        self.assertTrue(feature_state.is_enabled(user=gary))
+
+    def test_loggedout_disabled(self):
+        cfg = {'loggedout': True}
+        mock_world = self.world()
+        mock_world.is_user_loggedin = mock.Mock(return_value=False)
+        feature_state = self._make_state(cfg, mock_world)
+        self.assertFalse(feature_state.is_enabled(user=gary))
+
     def test_url_enabled(self):
         mock_world = self.world()
 

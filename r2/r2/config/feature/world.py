@@ -91,6 +91,11 @@ class World(object):
 
         return user.gold
 
+    def is_user_loggedin(self):
+        if self.current_user():
+            return True
+        return False
+
     def url_features(self):
         return set(request.GET.getall('feature'))
 
