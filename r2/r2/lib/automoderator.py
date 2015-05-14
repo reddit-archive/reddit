@@ -317,7 +317,8 @@ class RuleComponent(object):
     """Data related to individual key/value components making up a rule."""
 
     def __init__(self, valid_types=None, valid_values=None,
-            valid_regex=None, valid_targets=None, default=None, component_type=None):
+            valid_regex=None, valid_targets=None, default=None,
+            component_type=None, aliases=None):
         """
         Keyword arguments:
         valid_types -- valid value types for this key
@@ -326,6 +327,7 @@ class RuleComponent(object):
         valid_targets -- this key can only be defined for these target types
         default -- if this key isn't defined, default to this value
         component_type -- "action" or "check" if relevant for this key
+        aliases -- other keys you can use (only if "normal" one isn't used)
         """
         self.valid_types = valid_types
         self.valid_values = valid_values
@@ -336,6 +338,7 @@ class RuleComponent(object):
         self.valid_targets = tup(valid_targets)
         self.default = default
         self.component_type = component_type
+        self.aliases = aliases or []
 
     def validate(self, value):
         """Return whether a value satisfies this key's constraints."""
@@ -546,15 +549,11 @@ class RuleTarget(object):
         else:
             values = values.copy()
 
+        self.set_values(values)
+
         # determine patterns that will be matched against fields
         self.match_patterns = self.get_match_patterns(values)
         self.matches = {}
-        
-        # remove any match pattern keys from the values dict
-        for key in self.match_patterns:
-            del values[key]
-
-        self.set_values(values)
 
         self.approve_banned = approve_banned
 
@@ -569,8 +568,16 @@ class RuleTarget(object):
 
         for key, component in self._potential_components.iteritems():
             if self.target_type in component.valid_targets:
-                if key in values:
-                    value = values.pop(key)
+                # pop the key and all aliases out of the values
+                # but only keep the first value we find
+                value = None
+                sources = [key] + component.aliases
+                for source in sources:
+                    from_source = values.pop(source, None)
+                    if value is None:
+                        value = from_source
+
+                if value is not None:
                     if not component.validate(value):
                         raise AutoModeratorSyntaxError(
                             "invalid value for `%s`: `%s`" % (key, value),
@@ -586,6 +593,12 @@ class RuleTarget(object):
                 else:
                     setattr(self, key, component.default)
             else:
+                if key in values:
+                    raise AutoModeratorRuleTypeError(
+                        "Can't use `%s` on this type" % key,
+                        self.parent.yaml,
+                    )
+
                 setattr(self, key, None)
 
         # special handling for set_flair
@@ -662,9 +675,6 @@ class RuleTarget(object):
         match_patterns = {}
         
         for key in values:
-            if key in self._potential_components:
-                continue
-
             parsed_key = self.parse_match_fields_key(key)
 
             # add fields to the list of fields we're going to check
