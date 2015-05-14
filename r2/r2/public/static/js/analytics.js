@@ -213,7 +213,7 @@ r.analytics = {
   stripAnalyticsParams: function() {
     var hasReplaceState = !!(window.history && window.history.replaceState);
     var params = $.url().param();
-    var stripParams = ['ref'];
+    var stripParams = ['ref', 'ref_source'];
     var strippedParams = _.omit(params, stripParams);
 
     if (hasReplaceState && !_.isEqual(params, strippedParams)) {
