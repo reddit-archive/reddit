@@ -1301,7 +1301,6 @@ class RedditsController(ListingController):
                 return [
                     sr._fullname
                     for sr in Subreddit.default_subreddits(ids=False)
-                    if getattr(sr, 'author_id', -1) is not -1
                 ]
             else:
                 reddits = Subreddit._query( write_cache = True,
