@@ -62,7 +62,9 @@
          name="q" placeholder="${_('search')}" tabindex="20">
 
   %if feature.is_enabled('subreddit_search') and not thing.simple:
-    <button class="search-submit-button c-btn c-btn-primary" type='submit'>${_("search")}</button>
+    <button class="search-submit-button c-btn c-btn-primary" type='submit' aria-label="${_("Search")}">
+      <span class="search-icon"></span>
+    </button>
   %else:
     <input type="submit" value="" tabindex="22">
   %endif
