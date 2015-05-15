@@ -93,13 +93,17 @@ def replace_placeholders(string, data, matches):
     replacements = {
         "{{author}}": data["author"].name,
         "{{body}}": getattr(item, "body", ""),
-        "{{permalink}}": item.make_permalink_slow(),
         "{{subreddit}}": data["subreddit"].name,
     }
 
     if isinstance(item, Comment):
+        context = None
+        if item.parent_id:
+            context = 3
         replacements.update({
             "{{kind}}": "comment",
+            "{{permalink}}": item.make_permalink_slow(
+                context=context, force_domain=True),
             "{{title}}": data["link"].title,
         })
         media_item = data["link"]
@@ -107,6 +111,7 @@ def replace_placeholders(string, data, matches):
         replacements.update({
             "{{kind}}": "submission",
             "{{domain}}": item.link_domain(),
+            "{{permalink}}": item.make_permalink_slow(force_domain=True),
             "{{title}}": item.title,
             "{{url}}": item.url,
         })
