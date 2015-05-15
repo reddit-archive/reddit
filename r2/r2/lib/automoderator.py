@@ -437,7 +437,7 @@ class RuleTarget(object):
             valid_targets=(Link, Comment),
         ),
         "action": RuleComponent(
-            valid_values={"approve", "remove", "spam", "report"},
+            valid_values={"approve", "remove", "spam", "filter", "report"},
             valid_targets=(Link, Comment),
             component_type="action",
         ),
@@ -943,10 +943,16 @@ class RuleTarget(object):
 
                 g.stats.simple_event("automoderator.approve")
 
-        if self.action in {"remove", "spam"}:
+        if self.action in {"remove", "spam", "filter"}:
             spam = (self.action == "spam")
-            admintools.spam(item, auto=False, moderator_banned=True,
-                banner=ACCOUNT.name, train_spam=spam)
+            keep_in_modqueue = (self.action == "filter")
+            admintools.spam(
+                item,
+                auto=keep_in_modqueue,
+                moderator_banned=True,
+                banner=ACCOUNT.name,
+                train_spam=spam,
+            )
 
             # TODO: shouldn't need to do all of this here
             modified_thing = None
@@ -1220,7 +1226,7 @@ class Rule(object):
     @property
     def is_removal_rule(self):
         """Whether the rule could result in removing the item."""
-        return self.targets["base"].action in {"spam", "remove"}
+        return self.targets["base"].action in {"spam", "remove", "filter"}
 
     @property
     def is_inapplicable_to_mods(self):

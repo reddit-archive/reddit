@@ -638,13 +638,19 @@ class FrontController(RedditController):
                 verdict = getattr(x, "verdict", None)
                 if verdict is None:
                     return True # anything without a verdict
-                if x._spam and verdict != 'mod-removed':
-                    return True # spam, unless banned by a moderator
+                if x._spam:
+                    ban_info = getattr(x, "ban_info", {})
+                    if ban_info.get("auto", True):
+                        return True # spam, unless banned by a moderator
                 return False
             elif location == "unmoderated":
                 # banned user, don't show if subreddit pref excludes
                 if x.author._spam and x.subreddit.exclude_banned_modqueue:
                     return False
+                if x._spam:
+                    ban_info = getattr(x, "ban_info", {})
+                    if ban_info.get("auto", True):
+                        return True
                 return not getattr(x, 'verdict', None)
             elif location == "edited":
                 return bool(getattr(x, "editted", False))

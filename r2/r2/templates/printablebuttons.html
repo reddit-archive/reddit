@@ -151,7 +151,7 @@
 <%def name="big_modbuttons(thing)">
   <span class="big-mod-buttons">
     <span role="radiogroup">
-      %if not getattr(thing, "moderator_banned", None):
+      %if not getattr(thing, "moderator_banned", None) or getattr(thing, "autobanned", False):
         ${pretty_button(_("spam"), "big_mod_action", -2, "negative")}
         ${pretty_button(_("remove"), "big_mod_action", -1, "neutral")}
       %endif
