@@ -31,6 +31,7 @@ from pylons import app_globals as g
 from pylons.i18n import _
 
 from r2.config.extensions import set_extension
+from r2.lib import hooks
 from r2.lib.base import abort
 from reddit_base import RedditController, MinimalController, require_https
 from r2.lib.db import tdb_cassandra
@@ -375,6 +376,10 @@ class OAuth2AccessController(MinimalController):
         }
         if refresh_token:
             resp["refresh_token"] = refresh_token._id
+
+        hooks.get_hook("oauth2.create_token").call(token_dict=resp,
+                                                   token=access_token)
+
         return resp
 
     @validate(code=nop("code"),
