@@ -572,6 +572,7 @@ class ApiController(RedditController):
 
         queries.new_link(l)
         l.update_search_index()
+        g.events.submit_event(l, request=request, context=c)
 
         if then == 'comments':
             path = add_sr(l.make_permalink_slow())
