@@ -78,7 +78,7 @@
     <% pretty_name = thing.path.rstrip('/') %>
     ${self.search_result_icon('filter')}
     ${plain_link(
-        pretty_name,
+        _("search within %(subreddit)s") % dict(subreddit=pretty_name),
         search_url(thing.prev_search, thing.name, restrict_sr='on', sort=thing.sort, recent=thing.recent),
         sr_path=False,
         cname=False,
