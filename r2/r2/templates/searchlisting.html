@@ -31,7 +31,14 @@
   <div class="search-result-group">
     %if thing.heading:
       <header class="search-result-group-header">
-        ${thing.heading}
+        <span class="search-header-label">${thing.heading}</span>
+        %if thing.nav_menus:
+          <div class="search-header-menus">
+            %for menu in thing.nav_menus:
+              ${menu}
+            %endfor
+          </div>
+        %endif
       </header>
     %endif
     <div class="contents">

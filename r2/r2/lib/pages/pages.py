@@ -1467,7 +1467,7 @@ class SearchPage(BoringPage):
                                    self.nav_menu, self.subreddits, self._content))
 
         return self.content_stack((self.searchbar, self.infobar,
-                                   self.nav_menu, self.subreddits, self._content,
+                                   self.subreddits, self._content,
                                    self.sr_facets))
 
 

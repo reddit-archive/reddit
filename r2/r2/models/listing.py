@@ -296,8 +296,8 @@ class LinkListing(Listing):
 class SearchListing(LinkListing):
     def __init__(self, *a, **kw):
         LinkListing.__init__(self, *a, **kw)
-
         self.heading = kw.get('heading', None)
+        self.nav_menus = kw.get('nav_menus', None)
 
     def listing(self, legacy_render_class=False, *args, **kwargs):
         wrapped = LinkListing.listing(self, *args, **kwargs)

@@ -171,12 +171,21 @@
     padding-right: @margin-large * 1px;
 
     .search-result-group-header {
-      .search-font-size(@search-font-medium);
       border-bottom: 2px solid @color-group-header-border;
       color: @color-dark-grey;
-      font-weight: bold;
       margin-bottom: @margin-large * 1px;
       margin-top: @margin-xx-large * 1px;
+    }
+
+    .search-header-label {
+      .search-font-size(@search-font-medium);
+      font-weight: bold;
+    }
+
+    .search-header-menus {
+      .search-font-size(@search-font-base);
+      display: inline-block;
+      margin-left: @margin-large * 1px;
     }
 
     footer .nav-buttons {

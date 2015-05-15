@@ -1035,7 +1035,8 @@ class FrontController(RedditController):
                                          recent=recent, syntax=syntax)
                 heading = _('posts') if sr_num > 0 else None
                 content = self._search(q, num=num, after=after, reverse=reverse,
-                                       count=count, sr_detail=sr_detail, heading=heading,
+                                       count=count, sr_detail=sr_detail,
+                                       heading=heading, nav_menus=nav_menus,
                                        legacy_render_class=legacy_render_class)
                 converted_data = q.converted_data
                 subreddit_facets = content.subreddit_facets
@@ -1055,7 +1056,7 @@ class FrontController(RedditController):
                                          include_over18=include_over18,
                                          recent=recent)
                 content = self._search(q, num=num, after=after, reverse=reverse,
-                                       count=count, heading=_('posts'),
+                                       count=count, heading=_('posts'), nav_menus=nav_menus,
                                        legacy_render_class=legacy_render_class)
                 converted_data = q.converted_data
                 subreddit_facets = content.subreddit_facets
@@ -1140,7 +1141,7 @@ class FrontController(RedditController):
 
     def _search(self, query_obj, num, after, reverse, count=0, type=None,
                 skip_deleted_authors=True, sr_detail=False,
-                heading=None, legacy_render_class=True):
+                heading=None, nav_menus=None, legacy_render_class=True):
         """Helper function for interfacing with search.  Basically a
            thin wrapper for SearchBuilder."""
 
@@ -1163,7 +1164,8 @@ class FrontController(RedditController):
         if type:
             params['type'] = type
 
-        listing = SearchListing(builder, show_nums=True, params=params, heading=heading)
+        listing = SearchListing(builder, show_nums=True, params=params,
+                                heading=heading, nav_menus=nav_menus)
 
         try:
             res = listing.listing(legacy_render_class)
