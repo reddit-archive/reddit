@@ -34,6 +34,10 @@ import r2.lib.amqp
 from r2.lib.utils import epoch_timestamp, sampled, squelch_exceptions
 
 
+MAX_EVENT_SIZE = 4096
+MAX_CONTENT_LENGTH = 40 * 1024
+
+
 def _make_http_date(when=None):
     if when is None:
         when = datetime.datetime.now(pytz.UTC)
@@ -83,6 +87,53 @@ class EventQueue(object):
             event_base["vote_type"] = "self"
         event_base["sr"] = vote._thing2.subreddit_slow.name
         event_base["sr_id"] = str(vote._thing2.subreddit_slow._id)
+
+        self.save_event(event_base)
+
+    @squelch_exceptions
+    @sampled("events_collector_submit_sample_rate")
+    def submit_event(self, new_link, event_base=None, request=None,
+                     context=None):
+        """Create a 'submit' event for event-collector
+
+        new_link: An r2.models.Link object
+        event_base: The base fields for an Event. If not given, caller MUST
+            supply a pylons.request and pylons.c object to build a base from
+        request, context: Should be pylons.request & pylons.c respectively;
+            used to build the base Event if event_base is not given
+
+        """
+        if event_base is None:
+            event_base = Event.base_from_request(request, context)
+
+        event_base["event_topic"] = "submit"
+        event_base["event_name"] = "submit_server"
+        event_base["event_ts"] = str(epoch_timestamp(new_link._date))
+        event_base["id"] = new_link._fullname
+        event_base["type"] = "self" if new_link.is_self else "link"
+
+        sr = new_link.subreddit_slow
+        event_base["sr"] = sr.name
+        event_base["sr_id"] = str(sr._id)
+
+        event_base["title"] = new_link.title
+
+        if new_link._spam:
+            event_base["flagged_spam"] = True
+            banner = getattr(new_link, "ban_info", {}).get("banner")
+            if banner:
+                event_base["spam_reason"] = banner
+
+        content = new_link.selftext if new_link.is_self else new_link.url
+        content_length = len(content)
+
+        event_base["length"] = content_length
+        event_base["text"] = content
+
+        size_so_far = len(json.dumps(event_base))
+        oversize = size_so_far - MAX_EVENT_SIZE
+        if oversize > 0:
+            event_base["text"] = event_base["text"][:-oversize]
 
         self.save_event(event_base)
 
@@ -163,7 +214,7 @@ def _split_list(some_list):
 
 class EventPublisher(object):
     def __init__(self, url, signature_key, secret, user_agent, stats,
-                 max_content_length=40 * 1024, timeout=None):
+                 max_content_length=MAX_CONTENT_LENGTH, timeout=None):
         self.url = url
         self.signature_key = signature_key
         self.secret = secret
@@ -229,7 +280,7 @@ def _get_reason(response):
             getattr(response.raw, "reason", "{unknown}"))
 
 
-def process_events(g, timeout=5.0, max_event_size=4096, **kw):
+def process_events(g, timeout=5.0, max_event_size=MAX_EVENT_SIZE, **kw):
     publisher = EventPublisher(
         g.events_collector_url,
         g.secrets["events_collector_key"],
