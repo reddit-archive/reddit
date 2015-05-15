@@ -165,17 +165,12 @@ class Account(Thing):
         return not self.__eq__(other)
 
     def has_interacted_with(self, sr):
-        if not sr:
+        try:
+            r = SubredditParticipationByAccount.fast_query(self, [sr])
+        except tdb_cassandra.NotFound:
             return False
 
-        for type in ('link', 'comment'):
-            if hasattr(self, "%s_%s_karma" % (sr.name, type)):
-                return True
-
-        if sr.is_subscriber(self):
-            return True
-
-        return False
+        return (self, sr) in r
 
     def karma(self, kind, sr = None):
         suffix = '_' + kind + '_karma'
@@ -1067,3 +1062,21 @@ class AccountsByCanonicalEmail(tdb_cassandra.View):
             return []
         account_id36s = cls.get_time_sorted_columns(canonical).keys()
         return Account._byID36(account_id36s, data=True, return_dict=False)
+    
+
+class SubredditParticipationByAccount(tdb_cassandra.DenormalizedRelation):
+    _use_db = True
+    _write_last_modified = False
+    _views = []
+    _extra_schema_creation_args = {
+        "key_validation_class": tdb_cassandra.ASCII_TYPE,
+        "default_validation_class": tdb_cassandra.DATE_TYPE,
+    }
+
+    @classmethod
+    def value_for(cls, thing1, thing2):
+        return datetime.now(g.tz)
+
+    @classmethod
+    def mark_participated(cls, account, subreddit):
+        cls.create(account, [subreddit])

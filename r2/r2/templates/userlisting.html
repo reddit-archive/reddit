@@ -36,11 +36,6 @@
     <input type="hidden" name="action" value="add">
     <input type="hidden" name="container" value="${container_name}">
     <input type="hidden" name="type" value="${add_type}">
-    %if add_type == "banned":
-      <div class="note">
-        ${_("note: the banned user will only receive a message notifying them of their ban if they are subscribed to the subreddit or have previously gained or lost any karma (either link or comment) in the subreddit.")}
-      </div>
-    %endif
     %if add_type in ("banned", "wikibanned"):
         <label for="name">${_('who to ban?')} &nbsp;</label>
         <input type="text" class="friend-name" name="name" id="name">
@@ -75,7 +70,6 @@
     ${error_field("USER_DOESNT_EXIST", "name")}
     ${error_field("ALREADY_MODERATOR", "name")}
     ${error_field("BANNED_FROM_SUBREDDIT", "name")}
-    ${error_field("USER_BAN_NO_MESSAGE", "ban_message")}
     %if caller:
       ${caller.body()}
     %endif

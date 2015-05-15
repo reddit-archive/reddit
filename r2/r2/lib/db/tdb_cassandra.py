@@ -34,6 +34,7 @@ from pycassa.cassandra.ttypes import ConsistencyLevel, NotFoundException
 from pycassa.system_manager import (
     ASCII_TYPE,
     COUNTER_COLUMN_TYPE,
+    DATE_TYPE,
     INT_TYPE,
     SystemManager,
     TIME_UUID_TYPE,

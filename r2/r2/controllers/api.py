@@ -1041,13 +1041,6 @@ class ApiController(RedditController):
         if type == "banned":
             if form.has_errors("ban_message", errors.TOO_LONG):
                 return
-
-            # don't let them ban with a custom message if the user won't
-            # actually be messaged
-            if ban_message and not friend.has_interacted_with(container):
-                c.errors.add(errors.USER_BAN_NO_MESSAGE, field="ban_message")
-                form.set_error(errors.USER_BAN_NO_MESSAGE, "ban_message")
-                return
         else:
             ban_message = None
 
@@ -3365,6 +3358,8 @@ class ApiController(RedditController):
             Subreddit.subscribe_defaults(c.user)
 
             if action == "sub":
+                SubredditParticipationByAccount.mark_participated(c.user, sr)
+
                 if sr.add_subscriber(c.user):
                     sr._incr('_ups', 1)
                 else:

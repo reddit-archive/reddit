@@ -32,7 +32,12 @@ from r2.lib.utils import (
     tup,
     UrlParser,
 )
-from account import Account, DeletedUser, BlockedSubredditsByAccount
+from account import (
+    Account,
+    BlockedSubredditsByAccount,
+    DeletedUser,
+    SubredditParticipationByAccount,
+)
 from subreddit import DefaultSR, DomainSR, Subreddit
 from printable import Printable
 from r2.config import extensions
@@ -210,6 +215,7 @@ class Link(Thing, Printable):
         l._commit()
         l.set_url_cache()
         LinksByAccount.add_link(author, l)
+        SubredditParticipationByAccount.mark_participated(author, sr)
         if author._spam:
             g.stats.simple_event('spam.autoremove.link')
             admintools.spam(l, banner='banned user')
@@ -1000,6 +1006,8 @@ class Comment(Thing, Printable):
             link.update_search_index(boost_only=True)
 
         CommentsByAccount.add_comment(author, c)
+        SubredditParticipationByAccount.mark_participated(
+            author, c.subreddit_slow)
 
         def should_send():
             # don't send the message to author if replying to own comment
@@ -1650,6 +1658,9 @@ class Message(Thing, Printable):
 
         if sr_id and not sr:
             sr = Subreddit._byID(sr_id)
+
+        if to_subreddit:
+            SubredditParticipationByAccount.mark_participated(author, sr)
 
         inbox_rel = []
 
