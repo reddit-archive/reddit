@@ -178,6 +178,7 @@ r.ui.ReadNext = Backbone.View.extend({
         this.$links = this.$readNext.find('.read-next-link');
         this.numLinks = this.$links.length;
 
+
         this.state = new Backbone.Model({
             fixed: false,
             index: -1,
@@ -198,14 +199,36 @@ r.ui.ReadNext = Backbone.View.extend({
             index: startingIndex,
         });
 
+        this.resetRefIndicies(startingIndex);
         this.$readNext.addClass('active');
+    },
+
+    resetRefIndicies: function(startingIndex) {
+        var a = document.createElement('a');
+
+        this.$links.toArray().forEach(function(link, i) {
+            var url = $.url(link.href);
+            var params = url.param();
+            if (!params.ref) {
+                return;
+            }
+            var relativeIndex = this.moduloIndex(i - startingIndex);
+            params.ref = params.ref.split('_')[0] + '_' + relativeIndex;
+            a.href = link.href;
+            a.search = $.param(params);
+            link.href = a.href;
+        }, this);
+    },
+
+    moduloIndex: function(i) {
+        var numLinks = this.numLinks;
+        return (i + numLinks) % numLinks;
     },
 
     next: function() {
         var currentIndex = this.state.get('index');
-        var numLinks = this.numLinks;
         this.state.set({
-            index: currentIndex = (currentIndex + 1) % numLinks,
+            index: this.moduloIndex(currentIndex + 1),
         });
         r.analytics.fireGAEvent('readnext', 'nav-next');
     },
@@ -214,7 +237,7 @@ r.ui.ReadNext = Backbone.View.extend({
         var currentIndex = this.state.get('index');
         var numLinks = this.numLinks;
         this.state.set({
-            index: currentIndex = (currentIndex + numLinks - 1) % numLinks,
+            index: this.moduloIndex(currentIndex - 1),
         });
         r.analytics.fireGAEvent('readnext', 'nav-prev');
     },
