@@ -1384,7 +1384,7 @@ class MyredditsController(ListingController):
         if self.where == 'moderator' and not c.user.is_moderator_somewhere:
             return []
         elif self.where == "subscriber":
-            sr_ids = Subreddit.reverse_subscriber_ids(c.user)
+            sr_ids = Subreddit.subscribed_ids_by_user(c.user)
             sr_fullnames = [
                 Subreddit._fullname_from_id36(to36(sr_id)) for sr_id in sr_ids]
             return sr_fullnames
@@ -1404,7 +1404,7 @@ class MyredditsController(ListingController):
 
     def content(self):
         user = c.user if c.user_is_loggedin else None
-        num_subscriptions = len(Subreddit.reverse_subscriber_ids(user))
+        num_subscriptions = len(Subreddit.subscribed_ids_by_user(user))
         if self.where == 'subscriber' and num_subscriptions == 0:
             message = strings.sr_messages['empty']
         else:

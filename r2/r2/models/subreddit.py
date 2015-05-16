@@ -838,7 +838,7 @@ class Subreddit(Thing, Printable, BaseSite):
             # an argument) will act as expected
             subscriber_srids = set(Subreddit.default_subreddits())
         else:
-            subscriber_srids = Subreddit.reverse_subscriber_ids(user)
+            subscriber_srids = Subreddit.subscribed_ids_by_user(user)
 
         if user and c.user_is_loggedin:
             srmembers_to_fetch.extend(['moderator', 'contributor', 'banned'])
@@ -990,9 +990,9 @@ class Subreddit(Thing, Printable, BaseSite):
 
     @classmethod
     def random_subscription(cls, user):
-        srs = Subreddit.reverse_subscriber_ids(user)
-        return (Subreddit._byID(random.choice(srs))
-                if srs else Subreddit._by_name(g.default_sr))
+        sr_ids = Subreddit.subscribed_ids_by_user(user)
+        return (Subreddit._byID(random.choice(sr_ids), data=True)
+                if sr_ids else Subreddit._by_name(g.default_sr))
 
     @classmethod
     def user_subreddits(cls, user, ids=True, limit=DEFAULT_LIMIT):
@@ -1019,7 +1019,7 @@ class Subreddit(Thing, Printable, BaseSite):
         # note: for user not logged in, the fake user account has
         # has_subscribed == False by default.
         if user and user.has_subscribed:
-            sr_ids = Subreddit.reverse_subscriber_ids(user)
+            sr_ids = Subreddit.subscribed_ids_by_user(user)
             sr_ids = cls.random_reddits(user.name, sr_ids, limit)
 
             return sr_ids if ids else Subreddit._byID(sr_ids,
@@ -1149,7 +1149,7 @@ class Subreddit(Thing, Printable, BaseSite):
         self._incr('_ups', -1)
 
     @classmethod
-    def reverse_subscriber_ids(cls, user):
+    def subscribed_ids_by_user(cls, user):
         return SubscribedSubredditsByAccount.get_all_sr_ids(user)
 
 
