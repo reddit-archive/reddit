@@ -2638,10 +2638,9 @@ class ApiController(RedditController):
             sr._commit()
 
             Subreddit.subscribe_defaults(c.user)
-            # make sure this user is on the admin list of that site!
-            if sr.add_subscriber(c.user):
-                sr._incr('_ups', 1)
+            sr.add_subscriber(c.user)
             sr.add_moderator(c.user)
+
             if not sr.hide_contributors:
                 sr.add_contributor(c.user)
             redir = sr.path + "about/edit/?created=true"
@@ -3380,14 +3379,11 @@ class ApiController(RedditController):
             if action == "sub":
                 SubredditParticipationByAccount.mark_participated(c.user, sr)
 
-                if sr.add_subscriber(c.user):
-                    sr._incr('_ups', 1)
-                else:
-                    # tried to subscribe but user was already subscribed
-                    pass
+                if not sr.is_subscriber(c.user):
+                    sr.add_subscriber(c.user)
             else:
-                if sr.remove_subscriber(c.user):
-                    sr._incr('_ups', -1)
+                if sr.is_subscriber(c.user):
+                    sr.remove_subscriber(c.user)
                 else:
                     # tried to unsubscribe but user was not subscribed
                     return abort(404, 'not found')

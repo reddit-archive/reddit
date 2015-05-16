@@ -39,7 +39,7 @@ from pylons.i18n import _, N_
 from r2.lib.db.thing import Thing, Relation, NotFound
 from account import Account, AccountsActiveBySR, FakeAccount
 from printable import Printable
-from r2.lib.db.userrel import UserRel
+from r2.lib.db.userrel import UserRel, MigratingUserRel
 from r2.lib.db.operators import lower, or_, and_, not_, desc
 from r2.lib.errors import UserRequiredException, RedditError
 from r2.lib.geoip import location_by_ips
@@ -827,7 +827,6 @@ class Subreddit(Thing, Printable, BaseSite):
 
     @classmethod
     def add_props(cls, user, wrapped):
-        subscriber_srids = set()
         moderator_srids = set()
         contributor_srids = set()
         banned_srids = set()
@@ -837,10 +836,9 @@ class Subreddit(Thing, Printable, BaseSite):
             # NOTE: add_props is called with user = c.user, so
             # default_subreddits (which uses c.user rather than taking user as
             # an argument) will act as expected
-            default_srids = Subreddit.default_subreddits()
-            subscriber_srids.update(default_srids)
+            subscriber_srids = set(Subreddit.default_subreddits())
         else:
-            srmembers_to_fetch.append('subscriber')
+            subscriber_srids = Subreddit.reverse_subscriber_ids(user)
 
         if user and c.user_is_loggedin:
             srmembers_to_fetch.extend(['moderator', 'contributor', 'banned'])
@@ -850,8 +848,6 @@ class Subreddit(Thing, Printable, BaseSite):
             for (item, i_user, rel_name), rel in rels.iteritems():
                 if not rel:
                     continue
-                elif rel_name == 'subscriber':
-                    subscriber_srids.add(item._id)
                 elif rel_name == 'moderator':
                     moderator_srids.add(item._id)
                 elif rel_name == 'contributor':
@@ -1044,12 +1040,8 @@ class Subreddit(Thing, Printable, BaseSite):
     @classmethod
     def subscribe_defaults(cls, user):
         if not user.has_subscribed:
-            for sr in cls.user_subreddits(user=None, ids=False, limit=None):
-                #this will call reverse_subscriber_ids after every
-                #addition. if it becomes a problem we should make an
-                #add_multiple_subscriber fn
-                if sr.add_subscriber(user):
-                    sr._incr('_ups', 1)
+            srs = cls.user_subreddits(user=None, ids=False, limit=None)
+            cls.subscribe_multiple(user, srs)
             user.has_subscribed = True
             user._commit()
 
@@ -1133,6 +1125,31 @@ class Subreddit(Thing, Printable, BaseSite):
             return int(g.promo_srid36, 36)
         else:
             return None
+
+    def is_subscriber(self, user):
+        return legacy_subscriber_userrel.is_subscriber(self, user)
+
+    def add_subscriber(self, user):
+        legacy_subscriber_userrel.add_subscriber(self, user)
+        SubscribedSubredditsByAccount.create(user, self)
+        self._incr('_ups', 1)
+
+    @classmethod
+    def subscribe_multiple(cls, user, srs):
+        for sr in srs:
+            legacy_subscriber_userrel.add_subscriber(sr, user)
+        SubscribedSubredditsByAccount.create(user, srs)
+        for sr in srs:
+            sr._incr('_ups', 1)
+
+    def remove_subscriber(self, user):
+        legacy_subscriber_userrel.remove_subscriber(self, user)
+        SubscribedSubredditsByAccount.destroy(user, self)
+        self._incr('_ups', -1)
+
+    @classmethod
+    def reverse_subscriber_ids(cls, user):
+        return legacy_subscriber_userrel.reverse_subscriber_ids(user)
 
 
 class SubscribedSubredditsByAccount(tdb_cassandra.DenormalizedRelation):
@@ -2401,11 +2418,13 @@ Subreddit.__bases__ += (
     UserRel('moderator_invite', SRMember,
             permission_class=ModeratorPermissionSet),
     UserRel('contributor', SRMember),
-    UserRel('subscriber', SRMember, disable_ids_fn=True),
     UserRel('banned', SRMember),
     UserRel('wikibanned', SRMember),
     UserRel('wikicontributor', SRMember),
 )
+
+legacy_subscriber_userrel = MigratingUserRel(
+    'subscriber', SRMember, disable_ids_fn=True)
 
 
 class SubredditTempBan(object):
