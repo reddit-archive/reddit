@@ -1127,7 +1127,12 @@ class Subreddit(Thing, Printable, BaseSite):
             return None
 
     def is_subscriber(self, user):
-        return legacy_subscriber_userrel.is_subscriber(self, user)
+        try:
+            SubscribedSubredditsByAccount.fast_query(user, self)
+        except tdb_cassandra.NotFound:
+            return False
+
+        return True
 
     def add_subscriber(self, user):
         legacy_subscriber_userrel.add_subscriber(self, user)
@@ -1151,7 +1156,8 @@ class Subreddit(Thing, Printable, BaseSite):
 
     @classmethod
     def reverse_subscriber_ids(cls, user):
-        return legacy_subscriber_userrel.reverse_subscriber_ids(user)
+        r = SubscribedSubredditsByAccount._cf.xget(user._id36)
+        return [int(sr_id36, 36) for sr_id36, val in r]
 
 
 class SubscribedSubredditsByAccount(tdb_cassandra.DenormalizedRelation):

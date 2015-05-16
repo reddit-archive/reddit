@@ -48,6 +48,7 @@ from r2.lib.utils import (
     extract_user_mentions,
     iters,
     timeago,
+    to36,
     trunc_string,
     precise_format_timedelta,
 )
@@ -1382,16 +1383,24 @@ class MyredditsController(ListingController):
     def query(self):
         if self.where == 'moderator' and not c.user.is_moderator_somewhere:
             return []
-        reddits = SRMember._query(SRMember.c._name == self.where,
-                                  SRMember.c._thing2_id == c.user._id,
-                                  #hack to prevent the query from
-                                  #adding it's own date
-                                  sort = (desc('_t1_ups'), desc('_t1_date')),
-                                  eager_load = True,
-                                  thing_data = True,
-                                  thing_stale = True)
-        reddits.prewrap_fn = lambda x: x._thing1
-        return reddits
+        elif self.where == "subscriber":
+            sr_ids = Subreddit.reverse_subscriber_ids(c.user)
+            sr_fullnames = [
+                Subreddit._fullname_from_id36(to36(sr_id)) for sr_id in sr_ids]
+            return sr_fullnames
+        else:
+            q = SRMember._query(
+                SRMember.c._name == self.where,
+                SRMember.c._thing2_id == c.user._id,
+                #hack to prevent the query from
+                #adding it's own date
+                sort=(desc('_t1_ups'), desc('_t1_date')),
+                eager_load=True,
+                thing_data=True,
+                thing_stale=True,
+            )
+            q.prewrap_fn = lambda srmember: srmember._thing1
+            return q
 
     def content(self):
         user = c.user if c.user_is_loggedin else None
@@ -1411,11 +1420,16 @@ class MyredditsController(ListingController):
         return stack
 
     def build_listing(self, after=None, **kwargs):
-        if after and isinstance(after, Subreddit):
-            after = SRMember._fast_query(after, c.user, self.where,
-                                         data=False).values()[0]
-        if after and not isinstance(after, SRMember):
-            abort(400, 'gimme a srmember')
+        if after:
+            if self.where == "subscriber":
+                if not isinstance(after, Subreddit):
+                    abort(400, 'gimme a subreddit')
+            elif isinstance(after, Subreddit):
+                # non-subscriber listings operate on SRMembers
+                after = SRMember._fast_query(
+                    after, c.user, self.where, data=False).values()[0]
+            elif not isinstance(after, SRMember):
+                abort(400, 'gimme a srmember')
 
         return ListingController.build_listing(self, after=after, **kwargs)
 
