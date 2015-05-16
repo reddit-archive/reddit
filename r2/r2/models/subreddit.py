@@ -31,6 +31,7 @@ import re
 import struct
 
 from pycassa.util import convert_uuid_to_time
+from pycassa.system_manager import DATE_TYPE
 from pylons import c, g, request
 from pylons.i18n import _, N_
 
@@ -1131,6 +1132,22 @@ class Subreddit(Thing, Printable, BaseSite):
             return int(g.promo_srid36, 36)
         else:
             return None
+
+
+class SubscribedSubredditsByAccount(tdb_cassandra.DenormalizedRelation):
+    _use_db = True
+    _last_modified_name = 'subscribe_subreddit'
+    _read_consistency_level = tdb_cassandra.CL.ONE
+    _write_consistency_level = tdb_cassandra.CL.QUORUM
+    _connection_pool = 'main'
+    _views = []
+    _extra_schema_creation_args = {
+        "default_validation_class": DATE_TYPE,
+    }
+
+    @classmethod
+    def value_for(cls, user, sr):
+        return datetime.datetime.now(g.tz)
 
 
 class FakeSubreddit(BaseSite):
