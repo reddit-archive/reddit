@@ -20,10 +20,14 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%! from r2.lib.template_helpers import get_domain%>
+<%!
+  from r2.lib.template_helpers import get_domain
+  from r2.lib.filters import unsafe
+%>
+
 ${thing.username} from http://${get_domain(cname = c.cname, subreddit = False)}/ has shared a link with you.
 
-${thing.body}
+${unsafe(thing.body)}
 
 ___
 If you would not like to receive emails from reddit.com in the future, visit http://${g.domain}/mail/optout?x=${thing.msg_hash}

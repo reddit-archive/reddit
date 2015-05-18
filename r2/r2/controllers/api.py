@@ -1952,12 +1952,21 @@ class ApiController(RedditController):
             if getattr(link, "promoted", None) and link.disable_comments:
                 message = message + "\n\n" if message else ""
                 message += '\n%s\n\n%s\n\n' % (link.title, link.url)
+                email_message = pm_message = message
             else:
+                message = message + "\n\n" if message else ""
+                message += '\n%s\n' % link.title
+
                 urlparts = (get_domain(cname=c.cname, subreddit=False),
                             link._id36)
                 url = "http://%s/tb/%s" % urlparts
-                message = message + "\n\n" if message else ""
-                message += '\n%s\n\n%s\n\n' % (link.title, url)
+                url_parser = UrlParser(url)
+                url_parser.update_query(ref="share", ref_source="email")
+                email_source_url = url_parser.unparse()
+                url_parser.update_query(ref_source="pm")
+                pm_source_url = url_parser.unparse()
+
+                message += '\n%(source_url)s\n\n'
 
                 # Deliberately not translating this, as it'd be in the
                 # sender's language
@@ -1973,22 +1982,36 @@ class ApiController(RedditController):
                     message = message + "You can leave a comment here:\n\n"
 
                 url = add_sr(link.make_permalink_slow(), force_hostname=True)
-                message = message + url
+                url_parser = UrlParser(url)
+                url_parser.update_query(ref="share", ref_source="email")
+                email_comments_url = url_parser.unparse()
+                url_parser.update_query(ref_source="pm")
+                pm_comments_url = url_parser.unparse()
+
+                message += '%(comments_url)s'
+                email_message = message % {
+                        "source_url": email_source_url,
+                        "comments_url": email_comments_url,
+                    }
+                pm_message = message % {
+                        "source_url": pm_source_url,
+                        "comments_url": pm_comments_url,
+                    }
             
             # E-mail everyone
             emailer.share(link, emails, from_name = share_from or "",
-                          body = message or "", reply_to = reply_to or "")
+                          body = email_message or "", reply_to = reply_to or "")
 
             # Send the PMs
             subject = "%s has shared a link with you!" % c.user.name
             # Prepend this subject to the message - we're repeating ourselves
             # because it looks very abrupt without it.
-            message = "%s\n\n%s" % (subject,message)
+            pm_message = "%s\n\n%s" % (subject, pm_message)
             
             for target in users:
                 
                 m, inbox_rel = Message._new(c.user, target, subject,
-                                            message, request.ip)
+                                            pm_message, request.ip)
                 # Queue up this PM
                 amqp.add_item('new_message', m._fullname)
 
