@@ -111,16 +111,25 @@ class ToolbarController(RedditController):
         
         '''
         from r2.lib.media import thumbnail_url
+        redirect_url = None
+        query_params = dict(request.GET)
         if not link:
             return self.abort404()
         elif not link.subreddit_slow.can_view(c.user):
             # don't disclose the subreddit/title of a post via the redirect url
             self.abort403()
         elif link.is_self:
-            return self.redirect(link.url)
+            redirect_url = link.url
         elif not (c.user_is_loggedin and c.user.uses_toolbar):
-            return self.redirect(link.make_permalink_slow(force_domain=True))
+            redirect_url = link.make_permalink_slow(force_domain=True)
         
+        if redirect_url:
+            if query_params:
+                url = UrlParser(redirect_url)
+                url.update_query(**query_params)
+                redirect_url =  url.unparse()
+            return self.redirect(redirect_url)
+
         # if the domain is shame-banned, bail out.
         if is_shamed_domain(link.url)[0]:
             self.abort404()
