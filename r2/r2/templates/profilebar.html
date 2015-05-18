@@ -29,7 +29,15 @@
 <%namespace file="printablebuttons.html" import="toggle_button"/>
 
 <div class="titlebox">
-  <h1>${thing.user.name}</h1>
+  <h1>${thing.user.name}
+    %if thing.user.employee:
+      <span class="user-distinction">
+        [
+        <a href="/about/team/#user/${thing.user.name.lower()}" class="admin" title="reddit admin">A</a>
+        ]
+      </span>
+    %endif
+  </h1>
 
   %if c.user_is_loggedin and not thing.viewing_self:
     <div>
