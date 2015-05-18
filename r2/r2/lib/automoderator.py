@@ -86,7 +86,7 @@ DISCLAIMER = "*I am a bot, and this action was performed automatically. Please [
 rules_by_subreddit = {}
 
 unnumbered_placeholders_regex = re.compile(r"\{\{(match(?:-[^\d-]+?)?)\}\}")
-match_placeholders_regex = re.compile(r"\{\{match-(?:(.+?)-)?(\d+)\}\}")
+match_placeholders_regex = re.compile(r"\{\{match-(?:([^}]+?)-)?(\d+)\}\}")
 def replace_placeholders(string, data, matches):
     """Replace placeholders in the string with appropriate values."""
     item = data["item"]
