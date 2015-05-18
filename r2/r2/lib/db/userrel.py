@@ -161,3 +161,35 @@ def UserRel(name, relation, disable_ids_fn=False, disable_reverse_ids_fn=False,
         setattr(UR, mgr.reverse_ids_fn_name, staticmethod(mgr.reverse_ids))
 
     return UR
+
+
+def MigratingUserRel(name, relation, disable_ids_fn=False,
+                     disable_reverse_ids_fn=False, permission_class=None):
+    """
+    Replacement for UserRel to be used during migrations away from the system.
+
+    The resulting "UserRel" classes generated are to be used as standalones and
+    not included in Subreddit.__bases__.
+
+    """
+
+    mgr = MemoizedUserRelManager(
+        name, relation, permission_class,
+        disable_ids_fn, disable_reverse_ids_fn)
+
+    class URM: pass
+
+    setattr(URM, 'is_' + name, mgr.get)
+    setattr(URM, 'get_' + name, mgr.get)
+    setattr(URM, 'add_' + name, staticmethod(mgr.add))
+    setattr(URM, 'remove_' + name, staticmethod(mgr.remove))
+    setattr(URM, 'each_' + name, mgr.by_thing)
+    setattr(URM, name + '_permission_class', permission_class)
+
+    if not disable_ids_fn:
+        setattr(URM, mgr.ids_fn_name, mgr.ids)
+
+    if not disable_reverse_ids_fn:
+        setattr(URM, mgr.reverse_ids_fn_name, staticmethod(mgr.reverse_ids))
+
+    return URM
