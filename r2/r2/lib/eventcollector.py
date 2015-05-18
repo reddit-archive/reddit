@@ -155,7 +155,7 @@ class Event(dict):
         "event_ts",
         "utc_offset",
         "user_agent",
-        "ip",
+        "client_ip",
         "domain",
         "uuid",
     )
@@ -199,7 +199,7 @@ class Event(dict):
         if user_agent is not None:
             ret["user_agent"] = user_agent
         if ip is not None:
-            ret["ip"] = ip
+            ret["client_ip"] = ip
         if domain is not None:
             ret["domain"] = domain
         if user_id is not None:
