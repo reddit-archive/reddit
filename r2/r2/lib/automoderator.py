@@ -1382,6 +1382,7 @@ class Rule(object):
             new_comment, inbox_rel = Comment._new(
                 ACCOUNT, link, parent_comment, comment, None)
             new_comment.distinguished = "yes"
+            new_comment.sendreplies = False
             new_comment._commit()
             queries.queue_vote(ACCOUNT, new_comment, True, None)
             queries.new_comment(new_comment, inbox_rel)
