@@ -44,6 +44,11 @@ def _make_http_date(when=None):
     return format_date_time(time.mktime(when.timetuple()))
 
 
+def _epoch_to_millis(timestamp):
+    """Convert an epoch_timestamp from seconds (float) to milliseconds (int)"""
+    return int(timestamp * 1000)
+
+
 class EventQueue(object):
     def __init__(self, queue=r2.lib.amqp):
         self.queue = queue
@@ -76,12 +81,12 @@ class EventQueue(object):
 
         event_base["event_topic"] = "vote"
         event_base["event_name"] = "vote_server"
-        event_base["event_ts"] = str(epoch_timestamp(vote._date))
+        event_base["event_ts"] = _epoch_to_millis(epoch_timestamp(vote._date))
         event_base["vote_target"] = vote._thing2._fullname
         event_base["vote_direction"] = self.VOTES[vote._name]
         if old_vote:
             event_base["prev_vote_direction"] = self.VOTES[old_vote.direction]
-            event_base["prev_vote_ts"] = old_vote.date
+            event_base["prev_vote_ts"] = _epoch_to_millis(old_vote.date)
         event_base["vote_type"] = vote._thing2.__class__.__name__.lower()
         if event_base["vote_type"] == "link" and vote._thing2.is_self:
             event_base["vote_type"] = "self"
@@ -108,7 +113,9 @@ class EventQueue(object):
 
         event_base["event_topic"] = "submit"
         event_base["event_name"] = "submit_server"
-        event_base["event_ts"] = str(epoch_timestamp(new_link._date))
+
+        submit_ts = epoch_timestamp(new_link._date)
+        event_base["event_ts"] = _epoch_to_millis(submit_ts)
         event_base["id"] = new_link._fullname
         event_base["type"] = "self" if new_link.is_self else "link"
 
