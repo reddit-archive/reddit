@@ -942,9 +942,17 @@ class ReadNextLink(Link):
 class SearchResultLink(Link):
     _nodb = True
 
+class LegacySearchResultLink(Link):
+    _nodb = True
+
     @classmethod
     def add_props(cls, user, wrapped):
         Link.add_props(user, wrapped)
+        for item in wrapped:
+            url = UrlParser(item.permalink)
+            url.update_query(ref="search_posts")
+            item.permalink = url.unparse()
+            item.render_css_class = 'link'
         Printable.add_props(user, wrapped)
 
 

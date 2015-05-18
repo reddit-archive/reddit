@@ -1129,6 +1129,15 @@ class FrontController(RedditController):
             return w
         return wrapper_fn
 
+    def _legacy_search_builder_wrapper(self):
+        default_wrapper = default_thing_wrapper()
+        def wrapper_fn(thing):
+            w = default_wrapper(thing)
+            if isinstance(thing, Link):
+                w.render_class = LegacySearchResultLink
+            return w
+        return wrapper_fn
+
     def _search(self, query_obj, num, after, reverse, count=0, type=None,
                 skip_deleted_authors=True, sr_detail=False,
                 heading=None, legacy_render_class=True):
@@ -1136,7 +1145,7 @@ class FrontController(RedditController):
            thin wrapper for SearchBuilder."""
 
         if legacy_render_class:
-            builder_wrapper = default_thing_wrapper()
+            builder_wrapper = self._legacy_search_builder_wrapper()
         else:
             builder_wrapper = self._search_builder_wrapper(query_obj)
 
