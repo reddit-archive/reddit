@@ -558,10 +558,12 @@ def add_attr(attrs, kind, label=None, link=None, cssclass=None, symbol=None):
     attrs.append( (priority, symbol, cssclass, label, link) )
 
 
-def search_url(query, subreddit, restrict_sr="off", sort=None, recent=None):
+def search_url(query, subreddit, restrict_sr="off", sort=None, recent=None, ref=None):
     import urllib
     query = _force_utf8(query)
     url_query = {"q": query}
+    if ref:
+        url_query["ref"] = ref
     if restrict_sr:
         url_query["restrict_sr"] = restrict_sr
     if sort:
