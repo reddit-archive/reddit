@@ -446,6 +446,12 @@ class Link(Thing, Printable):
             author_flair_srids = {sr._id for sr in srs
                                   if sr.link_flair_self_assign_enabled}
 
+        if user_is_loggedin:
+            srs = {item.subreddit for item in wrapped}
+            is_moderator_srids = {sr._id for sr in srs if sr.is_moderator(user)}
+        else:
+            is_moderator_srids = set()
+
         for item in wrapped:
             show_media = False
             if not hasattr(item, "score_fmt"):
@@ -583,10 +589,12 @@ class Link(Thing, Printable):
             if not item.domain_str:
                 item.domain_str = item.domain
 
+            item.user_is_moderator = item.sr_id in is_moderator_srids
+
             # do we hide the score?
             if user_is_admin:
                 item.hide_score = False
-            elif user_is_loggedin and item.subreddit.is_moderator(c.user):
+            elif user_is_loggedin and item.user_is_moderator:
                 item.hide_score = False
             elif item.promoted and item.score <= 0:
                 item.hide_score = True
