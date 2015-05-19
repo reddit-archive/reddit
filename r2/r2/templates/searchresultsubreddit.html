@@ -49,7 +49,9 @@
 <%def name="search_result_meta()">
   <%parent:search_result_meta>
     <% data_attrs = {"sr_name": thing.name} %>
-    ${subscribe_button(thing, data_attrs, css_class='search-subscribe-button')}
+    %if thing.display_type != "private":
+      ${subscribe_button(thing, data_attrs, css_class='search-subscribe-button')}
+    %endif
     ${self.permissions_stamps()}
     ${plain_link(
         thing.path.rstrip('/'),
