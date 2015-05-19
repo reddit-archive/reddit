@@ -30,6 +30,7 @@ import json
 import re
 import struct
 
+from pycassa import types
 from pycassa.util import convert_uuid_to_time
 from pycassa.system_manager import DATE_TYPE
 from pylons import c, g, request
@@ -1148,6 +1149,70 @@ class SubscribedSubredditsByAccount(tdb_cassandra.DenormalizedRelation):
     @classmethod
     def value_for(cls, user, sr):
         return datetime.datetime.now(g.tz)
+
+
+class SubscriptionsByDay(tdb_cassandra.View):
+    _use_db = True
+    _connection_pool = 'main'
+    _compare_with = types.CompositeType(types.AsciiType(), types.AsciiType())
+    _extra_schema_creation_args = {
+        "key_validation_class": DATE_TYPE,
+    }
+
+    @classmethod
+    def create(cls, srs, user):
+        rowkey = datetime.datetime.now(g.tz).replace(
+            hour=0,
+            minute=0,
+            second=0,
+            microsecond=0,
+        )
+        srs = tup(srs)
+        columns = {(sr._id36, user._id36): "" for sr in srs}
+        cls._cf.insert(rowkey, columns)
+
+    @classmethod
+    def get_all_counts(cls, date):
+        date = date.replace(
+            hour=0,
+            minute=0,
+            second=0,
+            microsecond=0,
+            tzinfo=g.tz,
+        )
+
+        gen = cls._cf.xget(date)
+        (prev_sr_id36, user_id36), val = next(gen)
+
+        count = 1
+        for (sr_id36, user_id36), val in gen:
+            if sr_id36 == prev_sr_id36:
+                count += 1
+            else:
+                yield (prev_sr_id36, count)
+                prev_sr_id36 = sr_id36
+                count = 1
+        yield (prev_sr_id36, count)
+
+    @classmethod
+    def write_counts(cls, days_ago=1):
+        from sqlalchemy.orm import scoped_session, sessionmaker
+        from r2.models.traffic import SubscriptionsBySubreddit, engine
+
+        Session = scoped_session(sessionmaker(bind=engine))
+
+        date = datetime.datetime.now(g.tz) - datetime.timedelta(days=days_ago)
+
+        for sr_id36, count in cls.get_all_counts(date):
+            sr = Subreddit._byID36(sr_id36, data=True)
+            row = SubscriptionsBySubreddit(
+                subreddit=sr.name,
+                date=date,
+                subscriber_count=count,
+            )
+            Session.merge(row)
+            Session.commit()
+        Session.remove()
 
 
 class FakeSubreddit(BaseSite):
