@@ -2220,13 +2220,17 @@ class SearchResultSubreddit(Subreddit):
 
     @classmethod
     def add_props(cls, user, wrapped):
+        from r2.controllers.reddit_base import UnloggedUser
         Subreddit.add_props(user, wrapped)
         for item in wrapped:
             url = UrlParser(item.path)
             url.update_query(ref="search_subreddits")
             item.search_path = url.unparse()
             can_view = item.can_view(user)
-            can_comment = item.can_comment(user)
+            if isinstance(user, UnloggedUser):
+                can_comment = item.type == "public"
+            else:
+                can_comment = item.can_comment(user)
             if not can_view:
                 item.display_type = "private"
             elif item.type == "archived":
