@@ -300,11 +300,21 @@ class SubredditJsonTemplate(ThingJsonTemplate):
             return safemarkdown(thing.description)
         elif attr == 'public_description_html':
             return safemarkdown(thing.public_description)
-        elif attr in ('is_banned', 'is_contributor', 'is_moderator',
-                      'is_subscriber'):
+        elif attr == "is_moderator":
             if c.user_is_loggedin:
-                check_func = getattr(thing, attr)
-                return bool(check_func(c.user))
+                return thing.moderator
+            return None
+        elif attr == "is_contributor":
+            if c.user_is_loggedin:
+                return thing.contributor
+            return None
+        elif attr == "is_subscriber":
+            if c.user_is_loggedin:
+                return thing.subscriber
+            return None
+        elif attr == 'is_banned':
+            if c.user_is_loggedin:
+                return bool(thing.is_banned(c.user))
             return None
         elif attr == 'submit_text_html':
             return safemarkdown(thing.submit_text)
