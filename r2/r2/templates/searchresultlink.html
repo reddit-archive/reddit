@@ -47,6 +47,9 @@
 
 <%def name="search_result_header()">
   <%parent:search_result_header>
+    %if c.site.link_flair_position == 'left':
+      ${self.flair()}
+    %endif
     ${plain_link(
         thing.title,
         thing.permalink,
@@ -54,7 +57,16 @@
         cname=False,
         _class='search-title',
       )}
+    %if c.site.link_flair_position == 'right':
+      ${self.flair()}
+    %endif
   </%parent:search_result_header>
+</%def>
+
+<%def name="flair()">
+  %if c.user.pref_show_link_flair and thing.flair_text:
+    <span class="linkflairlabel" title="${thing.flair_text}">${thing.flair_text}</span>
+  %endif
 </%def>
 
 <%def name="search_result_meta()">

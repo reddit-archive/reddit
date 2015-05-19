@@ -56,7 +56,6 @@
       }
     }
 
-    .search-result-header,
     .search-result-meta,
     .search-result-footer {
       .search-font-size();
@@ -69,6 +68,12 @@
     }
 
     .search-result-header {
+      .search-font-size();
+
+      > * {
+        vertical-align: top;
+      }
+
       .search-title {
         font-size: @search-font-large * 1px;
         color: @color-title;
@@ -294,6 +299,10 @@
   .menuarea {
     font-size: 1em;
     margin-left: @margin-large * 1px;
+  }
+
+  .linkflairlabel {
+    line-height: 17px;
   }
 
   // undo old styles, remove when unflagged
