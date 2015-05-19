@@ -1132,6 +1132,7 @@ class Subreddit(Thing, Printable, BaseSite):
     def add_subscriber(self, user):
         legacy_subscriber_userrel.add_subscriber(self, user)
         SubscribedSubredditsByAccount.create(user, self)
+        SubscriptionsByDay.create(self, user)
         self._incr('_ups', 1)
 
     @classmethod
@@ -1139,6 +1140,7 @@ class Subreddit(Thing, Printable, BaseSite):
         for sr in srs:
             legacy_subscriber_userrel.add_subscriber(sr, user)
         SubscribedSubredditsByAccount.create(user, srs)
+        SubscriptionsByDay.create(srs, user)
         for sr in srs:
             sr._incr('_ups', 1)
 
