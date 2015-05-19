@@ -1966,7 +1966,7 @@ class ApiController(RedditController):
                 url_parser.update_query(ref_source="pm")
                 pm_source_url = url_parser.unparse()
 
-                message += '\n%(source_url)s\n\n'
+                message_body = '\n%(source_url)s\n\n'
 
                 # Deliberately not translating this, as it'd be in the
                 # sender's language
@@ -1977,9 +1977,9 @@ class ApiController(RedditController):
                         count = ("There is currently %(num_comments)s " +
                                  "comment on this link.  You can view it here:")
                     numcom = count % {'num_comments': link.num_comments}
-                    message = message + "%s\n\n" % numcom
+                    message_body = message_body + "%s\n\n" % numcom
                 else:
-                    message = message + "You can leave a comment here:\n\n"
+                    message_body = message_body + "You can leave a comment here:\n\n"
 
                 url = add_sr(link.make_permalink_slow(), force_hostname=True)
                 url_parser = UrlParser(url)
@@ -1988,12 +1988,12 @@ class ApiController(RedditController):
                 url_parser.update_query(ref_source="pm")
                 pm_comments_url = url_parser.unparse()
 
-                message += '%(comments_url)s'
-                email_message = message % {
+                message_body += '%(comments_url)s'
+                email_message = message + message_body % {
                         "source_url": email_source_url,
                         "comments_url": email_comments_url,
                     }
-                pm_message = message % {
+                pm_message = message + message_body % {
                         "source_url": pm_source_url,
                         "comments_url": pm_comments_url,
                     }
