@@ -640,8 +640,9 @@ var exports = r.sponsored = {
         return dates
     },
 
-    get_inventory_key: function(srname, collection, geotarget) {
+    get_inventory_key: function(srname, collection, geotarget, platform) {
         var inventoryKey = collection ? '#' + collection : srname
+        inventoryKey += "/" + platform
         if (geotarget.country != "") {
             inventoryKey += "/" + geotarget.country
         }
@@ -670,8 +671,10 @@ var exports = r.sponsored = {
         var srname = targeting.sr,
             collection = targeting.collection,
             geotarget = targeting.geotarget, 
+            platform = targeting.platform,
             inventoryKey = targeting.inventoryKey,
             dates = timing.dates;
+
         dates.sort(function(d1,d2){return d1 - d2})
         var end = new Date(dates[dates.length-1].getTime())
         end.setDate(end.getDate() + 5)
@@ -685,7 +688,8 @@ var exports = r.sponsored = {
                 region: geotarget.region,
                 metro: geotarget.metro,
                 startdate: $.datepicker.formatDate('mm/dd/yy', dates[0]),
-                enddate: $.datepicker.formatDate('mm/dd/yy', end)
+                enddate: $.datepicker.formatDate('mm/dd/yy', end),
+                platform: platform
             },
         });
     },
@@ -764,7 +768,7 @@ var exports = r.sponsored = {
     },
 
     getAvailableImpsByDay: function(dates, booked, inventoryKey) {
-       return _.map(dates, function(date) {
+        return _.map(dates, function(date) {
             var datestr = $.datepicker.formatDate('mm/dd/yy', date);
             var daily_booked = booked[datestr] || 0;
             return r.sponsored.inventory[inventoryKey][datestr] + daily_booked;
@@ -779,7 +783,7 @@ var exports = r.sponsored = {
             inventoryKey = targeting.inventoryKey,
             booked = this.get_booked_inventory($form, targeting.sr, 
                     targeting.geotarget, isOverride);
-        
+
         var minbid_amt = r.sponsored.get_real_min_bid();
         var maxbid_amt = r.sponsored.get_max_bid();
 
@@ -871,7 +875,8 @@ var exports = r.sponsored = {
             region = canGeotarget && $('#region').val() || '',
             metro = canGeotarget && $('#metro').val() || '',
             geotarget = {'country': country, 'region': region, 'metro': metro},
-            inventoryKey = this.get_inventory_key(sr, collection, geotarget),
+            platform = this.getPlatformTargeting().platform,
+            inventoryKey = this.get_inventory_key(sr, collection, geotarget, platform),
             isValid = isFrontpage || (isSubreddit && sr) || (isCollection && collection);
 
         return {
@@ -882,6 +887,7 @@ var exports = r.sponsored = {
             'collection': collection,
             'canGeotarget': canGeotarget,
             'geotarget': geotarget,
+            'platform': platform,
             'inventoryKey': inventoryKey,
         };
     },
@@ -1017,15 +1023,30 @@ var exports = r.sponsored = {
     },
 
     fill_campaign_editor: function() {
-        var $form = $("#campaign"),
-            priority = this.get_priority($form),
+        var $form = $("#campaign");
+        var platformTargeting = this.getPlatformTargeting();
+        var platformOverride = platformTargeting.isMobile && platformTargeting.platform === 'mobile';
+
+        var $priorities = $form.find('*[name="priority"]');
+        if (platformOverride) {
+          $priorities.filter('[value="house"]').prop('checked', 'checked');
+          $priorities.filter(':not([value="house"])').prop('disabled', true);
+        } else {
+          if (this.currentPlatform === 'mobile') {
+            $priorities.filter('[value="standard"]').prop('checked', 'checked');
+          }
+          $priorities.prop('disabled', false);
+        }
+        this.currentPlatform = platformTargeting.platform;
+
+        var priority = this.get_priority($form),
             targeting = this.get_targeting($form),
             timing = this.get_timing($form),
             ndays = timing.duration,
             budget = this.get_budget($form),
             cpm = budget.cpm,
             impressions = budget.impressions,
-            checkInventory = targeting.isValid && priority.isCpm;
+            checkInventory = targeting.isValid;
 
         $(".duration").text(ndays + " " + ((ndays > 1) ? r._("days") : r._("day")))
         $(".price-info").text(r._("$%(cpm)s per 1,000 impressions").format({cpm: (cpm/100).toFixed(2)}))
@@ -1044,37 +1065,40 @@ var exports = r.sponsored = {
             this.hide_cpm()
         }
 
-        if (checkInventory) {
-            this.check_inventory($form, targeting, timing, budget, priority.isOverride)
-        } else if (!priority.isCpm) {
-          var booked = this.get_booked_inventory($form, targeting.sr, 
-                                                 targeting.geotarget, priority.isOverride);
-          var availableByDate = this.getAvailableImpsByDay(timing.dates, booked,
-                                                           targeting.inventoryKey);
-          var totalImpsAvailable = _.reduce(availableByDate, sum, 0);    
+        if (!priority.isCpm && checkInventory) {
+          $.when(r.sponsored.get_check_inventory(targeting, timing)).then(
+            function() {
+              var booked = this.get_booked_inventory($form, targeting.sr,
+                                                     targeting.geotarget, priority.isOverride);
+              var availableByDate = this.getAvailableImpsByDay(timing.dates, booked,
+                                                               targeting.inventoryKey);
+              var totalImpsAvailable = _.reduce(availableByDate, sum, 0);
 
-
-          React.renderComponent(
-            React.DOM.div(null,
-              CampaignSet(null,
-                InfoText(null, r._('house campaigns, man.')),
-                CampaignOptionTable(null,
-                  CampaignOption({
-                    bid: null,
-                    end: timing.enddate,
-                    impressions: 'unsold ',
-                    isNew: !$("#campaign").parents('tr:first').length,
-                    primary: true,
-                    start: timing.startdate,
-                  })
-                )
-              ),
-              InfoText({impressions: totalImpsAvailable},
-                  r._('maximum possible impressions: %(impressions)s')
-              )
-            ),
-            document.getElementById('campaign-creator')
+              React.renderComponent(
+                React.DOM.div(null,
+                  CampaignSet(null,
+                    InfoText(null, r._('house campaigns, man.')),
+                    CampaignOptionTable(null,
+                      CampaignOption({
+                        bid: null,
+                        end: timing.enddate,
+                        impressions: 'unsold ',
+                        isNew: !$("#campaign").parents('tr:first').length,
+                        primary: true,
+                        start: timing.startdate,
+                      })
+                    )
+                  ),
+                  InfoText({impressions: totalImpsAvailable},
+                      r._('maximum possible impressions: %(impressions)s')
+                  )
+                ),
+                document.getElementById('campaign-creator')
+              );
+            }.bind(this)
           );
+        } else if (checkInventory) {
+            this.check_inventory($form, targeting, timing, budget, priority.isOverride)
         }
             
         if (targeting.canGeotarget) {

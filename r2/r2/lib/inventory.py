@@ -50,6 +50,13 @@ MIN_DAILY_CASS_KEY = 'min_daily_pageviews.GET_listing'
 PAGEVIEWS_REGEXP = re.compile('(.*)-GET_listing')
 INVENTORY_FACTOR = 1.00
 DEFAULT_INVENTORY_FACTOR = 5.00
+# For `PERCENT_MOBILE`:
+# if `0`, 100% of inventory will be displayed no matter the platform;
+# if not `0`:
+# - `all` is 100% of inventory
+# - `mobile` is `all` * (PERCENT_MOBILE / 100)
+# - `desktop` is `all` - `mobile`
+PERCENT_MOBILE = 0
 
 
 def update_prediction_data():
@@ -212,7 +219,7 @@ def find_campaigns(srs, start, end, ignore):
 
 
 def get_available_pageviews(targets, start, end, location=None, datestr=False,
-                            ignore=None):
+                            ignore=None, platform='all'):
     """
     Return the available pageviews by date for the targets and location.
 
@@ -292,6 +299,12 @@ def get_available_pageviews(targets, start, end, location=None, datestr=False,
                     subreddit_names, booked_by_target, pageviews_by_sr_name)
             # available pageviews is the minimum from all locations
             min_pageviews = min(pageviews_by_location.values())
+            if PERCENT_MOBILE != 0:
+                mobile_pageviews = min_pageviews * (float(PERCENT_MOBILE) / 100)
+                if platform == 'mobile':
+                    min_pageviews = mobile_pageviews
+                if platform == 'desktop':
+                    min_pageviews = min_pageviews - mobile_pageviews
             ret[name][datekey(date)] = max(0, min_pageviews)
 
     if is_single:

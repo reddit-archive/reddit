@@ -556,9 +556,11 @@ class PromoteApiController(ApiController):
                    collection=VCollection('collection'),
                    location=VLocation(),
                    start=VDate('startdate'),
-                   end=VDate('enddate'))
+                   end=VDate('enddate'),
+                   platform=VOneOf('platform', ('mobile', 'desktop', 'all'), 
+                                   default='all'))
     def GET_check_inventory(self, responder, sr, collection, location, start,
-                            end):
+                            end, platform):
         if collection:
             target = Target(collection)
             sr = None
@@ -570,7 +572,8 @@ class PromoteApiController(ApiController):
             return abort(403, 'forbidden')
 
         available = inventory.get_available_pageviews(
-                        target, start, end, location=location, datestr=True)
+                        target, start, end, location=location, platform=platform,
+                        datestr=True)
 
         return {'inventory': available}
 
