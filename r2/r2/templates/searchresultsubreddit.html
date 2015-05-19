@@ -50,9 +50,7 @@
   <%parent:search_result_meta>
     <% data_attrs = {"sr_name": thing.name} %>
     ${subscribe_button(thing, data_attrs, css_class='search-subscribe-button')}
-    %if thing.over_18:
-      <span class="nsfw-stamp">${nsfw_stamp()}</span>&#32;
-    %endif
+    ${self.permissions_stamps()}
     ${plain_link(
         thing.path.rstrip('/'),
         thing.search_path,
@@ -86,4 +84,17 @@
         title=_('search in %(subreddit)s' % dict(subreddit=pretty_name)),
       )}
   </%parent:search_result_footer>
+</%def>
+
+<%def name="permissions_stamps()">
+  %if thing.over_18:
+    <span class="stamp nsfw-stamp">${nsfw_stamp()}</span>&#32;
+  %endif
+  %if thing.display_type == "private":
+    <span class="stamp private-stamp">${_("private")}</span>&#32;
+  %elif thing.display_type == "restricted": 
+    <span class="stamp restricted-stamp">${_("restricted")}</span>&#32;
+  %elif thing.display_type == "archived":
+    <span class="stamp archived-stamp">${_("archived")}</span>&#32;
+  %endif
 </%def>

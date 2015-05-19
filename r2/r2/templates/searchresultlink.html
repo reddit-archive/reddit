@@ -72,7 +72,7 @@
 <%def name="search_result_meta()">
   <%parent:search_result_meta>
     %if thing.over_18:
-      <span class="nsfw-stamp">${nsfw_stamp()}</span>&#32;
+      <span class="stamp nsfw-stamp">${nsfw_stamp()}</span>&#32;
     %endif
     ${plain_link(
         '/r/%s' % thing.subreddit.name,

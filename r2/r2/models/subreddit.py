@@ -2225,6 +2225,16 @@ class SearchResultSubreddit(Subreddit):
             url = UrlParser(item.path)
             url.update_query(ref="search_subreddits")
             item.search_path = url.unparse()
+            can_view = item.can_view(user)
+            can_comment = item.can_comment(user)
+            if not can_view:
+                item.display_type = "private"
+            elif item.type == "archived":
+                item.display_type = "archived"
+            elif not can_comment:
+                item.display_type = "restricted"
+            else:
+                item.display_type = "public"
         Printable.add_props(user, wrapped)
 
 Frontpage = DefaultSR()

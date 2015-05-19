@@ -4658,14 +4658,36 @@ form input[type=radio] {margin: 2px .5em 0 0; }
     font-size: x-small;
 }
 
-.nsfw-stamp acronym {
-    color: #ac3939;
+@color-nsfw-stamp: darken(@color-warning-red, 5%);
+@color-private-stamp: darken(@color-orange, 10%);
+@color-restricted-stamp: darken(@color-orange, 10%);
+@color-archived-stamp: lighten(@color-text-grey, 15%);
+
+.stamp {
     font-size: x-small;
     text-decoration: none;
     padding: 0 2px;
-    border: 1px solid #d27979 !important;
+    border: 1px solid !important;
     border-radius: 3px;
+    text-transform: uppercase;
 }
+
+.nsfw-stamp {
+    color: @color-nsfw-stamp;
+}
+
+.private-stamp {
+    color: @color-private-stamp;
+}
+
+.restricted-stamp {
+    color: @color-restricted-stamp;
+}
+
+.archived-stamp {
+    color: @color-archived-stamp;
+}
+
 
 .entry .buttons li.reported-stamp {
     border: 1px solid black !important;
