@@ -863,9 +863,7 @@ class Subreddit(Thing, Printable, BaseSite):
         for item in wrapped:
             item.subscriber = item._id in subscriber_srids
             item.moderator = item._id in moderator_srids
-            item.contributor = (item.type != 'public' and
-                                    (item.moderator or
-                                     item._id in contributor_srids))
+            item.contributor = item._id in contributor_srids
 
             if item.hide_subscribers and not c.user_is_admin:
                 item._ups = 0
