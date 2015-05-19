@@ -85,12 +85,17 @@ def _oembed_comment(thing, **embed_options):
                        title=websafe(title),
                        )
 
-    return dict(_OEMBED_BASE,
-                type="rich",
-                title=title,
-                author_name=author_name,
-                html=html,
-                )
+    oembed_response = dict(_OEMBED_BASE,
+                           type="rich",
+                           title=title,
+                           author_name=author_name,
+                           html=html,
+                           )
+
+    if author_name:
+        oembed_response['author_url'] = make_url_https('/user/' + author_name)
+
+    return oembed_response
 
 
 class OEmbedController(MinimalController):
