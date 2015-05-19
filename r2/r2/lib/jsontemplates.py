@@ -23,7 +23,7 @@
 import calendar
 
 from utils import to36, tup, iters
-from wrapped import Wrapped, StringTemplate, CacheStub, CachedVariable, Templated
+from wrapped import Wrapped, StringTemplate, CacheStub, Templated
 from mako.template import Template
 from r2.config import feature
 from r2.config.extensions import get_api_subtype
@@ -166,7 +166,11 @@ class ThingJsonTemplate(JsonTemplate):
             return (time.mktime(thing._date.astimezone(pytz.UTC).timetuple())
                     - time.timezone)
         elif attr == "child":
-            return CachedVariable("childlisting")
+            child = getattr(thing, "child", None)
+            if child:
+                return child.render()
+            else:
+                return ""
         elif attr == "upvotes":
             return thing.score
         elif attr == "downvotes":

@@ -68,7 +68,7 @@ class Listing(object):
         builder_items = self.builder.get_items(*a, **kw)
         for item in self.builder.item_iter(builder_items):
             # rewrite the render method
-            if not hasattr(item, "render_replaced"):
+            if c.render_style != "api" and not hasattr(item, "render_replaced"):
                 item.render = replace_render(self, item, item.render)
                 item.render_replaced = True
         return builder_items
