@@ -38,7 +38,7 @@
   <%parent:search_result_header>
     ${plain_link(
         thing.title,
-        thing.path,
+        thing.search_path,
         sr_path=False,
         cname=False,
         _class='search-title',
@@ -55,7 +55,7 @@
     %endif
     ${plain_link(
         thing.path.rstrip('/'),
-        thing.path,
+        thing.search_path,
         sr_path=False,
         cname=False,
         _class='search-subreddit-link',

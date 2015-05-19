@@ -45,8 +45,13 @@ from r2.lib.memoize import memoize
 from r2.lib.permissions import ModeratorPermissionSet
 from r2.lib.utils import tup, last_modified_multi, fuzz_activity, \
     unicode_title_to_ascii
-from r2.lib.utils import timeago, summarize_markdown, in_chunks
-from r2.lib.cache import sgm, TransitionalCache
+from r2.lib.utils import (
+    timeago,
+    summarize_markdown,
+    in_chunks,
+    UrlParser,
+)
+from r2.lib.cache import sgm
 from r2.lib.strings import strings, Score
 from r2.lib.filters import _force_unicode
 from r2.lib.db import tdb_cassandra
@@ -2216,6 +2221,10 @@ class SearchResultSubreddit(Subreddit):
     @classmethod
     def add_props(cls, user, wrapped):
         Subreddit.add_props(user, wrapped)
+        for item in wrapped:
+            url = UrlParser(item.path)
+            url.update_query(ref="search_subreddits")
+            item.search_path = url.unparse()
         Printable.add_props(user, wrapped)
 
 Frontpage = DefaultSR()
