@@ -314,7 +314,7 @@ class SubredditJsonTemplate(ThingJsonTemplate):
             return None
         elif attr == 'is_banned':
             if c.user_is_loggedin:
-                return bool(thing.is_banned(c.user))
+                return thing.banned
             return None
         elif attr == 'submit_text_html':
             return safemarkdown(thing.submit_text)
