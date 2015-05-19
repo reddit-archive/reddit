@@ -1893,59 +1893,6 @@ class VRatelimit(Validator):
             to_set['ip' + str(request.ip)] = expire_time
         g.cache.set_multi(to_set, prefix = prefix, time = seconds)
 
-class VDelay(Validator):
-    def __init__(self, category, *a, **kw):
-        self.category = category
-        self.seconds = None
-        Validator.__init__(self, *a, **kw)
-
-    def run (self):
-        if g.disable_ratelimit:
-            return
-        key = "VDelay-%s-%s" % (self.category, request.ip)
-        prev_violations = g.cache.get(key)
-        if prev_violations:
-            time = utils.timeuntil(prev_violations["expire_time"])
-            remaining = prev_violations["expire_time"] - datetime.now(g.tz)
-            self.seconds = remaining.total_seconds()
-            if self.seconds >= 3:
-                self.set_error(errors.RATELIMIT, {'time': time},
-                               field='vdelay', code=429)
-
-    @classmethod
-    def record_violation(self, category, seconds = None, growfast=False):
-        if seconds is None:
-            seconds = g.RL_RESET_SECONDS
-
-        key = "VDelay-%s-%s" % (category, request.ip)
-        prev_violations = g.cache.get(key)
-        if prev_violations is None:
-            prev_violations = dict(count=0)
-
-        num_violations = prev_violations["count"]
-
-        if growfast:
-            multiplier = 3 ** num_violations
-        else:
-            multiplier = 1
-
-        max_duration = 8 * 3600
-        duration = min(seconds * multiplier, max_duration)
-
-        expire_time = (datetime.now(g.tz) +
-                       timedelta(seconds = duration))
-
-        prev_violations["expire_time"] = expire_time
-        prev_violations["duration"] = duration
-        prev_violations["count"] += 1
-
-        with g.make_lock("record_violation", "lock-" + key, timeout=5, verbose=False):
-            existing = g.cache.get(key)
-            if existing and existing["count"] > prev_violations["count"]:
-                g.log.warning("Tried to set %s to count=%d, but found existing=%d"
-                             % (key, prev_violations["count"], existing["count"]))
-            else:
-                g.cache.set(key, prev_violations, max_duration)
 
 class VCommentIDs(Validator):
     def run(self, id_str):
