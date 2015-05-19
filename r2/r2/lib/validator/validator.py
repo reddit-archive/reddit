@@ -1461,6 +1461,8 @@ class VThrottledLogin(VRequired):
 
         ratelimit_key = None
 
+        g.stats.event_count("login_throttle", "checked",
+                            sample_rate=0.1)
         try:
             if username:
                 username = username.strip()
@@ -1503,6 +1505,8 @@ class VThrottledLogin(VRequired):
                         return False
                 except ratelimit.RatelimitError as e:
                     g.log.info("ratelimitcache error (login): %s", e)
+                    g.stats.event_count("login_throttle", "limited",
+                                        sample_rate=0.1)
 
             try:
                 str(password)
@@ -1518,6 +1522,8 @@ class VThrottledLogin(VRequired):
                     ratelimit.record_usage(ratelimit_key, time_slice)
                 except ratelimit.RatelimitError as e:
                     g.log.info("ratelimitcache error (login): %s", e)
+                g.stats.event_count("login_throttle", "usage_recorded",
+                                    sample_rate=0.1)
             self.error()
             return False
 
