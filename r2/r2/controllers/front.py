@@ -1033,10 +1033,9 @@ class FrontController(RedditController):
                                          faceting=faceting,
                                          include_over18=include_over18,
                                          recent=recent, syntax=syntax)
-                heading = _('posts') if sr_num > 0 else None
                 content = self._search(q, num=num, after=after, reverse=reverse,
                                        count=count, sr_detail=sr_detail,
-                                       heading=heading, nav_menus=nav_menus,
+                                       heading=_('posts'), nav_menus=nav_menus,
                                        legacy_render_class=legacy_render_class)
                 converted_data = q.converted_data
                 subreddit_facets = content.subreddit_facets
@@ -1077,10 +1076,9 @@ class FrontController(RedditController):
             sr_q = g.search.SubredditSearchQuery(query, sort='relevance',
                                                  faceting={},
                                                  include_over18=include_over18)
-            heading = _('subreddits') if num > 0 else None
             subreddits = self._search(sr_q, num=sr_num, reverse=reverse,
                                       after=after, count=count, type='sr',
-                                      skip_deleted_authors=False, heading=heading,
+                                      skip_deleted_authors=False, heading=_('subreddits'),
                                       legacy_render_class=legacy_render_class)
 
             # backfill with facets if no subreddit search results
