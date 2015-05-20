@@ -418,6 +418,20 @@ class TrimmedSubredditJsonTemplate(SubredditJsonTemplate):
         user_is_subscriber="is_subscriber",
     )
 
+    def thing_attr(self, thing, attr):
+        if attr in ('is_banned', 'is_contributor', 'is_moderator',
+                    'is_subscriber'):
+            # can't use SubredditJsonTemplate.thing_attr for these attributes
+            # because it depends on the thing being a fully built/wrapped object
+            # that has run through Subreddit.add_props
+            if c.user_is_loggedin:
+                check_func = getattr(thing, attr)
+                return bool(check_func(c.user))
+            else:
+                return None
+        else:
+            return SubredditJsonTemplate.thing_attr(self, thing, attr)
+
 
 class IdentityJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = ThingJsonTemplate.data_attrs(
