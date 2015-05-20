@@ -41,7 +41,7 @@
         thing.search_path,
         sr_path=False,
         cname=False,
-        _class='search-title',
+        _class='search-title may-blank',
       )}
   </%parent:search_result_header>
 </%def>
@@ -58,7 +58,7 @@
         thing.search_path,
         sr_path=False,
         cname=False,
-        _class='search-subreddit-link',
+        _class='search-subreddit-link may-blank',
       )}&#32;
     <span class="search-subscribers">${_("%(subscribers)s subscribers") % dict(subscribers=thing._ups)},</span>&#32;
     <span class="search-time">${_("a community for %(time)s") % dict(time=timesince(thing._date))}</span>&#32;
