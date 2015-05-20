@@ -64,12 +64,6 @@ _TIMEOUT = 5 # seconds for http requests to cloudsearch
 _CHUNK_SIZE = 4000000 # Approx. 4 MB, to stay under the 5MB limit
 _VERSION_OFFSET = 13257906857
 
-SORTS_MENU_MAPPING = {'relevance': 1,
-                      'hot': 2,
-                      'new': 3,
-                      'top': 4,
-                      'comments': 5,
-                      }
 
 class CloudSearchUploader(object):
     use_safe_get = False
@@ -712,12 +706,6 @@ class CloudSearchQuery(object):
 class LinkSearchQuery(CloudSearchQuery):
     search_api = g.CLOUDSEARCH_SEARCH_API
     sorts = g.search_sorts 
-    sorts_menu_mapping = {'relevance': 1,
-                          'hot': 2,
-                          'new': 3,
-                          'top': 4,
-                          'comments': 5,
-                          }
     recents = {
         'hour': timedelta(hours=1),
         'day': timedelta(days=1),
@@ -791,11 +779,6 @@ class CloudSearchSubredditSearchQuery(CloudSearchQuery):
         'relevance': '-relevance',
         'activity': '-activity',
     }
-    sorts_menu_mapping = {
-        'relevance': 1,
-        'activity': 2,
-    }
-
     known_syntaxes = ("plain",)
     default_syntax = "plain"
 
