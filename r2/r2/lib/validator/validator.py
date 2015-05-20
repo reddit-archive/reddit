@@ -43,7 +43,6 @@ from r2.lib.souptest import (
 from r2.lib.template_helpers import add_sr
 from r2.lib.jsonresponse import JQueryResponse, JsonResponse
 from r2.lib.log import log_text
-from r2.lib.menus import CommentSortMenu
 from r2.lib.permissions import ModeratorPermissionSet
 from r2.models import *
 from r2.models.promo import Location
@@ -1827,34 +1826,6 @@ class VMenu(Validator):
             self.param[0]: 'one of (%s)' % ', '.join("`%s`" % s
                                                   for s in self.nav._options),
         }
-
-
-class VTransitionaryMenu(VMenu):
-    """A temporary version of VMenu helping to transition to a new preference."""
-    def __init__(self, param):
-        # Our logic down below only makes sense for comment sorts, so let's
-        # hard-code that in as the menu.
-        VMenu.__init__(self, param, CommentSortMenu, remember=False)
-
-    def run(self, sort, where):
-        old_user_pref = c.user.sort_options.get('front_sort')
-        new_user_pref = c.user.pref_default_comment_sort
-
-        if c.user_is_loggedin and old_user_pref != new_user_pref:
-            # Even on view, if we catch an inconsistency between the
-            # preferences, we want to update them to match.  This allows us to
-            # transition over to the new one without having to wait for people
-            # to change their sort.
-            c.user.pref_default_comment_sort = old_user_pref
-            c.user._commit()
-
-            g.stats.simple_event('default_comment_sort.synchronized')
-
-        # Was a valid sort provided?
-        if sort not in self.nav._options:
-            sort = c.user.default_comment_sort # Includes fallbacks
-
-        return sort
 
 
 class VRatelimit(Validator):

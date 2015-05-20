@@ -84,7 +84,7 @@ class Account(Thing):
                      pref_min_comment_score = -4,
                      pref_num_comments = g.num_comments,
                      pref_highlight_controversial=False,
-                     pref_default_comment_sort = None,
+                     pref_default_comment_sort = 'confidence',
                      pref_lang = g.lang,
                      pref_content_langs = (g.lang,),
                      pref_over_18 = False,
@@ -779,17 +779,6 @@ class Account(Thing):
 
     def incr_admin_takedown_strikes(self, amt=1):
         return self._incr('admin_takedown_strikes', amt)
-
-    @property
-    def default_comment_sort(self):
-        if self.pref_default_comment_sort:
-            return self.pref_default_comment_sort
-
-        old_sort_pref = self.sort_options.get('front_sort')
-        if old_sort_pref:
-            return old_sort_pref
-
-        return 'confidence'
 
 
 class FakeAccount(Account):
