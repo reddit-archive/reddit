@@ -39,7 +39,7 @@ from r2.config import feature
 from r2.config.extensions import is_api, API_TYPES, RSS_TYPES
 from r2.lib import hooks, recommender, embeds, pages
 from r2.lib.pages import *
-from r2.lib.pages.things import hot_links_by_url_listing
+from r2.lib.pages.things import hot_links_by_url_listing, wrap_things
 from r2.lib.pages import trafficpages
 from r2.lib.menus import *
 from r2.lib.admin_utils import check_cheating
@@ -810,7 +810,8 @@ class FrontController(RedditController):
         Data includes the subscriber count, description, and header image."""
         if not is_api() or isinstance(c.site, FakeSubreddit):
             return self.abort404()
-        return Reddit(content=Wrapped(c.site)).render()
+        wrapped_subreddit = wrap_things(c.site)[0]
+        return Reddit(content=wrapped_subreddit).render()
 
     @require_oauth2_scope("read")
     @api_doc(api_section.subreddits, uses_site=True)
