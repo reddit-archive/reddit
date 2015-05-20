@@ -235,16 +235,21 @@ class Ruleset(object):
             type = values.get("type", "any")
             if type == "any":
                 # try to create two Rules for comments and links
+                rule = None
                 for type_value in ("comment", "submission"):
                     values["type"] = type_value
                     try:
                         rule = Rule(values)
-                    except AutoModeratorRuleTypeError:
+                    except AutoModeratorRuleTypeError as type_error:
                         continue
 
                     # only keep the rule if it had any checks
                     if rule.has_any_checks(targets_only=True):
                         self.rules.append(Rule(values))
+
+                # if both types hit exceptions we should actually error
+                if not rule:
+                    raise type_error
             else:
                 self.rules.append(Rule(values))
 
