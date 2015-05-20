@@ -1147,6 +1147,12 @@ class Comment(Thing, Printable):
 
         subreddits = Subreddit._byID(set(cm.sr_id for cm in wrapped),
                                      data=True, return_dict=False, stale=True)
+        if c.user_is_loggedin:
+            is_moderator_subreddits = {
+                sr._id for sr in subreddits if sr.is_moderator(user)}
+        else:
+            is_moderator_subreddits = set()
+
         cids = dict((w._id, w) for w in wrapped)
         parent_ids = set(cm.parent_id for cm in wrapped
                          if getattr(cm, 'parent_id', None)
@@ -1345,8 +1351,10 @@ class Comment(Thing, Printable):
             else:
                 item.score_hidden = False
 
+            item.user_is_moderator = item.sr_id in is_moderator_subreddits
+
             if item.score_hidden and c.user_is_loggedin:
-                if c.user_is_admin or item.subreddit.is_moderator(c.user):
+                if c.user_is_admin or item.user_is_moderator:
                     item.score_hidden = False
 
             if item.score_hidden:
