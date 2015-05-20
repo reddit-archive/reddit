@@ -181,9 +181,9 @@ class ThingJsonTemplate(JsonTemplate):
             if distinguished == 'no':
                 return None
             return distinguished
-        
+
         if attr in ["num_reports", "report_reasons", "banned_by", "approved_by"]:
-            if c.user_is_loggedin and thing.subreddit.is_moderator(c.user):
+            if c.user_is_loggedin and thing.user_is_moderator:
                 if attr == "num_reports":
                     return thing.reported
                 elif attr == "report_reasons":
