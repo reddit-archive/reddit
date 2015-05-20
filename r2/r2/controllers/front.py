@@ -896,9 +896,11 @@ class FrontController(RedditController):
 
     @base_listing
     @require_oauth2_scope("read")
-    @validate(query=nop('q', docs={"q": "a search query"}))
+    @validate(query=nop('q', docs={"q": "a search query"}),
+              sort=VOneOf('sort', ('relevance', 'activity'),
+                          default='relevance'))
     @api_doc(api_section.subreddits, uri='/subreddits/search', supports_rss=True)
-    def GET_search_reddits(self, query, reverse, after, count, num):
+    def GET_search_reddits(self, query, reverse, after, count, num, sort):
         """Search subreddits by title and description."""
 
         # trigger redirect to /over18
@@ -909,10 +911,6 @@ class FrontController(RedditController):
             return self.intermediate_redirect('/over18', sr_path=False,
                                               fullpath=search_url)
 
-        # do not officially expose sort api yet
-        vsort = VMenu('sort', SubredditSearchSortMenu, remember=False)
-        sort = vsort.run(request.GET.get('sort'), '')
-
         # show NSFW to API and RSS users unless obey_over18=true
         is_api_or_rss = (c.render_style in API_TYPES
                          or c.render_style in RSS_TYPES)
@@ -922,9 +920,6 @@ class FrontController(RedditController):
             include_over18 = c.over18
         else:
             include_over18 = True
-
-        if feature.is_enabled('subreddit_relevancy') and sort == 'relevance':
-            sort = 'rel1'
 
         if query:
             q = g.search.SubredditSearchQuery(query, sort=sort, faceting={},
@@ -1068,7 +1063,7 @@ class FrontController(RedditController):
 
         # extra search request for subreddit results
         if sr_num > 0 and has_query:
-            sr_q = g.search.SubredditSearchQuery(query, sort='rel1',
+            sr_q = g.search.SubredditSearchQuery(query, sort='relevance',
                                                  faceting={},
                                                  include_over18=include_over18)
             subreddits = self._search(sr_q, num=sr_num, reverse=reverse,

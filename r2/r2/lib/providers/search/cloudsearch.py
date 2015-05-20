@@ -788,16 +788,12 @@ class LinkSearchQuery(CloudSearchQuery):
 class CloudSearchSubredditSearchQuery(CloudSearchQuery):
     search_api = g.CLOUDSEARCH_SUBREDDIT_SEARCH_API
     sorts = {
-        'relevance': '-activity',
+        'relevance': '-relevance',
         'activity': '-activity',
-        'rel1': '-rel1',
-        'rel2': '-rel2',
     }
     sorts_menu_mapping = {
         'relevance': 1,
         'activity': 2,
-        'rel1': 3,
-        'rel2': 4,
     }
 
     known_syntaxes = ("plain",)
