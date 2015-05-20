@@ -887,6 +887,7 @@ class RuleTarget(object):
         if len(self.match_patterns) == 0:
             return True
 
+        self.matches = {}
         match = None
         checked_anything = False
         for key, match_pattern in self.match_patterns.iteritems():
