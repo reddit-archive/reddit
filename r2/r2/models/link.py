@@ -1145,8 +1145,8 @@ class Comment(Thing, Printable):
             if not hasattr(cm, 'sr_id'):
                 cm.sr_id = links[cm.link_id].sr_id
 
-        subreddits = Subreddit._byID(set(cm.sr_id for cm in wrapped),
-                                     data=True, return_dict=False, stale=True)
+        subreddits = {item.subreddit for item in wrapped}
+
         if c.user_is_loggedin:
             is_moderator_subreddits = {
                 sr._id for sr in subreddits if sr.is_moderator(user)}
