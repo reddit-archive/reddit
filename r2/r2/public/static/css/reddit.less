@@ -4665,15 +4665,17 @@ form input[type=radio] {margin: 2px .5em 0 0; }
 
 .stamp {
     font-size: x-small;
-    text-decoration: none;
     padding: 0 2px;
     border: 1px solid !important;
     border-radius: 3px;
-    text-transform: uppercase;
 }
 
 .nsfw-stamp {
     color: @color-nsfw-stamp;
+
+    acronym {
+        text-decoration: none;
+    }
 }
 
 .private-stamp {
