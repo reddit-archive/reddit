@@ -1034,8 +1034,10 @@ class FrontController(RedditController):
         else:
             sr_num = 0
 
-        if feature.is_enabled('link_relevancy') and sort == 'relevance':
-            sort = 'relevance2'
+        # inject requested sort for relevance2 test (not handled by menu validator)
+        requested_sort = request.GET.get('sort', 'relevance2')
+        if feature.is_enabled('link_relevancy') and requested_sort == 'relevance2':
+            sort = requested_sort
 
         content = None
         subreddits = None
