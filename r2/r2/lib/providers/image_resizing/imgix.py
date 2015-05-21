@@ -39,7 +39,7 @@ class ImgixImageResizingProvider(ImageResizingProvider):
         ],
     }
 
-    def resize_image(self, image, width=None):
+    def resize_image(self, image, width=None, censor_nsfw=False):
         url = UrlParser(image['url'])
         url.hostname = g.imgix_domain
         # Let's encourage HTTPS; it's cool, works just fine on HTTP pages, and
@@ -50,6 +50,14 @@ class ImgixImageResizingProvider(ImageResizingProvider):
                 raise NotLargeEnough()
             # http://www.imgix.com/docs/reference/size#param-w
             url.update_query(w=width)
+        if censor_nsfw:
+            # Since we aren't concerned with inhibiting a user's ability to
+            # reverse the censoring for privacy reasons, pixellation is better
+            # than a Gaussian blur because it compresses well.  The specific
+            # value is just "what looks about right".
+            #
+            # http://www.imgix.com/docs/reference/stylize#param-px
+            url.update_query(px=20)
         if g.imgix_signing:
             url = self._sign_url(url, g.secrets['imgix_signing_token'])
         return url.unparse()

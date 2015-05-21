@@ -642,35 +642,42 @@ class LinkJsonTemplate(ThingJsonTemplate):
             source_height = preview_object['height']
             source_ratio = float(source_height) / source_width
 
-            # Determine which previews would be feasible with our given dims
-            preview_resolutions = []
-            for w in self.PREVIEW_RESOLUTIONS:
-                if w > source_width:
-                    continue
+            def generate_image_links(censor_nsfw=False):
+                # Determine which previews would be feasible with our given dims
+                preview_resolutions = []
+                for w in self.PREVIEW_RESOLUTIONS:
+                    if w > source_width:
+                        continue
 
-                url = g.image_resizing_provider.resize_image(preview_object, w)
-                h = int(w * source_ratio)
-                preview_resolutions.append({
-                    "url": url,
-                    "width": w,
-                    "height": h,
-                })
+                    url = g.image_resizing_provider.resize_image(
+                        preview_object, w, censor_nsfw)
+                    h = int(w * source_ratio)
+                    preview_resolutions.append({
+                        "url": url,
+                        "width": w,
+                        "height": h,
+                    })
 
-            d['post_hint'] = thing.post_hint
-            url = g.image_resizing_provider.resize_image(preview_object)
-            d['preview'] = {
-                "images": [
-                    {
-                        "id": preview_object['uid'],
-                        "source": {
-                            "url": url,
-                            "width": source_width,
-                            "height": source_height,
-                        },
-                        "resolutions": preview_resolutions,
+                d['post_hint'] = thing.post_hint
+                url = g.image_resizing_provider.resize_image(
+                    preview_object, censor_nsfw=censor_nsfw)
+
+                return {
+                    "source": {
+                        "url": url,
+                        "width": source_width,
+                        "height": source_height,
                     },
-                ],
-            }
+                    "resolutions": preview_resolutions,
+                }
+
+            d['preview'] = {}
+            images = generate_image_links()
+            images['id'] = preview_object['uid']
+            images['variants'] = {}
+            if thing.nsfw:
+                images['variants']['nsfw'] = generate_image_links(censor_nsfw=True)
+            d['preview']['images'] = [images]
 
         return d
 

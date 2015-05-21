@@ -79,3 +79,9 @@ class TestImgixResizer(unittest.TestCase):
         signed_url = self.provider._sign_url(u, 'abcdef')
         self.assertEqual(signed_url.unparse(),
                 'http://examples.imgix.net/frog.jpg?w=100&s=cd3bdf071108af73b15c21bdcee5e49c')
+
+    def test_censor(self):
+        image = dict(url='http://s3.amazonaws.com/a.jpg', width=1200,
+                      height=800)
+        url = self.provider.resize_image(image, censor_nsfw=True)
+        self.assertEqual(url, 'https://example.com/a.jpg?px=20')

@@ -28,7 +28,7 @@ class UnsplashitImageResizingProvider(ImageResizingProvider):
     Useful if you don't want the external dependencies of imgix, but need
     correctly-sized images for testing a UI.
     """
-    def resize_image(self, image, width=None):
+    def resize_image(self, image, width=None, censor_nsfw=False):
         if width is None:
             width = image['width']
         height = width * 2
