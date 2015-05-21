@@ -26,6 +26,7 @@
 <%namespace file="link.html" import="thumbnail" />
 
 <%!
+  from r2.lib.template_helpers import format_number
   from r2.lib.pages import WrappedUser
 %>
 
@@ -81,8 +82,8 @@
         cname=False,
         _class='search-subreddit-link may-blank',
       )}&#32;
-    <span class="search-score">${thing.score} ${ungettext('point', 'points', thing.score)},</span>&#32;
-    <span class="search-comments">${thing.num_comments} ${ungettext('comment', 'comments', thing.num_comments)},</span>&#32;
+    <span class="search-score">${format_number(thing.score)} ${ungettext('point', 'points', thing.score)},</span>&#32;
+    <span class="search-comments">${format_number(thing.num_comments)} ${ungettext('comment', 'comments', thing.num_comments)},</span>&#32;
     <span class="search-time">submitted&#32;${thing_timestamp(thing, thing.timesince, include_tense=True)}</span>&#32;
     <span class="search-author">by&#32;${WrappedUser(thing.author, thing.attribs, thing)}</span>&#32;
   </%parent:search_result_meta>

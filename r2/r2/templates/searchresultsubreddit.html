@@ -26,7 +26,7 @@
 <%namespace file="subscribebutton.html" import="subscribe_button" />
 
 <%!
-  from r2.lib.template_helpers import search_url
+  from r2.lib.template_helpers import format_number, search_url
   from r2.lib.utils import timesince
 %>
 
@@ -61,7 +61,7 @@
         _class='search-subreddit-link may-blank',
       )}&#32;
     %if not thing.score_hidden:
-      <span class="search-subscribers">${thing._ups} ${ungettext('subscriber', 'subscribers', thing._ups)},</span>&#32;
+      <span class="search-subscribers">${format_number(thing._ups)} ${ungettext('subscriber', 'subscribers', thing._ups)},</span>&#32;
     %endif
     <span class="search-time">${_("a community for %(time)s") % dict(time=timesince(thing._date))}</span>&#32;
   </%parent:search_result_meta>
