@@ -56,6 +56,7 @@ from r2.lib.utils import (
     domain,
     extract_urls_from_markdown,
     get_requests_resp_json,
+    is_subdomain,
 )
 from r2.models.link import Link
 from r2.models.media_cache import (
@@ -335,12 +336,19 @@ def _get_scrape_url(link):
         return link.url
 
     urls = extract_urls_from_markdown(link.selftext)
+    second_choice = None
     for url in urls:
         p = UrlParser(url)
-        if not p.is_reddit_url():
+        if p.is_reddit_url():
+            continue
+        # If we don't find anything we like better, use the first image.
+        if not second_choice:
+            second_choice = url
+        # This is an optimization for "proof images" in AMAs.
+        if is_subdomain(p.netloc, 'imgur.com') or p.has_image_extension():
             return url
 
-    return None
+    return second_choice
 
 
 def _set_media(link, force=False, **kwargs):

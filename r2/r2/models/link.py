@@ -785,11 +785,10 @@ class Link(Thing, Printable):
             return 'link'
 
         p = UrlParser(self.url)
-        extension = p.path_extension().lower()
-        if extension in {'gif', 'jpeg', 'jpg', 'png', 'tiff'}:
+        if p.has_image_extension():
             return 'image'
 
-        if extension in {'mp4', 'webm'}:
+        if p.path_extension().lower() in {'mp4', 'webm'}:
             return 'video'
 
         return 'link'

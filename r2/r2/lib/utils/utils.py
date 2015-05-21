@@ -557,6 +557,11 @@ class UrlParser(object):
 
         return filename_parts[-1]
 
+    def has_image_extension(self):
+        """Guess if the url leads to an image."""
+        extension = self.path_extension().lower()
+        return extension in {'gif', 'jpeg', 'jpg', 'png', 'tiff'}
+
     def set_extension(self, extension):
         """
         Changes the extension of the path to the provided value (the
