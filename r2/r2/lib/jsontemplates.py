@@ -730,7 +730,7 @@ class LinkJsonTemplate(ThingJsonTemplate):
             d['suggested_sort'] = thing.sort_if_suggested()
 
         preview_object = getattr(thing, 'preview_object', None)
-        if feature.is_enabled('link_preview') and preview_object:
+        if preview_object:
             d['preview'] = {}
             d['post_hint'] = thing.post_hint
             images = self.generate_image_links(preview_object)
