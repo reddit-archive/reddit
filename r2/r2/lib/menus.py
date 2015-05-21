@@ -608,23 +608,13 @@ class CommentSortMenu(SortMenu):
 class SearchSortMenu(SortMenu):
     """Sort menu for search pages."""
     _default = 'relevance'
-    mapping = g.search_sorts
-    _options = mapping.keys()
-
-    @classmethod
-    def operator(cls, sort):
-        return cls.mapping.get(sort, cls.mapping[cls.default])
+    _options = ('relevance', 'hot', 'top', 'new', 'comments')
 
 
 class SubredditSearchSortMenu(SortMenu):
     """Sort menu for subreddit search pages."""
     _default = 'relevance'
-    mapping = g.search_sorts
-    _options = mapping.keys()
-
-    @classmethod
-    def operator(cls, sort):
-        return cls.mapping.get(sort, cls.mapping[cls.default])
+    _options = ('relevance', 'activity')
 
 
 class RecSortMenu(SortMenu):

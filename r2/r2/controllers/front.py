@@ -904,8 +904,7 @@ class FrontController(RedditController):
     @base_listing
     @require_oauth2_scope("read")
     @validate(query=nop('q', docs={"q": "a search query"}),
-              sort=VOneOf('sort', ('relevance', 'activity'),
-                          default='relevance'))
+              sort=VMenu('sort', SubredditSearchSortMenu, remember=False))
     @api_doc(api_section.subreddits, uri='/subreddits/search', supports_rss=True)
     def GET_search_reddits(self, query, reverse, after, count, num, sort):
         """Search subreddits by title and description."""

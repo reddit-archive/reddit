@@ -161,7 +161,7 @@ class SolrSearchQuery(object):
         if raw_sort:
             self.sort = _translate_raw_sort(raw_sort)
         elif sort:
-            self.sort = g.search_sorts.get(sort)
+            self.sort = self.sorts.get(sort)
         else:
             self.sort = 'score'
         self.rank_expressions = rank_expressions
@@ -289,13 +289,13 @@ class SolrSearchQuery(object):
 
 class LinkSearchQuery(SolrSearchQuery):
     search_api = g.solr_search_host
-    sorts = g.search_sorts
-    sorts_menu_mapping = {'relevance': 1,
-                          'hot': 2,
-                          'new': 3,
-                          'top': 4,
-                          'comments': 5,
-                          }
+    sorts = {
+        'relevance': 'score desc',
+        'hot': 'max(hot/45000.0, 1.0) desc',
+        'top': 'top desc',
+        'new': 'timestamp desc',
+        'comments': 'num_comments desc',
+    }
     recents = {
         'hour': timedelta(hours=1),
         'day': timedelta(days=1),
@@ -365,12 +365,9 @@ class LinkSearchQuery(SolrSearchQuery):
 
 class SolrSubredditSearchQuery(SolrSearchQuery):
     search_api = g.solr_subreddit_search_host
-    sorts = {'relevance': 'activity',
-             None: 'activity',
-             }
-    sorts_menu_mapping = {'relevance': 1,
-                          }
-
+    sorts = {
+        'relevance': 'activity desc',
+    }
     known_syntaxes = ("plain", "solr")
     default_syntax = "plain"
 
@@ -833,8 +830,6 @@ class SolrSearchProvider(SearchProvider):
 
     SubredditSearchQuery = SolrSubredditSearchQuery
     
-    sorts = LinkSearchQuery.sorts_menu_mapping
-
     def run_changed(self, drain=False, min_size=int(getattr(g, 'solr_min_batch', 500)), limit=1000, sleep_time=10, 
             use_safe_get=False, verbose=False):
         '''Run by `cron` (through `paster run`) on a schedule to send Things to Solr

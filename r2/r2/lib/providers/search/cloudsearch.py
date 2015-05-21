@@ -443,7 +443,7 @@ INVALID_QUERY_CODES = ('CS-UnknownFieldInMatchExpression',
                        'CS-InvalidMatchSetExpression',)
 DEFAULT_FACETS = {"reddit": {"count":20}}
 def basic_query(query=None, bq=None, faceting=None, size=1000,
-                start=0, rank="-relevance", rank_expressions=None,
+                start=0, rank=None, rank_expressions=None,
                 return_fields=None, record_stats=False, search_api=None):
     if search_api is None:
         search_api = g.CLOUDSEARCH_SEARCH_API
@@ -515,7 +515,8 @@ def _encode_query(query, bq, faceting, size, start, rank, rank_expressions,
     params["results-type"] = "json"
     params["size"] = size
     params["start"] = start
-    params["rank"] = rank
+    if rank:
+        params["rank"] = rank
     if rank_expressions:
         for rank, expression in rank_expressions.iteritems():
             params['rank-%s' % rank] = expression
@@ -536,7 +537,6 @@ class CloudSearchQuery(object):
     '''Represents a search query sent to cloudsearch'''
     search_api = None
     sorts = {}
-    sorts_menu_mapping = {}
     recents = {None: None}
     default_syntax = "plain"
     lucene_parser = None
@@ -568,7 +568,7 @@ class CloudSearchQuery(object):
         if raw_sort:
             self.sort = raw_sort
         else:
-            self.sort = self.sorts[sort]
+            self.sort = self.sorts.get(sort)
         self.rank_expressions = rank_expressions
 
         # pagination
@@ -638,8 +638,9 @@ class CloudSearchQuery(object):
             result.append(" bq:")
             result.append(repr(self.bq))
             result.append(" ")
-        result.append("sort:")
-        result.append(self.sort)
+        if self.sort:
+            result.append("sort:")
+            result.append(self.sort)
         return ''.join(result)
 
     @classmethod
@@ -705,7 +706,13 @@ class CloudSearchQuery(object):
 
 class LinkSearchQuery(CloudSearchQuery):
     search_api = g.CLOUDSEARCH_SEARCH_API
-    sorts = g.search_sorts 
+    sorts = {
+        'relevance': '-relevance',
+        'hot': '-hot2',
+        'top': '-top',
+        'new': '-timestamp',
+        'comments': '-num_comments',
+    }
     recents = {
         'hour': timedelta(hours=1),
         'day': timedelta(days=1),

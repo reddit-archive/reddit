@@ -74,19 +74,6 @@ from r2.lib.utils import config_gold_price, thread_dump
 
 LIVE_CONFIG_NODE = "/config/live"
 
-LINK_SEARCH_SORTS = {
-        'cloudsearch': {'relevance': '-relevance',
-                        'hot': '-hot2',
-                        'top': '-top',
-                        'new': '-timestamp',
-                        'comments': '-num_comments',},
-        'solr': {'relevance': 'score desc',
-                              'hot': 'max(hot/45000.0, 1.0) desc',
-                              'top': 'top desc',
-                              'new': 'timestamp desc',
-                              'comments': 'num_comments desc',},
-        }
-
 SEARCH_SYNTAXES = {
         'cloudsearch': ('cloudsearch', 'lucene', 'plain'),
         'solr': ('solr', 'plain'),
@@ -998,10 +985,6 @@ class Globals(object):
                                        )
             return  self.search_provider
         return None
-
-    @property
-    def search_sorts(self):
-        return  LINK_SEARCH_SORTS[self.config.get('search_provider')]
 
     @property
     def search_syntaxes(self):
