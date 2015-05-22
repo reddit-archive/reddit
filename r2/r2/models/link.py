@@ -507,26 +507,33 @@ class Link(Thing, Printable):
             # always show a promo author their own thumbnail
             if item.promoted and (user_is_admin or item.is_author) and item.has_thumbnail:
                 item.thumbnail = media.thumbnail_url(item)
+                item.preview_image = getattr(item, 'preview_object', None)
             elif user.pref_no_profanity and item.over_18 and not c.site.over_18:
                 if show_media:
                     item.thumbnail = "nsfw"
                     item.thumbnail_sprited = True
                 else:
                     item.thumbnail = ""
+                item.preview_image = None
             elif not show_media:
                 item.thumbnail = ""
+                item.preview_image = None
             elif (item._deleted or
                   item._spam and item._date < timeago("6 hours")):
                 item.thumbnail = "default"
                 item.thumbnail_sprited = True
+                item.preview_image = None
             elif item.has_thumbnail:
                 item.thumbnail = media.thumbnail_url(item)
+                item.preview_image = getattr(item, 'preview_object', None)
             elif item.is_self:
                 item.thumbnail = "self"
                 item.thumbnail_sprited = True
+                item.preview_image = getattr(item, 'preview_object', None)
             else:
                 item.thumbnail = "default"
                 item.thumbnail_sprited = True
+                item.preview_image = getattr(item, 'preview_object', None)
 
             item.score = max(0, item.score)
 

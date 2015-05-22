@@ -1654,7 +1654,7 @@ class LinkInfoPage(Reddit):
         if self.link.url and url_is_embeddable_image(self.link.url):
             return {'url': self.link.url}
 
-        preview_object = getattr(self.link, 'preview_object', None)
+        preview_object = self.link.preview_image
         if preview_object:
             try:
                 return {
