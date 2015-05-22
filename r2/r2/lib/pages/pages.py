@@ -1748,7 +1748,7 @@ class LinkInfoPage(Reddit):
             query_obj = c.site.get_links('hot', 'all')
             builder = IDBuilder(query_obj,
                                 wrap=wrapper_fn,
-                                skip=True, num=25)
+                                skip=True, num=10)
             listing = ReadNextListing(builder).listing()
             if len(listing.things):
                 rb.append(ReadNext(c.site, listing.render()))
