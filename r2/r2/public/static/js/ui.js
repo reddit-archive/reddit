@@ -151,8 +151,23 @@ r.ui.highlightNewComments = function() {
 }
 
 r.ui.initReadNext = function() {
+    // 2 week expiration
+    var ttl = (1000 * 60 * 60 * 24 * 14);
     var $readNextContainer = $('.read-next-container');
     var isDismissed = !!store.get('readnext.dismissed');
+    var expiration = parseInt(store.get('readnext.expiration'), 10);
+    var now = Date.now();
+
+    if (isDismissed) {
+        if (!expiration) {
+            expiration = now + ttl;
+            store.set('readnext.expiration', expiration);
+        } else if (expiration < now) {
+            store.set('readnext.dismissed', false);
+            isDismissed = false;
+        }
+    }
+
     var currentLinkFullname = r.config.cur_link;
 
     if (isDismissed || !$readNextContainer.length) {
@@ -163,6 +178,7 @@ r.ui.initReadNext = function() {
         el: $readNextContainer,
         fixToBottom: !r.ui.isSmallScreen(),
         currentLinkFullname: currentLinkFullname,
+        ttl: ttl,
     });
 };
 
@@ -177,7 +193,6 @@ r.ui.ReadNext = Backbone.View.extend({
         this.$readNext = this.$el.find('.read-next');
         this.$links = this.$readNext.find('.read-next-link');
         this.numLinks = this.$links.length;
-
 
         this.state = new Backbone.Model({
             fixed: false,
@@ -247,6 +262,8 @@ r.ui.ReadNext = Backbone.View.extend({
         window.removeEventListener('scroll', this.updateScroll);
         r.analytics.fireGAEvent('readnext', 'dismiss');
         store.set('readnext.dismissed', true);
+        var expiration = Date.now() + this.options.ttl;
+        store.set('readnext.expiration', expiration);
     },
 
     updateScroll: function() {
