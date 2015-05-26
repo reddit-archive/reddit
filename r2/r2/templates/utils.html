@@ -270,6 +270,7 @@ ${unsafe(txt)}
     <script type="text/javascript">
       function completedUploadImage (status, img_src, name, errors, form_id) {
         /* should only be called when the uploaded file is too large */
+        form_id = $.with_default(form_id, "${form_id}");
         if (status == "failed") {
           $("#${form_id}").find(".status").html("");
           for (var i in errors) {
@@ -319,7 +320,7 @@ ${unsafe(txt)}
                  onchange="$(this).next().prop('disabled', false); ${onchange}"/>
           <button id="submit-img" class="submit-img primary-button"
                   type="submit" name="upload" 
-                  onclick="$(this).siblings('.img-status').show().text('${jssafe(_('uploading'))}'); return true;"
+                  onclick="$(this).parent().addClass('uploading').find('.img-status').show().text('${jssafe(_('uploading'))}'); return true;"
                   disabled>
             ${_('upload')}
           </button>
@@ -331,8 +332,9 @@ ${unsafe(txt)}
        function create_new_image(name) {}
 
        function completedUploadImage(status, img_src, name, errors, form_id) {
-           form_id = $.with_default(form_id, "${form_id}");
-           var form = $("#" + form_id);
+           var form = form_id ? $("#" + form_id) : $('form.image-upload.uploading');
+           form.removeClass('uploading');
+
            if (status) 
                form.find(".img-status").show().html(status);
            else
