@@ -24,7 +24,9 @@
 
 <a id="read-next-link-${thing._fullname}" class="read-next-link may-blank" href="${thing.permalink}?ref=readnext">
   <div class="read-next-meta">
-    <span class="score">${thing.score} points</span>&#32;
+    %if not thing.hide_score:
+      <span class="score">${thing.score} points</span>&#32;
+    %endif
     %if thing.num_comments:
       &middot;&#32;
       <span class="comments">${thing.comment_label}</span>&#32;
