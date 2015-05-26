@@ -854,6 +854,10 @@ class UserController(ListingController):
                                        'upvoted', 'downvoted', 'hidden',
                                        'saved', 'gilded']])
     def GET_listing(self, where, vuser, sort, time, show, **env):
+        # the validator will ensure that vuser is a valid account
+        if not vuser:
+            return self.abort404()
+
         # continue supporting /liked and /disliked paths for API clients
         # but 301 redirect non-API users to the new location
         changed_wheres = {"liked": "upvoted", "disliked": "downvoted"}
@@ -871,10 +875,6 @@ class UserController(ListingController):
         self.sort = sort
         self.time = time
         self.show = show
-
-        # the validator will ensure that vuser is a valid account
-        if not vuser:
-            return self.abort404()
 
         # only allow admins to view deleted users
         if vuser._deleted and not c.user_is_admin:
