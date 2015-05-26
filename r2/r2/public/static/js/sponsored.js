@@ -875,11 +875,10 @@ var exports = r.sponsored = {
             region = canGeotarget && $('#region').val() || '',
             metro = canGeotarget && $('#metro').val() || '',
             geotarget = {'country': country, 'region': region, 'metro': metro},
-            platform = this.getPlatformTargeting().platform,
             inventoryKey = this.get_inventory_key(sr, collection, geotarget, platform),
             isValid = isFrontpage || (isSubreddit && sr) || (isCollection && collection);
 
-        return {
+        var targets = {
             'type': type,
             'displayName': displayName,
             'isValid': isValid,
@@ -887,9 +886,17 @@ var exports = r.sponsored = {
             'collection': collection,
             'canGeotarget': canGeotarget,
             'geotarget': geotarget,
-            'platform': platform,
-            'inventoryKey': inventoryKey,
         };
+
+        if (this.$platformInputs) {
+            var platform = this.getPlatformTargeting().platform;
+            targets['platform'] = platform;
+            targets['inventoryKey'] = this.get_inventory_key(sr, collection, geotarget, platform);
+        } else {
+            targets['inventoryKey'] = this.get_inventory_key(sr, collection, geotarget);
+        }
+
+        return targets;
     },
 
     get_timing: function($form) {
