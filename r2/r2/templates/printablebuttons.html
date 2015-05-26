@@ -23,6 +23,7 @@
 <%namespace file="utils.html" import="plain_link, pretty_button, data, error_field" />
 
 <%!
+   from r2.config import feature
    from r2.lib.filters import conditional_websafe, jssafe
    from r2.lib.strings import strings
    from r2.models.promo import PROMOTE_STATUS
@@ -238,8 +239,12 @@
   %endif
   % if c.user_is_loggedin or not g.read_only_mode:
   <li class="share">
-    ${self.toggle_button("share-button", _("share"), _("cancel"),
-                         "share", "cancelShare", login_required = True)}
+    %if feature.is_enabled('improved_sharing'):
+      <a class="post-sharing-button" href="javascript: void 0;">${_("share")}</a>
+    %else:
+      ${self.toggle_button("share-button", _("share"), _("cancel"),
+                           "share", "cancelShare", login_required = True)}
+    %endif
   </li>
   % endif
   %if thing.is_loggedin:

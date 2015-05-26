@@ -362,7 +362,10 @@ class Reddit(Templated):
                                       )
             report_form = ReportForm()
 
-            panes.extend([ShareLink(), report_form])
+            if not feature.is_enabled('improved_sharing'):
+                panes.append(ShareLink())
+
+            panes.append(report_form)
 
             if self.show_sidebar:
                 panes.extend([gold_comment, gold_link])

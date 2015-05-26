@@ -508,6 +508,7 @@ module["reddit"] = LocalizedModule("reddit.js",
     "recommender.js",
     "action-forms.js",
     "embed.js",
+    "post-sharing.js",
     "saved.js",
     "messages.js",
     PermissionsDataSource({

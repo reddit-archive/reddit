@@ -194,10 +194,14 @@ def js_config(extra_config=None):
           "verification": verification,
           "actionName": controller_name + '.' + action_name,
         },
+        "facebook_app_id": g.live_config["facebook_app_id"],
     }
 
     if g.uncompressedJS:
         config["uncompressedJS"] = True
+
+    if g.shortdomain:
+        config["short_domain"] = g.shortdomain
 
     if extra_config:
         config.update(extra_config)
