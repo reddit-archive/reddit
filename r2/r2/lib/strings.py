@@ -47,6 +47,9 @@ string_dict = dict(
 
     banned_by = "removed by %s",
     banned    = "removed",
+    times_banned="removed %d times",
+    time_banned="removed at %s",
+    time_approved="approved at %s",
     reports   = "reports: %d",
     
     submitting = _("submitting..."),

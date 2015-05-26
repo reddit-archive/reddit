@@ -1643,7 +1643,7 @@ class RedditController(OAuth2ResourceController):
             # is the subreddit banned?
             if c.site.spammy() and not c.user_is_admin and not c.error_page:
                 ban_info = getattr(c.site, "ban_info", {})
-                if "message" in ban_info:
+                if "message" in ban_info and ban_info['message']:
                     message = ban_info['message']
                 else:
                     sitelink = url_escape(add_sr("/"))

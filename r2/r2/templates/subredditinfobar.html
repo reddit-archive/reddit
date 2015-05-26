@@ -95,19 +95,56 @@
   </div>
 
   %if c.user_is_admin:
-    %if thing.sr._spam:
-      ${state_button("approve", _("approve this subreddit"),
-        "return change_state(this, 'approve');", _("approved"),
-        hidden_data = dict(id = thing.sr._fullname))}
-      %if thing.sr._spam and hasattr(thing.sr, "banner"):
-         &#32;(${strings.banned_by % thing.sr.banner})
+    <div class="raisedbox spacer">
+      %if thing.sr.ban_count:
+        <p>
+          ${strings.times_banned % thing.sr.ban_count}
+        </p>
       %endif
+      
+      %if thing.sr._spam:
+        ${ynbutton(op='approve',
+                   title=_('approve this subreddit'), 
+                   executed=_('approved'),
+                   hidden_data = dict(id = thing.sr._fullname),
+        )}
+        
+        <form id="banmessage-form" method="post" onsubmit="return post_form(this, 'admin/add_ban_message')">
+          <input type="hidden" name="thing" value="${thing.sr._fullname}">
+          <input type="hidden" name="system" value="subreddit">
+          <textarea name="message" rows=4>
+            %if getattr(thing.sr, 'ban_info', {}) and 'message' in thing.sr.ban_info:
+              ${thing.sr.ban_info['message'] or ''}
+            %endif
+          </textarea>
+          <input type="submit" class="notes-button" 
+            value="Set public ban message (blank for default)">
+        </form>
+        
+        %if hasattr(thing.sr, "banner"):
+          <p>
+           ${strings.banned_by % thing.sr.banner}
+          </p>
+        %endif
+        %if getattr(thing.sr, 'ban_info', {}):
+          <p>
+            ${strings.time_banned % thing.sr.ban_info['banned_at'] or 'N/A'}
+          </p>
+        %endif
 
-    %else:
-      ${state_button("remove", _("ban this subreddit"),
-        "return change_state(this, 'remove');", _("banned"),
-        hidden_data = dict(id = thing.sr._fullname))}
-    %endif
+      %else:
+        ${ynbutton(op='remove',
+                   title=_('ban this subreddit'), 
+                   executed=_('banned'),
+                   hidden_data = dict(id = thing.sr._fullname),
+        )}
+        %if getattr(thing.sr, 'ban_info', {}):
+          <p>
+            ${strings.time_approved % thing.sr.ban_info['unbanned_at'] or 'N/A'}
+          </p>
+        %endif
+      %endif
+    </div>
   %endif
 
   <div class="clear"> </div>
