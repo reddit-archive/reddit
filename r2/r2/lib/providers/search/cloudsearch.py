@@ -475,7 +475,11 @@ def basic_query(query=None, bq=None, faceting=None, size=1000,
                                            search_api, path, reasons)
             raise SearchHTTPError(resp.status, resp.reason,
                                   search_api, path, response)
+    except socket.timeout as e:
+        g.stats.simple_event('cloudsearch.error.timeout')
+        raise SearchError(e, search_api, path)
     except socket.error as e:
+        g.stats.simple_event('cloudsearch.error.socket')
         raise SearchError(e, search_api, path)
     finally:
         connection.close()
