@@ -296,8 +296,10 @@ class LinkListing(Listing):
 class SearchListing(LinkListing):
     def listing(self, *args, **kwargs):
         wrapped = LinkListing.listing(self, *args, **kwargs)
-        self.subreddit_facets = self.builder.subreddit_facets
-        self.timing = time.time() - self.builder.start_time
+        if hasattr(self.builder, 'subreddit_facets'):
+            self.subreddit_facets = self.builder.subreddit_facets
+        if hasattr(self.builder, 'start_time'):
+            self.timing = time.time() - self.builder.start_time
         return wrapped
 
 
