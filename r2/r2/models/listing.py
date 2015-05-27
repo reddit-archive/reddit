@@ -307,7 +307,7 @@ class SearchListing(LinkListing):
             self.timing = time.time() - self.builder.start_time
 
         if legacy_render_class:
-            wrapped.render_class = Listing
+            wrapped.render_class = LinkListing
 
         return wrapped
 
