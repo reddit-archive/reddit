@@ -990,6 +990,10 @@ class CommentBuilder(Builder):
             comment.edits_visible = self.edits_visible
 
             parent = wrapped_by_id.get(comment.parent_id)
+            if qa_sort_hiding:
+                author_is_special = comment.author_id in special_responder_ids
+            else:
+                author_is_special = False
 
             # In the Q&A sort type, we want to collapse all comments other than
             # those that are:
@@ -1002,20 +1006,20 @@ class CommentBuilder(Builder):
             #    comments).
             if (qa_sort_hiding and
                     depth[comment._id] != 0 and  # (1)
-                    comment.author_id not in special_responder_ids and  # (2)
+                    not author_is_special and  # (2)
                     not (parent and
                          parent.author_id in special_responder_ids and
                          feature.is_enabled('qa_show_replies')) and  # (4)
                     not comment.prevent_collapse):  # (5)
                 comment.hidden = True
 
-            if comment.collapsed and comment._id in dont_collapse:
-                comment.collapsed = False
-                comment.hidden = False
+            if comment.collapsed:
+                if comment._id in dont_collapse or author_is_special:
+                    comment.collapsed = False
+                    comment.hidden = False
 
             if parent:
-                if (qa_sort_hiding and
-                        comment.author_id in special_responder_ids):
+                if author_is_special:
                     # Un-collapse parents as necessary.  It's a lot easier to
                     # do this here, upwards, than to check through all the
                     # children when we were iterating at the parent.
