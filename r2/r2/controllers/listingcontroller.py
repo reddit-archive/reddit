@@ -295,7 +295,7 @@ class SubredditListingController(ListingController):
                     "og_data": {
                         "site_name": "reddit",
                         "title": self._build_og_title(),
-                        "image": static('icon.png'),
+                        "image": static('icon.png', absolute=True),
                         "description": self._build_og_description(),
                     },
                     "twitter_card": twitter_card,
