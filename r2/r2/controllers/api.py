@@ -2017,6 +2017,9 @@ class ApiController(RedditController):
 
                 queries.new_message(m, inbox_rel)
 
+            g.stats.simple_event('share.email_sent', len(emails))
+            g.stats.simple_event('share.pm_sent', len(users))
+
             #set the ratelimiter
             if should_ratelimit:
                 VRatelimit.ratelimit(rate_user=True, rate_ip = True,
