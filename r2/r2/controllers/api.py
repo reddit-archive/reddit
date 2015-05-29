@@ -1737,8 +1737,9 @@ class ApiController(RedditController):
         original_text = item.body
         if isinstance(item, Comment):
             kind = 'comment'
-            removed_mentions = set(extract_user_mentions(original_text)) - \
-                set(extract_user_mentions(text))
+            prev_mentions = extract_user_mentions(original_text)
+            new_mentions = extract_user_mentions(text)
+            removed_mentions = prev_mentions - new_mentions
             item.body = text
         elif isinstance(item, Link):
             kind = 'link'

@@ -2356,10 +2356,11 @@ class Inbox(MultiRelation('inbox',
                 possible_recipients.append(parent_link.author_id)
 
             mentions = utils.extract_user_mentions(obj.body)
-            possible_recipients.extend(Account._names_to_ids(
-                mentions,
-                ignore_missing=True,
-            ))
+            if len(mentions) <= g.butler_max_mentions:
+                possible_recipients.extend(Account._names_to_ids(
+                    mentions,
+                    ignore_missing=True,
+                ))
         elif isinstance(obj, Message):
             if obj.to_id:
                 possible_recipients.append(obj.to_id)

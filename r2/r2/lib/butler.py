@@ -61,7 +61,7 @@ def monitor_mentions(comment):
         return
 
     subreddit = comment.subreddit_slow
-    usernames = list(extract_user_mentions(comment.body, num=g.butler_max_mentions + 1))
+    usernames = extract_user_mentions(comment.body)
     inbox_class = Inbox.rel(Account, Comment)
 
     # If more than our allowed number of mentions were passed, don't highlight

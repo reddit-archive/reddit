@@ -1546,16 +1546,21 @@ def extract_urls_from_markdown(md):
             yield url
 
 
-def extract_user_mentions(text, num=None):
+def extract_user_mentions(text):
+    """Return a set of all usernames (lowercased) mentioned in Markdown text.
+
+    This function works by processing the Markdown, and then looking through
+    all links in the resulting HTML. Any links that start with /u/ (as a
+    relative link) are considered to be a "mention", so this will mostly just
+    catch the links created by our auto-linking of /u/ and u/.
+
+    Note that the usernames are converted to lowercase and added to a set,
+    so only unique mentions will be returned.
+    """
     from r2.lib.validator import chkuser
-    if num is None:
-        num = g.butler_max_mentions
+    usernames = set()
 
-    cur_num = 0
     for url in extract_urls_from_markdown(text):
-        if num != -1 and cur_num >= num:
-            break
-
         if not url.startswith("/u/"):
             continue
 
@@ -1563,8 +1568,9 @@ def extract_user_mentions(text, num=None):
         if not chkuser(username):
             continue
 
-        cur_num += 1
-        yield username.lower()
+        usernames.add(username.lower())
+
+    return usernames
 
 
 def summarize_markdown(md):
