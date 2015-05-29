@@ -1614,7 +1614,19 @@ class LinkInfoPage(Reddit):
         if not self.link.nsfw:
             image_data = self._build_og_image()
             for key, value in image_data.iteritems():
-                data["image:%s" % key] = value
+                # Although the spec[0] and their docs[1] say 'og:image' and
+                # 'og:image:url' are equivalent, Facebook doesn't actually take
+                # the thumbnail from the latter form.  Even if that gets fixed,
+                # it's likely the authors of other scrapers haven't read the
+                # spec in-depth, either, so we'll just keep on doing the more
+                # well-supported thing.
+                #
+                # [0]: http://ogp.me/#structured
+                # [1]: https://developers.facebook.com/docs/sharing/webmasters#images
+                if key == 'url':
+                    data['image'] = value
+                else:
+                    data["image:%s" % key] = value
 
         return data
 
