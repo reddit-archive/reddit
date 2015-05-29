@@ -893,9 +893,9 @@ class RuleTarget(object):
             return True
 
         self.matches = {}
-        match = None
         checked_anything = False
         for key, match_pattern in self.match_patterns.iteritems():
+            match = None
             parsed_key = self.parse_match_fields_key(key)
 
             if isinstance(item, Link) and not item.is_self:
