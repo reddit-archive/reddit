@@ -55,7 +55,6 @@
         'event_ts': now.getTime(),
         'event_ts_utc_offset': now.getTimezoneOffset() / -60,
         'user_agent': navigator.userAgent,
-        'embed_ts_created': config.created,
         'sr_id': thing.sr_id,
         'sr_name': thing.sr_name,
         'embed_id': thing.id,
@@ -67,6 +66,13 @@
         'comment_deleted': thing.deleted,
         'uuid': App.utils.uuid(),
       };
+
+      // If the creation field doesn't exist (due to manual modification, bad
+      // oEmbed plugin, etc.), don't send the field at all to avoid messing up
+      // the data pipeline.
+      if (config.created !== "null") {
+        data['embed_ts_created'] = config.created;
+      }
   
       for (var name in payload) {
         data[name] = payload[name];
