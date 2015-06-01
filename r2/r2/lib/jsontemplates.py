@@ -66,16 +66,74 @@ class ObjectTemplate(StringTemplate):
 
     def finalize(self, kw = {}):
         return self.update(kw).d
-    
+
+
 class JsonTemplate(Template):
     def __init__(self): pass
 
     def render(self, thing = None, *a, **kw):
         return ObjectTemplate({})
 
+
 class TakedownJsonTemplate(JsonTemplate):
     def render(self, thing = None, *a, **kw):
         return thing.explanation
+
+
+class ThingTemplate(object):
+    @classmethod
+    def render(cls, thing):
+        """
+        Return a JSON representation of a Wrapped Thing object.
+
+        The Thing object should be Wrapped and been run through add_props just
+        like is required for regular HTML rendering. The return value is an
+        ObjectTemplate wrapped dictionary.
+
+        """
+
+        api_subtype = get_api_subtype()
+
+        # the argument is named `thing` due to specifics of wrapped
+        item = thing
+
+        if api_subtype:
+            # special handling for rendering a nested template as a different
+            # style (usually html)
+            data = cls.get_rendered(item, render_style=api_subtype)
+        else:
+            data = cls.get_json(item)
+
+        d = {
+            "kind": cls.get_kind(item),
+            "data": data,
+        }
+        return ObjectTemplate(d)
+
+    @classmethod
+    def get_kind(cls, item):
+        thing = item.lookups[0]
+        return make_typename(thing.__class__)
+
+    @classmethod
+    def get_json(cls, item):
+        data = {
+            "created": time.mktime(item._date.timetuple()),
+            "created_utc": time.mktime(
+                item._date.astimezone(pytz.UTC).timetuple()) - time.timezone,
+            "id": item._id36,
+            "name": item._fullname,
+        }
+        return data
+
+    @classmethod
+    def get_rendered(cls, item, render_style):
+        data = {
+            "id": item._fullname,
+            "content": item.render(style=render_style),
+        }
+        return data
+
 
 class ThingJsonTemplate(JsonTemplate):
     _data_attrs_ = dict(
