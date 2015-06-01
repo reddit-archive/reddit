@@ -3084,9 +3084,9 @@ class ApiController(RedditController):
     @require_oauth2_scope("report")
     @noresponse(VUser(),
                 VModhash(),
-                thing = VByName('id', thing_cls=Link))
+                links=VByName('id', thing_cls=Link, multiple=True, limit=50))
     @api_doc(api_section.links_and_comments)
-    def POST_hide(self, thing):
+    def POST_hide(self, links):
         """Hide a link.
 
         This removes it from the user's default view of subreddit listings.
@@ -3094,22 +3094,26 @@ class ApiController(RedditController):
         See also: [/api/unhide](#POST_api_unhide).
 
         """
-        if not thing: return
-        thing._hide(c.user)
+        if not links:
+            return abort(400)
+
+        LinkHidesByAccount._hide(c.user, links)
 
     @require_oauth2_scope("report")
     @noresponse(VUser(),
                 VModhash(),
-                thing = VByName('id'))
+                links=VByName('id', thing_cls=Link, multiple=True, limit=50))
     @api_doc(api_section.links_and_comments)
-    def POST_unhide(self, thing):
+    def POST_unhide(self, links):
         """Unhide a link.
 
         See also: [/api/hide](#POST_api_hide).
 
         """
-        if not thing: return
-        thing._unhide(c.user)
+        if not links:
+            return abort(400)
+
+        LinkHidesByAccount._unhide(c.user, links)
 
 
     @csrf_exempt
