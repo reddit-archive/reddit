@@ -20,6 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+from r2.config import feature
 from r2.lib.db.thing import (
     Thing, Relation, NotFound, MultiRelation, CreationError)
 from r2.lib.db.operators import desc
@@ -495,6 +496,8 @@ class Link(Thing, Printable):
             item.over_18 = bool(item.over_18 or item.subreddit.over_18 or
                                 item.nsfw_str)
             item.nsfw = item.over_18 and user.pref_label_nsfw
+
+            item.show_new_post_sharing = feature.is_enabled('improved_sharing')
 
             item.is_author = (user == item.author)
 
