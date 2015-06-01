@@ -13,7 +13,8 @@ r.ui.init = function() {
 
     // mweb beta banner
     var mwebOptInCookieName = "__cf_mob_redir";
-    if (smallScreen && r.config.renderstyle != 'compact' && !r.ui.inMobileWebBlacklist()) {
+    var onFrontPage = $.url().attr('path') == '/';
+    if (smallScreen && onFrontPage && r.config.renderstyle != 'compact' && !r.ui.inMobileWebBlacklist()) {
         var a = document.createElement('a');
         a.href = window.location;
         a.host = 'm.' + r.config.cur_domain;
