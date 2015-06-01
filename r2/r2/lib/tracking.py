@@ -149,16 +149,20 @@ def get_srpath():
     return '-'.join((name, action))
 
 
-def get_pageview_pixel_url():
-    """Return a URL to use for tracking pageviews for the current request."""
+def _get_encrypted_user_slug():
+    """Return an encrypted string containing context info."""
     data = [
         c.user._id36 if c.user_is_loggedin else "",
         get_srpath(),
         c.lang or "",
         c.cname,
     ]
-    encrypted = encrypt("|".join(_force_utf8(s) for s in data))
-    return g.tracker_url + "?v=" + encrypted
+    return encrypt("|".join(_force_utf8(s) for s in data))
+
+
+def get_pageview_pixel_url():
+    """Return a URL to use for tracking pageviews for the current request."""
+    return g.tracker_url + "?v=" + _get_encrypted_user_slug()
 
 
 def get_impression_pixel_url(codename):
@@ -168,4 +172,5 @@ def get_impression_pixel_url(codename):
     return g.adframetracker_url + "?" + urllib.urlencode({
         "hash": mac,
         "id": codename,
+        "v": _get_encrypted_user_slug(),
     })
