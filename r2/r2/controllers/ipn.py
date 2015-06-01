@@ -924,6 +924,7 @@ class StripeController(GoldPaymentController):
         'customer.card.created': 'noop',
         'customer.card.updated': 'noop',
         'customer.card.deleted': 'noop',
+        'customer.source.updated': 'noop',
         'transfer.created': 'noop',
         'transfer.paid': 'noop',
         'balance.available': 'noop',
