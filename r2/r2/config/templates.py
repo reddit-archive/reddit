@@ -46,12 +46,9 @@ api('templated', NullJsonTemplate)
 # class specific overrides
 api('link',          LinkJsonTemplate)
 api('promotedlink',  PromotedLinkJsonTemplate)
-api('comment',       CommentJsonTemplate)
 api('message',       MessageJsonTemplate)
 api('subreddit',     SubredditJsonTemplate)
 api('labeledmulti',  LabeledMultiJsonTemplate)
-api('morerecursion', MoreCommentJsonTemplate)
-api('morechildren',  MoreCommentJsonTemplate)
 api('reddit',        RedditJsonTemplate)
 api('panestack',     PanestackJsonTemplate)
 api('listing',       ListingJsonTemplate)
@@ -91,3 +88,8 @@ api('uploadedimage', UploadedImageJsonTemplate)
 api('modaction', ModActionTemplate)
 
 api('trophy', TrophyJsonTemplate)
+
+
+register_api_templates('comment', CommentJsonTemplate)
+register_api_templates('morerecursion', MoreCommentJsonTemplate)
+register_api_templates('morechildren', MoreCommentJsonTemplate)
