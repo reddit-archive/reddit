@@ -9,23 +9,35 @@ r.ui.init = function() {
         store.safeSet('ui.shown.welcome', true)
     }
 
-    // mobile suggest infobar
-    var smallScreen = r.ui.isSmallScreen(),
-        onFrontPage = $.url().attr('path') == '/'
-    if (smallScreen && onFrontPage && r.config.renderstyle != 'compact') {
+    var smallScreen = r.ui.isSmallScreen();
+
+    // mweb beta banner
+    var mwebOptInCookieName = "__cf_mob_redir";
+    if (smallScreen && r.config.renderstyle != 'compact' && !r.ui.inMobileWebBlacklist()) {
         var a = document.createElement('a');
         a.href = window.location;
         a.host = 'm.' + r.config.cur_domain;
-        a.search += (a.search ? '&' : '?') + 'ref=mobile_suggest&ref_source=desktop'
+        a.search += (a.search ? '&' : '?') + 'ref=mobile_beta_banner&ref_source=desktop'
         var url = a.href;
 
-        var infobar = $('<div class="infobar mellow">')
-            .html(r.utils.formatMarkdownLinks(
-                r._("Looks like you're browsing on a small screen. Would you like to try [reddit's mobile interface](%(url)s)?").format({
-                    url: url
-                })
-            ))
-        $('body > .content > :not(.infobar):first').before(infobar)
+        var $bar = $(_.template(
+          '<a href="<%- url %>" class="mobile-web-redirect"><%- button_text %></a>', {
+            url: url,
+            button_text: r._("switch to mobile version"),
+          }));
+
+        $bar.on('click', function() {
+           $.cookie(mwebOptInCookieName, '1', {
+               domain: r.config.cur_domain,
+               path:'/',
+               expires: 90
+            });
+
+           // redirect
+           return true;
+        });
+
+        $('#header').before($bar)
     }
 
     $('.help-bubble').each(function(idx, el) {
@@ -77,6 +89,12 @@ r.ui.init = function() {
     r.ui.initReadNext();
 
     r.ui.initTimings()
+}
+
+r.ui.inMobileWebBlacklist = function() {
+  return _.any(r.config.mweb_blacklist_expressions, function(regex) {
+    return (new RegExp(regex)).test(window.location.pathname)
+  });
 }
 
 r.ui.isSmallScreen = function() {

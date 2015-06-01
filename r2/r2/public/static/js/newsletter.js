@@ -21,7 +21,7 @@ r.newsletter = {
 r.newsletter.ui = {
   _setupNewsletterBar: function() {
     var newsletterBarSeen = !!store.get('newsletterbar.seen');
-    if (newsletterBarSeen) {
+    if (newsletterBarSeen || r.ui.isSmallScreen()) {
       return;
     }
 

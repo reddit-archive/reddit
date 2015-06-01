@@ -337,6 +337,7 @@ class Globals(object):
             'listing_chooser_sample_multis',
             'discovery_srs',
             'proxy_gilding_accounts',
+            'mweb_blacklist_expressions',
         ],
         ConfigValue.str: [
             'listing_chooser_gold_multi',
