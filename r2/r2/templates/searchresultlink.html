@@ -26,15 +26,19 @@
 <%namespace file="link.html" import="thumbnail" />
 
 <%!
-  from r2.lib.template_helpers import format_number
+  from r2.lib.template_helpers import (
+      format_number,
+      get_linkflair_css_classes,
+  )
   from r2.lib.pages import WrappedUser
 %>
 
 <%def name="search_result_css_class()">
   <%
     has_thumbnail_class = "has-thumbnail" if thing.thumbnail else ""
+    linkflair_classes = get_linkflair_css_classes(thing)
   %>
-  ${parent.search_result_css_class()} search-result-link ${has_thumbnail_class}
+  ${parent.search_result_css_class()} search-result-link ${has_thumbnail_class} ${linkflair_classes}
 </%def>
 
 <%def name="search_result_content()">

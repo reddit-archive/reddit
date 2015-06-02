@@ -657,3 +657,16 @@ def _wsf(format_trans, *args, **kwargs):
       _wsf("Are you %s? %s", name, unsafe(checkbox_html))
     """
     return format_html(_ws(format_trans), *args, **kwargs)
+
+
+def get_linkflair_css_classes(thing, prefix="linkflair-", on_class="has-linkflair", off_class="no-linkflair"):
+    has_linkflair =  thing.flair_text or thing.flair_css_class
+    show_linkflair = c.user.pref_show_link_flair
+    if has_linkflair and show_linkflair:
+        if thing.flair_css_class:
+            flair_css_classes = thing.flair_css_class.split()
+            prefixed_css_classes = ["%s%s" % (prefix, css_class) for css_class in flair_css_classes]
+            on_class = "%s %s" % (on_class, ' '.join(prefixed_css_classes))
+        return on_class
+    else:
+        return off_class
