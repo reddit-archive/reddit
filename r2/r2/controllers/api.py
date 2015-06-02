@@ -1929,105 +1929,108 @@ class ApiController(RedditController):
         # finding an error on one necessitates hiding the other error
         if shareform.has_errors("share_from", errors.TOO_LONG):
             shareform.find(".message-errors").children().hide()
+            return
         elif shareform.has_errors("message", errors.TOO_LONG):
             shareform.find(".share-form-errors").children().hide()
+            return
         # reply_to and share_to also share errors...
         elif shareform.has_errors("share_to", errors.BAD_EMAILS,
                                   errors.NO_EMAILS,
                                   errors.TOO_MANY_EMAILS):
             shareform.find(".reply-to-errors").children().hide()
+            return
         elif shareform.has_errors("replyto", errors.BAD_EMAILS,
                                   errors.TOO_MANY_EMAILS):
             shareform.find(".share-to-errors").children().hide()
+            return
         # lastly, check the captcha.
         elif shareform.has_errors("captcha", errors.BAD_CAPTCHA):
-            pass
+            return
         elif shareform.has_errors("ratelimit", errors.RATELIMIT):
-            pass
+            return
         elif not sr.can_view(c.user):
             return abort(403, 'forbidden')
+
+        emails, users = emails
+        jquery.things(link._fullname).set_text(".share", _("shared"))
+        shareform.html(format_html("<div class='clearleft'></div>"
+                                   "<p class='error'>%s</p>",
+                                   _("your link has been shared.")))
+
+        if getattr(link, "promoted", None) and link.disable_comments:
+            message = message + "\n\n" if message else ""
+            message += '\n%s\n\n%s\n\n' % (link.title, link.url)
+            email_message = pm_message = message
         else:
-            emails, users = emails
-            jquery.things(link._fullname).set_text(".share", _("shared"))
-            shareform.html(format_html("<div class='clearleft'></div>"
-                                       "<p class='error'>%s</p>",
-                                       _("your link has been shared.")))
+            message = message + "\n\n" if message else ""
+            message += '\n%s\n' % link.title
 
-            if getattr(link, "promoted", None) and link.disable_comments:
-                message = message + "\n\n" if message else ""
-                message += '\n%s\n\n%s\n\n' % (link.title, link.url)
-                email_message = pm_message = message
+            urlparts = (get_domain(cname=c.cname, subreddit=False),
+                        link._id36)
+            url = "http://%s/tb/%s" % urlparts
+            url_parser = UrlParser(url)
+            url_parser.update_query(ref="share", ref_source="email")
+            email_source_url = url_parser.unparse()
+            url_parser.update_query(ref_source="pm")
+            pm_source_url = url_parser.unparse()
+
+            message_body = '\n%(source_url)s\n\n'
+
+            # Deliberately not translating this, as it'd be in the
+            # sender's language
+            if link.num_comments:
+                count = ("There are currently %(num_comments)s comments " +
+                         "on this link.  You can view them here:")
+                if link.num_comments == 1:
+                    count = ("There is currently %(num_comments)s " +
+                             "comment on this link.  You can view it here:")
+                numcom = count % {'num_comments': link.num_comments}
+                message_body = message_body + "%s\n\n" % numcom
             else:
-                message = message + "\n\n" if message else ""
-                message += '\n%s\n' % link.title
+                message_body = message_body + "You can leave a comment here:\n\n"
 
-                urlparts = (get_domain(cname=c.cname, subreddit=False),
-                            link._id36)
-                url = "http://%s/tb/%s" % urlparts
-                url_parser = UrlParser(url)
-                url_parser.update_query(ref="share", ref_source="email")
-                email_source_url = url_parser.unparse()
-                url_parser.update_query(ref_source="pm")
-                pm_source_url = url_parser.unparse()
+            url = add_sr(link.make_permalink_slow(), force_hostname=True)
+            url_parser = UrlParser(url)
+            url_parser.update_query(ref="share", ref_source="email")
+            email_comments_url = url_parser.unparse()
+            url_parser.update_query(ref_source="pm")
+            pm_comments_url = url_parser.unparse()
 
-                message_body = '\n%(source_url)s\n\n'
+            message_body += '%(comments_url)s'
+            email_message = message + message_body % {
+                    "source_url": email_source_url,
+                    "comments_url": email_comments_url,
+                }
+            pm_message = message + message_body % {
+                    "source_url": pm_source_url,
+                    "comments_url": pm_comments_url,
+                }
+        
+        # E-mail everyone
+        emailer.share(link, emails, from_name = share_from or "",
+                      body = email_message or "", reply_to = reply_to or "")
 
-                # Deliberately not translating this, as it'd be in the
-                # sender's language
-                if link.num_comments:
-                    count = ("There are currently %(num_comments)s comments " +
-                             "on this link.  You can view them here:")
-                    if link.num_comments == 1:
-                        count = ("There is currently %(num_comments)s " +
-                                 "comment on this link.  You can view it here:")
-                    numcom = count % {'num_comments': link.num_comments}
-                    message_body = message_body + "%s\n\n" % numcom
-                else:
-                    message_body = message_body + "You can leave a comment here:\n\n"
+        # Send the PMs
+        subject = "%s has shared a link with you!" % c.user.name
+        # Prepend this subject to the message - we're repeating ourselves
+        # because it looks very abrupt without it.
+        pm_message = "%s\n\n%s" % (subject, pm_message)
+        
+        for target in users:
+            m, inbox_rel = Message._new(c.user, target, subject,
+                                        pm_message, request.ip)
+            # Queue up this PM
+            amqp.add_item('new_message', m._fullname)
 
-                url = add_sr(link.make_permalink_slow(), force_hostname=True)
-                url_parser = UrlParser(url)
-                url_parser.update_query(ref="share", ref_source="email")
-                email_comments_url = url_parser.unparse()
-                url_parser.update_query(ref_source="pm")
-                pm_comments_url = url_parser.unparse()
+            queries.new_message(m, inbox_rel)
 
-                message_body += '%(comments_url)s'
-                email_message = message + message_body % {
-                        "source_url": email_source_url,
-                        "comments_url": email_comments_url,
-                    }
-                pm_message = message + message_body % {
-                        "source_url": pm_source_url,
-                        "comments_url": pm_comments_url,
-                    }
-            
-            # E-mail everyone
-            emailer.share(link, emails, from_name = share_from or "",
-                          body = email_message or "", reply_to = reply_to or "")
+        g.stats.simple_event('share.email_sent', len(emails))
+        g.stats.simple_event('share.pm_sent', len(users))
 
-            # Send the PMs
-            subject = "%s has shared a link with you!" % c.user.name
-            # Prepend this subject to the message - we're repeating ourselves
-            # because it looks very abrupt without it.
-            pm_message = "%s\n\n%s" % (subject, pm_message)
-            
-            for target in users:
-                
-                m, inbox_rel = Message._new(c.user, target, subject,
-                                            pm_message, request.ip)
-                # Queue up this PM
-                amqp.add_item('new_message', m._fullname)
-
-                queries.new_message(m, inbox_rel)
-
-            g.stats.simple_event('share.email_sent', len(emails))
-            g.stats.simple_event('share.pm_sent', len(users))
-
-            #set the ratelimiter
-            if should_ratelimit:
-                VRatelimit.ratelimit(rate_user=True, rate_ip = True,
-                                     prefix = "rate_share_")
+        #set the ratelimiter
+        if should_ratelimit:
+            VRatelimit.ratelimit(rate_user=True, rate_ip = True,
+                                 prefix = "rate_share_")
 
     @require_oauth2_scope("vote")
     @noresponse(VUser(),
