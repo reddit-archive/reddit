@@ -101,4 +101,4 @@ class TestImgixResizer(unittest.TestCase):
         image = dict(url='http://s3.amazonaws.com/a.jpg', width=1200,
                       height=800)
         url = self.provider.resize_image(image, censor_nsfw=True)
-        self.assertEqual(url, 'https://example.com/a.jpg?px=20')
+        self.assertEqual(url, 'https://example.com/a.jpg?blur=600&px=32')

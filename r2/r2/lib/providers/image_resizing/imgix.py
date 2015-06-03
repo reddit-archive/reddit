@@ -58,13 +58,15 @@ class ImgixImageResizingProvider(ImageResizingProvider):
             # http://www.imgix.com/docs/reference/size#param-w
             url.update_query(w=width)
         if censor_nsfw:
-            # Since we aren't concerned with inhibiting a user's ability to
-            # reverse the censoring for privacy reasons, pixellation is better
-            # than a Gaussian blur because it compresses well.  The specific
-            # value is just "what looks about right".
+            # Do an initial blur to make sure we're getting rid of icky
+            # details.
+            #
+            # http://www.imgix.com/docs/reference/stylize#param-blur
+            url.update_query(blur=600)
+            # And then add pixellation to help the image compress well.
             #
             # http://www.imgix.com/docs/reference/stylize#param-px
-            url.update_query(px=20)
+            url.update_query(px=32)
         if g.imgix_signing:
             url = self._sign_url(url, g.secrets['imgix_signing_token'])
         return url.unparse()
