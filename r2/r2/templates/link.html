@@ -42,7 +42,11 @@
 </%def>
 
 <%def name="make_link(name, css_class, tabindex=0)">
-  <a class="${css_class} may-blank ${ c.user_is_loggedin and 'loggedin' or ''}"
+  <%
+    media_override = thing.link_child and getattr(thing, 'media_override', False)
+  %>
+  <a class="${css_class} may-blank ${ c.user_is_loggedin and 'loggedin' or ''}
+            ${ media_override and 'open-expando' or '' }"
      href="${thing.href_url}"
      %if tabindex:
        tabindex="${tabindex}"
@@ -55,9 +59,6 @@
      %endif
      %if thing.mousedown_url:
        onmousedown="save_href($(this));this.href='${thing.mousedown_url}'"
-     %endif
-     %if thing.link_child and getattr(thing, "media_override", False):
-       onclick="return expando_child(this)"
      %endif
      >
      ${caller.body()}
@@ -109,8 +110,7 @@
   <% selftext_hide = thing.is_self and not thing.selftext %>
   %if thing.link_child and not thing.link_child.expand and not selftext_hide:
     <div class="expando-button collapsed
-                ${thing.link_child.css_style}"
-         onclick="expando_child(this)"></div>
+                ${thing.link_child.css_style}"></div>
   %endif
 
   <p class="tagline">
@@ -133,7 +133,11 @@
   <div class="unvotable-message">${strings.unvotable_message}</div>
 %endif
 
-  <div class="expando" ${"style='display: none'" if not expand else ""}>
+  <div class="expando" ${"style='display: none'" if not expand else ""}
+    %if not expand and child_content:
+      data-cachedhtml="${websafe(child_content)}"
+    %endif
+  >
     %if expand:
       ${child_content}
     %else:
@@ -144,14 +148,6 @@
   ##if we are on a permalink page, we'll render the buttons below
   %if expand:
     ${bottom_buttons()}
-  %endif
-
- ##populate the expando cache if we have something
-  %if not expand and child_content:
-    <script type="text/javascript">
-      var cache = expando_cache();
-      cache["${thing._fullname}_cache"] = "${websafe(child_content)}";
-    </script>
   %endif
 </%def>
 

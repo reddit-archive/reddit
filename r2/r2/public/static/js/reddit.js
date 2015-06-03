@@ -258,7 +258,8 @@ function hide_thing(elem) {
     } else {
         $thing.fadeOut(function() {
             $(this).toggleClass('hidden');
-            unexpando_child(elem);
+            var thing_id = $(this).thing_id();
+            $(document).trigger('hide_thing_' + thing_id);
         });
     }
 }
@@ -788,60 +789,6 @@ function select_form_tab(elem, to_show, to_hide) {
     content.find(to_hide)
         .hide()
         .find(":input").attr("disabled", true);
-}
-
-/**** expando stuff ********/
-function expando_cache() {
-    if (!$.defined(reddit.thing_child_cache)) {
-        reddit.thing_child_cache = new Array();
-    }
-    return reddit.thing_child_cache;
-}
-
-function expando_child(elem) {
-    var child_cache = expando_cache();
-    var thing = $(elem).thing();
-
-    //swap button
-    var button = thing.find(".expando-button");
-    button
-        .addClass("expanded")
-        .removeClass("collapsed")
-        .get(0).onclick = function() {unexpando_child(elem)};
-
-    //load content
-    var expando = thing.find(".expando");
-    var key = thing.thing_id() + "_cache";
-    if (!child_cache[key]) {
-        $.request("expando",
-                  {"link_id":thing.thing_id()},
-                  function(r) {
-                      child_cache[key] = r;
-                      expando.html($.unsafe(r));
-                      $(document).trigger('expando_thing', thing)
-                  },
-                  false, "html", true);
-    }
-    else {
-        expando.html($.unsafe(child_cache[key]));
-        $(document).trigger('expando_thing', thing)
-    }
-    expando.show();
-    return false;
-}
-
-function unexpando_child(elem) {
-    var thing = $(elem).thing();
-    var button = thing.find(".expando-button");
-
-    if (button.length) {
-        button
-            .addClass("collapsed")
-            .removeClass("expanded")
-            .get(0).onclick = function() {expando_child(elem)};
-    }
-
-    thing.find(".expando").hide().empty();
 }
 
 /******* editting comments *********/
