@@ -1169,6 +1169,18 @@ def new_message(message, inbox_rels, add_to_sent=True, update_modmail=True):
     amqp.add_item('new_message', message._fullname)
     add_message(message, update_recipient=update_recipient,
                 update_modmail=update_modmail, add_to_user=add_to_user)
+    
+    # light up the modmail icon for all other mods with mail access
+    if update_modmail:
+        mod_perms = message.subreddit_slow.moderators_with_perms()
+        mod_ids = [mod_id for mod_id, perms in mod_perms.iteritems()
+            if mod_id != from_user._id and perms.get('mail', False)]
+        moderators = Account._byID(mod_ids, data=True, return_dict=False)
+        for mod in moderators:
+            if not mod.modmsgtime:
+                mod.modmsgtime = message._date
+                mod._commit()
+
 
 def set_unread(messages, to, unread, mutator=None):
     # Maintain backwards compatability

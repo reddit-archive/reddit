@@ -105,7 +105,7 @@ from r2.lib.media import str_to_image
 from r2.controllers.api_docs import api_doc, api_section
 from r2.controllers.oauth2 import require_oauth2_scope, allow_oauth2_access
 from r2.lib.template_helpers import add_sr, get_domain, make_url_protocol_relative
-from r2.lib.system_messages import notify_user_added
+from r2.lib.system_messages import notify_user_added, send_ban_message
 from r2.controllers.ipn import generate_blob, update_blob
 from r2.lib.lock import TimeoutExpired
 from r2.lib.csrf import csrf_exempt
@@ -1041,8 +1041,6 @@ class ApiController(RedditController):
         if type == "banned":
             if form.has_errors("ban_message", errors.TOO_LONG):
                 return
-        else:
-            ban_message = None
 
         if type in self._sr_friend_types_with_permissions:
             if form.has_errors('type', errors.INVALID_PERMISSION_TYPE):
@@ -1130,7 +1128,12 @@ class ApiController(RedditController):
             table.find(".notfound").hide()
 
         if new:
-            notify_user_added(type, c.user, friend, container, ban_message)
+            if type == "banned":
+                if friend.has_interacted_with(container):
+                    send_ban_message(container, c.user, friend,
+                        ban_message, duration)
+            else:
+                notify_user_added(type, c.user, friend, container)
 
     @validatedForm(VGold(),
                    VModhash(),

@@ -2421,15 +2421,6 @@ class ModeratorInbox(Relation(Subreddit, Message)):
         if not sr._loaded:
             sr._load()
 
-        mod_perms = sr.moderators_with_perms()
-        mod_ids = set(mod_id for mod_id, perms in mod_perms.iteritems()
-                      if perms.get('mail', False))
-        moderators = Account._byID(mod_ids, data=True, return_dict=False)
-        for m in moderators:
-            if obj.author_id != m._id and not m.modmsgtime:
-                m.modmsgtime = obj._date
-                m._commit()
-
         return i
 
     @classmethod

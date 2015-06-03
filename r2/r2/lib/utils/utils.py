@@ -1580,6 +1580,11 @@ def summarize_markdown(md):
     return first_graf[:500]
 
 
+def blockquote_text(text):
+    """Wrap a chunk of Markdown text into a blockquote."""
+    return "\n".join("> " + line for line in text.splitlines())
+
+
 def find_containing_network(ip_ranges, address):
     """Find an IP network that contains the given address."""
     addr = ipaddress.ip_address(address)
