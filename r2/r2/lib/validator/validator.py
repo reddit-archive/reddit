@@ -1908,6 +1908,94 @@ class VRatelimit(Validator):
         g.stats.event_count('VRatelimit.%s' % prefix, event, sample_rate=0.1)
 
 
+class VRatelimitImproved(Validator):
+    """Enforce ratelimits on a function.
+
+    This is a newer version of VRatelimit that uses the ratelimit lib.
+    """
+
+    KEY_PREFIX = 'ratelimit'
+
+    def __init__(self, prefix, max_usage, rate_user=False, rate_ip=False,
+                 error=errors.RATELIMIT, *a, **kw):
+        """
+        Arguments:
+
+        prefix -- a string used to separate out ratelimits.  Set this to a
+                  unique value unless you have a very good reason not to.
+        max_usage -- the maximum number of times to allow the user or IP to
+                     perform this action in g.RL_RESET_SECONDS seconds.
+        rate_user -- should we limit the user account?
+        rate_ip -- should we limit the ip address?
+        (At least one of rate_user and rate_ip should be True for this function
+        to have any effect.)
+        error -- the error message to use when the limit is exceeded.
+        """
+        self.max_usage = max_usage
+        self.rate_user = rate_user
+        self.rate_ip = rate_ip
+        self.prefix = prefix
+        self.error = error
+        self.seconds = None
+        Validator.__init__(self, *a, **kw)
+
+    def run(self):
+        if g.disable_ratelimit:
+            return
+
+        if c.user_is_loggedin:
+            hook = hooks.get_hook("account.is_ratelimit_exempt")
+            ratelimit_exempt = hook.call_until_return(account=c.user)
+            if ratelimit_exempt:
+                self._record_event(self.prefix, 'exempted')
+                return
+
+        if self.rate_user and c.user_is_loggedin:
+            self._check_usage('user', c.user._id36)
+        if self.rate_ip:
+            self._check_usage('ip', request.ip)
+
+    def _check_usage(self, usage_type, key):
+        """Check ratelimit usage and set an error if necessary."""
+        ratelimit_key = '%s-%s-%s' % (self.KEY_PREFIX, usage_type, key)
+        time_slice = ratelimit.get_timeslice(g.RL_RESET_SECONDS)
+        usage = ratelimit.get_usage(ratelimit_key, time_slice)
+        self._record_event(self.prefix, 'check_' + usage_type)
+
+        if usage > self.max_usage:
+            g.log.debug('rate-limiting %s with %s used', ratelimit_key, usage)
+            self._record_event(self.prefix, '%s_limit_hit' % usage_type)
+
+            # When errors have associated field parameters, we'll need
+            # to add that here.
+            if self.error == errors.RATELIMIT:
+                period_end = datetime.utcfromtimestamp(
+                    time_slice.end).replace(tzinfo=pytz.UTC)
+                time = utils.timeuntil(period_end)
+                self.set_error(errors.RATELIMIT, {'time': time},
+                               field='ratelimit', code=429)
+            else:
+                self.set_error(self.error)
+
+    @classmethod
+    def ratelimit(cls, prefix, rate_user=False, rate_ip=False):
+        """Record usage of a resource."""
+        time_slice = ratelimit.get_timeslice(g.RL_RESET_SECONDS)
+
+        if rate_user and c.user_is_loggedin:
+            ratelimit_key = '%s-user-%s' % (cls.KEY_PREFIX, c.user._id36)
+            ratelimit.record_usage(ratelimit_key, time_slice)
+            cls._record_event(prefix, 'set_user_limit')
+        if rate_ip:
+            ratelimit_key = '%s-ip-%s' % (cls.KEY_PREFIX, request.ip)
+            ratelimit.record_usage(ratelimit_key, time_slice)
+            cls._record_event(prefix, 'set_ip_limit')
+
+    @classmethod
+    def _record_event(cls, prefix, event):
+        g.stats.event_count('VRatelimitImproved.%s' % prefix, event, sample_rate=0.1)
+
+
 class VCommentIDs(Validator):
     def run(self, id_str):
         if id_str:
