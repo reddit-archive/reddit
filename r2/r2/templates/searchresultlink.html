@@ -22,7 +22,7 @@
 
 <%inherit  file="searchresultbase.html"/>
 
-<%namespace file="utils.html" import="plain_link, thing_timestamp, nsfw_stamp, thumbnail_img" />
+<%namespace file="utils.html" import="plain_link, thing_timestamp, md, nsfw_stamp, thumbnail_img" />
 <%namespace file="link.html" import="thumbnail" />
 
 <%!
@@ -115,7 +115,7 @@
   %if thing.selftext:
     <div class="search-expando collapsed">
       <%parent:search_result_body>
-        ${thing.selftext}
+        ${md(thing.selftext, wrap=True)}
       </%parent:search_result_body>
     </div>
     <div class="search-expando-button collapsed">
