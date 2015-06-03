@@ -1205,6 +1205,14 @@ $(function() {
           .find('.search-title, .search-link, .search-subreddit-link, .search-result-body')
           .highlight(query);
         
+        // add new search page links to the 'recently viewed' links...
+        $(".search-result-link").find("a.search-title, a.thumbnail").mousedown(function() {
+            var fullname = $(this).closest('[data-fullname]').data('fullname');
+            if (fullname) {
+                add_thing_id_to_cookie(fullname, "recentclicks2");
+            }
+        });
+
         /* Select shortlink text on click */
         $("#shortlink-text").click(function() {
             $(this).select();

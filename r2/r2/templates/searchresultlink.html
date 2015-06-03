@@ -38,8 +38,9 @@
   <%
     has_thumbnail_class = "has-thumbnail" if thing.thumbnail else ""
     linkflair_classes = get_linkflair_css_classes(thing)
+    visited_class = 'visited' if thing.visited else ''
   %>
-  ${parent.search_result_css_class()} search-result-link ${has_thumbnail_class} ${linkflair_classes}
+  ${parent.search_result_css_class()} search-result-link ${has_thumbnail_class} ${linkflair_classes} ${visited_class}
 </%def>
 
 <%def name="search_result_content()">

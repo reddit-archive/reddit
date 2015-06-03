@@ -1,12 +1,13 @@
 @color-body: @color-text-grey;
 @color-meta: @color-dark-grey;
-@color-link: @color-alien-blue;
+@color-link: darken(@color-alien-blue, 5%);
+@color-link-visited: @color-link-purple;
+
 @color-unsubscribe: darken(@color-warning-red, 10%);
 @color-subscribe: darken(@color-green, 10%);
 @color-subscribe-button-focus: @color-white;
 @color-group-header-border: @color-pale-grey;
 
-@color-title: darken(@color-link, 5%);
 @color-subreddit: @color-meta;
 
 @max-width: 750px;
@@ -31,10 +32,29 @@
     .md-base-font-size(@search-font-base);
   }
 
+  .search-result.visited {
+    .search-title,
+    .search-link {
+      &, > mark {
+        color: @color-link-visited;
+      }
+    }
+  }
 
   .search-result {
     margin-bottom: @margin-x-large * 1px;
     margin-top: @margin-small * 1px;
+
+    a {
+      &, > mark {
+        color: @color-link;
+      }
+
+      &:visited,
+      &:visited > mark {
+        color: @color-link-visited;
+      }
+    }
 
     &.has-thumbnail {
       .display-flex();
@@ -76,8 +96,11 @@
 
       .search-title {
         font-size: @search-font-large * 1px;
-        color: @color-title;
         margin-right: @margin-x-small * 1px;
+
+        > mark {
+          vertical-align: middle;
+        }
       }
 
       .search-subreddit-link {
@@ -149,7 +172,6 @@
       white-space: nowrap;
 
       .search-link {
-        color: @color-link;
         margin-left: @margin-x-small * 1px;
       }
     }
@@ -158,6 +180,7 @@
       background-color: transparent;
       color: inherit;
       font-weight: bold;
+      line-height: 1em;
     }
   }
 
@@ -192,6 +215,7 @@
       }
 
       .add, .remove {
+        color: @color-white;
         text-align: center;
         transform: scale(1, 1);
         transition: all 0.15s;
