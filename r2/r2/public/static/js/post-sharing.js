@@ -466,16 +466,13 @@
       });
 
       $parentThing.find('.entry .buttons').after(postSharing.el);
-      var originalShareButtonText = $shareButton.text();
 
       postSharing.on('show', function() {
-        $shareButton.text(r._('nvm'));
         r.analytics.fireGAEvent('post-sharing', 'open', thingId);
         r.ui.activeShareMenu = postSharing;
       });
 
       postSharing.on('unmount', function() {
-        $shareButton.text(originalShareButtonText);
         r.ui.activeShareMenu = null;
       });
 
