@@ -159,7 +159,7 @@
       };
 
       var props = this.options.props || {};
-      props.link = this.thingData.link;
+      props.link = this.getShareLink('link');
       this.state = new this._model(props);
       this.listenTo(this.state, 'change', this.render);
 
