@@ -63,7 +63,7 @@
 
       > * {
         // prevent unstyled children (e.g. spans) from adding to line-height
-        line-height: 0;
+        line-height: 1em;
       }
     }
 
@@ -91,6 +91,11 @@
       .search-font-size();
       color: @color-meta;
       font-size: 12px;
+    }
+
+    .search-comments {
+      font-weight: bold;
+      color: @color-meta;
     }
 
     .search-result-body {
@@ -244,6 +249,10 @@
     }
   }
 
+  .author {
+    margin-right: 0;
+  }
+
   .search-result-icon {
     background-position: center;
     background-repeat: no-repeat;
@@ -251,6 +260,11 @@
     height: 15px;
     vertical-align: middle;
     width: 16px;
+  }
+
+  .search-result-icon-score {
+    background-image: data-uri('../ambivote-icon.png');
+    background-size: 10px 14px;
   }
 
   .search-result-icon-external {

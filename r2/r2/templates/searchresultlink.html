@@ -27,6 +27,7 @@
 
 <%!
   from r2.lib.template_helpers import (
+      format_html,
       format_number,
       get_linkflair_css_classes,
   )
@@ -82,19 +83,30 @@
     %if thing.over_18:
       <span class="stamp nsfw-stamp">${nsfw_stamp()}</span>&#32;
     %endif
+    %if not thing.hide_score:
+      ${self.search_result_icon('score')}
+      <span class="search-score">${format_number(thing.score)} ${ungettext('point', 'points', thing.score)}</span>&#32;
+    %endif
+    ${plain_link(
+        '%s %s' % (format_number(thing.num_comments), ungettext('comment', 'comments', thing.num_comments)),
+        thing.permalink,
+        sr_path=False,
+        cname=False,
+        _class="search-comments may-blank",
+      )}&#32;
+    <span class="search-time">submitted&#32;${thing_timestamp(thing, thing.timesince, include_tense=True)}</span>&#32;
+    <span class="search-author">by&#32;${WrappedUser(thing.author, thing.attribs, thing)}</span>&#32;
+    <%
+      subreddit_link_fmt = format_html('<span>%s</span>', _('to %s')).replace(' ', '&#32;')
+    %>
     ${plain_link(
         '/r/%s' % thing.subreddit.name,
         '/r/%s' % thing.subreddit.name,
-        sr_path=False,
-        cname=False,
+        _sr_path=False,
+        nocname=True,
+        fmt=subreddit_link_fmt,
         _class='search-subreddit-link may-blank',
-      )}&#32;
-    %if not thing.hide_score:
-      <span class="search-score">${format_number(thing.score)} ${ungettext('point', 'points', thing.score)},</span>&#32;
-    %endif
-    <span class="search-comments">${format_number(thing.num_comments)} ${ungettext('comment', 'comments', thing.num_comments)},</span>&#32;
-    <span class="search-time">submitted&#32;${thing_timestamp(thing, thing.timesince, include_tense=True)}</span>&#32;
-    <span class="search-author">by&#32;${WrappedUser(thing.author, thing.attribs, thing)}</span>&#32;
+      )}
   </%parent:search_result_meta>
 </%def>
 
