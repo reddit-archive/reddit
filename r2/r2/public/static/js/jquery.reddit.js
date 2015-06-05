@@ -350,15 +350,6 @@ $.things = function() {
     return $(sel);
 };
 
-$.fn.same_author = function() {
-    var aid = $(this).thing_id("author");
-    var ids = [];
-    $(".author.id-" + aid).each(function() {
-            ids.push(".thing.id-" + $(this).thing_id());
-        });
-    return $(ids.join(", "));
-};
-
 $.fn.things = function() {
     /* 
      * try to find all things that occur below a given selector, like:

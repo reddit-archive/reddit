@@ -34,8 +34,7 @@
 
     <div class="dropdown ${css_class}"
          ${"id='%s'" % thing._id if thing._id else ""}
-         onclick="open_menu(this)"
-         onmouseover="hover_open_menu(this)">
+         onclick="open_menu(this)">
  
       %if thing.selected:
           <span class="selected">${thing.selected.selected_title()}</span>

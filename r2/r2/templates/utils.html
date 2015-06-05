@@ -114,22 +114,6 @@ ${first_defined(kw[1:])}
   </${kind}>
 </%def>
 
-<%def name="success_field(success_str, kind='p', successful=False, hide='')">
-<${kind} class="error success">
-  %if successful:
-  ${success_str}
-  %endif
-</${kind}>
-<script type="text/javascript">
-  function fire_success() {
-  $('success').innerHTML = "${success_str}";
-  %if hide:
-  hide(document.getElementById('${hide}'));
-  %endif
-  }
-</script>
-</%def>
-
 <%def name="img_link(link_text, img, path, _id='', target='', img_id=None, size=None, **kw)">
   <% 
      if (not target or target == '_parent') and c.cname:

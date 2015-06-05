@@ -36,8 +36,6 @@ function close_menus(event) {
     }
 };
 
-function hover_open_menu(menu) { };
-
 function select_tab_menu(tab_link, tab_name) {
     var target = "tabbedpane-" + tab_name;
     var menu = $(tab_link).parent().parent().parent();
@@ -46,17 +44,6 @@ function select_tab_menu(tab_link, tab_name) {
     menu.find(".tabbedpane").each(function() {
         this.style.display = (this.id == target) ? "block" : "none";
       });
-}
-
-function update_user(form) {
-  try {
-    var user = $(form).find('input[name="user"]').val();
-    form.action += "/" + user;
-  } catch (e) {
-    // ignore
-  }
-
-  return true;
 }
 
 function post_user(form, where) {
@@ -143,14 +130,6 @@ function post_multipart_form(form, where) {
     return true;
 }
 
-function emptyInput(elem, msg) {
-    if (! $(elem).val() || $(elem).val() == msg ) 
-        $(elem).addClass("gray").val(msg).attr("rows", 3);
-    else
-        $(elem).focus(function(){});
-};
-
-
 function showlang() {
     var content = $('#lang-popup').prop('innerHTML');
     var popup = new r.ui.Popup({
@@ -214,14 +193,6 @@ function read_thing(elem) {
     }
 
     $.request("read_message", {"id": $(t).thing_id()});
-}
-
-function save_thing(elem) {
-    $(elem).thing().addClass("saved");
-}
-
-function unsave_thing(elem) {
-    $(elem).thing().removeClass("saved");
 }
 
 function click_thing(elem) {
@@ -865,11 +836,6 @@ function cancel_usertext(elem) {
     hide_edit_usertext(t.closest(".usertext"));
 }
 
-function save_usertext(elem) {
-    var t = $(elem).thing();
-    t.find(".edit-usertext:first").parent("li").addBack().show(); 
-}
-
 function reply(elem) {
     var form = comment_reply_for_elem(elem);
 
@@ -1050,14 +1016,6 @@ var toolbar_p = function(expanded_size, collapsed_size) {
         $.request('tb_commentspanel_show');
     };
 };
-
-function clear_all_langs(elem) {
-    $(elem).parents("td").find('input[type="checkbox"]').prop("checked", false);
-}
-
-function check_some_langs(elem) {
-    $(elem).parents("td").find("#some-langs").prop("checked", true);
-}
 
 function fetch_parent(elem, parent_permalink, parent_id) {
     var thing = $(elem).thing();
@@ -1266,40 +1224,9 @@ function show_friend(account_fullname) {
             });
 }
 
-function show_unfriend(account_fullname) {
-    var ua = $(".author.id-" + account_fullname).removeClass("friend")
-        .next(".userattrs");
-    ua.each(function() {
-            $(this).find("a.friend").remove();
-            if ($(this).find("a").length == 0) {
-                $(this).html("");
-            }
-        });
-}
-
 function save_href(link) {
   if (!link.attr("srcurl")){
     link.attr("srcurl", link.attr("href"));
   }
   return link;
-}
-
-function pure_domain(url) {
-    var domain = url.match(/:\/\/([^/]+)/)
-    if (domain) {
-        domain = domain[1].replace(/^www\./, '');
-    }
-    return domain;
-}
-
-function parse_domain(url) {
-    var domain = pure_domain(url);
-    if (!domain) {
-        /* Internal link? Get the SR name, if there is one */
-        var reddit = url.match(/\/r\/([^/]+)/)
-        if (reddit) {
-            domain = "self." + reddit[1].toLowerCase();
-        }
-    }
-    return domain;
 }

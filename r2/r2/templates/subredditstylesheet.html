@@ -154,12 +154,6 @@
            $(img).parent("a").attr("href", $(img).attr("src"));
         }
 
-
-        function too_big() {
-            $(".IMAGE_ERROR").innerHTML = "image too big: there is a 500k cap";
-            $(".img-status").innerHTML = "";
-        }
-
         function paste_url(source) {
             var txt = $(source).siblings("pre:first").html();
             $("#stylesheet_contents").insertAtCursor(txt);
@@ -189,24 +183,6 @@
                     $('input:radio[name=img_type][value="' + ext + '"]').attr('checked', true);
                 }
             }
-        }
-        function check_name(form) {
-           var name = form.name.value;
-           var r = new RegExp(/[^a-zA-Z0-9\-]/);
-           if (name == "" || name.match(r)) { 
-              $(".img-status").html("").hide();
-              $(".BAD_CSS_NAME").show().html("${_('bad image name')}");
-              return false; 
-           }
-           else if(form.srfile.value) {
-              $(".BAD_CSS_NAME").html("").hide();
-              $(".IMAGE_ERROR").html("").hide();
-              return true;
-           } else {
-              $(".img-status").html("").hide();
-              $(".IMAGE_ERROR").show().html("${_('please select an image')}");
-              return false; 
-           }
         }
     /* ]]> */
     </script>
