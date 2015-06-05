@@ -21,7 +21,6 @@
 ###############################################################################
 
 <%namespace file="utils.html" import="error_field"/>
-<%namespace file="captcha.html" import="captchagen"/>
 
 <form onsubmit="return post_form(this, 'share')" method="post"
       id="sharelink_${thing.link_name}"
@@ -106,9 +105,6 @@
           ${error_field("TOO_LONG", "message")}
         </td>
       </tr>
-      %if thing.captcha:
-        ${captchagen('', tabulate = False, size = 30)}
-      %endif
       <tr>
         <td>
         </td>

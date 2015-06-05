@@ -3287,7 +3287,6 @@ class NewLink(Templated):
 
 class ShareLink(CachedTemplate):
     def __init__(self, link_name = "", emails = None):
-        self.captcha = c.user.needs_captcha()
         self.username = c.user.name
         Templated.__init__(self, link_name=link_name)
 
