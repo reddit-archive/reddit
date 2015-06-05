@@ -27,7 +27,11 @@
     <header class="read-next-header">
       <div class="read-next-header-title">
         ${_("discussions in")}&#32;
-        ${plain_link('/r/%s' % thing.sr.name, thing.sr.path, _sr_path=False)}
+        ${plain_link(
+          '/r/%s' % thing.sr.name,
+          '%s?ref=readnext' % thing.sr.path,
+          _sr_path=False,
+          )}
       </div>
       <nav class="read-next-nav read-next-nav-left">
         <span class="read-next-button prev">&lt;</span>
