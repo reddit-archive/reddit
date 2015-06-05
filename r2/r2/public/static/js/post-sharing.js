@@ -149,13 +149,11 @@
       var id = fullname.split('_')[1];
       var title = $thing.find('.entry a.title').text();
       var link = $thing.find('.entry a.comments').attr('href');
-      var shortLink = r.config.short_domain ? 'http://' + r.config.short_domain + '/' + id : null;
 
       this.thingData = {
         fullname: fullname,
         title: title,
         link: link,
-        shortLink: shortLink,
       };
 
       var props = this.options.props || {};
@@ -232,13 +230,12 @@
     },
 
     getShareLink: function(refSource) {
-      var link = this.thingData.shortLink || this.thingData.link;
       var refParams = {
         ref: 'share',
         ref_source: refSource,
       };
 
-      return replaceParams(link, refParams);
+      return replaceParams(this.thingData.link, refParams);
     },
 
     shareToFacebook: function() {

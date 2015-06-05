@@ -200,9 +200,6 @@ def js_config(extra_config=None):
     if g.uncompressedJS:
         config["uncompressedJS"] = True
 
-    if g.shortdomain:
-        config["short_domain"] = g.shortdomain
-
     if extra_config:
         config.update(extra_config)
 
