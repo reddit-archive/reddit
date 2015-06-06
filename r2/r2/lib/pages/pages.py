@@ -800,12 +800,6 @@ class Reddit(Templated):
                            data_attrs=data_attrs,
                            show_cover = True, nocname=True))
 
-        if c.default_sr:
-            hook = hooks.get_hook('home.add_sidebox')
-            extra_sidebox = hook.call_until_return()
-            if extra_sidebox:
-                ps.append(extra_sidebox)
-
         if not isinstance(c.site, FakeSubreddit) and not c.cname:
             moderator_ids = c.site.moderator_ids()
             if moderator_ids:
