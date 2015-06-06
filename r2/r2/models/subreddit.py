@@ -981,10 +981,11 @@ class Subreddit(Thing, Printable, BaseSite):
 
         # /r/promos is public but has special handling to make it unviewable
         promo_sr_id = cls.get_promote_srid()
-        try:
-            sr_ids.remove(promo_sr_id)
-        except ValueError:
-            pass
+        if promo_sr_id:
+            try:
+                sr_ids.remove(promo_sr_id)
+            except ValueError:
+                pass
 
         NamedGlobals.set("popular_sr_ids", sr_ids)
         NamedGlobals.set("popular_over_18_sr_ids", over_18_sr_ids)
@@ -1125,18 +1126,11 @@ class Subreddit(Thing, Printable, BaseSite):
         self._incr("gilding_server_seconds", int(seconds))
 
     @classmethod
-    @memoize("get_promote_srid")
-    def get_promote_srid(cls, name='promos'):
-        try:
-            sr = cls._by_name(name, stale=True)
-        except NotFound:
-            sr = cls._new(name=name,
-                          title="promoted links",
-                          # negative author_ids make this unlisable
-                          author_id=-1,
-                          type="public",
-                          ip='0.0.0.0')
-        return sr._id
+    def get_promote_srid(cls):
+        if g.promo_srid36:
+            return int(g.promo_srid36, 36)
+        else:
+            return None
 
 
 class FakeSubreddit(BaseSite):

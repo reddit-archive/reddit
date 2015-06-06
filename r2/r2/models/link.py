@@ -1261,7 +1261,9 @@ class Comment(Thing, Printable):
 
         can_reply_srs = set(s._id for s in subreddits if s.can_comment(user)) \
                         if c.user_is_loggedin else set()
-        can_reply_srs.add(Subreddit.get_promote_srid())
+        promo_sr_id = Subreddit.get_promote_srid()
+        if promo_sr_id:
+            can_reply_srs.add(promo_sr_id)
 
         profilepage = c.profilepage
         user_is_admin = c.user_is_admin
