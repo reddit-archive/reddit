@@ -695,7 +695,7 @@ class SolrSubredditUploader(SolrSearchUploader):
         return SubredditFields(thing).fields()
 
     def should_index(self, thing):
-        return getattr(thing, 'author_id', None) != -1
+        return thing._id != Subreddit.get_promote_srid()
 
  
 def _progress_key(item):

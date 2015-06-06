@@ -1323,8 +1323,10 @@ class RedditsController(ListingController):
                 reddits._sort = desc('_downs')
 
             if g.domain != 'reddit.com':
-                # don't try to render special subreddits (like promos)
-                reddits._filter(Subreddit.c.author_id != -1)
+                # don't try to render /r/promos on opensource installations
+                promo_sr_id = Subreddit.get_promote_srid()
+                if promo_sr_id:
+                    reddits._filter(Subreddit.c._id != promo_sr_id)
 
         if self.where == 'popular':
             self.render_params = {"show_interestbar": True}
