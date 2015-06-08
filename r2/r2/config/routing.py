@@ -454,8 +454,6 @@ def make_map():
     mc('/mobile', controller='redirect', action='redirect',
        dest='http://m.reddit.com/')
 
-    mc('/authorize_embed', controller='front', action='authorize_embed')
-
     # Used for showing ads
     mc("/ads/", controller="ad", action="ad")
 
