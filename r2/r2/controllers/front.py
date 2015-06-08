@@ -479,6 +479,13 @@ class FrontController(RedditController):
         else:
             self.abort404()
 
+    def GET_share_close(self):
+        """Render a page that closes itself.
+
+        Intended for use as a redirect target for facebook sharing.
+        """
+        return ShareClose().render()
+
     def _make_moderationlog(self, srs, num, after, reverse, count, mod=None, action=None):
         query = Subreddit.get_modactions(srs, mod=mod, action=action)
         builder = ModActionBuilder(

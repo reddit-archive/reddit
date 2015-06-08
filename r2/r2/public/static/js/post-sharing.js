@@ -240,12 +240,13 @@
 
     shareToFacebook: function() {
       var redditUrl = this.getShareLink('facebook');
+      var redirectUrl = r.config.currentOrigin + '/share/close';
       var shareParams = {
         app_id: r.config.facebook_app_id,
         display: 'popup',
         link: redditUrl,
         description: this.thingData.title,
-        redirect_uri: 'https://www.facebook.com',
+        redirect_uri: redirectUrl,
       }
       var shareUrl = replaceParams('https://www.facebook.com/dialog/feed', shareParams);
 

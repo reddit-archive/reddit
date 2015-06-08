@@ -232,6 +232,8 @@ def make_map():
     mc('/framebuster/:what/:blah',
        controller='front', action='framebuster')
 
+    mc('/share/close', controller='front', action='share_close')
+
     # sponsor endpoints
     mc('/sponsor/report', controller='sponsor', action='report')
     mc('/sponsor/inventory', controller='sponsor', action='promote_inventory')
