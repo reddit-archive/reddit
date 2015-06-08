@@ -78,6 +78,9 @@ feature_some_flag = {"subdomains": ["beta"]}
 # On by OAuth client IDs
 feature_some_flag = {"oauth_clients: ["xyzABC123"]}
 
+# On for a percentage of loggedin users (0 being no users, 100 being all of them)
+feature_some_flag = {"percent_loggedin": 25}
+
 # For both admin and a group of users
 feature_some_flag = {"admin": true, "users": ["user1", "user2"]}
 
