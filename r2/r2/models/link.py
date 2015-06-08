@@ -277,7 +277,7 @@ class Link(Thing, Printable):
             if (allow_auto_hide and
                     ((user.pref_hide_ups and wrapped.likes == True) or
                      (user.pref_hide_downs and wrapped.likes == False) or
-                     wrapped._score < user.pref_min_link_score)):
+                     wrapped.score < user.pref_min_link_score)):
                 return False
 
         # show NSFW to API and RSS users unless obey_over18=true
