@@ -171,6 +171,7 @@ class EmailHandler(object):
             try:
                 o.insert().values({o.c.email: email,
                                    o.c.msg_hash: msg_hash}).execute()
+                g.stats.simple_event('share.opt_out')
 
                 #clear caches
                 has_opted_out(email, _update = True)
@@ -187,6 +188,7 @@ class EmailHandler(object):
             o = self.opt_table
             if self.has_opted_out(email):
                 sa.delete(o, o.c.email == email).execute()
+                g.stats.simple_event('share.opt_in')
 
                 #clear caches
                 has_opted_out(email, _update = True)
