@@ -96,9 +96,45 @@
     .search-result-body {
       .search-font-size(@search-font-base, @search-line-small);
       color: @color-body;
-      max-height: 45px;
-      overflow: hidden;
       padding-right: @margin-xxx-large * 1px;
+    }
+
+    .search-expando {
+      overflow: hidden;
+
+      &.collapsed {
+        max-height: 45px;
+        position: relative;
+
+        &:before {
+          bottom: 0;
+          content:'';
+          height: 15px;
+          left: 0;
+          position: absolute;
+          width: 100%;
+
+          .linear-gradient(rgba(255, 255, 255, 0), rgba(255, 255, 255, 1));
+        }
+      }
+    }
+
+    .search-expando-button {
+      color: @color-link;
+
+      &:hover {
+        cursor: pointer;
+        text-decoration: underline;
+      }
+
+      > span {
+        display: none;
+      }
+
+      &.expanded .search-expando-button-label-expanded,
+      &.collapsed .search-expando-button-label-collapsed {
+        display: inline;
+      }
     }
 
     .search-result-footer {

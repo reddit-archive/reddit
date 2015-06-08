@@ -100,9 +100,15 @@
 
 <%def name="search_result_body()">
   %if thing.selftext:
-    <%parent:search_result_body>
-      ${thing.selftext}
-    </%parent:search_result_body>
+    <div class="search-expando collapsed">
+      <%parent:search_result_body>
+        ${thing.selftext}
+      </%parent:search_result_body>
+    </div>
+    <div class="search-expando-button collapsed">
+      <span class="search-expando-button-label-collapsed">${_("more")}</span>
+      <span class="search-expando-button-label-expanded">${_("less")}</span>
+    </div>
   %endif
 </%def>
 
