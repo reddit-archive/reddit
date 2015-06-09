@@ -1,4 +1,9 @@
 !function(r) {
+  function isPluginExpandoButton(elem) {
+    // temporary fix for RES http://redd.it/392zol
+    return elem.tagName !== 'DIV';
+  }
+
   var ExpandoLink = Backbone.View.extend({
     events: {
       'click .expando-button': 'toggleExpando',
@@ -22,6 +27,8 @@
     },
 
     toggleExpando: function(e) {
+      if (isPluginExpandoButton(e.target)) { return; }
+
       this.expanded ? this.collapse() : this.expand();
     },
 
@@ -54,6 +61,8 @@
 
   $(function() {
     $('.linklisting').on('click', '.expando-button', function(e) {
+      if (isPluginExpandoButton(e.target)) { return; }
+    
       var $thing = $(this).closest('.thing')
 
       if ($thing.data('expando')) {
