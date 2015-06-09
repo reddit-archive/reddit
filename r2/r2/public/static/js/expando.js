@@ -15,6 +15,10 @@
       $(document).on('hide_thing_' + this.id, function() {
         this.collapse();
       }.bind(this));
+
+      if (this.options.expanded) {
+        this.expand();
+      }
     },
 
     toggleExpando: function(e) {
@@ -49,10 +53,18 @@
   });
 
   $(function() {
-    var expandoThings = $('.expando-button').closest('.thing');
+    $('.linklisting').on('click', '.expando-button', function(e) {
+      var $thing = $(this).closest('.thing')
 
-    expandoThings.each(function() {
-      new ExpandoLink({ el: this });
+      if ($thing.data('expando')) {
+        return;
+      }
+
+      $thing.data('expando', true);
+      var view = new ExpandoLink({
+        el: $thing[0],
+        expanded: true,
+      });
     });
   });
 }(r);
