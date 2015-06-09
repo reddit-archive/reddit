@@ -612,6 +612,11 @@ class SearchSortMenu(SortMenu):
     _default = 'relevance'
     _options = ('relevance', 'hot', 'top', 'new', 'comments')
 
+    @class_property
+    def hidden_options(cls):
+        if feature.is_enabled('subreddit_search'):
+            return ['hot']
+        return []
 
 class SubredditSearchSortMenu(SortMenu):
     """Sort menu for subreddit search pages."""
