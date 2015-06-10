@@ -95,8 +95,8 @@
         cname=False,
         _class="search-comments may-blank",
       )}&#32;
-    <span class="search-time">submitted&#32;${thing_timestamp(thing, thing.timesince, include_tense=True)}</span>&#32;
-    <span class="search-author">by&#32;${WrappedUser(thing.author, thing.attribs, thing)}</span>&#32;
+    <span class="search-time">${_("submitted")}&#32;${thing_timestamp(thing, thing.timesince, include_tense=True)}</span>&#32;
+    <span class="search-author">${_("by")}&#32;${WrappedUser(thing.author, thing.attribs, thing)}</span>&#32;
     <%
       subreddit_link_fmt = format_html('<span>%s</span>', _('to %s')).replace(' ', '&#32;')
     %>
