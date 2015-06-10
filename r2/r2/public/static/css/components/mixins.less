@@ -84,6 +84,11 @@
   display: flex;
 }
 
+.align-items(@props) {
+    -webkit-align-items: @props;
+    align-items: @props;
+}
+
 .clearfix() {
     &:before,
     &:after {
