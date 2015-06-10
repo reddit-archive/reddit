@@ -16,11 +16,12 @@
 @search-font-large: @font-medium;
 @search-font-medium: @font-small;
 @search-font-base: @font-x-small;
+@search-font-small: @font-xx-small;
 @search-line-base: @line-medium;
 @search-line-small: @line-x-small;
 
-.search-font-size(@font:@search-font-base, @line:@search-line-base) {
-  .md-font-size(@search-font-base, @font, @line);
+.search-font-size(@font:@search-font-base, @line:@search-line-base, @base:@search-font-base) {
+  .md-font-size(@base, @font, @line);
 }
 
 .combined-search-page {
@@ -111,9 +112,20 @@
     }
 
     .search-result-meta {
-      .search-font-size();
+      .search-font-size(@search-font-small, @search-line-base);
       color: @color-meta;
-      font-size: 12px;
+
+      .search-result-icon {
+        vertical-align: text-bottom;
+      }
+    }
+
+    .search-score {
+      .search-font-size(@search-font-base, @search-font-base, @search-font-small);
+
+      &:after {
+        content: ' •';
+      }
     }
 
     .search-comments {
