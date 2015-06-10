@@ -127,6 +127,8 @@ class Link(Thing, Printable):
     _essentials = ('sr_id', 'author_id')
     _nsfw = re.compile(r"\bnsf[wl]\b", re.I)
 
+    SELFTEXT_MAX_LENGTH = 40000
+
     def __init__(self, *a, **kw):
         Thing.__init__(self, *a, **kw)
 

@@ -529,9 +529,9 @@ class ApiController(RedditController):
                     return
 
         if not c.user_is_admin and kind == 'self':
-            if len(selftext) > sr.selftext_max_length:
+            if len(selftext) > Link.SELFTEXT_MAX_LENGTH:
                 c.errors.add(errors.TOO_LONG, field='text',
-                             msg_params={'max_length': sr.selftext_max_length})
+                    msg_params={'max_length': Link.SELFTEXT_MAX_LENGTH})
                 form.set_error(errors.TOO_LONG, 'text')
                 return
 
@@ -1727,7 +1727,7 @@ class ApiController(RedditController):
             max_length = 10000
             admin_override = False
         else:
-            max_length = item.subreddit_slow.selftext_max_length
+            max_length = Link.SELFTEXT_MAX_LENGTH
             admin_override = c.user_is_admin
 
         if not admin_override and len(text) > max_length:

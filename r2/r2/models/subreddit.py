@@ -283,9 +283,6 @@ class Subreddit(Thing, Printable, BaseSite):
     gold_limit = 100
     DEFAULT_LIMIT = object()
 
-    BASE_SELFTEXT_LENGTH = 15000
-    ONLY_SELFTEXT_LENGTH = 40000
-
     ICON_EXACT_SIZE = (240, 240)
     BANNER_MIN_SIZE = (640, 360)
     BANNER_MAX_SIZE = (1280, 720)
@@ -467,13 +464,6 @@ class Subreddit(Thing, Printable, BaseSite):
         if self.link_type == "any":
             return set(("link", "self"))
         return set((self.link_type,))
-
-    @property
-    def selftext_max_length(self):
-        if self.link_type == "self":
-            return self.ONLY_SELFTEXT_LENGTH
-        else:
-            return self.BASE_SELFTEXT_LENGTH
 
     @property
     def allows_referrers(self):
