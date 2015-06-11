@@ -465,9 +465,10 @@
 
       $parentThing.find('.entry .buttons').after(postSharing.el);
 
+      r.ui.activeShareMenu = postSharing;
+
       postSharing.on('show', function() {
         r.analytics.fireGAEvent('post-sharing', 'open', thingId);
-        r.ui.activeShareMenu = postSharing;
       });
 
       postSharing.on('unmount', function() {
