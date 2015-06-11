@@ -442,7 +442,7 @@ class Globals(object):
         self.queues = queues.declare_queues(self)
 
         self.extension_subdomains = dict(
-            m="mobile",
+            simple="mobile",
             i="compact",
             api="api",
             rss="rss",

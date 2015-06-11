@@ -169,7 +169,7 @@ class TestSwitchSubdomainByExtension(unittest.TestCase):
         u = UrlParser(result)
         u.switch_subdomain_by_extension('mobile')
         result = u.unparse()
-        self.assertEquals('http://m.reddit.com/r/redditdev', result)
+        self.assertEquals('http://simple.reddit.com/r/redditdev', result)
 
     def test_default_prefix(self):
         u = UrlParser('http://i.reddit.com/r/redditdev')
