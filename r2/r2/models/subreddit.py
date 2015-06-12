@@ -1959,7 +1959,7 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         obj._srs = multi._srs
         obj._srs_loaded = multi._srs_loaded
         obj.owner_fullname = owner._fullname
-        obj.copied_from = multi.path
+        obj.copied_from = multi.path.lower()
         obj._commit()
         obj._linked_multi = multi if symlink else None
         obj._owner = owner
