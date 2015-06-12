@@ -210,6 +210,10 @@ function click_thing(elem) {
 }
 
 function hide_thing(elem) {
+    if ($('body').hasClass('comments-page')) {
+        return;
+    }
+
     var $thing = $(elem).thing();
 
     if ($thing.is('.comment') && $thing.has('.child:not(:empty)').length) {
