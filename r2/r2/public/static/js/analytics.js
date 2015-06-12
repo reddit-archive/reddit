@@ -95,7 +95,10 @@ r.analytics = {
 
     // if it's for Gold tracking and we have new _ga available
     // then use it to track the event; otherwise, fallback to old version
-    if (options.tracker && '_ga' in window && window._ga.getByName(options.tracker)) {
+    if (options.tracker &&
+        '_ga' in window &&
+        window._ga.getByName &&
+        window._ga.getByName(options.tracker)) {
       window._ga(options.tracker + '.send', 'pageview', {
         'page': page,
         'hitCallback': callback
