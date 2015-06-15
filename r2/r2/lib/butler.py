@@ -50,6 +50,16 @@ def remove_mention_notification(mention):
         queries.set_unread(thing, inbox_owner, unread=False, mutator=m)
 
 
+def readd_mention_notification(mention):
+    """Reinsert into inbox after a comment has been unspammed"""
+    inbox_owner = mention._thing1
+    thing = mention._thing2
+    with query_cache.CachedQueryMutator() as m:
+        m.insert(queries.get_inbox_comment_mentions(inbox_owner), [mention])
+        unread = getattr(mention, 'unread_preremoval', True)
+        queries.set_unread(thing, inbox_owner, unread=unread, mutator=m)
+
+
 def monitor_mentions(comment):
     if comment._spam or comment._deleted:
         return

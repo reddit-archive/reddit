@@ -2820,6 +2820,9 @@ class ApiController(RedditController):
             action = 'approve' + thing.__class__.__name__.lower()
             ModAction.create(sr, c.user, action, **kw)
 
+        if isinstance(thing, Comment) and insert:
+            queries.renotify(thing)
+
     @require_oauth2_scope("modposts")
     @noresponse(VUser(), VModhash(),
                 VSrCanBan('id'),

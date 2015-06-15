@@ -994,7 +994,7 @@ def new_link(link):
         results.append(get_domain_links(domain, 'new', "all"))
 
     with CachedQueryMutator() as m:
-        if link._spam:    
+        if link._spam:
             m.insert(get_spam_links(sr), [link])
         if not (sr.exclude_banned_modqueue and author._spam):
             m.insert(get_unmoderated_links(sr), [link])
@@ -1018,6 +1018,9 @@ def update_comment_notifications(comment, inbox_rels, mutator):
 
     for inbox_rel in tup(inbox_rels):
         inbox_owner = inbox_rel._thing1
+        unread = (is_visible and
+            getattr(inbox_rel, 'unread_preremoval', True))
+
         if inbox_rel._name == "inbox":
             query = get_inbox_comments(inbox_owner)
         elif inbox_rel._name == "selfreply":
@@ -1032,7 +1035,7 @@ def update_comment_notifications(comment, inbox_rels, mutator):
         else:
             mutator.delete(query, [inbox_rel])
 
-        set_unread(comment, inbox_owner, unread=is_visible, mutator=mutator)
+        set_unread(comment, inbox_owner, unread=unread, mutator=mutator)
 
 
 def new_comment(comment, inbox_rels):
@@ -1260,13 +1263,38 @@ def unread_handler(things, user, unread):
 
 
 def unnotify(thing, possible_recipients=None):
-    """Given a Thing, remove any notifications to possible recipients for it.
+    """Given a Thing, remove any notifications to its possible recipients.
 
     `possible_recipients` is a list of account IDs to unnotify. If not passed,
     deduce all possible recipients and remove their notifications.
     """
     from r2.lib import butler
+    error_message = ("Unable to unnotify thing of type: %r" % thing)
+    notification_handler(thing,
+        notify_function=butler.remove_mention_notification,
+        error_message=error_message,
+        possible_recipients=possible_recipients,
+    )
 
+
+def renotify(thing, possible_recipients=None):
+    """Given a Thing, reactivate notifications for possible recipients.
+
+    `possible_recipients` is a list of account IDs to renotify. If not passed,
+    deduce all possible recipients and add their notifications.
+    This is used when unspamming comments.
+    """
+    from r2.lib import butler
+    error_message = ("Unable to renotify thing of type: %r" % thing)
+    notification_handler(thing,
+        notify_function=butler.readd_mention_notification,
+        error_message=error_message,
+        possible_recipients=possible_recipients,
+    )
+
+
+def notification_handler(thing, notify_function,
+        error_message, possible_recipients=None):
     if not possible_recipients:
         possible_recipients = Inbox.possible_recipients(thing)
 
@@ -1286,20 +1314,28 @@ def unnotify(thing, possible_recipients=None):
             ("inbox", "selfreply", "mention"),
         )
 
+        # if the comment has been spammed, remember the previous
+        # new value in case it becomes unspammed
+        if thing._spam:
+            for (tupl, rel) in rels.iteritems():
+                if rel:
+                    rel.unread_preremoval = rel.new
+                    rel._commit()
+
         replies, mentions = utils.partition(
             lambda r: r._name == "mention",
             filter(None, rels.values()),
         )
 
         for mention in mentions:
-            butler.remove_mention_notification(mention)
+            notify_function(mention)
 
         replies = list(replies)
         if replies:
             with CachedQueryMutator() as m:
                 update_comment_notifications(thing, replies, mutator=m)
     else:
-        raise ValueError("Unable to unnotify thing of type: %r" % thing)
+        raise ValueError(error_message)
 
 
 def _by_srid(things, srs=True):
