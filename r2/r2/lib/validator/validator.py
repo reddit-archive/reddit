@@ -2920,7 +2920,7 @@ class VResultTypes(Validator):
 
         if is_api():
             result_types = result_types or {'link'}
-        elif feature.is_enabled('subreddit_search'):
+        elif not feature.is_enabled('legacy_search') and feature.is_enabled('subreddit_search'):
             result_types = result_types or {'link', 'sr'}
         else:
             result_types = {'link'}
