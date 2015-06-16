@@ -1156,8 +1156,7 @@ class Subreddit(Thing, Printable, BaseSite):
 
     @classmethod
     def reverse_subscriber_ids(cls, user):
-        r = SubscribedSubredditsByAccount._cf.xget(user._id36)
-        return [int(sr_id36, 36) for sr_id36, val in r]
+        return SubscribedSubredditsByAccount.get_all_sr_ids(user)
 
 
 class SubscribedSubredditsByAccount(tdb_cassandra.DenormalizedRelation):
@@ -1174,6 +1173,17 @@ class SubscribedSubredditsByAccount(tdb_cassandra.DenormalizedRelation):
     @classmethod
     def value_for(cls, user, sr):
         return datetime.datetime.now(g.tz)
+
+    @classmethod
+    def get_all_sr_ids(cls, user):
+        key = cls.__name__ + user._id36
+        sr_ids = g.thing_cache.get(key)
+        if sr_ids is None:
+            r = cls._cf.xget(user._id36)
+            sr_ids = [int(sr_id36, 36) for sr_id36, val in r]
+            g.thing_cache.set(key, sr_ids)
+
+        return sr_ids
 
 
 class SubscriptionsByDay(tdb_cassandra.View):
