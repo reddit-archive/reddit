@@ -57,6 +57,7 @@ from r2.lib.cache import sgm
 from r2.lib.strings import strings, Score
 from r2.lib.filters import _force_unicode
 from r2.lib.db import tdb_cassandra
+from r2.lib.db.tdb_sql import CreationError
 from r2.models.wiki import WikiPage, ImagesByWikiPage
 from r2.models.trylater import TryLater, TryLaterBySubject
 from r2.lib.merge import ConflictException
@@ -1135,6 +1136,7 @@ class Subreddit(Thing, Printable, BaseSite):
     def add_subscriber(self, user):
         SubscribedSubredditsByAccount.create(user, self)
         SubscriptionsByDay.create(self, user)
+        add_legacy_subscriber(self, user)
         self._incr('_ups', 1)
 
     @classmethod
@@ -1142,10 +1144,12 @@ class Subreddit(Thing, Printable, BaseSite):
         SubscribedSubredditsByAccount.create(user, srs)
         SubscriptionsByDay.create(srs, user)
         for sr in srs:
+            add_legacy_subscriber(sr, user)
             sr._incr('_ups', 1)
 
     def remove_subscriber(self, user):
         SubscribedSubredditsByAccount.destroy(user, self)
+        remove_legacy_subscriber(self, user)
         self._incr('_ups', -1)
 
     @classmethod
@@ -2434,6 +2438,21 @@ Subreddit.__bases__ += (
     UserRel('wikibanned', SRMember),
     UserRel('wikicontributor', SRMember),
 )
+
+
+def add_legacy_subscriber(sr, user):
+    rel = SRMember(sr, user, "subscriber")
+    try:
+        rel._commit()
+    except CreationError:
+        pass
+
+
+def remove_legacy_subscriber(sr, user):
+    rels = SRMember._fast_query([sr], [user], "subscriber")
+    rel = rels.get((sr, user, "subscriber"))
+    if rel:
+        rel._delete()
 
 
 class SubredditTempBan(object):
