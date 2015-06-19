@@ -1521,7 +1521,7 @@ class LinkInfoPage(Reddit):
 
     create_reddit_box = False
     extra_page_classes = ['single-page']
-    metadata_image_width = 216
+    metadata_image_widths = (320, 216)
 
     def __init__(self, link = None, comment = None,
                  link_title = '', subtitle = None, num_duplicates = None,
@@ -1656,14 +1656,15 @@ class LinkInfoPage(Reddit):
 
         preview_object = self.link.preview_image
         if preview_object:
-            try:
-                return {
-                    'url': g.image_resizing_provider.resize_image(
-                                preview_object, self.metadata_image_width),
-                    'width': self.metadata_image_width,
-                }
-            except image_resizing.NotLargeEnough:
-                pass
+            for width in self.metadata_image_widths:
+                try:
+                    return {
+                        'url': g.image_resizing_provider.resize_image(
+                                    preview_object, width),
+                        'width': width,
+                    }
+                except image_resizing.NotLargeEnough:
+                    pass
 
         if self.link.has_thumbnail and self.link.thumbnail:
             # This is really not a great thumbnail for facebook right now
