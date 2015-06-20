@@ -100,6 +100,7 @@ error_list = dict((
         ('BAD_DATE_RANGE', _('the dates need to be in order and not identical')),
         ('DATE_TOO_LATE', _('please enter a date %(day)s or earlier')),
         ('DATE_TOO_EARLY', _('please enter a date %(day)s or later')),
+        ('START_DATE_CANNOT_CHANGE', _('start date cannot be changed')),
         ('BAD_ADDRESS', _('address problem: %(message)s')),
         ('BAD_CARD', _('card problem: %(message)s')),
         ('TOO_LONG', _("this is too long (max: %(max_length)s)")),

@@ -493,6 +493,10 @@ class PromoCampaign(Thing):
         else:
             return g.locations[self.location.country]['name']
 
+    @property
+    def is_paid(self):
+        return self.trans_id != 0 or self.priority == 'house'
+
     def is_freebie(self):
         return self.trans_id < 0
 

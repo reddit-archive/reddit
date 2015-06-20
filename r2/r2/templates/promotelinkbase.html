@@ -57,6 +57,7 @@
            value="${value}" id="${name}" class="rounded styled-input" readonly="readonly" size="10" />
     <div id="datepicker-${name}" class="datepicker"></div>
     ${error_field("BAD_DATE", name, "div")}
+    ${error_field("START_DATE_CANNOT_CHANGE", name, "div")}
     ${error_field("DATE_TOO_EARLY", name, "div")}
     ${error_field("DATE_TOO_LATE", name, "div")}
     <script type="text/javascript">

@@ -1039,7 +1039,17 @@ class PromoteApiController(ApiController):
 
         min_start, max_start, max_end = promote.get_date_limits(
             link, c.user_is_sponsor)
-        if start.date() < min_start:
+
+        if campaign_id36:
+            promo_campaign = PromoCampaign._byID36(campaign_id36)
+            if (promote.is_promoted(link) and
+                    promo_campaign.start_date.date() <= min_start and
+                    start != promo_campaign.start_date and
+                    promo_campaign.is_paid):
+                c.errors.add(errors.START_DATE_CANNOT_CHANGE, field='startdate')
+                form.has_errors('startdate', errors.START_DATE_CANNOT_CHANGE)
+                return
+        elif start.date() < min_start:
             c.errors.add(errors.DATE_TOO_EARLY,
                          msg_params={'day': min_start.strftime("%m/%d/%Y")},
                          field='startdate')
