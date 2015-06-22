@@ -797,28 +797,39 @@ def enforce_https():
     if c.forced_loggedout or c.render_style == "js":
         return
 
+    # HACK: 404s in non-existent subreddits happen before we get here, and
+    # we can't redirect in the error controller. Can be removed once this
+    # function's behaviour doesn't vary by user
+    if request.environ.get('pylons.error_call', False):
+        return
+
+    is_api_request = is_api() or request.path.startswith("/api/")
     redirect_url = None
 
     # This is likely a request from an API client. Redirecting them or giving
     # them an HSTS grant is unlikely to stop them from making requests to HTTP.
-    if is_api() and not c.secure:
-        # Record the violation so we know who to talk to.
-        if c.user.https_forced:
-            g.stats.count_string('https.pref_violation', request.user_agent)
-            # TODO: 400 here after a grace period. Sending a user's cookies over
-            # HTTP when they asked you not to isn't nice.
+    if is_api_request and not c.secure:
+        # Record the violation so we know who to talk to to get this fixed.
+        # This is preferable to redirecting insecure API reqs right away
+        # because a lot of clients just break on redirect, it would create two
+        # requests for every request, and it wouldn't increase security.
+        ua = request.user_agent
+        g.stats.count_string('https.security_violation', ua)
+        # It's especially bad to send credentials over HTTP
+        if c.user_is_loggedin:
+            g.stats.count_string('https.loggedin_security_violation', ua)
 
         # They didn't send a login cookie, but their cookies indicate they won't
         # be authed properly unless we redirect them to the secure version.
         if have_secure_session_cookie() and not c.user_is_loggedin:
-            redirect_url = make_url_https(request.environ['FULLPATH'])
+            redirect_url = make_url_https(request.fullurl)
 
     need_grant = False
     grant = None
     # Forcing the users through the HSTS gateway probably wouldn't help much for
     # other render types since they're mostly made by clients that don't respect
     # HSTS.
-    if c.render_style in {"html", "compact", "mobile"}:
+    if c.render_style in {"html", "compact", "mobile"} and not is_api_request:
         if hsts_eligible():
             grant = g.hsts_max_age
             # They're forcing HTTPS but don't have a "secure_session" cookie?
@@ -839,7 +850,7 @@ def enforce_https():
                 # grant expire. redirect to the HTTPS version through the HSTS
                 # endpoint.
                 need_grant = True
-                redirect_url = make_url_https(request.environ['FULLPATH'])
+                redirect_url = make_url_https(request.fullurl)
         else:
             grant = 0
             if c.secure:
@@ -849,6 +860,10 @@ def enforce_https():
                     change_user_cookie_security(False)
                     need_grant = True
 
+        # Gradual rollout feature for HTTPS for loggedin users
+        if feature.is_enabled("https_redirect") and not c.secure:
+            redirect_url = make_url_https(request.fullurl)
+
     if feature.is_enabled("give_hsts_grants") and grant is not None:
         if request.host == g.domain and c.secure:
             # Always set an HSTS header if we can and we're on the base domain
@@ -856,7 +871,7 @@ def enforce_https():
         elif need_grant:
             # Definitely need to change the grant, but we're not on an origin
             # where we can modify it, redirect through one that can.
-            dest = redirect_url or request.environ['FULLPATH']
+            dest = redirect_url or request.fullurl
             redirect_url = hsts_modify_redirect(dest)
 
     if redirect_url:
