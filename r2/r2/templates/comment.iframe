@@ -60,12 +60,9 @@
             ${_("[account deleted]")}
           </span>
         %else:
-          <a class="reddit-embed-author"
-             href="http://${get_domain(subreddit=False)}/user/${thing.author.name}"
-             data-redirect-type="user"
-             data-redirect-thing="${thing.author._id}">
+          <span class="reddit-embed-author">
             ${thing.author.name}
-          </a>
+          </span>
         %endif
         %if hide_edits:
           ${_("%(name)s's comment was changed.") % dict(name="")}
