@@ -128,7 +128,8 @@ class FrontController(RedditController):
         links, first, last, before, after = builder.get_items()
 
         if links:
-            return self.redirect(add_sr("/tb/" + links[0]._id36))
+            redirect_url = links[0].make_permalink_slow(force_domain=True)
+            return self.redirect(redirect_url)
         else:
             return self.redirect(add_sr('/'))
 
