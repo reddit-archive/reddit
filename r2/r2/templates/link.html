@@ -60,9 +60,6 @@
      %if c.cname:
        target="_top"
      %endif
-     %if thing.mousedown_url:
-       onmousedown="save_href($(this));this.href='${thing.mousedown_url}'"
-     %endif
      >
      ${caller.body()}
   </a>

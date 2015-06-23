@@ -28,10 +28,6 @@
 %>
 <%
    permalink = add_sr(thing.permalink, force_hostname = True)
-   if thing.mousedown_url:
-      url = thing.mousedown_url
-   else:
-      url = permalink
    use_thumbs = thing.has_thumbnail and thing.thumbnail and not request.GET.has_key("nothumbs")
    use_thumbs = use_thumbs and not thing.thumbnail_sprited
  %>
@@ -40,7 +36,7 @@
   %if thing.different_sr:
     <category>${thing.subreddit.name}</category>
   %endif
-  <link>${url}</link>
+  <link>${permalink}</link>
   <guid isPermaLink="true">${permalink}</guid>
   <pubDate>${thing._date.strftime('%a, %d %b %Y %H:%M:%S %z')}</pubDate>
   <description>
@@ -48,7 +44,7 @@
       %if use_thumbs:
         <table>
           <tr><td>
-            <a href="${url}"><img src="${thing.thumbnail}" alt="${thing.title}" title="${thing.title}" /></a>
+            <a href="${permalink}"><img src="${thing.thumbnail}" alt="${thing.title}" title="${thing.title}" /></a>
           </td><td>
       %endif
       <% 

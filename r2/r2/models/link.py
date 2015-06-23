@@ -665,21 +665,10 @@ class Link(Thing, Printable):
             # attach video or selftext as needed
             item.link_child, item.editable = make_link_child(item)
 
-            item.tblink = "http://%s/tb/%s" % (
-                get_domain(cname=cname, subreddit=False),
-                item._id36)
-
             if item.is_self and not item.promoted:
                 item.href_url = item.permalink
             else:
                 item.href_url = item.url
-
-            # show the toolbar if the preference is set and the link
-            # is neither a promoted link nor a self post
-            if pref_frame and not item.is_self and not item.promoted:
-                item.mousedown_url = item.tblink
-            else:
-                item.mousedown_url = None
 
             item.fresh = not any((item.likes != None,
                                   item.saved,

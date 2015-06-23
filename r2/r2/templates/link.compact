@@ -68,8 +68,6 @@
   <%
     if thing.is_self:
         url = add_sr(thing.href_url)
-    elif thing.pref_frame:
-        url = thing.tblink + '.compact'
     else:
         url = thing.url
   %>

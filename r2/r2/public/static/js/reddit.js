@@ -1223,10 +1223,3 @@ function show_friend(account_fullname) {
                 }
             });
 }
-
-function save_href(link) {
-  if (!link.attr("srcurl")){
-    link.attr("srcurl", link.attr("href"));
-  }
-  return link;
-}

@@ -37,7 +37,7 @@
            %if thing.link.is_self:
              <a href="${add_sr(thing.link.url)}" class="title">
            %else:
-             <a href="/tb/${thing.link._id36}.compact" class="title">
+             <a href="${thing.link.url}" class="title">
            %endif
           ${thing.link.title}
         </a>
