@@ -1196,9 +1196,8 @@ class FrontController(RedditController):
     @validate(url=VRequired('url', None),
               title=VRequired('title', None),
               text=VRequired('text', None),
-              selftext=VRequired('selftext', None),
-              then=VOneOf('then', ('tb','comments'), default='comments'))
-    def GET_submit(self, url, title, text, selftext, then):
+              selftext=VRequired('selftext', None))
+    def GET_submit(self, url, title, text, selftext):
         """Submit form."""
         resubmit = request.GET.get('resubmit')
         url = sanitize_url(url)
@@ -1249,7 +1248,6 @@ class FrontController(RedditController):
             show_link=c.default_sr or c.site.can_submit_link(c.user),
             show_self=((c.default_sr or c.site.can_submit_text(c.user))
                       and not request.GET.get('no_self')),
-            then=then,
         )
 
         return FormPage(_("submit"),

@@ -416,14 +416,13 @@ class ApiController(RedditController):
         sendreplies=VBoolean('sendreplies'),
         selftext=VMarkdown('text'),
         kind=VOneOf('kind', ['link', 'self']),
-        then=VOneOf('then', ('tb', 'comments'), default='comments'),
         extension=VLength("extension", 20,
                           docs={"extension": "extension used for redirects"}),
         resubmit=VBoolean('resubmit'),
     )
     @api_doc(api_section.links_and_comments)
     def POST_submit(self, form, jquery, url, selftext, kind, title,
-                    sr, then, extension, sendreplies, resubmit):
+                    sr, extension, sendreplies, resubmit):
         """Submit a link to a subreddit.
 
         Submit will create a link or self-post in the subreddit `sr` with the
@@ -575,12 +574,7 @@ class ApiController(RedditController):
         l.update_search_index()
         g.events.submit_event(l, request=request, context=c)
 
-        if then == 'comments':
-            path = add_sr(l.make_permalink_slow())
-        elif then == 'tb':
-            form.attr('target', '_top')
-            path = add_sr('/tb/%s' % l._id36)
-
+        path = add_sr(l.make_permalink_slow())
         if extension:
             path += ".%s" % extension
 
