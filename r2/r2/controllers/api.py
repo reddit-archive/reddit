@@ -44,6 +44,7 @@ from r2.lib import recommender
 from r2.lib import hooks
 
 from r2.lib.utils import (
+    blockquote_text,
     extract_user_mentions,
     get_title,
     query_string,
@@ -1956,11 +1957,11 @@ class ApiController(RedditController):
                                    _("your link has been shared.")))
 
         if getattr(link, "promoted", None) and link.disable_comments:
-            message = message + "\n\n" if message else ""
+            message = blockquote_text(message) + "\n\n" if message else ""
             message += '\n%s\n\n%s\n\n' % (link.title, link.url)
             email_message = pm_message = message
         else:
-            message = message + "\n\n" if message else ""
+            message = blockquote_text(message) + "\n\n" if message else ""
             message += '\n%s\n' % link.title
 
             urlparts = (get_domain(cname=c.cname, subreddit=False),
