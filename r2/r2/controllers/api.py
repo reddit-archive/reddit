@@ -1958,16 +1958,7 @@ class ApiController(RedditController):
             message = blockquote_text(message) + "\n\n" if message else ""
             message += '\n%s\n' % link.title
 
-            urlparts = (get_domain(cname=c.cname, subreddit=False),
-                        link._id36)
-            url = "http://%s/tb/%s" % urlparts
-            url_parser = UrlParser(url)
-            url_parser.update_query(ref="share", ref_source="email")
-            email_source_url = url_parser.unparse()
-            url_parser.update_query(ref_source="pm")
-            pm_source_url = url_parser.unparse()
-
-            message_body = '\n%(source_url)s\n\n'
+            message_body = '\n'
 
             # Deliberately not translating this, as it'd be in the
             # sender's language
@@ -1991,11 +1982,9 @@ class ApiController(RedditController):
 
             message_body += '%(comments_url)s'
             email_message = message + message_body % {
-                    "source_url": email_source_url,
                     "comments_url": email_comments_url,
                 }
             pm_message = message + message_body % {
-                    "source_url": pm_source_url,
                     "comments_url": pm_comments_url,
                 }
         
