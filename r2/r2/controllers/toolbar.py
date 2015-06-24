@@ -172,6 +172,9 @@ class ToolbarController(RedditController):
             qs = utils.query_string({"url": path})
             return self.redirect(add_sr("/submit" + qs))
 
+    def GET_redirect(self):
+        return self.redirect('/', code=301)
+
     @validate(link = VLink('linkoid'))
     def GET_linkoid(self, link):
         if not link:

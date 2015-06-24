@@ -336,6 +336,7 @@ def make_map():
 
     mc('/goto', controller='toolbar', action='goto')
     mc('/tb/:id', controller='toolbar', action='tb')
+    mc('/toolbar/*frame', controller='toolbar', action='redirect')
 
     mc('/c/:comment_id', controller='front', action='comment_by_id')
 
