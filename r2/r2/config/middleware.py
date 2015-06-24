@@ -317,7 +317,7 @@ def _wsgi_json(start_response, status_int, message=""):
         "error": status_int,
         "message": message
     })
-    return filters.websafe_json(data)
+    return [filters.websafe_json(data).encode("utf-8")]
 
 
 class LimitUploadSize(object):
