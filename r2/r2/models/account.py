@@ -751,7 +751,7 @@ class Account(Thing):
 
     @property
     def uses_toolbar(self):
-        return not self.https_forced and self.pref_frame
+        return False
 
     @property
     def has_gold_subscription(self):

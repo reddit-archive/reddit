@@ -105,14 +105,11 @@ class ToolbarController(RedditController):
 
     @validate(link = VLink('id'))
     def GET_tb(self, link):
-        '''/tb/$id36, show a given link with the toolbar
-        If the user doesn't have the toolbar enabled, redirect to comments
-        page.
+        '''/tb/$id36, former toolbar
+        The reddit toolbar is no longer supported, redirect to comments page.
+        The /tb url is still used as redirect from the linkoid short link.
         
         '''
-        from r2.lib.media import thumbnail_url
-        redirect_url = None
-        query_params = dict(request.GET)
         if not link:
             return self.abort404()
         elif not link.subreddit_slow.can_view(c.user):
@@ -120,32 +117,16 @@ class ToolbarController(RedditController):
             self.abort403()
         elif link.is_self:
             redirect_url = link.url
-        elif not (c.user_is_loggedin and c.user.uses_toolbar):
+        else:
             redirect_url = link.make_permalink_slow(force_domain=True)
         
-        if redirect_url:
-            if query_params:
-                url = UrlParser(redirect_url)
-                url.update_query(**query_params)
-                redirect_url =  url.unparse()
-            return self.redirect(redirect_url)
+        query_params = dict(request.GET)
+        if query_params:
+            url = UrlParser(redirect_url)
+            url.update_query(**query_params)
+            redirect_url = url.unparse()
 
-        # if the domain is shame-banned, bail out.
-        if is_shamed_domain(link.url)[0]:
-            self.abort404()
-
-        if link.has_thumbnail:
-            thumbnail = thumbnail_url(link)
-        else:
-            thumbnail = None
-
-        res = Frame(
-            title=link.title,
-            url=match_current_reddit_subdomain(link.url),
-            thumbnail=thumbnail,
-            fullname=link._fullname,
-        )
-        return spaceCompress(res.render())
+        return self.redirect(redirect_url)
 
     @validate(urloid=nop('urloid'))
     def GET_s(self, urloid):

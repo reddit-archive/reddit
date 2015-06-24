@@ -37,7 +37,6 @@ from r2.models import Subreddit, NotFound
 # Non-preference validators should be added to to the controller
 # method directly (see PostController.POST_options)
 PREFS_VALIDATORS = dict(
-    pref_frame=VBoolean('frame'),
     pref_clickgadget=VBoolean('clickgadget'),
     pref_organic=VBoolean('organic'),
     pref_newwindow=VBoolean('newwindow'),
