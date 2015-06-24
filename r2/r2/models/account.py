@@ -70,8 +70,6 @@ class Account(Thing):
     _int_prop_suffix = '_karma'
     _essentials = ('name', )
     _defaults = dict(pref_numsites = 25,
-                     pref_frame = False,
-                     pref_frame_commentspanel = False,
                      pref_newwindow = False,
                      pref_clickgadget = 5,
                      pref_store_visits = False,
@@ -749,10 +747,6 @@ class Account(Thing):
         if feature.is_enabled_for("require_https", self):
             return True
         return self.pref_force_https
-
-    @property
-    def uses_toolbar(self):
-        return False
 
     @property
     def has_gold_subscription(self):

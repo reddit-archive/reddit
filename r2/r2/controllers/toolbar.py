@@ -84,11 +84,6 @@ def force_html():
     c.extension = None
     c.content_type = 'text/html; charset=UTF-8'
 
-def auto_expand_panel(link):
-    if not link.num_comments or link.is_self:
-        return False
-    else:
-        return c.user.pref_frame_commentspanel
 
 class ToolbarController(RedditController):
 
@@ -176,66 +171,6 @@ class ToolbarController(RedditController):
             # It hasn't been submitted yet. Give them a chance to
             qs = utils.query_string({"url": path})
             return self.redirect(add_sr("/submit" + qs))
-
-    @validate(link = VLink('id'))
-    def GET_comments(self, link):
-        if not link:
-            self.abort404()
-        if not link.subreddit_slow.can_view(c.user):
-            abort(403, 'forbidden')
-
-        links = list(wrap_links(link))
-        if not links:
-            # they aren't allowed to see this link
-            return abort(403, 'forbidden')
-        link = links[0]
-
-        wrapper = make_wrapper(render_class = StarkComment,
-                               target = "_top")
-        b = TopCommentBuilder(link, CommentSortMenu.operator('confidence'),
-                              num=10, wrap=wrapper)
-
-        listing = NestedListing(b, parent_name=link._fullname)
-
-        raw_bar = strings.comments_panel_text % dict(
-            fd_link=link.permalink)
-
-        md_bar = safemarkdown(raw_bar, target="_top")
-
-        res = RedditMin(content=CommentsPanel(link=link,
-                                              listing=listing.listing(),
-                                              expanded=auto_expand_panel(link),
-                                              infobar=md_bar))
-
-        return res.render()
-
-    @validate(link = VByName('id'),
-              url = nop('url'))
-    def GET_toolbar(self, link, url):
-        """The visible toolbar, with voting buttons and all"""
-        if url:
-            url = demangle_url(url)
-
-        if link:
-            wrapped = wrap_links(link, wrapper=FrameToolbar, num=1)
-        else:
-            return self.abort404()
-
-        return spaceCompress(wrapped.render())
-
-    @validate(link = VByName('id'))
-    def GET_inner(self, link):
-        """The intermediate frame that displays the comments side-bar
-           on one side and the link on the other"""
-        if not link:
-            return self.abort404()
-
-        res = InnerToolbarFrame(
-            link=link,
-            url=match_current_reddit_subdomain(link.url),
-            expanded=auto_expand_panel(link),
-        )
-        return spaceCompress(res.render())
 
     @validate(link = VLink('linkoid'))
     def GET_linkoid(self, link):

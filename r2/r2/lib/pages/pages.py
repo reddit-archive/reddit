@@ -1011,17 +1011,6 @@ class ClickGadget(Templated):
         return content.render(style = "htmllite")
 
 
-class RedditMin(Reddit):
-    """a version of Reddit that has no sidebar, toolbar, footer,
-       etc"""
-    footer       = False
-    show_sidebar = False
-    show_infobar = False
-
-    def page_classes(self):
-        return ('min-body',)
-
-
 class LoginFormWide(CachedTemplate):
     """generates a login form suitable for the 300px rightbox."""
     def __init__(self):
@@ -1492,16 +1481,6 @@ class TakedownPane(Templated):
                                    _("this page is no longer available due to a copyright claim."))
         Templated.__init__(self, *a, **kw)
 
-class CommentsPanel(Templated):
-    """the side-panel on the reddit toolbar frame that shows the top
-       comments of a link"""
-
-    def __init__(self, link = None, listing = None, expanded = False, *a, **kw):
-        self.link = link
-        self.listing = listing
-        self.expanded = expanded
-
-        Templated.__init__(self, *a, **kw)
 
 class CommentVisitsBox(Templated):
     def __init__(self, visits, *a, **kw):
@@ -3167,79 +3146,6 @@ class SubredditFacets(Templated):
         self.prev_search = prev_search
 
         Templated.__init__(self, facets=facets, sort=sort, recent=recent)
-
-
-class Frame(Wrapped):
-    """Frameset for the FrameToolbar used when a user hits /tb/. The
-    top 30px of the page are dedicated to the toolbar, while the rest
-    of the page will show the results of following the link."""
-    def __init__(self, url='', title='', fullname=None, thumbnail=None):
-        if title:
-            title = (_('%(site_title)s via %(domain)s')
-                     % dict(site_title = _force_unicode(title),
-                            domain     = g.domain))
-        else:
-            title = g.domain
-        Wrapped.__init__(self, url = url, title = title,
-                           fullname = fullname, thumbnail = thumbnail)
-
-class FrameToolbar(Wrapped):
-    """The reddit voting toolbar used together with Frame."""
-
-    cachable = True
-    extension_handling = False
-    cache_ignore = Link.cache_ignore
-    site_tracking = True
-
-    def __init__(self, link, title = None, url = None, expanded = False, **kw):
-        if link:
-            self.title = link.title
-            self.url = link.url
-        else:
-            self.title = title
-            self.url = url
-
-        self.expanded = expanded
-        self.user_is_loggedin = c.user_is_loggedin
-        self.have_messages = c.have_messages
-        self.user_name = c.user.name if self.user_is_loggedin else ""
-        self.cname = c.cname
-        self.site_name = c.site.name
-        self.site_description = c.site.description
-        self.default_sr = c.default_sr
-
-        Wrapped.__init__(self, link)
-        if link is None:
-            self.add_props(c.user, [self])
-
-    @classmethod
-    def add_props(cls, user, wrapped):
-        # unlike most wrappers we can guarantee that there is a link
-        # that this wrapper is wrapping.
-        nonempty = [w for w in wrapped if hasattr(w, "_fullname")]
-        Link.add_props(user, nonempty)
-        for w in wrapped:
-            w.score_fmt = Score.safepoints
-            if not hasattr(w, '_fullname'):
-                w._fullname = None
-                w.tblink = add_sr("/s/"+quote(w.url))
-                submit_url_options = dict(url  = _force_unicode(w.url),
-                                          then = 'tb')
-                if w.title:
-                    submit_url_options['title'] = _force_unicode(w.title)
-                w.submit_url = add_sr('/submit' +
-                                         query_string(submit_url_options))
-            else:
-                w.tblink = add_sr("/tb/"+w._id36)
-                w.upstyle = "mod" if w.likes else ""
-                w.downstyle = "mod" if w.likes is False else ""
-            if not c.user_is_loggedin:
-                w.loginurl = add_sr("/login?dest="+quote(w.tblink))
-        # run to set scores with current score format (for example)
-        Printable.add_props(user, nonempty)
-
-    def page_classes(self):
-        return ("toolbar",)
 
 
 class NewLink(Templated):
@@ -4913,10 +4819,6 @@ class PromoteReport(PromoteLinkBase):
                 'url': link.url,
             })
 
-
-class InnerToolbarFrame(Templated):
-    def __init__(self, link, url, expanded=False):
-        Templated.__init__(self, link=link, url=url, expanded=expanded)
 
 class RawString(Templated):
    def __init__(self, s):

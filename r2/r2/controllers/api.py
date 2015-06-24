@@ -1232,10 +1232,6 @@ class ApiController(RedditController):
                           _("you may not disable HTTPS on this account"))
             return
         c.user.pref_force_https = force_https
-        # Most pages we'd try to frame would be http:, and most browsers
-        # disallow mixed-content. Disable the toolbar when forcing HTTPS.
-        if force_https:
-            c.user.pref_frame = False
         c.user._commit()
 
         # run the change password command to get a new salt.
@@ -3980,20 +3976,6 @@ class ApiController(RedditController):
 
         jquery('.gadget').show().find('.click-gadget').html(
             spaceCompress(content))
-
-    @csrf_exempt
-    @noresponse()
-    def POST_tb_commentspanel_show(self):
-        # this preference is allowed for non-logged-in users
-        c.user.pref_frame_commentspanel = True
-        c.user._commit()
-
-    @csrf_exempt
-    @noresponse()
-    def POST_tb_commentspanel_hide(self):
-        # this preference is allowed for non-logged-in users
-        c.user.pref_frame_commentspanel = False
-        c.user._commit()
 
     @csrf_exempt
     @require_oauth2_scope("read")

@@ -204,7 +204,6 @@ class UnloggedUser(FakeAccount):
     COOKIE_NAME = "_options"
     allowed_prefs = {
         "pref_lang": VLang.validate_lang,
-        "pref_frame_commentspanel": bool,
         "pref_hide_locationbar": bool,
         "pref_use_global_defaults": bool,
     }
@@ -214,7 +213,6 @@ class UnloggedUser(FakeAccount):
         lang = browser_langs[0] if browser_langs else g.lang
         self._defaults = self._defaults.copy()
         self._defaults['pref_lang'] = lang
-        self._defaults['pref_frame_commentspanel'] = False
         self._defaults['pref_hide_locationbar'] = False
         self._defaults['pref_use_global_defaults'] = False
         if feature.is_enabled('new_user_new_window_preference'):

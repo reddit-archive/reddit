@@ -336,9 +336,6 @@ def make_map():
 
     mc('/goto', controller='toolbar', action='goto')
     mc('/tb/:id', controller='toolbar', action='tb')
-    mc('/toolbar/:action', controller='toolbar',
-       requirements=dict(action="toolbar|inner|login"))
-    mc('/toolbar/comments/:id', controller='toolbar', action='comments')
 
     mc('/c/:comment_id', controller='front', action='comment_by_id')
 
