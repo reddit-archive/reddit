@@ -194,7 +194,7 @@ class FrontController(RedditController):
               comment=VCommentID('comment',
                   docs={"comment": "(optional) ID36 of a comment"}),
               context=VInt('context', min=0, max=8),
-              sort=VOneOf('sort', CommentSortMenu.visible_options()),
+              sort=VOneOf('sort', CommentSortMenu._options),
               limit=VInt('limit',
                   docs={"limit": "(optional) an integer"}),
               depth=VInt('depth',
