@@ -3375,26 +3375,20 @@ class ApiController(RedditController):
         elif isinstance(sr, FakeSubreddit):
             return abort(403, 'permission denied')
 
-        try:
-            Subreddit.subscribe_defaults(c.user)
+        Subreddit.subscribe_defaults(c.user)
 
-            if action == "sub":
-                SubredditParticipationByAccount.mark_participated(c.user, sr)
+        if action == "sub":
+            SubredditParticipationByAccount.mark_participated(c.user, sr)
 
-                if not sr.is_subscriber(c.user):
-                    sr.add_subscriber(c.user)
+            if not sr.is_subscriber(c.user):
+                sr.add_subscriber(c.user)
+        else:
+            if sr.is_subscriber(c.user):
+                sr.remove_subscriber(c.user)
             else:
-                if sr.is_subscriber(c.user):
-                    sr.remove_subscriber(c.user)
-                else:
-                    # tried to unsubscribe but user was not subscribed
-                    return abort(404, 'not found')
-            sr.update_search_index(boost_only=True)
-        except CreationError:
-            # This only seems to happen when someone is pounding on the
-            # subscribe button or the DBs are really lagged; either way,
-            # some other proc has already handled this subscribe request.
-            return
+                # tried to unsubscribe but user was not subscribed
+                return abort(404, 'not found')
+        sr.update_search_index(boost_only=True)
 
     @validatedForm(VAdmin(),
                    VModhash(),
