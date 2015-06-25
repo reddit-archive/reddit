@@ -507,7 +507,7 @@ class Reddit(Templated):
                 WikiPage.get(c.site, "config/automoderator")
                 buttons.append(NamedButton(
                     "automod",
-                    dest="../wiki/config/automoderator",
+                    dest="../wiki/edit/config/automoderator",
                     css_class="reddit-automod",
                 ))
             except tdb_cassandra.NotFound:
