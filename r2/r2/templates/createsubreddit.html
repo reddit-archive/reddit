@@ -77,11 +77,15 @@ try participating in other communities on reddit for a little while first before
 
   <%utils:line_field title="${_('description')}" css_class="usertext"
                      description="${_('publicly describe your subreddit for all to see. 500 characters max.')}">
-    %if thing.site and thing.site.public_description:
-     ${UserText(None, text=thing.site.public_description or "", editable=True, creating=True, name="public_description", have_form=False)}
-    %else:
-     ${UserText(None, text="", creating=True, name="public_description", have_form=False)}
-    %endif
+    <div class="usertext-edit md-container">
+      <div class="md">
+        <textarea rows="1" cols="1" name="public_description" class="usertext">
+          %if thing.site and thing.site.public_description:
+            ${keep_space(thing.site.public_description or "")}
+          %endif
+        </textarea>
+      </div>
+    </div>
   </%utils:line_field>
 
   <%utils:line_field title="${_('sidebar')}" css_class="usertext"
