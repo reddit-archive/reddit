@@ -1314,7 +1314,7 @@ class VSubscribeSR(VByName):
 
     def param_docs(self):
         return {
-            self.param[0]: "the [fullname](#fullname) of a subreddit",
+            self.param[0]: "the name of a subreddit",
         }
 
 
