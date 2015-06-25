@@ -3372,6 +3372,8 @@ class ApiController(RedditController):
             return abort(404, 'not found')
         elif action == "sub" and not sr.can_comment(c.user):
             return abort(403, 'permission denied')
+        elif isinstance(sr, FakeSubreddit):
+            return abort(403, 'permission denied')
 
         try:
             Subreddit.subscribe_defaults(c.user)
