@@ -1128,11 +1128,9 @@ class Subreddit(Thing, Printable, BaseSite):
 
     def is_subscriber(self, user):
         try:
-            SubscribedSubredditsByAccount.fast_query(user, self)
+            return bool(SubscribedSubredditsByAccount.fast_query(user, self))
         except tdb_cassandra.NotFound:
             return False
-
-        return True
 
     def add_subscriber(self, user):
         legacy_subscriber_userrel.add_subscriber(self, user)
