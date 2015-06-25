@@ -1159,7 +1159,7 @@ class Subreddit(Thing, Printable, BaseSite):
 
 class SubscribedSubredditsByAccount(tdb_cassandra.DenormalizedRelation):
     _use_db = True
-    _last_modified_name = 'subscribe_subreddit'
+    _write_last_modified = False
     _read_consistency_level = tdb_cassandra.CL.ONE
     _write_consistency_level = tdb_cassandra.CL.QUORUM
     _connection_pool = 'main'
