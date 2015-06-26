@@ -243,6 +243,7 @@ def link_comments_and_sort(link, sort):
         g.log.debug(
             "Error in comment_tree: sorter %s/%s inconsistent (missing %d e.g. %r)"
             % (link, sort, len(sorter_needed), sorter_needed[:10]))
+        g.stats.simple_event('comment_tree_bad_sorter')
         if not g.disallow_db_writes:
             update_comment_votes(Comment._byID(sorter_needed, data=True, return_dict=False))
 
