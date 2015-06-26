@@ -237,6 +237,7 @@ class Globals(object):
             'trust_local_proxies',
             'shard_link_vote_queues',
             'shard_commentstree_queues',
+            'authnet_validate',
             'ENFORCE_RATELIMIT',
             'RL_SITEWIDE_ENABLED',
             'RL_OAUTH_SITEWIDE_ENABLED',

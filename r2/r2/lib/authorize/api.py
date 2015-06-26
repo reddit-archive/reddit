@@ -356,7 +356,7 @@ class CreateCustomerPaymentProfileRequest(CustomerRequest):
         CustomerRequest.__init__(self, user,
                                  paymentProfile=PaymentProfile(address,
                                                                creditcard),
-                                 validationMode=validationMode)
+                                 validationMode="liveMode" if g.authnet_validate else None)
 
     def process_response(self, res):
         pay_id = int(res.customerpaymentprofileid.contents[0])
@@ -476,7 +476,7 @@ class UpdateCustomerPaymentProfileRequest(CreateCustomerPaymentProfileRequest):
                                  paymentProfile=PaymentProfile(address,
                                                                creditcard,
                                                                paymentid),
-                                 validationMode=validationMode)
+                                 validationMode="liveMode" if g.authnet_validate else None)
 
     def process_response(self, res):
         return self.paymentProfile.customerPaymentProfileId
