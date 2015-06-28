@@ -179,7 +179,7 @@ class ApiController(RedditController):
     @pagecache_policy(PAGECACHE_POLICY.NEVER)
     @require_oauth2_scope("read")
     @validate(
-        things=VByName('id', multiple=True, limit=100),
+        things=VByName('id', multiple=True, ignore_missing=True, limit=100),
         url=VUrl('url'),
     )
     @api_doc(api_section.links_and_comments, uses_site=True)
