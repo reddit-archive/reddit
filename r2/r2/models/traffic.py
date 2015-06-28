@@ -642,7 +642,7 @@ class SubscriptionsBySubreddit(Base):
     subscriber_count = Column("unique", Integer())
 
     @classmethod
-    @memoize_traffic(time=3600 * 6)
+    @memoize_traffic(time=3600)
     def history(cls, interval, subreddit):
         time_points, q = make_history_query(cls, interval)
         q = q.filter(cls.subreddit == subreddit)
