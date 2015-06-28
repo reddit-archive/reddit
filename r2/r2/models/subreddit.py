@@ -1235,7 +1235,10 @@ class SubscriptionsByDay(tdb_cassandra.View):
         Session = scoped_session(sessionmaker(bind=engine))
 
         date = datetime.datetime.now(g.tz) - datetime.timedelta(days=days_ago)
+        print "writing subscribers for %s" % date
 
+        num_srs = 0
+        num_subscribers = 0
         for sr_id36, count in cls.get_all_counts(date):
             sr = Subreddit._byID36(sr_id36, data=True)
             row = SubscriptionsBySubreddit(
@@ -1245,6 +1248,9 @@ class SubscriptionsByDay(tdb_cassandra.View):
             )
             Session.merge(row)
             Session.commit()
+            num_srs += 1
+            num_subscribers += count
+        print "%s subscribers in %s subreddits" % (num_subscribers, num_srs)
         Session.remove()
 
 
