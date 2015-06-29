@@ -860,7 +860,7 @@ def enforce_https():
                     change_user_cookie_security(False)
                     need_grant = True
 
-        # Gradual rollout feature for HTTPS for loggedin users
+        # Gradual rollout for HTTPS
         if feature.is_enabled("https_redirect") and not c.secure:
             redirect_url = make_url_https(request.fullurl)
 
@@ -998,6 +998,7 @@ class MinimalController(BaseController):
                         c.extension,
                         c.render_style,
                         location,
+                        feature.is_enabled("https_redirect"),
                         request.environ.get("WANT_RAW_JSON"),
                         cookies_key)
 
