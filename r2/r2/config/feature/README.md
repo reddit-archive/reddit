@@ -81,6 +81,15 @@ feature_some_flag = {"oauth_clients: ["xyzABC123"]}
 # On for a percentage of loggedin users (0 being no users, 100 being all of them)
 feature_some_flag = {"percent_loggedin": 25}
 
+# On for a percentage of loggedout users (0 being no users, 100 being all of them)
+# N.B: This is based on the value of the `loid` cookie, if there is no `loid`
+# cookie the feature will be off.
+# The `loid` cookie is currently set in JavaScript, so you can't expect it to
+# exist on the first visit or in requests made by API clients.
+# Also note that using this feature flag might require disabling caching on the
+# CDN and modifying the pagecache key.
+feature_some_flag = {"percent_loggedout": 25}
+
 # For both admin and a group of users
 feature_some_flag = {"admin": true, "users": ["user1", "user2"]}
 
@@ -101,7 +110,7 @@ This is useful for a whole lot of reasons.
 
 * To release something to third party devs and mods before it goes live
 
-* (eventually) to gradually add traffic to something that may have serious
+* To gradually add traffic to something that may have serious
   impact on load
 
 * To guard something that you might need to quickly turn off for some reason

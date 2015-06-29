@@ -136,5 +136,19 @@ class FeatureState(object):
             if int_digest % 100 < percent_loggedin:
                 return True
 
+        percent_loggedout = cfg.get('percent_loggedout', 0)
+        if percent_loggedout and not loggedin:
+            # We want this to match the JS function for bucketing loggedout
+            # users, and JS doesn't make it easy to mix the feature name in
+            # with the LOID. Just look at the last 4 chars of the LOID.
+            loid = world.current_loid()
+            if loid:
+                try:
+                    bucket = int(loid[-4:], 36) % 100
+                    if bucket < percent_loggedout:
+                        return True
+                except ValueError:
+                    pass
+
         # Unknown value, default to off.
         return False

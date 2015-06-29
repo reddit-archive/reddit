@@ -22,6 +22,8 @@
 ###############################################################################
 
 import collections
+import random
+import string
 import unittest
 
 import mock
@@ -47,8 +49,13 @@ class TestFeature(unittest.TestCase):
             cls._world = World()
             cls._world.current_user = mock.Mock(return_value='')
             cls._world.current_subreddit = mock.Mock(return_value='')
+            cls._world.current_loid = mock.Mock(return_value='')
 
         return cls._world
+
+    @classmethod
+    def generate_loid(cls):
+        return ''.join(random.sample(string.letters + string.digits, 16))
 
     def _make_state(self, config, world=None):
         # Mock by hand because _parse_config is called in __init__, so we
@@ -59,6 +66,13 @@ class TestFeature(unittest.TestCase):
         if not world:
             world = self.world()
         return MockState('test_state', world)
+
+    def _assert_fuzzy_percent_true(self, results, percent):
+        stats = collections.Counter(results)
+        total = sum(stats.values())
+        # _roughly_ `percent` should have been `True`
+        diff = abs((float(stats[True]) / total) - (percent / 100.0))
+        self.assertTrue(diff < 0.1)
 
     def test_enabled(self):
         cfg = {'enabled': 'on'}
@@ -169,18 +183,32 @@ class TestFeature(unittest.TestCase):
             feature_state = self._make_state(cfg, mock_world)
             return (feature_state.is_enabled(x) for x in users)
 
-        def assert_fuzzy_percent_true(results, percent):
-            stats = collections.Counter(results)
-            # _roughly_ `percent` should have been `True`
-            diff = abs((float(stats[True]) / num_users) - (percent / 100.0))
-            self.assertTrue(diff < 0.1)
-
         self.assertFalse(any(simulate_percent_loggedin(0)))
         self.assertTrue(all(simulate_percent_loggedin(100)))
-        assert_fuzzy_percent_true(simulate_percent_loggedin(25), 25)
-        assert_fuzzy_percent_true(simulate_percent_loggedin(10), 10)
-        assert_fuzzy_percent_true(simulate_percent_loggedin(50), 50)
-        assert_fuzzy_percent_true(simulate_percent_loggedin(99), 99)
+        self._assert_fuzzy_percent_true(simulate_percent_loggedin(25), 25)
+        self._assert_fuzzy_percent_true(simulate_percent_loggedin(10), 10)
+        self._assert_fuzzy_percent_true(simulate_percent_loggedin(50), 50)
+        self._assert_fuzzy_percent_true(simulate_percent_loggedin(99), 99)
+
+    def test_percent_loggedout(self):
+        num_users = 2000
+
+        def simulate_percent_loggedout(wanted_percent):
+            cfg = {'percent_loggedout': wanted_percent}
+            for i in xrange(num_users):
+                mock_world = self.world()
+                loid = self.generate_loid()
+                mock_world.current_loid = mock.Mock(return_value=loid)
+                mock_world.is_user_loggedin = mock.Mock(return_value=False)
+                feature_state = self._make_state(cfg, mock_world)
+                yield feature_state.is_enabled()
+
+        self.assertFalse(any(simulate_percent_loggedout(0)))
+        self.assertTrue(all(simulate_percent_loggedout(100)))
+        self._assert_fuzzy_percent_true(simulate_percent_loggedout(25), 25)
+        self._assert_fuzzy_percent_true(simulate_percent_loggedout(10), 10)
+        self._assert_fuzzy_percent_true(simulate_percent_loggedout(50), 50)
+        self._assert_fuzzy_percent_true(simulate_percent_loggedout(99), 99)
 
     def test_url_enabled(self):
         mock_world = self.world()
