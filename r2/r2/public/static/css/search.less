@@ -29,287 +29,57 @@
     font-size: @base-font-keyword;
   }
 
-  .search-result-listing {
-    .md-base-font-size(@search-font-base);
-  }
+  // needs the extra selector to override the default styles :/
+  .search-subscribe-button {
+    display: inline-block;
+    margin: 0;
+    margin-right: @margin-x-small * 1px;
 
-  .search-result.visited {
-    .search-title,
-    .search-link {
-      &, > mark {
-        color: @color-link-visited;
-      }
-    }
-  }
+    .remove {
+      @color: @color-unsubscribe;
+      @color2: darken(@color, 10%);
 
-  .search-result {
-    margin-bottom: @margin-x-large * 1px;
-    margin-top: @margin-small * 1px;
+      background: @color;
+      border-color: @color2;
 
-    a {
-      &, > mark {
-        color: @color-link;
-      }
-
-      &:visited,
-      &:visited > mark {
-        color: @color-link-visited;
+      &:active {
+        background: @color2;
       }
     }
 
-    &.has-thumbnail {
-      .display-flex();
+    .add {
+      @color: @color-subscribe;
+      @color2: darken(@color, 10%);
 
-      > * {
-        .flex(1 1);
-      }
+      background: @color;
+      border-color: @color2;
 
-      > .thumbnail {
-        .flex(0 0 70px);
-        margin-right: @margin-small * 1px;
-        width: 70px;
-
-        img {
-          display: block;
-          height: auto;
-          width: 100%;
-        }
+      &:active {
+        background: @color2;
       }
     }
 
-    .search-result-meta,
-    .search-result-footer {
-      .search-font-size();
-      vertical-align: baseline;
-    }
+    .add, .remove {
+      color: @color-white;
+      text-align: center;
+      transform: scale(1, 1);
+      transition: all 0.15s;
+      width: 90px;
 
-    .search-result-header {
-      .search-font-size();
-
-      * {
-        vertical-align: top;
+      &:focus {
+        outline: none;
+        box-shadow: 0 0 0 1px @color-subscribe-button-focus inset;
       }
 
-      .search-title {
-        font-size: @search-font-large * 1px;
-        margin-right: @margin-x-small * 1px;
-      }
-
-      .search-subreddit-link {
-        color: @color-subreddit;
+      &.active {
         display: inline-block;
-        margin-bottom: 0;
+        line-height: 13px;
       }
-    }
-
-    .search-result-meta {
-      .search-font-size(@search-font-small, @search-line-base);
-      color: @color-meta;
-
-      .search-result-icon {
-        vertical-align: text-bottom;
-      }
-    }
-
-    .search-score {
-      .search-font-size(@search-font-base, @search-font-base, @search-font-small);
-
-      &:after {
-        content: ' •';
-      }
-    }
-
-    .search-comments {
-      font-weight: bold;
-      color: @color-meta;
-    }
-
-    .search-result-body {
-      .search-font-size(@search-font-base, @search-line-small);
-      color: @color-body;
-      padding-right: @margin-xxx-large * 1px;
-    }
-
-    .search-expando {
-      overflow: hidden;
-
-      &.collapsed {
-        max-height: 45px;
-        position: relative;
-
-        &:before {
-          bottom: 0;
-          content:'';
-          height: 15px;
-          left: 0;
-          position: absolute;
-          width: 100%;
-
-          .linear-gradient(rgba(255, 255, 255, 0), rgba(255, 255, 255, 1));
-        }
-      }
-    }
-
-    .search-expando-button {
-      color: @color-link;
-
-      &:hover {
-        cursor: pointer;
-        text-decoration: underline;
-      }
-
-      > span {
-        display: none;
-      }
-
-      &.expanded .search-expando-button-label-expanded,
-      &.collapsed .search-expando-button-label-collapsed {
-        display: inline;
-      }
-    }
-
-    .search-result-footer {
-      .search-font-size();
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-
-      .search-link {
-        margin-left: @margin-x-small * 1px;
-      }
-    }
-
-    mark {
-      background-color: transparent;
-      color: inherit;
-      font-weight: bold;
-    }
-  }
-
-  .search-result-subreddit {
-    .search-subscribe-button {
-      display: inline-block;
-      margin: 0;
-      margin-right: @margin-x-small * 1px;
-
-      .remove {
-        @color: @color-unsubscribe;
-        @color2: darken(@color, 10%);
-
-        background: @color;
-        border-color: @color2;
-
-        &:active {
-          background: @color2;
-        }
-      }
-
-      .add {
-        @color: @color-subscribe;
-        @color2: darken(@color, 10%);
-
-        background: @color;
-        border-color: @color2;
-
-        &:active {
-          background: @color2;
-        }
-      }
-
-      .add, .remove {
-        color: @color-white;
-        text-align: center;
-        transform: scale(1, 1);
-        transition: all 0.15s;
-        width: 90px;
-
-        &:focus {
-          outline: none;
-          box-shadow: 0 0 0 1px @color-subscribe-button-focus inset;
-        }
-
-        &.active {
-          display: inline-block;
-          line-height: 13px;
-        }
-      }
-    }
-  }
-
-  .search-result-group {
-    max-width: @max-width;
-    min-width: @min-width;
-    padding-left: @margin-xx-large * 1px;
-    padding-right: @margin-large * 1px;
-
-    .search-result-group-header {
-      border-bottom: 2px solid @color-group-header-border;
-      color: @color-dark-grey;
-      margin-bottom: @margin-large * 1px;
-      margin-top: @margin-xx-large * 1px;
-    }
-
-    .search-header-label {
-      .search-font-size(@search-font-medium);
-      font-weight: bold;
-    }
-
-    .search-header-menus {
-      float: right;
-    }
-
-    .search-menu {
-      .search-font-size(@search-font-base);
-      display: inline-block;
-      margin-left: @margin-large * 1px;
-    }
-
-    footer .nav-buttons {
-      .search-font-size(@search-font-base);
-      margin-top: @margin-small * 1px;
-      margin-bottom: @margin-xx-large * 1px;
-
-      * { 
-        font-size: inherit;
-      }
-    }
-
-    footer .info {
-      color: @color-meta;
     }
   }
 
   .author {
     margin-right: 0;
-  }
-
-  .search-result-icon {
-    background-position: center;
-    background-repeat: no-repeat;
-    display: inline-block;
-    height: 15px;
-    vertical-align: middle;
-    width: 16px;
-  }
-
-  .search-result-icon-score {
-    background-image: data-uri('../ambivote-icon.png');
-    background-size: 10px 14px;
-  }
-
-  .search-result-icon-external {
-    background-image: data-uri('../external-link-icon.png');
-    background-size: 15px 7px;
-  }
-
-  .search-result-icon-filter {
-    background-image: data-uri('../search-icon.png');
-    background-size: 11px 12px;
-  }
-
-  .search-result-icon-internal {
-    background-image: data-uri('../internal-link-icon.png');
-    background-size: 11px 10px;
   }
 
   .searchfacets {
@@ -413,6 +183,240 @@
     width: 20px;
   }
 }
+
+.search-result-listing {
+  .md-base-font-size(@search-font-base);
+}
+
+.search-result.visited {
+  .search-title,
+  .search-link {
+    &, > mark {
+      color: @color-link-visited;
+    }
+  }
+}
+
+.search-result {
+  margin-bottom: @margin-x-large * 1px;
+  margin-top: @margin-small * 1px;
+
+  :link {
+    &, > mark {
+      color: @color-link;
+    }
+  }
+
+  :visited {
+    &, > mark {
+      color: @color-link-visited;
+    }
+  }
+
+  &.has-thumbnail {
+    .display-flex();
+
+    > * {
+      .flex(1 1);
+    }
+
+    > .thumbnail {
+      .flex(0 0 70px);
+      margin-right: @margin-small * 1px;
+      width: 70px;
+
+      img {
+        display: block;
+        height: auto;
+        width: 100%;
+      }
+    }
+  }
+
+
+  mark {
+    background-color: transparent;
+    color: inherit;
+    font-weight: bold;
+    line-height: 1em;
+  }
+}
+
+.search-result-meta,
+.search-result-footer {
+  .search-font-size();
+  vertical-align: baseline;
+
+  > * {
+    // prevent unstyled children (e.g. spans) from adding to line-height
+    line-height: 1em;
+  }
+}
+
+.search-result-header {
+  .search-font-size();
+
+  > * {
+    vertical-align: top;
+  }
+
+}
+
+.search-title {
+  font-size: @search-font-large * 1px;
+  margin-right: @margin-x-small * 1px;
+}
+
+.search-result-meta {
+  .search-font-size(@search-font-small, @search-line-base);
+  color: @color-meta;
+
+  .search-result-icon {
+    vertical-align: text-bottom;
+  }
+}
+
+.search-score {
+  .search-font-size(@search-font-base, @search-font-base, @search-font-small);
+
+  &:after {
+    content: ' •';
+  }
+}
+
+.search-comments {
+  font-weight: bold;
+  color: @color-meta;
+}
+
+.search-result-body {
+  .search-font-size(@search-font-base, @search-line-small);
+  color: @color-body;
+  padding-right: @margin-xxx-large * 1px;
+}
+
+.search-expando {
+  overflow: hidden;
+
+  &.collapsed {
+    max-height: 45px;
+    position: relative;
+
+    &:before {
+      bottom: 0;
+      content:'';
+      height: 15px;
+      left: 0;
+      position: absolute;
+      width: 100%;
+
+      .linear-gradient(rgba(255, 255, 255, 0), rgba(255, 255, 255, 1));
+    }
+  }
+}
+
+.search-expando-button {
+  color: @color-link;
+
+  &:hover {
+    cursor: pointer;
+    text-decoration: underline;
+  }
+
+  > span {
+    display: none;
+  }
+
+  &.expanded .search-expando-button-label-expanded,
+  &.collapsed .search-expando-button-label-collapsed {
+    display: inline;
+  }
+}
+
+.search-result-footer {
+  .search-font-size();
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  .search-link {
+    margin-left: @margin-x-small * 1px;
+  }
+}
+
+.search-result-group {
+  max-width: @max-width;
+  min-width: @min-width;
+  padding-left: @margin-xx-large * 1px;
+  padding-right: @margin-large * 1px;
+
+
+  footer .nav-buttons {
+    .search-font-size(@search-font-base);
+    margin-top: @margin-small * 1px;
+    margin-bottom: @margin-xx-large * 1px;
+
+    * { 
+      font-size: inherit;
+    }
+  }
+
+  footer .info {
+    color: @color-meta;
+  }
+}
+
+.search-result-group-header {
+  border-bottom: 2px solid @color-group-header-border;
+  color: @color-dark-grey;
+  margin-bottom: @margin-large * 1px;
+  margin-top: @margin-xx-large * 1px;
+}
+
+.search-header-label {
+  .search-font-size(@search-font-medium);
+  font-weight: bold;
+}
+
+.search-header-menus {
+  float: right;
+}
+
+.search-menu {
+  .search-font-size(@search-font-base);
+  display: inline-block;
+  margin-left: @margin-large * 1px;
+}
+
+.search-result-icon {
+  background-position: center;
+  background-repeat: no-repeat;
+  display: inline-block;
+  height: 15px;
+  vertical-align: middle;
+  width: 16px;
+}
+
+.search-result-icon-score {
+  background-image: data-uri('../ambivote-icon.png');
+  background-size: 10px 14px;
+}
+
+.search-result-icon-external {
+  background-image: data-uri('../external-link-icon.png');
+  background-size: 15px 7px;
+}
+
+.search-result-icon-filter {
+  background-image: data-uri('../search-icon.png');
+  background-size: 11px 12px;
+}
+
+.search-result-icon-internal {
+  background-image: data-uri('../internal-link-icon.png');
+  background-size: 11px 10px;
+}
+
 
 // old styles, remove when unflagged
 .searchfacets {
