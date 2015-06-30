@@ -54,11 +54,13 @@
 </div>
 
 <%def name="last_modified_message()">
-    <p id="timeseries-unprocessed" data-last-processed="${js_timestamp(thing.traffic_last_modified)}">
+    <p id="timeseries-unprocessed" data-last-processed="${js_timestamp(thing.traffic_last_modified)}"
     % if thing.traffic_lag.total_seconds() > 10800:
-    ${strings.traffic_processing_slow % dict(date=babel.dates.format_datetime(thing.traffic_last_modified, format="long", locale=c.locale))}
+      class="slow">
+      ${strings.traffic_processing_slow % dict(date=babel.dates.format_datetime(thing.traffic_last_modified, format="long", locale=c.locale))}
     % else:
-    ${strings.traffic_processing_normal % dict(date=babel.dates.format_datetime(thing.traffic_last_modified, format="long", locale=c.locale))}
+      >
+      ${strings.traffic_processing_normal % dict(date=babel.dates.format_datetime(thing.traffic_last_modified, format="long", locale=c.locale))}
     % endif
     </p>
 </%def>

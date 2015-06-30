@@ -5978,9 +5978,12 @@ div.timeseries span.title {
 #timeseries-unprocessed {
     font-size: small;
     font-weight: bold;
-    color: #900;
     margin: 1em 0;
     max-width: 60em;
+
+    &.slow {
+        color: #900;
+    }
 }
 
 .timeseries-tablebar {
