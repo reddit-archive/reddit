@@ -78,10 +78,6 @@
     }
   }
 
-  .author {
-    margin-right: 0;
-  }
-
   .searchfacets {
     .search-font-size();
     border: 1px solid @color-meta;
@@ -268,6 +264,12 @@
 }
 
 .search-result-meta {
+  // let this element inherit the same styles as the 'tagline' class
+  // we don't want to add the extra class to the markup because it will cause
+  // the line to potentially inherit a bunch of unwanted styles from subreddit
+  // stylesheets
+  &:extend(.tagline all);
+
   .search-font-size(@search-font-small, @search-line-base);
   color: @color-meta;
 
