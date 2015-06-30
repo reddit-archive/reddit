@@ -210,12 +210,14 @@ r.analytics = {
     );
   },
 
-  firePageTrackingPixel: function(params) {
-    params = params || {};
-    var querystring = [];
+  firePageTrackingPixel: function(url, params) {
+    if (!url) { return; }
 
-    var cachebuster = Math.round(Math.random() * 2147483647);
-    querystring.push('r=' + cachebuster);
+    params = params || {};
+
+    var querystring = [
+      'r=' + Math.random(),
+    ];
 
     var referrer = document.referrer || '';
     var referrerDomain = referrer.match(/\/\/([^\/]+)/);
@@ -233,7 +235,7 @@ r.analytics = {
     }
 
     var pixel = new Image();
-    pixel.src = r.config.tracker_url + '?' + querystring.join('&');
+    pixel.src = url + '&' + querystring.join('&');
   },
 
   // If we passed along referring tags to this page, after it's loaded, remove them from the URL so that 

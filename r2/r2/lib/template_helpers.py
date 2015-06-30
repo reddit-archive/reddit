@@ -30,7 +30,7 @@ from r2.lib.utils import UrlParser, timeago, timesince, is_subdomain
 
 from r2.lib import hooks
 from r2.lib.static import static_mtime
-from r2.lib import js
+from r2.lib import js, tracking
 
 import babel.numbers
 import simplejson
@@ -178,7 +178,7 @@ def js_config(extra_config=None):
           "loading": _("loading...")
         },
         "is_fake": isinstance(c.site, FakeSubreddit),
-        "tracker_url": g.tracker_url,
+        "tracker_url": tracking.get_pageview_pixel_url() or '',
         "adtracker_url": g.adtracker_url,
         "clicktracker_url": g.clicktracker_url,
         "uitracker_url": g.uitracker_url,

@@ -90,6 +90,26 @@ r.ui.init = function() {
     r.ui.initReadNext();
 
     r.ui.initTimings()
+
+    r.ui.firePageTrackingPixel()
+}
+
+r.ui.firePageTrackingPixel = function() {
+  var url = r.config.tracker_url;
+  var params = {};
+
+  if (!r.config.user_id) {
+    var tracker = new redditlib.Tracker();
+    var loggedOutData = tracker.getTrackingData();
+    if (loggedOutData && loggedOutData.loid) {
+      params = {
+          loid: loggedOutData.loid,
+          loidcreated: loggedOutData.loidcreated
+      };
+    }
+  }
+
+  r.analytics.firePageTrackingPixel(url, params);
 }
 
 r.ui.inMobileWebBlacklist = function() {

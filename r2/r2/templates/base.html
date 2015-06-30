@@ -90,25 +90,6 @@ reddit, reddit.com, vote, comment, submit
 </%def>
 
 <%def name="head()">
-%if g.tracker_url and thing.site_tracking:
-<script type="text/javascript">
-    (function() {
-        var loggedOutParams = {};
-        %if not c.user_is_loggedin:
-            var tracker = new redditlib.Tracker();
-            var loggedOutData = tracker.getTrackingData();
-            if (loggedOutData && loggedOutData.loid) {
-              loggedOutParams = {
-                  loid: loggedOutData.loid,
-                  loidcreated: loggedOutData.loidcreated
-              };
-            }
-        %endif
-        r.analytics.firePageTrackingPixel(loggedOutParams);
-    })();
-</script>
-%endif
-
 ${googleanalytics('web', thing.is_gold_page() if hasattr(thing, 'is_gold_page') else False)}
 </%def>
 
