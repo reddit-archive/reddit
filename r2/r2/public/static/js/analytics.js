@@ -210,6 +210,32 @@ r.analytics = {
     );
   },
 
+  firePageTrackingPixel: function(params) {
+    params = params || {};
+    var querystring = [];
+
+    var cachebuster = Math.round(Math.random() * 2147483647);
+    querystring.push('r=' + cachebuster);
+
+    var referrer = document.referrer || '';
+    var referrerDomain = referrer.match(/\/\/([^\/]+)/);
+
+    if (referrerDomain && referrerDomain.length > 1) {
+      querystring.push('referrer_domain=' + encodeURIComponent(referrerDomain[1]));
+    }
+
+    for(var p in params) {
+      if (params.hasOwnProperty(p)) {
+        querystring.push(
+          encodeURIComponent(p) + '=' + encodeURIComponent(params[p])
+        );
+      }
+    }
+
+    var pixel = new Image();
+    pixel.src = r.config.tracker_url + '?' + querystring.join('&');
+  },
+
   // If we passed along referring tags to this page, after it's loaded, remove them from the URL so that 
   // the user can have a clean, copy-pastable URL. This will also help avoid erroneous analytics if they paste the URL
   // in an email or something.
