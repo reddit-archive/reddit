@@ -1041,10 +1041,10 @@ class Subreddit(Thing, Printable, BaseSite):
     @classmethod
     def subscribe_defaults(cls, user):
         if not user.has_subscribed:
-            srs = cls.user_subreddits(user=None, ids=False, limit=None)
-            cls.subscribe_multiple(user, srs)
             user.has_subscribed = True
             user._commit()
+            srs = cls.user_subreddits(user=None, ids=False, limit=None)
+            cls.subscribe_multiple(user, srs)
 
     def keep_item(self, wrapped):
         if c.user_is_admin:
