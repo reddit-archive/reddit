@@ -23,10 +23,6 @@
 
 import unittest
 
-from r2.tests import stage_for_paste
-
-stage_for_paste()
-
 from r2.lib.permissions import PermissionSet, ModeratorPermissionSet
 
 class TestPermissionSet(PermissionSet):

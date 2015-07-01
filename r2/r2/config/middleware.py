@@ -425,6 +425,11 @@ class RedditApp(PylonsApp):
 
     def setup_app_env(self, environ, start_response):
         PylonsApp.setup_app_env(self, environ, start_response)
+        from pylons import g
+        # When running tests don't load controllers or register hooks. Loading the
+        # controllers currently causes db initialization and runs queries.
+        if g.env == 'unit_test':
+            return
         self.load()
 
     def load(self):
