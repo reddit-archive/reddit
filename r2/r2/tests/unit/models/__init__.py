@@ -19,7 +19,3 @@
 # All portions of the code written by reddit are Copyright (c) 2006-2015 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
-
-from r2.tests import stage_for_paste
-
-stage_for_paste()

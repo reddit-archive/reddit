@@ -425,6 +425,8 @@ class RedditApp(PylonsApp):
 
     def setup_app_env(self, environ, start_response):
         PylonsApp.setup_app_env(self, environ, start_response)
+        if environ.get('paste.testing'):
+            return
         self.load()
 
     def load(self):

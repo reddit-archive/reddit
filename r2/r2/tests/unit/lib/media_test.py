@@ -21,9 +21,6 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from r2.tests import stage_for_paste
-stage_for_paste()
-
 import unittest
 
 from r2.lib.media import _get_scrape_url

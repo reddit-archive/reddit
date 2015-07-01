@@ -35,9 +35,9 @@ class TestPermissionSet(PermissionSet):
 class SRMemberTest(unittest.TestCase):
     def setUp(self):
         a = Account()
-        a._commit()
+        a._id = 1
         sr = Subreddit()
-        sr._commit()
+        sr._id = 2
         self.rel = SRMember(sr, a, 'test')
 
     def test_get_permissions(self):
