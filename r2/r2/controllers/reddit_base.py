@@ -1681,6 +1681,7 @@ class RedditController(OAuth2ResourceController):
                         strings.private_subreddit_message,
                         image="subreddit-private.png",
                         sr_description=public_description,
+                        include_message_mods_link=True,
                     )
                     request.environ['usable_error_content'] = errpage.render()
                     self.abort403()

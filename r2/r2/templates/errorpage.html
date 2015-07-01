@@ -42,4 +42,10 @@ from r2.lib.filters import unsafe, safemarkdown
       ${unsafe(safemarkdown(thing.sr_description, wrap=False))}
   </div>
   % endif
+
+  % if thing.include_message_mods_link:
+  <div id="private-subreddit-message-link" class="errorpage-message">
+    <a href="/message/compose/?to=/r/${c.site.name}">${_("send a message to the moderators to request access")}</a>
+  </div>
+  % endif
 </div>

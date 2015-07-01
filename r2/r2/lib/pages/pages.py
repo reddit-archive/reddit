@@ -2412,14 +2412,18 @@ class SidebarMessage(Templated):
 class RedditError(BoringPage):
     site_tracking = False
     def __init__(self, title, message, image=None, sr_description=None,
-                 explanation=None):
+            include_message_mods_link=False, explanation=None):
+        content = ErrorPage(
+            title=title,
+            message=message,
+            image=image,
+            sr_description=sr_description,
+            include_message_mods_link=include_message_mods_link,
+            explanation=explanation,
+        )
         BoringPage.__init__(self, title, loginbox=False,
                             show_sidebar = False,
-                            content=ErrorPage(title=title,
-                                              message=message,
-                                              image=image,
-                                              sr_description=sr_description,
-                                              explanation=explanation))
+                            content=content)
 
 class ErrorPage(Templated):
     """Wrapper for an error message"""
