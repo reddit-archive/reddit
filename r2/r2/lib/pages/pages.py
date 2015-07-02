@@ -4203,13 +4203,12 @@ class PromoteLinkEdit(PromoteLinkBase):
         self.subreddit_selector = SubredditSelector(
             extra_subreddits=extra_subreddits, include_user_subscriptions=False)
         self.inventory = {}
-        message = _("This dashboard allows you to easily place ads on reddit. "
-                    "Have any questions? [Check out the FAQ](%(faq)s).\n\n"
-                    "__New!__ Interest Audience Targeting and user interface changes. "
-                    "[Read our announcement post](%(link)s) on /r/selfserve.")
+        message = _("Create your ad on this page. Have questions? "
+                    "Check out the [Help Center](%(help_center)s) "
+                    "or [/r/selfserve](%(selfserve)s).")
         message %= {
-            'link': '/r/selfserve/comments/2dg4lq/announcement_interest_audience_group_targeting/',
-            'faq': 'http://www.reddit.com/wiki/selfserve',
+            'help_center': 'https://reddit.zendesk.com/hc/en-us/categories/200352595-Advertising',
+            'selfserve': 'https://www.reddit.com/r/selfserve'
         }
         self.infobar = InfoBar(message=message)
         self.price_dict = PromotionPrices.get_price_dict(c.user)

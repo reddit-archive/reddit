@@ -644,7 +644,7 @@ class PromotionPrices(tdb_cassandra.View):
 
     COLLECTION_DEFAULT = g.cpm_selfserve_collection.pennies
     SUBREDDIT_DEFAULT = g.cpm_selfserve.pennies
-    COUNTRY_DEFAULT = g.cpm_selfserve_collection.pennies
+    COUNTRY_DEFAULT = g.cpm_selfserve_geotarget_country.pennies
     METRO_DEFAULT = g.cpm_selfserve_geotarget_metro.pennies
 
     @classmethod
@@ -763,7 +763,7 @@ class PromotionPrices(tdb_cassandra.View):
                 "METRO": {},
                 "COLLECTION_DEFAULT": g.cpm_selfserve_collection.pennies,
                 "SUBREDDIT_DEFAULT": g.cpm_selfserve.pennies,
-                "COUNTRY_DEFAULT": g.cpm_selfserve_collection.pennies,
+                "COUNTRY_DEFAULT": g.cpm_selfserve_geotarget_country.pennies,
                 "METRO_DEFAULT": g.cpm_selfserve_geotarget_metro.pennies,
             }
 
