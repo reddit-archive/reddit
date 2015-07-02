@@ -213,6 +213,7 @@ class Globals(object):
             'RL_AVG_REQ_PER_SEC',
             'RL_OAUTH_AVG_REQ_PER_SEC',
             'RL_LOGIN_AVG_PER_SEC',
+            'RL_LOGIN_IP_AVG_PER_SEC',
             'RL_SHARE_AVG_PER_SEC',
         ],
 
@@ -585,6 +586,8 @@ class Globals(object):
 
         self.RL_LOGIN_MAX_REQS = int(self.config["RL_LOGIN_AVG_PER_SEC"] *
                                      self.RL_RESET_SECONDS)
+        self.RL_LOGIN_IP_MAX_REQS = int(self.config["RL_LOGIN_IP_AVG_PER_SEC"] *
+                                        self.RL_RESET_SECONDS)
         self.RL_SHARE_MAX_REQS = int(self.config["RL_SHARE_AVG_PER_SEC"] *
                                      self.RL_RESET_SECONDS)
 
