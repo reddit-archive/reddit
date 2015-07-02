@@ -347,6 +347,7 @@ class Globals(object):
             'events_collector_vote_sample_rate',
             'events_collector_mod_sample_rate',
             'events_collector_quarantine_sample_rate',
+            'https_cert_testing_probability',
         ],
         ConfigValue.tuple: [
             'fastlane_links',

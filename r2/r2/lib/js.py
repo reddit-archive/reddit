@@ -580,6 +580,12 @@ module["less"] = Module('less.js',
     should_compile=False,
 )
 
+# This needs to be separate module because we need it to load on old / bad
+# browsers that choke on reddit.js
+module["https-tester"] = Module("https-tester.js",
+    "https-tester.js"
+)
+
 def src(*names, **kwargs):
     sources = []
 

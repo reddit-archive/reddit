@@ -23,7 +23,7 @@
 <%! 
    from r2.config import feature
    from r2.lib.template_helpers import add_sr, static, join_urls, class_dict, get_domain
-   from r2.lib.filters import unsafe
+   from r2.lib.filters import unsafe, scriptsafe_dumps
    from r2.lib.pages import SearchForm, ClickGadget, SideContentBox, Login, ListingChooser
    from r2.lib import tracking
    from pylons import request
@@ -174,6 +174,24 @@
         <%include file="prefoptions.html" />
       </script>
     %endif
+  %endif
+  %if feature.is_enabled("test_https_certs"):
+    <% from r2.lib import js %>
+    ${unsafe(js.use("https-tester"))}
+    <%
+    cur_proto = ("https:" if c.secure else "http:")
+    https_test_config = {
+        "runName": g.live_config.get("https_cert_testing_run_name"),
+        "controlImg": cur_proto + g.live_config.get("https_cert_testing_img_control"),
+        "testImg": g.live_config.get("https_cert_testing_img_test"),
+        "logPixel": cur_proto + g.httpstracker_url,
+    }
+    %>
+    <script type="text/javascript">
+    if(Math.random() < ${scriptsafe_dumps(g.live_config.get("https_cert_testing_probability"))}) {
+        runHTTPSCertTest(${scriptsafe_dumps(https_test_config)});
+    }
+    </script>
   %endif
   ${framebuster()}
   ${thing.debug_footer}
