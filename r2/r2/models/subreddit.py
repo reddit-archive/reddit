@@ -274,6 +274,7 @@ class Subreddit(Thing, Printable, BaseSite):
         key_color='',
         hide_ads=False,
         ban_count=0,
+        allow_random=True,
     )
 
     # special attributes that shouldn't set Thing data attributes because they
@@ -988,16 +989,24 @@ class Subreddit(Thing, Printable, BaseSite):
                        data=True)
         srs = list(q)
 
-        sr_ids = [sr._id for sr in srs if not sr.over_18]
-        over_18_sr_ids = [sr._id for sr in srs if sr.over_18]
+        # split the list into two based on whether the subreddit is 18+ or not
+        sr_ids = []
+        over_18_sr_ids = []
 
         # /r/promos is public but has special handling to make it unviewable
         promo_sr_id = cls.get_promote_srid()
-        if promo_sr_id:
-            try:
-                sr_ids.remove(promo_sr_id)
-            except ValueError:
-                pass
+
+        for sr in srs:
+            if not sr.allow_random:
+                continue
+
+            if sr._id == promo_sr_id:
+                continue
+
+            if not sr.over_18:
+                sr_ids.append(sr._id)
+            else:
+                over_18_sr_ids.append(sr._id)
 
         NamedGlobals.set("popular_sr_ids", sr_ids)
         NamedGlobals.set("popular_over_18_sr_ids", over_18_sr_ids)
