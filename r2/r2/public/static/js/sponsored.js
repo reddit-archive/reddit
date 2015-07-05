@@ -1064,11 +1064,10 @@ var exports = r.sponsored = {
         var platformOverride = platformTargeting.isMobile && platformTargeting.platform === 'mobile';
 
         var $priorities = $form.find('*[name="priority"]');
-        if (platformOverride) {
+        if (platformOverride && this.currentPlatform != 'mobile') {
           $priorities.filter('[value="house"]').prop('checked', 'checked');
-          $priorities.filter(':not([value="house"])').prop('disabled', true);
         } else {
-          if (this.currentPlatform === 'mobile') {
+          if (!platformOverride && this.currentPlatform === 'mobile') {
             $priorities.filter('[value="standard"]').prop('checked', 'checked');
           }
           $priorities.prop('disabled', false);

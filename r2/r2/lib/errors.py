@@ -164,7 +164,6 @@ error_list = dict((
         ('GOLD_ONLY_SR_REQUIRED', _("this subreddit must be 'gold only' to select this")),
         ('CANT_CREATE_SR', _("your account is too new to create a subreddit. please contact the admins to request an exemption.")),
         ('BAD_PROMO_MOBILE_OS', _("you must select at least one mobile OS to target")),
-        ('BAD_PROMO_MOBILE_PRIORITY', _("mobile campaigns may only use house priority")),
     ))
 
 errors = Storage([(e, e) for e in error_list.keys()])

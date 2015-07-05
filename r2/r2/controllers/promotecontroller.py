@@ -1008,11 +1008,6 @@ class PromoteApiController(ApiController):
             form.set_error(errors.BAD_PROMO_MOBILE_OS, 'mobile_os')
             return
 
-        if platform == 'mobile' and priority.cpm:
-            c.errors.add(errors.BAD_PROMO_MOBILE_PRIORITY, field='priority')
-            form.set_error(errors.BAD_PROMO_MOBILE_PRIORITY, 'priority')
-            return
-
         if not (c.user_is_sponsor or platform == 'desktop'):
             return abort(403, 'forbidden')
 
