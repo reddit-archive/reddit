@@ -564,18 +564,6 @@ class ActionBuilder(IDBuilder):
 
 class CampaignBuilder(IDBuilder):
     """Build on a list of PromoTuples."""
-
-    def __init__(self, query, wrap=Wrapped, keep_fn=None, prewrap_fn=None,
-                 skip=False, num=None, after=None, reverse=False, count=0, **kw):
-        Builder.__init__(self, wrap=wrap, keep_fn=keep_fn)
-        self.query = query
-        self.skip = skip
-        self.num = num
-        self.start_count = count
-        self.after = after
-        self.reverse = reverse
-        self.prewrap_fn = prewrap_fn
-
     @staticmethod
     def _get_after(promo_tuples, after, reverse):
         promo_tuples = list(promo_tuples)
@@ -621,17 +609,6 @@ class CampaignBuilder(IDBuilder):
             ret.append(w)
 
         return ret
-
-    def valid_after(self, after):
-        # CampaignBuilder's wrapping logic only applies to Campaigns, so it
-        # needs its own version of valid_after to just use the base class'
-        # wrapping logic for security checks.
-        if self.prewrap_fn:
-            after = self.prewrap_fn(after)
-        if self.wrap:
-            after = Builder.wrap_items(self, (after,))[0]
-
-        return not self.must_skip(after)
 
 
 class ModActionBuilder(QueryBuilder):
