@@ -61,12 +61,12 @@
          %endif
          name="q" placeholder="${_('search')}" tabindex="20">
 
-  %if not feature.is_enabled('legacy_search') and not thing.simple:
+  %if feature.is_enabled('legacy_search') or c.user.pref_legacy_search or thing.simple:
+    <input type="submit" value="" tabindex="22">
+  %else:
     <button class="search-submit-button c-btn c-btn-primary" type='submit' aria-label="${_("Search")}">
       <span class="search-icon"></span>
     </button>
-  %else:
-    <input type="submit" value="" tabindex="22">
   %endif
 
   %if thing.subreddit_search:

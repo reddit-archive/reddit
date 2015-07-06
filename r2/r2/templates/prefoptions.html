@@ -292,6 +292,10 @@
         ${checkbox(_("show self-serve advertising tab on front page"), 
           "show_promote")}
       %endif
+      %if feature.is_enabled('legacy_search_pref'):
+        <br>
+        ${checkbox(_("show legacy search page"), "legacy_search")}
+      %endif
     </td>
   </tr>
   <tr>

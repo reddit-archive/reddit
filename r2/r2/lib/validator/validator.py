@@ -2920,7 +2920,7 @@ class VResultTypes(Validator):
 
         if is_api():
             result_types = result_types or {'link'}
-        elif feature.is_enabled('legacy_search'):
+        elif feature.is_enabled('legacy_search') or c.user.pref_legacy_search:
             result_types = {'link'}
         else:
             result_types = result_types or {'link', 'sr'}

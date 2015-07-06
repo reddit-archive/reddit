@@ -112,6 +112,7 @@ class Account(Thing):
                      pref_public_server_seconds=False,
                      pref_ignore_suggested_sort=False,
                      pref_beta=False,
+                     pref_legacy_search=False,
                      mobile_compress = False,
                      mobile_thumbnail = True,
                      reported = 0,

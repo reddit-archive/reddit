@@ -1435,7 +1435,7 @@ class SearchPage(BoringPage):
                  syntax=None, converted_data=None, facets={}, sort=None,
                  recent=None, subreddits=None,
                  *a, **kw):
-        if not feature.is_enabled('legacy_search'):
+        if not (feature.is_enabled('legacy_search') or c.user.pref_legacy_search):
             self.extra_page_classes = self.extra_page_classes + ['combined-search-page']
         self.searchbar = SearchBar(prev_search=prev_search,
                                    search_params=search_params,
@@ -1462,7 +1462,7 @@ class SearchPage(BoringPage):
         BoringPage.__init__(self, pagename, robots='noindex', *a, **kw)
 
     def content(self):
-        if feature.is_enabled('legacy_search'):
+        if feature.is_enabled('legacy_search') or c.user.pref_legacy_search:
             return self.content_stack((self.searchbar, self.sr_facets, self.infobar,
                                    self.nav_menu, self.subreddits, self._content))
 

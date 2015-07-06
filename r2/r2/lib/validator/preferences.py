@@ -83,6 +83,7 @@ PREFS_VALIDATORS = dict(
     pref_default_theme_sr=VSRByName("theme_selector", False),
     pref_other_theme=VSRByName("other_theme", False),
     pref_beta=VBoolean('beta'),
+    pref_legacy_search=VBoolean('legacy_search'),
 )
 
 
