@@ -1927,6 +1927,8 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         # limit to max subreddit count, allowing a little fudge room for
         # cassandra inconsistency
         if self.is_symlink:
+            if not getattr(self, '_linked_multi', None):
+                self._linked_multi = LabeledMulti._byID(self.copied_from)
             return self.linked_multi.sr_columns
 
         remaining = self.MAX_SR_COUNT + 10
