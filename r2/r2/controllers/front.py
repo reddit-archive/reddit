@@ -1045,7 +1045,7 @@ class FrontController(RedditController):
         cleanup_message = None
         converted_data = None
         subreddit_facets = None
-        legacy_render_class = feature.is_enabled('legacy_search') or not feature.is_enabled('subreddit_search')
+        legacy_render_class = feature.is_enabled('legacy_search')
 
         if num > 0 and has_query:
             nav_menus = [SearchSortMenu(default=sort), TimeMenu(default=recent)]
