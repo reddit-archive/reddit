@@ -614,9 +614,7 @@ class SearchSortMenu(SortMenu):
 
     @class_property
     def hidden_options(cls):
-        if feature.is_enabled('subreddit_search'):
-            return ['hot']
-        return []
+        return ['hot']
 
     def make_buttons(self):
         buttons = super(SearchSortMenu, self).make_buttons()
