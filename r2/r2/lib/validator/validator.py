@@ -2910,14 +2910,17 @@ class VResultTypes(Validator):
     """
     def __init__(self, param):
         Validator.__init__(self, param, get_multiple=True)
-        self.options = ('link', 'sr')
+        self.default = []
+        self.options = {'link', 'sr'}
 
     def run(self, result_types):
         if result_types and ',' in result_types[0]:
             result_types = result_types[0].strip(',').split(',')
 
-        result_types = set(result_types) - {''}
+        # invalid values are ignored
+        result_types = set(result_types) & self.options
 
+        # for backwards compatibility, api and legacy default to link results
         if is_api():
             result_types = result_types or {'link'}
         elif feature.is_enabled('legacy_search') or c.user.pref_legacy_search:

@@ -970,10 +970,11 @@ class FrontController(RedditController):
               recent=VMenu('t', TimeMenu, remember=False),
               restrict_sr=VBoolean('restrict_sr', default=False),
               include_facets=VBoolean('include_facets', default=False),
+              result_types=VResultTypes('type'),
               syntax=VOneOf('syntax', options=g.search_syntaxes))
     @api_doc(api_section.search, supports_rss=True, uses_site=True)
     def GET_search(self, query, num, reverse, after, count, sort, recent,
-                   restrict_sr, include_facets, syntax, sr_detail):
+                   restrict_sr, include_facets, result_types, syntax, sr_detail):
         """Search links page."""
 
         # trigger redirect to /over18
@@ -1014,10 +1015,6 @@ class FrontController(RedditController):
             faceting = None if include_facets else {}
         else:
             faceting = None
-
-        # specify link or subreddit result types (when supported)
-        # do not officially expose search result type api yet
-        result_types = VResultTypes('type').run(request.GET.getall('type'))
 
         # no subreddit results if fielded search or structured syntax
         if syntax == 'cloudsearch' or (query and ':' in query):
