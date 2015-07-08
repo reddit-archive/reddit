@@ -1430,12 +1430,9 @@ class MyredditsController(ListingController):
             if self.where == "subscriber":
                 if not isinstance(after, Subreddit):
                     abort(400, 'gimme a subreddit')
-            elif isinstance(after, Subreddit):
-                # non-subscriber listings operate on SRMembers
+            else:
                 after = SRMember._fast_query(
                     after, c.user, self.where, data=False).values()[0]
-            elif not isinstance(after, SRMember):
-                abort(400, 'gimme a srmember')
 
         return ListingController.build_listing(self, after=after, **kwargs)
 

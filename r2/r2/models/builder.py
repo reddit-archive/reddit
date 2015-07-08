@@ -420,7 +420,6 @@ class QueryBuilder(Builder):
         num_have = 0
         done = False
         items = []
-        orig_items = {}
         count = self.start_count
         fetch_after = None
         loopcount = 0
@@ -445,9 +444,6 @@ class QueryBuilder(Builder):
 
             # Wrap the fetched items if necessary
             new_items = self.convert_items(fetched_items)
-
-            # For wrapped -> unwrapped lookups
-            orig_items.update((a._id, b) for a, b in izip(new_items, fetched_items))
 
             #skip and count
             while new_items and (not self.num or num_have < self.num):
@@ -479,9 +475,8 @@ class QueryBuilder(Builder):
         last_item = None
         if items:
             if self.start_count > 0:
-                # Make sure the item is the unwrapped version
-                first_item = orig_items[items[0]._id]
-            last_item = orig_items[items[-1]._id]
+                first_item = items[0]
+            last_item = items[-1]
 
         if self.reverse:
             items.reverse()
