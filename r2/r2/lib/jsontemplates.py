@@ -290,6 +290,7 @@ class SubredditJsonTemplate(ThingJsonTemplate):
         icon_img="icon_img",
         icon_size="icon_size",
         # key_color="key_color",
+        lang="lang",
         over18="over_18",
         public_description="public_description",
         public_description_html="public_description_html",
