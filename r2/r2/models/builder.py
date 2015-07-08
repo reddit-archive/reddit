@@ -71,11 +71,12 @@ EXTRA_FACTOR = 1.5
 MAX_RECURSION = 10
 
 class Builder(object):
-    def __init__(self, wrap=Wrapped, keep_fn=None, stale=True,
-                 spam_listing=False, **kw):
-        self.stale = stale
+    def __init__(self, wrap=Wrapped, prewrap_fn=None, keep_fn=None, stale=True,
+                 spam_listing=False):
         self.wrap = wrap
+        self.prewrap_fn = prewrap_fn
         self.keep_fn = keep_fn
+        self.stale = stale
         self.spam_listing = spam_listing
 
     def keep_item(self, item):
@@ -310,13 +311,15 @@ class Builder(object):
 
     def convert_items(self, items):
         """Convert a list of items to the desired output format"""
+        if self.prewrap_fn:
+            items = [self.prewrap_fn(i) for i in items]
+
         if self.wrap:
             items = self.wrap_items(items)
         else:
             # make a copy of items so the converted items can be mutated without
             # changing the original items
             items = items[:]
-
         return items
 
     def valid_after(self, after):
@@ -355,18 +358,16 @@ class Builder(object):
             return True
 
 class QueryBuilder(Builder):
-    def __init__(self, query, wrap=Wrapped, keep_fn=None, skip=False,
-                 spam_listing=False, **kw):
-        Builder.__init__(self, wrap=wrap, keep_fn=keep_fn,
-                         spam_listing=spam_listing)
+    def __init__(self, query, skip=False, num=None, sr_detail=None, count=0,
+                 after=None, reverse=False, **kw):
         self.query = query
         self.skip = skip
-        self.num = kw.get('num')
-        self.sr_detail = kw.get('sr_detail')
-        self.start_count = kw.get('count', 0) or 0
-        self.after = kw.get('after')
-        self.reverse = kw.get('reverse')
-        self.prewrap_fn = getattr(query, 'prewrap_fn', None)
+        self.num = num
+        self.sr_detail = sr_detail
+        self.start_count = count or 0
+        self.after = after
+        self.reverse = reverse
+        Builder.__init__(self, **kw)
 
     def __repr__(self):
         return "<%s(%r)>" % (self.__class__.__name__, self.query)
@@ -375,11 +376,6 @@ class QueryBuilder(Builder):
         """Iterates over the items returned by get_items"""
         for i in a[0]:
             yield i
-
-    def convert_items(self, items):
-        if self.prewrap_fn:
-            items = [self.prewrap_fn(i) for i in items]
-        return Builder.convert_items(self, items)
 
     def init_query(self):
         q = self.query
@@ -683,11 +679,9 @@ class SimpleBuilder(IDBuilder):
 
 
 class SearchBuilder(IDBuilder):
-    def __init__(self, query, wrap=Wrapped, keep_fn=None, skip=False,
-                 skip_deleted_authors=True, **kw):
-        IDBuilder.__init__(self, query, wrap, keep_fn, skip, **kw)
+    def __init__(self, query, skip_deleted_authors=True, **kw):
         self.skip_deleted_authors = skip_deleted_authors
-        self.sr_detail = kw.get('sr_detail')
+        IDBuilder.__init__(self, query, **kw)
 
     def init_query(self):
         self.skip = True
@@ -735,15 +729,16 @@ class SearchBuilder(IDBuilder):
 
         return True
 
+
 class WikiRevisionBuilder(QueryBuilder):
     show_extended = True
-    
-    def __init__(self, revisions, page=None, **kw):
-        self.user = kw.pop('user', None)
-        self.sr = kw.pop('sr', None)
+
+    def __init__(self, revisions, user=None, sr=None, page=None, **kw):
+        self.user = user
+        self.sr = sr
         self.page = page
         QueryBuilder.__init__(self, revisions, **kw)
-    
+
     def wrap_items(self, items):
         from r2.lib.validator.wiki import this_may_revise
         types = {}
@@ -756,7 +751,7 @@ class WikiRevisionBuilder(QueryBuilder):
             w.show_compare = self.show_extended
             types.setdefault(w.render_class, []).append(w)
             wrapped.append(w)
-        
+
         user = c.user
         for cls in types.keys():
             cls.add_props(user, types[cls])
@@ -803,7 +798,6 @@ class CommentBuilder(Builder):
                  load_more=True, continue_this_thread=True,
                  max_depth=MAX_RECURSION, edits_visible=True, num=None,
                  show_deleted=False, **kw):
-        Builder.__init__(self, **kw)
         self.link = link
         self.comment = comment
         self.children = children
@@ -817,6 +811,7 @@ class CommentBuilder(Builder):
         self.sort = sort
         self.rev_sort = isinstance(sort, operators.desc)
         self.comments = None
+        Builder.__init__(self, **kw)
 
     def update_candidates(self, candidates, sorter, to_add=None):
         for comment in (comment for comment in tup(to_add)
@@ -1135,17 +1130,14 @@ class CommentBuilder(Builder):
 
 
 class MessageBuilder(Builder):
-    def __init__(self, parent = None, focal = None,
-                 skip = True, **kw):
-
-        self.num = kw.pop('num', None)
-        self.focal = focal
-        self.parent = parent
+    def __init__(self, skip=True, num=None, parent=None, focal=None, after=None,
+                 reverse=False, **kw):
         self.skip = skip
-
-        self.after = kw.pop('after', None)
-        self.reverse = kw.pop('reverse', None)
-
+        self.num = num
+        self.parent = parent
+        self.focal = focal
+        self.after = after
+        self.reverse = reverse
         Builder.__init__(self, **kw)
 
     def get_tree(self):
@@ -1290,6 +1282,7 @@ class ModeratorMessageBuilder(MessageBuilder):
         sr_ids = Subreddit.reverse_moderator_ids(self.user)
         return moderator_messages(sr_ids)
 
+
 class MultiredditMessageBuilder(MessageBuilder):
     def __init__(self, sr, **kw):
         self.sr = sr
@@ -1301,18 +1294,18 @@ class MultiredditMessageBuilder(MessageBuilder):
             return sr_conversation(sr, self.parent)
         return moderator_messages(self.sr.sr_ids)
 
+
 class TopCommentBuilder(CommentBuilder):
     """A comment builder to fetch only the top-level, non-spam,
        non-deleted comments"""
-    def __init__(self, link, sort, num=None, wrap=Wrapped, **kw):
-        CommentBuilder.__init__(self, link, sort,
-                                load_more = False,
-                                continue_this_thread = False,
-                                max_depth=1, wrap=wrap, num=num)
+    def __init__(self, link, sort, num=None, wrap=Wrapped):
+        CommentBuilder.__init__(self, link, sort, load_more=False,
+            continue_this_thread=False, max_depth=1, wrap=wrap, num=num)
 
     def get_items(self):
         final = CommentBuilder.get_items(self)
         return [ cm for cm in final if not cm.deleted ]
+
 
 class SrMessageBuilder(MessageBuilder):
     def __init__(self, sr, **kw):
@@ -1323,6 +1316,7 @@ class SrMessageBuilder(MessageBuilder):
         if self.parent:
             return sr_conversation(self.sr, self.parent)
         return subreddit_messages(self.sr)
+
 
 class UserMessageBuilder(MessageBuilder):
     def __init__(self, user, **kw):
@@ -1345,6 +1339,7 @@ class UserMessageBuilder(MessageBuilder):
         # Messages that have been spammed are still valid afters
         w = self.convert_items((after,))[0]
         return MessageBuilder._viewable_message(self, w)
+
 
 class UserListBuilder(QueryBuilder):
     def thing_lookup(self, rels):

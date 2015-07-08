@@ -176,17 +176,19 @@ class ListingController(RedditController):
         elif isinstance(self.query_obj, (CachedQuery, MergedCachedQuery)):
             builder_cls = IDBuilder
 
-        b = builder_cls(self.query_obj,
-                        num = self.num,
-                        skip = self.skip,
-                        after = self.after,
-                        count = self.count,
-                        reverse = self.reverse,
-                        keep_fn = self.keep_fn(),
-                        sr_detail=self.sr_detail,
-                        wrap = self.builder_wrapper)
-
-        return b
+        builder = builder_cls(
+            self.query_obj,
+            num=self.num,
+            skip=self.skip,
+            after=self.after,
+            count=self.count,
+            reverse=self.reverse,
+            keep_fn=self.keep_fn(),
+            sr_detail=self.sr_detail,
+            wrap=self.builder_wrapper,
+            prewrap_fn=self.prewrap_fn(),
+        )
+        return builder
 
     def keep_fn(self):
         def keep(item):
@@ -200,6 +202,9 @@ class ListingController(RedditController):
                 return False
             return wouldkeep
         return keep
+
+    def prewrap_fn(self):
+        return
 
     def listing(self):
         """Listing to generate from the builder"""
@@ -1405,8 +1410,14 @@ class MyredditsController(ListingController):
                 thing_data=True,
                 thing_stale=True,
             )
-            q.prewrap_fn = lambda srmember: srmember._thing1
             return q
+
+    def prewrap_fn(self):
+        if self.where != "subscriber":
+            def sr_from_srmember(srmember):
+                sr = srmember._thing1
+                return sr
+            return sr_from_srmember
 
     def content(self):
         user = c.user if c.user_is_loggedin else None
