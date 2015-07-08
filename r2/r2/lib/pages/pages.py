@@ -3635,6 +3635,11 @@ class RelTableItem(UserTableItem):
         UserTableItem.__init__(self, rel._thing2, **kw)
 
     @property
+    def _fullname(self):
+        # needed for paging (see Listing.listing())
+        return self.rel._fullname
+
+    @property
     def container_name(self):
         return c.site._fullname
 
