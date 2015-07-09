@@ -1538,7 +1538,7 @@ class ApiController(RedditController):
                    state=VBoolean('state'))
     @api_doc(api_section.links_and_comments)
     def POST_set_subreddit_sticky(self, form, jquery, thing, state):
-        """Set or unset a self-post as the sticky post in its subreddit.
+        """Set or unset a Link as the sticky in its subreddit.
         
         `state` is a boolean that indicates whether to sticky or unsticky
         this post - true to sticky, false to unsticky.
@@ -1547,7 +1547,7 @@ class ApiController(RedditController):
         one will replace the previous one.
         
         """
-        if not isinstance(thing, Link) or not thing.is_self:
+        if not isinstance(thing, Link):
             return
 
         sr = thing.subreddit_slow
