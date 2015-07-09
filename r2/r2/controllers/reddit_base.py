@@ -1240,8 +1240,20 @@ class MinimalController(BaseController):
         would_poison = any((k not in CACHEABLE_COOKIES) for k in dirty_cookies)
 
         if c.user_is_loggedin or would_poison:
-            response.headers['Cache-Control'] = 'private, no-cache'
-            response.headers['Pragma'] = 'no-cache'
+            # Based off logged in <https://en.wikipedia.org/>,
+            # must-revalidate might not be necessary, but should force
+            # similar behaviour to no-cache (in theory.)
+            # Normally you'd prefer `no-store`, but many of reddit's
+            # listings are ephemeral, and the content might not even
+            # exist anymore if you force a refresh when hitting back.
+            cache_control = (
+                'private',
+                's-maxage=0',
+                'max-age=0',
+                'must-revalidate',
+            )
+            response.headers['Expires'] = '-1'
+            response.headers['Cache-Control'] = ', '.join(cache_control)
 
         # save the result of this page to the pagecache if possible.  we
         # mustn't cache things that rely on state not tracked by request_key

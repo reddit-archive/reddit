@@ -10,6 +10,11 @@ CACHE_POLICY_DIRECTIVES = {
         "pragma": {"no-cache"},
         "expires": set(),
     },
+    "loggedin_www_new": {
+        "cache-control": {"private", "max-age=0", "must-revalidate"},
+        "pragma": set(),
+        "expires": {"-1"},
+    },
     "loggedin_mweb": {
         "cache-control": {"private", "no-cache"},
         "pragma": set(),

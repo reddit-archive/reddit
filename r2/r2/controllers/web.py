@@ -121,7 +121,9 @@ class WebLogController(RedditController):
         url=VPrintable('url', 2048),
         # To differentiate between web and mweb in the future
         source=VOneOf('source', ('web', 'mweb')),
-        cache_policy=VOneOf('cache_policy', ('loggedin_www', 'loggedin_mweb')),
+        cache_policy=VOneOf('cache_policy',
+            ('loggedin_www', 'loggedin_www_new', 'loggedin_mweb')
+        ),
         # JSON-encoded response headers from when our script re-requested
         # the poisoned page
         resp_headers=nop('resp_headers'),

@@ -138,9 +138,9 @@ def js_config(extra_config=None):
     action_name = request.environ['pylons.routes_dict']['action']
     route_name = controller_name + '.' + action_name
 
-    # In the future this will have names for different caching rules we're
-    # testing
-    cache_policy = "loggedin_www" if c.user_is_loggedin else "loggedout_www"
+    cache_policy = "loggedout_www"
+    if c.user_is_loggedin:
+        cache_policy = "loggedin_www_new"
 
     # Canary for detecting cache poisoning
     poisoning_canary = None
