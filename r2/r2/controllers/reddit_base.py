@@ -110,7 +110,6 @@ from r2.models import (
     Random,
     RandomNSFW,
     RandomSubscription,
-    Sub,
     Subreddit,
     valid_admin_cookie,
     valid_feed,
@@ -369,9 +368,6 @@ def set_subreddit():
                 domain = ".".join((g.domain_prefix, domain))
             path = 'http://%s%s' % (domain, sr.path)
             abort(301, location=BaseController.format_output_url(path))
-    elif sr_name == 'r':
-        #reddits
-        c.site = Sub
     elif '+' in sr_name:
         name_filter = lambda name: Subreddit.is_valid_name(name,
             allow_language_srs=True)

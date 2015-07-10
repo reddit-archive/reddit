@@ -59,8 +59,6 @@ from r2.models import (
     RandomNSFW,
     RandomSubscription,
     StylesheetsEverywhere,
-    Sub,
-    SubSR,
     Subreddit,
     Target,
     Trophy,
@@ -1279,7 +1277,7 @@ class BoringPage(Reddit):
         Reddit.__init__(self, **context)
 
     def build_toolbars(self):
-        if not isinstance(c.site, (DefaultSR, SubSR)) and not c.cname:
+        if not isinstance(c.site, DefaultSR) and not c.cname:
             return [PageNameNav('subreddit', title = self.pagename)]
         else:
             return [PageNameNav('nomenu', title = self.pagename)]

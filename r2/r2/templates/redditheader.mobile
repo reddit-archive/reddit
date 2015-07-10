@@ -22,7 +22,7 @@
 
 <%!
    from r2.lib.template_helpers import static
-   from r2.models import Sub, FakeSubreddit
+   from r2.models import FakeSubreddit
 %>
 <%namespace file="utils.html" import="plain_link, img_link, separator"/>
 

@@ -2368,24 +2368,6 @@ class ContribSR(ModContribSR):
     query_param = "contributor"
     path = "/r/contrib"
 
-class SubSR(FakeSubreddit):
-    stylesheet = 'subreddit.css'
-    #this will make the javascript not send an SR parameter
-    name = ''
-    title = ''
-
-    def can_view(self, user):
-        return True
-
-    def can_comment(self, user):
-        return False
-
-    def can_submit(self, user, promotion=False):
-        return True
-
-    @property
-    def path(self):
-        return "/subreddits/"
 
 class DomainSR(FakeSubreddit):
     @property
@@ -2434,7 +2416,6 @@ class SearchResultSubreddit(Subreddit):
         Printable.add_props(user, wrapped)
 
 Frontpage = DefaultSR()
-Sub = SubSR()
 Friends = FriendsSR()
 Mod = ModSR()
 Contrib = ContribSR()

@@ -20,9 +20,6 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%!
-   from r2.models import Sub
- %>
 <%namespace file="utils.html" import="plain_link" />
 
 <%
