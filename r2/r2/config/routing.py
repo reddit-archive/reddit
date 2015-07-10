@@ -86,12 +86,14 @@ def make_map():
     mc('/subreddits/search', controller='front', action='search_reddits')
     mc('/subreddits/login', controller='forms', action='login')
     mc('/subreddits/:where', controller='reddits', action='listing',
-       where='popular', requirements=dict(where="popular|new|banned|employee|gold|default"))
+       where='popular', conditions={'function':not_in_sr},
+       requirements=dict(where="popular|new|banned|employee|gold|default"))
+
     # If no subreddit is specified, might as well show a list of 'em.
     mc('/r', controller='redirect', action='redirect', dest='/subreddits')
 
     mc('/subreddits/mine/:where', controller='myreddits', action='listing',
-       where='subscriber',
+       where='subscriber', conditions={'function':not_in_sr},
        requirements=dict(where='subscriber|contributor|moderator'))
 
     # These routes are kept for backwards-compatibility reasons
@@ -100,10 +102,11 @@ def make_map():
     mc('/reddits/search', controller='front', action='search_reddits')
     mc('/reddits/login', controller='forms', action='login')
     mc('/reddits/:where', controller='reddits', action='listing',
-       where='popular', requirements=dict(where="popular|new|banned"))
+       where='popular', conditions={'function':not_in_sr},
+       requirements=dict(where="popular|new|banned"))
 
     mc('/reddits/mine/:where', controller='myreddits', action='listing',
-       where='subscriber',
+       where='subscriber', conditions={'function':not_in_sr},
        requirements=dict(where='subscriber|contributor|moderator'))
 
     mc('/buttons', controller='buttons', action='button_demo_page')
