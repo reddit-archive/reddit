@@ -1916,6 +1916,11 @@ class Message(Thing, Printable):
                 item.user_is_recipient = not user_is_sender
                 user_is_moderator = item.sr_id in user_mod_sr_ids
 
+                from subreddit import FakeSubreddit
+                if isinstance(c.site, FakeSubreddit):
+                    rgb = item.subreddit.get_rgb(fade=0)
+                    item.bar_color = 'rgb(%s,%s,%s)' % rgb
+
                 if item.subreddit.is_muted(item.author):
                     item.sr_muted = True
 

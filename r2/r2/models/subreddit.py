@@ -1252,6 +1252,12 @@ class Subreddit(Thing, Printable, BaseSite):
     @classmethod
     def subscribed_ids_by_user(cls, user):
         return SubscribedSubredditsByAccount.get_all_sr_ids(user)
+        
+    def get_rgb(self, fade=0.8):
+        r = int(256 - (hash(str(self._id)) % 256)*(1-fade))
+        g = int(256 - (hash(str(self._id) + ' ') % 256)*(1-fade))
+        b = int(256 - (hash(str(self._id) + '  ') % 256)*(1-fade))
+        return (r, g, b)
 
     def get_sticky_fullnames(self):
         """Return the fullnames of the Links stickied in the subreddit."""

@@ -53,6 +53,19 @@
   ${"most-recent" if getattr(thing, "most_recent", "") else ""}
 </%def>
 
+<%def name="thing_css_rowclass(what)">
+  ${parent.thing_css_rowclass(what)}
+  %if getattr(thing, "bar_color", "") and getattr(thing, "is_parent", False):
+    color-bar
+  %endif
+</%def>
+
+<%def name="thing_data_attributes(what)">
+  %if getattr(thing, "bar_color", "") and getattr(thing, "is_parent", False):
+    style="border-color:${thing.bar_color}"
+  %endif
+</%def>
+
 <%def name="tagline()">
   <a href="javascript:void(0)" class="expand" onclick="return togglemessage(this)">
     ${"[%s]" % ("+" if thing.collapsed else "–")}
@@ -102,6 +115,9 @@
        %if thing.sr_id:
          <span class="correspondent reddit rounded">
            <a href="${thing.subreddit.path}message/moderator/inbox">
+            %if getattr(thing, "bar_color", False):
+              <span class="marker-dot" style="background-color: ${thing.bar_color};"></span>
+            %endif
              /r/${thing.subreddit.name}
            </a>
          </span>

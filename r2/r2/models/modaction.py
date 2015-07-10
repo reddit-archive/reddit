@@ -273,14 +273,6 @@ class ModAction(tdb_cassandra.UuidThing):
         return text
 
     @classmethod
-    def get_rgb(cls, item, fade=0.8):
-        sr_id = item.subreddit._id
-        r = int(256 - (hash(str(sr_id)) % 256)*(1-fade))
-        g = int(256 - (hash(str(sr_id) + ' ') % 256)*(1-fade))
-        b = int(256 - (hash(str(sr_id) + '  ') % 256)*(1-fade))
-        return (r, g, b)
-
-    @classmethod
     def add_props(cls, user, wrapped):
         from r2.lib.db.thing import Thing
         from r2.lib.menus import QueryButton
@@ -361,7 +353,7 @@ class ModAction(tdb_cassandra.UuidThing):
                 item.mod_button = mod_button
 
                 if isinstance(c.site, ModSR) or isinstance(c.site, MultiReddit):
-                    item.bgcolor = 'rgb(%s,%s,%s)' % cls.get_rgb(item)
+                    item.bgcolor = 'rgb(%s,%s,%s)' % item.subreddit.get_rgb()
                     item.is_multi = True
                 else:
                     item.bgcolor = "rgb(255,255,255)"
