@@ -425,8 +425,14 @@ class HotController(ListingWithPromos):
             return normalized_hot(c.site.kept_sr_ids, obey_age_limit=False,
                                   ageweight=c.site.ageweight)
         else:
-            if c.site.sticky_fullname:
-                link_list = [c.site.sticky_fullname]
+            sticky_fullnames = c.site.get_sticky_fullnames()
+            if sticky_fullnames:
+                # need to use a copy of the list because we add all the other
+                # links into this below, so get_sticky_fullnames() will start
+                # returning a list of all the hot links after this if we
+                # modify it directly
+                link_list = sticky_fullnames[:]
+                
                 wrapped = wrap_links(link_list,
                                      wrapper=self.builder_wrapper,
                                      keep_fn=self.keep_fn(),
@@ -434,10 +440,10 @@ class HotController(ListingWithPromos):
                 # add all other items and decrement count if sticky is visible
                 if wrapped.things:
                     link_list += [l for l in c.site.get_links('hot', 'all')
-                                    if l != c.site.sticky_fullname]
+                                    if l not in sticky_fullnames]
                     if not self.after:
-                        self.count -= 1
-                        self.num += 1
+                        self.count -= len(sticky_fullnames)
+                        self.num += len(sticky_fullnames)
                     return link_list
             
             # no sticky or sticky hidden

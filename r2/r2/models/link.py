@@ -474,6 +474,8 @@ class Link(Thing, Printable):
         else:
             is_moderator_srids = set()
 
+        sticky_fullnames = site.get_sticky_fullnames()
+
         for item in wrapped:
             show_media = False
             if not hasattr(item, "score_fmt"):
@@ -642,7 +644,7 @@ class Link(Thing, Printable):
             item.different_sr = (isinstance(site, FakeSubreddit) or
                                  site.name != item.subreddit.name)
             item.stickied = (not item.different_sr and
-                             site.sticky_fullname == item._fullname)
+                item._fullname in sticky_fullnames)
 
             if user_is_loggedin and item.author_id == user._id:
                 item.nofollow = False

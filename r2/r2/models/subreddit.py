@@ -211,6 +211,10 @@ class BaseSite(object):
     def get_live_promos(self):
         raise NotImplementedError
 
+    def get_sticky_fullnames(self):
+        # return empty list for "special" subreddits, overridden in Subreddit
+        return []
+
 
 class SubredditExists(Exception): pass
 
@@ -240,7 +244,7 @@ class Subreddit(Thing, Printable, BaseSite):
         mod_actions=0,
         # do we allow self-posts, links only, or any?
         link_type='any', # one of ('link', 'self', 'any')
-        sticky_fullname=None,
+        sticky_fullnames=None,
         submit_link_label='',
         submit_text_label='',
         comment_score_hide_mins=0,
@@ -324,6 +328,8 @@ class Subreddit(Thing, Printable, BaseSite):
         ('#24a0ed', N_('blue')),
         ('#0079d3', N_('alien blue')),
     ])
+
+    MAX_STICKIES = 2
 
     def __setattr__(self, attr, val, make_dirty=True):
         if attr in self._derived_attrs:
@@ -1155,6 +1161,72 @@ class Subreddit(Thing, Printable, BaseSite):
     @classmethod
     def subscribed_ids_by_user(cls, user):
         return SubscribedSubredditsByAccount.get_all_sr_ids(user)
+
+    def get_sticky_fullnames(self):
+        """Return the fullnames of the Links stickied in the subreddit."""
+        
+        # Note: This function is to ease the transition from a single sticky to
+        # multiple. At some point in the future we can probably replace this
+        # function with a simple usage of the sticky_fullnames attr.
+
+        if self.sticky_fullnames is None:
+            # for apps that can't update the db, just return
+            if g.disallow_db_writes:
+                if getattr(self, "sticky_fullname", None):
+                    return [self.sticky_fullname]
+                else:
+                    return []
+
+            # if there's an old single sticky, convert it
+            if getattr(self, "sticky_fullname", None):
+                self.sticky_fullnames = [self.sticky_fullname]
+                self.sticky_fullname = None
+                self._commit()
+
+        return self.sticky_fullnames
+
+    def set_sticky(self, link, user, num=None):
+        from r2.models import ModAction
+        if not self.sticky_fullnames:
+            self.sticky_fullnames = [link._fullname]
+        else:
+            # XXX: have to work with a copy of the list instead of modifying
+            #   it directly, because it doesn't get marked as "dirty" and
+            #   saved properly unless we assign a new list to the attr
+            sticky_fullnames = self.sticky_fullnames[:]
+
+            # if a particular slot was specified and is in use, replace it
+            if num and num <= len(sticky_fullnames):
+                sticky_fullnames[num-1] = link._fullname
+            else:
+                # either didn't specify a slot or it's empty, just append
+
+                # if we're already at the max number of stickies, remove
+                # the bottom-most to make room for this new one
+                if len(sticky_fullnames) >= self.MAX_STICKIES:
+                    sticky_fullnames = sticky_fullnames[:self.MAX_STICKIES-1]
+
+                sticky_fullnames.append(link._fullname)
+
+            self.sticky_fullnames = sticky_fullnames
+            
+        self._commit()
+        ModAction.create(self, user, "sticky", target=link)
+
+    def remove_sticky(self, link, user):
+        from r2.models import ModAction
+        # XXX: have to work with a copy of the list instead of modifying
+        #   it directly, because it doesn't get marked as "dirty" and
+        #   saved properly unless we assign a new list to the attr
+        sticky_fullnames = self.sticky_fullnames[:]
+        try:
+            sticky_fullnames.remove(link._fullname)
+        except ValueError:
+            return
+        
+        self.sticky_fullnames = sticky_fullnames
+        self._commit()
+        ModAction.create(self, user, "unsticky", target=link)
 
 
 class SubscribedSubredditsByAccount(tdb_cassandra.DenormalizedRelation):

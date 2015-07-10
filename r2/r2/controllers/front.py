@@ -838,14 +838,25 @@ class FrontController(RedditController):
 
     @require_oauth2_scope("read")
     @api_doc(api_section.subreddits, uses_site=True)
-    def GET_sticky(self):
-        """Get the post stickied to the current subreddit
+    @validate(
+        num=VInt("num",
+            min=1, max=Subreddit.MAX_STICKIES, num_default=1, coerce=True),
+    )
+    def GET_sticky(self, num):
+        """Redirect to one of the posts stickied in the current subreddit
 
-        Will 404 if there is not currently a sticky post in this subreddit
+        The "num" argument can be used to select a specific sticky, and will
+        default to 1 (the top sticky) if not specified.
+        Will 404 if there is not currently a sticky post in this subreddit.
 
         """
-        if c.site.sticky_fullname:
-            sticky = Link._by_fullname(c.site.sticky_fullname, data=True)
+        sticky_fullnames = c.site.get_sticky_fullnames()
+        if sticky_fullnames:
+            try:
+                fullname = sticky_fullnames[num-1]
+            except IndexError:
+                abort(404)
+            sticky = Link._by_fullname(fullname, data=True)
             self.redirect(sticky.make_permalink_slow())
         else:
             abort(404)

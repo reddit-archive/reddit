@@ -1024,21 +1024,13 @@ class RuleTarget(object):
                 item._commit()
 
         if self.set_sticky is not None:
-            already_stickied = data["subreddit"].sticky_fullname == item._fullname
+            stickied_fullnames = data["subreddit"].get_sticky_fullnames()
+            already_stickied = item._fullname in stickied_fullnames
             if already_stickied != self.set_sticky:
-                if not self.set_sticky:
-                    data["subreddit"].sticky_fullname = None
-                else:
-                    data["subreddit"].sticky_fullname = item._fullname
-                data["subreddit"]._commit()
-
-                # TODO: shouldn't need to do this here
                 if self.set_sticky:
-                    log_action = "sticky"
+                    data["subreddit"].set_sticky(item, ACCOUNT)
                 else:
-                    log_action = "unsticky"
-                ModAction.create(
-                    data["subreddit"], ACCOUNT, log_action, target=item)
+                    data["subreddit"].remove_sticky(item, ACCOUNT)
 
         if self.set_suggested_sort is not None:
             if not item.suggested_sort:

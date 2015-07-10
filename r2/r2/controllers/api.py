@@ -1531,20 +1531,26 @@ class ApiController(RedditController):
         jquery.refresh()
 
     @require_oauth2_scope("modposts")
-    @validatedForm(VUser(),
-                   VModhash(),
-                   VSrCanBan('id'),
-                   thing=VByName('id'),
-                   state=VBoolean('state'))
+    @validatedForm(
+        VUser(),
+        VModhash(),
+        VSrCanBan('id'),
+        thing=VByName('id'),
+        state=VBoolean('state'),
+        num=VInt("num", min=1, max=Subreddit.MAX_STICKIES, coerce=True),
+    )
     @api_doc(api_section.links_and_comments)
-    def POST_set_subreddit_sticky(self, form, jquery, thing, state):
+    def POST_set_subreddit_sticky(self, form, jquery, thing, state, num):
         """Set or unset a Link as the sticky in its subreddit.
         
         `state` is a boolean that indicates whether to sticky or unsticky
         this post - true to sticky, false to unsticky.
 
-        Note that if another post was previously stickied, stickying a new
-        one will replace the previous one.
+        The `num` argument is optional, and only used when stickying a post.
+        It allows specifying a particular "slot" to sticky the post into, and
+        if there is already a post stickied in that slot it will be replaced.
+        If there is no post in the specified slot to replace, or `num` is None,
+        the bottom-most slot will be used.
         
         """
         if not isinstance(thing, Link):
@@ -1553,13 +1559,10 @@ class ApiController(RedditController):
         sr = thing.subreddit_slow
 
         if state:
-            sr.sticky_fullname = thing._fullname
-            ModAction.create(sr, c.user, 'sticky', target=thing)
-        elif not state:
-            sr.sticky_fullname = None
-            ModAction.create(sr, c.user, 'unsticky', target=thing)
+            sr.set_sticky(thing, c.user, num=num)
+        else:
+            sr.remove_sticky(thing, c.user)
 
-        sr._commit()
         jquery.refresh()
 
     @require_oauth2_scope("report")
