@@ -22,6 +22,7 @@
 
 import hmac
 import hashlib
+import urllib
 
 from r2.models import *
 from filters import unsafe, websafe, _force_utf8, conditional_websafe
@@ -670,3 +671,9 @@ def get_linkflair_css_classes(thing, prefix="linkflair-", on_class="has-linkflai
         return on_class
     else:
         return off_class
+
+
+def update_query(base_url, **kw):
+    parsed = UrlParser(base_url)
+    parsed.update_query(**kw)
+    return parsed.unparse()
