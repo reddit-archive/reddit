@@ -29,7 +29,6 @@ from r2.config import feature
 from r2.config.extensions import get_api_subtype
 from r2.lib.filters import spaceCompress, safemarkdown, _force_unicode
 from r2.models import Account, Report, Trophy
-from r2.models.subreddit import SubSR
 from r2.models.token import OAuth2Scope, extra_oauth2_scope
 import time, pytz
 from pylons import c, g, response
@@ -275,7 +274,7 @@ class ThingJsonTemplate(JsonTemplate):
 
 class SubredditJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = ThingJsonTemplate.data_attrs(
-        accounts_active="accounts_active",
+        accounts_active="accounts_active_count",
         banner_img="banner_img",
         banner_size="banner_size",
         collapse_deleted_comments="collapse_deleted_comments",
@@ -356,9 +355,6 @@ class SubredditJsonTemplate(ThingJsonTemplate):
 
         if attr == "_ups" and thing.hide_subscribers:
             return 0
-        # Don't return accounts_active counts in /subreddits
-        elif (attr == "accounts_active" and isinstance(c.site, SubSR)):
-            return None
         elif attr == 'description_html':
             return safemarkdown(thing.description)
         elif attr == 'public_description_html':
