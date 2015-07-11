@@ -2996,13 +2996,25 @@ class ApiController(RedditController):
     @noresponse(VUser(),
                 VModhash(),
                 things = VByName('id', multiple = True))
+    @api_doc(api_section.messages)
     def POST_collapse_message(self, things):
+        """Collapse a message
+
+        See also: [/api/uncollapse_message](#POST_uncollapse_message)
+
+        """
         self.collapse_handler(things, True)
 
     @noresponse(VUser(),
                 VModhash(),
                 things = VByName('id', multiple = True))
+    @api_doc(api_section.messages)
     def POST_uncollapse_message(self, things):
+        """Uncollapse a message
+
+        See also: [/api/collapse_message](#POST_collapse_message)
+
+        """
         self.collapse_handler(things, False)
 
     @require_oauth2_scope("privatemessages")
