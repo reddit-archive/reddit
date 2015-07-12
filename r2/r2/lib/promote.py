@@ -45,6 +45,7 @@ from r2.lib import (
 from r2.lib.db.operators import not_
 from r2.lib.db import queries
 from r2.lib.cache import sgm
+from r2.lib.filters import _force_utf8
 from r2.lib.geoip import location_by_ips
 from r2.lib.memoize import memoize
 from r2.lib.strings import strings
@@ -203,7 +204,7 @@ def add_trackers(items, sr):
             item.third_party_tracking_url_2 = item.third_party_tracking_2
 
         # construct the click redirect url
-        url = urllib.unquote(item.url.encode("utf-8"))
+        url = urllib.unquote(_force_utf8(item.url))
         hashable = ''.join((url, tracking_name.encode("utf-8")))
         click_mac = hmac.new(
             g.tracking_secret, hashable, hashlib.sha1).hexdigest()
