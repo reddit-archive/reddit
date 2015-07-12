@@ -1586,6 +1586,11 @@ class VUrl(VRequired):
         if not url:
             return self.error(errors.BAD_URL)
 
+        try:
+            url.encode('utf-8')
+        except UnicodeDecodeError:
+            return self.error(errors.BAD_URL)
+
         if url == 'self':
             if self.allow_self:
                 return url
