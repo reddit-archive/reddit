@@ -1186,7 +1186,9 @@ class Subreddit(Thing, Printable, BaseSite):
         return self.sticky_fullnames
 
     def set_sticky(self, link, user, num=None):
-        from r2.models import ModAction
+        from r2.models import Link, ModAction
+        unstickied_fullnames = []
+
         if not self.sticky_fullnames:
             self.sticky_fullnames = [link._fullname]
         else:
@@ -1197,6 +1199,7 @@ class Subreddit(Thing, Printable, BaseSite):
 
             # if a particular slot was specified and is in use, replace it
             if num and num <= len(sticky_fullnames):
+                unstickied_fullnames.append(sticky_fullnames[num-1])
                 sticky_fullnames[num-1] = link._fullname
             else:
                 # either didn't specify a slot or it's empty, just append
@@ -1204,6 +1207,8 @@ class Subreddit(Thing, Printable, BaseSite):
                 # if we're already at the max number of stickies, remove
                 # the bottom-most to make room for this new one
                 if len(sticky_fullnames) >= self.MAX_STICKIES:
+                    unstickied_fullnames.extend(
+                        sticky_fullnames[self.MAX_STICKIES-1:])
                     sticky_fullnames = sticky_fullnames[:self.MAX_STICKIES-1]
 
                 sticky_fullnames.append(link._fullname)
@@ -1211,6 +1216,11 @@ class Subreddit(Thing, Printable, BaseSite):
             self.sticky_fullnames = sticky_fullnames
             
         self._commit()
+
+        for fullname in unstickied_fullnames:
+            unstickied = Link._by_fullname(fullname)
+            ModAction.create(
+                self, user, "unsticky", target=unstickied, details="replaced")
         ModAction.create(self, user, "sticky", target=link)
 
     def remove_sticky(self, link, user):
