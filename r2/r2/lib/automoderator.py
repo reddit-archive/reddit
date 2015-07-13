@@ -69,6 +69,7 @@ from r2.models import (
     Message,
     ModAction,
     Report,
+    Subreddit,
     Thing,
     WikiPage,
 )
@@ -477,7 +478,9 @@ class RuleTarget(object):
             component_type="check",
         ),
         "set_sticky": RuleComponent(
-            valid_types=bool,
+            valid_types=(bool, int),
+            valid_values=set(
+                [True, False] + range(1, Subreddit.MAX_STICKIES+1)),
             valid_targets=Link,
             component_type="action",
         ),
@@ -1026,9 +1029,15 @@ class RuleTarget(object):
         if self.set_sticky is not None:
             stickied_fullnames = data["subreddit"].get_sticky_fullnames()
             already_stickied = item._fullname in stickied_fullnames
-            if already_stickied != self.set_sticky:
+            if already_stickied != bool(self.set_sticky):
                 if self.set_sticky:
-                    data["subreddit"].set_sticky(item, ACCOUNT)
+                    # if set_sticky is a bool, don't specify a slot
+                    if isinstance(self.set_sticky, bool):
+                        num = None
+                    else:
+                        num = self.set_sticky
+
+                    data["subreddit"].set_sticky(item, ACCOUNT, num)
                 else:
                     data["subreddit"].remove_sticky(item, ACCOUNT)
 
