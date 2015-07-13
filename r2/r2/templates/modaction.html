@@ -73,8 +73,8 @@
     ${thing.wrapped_user_target}&#32;
   %endif
 
-  %if hasattr(thing, 'details') and thing.details:
-    <em>(${thing.details})</em>
+  %if thing.details_text:
+    <em>(${thing.details_text})</em>
   %endif
   </td>
 </tr>

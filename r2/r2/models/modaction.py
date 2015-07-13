@@ -253,12 +253,15 @@ class ModAction(tdb_cassandra.UuidThing):
 
         return q
 
-    def get_extra_text(self):
-        text = ''
-        if hasattr(self, 'details') and not self.details == None:
+    @property
+    def details_text(self):
+        text = ""
+        if getattr(self, "details", None):
             text += self._details_text.get(self.details, self.details)
-        if hasattr(self, 'description') and not self.description == None:
-            text += ' %s' % self.description
+        if getattr(self, "description", None):
+            if text:
+                text += ": "
+            text += self.description
         return text
 
     @classmethod
@@ -307,7 +310,6 @@ class ModAction(tdb_cassandra.UuidThing):
             item.moderator = moderators[item.mod_id36]
             item.subreddit = srs[item.sr_id36]
             item.text = cls._text.get(item.action, '')
-            item.details = item.get_extra_text()
             item.target = None
             item.target_author = None
 

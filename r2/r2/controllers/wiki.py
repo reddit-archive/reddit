@@ -409,7 +409,8 @@ class WikiApiController(WikiController):
 
                 if page.special or c.is_wiki_mod:
                     description = modactions.get(page.name, 'Page %s edited' % page.name)
-                    ModAction.create(c.site, c.user, 'wikirevise', details=description)
+                    ModAction.create(c.site, c.user, "wikirevise",
+                        details=description, description=reason)
         except ConflictException as e:
             self.handle_error(409, 'EDIT_CONFLICT', newcontent=e.new, newrevision=page.revision, diffcontent=e.htmldiff)
         return json.dumps({})
