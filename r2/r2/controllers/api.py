@@ -1904,14 +1904,11 @@ class ApiController(RedditController):
         VModhash(),
         VRatelimitImproved(prefix='share', max_usage=g.RL_SHARE_MAX_REQS,
                            rate_user=True, rate_ip=True),
-        share_from=VLength('share_from', max_length=100),
-        emails=ValidEmailsOrExistingUnames("share_to"),
-        reply_to=ValidEmails("replyto", num=1), 
+        share_to=ValidEmailsOrExistingUnames("share_to"),
         message=VLength("message", max_length=1000), 
         link=VByName('parent', thing_cls=Link),
     )
-    def POST_share(self, shareform, jquery, emails, link, share_from, reply_to,
-                   message):
+    def POST_share(self, shareform, jquery, share_to, message, link):
         if not link:
             abort(404, 'not found')
 
@@ -1921,23 +1918,11 @@ class ApiController(RedditController):
         if not should_ratelimit:
             c.errors.remove((errors.RATELIMIT, 'ratelimit'))
 
-        # share_from and messages share a too_long error.
-        # finding an error on one necessitates hiding the other error
-        if shareform.has_errors("share_from", errors.TOO_LONG):
-            shareform.find(".message-errors").children().hide()
+        if shareform.has_errors("message", errors.TOO_LONG):
             return
-        elif shareform.has_errors("message", errors.TOO_LONG):
-            shareform.find(".share-form-errors").children().hide()
-            return
-        # reply_to and share_to also share errors...
         elif shareform.has_errors("share_to", errors.BAD_EMAILS,
                                   errors.NO_EMAILS,
                                   errors.TOO_MANY_EMAILS):
-            shareform.find(".reply-to-errors").children().hide()
-            return
-        elif shareform.has_errors("replyto", errors.BAD_EMAILS,
-                                  errors.TOO_MANY_EMAILS):
-            shareform.find(".share-to-errors").children().hide()
             return
         elif shareform.has_errors("ratelimit", errors.RATELIMIT):
             return
@@ -1945,11 +1930,7 @@ class ApiController(RedditController):
         if not link.subreddit_slow.can_view(c.user):
             return abort(403, 'forbidden')
 
-        emails, users = emails
-        jquery.things(link._fullname).set_text(".share", _("shared"))
-        shareform.html(format_html("<div class='clearleft'></div>"
-                                   "<p class='error'>%s</p>",
-                                   _("your link has been shared.")))
+        emails, users = share_to
 
         if getattr(link, "promoted", None) and link.disable_comments:
             message = blockquote_text(message) + "\n\n" if message else ""
@@ -1990,8 +1971,7 @@ class ApiController(RedditController):
                 }
         
         # E-mail everyone
-        emailer.share(link, emails, from_name = share_from or "",
-                      body = email_message or "", reply_to = reply_to or "")
+        emailer.share(link, emails, body=email_message or "")
 
         # Send the PMs
         subject = "%s has shared a link with you!" % c.user.name
