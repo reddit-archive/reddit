@@ -127,7 +127,13 @@
   });
 
   $(function() {
-    $('.linklisting').on('click', '.expando-button', function(e) {
+    var listingSelectors = [
+      '.linklisting',
+      '.organic-listing',
+      '.selfserve-subreddit-links',
+    ];
+
+    $(listingSelectors.join(',')).on('click', '.expando-button', function(e) {
       if (isPluginExpandoButton(e.target)) { return; }
     
       var $thing = $(this).closest('.thing')
