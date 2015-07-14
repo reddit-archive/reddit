@@ -610,6 +610,16 @@ class CampaignBuilder(IDBuilder):
 
         return ret
 
+    def valid_after(self, after):
+        # CampaignBuilder has special wrapping logic to operate on
+        # PromoTuples and PromoCampaigns. `after` is just a Link, so bypass
+        # the special wrapping logic and use the base class.
+        if self.prewrap_fn:
+            after = self.prewrap_fn(after)
+        if self.wrap:
+            after = Builder.wrap_items(self, (after,))[0]
+        return not self.must_skip(after)
+
 
 class ModActionBuilder(QueryBuilder):
     def wrap_items(self, items):
