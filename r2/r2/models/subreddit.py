@@ -530,17 +530,13 @@ class Subreddit(Thing, Printable, BaseSite):
             return ''
 
     @property
-    def banned(self):
-        return self.banned_ids()
-    
-    @property
     def wikibanned(self):
         return self.wikibanned_ids()
-    
+
     @property
     def wikicontributor(self):
         return self.wikicontributor_ids()
-    
+
     @property
     def _should_wiki(self):
         return True
@@ -2528,7 +2524,7 @@ Subreddit.__bases__ += (
     UserRel('moderator_invite', SRMember,
             permission_class=ModeratorPermissionSet),
     UserRel('contributor', SRMember, disable_ids_fn=True),
-    UserRel('banned', SRMember),
+    UserRel('banned', SRMember, disable_ids_fn=True),
     UserRel('wikibanned', SRMember),
     UserRel('wikicontributor', SRMember),
 )
