@@ -459,9 +459,17 @@ class CachedTemplate(Templated):
         # these values are needed to render any link on the site, and
         # a menu is just a set of links, so we best cache against
         # them.
-        keys = [c.user_is_loggedin, c.user_is_admin, c.domain_prefix,
-                style, c.secure, c.cname, c.lang, c.site.path,
-                self.template_hash(style)]
+        keys = [
+            c.user_is_loggedin,
+            c.user_is_admin,
+            c.domain_prefix,
+            style,
+            c.secure,
+            c.cname,
+            c.lang,
+            c.site.user_path,
+            self.template_hash(style),
+        ]
 
         if c.secure:
             keys.append(request.host)
