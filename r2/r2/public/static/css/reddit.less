@@ -5614,6 +5614,21 @@ ul.colors {
     font-weight: bold;
 }
 
+.frequency-cap-inputs {
+    margin-left: 20px;
+}
+
+.frequency-cap-example {
+    margin: -15px 0 0 20px;
+    font-style: italic;
+    font-size: 12px;
+}
+
+.frequency-cap-dur-unit {
+    vertical-align: sub;
+    margin-left: 5px;
+}
+
 .minimum-spend.error {
     font-weight: bold;
     color: red;
@@ -5705,7 +5720,8 @@ ul.colors {
 .campaign td.prefright { 
     padding: 8px 4px 4px;
 }
-.campaign #bid, .campaign #impressions {
+.campaign #bid, .campaign #impressions,
+.campaign #cap, .campaign #duration {
     text-align: right;
     width: auto;
     margin-bottom: 5px;
@@ -6595,7 +6611,8 @@ div #campaign-field {
 
     .lookup-user-field,
     .budget-field,
-    .timing-field {
+    .timing-field,
+    .frequency-cap-field {
         .group {
             display: flex;
             margin-bottom: 10px;

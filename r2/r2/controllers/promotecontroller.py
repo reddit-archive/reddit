@@ -89,6 +89,7 @@ from r2.lib.validator import (
     VDate,
     VExistingUname,
     VFloat,
+    VFrequencyCap,
     VImageType,
     VInt,
     VLength,
@@ -992,15 +993,21 @@ class PromoteApiController(ApiController):
         bid=VFloat('bid', coerce=False),
         target=VPromoTarget(),
         campaign_id36=nop("campaign_id36"),
+        frequency_cap=VFrequencyCap(("frequency_capped",
+                                     "frequency_cap",
+                                     "frequency_cap_duration"),),
         priority=VPriority("priority"),
         location=VLocation(),
         platform=VOneOf("platform", ("mobile", "desktop", "all"), default="desktop"),
         mobile_os=VList("mobile_os", choices=["iOS", "Android"]),
     )
     def POST_edit_campaign(self, form, jquery, link, campaign_id36,
-                           start, end, bid, target, priority, location,
-                           platform, mobile_os):
+                           start, end, bid, target, frequency_cap,
+                           priority, location, platform, mobile_os):
         if not link:
+            return
+
+        if form.has_errors('frequency_cap', errors.INVALID_FREQUENCY_CAP):
             return
 
         if platform in ('mobile', 'all') and not mobile_os:
@@ -1142,9 +1149,11 @@ class PromoteApiController(ApiController):
         dates = (start, end)
         if campaign:
             promote.edit_campaign(link, campaign, dates, bid, cpm, target,
-                                  priority, location, platform, mobile_os)
+                                  frequency_cap[0], frequency_cap[1], priority,
+                                  location, platform, mobile_os)
         else:
             campaign = promote.new_campaign(link, dates, bid, cpm, target,
+                                            frequency_cap[0], frequency_cap[1],
                                             priority, location, platform, mobile_os)
         rc = RenderableCampaign.from_campaigns(link, campaign)
         jquery.update_campaign(campaign._fullname, rc.render_html())

@@ -152,6 +152,7 @@ error_list = dict((
         ('JSON_MISSING_KEY', _('JSON missing key: "%(key)s"')),
         ('NO_CHANGE_KIND', _("can't change post type")),
         ('INVALID_LOCATION', _("invalid location")),
+        ('INVALID_FREQUENCY_CAP', _("invalid values for frequency cap")),
         ('BANNED_FROM_SUBREDDIT', _('that user is banned from the subreddit')),
         ('GOLD_REQUIRED', _('you must have an active reddit gold subscription to do that')),
         ('INSUFFICIENT_CREDDITS', _("insufficient creddits")),

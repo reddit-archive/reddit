@@ -311,6 +311,8 @@ class PromoCampaign(Thing):
         location_code=None,
         platform='desktop',
         mobile_os_names=None,
+        frequency_cap=None,
+        frequency_cap_duration=None,
     )
 
     # special attributes that shouldn't set Thing data attributes because they
@@ -376,8 +378,8 @@ class PromoCampaign(Thing):
         return target_sr_names, target_name
 
     @classmethod
-    def create(cls, link, target, bid, cpm, start_date, end_date, priority,
-             location, platform, mobile_os):
+    def create(cls, link, target, bid, cpm, start_date, end_date, frequency_cap,
+             frequency_cap_duration, priority, location, platform, mobile_os):
         pc = PromoCampaign(
             link_id=link._id,
             bid=bid,
@@ -387,6 +389,8 @@ class PromoCampaign(Thing):
             trans_id=NO_TRANSACTION,
             owner_id=link.author_id,
         )
+        pc.frequency_cap = frequency_cap
+        pc.frequency_cap_duration = frequency_cap_duration
         pc.priority = priority
         pc.location = location
         pc.target = target

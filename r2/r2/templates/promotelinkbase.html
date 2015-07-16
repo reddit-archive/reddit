@@ -426,6 +426,78 @@
   %endif
 </%def>
 
+<%def name="frequency_cap_field(default_checked='false')">
+  <%def name="frequency_select_content()">
+    <div class="radio-group group">
+      <span class="label">frequency capping</span>
+      <label class="form-group">
+        <input id="frequency_capped_false" class="nomargin"
+               type="radio" value="false" name="frequency_capped"
+               onclick="r.sponsored.toggleFrequency()"
+               %if default_checked == 'false':
+                 checked="checked"
+               %endif
+               >
+        <div class="label-group">
+          <span class="label">${_("no frequency cap")}</span>
+        </div>
+      </label>
+      <label class="form-group">
+        <input id="frequency_capped_true" class="nomargin"
+               type="radio" value="true" name="frequency_capped"
+               onclick="r.sponsored.toggleFrequency()"
+               %if default_checked == 'true':
+                 checked="checked"
+               %endif
+               >
+        <div class="label-group">
+          <span class="label">${_("frequency capped")}</span>
+        </div>
+      </label>
+
+    </div>
+  </%def>
+
+  <%def name="frequency_details_content()">
+    <div class="group frequency-cap-inputs">
+      <div>
+        <div class="form-group">
+          <span class="label">${_("cap")}</span>
+          <div class="input-group">
+            <input id="frequency_cap" name="frequency_cap" size="7" type="text"
+                   class="rounded style-input"
+                    style="width:auto"/>
+
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="form-group">
+          <span class="label">${_("duration")}</span>
+          <div class="input-group">
+            <input id="frequency_cap_duration" name="frequency_cap_duration"
+                   size="7" type="text" class="rounded styled-input"/>
+          </div>
+          <span class="frequency-cap-dur-unit">hours</span>
+        </div>
+      </div>
+    </div>
+    <div class="frequency-cap-example">
+      ${_('Example: Display this flight 3 times per 24 hours.')}
+    </div>
+    ${error_field("INVALID_FREQUENCY_CAP", "frequency_cap", "div")}
+  </%def>
+
+  %if c.user_is_sponsor:
+    <%utils:line_field title="${_('frequency')}" css_class="rounded">
+      ${frequency_select_content()}
+      <div class="frequency-cap-field hidden">
+        ${frequency_details_content()}
+      </div>
+    </%utils:line_field>
+  %endif
+</%def>
+
 <%def name="priority_field()">
   <%def name="priority_field_content()">
     <div class="radio-group">

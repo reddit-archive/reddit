@@ -598,6 +598,10 @@ var exports = r.sponsored = {
         collapse();
     },
 
+    toggleFrequency: function() {
+      $('.frequency-cap-field').toggle('slow');
+    },
+
     setup_geotargeting: function(regions, metros) {
         this.regions = regions
         this.metros = metros
@@ -1570,7 +1574,8 @@ function edit_campaign($campaign_row) {
         $editRow.append($editCell)
         $campaign_row.fadeOut(function() {
             /* fill inputs from data in campaign row */
-            _.each(['startdate', 'enddate', 'bid', 'campaign_id36', 'campaign_name'],
+            _.each(['startdate', 'enddate', 'bid', 'campaign_id36', 'campaign_name',
+                    'frequency_cap', 'frequency_cap_duration'],
                 function(input) {
                     var val = $campaign_row.data(input),
                         $input = campaign.find('*[name="' + input + '"]')
@@ -1587,6 +1592,12 @@ function edit_campaign($campaign_row) {
               mobile_os_names.forEach(function(name) {
                 campaign.find('#mobile_os_' + name).prop("checked", "checked");
               });
+            }
+
+            /* show frequency inputs */
+            if ($campaign_row.data('frequency_cap')) {
+              $('.frequency-cap-field').show();
+              $('#frequency_capped_true').prop('checked', 'checked');
             }
 
             /* set priority */
@@ -1693,6 +1704,10 @@ function create_campaign() {
                 .find('select[name="country"]').val('').end()
                 .find('select[name="region"]').hide().end()
                 .find('select[name="metro"]').hide().end()
+                .find('input[name="frequency_cap"]').val('').end()
+                .find('input[name="frequency_cap_duration"]').val('').end()
+                .find('#frequency_capped_false').prop('checked', 'checked').end()
+                .find('.frequency-cap-field').hide().end()
                 .slideDown();
             r.sponsored.render();
         });

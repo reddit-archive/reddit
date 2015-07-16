@@ -3,14 +3,28 @@
     setup: function(organicLinks, interestProb, showPromo, srnames) {
       this.organics = [];
       this.lineup = [];
+      this.adWasClicked = false;
       this.interestProb = interestProb;
       this.showPromo = showPromo;
       this.srnames = srnames;
-      this.lastPromoTimestamp = Date.now();
-      this.MIN_PROMO_TIME = 1500;
+      this.loid = $.cookie('loid');
+      this.lastTabChangeTimestamp = Date.now();
+      this.MIN_PROMO_TIME = 3000;
       this.next = this._advance.bind(this, 1);
       this.prev = this._advance.bind(this, -1);
       this.$listing = $('.organic-listing');
+
+      this.$listing.on('click', function(e) {
+        var $target = $(e.target);
+        if ($target.is('.thumbnail, .title')) {
+          this.adWasClicked = true;
+        }
+      }.bind(this));
+
+      this.adBlockIsEnabled = $('#siteTable_organic').is(":hidden");
+      if (this.adBlockIsEnabled) {
+        this.showPromo = false;
+      }
 
       organicLinks.forEach(function(name) {
         this.organics.push(name);
@@ -36,7 +50,8 @@
         r.debug('restoring spotlight selection to last click');
         selectedThing = { fullname: lastClickFullname, };
       } else {
-        selectedThing = this.chooseRandom();
+        var shouldForcePromo = this._isDocumentVisible() && this.showPromo;
+        selectedThing = this.chooseRandom(shouldForcePromo);
       }
 
       this.lineup = _.chain(this.lineup)
@@ -50,40 +65,56 @@
       this.lineup.pos = 0;
       this._advance(0);
 
-      if ('hidden' in document) {
-        this.readyForNewPromo = !document.hidden;
+      if (!this.showPromo) {
+        return;
+      }
+      // IE 9 and below do not have this prop or work with
+      // visibilitychange.
+      if ('hidden' in document ) {
+        $(document).on('visibilitychange', this._requestOrSaveTimestamp.bind(this));
+      } else {        
+        $(window).on('focus blur', this._requestOrSaveTimestamp.bind(this));
+      }
 
-        $(document).on('visibilitychange', function(e) {
-          if (!document.hidden) {
-            this.requestNewPromo();
-          }
-        }.bind(this));
+    },
+
+    _requestOrSaveTimestamp: function() {
+      if ( this._isDocumentVisible() ) {
+        this.requestNewPromo();
       } else {
-        this.readyForNewPromo = document.hasFocus();
+        this.lastTabChangeTimestamp = Date.now();
+      }
+    },
 
-        $(window).on('focus', this.requestNewPromo.bind(this));
+    _isDocumentVisible: function () {
+      if ('hidden' in document) {
+        return !document.hidden;
+      } else {
+        return document.hasFocus();
       }
     },
 
     requestNewPromo: function() {
-      // if the page loads in a background tab, this should be false.  In that
-      // case, we don't want to load a new ad, as this will be the first view
-      if (!this.readyForNewPromo) {
-        this.readyForNewPromo = true;
-        return;
-      }
 
       // the ad will be stored as a promise
       if (!this.lineup[this.lineup.pos].promise) {
+        return;
+      }
+      // we don't want to fetch a new ad when the user has clicked so they 
+      // can have a chance to vote or comment on the last ad.
+      if (this.adWasClicked) {
         return;
       }
 
       var $promotedLink = this.$listing.find('.promotedlink');
       var $clearLeft = $promotedLink.next('.clearleft');
 
-      if (!$promotedLink.length || $promotedLink.is(':hidden') ||
-          $promotedLink.offset().top < window.scrollY ||
-          Date.now() - this.lastPromoTimestamp < this.MIN_PROMO_TIME) {
+      if (this.adBlockIsEnabled ||
+          Date.now() - this.lastTabChangeTimestamp < this.MIN_PROMO_TIME) {
+        return;
+      }
+
+      if ($promotedLink.length && $promotedLink.offset().top < window.scrollY) {
         return;
       }
 
@@ -96,10 +127,22 @@
         var $link = $promo.eq(0);
         var fullname = $link.data('fullname');
 
-        this.organics[this.lineup.pos] = fullname;
-        this.lineup[this.lineup.pos] = newPromo;
-        $promotedLink.add($clearLeft).remove();
-        $promo.show();
+        if ($promotedLink.length) {
+          this.organics[this.lineup.pos] = fullname;
+          this.lineup[this.lineup.pos] = newPromo;
+        } else {
+          this.organics[this.lineup.pos + 1] = fullname;
+          this.lineup[this.lineup.pos + 1] = newPromo;
+        }
+
+        if (!$link.hasClass('adsense-wrap')) {
+          if ($promotedLink.length) {
+            $promotedLink.add($clearLeft).remove(); 
+            $promo.show();            
+          } else {
+            this.next()
+          }
+        }
         // force a redraw to prevent showing duplicate ads
         this.$listing.hide().show();
       }.bind(this));
@@ -113,27 +156,44 @@
         data: {
           srnames: this.srnames,
           r: r.config.post_site,
+          loid: this.loid,
         },
       }).pipe(function(promo) {
+        var prevPromo = this.$listing.find('.promotedlink')
         if (promo) {
-          this.lastPromoTimestamp = Date.now();
+          if (this.showPromo) {
+            $('#siteTable_organic').show('slow');
+          }
+
           var $item = $(promo);
-          $item.hide().appendTo(this.$listing);
+          // adsense will throw error if inserted while hidden
+          if (!$item.hasClass('adsense-wrap')) {
+            $item.hide().appendTo(this.$listing);
+          } else {
+            var $promotedLink = this.$listing.find('.promotedlink');
+            $promotedLink.remove()
+            $item.appendTo(this.$listing);
+          }
           return $item;
         } else {
+          if (!prevPromo.length && !this.organics.length) {
+            // spotlight box must be hidden when no ad is returned
+            // and there is no other content.
+            $('#siteTable_organic').hide();
+          }
           return false;
         }
       }.bind(this));
     },
 
-    chooseRandom: function() {
-      if (this.showPromo) {
+    chooseRandom: function(forcePromo) {
+      if (forcePromo) {
         return this.requestPromo();
       } else if (Math.random() < this.interestProb) {
         return '.interestbar';
       } else {
-        var name = this.organics[Math.floor(Math.random() * this.organics.length)];
-        return { fullname: name, };
+        var name = this.organics[_.random(this.organics.length)];
+        return (name) ? { fullname: name, } : null;
       }
     },
 
@@ -238,6 +298,8 @@
             $help.find('.help-promoted').show();
           } else if ($thing.hasClass('interestbar')) {
             $help.find('.help-interestbar').show();
+          } else if ($thing.hasClass('adsense-wrap')) {
+            $help.find('.help-adserver').show()
           } else {
             $help.find('.help-organic').show();
           }

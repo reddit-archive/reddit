@@ -40,6 +40,8 @@
     data-cpm="${getattr(thing.campaign, 'cpm', g.cpm_selfserve.pennies)}"
     data-campaign_id36="${thing.campaign._id36}"
     data-campaign_name="${thing.campaign._fullname}"
+    data-frequency_cap="${thing.campaign.frequency_cap}"
+    data-frequency_cap_duration="${thing.campaign.frequency_cap_duration}"
     data-priority="${thing.campaign.priority.name}"
     data-override="${json.dumps(thing.campaign.priority.inventory_override)}"
     data-platform="${thing.platform}"

@@ -2128,6 +2128,22 @@ class VList(Validator):
         return {self.param: docs}
 
 
+class VFrequencyCap(Validator):
+    def run(self, frequency_capped='false', frequency_cap=None,
+            frequency_cap_duration=None):
+
+        if frequency_capped == 'true':
+            if frequency_cap and frequency_cap_duration:
+                try:
+                    return (int(frequency_cap), int(frequency_cap_duration),)
+                except (ValueError, TypeError):
+                    self.set_error(errors.INVALID_FREQUENCY_CAP, code=400)
+            else:
+                self.set_error(errors.INVALID_FREQUENCY_CAP, code=400)
+        else:
+            return (None, None)
+
+
 class VPriority(Validator):
     def run(self, val):
         if c.user_is_sponsor:
