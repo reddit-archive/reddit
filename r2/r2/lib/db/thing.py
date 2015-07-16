@@ -906,10 +906,6 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
             return res_obj
 
         @classmethod
-        def _gay(cls):
-            return cls._type1 == cls._type2
-
-        @classmethod
         def _build(cls, id, bases):
             return cls(bases.thing1_id, bases.thing2_id, bases.name, bases.date, id)
 
@@ -1131,12 +1127,15 @@ def load_things(rels, load_data=False, stale=False):
     kind = rels[0].__class__
 
     t1_ids = set()
-    t2_ids = t1_ids if kind._gay() else set()
+    if kind._type1 == kind._type2:
+        t2_ids = t1_ids
+    else:
+        t2_ids = set()
     for rel in rels:
         t1_ids.add(rel._thing1_id)
         t2_ids.add(rel._thing2_id)
     kind._type1._byID(t1_ids, data=load_data, stale=stale)
-    if not kind._gay():
+    if kind._type1 != kind._type2:
         t2_items = kind._type2._byID(t2_ids, data=load_data, stale=stale)
 
 class Relations(Query):
