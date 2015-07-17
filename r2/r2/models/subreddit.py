@@ -1180,8 +1180,9 @@ class Subreddit(Thing, Printable, BaseSite):
             # if there's an old single sticky, convert it
             if getattr(self, "sticky_fullname", None):
                 self.sticky_fullnames = [self.sticky_fullname]
-                self.sticky_fullname = None
-                self._commit()
+            else:
+                self.sticky_fullnames = []
+            self._commit()
 
         return self.sticky_fullnames
 
