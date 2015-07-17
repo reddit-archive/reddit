@@ -1386,11 +1386,9 @@ class ApiController(RedditController):
 
         thing.update_search_index()
 
-        #expire the item from the sr cache
         if isinstance(thing, Link):
             queries.delete(thing)
-
-        #comments have special delete tasks
+            thing.subreddit_slow.remove_sticky(thing)
         elif isinstance(thing, Comment):
             if not was_deleted:
                 queries.delete_comment(thing)

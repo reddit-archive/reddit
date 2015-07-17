@@ -1178,8 +1178,7 @@ class Subreddit(Thing, Printable, BaseSite):
 
         return self.sticky_fullnames
 
-    def set_sticky(self, link, user, num=None):
-        from r2.models import Link, ModAction
+    def set_sticky(self, link, log_user=None, num=None):
         unstickied_fullnames = []
 
         if not self.sticky_fullnames:
@@ -1210,14 +1209,15 @@ class Subreddit(Thing, Printable, BaseSite):
             
         self._commit()
 
-        for fullname in unstickied_fullnames:
-            unstickied = Link._by_fullname(fullname)
-            ModAction.create(
-                self, user, "unsticky", target=unstickied, details="replaced")
-        ModAction.create(self, user, "sticky", target=link)
+        if log_user:
+            from r2.models import Link, ModAction
+            for fullname in unstickied_fullnames:
+                unstickied = Link._by_fullname(fullname)
+                ModAction.create(self, log_user, "unsticky",
+                    target=unstickied, details="replaced")
+            ModAction.create(self, log_user, "sticky", target=link)
 
-    def remove_sticky(self, link, user):
-        from r2.models import ModAction
+    def remove_sticky(self, link, log_user=None):
         # XXX: have to work with a copy of the list instead of modifying
         #   it directly, because it doesn't get marked as "dirty" and
         #   saved properly unless we assign a new list to the attr
@@ -1229,7 +1229,10 @@ class Subreddit(Thing, Printable, BaseSite):
         
         self.sticky_fullnames = sticky_fullnames
         self._commit()
-        ModAction.create(self, user, "unsticky", target=link)
+
+        if log_user:
+            from r2.models import ModAction
+            ModAction.create(self, log_user, "unsticky", target=link)
 
 
 class SubscribedSubredditsByAccount(tdb_cassandra.DenormalizedRelation):
