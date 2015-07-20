@@ -115,7 +115,6 @@ def make_map(config):
     mc('/buttonlite', controller='buttons', action='button_lite')
 
     mc('/widget', controller='buttons', action='widget_demo_page')
-    mc('/bookmarklets', controller='buttons', action='bookmarklets')
 
     mc('/awards', controller='front', action='awards')
     mc('/awards/confirm/:code', controller='front',

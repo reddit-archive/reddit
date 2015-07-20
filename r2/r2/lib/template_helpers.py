@@ -429,34 +429,6 @@ def get_domain(cname=False, subreddit=True, no_www=False):
 
     return domain
 
-def dockletStr(context, type, browser):
-    site_host = "%s://%s" % (g.default_scheme, get_domain())
-
-    if type == "serendipity!":
-        return site_host+"/random"
-    elif type == "submit":
-        return ("javascript:location.href='"+site_host+
-               "/submit?url='+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title)")
-    elif type == "reddit toolbar":
-        return ("javascript:%20var%20h%20=%20window.location.href;%20h%20=%20'" +
-                site_host + "/s/'%20+%20escape(h);%20window.location%20=%20h;")
-    else:
-        # these are the linked/disliked buttons, which we have removed
-        # from the UI
-        return (("javascript:function b(){var u=encodeURIComponent(location.href);"
-                 "var i=document.getElementById('redstat')||document.createElement('a');"
-                 "var s=i.style;s.position='%(position)s';s.top='0';s.left='0';"
-                 "s.zIndex='10002';i.id='redstat';"
-                 "i.href='%(site_host)s/submit?url='+u+'&title='+"
-                 "encodeURIComponent(document.title);"
-                 "var q=i.firstChild||document.createElement('img');"
-                 "q.src='%(site_host)s/d/%(type)s.png?v='+Math.random()+'&uh=%(modhash)s&u='+u;"
-                 "i.appendChild(q);document.body.appendChild(i)};b()") %
-                dict(position = "absolute" if browser == "ie" else "fixed",
-                     site_host = site_host, type = type,
-                     modhash = c.modhash if c.user else ''))
-
-
 
 def add_sr(
         path, sr_path=True, nocname=False, force_hostname=False,

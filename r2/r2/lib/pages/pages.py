@@ -3550,13 +3550,6 @@ class WidgetDemoPanel(Templated):
     """Demo page for the .embed widget."""
     pass
 
-class Bookmarklets(Templated):
-    """The bookmarklets page."""
-    def __init__(self, buttons=None):
-        if buttons is None:
-            buttons = ["reddit toolbar", "submit", "serendipity!"]
-        Templated.__init__(self, buttons = buttons)
-
 
 class UserAwards(Templated):
     """For drawing the regular-user awards page."""

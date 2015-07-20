@@ -1460,38 +1460,6 @@ body.post-under-6h-old .gilded-icon {
 .md table { margin: 5px 10px;  }
 .md center { text-align: left;  }
 
-/* bookmarklet page */
-
-.instructions p { 
-    background-color: white;
-    padding: 10px;
-    margin: 10px; 
-    @include border-radius(10px);
-}
-
-.instructions h1 { 
-    font-size: medium;
-    margin-left: 5px;
-}
-
-.instructions h2 { 
-    font-size: medium;
-    margin-left: 5px;
-}
-
-.instructions img { 
-    width: 290px;
-    margin-left: 15px; 
-    @include border-radius(10px);
-    border: 1px solid #888;
-}
-
-.instructions textarea#bookmarklet { 
-    width: 290px;
-    margin: 15px; 
-    height: 80px; 
-}
-
 .tryme { 
     width: 100%;
     max-width: 280px;

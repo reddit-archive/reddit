@@ -22,7 +22,7 @@
 
 from reddit_base import RedditController, UnloggedUser
 from r2.lib.pages import (ButtonLite, ButtonDemoPanel, WidgetDemoPanel,
-                          Bookmarklets, BoringPage)
+                          BoringPage)
 from r2.lib.pages.things import wrap_links
 from r2.models import *
 from r2.lib.validator import *
@@ -115,9 +115,3 @@ class ButtonsController(RedditController):
         return BoringPage(_("reddit widget"),
                           show_sidebar = False, 
                           content=WidgetDemoPanel()).render()
-
-    def GET_bookmarklets(self):
-        return BoringPage(_("bookmarklets"),
-                          show_sidebar = False, 
-                          content=Bookmarklets()).render()
-

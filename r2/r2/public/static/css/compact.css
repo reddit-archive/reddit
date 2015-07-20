@@ -523,17 +523,6 @@ body.post-under-6h-old .gilded-icon { opacity: .55; }
 
 .md center { text-align: left; }
 
-/* bookmarklet page */
-.instructions p { background-color: white; padding: 10px; margin: 10px; -moz-border-radius: 10px; -webkit-border-radius: 10px; border-radius: 10px; }
-
-.instructions h1 { font-size: medium; margin-left: 5px; }
-
-.instructions h2 { font-size: medium; margin-left: 5px; }
-
-.instructions img { width: 290px; margin-left: 15px; -moz-border-radius: 10px; -webkit-border-radius: 10px; border-radius: 10px; border: 1px solid #888; }
-
-.instructions textarea#bookmarklet { width: 290px; margin: 15px; height: 80px; }
-
 .tryme { width: 100%; max-width: 280px; padding: 10px; background-color: white; -moz-border-radius: 10px; -webkit-border-radius: 10px; border-radius: 10px; margin: 10px auto; }
 
 .tryme p { margin: 10px; font-size: small; }
