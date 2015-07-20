@@ -86,7 +86,7 @@ page_descriptions = {
     "config/stylesheet": _("This page is the subreddit stylesheet, changes here apply to the subreddit css"),
     "config/submit_text": _("The contents of this page appear on the submit page"),
     "config/sidebar": _("The contents of this page appear on the subreddit sidebar"),
-    "config/description": _("The contents of this page appear in the public subreddit description"),
+    "config/description": _("The contents of this page appear in the public subreddit description and when the user does not have access to the subreddit"),
     "config/automoderator": _("This page is used to configure AutoModerator for the subreddit, please see [the full documentation](/wiki/automoderator/full-documentation) for information"),
 }
 
