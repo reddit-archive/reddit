@@ -2289,7 +2289,21 @@ textarea.gray { color: gray; }
     > .entry {
         .buttons, .md {
             display: none;
-        }   
+        }
+    }
+
+    &.threaded {
+        .tagline, .tagline a {
+            color: gray;
+
+            :not(.expand) {
+                font-style: italic;
+            }
+        }
+
+        .child {
+            display: none;
+        }
     }
 
     .midcol {
@@ -2311,8 +2325,7 @@ textarea.gray { color: gray; }
 }
 
 
-.message.message-parent .tagline,
-.message.message-reply .tagline  {
+.message .tagline {
     color: #485;
 }
 
@@ -2357,6 +2370,17 @@ textarea.gray { color: gray; }
 }
 
 
+.message.threaded .child {
+    margin-top: 10px;
+    margin-left: 20px;
+    border-left: 2px dashed #E7E7E7;
+}
+
+.message:not(.threaded) .entry {
+    margin-left: 10px;
+    border-left: 2px dashed #E7E7E7;
+}
+
 .message .child .message,
 .message .child .usertext { 
     margin-top: 10px; 
@@ -2383,12 +2407,6 @@ textarea.gray { color: gray; }
 }
 
 /* threaded message styles: remove padding */
-.message.message-parent .child,
-.message.message-reply .child { 
-    margin: 0;
-    padding: 0; 
-}
-
 .message.message-parent .child .message,
 .message.message-reply  .child .message
  { 
@@ -2410,10 +2428,8 @@ textarea.gray { color: gray; }
 
 .message.message-reply .entry, 
 .message.message-parent .entry { 
-    margin-left: 10px;
     padding-left: 10px;
     padding-bottom: 10px; 
-    border-left: 2px dashed #E7E7E7;
 }
 
 

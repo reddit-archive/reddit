@@ -1121,12 +1121,13 @@ class CommentBuilder(Builder):
 
 class MessageBuilder(Builder):
     def __init__(self, skip=True, num=None, parent=None, after=None,
-                 reverse=False, **kw):
+                 reverse=False, threaded=False, **kw):
         self.skip = skip
         self.num = num
         self.parent = parent
         self.after = after
         self.reverse = reverse
+        self.threaded = threaded
         Builder.__init__(self, **kw)
 
     def get_tree(self):
@@ -1185,19 +1186,31 @@ class MessageBuilder(Builder):
             next_item = tree_sort_fn((last_id, last_children))
         return tree, prev_item, next_item
 
+    @classmethod
+    def should_collapse(cls, message):
+        # don't collapse this message if it has a new direct child
+        if hasattr(message, "child"):
+            has_new_child = any(child.new for child in message.child.things)
+        else:
+            has_new_child = False
+
+        return (message.is_collapsed and
+            not message.new and
+            not has_new_child)
+
     def get_items(self):
         tree = self.get_tree()
         tree, prev_item, next_item = self._apply_pagination(tree)
 
-        # generate the set of ids to look up and look them up
         message_ids = []
-        for root, thread in tree:
-            message_ids.append(root)
-            message_ids.extend(thread)
+        for parent_id, child_ids in tree:
+            message_ids.append(parent_id)
+            message_ids.extend(child_ids)
+
         if prev_item:
             message_ids.append(prev_item)
 
-        messages = Message._byID(message_ids, data = True, return_dict = False)
+        messages = Message._byID(message_ids, data=True, return_dict=False)
         wrapped = {m._id: m for m in self.wrap_items(messages)}
 
         if prev_item:
@@ -1206,55 +1219,86 @@ class MessageBuilder(Builder):
             next_item = wrapped[next_item]
 
         final = []
-        for parent, children in tree:
-            if parent not in wrapped:
+        for parent_id, child_ids in tree:
+            if parent_id not in wrapped:
                 continue
 
-            parent = wrapped[parent]
+            parent = wrapped[parent_id]
 
             if not self._viewable_message(parent):
                 continue
 
-            if children:
-                # if no parent is specified, check if any of the messages are
-                # uncollapsed, and truncate the thread
-                children = [wrapped[child] for child in children
-                                           if child in wrapped]
+            children = [
+                wrapped[child_id] for child_id in child_ids
+                if child_id in wrapped
+            ]
+
+            depth = {parent_id: 0}
+            substitute_parents = {}
+
+            if (not self.threaded and
+                    not self.parent and not parent.new and parent.is_collapsed):
+                for i, child in enumerate(children):
+                    if child.new or not child.is_collapsed:
+                        break
+                else:
+                    i = -1
+                # in flat view replace collapsed chain with MoreMessages
                 add_child_listing(parent)
-                # if the parent is new or uncollapsed we don't  want it to
-                # become a moremessages wrapper.
-                if (self.skip and 
-                        not self.parent and
-                        not parent.new and
-                        parent.is_collapsed):
-                    for i, child in enumerate(children):
-                        if child.new or not child.is_collapsed:
-                            break
-                    else:
-                        i = -1
-                    parent = Wrapped(MoreMessages(parent, parent.child))
-                    children = children[i:]
+                parent = Wrapped(MoreMessages(parent, parent.child))
+                children = children[i:]
 
-                parent.child.parent_name = parent._fullname
-                parent.child.things = []
+            for child in sorted(children, key=lambda child: child._id):
+                # iterate from the root outwards so we can check the depth
+                if self.threaded:
+                    child_parent = wrapped[child.parent_id]
+                else:
+                    # for flat view all messages are decendants of the
+                    # parent message
+                    child_parent = parent
+                parent_depth = depth[child_parent._id]
+                child_depth = parent_depth + 1
+                depth[child._id] = child_depth
 
-                for child in children:
-                    child.is_child = True
-                    child.collapsed = child.is_collapsed
+                if child_depth == MAX_RECURSION:
+                    # current message is at maximum depth level, all its
+                    # children will be displayed as children of its parent
+                    substitute_parents[child._id] = child_parent._id
 
-                    parent.child.things.append(child)
+                if child_depth > MAX_RECURSION:
+                    child_parent_id = substitute_parents[child.parent_id]
+                    substitute_parents[child._id] = child_parent_id
+                    child_parent = wrapped[child_parent_id]
+
+                if not hasattr(child_parent, "child"):
+                    add_child_listing(child_parent)
+                child.is_child = True
+                child_parent.child.things.append(child)
+
+            for child in children:
+                # look over the children again to decide whether they can be
+                # collapsed
+                child.threaded = self.threaded
+                child.collapsed = self.should_collapse(child)
+
             parent.is_parent = True
-            parent.collapsed = parent.is_collapsed
+            parent.threaded = self.threaded
+            parent.collapsed = self.should_collapse(parent)
             final.append(parent)
 
         return (final, prev_item, next_item, len(final), len(final))
 
-    def item_iter(self, a):
-        for i in a[0]:
-            yield i
-            if hasattr(i, 'child'):
-                for j in i.child.things:
-                    yield j
+    def item_iter(self, builder_items):
+        items = builder_items[0]
+
+        def _item_iter(_items):
+            for i in _items:
+                yield i
+                if hasattr(i, "child"):
+                    for j in _item_iter(i.child.things):
+                        yield j
+
+        return _item_iter(items)
 
 
 class ModeratorMessageBuilder(MessageBuilder):
