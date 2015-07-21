@@ -1120,12 +1120,11 @@ class CommentBuilder(Builder):
 
 
 class MessageBuilder(Builder):
-    def __init__(self, skip=True, num=None, parent=None, focal=None, after=None,
+    def __init__(self, skip=True, num=None, parent=None, after=None,
                  reverse=False, **kw):
         self.skip = skip
         self.num = num
         self.parent = parent
-        self.focal = focal
         self.after = after
         self.reverse = reverse
         Builder.__init__(self, **kw)
@@ -1214,14 +1213,14 @@ class MessageBuilder(Builder):
                 children = [wrapped[child] for child in children
                                            if child in wrapped]
                 add_child_listing(parent)
-                # if the parent is new, uncollapsed, or focal we don't
-                # want it to become a moremessages wrapper.
+                # if the parent is new or uncollapsed we don't  want it to
+                # become a moremessages wrapper.
                 if (self.skip and 
-                    not self.parent and not parent.new and parent.is_collapsed 
-                    and not (self.focal and self.focal._id == parent._id)):
+                        not self.parent and
+                        not parent.new and
+                        parent.is_collapsed):
                     for i, child in enumerate(children):
-                        if (child.new or not child.is_collapsed or
-                            (self.focal and self.focal._id == child._id)):
+                        if child.new or not child.is_collapsed:
                             break
                     else:
                         i = -1
@@ -1233,21 +1232,11 @@ class MessageBuilder(Builder):
 
                 for child in children:
                     child.is_child = True
-                    if self.focal and child._id == self.focal._id:
-                        # focal message is never collapsed
-                        child.collapsed = False
-                        child.focal = True
-                    else:
-                        child.collapsed = child.is_collapsed
+                    child.collapsed = child.is_collapsed
 
                     parent.child.things.append(child)
             parent.is_parent = True
-            # the parent might be the focal message on a permalink page
-            if self.focal and parent._id == self.focal._id:
-                parent.collapsed = False
-                parent.focal = True
-            else:
-                parent.collapsed = parent.is_collapsed
+            parent.collapsed = parent.is_collapsed
             final.append(parent)
 
         return (final, prev_item, next_item, len(final), len(final))
