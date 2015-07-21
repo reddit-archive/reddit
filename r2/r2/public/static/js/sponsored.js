@@ -599,7 +599,16 @@ var exports = r.sponsored = {
     },
 
     toggleFrequency: function() {
-      $('.frequency-cap-field').toggle('slow');
+        var prevChecked = this.frequency_capped;
+        var currentlyChecked = ($('input[name="frequency_capped"]:checked').val() === 'true');
+        if (prevChecked != currentlyChecked) {
+            $('.frequency-cap-field').toggle('slow');
+            this.frequency_capped = currentlyChecked;
+        }
+    },
+
+    setup_frequency_cap: function(frequency_capped) {
+        this.frequency_capped = !!frequency_capped;
     },
 
     setup_geotargeting: function(regions, metros) {
@@ -1594,6 +1603,7 @@ function edit_campaign($campaign_row) {
               });
             }
 
+            r.sponsored.setup_frequency_cap($campaign_row.data('frequency_cap'));
             /* show frequency inputs */
             if ($campaign_row.data('frequency_cap')) {
               $('.frequency-cap-field').show();
