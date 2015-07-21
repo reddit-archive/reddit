@@ -41,8 +41,8 @@
   elif hasattr(thing, "target") and isinstance(thing.target, Account):
     title += ' %s' % thing.target.name
 
-  if thing.details:
-    title += ' (%s)' % thing.details
+  if thing.details_text:
+    title += ' (%s)' % thing.details_text
 
   if isinstance(thing, Comment):
     permalink = thing.target.make_permalink(thing.parent_link, thing.subreddit)
