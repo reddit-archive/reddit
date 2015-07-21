@@ -1375,11 +1375,7 @@ def reverse_gold_purchase(transaction_id):
         goldtype = 'autorenew'
     else:
         secret = transaction.secret
-        if '{' in secret:
-            secret.strip('{}') # I goofed
-            pieces = secret.split(',')
-        else:
-            pieces = secret.split('-')
+        pieces = secret.split('-')
         goldtype = pieces[0]
 
     if goldtype == 'gift':
