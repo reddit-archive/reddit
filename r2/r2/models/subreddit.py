@@ -274,7 +274,6 @@ class Subreddit(Thing, Printable, BaseSite):
         key_color='',
         hide_ads=False,
         ban_count=0,
-        allow_random=True,
         quarantine=False,
     )
 
@@ -998,7 +997,7 @@ class Subreddit(Thing, Printable, BaseSite):
         promo_sr_id = cls.get_promote_srid()
 
         for sr in srs:
-            if not sr.allow_random:
+            if sr.quarantine:
                 continue
 
             if sr._id == promo_sr_id:
