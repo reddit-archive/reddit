@@ -508,8 +508,12 @@ class Link(Thing, Printable):
             item.is_author = (user == item.author)
 
             item.thumbnail_sprited = False
+
+            if item.quarantine:
+                item.thumbnail = ""
+                item.preview_image = None
             # always show a promo author their own thumbnail
-            if item.promoted and (user_is_admin or item.is_author) and item.has_thumbnail:
+            elif item.promoted and (user_is_admin or item.is_author) and item.has_thumbnail:
                 item.thumbnail = media.thumbnail_url(item)
                 item.preview_image = getattr(item, 'preview_object', None)
             elif user.pref_no_profanity and item.over_18 and not c.site.over_18:
