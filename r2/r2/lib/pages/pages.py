@@ -935,9 +935,6 @@ class AccountActivityBox(Templated):
     def __init__(self):
         super(AccountActivityBox, self).__init__()
 
-class RedditHeader(Templated):
-    def __init__(self):
-        pass
 
 class RedditFooter(CachedTemplate):
     def cachable_attrs(self):
