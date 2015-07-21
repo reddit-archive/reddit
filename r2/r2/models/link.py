@@ -501,6 +501,8 @@ class Link(Thing, Printable):
                                 item.nsfw_str)
             item.nsfw = item.over_18 and user.pref_label_nsfw
 
+            item.quarantine = item.subreddit.quarantine
+
             item.show_new_post_sharing = feature.is_enabled('improved_sharing')
 
             item.is_author = (user == item.author)

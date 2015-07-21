@@ -4489,12 +4489,16 @@ form input[type=radio] {margin: 2px .5em 0 0; }
 
 .over18 button { margin: 0 10px 0 10px; padding: 5px}
 
-.entry .buttons li.nsfw-stamp {
-    padding-right: 2px;
-    font-size: x-small;
+.entry .buttons {
+    .nsfw-stamp,
+    .quarantine-stamp {
+        padding-right: 2px;
+        font-size: x-small;
+    }
 }
 
 @color-nsfw-stamp: darken(@color-warning-red, 5%);
+@color-quarantine-stamp: @color-nsfw-stamp;
 @color-private-stamp: darken(@color-orange, 10%);
 @color-restricted-stamp: darken(@color-orange, 10%);
 @color-archived-stamp: lighten(@color-text-grey, 15%);
@@ -4512,6 +4516,11 @@ form input[type=radio] {margin: 2px .5em 0 0; }
     acronym {
         text-decoration: none;
     }
+}
+
+.quarantine-stamp {
+    color: @color-quarantine-stamp;
+    text-transform: uppercase;
 }
 
 .private-stamp {

@@ -646,6 +646,12 @@ ${unsafe(txt)}
   </acronym>
 </%def>
 
+<%def name="quarantine_stamp()">
+  <span title="${_('Quarantined content: Content may be highly offensive')}">
+    ${_("Warning")}
+  </span>
+</%def>
+
 <%def name="thumbnail_img(thing)">
   %if thing.thumbnail and not thing.thumbnail_sprited:
     <%

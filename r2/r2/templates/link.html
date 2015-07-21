@@ -35,7 +35,7 @@
 %>
  
 <%inherit  file="printable.html"/>
-<%namespace file="utils.html" import="plain_link, thing_timestamp, edited, nsfw_stamp, thumbnail_img" />
+<%namespace file="utils.html" import="plain_link, thing_timestamp, edited, nsfw_stamp, quarantine_stamp, thumbnail_img" />
 <%namespace file="printablebuttons.html" import="toggle_button" />
  
 <%def name="numcol()">
@@ -67,6 +67,11 @@
 
 <%def name="bottom_buttons()">
   <ul class="flat-list buttons">
+    %if thing.quarantine:
+      <li class="rounded quarantine-stamp stamp">
+        ${quarantine_stamp()}
+      </li>
+    %endif
     %if thing.nsfw:
      <li class="rounded nsfw-stamp stamp">
       ${nsfw_stamp()}
