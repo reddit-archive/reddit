@@ -2420,6 +2420,7 @@ class ApiController(RedditController):
                    suggested_comment_sort=VOneOf('suggested_comment_sort',
                                                  CommentSortMenu._options,
                                                  default=None),
+                   quarantine = VBoolean('quarantine'),
                    # community_rules = VLength('community_rules', max_length=1024),
                    # related_subreddits = VSubredditList('related_subreddits', limit=20),
                    # key_color = VColor('key_color'),
@@ -2493,6 +2494,7 @@ class ApiController(RedditController):
             'over_18',
             'public_description',
             'public_traffic',
+            'quarantine',
             'related_subreddits',
             'show_cname_sidebar',
             'show_media',
@@ -2580,6 +2582,13 @@ class ApiController(RedditController):
         can_set_employees_only = c.user.employee
         if kw['type'] == 'employees_only' and not can_set_employees_only:
             c.errors.add(errors.INVALID_OPTION, field='type')
+
+        # if user is not an admin, set the quarantine argument to the original value
+        if not c.user_is_admin:
+            if sr:
+                kw['quarantine'] = sr.quarantine
+            else:
+                kw['quarantine'] = False
 
         if not sr and form.has_errors("ratelimit", errors.RATELIMIT):
             pass

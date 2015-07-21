@@ -275,6 +275,7 @@ class Subreddit(Thing, Printable, BaseSite):
         hide_ads=False,
         ban_count=0,
         allow_random=True,
+        quarantine=False,
     )
 
     # special attributes that shouldn't set Thing data attributes because they
