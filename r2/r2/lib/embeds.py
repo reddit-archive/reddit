@@ -43,7 +43,12 @@ def embeddable_sr(thing):
         except NotFound:
             sr = None
 
-    return sr if (sr is not None and sr.type not in Subreddit.private_types) else False
+    if (sr is not None and
+            sr.type not in Subreddit.private_types and
+            not sr.quarantine):
+        return sr
+    else:
+        return False
 
 
 def edited_after(thing, iso_timestamp, showedits):
