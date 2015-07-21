@@ -4317,7 +4317,8 @@ def make_link_child(item):
 
             if media_embed:
                 if media_embed.sandbox:
-                    should_authenticate = (item.subreddit.type in Subreddit.private_types)
+                    should_authenticate = (item.subreddit.type in Subreddit.private_types or
+                        item.subreddit.quarantine)
                     media_embed = MediaEmbed(
                         media_domain=g.media_domain,
                         height=media_embed.height + 10,
