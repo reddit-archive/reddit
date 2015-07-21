@@ -2457,6 +2457,13 @@ class Over18(Templated):
     """The creepy 'over 18' check page for nsfw content."""
     pass
 
+
+class Quarantine(Templated):
+    """The opt in page for viewing quarantined content."""
+    def __init__(self, sr_name):
+        Templated.__init__(self, sr_name=sr_name)
+
+
 class SubredditTopBar(CachedTemplate):
 
     """The horizontal strip at the top of most pages for navigating

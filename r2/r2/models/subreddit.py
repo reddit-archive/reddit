@@ -37,7 +37,12 @@ from pylons import c, g, request
 from pylons.i18n import _, N_
 
 from r2.lib.db.thing import Thing, Relation, NotFound
-from account import Account, AccountsActiveBySR, FakeAccount
+from account import (
+    Account,
+    AccountsActiveBySR,
+    FakeAccount,
+    QuarantinedSubredditOptInsByAccount,
+)
 from printable import Printable
 from r2.lib.db.userrel import UserRel, MigratingUserRel
 from r2.lib.db.operators import lower, or_, and_, not_, desc
@@ -793,7 +798,7 @@ class Subreddit(Thing, Printable, BaseSite):
     def can_view(self, user):
         if c.user_is_admin:
             return True
-        
+
         if self.spammy() or not self.is_exposed(user):
             return False
         elif self.type in ('public', 'restricted',
@@ -811,9 +816,15 @@ class Subreddit(Thing, Printable, BaseSite):
                     self.is_moderator_invite(user))
 
     def is_exposed(self, user):
-        """Checks if visible to user based on the quarantine attribute."""
-        return not self.quarantine or (c.user_is_loggedin and 
-                                       self.is_subscriber(user))
+        if c.user_is_admin:
+            return True
+        elif not self.quarantine:
+            return True
+        elif (c.user_is_loggedin and
+                QuarantinedSubredditOptInsByAccount.is_opted_in(user, self)):
+            return True
+
+        return False
 
     def can_demod(self, bully, victim):
         bully_rel = self.get_moderator(bully)

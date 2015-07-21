@@ -1668,13 +1668,11 @@ class RedditController(OAuth2ResourceController):
                     # do not leak the existence of multis via 403.
                     self.abort404()
                 elif not c.site.is_exposed(c.user):
-                    errpage = pages.RedditError(
-                        strings.quarantine_subreddit_title,
-                        strings.quarantine_subreddit_message,
-                        image="subreddit-banned.png",
-                    )
-                    request.environ['usable_error_content'] = errpage.render()
-                    self.abort403()
+                    if not c.user_is_loggedin:
+                        return self.intermediate_redirect('/login', sr_path=False)
+                    else:
+                        return self.intermediate_redirect("/quarantine", sr_path=False)
+
                 elif c.site.type == 'gold_only' and not (c.user.gold or c.user.gold_charter):
                     public_description = c.site.public_description
                     errpage = pages.RedditError(

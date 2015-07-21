@@ -70,6 +70,7 @@ def make_map():
     mc('/submit', controller='front', action='submit')
 
     mc('/over18', controller='post', action='over18')
+    mc('/quarantine', controller='post', action='quarantine')
 
     mc('/rules', controller='front', action='rules')
     mc('/sup', controller='front', action='sup')

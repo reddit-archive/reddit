@@ -1076,3 +1076,33 @@ class SubredditParticipationByAccount(tdb_cassandra.DenormalizedRelation):
     @classmethod
     def mark_participated(cls, account, subreddit):
         cls.create(account, [subreddit])
+
+
+class QuarantinedSubredditOptInsByAccount(tdb_cassandra.DenormalizedRelation):
+    _use_db = True
+    _last_modified_name = 'QuarantineSubredditOptin'
+    _read_consistency_level = tdb_cassandra.CL.QUORUM
+    _write_consistency_level = tdb_cassandra.CL.QUORUM
+    _connection_pool = 'main'
+    _views = []
+
+    @classmethod
+    def value_for(cls, thing1, thing2):
+        return datetime.now(g.tz)
+
+    @classmethod
+    def opt_in(cls, account, subreddit):
+        if subreddit.quarantine:
+            cls.create(account, subreddit)
+
+    @classmethod
+    def opt_out(cls, account, subreddit):
+        cls.destroy(account, subreddit)
+
+    @classmethod
+    def is_opted_in(cls, user, subreddit):
+        try:
+            r = cls.fast_query(user, [subreddit])
+        except tdb_cassandra.NotFound:
+            return False
+        return (user, subreddit) in r

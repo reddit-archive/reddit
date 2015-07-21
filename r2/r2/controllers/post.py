@@ -81,6 +81,16 @@ class PostController(ApiController):
         return BoringPage(_("over 18?"), content=Over18(),
                           show_sidebar=False).render()
 
+    @validate(
+        dest=VDestination(default='/'),
+    )
+    def GET_quarantine(self, dest):
+        sr = UrlParser(dest).get_subreddit()
+        return BoringPage(_("opt in to potentially offensive content?"),
+            content=Quarantine(sr.name),
+            show_sidebar=False,
+        ).render()
+
     @validate(VModhash(fatal=False),
               over18 = nop('over18'),
               dest = VDestination(default = '/'))
@@ -98,6 +108,23 @@ class PostController(ApiController):
                 c.user._commit()
             else:
                 delete_over18_cookie()
+            return self.redirect('/')
+
+    @validate(
+        VModhash(),
+        sr=VSRByName('sr_name'),
+        accept=VBoolean('accept'),
+        dest=VDestination(default='/'),
+    )
+    def POST_quarantine(self, sr, accept, dest):
+        if not c.user_is_loggedin:
+            return self.redirect(dest)
+
+        if accept:
+            QuarantinedSubredditOptInsByAccount.opt_in(c.user, sr)
+            return self.redirect(dest)
+        else:
+            QuarantinedSubredditOptInsByAccount.opt_out(c.user, sr)
             return self.redirect('/')
 
     @csrf_exempt
