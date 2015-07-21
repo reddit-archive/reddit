@@ -87,8 +87,7 @@ def make_map():
     mc('/subreddits/login', controller='forms', action='login')
     mc('/subreddits/:where', controller='reddits', action='listing',
        where='popular', conditions={'function':not_in_sr},
-       requirements=dict(where="popular|new|banned|employee|gold|default"))
-
+       requirements=dict(where="popular|new|banned|employee|gold|default|quarantine"))
     # If no subreddit is specified, might as well show a list of 'em.
     mc('/r', controller='redirect', action='redirect', dest='/subreddits')
 

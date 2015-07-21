@@ -1322,6 +1322,18 @@ class RedditsController(ListingController):
                     stale=True,
                 )
                 reddits._sort = desc('_downs')
+            elif self.where == 'quarantine':
+                if c.user_is_admin:
+                    reddits = Subreddit._query(
+                        Subreddit.c.quarantine==True,
+                        write_cache=True,
+                        read_cache=True,
+                        cache_time=5 * 60,
+                        stale=True,
+                    )
+                    reddits._sort = desc('_downs')
+                else:
+                    abort(404)
             elif self.where == 'gold':
                 reddits = Subreddit._query(
                     Subreddit.c.type=='gold_only',
