@@ -1136,12 +1136,6 @@ class MessageBuilder(Builder):
         w = self.convert_items((after,))[0]
         return self._viewable_message(w)
 
-    def _tree_filter_reverse(self, x):
-        return tree_sort_fn(x) >= self.after._id
-
-    def _tree_filter(self, x):
-        return tree_sort_fn(x) < self.after._id
-
     def _viewable_message(self, m):
         if (c.user_is_admin or
                 getattr(m, "author_id", 0) == c.user._id or
@@ -1155,31 +1149,45 @@ class MessageBuilder(Builder):
 
         return False
 
+    def _apply_pagination(self, tree):
+        if self.parent or self.num is None:
+            return tree, None, None
+
+        prev_item = None
+        next_item = None
+
+        if self.after:
+            # truncate the tree to only show before/after requested message
+            if self.reverse:
+                next_item = self.after._id
+                tree = [
+                    (parent_id, child_ids) for parent_id, child_ids in tree
+                    if tree_sort_fn((parent_id, child_ids)) >= next_item
+                ]
+
+                # special handling for after+reverse (before link): truncate
+                # the tree so it has num messages before the requested one
+                if len(tree) > self.num:
+                    first_id, first_children = tree[-(self.num + 1)]
+                    prev_item = tree_sort_fn((first_id, first_children))
+                    tree = tree[-self.num:]
+            else:
+                prev_item = self.after._id
+                tree = [
+                    (parent_id, child_ids) for parent_id, child_ids in tree
+                    if tree_sort_fn((parent_id, child_ids)) < prev_item
+                ]
+
+        if len(tree) > self.num:
+            # truncate the tree to show only num conversations
+            tree = tree[:self.num]
+            last_id, last_children = tree[-1]
+            next_item = tree_sort_fn((last_id, last_children))
+        return tree, prev_item, next_item
+
     def get_items(self):
         tree = self.get_tree()
-
-        prev_item = next_item = None
-        if not self.parent:
-            if self.num is not None:
-                if self.after:
-                    if self.reverse:
-                        tree = filter(
-                            self._tree_filter_reverse,
-                            tree)
-                        next_item = self.after._id
-                        if len(tree) > self.num:
-                            first = tree[-(self.num+1)]
-                            prev_item = first[1][-1] if first[1] else first[0]
-                            tree = tree[-self.num:]
-                    else:
-                        prev_item = self.after._id
-                        tree = filter(
-                            self._tree_filter,
-                            tree)
-                if len(tree) > self.num:
-                    tree = tree[:self.num]
-                    last = tree[-1]
-                    next_item = last[1][-1] if last[1] else last[0]
+        tree, prev_item, next_item = self._apply_pagination(tree)
 
         # generate the set of ids to look up and look them up
         message_ids = []
