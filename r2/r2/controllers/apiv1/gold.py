@@ -84,6 +84,10 @@ class APIv1GoldController(OAuth2OnlyController):
             err = RedditError("NO_THING_ID")
             self.on_validation_error(err)
 
+        if target.subreddit_slow.quarantine:
+            err = RedditError("GILDING_NOT_ALLOWED")
+            self.on_validation_error(err)
+
         self._gift_using_creddits(
             recipient=target.author_slow,
             thing_fullname=target._fullname,

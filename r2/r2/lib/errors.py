@@ -156,6 +156,7 @@ error_list = dict((
         ('BANNED_FROM_SUBREDDIT', _('that user is banned from the subreddit')),
         ('GOLD_REQUIRED', _('you must have an active reddit gold subscription to do that')),
         ('INSUFFICIENT_CREDDITS', _("insufficient creddits")),
+        ('GILDING_NOT_ALLOWED', _("gilding is not allowed in this subreddit")),
         ('SCRAPER_ERROR', _("unable to scrape provided url")),
         ('NO_SR_TO_SR_MESSAGE', _("can't send a message from a subreddit to another subreddit")),
         ('USER_BLOCKED_MESSAGE', _("can't send message to that user")),

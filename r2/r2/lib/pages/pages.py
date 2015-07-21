@@ -665,10 +665,7 @@ class Reddit(Templated):
 
         no_ads_yet = True
         user_disabled_ads = c.user.gold and c.user.pref_hide_ads
-        sr_disabled_ads = (not isinstance(c.site, FakeSubreddit) and
-            c.site.type == "gold_only" and
-            c.site.hide_ads)
-        show_adbox = not (user_disabled_ads or sr_disabled_ads or g.disable_ads)
+        show_adbox = c.site.allow_ads and not (user_disabled_ads or g.disable_ads)
 
         # don't show the subreddit info bar on cnames unless the option is set
         if not isinstance(c.site, FakeSubreddit) and (not c.cname or c.site.show_cname_sidebar):

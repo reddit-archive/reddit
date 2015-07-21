@@ -257,7 +257,6 @@ class Subreddit(Thing, Printable, BaseSite):
         description="",
         public_description="",
         submit_text="",
-        allow_gilding=True,
         public_traffic=False,
         spam_links='high',
         spam_selfposts='high',
@@ -1151,6 +1150,10 @@ class Subreddit(Thing, Printable, BaseSite):
         seconds = get_current_value_of_month()
         self._incr("gilding_server_seconds", int(seconds))
 
+    @property
+    def allow_gilding(self):
+        return not self.quarantine
+
     @classmethod
     def get_promote_srid(cls):
         if g.promo_srid36:
@@ -1387,6 +1390,10 @@ class FakeSubreddit(BaseSite):
     @property
     def _should_wiki(self):
         return False
+
+    @property
+    def allow_ads(self):
+        return True
 
     def is_moderator(self, user):
         if c.user_is_loggedin and c.user_is_admin:

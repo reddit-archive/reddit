@@ -2578,6 +2578,8 @@ class ApiController(RedditController):
         if kw['hide_ads'] and not can_set_hide_ads:
             form.set_error(errors.GOLD_ONLY_SR_REQUIRED, 'hide_ads')
             c.errors.add(errors.GOLD_ONLY_SR_REQUIRED, field='hide_ads')
+        elif not can_set_hide_ads and sr:
+            kw['hide_ads'] = sr.hide_ads
 
         can_set_employees_only = c.user.employee
         if kw['type'] == 'employees_only' and not can_set_employees_only:
