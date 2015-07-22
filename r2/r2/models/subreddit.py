@@ -791,7 +791,7 @@ class Subreddit(Thing, Printable, BaseSite):
         if c.user_is_admin:
             return True
         
-        if self.spammy():
+        if self.spammy() or not self.is_exposed(user):
             return False
         elif self.type in ('public', 'restricted',
                            'gold_restricted', 'archived'):
@@ -806,6 +806,11 @@ class Subreddit(Thing, Printable, BaseSite):
             return (self.is_contributor(user) or
                     self.is_moderator(user) or
                     self.is_moderator_invite(user))
+
+    def is_exposed(self, user):
+        """Checks if visible to user based on the quarantine attribute."""
+        return not self.quarantine or (c.user_is_loggedin and 
+                                       self.is_subscriber(user))
 
     def can_demod(self, bully, victim):
         bully_rel = self.get_moderator(bully)
