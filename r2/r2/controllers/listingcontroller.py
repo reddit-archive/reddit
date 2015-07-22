@@ -1104,14 +1104,20 @@ class MessageController(ListingController):
                 root = Subreddit._byID(parent.sr_id)
                 message_cls = SrMessageBuilder
 
-            return message_cls(root,
-                               wrap = self.builder_wrapper,
-                               parent = parent,
-                               skip = skip,
-                               num = self.num,
-                               after = self.after,
-                               keep_fn = self.keep_fn(),
-                               reverse = self.reverse)
+            enable_threaded = (self.where == "moderator" and
+                c.user.pref_threaded_modmail)
+
+            return message_cls(
+                root,
+                wrap=self.builder_wrapper,
+                parent=parent,
+                skip=skip,
+                num=self.num,
+                after=self.after,
+                keep_fn=self.keep_fn(),
+                reverse=self.reverse,
+                threaded=enable_threaded,
+            )
         return ListingController.builder(self)
 
     def _verify_inbox_count(self, kept_msgs):

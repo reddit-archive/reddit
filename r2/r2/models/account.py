@@ -147,6 +147,7 @@ class Account(Thing):
                      selfserve_cpm_override_pennies=None,
                      pref_show_gold_expiration=False,
                      admin_takedown_strikes=0,
+                     pref_threaded_modmail=False,
                      )
     _preference_attrs = tuple(k for k in _defaults.keys()
                               if k.startswith("pref_"))

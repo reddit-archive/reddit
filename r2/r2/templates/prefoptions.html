@@ -272,6 +272,8 @@
         <br>
         ${checkbox(_("send messages as emails"), "email_messages", disabled=(not c.user.email_verified), disabled_text=_("requires a verified email"))}
       %endif
+      <br>
+      ${checkbox(_("enable threaded modmail display"), "threaded_modmail")}
     </td>
   </tr>
   <tr>

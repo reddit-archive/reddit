@@ -84,6 +84,7 @@ PREFS_VALIDATORS = dict(
     pref_other_theme=VSRByName("other_theme", False),
     pref_beta=VBoolean('beta'),
     pref_legacy_search=VBoolean('legacy_search'),
+    pref_threaded_modmail=VBoolean('threaded_modmail', False),
 )
 
 
