@@ -1314,14 +1314,17 @@ class RedditsController(ListingController):
                                             stale = True)
                 reddits._sort = desc('_date')
             elif self.where == 'employee':
-                reddits = Subreddit._query(
-                    Subreddit.c.type=='employees_only',
-                    write_cache=True,
-                    read_cache=True,
-                    cache_time=5 * 60,
-                    stale=True,
-                )
-                reddits._sort = desc('_downs')
+                if c.user_is_loggedin and c.user.employee:
+                    reddits = Subreddit._query(
+                        Subreddit.c.type=='employees_only',
+                        write_cache=True,
+                        read_cache=True,
+                        cache_time=5 * 60,
+                        stale=True,
+                    )
+                    reddits._sort = desc('_downs')
+                else:
+                    abort(404)
             elif self.where == 'quarantine':
                 if c.user_is_admin:
                     reddits = Subreddit._query(
@@ -1372,7 +1375,6 @@ class RedditsController(ListingController):
                      uri_variants=[
                          '/subreddits/popular',
                          '/subreddits/new',
-                         '/subreddits/employee',
                          '/subreddits/gold',
                          '/subreddits/default',
                      ])
