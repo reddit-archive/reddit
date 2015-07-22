@@ -280,6 +280,11 @@ class Globals(object):
             'mobile_ad_image_size',
         ],
 
+        ConfigValue.tuple_of(ConfigValue.float): [
+            'ios_versions',
+            'android_versions',
+        ],
+
         ConfigValue.dict(ConfigValue.str, ConfigValue.int): [
             'agents',
         ],

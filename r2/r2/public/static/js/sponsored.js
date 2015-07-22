@@ -207,7 +207,6 @@ var CampaignSet = React.createClass({
   },
 });
 
-
 var CampaignCreator = React.createClass({
   displayName: 'CampaignCreator',
 
@@ -524,15 +523,20 @@ var exports = r.sponsored = {
         this.inventory = inventory_by_sr
         this.priceDict = priceDict
 
-        this.ALL_PLATFORMS = ['desktop', 'mobile'];
-
         var $platformField = $('.platform-field');
         this.$platformInputs = $platformField.find('input[name=platform]');
         this.$mobileOSInputs = $platformField.find('.mobile-os-group input');
+        this.$iOSDeviceInputs = $platformField.find('.ios-device input');
+        this.$iOSMinSelect = $platformField.find('#ios_min');
+        this.$iOSMaxSelect = $platformField.find('#ios_max');
+        this.$androidDeviceInputs = $platformField.find('.android-device input');
+        this.$androidMinSelect = $platformField.find('#android_min');
+        this.$androidMaxSelect = $platformField.find('#android_max');
+        this.$deviceAndVersionInputs = $platformField.find('input[name="os_versions"]');
 
         var render = this.render.bind(this);
-        this.$platformInputs.on('change', render);
-        this.$mobileOSInputs.on('change', render);
+
+        $('.platform-field input, .platform-field select').on('change', render);
 
         if (isEmpty) {
             this.render();
@@ -635,6 +639,15 @@ var exports = r.sponsored = {
 
     setup_frequency_cap: function(frequency_capped) {
         this.frequency_capped = !!frequency_capped;
+    },
+
+    setup_mobile_targeting: function(mobileOS, iOSDevices, iOSVersions, 
+                                     androidDevices, androidVersions) {
+      this.mobileOS = mobileOS;
+      this.iOSDevices = iOSDevices;
+      this.iOSVersions = iOSVersions;
+      this.androidDevices = androidDevices;
+      this.androidVersions = androidVersions;
     },
 
     setup_geotargeting: function(regions, metros) {
@@ -914,19 +927,52 @@ var exports = r.sponsored = {
       var platform = this.$platformInputs.filter(':checked').val();
       var isMobile = platform === 'mobile' || platform === 'all';
 
-      if (isMobile) {
-        os = this.$mobileOSInputs.filter(':checked').map(function() {
+      function mapTargets(target) {
+        targets = target.filter(':checked').map(function() {
           return $(this).attr('value');
         }).toArray().join(',');
-      } else {
-        os = null;
+        return targets.length === 1 ? targets[0] : targets
       }
 
-      return {
+      function getSelect(target) {
+        return target.find(':selected').val();
+      }
+
+      var targets;
+      if (isMobile) {
+        targets = {
+          os: mapTargets(this.$mobileOSInputs),
+          deviceAndVersion: mapTargets(this.$deviceAndVersionInputs),
+          iOSDevices: mapTargets(this.$iOSDeviceInputs),
+          iOSVersionRange: (getSelect(this.$iOSMinSelect) + ','
+            + getSelect(this.$iOSMaxSelect)),
+          iOSMinVersion: getSelect(this.$iOSMinSelect),
+          iOSMaxVersion: getSelect(this.$iOSMaxSelect),
+          androidDevices: mapTargets(this.$androidDeviceInputs),
+          androidVersionRange: (getSelect(this.$androidMinSelect) + ','
+            + getSelect(this.$androidMaxSelect)),
+          androidMinVersion: getSelect(this.$androidMinSelect),
+          androidMaxVersion: getSelect(this.$androidMaxSelect),
+        };
+      } else {
+        targets = {
+          os: null,
+          deviceAndVersion: null,
+          iOSDevices: null,
+          iOSVersionRange: null,
+          iOSMinVersion: null,
+          iOSMaxVersion: null,
+          androidDevices: null,
+          androidVersionRange: null,
+          androidMinVersion: null,
+          androidMaxVersion: null,
+        };
+      }
+
+      return $.extend({
         platform: platform,
-        os: os,
         isMobile: isMobile,
-      };
+      }, targets);
     },
 
     get_targeting: function($form) {
@@ -957,8 +1003,25 @@ var exports = r.sponsored = {
         };
 
         if (this.$platformInputs) {
-            var platform = this.getPlatformTargeting().platform;
-            targets['platform'] = platform;
+            var platformTargets = this.getPlatformTargeting();
+
+            var os = platformTargets.os;
+            var platform = platformTargets.platform;
+            var iOSDevices = platformTargets.iOSDevices;
+            var iOSVersionRange = platformTargets.iOSVersionRange;
+            var androidDevices = platformTargets.androidDevices;
+            var androidVersionRange = platformTargets.androidVersionRange;
+            
+            platformTargetsList = ['platform',
+                                   'iOSDevices',
+                                   'iOSVersionRange',
+                                   'androidDevices',
+                                   'androidVersionRange',];
+
+            platformTargetsList.forEach(function(platformStr) {
+              targets[platformStr] = eval(platformStr)
+            });
+
             targets['inventoryKey'] = this.get_inventory_key(sr, collection, geotarget, platform);
         } else {
             targets['inventoryKey'] = this.get_inventory_key(sr, collection, geotarget);
@@ -1097,7 +1160,38 @@ var exports = r.sponsored = {
         $bid.trigger("change")
     },
 
+    validateDeviceAndVersion: function(os, generalData, osData) {
+      var deviceError = false;
+      var versionError = false;
+      /* if OS is selected to target, populate hidden inputs */
+      if (generalData.platformTargetingOS.indexOf(os) !== -1) {
+        osData.deviceHiddenInput.val(osData.platformTargetingDevices);
+        osData.versionHiddenInput.val(osData.platformTargetingVersions);
+        osData.group.show();
+
+        if (generalData.deviceAndVersion == 'filter') {
+          /* check that at least one devices is selected */
+          if (!osData.deviceHiddenInput.val()) {
+            deviceError = true;
+          }
+
+          /* check that min version is less-or-equal-to max */
+          var versions = osData.versionHiddenInput.val().split(',');
+          if ((versions[1] !== '') && (versions[0] > versions[1])) {
+            versionError = true;
+          }
+        }
+      } else {
+        osData.deviceHiddenInput.val('');
+        osData.versionHiddenInput.val('');
+        osData.group.hide();
+      }
+      return {'deviceError': deviceError,
+              'versionError': versionError}
+    },
+
     fill_campaign_editor: function() {
+
         var $form = $("#campaign");
         var platformTargeting = this.getPlatformTargeting();
         var platformOverride = platformTargeting.isMobile && platformTargeting.platform === 'mobile';
@@ -1130,20 +1224,93 @@ var exports = r.sponsored = {
         var $mobileOSGroup = $('.mobile-os-group');
         var $mobileOSHiddenInput = $('#mobile_os');
 
+        var $OSDeviceGroup = $('.os-device-group');
+        var $iOSDeviceHiddenInput = $('#ios_device');
+        var $iOSVersionHiddenInput = $('#ios_version_range');
+        var $androidDeviceHiddenInput = $('#android_device');
+        var $androidVersionHiddenInput = $('#android_version_range');
+
         if (platformTargeting.isMobile) {
           var $mobileOSError = $mobileOSGroup.find('.error');
+          var $OSDeviceError = $OSDeviceGroup.find('.error.device-error');
+          var $OSVersionError = $OSDeviceGroup.find('.error.version-error');
 
           $mobileOSGroup.show();
           $mobileOSHiddenInput.val(platformTargeting.os || '');
+
+          $OSDeviceGroup.show();
 
           if (!platformTargeting.os) {
             $mobileOSError.show();
           } else {
             $mobileOSError.hide();
           }
+
+          var $deviceVersionGroup = $('.device-version-group');
+          var $deviceAndVersion = (platformTargeting.deviceAndVersion || 'all')
+
+          if ($deviceAndVersion === 'all') {
+            $deviceVersionGroup.hide();
+            $OSDeviceError.hide();
+            $OSVersionError.hide();
+            $iOSDeviceHiddenInput.val('');
+            $iOSVersionHiddenInput.val('');
+            $androidDeviceHiddenInput.val('');
+            $androidVersionHiddenInput.val('');
+          } else {
+            $deviceVersionGroup.show();
+
+            $iOSGroup = $('.ios-group');
+            $androidGroup = $('.android-group');
+
+            var generalData = {
+              platformTargetingOS: platformTargeting.os,
+              deviceAndVersion: $deviceAndVersion,
+            }
+
+            var iOSData = {
+              deviceHiddenInput: $iOSDeviceHiddenInput,
+              versionHiddenInput: $iOSVersionHiddenInput,
+              platformTargetingDevices: platformTargeting.iOSDevices,
+              platformTargetingVersions: platformTargeting.iOSVersionRange,
+              group: $iOSGroup,
+            }
+
+            var androidData = {
+              deviceHiddenInput: $androidDeviceHiddenInput,
+              versionHiddenInput: $androidVersionHiddenInput,
+              platformTargetingDevices: platformTargeting.androidDevices,
+              platformTargetingVersions: platformTargeting.androidVersionRange,
+              group: $androidGroup,
+            }
+
+            var iOSErrors = this.validateDeviceAndVersion('iOS', generalData, iOSData);
+            var androidErrors = this.validateDeviceAndVersion('Android', generalData, androidData);
+            var iOSDeviceError = iOSErrors['deviceError']
+            var iOSVersionError = iOSErrors['versionError'];
+            var androidDeviceError = androidErrors['deviceError'];
+            var androidVersionError = androidErrors['versionError'];
+
+            if (iOSDeviceError || androidDeviceError) {
+              $OSDeviceError.show();
+            } else {
+              $OSDeviceError.hide();
+            }
+
+            if (iOSVersionError || androidVersionError) {
+              $OSVersionError.show();
+            } else {
+              $OSVersionError.hide();
+            }
+          }
         } else {
-          $mobileOSGroup.hide();
           $mobileOSHiddenInput.val('');
+          $iOSDeviceHiddenInput.val('');
+          $iOSVersionHiddenInput.val('');
+          $androidDeviceHiddenInput.val('');
+          $androidVersionHiddenInput.val('');
+          $mobileOSGroup.hide();
+          $OSDeviceGroup.hide();
         }
 
         if (targeting.isValid) {
@@ -1632,9 +1799,56 @@ function edit_campaign($campaign_row) {
             var platform = $campaign_row.data('platform');
             campaign.find('*[name="platform"][value="' + platform + '"]').prop("checked", "checked");
 
-            campaign.find('.mobile_os_group input').prop("checked", false);
+            /* set mobile targeting */
+            r.sponsored.setup_mobile_targeting(
+              $campaign_row.data('mobile_os'),
+              $campaign_row.data('ios_devices'),
+              $campaign_row.data('ios_versions'),
+              $campaign_row.data('android_devices'),
+              $campaign_row.data('android_versions')
+            );
 
-            var mobile_os_names = $campaign_row.data('mobile-os');
+            /* pre-select mobile OS checkboxes if current platform is not mobile */
+            campaign.find('.mobile-os-group input').prop("checked", !r.sponsored.mobileOS);
+
+            /* logic if filtering by device and OS */
+            if (r.sponsored.iOSDevices || r.sponsored.androidDevices) {
+              /* pre-select the device and OS version radio button */
+              campaign.find('#filter_os_devices').prop('checked', 'checked');
+
+              /* first, clear all checked devices (they're checked by default),
+                 but only if the campaign has devices for the OS */
+              if (r.sponsored.iOSDevices) {
+                campaign.find('.ios-device input[type="checkbox"]').prop('checked', false);
+              }
+              if (r.sponsored.androidDevices) {
+                campaign.find('.android-device input[type="checkbox"]').prop('checked', false);
+              }
+
+              /* then, pre-select all appropriate devices */
+              var allDevices = [].concat(r.sponsored.iOSDevices, r.sponsored.androidDevices);
+              allDevices.forEach(function(device) {
+                if (device) {
+                  campaign.find('#'+device.toLowerCase()).prop('checked', true);
+                }
+              });
+
+              /* pre-select iOS versions */
+              if (r.sponsored.iOSVersions) {
+                campaign.find('#ios_min').val(r.sponsored.iOSVersions[0]);
+                campaign.find('#ios_max').val(r.sponsored.iOSVersions[1]);
+              }
+
+              /* pre-select Android versions */
+              if (r.sponsored.androidVersions) {
+                campaign.find('#android_min').val(r.sponsored.androidVersions[0]);
+                campaign.find('#android_max').val(r.sponsored.androidVersions[1]);
+              }
+            } else {
+              campaign.find('#all_os_devices').prop('checked', true);
+            }
+
+            var mobile_os_names = $campaign_row.data('mobile_os');
             if (mobile_os_names) {
               mobile_os_names.forEach(function(name) {
                 campaign.find('#mobile_os_' + name).prop("checked", "checked");

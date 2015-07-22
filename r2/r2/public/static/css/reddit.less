@@ -6425,6 +6425,20 @@ div #campaign-field {
     }
 }
 
+.mobile-targeting-group {
+    display: block;
+}
+
+.mobile-os-group,
+.os-device-group {
+    display: inline-block;
+    vertical-align: top;
+}
+
+.mobile-os-group {
+    width: 150px;
+}
+
 .sponsored-page {
     .checkbox-group,
     .radio-group,
@@ -6579,6 +6593,40 @@ div #campaign-field {
             width: 20em;
         }
 
+    }
+}
+
+.os-device-group {
+    .radio-group + .device-version-group + .device-version-group {
+        border-top: 1px solid #e6e6e6;
+        padding-top: 10px;
+    }
+    .device-version-group {
+        padding-left: 24px;
+    }
+}
+
+.device-version-group {
+    .checkbox-group {
+        width: 140px;
+    }
+    .checkbox-group,
+    .select-group {
+        display: inline-block;
+        vertical-align: top;
+    }
+}
+
+.version-select {
+    .form-group {
+        margin: 5px 0 20px 0;
+        select {
+            width: 100px;
+        }
+        > .label:first-child {
+            width: 30px;
+            display: inline-block;
+        }
     }
 }
 

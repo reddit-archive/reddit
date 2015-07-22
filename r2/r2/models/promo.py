@@ -311,6 +311,10 @@ class PromoCampaign(Thing):
         location_code=None,
         platform='desktop',
         mobile_os_names=None,
+        ios_device_names=None,
+        ios_version_names=None,
+        android_device_names=None,
+        android_version_names=None,
         frequency_cap=None,
         frequency_cap_duration=None,
     )
@@ -322,11 +326,15 @@ class PromoCampaign(Thing):
         "priority",
         "target",
         "mobile_os",
+        "ios_devices",
+        "ios_version_range",
+        "android_devices",
+        "android_version_range",
     )
 
     SR_NAMES_DELIM = '|'
     SUBREDDIT_TARGET = "subreddit"
-    MOBILE_OS_NAMES_DELIM = ','
+    MOBILE_TARGET_DELIM = ','
 
     def __getattr__(self, attr):
         val = Thing.__getattr__(self, attr)
@@ -379,7 +387,9 @@ class PromoCampaign(Thing):
 
     @classmethod
     def create(cls, link, target, bid, cpm, start_date, end_date, frequency_cap,
-             frequency_cap_duration, priority, location, platform, mobile_os):
+               frequency_cap_duration, priority, location, platform, mobile_os,
+               ios_devices, ios_version_range, android_devices,
+               android_version_range):
         pc = PromoCampaign(
             link_id=link._id,
             bid=bid,
@@ -396,6 +406,10 @@ class PromoCampaign(Thing):
         pc.target = target
         pc.platform = platform
         pc.mobile_os = mobile_os
+        pc.ios_devices = ios_devices
+        pc.ios_version_range = ios_version_range
+        pc.android_devices = android_devices
+        pc.android_version_range = android_version_range
         pc._commit()
         return pc
 
@@ -470,19 +484,57 @@ class PromoCampaign(Thing):
         # set _target so we don't need to lookup on subsequent access
         self._target = target
 
-    @property
-    def mobile_os(self):
-        if not self.mobile_os_names:
+    def _mobile_target_getter(self, target):
+        if not target:
             return None
         else:
-            return self.mobile_os_names.split(self.MOBILE_OS_NAMES_DELIM)
+            return target.split(self.MOBILE_TARGET_DELIM)
+
+    def _mobile_target_setter(self, target_names):
+        if not target_names:
+            return None
+        else:
+            return self.MOBILE_TARGET_DELIM.join(target_names)
+
+    @property
+    def mobile_os(self):
+        return self._mobile_target_getter(self.mobile_os_names)
 
     @mobile_os.setter
     def mobile_os(self, mobile_os_names):
-        if not mobile_os_names:
-            self.mobile_os_names = None
-        else:
-            self.mobile_os_names = self.MOBILE_OS_NAMES_DELIM.join(mobile_os_names)
+        self.mobile_os_names = self._mobile_target_setter(mobile_os_names)
+
+    @property
+    def ios_devices(self):
+        return self._mobile_target_getter(self.ios_device_names)
+
+    @ios_devices.setter
+    def ios_devices(self, ios_device_names):
+        self.ios_device_names = self._mobile_target_setter(ios_device_names)
+
+    @property
+    def android_devices(self):
+        return self._mobile_target_getter(self.android_device_names)
+
+    @android_devices.setter
+    def android_devices(self, android_device_names):
+        self.android_device_names = self._mobile_target_setter(android_device_names)
+
+    @property
+    def ios_version_range(self):
+        return self._mobile_target_getter(self.ios_version_names)
+
+    @ios_version_range.setter
+    def ios_version_range(self, ios_version_names):
+        self.ios_version_names = self._mobile_target_setter(ios_version_names)
+
+    @property
+    def android_version_range(self):
+        return self._mobile_target_getter(self.android_version_names)
+
+    @android_version_range.setter
+    def android_version_range(self, android_version_names):
+        self.android_version_names = self._mobile_target_setter(android_version_names)
 
     @property
     def location_str(self):

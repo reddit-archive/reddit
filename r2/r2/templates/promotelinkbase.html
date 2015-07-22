@@ -413,6 +413,124 @@
         ${_("you must select at least one mobile OS")}
       </div>
     </div>
+    <div class="os-device-group">
+      <div class="radio-group">
+        <span class="label">device and OS version</span>
+        <label class="form-group">
+          <input id="all_os_devices" class="nomargin"
+                 type="radio" value="all" name="os_versions"
+                 checked="checked"
+                 >
+          <div class="label-group">
+            <span class="label">${_("All")}</span>
+          </div>
+        </label>
+        <label class="form-group">
+          <input id="filter_os_devices" class="nomargin"
+                 type="radio" value="filter" name="os_versions"
+                 >
+          <div class="label-group">
+            <span class="label">${_("Filter by device and OS")}</span>
+          </div>
+        </label>
+      </div>
+      <div class="device-version-group ios-group">
+        <input type="hidden" id="ios_device" name="ios_device" value="">
+        <div class="checkbox-group ios-device">
+          <label class="form-group">
+            <input type="checkbox" id="iphone" value="iPhone" checked>
+            <span class="label">${_("iPhone")}</span>
+          </label>
+          <label class="form-group">
+            <input type="checkbox" id="ipad" value="iPad" checked>
+            <span class="label">${_("iPad")}</span>
+          </label>
+          <label class="form-group">
+            <input type="checkbox" id="ipod" value="iPod" checked>
+            <span class="label">${_("iPod")}</span>
+          </label>
+        </div>
+        <input type="hidden" id="ios_version_range"
+               name="ios_version_range">
+        <div class="select-group version-select ios-min-version">
+          <label class="form-group">
+            <span class="label">${_("Min")}</span>
+            <select id="ios_min" title="${_('iOS min')}"
+              %for version in thing.ios_versions:
+              <option ${"selected='selected'" if selected else ""} value="${version}">
+                ${version}
+              </option>
+              %endfor
+            </select>
+          </label>
+        </div
+        <div class="select-group version-select ios-max-version">
+          <label class="form-group">
+            <span class="label">${_("Max")}</span>
+            <select id="ios_max" title="${_('iOS max')}">
+              <option ${"selected='selected'" if selected else ""} value="">
+                no max
+              </option>
+              %for version in thing.ios_versions:
+              <option ${"selected='selected'" if selected else ""} value="${version}">
+                ${version}
+              </option>
+              %endfor
+            </select>
+          </label>
+        </div>
+      </div>
+      <div class="device-version-group android-group">
+        <input type="hidden" id="android_device" name="android_device">
+        <div class="checkbox-group android-device">
+          <label class="form-group">
+            <input type="checkbox" id="phone" value="phone" checked>
+            <span class="label">${_("Android Phone")}</span>
+          </label>
+          <label class="form-group">
+            <input type="checkbox" id="tablet" value="tablet" checked>
+            <span class="label">${_("Android Tablet")}</span>
+          </label>
+        </div>
+        <input type="hidden" id="android_version_range"
+               name="android_version_range">
+        <div class="select-group version-select android-min-version">
+          <label class="form-group">
+            <span class="label">${_("Min")}</span>
+            <select id="android_min" title="${_('android min')}"
+              %for version in thing.android_versions:
+              <option ${"selected='selected'" if selected else ""} value="${version}">
+                ${version}
+              </option>
+              %endfor
+            </select>
+          </label>
+        </div
+        <div class="select-group version-select android-max-version">
+          <label class="form-group">
+            <span class="label">${_("Max")}</span>
+            <select id="android_max" title="${_('Android max')}">
+              <option ${"selected='selected'" if selected else ""} value="">
+                no max
+              </option>
+              %for version in thing.android_versions:
+              <option ${"selected='selected'" if selected else ""} value="${version}">
+                ${version}
+              </option>
+              %endfor
+            </select>
+          </label>
+        </div>
+      </div>
+      ${error_field("BAD_PROMO_MOBILE_DEVICE", "os_versions", "div")}
+      ${error_field("INVALID_OS_VERSION", "os_version", "div")}
+      <div class="error version-error">
+        ${_("you must select valid versions to target")}
+      </div>
+      <div class="error device-error">
+        ${_("you must select at least one device per OS to target")}
+      </div>
+    </div>
   </%def>
 
   %if c.user_is_sponsor:
@@ -649,19 +767,19 @@
       </div>
       <div class="geotargeting-selects">
         <select class="geotarget-select" id="country" name="country"
-                title=${_("country")}
+                title="${_("country")}"
                 onchange="r.sponsored.country_changed()">
           %for code, name, selected in thing.countries:
-          <option ${"selected='selected'" if selected else ""} value=${code}>
+          <option ${"selected='selected'" if selected else ""} value="${code}">
             ${name}
           </option>
           %endfor
         </select>
         <select class="geotarget-select" id="region" name="region"
-                title=${_("region")} style="display:none"
+                title="${_("region")}" style="display:none"
                 onchange="r.sponsored.region_changed()"></select>
         <select class="geotarget-select" id="metro" name="metro"
-                title=${_("metro")} style="display:none"
+                title="${_("metro")}" style="display:none"
                 onchange="r.sponsored.metro_changed()"></select>
         ${error_field("INVALID_LOCATION", ("country", "region", "metro"), "div")}
       </div>

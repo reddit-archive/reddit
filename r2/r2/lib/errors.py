@@ -79,6 +79,7 @@ error_list = dict((
         ('BAD_SR_NAME', _('that name isn\'t going to work')),
         ('COLLECTION_NOEXIST', _('that collection doesn\'t exist')),
         ('INVALID_TARGET', _('that target type is not valid')),
+        ('INVALID_OS_VERSION', _('that version range is not valid')),
         ('RATELIMIT', _('you are doing that too much. try again in %(time)s.')),
         ('QUOTA_FILLED', _("You've submitted too many links recently. Please try again in an hour.")),
         ('SUBREDDIT_RATELIMIT', _("you are doing that too much. try again later.")),
@@ -166,6 +167,7 @@ error_list = dict((
         ('GOLD_ONLY_SR_REQUIRED', _("this subreddit must be 'gold only' to select this")),
         ('CANT_CREATE_SR', _("your account is too new to create a subreddit. please contact the admins to request an exemption.")),
         ('BAD_PROMO_MOBILE_OS', _("you must select at least one mobile OS to target")),
+        ('BAD_PROMO_MOBILE_DEVICE', _("you must select at least one device per OS to target")),
     ))
 
 errors = Storage([(e, e) for e in error_list.keys()])

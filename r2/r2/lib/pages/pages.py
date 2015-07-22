@@ -4141,6 +4141,10 @@ class PromoteLinkBase(Templated):
     def get_collections(self):
         self.collections = [cl.__dict__ for cl in Collection.get_all()]
 
+    def get_mobile_versions(self):
+        self.ios_versions = g.ios_versions
+        self.android_versions = g.android_versions
+
 
 class PromoteLinkNew(PromoteLinkBase):
     pass
@@ -4207,6 +4211,7 @@ class PromoteLinkEdit(PromoteLinkBase):
 
         self.get_locations()
         self.get_collections()
+        self.get_mobile_versions()
 
         user_srs = [sr for sr in Subreddit.user_subreddits(c.user, ids=False)
                     if sr.can_submit(c.user, promotion=True) and sr.allow_ads]
@@ -4267,6 +4272,10 @@ class RenderableCampaign(Templated):
 
         self.platform = campaign.platform
         self.mobile_os = campaign.mobile_os
+        self.ios_devices = campaign.ios_devices
+        self.ios_versions = campaign.ios_version_range
+        self.android_devices = campaign.android_devices
+        self.android_versions = campaign.android_version_range
 
         Templated.__init__(self)
 

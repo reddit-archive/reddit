@@ -98,6 +98,7 @@ from r2.lib.validator import (
     VLocation,
     VModhash,
     VOneOf,
+    VOSVersion,
     VPriority,
     VPromoCampaign,
     VPromoTarget,
@@ -129,6 +130,9 @@ from r2.models import (
     Subreddit,
     Target,
 )
+
+IOS_DEVICES = ('iPhone', 'iPad', 'iPod',)
+ANDROID_DEVICES = ('phone', 'tablet',)
 
 
 def campaign_has_oversold_error(form, campaign):
@@ -1000,20 +1004,42 @@ class PromoteApiController(ApiController):
         location=VLocation(),
         platform=VOneOf("platform", ("mobile", "desktop", "all"), default="desktop"),
         mobile_os=VList("mobile_os", choices=["iOS", "Android"]),
+        os_versions=VOneOf('os_versions', ('all', 'filter'), default='all'),
+        ios_devices=VList('ios_device', choices=IOS_DEVICES),
+        android_devices=VList('android_device', choices=ANDROID_DEVICES),
+        ios_versions=VOSVersion('ios_version_range', 'ios'),
+        android_versions=VOSVersion('android_version_range', 'android'),
     )
     def POST_edit_campaign(self, form, jquery, link, campaign_id36,
                            start, end, bid, target, frequency_cap,
-                           priority, location, platform, mobile_os):
+                           priority, location, platform, mobile_os,
+                           os_versions, ios_devices, ios_versions,
+                           android_devices, android_versions):
         if not link:
             return
 
         if form.has_errors('frequency_cap', errors.INVALID_FREQUENCY_CAP):
             return
 
-        if platform in ('mobile', 'all') and not mobile_os:
-            c.errors.add(errors.BAD_PROMO_MOBILE_OS, field='mobile_os')
-            form.set_error(errors.BAD_PROMO_MOBILE_OS, 'mobile_os')
-            return
+        # if on mobile platform, do a few checks
+        if platform in ('mobile', 'all'):
+            # check if platform includes mobile, but no mobile OS is selected
+            if not mobile_os:
+                c.errors.add(errors.BAD_PROMO_MOBILE_OS, field='mobile_os')
+                form.set_error(errors.BAD_PROMO_MOBILE_OS, 'mobile_os')
+                return
+            elif os_versions == 'filter':
+                # check if OS is selected, but OS devices are not
+                if (('iOS' in mobile_os and not ios_devices) or
+                        ('Android' in mobile_os and not android_devices)):
+                    c.errors.add(errors.BAD_PROMO_MOBILE_DEVICE, field='os_versions')
+                    form.set_error(errors.BAD_PROMO_MOBILE_DEVICE, 'os_versions')
+                    return
+                # check if OS versions are invalid
+                if form.has_errors('os_version', errors.INVALID_OS_VERSION):
+                    c.errors.add(errors.INVALID_OS_VERSION, field='os_version')
+                    form.set_error(errors.INVALID_OS_VERSION, 'os_version')
+                    return
 
         if not (c.user_is_sponsor or platform == 'desktop'):
             return abort(403, 'forbidden')
@@ -1150,11 +1176,14 @@ class PromoteApiController(ApiController):
         if campaign:
             promote.edit_campaign(link, campaign, dates, bid, cpm, target,
                                   frequency_cap[0], frequency_cap[1], priority,
-                                  location, platform, mobile_os)
+                                  location, platform, mobile_os, ios_devices,
+                                  ios_versions, android_devices, android_versions)
         else:
             campaign = promote.new_campaign(link, dates, bid, cpm, target,
                                             frequency_cap[0], frequency_cap[1],
-                                            priority, location, platform, mobile_os)
+                                            priority, location, platform, mobile_os,
+                                            ios_devices, ios_versions, android_devices,
+                                            android_versions)
         rc = RenderableCampaign.from_campaigns(link, campaign)
         jquery.update_campaign(campaign._fullname, rc.render_html())
 

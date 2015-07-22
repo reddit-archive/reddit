@@ -282,10 +282,13 @@ def get_transactions(link, campaigns):
     return bids_by_campaign
 
 def new_campaign(link, dates, bid, cpm, target, frequency_cap, frequency_cap_duration,
-                 priority, location, platform, mobile_os):
+                 priority, location, platform, mobile_os, ios_devices,
+                 ios_version_range, android_devices, android_version_range):
     campaign = PromoCampaign.create(link, target, bid, cpm, dates[0], dates[1],
                                     frequency_cap, frequency_cap_duration, priority,
-                                    location, platform, mobile_os)
+                                    location, platform, mobile_os, ios_devices,
+                                    ios_version_range, android_devices,
+                                    android_version_range)
     PromotionWeights.add(link, campaign)
     PromotionLog.add(link, 'campaign %s created' % campaign._id)
 
@@ -303,7 +306,8 @@ def free_campaign(link, campaign, user):
 
 def edit_campaign(link, campaign, dates, bid, cpm, target, frequency_cap,
                   frequency_cap_duration, priority, location, platform='desktop',
-                  mobile_os=None):
+                  mobile_os=None, ios_devices=None, ios_version_range=None,
+                  android_devices=None, android_version_range=None):
     changed = {}
     if bid != campaign.bid:
          # if the bid amount changed, cancel any pending transactions
@@ -343,6 +347,20 @@ def edit_campaign(link, campaign, dates, bid, cpm, target, frequency_cap,
     if mobile_os != campaign.mobile_os:
         changed["mobile_os"] = (campaign.mobile_os, mobile_os)
         campaign.mobile_os = mobile_os
+    if ios_devices != campaign.ios_devices:
+        changed['ios_devices'] = (campaign.ios_devices, ios_devices)
+        campaign.ios_devices = ios_devices
+    if android_devices != campaign.android_devices:
+        changed['android_devices'] = (campaign.android_devices, android_devices)
+        campaign.android_devices = android_devices
+    if ios_version_range != campaign.ios_version_range:
+        changed['ios_version_range'] = (campaign.ios_version_range,
+                                        ios_version_range)
+        campaign.ios_version_range = ios_version_range
+    if android_version_range != campaign.android_version_range:
+        changed['android_version_range'] = (campaign.android_version_range,
+                                            android_version_range)
+        campaign.android_version_range = android_version_range
 
     change_strs = map(lambda t: '%s: %s -> %s' % (t[0], t[1][0], t[1][1]),
                       changed.iteritems())
