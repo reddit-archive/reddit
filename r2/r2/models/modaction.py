@@ -25,7 +25,7 @@ import itertools
 from uuid import UUID
 
 from pycassa.system_manager import TIME_UUID_TYPE
-from pylons import c, request
+from pylons import c, g, request
 from pylons.i18n import _
 
 from r2.lib.db import tdb_cassandra
@@ -207,6 +207,9 @@ class ModAction(tdb_cassandra.UuidThing):
 
         ma = cls(**kw)
         ma._commit()
+
+        g.events.mod_event(ma, sr, mod, target, request=request, context=c)
+
         return ma
 
     def _on_create(self):

@@ -152,6 +152,46 @@ class EventQueue(object):
         self.save_event(event_base)
 
     @squelch_exceptions
+    @sampled("events_collector_mod_sample_rate")
+    def mod_event(self, modaction, subreddit, mod, target=None,
+            request=None, context=None):
+        """Create a 'mod' event for event-collector.
+
+        modaction: An r2.models.ModAction object
+        subreddit: The Subreddit the mod action is being performed in
+        mod: The Account that is performing the mod action
+        target: The Thing the mod action was applied to
+        request, context: Should be pylons.request & pylons.c respectively;
+            used to build the base Event if event_base is not given
+
+        """
+        event = EventV2(
+            topic="mod_events",
+            event_type=modaction.action,
+            time=modaction.date,
+            uuid=modaction._id,
+            request=request,
+            context=context,
+        )
+
+        event.add("sr_id", subreddit._id)
+        event.add("sr_name", subreddit.name)
+
+        if modaction.details_text:
+            event.add("details_text", modaction.details_text)
+
+        if target:
+            from r2.models import Account
+
+            event.add("target_fullname", target._fullname)
+            event.add("target_type", target.__class__.__name__.lower())
+            event.add("target_id", target._id)
+            if isinstance(target, Account):
+                event.add("target_name", target.name)
+
+        self.save_event(event)
+
+    @squelch_exceptions
     def event_base(self, request, context):
         return Event.base_from_request(request, context)
 
