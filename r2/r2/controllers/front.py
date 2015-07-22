@@ -288,8 +288,9 @@ class FrontController(RedditController):
         if request.GET.get('already_submitted'):
             submit_url = request.GET.get('submit_url') or article.url
             resubmit_url = Link.resubmit_link(submit_url)
-            sr_resubmit_url = add_sr(resubmit_url)
-            infotext = strings.already_submitted % sr_resubmit_url
+            if c.user_is_loggedin and c.site.can_submit(c.user):
+                resubmit_url = add_sr(resubmit_url)
+            infotext = strings.already_submitted % resubmit_url
 
         check_cheating('comments')
 
