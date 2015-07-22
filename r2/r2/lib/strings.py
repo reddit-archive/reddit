@@ -109,6 +109,8 @@ string_dict = dict(
     gold_only_subreddit_message = _("you must have [reddit gold](/gold/about) to view this super secret subreddit ^[beta](/gold/about#gold-only-subreddits)"),
     private_subreddit_title = _("this subreddit is private"),
     private_subreddit_message = _("the moderators of this subreddit have set it to private. you must be a moderator or approved submitter to view its contents."),
+    quarantine_subreddit_title = _("this subreddit is quarantined"),
+    quarantine_subreddit_message = _("this subreddit contains offensive content"),
     comments_panel_text = _("""The following is a sample of what Reddit users had to say about this page. The full discussion is available [here](%(fd_link)s); you can also get there by clicking the link's title (in the middle of the toolbar, to the right of the comments button)."""),
 
     submit_link = _("""You are submitting a link. The key to a successful submission is interesting content and a descriptive title."""),

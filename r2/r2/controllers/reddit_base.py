@@ -1667,6 +1667,14 @@ class RedditController(OAuth2ResourceController):
                 if isinstance(c.site, LabeledMulti):
                     # do not leak the existence of multis via 403.
                     self.abort404()
+                elif not c.site.is_exposed(c.user):
+                    errpage = pages.RedditError(
+                        strings.quarantine_subreddit_title,
+                        strings.quarantine_subreddit_message,
+                        image="subreddit-banned.png",
+                    )
+                    request.environ['usable_error_content'] = errpage.render()
+                    self.abort403()
                 elif c.site.type == 'gold_only' and not (c.user.gold or c.user.gold_charter):
                     public_description = c.site.public_description
                     errpage = pages.RedditError(
