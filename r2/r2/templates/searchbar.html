@@ -20,16 +20,6 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%namespace file="utils.html" import="pretty_button" />
-
-<%!
-   from r2.lib.strings import strings
-   from r2.lib.pages import SearchForm
-   from r2.lib.template_helpers import static
-%>
-
-<% isize = 60 %>
-
 %if thing.prev_search and thing.converted_data:
   <div class="search-summary">
     <div>
@@ -45,10 +35,6 @@
   <h4 style="color:gray">${thing.header}</h4>
 
   <div id="previoussearch">
-    ${SearchForm(prev_search=thing.prev_search,
-                 search_params=thing.search_params,
-                 site=thing.site, subreddit_search=thing.subreddit_search,
-                 simple=thing.simple, restrict_sr=thing.restrict_sr,
-                 syntax=thing.syntax)}
+    ${thing.search_form}
   </div>
 </div>

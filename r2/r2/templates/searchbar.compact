@@ -20,17 +20,10 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%!
-   from r2.lib.strings import strings
-   from r2.lib.pages import SearchForm
-%>
-
-<% isize = 60 %>
 <div class="searchpane raisedbox">
   <h4 style="color:gray">${thing.header}</h4>
 
   <div id="previoussearch">
-    ${SearchForm(prev_search = thing.prev_search,
-                 search_params = thing.search_params)}
+    ${thing.search_form}
   </div>
 </div>
