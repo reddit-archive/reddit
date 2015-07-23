@@ -4133,9 +4133,8 @@ class PromoteLinkEdit(PromoteLinkBase):
         self.get_locations()
         self.get_collections()
 
-        user_srs = Subreddit.user_subreddits(c.user, ids=False)
-        user_srs = filter(lambda sr: sr.can_submit(c.user, promotion=True),
-                          user_srs)
+        user_srs = [sr for sr in Subreddit.user_subreddits(c.user, ids=False)
+                    if sr.can_submit(c.user, promotion=True) and sr.allow_ads]
         top_srs = sorted(user_srs, key=lambda sr: sr._ups, reverse=True)[:20]
         extra_subreddits = [(_("suggestions:"), top_srs)]
         self.subreddit_selector = SubredditSelector(

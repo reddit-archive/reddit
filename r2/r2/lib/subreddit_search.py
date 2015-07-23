@@ -69,6 +69,8 @@ def popular_searches(include_over_18=True):
                                    data = True)
     top_searches = {}
     for sr in top_reddits:
+        if sr.quarantine:
+            continue
         if sr.over_18 and not include_over_18:
             continue
         name = sr.name.lower()

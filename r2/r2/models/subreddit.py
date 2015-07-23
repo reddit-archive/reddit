@@ -593,6 +593,10 @@ class Subreddit(Thing, Printable, BaseSite):
             multi = None
         return  [sr.name for sr in multi.srs] if multi else []
 
+    @property
+    def allow_ads(self):
+        return not (self.hide_ads or self.quarantine)
+
     @related_subreddits.setter
     def related_subreddits(self, related_subreddits):
         try:
