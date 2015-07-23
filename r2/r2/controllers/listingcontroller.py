@@ -194,7 +194,7 @@ class ListingController(RedditController):
         def keep(item):
             wouldkeep = item.keep_item(item)
             if isinstance(c.site, AllSR):
-                if not item.subreddit.allow_top:
+                if not item.subreddit.discoverable:
                     return False
             if getattr(item, "promoted", None) is not None:
                 return False
@@ -566,7 +566,7 @@ class BrowseController(ListingWithPromos):
             oldest = timeago('1 %s' % (str(self.time),))
             def keep(item):
                 if isinstance(c.site, AllSR):
-                    if not item.subreddit.allow_top:
+                    if not item.subreddit.discoverable:
                         return False
                 return item._date > oldest and item.keep_item(item)
             return keep
