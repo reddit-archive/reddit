@@ -351,6 +351,10 @@ def _get_scrape_url(link):
 
 
 def _set_media(link, force=False, **kwargs):
+    # Do not process thumbnails for quarantined subreddits
+    if link.subreddit_slow.quarantine:
+        return
+
     if link.is_self:
         if not feature.is_enabled('scrape_self_posts'):
             return
