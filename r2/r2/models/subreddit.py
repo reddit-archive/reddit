@@ -601,6 +601,10 @@ class Subreddit(Thing, Printable, BaseSite):
     def allow_ads(self):
         return not (self.hide_ads or self.quarantine)
 
+    @property
+    def discoverable(self):
+        return self.allow_top and not self.quarantine
+
     @related_subreddits.setter
     def related_subreddits(self, related_subreddits):
         try:
@@ -1016,7 +1020,7 @@ class Subreddit(Thing, Printable, BaseSite):
         promo_sr_id = cls.get_promote_srid()
 
         for sr in srs:
-            if sr.quarantine:
+            if not sr.discoverable:
                 continue
 
             if sr._id == promo_sr_id:

@@ -263,7 +263,7 @@ def is_visible(sr):
     return (
         sr.type not in Subreddit.private_types and
         not sr._spam and
-        not sr.quarantine
+        sr.discoverable
     )
 
 
