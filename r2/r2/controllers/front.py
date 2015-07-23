@@ -122,7 +122,11 @@ class FrontController(RedditController):
         rand.shuffle(names)
 
         def keep_fn(item):
-            return item.fresh and item.keep_item(item)
+            return (
+                item.fresh and
+                item.keep_item(item) and
+                item.subreddit.discoverable
+            )
 
         builder = IDBuilder(names, skip=True, keep_fn=keep_fn, num=1)
         links, first, last, before, after = builder.get_items()
