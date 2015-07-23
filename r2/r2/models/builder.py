@@ -693,13 +693,19 @@ class SearchBuilder(IDBuilder):
         # doesn't use the default keep_item because we want to keep
         # things that were voted on, even if they've chosen to hide
         # them in normal listings
+        user = c.user if c.user_is_loggedin else None
+
         if item._spam or item._deleted:
             return False
         # If checking (wrapped) links, filter out banned subreddits
         elif hasattr(item, 'subreddit') and item.subreddit.spammy():
             return False
+        elif hasattr(item, 'subreddit') and not item.subreddit.is_exposed(user):
+            return False
         elif (self.skip_deleted_authors and
               getattr(item, "author", None) and item.author._deleted):
+            return False
+        elif isinstance(item.lookups[0], Subreddit) and not item.is_exposed(user):
             return False
 
         # show NSFW to API and RSS users unless obey_over18=true
