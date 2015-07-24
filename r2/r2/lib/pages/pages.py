@@ -2743,6 +2743,13 @@ class AutoModeratorConfig(Templated):
     def __init__(self, automoderator_config):
         Templated.__init__(self, automoderator_config=automoderator_config)
 
+
+class RawCode(Templated):
+    """A "raw code" view of a wiki page - not rendered as markdown."""
+    def __init__(self, code):
+        Templated.__init__(self, code=code)
+
+
 class CssError(Templated):
     """Rendered error returned to the stylesheet editing page via ajax"""
     def __init__(self, error):

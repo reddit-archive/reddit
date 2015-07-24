@@ -20,7 +20,12 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from r2.lib.pages.pages import AutoModeratorConfig, Reddit, SubredditStylesheetSource
+from r2.lib.pages.pages import (
+    AutoModeratorConfig,
+    RawCode,
+    Reddit,
+    SubredditStylesheetSource,
+)
 from pylons import c
 from r2.lib.wrapped import Templated
 from r2.lib.menus import PageNameNav
@@ -40,6 +45,9 @@ class WikiView(Templated):
             self.page_content = SubredditStylesheetSource(content).render()
         elif renderer == "automoderator":
             self.page_content = AutoModeratorConfig(content).render()
+        elif renderer == "rawcode":
+            self.page_content = RawCode(content).render()
+
         self.renderer = renderer
         self.page = page
         self.diff = diff
