@@ -26,7 +26,7 @@
    from r2.lib.pages import WrappedUser
 %>
 
-<%namespace file="utils.html" import="plain_link, thing_timestamp, edited" />
+<%namespace file="utils.html" import="plain_link, thing_timestamp, edited, nsfw_stamp, quarantine_stamp" />
 <%inherit file="comment_skeleton.html"/>
 
 #####################
@@ -145,6 +145,17 @@ ${parent.midcol(cls = cls)}
 </%def>
 
 <%def name="buttons()">
+  %if c.profilepage:
+    %if thing.subreddit.quarantine:
+      <li class="rounded quarantine-stamp stamp">
+        ${quarantine_stamp()}
+      </li>
+    %elif thing.nsfw:
+      <li class="rounded nsfw-stamp stamp">
+        ${nsfw_stamp()}
+      </li>
+    %endif
+  %endif
   ${CommentButtons(thing)}
   ${self.admintagline()}
 </%def>

@@ -871,7 +871,13 @@ body > .content .link.compressed .midcol {
 a.author { margin-right: 0.5em; }
 a.banned-user { color: red; }
 
-.thing .parent .author { margin-right: 0.5em; }
+.thing .parent {
+    .stamp,
+    .author {
+        margin-right: 0.5em;
+    }
+}
+
 
 .flair, .linkflairlabel {
     display: inline-block;
@@ -4506,10 +4512,12 @@ form input[type=radio] {margin: 2px .5em 0 0; }
 @color-archived-stamp: lighten(@color-text-grey, 15%);
 
 .stamp {
+    display: inline-block;
     font-size: x-small;
     padding: 0 2px;
     border: none;
     border-radius: 3px;
+    line-height: 1.6em;
 }
 
 .nsfw-stamp {

@@ -1378,6 +1378,8 @@ class Comment(Thing, Printable):
                 extra_css += " border"
 
             if profilepage:
+                item.nsfw = user.pref_label_nsfw and (item.link.is_nsfw or item.subreddit.over_18)
+
                 link_author = authors[item.link.author_id]
                 if ((item.link._deleted or link_author._deleted) and
                         not user_is_admin):
