@@ -1083,6 +1083,10 @@ class QuarantinedSubredditOptInsByAccount(tdb_cassandra.DenormalizedRelation):
     _last_modified_name = 'QuarantineSubredditOptin'
     _read_consistency_level = tdb_cassandra.CL.QUORUM
     _write_consistency_level = tdb_cassandra.CL.QUORUM
+    _extra_schema_creation_args = {
+        "key_validation_class": tdb_cassandra.ASCII_TYPE,
+        "default_validation_class": tdb_cassandra.DATE_TYPE,
+    }
     _connection_pool = 'main'
     _views = []
 
