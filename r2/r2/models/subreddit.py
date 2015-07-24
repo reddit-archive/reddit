@@ -428,7 +428,12 @@ class Subreddit(Thing, Printable, BaseSite):
                     q = cls._query(
                         lower(cls.c.name) == srnames,
                         cls.c._spam == (True, False),
+                        # subreddits can't actually be deleted, but the combo
+                        # of allowing for deletion and turning on optimize_rules
+                        # gets rid of an unnecessary join on the thing table
+                        cls.c._deleted == (True, False),
                         limit=len(srnames),
+                        optimize_rules=True,
                         data=True,
                     )
                     fetched = {sr.name.lower(): sr._id for sr in q}
