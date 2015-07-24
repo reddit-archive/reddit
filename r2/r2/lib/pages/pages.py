@@ -2704,12 +2704,18 @@ class SubredditStylesheet(Templated):
     """form for editing or creating subreddit stylesheets"""
     def __init__(self, site = None,
                  stylesheet_contents = ''):
+        allow_image_upload = site and not site.quarantine
         raw_images = ImagesByWikiPage.get_images(c.site, "config/stylesheet")
         images = {name: make_url_protocol_relative(url)
                   for name, url in raw_images.iteritems()}
 
-        Templated.__init__(self, site = site, images=images,
-                         stylesheet_contents = stylesheet_contents)
+        Templated.__init__(
+            self,
+            site=site,
+            images=images,
+            stylesheet_contents=stylesheet_contents,
+            allow_image_upload=allow_image_upload,
+        )
 
     @staticmethod
     def find_preview_comments(sr):
