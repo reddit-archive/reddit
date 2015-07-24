@@ -5114,6 +5114,15 @@ class SubscribeButton(Templated):
             self.data_attrs["bubble_class"] = bubble_class
 
 
+class QuarantineOptoutButton(Templated):
+    def __init__(self, sr, bubble_class=None):
+        Templated.__init__(self)
+        self.sr = sr
+        self.data_attrs = {"sr_name": sr.name}
+        if bubble_class:
+            self.data_attrs["bubble_class"] = bubble_class
+
+
 class SubredditSelector(Templated):
     def __init__(self, default_sr=None, extra_subreddits=None, required=False,
                  include_searches=True, include_user_subscriptions=True, class_name=None,

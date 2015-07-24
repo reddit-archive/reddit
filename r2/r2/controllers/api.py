@@ -3410,6 +3410,19 @@ class ApiController(RedditController):
                 return abort(404, 'not found')
         sr.update_search_index(boost_only=True)
 
+    @noresponse(
+        VUser(),
+        VModhash(),
+        sr=VSRByName('sr_name'),
+    )
+    def POST_quarantine_optout(self, sr):
+        """Opt out from a quarantined subreddit"""
+        if not sr:
+            return abort(404, 'not found')
+        else:
+            QuarantinedSubredditOptInsByAccount.opt_out(c.user, sr)
+        return self.redirect('/')
+
     @validatedForm(VAdmin(),
                    VModhash(),
                    hexkey=VLength("hexkey", max_length=32),

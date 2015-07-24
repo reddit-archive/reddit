@@ -320,6 +320,15 @@ function unsubscribe(reddit_name) {
     };
 };
 
+function quarantine_optout(subreddit_name) {
+    return function() {
+        if (reddit.logged) {
+            $.request("quarantine_optout", {sr: subreddit_name});
+            $.redirect("/");
+        }
+    };
+};
+
 function friend(user_name, container_name, type) {
     return function() {
         if (reddit.logged) {
