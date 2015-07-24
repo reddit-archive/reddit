@@ -2665,6 +2665,8 @@ class ApiController(RedditController):
 
             update_wiki_text(sr)
 
+            update_stylesheet = kw['quarantine'] != sr.quarantine
+
             if not sr.domain:
                 del kw['css_on_cname']
 
@@ -2694,6 +2696,11 @@ class ApiController(RedditController):
 
                 setattr(sr, k, v)
             sr._commit()
+
+            if update_stylesheet:
+                stylesheet_contents = sr.fetch_stylesheet_source()
+                css_errors, parsed = sr.parse_css(stylesheet_contents)
+                sr.change_css(stylesheet_contents, parsed)
 
             #update the domain cache if the domain changed
             if sr.domain != old_domain:
