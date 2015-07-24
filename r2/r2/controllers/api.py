@@ -2306,6 +2306,9 @@ class ApiController(RedditController):
 
         """
 
+        if c.site.quarantine:
+            abort(403)
+
         # default error list (default values will reset the errors in
         # the response if no error is raised)
         errors = dict(BAD_CSS_NAME = "", IMAGE_ERROR = "")
