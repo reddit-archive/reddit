@@ -4497,8 +4497,10 @@ form input[type=radio] {margin: 2px .5em 0 0; }
     }
 }
 
+@color-stamp-text-dark: @color-semi-black;
+@color-stamp-text-light: @color-white;
 @color-nsfw-stamp: darken(@color-warning-red, 5%);
-@color-quarantine-stamp: @color-nsfw-stamp;
+@color-quarantine-stamp: @color-yellow;
 @color-private-stamp: darken(@color-orange, 10%);
 @color-restricted-stamp: darken(@color-orange, 10%);
 @color-archived-stamp: lighten(@color-text-grey, 15%);
@@ -4506,12 +4508,13 @@ form input[type=radio] {margin: 2px .5em 0 0; }
 .stamp {
     font-size: x-small;
     padding: 0 2px;
-    border: 1px solid !important;
+    border: none;
     border-radius: 3px;
 }
 
 .nsfw-stamp {
-    color: @color-nsfw-stamp;
+    background-color: @color-nsfw-stamp;
+    color: @color-stamp-text-light;
 
     acronym {
         text-decoration: none;
@@ -4519,8 +4522,8 @@ form input[type=radio] {margin: 2px .5em 0 0; }
 }
 
 .quarantine-stamp {
-    color: @color-quarantine-stamp;
-    text-transform: uppercase;
+    background-color: @color-quarantine-stamp;
+    color: @color-stamp-text-dark;
 }
 
 .private-stamp {
