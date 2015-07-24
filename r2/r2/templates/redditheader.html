@@ -43,7 +43,7 @@
         header_title = c.site.header_title
         d = thing.default_theme_sr
 
-        if c.site.header and c.can_apply_styles and c.allow_styles and not thing.no_sr_styles:
+        if c.site.header and c.can_apply_styles and c.allow_styles and not (thing.no_sr_styles or c.site.quarantine):
             header_img = c.site.header
             header_size = c.site.header_size
         else:

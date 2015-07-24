@@ -43,7 +43,7 @@
   <div class="left">
    <%
         d = DefaultSR()
-        if c.site.header and c.allow_styles:
+        if c.site.header and c.allow_styles and not c.site.quarantine:
             header_img = header_url(c.site.header)
             header_size = c.site.header_size
             header_title = c.site.header_title
