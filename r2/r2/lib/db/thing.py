@@ -533,8 +533,7 @@ class DataThing(object):
 class ThingMeta(type):
     def __init__(cls, name, bases, dct):
         if name == 'Thing' or hasattr(cls, '_nodb') and cls._nodb: return
-        if g.env == 'unit_test':
-            return
+        #print "checking thing", name
 
         #TODO exceptions
         cls._type_name = name.lower()
@@ -666,9 +665,6 @@ class RelationMeta(type):
     def __init__(cls, name, bases, dct):
         if name == 'RelationCls': return
         #print "checking relation", name
-
-        if g.env == 'unit_test':
-            return
 
         cls._type_name = name.lower()
         try:

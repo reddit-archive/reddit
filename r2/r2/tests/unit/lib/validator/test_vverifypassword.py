@@ -29,7 +29,8 @@ from webob.exc import HTTPException
 
 # Needs to be done before other r2 imports, since some code run on module import
 # expects a sane pylons env
-from r2.tests import RedditTestCase
+from r2.tests import stage_for_paste
+stage_for_paste()
 
 from r2.lib.db.thing import NotFound
 from r2.lib.errors import errors, ErrorSet, UserRequiredException
@@ -41,14 +42,26 @@ class TestVVerifyPassword(unittest.TestCase):
     """Test that only the current user's password satisfies VVerifyPassword"""
     @classmethod
     def setUpClass(cls):
+        cls._backup_user = c.user
+        cls._backup_loggedin = c.user_is_loggedin
+
         # Create a dummy account for testing with; won't touch the database
         # as long as we don't `._commit()`
         name = "unit_tester_%s" % uuid.uuid4().hex
         cls._password = uuid.uuid4().hex
-        cls._account = Account(
-            name=name,
-            password=bcrypt_password(cls._password)
-        )
+        try:
+            Account._by_name(name)
+            raise AccountExists
+        except NotFound:
+            cls._account = Account(
+                name=name,
+                password=bcrypt_password(cls._password)
+            )
+
+    @classmethod
+    def tearDownClass(cls):
+        c.user_is_loggedin = cls._backup_loggedin
+        c.user = cls._backup_user
 
     def setUp(self):
         c.user_is_loggedin = True

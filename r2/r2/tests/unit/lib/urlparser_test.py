@@ -24,14 +24,15 @@
 import unittest
 
 from r2.lib.utils import UrlParser
-from r2.tests import RedditTestCase
+from r2.tests import stage_for_paste
 from pylons import g
 
 
-class TestIsRedditURL(RedditTestCase):
+class TestIsRedditURL(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        stage_for_paste()
         cls._old_offsite = g.offsite_subdomains
         g.offsite_subdomains = ["blog"]
 
@@ -145,7 +146,8 @@ class TestIsRedditURL(RedditTestCase):
         self.assertIsSafeRedditUrl(u"/foo/bar/\xa0baz")
 
 
-class TestSwitchSubdomainByExtension(RedditTestCase):
+
+class TestSwitchSubdomainByExtension(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls._old_domain = g.domain

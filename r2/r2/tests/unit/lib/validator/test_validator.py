@@ -22,7 +22,9 @@
 ###############################################################################
 
 import unittest
-from r2.tests import RedditTestCase
+
+from r2.tests import stage_for_paste
+stage_for_paste()
 
 from pylons import c
 from r2.lib.errors import errors, ErrorSet

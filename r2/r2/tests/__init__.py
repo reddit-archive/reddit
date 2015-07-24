@@ -39,7 +39,19 @@ pkg_resources.working_set.add_entry(conf_dir)
 pkg_resources.require('Paste')
 pkg_resources.require('PasteScript')
 
-_app_context = False
+
+def stage_for_paste():
+     wsgiapp = loadapp('config:test.ini', relative_to=conf_dir)
+     test_app = paste.fixture.TestApp(wsgiapp)
+
+     # this is basically what 'paster run' does (see r2/commands.py)
+     test_response = test_app.get("/_test_vars")
+     request_id = int(test_response.body)
+     test_app.pre_request_hook = lambda self: \
+         paste.registry.restorer.restoration_end()
+     test_app.post_request_hook = lambda self: \
+         paste.registry.restorer.restoration_begin(request_id)
+     paste.registry.restorer.restoration_begin(request_id)
 
 
 class RedditTestCase(TestCase):
@@ -49,20 +61,6 @@ class RedditTestCase(TestCase):
     this isn't necessary as it'll save time.
 
     """
-    if not _app_context:
-        wsgiapp = loadapp('config:test.ini', relative_to=conf_dir)
-        test_app = paste.fixture.TestApp(wsgiapp)
-
-        # this is basically what 'paster run' does (see r2/commands.py)
-        test_response = test_app.get("/_test_vars")
-        request_id = int(test_response.body)
-        test_app.pre_request_hook = lambda self: \
-            paste.registry.restorer.restoration_end()
-        test_app.post_request_hook = lambda self: \
-            paste.registry.restorer.restoration_begin(request_id)
-        paste.registry.restorer.restoration_begin(request_id)
-
-        _app_context = True
-
     def __init__(self, *args, **kwargs):
+        stage_for_paste()
         TestCase.__init__(self, *args, **kwargs)

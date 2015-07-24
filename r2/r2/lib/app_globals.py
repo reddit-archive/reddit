@@ -442,7 +442,6 @@ class Globals(object):
             raise AttributeError
 
     def setup(self):
-        self.env = 'unit_test' if 'test' in sys.argv[0] else ''
         self.queues = queues.declare_queues(self)
 
         self.extension_subdomains = dict(
@@ -916,13 +915,8 @@ class Globals(object):
     def load_db_params(self):
         self.databases = tuple(ConfigValue.to_iter(self.config.raw_data['databases']))
         self.db_params = {}
-        self.predefined_type_ids = {}
         if not self.databases:
             return
-
-        if self.env == 'unit_test':
-            from mock import MagicMock
-            return MagicMock()
 
         dbm = db_manager.db_manager()
         db_param_names = ('name', 'db_host', 'db_user', 'db_pass', 'db_port',
@@ -965,6 +959,7 @@ class Globals(object):
             return params, flags
 
         prefix = 'db_table_'
+        self.predefined_type_ids = {}
         for k, v in self.config.raw_data.iteritems():
             if not k.startswith(prefix):
                 continue
