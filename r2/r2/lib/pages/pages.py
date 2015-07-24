@@ -2683,11 +2683,13 @@ class AllInfoBar(Templated):
 class CreateSubreddit(Templated):
     """reddit creation form."""
     def __init__(self, site = None, name = '', captcha=None):
+        allow_image_upload = site and not site.quarantine
         Templated.__init__(self,
                            site=site,
                            name=name,
                            captcha=captcha,
                            comment_sorts=CommentSortMenu.visible_options(),
+                           allow_image_upload=allow_image_upload,
                            )
         self.color_options = Subreddit.KEY_COLORS
         self.subreddit_selector = SubredditSelector(

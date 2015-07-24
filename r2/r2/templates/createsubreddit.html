@@ -458,37 +458,39 @@ try participating in other communities on reddit for a little while first before
         &#32;
         <span class="gray">(${_("leaves this page")})</span>
         </li>
-        <li>
-          <label for="header-title">header mouseover text:</label>
-          <input type="text" name="header-title" id="header-title"
-                 value="${thing.site.header_title}"
-                 />
-        </li>
-        <li>
-          <%utils:image_upload post_target="/api/upload_sr_img" 
-                               current_image="${thing.site.header}"
-                               label="${_('upload header image')}"
-                               ask_type="${True}">
-            <br/>
-            <button id="delete-img" class="delete-img"
-                    %if not thing.site.header:
-                       style="display: none;"
-                    %endif
-                    onclick="return post_form(this.form, 'delete_sr_header');">
-              ${_('restore default header')}
-            </button>
-            <div class="clearleft"></div>
-            <input type="hidden" name="uh" value="${c.modhash}" />
-            <input type="hidden" name="r"  value="${c.site.name}" />
-            <input type="hidden" name="header" value="1" />
-  
-            <script type="text/javascript">
-              function on_image_success(img) {
-                 $("#header-img").log().attr("src", img.attr("src"));
-              }
-            </script>
-          </%utils:image_upload>
-        </li>
+        %if thing.allow_image_upload:
+          <li>
+            <label for="header-title">header mouseover text:</label>
+            <input type="text" name="header-title" id="header-title"
+                   value="${thing.site.header_title}"
+                   />
+          </li>
+          <li>
+            <%utils:image_upload post_target="/api/upload_sr_img" 
+                                 current_image="${thing.site.header}"
+                                 label="${_('upload header image')}"
+                                 ask_type="${True}">
+              <br/>
+              <button id="delete-img" class="delete-img"
+                      %if not thing.site.header:
+                         style="display: none;"
+                      %endif
+                      onclick="return post_form(this.form, 'delete_sr_header');">
+                ${_('restore default header')}
+              </button>
+              <div class="clearleft"></div>
+              <input type="hidden" name="uh" value="${c.modhash}" />
+              <input type="hidden" name="r"  value="${c.site.name}" />
+              <input type="hidden" name="header" value="1" />
+    
+              <script type="text/javascript">
+                function on_image_success(img) {
+                   $("#header-img").log().attr("src", img.attr("src"));
+                }
+              </script>
+            </%utils:image_upload>
+          </li>
+        %endif
       </ul>
     </%utils:line_field>
 %endif
