@@ -1668,7 +1668,7 @@ class RedditController(OAuth2ResourceController):
                     # do not leak the existence of multis via 403.
                     self.abort404()
                 elif not c.site.is_exposed(c.user):
-                    if not c.user_is_loggedin:
+                    if not (c.user_is_loggedin and c.user.email_verified):
                         return self.intermediate_redirect('/login', sr_path=False)
                     else:
                         return self.intermediate_redirect("/quarantine", sr_path=False)

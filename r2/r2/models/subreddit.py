@@ -825,7 +825,8 @@ class Subreddit(Thing, Printable, BaseSite):
         elif not self.quarantine:
             return True
         elif (c.user_is_loggedin and
-                QuarantinedSubredditOptInsByAccount.is_opted_in(user, self)):
+                QuarantinedSubredditOptInsByAccount.is_opted_in(user, self) and
+                c.user.email_verified):
             return True
 
         return False
