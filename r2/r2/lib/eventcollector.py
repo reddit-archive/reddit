@@ -54,7 +54,10 @@ class EventQueue(object):
         self.queue = queue
 
     def save_event(self, event):
-        self.queue.add_item("event_collector", json.dumps(event))
+        if isinstance(event, Event):
+            self.queue.add_item("event_collector", json.dumps(event))
+        elif isinstance(event, EventV2):
+            self.queue.add_item("event_collector", event.dump())
 
     # Mapping of stored vote "names" to more readable ones
     VOTES = {"1": "up", "0": "clear", "-1": "down"}
@@ -149,7 +152,71 @@ class EventQueue(object):
         return Event.base_from_request(request, context)
 
 
+class EventV2(object):
+    def __init__(self, topic, event_type,
+            time=None, uuid=None, request=None, context=None):
+        """Create a new event for event-collector.
+
+        topic: Used to filter events into appropriate streams for processing
+        event_type: Used for grouping and sub-categorizing events
+        time: Should be a datetime.datetime object in UTC timezone
+        uuid: Should be a UUID object
+        request, context: Should be pylons.request & pylons.c respectively
+        """
+        self.topic = topic
+        self.event_type = event_type
+
+        if not time:
+            time = datetime.datetime.now(pytz.UTC)
+        self.timestamp = _epoch_to_millis(epoch_timestamp(time))
+
+        if not uuid:
+            uuid = uuid.uuid4()
+        self.uuid = str(uuid)
+
+        self.payload = {}
+        self.obfuscated_data = {}
+
+        if context and request:
+            if context.user_is_loggedin:
+                self.add("user_id", context.user._id)
+                self.add("user_name", context.user.name)
+            else:
+                loid = request.cookies.get("loid", None)
+                if loid:
+                    self.add("loid", loid)
+
+            oauth2_client = getattr(context, "oauth2_client", None)
+            if oauth2_client:
+                self.add("oauth2_client_id", oauth2_client._id)
+
+            self.add("domain", request.host)
+            self.add("user_agent", request.user_agent)
+            self.add("client_ip", request.ip, obfuscate=True)
+
+    def add(self, field, value, obfuscate=False):
+        if obfuscate:
+            self.obfuscated_data[field] = value
+        else:
+            self.payload[field] = value
+
+    def dump(self):
+        """Returns the JSON representation of the event."""
+        data = {
+            "event_topic": self.topic,
+            "event_type": self.event_type,
+            "event_ts": self.timestamp,
+            "uuid": self.uuid,
+            "payload": self.payload,
+        }
+        if self.obfuscated_data:
+            data["payload"]["obfuscatedData"] = self.obfuscated_data
+
+        return json.dumps(data)
+
+
 class Event(dict):
+    """Deprecated. All new events should use EventV2."""
     REQUIRED_FIELDS = (
         "event_name",
         "event_ts",
