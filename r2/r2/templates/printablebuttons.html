@@ -236,7 +236,7 @@
       ${self.simple_button(_("edit"), "edit_usertext", css_class="edit-usertext")}
     </li>
   %endif
-  % if c.user_is_loggedin or not g.read_only_mode:
+  % if thing.show_share:
   <li class="share">
     %if thing.show_new_post_sharing:
       <a class="post-sharing-button" href="javascript: void 0;">${_("share")}</a>

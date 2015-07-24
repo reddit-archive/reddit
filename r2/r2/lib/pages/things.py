@@ -87,6 +87,9 @@ class LinkButtons(PrintableButtons):
         # do we show the report button?
         show_report = not is_author and report
 
+        show_share = ((c.user_is_loggedin or not g.read_only_mode) and
+                      not thing.subreddit.quarantine)
+
         # if they are the author, can they edit it?
         thing_editable = getattr(thing, 'editable', True)
         thing_takendown = getattr(thing, 'admin_takedown', False)
@@ -158,6 +161,7 @@ class LinkButtons(PrintableButtons):
                                   show_rescrape=show_rescrape,
                                   show_givegold=show_givegold,
                                   show_comments = comments,
+                                  show_share=show_share,
                                   # promotion
                                   promoted = thing.promoted,
                                   is_link = True,
