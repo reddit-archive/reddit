@@ -1278,6 +1278,11 @@ class Subreddit(Thing, Printable, BaseSite):
     def subscribed_ids_by_user(cls, user):
         return SubscribedSubredditsByAccount.get_all_sr_ids(user)
 
+    @classmethod
+    def reverse_subscriber_ids(cls, user):
+        # This is just for consistency with all the other UserRel types
+        return cls.subscribed_ids_by_user(user)
+
     def get_rgb(self, fade=0.8):
         r = int(256 - (hash(str(self._id)) % 256)*(1-fade))
         g = int(256 - (hash(str(self._id) + ' ') % 256)*(1-fade))

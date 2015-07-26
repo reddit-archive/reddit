@@ -481,31 +481,12 @@ class Account(Thing):
         except NotFound:
             pass
 
-        # Mark this account for scrubbing
+        # Mark this account for immediate cleanup tasks
         amqp.add_item('account_deleted', self._fullname)
 
-        #remove from friends lists
-        q = Friend._query(Friend.c._thing2_id == self._id,
-                          Friend.c._name == 'friend',
-                          eager_load = True)
-        for f in q:
-            f._thing1.remove_friend(f._thing2)
-
-        q = Friend._query(Friend.c._thing2_id == self._id,
-                          Friend.c._name == 'enemy',
-                          eager_load=True)
-        for f in q:
-            f._thing1.remove_enemy(f._thing2)
-
-        # wipe out stored password data after a recovery period
+        # schedule further cleanup after a possible recovery period
         TryLater.schedule("account_deletion", self._id36,
                           delay=timedelta(days=90))
-
-        # Remove OAuth2Client developer permissions.  This will delete any
-        # clients for which this account is the sole developer.
-        from r2.models.token import OAuth2Client
-        for client in OAuth2Client._by_developer(self):
-            client.remove_developer(self)
 
     # 'State' bitfield properties
     @property
@@ -960,14 +941,86 @@ class BlockedSubredditsByAccount(tdb_cassandra.DenormalizedRelation):
 
 
 @trylater_hooks.on("trylater.account_deletion")
-def on_account_deletion(data):
+def deleted_account_cleanup(data):
+    from r2.models import Subreddit
+    from r2.models.admin_notes import AdminNotesBySystem
+    from r2.models.flair import Flair
+    from r2.models.token import OAuth2Client
+
     for account_id36 in data.itervalues():
         account = Account._byID36(account_id36, data=True)
 
         if not account._deleted:
             continue
 
+        # wipe the account's password and email address
         account.password = ""
+        account.email = ""
+        account.email_verified = False
+
+        notes = ""
+
+        # "noisy" rel removals, we'll record all of these in the account's
+        # usernotes in case we need the information later
+        rel_removal_descriptions = {
+            "moderator": "Unmodded",
+            "moderator_invite": "Cancelled mod invite",
+            "contributor": "Removed as contributor",
+            "banned": "Unbanned",
+            "wikibanned": "Un-wikibanned",
+            "wikicontributor": "Removed as wiki contributor",
+        }
+        if account.has_subscribed:
+            rel_removal_descriptions["subscriber"] = "Unsubscribed"
+
+        for rel_type, description in rel_removal_descriptions.iteritems():
+            try:
+                ids_fn = getattr(Subreddit, "reverse_%s_ids" % rel_type)
+                sr_ids = ids_fn(account)
+
+                sr_names = []
+                srs = Subreddit._byID(sr_ids, data=True, return_dict=False)
+                for subreddit in srs:
+                    remove_fn = getattr(subreddit, "remove_" + rel_type)
+                    remove_fn(account)
+                    sr_names.append(subreddit.name)
+
+                if description and sr_names:
+                    sr_list = ", ".join(sr_names)
+                    notes += "* %s from %s\n" % (description, sr_list)
+            except Exception as e:
+                notes += "* Error cleaning up %s rels: %s\n" % (rel_type, e)
+
+        # silent rel removals, no record left in the usernotes
+        rel_classes = {
+            "flair": Flair,
+            "friend": Friend,
+            "enemy": Friend,
+        }
+
+        for rel_name, rel_cls in rel_classes.iteritems():
+            try:
+                rels = rel_cls._query(
+                    rel_cls.c._thing2_id == account._id,
+                    rel_cls.c._name == rel_name,
+                    eager_load=True,
+                )
+                for rel in rels:
+                    remove_fn = getattr(rel._thing1, "remove_" + rel_name)
+                    remove_fn(account)
+            except Exception as e:
+                notes += "* Error cleaning up %s rels: %s\n" % (rel_name, e)
+
+        # add the note with info about the major changes to the account
+        if notes:
+            AdminNotesBySystem.add(
+                system_name="user",
+                subject=account.name,
+                note="Account deletion cleanup summary:\n\n%s" % notes,
+                author="<automated>",
+                when=datetime.now(g.tz),
+            )
+
         account._commit()
 
 
