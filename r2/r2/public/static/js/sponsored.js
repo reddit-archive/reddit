@@ -333,12 +333,19 @@ var CampaignCreator = React.createClass({
     else if (requested.bid < this.props.minValidBid) {
       var minimal = this.getMinimizedOption();
       if (minimal.impressions <= this.state.available) {
-        return CampaignSet(null,
-          InfoText({ className: 'error' },
-            r._('the campaign you requested is too small! this campaign is available:')
-          ),
-          CampaignOptionTable(null, CampaignOption(minimal))
-        );
+        if (r.sponsored.userIsSponsor) {
+          return CampaignSet(null,
+            InfoText(null, r._('the campaign you requested is available!')),
+            CampaignOptionTable(null, CampaignOption(requested))
+          );
+        } else {
+          return CampaignSet(null,
+            InfoText({ className: 'error' },
+              r._('the campaign you requested is too small! this campaign is available:')
+            ),
+            CampaignOptionTable(null, CampaignOption(minimal))
+          );
+        }
       }
       else {
         return InfoText({ className: 'error' },
@@ -489,6 +496,8 @@ var exports = r.sponsored = {
         $("#sr-autocomplete").on("sr-changed blur", function() {
             r.sponsored.render()
         })
+        this.targetValid = true;
+        this.bidValid = true;
         this.inventory = {}
         this.campaignListColumns = $('.existing-campaigns thead th').length
         $("input[name='media_url_type']").on("change", this.mediaInputChange)
@@ -1121,7 +1130,11 @@ var exports = r.sponsored = {
         }
 
         if (targeting.isValid) {
-            this.enable_form($form)
+            this.targetValid = true;
+            this.enable_form($form);
+        } else {
+            this.targetValid = false;
+            this.disable_form($form);
         }
 
         if (priority.isCpm) {
@@ -1185,15 +1198,17 @@ var exports = r.sponsored = {
     },
 
     disable_form: function($form) {
-        $form.find('.create, button[name="save"]')
+        $form.find('button[class*="campaign-button"]')
             .prop("disabled", true)
             .addClass("disabled");
     },
 
     enable_form: function($form) {
-        $form.find('.create, button[name="save"]')
-            .prop("disabled", false)
-            .removeClass("disabled");
+        if (this.bidValid && this.targetValid) {
+            $form.find('button[class*="campaign-button"]')
+                .prop("disabled", false)
+                .removeClass("disabled");
+        }
     },
 
     hide_cpm: function() {
@@ -1304,9 +1319,15 @@ var exports = r.sponsored = {
         }
 
         $(".minimum-spend").removeClass("error");
+
         if (bid < minimum_bid) {
+            this.bidValid = false;
+            this.disable_form($form);
             $(".minimum-spend").addClass("error");
-            this.disable_form($form)
+        } else {
+            this.bidValid = true;
+            this.enable_form($form);
+            $(".minimum-spend").removeClass("error");
         }
     },
 
