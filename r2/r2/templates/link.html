@@ -180,9 +180,13 @@
 </%def>
 
 
-<%def name="domain()">
+<%def name="domain(link=True)">
   <span class="domain">
-    (<a href="${thing.domain_path}">${thing.domain_str}</a>)
+    %if link:
+      (<a href="${thing.domain_path}">${thing.domain_str}</a>)
+    %else:
+      (${thing.domain_str})
+    %endif
     %if c.user_is_admin:
       &#32;
       <a class="adminbox" href="/admin/domain/${thing.domain}">d</a>

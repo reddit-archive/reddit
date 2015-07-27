@@ -55,7 +55,7 @@ ${unsafe(taglinetext % dict(author=author))}
 
 <%def name="domain()">
   %if not thing.is_self:
-    ${parent.domain()}
+    ${parent.domain(link=False)}
   %endif
 </%def>
 
