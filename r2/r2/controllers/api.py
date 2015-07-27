@@ -1938,7 +1938,9 @@ class ApiController(RedditController):
         elif shareform.has_errors("ratelimit", errors.RATELIMIT):
             return
 
-        if not link.subreddit_slow.can_view(c.user):
+        subreddit = link.subreddit_slow
+
+        if subreddit.quarantine or not subreddit.can_view(c.user):
             return abort(403, 'forbidden')
 
         emails, users = share_to
