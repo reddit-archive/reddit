@@ -574,10 +574,6 @@ class Subreddit(Thing, Printable, BaseSite):
         return self.subscriber_ids()
 
     @property
-    def flair(self):
-        return self.flair_ids()
-
-    @property
     def accounts_active(self):
         if self.hide_num_users_info:
             return 0
