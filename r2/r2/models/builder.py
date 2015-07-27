@@ -1251,7 +1251,12 @@ class MessageBuilder(Builder):
             for child in sorted(children, key=lambda child: child._id):
                 # iterate from the root outwards so we can check the depth
                 if self.threaded:
-                    child_parent = wrapped[child.parent_id]
+                    try:
+                        child_parent = wrapped[child.parent_id]
+                    except KeyError:
+                        # the stored comment tree was missing this message's
+                        # parent, treat it as a top level reply
+                        child_parent = parent
                 else:
                     # for flat view all messages are decendants of the
                     # parent message
