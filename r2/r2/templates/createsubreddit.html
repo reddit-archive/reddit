@@ -312,6 +312,7 @@ try participating in other communities on reddit for a little while first before
             ${_("viewers must be over eighteen years old")}
           </label>
         </li>
+        %if not thing.site or not thing.site.quarantine:
         <li>
           <input class="nomargin" type="checkbox"
                  name="allow_top" id="allow_top"
@@ -334,6 +335,7 @@ try participating in other communities on reddit for a little while first before
             ${_("show thumbnail images of content")}
           </label>
         </li>
+        %endif
         <li>
           <input class="nomargin" type="checkbox"
                  name="exclude_banned_modqueue" id="exclude_banned_modqueue"

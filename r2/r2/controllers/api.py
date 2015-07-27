@@ -2684,7 +2684,13 @@ class ApiController(RedditController):
                     emailer.sales_email(msg)
 
             # do not clobber these fields if absent in request
-            no_clobber = ('community_rules', 'key_color', 'related_subreddits')
+            no_clobber = (
+                'allow_top',
+                'community_rules',
+                'key_color',
+                'related_subreddits',
+                'show_media',
+            )
 
             for k, v in kw.iteritems():
                 if getattr(sr, k, None) != v:
