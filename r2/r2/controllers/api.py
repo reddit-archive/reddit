@@ -3106,15 +3106,20 @@ class ApiController(RedditController):
                                        parent = parent, skip = False)
         else:
             builder = UserMessageBuilder(c.user, parent = parent, skip = False)
+
         listing = Listing(builder).listing()
+
         a = []
         for item in listing.things:
             a.append(item)
-            for x in item.child.things:
-                a.append(x)
+            if hasattr(item, "child"):
+                for x in item.child.things:
+                    a.append(x)
+
         for item in a:
             if hasattr(item, "child"):
                 item.child = None
+
         jquery.things(parent._fullname).parent().replace_things(a, False, True)
 
     @require_oauth2_scope("read")
