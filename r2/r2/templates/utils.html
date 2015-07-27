@@ -269,6 +269,28 @@ ${unsafe(txt)}
   </form>
 </%def>
 
+
+<%def name="image_upload_inline(form_id='file', field_id='inline-file')">
+  <div id="${field_id}">
+    <input type="file" name="${form_id}" id="${form_id}">
+    ${error_field("IMAGE_ERROR", "span")}
+    <script>
+      function completedUploadImage (status, img_src, name, errors, form_id) {
+        if (status == 'failed') {
+          var $form = $('#${field_id}');
+          $form.find('.status').html('');
+          for (var i in errors) {
+            $form.find('.error.' + errors[i][0])
+                .show().text(errors[i][1]);
+          }
+          var top = $form.position().top;
+          $(window).scrollTop(top);
+        }
+      }
+    </script>
+  </div>
+</%def>
+
 <%def name="image_upload(post_target, current_image = None, onsubmit = '', 
                          onchange = '', label = '', form_id = 'image-upload',
                          ask_type = False, hidden_data=None)">

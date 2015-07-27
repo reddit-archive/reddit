@@ -195,7 +195,7 @@
           <input type="hidden" name="link_name" value="${link_name}" />
         </%utils:image_upload>
       %else:
-        <input type="file" name="file" id="file"/>
+        ${utils.image_upload_inline()}
       %endif
 
       <div class="clearleft"></div>
