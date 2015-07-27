@@ -21,7 +21,23 @@ r.analytics = {
       r.analytics.fireFunnelEvent('ads', r.config.ads_virtual_page);
     }
 
-    r.analytics.stripAnalyticsParams();
+    var url = r.config.tracker_url;
+    var params = {};
+
+    if (!r.config.user_id) {
+      var tracker = new redditlib.Tracker();
+      var loggedOutData = tracker.getTrackingData();
+      if (loggedOutData && loggedOutData.loid) {
+        params = {
+            loid: loggedOutData.loid
+        };
+        if (loggedOutData.loidcreated) {
+          params['loidcreated'] = loggedOutData.loidcreated
+        }
+      }
+    }
+
+    r.analytics.firePageTrackingPixel(url, params, r.analytics.stripAnalyticsParams);
   },
 
   _eventPredicates: {},
@@ -210,7 +226,7 @@ r.analytics = {
     );
   },
 
-  firePageTrackingPixel: function(url, params) {
+  firePageTrackingPixel: function(url, params, callback) {
     if (!url) { return; }
 
     params = params || {};
@@ -235,6 +251,7 @@ r.analytics = {
     }
 
     var pixel = new Image();
+    pixel.onload = pixel.onerror = callback;
     pixel.src = url + '&' + querystring.join('&');
   },
 
