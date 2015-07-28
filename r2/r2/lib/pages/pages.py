@@ -955,7 +955,7 @@ class RedditFooter(CachedTemplate):
 
             NavMenu([
                     NamedButton("rules", False, nocname=True),
-                    NamedButton("faq", False, nocname=True, dest="/wiki/faq"),
+                    OffsiteButton(_("FAQ"), "https://reddit.zendesk.com"),
                     NamedButton("wiki", False, nocname=True),
                     NamedButton("reddiquette", False, nocname=True, dest="/wiki/reddiquette"),
                     NamedButton("transparency", False, nocname=True, dest="/wiki/transparency"),
