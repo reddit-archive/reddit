@@ -4948,9 +4948,11 @@ class LinkCommentsSettings(Templated):
         self.stickied = link._fullname in stickied_fullnames
         self.stickies_full = len(stickied_fullnames) >= Subreddit.MAX_STICKIES
         self.sendreplies = link.sendreplies
-        self.can_edit = (c.user_is_loggedin
-                           and (c.user_is_admin or
-                                self.sr.is_moderator(c.user)))
+        self.can_edit = (
+            c.user_is_loggedin and
+            (c.user_is_admin or
+                self.sr.is_moderator_with_perms(c.user, "posts"))
+        )
         self.sort = sort
         self.suggested_sort = suggested_sort
 
