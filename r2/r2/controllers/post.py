@@ -44,6 +44,7 @@ from pylons.i18n import _
 from r2.models import *
 import hashlib
 from r2.lib.base import abort
+from r2.config import feature
 
 class PostController(ApiController):
     @csrf_exempt
@@ -89,6 +90,8 @@ class PostController(ApiController):
         dest=VDestination(default='/'),
     )
     def GET_quarantine(self, dest):
+        if not feature.is_enabled('quarantine'):
+            return self.abort404()
         sr = UrlParser(dest).get_subreddit()
         logged_in = c.user_is_loggedin
         email_verified = logged_in and c.user.email_verified
@@ -133,6 +136,8 @@ class PostController(ApiController):
         dest=VDestination(default='/'),
     )
     def POST_quarantine(self, sr, accept, dest):
+        if not feature.is_enabled('quarantine'):
+            return self.abort404()
         if not c.user_is_loggedin:
             return self.redirect(dest)
 

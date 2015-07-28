@@ -23,6 +23,7 @@
 <%!
    from pylons import g
 
+   from r2.config import feature
    from r2.lib.filters import conditional_websafe
    from r2.lib.template_helpers import (
        get_domain,
@@ -67,7 +68,7 @@
 
 <%def name="bottom_buttons()">
   <ul class="flat-list buttons">
-    %if thing.quarantine:
+    %if thing.quarantine and feature.is_enabled('quarantine'):
       <li class="rounded quarantine-stamp stamp">
         ${quarantine_stamp()}
       </li>

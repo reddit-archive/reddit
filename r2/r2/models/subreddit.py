@@ -36,6 +36,7 @@ from pycassa.system_manager import DATE_TYPE
 from pylons import c, g, request
 from pylons.i18n import _, N_
 
+from r2.config import feature
 from r2.lib.db.thing import Thing, Relation, NotFound
 from account import (
     Account,
@@ -603,6 +604,9 @@ class Subreddit(Thing, Printable, BaseSite):
 
     @property
     def discoverable(self):
+        if not feature.is_enabled('quarantine'):
+            return self.allow_top
+
         return self.allow_top and not self.quarantine
 
     @related_subreddits.setter
@@ -840,6 +844,9 @@ class Subreddit(Thing, Printable, BaseSite):
                     self.is_moderator_invite(user))
 
     def is_exposed(self, user):
+        if not feature.is_enabled('quarantine'):
+            return True
+
         if c.user_is_admin:
             return True
         elif not self.quarantine:

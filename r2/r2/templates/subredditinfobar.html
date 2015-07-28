@@ -21,6 +21,7 @@
 ###############################################################################
 
 <%!
+   from r2.config import feature
    from r2.lib.filters import websafe
    from r2.lib.strings import strings, Score
    from r2.lib.pages import WrappedUser, QuarantineOptoutButton, SubscribeButton
@@ -36,7 +37,7 @@
     ${plain_link(thing.sr.name, thing.sr.path, _sr_path=False, _class="hover")}
   </h1>
 
-  %if thing.sr.quarantine:
+  %if thing.sr.quarantine and feature.is_enabled('quarantine'):
     <div class="quarantine-notice">
       <div class="md-container">
         ${_md("This community is quarantined because of its distasteful and highly offensive content.", wrap=True)}

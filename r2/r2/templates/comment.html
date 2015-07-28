@@ -21,6 +21,7 @@
 ###############################################################################
 
 <%!
+   from r2.config import feature
    from r2.lib.filters import unsafe
    from r2.lib.pages.things import CommentButtons
    from r2.lib.pages import WrappedUser
@@ -145,7 +146,7 @@ ${parent.midcol(cls = cls)}
 </%def>
 
 <%def name="buttons()">
-  %if c.profilepage:
+  %if c.profilepage and feature.is_enabled('quarantine'):
     %if thing.subreddit.quarantine:
       <li class="rounded quarantine-stamp stamp">
         ${quarantine_stamp()}
