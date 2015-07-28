@@ -185,7 +185,10 @@ class Builder(object):
                     args['kind'] = 'special'
                 add_attr(w.attribs, **args)
 
-            if w.author and w.author._id in cakes and not c.profilepage:
+            # if display_author exists, then author_id is unknown to the
+            # receiver, so don't display the cake day
+            if (not hasattr(item, 'display_author') and
+                    w.author and w.author._id in cakes and not c.profilepage):
                 add_attr(
                     w.attribs,
                     kind="cake",
