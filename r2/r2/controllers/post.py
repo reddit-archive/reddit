@@ -95,6 +95,7 @@ class PostController(ApiController):
             _("quarantined"),
             content=Quarantine(sr.name, logged_in, email_verified),
             show_sidebar=False,
+            show_newsletterbar=False,
             robots='noindex,nofollow').render()
 
     @validate(VModhash(fatal=False),
