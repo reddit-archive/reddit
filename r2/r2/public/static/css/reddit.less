@@ -4506,7 +4506,7 @@ form input[type=radio] {margin: 2px .5em 0 0; }
 @color-stamp-text-dark: @color-semi-black;
 @color-stamp-text-light: @color-white;
 @color-nsfw-stamp: darken(@color-warning-red, 5%);
-@color-quarantine-stamp: @color-yellow;
+@color-quarantine: @color-yellow;
 @color-private-stamp: darken(@color-orange, 10%);
 @color-restricted-stamp: darken(@color-orange, 10%);
 @color-archived-stamp: lighten(@color-text-grey, 15%);
@@ -4530,7 +4530,7 @@ form input[type=radio] {margin: 2px .5em 0 0; }
 }
 
 .quarantine-stamp {
-    background-color: @color-quarantine-stamp;
+    background-color: @color-quarantine;
     color: @color-stamp-text-dark;
 }
 
@@ -4546,6 +4546,37 @@ form input[type=radio] {margin: 2px .5em 0 0; }
     color: @color-archived-stamp;
 }
 
+.quarantine-notice {
+    .box-sizing(border-box);
+    background: @color-quarantine;
+    padding: @margin-small * 1px;
+    padding-top: @margin-x-small * 1px;
+    margin-bottom: @margin-small * 1px;
+    .md p {
+        margin-top: 0;
+    }
+}
+
+.btn-quarantine {
+    font-weight: normal;
+    background-color: lighten(@color-quarantine, 13%);
+    text-transform: none;
+    width: 100%;
+    border: 1px solid darken(@color-quarantine, 15%);
+
+    &:hover {
+        background-color: lighten(@color-quarantine, 17%);
+        color: @color-semi-black;
+    }
+
+    &:active {
+        background-color: darken(@color-quarantine, 10%);
+    }
+
+    &:focus {
+        color: @color-semi-black;
+    }
+}
 
 .entry .buttons li.reported-stamp {
     border: 1px solid black !important;
