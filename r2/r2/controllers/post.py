@@ -90,7 +90,7 @@ class PostController(ApiController):
     def GET_quarantine(self, dest):
         sr = UrlParser(dest).get_subreddit()
         return BoringPage(
-            _("opt in to potentially offensive content?"),
+            _("quarantined"),
             content=Quarantine(sr.name),
             show_sidebar=False,
             robots='noindex,nofollow').render()

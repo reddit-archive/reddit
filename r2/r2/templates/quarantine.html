@@ -22,23 +22,31 @@
 
 <% from r2.lib.template_helpers import static %>
 
-<div class="content over18" style="text-align: center">
-  <p class="error">
-    ${_("the following content is questionable")}
-  </p>
-  <img src="${static('over18.png')}" alt="" height="254" width="180" />
-  
-  <form method="post" action="" class="pretty-form"
+<%namespace file="utils.html" import="_md"/>
+
+<div class="interstitial">
+  <img class="interstitial-image" src="${static('interstitial-image-quarantine.png')}" alt="" height="150" width="150" />
+
+  <div class="interstitial-message md-container">
+    <div class="md">
+      ${_md("### Are you sure you want to view this community?")}
+
+      ${_md("Communities that are dedicated to distasteful and highly offensive content are quarantined. Content in this community may be shocking or upsetting; are you certain you want to continue?")}
+    </div>
+  </div>
+
+  <form method="post" action=""
       ${"target='_top'" if c.cname else ""}>
     <input type="hidden" name="uh" value="${c.modhash}" />
-    <input type="hidden" name="sr_name" value="${thing.sr_name}" />
-    <p>
-      ${_("are you willing to see this questionable content?")}
-    </p>
-    <p>
-      <button type="submit" name="accept" value="yes">yes</button>
-      <button type="submit" name="accept" value="no">no</button>
-    </p>
+    <input type="hidden" name="sr_name" value="${thing.sr_name}" />    
+    <div class="buttons">
+      <button class="c-btn c-btn-primary" type="submit" name="accept" value="no">
+        ${_("no thank you")}
+      </button>
+      <button class="c-btn c-btn-primary" type="submit" name="accept" value="yes">
+        ${_("continue")}
+      </button>
+    </div>
   </form>
 </div>
 
