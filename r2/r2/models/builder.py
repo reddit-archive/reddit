@@ -1236,7 +1236,7 @@ class MessageBuilder(Builder):
             depth = {parent_id: 0}
             substitute_parents = {}
 
-            if (self.skip and not self.threaded and
+            if (children and self.skip and not self.threaded and
                     not self.parent and not parent.new and parent.is_collapsed):
                 for i, child in enumerate(children):
                     if child.new or not child.is_collapsed:
