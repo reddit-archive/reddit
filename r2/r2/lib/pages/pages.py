@@ -2460,8 +2460,13 @@ class Over18(Templated):
 
 class Quarantine(Templated):
     """The opt in page for viewing quarantined content."""
-    def __init__(self, sr_name):
-        Templated.__init__(self, sr_name=sr_name)
+    def __init__(self, sr_name, logged_in, email_verified):
+        Templated.__init__(
+            self,
+            sr_name=sr_name,
+            logged_in=logged_in,
+            email_verified=email_verified,
+        )
 
 
 class SubredditTopBar(CachedTemplate):

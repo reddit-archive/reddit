@@ -89,9 +89,11 @@ class PostController(ApiController):
     )
     def GET_quarantine(self, dest):
         sr = UrlParser(dest).get_subreddit()
+        logged_in = c.user_is_loggedin
+        email_verified = logged_in and c.user.email_verified
         return BoringPage(
             _("quarantined"),
-            content=Quarantine(sr.name),
+            content=Quarantine(sr.name, logged_in, email_verified),
             show_sidebar=False,
             robots='noindex,nofollow').render()
 

@@ -22,31 +22,45 @@
 
 <% from r2.lib.template_helpers import static %>
 
-<%namespace file="utils.html" import="_md"/>
-
 <div class="interstitial">
   <img class="interstitial-image" src="${static('interstitial-image-quarantine.png')}" alt="" height="150" width="150" />
 
   <div class="interstitial-message md-container">
     <div class="md">
-      ${_md("### Are you sure you want to view this community?")}
+      %if thing.logged_in and thing.email_verified:
+        <h3>${_("Are you sure you want to view this community?")}</h3>
 
-      ${_md("Communities that are dedicated to distasteful and highly offensive content are quarantined. Content in this community may be shocking or upsetting; are you certain you want to continue?")}
+        <p>${_("Communities that are dedicated to distasteful and highly offensive content are quarantined. Content in this community may be shocking or upsetting; are you certain you want to continue?")}</p>
+      %elif thing.logged_in:
+        <h3>${_("You must have a verified email to view this community")}</h3>
+
+        <p>${_("Communities that are dedicated to distasteful and highly offensive content are quarantined.")}</p>
+      %else:
+        <h3>${_("You must log in and have a verified email to view this community")}</h3>
+
+        <p>${_("Communities that are dedicated to distasteful and highly offensive content are quarantined.")}</p>
+      %endif
     </div>
   </div>
 
-  <form method="post" action=""
-      ${"target='_top'" if c.cname else ""}>
-    <input type="hidden" name="uh" value="${c.modhash}" />
-    <input type="hidden" name="sr_name" value="${thing.sr_name}" />    
+  %if thing.logged_in and thing.email_verified:
+    <form method="post" action=""
+        ${"target='_top'" if c.cname else ""}>
+      <input type="hidden" name="uh" value="${c.modhash}" />
+      <input type="hidden" name="sr_name" value="${thing.sr_name}" />    
+      <div class="buttons">
+        <button class="c-btn c-btn-primary" type="submit" name="accept" value="no">
+          ${_("no thank you")}
+        </button>
+        <button class="c-btn c-btn-primary" type="submit" name="accept" value="yes">
+          ${_("continue")}
+        </button>
+      </div>
+    </form>
+  %else:
     <div class="buttons">
-      <button class="c-btn c-btn-primary" type="submit" name="accept" value="no">
-        ${_("no thank you")}
-      </button>
-      <button class="c-btn c-btn-primary" type="submit" name="accept" value="yes">
-        ${_("continue")}
-      </button>
+      <a href="/" class="c-btn c-btn-primary">${_("back to reddit")}</a>
     </div>
-  </form>
+  %endif
 </div>
 
