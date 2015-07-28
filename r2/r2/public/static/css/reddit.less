@@ -2376,9 +2376,12 @@ textarea.gray { color: gray; }
     border-left: 2px dashed #E7E7E7;
 }
 
-.message:not(.threaded) .entry {
-    margin-left: 10px;
-    border-left: 2px dashed #E7E7E7;
+// message-reply and message-parent classes are only present in tree view
+.message.message-reply, .message.message-parent {
+    &:not(.threaded) .entry {
+        margin-left: 10px;
+        border-left: 2px dashed #E7E7E7;
+    }
 }
 
 .message .child .message,
