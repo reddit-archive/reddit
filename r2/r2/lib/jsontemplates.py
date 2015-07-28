@@ -606,6 +606,7 @@ class LinkJsonTemplate(ThingJsonTemplate):
         edited="editted",
         gilded="gildings",
         hidden="hidden",
+        hide_score="hide_score",
         is_self="is_self",
         likes="likes",
         link_flair_css_class="flair_css_class",
