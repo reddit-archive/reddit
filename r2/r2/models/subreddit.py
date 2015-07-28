@@ -812,8 +812,21 @@ class Subreddit(Thing, Printable, BaseSite):
 
         if self.spammy() or not self.is_exposed(user):
             return False
-        elif self.type in ('public', 'restricted',
-                           'gold_restricted', 'archived'):
+        else:
+            return self.is_allowed_to_view(user)
+
+    def can_view_in_modlist(self, user):
+        if c.user_is_admin:
+            return True
+        elif self.spammy():
+            return False
+        else:
+            return self.is_allowed_to_view(user)
+
+    def is_allowed_to_view(self, user):
+        """Returns whether user can view based on permissions and settings"""
+        if self.type in ('public', 'restricted',
+                         'gold_restricted', 'archived'):
             return True
         elif c.user_is_loggedin:
             if self.type == 'gold_only':
