@@ -4136,7 +4136,7 @@ class PromoteLinkEdit(PromoteLinkBase):
             'selfserve': 'https://www.reddit.com/r/selfserve'
         }
         self.infobar = InfoBar(message=message)
-        self.price_dict = PromotionPrices.get_price_dict(c.user)
+        self.price_dict = PromotionPrices.get_price_dict(self.author)
 
 
 class RenderableCampaign(Templated):
