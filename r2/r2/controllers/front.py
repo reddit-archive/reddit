@@ -255,12 +255,12 @@ class FrontController(RedditController):
             return self.intermediate_redirect("/over18", sr_path=False)
 
         # Determine if we should show the embed link for comments
-        c.can_embed = bool(comment)
+        c.can_embed = bool(comment) and sr.is_embeddable
 
-        is_embed = embeds.prepare_embed_request(sr)
+        is_embed = embeds.prepare_embed_request()
 
         if is_embed:
-            embeds.set_up_embed(sr, comment, showedits=showedits)
+            embeds.set_up_comment_embed(sr, comment, showedits=showedits)
 
         # Temporary hook until IAMA app "OP filter" is moved from partners
         # Not to be open-sourced
