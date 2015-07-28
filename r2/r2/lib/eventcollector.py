@@ -22,6 +22,7 @@
 import datetime
 import hashlib
 import hmac
+import itertools
 import json
 import time
 import uuid
@@ -57,7 +58,10 @@ class EventQueue(object):
         if isinstance(event, Event):
             self.queue.add_item("event_collector", json.dumps(event))
         elif isinstance(event, EventV2):
-            self.queue.add_item("event_collector", event.dump())
+            if event.testing:
+                self.queue.add_item("event_collector_test", event.dump())
+            else:
+                self.queue.add_item("event_collector", event.dump())
 
     # Mapping of stored vote "names" to more readable ones
     VOTES = {"1": "up", "0": "clear", "-1": "down"}
@@ -154,7 +158,7 @@ class EventQueue(object):
 
 class EventV2(object):
     def __init__(self, topic, event_type,
-            time=None, uuid=None, request=None, context=None):
+            time=None, uuid=None, request=None, context=None, testing=False):
         """Create a new event for event-collector.
 
         topic: Used to filter events into appropriate streams for processing
@@ -162,9 +166,11 @@ class EventV2(object):
         time: Should be a datetime.datetime object in UTC timezone
         uuid: Should be a UUID object
         request, context: Should be pylons.request & pylons.c respectively
+        testing: Whether to send the event to the test endpoint
         """
         self.topic = topic
         self.event_type = event_type
+        self.testing = testing
 
         if not time:
             time = datetime.datetime.now(pytz.UTC)
@@ -363,17 +369,36 @@ def process_events(g, timeout=5.0, max_event_size=MAX_EVENT_SIZE, **kw):
         g.stats,
         timeout=timeout,
     )
+    test_publisher = EventPublisher(
+        g.events_collector_test_url,
+        g.secrets["events_collector_key"],
+        g.secrets["events_collector_secret"],
+        g.useragent,
+        g.stats,
+        timeout=timeout,
+    )
 
     @g.stats.amqp_processor("event_collector")
     def processor(msgs, chan):
         events = []
+        test_events = []
+
         for msg in msgs:
-            if len(msg.body) <= max_event_size:
-                events.append(msg.body)
-            else:
+            if len(msg.body) > max_event_size:
                 g.log.warning("Event too large (%s); dropping", len(msg.body))
                 g.log.warning("%r", msg.body)
-        for response, sent in publisher.publish(events):
+                continue
+
+            if msg.delivery_info["routing_key"] == "event_collector_test":
+                test_events.append(msg.body)
+            else:
+                events.append(msg.body)
+
+        to_publish = itertools.chain(
+            publisher.publish(events),
+            test_publisher.publish(test_events),
+        )
+        for response, sent in to_publish:
             if response.ok:
                 g.log.info("Published %s events", len(sent))
             else:

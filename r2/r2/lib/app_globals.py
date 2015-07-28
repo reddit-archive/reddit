@@ -292,6 +292,7 @@ class Globals(object):
             'community_email',
             'smtp_server',
             'events_collector_url',
+            'events_collector_test_url',
             'search_provider',
         ],
 

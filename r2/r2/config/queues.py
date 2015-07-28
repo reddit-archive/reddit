@@ -117,5 +117,6 @@ def declare_queues(g):
         "link_text_edited",
         "comment_text_edited",
     )
+    queues.event_collector << "event_collector_test"
 
     return queues
