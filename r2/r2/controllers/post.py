@@ -82,6 +82,7 @@ class PostController(ApiController):
             _("over 18?"),
             content=Over18(),
             show_sidebar=False,
+            show_newsletterbar=False,
             robots='noindex,nofollow').render()
 
     @validate(
