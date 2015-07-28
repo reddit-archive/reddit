@@ -980,7 +980,6 @@ class RedditFooter(CachedTemplate):
                     OffsiteButton(_("reddit store"), "http://redditmarket.com"),
                     OffsiteButton(_("redditgifts"), "//redditgifts.com"),
                     OffsiteButton(_("reddit.tv"), "//reddit.tv"),
-                    OffsiteButton(_("radio reddit"), "//radioreddit.com"),
                 ],
                 title = _("<3"),
                 type = "flat_vert",
