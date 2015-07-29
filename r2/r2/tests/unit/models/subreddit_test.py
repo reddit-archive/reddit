@@ -228,16 +228,25 @@ class ByNameTest(unittest.TestCase):
         self.cache.set_multi.assert_called_once_with(
             {sr.name: sr._id}, prefix="subreddit.byname")
 
-    def testDontCrashOnNegativeResult(self):
-        self.cache.get_multi.return_value = {"doesnotexist": "n"}
+    def testCacheNegativeResults(self):
+        self.cache.get_multi.return_value = {}
+        self.subreddit_query.return_value = []
+        self.subreddit_byID.return_value = []
 
         with self.assertRaises(NotFound):
             Subreddit._by_name("doesnotexist")
 
+        self.cache.set_multi.assert_called_once_with(
+            {"doesnotexist": Subreddit.SRNAME_NOTFOUND}, prefix="subreddit.byname")
+
+    def testExcludeNegativeLookups(self):
+        self.cache.get_multi.return_value = {"doesnotexist": Subreddit.SRNAME_NOTFOUND}
+
+        with self.assertRaises(NotFound):
+            Subreddit._by_name("doesnotexist")
         self.assertEqual(self.subreddit_query.call_count, 0)
         self.assertEqual(self.subreddit_byID.call_count, 0)
         self.assertEqual(self.cache.set_multi.call_count, 0)
-
 
 
 if __name__ == '__main__':
