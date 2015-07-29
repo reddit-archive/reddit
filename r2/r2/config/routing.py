@@ -170,6 +170,9 @@ def make_map(config):
 
     mc("/newsletter", controller="newsletter", action="newsletter")
 
+    mc("/gtm/jail", controller="googletagmanager", action="jail")
+    mc("/gtm", controller="googletagmanager", action="gtm")
+
     mc('/oembed', controller='oembed', action='oembed')
 
     mc('/about/sidebar', controller='front', action='sidebar')

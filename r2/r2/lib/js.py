@@ -405,12 +405,29 @@ module = {}
 
 catch_errors = "try {{ {content} }} catch (err) {{ r.sendError('Error running module', '{name}', ':', err.toString()) }}"
 
+
+module["gtm-jail"] = Module("gtm-jail.js",
+    "lib/json2.js",
+    "custom-event.js",
+    "frames.js",
+    "google-tag-manager/gtm-jail-listener.js",
+)
+
+
+module["gtm"] = Module("gtm.js",
+    "lib/json2.js",
+    "custom-event.js",
+    "frames.js",
+    "google-tag-manager/gtm-listener.js",
+)
+
+
 module["reddit-embed-base"] = Module("reddit-embed-base.js",
     "lib/es5-shim.js",
     "lib/json2.js",
-    "embed/custom-event.js",
+    "custom-event.js",
+    "frames.js",
     "embed/utils.js",
-    "embed/post-message.js",
     "embed/pixel-tracking.js",
 )
 
@@ -438,6 +455,7 @@ module["reddit-init-base"] = LocalizedModule("reddit-init-base.js",
     "lib/bootstrap.tooltip.js",
     "lib/reddit-client-lib.js",
     "lib/jquery.cookie.js",
+    "do-not-track.js",
     "bootstrap.tooltip.extension.js",
     "base.js",
     "hooks.js",
@@ -482,11 +500,12 @@ module["reddit-init"] = LocalizedModule("reddit-init.js",
 module["reddit"] = LocalizedModule("reddit.js",
     "lib/jquery.url.js",
     "lib/backbone-1.0.0.js",
-    "embed/custom-event.js",
+    "custom-event.js",
+    "frames.js",
     "embed/utils.js",
-    "embed/post-message.js",
     "embed/pixel-tracking.js",
     "embed/comment-embed.js",
+    "google-tag-manager/gtm.js",
     "timings.js",
     "templates.js",
     "scrollupdater.js",

@@ -1,4 +1,4 @@
-;(function(App, window, undefined) {
+;(function(App, r, window, undefined) {
   App.VERSION = '0.1';
 
   var RE_HOST = /^https?:\/\/([^\/|?]+).*/;
@@ -6,8 +6,10 @@
   var thing = config.thing;
 
   if (document.referrer && document.referrer.match(RE_HOST)) {
-    App.addPostMessageOrigin(RegExp.$1);
+    r.frames.addPostMessageOrigin(RegExp.$1);
   }
+
+  r.frames.listen('embed');
 
   function checkHeight() {
     var height = document.body.clientHeight;
@@ -15,7 +17,7 @@
     if (height && App.height !== height) {
       App.height = height;
 
-      App.postMessage(window.parent, 'resize', height, '*');
+      r.frames.postMessage(window.parent, 'resize.embed', height, { targetOrigin: '*' });
     }
   }
 
@@ -84,7 +86,7 @@
 
   setInterval(checkHeight, 100);
 
-  App.receiveMessage(window.parent, 'pong', function(e) {
+  r.frames.receiveMessage(window.parent, 'pong.embed', function(e) {
     var type = e.detail.type;
     var options = e.detail.options;
     var location = e.detail.location;
@@ -159,8 +161,8 @@
 
   });
 
-  App.postMessage(window.parent, 'ping', {
+  r.frames.postMessage(window.parent, 'ping.embed', {
     config: config,
   });
 
-})((window.rembeddit = window.rembeddit || {}), this);
+})((window.rembeddit = window.rembeddit || {}), window.r, this);

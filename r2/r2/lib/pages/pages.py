@@ -269,6 +269,7 @@ class Reddit(Templated):
         self.loginbox = loginbox
         self.show_sidebar = show_sidebar
         self.space_compress = space_compress
+        self.dnt_enabled = feature.is_enabled("do_not_track")
         # instantiate a footer
         self.header = header
         self.footer = RedditFooter() if footer else None
@@ -5407,6 +5408,14 @@ class PolicyPage(BoringPage):
                                 base_path='/help')
         toolbars.append(policies_menu)
         return toolbars
+
+
+class GoogleTagManagerJail(Templated):
+    pass
+
+
+class GoogleTagManager(Templated):
+    pass
 
 
 class Newsletter(BoringPage):

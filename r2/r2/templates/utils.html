@@ -25,7 +25,7 @@
     from datetime import datetime
 
     from r2.lib import tracking
-    from r2.lib.filters import spaceCompress, unsafe, safemarkdown, jssafe
+    from r2.lib.filters import spaceCompress, unsafe, safemarkdown, jssafe, scriptsafe_dumps
     from r2.lib.template_helpers import (
         add_sr,
         html_datetime,
@@ -443,6 +443,23 @@ ${unsafe(txt)}
   <script type="text/javascript" id="config">
     r.setup(${unsafe(json.dumps(js_config(extra_config)))})
   </script>
+</%def>
+
+<%def name="googletagmanager()">
+  %if g.googletagmanager and thing.site_tracking and thing.dnt_enabled:
+    <script>
+      if (!window.DO_NOT_TRACK) {
+        var frame = document.createElement('iframe');
+
+        frame.style.display = 'none';
+        frame.referrer = 'no-referrer';
+        frame.id = 'gtm-jail';
+        frame.src = '//' + ${scriptsafe_dumps(g.media_domain)} + '/gtm/jail';
+
+        document.body.appendChild(frame);
+      }
+    </script>
+  %endif
 </%def>
 
 <%def name="googleanalytics(uitype, is_gold_page=False)">
