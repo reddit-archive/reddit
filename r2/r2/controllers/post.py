@@ -79,13 +79,10 @@ class PostController(ApiController):
         return self.redirect(u.unparse())
 
     def GET_over18(self):
-        return BoringPage(
+        return InterstitialPage(
             _("over 18?"),
-            content=Over18(),
-            show_sidebar=False,
-            show_newsletterbar=False,
-            show_welcomebar=False,
-            robots='noindex,nofollow').render()
+            content=Over18Interstitial(),
+        ).render()
 
     @validate(
         dest=VDestination(default='/'),
@@ -94,8 +91,6 @@ class PostController(ApiController):
         if not feature.is_enabled('quarantine'):
             return self.abort404()
         sr = UrlParser(dest).get_subreddit()
-        logged_in = c.user_is_loggedin
-        email_verified = logged_in and c.user.email_verified
 
         # if dest doesn't include a quarantined subreddit,
         # redirect to the homepage or the original destination
@@ -104,13 +99,14 @@ class PostController(ApiController):
         elif isinstance(sr, FakeSubreddit) or sr.is_exposed(c.user):
             return self.redirect(dest)
 
-        return BoringPage(
+        return InterstitialPage(
             _("quarantined"),
-            content=Quarantine(sr.name, logged_in, email_verified),
-            show_sidebar=False,
-            show_newsletterbar=False,
-            show_welcomebar=False,
-            robots='noindex,nofollow').render()
+            content=QuarantineInterstitial(
+                sr_name=sr.name,
+                logged_in=c.user_is_loggedin,
+                email_verified=c.user_is_loggedin and c.user.email_verified,
+            ),
+        ).render()
 
     @validate(VModhash(fatal=False),
               over18 = nop('over18'),

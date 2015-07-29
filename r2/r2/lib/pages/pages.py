@@ -2462,20 +2462,67 @@ class ErrorPage(Templated):
                            **kwargs)
 
 
-class Over18(Templated):
-    """The creepy 'over 18' check page for nsfw content."""
+class InterstitialPage(BoringPage):
+    def __init__(self, title, content=None):
+        BoringPage.__init__(
+            self,
+            title,
+            loginbox=False,
+            show_sidebar=False,
+            show_newsletterbar=False,
+            show_welcomebar=False,
+            robots='noindex,nofollow',
+            content=content,
+        )
+
+
+class Interstitial(Templated):
+    """Generic template for rendering an interstitial page's content."""
+
+    def __init__(self, image=None, title=None, message=None, sr_name=None,
+                 sr_description=None, **kwargs):
+        Templated.__init__(
+            self,
+            image=image,
+            title=title,
+            message=message,
+            sr_name=sr_name,
+            sr_description=sr_description,
+            **kwargs
+        )
+
+
+class BannedInterstitial(Interstitial):
+    """The banned subreddit message."""
     pass
 
 
-class Quarantine(Templated):
+class PrivateInterstitial(Interstitial):
+    """The interstitial shown on private subreddits."""
+    pass
+
+
+class GoldOnlyInterstitial(Interstitial):
+    """Interstitial for gold-only subreddits."""
+    pass
+
+
+class QuarantineInterstitial(Interstitial):
     """The opt in page for viewing quarantined content."""
+
     def __init__(self, sr_name, logged_in, email_verified):
-        Templated.__init__(
+        can_opt_in = logged_in and email_verified
+        Interstitial.__init__(
             self,
             sr_name=sr_name,
             logged_in=logged_in,
-            email_verified=email_verified,
+            can_opt_in=can_opt_in,
         )
+
+
+class Over18Interstitial(Interstitial):
+    """The no-longer-creepy 'over 18' check page for nsfw content."""
+    pass
 
 
 class SubredditTopBar(CachedTemplate):

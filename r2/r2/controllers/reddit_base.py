@@ -1646,16 +1646,13 @@ class RedditController(OAuth2ResourceController):
                 if "message" in ban_info and ban_info['message']:
                     message = ban_info['message']
                 else:
-                    sitelink = url_escape(add_sr("/"))
-                    subject = ("/r/%s has been incorrectly banned" %
-                                   c.site.name)
-                    link = ("/r/redditrequest/submit?url=%s&title=%s" %
-                                (sitelink, subject))
-                    message = strings.banned_subreddit_message % dict(
-                                                                    link=link)
-                errpage = pages.RedditError(strings.banned_subreddit_title,
-                                            message,
-                                            image="subreddit-banned.png")
+                    message = None
+                errpage = pages.InterstitialPage(
+                    _("banned"),
+                    content=pages.BannedInterstitial(
+                        message=message,
+                    ),
+                )
                 request.environ['usable_error_content'] = errpage.render()
                 self.abort404()
 
@@ -1670,23 +1667,22 @@ class RedditController(OAuth2ResourceController):
                     # do not leak the existence of multis via 403.
                     self.abort404()
                 elif not allowed_to_view and c.site.type == 'gold_only':
-                    public_description = c.site.public_description
-                    errpage = pages.RedditError(
-                        strings.gold_only_subreddit_title,
-                        strings.gold_only_subreddit_message,
-                        image="subreddit-gold-only.png",
-                        sr_description=public_description,
+                    errpage = pages.InterstitialPage(
+                        _("gold members only"),
+                        content=pages.GoldOnlyInterstitial(
+                            sr_name=c.site.name,
+                            sr_description=c.site.public_description,
+                        ),
                     )
                     request.environ['usable_error_content'] = errpage.render()
                     self.abort403()
                 elif not allowed_to_view:
-                    public_description = c.site.public_description
-                    errpage = pages.RedditError(
-                        strings.private_subreddit_title,
-                        strings.private_subreddit_message,
-                        image="subreddit-private.png",
-                        sr_description=public_description,
-                        include_message_mods_link=True,
+                    errpage = pages.InterstitialPage(
+                        _("private"),
+                        content=pages.PrivateInterstitial(
+                            sr_name=c.site.name,
+                            sr_description=c.site.public_description,
+                        ),
                     )
                     request.environ['usable_error_content'] = errpage.render()
                     self.abort403()
