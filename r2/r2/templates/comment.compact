@@ -21,12 +21,13 @@
 ###############################################################################
 
 <%!
+    from r2.config import feature
     from r2.lib.pages import WrappedUser
     from r2.lib.template_helpers import add_sr, _wsf
 %>
 <%namespace file="printable.compact" import="delete_report_buttons"/>
 <%namespace file="printable.html" import="arrow, score, thing_css_rowclass"/>
-<%namespace file="utils.html" import="plain_link" />
+<%namespace file="utils.html" import="plain_link, nsfw_stamp, quarantine_stamp" />
 <%namespace file="utils.compact" import="icon_button" />
 <%namespace file="printablebuttons.html" import="simple_button"/>
 
@@ -47,6 +48,16 @@
       %else:
           ${thing.link.url}
       %endif
+    %endif
+    %if thing.subreddit.quarantine and feature.is_enabled('quarantine'):
+      <span class="quarantine-warning">
+        ${quarantine_stamp()}
+      </span>
+    %endif
+    %if thing.nsfw:
+      <span class="nsfw-warning">
+        ${nsfw_stamp()}
+      </span>
     %endif
   %endif
   <Div class="midcol">

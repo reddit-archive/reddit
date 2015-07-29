@@ -146,12 +146,13 @@ ${parent.midcol(cls = cls)}
 </%def>
 
 <%def name="buttons()">
-  %if c.profilepage and feature.is_enabled('quarantine'):
-    %if thing.subreddit.quarantine:
+  %if c.profilepage:
+    %if thing.subreddit.quarantine and feature.is_enabled('quarantine'):
       <li class="rounded quarantine-stamp stamp">
         ${quarantine_stamp()}
       </li>
-    %elif thing.nsfw:
+    %endif
+    %if thing.nsfw:
       <li class="rounded nsfw-stamp stamp">
         ${nsfw_stamp()}
       </li>

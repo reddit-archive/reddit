@@ -21,6 +21,7 @@
 ###############################################################################
 
 <%!
+   from r2.config import feature
    from r2.lib.template_helpers import add_sr
    from r2.lib.template_helpers import make_url_protocol_relative
    import urllib
@@ -29,7 +30,7 @@
 <%namespace file="printable.compact" import="delete_report_buttons"/>
 <%namespace file="printable.html" import="arrow, score"/>
 <%namespace file="link.html" import="tagline, thumbnail"/>
-<%namespace file="utils.html" import="plain_link" />
+<%namespace file="utils.html" import="plain_link, nsfw_stamp, quarantine_stamp" />
 <%namespace file="utils.compact" import="icon_button, toggle_button" />
 <%namespace file="printablebuttons.html" import="state_button" />
 
@@ -87,11 +88,14 @@
         (<a href="${thing.domain_path}.compact">${thing.domain_str}</a>)
     %endif
     </span>
+    %if thing.quarantine and feature.is_enabled('quarantine'):
+      <span class="quarantine-warning">
+        ${quarantine_stamp()}
+      </span>
+    %endif
     %if thing.nsfw:
       <span class="nsfw-warning">
-        <acronym title="${_('Adult content: Not Safe For Work')}">
-          ${_("NSFW")}
-        </acronym>
+        ${nsfw_stamp()}
       </span>
     %endif
     </p>
