@@ -385,6 +385,8 @@ class Subreddit(Thing, Printable, BaseSite):
 
     _specials = {}
 
+    SRNAME_NOTFOUND = "n"
+
     @classmethod
     def _by_name(cls, names, stale=False, _update = False):
         '''
@@ -444,7 +446,7 @@ class Subreddit(Thing, Printable, BaseSite):
                     g.cache.set_multi(fetched, prefix='subreddit.byname')
 
             srs = {}
-            srids = srids_by_name.values()
+            srids = [v for v in srids_by_name.itervalues() if v != cls.SRNAME_NOTFOUND]
             if srids:
                 srs = cls._byID(srids, data=True, return_dict=False, stale=stale)
 
