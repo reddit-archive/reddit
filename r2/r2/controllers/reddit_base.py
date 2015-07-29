@@ -1664,13 +1664,12 @@ class RedditController(OAuth2ResourceController):
             # is sent in those cases - just a set of headers
             if (not c.site.can_view(c.user) and not c.error_page and
                     request.method != "OPTIONS"):
+                allowed_to_view = c.site.is_allowed_to_view(c.user)
+
                 if isinstance(c.site, LabeledMulti):
                     # do not leak the existence of multis via 403.
                     self.abort404()
-                elif not c.site.is_exposed(c.user):
-                    return self.intermediate_redirect("/quarantine", sr_path=False)
-
-                elif c.site.type == 'gold_only' and not (c.user.gold or c.user.gold_charter):
+                elif not allowed_to_view and c.site.type == 'gold_only':
                     public_description = c.site.public_description
                     errpage = pages.RedditError(
                         strings.gold_only_subreddit_title,
@@ -1680,7 +1679,7 @@ class RedditController(OAuth2ResourceController):
                     )
                     request.environ['usable_error_content'] = errpage.render()
                     self.abort403()
-                else:
+                elif not allowed_to_view:
                     public_description = c.site.public_description
                     errpage = pages.RedditError(
                         strings.private_subreddit_title,
@@ -1691,6 +1690,8 @@ class RedditController(OAuth2ResourceController):
                     )
                     request.environ['usable_error_content'] = errpage.render()
                     self.abort403()
+                else:
+                    return self.intermediate_redirect("/quarantine", sr_path=False)
 
             #check over 18
             if (c.site.over_18 and not c.over18 and
