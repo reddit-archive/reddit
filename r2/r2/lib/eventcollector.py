@@ -29,10 +29,11 @@ import uuid
 
 import pytz
 import requests
+from pylons import g
 from wsgiref.handlers import format_date_time
 
 import r2.lib.amqp
-from r2.lib.utils import epoch_timestamp, sampled, squelch_exceptions
+from r2.lib.utils import domain, epoch_timestamp, sampled, squelch_exceptions
 
 
 MAX_EVENT_SIZE = 4096
@@ -188,6 +189,59 @@ class EventQueue(object):
             event.add("target_id", target._id)
             if isinstance(target, Account):
                 event.add("target_name", target.name)
+
+        self.save_event(event)
+
+    @squelch_exceptions
+    @sampled("events_collector_quarantine_sample_rate")
+    def quarantine_event(self, event_type, subreddit,
+            request=None, context=None):
+        """Create a 'quarantine' event for event-collector.
+
+        event_type: quarantine_interstitial_view, quarantine_opt_in,
+            quarantine_opt_out, quarantine_interstitial_dismiss
+        subreddit: The quarantined subreddit
+        request, context: Should be pylons.request & pylons.c respectively;
+            used to build the base Event
+
+        """
+        event = EventV2(
+            topic="quarantine",
+            event_type=event_type,
+            request=request,
+            context=context,
+        )
+
+        if context:
+            if context.user_is_loggedin:
+                event.add("verified_email", context.user.email_verified)
+            else:
+                event.add("verified_email", False)
+
+        event.add("sr_id", subreddit._id)
+        event.add("sr_name", subreddit.name)
+
+        # Due to the redirect, the request object being sent isn't the 
+        # original, so referrer and action data is missing for certain events
+        if request and (event_type == "quarantine_interstitial_view" or
+                 event_type == "quarantine_opt_out"):
+            request_vars = request.environ["pylons.routes_dict"]
+            event.add("sr_action", request_vars.get("action", None))
+
+            # The thing_id the user is trying to view is a comment
+            if request.environ["pylons.routes_dict"].get("comment", None):
+                thing_id36 = request_vars.get("comment", None)
+            # The thing_id is a link
+            else:
+                thing_id36 = request_vars.get("article", None)
+
+            if thing_id36:
+                event.add("thing_id", int(thing_id36, 36))
+
+            referrer_url = request.headers.get('Referer', None)
+            if referrer_url:
+                event.add("referrer_url", referrer_url)
+                event.add("referrer_domain", domain(referrer_url))
 
         self.save_event(event)
 

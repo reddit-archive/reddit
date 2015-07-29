@@ -42,25 +42,25 @@
       %endif
     </div>
   </div>
-
-  %if thing.logged_in and thing.email_verified:
+  
     <form method="post" action=""
         ${"target='_top'" if c.cname else ""}>
       <input type="hidden" name="uh" value="${c.modhash}" />
       <input type="hidden" name="sr_name" value="${thing.sr_name}" />    
       <div class="buttons">
-        <button class="c-btn c-btn-primary" type="submit" name="accept" value="no">
-          ${_("no thank you")}
-        </button>
-        <button class="c-btn c-btn-primary" type="submit" name="accept" value="yes">
-          ${_("continue")}
-        </button>
+        %if thing.logged_in and thing.email_verified:
+          <button class="c-btn c-btn-primary" type="submit" name="accept" value="no">
+            ${_("no thank you")}
+          </button>
+          <button class="c-btn c-btn-primary" type="submit" name="accept" value="yes">
+            ${_("continue")}
+          </button>
+        %else:
+          <button class="c-btn c-btn-primary" type="submit" name="accept" value="no">
+            ${_("back to reddit")}
+          </button>
+        %endif
       </div>
     </form>
-  %else:
-    <div class="buttons">
-      <a href="/" class="c-btn c-btn-primary">${_("back to reddit")}</a>
-    </div>
-  %endif
 </div>
 

@@ -1691,6 +1691,8 @@ class RedditController(OAuth2ResourceController):
                     request.environ['usable_error_content'] = errpage.render()
                     self.abort403()
                 else:
+                    g.events.quarantine_event('quarantine_interstitial_view', c.site,
+                        request=request, context=c)
                     return self.intermediate_redirect("/quarantine", sr_path=False)
 
             #check over 18
