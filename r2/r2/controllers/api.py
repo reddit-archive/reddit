@@ -520,7 +520,7 @@ class ApiController(RedditController):
                 if links:
                     c.errors.add(errors.ALREADY_SUB, field='url')
                     form.has_errors('url', errors.ALREADY_SUB)
-                    u = links[0].already_submitted_link(url)
+                    u = links[0].already_submitted_link(url, title)
                     if extension:
                         u = UrlParser(u)
                         u.set_extension(extension)

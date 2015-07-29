@@ -177,16 +177,17 @@ class Link(Thing, Printable):
             LinksByUrl._set_values(LinksByUrl._key_from_url(self.url),
                                    {self._id36: ''})
 
-    def already_submitted_link(self, url):
+    def already_submitted_link(self, url, title):
         permalink = self.make_permalink_slow()
         p = UrlParser(permalink)
-        p.update_query(already_submitted="true", submit_url=url)
+        p.update_query(already_submitted="true", submit_url=url,
+                       submit_title=title)
         return p.unparse()
 
     @classmethod
-    def resubmit_link(cls, url):
+    def resubmit_link(cls, url, title):
         p = UrlParser("/submit")
-        p.update_query(resubmit="true", url=url)
+        p.update_query(resubmit="true", url=url, title=title)
         return p.unparse()
 
     @classmethod

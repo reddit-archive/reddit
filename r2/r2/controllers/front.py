@@ -287,7 +287,8 @@ class FrontController(RedditController):
         infotext = None
         if request.GET.get('already_submitted'):
             submit_url = request.GET.get('submit_url') or article.url
-            resubmit_url = Link.resubmit_link(submit_url)
+            submit_title = request.GET.get('submit_title') or ""
+            resubmit_url = Link.resubmit_link(submit_url, submit_title)
             if c.user_is_loggedin and c.site.can_submit(c.user):
                 resubmit_url = add_sr(resubmit_url)
             infotext = strings.already_submitted % resubmit_url
@@ -1225,12 +1226,13 @@ class FrontController(RedditController):
 
             if links and len(links) == 1:
                 # redirect the user to the existing link's comments
-                existing_submission_url = links[0].already_submitted_link(url)
+                existing_submission_url = links[0].already_submitted_link(
+                    url, title)
                 return self.redirect(existing_submission_url)
             elif links:
                 # show the user a listing of all the other links with this url
                 # an infotext to resubmit it
-                resubmit_url = Link.resubmit_link(url)
+                resubmit_url = Link.resubmit_link(url, title)
                 sr_resubmit_url = add_sr(resubmit_url)
                 infotext = strings.multiple_submitted % sr_resubmit_url
                 res = BoringPage(
