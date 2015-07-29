@@ -216,5 +216,18 @@ class ByNameTest(unittest.TestCase):
         self.assertEqual(self.cache.get_multi.call_count, 1)
         self.assertEqual(self.subreddit_query.call_count, 0)
 
+    def testForceUpdate(self):
+        sr = Subreddit(id=1, name="exists")
+        self.cache.get_multi.return_value = {sr.name: sr._id}
+        self.subreddit_query.return_value = [sr]
+        self.subreddit_byID.return_value = [sr]
+
+        ret = Subreddit._by_name("exists", _update=True)
+
+        self.assertEqual(ret, sr)
+        self.cache.set_multi.assert_called_once_with(
+            {sr.name: sr._id}, prefix="subreddit.byname")
+
+
 if __name__ == '__main__':
     unittest.main()

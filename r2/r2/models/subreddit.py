@@ -419,8 +419,11 @@ class Subreddit(Thing, Printable, BaseSite):
                     g.log.debug("Subreddit._by_name() ignoring invalid srname: %s", lname)
 
         if to_fetch:
-            srids_by_name = g.cache.get_multi(
-                to_fetch.keys(), prefix='subreddit.byname', stale=True)
+            if not _update:
+                srids_by_name = g.cache.get_multi(
+                    to_fetch.keys(), prefix='subreddit.byname', stale=True)
+            else:
+                srids_by_name = {}
 
             missing_srnames = set(to_fetch.keys()) - set(srids_by_name.keys())
             if missing_srnames:
