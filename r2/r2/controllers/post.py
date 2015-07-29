@@ -92,6 +92,14 @@ class PostController(ApiController):
         sr = UrlParser(dest).get_subreddit()
         logged_in = c.user_is_loggedin
         email_verified = logged_in and c.user.email_verified
+
+        # if dest doesn't include a quarantined subreddit,
+        # redirect to the homepage or the original destination
+        if not sr:
+            return self.redirect('/')
+        elif isinstance(sr, FakeSubreddit) or sr.is_exposed(c.user):
+            return self.redirect(dest)
+
         return BoringPage(
             _("quarantined"),
             content=Quarantine(sr.name, logged_in, email_verified),
