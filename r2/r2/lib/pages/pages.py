@@ -1116,7 +1116,7 @@ class PrefsPage(Reddit):
         ])
 
         # Hide the security tab behind a feature flag while it's being tested
-        if feature.is_enabled_for('allow_force_https', c.user):
+        if feature.is_enabled('allow_force_https'):
             buttons += [NamedButton('security')]
         #if CustomerID.get_id(user):
         #    buttons += [NamedButton('payment')]

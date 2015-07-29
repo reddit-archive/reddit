@@ -745,7 +745,7 @@ class Account(Thing):
     @property
     def https_forced(self):
         """Return whether this account may only be used via HTTPS."""
-        if feature.is_enabled_for("require_https", self):
+        if feature.is_enabled("require_https", user=self):
             return True
         return self.pref_force_https
 

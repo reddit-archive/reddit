@@ -105,7 +105,7 @@ def set_prefs(user, prefs):
 
 def filter_prefs(prefs, user):
     # replace stylesheet_override with other_theme if it doesn't exist
-    if feature.is_enabled_for('stylesheets_everywhere', user):
+    if feature.is_enabled('stylesheets_everywhere', user=user):
         if not prefs["pref_default_theme_sr"]:
             if prefs.get("pref_other_theme", False):
                 prefs["pref_default_theme_sr"] = prefs["pref_other_theme"]
@@ -137,7 +137,7 @@ def filter_prefs(prefs, user):
         prefs['pref_highlight_new_comments'] = True
 
     # check stylesheet override
-    if feature.is_enabled_for('stylesheets_everywhere', user):
+    if feature.is_enabled('stylesheets_everywhere', user=user):
         override_sr = prefs['pref_default_theme_sr']
         if not override_sr:
             del prefs['pref_default_theme_sr']

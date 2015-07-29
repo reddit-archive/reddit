@@ -115,13 +115,13 @@ Copied essentially wholesale from Etsy's guidelines:
 To make it easier to push features through the life cycle there are a
 few coding guidelines to observe.
 
-First, the feature name argument to the Feature methods (`is_enabled`,
-`is_enabled_for`) should always be a string literal. This will make it easier
-to find all the places that a particular feature is checked. If you find
-yourself creating feature names at run time and then checking them, you’re
-probably abusing the Feature system. Chances are in such a case you don’t
-really want to be using the Feature API but rather simply driving your code
-with some plain old config data.
+First, the feature name argument to the Feature method (`is_enabled`) should
+always be a string literal. This will make it easier to find all the places
+that a particular feature is checked. If you find yourself creating feature
+names at run time and then checking them, you’re probably abusing the Feature
+system. Chances are in such a case you don’t really want to be using the
+Feature API but rather simply driving your code with some plain old config
+data.
 
 Second, the results of the Feature methods should not be cached, such
 as by calling `feature.is_enabled` once and storing the result in an

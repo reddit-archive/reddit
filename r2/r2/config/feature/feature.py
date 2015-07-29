@@ -30,34 +30,30 @@ _world = World()
 _featurestate_cache = {}
 
 
-def is_enabled(name):
+def is_enabled(name, user=None):
     """Test and return whether a given feature is enabled for this request.
 
     If `feature` is not found, returns False.
 
+    The optional arguments allow overriding that you generally don't want, but
+    is useful outside of request contexts - cron jobs and the like.
+
     :param name string - a given feature name
+    :param user - (optional) an Account
     :return bool
     """
+    if not user:
+        user = _world.current_user()
+    subreddit = _world.current_subreddit()
+    subdomain = _world.current_subdomain()
+    oauth_client = _world.current_oauth_client()
+
     return _get_featurestate(name).is_enabled(
-               user=_world.current_user(),
-               subreddit=_world.current_subreddit(),
-               subdomain=_world.current_subdomain(),
-               oauth_client=_world.current_oauth_client(),
+        user=user,
+        subreddit=subreddit,
+        subdomain=subdomain,
+        oauth_client=oauth_client,
     )
-
-
-def is_enabled_for(name, user):
-    """Test and return whether a given feature is enabled for a user.
-
-    This should only be used in contexts where we want to test outside
-    of a current user context - cron jobs and the like. This is also
-    going to be slower, as featurestates are not cached.
-
-    :param name string - a given feature name
-    :param user - an Account
-    :return bool
-    """
-    return _get_featurestate(name).is_enabled(user)
 
 
 @feature_hooks.on('worker.live_config.update')

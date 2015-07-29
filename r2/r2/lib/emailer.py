@@ -145,7 +145,7 @@ def message_notification_email(data):
         # In case a user has enabled the preference while it was enabled for
         # them, but we've since turned it off.  We need to explicitly state the
         # user because we're not in the context of an HTTP request from them.
-        if not feature.is_enabled_for('orangereds_as_emails', user):
+        if not feature.is_enabled('orangereds_as_emails', user=user):
             continue
 
         if g.cache.get(MESSAGE_THROTTLE_KEY) > MAX_EMAILS_PER_DAY:
