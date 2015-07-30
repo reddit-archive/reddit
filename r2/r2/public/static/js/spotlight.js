@@ -1,5 +1,36 @@
 !function(r, _, $) {
   r.spotlight = {
+    _bindEvents: function() {
+      // unbind everything and then selectively rebind
+      this.$listing.off('.spotlight');
+      this.$listing.find('.arrow.prev').off('.spotlight');
+      this.$listing.find('.arrow.next').off('.spotlight');
+      $(document).off('.spotlight');
+      $(window).off('.spotlight');
+
+      this.$listing.on('click.spotlight', function(e) {
+        var $target = $(e.target);
+        if ($target.is('.thumbnail, .title')) {
+          this.adWasClicked = true;
+        }
+      }.bind(this));
+
+      if (this.$listing.length) {
+        this.$listing.find('.arrow.prev').on('click.spotlight', this.prev);
+        this.$listing.find('.arrow.next').on('click.spotlight', this.next);
+      }
+
+      if (this.showPromo) {
+        // IE 9 and below do not have this prop or work with
+        // visibilitychange.
+        if ('hidden' in document) {
+          $(document).on('visibilitychange.spotlight', this._requestOrSaveTimestamp.bind(this));
+        } else {
+          $(window).on('focus.spotlight blur.spotlight', this._requestOrSaveTimestamp.bind(this));
+        }
+      }
+    },
+
     setup: function(organicLinks, interestProb, showPromo, srnames) {
       this.organics = [];
       this.lineup = [];
@@ -13,18 +44,13 @@
       this.next = this._advance.bind(this, 1);
       this.prev = this._advance.bind(this, -1);
       this.$listing = $('.organic-listing');
-
-      this.$listing.on('click', function(e) {
-        var $target = $(e.target);
-        if ($target.is('.thumbnail, .title')) {
-          this.adWasClicked = true;
-        }
-      }.bind(this));
-
       this.adBlockIsEnabled = $('#siteTable_organic').is(":hidden");
+
       if (this.adBlockIsEnabled) {
         this.showPromo = false;
       }
+
+      this._bindEvents();
 
       organicLinks.forEach(function(name) {
         this.organics.push(name);
@@ -34,13 +60,6 @@
       if (interestProb) {
         this.lineup.push('.interestbar');
       }
-
-      if (!this.$listing.length) {
-        return;
-      }
-
-      this.$listing.find('.arrow.prev').on('click', this.prev);
-      this.$listing.find('.arrow.next').on('click', this.next);
 
       var selectedThing;
       var lastClickFullname = r.analytics.breadcrumbs.lastClickFullname();
@@ -64,18 +83,6 @@
 
       this.lineup.pos = 0;
       this._advance(0);
-
-      if (!this.showPromo) {
-        return;
-      }
-      // IE 9 and below do not have this prop or work with
-      // visibilitychange.
-      if ('hidden' in document ) {
-        $(document).on('visibilitychange', this._requestOrSaveTimestamp.bind(this));
-      } else {        
-        $(window).on('focus blur', this._requestOrSaveTimestamp.bind(this));
-      }
-
     },
 
     _requestOrSaveTimestamp: function() {
@@ -95,9 +102,9 @@
     },
 
     requestNewPromo: function() {
-
-      // the ad will be stored as a promise
-      if (!this.lineup[this.lineup.pos].promise) {
+      var $promotedLink = this.$listing.find('.promotedlink');
+      // if there isn't an ad visible currently don't fetch a new one
+      if (!$promotedLink.is(':visible')) {
         return;
       }
       // we don't want to fetch a new ad when the user has clicked so they 
@@ -106,7 +113,7 @@
         return;
       }
 
-      var $promotedLink = this.$listing.find('.promotedlink');
+      
       var $clearLeft = $promotedLink.next('.clearleft');
 
       if (this.adBlockIsEnabled ||
@@ -292,7 +299,15 @@
 
       // this function can be called before the help bubble has initialized
       $(function() {
-        $help.data('HelpBubble').hide(function() {
+        var help = $help.data('HelpBubble');
+
+        // `r.ui.refreshListing` replaces the help and it needs
+        // to be reinitialized.
+        if (!help) {
+          help = new r.ui.Bubble({el: $help.get(0)});
+        }
+
+        help.hide(function() {
           $help.find('.help-section').hide();
           if ($thing.hasClass('promoted')) {
             $help.find('.help-promoted').show();
