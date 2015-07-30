@@ -50,6 +50,7 @@
   ${"gold" if getattr(thing, "distinguished", "") == "gold" else ""}
   ${"gold-auto" if getattr(thing, "distinguished", "") == "gold-auto" else ""}
   ${"threaded" if getattr(thing, "threaded", "") else ""}
+  ${"most-recent" if getattr(thing, "most_recent", "") else ""}
 </%def>
 
 <%def name="tagline()">

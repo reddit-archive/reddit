@@ -1286,6 +1286,11 @@ class MessageBuilder(Builder):
                 child.threaded = self.threaded
                 child.collapsed = self.should_collapse(child)
 
+            if self.threaded and children:
+                most_recent_child_id = max(child._id for child in children)
+                most_recent_child = wrapped[most_recent_child_id]
+                most_recent_child.most_recent = True
+
             parent.is_parent = True
             parent.threaded = self.threaded
             parent.collapsed = self.should_collapse(parent)
