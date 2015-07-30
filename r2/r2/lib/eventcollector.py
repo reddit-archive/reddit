@@ -24,12 +24,12 @@ import hashlib
 import hmac
 import itertools
 import json
-import time
-import uuid
-
 import pytz
 import requests
+import time
+
 from pylons import g
+from uuid import uuid4
 from wsgiref.handlers import format_date_time
 
 import r2.lib.amqp
@@ -271,7 +271,7 @@ class EventV2(object):
         self.timestamp = _epoch_to_millis(epoch_timestamp(time))
 
         if not uuid:
-            uuid = uuid.uuid4()
+            uuid = uuid4()
         self.uuid = str(uuid)
 
         self.payload = {}
@@ -357,7 +357,7 @@ class Event(dict):
         ret = cls(kw)
 
         if event_uuid is None:
-            ret["uuid"] = str(uuid.uuid4())
+            ret["uuid"] = str(uuid4())
 
         if event_name is not None:
             ret["event_name"] = event_name
