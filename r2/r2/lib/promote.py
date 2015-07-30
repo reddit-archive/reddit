@@ -176,8 +176,9 @@ def update_query(base_url, query_updates):
     return urlparse.urlunparse((scheme, netloc, path, params, query, fragment))
 
 
-def add_trackers(items, sr):
+def add_trackers(items, sr, adserver_click_urls=None):
     """Add tracking names and hashes to a list of wrapped promoted links."""
+    adserver_click_urls = adserver_click_urls or {}
     for item in items:
         if not item.promoted:
             continue
@@ -204,7 +205,8 @@ def add_trackers(items, sr):
             item.third_party_tracking_url_2 = item.third_party_tracking_2
 
         # construct the click redirect url
-        url = urllib.unquote(_force_utf8(item.url))
+        item_url = adserver_click_urls.get(item.campaign, item.url)
+        url = urllib.unquote(_force_utf8(item_url))
         hashable = ''.join((url, tracking_name.encode("utf-8")))
         click_mac = hmac.new(
             g.tracking_secret, hashable, hashlib.sha1).hexdigest()
