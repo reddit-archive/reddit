@@ -315,7 +315,8 @@ class Reddit(Templated):
                                        extra_class="gold")
 
             if not c.user_is_loggedin:
-                self.welcomebar = WelcomeBar()
+                if getattr(self, "show_welcomebar", True):
+                    self.welcomebar = WelcomeBar()
                 if getattr(self, "show_newsletterbar", True):
                     self.newsletterbar = NewsletterBar()
 

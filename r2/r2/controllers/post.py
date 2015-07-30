@@ -84,6 +84,7 @@ class PostController(ApiController):
             content=Over18(),
             show_sidebar=False,
             show_newsletterbar=False,
+            show_welcomebar=False,
             robots='noindex,nofollow').render()
 
     @validate(
@@ -108,6 +109,7 @@ class PostController(ApiController):
             content=Quarantine(sr.name, logged_in, email_verified),
             show_sidebar=False,
             show_newsletterbar=False,
+            show_welcomebar=False,
             robots='noindex,nofollow').render()
 
     @validate(VModhash(fatal=False),
