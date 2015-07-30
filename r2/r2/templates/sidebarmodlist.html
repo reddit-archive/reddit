@@ -30,14 +30,16 @@
 %for sr in thing.subreddits:
   <li>
     <a href="${sr.path}" title="/r/${sr.name}">/r/${sr.name}</a>
-    %if sr.quarantine and feature.is_enabled('quarantine'):
-      <span class="rounded quarantine-stamp stamp">
-        ${quarantine_stamp()}
-      </span>
-    %elif sr.over_18 and c.user.pref_label_nsfw:
-      <span class="rounded nsfw-stamp stamp">
-        ${nsfw_stamp()}
-      </span>
+    %if feature.is_enabled('quarantine'):
+      %if sr.quarantine:
+        <span class="rounded quarantine-stamp stamp bold-stamp">
+          ${quarantine_stamp()}
+        </span>
+      %elif sr.over_18 and c.user.pref_label_nsfw:
+        <span class="rounded nsfw-stamp stamp bold-stamp">
+          ${nsfw_stamp()}
+        </span>
+      %endif
     %endif
   </li>
 %endfor

@@ -4499,9 +4499,12 @@ form input[type=radio] {margin: 2px .5em 0 0; }
 .entry .buttons {
     .nsfw-stamp,
     .quarantine-stamp {
+        padding-right: 2px;
+        font-size: x-small;
+    }
+    .bold-stamp {
         padding-left: 4px;
         padding-right: 4px;
-        font-size: x-small;
     }
 }
 
@@ -4517,14 +4520,22 @@ form input[type=radio] {margin: 2px .5em 0 0; }
     display: inline-block;
     font-size: x-small;
     padding: 0 2px;
-    border: none;
+    border: 1px solid !important;
     border-radius: 3px;
     line-height: 1.6em;
+
+    &.bold-stamp {
+        border: none !important;
+    }
 }
 
 .nsfw-stamp {
-    background-color: @color-nsfw-stamp;
-    color: @color-stamp-text-light;
+    color: @color-nsfw-stamp;
+
+    &.bold-stamp {
+        background-color: @color-nsfw-stamp;
+        color: @color-stamp-text-light;
+    }
 
     acronym {
         text-decoration: none;
