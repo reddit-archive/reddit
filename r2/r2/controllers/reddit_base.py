@@ -1055,19 +1055,26 @@ class MinimalController(BaseController):
             "X-Ratelimit-Remaining": str(reqs_remaining),
         }
 
+        event_type = None
+
         if reqs_remaining <= 0:
             if recent_reqs > (2 * max_reqs):
-                g.stats.event_count("ratelimit.exceeded", "hyperbolic")
+                event_type = "hyperbolic"
             else:
-                g.stats.event_count("ratelimit.exceeded", "over")
+                event_type = "over"
             if g.ENFORCE_RATELIMIT:
-                # For non-abort situations, the headers will be added in post(),
+                # For non-abort situations, the headers will be added in post()
                 # to avoid including them in a pagecache
                 request.environ['retry_after'] = time_slice.remaining
                 response.headers.update(c.ratelimit_headers)
                 abort(429)
         elif reqs_remaining < (0.1 * max_reqs):
-            g.stats.event_count("ratelimit.exceeded", "close")
+            event_type = "close"
+
+        if event_type is not None:
+            g.stats.event_count("ratelimit.exceeded", event_type)
+            if type_ == "oauth":
+                g.stats.count_string("oauth.{}".format(event_type), client_id)
 
     def pre(self):
         action = request.environ["pylons.routes_dict"].get("action")
