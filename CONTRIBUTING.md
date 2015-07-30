@@ -28,6 +28,15 @@ will be ignored.
 4. Please adhere to our [coding
 standards](https://github.com/reddit/reddit/wiki#change-reddit).
 
+5. Please don't submit PRs that are just whitespace, style or readability
+changes. We prefer to make those changes when we're working with the code
+in that area anyway.
+
+6. Please don't submit minor tweaks to text on the site, such as changes to
+punctuation, spacing or wording. Any string changes will cause all previous
+translations of that string to other languages to be invalidated, so we try
+to only change strings when the difference is significant.
+
 After you submit your issue or request, we'll take a look and it and get back
 to you in a few days. If you have any questions, feel free to ask us! We're
 readily available:
