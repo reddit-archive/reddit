@@ -932,6 +932,15 @@ class PromotedLink(Link):
         # Run this last
         Printable.add_props(user, wrapped)
 
+    @property
+    def absolute_url(self):
+        from r2.lib.template_helpers import add_sr
+
+        if self.is_self:
+            return add_sr(self.url, sr_path=False)
+
+        return self.url
+
 
 class ReadNextLink(Link):
     _nodb = True
