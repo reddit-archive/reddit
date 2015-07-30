@@ -111,20 +111,20 @@ def notify_user_added(rel_type, author, user, target):
 def send_ban_message(subreddit, mod, user, note=None, days=None):
     sr_name = "/r/" + subreddit.name
     if days:
-        subject = _("you've been temporarily banned from %(subreddit)s")
-        message = _("you have been temporarily banned from posting to "
+        subject = "you've been temporarily banned from %(subreddit)s"
+        message = ("you have been temporarily banned from posting to "
             "%(subreddit)s. this ban will last for %(duration)s days.")
     else:
-        subject = _("you've been banned from %(subreddit)s")
-        message = _("you have been banned from posting to %(subreddit)s.")
+        subject = "you've been banned from %(subreddit)s"
+        message = "you have been banned from posting to %(subreddit)s."
     subject %= {"subreddit": sr_name}
     message %= {"subreddit": sr_name, "duration": days}
 
     if note:
-        message += "\n\n" + _('note from the moderators:')
+        message += "\n\n" + 'note from the moderators:'
         message += "\n\n" + blockquote_text(note)
 
-    message += "\n\n" + _("you can contact the moderators regarding your ban "
+    message += "\n\n" + ("you can contact the moderators regarding your ban "
         "by replying to this message. **warning**: using other accounts to "
         "circumvent a subreddit ban is considered a violation of reddit's "
         "[site rules](/rules) and can result in being banned from reddit "
