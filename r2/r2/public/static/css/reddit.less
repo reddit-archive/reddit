@@ -4548,14 +4548,13 @@ form input[type=radio] {margin: 2px .5em 0 0; }
        which we could try to fix here some day. */
 }
 
-div.banned-user {
+.thing.banned-user {
     overflow: hidden;
-    opacity: .7;
-    filter:alpha(opacity=70); /* IE patch */
-}
+    background-color: rgba(250, 128, 114, 0.5);
 
-div.banned-user .title {
-    text-decoration: line-through;
+    .title {
+        text-decoration: line-through;
+    }
 }
 
 .approval-checkmark {
