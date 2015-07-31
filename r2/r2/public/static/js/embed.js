@@ -94,6 +94,7 @@
       var serializedOptions = typeof options !== 'string' ?
         serializeOptions(options) : options;
 
+      window.rembeddit.preview = true;
       window.rembeddit.init({track: false}, function() {
         var height = 0;
 
