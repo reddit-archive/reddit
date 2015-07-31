@@ -132,7 +132,7 @@ class PostController(ApiController):
             return self.redirect('/')
 
     @validate(
-        VModhash(),
+        VModhash(fatal=False),
         sr=VSRByName('sr_name'),
         accept=VBoolean('accept'),
         dest=VDestination(default='/'),
@@ -140,15 +140,17 @@ class PostController(ApiController):
     def POST_quarantine(self, sr, accept, dest):
         if not feature.is_enabled('quarantine'):
             return self.abort404()
-        if not c.user_is_loggedin or not c.user.email_verified:
-            return self.redirect(dest)
 
-        if accept:
+        can_opt_in = c.user_is_loggedin and c.user.email_verified
+
+        if accept and can_opt_in and not c.errors:
+            QuarantinedSubredditOptInsByAccount.opt_in(c.user, sr)
             g.events.quarantine_event('quarantine_opt_in', sr,
                 request=request, context=c)
-            QuarantinedSubredditOptInsByAccount.opt_in(c.user, sr)
             return self.redirect(dest)
         else:
+            if c.user_is_loggedin and not c.errors:
+                QuarantinedSubredditOptInsByAccount.opt_out(c.user, sr)
             g.events.quarantine_event('quarantine_interstitial_dismiss', sr,
                 request=request, context=c)
             return self.redirect('/')
