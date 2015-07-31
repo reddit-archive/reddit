@@ -24,6 +24,7 @@
 from collections import Counter, OrderedDict
 
 from r2.config import feature
+from r2.lib.contrib.ipaddress import ip_address
 from r2.lib.db.operators import asc
 from r2.lib.wrapped import Wrapped, Templated, CachedTemplate
 from r2.models import (
@@ -4876,6 +4877,13 @@ class UserIPHistory(Templated):
     def __init__(self):
         self.my_apps = OAuth2Client._by_user_grouped(c.user)
         self.ips = ips_by_account_id(c.user._id)
+
+        if not c.user_is_admin:
+            self.ips = [
+                ip
+                for ip in self.ips
+                if not ip_address(ip[0]).is_private
+            ]
         super(UserIPHistory, self).__init__()
 
 class ApiHelp(Templated):

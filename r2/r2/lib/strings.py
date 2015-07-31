@@ -153,7 +153,7 @@ string_dict = dict(
     gold_summary_gilding_page_link = _("You're about to give *%(recipient)s* a month of [reddit gold](/gold/about) for this submission:"),
     gold_summary_gilding_page_footer = _("You'll pay a total of %(price)s for this."),
     unvotable_message = _("sorry, this has been archived and can no longer be voted on"),
-    account_activity_blurb = _("This page shows a history of recent activity on your account. If you notice unusual activity, you should change your password immediately. Location information is guessed from your computer's IP address and may be wildly wrong, especially for visits from mobile devices. Note: due to a bug, private-use addresses (starting with 10.) sometimes show up erroneously in this list after regular use of the site."),
+    account_activity_blurb = _("This page shows a history of recent activity on your account. If you notice unusual activity, you should change your password immediately. Location information is guessed from your computer's IP address and may be wildly wrong, especially for visits from mobile devices."),
     your_current_ip_is = _("You are currently accessing reddit from this IP address: %(address)s."),
     account_activity_apps_blurb = _("""
 These apps are authorized to access your account. Signing out of all sessions
