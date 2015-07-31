@@ -256,7 +256,7 @@ class EventV2(object):
             "payload": self.payload,
         }
         if self.obfuscated_data:
-            data["payload"]["obfuscatedData"] = self.obfuscated_data
+            data["payload"]["obfuscated_data"] = self.obfuscated_data
 
         return json.dumps(data)
 
