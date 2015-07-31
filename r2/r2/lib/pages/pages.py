@@ -1496,7 +1496,7 @@ class LinkInfoPage(Reddit):
     extra_page_classes = ['single-page']
     metadata_image_widths = (320, 216)
 
-    def __init__(self, link = None, comment = None,
+    def __init__(self, link = None, comment = None, disable_comments=False,
                  link_title = '', subtitle = None, num_duplicates = None,
                  show_promote_button=False, sr_detail=False, *a, **kw):
 
@@ -1504,6 +1504,7 @@ class LinkInfoPage(Reddit):
         expand_children = kw.get("expand_children", not bool(comment))
 
         wrapper = default_thing_wrapper(expand_children=expand_children)
+
 
         # link_listing will be the one-element listing at the top
         self.link_listing = wrap_links(link, wrapper=wrapper, sr_detail=sr_detail)
@@ -1516,6 +1517,7 @@ class LinkInfoPage(Reddit):
             link.campaign = ''
 
         promote.add_trackers(things, c.site)
+        self.disable_comments = disable_comments
         self.link = things[0]
 
         if promote.is_promo(self.link) and not promote.is_promoted(self.link):
@@ -1697,7 +1699,7 @@ class LinkInfoPage(Reddit):
                                aliases = ['/%s/%s' % (name, self.link._id36)],
                                fmt_args = fmt_args)
         buttons = []
-        if not getattr(self.link, "disable_comments", False):
+        if not self.disable_comments:
             buttons.extend([info_button('comments'),
                             info_button('related')])
 
@@ -1719,13 +1721,21 @@ class LinkInfoPage(Reddit):
         return toolbar
 
     def content(self):
-        title_buttons = getattr(self, "subtitle_buttons", [])
-        return self.content_stack((self.infobar, self.link_listing,
-                                   PaneStack([PaneStack((self.nav_menu,
-                                                         self._content))],
-                                             title = self.subtitle,
-                                             title_buttons = title_buttons,
-                                             css_class = "commentarea")))
+        if self.disable_comments:
+            comment_area = InfoBar(message=_("comments disabled"))
+        else:
+            comment_area = PaneStack([
+                PaneStack(
+                    (self.nav_menu, self._content)
+                )],
+                title=self.subtitle,
+                title_buttons=getattr(self, "subtitle_buttons", []),
+                css_class="commentarea",
+            )
+
+        return self.content_stack(
+            (self.infobar, self.link_listing, comment_area)
+        )
 
     def rightbox(self):
         rb = Reddit.rightbox(self)

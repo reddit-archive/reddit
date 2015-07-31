@@ -398,8 +398,11 @@ class FrontController(RedditController):
                                        comment, context, num, **kw))
 
         subtitle_buttons = []
+        disable_comments = article.promoted and article.disable_comments
 
-        if c.focal_comment or context is not None:
+        if (c.focal_comment or
+            context is not None or
+            disable_comments):
             subtitle = None
         elif article.num_comments == 0:
             subtitle = _("no comments (yet)")
@@ -430,7 +433,10 @@ class FrontController(RedditController):
             suggested_sort=suggested_sort,
         )
 
-        res = LinkInfoPage(link=article, comment=comment,
+
+        res = LinkInfoPage(link=article,
+                           comment=comment,
+                           disable_comments=disable_comments,
                            content=displayPane,
                            page_classes=['comments-page'],
                            subtitle=subtitle,

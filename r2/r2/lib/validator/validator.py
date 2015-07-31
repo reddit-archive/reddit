@@ -65,13 +65,12 @@ def visible_promo(article):
     is_author = (c.user_is_loggedin and
                  c.user._id == article.author_id)
 
-    # promos are visible only if comments are not disabled and the
-    # user is either the author or the link is live/previously live.
+    # promos are visible only if the user is either the author
+    # or the link is live/previously live.
     if is_promo:
         return (c.user_is_sponsor or
                 is_author or
-                (not article.disable_comments and
-                 article.promote_status >= PROMOTE_STATUS.promoted))
+                article.promote_status >= PROMOTE_STATUS.promoted)
     # not a promo, therefore it is visible
     return True
 
