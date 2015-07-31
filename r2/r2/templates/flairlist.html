@@ -26,7 +26,7 @@
   <%utils:line_field title="${_('jump to user (or add):')}" css_class="flair-jump">
     <form method="get">
       <% name = thing.user.name if thing.user else thing.name %>
-      <input type="text" maxlength="32" id="flair_jump_name" name="name"
+      <input type="text" maxlength="20" id="flair_jump_name" name="name"
              value="${name}">
       <button type="submit">${_('go')}</button>
       ${utils.error_field(('USER_DOESNT_EXIST', 'name'), 'name')}
