@@ -784,7 +784,7 @@ class Globals(object):
                 memcaches,
             )
         else:
-            self.cache = MemcacheChain((localcache_cls(), memcaches))
+            self.cache = CacheChain((localcache_cls(), memcaches))
         cache_chains.update(cache=self.cache)
 
         if stalecaches:
