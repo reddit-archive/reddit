@@ -1933,7 +1933,15 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         ret = super(cls, cls)._byID(ids, return_dict=False,
                                     properties=properties)
         if not ret:
-            return
+            # the falsy return object must be converted to the proper type
+            # based on whether ids was an iterable and return_dict
+            if ret == []:
+                if return_dict:
+                    return {}
+                else:
+                    return []
+            else:
+                return
 
         ret = cls._load(ret, load_subreddits=load_subreddits,
                         load_linked_multis=load_linked_multis)
