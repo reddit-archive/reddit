@@ -690,11 +690,12 @@ class Globals(object):
 
         # a smaller pool of caches used only for distributed locks.
         # TODO: move this to ZooKeeper
-        self.lock_cache = CMemcache("lock",
-                                    self.lockcaches,
-                                    binary=True,
-                                    num_clients=num_mc_clients,
-                                    validators=[validate_size_error],)
+        self.lock_cache = CMemcache(
+            "lock",
+            self.lockcaches,
+            num_clients=num_mc_clients,
+            validators=[validate_size_error],
+        )
         self.make_lock = make_lock_factory(self.lock_cache, self.stats)
 
         # memcaches used in front of the permacache CF in cassandra.
