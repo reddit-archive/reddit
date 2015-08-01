@@ -712,11 +712,12 @@ class Globals(object):
         # the stalecache is a memcached local to the current app server used
         # for data that's frequently fetched but doesn't need to be fresh.
         if self.stalecaches:
-            stalecaches = CMemcache("stale",
-                                    self.stalecaches,
-                                    binary=True,
-                                    num_clients=num_mc_clients,
-                                    validators=[validate_size_error],)
+            stalecaches = CMemcache(
+                "stale",
+                self.stalecaches,
+                num_clients=num_mc_clients,
+                validators=[validate_size_error],
+            )
         else:
             stalecaches = None
 
