@@ -689,7 +689,6 @@ class Globals(object):
         )
 
         # a smaller pool of caches used only for distributed locks.
-        # TODO: move this to ZooKeeper
         self.lock_cache = CMemcache(
             "lock",
             self.lockcaches,
