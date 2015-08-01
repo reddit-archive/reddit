@@ -659,7 +659,6 @@ class Globals(object):
             self.memoizecaches,
             min_compress_len=50 * 1024,
             num_clients=num_mc_clients,
-            binary=True,
             validators=[validate_size_error],
         )
 
