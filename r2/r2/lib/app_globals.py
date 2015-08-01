@@ -259,6 +259,7 @@ class Globals(object):
             'srmembercaches',
             'relcaches',
             'ratelimitcaches',
+            'hardcache_memcaches',
             'cassandra_seeds',
             'automatic_reddits',
             'hardcache_categories',
@@ -740,6 +741,16 @@ class Globals(object):
             validators=[],
         )
 
+        # hardcache memcache pool
+        hardcache_memcaches = CMemcache(
+            "hardcache",
+            self.hardcache_memcaches,
+            binary=True,
+            min_compress_len=1400,
+            num_clients=num_mc_clients,
+            validators=[validate_size_error],
+        )
+
         self.startup_timer.intermediate("memcache")
 
         ################# CASSANDRA
@@ -863,7 +874,7 @@ class Globals(object):
         # hardcache is used for various things that tend to expire
         # TODO: replace hardcache w/ cassandra stuff
         self.hardcache = HardcacheChain(
-            (localcache_cls(), memcaches, HardCache(self)),
+            (localcache_cls(), hardcache_memcaches, HardCache(self)),
             cache_negative_results=True,
         )
         cache_chains.update(hardcache=self.hardcache)
