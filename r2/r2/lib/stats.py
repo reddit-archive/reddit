@@ -244,7 +244,6 @@ class Timer:
 
     def __exit__(self, type, value, tb):
         self.stop()
-        return self
 
     def flush(self):
         for timing in self._timings:
