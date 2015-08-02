@@ -178,7 +178,7 @@ def js_config(extra_config=None):
           "loading": _("loading...")
         },
         "is_fake": isinstance(c.site, FakeSubreddit),
-        "tracker_url": tracking.get_pageview_pixel_url() or '',
+        "tracker_url": "",  # overridden below if configured
         "adtracker_url": g.adtracker_url,
         "clicktracker_url": g.clicktracker_url,
         "uitracker_url": g.uitracker_url,
@@ -198,6 +198,9 @@ def js_config(extra_config=None):
         },
         "facebook_app_id": g.live_config["facebook_app_id"],
     }
+
+    if g.tracker_url:
+        config["tracker_url"] = tracking.get_pageview_pixel_url()
 
     if g.uncompressedJS:
         config["uncompressedJS"] = True
