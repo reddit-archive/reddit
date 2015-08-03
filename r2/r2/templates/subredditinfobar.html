@@ -128,7 +128,7 @@
         %endif
         %if getattr(thing.sr, 'ban_info', {}):
           <p>
-            ${strings.time_banned % thing.sr.ban_info['banned_at'] or 'N/A'}
+            ${strings.time_banned % thing.sr.ban_info.get('banned_at') or 'N/A'}
           </p>
         %endif
 
@@ -140,7 +140,7 @@
         )}
         %if getattr(thing.sr, 'ban_info', {}):
           <p>
-            ${strings.time_approved % thing.sr.ban_info['unbanned_at'] or 'N/A'}
+            ${strings.time_approved % thing.sr.ban_info.get('unbanned_at') or 'N/A'}
           </p>
         %endif
       %endif
