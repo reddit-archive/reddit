@@ -3428,6 +3428,7 @@ class ApiController(RedditController):
                 return abort(404, 'not found')
         sr.update_search_index(boost_only=True)
 
+    @require_oauth2_scope("subscribe")
     @noresponse(
         VUser(),
         VModhash(),
@@ -3442,6 +3443,24 @@ class ApiController(RedditController):
                 request=request, context=c)
             QuarantinedSubredditOptInsByAccount.opt_out(c.user, sr)
         return self.redirect('/')
+
+    @require_oauth2_scope("subscribe")
+    @noresponse(
+        VUser(),
+        VModhash(),
+        sr=VSRByName('sr_name'),
+    )
+    def POST_quarantine_optin(self, sr):
+        """Opt in to a quarantined subreddit"""
+        if not sr:
+            return abort(404, 'not found')
+        elif not c.user.email_verified:
+            return abort(403, 'email not verified')
+        else:
+            g.events.quarantine_event('quarantine_opt_in', sr,
+                request=request, context=c)
+            QuarantinedSubredditOptInsByAccount.opt_in(c.user, sr)
+        return self.redirect('/r/%s' % sr.name)
 
     @validatedForm(VAdmin(),
                    VModhash(),
