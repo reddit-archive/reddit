@@ -905,7 +905,8 @@ class Reddit(Templated):
         if getattr(c.site, 'type', None) == 'gold_only':
             classes.add('gold-only')
 
-        if getattr(c.site, 'quarantine', False):
+        if (getattr(c.site, 'quarantine', False) and
+                feature.is_enabled('quarantine')):
             classes.add('quarantine')
 
         if self.extra_page_classes:
