@@ -69,9 +69,9 @@
 <%def name="bottom_buttons()">
   <ul class="flat-list buttons">
     <%
-      stamp_style = 'bold-stamp' if feature.is_enabled('quarantine') else ''
+      stamp_style = 'bold-stamp' if thing.quarantine_enabled else ''
     %>
-    %if thing.quarantine and feature.is_enabled('quarantine'):
+    %if thing.quarantine_enabled and thing.quarantine:
       <li class="rounded quarantine-stamp stamp ${stamp_style}">
         ${quarantine_stamp()}
       </li>

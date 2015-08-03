@@ -49,7 +49,7 @@
           ${thing.link.url}
       %endif
     %endif
-    %if feature.is_enabled('quarantine'):
+    %if thing.quarantine_enabled:
       %if thing.subreddit.quarantine:
         <span class="quarantine-warning">
           ${quarantine_stamp()}

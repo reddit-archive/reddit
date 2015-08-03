@@ -30,7 +30,7 @@
 %for sr in thing.subreddits:
   <li>
     <a href="${sr.path}" title="/r/${sr.name}">/r/${sr.name}</a>
-    %if feature.is_enabled('quarantine'):
+    %if thing.quarantine_enabled:
       %if sr.quarantine:
         <span class="rounded quarantine-stamp stamp bold-stamp">
           ${quarantine_stamp()}
