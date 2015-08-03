@@ -2525,6 +2525,10 @@ class Over18Interstitial(Interstitial):
     pass
 
 
+class Over18(Templated):
+    """The creepy 'over 18' check page for nsfw content."""
+    pass
+
 class SubredditTopBar(CachedTemplate):
 
     """The horizontal strip at the top of most pages for navigating

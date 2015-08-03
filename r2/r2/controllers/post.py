@@ -79,10 +79,19 @@ class PostController(ApiController):
         return self.redirect(u.unparse())
 
     def GET_over18(self):
-        return InterstitialPage(
-            _("over 18?"),
-            content=Over18Interstitial(),
-        ).render()
+        if feature.is_enabled('better_interstitials'):
+            return InterstitialPage(
+                _("over 18?"),
+                content=Over18Interstitial(),
+            ).render()
+        else:
+            return BoringPage(
+                _("over 18?"),
+                content=Over18(),
+                show_sidebar=False,
+                show_newsletterbar=False,
+                show_welcomebar=False,
+                robots='noindex,nofollow').render()
 
     @validate(
         dest=VDestination(default='/'),
