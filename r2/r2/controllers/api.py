@@ -1064,16 +1064,6 @@ class ApiController(RedditController):
 
         new = fn(friend, permissions=type_and_permissions[1])
 
-        # Log this action
-        if new and type in self._sr_friend_types:
-            action = dict(banned='banuser',
-                          moderator='addmoderator',
-                          moderator_invite='invitemoderator',
-                          wikicontributor='wikicontributor',
-                          contributor='addcontributor',
-                          wikibanned='wikibanned').get(type, None)
-            ModAction.create(container, c.user, action, target=friend)
-
         if type == "friend" and c.user.gold:
             # Yes, the order of the next two lines is correct.
             # First you recalculate the rel_ids, then you find
@@ -1081,9 +1071,15 @@ class ApiController(RedditController):
             c.user.friend_rels_cache(_update=True)
             c.user.add_friend_note(friend, note or '')
 
+        # additional logging/info needed for bans
         tempinfo = None
+        log_details = None
+        log_description = None
+
         if type in ('banned', 'wikibanned'):
             container.add_rel_note(type, friend, note)
+            log_description = note
+
             if duration:
                 container.unschedule_unban(friend, type)
                 tempinfo = container.schedule_unban(
@@ -1092,10 +1088,32 @@ class ApiController(RedditController):
                     c.user,
                     duration,
                 )
+                log_details = "%d days" % duration
             elif not new:
                 # Preexisting ban and no duration specified means turn the
                 # temporary ban into a permanent one.
                 container.unschedule_unban(friend, type)
+            else:
+                log_details = "permanent"
+
+        # Log this action
+        if new and type in self._sr_friend_types:
+            mod_action_by_type = {
+                "banned": "banuser",
+                "contributor": "addcontributor",
+                "moderator": "addmoderator",
+                "moderator_invite": "invitemoderator",
+            }
+            action = mod_action_by_type.get(type, type)
+
+            ModAction.create(
+                container,
+                c.user,
+                action,
+                target=friend,
+                details=log_details,
+                description=log_description,
+            )
 
         row_cls = dict(friend=FriendTableItem,
                        moderator=ModTableItem,
