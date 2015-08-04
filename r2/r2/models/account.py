@@ -1101,6 +1101,8 @@ class QuarantinedSubredditOptInsByAccount(tdb_cassandra.DenormalizedRelation):
 
     @classmethod
     def opt_out(cls, account, subreddit):
+        if subreddit.is_subscriber(account):
+            subreddit.remove_subscriber(account)
         cls.destroy(account, subreddit)
 
     @classmethod
