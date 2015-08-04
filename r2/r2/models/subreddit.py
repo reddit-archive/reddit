@@ -591,6 +591,9 @@ class Subreddit(Thing, Printable, BaseSite):
 
     @property
     def hide_num_users_info(self):
+        if not feature.is_enabled("quarantine"):
+            return False
+
         return self.quarantine
 
     @property
