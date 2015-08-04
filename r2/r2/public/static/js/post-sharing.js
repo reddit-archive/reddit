@@ -188,6 +188,7 @@
     show: function() {
       this.$el.slideDown(this.animationSpeed, 'swing', function() {
         this.trigger('show', this);
+        this.selectLinkInputText();
       }.bind(this));
     },
 
@@ -355,8 +356,7 @@
     },
 
     selectLinkInputText: function() {
-      this.refs.$postSharingLinkInput.select();
-      this.trigger('link', 'focus');
+      this.refs.$postSharingLinkInput.focus().select();
     },
 
     fireCopyEvent: function() {
