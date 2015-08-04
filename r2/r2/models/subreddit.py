@@ -572,6 +572,9 @@ class Subreddit(Thing, Printable, BaseSite):
 
     @property
     def accounts_active(self):
+        if self.hide_num_users_info:
+            return 0
+
         return self.get_accounts_active()[0]
 
     @property
@@ -585,6 +588,10 @@ class Subreddit(Thing, Printable, BaseSite):
     @property
     def hide_contributors(self):
         return self.type in {'employees_only', 'gold_only'}
+
+    @property
+    def hide_num_users_info(self):
+        return self.quarantine
 
     @property
     def _related_multipath(self):
@@ -930,7 +937,10 @@ class Subreddit(Thing, Printable, BaseSite):
             if item.hide_subscribers and not c.user_is_admin:
                 item._ups = 0
 
-            item.score_hidden = not item.can_view(user)
+            item.score_hidden = (
+                not item.can_view(user) or 
+                item.hide_num_users_info
+            )
 
             item.score = item._ups
 

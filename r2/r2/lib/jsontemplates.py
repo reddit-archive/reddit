@@ -353,7 +353,8 @@ class SubredditJsonTemplate(ThingJsonTemplate):
         if attr not in self._public_attrs and not thing.can_view(c.user):
             return None
 
-        if attr == "_ups" and thing.hide_subscribers:
+        if (attr == "_ups" and
+                (thing.hide_subscribers or thing.hide_num_users_info)):
             return 0
         elif attr == 'description_html':
             return safemarkdown(thing.description)
