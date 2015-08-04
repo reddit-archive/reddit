@@ -1046,6 +1046,7 @@ class SubredditInfoBar(CachedTemplate):
         self.sr_style_toggle = False
         self.use_subreddit_style = True
 
+        self.quarantine = self.sr.quarantine
         self.quarantine_enabled = feature.is_enabled('quarantine')
 
         if (c.user_is_loggedin and

@@ -37,7 +37,7 @@
     ${plain_link(thing.sr.name, thing.sr.path, _sr_path=False, _class="hover")}
   </h1>
 
-  %if thing.sr.quarantine and thing.quarantine_enabled:
+  %if thing.quarantine and thing.quarantine_enabled:
     <div class="quarantine-notice">
       <div class="md-container">
         ${_md("This community is quarantined because of its distasteful and highly offensive content.", wrap=True)}
