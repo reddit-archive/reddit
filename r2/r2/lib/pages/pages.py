@@ -362,9 +362,6 @@ class Reddit(Templated):
                                       )
             report_form = ReportForm()
 
-            if not feature.is_enabled('improved_sharing'):
-                panes.append(ShareLink())
-
             panes.append(report_form)
 
             if self.show_sidebar:
@@ -3297,12 +3294,6 @@ class NewLink(Templated):
 
         Templated.__init__(self, captcha = captcha, url = url,
                          title = title, text = text)
-
-class ShareLink(CachedTemplate):
-    def __init__(self, link_name = "", emails = None):
-        self.username = c.user.name
-        Templated.__init__(self, link_name=link_name)
-
 
 
 class Share(Templated):

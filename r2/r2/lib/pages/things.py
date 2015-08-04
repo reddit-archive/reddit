@@ -52,8 +52,6 @@ class PrintableButtons(Styled):
         show_approve = (thing.show_spam or show_ignore or
                         (is_link and approval_checkmark is None)) and not thing._deleted
 
-        show_new_post_sharing = feature.is_enabled('improved_sharing')
-
         Styled.__init__(self, style = style,
                         thing = thing,
                         fullname = thing._fullname,
@@ -71,7 +69,6 @@ class PrintableButtons(Styled):
                         show_flair = show_flair,
                         show_rescrape=show_rescrape,
                         show_givegold=show_givegold,
-                        show_new_post_sharing=show_new_post_sharing,
                         **kw)
         
 class BanButtons(PrintableButtons):

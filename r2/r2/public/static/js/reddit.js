@@ -346,24 +346,6 @@ function unfriend(user_name, container_name, type) {
     }
 };
 
-function share(elem) {
-  var thingId = $(elem).thing_id();
-  r.analytics.fireGAEvent('share', 'shareOpen', thingId);
-
-  $.request("new_captcha");
-  $(elem).new_thing_child($(".sharelink:first").clone(true)
-                          .attr("id", "sharelink_" + thingId),
-                           false);
-  $.request("new_captcha");
-};
-
-function cancelShare(elem) {
-  var thingId = $(elem).thing_id();
-  r.analytics.fireGAEvent('share', 'shareClose', thingId);
-
-  return cancelToggleForm(elem, ".sharelink", ".share-button");
-};
-
 function reject_promo(elem) {
     $(elem).thing().find(".rejection-form").show().find("textare").focus();
 }

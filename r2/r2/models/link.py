@@ -503,8 +503,6 @@ class Link(Thing, Printable):
 
             item.quarantine = item.subreddit.quarantine
 
-            item.show_new_post_sharing = feature.is_enabled('improved_sharing')
-
             item.is_author = (user == item.author)
 
             item.thumbnail_sprited = False

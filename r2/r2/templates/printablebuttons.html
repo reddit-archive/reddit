@@ -237,14 +237,9 @@
     </li>
   %endif
   % if thing.show_share:
-  <li class="share">
-    %if thing.show_new_post_sharing:
+    <li class="share">
       <a class="post-sharing-button" href="javascript: void 0;">${_("share")}</a>
-    %else:
-      ${self.toggle_button("share-button", _("share"), _("cancel"),
-                           "share", "cancelShare", login_required = True)}
-    %endif
-  </li>
+    </li>
   % endif
   %if thing.is_loggedin:
     %if thing.saved:
