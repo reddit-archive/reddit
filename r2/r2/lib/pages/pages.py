@@ -802,7 +802,7 @@ class Reddit(Templated):
                             NamedButton('top'),
                             ]
 
-            if not isinstance(c.site, DomainSR):
+            if c.site.allow_gilding:
                 main_buttons.append(NamedButton('gilded',
                                                 aliases=['/comments/gilded']))
 
@@ -814,12 +814,13 @@ class Reddit(Templated):
                 if not g.disable_wiki:
                     main_buttons.append(NavButton('wiki', 'wiki'))
 
-            if isinstance(c.site, (Subreddit, DefaultSR, MultiReddit)):
+            if (isinstance(c.site, (Subreddit, DefaultSR, MultiReddit)) and
+                    c.site.allow_ads):
                 main_buttons.append(NavButton(menu.promoted, 'ads'))
 
         more_buttons = []
 
-        if c.user_is_loggedin:
+        if c.user_is_loggedin and c.site.allow_ads:
             if c.user_is_sponsor:
                 sponsor_button = NavButton(
                     menu.sponsor, dest='/sponsor', sr_path=False)

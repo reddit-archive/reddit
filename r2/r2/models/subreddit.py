@@ -2496,6 +2496,11 @@ class DomainSR(FakeSubreddit):
         from r2.lib.db import queries
         return queries.get_domain_links(self.domain, sort, time)
 
+    @property
+    def allow_gilding(self):
+        return False
+
+
 class SearchResultSubreddit(Subreddit):
     _nodb = True
 
