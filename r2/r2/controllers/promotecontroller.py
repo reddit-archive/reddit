@@ -752,7 +752,7 @@ class PromoteApiController(ApiController):
                     third_party_tracking, third_party_tracking_2,
                     is_managed, l=None, thumbnail_file=None):
         should_ratelimit = False
-        is_self = kind == "self"
+        is_self = (kind == "self")
         is_link = not is_self
         if not c.user_is_sponsor:
             should_ratelimit = True
@@ -811,9 +811,14 @@ class PromoteApiController(ApiController):
 
         if not l:
             # creating a new promoted link
-            l = promote.new_promotion(title, url if kind == 'link' else 'self',
-                                      selftext if kind == 'self' else '',
-                                      user, request.ip)
+            l = promote.new_promotion(
+                is_self=is_self,
+                title=title,
+                content=(selftext if is_self else url),
+                author=user,
+                ip=request.ip,
+            )
+
             if c.user_is_sponsor:
                 l.managed_promo = is_managed
                 l.domain_override = domain_override or None
@@ -847,11 +852,12 @@ class PromoteApiController(ApiController):
         if not promote.is_promoted(l) or c.user_is_sponsor:
             if title and title != l.title:
                 l.title = title
-                changed = not c.user_is_sponsor
+                changed = True
 
-            if kind == 'link' and url and url != l.url:
-                l.url = url
-                changed = not c.user_is_sponsor
+            # type changing
+            if is_self != l.is_self:
+                l.set_type(is_self, selftext if is_self else url)
+                changed = True
 
         # only trips if the title and url are changed by a non-sponsor
         if changed:

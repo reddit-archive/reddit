@@ -466,6 +466,8 @@ class ApiController(RedditController):
             # VUrl may have replaced 'url' by adding 'http://'
             form.set_inputs(url=url)
 
+        is_self = (kind == "self")
+
         if not kind or form.has_errors('sr', errors.INVALID_OPTION):
             return
 
@@ -481,7 +483,7 @@ class ApiController(RedditController):
                             errors.NO_LINKS):
             return
 
-        if not sr.can_submit_text(c.user) and kind == "self":
+        if not sr.can_submit_text(c.user) and is_self:
             # this could happen if they actually typed "self" into the
             # URL box and we helpfully translated it for them
             c.errors.add(errors.NO_SELFS, field='sr')
@@ -497,7 +499,7 @@ class ApiController(RedditController):
             if form.has_errors('ratelimit', errors.RATELIMIT):
                 return
 
-        if kind == 'link':
+        if not is_self:
             if not url or form.has_errors("url", errors.NO_URL, errors.BAD_URL):
                 return
 
@@ -519,7 +521,7 @@ class ApiController(RedditController):
                     form.redirect(u)
                     return
 
-        if not c.user_is_admin and kind == 'self':
+        if not c.user_is_admin and is_self:
             if len(selftext) > Link.SELFTEXT_MAX_LENGTH:
                 c.errors.add(errors.TOO_LONG, field='text',
                     msg_params={'max_length': Link.SELFTEXT_MAX_LENGTH})
@@ -527,31 +529,31 @@ class ApiController(RedditController):
                 return
 
         if not request.POST.get('sendreplies'):
-            sendreplies = kind == 'self'
+            sendreplies = is_self
 
         # get rid of extraneous whitespace in the title
         cleaned_title = re.sub(r'\s+', ' ', title, flags=re.UNICODE)
         cleaned_title = cleaned_title.strip()
 
-        l = Link._submit(cleaned_title, url if kind == 'link' else 'self',
-                         c.user, sr, request.ip, spam=c.user._spam,
-                         sendreplies=sendreplies)
+        l = Link._submit(
+            is_self=is_self,
+            title=cleaned_title,
+            content=selftext if is_self else url,
+            author=c.user,
+            sr=sr,
+            ip=request.ip,
+            spam=c.user._spam,
+            sendreplies=sendreplies,
+        )
 
-        if kind == 'link':
+
+        if not is_self:
             ban = is_banned_domain(url)
             if ban:
                 g.stats.simple_event('spam.domainban.link_url')
                 admintools.spam(l, banner = "domain (%s)" % ban.banmsg)
                 hooks.get_hook('banned_domain.submit').call(item=l, url=url,
                                                             ban=ban)
-
-        if kind == 'self':
-            l.url = l.make_permalink_slow()
-            l.is_self = True
-            l.selftext = selftext
-
-            l._commit()
-            l.set_url_cache()
 
         queries.queue_vote(c.user, l, dir=True, ip=request.ip,
             cheater=c.cheater)

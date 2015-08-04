@@ -79,6 +79,7 @@ from pycassa.system_manager import (
 import pytz
 
 NOTIFICATION_EMAIL_DELAY = timedelta(hours=1)
+TEMPORARY_SELFPOST_URL = "self"
 
 class LinkExists(Exception): pass
 
@@ -172,8 +173,12 @@ class Link(Thing, Printable):
 
         raise NotFound('Link "%s"' % url)
 
-    def set_url_cache(self):
-        if self.url != 'self':
+    def _unset_url_cache(self):
+        LinksByUrl._remove(LinksByUrl._key_from_url(self.url),
+                           {self._id36: ''})
+
+    def _set_url_cache(self):
+        if not self.is_self:
             LinksByUrl._set_values(LinksByUrl._key_from_url(self.url),
                                    {self._id36: ''})
 
@@ -203,12 +208,13 @@ class Link(Thing, Printable):
             return cls._defaults['comment_tree_version']
 
     @classmethod
-    def _submit(cls, title, url, author, sr, ip, spam=False, sendreplies=True):
+    def _submit(cls, is_self, title, content, author, sr, ip,
+                spam=False, sendreplies=True):
         from r2.models import admintools
 
         l = cls(_ups=1,
                 title=title,
-                url=url,
+                url=TEMPORARY_SELFPOST_URL if is_self else content,
                 _spam=spam,
                 author_id=author._id,
                 sendreplies=sendreplies,
@@ -216,8 +222,10 @@ class Link(Thing, Printable):
                 lang=sr.lang,
                 ip=ip,
                 comment_tree_version=cls._choose_comment_tree_version())
+
         l._commit()
-        l.set_url_cache()
+        l.set_type(is_self, content)
+
         LinksByAccount.add_link(author, l)
         SubredditParticipationByAccount.mark_participated(author, sr)
         if author._spam:
@@ -227,6 +235,23 @@ class Link(Thing, Printable):
         hooks.get_hook('link.new').call(link=l)
 
         return l
+
+    def set_type(self, is_self, content):
+        was_self = self.is_self and self.url != TEMPORARY_SELFPOST_URL
+        self.is_self = is_self
+
+        if is_self:
+            if not was_self:
+                self._unset_url_cache()
+
+            self.url = self.make_permalink_slow()
+            self.selftext = content
+        else:
+            self.url = content
+            self.selftext = self._defaults.get("selftext", "")
+            self._set_url_cache()
+
+        self._commit()
 
     def _save(self, user, category=None):
         LinkSavesByAccount._save(user, self, category)
