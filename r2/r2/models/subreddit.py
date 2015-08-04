@@ -1447,6 +1447,10 @@ class FakeSubreddit(BaseSite):
         return False
 
     @property
+    def allow_gilding(self):
+        return True
+
+    @property
     def allow_ads(self):
         return True
 
