@@ -45,6 +45,9 @@ class PoliciesController(RedditController):
         elif page == 'useragreement':
             wiki_name = g.wiki_page_user_agreement
             pagename = _('user agreement')
+        elif page == 'contentpolicy':
+            wiki_name = g.wiki_page_content_policy
+            pagename = _('content policy')
         else:
             abort(404)
 

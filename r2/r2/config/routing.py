@@ -73,7 +73,6 @@ def make_map():
     mc('/quarantine', controller='post', action='quarantine')
     mc('/quarantine_optout', controller='api', action='quarantine_optout')
 
-    mc('/rules', controller='front', action='rules')
     mc('/sup', controller='front', action='sup')
     mc('/traffic', controller='front', action='site_traffic')
     mc('/traffic/languages/:langcode', controller='front',
@@ -314,7 +313,9 @@ def make_map():
 
     mc('/help/:page', controller='policies', action='policy_page',
        conditions={'function':not_in_sr},
-       requirements={'page':'privacypolicy|useragreement'})
+       requirements={'page':'contentpolicy|privacypolicy|useragreement'})
+    mc('/rules', controller='redirect', action='redirect',
+        dest='/help/contentpolicy')
 
     mc('/wiki/create/*page', controller='wiki', action='wiki_create')
     mc('/wiki/edit/*page', controller='wiki', action='wiki_revise')
