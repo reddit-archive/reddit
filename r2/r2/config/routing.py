@@ -316,6 +316,8 @@ def make_map():
        requirements={'page':'contentpolicy|privacypolicy|useragreement'})
     mc('/rules', controller='redirect', action='redirect',
         dest='/help/contentpolicy')
+    mc('/faq', controller='redirect', action='redirect',
+       dest='https://reddit.zendesk.com/')
 
     mc('/wiki/create/*page', controller='wiki', action='wiki_create')
     mc('/wiki/edit/*page', controller='wiki', action='wiki_revise')
@@ -335,7 +337,7 @@ def make_map():
     mc('/wiki/*page', controller='wiki', action='wiki_page')
     mc('/wiki/', controller='wiki', action='wiki_page')
 
-    mc('/:action', controller='wiki', requirements=dict(action="help|faq"))
+    mc('/:action', controller='wiki', requirements=dict(action="help"))
     mc('/help/*page', controller='wiki', action='wiki_redirect')
     mc('/w/*page', controller='wiki', action='wiki_redirect')
 
