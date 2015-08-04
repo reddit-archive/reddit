@@ -32,13 +32,9 @@
     <a href="${sr.path}" title="/r/${sr.name}">/r/${sr.name}</a>
     %if thing.quarantine_enabled:
       %if sr.quarantine:
-        <span class="rounded quarantine-stamp stamp bold-stamp">
-          ${quarantine_stamp()}
-        </span>
+        <span class="quarantine-stamp stamp">${quarantine_stamp()}</span>
       %elif sr.over_18 and c.user.pref_label_nsfw:
-        <span class="rounded nsfw-stamp stamp">
-          ${nsfw_stamp()}
-        </span>
+        <span class="nsfw-stamp stamp">${nsfw_stamp()}</span>
       %endif
     %endif
   </li>

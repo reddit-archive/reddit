@@ -4496,18 +4496,6 @@ form input[type=radio] {margin: 2px .5em 0 0; }
 
 .over18 button { margin: 0 10px 0 10px; padding: 5px}
 
-.entry .buttons {
-    .nsfw-stamp,
-    .quarantine-stamp {
-        padding-right: 2px;
-        font-size: x-small;
-    }
-    .bold-stamp {
-        padding-left: 4px;
-        padding-right: 4px;
-    }
-}
-
 @color-stamp-text-dark: @color-semi-black;
 @color-stamp-text-light: @color-white;
 @color-nsfw-stamp: darken(@color-warning-red, 5%);
@@ -4517,35 +4505,21 @@ form input[type=radio] {margin: 2px .5em 0 0; }
 @color-archived-stamp: lighten(@color-text-grey, 15%);
 
 .stamp {
-    display: inline-block;
-    font-size: x-small;
-    padding: 0 2px;
-    border: 1px solid !important;
     border-radius: 3px;
-    line-height: 1.6em;
-
-    &.bold-stamp {
-        border: none !important;
-    }
+    border: 1px solid;
+    display: inline-block;
+    font-size: 10px;
+    line-height: 14px;
+    padding: 0 4px;
 }
 
 .nsfw-stamp {
     color: @color-nsfw-stamp;
 
-    &.bold-stamp {
-        background-color: @color-nsfw-stamp;
-        color: @color-stamp-text-light;
-    }
-
     acronym {
         border: none;
         text-decoration: none;
     }
-}
-
-.quarantine-stamp {
-    background-color: @color-quarantine;
-    color: @color-stamp-text-dark;
 }
 
 .private-stamp {
@@ -4558,6 +4532,12 @@ form input[type=radio] {margin: 2px .5em 0 0; }
 
 .archived-stamp {
     color: @color-archived-stamp;
+}
+
+.quarantine-stamp {
+    background-color: @color-quarantine;
+    border-color: @color-quarantine;
+    color: @color-stamp-text-dark;
 }
 
 .quarantine-notice {
