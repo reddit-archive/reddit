@@ -22,7 +22,7 @@
 
 <%inherit  file="searchresultbase.html"/>
 
-<%namespace file="utils.html" import="plain_link, thing_timestamp, md, nsfw_stamp, thumbnail_img" />
+<%namespace file="utils.html" import="plain_link, thing_timestamp, md, nsfw_stamp, quarantine_stamp, thumbnail_img" />
 <%namespace file="link.html" import="thumbnail" />
 
 <%!
@@ -81,6 +81,9 @@
 
 <%def name="search_result_meta()">
   <%parent:search_result_meta>
+    %if thing.quarantine_enabled and thing.quarantine:
+      <span class="quarantine-stamp stamp bold-stamp">${quarantine_stamp()}</span>&#32;
+    %endif
     %if thing.over_18:
       <span class="stamp nsfw-stamp">${nsfw_stamp()}</span>&#32;
     %endif

@@ -937,6 +937,8 @@ class Subreddit(Thing, Printable, BaseSite):
             item.contributor = item._id in contributor_srids
             item.banned = item._id in banned_srids
 
+            item.quarantine_enabled = feature.is_enabled('quarantine')
+
             if item.hide_subscribers and not c.user_is_admin:
                 item._ups = 0
 
