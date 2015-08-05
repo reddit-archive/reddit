@@ -24,7 +24,7 @@
   from r2.lib.template_helpers import static 
 %>
 
-<%namespace file="utils.html" import="submit_form, _md"/>
+<%namespace file="utils.html" import="submit_form, _md, _mdf"/>
 <%namespace name="utils" file="utils.html"/>
 
 <%inherit file="interstitial.html"/>
@@ -46,10 +46,14 @@
 
 <%def name="interstitial_message()">
   <p>
+    <%
+      quarantine_link = 'https://reddit.zendesk.com/hc/en-us/articles/205701245'
+    %>
+
     %if thing.can_opt_in:
-      ${_("Communities that are dedicated to distasteful and highly offensive content are quarantined. Content in this community may be shocking or upsetting. Are you certain you want to continue?")}
+      ${_mdf("Communities that are dedicated to shocking or highly offensive content are [quarantined](%(link)s). Content in this community may be upsetting. Are you certain you want to continue?", link=quarantine_link)}
     %else:
-      ${_("Communities that are dedicated to distasteful and highly offensive content are quarantined.")}
+      ${_mdf("Communities that are dedicated to shocking or highly offensive content are [quarantined](%(link)s).", link=quarantine_link)}
     %endif
   </p>
 </%def>
