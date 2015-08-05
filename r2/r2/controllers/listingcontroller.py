@@ -640,7 +640,6 @@ class AdsController(SubredditListingController):
 
     def listing(self):
         listing = ListingController.listing(self)
-        promote.add_trackers(listing.things, c.site)
         return listing
 
     def GET_listing(self, *a, **kw):
