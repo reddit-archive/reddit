@@ -24,7 +24,7 @@
   from r2.lib.template_helpers import static 
 %>
 
-<%namespace file="utils.html" import="submit_form"/>
+<%namespace file="utils.html" import="submit_form, _md"/>
 <%namespace name="utils" file="utils.html"/>
 
 <%inherit file="interstitial.html"/>
@@ -38,7 +38,7 @@
   %if thing.can_opt_in:
     ${_("Are you sure you want to view this community?")}
   %elif thing.logged_in:
-    ${_("You must have a verified email to view this community")}
+    ${_md("You must have a [verified email](/prefs/update) to view this community")}
   %else:
     ${_("You must log in and have a verified email to view this community")}
   %endif
