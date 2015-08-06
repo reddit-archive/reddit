@@ -2672,6 +2672,10 @@ class ApiController(RedditController):
             if not sr.domain:
                 del kw['css_on_cname']
 
+            if kw['quarantine']:
+                del kw['allow_top']
+                del kw['show_media']
+
             #notify ads if sr in a collection changes over_18 to true
             if kw.get('over_18', False) and not sr.over_18:
                 collections = []
@@ -2687,11 +2691,9 @@ class ApiController(RedditController):
 
             # do not clobber these fields if absent in request
             no_clobber = (
-                'allow_top',
                 'community_rules',
                 'key_color',
                 'related_subreddits',
-                'show_media',
             )
 
             for k, v in kw.iteritems():
