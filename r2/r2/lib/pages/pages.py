@@ -4241,7 +4241,7 @@ class RenderableCampaign(Templated):
         self.is_live = is_live
         self.is_complete = is_complete
         self.needs_refund = (is_complete and c.user_is_sponsor and
-                             not transaction.is_refund() and
+                             (transaction and not transaction.is_refund()) and
                              self.spent < campaign.bid)
         self.pay_url = promote.pay_url(link, campaign)
         sr_name = random.choice(campaign.target.subreddit_names)
@@ -4290,8 +4290,7 @@ class RenderableCampaign(Templated):
             transaction = transactions.get(camp._id)
             is_pending = today < to_date(camp.start_date)
             is_live = camp in live_campaigns
-            is_complete = (transaction and (transaction.is_charged() or
-                                            transaction.is_refund()) and
+            is_complete = (camp.is_paid and
                            not (is_live or is_pending))
             rc = cls(link, camp, transaction, is_pending, is_live, is_complete,
                      full_details)

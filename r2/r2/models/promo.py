@@ -551,7 +551,7 @@ class PromoCampaign(Thing):
 
     @property
     def is_paid(self):
-        return self.trans_id != 0 or self.priority == 'house'
+        return self.trans_id != 0 or self.priority == HOUSE
 
     def is_freebie(self):
         return self.trans_id < 0

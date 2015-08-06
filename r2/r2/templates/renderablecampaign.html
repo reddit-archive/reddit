@@ -28,7 +28,7 @@
 
 <% jquery_row = "$('." + thing.campaign._fullname + "')" %>
 
-<tr class="campaign-row ${thing.campaign._fullname} ${'refund' if thing.needs_refund else ''}"
+<tr class="campaign-row ${thing.campaign._fullname} ${'refund' if (not thing.free and thing.needs_refund) else ''}"
     data-startdate="${thing.campaign.start_date.strftime('%m/%d/%Y')}"
     data-enddate="${thing.campaign.end_date.strftime('%m/%d/%Y')}"
     data-bid="${'%.2f' % thing.campaign.bid}"
