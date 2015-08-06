@@ -11079,3 +11079,45 @@ body:not(.loggedin) .reply-button,
 body:not(.loggedin) .report-button {
     display: none;
 }
+
+.sr-type-icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+
+    &.sr-type-icon-banned {
+        .hdpi-bg-image(@1x: url(../sr-type-icon-banned.png), @2x: url(../sr-type-icon-banned_2x.png));
+    }
+
+    &.sr-type-icon-moderator {
+        .hdpi-bg-image(@1x: url(../sr-type-icon-moderator.png), @2x: url(../sr-type-icon-moderator_2x.png));
+    }
+
+    &.sr-type-icon-approved {
+        .hdpi-bg-image(@1x: url(../sr-type-icon-approved.png), @2x: url(../sr-type-icon-approved_2x.png));
+    }
+
+    &.sr-type-icon-restricted {
+        .hdpi-bg-image(@1x: url(../sr-type-icon-restricted.png), @2x: url(../sr-type-icon-restricted_2x.png));
+    }
+
+    &.sr-type-icon-private {
+        .hdpi-bg-image(@1x: url(../sr-type-icon-private.png), @2x: url(../sr-type-icon-private_2x.png));
+    }
+
+    &.sr-type-icon-quarantined {
+        .hdpi-bg-image(@1x: url(../sr-type-icon-quarantined.png), @2x: url(../sr-type-icon-quarantined_2x.png));
+    }
+
+    &.sr-type-icon-nsfw {
+        .hdpi-bg-image(@1x: url(../sr-type-icon-nsfw.png), @2x: url(../sr-type-icon-nsfw_2x.png));
+    }
+}
+
+.subscription-box .sr-type-icon {
+    margin-right: 3px;
+}
+
+.subreddit .midcol .sr-type-icon {
+    margin-left: 3px;
+}

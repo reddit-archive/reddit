@@ -62,15 +62,17 @@
           <span class="fancy-toggle-button">
             <span class="active banned">${_("banned")}</span>
           </span>
-          <span class="title banned">${sr.name}</span>
-        %elif is_spam:
-          ${SubscribeButton(sr)}
-          <span class="title banned">${sr.name}</span>
         %else:
           ${SubscribeButton(sr)}
-          ${plain_link(sr.name, sr.path, _class="title")}
-          ${permission_icons(sr)}
         %endif
+
+        %if is_spam:
+          <span class="title banned">${sr.name}</span>
+        %else:
+          ${plain_link(sr.name, sr.path, _class="title")}
+        %endif
+
+        ${permission_icons(sr)}
       </li>
     %endfor
     </ul>

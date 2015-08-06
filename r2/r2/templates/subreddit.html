@@ -61,34 +61,39 @@
   ${_("a community for %(time)s") % dict(time=timesince(thing._date))}
 </%def>
 
+<%def name="sr_type_icon(name, title)">
+  <span class="sr-type-icon sr-type-icon-${name}"
+       title="${title}"
+       alt="${title}"></span>
+</%def>
+
 ##this function is used by subscriptionbox.html
 <%def name="permission_icons(sr)">
-  %if sr.moderator:
-    <img class="sr-type-img" title="${_('moderator')}" alt="${_('moderator')}" src="${static('shield.png')}" />
+  %if sr.spammy():
+    ${self.sr_type_icon("banned", _("banned"))}
+  %else:
+    %if sr.moderator:
+      ${self.sr_type_icon("moderator", _("moderator"))}
+    %elif sr.type in ("restricted", "private"):
+      %if sr.contributor:
+        ${self.sr_type_icon("approved", _("approved submitter"))}
+      %else:
+        ${self.sr_type_icon("restricted", _("not approved"))}
+      %endif
+    %endif 
+
+    %if sr.type in sr.private_types:
+      ${self.sr_type_icon("private", _("private"))}
+    %endif
+
+    %if sr.quarantine:
+      ${self.sr_type_icon("quarantined", _("quarantined"))}
+    %endif
+
+    %if sr.over_18:
+      ${self.sr_type_icon("nsfw", _("NSFW"))}
+    %endif
   %endif
-
-  %if sr.type in ("restricted", "private") and not sr.moderator:
-    <img class="sr-type-img"
-       %if sr.contributor:
-         alt="${_('approved submitter')}"
-         title="${_('approved submitter')}"
-         src="${static('pencil.png')}"
-       %else:
-         alt="${_('not approved')}"
-         title="${_('not approved')}"
-         src="${static('pencil-gray.png')}"
-       %endif
-    />
-  %endif 
-
-  %if sr.type in sr.private_types:
-    <img class="sr-type-img" title="${_('private')}" alt="${_('private')}" src="${static('eye.png')}" />
-  %endif
-
-  %if sr.over_18:
-    <img class="sr-type-img" title="${_('over18')}" alt="${_('over18')}" src="${static('over18_icon.png')}" />
-  %endif
-
 </%def>
 
 <%def name="midcol(display=True, cls='')">
