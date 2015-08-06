@@ -497,34 +497,6 @@ class ApiController(RedditController):
             if form.has_errors('ratelimit', errors.RATELIMIT):
                 return
 
-            filled_quota = c.user.quota_full('link')
-            if filled_quota is not None:
-                if c.user._spam:
-                    msg = strings.generic_quota_msg
-                else:
-                    log_text ("over-quota",
-                              "%s just went over their per-%s quota" %
-                              (c.user.name, filled_quota), "info")
-
-                    verify_link = "/verify?reason=submit"
-                    reddiquette_link = "/wiki/reddiquette"
-
-                    if c.user.email_verified:
-                        msg = strings.verified_quota_msg
-                        msg %= {"reddiquette": reddiquette_link}
-                    else:
-                        msg = strings.unverified_quota_msg
-                        msg %= {
-                            "verify": verify_link,
-                            "reddiquette": reddiquette_link,
-                        }
-
-                md = safemarkdown(msg)
-                form.set_html(".status", md)
-                c.errors.add(errors.QUOTA_FILLED)
-                form.set_error(errors.QUOTA_FILLED, None)
-                return
-
         if kind == 'link':
             if not url or form.has_errors("url", errors.NO_URL, errors.BAD_URL):
                 return
@@ -585,7 +557,6 @@ class ApiController(RedditController):
             cheater=c.cheater)
 
         if sr.should_ratelimit(c.user, 'link'):
-            c.user.clog_quota('link', l)
             VRatelimit.ratelimit(rate_user=True, rate_ip = True,
                                  prefix = "rate_submit_")
 

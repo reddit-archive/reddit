@@ -81,7 +81,6 @@ error_list = dict((
         ('INVALID_TARGET', _('that target type is not valid')),
         ('INVALID_OS_VERSION', _('that version range is not valid')),
         ('RATELIMIT', _('you are doing that too much. try again in %(time)s.')),
-        ('QUOTA_FILLED', _("You've submitted too many links recently. Please try again in an hour.")),
         ('SUBREDDIT_RATELIMIT', _("you are doing that too much. try again later.")),
         ('EXPIRED', _('your session has expired')),
         ('DRACONIAN', _('you must accept the terms first')),

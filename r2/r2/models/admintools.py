@@ -363,60 +363,6 @@ def ip_span(ip):
     ip = websafe(ip)
     return '<!-- %s -->' % ip
 
-def filter_quotas(unfiltered):
-    now = datetime.now(g.tz)
-
-    baskets = {
-        'hour':  [],
-        'day':   [],
-        'week':  [],
-        'month': [],
-        }
-
-    new_quotas = []
-    quotas_changed = False
-
-    for item in unfiltered:
-        delta = now - item._date
-
-        age = delta.days * 86400 + delta.seconds
-
-        # First, select a basket or abort if item is too old
-        if age < 3600:
-            basket = 'hour'
-        elif age < 86400:
-            basket = 'day'
-        elif age < 7 * 86400:
-            basket = 'week'
-        elif age < 30 * 86400:
-            basket = 'month'
-        else:
-            quotas_changed = True
-            continue
-
-        verdict = getattr(item, "verdict", None)
-        approved = verdict and verdict in (
-            'admin-approved', 'mod-approved')
-
-        # Then, make sure it's worthy of quota-clogging
-        if item._spam:
-            pass
-        elif item._score <= 0:
-            pass
-        elif age < 86400 and item._score <= g.QUOTA_THRESHOLD and not approved:
-            pass
-        else:
-            quotas_changed = True
-            continue
-
-        baskets[basket].append(item)
-        new_quotas.append(item._fullname)
-
-    if quotas_changed:
-        return baskets, new_quotas
-    else:
-        return baskets, None
-
 
 def wiki_template(template_slug, sr=None):
     """Pull content from a subreddit's wiki page for internal use."""

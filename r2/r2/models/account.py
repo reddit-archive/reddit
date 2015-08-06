@@ -46,7 +46,6 @@ from datetime import datetime, timedelta
 import bcrypt
 import hmac
 import hashlib
-import itertools
 from pycassa.system_manager import ASCII_TYPE
 
 
@@ -532,120 +531,14 @@ class Account(Thing):
         else:
             return None
 
-    def quota_key(self, kind):
-        return "user_%s_quotas-%s" % (kind, self.name)
-
-    def clog_quota(self, kind, item):
-        key = self.quota_key(kind)
-        fnames = g.hardcache.get(key, [])
-        fnames.append(item._fullname)
-        g.hardcache.set(key, fnames, 86400 * 30)
-
-    def quota_baskets(self, kind):
-        from r2.models.admintools import filter_quotas
-        key = self.quota_key(kind)
-        fnames = g.hardcache.get(key)
-
-        if not fnames:
-            return None
-
-        unfiltered = Thing._by_fullname(fnames, data=True, return_dict=False)
-
-        baskets, new_quotas = filter_quotas(unfiltered)
-
-        if new_quotas is None:
-            pass
-        elif new_quotas == []:
-            g.hardcache.delete(key)
-        else:
-            g.hardcache.set(key, new_quotas, 86400 * 30)
-
-        return baskets
-
-    # Needs to take the *canonicalized* version of each email
-    # When true, returns the reason
-    @classmethod
-    def which_emails_are_banned(cls, canons):
-        banned = hooks.get_hook('email.get_banned').call(canons=canons)
-
-        # Create a dictionary like:
-        # d["abc.def.com"] = [ "bob@abc.def.com", "sue@abc.def.com" ]
-        rv = {}
-        canons_by_domain = {}
-
-        # email.get_banned will return a list of lists (one layer from the
-        # hooks system, the second from the function itself); chain them
-        # together for easy processing
-        for canon in itertools.chain(*banned):
-            rv[canon] = None
-
-            at_sign = canon.find("@")
-            domain = canon[at_sign+1:]
-            canons_by_domain.setdefault(domain, [])
-            canons_by_domain[domain].append(canon)
-
-        # Hand off to the domain ban system; it knows in the case of
-        # abc@foo.bar.com to check foo.bar.com, bar.com, and .com
-        from r2.models.admintools import bans_for_domain_parts
-
-        for domain, canons in canons_by_domain.iteritems():
-            for d in bans_for_domain_parts(domain):
-                if d.no_email:
-                    rv[canon] = "domain"
-
-        return rv
-
     def set_email(self, email):
         old_email = self.email
         self.email = email
         self._commit()
         AccountsByCanonicalEmail.update_email(self, old_email, email)
 
-    def has_banned_email(self):
-        canon = self.canonical_email()
-        which = self.which_emails_are_banned((canon,))
-        return which.get(canon, None)
-
     def canonical_email(self):
         return canonicalize_email(self.email)
-
-    def cromulent(self):
-        """Return whether the user has validated their email address and
-           passes some rudimentary 'not evil' checks."""
-
-        if not self.email_verified:
-            return False
-
-        if self.has_banned_email():
-            return False
-
-        # Otherwise, congratulations; you're cromulent!
-        return True
-
-    def quota_limits(self, kind):
-        if kind != 'link':
-            raise NotImplementedError
-
-        if self.cromulent():
-            return dict(hour=3, day=10, week=50, month=150)
-        else:
-            return dict(hour=1,  day=3,  week=5,   month=5)
-
-    def quota_full(self, kind):
-        limits = self.quota_limits(kind)
-        baskets = self.quota_baskets(kind)
-
-        if baskets is None:
-            return None
-
-        total = 0
-        filled_quota = None
-        for key in ('hour', 'day', 'week', 'month'):
-            total += len(baskets[key])
-            if total >= limits[key]:
-                filled_quota = key
-
-        return filled_quota
 
     @classmethod
     def system_user(cls):
