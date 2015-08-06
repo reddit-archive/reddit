@@ -37,10 +37,13 @@ def load_all_reddits():
     query_cache = {}
 
     q = Subreddit._query(Subreddit.c.type == 'public',
+                         Subreddit.c._spam == False,
                          Subreddit.c._downs > 1,
                          sort = (desc('_downs'), desc('_ups')),
                          data = True)
     for sr in utils.fetch_things2(q):
+        if sr.quarantine:
+            continue
         name = sr.name.lower()
         for i in xrange(len(name)):
             prefix = name[:i + 1]
