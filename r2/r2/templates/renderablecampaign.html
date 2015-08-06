@@ -50,7 +50,8 @@
     data-ios_versions="${json.dumps(thing.ios_versions) if thing.ios_versions else ''}"
     data-android_devices="${json.dumps(thing.android_devices) if thing.android_devices else ''}"
     data-android_versions="${json.dumps(thing.android_versions) if thing.android_versions else ''}"
-    data-paid="${json.dumps(thing.paid)}">
+    data-paid="${json.dumps(thing.paid)}"
+    data-has-served="${json.dumps(thing.campaign.has_served or thing.is_live or thing.is_complete)}">
   <td class="campaign-start-date">
     ${thing.campaign.start_date.strftime("%m/%d/%Y")}
   </td>

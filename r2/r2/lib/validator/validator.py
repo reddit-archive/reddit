@@ -2398,11 +2398,15 @@ class VDate(Validator):
 
     """
 
-    def __init__(self, param, format="%m/%d/%Y"):
+    def __init__(self, param, format="%m/%d/%Y", required=True):
         self.format = format
+        self.required = required
         Validator.__init__(self, param)
 
     def run(self, datestr):
+        if not datestr and not self.required:
+            return None
+
         try:
             dt = datetime.strptime(datestr, self.format)
             return dt.replace(tzinfo=g.tz)

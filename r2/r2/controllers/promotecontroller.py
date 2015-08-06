@@ -992,7 +992,7 @@ class PromoteApiController(ApiController):
     @validatedForm(
         VSponsor('link_id36'),
         VModhash(),
-        start=VDate('startdate'),
+        start=VDate('startdate', required=False),
         end=VDate('enddate'),
         link=VLink('link_id36'),
         bid=VFloat('bid', coerce=False),
@@ -1066,18 +1066,39 @@ class PromoteApiController(ApiController):
                 form.has_errors('enddate', errors.BAD_DATE)):
             return
 
+        if not campaign_id36 and not start:
+            c.errors.add(errors.BAD_DATE, field='startdate')
+            form.set_error('startdate', errors.BAD_DATE)
+
         min_start, max_start, max_end = promote.get_date_limits(
             link, c.user_is_sponsor)
 
         if campaign_id36:
             promo_campaign = PromoCampaign._byID36(campaign_id36)
-            if (promote.is_promoted(link) and
-                    promo_campaign.start_date.date() <= min_start and
-                    start != promo_campaign.start_date and
-                    promo_campaign.is_paid):
-                c.errors.add(errors.START_DATE_CANNOT_CHANGE, field='startdate')
-                form.has_errors('startdate', errors.START_DATE_CANNOT_CHANGE)
-                return
+
+            # Start not sent for campaigns already serving,
+            # use the current start
+            if not start:
+                start = promo_campaign.start_date
+
+            if promo_campaign.start_date.date() != start.date():
+                # Can't edit the start date of campaigns that have served
+                if promo_campaign.has_served:
+                    c.errors.add(errors.START_DATE_CANNOT_CHANGE, field='startdate')
+                    form.has_errors('startdate', errors.START_DATE_CANNOT_CHANGE)
+                    return
+
+                # Or that are live or completed
+                live_campaigns = promote.live_campaigns_by_link(link)
+                is_pending = promote.is_pending(promo_campaign)
+                is_live = promo_campaign in live_campaigns
+                is_complete = (promo_campaign.is_paid and
+                               not (is_live or is_pending))
+                if is_live or is_complete:
+                    c.errors.add(errors.START_DATE_CANNOT_CHANGE, field='startdate')
+                    form.has_errors('startdate', errors.START_DATE_CANNOT_CHANGE)
+                    return
+
         elif start.date() < min_start:
             c.errors.add(errors.DATE_TOO_EARLY,
                          msg_params={'day': min_start.strftime("%m/%d/%Y")},

@@ -167,6 +167,9 @@ def is_finished(link):
 def is_live_on_sr(link, sr):
     return bool(live_campaigns_by_link(link, sr=sr))
 
+def is_pending(campaign):
+    today = promo_datetime_now().date()
+    return today < to_date(campaign.start_date)
 
 def update_query(base_url, query_updates):
     scheme, netloc, path, params, query, fragment = urlparse.urlparse(base_url)
@@ -174,6 +177,18 @@ def update_query(base_url, query_updates):
     query_dict.update(query_updates)
     query = urllib.urlencode(query_dict)
     return urlparse.urlunparse((scheme, netloc, path, params, query, fragment))
+
+
+def update_served(items):
+    for item in items:
+        if not item.promoted:
+            continue
+
+        campaign = PromoCampaign._by_fullname(item.campaign)
+
+        if not campaign.has_served:
+            campaign.has_served = True
+            campaign._commit()
 
 
 def add_trackers(items, sr, adserver_click_urls=None):

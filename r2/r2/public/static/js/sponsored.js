@@ -1796,6 +1796,12 @@ function edit_campaign($campaign_row) {
                     $input.val(val)
             })
 
+            if ($campaign_row.data('has-served')) {
+              campaign.find('[name="startdate"]').prop('disabled', true);
+            } else {
+              campaign.find('[name="startdate"]').prop('disabled', false);
+            }
+
             var platform = $campaign_row.data('platform');
             campaign.find('*[name="platform"][value="' + platform + '"]').prop("checked", "checked");
 
@@ -1967,6 +1973,7 @@ function create_campaign() {
                 .find('select[name="region"]').hide().end()
                 .find('select[name="metro"]').hide().end()
                 .find('input[name="frequency_cap"]').val('').end()
+                .find('input[name="startdate"]').prop('disabled', false).end()
                 .find('input[name="frequency_cap_duration"]').val('').end()
                 .find('#frequency_capped_false').prop('checked', 'checked').end()
                 .find('.frequency-cap-field').hide().end()

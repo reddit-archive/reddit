@@ -317,6 +317,7 @@ class PromoCampaign(Thing):
         android_version_names=None,
         frequency_cap=None,
         frequency_cap_duration=None,
+        has_served=False,
     )
 
     # special attributes that shouldn't set Thing data attributes because they

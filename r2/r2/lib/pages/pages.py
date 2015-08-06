@@ -4283,12 +4283,10 @@ class RenderableCampaign(Templated):
             transactions = {}
             live_campaigns = []
 
-        today = promote.promo_datetime_now().date()
-
         ret = []
         for camp in campaigns:
             transaction = transactions.get(camp._id)
-            is_pending = today < to_date(camp.start_date)
+            is_pending = promote.is_pending(camp)
             is_live = camp in live_campaigns
             is_complete = (camp.is_paid and
                            not (is_live or is_pending))
