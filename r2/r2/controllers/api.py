@@ -1797,7 +1797,7 @@ class ApiController(RedditController):
         jquery(".content").replace_things(item, True, True, wrap = wrapper)
         jquery(".content .link .rank").hide()
 
-    @require_oauth2_scope("submit")
+    @allow_oauth2_access
     @validatedForm(
         VUser(),
         VModhash(),
@@ -1812,9 +1812,9 @@ class ApiController(RedditController):
         `parent` is the fullname of the thing being replied to. Its value
         changes the kind of object created by this request:
 
-        * the fullname of a Link: a top-level comment in that Link's thread.
-        * the fullname of a Comment: a comment reply to that comment.
-        * the fullname of a Message: a message reply to that message.
+        * the fullname of a Link: a top-level comment in that Link's thread. (requires `submit` scope)
+        * the fullname of a Comment: a comment reply to that comment. (requires `submit` scope)
+        * the fullname of a Message: a message reply to that message. (requires `privatemessages` scope)
 
         `text` should be the raw markdown body of the comment or message.
 
@@ -1825,6 +1825,9 @@ class ApiController(RedditController):
         #check the parent type here cause we need that for the
         #ratelimit checks
         if isinstance(parent, Message):
+            if (c.oauth_user and not
+                    c.oauth_scope.has_any_scope({'privatemessages', 'submit'})):
+                abort(403, 'forbidden')
             if not getattr(parent, "repliable", True):
                 abort(403, 'forbidden')
             if not parent.can_view_slow():
@@ -1832,6 +1835,9 @@ class ApiController(RedditController):
             is_message = True
             should_ratelimit = False
         else:
+            if (c.oauth_user and not
+                    c.oauth_scope.has_access(c.site.name, {'submit'})):
+                abort(403, 'forbidden')
             is_message = False
             if isinstance(parent, Link):
                 link = parent
