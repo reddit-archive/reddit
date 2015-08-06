@@ -700,7 +700,9 @@ class SearchBuilder(IDBuilder):
         # If checking (wrapped) links, filter out banned subreddits
         elif hasattr(item, 'subreddit') and item.subreddit.spammy():
             return False
-        elif hasattr(item, 'subreddit') and not item.subreddit.is_exposed(user):
+        elif (hasattr(item, 'subreddit') and
+              not c.user_is_admin and
+              not item.subreddit.is_exposed(user)):
             return False
         elif (self.skip_deleted_authors and
               getattr(item, "author", None) and item.author._deleted):
