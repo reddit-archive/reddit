@@ -821,10 +821,10 @@ class ApiController(RedditController):
             if isinstance(c.site, FakeSubreddit):
                 abort(403, 'forbidden')
             container = c.site
-            if c.user._spam:
-                # The requesting user is marked as spam, and is trying to
-                # do a mod action. The only action they should be allowed to do
-                # and have it stick is demodding themself
+            if c.user._spam or c.user.in_timeout:
+                # The requesting user is marked as spam or banned, and is
+                # trying to do a mod action. The only action they should be
+                # allowed to do and have it stick is demodding themself.
                 if not (c.user == victim and type == 'moderator'):
                     return
         else:
@@ -971,8 +971,11 @@ class ApiController(RedditController):
                 return
 
         # Don't let banned users make subreddit access changes
-        if type in self._sr_friend_types and c.user._spam:
-            return
+        if type in self._sr_friend_types:
+            if c.user._spam:
+                return
+            if c.user.in_timeout:
+                abort(403, 'forbidden')
 
         if type == "moderator" and not c.user_is_admin:
             # attempts to add moderators now create moderator invites.
@@ -1639,6 +1642,9 @@ class ApiController(RedditController):
         if not thing or thing._deleted:
             return
 
+        if c.user.in_timeout:
+            self.abort403()
+
         if (form.has_errors("reason", errors.TOO_LONG) or
             form.has_errors("other_reason", errors.TOO_LONG)):
             return
@@ -1967,6 +1973,11 @@ class ApiController(RedditController):
             if (c.oauth_user and not
                     c.oauth_scope.has_access(c.site.name, {'submit'})):
                 abort(403, 'forbidden')
+
+            # Users in timeout shouldn't be able to post comments at all.
+            if c.user.in_timeout:
+                self.abort403()
+
             is_message = False
             if isinstance(parent, Link):
                 link = parent
@@ -2003,6 +2014,12 @@ class ApiController(RedditController):
                 to = Subreddit._byID(parent.sr_id)
             else:
                 to = Account._byID(parent.author_id)
+
+            # A user in timeout should only be able to message us, the admins.
+            if c.user.in_timeout:
+                if not (isinstance(to, Subreddit) and
+                        to.path.rstrip('/') == g.admin_message_acct):
+                    self.abort403()
 
             subject = parent.subject
             re = "re: "
@@ -2169,6 +2186,9 @@ class ApiController(RedditController):
         if not thing.is_votable:
             abort(400, "That type of thing can't be voted on.")
 
+        if user.in_timeout:
+            return self.abort403()
+
         hooks.get_hook("vote.validate").call(thing=thing)
 
         if isinstance(thing, Link) and promote.is_promo(thing):
@@ -2311,6 +2331,7 @@ class ApiController(RedditController):
         # just in case we need to kill this feature from XSS
         if g.css_killswitch:
             return abort(403, 'forbidden')
+
         if c.site.header:
             c.site.header = None
             c.site.header_size = None
@@ -2587,6 +2608,9 @@ class ApiController(RedditController):
             if wr:
                 ModAction.create(sr, c.user, 'wikirevise',
                                  details=wiki.modactions.get(pagename))
+
+        if c.user.in_timeout:
+            self.abort403()
 
         # XXX: This should be moved to @validatedForm above when we remove
         # the feature flag. Down here to avoid processing when flagged off
@@ -2910,7 +2934,8 @@ class ApiController(RedditController):
         """
         if not thing: return
         if thing._deleted: return
-        if c.user._spam: return
+        if c.user._spam:
+           self.abort403()
         kw = {'target': thing}
         if thing._spam:
             kw['details'] = 'unspam'

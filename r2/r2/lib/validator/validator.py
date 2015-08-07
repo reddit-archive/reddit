@@ -1119,6 +1119,13 @@ class VSrModerator(Validator):
         super(VSrModerator, self).__init__(*a, **kw)
 
     def run(self):
+        # We don't want to allow users who are in timeout to do any sort of
+        # moderator actions.
+        if c.user_is_loggedin and c.user.in_timeout:
+            if self.fatal:
+                abort(403, "forbidden")
+            return self.set_error('IN_TIMEOUT', code=403)
+
         if not (c.user_is_loggedin
                 and c.site.is_moderator_with_perms(c.user, *self.perms)
                 or c.user_is_admin):
@@ -1128,7 +1135,7 @@ class VSrModerator(Validator):
 
 class VCanDistinguish(VByName):
     def run(self, thing_name, how):
-        if c.user_is_loggedin:
+        if c.user_is_loggedin and not c.user.in_timeout:
             item = VByName.run(self, thing_name)
             if item.author_id == c.user._id:
                 # will throw a legitimate 500 if this isn't a link or
@@ -1170,7 +1177,7 @@ class VSrCanBan(VByName):
     def run(self, thing_name):
         if c.user_is_admin:
             return True
-        elif c.user_is_loggedin:
+        elif c.user_is_loggedin and not c.user.in_timeout:
             item = VByName.run(self, thing_name)
             if isinstance(item, (Link, Comment)):
                 sr = item.subreddit_slow
@@ -1279,6 +1286,10 @@ class VSubmitSR(Validator):
             Validator.__init__(self, srname_param)
 
     def run(self, sr_name, link_type = None):
+        if c.user_is_loggedin and c.user.in_timeout:
+            self.set_error(errors.IN_TIMEOUT)
+            return
+
         if not sr_name:
             self.set_error(errors.SUBREDDIT_REQUIRED)
             return None
@@ -1749,6 +1760,13 @@ class VMessageRecipient(VExistingUname):
         elif name.startswith('#'):
             name = name[1:]
             is_subreddit = True
+
+        # A user in timeout should only be able to message us, the admins.
+        if (c.user.in_timeout and
+                not (is_subreddit and
+                     name.path.rstrip('/') == g.admin_message_acct)):
+            abort(403, 'forbidden')
+
         if is_subreddit:
             try:
                 s = Subreddit._by_name(name)

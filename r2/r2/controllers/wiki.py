@@ -292,6 +292,9 @@ class WikiController(RedditController):
               listed=VBoolean('listed'))
     def POST_wiki_settings(self, page, permlevel, listed):
         """Update the permissions and visibility of wiki `page`"""
+        if c.user.in_timeout:
+            self.abort403()
+
         oldpermlevel = page.permlevel
         try:
             page.change_permlevel(permlevel)
@@ -362,15 +365,17 @@ class WikiApiController(WikiController):
         """Edit a wiki `page`"""
         page, previous = pageandprevious
 
+        if c.user._spam:
+            error = _("You are doing that too much, please try again later.")
+            self.handle_error(415, 'SPECIAL_ERRORS', special_errors=[error])
+        if c.user.in_timeout:
+            self.handle_error(403)
+
         if not page:
             error = c.errors.get(('WIKI_CREATE_ERROR', 'page'))
             if error:
                 self.handle_error(403, **(error.msg_params or {}))
-            if not c.user._spam:
-                page = WikiPage.create(c.site, page_name)
-        if c.user._spam:
-            error = _("You are doing that too much, please try again later.")
-            self.handle_error(415, 'SPECIAL_ERRORS', special_errors=[error])
+            page = WikiPage.create(c.site, page_name)
 
         renderer = RENDERERS_BY_PAGE.get(page.name, 'wiki')
         if renderer in ('wiki', 'reddit'):
