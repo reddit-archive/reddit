@@ -231,6 +231,7 @@ class Reddit(Templated):
 
     create_reddit_box  = True
     submit_box         = True
+    header             = True
     footer             = True
     searchbox          = True
     extension_handling = True
@@ -246,8 +247,8 @@ class Reddit(Templated):
                  infotext='', infotext_class=None, content=None,
                  short_description='', title='',
                  robots=None, show_sidebar=True, show_chooser=False,
-                 footer=True, srbar=True, page_classes=None, short_title=None,
-                 show_wiki_actions=False, extra_js_config=None,
+                 header=True, footer=True, srbar=True, page_classes=None,
+                 short_title=None, show_wiki_actions=False, extra_js_config=None,
                  show_locationbar=False,
                  **context):
         Templated.__init__(self, **context)
@@ -262,6 +263,7 @@ class Reddit(Templated):
         self.show_sidebar = show_sidebar
         self.space_compress = space_compress
         # instantiate a footer
+        self.header = header
         self.footer = RedditFooter() if footer else None
         self.debug_footer = DebugFooter()
         self.supplied_page_classes = page_classes or []

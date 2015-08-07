@@ -129,8 +129,10 @@
 </%def>
 
 <%def name="bodyContent()">
-  <%include file="adminbar.html"/>
-  <%include file="redditheader.html"/>
+  %if thing.header:
+    <%include file="adminbar.html"/>
+    <%include file="redditheader.html"/>
+  %endif
 
   %if thing.show_sidebar:
     <div class="side">
