@@ -59,7 +59,7 @@
       }
 
       // Clear validation state on empty values
-      if (/^\s*$/.test(value)) {
+      if (/^\s*$/.test(value) && !$el.data('validate-noclear')) {
         $el.trigger('cleared.validator');
         return;
       }
