@@ -279,8 +279,9 @@ class ApiController(RedditController):
 
     @csrf_exempt
     @json_validate(email=ValidEmail("email"),
-                   newsletter_subscribe=VBoolean("newsletter_subscribe", default=False))
-    def POST_check_email(self, responder, email, newsletter_subscribe):
+                   newsletter_subscribe=VBoolean("newsletter_subscribe", default=False),
+                   sponsor=VBoolean("sponsor", default=False))
+    def POST_check_email(self, responder, email, newsletter_subscribe, sponsor):
         """
         Check whether an email is valid. Allows blank emails.
 
@@ -290,6 +291,11 @@ class ApiController(RedditController):
         if newsletter_subscribe and not email:
             c.errors.add(errors.NEWSLETTER_NO_EMAIL, field="email")
             responder.has_errors("email", errors.NEWSLETTER_NO_EMAIL)
+            return
+
+        if sponsor and not email:
+            c.errors.add(errors.SPONSOR_NO_EMAIL, field="email")
+            responder.has_errors("email", errors.SPONSOR_NO_EMAIL)
             return
 
         if not (responder.has_errors("email", errors.BAD_EMAIL)):
@@ -664,9 +670,11 @@ class ApiController(RedditController):
                    rem = VBoolean('rem'),
                    newsletter_subscribe=VBoolean('newsletter_subscribe',
                                                  default=False),
+                   sponsor=VBoolean('sponsor', default=False),
                    )
     def _handle_register(self, form, responder, name, email,
-                         password, rem, newsletter_subscribe):
+                         password, rem, newsletter_subscribe,
+                         sponsor):
         bad_captcha = responder.has_errors('captcha', errors.BAD_CAPTCHA)
         if not (responder.has_errors("user",
                                 errors.USERNAME_TOO_SHORT,
@@ -683,6 +691,11 @@ class ApiController(RedditController):
             if newsletter_subscribe and not email:
                 c.errors.add(errors.NEWSLETTER_NO_EMAIL, field="email")
                 form.has_errors("email", errors.NEWSLETTER_NO_EMAIL)
+                return
+
+            if sponsor and not email:
+                c.errors.add(errors.SPONSOR_NO_EMAIL, field="email")
+                form.has_errors("email", errors.SPONSOR_NO_EMAIL)
                 return
 
             user = register(name, password, request.ip)
