@@ -108,6 +108,7 @@ from r2.lib.validator import (
     VSponsor,
     VSponsorAdmin,
     VSponsorAdminOrAdminSecret,
+    VVerifiedSponsor,
     VSubmitSR,
     VTitle,
     VUploadLength,
@@ -197,7 +198,7 @@ class PromoteController(RedditController):
         content = RefundPage(link, campaign)
         return Reddit("refund", content=content, show_sidebar=False).render()
 
-    @validate(VSponsor("link"),
+    @validate(VVerifiedSponsor("link"),
               link=VLink("link"),
               campaign=VPromoCampaign("campaign"))
     def GET_pay(self, link, campaign):
@@ -1210,7 +1211,7 @@ class PromoteApiController(ApiController):
         jquery.update_campaign(campaign._fullname, rc.render_html())
 
     @validatedForm(
-        VSponsor('link'),
+        VVerifiedSponsor('link'),
         VModhash(),
         link=VByName("link"),
         campaign=VPromoCampaign("campaign"),

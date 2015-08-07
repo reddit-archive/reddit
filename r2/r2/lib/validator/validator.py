@@ -1068,7 +1068,7 @@ class VSponsorAdmin(VVerifiedUser):
 
 VSponsorAdminOrAdminSecret = make_or_admin_secret_cls(VSponsorAdmin)
 
-class VSponsor(VVerifiedUser):
+class VSponsor(VUser):
     """
     Not intended to be used as a check for c.user_is_sponsor, but
     rather is the user allowed to use the sponsored link system.
@@ -1081,7 +1081,7 @@ class VSponsor(VVerifiedUser):
     def run(self, link_id=None, campaign_id=None):
         assert not (link_id and campaign_id), 'Pass link or campaign, not both'
 
-        VVerifiedUser.run(self)
+        VUser.run(self)
         if c.user_is_sponsor:
             return
         elif campaign_id:
@@ -1107,6 +1107,13 @@ class VSponsor(VVerifiedUser):
             except (NotFound, ValueError):
                 pass
             abort(403, 'forbidden')
+
+
+class VVerifiedSponsor(VSponsor):
+    def run(self, *args, **kwargs):
+        VVerifiedUser().run()
+
+        return super(VVerifiedSponsor, self).run(*args, **kwargs)
 
 
 class VEmployee(VVerifiedUser):
