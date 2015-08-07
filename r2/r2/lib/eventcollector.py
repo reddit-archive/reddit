@@ -56,13 +56,13 @@ class EventQueue(object):
         self.queue = queue
 
     def save_event(self, event):
-        if isinstance(event, Event):
-            self.queue.add_item("event_collector", json.dumps(event))
-        elif isinstance(event, EventV2):
+        if isinstance(event, EventV2):
             if event.testing:
                 self.queue.add_item("event_collector_test", event.dump())
             else:
                 self.queue.add_item("event_collector", event.dump())
+        else:
+            self.queue.add_item("event_collector", json.dumps(event))
 
     # Mapping of stored vote "names" to more readable ones
     VOTES = {"1": "up", "0": "clear", "-1": "down"}
