@@ -108,14 +108,16 @@ class PostController(ApiController):
         elif isinstance(sr, FakeSubreddit) or sr.is_exposed(c.user):
             return self.redirect(dest)
 
-        return InterstitialPage(
+        errpage = InterstitialPage(
             _("quarantined"),
             content=QuarantineInterstitial(
                 sr_name=sr.name,
                 logged_in=c.user_is_loggedin,
                 email_verified=c.user_is_loggedin and c.user.email_verified,
             ),
-        ).render()
+        )
+        request.environ['usable_error_content'] = errpage.render()
+        self.abort403()
 
     @validate(VModhash(fatal=False),
               over18 = nop('over18'),
