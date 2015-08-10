@@ -1078,7 +1078,11 @@ class Subreddit(Thing, Printable, BaseSite):
 
     @classmethod
     def random_subscription(cls, user):
-        sr_ids = Subreddit.subscribed_ids_by_user(user)
+        if user.has_subscribed:
+            sr_ids = Subreddit.subscribed_ids_by_user(user)
+        else:
+            sr_ids = Subreddit.default_subreddits(ids=True)
+
         return (Subreddit._byID(random.choice(sr_ids), data=True)
                 if sr_ids else Subreddit._by_name(g.default_sr))
 
