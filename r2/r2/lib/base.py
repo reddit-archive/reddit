@@ -118,6 +118,10 @@ class BaseController(WSGIController):
 
         #set the function to be called
         action = request.environ['pylons.routes_dict'].get('action')
+
+        if (request.environ.get('r2.controller.exception') and action == 'document'
+                and request.environ.get('render_style') == 'api'):
+            action = 'api_error'
         if action:
             meth = request.method.upper()
             if meth == 'HEAD':

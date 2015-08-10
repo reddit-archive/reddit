@@ -1301,11 +1301,13 @@ class MinimalController(BaseController):
         elif error.name == errors.VERIFIED_USER_REQUIRED:
             self.intermediate_redirect('/verify')
 
-    def abort404(self):
-        abort(404, "not found")
+    def abort404(self, error=None):
+        msg = error or "not found"
+        abort(404, msg)
 
-    def abort403(self):
-        abort(403, "forbidden")
+    def abort403(self, error=None):
+        msg = error or "forbidden"
+        abort(403, msg)
 
     COMMON_REDDIT_HEADERS = ", ".join((
         "X-Ratelimit-Used",
@@ -1719,7 +1721,7 @@ class RedditController(OAuth2ResourceController):
                             include_message_mods_link=True,
                         )
                     request.environ['usable_error_content'] = errpage.render()
-                    self.abort403()
+                    self.abort403("Insufficient permissions to view object.")
                 else:
                     if c.render_style != 'html':
                         self.abort403()
