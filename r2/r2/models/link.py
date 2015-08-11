@@ -150,6 +150,10 @@ class Link(Thing, Printable):
     def is_nsfw(self):
         return self.over_18 or bool(self._nsfw.search(self.title))
 
+    @property
+    def is_embeddable(self):
+        return not self.is_nsfw and self.subreddit_slow.is_embeddable
+
     @classmethod
     def _by_url(cls, url, sr):
         if isinstance(sr, FakeSubreddit):
