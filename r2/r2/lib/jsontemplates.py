@@ -27,6 +27,7 @@ from wrapped import Wrapped, StringTemplate, CacheStub, Templated
 from mako.template import Template
 from r2.config import feature
 from r2.config.extensions import get_api_subtype
+from r2.lib import hooks
 from r2.lib.filters import spaceCompress, safemarkdown, _force_unicode
 from r2.models import Account, Report, Trophy
 from r2.models.token import OAuth2Scope, extra_oauth2_scope
@@ -518,6 +519,8 @@ class IdentityJsonTemplate(ThingJsonTemplate):
         over_18="pref_over_18",
         gold_creddits="gold_creddits",
         gold_expiration="gold_expiration",
+        is_banned="in_timeout",
+        ban_expiration_utc="ban_expiration_utc",
     )
 
     def raw_data(self, thing):
@@ -559,6 +562,14 @@ class IdentityJsonTemplate(ThingJsonTemplate):
             if not thing.gold:
                 return None
             return calendar.timegm(thing.gold_expiration.utctimetuple())
+        elif attr == "ban_expiration_utc":
+            expiration_hook = hooks.get_hook('timeouts.fetch_expiration')
+            expiration_date = expiration_hook.call_until_return(user=thing)
+            if not expiration_date:
+                return None
+
+            return calendar.timegm(expiration_date.utctimetuple())
+
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
 
