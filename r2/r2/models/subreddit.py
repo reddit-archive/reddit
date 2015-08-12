@@ -591,9 +591,6 @@ class Subreddit(Thing, Printable, BaseSite):
 
     @property
     def hide_num_users_info(self):
-        if not feature.is_enabled("quarantine"):
-            return False
-
         return self.quarantine
 
     @property
@@ -614,9 +611,6 @@ class Subreddit(Thing, Printable, BaseSite):
 
     @property
     def discoverable(self):
-        if not feature.is_enabled('quarantine'):
-            return self.allow_top
-
         return self.allow_top and not self.quarantine
 
     @related_subreddits.setter
@@ -860,8 +854,6 @@ class Subreddit(Thing, Printable, BaseSite):
         content. Logged out users cannot opt-in, and all users are considered
         opted-in to non-quarantined subreddits.
         """
-        if not feature.is_enabled('quarantine'):
-            return True
         if not self.quarantine:
             return True
         elif not user:
@@ -941,8 +933,6 @@ class Subreddit(Thing, Printable, BaseSite):
             item.moderator = item._id in moderator_srids
             item.contributor = item._id in contributor_srids
             item.banned = item._id in banned_srids
-
-            item.quarantine_enabled = feature.is_enabled('quarantine')
 
             if item.hide_subscribers and not c.user_is_admin:
                 item._ups = 0

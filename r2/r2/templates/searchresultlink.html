@@ -81,7 +81,7 @@
 
 <%def name="search_result_meta()">
   <%parent:search_result_meta>
-    %if thing.quarantine_enabled and thing.quarantine:
+    %if thing.quarantine:
       <span class="quarantine-stamp stamp bold-stamp">${quarantine_stamp()}</span>&#32;
     %endif
     %if thing.over_18:

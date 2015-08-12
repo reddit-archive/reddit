@@ -88,7 +88,7 @@
         (<a href="${thing.domain_path}.compact">${thing.domain_str}</a>)
     %endif
     </span>
-    %if thing.quarantine and feature.is_enabled('quarantine'):
+    %if thing.quarantine:
       <span class="quarantine-warning">
         ${quarantine_stamp()}
       </span>

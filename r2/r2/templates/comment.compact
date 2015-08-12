@@ -49,17 +49,15 @@
           ${thing.link.url}
       %endif
     %endif
-    %if thing.quarantine_enabled:
-      %if thing.subreddit.quarantine:
-        <span class="quarantine-warning">
-          ${quarantine_stamp()}
-        </span>
-      %endif
-      %if thing.nsfw:
-        <span class="nsfw-warning">
-          ${nsfw_stamp()}
-        </span>
-      %endif
+    %if thing.subreddit.quarantine:
+      <span class="quarantine-warning">
+        ${quarantine_stamp()}
+      </span>
+    %endif
+    %if thing.nsfw:
+      <span class="nsfw-warning">
+        ${nsfw_stamp()}
+      </span>
     %endif
   %endif
   <Div class="midcol">

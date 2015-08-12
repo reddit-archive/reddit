@@ -68,7 +68,7 @@
 
 <%def name="bottom_buttons()">
   <ul class="flat-list buttons">
-    %if thing.quarantine_enabled and thing.quarantine:
+    %if thing.quarantine:
       <li>
         <span class="quarantine-stamp stamp">${quarantine_stamp()}</span>
       </li>

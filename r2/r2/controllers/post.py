@@ -97,8 +97,6 @@ class PostController(ApiController):
         dest=VDestination(default='/'),
     )
     def GET_quarantine(self, dest):
-        if not feature.is_enabled('quarantine'):
-            return self.abort404()
         sr = UrlParser(dest).get_subreddit()
 
         # if dest doesn't include a quarantined subreddit,
@@ -145,9 +143,6 @@ class PostController(ApiController):
         dest=VDestination(default='/'),
     )
     def POST_quarantine(self, sr, accept, dest):
-        if not feature.is_enabled('quarantine'):
-            return self.abort404()
-
         can_opt_in = c.user_is_loggedin and c.user.email_verified
 
         if accept and can_opt_in and not c.errors:

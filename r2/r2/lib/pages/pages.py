@@ -906,8 +906,7 @@ class Reddit(Templated):
         if getattr(c.site, 'type', None) == 'gold_only':
             classes.add('gold-only')
 
-        if (getattr(c.site, 'quarantine', False) and
-                feature.is_enabled('quarantine')):
+        if getattr(c.site, 'quarantine', False):
             classes.add('quarantine')
 
         if self.extra_page_classes:
@@ -1048,7 +1047,6 @@ class SubredditInfoBar(CachedTemplate):
         self.use_subreddit_style = True
 
         self.quarantine = self.sr.quarantine
-        self.quarantine_enabled = feature.is_enabled('quarantine')
 
         if (c.user_is_loggedin and
                 (self.sr.stylesheet_url or self.sr.header) and
@@ -2256,7 +2254,6 @@ class SidebarModList(Templated):
         # primary sort is desc. subscribers, secondary is name
         self.subreddits = sorted(subreddits,
                                  key=lambda sr: (-sr._ups, sr.name.lower()))
-        self.quarantine_enabled = feature.is_enabled('quarantine')
 
 
 class ProfileBar(Templated):
