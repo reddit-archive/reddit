@@ -902,6 +902,7 @@ class Subreddit(Thing, Printable, BaseSite):
         moderator_srids = set()
         contributor_srids = set()
         banned_srids = set()
+        muted_srids = set()
         srmembers_to_fetch = []
 
         if not user or not c.user_is_loggedin or not user.has_subscribed:
@@ -913,7 +914,7 @@ class Subreddit(Thing, Printable, BaseSite):
             subscriber_srids = Subreddit.subscribed_ids_by_user(user)
 
         if user and c.user_is_loggedin:
-            srmembers_to_fetch.extend(['moderator', 'contributor', 'banned'])
+            srmembers_to_fetch.extend(['moderator', 'contributor', 'banned', 'muted'])
 
         if srmembers_to_fetch:
             rels = SRMember._fast_query(wrapped, [user], srmembers_to_fetch)
@@ -926,6 +927,8 @@ class Subreddit(Thing, Printable, BaseSite):
                     contributor_srids.add(item._id)
                 elif rel_name == 'banned':
                     banned_srids.add(item._id)
+                elif rel_name == 'muted':
+                    muted_srids.add(item._id)
 
         target = "_top" if c.cname else None
         for item in wrapped:
@@ -933,6 +936,7 @@ class Subreddit(Thing, Printable, BaseSite):
             item.moderator = item._id in moderator_srids
             item.contributor = item._id in contributor_srids
             item.banned = item._id in banned_srids
+            item.muted = item._id in muted_srids
 
             if item.hide_subscribers and not c.user_is_admin:
                 item._ups = 0
@@ -1200,6 +1204,9 @@ class Subreddit(Thing, Printable, BaseSite):
 
     def get_tempbans(self, type=None, names=None):
         return SubredditTempBan.search(self.name, type, names)
+
+    def get_muted(self, names=None):
+        return MutedAccountsBySubreddit.search(self, names)
 
     def add_gilding_seconds(self):
         from r2.models.gold import get_current_value_of_month
@@ -1472,6 +1479,9 @@ class FakeSubreddit(BaseSite):
         return False
 
     def is_banned(self, user):
+        return False
+
+    def is_muted(self, user):
         return False
 
     def get_all_comments(self):
@@ -2622,6 +2632,7 @@ Subreddit.__bases__ += (
             permission_class=ModeratorPermissionSet),
     UserRel('contributor', SRMember, disable_ids_fn=True),
     UserRel('banned', SRMember, disable_ids_fn=True),
+    UserRel('muted', SRMember, disable_ids_fn=True),
     UserRel('wikibanned', SRMember),
     UserRel('wikicontributor', SRMember),
 )
@@ -2725,3 +2736,89 @@ def on_subreddit_unban(data):
             ).get(kind, None)
             ModAction.create(container, banner, action, target=victim,
                              description="was temporary")
+
+
+class MutedAccountsBySubreddit(object):
+    @classmethod
+    def mute(cls, sr, user, muter):
+        from r2.lib.db import queries
+        from r2.models import Message, ModAction
+        info = {
+            'sr': sr._id36,
+            'who': user._id36,
+            'muter': muter._id36,
+        }
+
+        result = TryLaterBySubject.schedule(
+            cls.cancel_rowkey(sr),
+            cls.cancel_colkey(user),
+            json.dumps(info),
+            datetime.timedelta(hours=24),
+            trylater_rowkey=cls.schedule_rowkey(),
+        )
+
+        #if the user has interacted with the subreddit before, message them
+        if user.has_interacted_with(sr):
+            subject = _("You have been muted from r/%(subredditname)s")
+            subject %= dict(subredditname=sr.name)
+            message = _("You have been [temporarily muted](%(muting_link)s) "
+                "from r/%(subredditname)s. You will not be able to message "
+                "the moderators of r/%(subredditname)s for 24 hours.")
+            message %= dict(
+                muting_link="https://reddit.zendesk.com/hc/en-us/articles/205269739",
+                subredditname=sr.name,
+            )
+
+            item, inbox_rel = Message._new(muter, user, subject, message,
+                request.ip, sr=sr, from_sr=True)
+            queries.new_message(item, inbox_rel, update_modmail=True)
+
+        return {user.name: result.keys()[0]}
+
+    @classmethod
+    def cancel_colkey(cls, user):
+        return user.name
+
+    @classmethod
+    def cancel_rowkey(cls, subreddit):
+        return "srmute:%s" % subreddit.name
+
+    @classmethod
+    def schedule_rowkey(cls):
+        return "srmute"
+
+    @classmethod
+    def search(cls, subreddit, subjects):
+        results = TryLaterBySubject.search(cls.cancel_rowkey(subreddit),
+                                           subjects)
+
+        return {
+            name: datetime.datetime.fromtimestamp(convert_uuid_to_time(uu),
+                    g.tz)
+                for name, uu in results.iteritems()
+        }
+
+    @classmethod
+    def unmute(cls, sr, user, automatic=False):
+        from r2.models import ModAction
+
+        TryLaterBySubject.unschedule(
+            cls.cancel_rowkey(sr),
+            cls.cancel_colkey(user),
+            cls.schedule_rowkey(),
+        )
+
+        if automatic:
+            unmuter = Account.system_user()
+            ModAction.create(sr, unmuter, 'unmuteuser', target=user)
+
+
+@trylater_hooks.on('trylater.srmute')
+def unmute_hook(data):
+    for blob in data.itervalues():
+        muteinfo = json.loads(blob)
+        subreddit = Subreddit._byID36(muteinfo['sr'], data=True)
+        user = Account._byID36(muteinfo['who'], data=True)
+
+        subreddit.remove_muted(user)
+        MutedAccountsBySubreddit.unmute(subreddit, user, automatic=True)

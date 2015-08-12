@@ -77,6 +77,7 @@ from r2.lib.pages import (
     FriendTableItem,
     InvitedModTableItem,
     ModTableItem,
+    MutedTableItem,
     SubredditStylesheet,
     WikiBannedTableItem,
     WikiMayContributeTableItem,
@@ -352,7 +353,9 @@ class ApiController(RedditController):
         """
         if (form.has_errors("to",
                     errors.USER_DOESNT_EXIST, errors.NO_USER,
-                    errors.SUBREDDIT_NOEXIST, errors.USER_BLOCKED) or
+                    errors.SUBREDDIT_NOEXIST, errors.USER_BLOCKED,
+                    errors.USER_MUTED,
+                ) or
                 form.has_errors("subject", errors.NO_SUBJECT) or
                 form.has_errors("subject", errors.TOO_LONG) or
                 form.has_errors("text", errors.NO_TEXT, errors.TOO_LONG) or
@@ -379,6 +382,10 @@ class ApiController(RedditController):
         if from_sr:
             if not from_sr.is_moderator_with_perms(c.user, "mail"):
                 abort(403)
+            elif from_sr.is_muted(to) and not c.user_is_admin:
+                c.errors.add(errors.MUTED_FROM_SUBREDDIT, field="to")
+                form.has_errors("to", errors.MUTED_FROM_SUBREDDIT)
+                return
             m, inbox_rel = Message._new(c.user, to, subject, body, request.ip,
                                         sr=from_sr, from_sr=True)
         else:
@@ -778,6 +785,7 @@ class ApiController(RedditController):
         'moderator_invite',
         'contributor',
         'banned',
+        'muted',
         'wikibanned',
         'wikicontributor',
     )
@@ -794,6 +802,7 @@ class ApiController(RedditController):
         'moderator_invite': {"modothers"},
         'contributor': {"modcontributors"},
         'banned': {"modcontributors"},
+        'muted': {"modcontributors"},
         'wikibanned': {"modcontributors", "modwiki"},
         'wikicontributor': {"modcontributors", "modwiki"},
         'friend': None,  # Handled with API v1 endpoint
@@ -837,6 +846,7 @@ class ApiController(RedditController):
         * moderator_invite: `modothers`
         * contributor: `modcontributors`
         * banned: `modcontributors`
+        * muted: `modcontributors`
         * wikibanned: `modcontributors` and `modwiki`
         * wikicontributor: `modcontributors` and `modwiki`
         * friend: Use [/api/v1/me/friends/{username}](#DELETE_api_v1_me_friends_{username})
@@ -890,11 +900,15 @@ class ApiController(RedditController):
 
         # Log this action
         if new and type in self._sr_friend_types:
-            action = dict(banned='unbanuser', moderator='removemoderator',
-                          moderator_invite='uninvitemoderator',
-                          wikicontributor='removewikicontributor',
-                          wikibanned='wikiunbanned',
-                          contributor='removecontributor').get(type, None)
+            action = dict(
+                banned='unbanuser',
+                moderator='removemoderator',
+                moderator_invite='uninvitemoderator',
+                wikicontributor='removewikicontributor',
+                wikibanned='wikiunbanned',
+                contributor='removecontributor',
+                muted='unmuteuser',
+            ).get(type, None)
             ModAction.create(container, c.user, action, target=victim)
 
         if type == "friend" and c.user.gold:
@@ -902,6 +916,9 @@ class ApiController(RedditController):
 
         if type in ('banned', 'wikibanned'):
             container.unschedule_unban(victim, type)
+
+        if type == 'muted':
+            MutedAccountsBySubreddit.unmute(container, victim)
 
     @require_oauth2_scope("modothers")
     @validatedForm(VSrModerator(), VModhash(),
@@ -971,6 +988,7 @@ class ApiController(RedditController):
         * moderator_invite: `modothers`
         * contributor: `modcontributors`
         * banned: `modcontributors`
+        * muted: `modcontributors`
         * wikibanned: `modcontributors` and `modwiki`
         * wikicontributor: `modcontributors` and `modwiki`
         * friend: Use [/api/v1/me/friends/{username}](#PUT_api_v1_me_friends_{username})
@@ -1055,19 +1073,27 @@ class ApiController(RedditController):
         else:
             permissions = None
 
-        if (type in ("banned", "moderator_invite") and
-                container.is_moderator(friend)):
+        if type == "moderator_invite" and container.is_moderator(friend):
             c.errors.add(errors.ALREADY_MODERATOR, field="name")
             form.set_error(errors.ALREADY_MODERATOR, "name")
             return
+        elif type in ("banned", "muted") and container.is_moderator(friend):
+            c.errors.add(errors.CANT_RESTRICT_MODERATOR, field="name")
+            form.set_error(errors.CANT_RESTRICT_MODERATOR, "name")
+            return
 
-        # don't allow increasing privileges of banned users
+        # don't allow increasing privileges of banned or muted users
         unbanned_types = ("moderator", "moderator_invite",
                           "contributor", "wikicontributor")
-        if type in unbanned_types and container.is_banned(friend):
-            c.errors.add(errors.BANNED_FROM_SUBREDDIT, field="name")
-            form.set_error(errors.BANNED_FROM_SUBREDDIT, "name")
-            return
+        if type in unbanned_types:
+            if container.is_banned(friend):
+                c.errors.add(errors.BANNED_FROM_SUBREDDIT, field="name")
+                form.set_error(errors.BANNED_FROM_SUBREDDIT, "name")
+                return
+            elif container.is_muted(friend):
+                c.errors.add(errors.MUTED_FROM_SUBREDDIT, field="name")
+                form.set_error(errors.MUTED_FROM_SUBREDDIT, "name")
+                return
 
         if type == "moderator":
             container.remove_moderator_invite(friend)
@@ -1105,11 +1131,14 @@ class ApiController(RedditController):
                 container.unschedule_unban(friend, type)
             else:
                 log_details = "permanent"
+        elif new and type == 'muted':
+            MutedAccountsBySubreddit.mute(container, friend, c.user)
 
         # Log this action
         if new and type in self._sr_friend_types:
             mod_action_by_type = {
                 "banned": "banuser",
+                "muted": "muteuser",
                 "contributor": "addcontributor",
                 "moderator": "addmoderator",
                 "moderator_invite": "invitemoderator",
@@ -1131,6 +1160,7 @@ class ApiController(RedditController):
                        contributor=ContributorTableItem,
                        wikicontributor=WikiMayContributeTableItem,
                        banned=BannedTableItem,
+                       muted=MutedTableItem,
                        wikibanned=WikiBannedTableItem).get(type)
 
         form.set_inputs(name = "")
@@ -1720,6 +1750,66 @@ class ApiController(RedditController):
             BlockedSubredditsByAccount.unblock(c.user, sr)
             return
 
+    @require_oauth2_scope("modcontributors")
+    @noresponse(
+        VUser(),
+        VModhash(),
+        message=VByName('id'),
+    )
+    @api_doc(api_section.moderation)
+    def POST_mute_message_author(self, message):
+        '''For muting user via modmail.'''
+        if not message:
+            return
+        subreddit = message.subreddit_slow
+
+        if not subreddit:
+            abort(403, 'Not modmail')
+
+        user = message.author_slow
+        if not c.user_is_admin:
+            if not subreddit.is_moderator_with_perms(c.user, 'access', 'mail'):
+                abort(403, 'Invalid mod permissions')
+
+            quota_key = "sr%squota-%s" % ("muted", subreddit._id36)
+            g.cache.add(quota_key, 0, time=g.sr_quota_time)
+            subreddit_quota = g.cache.incr(quota_key)
+            quota_limit = getattr(g, "sr_%s_quota" % "muted")
+            if subreddit_quota > quota_limit and subreddit.use_quotas:
+                abort(403, errors.SUBREDDIT_RATELIMIT)
+
+        added = subreddit.add_muted(user)
+        # Don't mute the user and create another modaction if already muted
+        if added:
+            MutedAccountsBySubreddit.mute(subreddit, user, c.user)
+            ModAction.create(subreddit, c.user, 'muteuser', target=user)
+
+    @require_oauth2_scope("modcontributors")
+    @noresponse(
+        VUser(),
+        VModhash(),
+        message=VByName('id'),
+    )
+    @api_doc(api_section.moderation)
+    def POST_unmute_message_author(self, message):
+        '''For unmuting user via modmail.'''
+        if not message:
+            return
+        subreddit = message.subreddit_slow
+
+        if not subreddit:
+            abort(403, 'Not modmail')
+
+        user = message.author_slow
+        if not c.user_is_admin:
+            if not subreddit.is_moderator_with_perms(c.user, 'access', 'mail'):
+                abort(403, 'Invalid mod permissions')
+
+        removed = subreddit.remove_muted(user)
+        if removed:
+            MutedAccountsBySubreddit.unmute(subreddit, user)
+            ModAction.create(subreddit, c.user, 'unmuteuser', target=user)
+
     @require_oauth2_scope("edit")
     @validatedForm(
         VUser(),
@@ -1845,6 +1935,27 @@ class ApiController(RedditController):
                 abort(403, 'forbidden')
             if not parent.can_view_slow():
                 abort(403, 'forbidden')
+
+            if parent.sr_id and not c.user_is_admin:
+                sr = parent.subreddit_slow
+                # get the first message to see who the non-mod recipient
+                # in a modmail conversation is
+                message = parent
+                if parent.first_message:
+                    message = Message._byID(parent.first_message, data=True)
+
+                user_muted_error = False
+                if sr.is_muted(message.author_slow):
+                    user_muted_error = True
+                elif message.to_id and sr.is_muted(message.recipient_slow):
+                    user_muted_error = True
+
+                if user_muted_error:
+                    if sr.is_moderator(c.user):
+                        c.errors.add(errors.MUTED_FROM_SUBREDDIT, field="parent")
+                    else:
+                        c.errors.add(errors.USER_MUTED, field="parent")
+
             is_message = True
             should_ratelimit = False
         else:
@@ -1879,7 +1990,9 @@ class ApiController(RedditController):
                 commentform.has_errors("comment", errors.TOO_LONG) or
                 commentform.has_errors("ratelimit", errors.RATELIMIT) or
                 commentform.has_errors("parent", errors.DELETED_COMMENT,
-                    errors.DELETED_LINK, errors.TOO_OLD, errors.USER_BLOCKED)):
+                    errors.DELETED_LINK, errors.TOO_OLD, errors.USER_BLOCKED,
+                    errors.USER_MUTED, errors.MUTED_FROM_SUBREDDIT)
+        ):
             return
 
         if is_message:

@@ -40,6 +40,8 @@
     ${error_field("USER_DOESNT_EXIST", "to")}
     ${error_field("SUBREDDIT_NOEXIST", "to")}
     ${error_field("USER_BLOCKED", "to")}
+    ${error_field("USER_MUTED", "to")}
+    ${error_field("MUTED_FROM_SUBREDDIT", "to")}
   </%utils:round_field>
 
   <%utils:round_field title="${_('subject')}">

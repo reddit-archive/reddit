@@ -135,6 +135,7 @@ error_list = dict((
         ('TOO_MANY_DEVELOPERS', _('too many developers')),
         ('BAD_HASH', _("i don't believe you.")),
         ('ALREADY_MODERATOR', _('that user is already a moderator')),
+        ('CANT_RESTRICT_MODERATOR', _("You can't perform that action because that user is a moderator.")),
         ('NO_INVITE_FOUND', _('there is no pending invite for that subreddit')),
         ('BID_LIVE', _('you cannot edit the budget of a live ad')),
         ('TOO_MANY_CAMPAIGNS', _('you have too many campaigns for that promotion')),
@@ -169,6 +170,8 @@ error_list = dict((
         ('CANT_CREATE_SR', _("your account is too new to create a subreddit. please contact the admins to request an exemption.")),
         ('BAD_PROMO_MOBILE_OS', _("you must select at least one mobile OS to target")),
         ('BAD_PROMO_MOBILE_DEVICE', _("you must select at least one device per OS to target")),
+        ('USER_MUTED', _("You have been muted from this subreddit.")),
+        ('MUTED_FROM_SUBREDDIT', _("This user has been muted from the subreddit.")),
     ))
 
 errors = Storage([(e, e) for e in error_list.keys()])

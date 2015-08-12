@@ -307,6 +307,7 @@ class SubredditJsonTemplate(ThingJsonTemplate):
         title="title",
         url="path",
         user_is_banned="is_banned",
+        user_is_muted="is_muted",
         user_is_contributor="is_contributor",
         user_is_moderator="is_moderator",
         user_is_subscriber="is_subscriber",
@@ -376,6 +377,10 @@ class SubredditJsonTemplate(ThingJsonTemplate):
         elif attr == 'is_banned':
             if c.user_is_loggedin:
                 return thing.banned
+            return None
+        elif attr == 'is_muted':
+            if c.user_is_loggedin:
+                return thing.muted
             return None
         elif attr == 'submit_text_html':
             return safemarkdown(thing.submit_text)
@@ -474,6 +479,7 @@ class TrimmedSubredditJsonTemplate(SubredditJsonTemplate):
         subscribers="_ups",
         url="path",
         user_is_banned="is_banned",
+        user_is_muted="is_muted",
         user_is_contributor="is_contributor",
         user_is_moderator="is_moderator",
         user_is_subscriber="is_subscriber",
@@ -481,7 +487,7 @@ class TrimmedSubredditJsonTemplate(SubredditJsonTemplate):
 
     def thing_attr(self, thing, attr):
         if attr in ('is_banned', 'is_contributor', 'is_moderator',
-                    'is_subscriber'):
+                'is_subscriber', 'is_muted'):
             # can't use SubredditJsonTemplate.thing_attr for these attributes
             # because it depends on the thing being a fully built/wrapped object
             # that has run through Subreddit.add_props
@@ -1148,6 +1154,10 @@ class BannedTableItemJsonTemplate(RelTableItemJsonTemplate):
     _data_attrs_ = RelTableItemJsonTemplate.data_attrs(
         note="rel.note",
     )
+
+
+class MutedTableItemJsonTemplate(RelTableItemJsonTemplate):
+    pass
 
 
 class InvitedModTableItemJsonTemplate(RelTableItemJsonTemplate):

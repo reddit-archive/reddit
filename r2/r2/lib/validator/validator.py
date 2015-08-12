@@ -1740,6 +1740,8 @@ class VMessageRecipient(VExistingUname):
                     raise NotFound, "fake subreddit"
                 if s._spam:
                     raise NotFound, "banned subreddit"
+                if s.is_muted(c.user) and not c.user_is_admin:
+                    self.set_error(errors.USER_MUTED)
                 return s
             except NotFound:
                 self.set_error(errors.SUBREDDIT_NOEXIST)

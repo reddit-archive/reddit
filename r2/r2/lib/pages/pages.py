@@ -494,6 +494,7 @@ class Reddit(Templated):
         if is_single_subreddit:
             if is_moderator_with_perms('access'):
                 buttons.append(NamedButton("banned", css_class="reddit-ban"))
+                buttons.append(NamedButton("muted", css_class="reddit-mute"))
             if is_moderator_with_perms('flair'):
                 buttons.append(NamedButton("flair", css_class="reddit-flair"))
 
@@ -3676,6 +3677,16 @@ class BannedTableItem(RelTableItem):
     @property
     def executed_message(self):
         return _("banned")
+
+
+class MutedTableItem(RelTableItem):
+    type = 'muted'
+    cells = ('user', 'age', 'remove')
+
+    @property
+    def executed_message(self):
+        return _("muted")
+
 
 class WikiBannedTableItem(BannedTableItem):
     type = 'wikibanned'

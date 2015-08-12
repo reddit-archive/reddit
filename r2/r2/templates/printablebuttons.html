@@ -443,6 +443,15 @@
               ${ynbutton(_("block user"), _("blocked"), "block", "hide_thing")}
             %endif
           </li>
+          %if thing.can_mute:
+            <li>
+              %if getattr(thing.thing, "sr_muted", False):
+                ${ynbutton(_("unmute user"), _("unmuted"), "unmute_message_author")}
+              %else:
+                ${ynbutton(_("mute user"), _("muted"), "mute_message_author")}
+              %endif
+            </li>
+          %endif
         %endif
       %endif
     <li class="unread">

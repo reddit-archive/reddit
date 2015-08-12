@@ -1916,6 +1916,9 @@ class Message(Thing, Printable):
                 item.user_is_recipient = not user_is_sender
                 user_is_moderator = item.sr_id in user_mod_sr_ids
 
+                if item.subreddit.is_muted(item.author):
+                    item.sr_muted = True
+
                 if sent_by_sr:
                     if item.sr_id in blocked_srids:
                         item.subject = _('[message from blocked subreddit]')
@@ -2027,6 +2030,11 @@ class Message(Thing, Printable):
         # The author is often already on the wrapped message as .author
         # If available, that should be used instead of calling this
         return Account._byID(self.author_id, data=True, return_dict=False)
+
+    @property
+    def recipient_slow(self):
+        """Returns the message's recipient."""
+        return Account._byID(self.to_id, data=True, return_dict=False)
 
     @staticmethod
     def wrapped_cache_key(wrapped, style):

@@ -59,6 +59,7 @@ api('account',       AccountJsonTemplate)
 
 api('reltableitem', RelTableItemJsonTemplate)
 api('bannedtableitem', BannedTableItemJsonTemplate)
+api('mutedtableitem', MutedTableItemJsonTemplate)
 api('invitedmodtableitem', InvitedModTableItemJsonTemplate)
 api('friendtableitem', FriendTableItemJsonTemplate)
 

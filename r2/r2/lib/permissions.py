@@ -74,7 +74,7 @@ class ModeratorPermissionSet(PermissionSet):
     info = dict(
         access=dict(
             title=N_('access'),
-            description=N_('manage the lists of contributors and banned users'),
+            description=N_('manage the lists of contributors and banned/muted users'),
         ),
         config=dict(
             title=N_('config'),

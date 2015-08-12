@@ -53,6 +53,7 @@
     <%call expr="add_form(thing.form_title, thing.destination, thing.type, thing.container_name, verb=_('add'))">
       ${error_field("ALREADY_MODERATOR", "name")}
       ${error_field("BANNED_FROM_SUBREDDIT", "name")}
+      ${error_field("MUTED_FROM_SUBREDDIT", "name")}
     </%call>
   %endif
   ${listing()}

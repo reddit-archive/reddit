@@ -29,7 +29,7 @@ from r2.lib.menus import (
   Styled,
 )
 from r2.lib.wrapped import Wrapped
-from r2.models import LinkListing, Link, PromotedLink, Report
+from r2.models import LinkListing, Link, Message, PromotedLink, Report
 from r2.models import make_wrapper, IDBuilder, Thing
 from r2.lib.utils import tup
 from r2.lib.strings import Score
@@ -232,9 +232,28 @@ class MessageButtons(PrintableButtons):
         # don't allow replying to self unless it's modmail
         valid_recipient = (thing.author_id != c.user._id or
                            thing.sr_id)
+        is_muted = False
+        can_mute = False
+        if not was_comment:
+            first_message = thing
+            if getattr(thing, 'first_message', False):
+                first_message = Message._byID(thing.first_message, data=True)
+
+            if thing.sr_id:
+                sr = thing.subreddit_slow
+                if (sr.is_muted(first_message.author_slow) or
+                        (first_message.to_id and
+                            sr.is_muted(first_message.recipient_slow))):
+                    is_muted = True
+
+                if (not sr.is_moderator(thing.author_slow) and
+                        sr.is_moderator_with_perms(c.user, 'access', 'mail')):
+                    can_mute = True
+
         can_reply = (c.user_is_loggedin and
                      getattr(thing, "repliable", True) and
-                     valid_recipient)
+                     valid_recipient and
+                     not is_muted)
         can_block = True
 
         if not thing.was_comment and thing.display_author:
@@ -256,6 +275,7 @@ class MessageButtons(PrintableButtons):
                                   show_report = True,
                                   show_delete = False,
                                   can_block = can_block,
+                                  can_mute = can_mute,
                                  )
 
 # formerly ListingController.builder_wrapper

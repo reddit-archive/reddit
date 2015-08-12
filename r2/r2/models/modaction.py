@@ -59,7 +59,8 @@ class ModAction(tdb_cassandra.UuidThing):
                'wikibanned', 'wikicontributor', 'wikiunbanned', 'wikipagelisted',
                'removewikicontributor', 'wikirevise', 'wikipermlevel',
                'ignorereports', 'unignorereports', 'setpermissions',
-               'setsuggestedsort', 'sticky', 'unsticky')
+               'setsuggestedsort', 'sticky', 'unsticky',
+               'muteuser', 'unmuteuser')
 
     _menu = {'banuser': _('ban user'),
              'unbanuser': _('unban user'),
@@ -91,6 +92,8 @@ class ModAction(tdb_cassandra.UuidThing):
              'setsuggestedsort': _('set suggested sort'),
              'sticky': _('sticky post'),
              'unsticky': _('unsticky post'),
+             'muteuser': _('mute user'),
+             'unmuteuser': _('unmute user'),
             }
 
     _text = {'banuser': _('banned'),
@@ -123,6 +126,8 @@ class ModAction(tdb_cassandra.UuidThing):
              'setsuggestedsort': _('set suggested sort'),
              'sticky': _('stickied'),
              'unsticky': _('unstickied'),
+             'muteuser': _('muted'),
+             'unmuteuser': _('unmuted'),
             }
 
     _details_text = {# approve comment/link

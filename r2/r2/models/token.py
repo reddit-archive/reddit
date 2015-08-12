@@ -149,7 +149,7 @@ class OAuth2Scope:
             "name": _("Approve submitters and ban users"),
             "description": _(
                 "Add/remove users to approved submitter lists and "
-                "ban/unban users from subreddits I moderate."
+                "ban/unban or mute/unmute users from subreddits I moderate."
             ),
         },
         "modflair": {
