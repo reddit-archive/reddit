@@ -864,6 +864,16 @@ class UserController(ListingController):
         if not vuser:
             return self.abort404()
 
+        if (vuser.in_timeout and
+                vuser != c.user and
+                not c.user_is_admin):
+            errpage = InterstitialPage(
+                _("banned"),
+                content=BannedUserInterstitial(),
+            )
+            request.environ['usable_error_content'] = errpage.render()
+            return self.abort403()
+
         # continue supporting /liked and /disliked paths for API clients
         # but 301 redirect non-API users to the new location
         changed_wheres = {"liked": "upvoted", "disliked": "downvoted"}
