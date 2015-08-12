@@ -2624,6 +2624,11 @@ class LockedInterstitial(Interstitial):
     pass
 
 
+class DeletedUserInterstitial(Interstitial):
+    """The deleted user message."""
+    pass
+
+
 class Popup(Templated):
     """Generic template for rendering a modal."""
     def __init__(self, popup_id=None, content=None, **kwargs):

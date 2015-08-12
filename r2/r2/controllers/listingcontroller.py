@@ -899,6 +899,11 @@ class UserController(ListingController):
 
         # only allow admins to view deleted users
         if vuser._deleted and not c.user_is_admin:
+            errpage = InterstitialPage(
+                _("deleted"),
+                content=DeletedUserInterstitial(),
+            )
+            request.environ['usable_error_content'] = errpage.render()
             return self.abort404()
 
         if c.user_is_admin:
