@@ -323,25 +323,28 @@ class HardCacheBackend(object):
 
 
 def delete_expired(expiration="now", limit=5000):
-    hcb = HardCacheBackend(g)
+    # the following depends on the structure of g.hardcache not changing
+    backend = g.hardcache.caches[2].backend
+    memcache = g.hardcache.caches[1]
+    # localcache = g.hardcache.caches[0]
 
     masters = set()
 
-    for engines in hcb.mapping.values():
+    for engines in backend.mapping.values():
         masters.add(engines[0])
 
     for engine in masters:
-        expiration_clause = hcb.clause_from_expiration(engine, expiration)
+        expiration_clause = backend.clause_from_expiration(engine, expiration)
 
         # Get all the expired keys
-        rows = hcb.expired(engine, expiration_clause, limit)
+        rows = backend.expired(engine, expiration_clause, limit)
 
         if len(rows) == 0:
             continue
 
         # Delete them from memcache
         mc_keys = [ "%s-%s" % (c, i) for e, c, i in rows ]
-        g.cache.delete_multi(mc_keys)
+        memcache.delete_multi(mc_keys)
 
         # Now delete them from the backend.
         engine.delete(expiration_clause).execute()
