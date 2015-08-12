@@ -874,6 +874,9 @@ class CommentJsonTemplate(ThingTemplate):
             data["banned_by"] = None
 
         if c.profilepage:
+            data["quarantine"] = item.subreddit.quarantine
+            data["over_18"] = item.link.is_nsfw
+
             data["link_title"] = item.link.title
             data["link_author"] = item.link_author.name
 
