@@ -113,7 +113,12 @@ class AdminNotesSidebar(Templated):
         Templated.__init__(self)
 
 
-class AdminLinkInfoBar(LinkInfoBar): pass
+class AdminLinkInfoBar(LinkInfoBar):
+    pass
+
+
+class AdminDetailsBar(Templated):
+    pass
 
 
 if config['r2.import_private']:

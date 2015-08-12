@@ -4126,6 +4126,15 @@ class DetailsPage(LinkInfoPage):
         kwargs['content'] = content
         LinkInfoPage.__init__(self, link, comment, *args, **kwargs)
 
+    def rightbox(self):
+        rb = LinkInfoPage.rightbox(self)
+
+        if c.user_is_admin:
+            from admin_pages import AdminDetailsBar
+            rb.append(AdminDetailsBar())
+
+        return rb
+
 class Cnameframe(Templated):
     """The frame page."""
     def __init__(self, original_path, subreddit, sub_domain):
