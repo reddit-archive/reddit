@@ -3941,13 +3941,9 @@ class FlairSelectorLinkSample(CachedTemplate):
 
 class FlairSelector(CachedTemplate):
     """Provide user with flair options according to subreddit settings."""
-    def __init__(self, user=None, link=None, site=None):
-        if user is None:
-            user = c.user
-        if site is None:
-            site = c.site
-        admin = bool(c.user_is_admin
-                     or site.is_moderator_with_perms(c.user, 'flair'))
+    def __init__(self, user, site, link=None):
+        admin = bool(
+            c.user_is_admin or site.is_moderator_with_perms(c.user, 'flair'))
 
         if link:
             flair_type = LINK_FLAIR
