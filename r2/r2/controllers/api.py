@@ -3865,6 +3865,9 @@ class ApiController(RedditController):
 
             return FlairSelector(link=link, site=link.subreddit_slow).render()
 
+        if isinstance(c.site, FakeSubreddit):
+            abort(403)
+
         if user and not (c.user_is_admin
                          or c.site.is_moderator_with_perms(c.user, 'flair')):
             # ignore user parameter if c.user is not mod/admin
