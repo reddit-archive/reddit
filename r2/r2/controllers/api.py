@@ -2792,7 +2792,9 @@ class ApiController(RedditController):
             action = 'remove' + thing.__class__.__name__.lower()
             ModAction.create(sr, c.user, action, **kw)
 
-        if isinstance(thing, Comment):
+        if isinstance(thing, Link):
+            sr.remove_sticky(thing)
+        elif isinstance(thing, Comment):
             queries.unnotify(thing)
 
 
