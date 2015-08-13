@@ -68,7 +68,7 @@ class EventQueue(object):
     VOTES = {"1": "up", "0": "clear", "-1": "down"}
 
     @squelch_exceptions
-    @sampled("events_collector_sample_rate")
+    @sampled("events_collector_vote_sample_rate")
     def vote_event(self, vote, old_vote=None, event_base=None, request=None,
                    context=None):
         """Create a 'vote' event for event-collector

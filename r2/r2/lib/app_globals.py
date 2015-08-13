@@ -344,7 +344,7 @@ class Globals(object):
             'spotlight_interest_nosub_p',
             'gold_revenue_goal',
             'invalid_key_sample_rate',
-            'events_collector_sample_rate',
+            'events_collector_vote_sample_rate',
             'events_collector_mod_sample_rate',
             'events_collector_quarantine_sample_rate',
         ],
