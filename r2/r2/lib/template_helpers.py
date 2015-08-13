@@ -24,6 +24,7 @@ import hmac
 import hashlib
 import urllib
 
+from r2.config import feature
 from r2.models import *
 from filters import (
     _force_utf8,
@@ -230,6 +231,7 @@ def js_config(extra_config=None):
           "actionName": route_name,
         },
         "facebook_app_id": g.live_config["facebook_app_id"],
+        "feature_tumblr_sharing": feature.is_enabled('tumblr_sharing'),
     }
 
     if g.tracker_url:
