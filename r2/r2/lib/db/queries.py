@@ -32,6 +32,7 @@ from r2.lib.utils import fetch_things2, tup, UniqueIterator, set_last_modified
 from r2.lib import utils
 from r2.lib import amqp, sup, filters
 from r2.lib.comment_tree import add_comments, update_comment_votes
+from r2.lib.eventcollector import EventV2
 from r2.models.promo import PROMOTE_STATUS, PromotionLog
 from r2.models.query_cache import (
     cached_query,
@@ -58,7 +59,7 @@ import collections
 from copy import deepcopy
 from r2.lib.db.operators import and_, or_
 
-from pylons import g
+from pylons import g, c, request
 query_cache = g.permacache
 log = g.log
 make_lock = g.make_lock
@@ -1729,7 +1730,7 @@ vote_names_by_dir = {True: "1", None: "0", False: "-1"}
 vote_dirs_by_name = {v: k for k, v in vote_names_by_dir.iteritems()}
 
 def queue_vote(user, thing, dir, ip, vote_info=None, cheater=False, store=True,
-               event_data=None):
+        send_event=True):
     # set the vote in memcached so the UI gets updated immediately
     key = prequeued_vote_key(user, thing)
     grace_period = int(g.vote_queue_grace_period.total_seconds())
@@ -1767,8 +1768,16 @@ def queue_vote(user, thing, dir, ip, vote_info=None, cheater=False, store=True,
             "ip": ip,
             "info": vote_info,
             "cheater": cheater,
-            "event": event_data,
         }
+
+        if send_event:
+            # the vote event will actually be sent from an async queue
+            # processor, so we need to pull out the context data at this point
+            vote["event_data"] = {
+                "context": EventV2.get_context_data(request, c),
+                "sensitive": EventV2.get_sensitive_context_data(request, c),
+            }
+
         amqp.add_item(qname, json.dumps(vote))
 
 def prequeued_vote_key(user, item):

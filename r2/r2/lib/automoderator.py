@@ -1395,7 +1395,8 @@ class Rule(object):
             new_comment.distinguished = "yes"
             new_comment.sendreplies = False
             new_comment._commit()
-            queries.queue_vote(ACCOUNT, new_comment, True, None)
+            queries.queue_vote(ACCOUNT, new_comment, dir=True, ip=None,
+                send_event=False)
             queries.new_comment(new_comment, inbox_rel)
 
             g.stats.simple_event("automoderator.comment")
