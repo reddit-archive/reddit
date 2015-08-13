@@ -225,6 +225,9 @@
         case 'twitter':
           return this.shareToTwitter();
 
+        case 'tumblr':
+          return this.shareToTumblr();
+
         default:
           this.close();
       }
@@ -286,6 +289,18 @@
       var shareUrl = replaceParams('https://twitter.com/intent/tweet', shareParams);
 
       this.openWebIntent(shareUrl, 'twitter');
+    },
+
+    shareToTumblr: function() {
+      var redditUrl = this.getShareLink('tumblr');
+      var title = this.thingData.title;
+      var shareParams = {
+        canonicalUrl: redditUrl,
+        title: title,
+      };
+      var shareUrl = replaceParams('https://www.tumblr.com/widgets/share/tool', shareParams);
+
+      this.openWebIntent(shareUrl, 'tumblr');
     },
 
     openWebIntent: function(shareUrl, windowTitle) {
@@ -445,6 +460,10 @@
         {
           name: 'twitter',
           tooltip: r._('Share to %(name)s').format({name: 'Twitter'}),
+        },
+        {
+          name: 'tumblr',
+          tooltip: r._('Share to %(name)s').format({name: 'Tumblr'}),
         },
       ];
 
