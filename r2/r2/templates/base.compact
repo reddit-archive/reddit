@@ -34,7 +34,7 @@
           href="/static/compact/reddit_startimg.png" />
     <link rel="canonical" href="${thing.canonical_link}" />
     %if hasattr(thing, "shortlink"):
-      <link rel="shorturl" href="http://${thing.shortlink}" />
+      <link rel="shorturl" href="https://${thing.shortlink}" />
     %endif
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
