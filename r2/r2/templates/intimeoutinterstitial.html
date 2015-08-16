@@ -20,27 +20,37 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%namespace file="utils.html" import="plain_link"/>
+<%!
+  from r2.lib.template_helpers import static 
+%>
 
-<div class="sidebox ${thing.css_class}${' disabled' if thing.disabled else ''}">
-  <div class="morelink">
-    ${plain_link(thing.title, thing.link, _sr_path=thing.sr_path,
-                 _class='login-required access-required' if thing.show_cover else None, nocname=thing.nocname,
-                 target=thing.target)}
-    <div class="nub"> </div>
-  </div>
+<%namespace file="utils.html" import="_mdf"/>
 
-  %if thing.subtitles:
-    %if thing.show_icon:
-      <div class="spacer">
-      ${plain_link('', thing.link, _sr_path=thing.sr_path,
-                   _class='login-required access-required' if thing.show_cover else None, nocname=thing.nocname)}
-    %else:
-      <div class="spacer no-icon">
-    %endif
-      %for subtitle in thing.subtitles:
-        <div class="subtitle">${subtitle}</div>
-      %endfor
-    </div>
+<%inherit file="interstitial.html"/>
+
+<%def name="interstitial_image_attrs()">
+  src="${static('interstitial-image-banned.png')}"
+  alt="${_('banned')}"
+</%def>
+
+<%def name="interstitial_title()">
+  %if thing.timeout_days_remaining:
+    ${_("You have been temporarily banned from Reddit")}
+  %else:
+    ${_("You have been banned from Reddit")}
   %endif
-</div>
+</%def>
+
+<%def name="interstitial_message()">
+  %if thing.message:
+    ${parent.interstitial_message()}
+  %elif thing.timeout_days_remaining:
+    <%
+      days = ungettext('day', 'days', thing.timeout_days_remaining)
+    %>
+    ${_mdf("You may not participate for %(num)s %(days)s.",
+           num=thing.timeout_days_remaining, days=days)}
+  %else:
+    ${_("You may not participate.")}
+  %endif
+</%def>

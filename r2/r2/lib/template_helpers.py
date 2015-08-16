@@ -143,6 +143,7 @@ def header_url(url):
 def js_config(extra_config=None):
     logged = c.user_is_loggedin and c.user.name
     user_id = c.user_is_loggedin and c.user._id
+    user_in_timeout = c.user_is_loggedin and c.user.in_timeout
     gold = bool(logged and c.user.gold)
     controller_name = request.environ['pylons.routes_dict']['controller']
     action_name = request.environ['pylons.routes_dict']['action']
@@ -178,6 +179,8 @@ def js_config(extra_config=None):
         "logged": logged,
         # logged in user's id
         "user_id": user_id,
+        # is user in timeout?
+        "user_in_timeout": user_in_timeout,
         # the subreddit's name (for posts)
         "post_site": cur_subreddit,
         # the user's voting hash

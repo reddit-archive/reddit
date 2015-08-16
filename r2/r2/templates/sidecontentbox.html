@@ -23,7 +23,10 @@
 <%namespace file="utils.html" import="tags"/>
 <div class="sidecontentbox ${thing.extra_class or ''} ${'collapsible' if thing.collapsible else ''}" ${tags(_id=thing._id)}>
   %if thing.helplink:
-     <a class="helplink" href="${thing.helplink[0]}">
+    <%
+      access_required = len(thing.helplink) < 3 or not thing.helplink[2]
+    %>
+     <a class="helplink ${'access-required' if access_required else ''}" href="${thing.helplink[0]}">
        ${thing.helplink[1]}
      </a>
   %endif

@@ -24,7 +24,14 @@
    from r2.config import feature
    from r2.lib.template_helpers import add_sr, static, join_urls, class_dict, get_domain
    from r2.lib.filters import unsafe, scriptsafe_dumps
-   from r2.lib.pages import SearchForm, ClickGadget, SideContentBox, Login, ListingChooser
+   from r2.lib.pages import (
+      SearchForm,
+      ClickGadget,
+      SideContentBox,
+      Login,
+      ListingChooser,
+      InTimeoutInterstitial,
+   )
    from r2.lib import tracking
    from pylons import request
    from r2.lib.strings import strings
@@ -172,6 +179,11 @@
       %endif
       <script id="lang-popup" type="text/template">
         <%include file="prefoptions.html" />
+      </script>
+    %endif
+    %if c.user_is_loggedin and c.user.in_timeout:
+      <script id="access-popup" type="text/template">
+        ${InTimeoutInterstitial(timeout_days_remaining=thing.timeout_days_remaining)}
       </script>
     %endif
   %endif

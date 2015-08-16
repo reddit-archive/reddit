@@ -398,6 +398,16 @@ class Reddit(Templated):
 
         self.toolbars = self.build_toolbars()
 
+        if c.user_is_loggedin and c.user.in_timeout:
+            hook = hooks.get_hook('timeouts.fetch_expiration')
+            expires = hook.call_until_return(user=c.user)
+            if expires:
+                now = datetime.datetime.now(g.tz)
+                expire_date = expires - now
+                self.timeout_days_remaining = expire_date.days + 1
+            else:
+                self.timeout_days_remaining = 0
+
         has_style_override = (c.user.pref_default_theme_sr and
                 feature.is_enabled('stylesheets_everywhere') and
                 c.user.pref_enable_default_themes)
@@ -442,24 +452,24 @@ class Reddit(Templated):
         buttons = []
 
         buttons.append(NamedButton("wikirecentrevisions",
-                                   css_class="wikiaction-revisions",
+                                   css_class="wikiaction-revisions access-required",
                                    dest="/wiki/revisions"))
 
         buttons.append(NamedButton("wikipageslist",
-                           css_class="wikiaction-pages",
+                           css_class="wikiaction-pages access-required",
                            dest="/wiki/pages"))
         if moderator:
-            buttons += [NamedButton('wikibanned', css_class='reddit-ban',
+            buttons += [NamedButton('wikibanned', css_class='reddit-ban access-required',
                                     dest='/about/wikibanned'),
                         NamedButton('wikicontributors',
-                                    css_class='reddit-contributors',
+                                    css_class='reddit-contributors access-required',
                                     dest='/about/wikicontributors')
                         ]
 
         return SideContentBox(_('wiki tools'),
                       [NavMenu(buttons,
                                type="flat_vert",
-                               css_class="icon-menu",
+                               css_class="icon-menu access-required",
                                separator="")],
                       _id="wikiactions",
                       collapsible=True)
@@ -473,43 +483,43 @@ class Reddit(Templated):
 
         if is_single_subreddit and is_moderator_with_perms('config'):
             buttons.append(NavButton(menu.community_settings,
-                                     css_class="reddit-edit",
+                                     css_class="reddit-edit access-required",
                                      dest="edit"))
             buttons.append(NavButton(menu.edit_stylesheet,
-                                     css_class="edit-stylesheet",
+                                     css_class="edit-stylesheet access-required",
                                      dest="stylesheet"))
 
         if is_moderator_with_perms('mail'):
             buttons.append(NamedButton("modmail",
                                     dest="message/inbox",
-                                    css_class="moderator-mail"))
+                                    css_class="moderator-mail access-required"))
 
         if is_single_subreddit:
             if is_moderator_with_perms('access'):
                 buttons.append(NamedButton("moderators",
-                                           css_class="reddit-moderators"))
+                                           css_class="reddit-moderators access-required"))
 
                 if not c.site.hide_contributors:
                     buttons.append(NavButton(
                             menu.contributors,
                             "contributors",
-                            css_class="reddit-contributors"))
+                            css_class="reddit-contributors access-required"))
 
-            buttons.append(NamedButton("traffic", css_class="reddit-traffic"))
+            buttons.append(NamedButton("traffic", css_class="reddit-traffic access-required"))
 
         if is_moderator_with_perms('posts'):
-            buttons += [NamedButton("modqueue", css_class="reddit-modqueue"),
-                        NamedButton("reports", css_class="reddit-reported"),
-                        NamedButton("spam", css_class="reddit-spam"),
-                        NamedButton("edited", css_class="reddit-edited")]
+            buttons += [NamedButton("modqueue", css_class="reddit-modqueue access-required"),
+                        NamedButton("reports", css_class="reddit-reported access-required"),
+                        NamedButton("spam", css_class="reddit-spam access-required"),
+                        NamedButton("edited", css_class="reddit-edited access-required")]
 
         if is_single_subreddit:
             if is_moderator_with_perms('access'):
-                buttons.append(NamedButton("banned", css_class="reddit-ban"))
+                buttons.append(NamedButton("banned", css_class="reddit-ban access-required"))
             if is_moderator_with_perms('access', 'mail'):
-                buttons.append(NamedButton("muted", css_class="reddit-mute"))
+                buttons.append(NamedButton("muted", css_class="reddit-mute access-required"))
             if is_moderator_with_perms('flair'):
-                buttons.append(NamedButton("flair", css_class="reddit-flair"))
+                buttons.append(NamedButton("flair", css_class="reddit-flair access-required"))
 
         if is_single_subreddit and is_moderator_with_perms('config'):
             # append automod button if they have an AutoMod configuration
@@ -518,15 +528,15 @@ class Reddit(Templated):
                 buttons.append(NamedButton(
                     "automod",
                     dest="../wiki/edit/config/automoderator",
-                    css_class="reddit-automod",
+                    css_class="reddit-automod access-required",
                 ))
             except tdb_cassandra.NotFound:
                 pass
 
-        buttons.append(NamedButton("log", css_class="reddit-moderationlog"))
+        buttons.append(NamedButton("log", css_class="reddit-moderationlog access-required"))
         if is_moderator_with_perms('posts'):
             buttons.append(
-                NamedButton("unmoderated", css_class="reddit-unmoderated"))
+                NamedButton("unmoderated", css_class="reddit-unmoderated access-required"))
 
         return SideContentBox(_('moderation tools'),
                               [NavMenu(buttons,
@@ -729,12 +739,14 @@ class Reddit(Templated):
                     more_text = _("about moderation team")
                 mod_href = c.site.path + 'about/moderators'
 
-                if '/r/%s' % c.site.name == g.admin_message_acct:
+                is_admin_sr = '/r/%s' % c.site.name == g.admin_message_acct
+
+                if is_admin_sr:
                     label = _('message the admins')
                 else:
                     label = _('message the moderators')
                 helplink = ("/message/compose?to=%%2Fr%%2F%s" % c.site.name,
-                            label)
+                            label, is_admin_sr)
                 ps.append(SideContentBox(_('moderators'),
                                          moderators[:sidebar_list_length],
                                          helplink = helplink,
@@ -2541,8 +2553,15 @@ class BannedInterstitial(Interstitial):
 
 
 class BannedUserInterstitial(BannedInterstitial):
-    """The banned user message."""
+    """The message shown when viewing a banned user profile."""
     pass
+
+
+class InTimeoutInterstitial(BannedInterstitial):
+    """The message shown to a user in timeout."""
+    def __init__(self, timeout_days_remaining=0):
+        self.timeout_days_remaining = timeout_days_remaining
+        BannedInterstitial.__init__(self)
 
 
 class PrivateInterstitial(Interstitial):

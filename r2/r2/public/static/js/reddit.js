@@ -248,6 +248,10 @@ function toggle_label (elem, callback, cancelback) {
 }
 
 function toggle(elem, callback, cancelback) {
+    if (r.config.user_in_timeout) {
+        return false;
+    }
+
     r.analytics.breadcrumbs.storeLastClick(elem)
 
     var self = $(elem).parent().addBack().filter(".option");
@@ -845,6 +849,10 @@ function cancel_usertext(elem) {
 }
 
 function reply(elem) {
+    if (r.config.user_in_timeout) {
+        return;
+    }
+
     var form = comment_reply_for_elem(elem);
 
     // quote any selected text and put it in the textarea if it's empty

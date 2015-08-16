@@ -83,6 +83,10 @@ $(function() {
     }
 
     function openFlairSelector(e) {
+        if (r.config.user_in_timeout) {
+            return false;
+        }
+
         close_menus(e);
 
         var button = this;

@@ -16,6 +16,11 @@ r.actionForm = {
   toggleActionForm: function(e) {
     var el = e.target;
     var $el = $(el);
+
+    if (r.timeouts.isLinkRestricted(el)) {
+      return;
+    }
+
     var $thing = $el.thing();
     var $thingForm = $thing.find('> .entry .action-form');
     var formSelector = $el.data('action-form');

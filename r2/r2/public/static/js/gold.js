@@ -75,6 +75,10 @@ r.gold = {
     },
     
     _toggleThingGoldForm: function (e) {
+        if (r.config.user_in_timeout) {
+          return;
+        }
+
         var $link = $(e.target);
         var $thing = $link.thing();
         var thingFullname = $link.thing_id();

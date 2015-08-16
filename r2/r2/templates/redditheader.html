@@ -125,10 +125,12 @@
               mail_img_class = 'nohavemail'
               mail_img_title = "no new mod mail"
               mail_path = "/message/moderator/"
+            
+            css_class = "%s access-required" % mail_img_class
           %>
          ${plain_link(_("mod messages"), path=mail_path,
                     title = mail_img_title, _sr_path = False,
-                    _id = "modmail", _class=mail_img_class)}
+                    _id = "modmail", _class=css_class)}
          ${separator("|")}
       %endif
     %endif

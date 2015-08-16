@@ -128,6 +128,7 @@ $(function() {
         r.newsletter.ui.init()
         r.cachePoisoning.init()
         r.locked.init();
+        r.timeouts.init();
     } catch (err) {
         r.sendError('Error during base.js init', err.toString());
     }
