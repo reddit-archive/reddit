@@ -72,11 +72,8 @@ string_dict = dict(
 
     user_deleted = _("your account has been deleted, but we won't judge you for it."),
 
-    cover_msg      = _("you'll need to sign in or create an account to do that"),
-    cover_disclaim = _("(don't worry, it only takes a few seconds)"),
-
     oauth_login_msg = _(
-        "Sign in or create an account to connect your reddit account with %(app)s."),
+        "Log in or sign up to connect your reddit account with %(app)s."),
 
     legal = _("I understand and agree that registration on or use of this site constitutes agreement to its %(user_agreement)s and %(privacy_policy)s."),
 
@@ -120,7 +117,7 @@ string_dict = dict(
     verify_email_submit = _("you'll be able to submit more frequently once you verify your email address"),
     email_verified =  _("your email address has been verified"),
     email_verify_failed = _("Verification failed.  Please try that again"),
-    email_verify_wrong_user = _("The email verification link you've followed is for a different user. Please sign out and switch to that user or try again below."),
+    email_verify_wrong_user = _("The email verification link you've followed is for a different user. Please log out and switch to that user or try again below."),
     search_failed = _("Our search machines are under too much load to handle your request right now. :( Sorry for the inconvenience. Try again in a little bit -- but please don't mash reload; that only makes the problem worse."),
     invalid_search_query = _("I couldn't understand your query, so I simplified it and searched for \"%(clean_query)s\" instead."),
     completely_invalid_search_query = _("I couldn't understand your search query. Please try again."),
@@ -129,7 +126,7 @@ string_dict = dict(
     generic_quota_msg = _("You've submitted too many links recently. Please try again in an hour."),
     verified_quota_msg = _("Looks like you're either a brand new user or your posts have not been doing well recently. You may have to wait a bit to post again. In the meantime feel free to [check out the reddiquette](%(reddiquette)s) or join the conversation in a different thread."),
     unverified_quota_msg = _("Looks like you're either a brand new user or your posts have not been doing well recently. You may have to wait a bit to post again. In the meantime feel free to [check out the reddiquette](%(reddiquette)s), join the conversation in a different thread, or [verify your email address](%(verify)s)."),
-    read_only_msg = _("reddit is in \"emergency read-only mode\" right now. :( you won't be able to sign in. we're sorry, and are working frantically to fix the problem."),
+    read_only_msg = _("Reddit is in \"emergency read-only mode\" right now. :( You won't be able to log in. We're sorry and are working frantically to fix the problem."),
     heavy_load_msg = _("this page is temporarily in read-only mode due to heavy traffic."),
     gold_benefits_msg = _("reddit gold is reddit's premium membership program. Here are the benefits:\n\n* [Extra site features](/gold/about)\n* [Extra perks](/gold/partners)\n* Discuss and get help on the features and perks at /r/goldbenefits"),
     lounge_msg = _("Grab a drink and join us in /r/lounge, the super-secret members-only community that may or may not exist."),

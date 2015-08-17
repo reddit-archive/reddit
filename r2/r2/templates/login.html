@@ -33,7 +33,7 @@
 
 ## default content 
 %if c.user_is_loggedin:
-  <p class="error">${_("you are signed in. go use the site!")}</p>
+  <p class="error">${_("You are logged in. Go use the site!")}</p>
 %else:
   %if thing.is_popup:
     <h3 id="cover-msg" class="modal-title">
@@ -137,7 +137,7 @@
       <div class="c-clearfix c-submit-group">
         <span class="c-form-throbber"></span>
         <button type="submit" class="c-btn c-btn-primary c-pull-right" tabindex="${tabindex}">
-          ${register and _("create account") or _("sign in")}
+          ${register and _("sign up") or _("log in")}
         </button>
       </div>
       <div>
@@ -233,7 +233,7 @@
       </ul>
         <p class="submit">
           <button type="submit" class="button" tabindex="${tabindex}">
-            ${register and _("create account") or _("login")}
+            ${register and _("sign up") or _("log in")}
           </button>
           <span class="throbber"></span>
           <span class="status"></span>
@@ -256,7 +256,7 @@
       ${lf(register=True, user=user_reg, dest=dest, autofocus=autofocus)}
     </div>
     <div class="split-panel-section">
-      <h4 class="modal-title">${_("sign in")}</h4>
+      <h4 class="modal-title">${_("log in")}</h4>
       ${lf(user = user_login, dest = dest, autofocus=autofocus)}
     </div>
   </div>

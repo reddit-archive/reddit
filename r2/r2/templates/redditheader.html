@@ -76,8 +76,8 @@
           base = g.https_endpoint if not c.cname else ""
           login_url = add_sr(base + "/login", sr_path=False)
         %>
-        ${text_with_links(_("want to join? %(login_or_register)s in seconds"),
-            login_or_register = dict(link_text=_("sign in or create an account"), path=login_url, _class="login-required"))}
+        ${text_with_links(_("Want to join? %(login_or_register)s in seconds."),
+            login_or_register = dict(link_text=_("Log in or sign up"), path=login_url, _class="login-required"))}
       </span>
       ${separator("|")}
       %endif

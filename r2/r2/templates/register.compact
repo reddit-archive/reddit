@@ -23,7 +23,7 @@
 <%namespace file="login.html" import="login_form"/>
 
 %if c.user_is_loggedin:
-  <p class="error">${_("you are signed in. go use the site!")}</p>
+  <p class="error">${_("You are logged in. Go use the site!")}</p>
 %else:
   ${login_form(register = True, user = thing.user_reg, dest = thing.dest, compact=True)}
   <script type="text/javascript">

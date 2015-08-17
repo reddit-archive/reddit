@@ -28,7 +28,7 @@ from copy import copy
 
 
 error_list = dict((
-        ('USER_REQUIRED', _("please sign in to do that")),
+        ('USER_REQUIRED', _("Please log in to do that.")),
         ('HTTPS_REQUIRED', _("this page must be accessed using https")),
         ('WRONG_DOMAIN', _("you can't do that on this domain")),
         ('VERIFIED_USER_REQUIRED', _("you need to set a valid email address to do that.")),
@@ -45,9 +45,9 @@ error_list = dict((
         ('NO_THING_ID', _('id not specified')),
         ('TOO_MANY_THING_IDS', _('you provided too many ids')),
         ('NOT_AUTHOR', _("you can't do that")),
-        ('NOT_USER', _("you are not signed in as that user")),
+        ('NOT_USER', _("You are not logged in as that user.")),
         ('NOT_FRIEND', _("you are not friends with that user")),
-        ('LOGGED_IN', _("you are already signed in")),
+        ('LOGGED_IN', _("You are already logged in.")),
         ('DELETED_LINK', _('the link you are commenting on has been deleted')),
         ('DELETED_COMMENT', _('that comment has been deleted')),
         ('DELETED_THING', _('that element has been deleted')),
