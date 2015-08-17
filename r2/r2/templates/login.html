@@ -262,9 +262,10 @@
   </div>
   <p class="login-disclaimer">
     ${text_with_links(
-      _("We care about your privacy, and we never spam. By creating an account, you agree to reddit's %(user_agreement)s and %(privacy_policy)s. We're proud of them, and you should read them."),
-        user_agreement=dict(link_text=_("User Agreement"), path="/help/useragreement"),
-        privacy_policy=dict(link_text=_("Privacy Policy"), path="/help/privacypolicy"),
+      _("By signing up, you agree to our %(terms)s and that you have read our %(privacy_policy)s and %(content_policy)s."),
+        terms=dict(link_text=_("Terms"), path="/help/useragreement/"),
+        privacy_policy=dict(link_text=_("Privacy Policy"), path="/help/privacypolicy/"),
+        content_policy=dict(link_text=_("Content Policy"), path="/help/contentpolicy/"),
     )}
   </p>
 </%def>
