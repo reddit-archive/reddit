@@ -31,7 +31,8 @@ from sqlalchemy.dialects.postgresql.base import PGInet
 from r2.lib.db.tdb_sql import make_metadata, index_str, create_table
 from r2.lib.utils import Enum, tup
 from r2.lib.memoize import memoize
-from pylons import g, request
+from pylons import request
+from pylons import app_globals as g
 from pylons.i18n import _
 
 def mail_queue(metadata):

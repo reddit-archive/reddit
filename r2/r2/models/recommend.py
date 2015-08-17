@@ -26,7 +26,7 @@ import time
 from collections import defaultdict
 from datetime import datetime, timedelta
 from itertools import chain
-from pylons import g
+from pylons import app_globals as g
 
 from r2.lib.db import tdb_cassandra
 from r2.lib.db.tdb_cassandra import max_column_count

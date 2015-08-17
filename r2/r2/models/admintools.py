@@ -35,7 +35,9 @@ from r2.models.token import AwardClaimToken
 from r2.models.wiki import WikiPage
 
 from _pylibmc import MemcachedError
-from pylons import g, c, config
+from pylons import config
+from pylons import tmpl_context as c
+from pylons import app_globals as g
 from pylons.i18n import _
 
 from datetime import datetime, timedelta

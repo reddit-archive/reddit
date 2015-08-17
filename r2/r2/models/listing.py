@@ -25,7 +25,8 @@ from link import *
 from vote import *
 from report import *
 from subreddit import DefaultSR, AllSR, Frontpage
-from pylons import i18n, request, g
+from pylons import i18n, request
+from pylons import app_globals as g
 from pylons.i18n import _
 
 from r2.config import feature

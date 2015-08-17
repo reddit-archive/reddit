@@ -34,7 +34,7 @@ the data pipeline.
 
 import datetime
 
-from pylons import g
+from pylons import app_globals as g
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.orm.exc import NoResultFound

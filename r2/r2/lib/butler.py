@@ -20,7 +20,8 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from pylons import g, c
+from pylons import tmpl_context as c
+from pylons import app_globals as g
 
 from r2.lib.db import queries
 from r2.lib.db.tdb_sql import CreationError

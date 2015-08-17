@@ -28,7 +28,7 @@ from r2.lib.db.operators import desc
 from r2.lib.utils import fetch_things2, progress
 from r2.models import Account, Message
 
-from pylons import g
+from pylons import app_globals as g
 
 
 def _keep(msg, account):

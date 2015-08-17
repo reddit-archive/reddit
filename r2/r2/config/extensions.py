@@ -20,7 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from pylons import c
+from pylons import tmpl_context as c
 
 def api_type(subtype = ''):
     return 'api-' + subtype if subtype else 'api'

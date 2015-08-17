@@ -22,7 +22,8 @@
 
 import math
 from datetime import datetime, timedelta
-from pylons import g
+from pylons import app_globals as g
+
 
 cdef extern from "math.h":
     double log10(double)

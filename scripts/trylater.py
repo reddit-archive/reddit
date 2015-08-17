@@ -20,7 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from pylons import g
+from pylons import app_globals as g
 
 from r2.lib import amqp
 from r2.lib.hooks import all_hooks, get_hook

@@ -380,7 +380,7 @@ class Globals(object):
         ],
     }
 
-    def __init__(self, global_conf, app_conf, paths, **extra):
+    def __init__(self, config, global_conf, app_conf, paths, **extra):
         """
         Globals acts as a container for objects available throughout
         the life of the application.
@@ -388,6 +388,9 @@ class Globals(object):
         One instance of Globals is created by Pylons during
         application initialization and is available during requests
         via the 'g' variable.
+
+        ``config``
+            The PylonsConfig object passed in from ``config/environment.py``
 
         ``global_conf``
             The same variable used throughout ``config/middleware.py``
@@ -432,8 +435,8 @@ class Globals(object):
         
         # turn on for language support
         self.lang = getattr(self, 'site_lang', 'en')
-        self.languages, self.lang_name = \
-            get_active_langs(default_lang=self.lang)
+        self.languages, self.lang_name = get_active_langs(
+            config, default_lang=self.lang)
 
         all_languages = self.lang_name.keys()
         all_languages.sort()

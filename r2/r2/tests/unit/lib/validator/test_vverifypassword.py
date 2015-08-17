@@ -24,7 +24,7 @@
 import uuid
 import unittest
 
-from pylons import c
+from pylons import tmpl_context as c
 from webob.exc import HTTPException
 
 # Needs to be done before other r2 imports, since some code run on module import

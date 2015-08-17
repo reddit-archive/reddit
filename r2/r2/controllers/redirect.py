@@ -19,7 +19,9 @@
 # All portions of the code written by reddit are Copyright (c) 2006-2015 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
-from pylons import request, c
+
+from pylons import request
+from pylons import tmpl_context as c
 from pylons.controllers.util import abort
 
 from r2.lib.base import BaseController

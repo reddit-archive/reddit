@@ -27,7 +27,7 @@ This listing is stored in get_gilded_comments and seen on /comments/gilded.
 
 import datetime
 
-from pylons import g
+from pylons import app_globals as g
 
 from r2.lib.db.queries import get_gilded_comments, get_all_gilded_comments
 from r2.lib.utils import Storage

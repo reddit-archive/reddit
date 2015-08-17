@@ -33,7 +33,8 @@ import time
 import urllib
 import urlparse
 
-from pylons import g, c
+from pylons import tmpl_context as c
+from pylons import app_globals as g
 from pylons.i18n import ungettext
 from pytz import timezone
 

@@ -26,7 +26,7 @@ import pytz
 from datetime import datetime
 from socket import gethostbyaddr
 
-from pylons import g
+from pylons import app_globals as g
 
 from pycassa import ColumnFamily
 from pycassa.pool import MaximumRetryException

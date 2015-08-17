@@ -25,7 +25,7 @@ from hashlib import md5
 from r2.lib.filters import _force_utf8
 from r2.lib.cache import NoneResult, make_key
 from r2.lib.lock import make_lock_factory
-from pylons import g
+from pylons import app_globals as g
 
 make_lock = g.make_lock
 memoizecache = g.memoizecache

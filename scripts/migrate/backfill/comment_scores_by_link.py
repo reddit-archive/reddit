@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pylons import g
+from pylons import app_globals as g
 
 from r2.models import (
     CommentSortsCache,

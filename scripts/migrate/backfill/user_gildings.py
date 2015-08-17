@@ -28,7 +28,7 @@ This listing is stored in get_user_gildings and seen on
 
 import datetime
 
-from pylons import g
+from pylons import app_globals as g
 
 from r2.lib.db.queries import get_user_gildings
 from r2.lib.utils import Storage

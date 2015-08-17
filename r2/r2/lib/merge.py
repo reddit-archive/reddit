@@ -24,7 +24,7 @@ import subprocess
 import tempfile
 import difflib
 from pylons.i18n import _
-from pylons import g
+from pylons import app_globals as g
 
 class ConflictException(Exception):
     def __init__(self, new, your, original):

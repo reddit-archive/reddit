@@ -37,7 +37,7 @@ import random
 import datetime
 import collections
 
-from pylons import g
+from pylons import app_globals as g
 from pycassa.system_manager import ASCII_TYPE, UTF8_TYPE
 from pycassa.batch import Mutator
 

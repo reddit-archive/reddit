@@ -35,7 +35,7 @@ from link import Link, Comment
 import pytz
 
 from pycassa.types import CompositeType, AsciiType
-from pylons import g
+from pylons import app_globals as g
 from datetime import datetime, timedelta
 
 __all__ = ['cast_vote', 'get_votes']

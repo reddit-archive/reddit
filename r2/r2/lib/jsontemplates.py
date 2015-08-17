@@ -31,7 +31,9 @@ from r2.lib.filters import spaceCompress, safemarkdown, _force_unicode
 from r2.models import Account, Report, Trophy
 from r2.models.token import OAuth2Scope, extra_oauth2_scope
 import time, pytz
-from pylons import c, g, response
+from pylons import response
+from pylons import tmpl_context as c
+from pylons import app_globals as g
 from pylons.i18n import _
 
 from r2.models.wiki import ImagesByWikiPage

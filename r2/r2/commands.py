@@ -68,7 +68,7 @@ class RunCommand(command.Command):
 
         is_standalone = self.args[0].lower() == 'standalone'
         if is_standalone:
-            load_environment(setup_globals=False)
+            config = load_environment(setup_globals=False)
         else:
             config_name = 'config:%s' % self.args[0]
 
@@ -78,18 +78,18 @@ class RunCommand(command.Command):
                              global_conf=conf.global_conf))
             paste.deploy.config.CONFIG.push_thread_config(conf)
 
-            load_environment(conf.global_conf, conf.local_conf)
+            config = load_environment(conf.global_conf, conf.local_conf)
 
         # Load locals and populate with objects for use in shell
         sys.path.insert(0, here_dir)
 
         # Load the wsgi app first so that everything is initialized right
         if not is_standalone:
-            wsgiapp = RegistryManager(RedditApp())
+            wsgiapp = RegistryManager(RedditApp(config=config))
         else:
             # in standalone mode we don't have an ini so we can't use
             # RedditApp since it imports all the fancy controllers.
-            wsgiapp = RegistryManager(PylonsApp())
+            wsgiapp = RegistryManager(PylonsApp(config=config))
         test_app = paste.fixture.TestApp(wsgiapp)
 
         # Query the test app to setup the environment

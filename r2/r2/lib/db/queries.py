@@ -59,7 +59,11 @@ import collections
 from copy import deepcopy
 from r2.lib.db.operators import and_, or_
 
-from pylons import g, c, request
+from pylons import app_globals as g
+from pylons import tmpl_context as c
+from pylons import request
+
+
 query_cache = g.permacache
 log = g.log
 make_lock = g.make_lock

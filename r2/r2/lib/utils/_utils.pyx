@@ -118,12 +118,12 @@ def timeago(str interval):
 
     [num] second|minute|hour|day|week|month|year(s)
     """
-    from pylons import g
+    from pylons import app_globals as g
     return datetime.now(g.tz) - timeinterval_fromstr(interval)
 
 def timefromnow(interval):
     "The opposite of timeago"
-    from pylons import g
+    from pylons import app_globals as g
     return datetime.now(g.tz) + timeinterval_fromstr(interval)
 
 def timedelta_by_name(interval):
@@ -217,11 +217,11 @@ cdef timetext(delta, precision=None, bare=True):
     return s
 
 def timesince(d, precision=None):
-    from pylons import g
+    from pylons import app_globals as g
     return timetext(datetime.now(g.tz) - d, precision)
 
 def timeuntil(d, precision=None):
-    from pylons import g
+    from pylons import app_globals as g
     return timetext(d - datetime.now(g.tz), precision)
 
 cpdef dict keymap(keys, callfn, mapfn = None, str prefix=''):

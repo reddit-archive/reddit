@@ -43,7 +43,7 @@ import ImageFile
 import lxml.html
 import requests
 
-from pylons import g
+from pylons import app_globals as g
 
 from r2 import models
 from r2.config import feature

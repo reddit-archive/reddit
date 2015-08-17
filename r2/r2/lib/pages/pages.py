@@ -97,7 +97,9 @@ from r2.config.extensions import is_api
 from r2.lib.menus import CommentSortMenu
 
 from pylons.i18n import _, ungettext
-from pylons import c, request, g, config
+from pylons import request, config
+from pylons import tmpl_context as c
+from pylons import app_globals as g
 from pylons.controllers.util import abort
 
 from r2.lib import hooks, inventory, media

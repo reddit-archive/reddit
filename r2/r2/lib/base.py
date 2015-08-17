@@ -20,7 +20,9 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from pylons import c, g, request, session, config, response
+from pylons import request, session, config, response
+from pylons import tmpl_context as c
+from pylons import app_globals as g
 from pylons.controllers import WSGIController
 from pylons.i18n import N_, _, ungettext, get_lang
 from webob.exc import HTTPException, status_map

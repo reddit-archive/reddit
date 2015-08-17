@@ -1,7 +1,7 @@
 from collections import defaultdict
 from datetime import datetime
 
-from pylons import g
+from pylons import app_globals as g
 
 from r2.lib.db.operators import desc
 from r2.lib.utils import fetch_things2

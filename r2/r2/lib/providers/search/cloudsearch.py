@@ -25,7 +25,8 @@ import functools
 import httplib
 import json
 from lxml import etree
-from pylons import g, c
+from pylons import tmpl_context as c
+from pylons import app_globals as g
 import socket
 import time
 import urllib

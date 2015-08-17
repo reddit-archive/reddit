@@ -25,11 +25,11 @@ import mimetypes
 
 from mako.lookup import TemplateLookup
 from pylons.error import handle_mako_error
-from pylons import config
+from pylons.configuration import PylonsConfig
 
 import r2.config
 import r2.lib.helpers
-from r2.config import routing
+from r2.config.routing import make_map
 from r2.lib.app_globals import Globals
 from r2.lib.configparse import ConfigValue
 
@@ -51,26 +51,31 @@ def load_environment(global_conf={}, app_conf={}, setup_globals=True):
     else:
         paths['static_files'] = os.path.join(os.path.dirname(root_path), 'build/public')
 
-    config.init_app(global_conf, app_conf, package='r2',
-                    template_engine='mako', paths=paths)
+    config = PylonsConfig()
+
+    config.init_app(global_conf, app_conf, package='r2', paths=paths)
 
     # don't put action arguments onto c automatically
     config['pylons.c_attach_args'] = False
-    # when accessing non-existent attributes on c, return "" instead of dying
-    config['pylons.strict_c'] = False
 
-    g = config['pylons.g'] = Globals(global_conf, app_conf, paths)
+    # when accessing non-existent attributes on c, return "" instead of dying
+    config['pylons.strict_tmpl_context'] = False
+
+    g = Globals(config, global_conf, app_conf, paths)
+    config['pylons.app_globals'] = g
+
     if setup_globals:
         config['r2.import_private'] = \
             ConfigValue.bool(global_conf['import_private'])
         g.setup()
         g.plugins.declare_queues(g.queues)
-    g.plugins.load_plugins()
+
+    g.plugins.load_plugins(config)
     config['r2.plugins'] = g.plugins
     g.startup_timer.intermediate("plugins")
 
     config['pylons.h'] = r2.lib.helpers
-    config['routes.map'] = routing.make_map()
+    config['routes.map'] = make_map(config)
 
     #override the default response options
     config['pylons.response_options']['headers'] = {}
@@ -94,7 +99,7 @@ def load_environment(global_conf={}, app_conf={}, setup_globals=True):
         module_directory = mako_module_path = None
 
     # set up the templating system
-    config["pylons.g"].mako_lookup = TemplateLookup(
+    config["pylons.app_globals"].mako_lookup = TemplateLookup(
         directories=paths["templates"],
         error_handler=handle_mako_error,
         module_directory=module_directory,
@@ -103,7 +108,9 @@ def load_environment(global_conf={}, app_conf={}, setup_globals=True):
         filesystem_checks=getattr(g, "reload_templates", False),
         imports=[
             "from r2.lib.filters import websafe, unsafe, conditional_websafe",
-            "from pylons import c, g, request",
+            "from pylons import request",
+            "from pylons import tmpl_context as c",
+            "from pylons import app_globals as g",
             "from pylons.i18n import _, ungettext",
         ],
         modulename_callable=mako_module_path,
@@ -111,3 +118,5 @@ def load_environment(global_conf={}, app_conf={}, setup_globals=True):
 
     if setup_globals:
         g.setup_complete()
+
+    return config

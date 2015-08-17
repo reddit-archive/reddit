@@ -28,7 +28,7 @@ import pytz
 import requests
 import time
 
-from pylons import g
+from pylons import app_globals as g
 from uuid import uuid4
 from wsgiref.handlers import format_date_time
 

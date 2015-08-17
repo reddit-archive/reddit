@@ -25,7 +25,9 @@ import itertools
 from uuid import UUID
 
 from pycassa.system_manager import TIME_UUID_TYPE
-from pylons import c, g, request
+from pylons import request
+from pylons import tmpl_context as c
+from pylons import app_globals as g
 from pylons.i18n import _
 
 from r2.lib.db import tdb_cassandra

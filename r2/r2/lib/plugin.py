@@ -25,8 +25,6 @@ import os.path
 import pkg_resources
 from collections import OrderedDict
 
-from pylons import config
-
 
 class Plugin(object):
     js = {}
@@ -136,8 +134,8 @@ class PluginLoader(object):
         for plugin in self:
             plugin.declare_queues(queues)
 
-    def load_plugins(self):
-        g = config['pylons.g']
+    def load_plugins(self, config):
+        g = config['pylons.app_globals']
         for plugin in self:
             # Record plugin version
             entry = plugin.entry_point

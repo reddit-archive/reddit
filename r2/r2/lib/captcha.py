@@ -21,8 +21,11 @@
 ###############################################################################
 
 from __future__ import absolute_import
+
 import random, string
-from pylons import g
+
+from pylons import app_globals as g
+
 from Captcha.Base import randomIdentifier
 from Captcha.Visual import Text, Backgrounds, Distortions, ImageCaptcha
 

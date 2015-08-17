@@ -22,7 +22,7 @@
 
 import re
 
-from pylons import g
+from pylons import app_globals as g
 
 from r2.models.keyvalue import NamedGlobals
 from r2.models import NotFound, Subreddit, Thing

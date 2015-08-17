@@ -24,7 +24,7 @@ import heapq
 import itertools
 from datetime import datetime, timedelta
 
-from pylons import g
+from pylons import app_globals as g
 
 from r2.config import feature
 from r2.lib.db.queries import _get_links, CachedResults

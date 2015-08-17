@@ -2,7 +2,7 @@ import json
 from collections import defaultdict
 from datetime import datetime, timedelta
 
-from pylons import g
+from pylons import app_globals as g
 
 from r2.lib.db.sorts import epoch_seconds
 from r2.lib.db.tdb_cassandra import write_consistency_level

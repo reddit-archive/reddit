@@ -29,7 +29,8 @@ import uuid
 from pycassa import NotFoundException
 from pycassa.system_manager import INT_TYPE, UTF8_TYPE
 from pycassa.util import convert_uuid_to_time
-from pylons import g, c
+from pylons import tmpl_context as c
+from pylons import app_globals as g
 from pylons.i18n import _, ungettext
 from datetime import datetime
 import sqlalchemy as sa

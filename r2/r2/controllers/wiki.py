@@ -20,7 +20,10 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from pylons import request, g, c
+from pylons import request
+from pylons import tmpl_context as c
+from pylons import app_globals as g
+
 from reddit_base import RedditController
 from r2.controllers.oauth2 import require_oauth2_scope
 from r2.lib.utils import url_links_builder

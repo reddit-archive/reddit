@@ -21,7 +21,8 @@
 ###############################################################################
 
 from datetime import datetime
-from pylons import g, c
+from pylons import tmpl_context as c
+from pylons import app_globals as g
 import collections
 import httplib
 import time

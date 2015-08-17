@@ -28,7 +28,8 @@ from email.errors import HeaderParseError
 import datetime
 import traceback, sys, smtplib
 
-from pylons import c, g
+from pylons import tmpl_context as c
+from pylons import app_globals as g
 import simplejson as json
 
 from r2.config import feature

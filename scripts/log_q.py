@@ -23,7 +23,7 @@
 
 
 from r2.lib import amqp, emailer
-from pylons import g
+from pylons import app_globals as g
 from datetime import datetime
 from md5 import md5
 from random import shuffle, choice

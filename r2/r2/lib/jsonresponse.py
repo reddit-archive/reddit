@@ -30,7 +30,8 @@ from r2.lib.pages.things import wrap_links
 from r2.models import IDBuilder, Listing
 
 import simplejson
-from pylons import c, g
+from pylons import tmpl_context as c
+from pylons import app_globals as g
 
 
 class JsonResponse(object):

@@ -25,7 +25,7 @@ import unittest
 
 from r2.lib.utils import UrlParser
 from r2.tests import RedditTestCase
-from pylons import g
+from pylons import app_globals as g
 
 
 class TestIsRedditURL(RedditTestCase):

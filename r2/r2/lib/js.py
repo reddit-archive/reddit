@@ -39,7 +39,7 @@ from r2.lib.permissions import ModeratorPermissionSet
 
 
 try:
-    from pylons import g, c, config
+    from pylons import tmpl_context as c, config, app_globals as g
 except ImportError:
     STATIC_ROOT = None
 else:

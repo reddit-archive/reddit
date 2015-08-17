@@ -22,7 +22,7 @@
 import re
 import string
 
-from pylons import c
+from pylons import tmpl_context as c
 
 from reddit_base import RedditController
 from r2.lib import utils

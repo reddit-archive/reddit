@@ -26,7 +26,7 @@ from collections import defaultdict
 import datetime
 from math import sqrt
 
-from pylons import g
+from pylons import app_globals as g
 from sqlalchemy.sql.functions import sum as sa_sum
 
 from r2.lib import promote

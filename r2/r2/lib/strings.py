@@ -28,7 +28,8 @@ random strings which can be different in each language, though the
 hooks to the UI are the same.
 """
 
-from pylons import g, c
+from pylons import tmpl_context as c
+from pylons import app_globals as g
 from pylons.i18n import _, ungettext, get_lang
 import random
 import babel.numbers

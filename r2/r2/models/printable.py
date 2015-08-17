@@ -20,7 +20,9 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from pylons import c, request
+from pylons import request
+from pylons import tmpl_context as c
+
 from r2.lib.strings import Score
 from r2.lib import hooks
 

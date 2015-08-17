@@ -48,10 +48,12 @@ SOURCE_LANG = 'en'
 
 def _get_translator(lang, graceful_fail=False, **kwargs):
     """Utility method to get a valid translator object from a language name"""
+    from pylons import config
+
     if not isinstance(lang, list):
         lang = [lang]
     try:
-        translator = translation(pylons.config['pylons.package'], I18N_PATH,
+        translator = translation(config['pylons.package'], I18N_PATH,
                                  languages=lang, **kwargs)
     except IOError, ioe:
         if graceful_fail:
@@ -84,9 +86,7 @@ def set_lang(lang, graceful_fail=False, fallback_lang=None, **kwargs):
         registry.replace(pylons.translator, translator)
 
 
-def load_data(lang_path, domain=None, extension='data'):
-    if domain is None:
-        domain = pylons.config['pylons.package']
+def load_data(lang_path, domain, extension='data'):
     filename = os.path.join(lang_path, domain + '.' + extension)
     with open(filename) as datafile:
         data = json.load(datafile)
@@ -103,12 +103,14 @@ def iter_langs(base_path=I18N_PATH):
                 yield lang, full_path
 
 
-def get_active_langs(path=I18N_PATH, default_lang='en'):
+def get_active_langs(config, path=I18N_PATH, default_lang='en'):
     trans = []
     trans_name = {}
     completions = {}
+    domain = config['pylons.package']
+
     for lang, lang_path in iter_langs(path):
-        data = load_data(lang_path)
+        data = load_data(lang_path, domain)
         name = [data['name'], '']
         if data['_is_enabled'] and lang != default_lang:
             trans.append(lang)

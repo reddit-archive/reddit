@@ -38,8 +38,11 @@ from r2.lib.validator.preferences import (
 )
 from r2.lib.csrf import csrf_exempt
 from r2.models.recommend import ExploreSettings
-from pylons import request, c, g
-from pylons.controllers.util import redirect_to
+from pylons import request
+from pylons import tmpl_context as c
+from pylons import app_globals as g
+from pylons import url
+from pylons.controllers.util import redirect
 from pylons.i18n import _
 from r2.models import *
 import hashlib
@@ -222,4 +225,4 @@ class PostController(ApiController):
             rising=rising,
             nsfw=nsfw,
         )
-        return redirect_to(controller='front', action='explore')
+        return redirect(url(controller='front', action='explore'))

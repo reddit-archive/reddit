@@ -22,7 +22,8 @@
 
 from sqlalchemy.orm.exc import MultipleResultsFound
 
-from pylons import g, request
+from pylons import request
+from pylons import app_globals as g
 
 from r2.lib.db.thing import NotFound
 from r2.lib.utils import Storage

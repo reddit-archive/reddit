@@ -27,8 +27,11 @@ from r2.lib.template_helpers import get_domain
 from r2.lib.pages import Embed, BoringPage, HelpPage
 from r2.lib.filters import websafe, SC_OFF, SC_ON
 from r2.lib.memoize import memoize
+
 from pylons.i18n import _
-from pylons import c, g, request
+from pylons import request
+from pylons import tmpl_context as c
+from pylons import app_globals as g
 
 from BeautifulSoup import BeautifulSoup, Tag
 

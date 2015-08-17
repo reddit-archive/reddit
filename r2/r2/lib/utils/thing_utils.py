@@ -34,7 +34,7 @@ def last_modified_key(thing, action):
 
 def last_modified_date(thing, action, set_if_empty = True):
     """Returns the date that should be sent as the last-modified header."""
-    from pylons import g
+    from pylons import app_globals as g
     cache = g.permacache
 
     key = last_modified_key(thing, action)
@@ -46,12 +46,12 @@ def last_modified_date(thing, action, set_if_empty = True):
     return last_modified
 
 def set_last_modified(thing, action):
-    from pylons import g
+    from pylons import app_globals as g
     key = last_modified_key(thing, action)
     g.permacache.set(key, make_last_modified())
 
 def last_modified_multi(things, action):
-    from pylons import g
+    from pylons import app_globals as g
     cache = g.permacache
 
     things = tup(things)

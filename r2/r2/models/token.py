@@ -27,7 +27,8 @@ from base64 import urlsafe_b64encode
 
 from pycassa.system_manager import ASCII_TYPE, DATE_TYPE, UTF8_TYPE
 
-from pylons import g, c
+from pylons import tmpl_context as c
+from pylons import app_globals as g
 from pylons.i18n import _
 
 from r2.lib import hooks

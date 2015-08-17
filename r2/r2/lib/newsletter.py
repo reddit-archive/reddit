@@ -20,7 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from pylons import g
+from pylons import app_globals as g
 
 import json
 import requests

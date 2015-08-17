@@ -25,9 +25,12 @@ import json
 from collections import OrderedDict
 from decimal import Decimal
 
-from pylons import c, g, request, response
+from pylons import request, response
+from pylons import tmpl_context as c
+from pylons import app_globals as g
 from pylons.i18n import _
 from pylons.controllers.util import abort
+
 from r2.config import feature
 from r2.config.extensions import api_type, is_api
 from r2.lib import utils, captcha, promote, totp, ratelimit

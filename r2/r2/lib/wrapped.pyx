@@ -184,7 +184,8 @@ class Templated(object):
         final form
         """
         from filters import unsafe
-        from pylons import g, c
+        from pylons import tmpl_context as c
+        from pylons import app_globals as g
 
         if self.render_class_name in g.timed_templates:
             timer = g.stats.get_timer('render.%s.nocache' %
@@ -232,7 +233,8 @@ class Templated(object):
         _render) will not be part of the cached version of the object,
         and will substituted last.
         """
-        from pylons import c, g
+        from pylons import tmpl_context as c
+        from pylons import app_globals as g
         timer = g.stats.get_timer('render.%s.cached' % self.render_class_name,
                                   publish=False)
         timer.start()
@@ -374,7 +376,7 @@ class Templated(object):
                                   md5(key).hexdigest())
 
     def _write_cache(self, keys):
-        from pylons import g
+        from pylons import app_globals as g
 
         if not keys:
             return
@@ -386,7 +388,7 @@ class Templated(object):
         g.rendercache.set_multi(toset)
 
     def _read_cache(self, keys):
-        from pylons import g
+        from pylons import app_globals as g
 
         ekeys = {}
         for key in keys:
@@ -454,7 +456,8 @@ class CachedTemplate(Templated):
         return ret
 
     def cache_key(self, style):
-        from pylons import c, request
+        from pylons import request
+        from pylons import tmpl_context as c
 
         # these values are needed to render any link on the site, and
         # a menu is just a set of links, so we best cache against

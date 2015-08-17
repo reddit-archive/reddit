@@ -63,7 +63,7 @@ import uuid
 
 from pycassa.system_manager import TIME_UUID_TYPE, UTF8_TYPE
 from pycassa.util import convert_time_to_uuid, convert_uuid_to_time
-from pylons import g
+from pylons import app_globals as g
 
 from r2.lib.db import tdb_cassandra
 from r2.lib.utils import tup

@@ -48,7 +48,9 @@ import unidecode
 from babel.dates import TIMEDELTA_UNITS
 from BeautifulSoup import BeautifulSoup, SoupStrainer
 from mako.filters import url_escape
-from pylons import c, g, request, config
+from pylons import request, config
+from pylons import tmpl_context as c
+from pylons import app_globals as g
 from pylons.i18n import ungettext, _
 
 from r2.lib.contrib import ipaddress
@@ -653,7 +655,6 @@ class UrlParser(object):
 
         On failure to find a subreddit, returns None.
         """
-        from pylons import g
         from r2.models import Subreddit, NotFound, DefaultSR
         try:
             if (not self.hostname or
@@ -736,7 +737,6 @@ class UrlParser(object):
         g.domain, or a subdomain of the provided subreddit's cname.
         """
 
-        from pylons import g
         valid_subdomain = (
             not self.hostname or
             is_subdomain(self.hostname, g.domain) or
@@ -1122,7 +1122,6 @@ def find_recent_broken_things(from_time = None, to_time = None,
     """
     from r2.models import Link, Comment
     from r2.lib.db.operators import desc
-    from pylons import g
 
     from_time = from_time or timeago('1 hour')
     to_time = to_time or datetime.now(g.tz)

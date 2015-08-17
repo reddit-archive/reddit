@@ -26,7 +26,7 @@ import inspect
 
 from mako.exceptions import TemplateLookupException
 from mako.template import Template as mTemplate
-from pylons import g
+from pylons import app_globals as g
 
 
 NULL_TEMPLATE = mTemplate("")

@@ -20,7 +20,8 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from pylons import g, c
+from pylons import tmpl_context as c
+from pylons import app_globals as g
 from itertools import chain
 from r2.lib.utils import SimpleSillyStub, tup, to36
 from r2.lib.db.sorts import epoch_seconds

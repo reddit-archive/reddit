@@ -23,7 +23,7 @@
 import json
 import hashlib
 
-from pylons import g
+from pylons import app_globals as g
 
 
 class FeatureState(object):

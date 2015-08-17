@@ -25,7 +25,9 @@ from r2.lib.db.userrel import UserRel
 from r2.lib.db.operators import asc, desc, lower
 from r2.lib.memoize import memoize
 from r2.models import Account
-from pylons import c, g, request
+from pylons import request
+from pylons import tmpl_context as c
+from pylons import app_globals as g
 
 class Award (Thing):
     _defaults = dict(

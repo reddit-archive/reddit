@@ -238,7 +238,7 @@ def consume_items(queue, callback, verbose=True):
        single items at a time. This is more efficient than
        handle_items when the queue is likely to be occasionally empty
        or if batching the received messages is not necessary."""
-    from pylons import c
+    from pylons import tmpl_context as c
 
     chan = connection_manager.get_channel()
 
@@ -292,7 +292,7 @@ def handle_items(queue, callback, ack=True, limit=1, min_size=0,
     used as a long-running process."""
     if limit < min_size:
         raise ValueError("min_size must be less than limit")
-    from pylons import c
+    from pylons import tmpl_context as c
 
     chan = connection_manager.get_channel()
     countdown = None

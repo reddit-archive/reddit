@@ -28,7 +28,7 @@ import os
 import socket
 import urllib2
 
-from pylons import g
+from pylons import app_globals as g
 
 from r2.lib.cache import sgm
 from r2.lib.utils import in_chunks, tup

@@ -24,7 +24,7 @@ from __future__ import with_statement
 from time import sleep
 from datetime import datetime
 from threading import local
-from pylons import g
+from pylons import app_globals as g
 import os
 import socket
 import random

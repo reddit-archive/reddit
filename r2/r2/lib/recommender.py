@@ -42,7 +42,7 @@ from r2.models.recommend import (
     ExploreSettings,
 )
 
-from pylons import g
+from pylons import app_globals as g
 from pylons.i18n import _
 
 # recommendation sources

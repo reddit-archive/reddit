@@ -24,7 +24,6 @@
 Setup your Routes options here
 """
 from routes import Mapper
-from pylons import config
 
 
 def not_in_sr(environ, results):
@@ -44,8 +43,9 @@ def partial_connect(mc, **override_args):
     return connect
 
 
-def make_map():
-    map = Mapper()
+def make_map(config):
+    map = Mapper(explicit=False)
+    map.minimization = True
     mc = map.connect
 
     # Username-relative userpage redirects, need to be defined here in case

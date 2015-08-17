@@ -39,7 +39,9 @@ import babel.core
 import pylibmc
 
 from mako.filters import url_escape
-from pylons import c, g, request, response
+from pylons import request, response
+from pylons import tmpl_context as c
+from pylons import app_globals as g
 from pylons.i18n import _
 from pylons.i18n.translation import LanguageError
 

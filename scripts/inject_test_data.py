@@ -31,7 +31,7 @@ import time
 
 import requests
 
-from pylons import g
+from pylons import app_globals as g
 
 from r2.lib.db import queries
 from r2.lib import amqp

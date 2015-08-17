@@ -23,7 +23,7 @@
 import json
 import requests
 
-from pylons import g
+from pylons import app_globals as g
 
 def post_takedown_notice_to_external_site(title, 
                           request_type, 

@@ -22,7 +22,8 @@
 
 from datetime import datetime
 
-from pylons import g, response
+from pylons import response
+from pylons import app_globals as g
 from pylons.i18n import _
 
 from r2.controllers.reddit_base import MinimalController

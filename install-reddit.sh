@@ -130,8 +130,8 @@ git-core
 
 python-dev
 python-setuptools
-python-routes
-python-pylons
+python-routes=1.12.3-1ubuntu1
+python-pylons=1.0-2
 python-boto
 python-tz
 python-crypto

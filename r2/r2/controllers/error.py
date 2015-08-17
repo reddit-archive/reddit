@@ -28,7 +28,10 @@ import pylons
 
 from webob.exc import HTTPFound, HTTPMovedPermanently
 from pylons.i18n import _
-from pylons import c, g, request, response
+from pylons import request, response
+from pylons import tmpl_context as c
+from pylons import app_globals as g
+
 
 try:
     # place all r2 specific imports in here.  If there is a code error, it'll

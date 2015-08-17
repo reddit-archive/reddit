@@ -66,7 +66,7 @@ def upgrade_messages(update_comments = True, update_messages = True,
     from r2.lib.db import queries
     from r2.lib import comment_tree, cache
     from r2.models import Account
-    from pylons import g
+    from pylons import app_globals as g
     accounts = set()
 
     def batch_fn(items):
@@ -137,7 +137,7 @@ def pushup_permacache(verbosity=1000):
     """When putting cassandra into the permacache chain, we need to
        push everything up into the rest of the chain, so this is
        everything that uses the permacache, as of that check-in."""
-    from pylons import g
+    from pylons import app_globals as g
     from r2.models import Link, Subreddit, Account
     from r2.lib.db.operators import desc
     from r2.lib.comment_tree import comments_key, messages_key

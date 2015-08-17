@@ -24,7 +24,7 @@
 import unittest
 from r2.tests import RedditTestCase
 
-from pylons import c
+from pylons import tmpl_context as c
 from r2.lib.errors import errors, ErrorSet
 from r2.lib.validator import VSubredditName, ValidEmail
 

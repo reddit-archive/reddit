@@ -25,7 +25,9 @@ import hmac
 import json
 import re
 
-from pylons import g, c, request, response
+from pylons import request, response
+from pylons import tmpl_context as c
+from pylons import app_globals as g
 from pylons.i18n import _
 
 from r2.controllers.reddit_base import RedditController, abort_with_error

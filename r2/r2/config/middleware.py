@@ -31,12 +31,14 @@ import itertools
 import simplejson
 
 from paste.cascade import Cascade
+from paste.errordocument import StatusBasedForward
+from paste.recursive import RecursiveMiddleware
 from paste.registry import RegistryManager
 from paste.urlparser import StaticURLParser
 from paste.deploy.converters import asbool
 from paste.request import path_info_split
-from pylons import config, response
-from pylons.middleware import ErrorDocuments, ErrorHandler
+from pylons import response
+from pylons.middleware import ErrorHandler
 from pylons.wsgiapp import PylonsApp
 from routes.middleware import RoutesMiddleware
 
@@ -71,14 +73,13 @@ weberror.evalexception.EvalException.post_traceback = _stub
 weberror.evalexception.EvalException.relay = _stub
 
 
-#from pylons.middleware import error_mapper
 def error_mapper(code, message, environ, global_conf=None, **kw):
     if environ.get('pylons.error_call'):
         return None
     else:
         environ['pylons.error_call'] = True
 
-    from pylons import c
+    from pylons import tmpl_context as c
 
     # c is not always registered with the paste registry by the time we get to
     # this error_mapper. if it's not, we can safely assume that we didn't use
@@ -125,6 +126,18 @@ def error_mapper(code, message, environ, global_conf=None, **kw):
         return url
 
 
+# from pylons < 1.0
+def ErrorDocuments(app, global_conf, mapper, **kw):
+    """Wraps the app in error docs using Paste RecursiveMiddleware and
+    ErrorDocumentsMiddleware
+    """
+    if global_conf is None:
+        global_conf = {}
+
+    return RecursiveMiddleware(StatusBasedForward(
+        app, global_conf=global_conf, mapper=mapper, **kw))
+
+
 class ProfilingMiddleware(object):
     def __init__(self, app, directory):
         self.app = app
@@ -150,11 +163,12 @@ class ProfilingMiddleware(object):
 class DomainMiddleware(object):
     lang_re = re.compile(r"\A\w\w(-\w\w)?\Z")
 
-    def __init__(self, app):
+    def __init__(self, app, config):
         self.app = app
+        self.config = config
 
     def __call__(self, environ, start_response):
-        g = config['pylons.g']
+        g = self.config['pylons.app_globals']
         http_host = environ.get('HTTP_HOST', 'localhost').lower()
         domain, s, port = http_host.partition(':')
 
@@ -427,7 +441,7 @@ class RedditApp(PylonsApp):
 
     def setup_app_env(self, environ, start_response):
         PylonsApp.setup_app_env(self, environ, start_response)
-        from pylons import g
+        from pylons import app_globals as g
         # When running tests don't load controllers or register hooks. Loading the
         # controllers currently causes db initialization and runs queries.
         if g.env == 'unit_test':
@@ -444,7 +458,7 @@ class RedditApp(PylonsApp):
 
     def _check_csrf_prevention(self):
         from r2 import controllers
-        from pylons import g
+        from pylons import app_globals as g
 
         if not g.running_as_script:
             controllers_iter = itertools.chain(
@@ -461,7 +475,7 @@ class RedditApp(PylonsApp):
         controllers = importlib.import_module(self.package_name +
                                               '.controllers')
         controllers.load_controllers()
-        config['r2.plugins'].load_controllers()
+        self.config['r2.plugins'].load_controllers()
         self._controllers = controllers
         self._check_csrf_prevention()
 
@@ -499,11 +513,11 @@ def make_app(global_conf, full_stack=True, **app_conf):
     """
 
     # Configure the Pylons environment
-    load_environment(global_conf, app_conf)
-    g = config['pylons.g']
+    config = load_environment(global_conf, app_conf)
+    g = config['pylons.app_globals']
 
     # The Pylons WSGI app
-    app = RedditApp()
+    app = RedditApp(config=config)
     app = RoutesMiddleware(app, config["routes.map"])
 
     # CUSTOM MIDDLEWARE HERE (filtered by the error handling middlewares)
@@ -520,7 +534,7 @@ def make_app(global_conf, full_stack=True, **app_conf):
     app = DomainListingMiddleware(app)
     app = SubredditMiddleware(app)
     app = ExtensionMiddleware(app)
-    app = DomainMiddleware(app)
+    app = DomainMiddleware(app, config=config)
 
     if asbool(full_stack):
         # Handle Python exceptions
@@ -528,7 +542,7 @@ def make_app(global_conf, full_stack=True, **app_conf):
 
         # Display error documents for 401, 403, 404 status codes (and 500 when
         # debug is disabled)
-        app = ErrorDocuments(app, global_conf, mapper=error_mapper, **app_conf)
+        app = ErrorDocuments(app, global_conf, error_mapper, **app_conf)
 
     # Establish the Registry for this application
     app = RegistryManager(app)
@@ -550,5 +564,7 @@ def make_app(global_conf, full_stack=True, **app_conf):
         app = Cascade([static_fallback, app])
 
     app = SafetyMiddleware(app)
+
+    app.config = config
 
     return app

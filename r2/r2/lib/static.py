@@ -30,7 +30,7 @@ import shutil
 
 
 def locate_static_file(name):
-    from pylons import g
+    from pylons import app_globals as g
     static_dirs = [plugin.static_dir for plugin in g.plugins]
     static_dirs.insert(0, g.paths['static_files'])
 

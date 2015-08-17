@@ -22,7 +22,7 @@
 
 import hashlib
 
-from pylons import g
+from pylons import app_globals as g
 
 from r2.lib.configparse import ConfigValue
 from r2.lib.providers.image_resizing import (

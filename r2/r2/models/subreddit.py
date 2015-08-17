@@ -33,7 +33,9 @@ import struct
 from pycassa import types
 from pycassa.util import convert_uuid_to_time
 from pycassa.system_manager import DATE_TYPE
-from pylons import c, g, request
+from pylons import request
+from pylons import tmpl_context as c
+from pylons import app_globals as g
 from pylons.i18n import _, N_
 
 from r2.config import feature

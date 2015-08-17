@@ -29,7 +29,7 @@ from pycassa import batch, types
 from pycassa.cassandra import ttypes
 from pycassa.system_manager import ASCII_TYPE, COUNTER_COLUMN_TYPE
 
-from pylons import g
+from pylons import app_globals as g
 
 
 class CommentTreeStorageBase(object):

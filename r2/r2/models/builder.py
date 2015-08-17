@@ -28,7 +28,9 @@ import heapq
 from random import shuffle
 import time
 
-from pylons import c, g, request
+from pylons import request
+from pylons import tmpl_context as c
+from pylons import app_globals as g
 from pylons.i18n import _
 
 from r2.config import feature

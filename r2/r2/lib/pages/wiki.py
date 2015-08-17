@@ -26,7 +26,7 @@ from r2.lib.pages.pages import (
     Reddit,
     SubredditStylesheetSource,
 )
-from pylons import c
+from pylons import tmpl_context as c
 from r2.lib.wrapped import Templated
 from r2.lib.menus import PageNameNav
 from r2.lib.validator.wiki import this_may_revise

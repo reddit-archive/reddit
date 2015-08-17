@@ -22,7 +22,8 @@
 
 import datetime
 
-from pylons import g, request
+from pylons import request
+from pylons import app_globals as g
 from sqlalchemy import (
     and_,
     Boolean,

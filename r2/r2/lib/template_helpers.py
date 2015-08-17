@@ -48,7 +48,10 @@ import urlparse
 import calendar
 import math
 import time
-from pylons import g, c, request
+
+from pylons import request
+from pylons import tmpl_context as c
+from pylons import app_globals as g
 from pylons.i18n import _, ungettext
 
 static_text_extensions = {

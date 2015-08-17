@@ -29,7 +29,7 @@ from curses.ascii import isgraph
 import logging
 from time import sleep
 
-from pylons import g
+from pylons import app_globals as g
 
 import pylibmc
 from _pylibmc import MemcachedError
@@ -1125,7 +1125,7 @@ def make_key(iden, *a, **kw):
     return '%s(%s)' % (iden, h.hexdigest())
 
 def test_stale():
-    from pylons import g
+    from pylons import app_globals as g
     ca = g.cache
     assert isinstance(ca, StaleCacheChain)
 

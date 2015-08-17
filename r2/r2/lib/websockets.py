@@ -28,7 +28,7 @@ import time
 import urllib
 import urlparse
 
-from pylons import g
+from pylons import app_globals as g
 
 from r2.lib import amqp
 from r2.lib.filters import websafe_json

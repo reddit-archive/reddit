@@ -19,7 +19,10 @@
 # All portions of the code written by reddit are Copyright (c) 2006-2015 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
-from pylons import c, g
+
+from pylons import tmpl_context as c
+from pylons import app_globals as g
+
 from r2.config import feature
 from r2.lib.menus import CommentSortMenu
 from r2.lib.validator.validator import (

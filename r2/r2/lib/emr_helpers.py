@@ -22,7 +22,7 @@
 
 from copy import copy
 
-from pylons import g
+from pylons import app_globals as g
 
 from r2.lib.memoize import memoize
 

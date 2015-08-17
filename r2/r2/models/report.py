@@ -28,7 +28,8 @@ from r2.lib.memoize import memoize
 from r2.models import Link, Comment, Message, Subreddit, Account
 from datetime import datetime
 
-from pylons import g, c
+from pylons import tmpl_context as c
+from pylons import app_globals as g
 
 class Report(MultiRelation('report',
                            Relation(Account, Link),

@@ -29,7 +29,8 @@ from collections import Counter
 import snudown
 
 from BeautifulSoup import BeautifulSoup, Tag
-from pylons import g, c
+from pylons import tmpl_context as c
+from pylons import app_globals as g
 
 from r2.lib.souptest import (
     souptest_fragment,

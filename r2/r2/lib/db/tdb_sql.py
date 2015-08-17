@@ -28,7 +28,10 @@ import operators
 import re
 import threading
 
-from pylons import g, c, request
+from pylons import request
+from pylons import tmpl_context as c
+from pylons import app_globals as g
+
 import sqlalchemy as sa
 
 from r2.lib import filters

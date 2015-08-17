@@ -33,7 +33,9 @@ from r2.controllers.reddit_base import (
 )
 
 from pylons.i18n import _
-from pylons import c, request, response
+from pylons import request, response
+from pylons import tmpl_context as c
+from pylons import app_globals as g
 
 from r2.lib.validator import *
 

@@ -30,7 +30,7 @@ import boto
 import pycassa
 
 from boto.s3.key import Key
-from pylons import g
+from pylons import app_globals as g
 
 from r2.lib.media import _get_scrape_url
 from r2.lib.providers.media.s3 import S3MediaProvider
