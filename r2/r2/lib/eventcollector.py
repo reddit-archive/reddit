@@ -292,7 +292,8 @@ class EventV2(object):
 
             self.add("domain", request.host)
             self.add("user_agent", request.user_agent)
-            self.add("client_ip", request.ip, obfuscate=True)
+            if getattr(request, "ip", None):
+                self.add("client_ip", request.ip, obfuscate=True)
 
     def add(self, field, value, obfuscate=False):
         if obfuscate:
