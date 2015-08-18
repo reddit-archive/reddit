@@ -20,7 +20,7 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%namespace file="utils.html" import="optionalstyle"/>
+<%namespace file="utils.html" import="optionalstyle, nsfw_stamp, quarantine_stamp"/>
 
 <%!
    from pylons.i18n import _, ungettext
@@ -93,6 +93,12 @@
          ${optionalstyle("color:gray;")}
        %endif
        >
+      %if thing.quarantine:
+        <span class="quarantine-stamp stamp">${quarantine_stamp()}</span>
+      %endif
+      %if thing.nsfw:
+        <span class="nsfw-stamp stamp">${nsfw_stamp()}</span>
+      %endif
       %if not expanded:
       <%
        if thing.hide_score:
