@@ -72,7 +72,7 @@ PROFILE_LIMIT = 10 # max payment profiles per user allowed by authorize.net
 
 @export
 class AuthorizeNetException(Exception):
-    def __init__(self, msg):
+    def __init__(self, msg, code=None):
         # don't let CC info show up in logs
         msg = re.sub("<cardNumber>\d+(\d{4})</cardNumber>", 
                      "<cardNumber>...\g<1></cardNumber>",
@@ -80,17 +80,21 @@ class AuthorizeNetException(Exception):
         msg = re.sub("<cardCode>\d+</cardCode>",
                      "<cardCode>omitted</cardCode>",
                      msg)
+        self.code = code
         super(AuthorizeNetException, self).__init__(msg)
-
-
-class DuplicateTransactionError(Exception):
-    def __init__(self, transaction_id):
-        self.transaction_id = transaction_id
 
 
 class TransactionError(Exception):
     def __init__(self, message):
         self.message = message
+
+
+class DuplicateTransactionError(TransactionError):
+    def __init__(self, transaction_id):
+        self.transaction_id = transaction_id
+        message = ('DuplicateTransactionError with transaction_id %d' %
+                   transaction_id)
+        super(DuplicateTransactionError, self).__init__(message)
 
 
 class AuthorizationHoldNotFound(Exception): pass
@@ -316,7 +320,6 @@ class AuthorizeNetRequest(SimpleXMLObject):
 
 # --- real request classes below
 
-
 class CreateCustomerProfileRequest(AuthorizeNetRequest):
     _keys = AuthorizeNetRequest._keys + ["profile", "validationMode"]
 
@@ -359,8 +362,6 @@ class CreateCustomerPaymentProfileRequest(AuthorizeNetRequest):
 
     def process_error(self, res):
         message_text = res.find("text").contents[0]
-        if self.is_error_code(res, Errors.DUPLICATE_RECORD):
-            raise AuthorizeNetException(message_text)
         raise AuthorizeNetException(message_text)
 
 
@@ -399,9 +400,11 @@ class GetCustomerProfileRequest(AuthorizeNetRequest):
 
     def process_error(self, res):
         message_text = res.find("text").contents[0]
-        raise AuthorizeNetException(message_text)
+        code = res.find('code').contents[0]
+        raise AuthorizeNetException(message_text, code=code)
 
 
+# TODO: implement
 class DeleteCustomerPaymentProfileRequest(AuthorizeNetRequest):
     _keys = AuthorizeNetRequest._keys + ["customerProfileId",
         "customerPaymentProfileId"]
@@ -559,10 +562,7 @@ def create_payment_profile(customer_id, address, credit_card, validate=False):
         validationMode="liveMode" if validate else None,
     )
 
-    try:
-        payment_profile_id = request.make_request()
-    except AuthorizeNetException:
-        return None
+    payment_profile_id = request.make_request()
 
     return payment_profile_id
 
@@ -581,14 +581,12 @@ def update_payment_profile(customer_id, payment_profile_id, address,
         validationMode="liveMode" if validate else None,
     )
 
-    try:
-        payment_profile_id = request.make_request()
-    except AuthorizeNetException:
-        return None
+    payment_profile_id = request.make_request()
 
     return payment_profile_id
 
 
+# TODO: implement
 def delete_payment_profile(customer_id, payment_profile_id):
     request = DeleteCustomerPaymentProfileRequest(
         customerProfileId=customer_id,
@@ -625,8 +623,6 @@ def create_authorization_hold(customer_id, payment_profile_id, amount, invoice,
     if (res.trans_id and
             res.response_code == TRANSACTION_ERROR and
             res.response_reason_code == TRANSACTION_DUPLICATE):
-        g.log.error("Authorize.net duplicate trans %d on campaign %d" % 
-                    (res.trans_id, campaign_id))
         raise DuplicateTransactionError(res.trans_id)
 
     if success:
