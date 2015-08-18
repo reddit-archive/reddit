@@ -22,6 +22,8 @@
 ###############################################################################
 """Read config from an INI file and put it in ZooKeeper for instant use."""
 
+from difflib import SequenceMatcher
+import itertools
 import os
 import sys
 import json
@@ -33,7 +35,7 @@ import kazoo.client
 from kazoo.security import make_acl, make_digest_acl
 from kazoo.exceptions import NoAuthException
 
-from r2.lib.zookeeper import connect_to_zookeeper
+from r2.lib.zookeeper import LiveConfig, connect_to_zookeeper
 from r2.lib.app_globals import extract_live_config, LIVE_CONFIG_NODE
 from r2.lib.configparse import ConfigValue
 from r2.lib.plugin import PluginLoader
@@ -79,16 +81,82 @@ def write_config_to_zookeeper(node, username, password, config, live_config):
         client.set(node, compressed_data)
 
 
-def confirm_config(live_config):
-    """Display the parsed live config and confirm that we should continue."""
+def print_dict_diff(old, new):
+    """Output changes between two dicts."""
 
-    max_key_length = max(len(k) for k in live_config.iterkeys())
+    old_keys = set(old.keys())
+    new_keys = set(new.keys())
 
-    print "Parsed Config:"
-    for key, value in sorted(live_config.iteritems(), key=lambda t: t[0]):
-        print " ", key.ljust(max_key_length), "=", repr(value)
+    # figure out which keys are interesting that we need to output
+    removed_keys = old_keys - new_keys
+    added_keys = new_keys - old_keys
+    both_keys = old_keys & new_keys
+    changed_keys = [key for key in both_keys if new[key] != old[key]]
 
-    answer = raw_input("Continue? [y|N] ")
+    for key in changed_keys[:]:
+        # if the value type changed, or it's a type with short values,
+        # just display it as a removal and addition
+        if (type(new[key]) != type(old[key]) or
+                isinstance(new[key], (int, float, bool))):
+            added_keys.add(key)
+            removed_keys.add(key)
+            changed_keys.remove(key)
+
+    keys = sorted(set(itertools.chain(removed_keys, added_keys, changed_keys)))
+    if not keys:
+        print "No changes found. Did you forget to deploy the INI change?"
+        return
+
+    max_key_length = max(len(key) for key in keys)
+
+    for key in keys:
+        if key in removed_keys:
+            print "- {key:<{length}s} = {value!r}".format(
+                key=key, value=old[key], length=max_key_length)
+
+        if key in added_keys:
+            print "+ {key:<{length}s} = {value!r}".format(
+                key=key, value=new[key], length=max_key_length)
+            
+        if key in changed_keys:
+            print "! {key:<{length}s} :".format(key=key, length=max_key_length)
+
+            matcher = SequenceMatcher(a=repr(old[key]), b=repr(new[key]))
+            for tag, i, j, m, n in matcher.get_opcodes():
+                if tag == "equal":
+                    continue
+                elif tag == "replace":
+                    print '    ! "{}" to "{}"'.format(
+                        matcher.a[i:j], matcher.b[m:n])
+                elif tag == "insert":
+                    print '    + "{}"'.format(matcher.b[m:n])
+                elif tag == "delete":
+                    print '    - "{}"'.format(matcher.a[i:j])
+
+
+def get_current_live_config(config):
+    """Return the current live config values as a dict."""
+
+    # read the zk configuration from the app's config
+    zk_hostlist = config.get("DEFAULT", "zookeeper_connection_string")
+    username = config.get("DEFAULT", "zookeeper_username")
+    password = config.get("DEFAULT", "zookeeper_password")
+
+    client = connect_to_zookeeper(zk_hostlist, (username, password))
+    return LiveConfig(client, LIVE_CONFIG_NODE).data
+
+
+def confirm_config(old_config, new_config):
+    """Display the changes and confirm that we should continue."""
+
+    # we need to convert the new config to json and back so values like
+    # tuples are converted to the same format as the existing config
+    new_config = json.loads(json.dumps(new_config))
+
+    print ("Updates (a line starting with + is a new setting, - is removed, "
+        "and ! is changed, with additions/removals/replacements indented):\n")
+    print_dict_diff(old_config, new_config)
+    answer = raw_input("\nContinue? [y|N] ")
     return answer.lower() == "y"
 
 
@@ -119,7 +187,8 @@ def main():
         print >> sys.stderr, "%s: %s" % (progname, e)
         return 1
     else:
-        if not confirm_config(live):
+        current_config = get_current_live_config(config)
+        if not confirm_config(current_config, live):
             print "Oh, well, never mind then. Bye :("
             return 1
 
