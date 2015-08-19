@@ -175,6 +175,10 @@
       </script>
     %endif
   %endif
+  % if c.secure:
+      ## Pixel to pick up HSTS policies from the base domain
+      <img id="hsts_pixel" src="//${g.domain}/static/pixel.png">
+  % endif
   %if feature.is_enabled("test_https_certs"):
     <% from r2.lib import js %>
     ${unsafe(js.use("https-tester"))}
