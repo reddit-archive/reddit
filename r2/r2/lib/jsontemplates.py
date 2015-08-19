@@ -853,7 +853,7 @@ class CommentJsonTemplate(ThingTemplate):
         if hasattr(item, "action_type"):
             data["action_type"] = item.action_type
 
-        if c.user_is_loggedin and item.user_is_moderator:
+        if c.user_is_loggedin and item.can_ban:
             data["num_reports"] = item.reported
             data["report_reasons"] = Report.get_reasons(item)
 
