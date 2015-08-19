@@ -2018,7 +2018,7 @@ class Message(Thing, Printable):
     def subreddit_slow(self):
         from subreddit import Subreddit
         if self.sr_id:
-            return Subreddit._byID(self.sr_id)
+            return Subreddit._byID(self.sr_id, data=True)
 
     @property
     def author_slow(self):
