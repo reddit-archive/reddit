@@ -101,6 +101,16 @@ def print_dict_diff(old, new):
             added_keys.add(key)
             removed_keys.add(key)
             changed_keys.remove(key)
+            continue
+
+        # otherwise, see how similar the reprs are, and if it's less
+        # than 50% similar, just display it as a removal and addition
+        matcher = SequenceMatcher(a=repr(old[key]), b=repr(new[key]))
+        if matcher.ratio() < 0.5:
+            added_keys.add(key)
+            removed_keys.add(key)
+            changed_keys.remove(key)
+            continue
 
     keys = sorted(set(itertools.chain(removed_keys, added_keys, changed_keys)))
     if not keys:
