@@ -855,6 +855,9 @@ class ApiController(RedditController):
         Complement to [POST_friend](#POST_api_friend)
 
         """
+        if type == 'muted' and not feature.is_enabled('modmail_muting'):
+            return abort(403, "This feature is not yet enabled")
+
         self.check_api_friend_oauth_scope(type)
 
         victim = iuser or nuser
@@ -997,6 +1000,9 @@ class ApiController(RedditController):
         Complement to [POST_unfriend](#POST_api_unfriend)
 
         """
+        if type == 'muted' and not feature.is_enabled('modmail_muting'):
+            return abort(403, "This feature is not yet enabled")
+
         self.check_api_friend_oauth_scope(type)
 
         if type in self._sr_friend_types:
@@ -1766,6 +1772,9 @@ class ApiController(RedditController):
         if not subreddit:
             abort(403, 'Not modmail')
 
+        if not feature.is_enabled('modmail_muting', subreddit=subreddit.name):
+            return abort(403, "This feature is not yet enabled")
+
         user = message.author_slow
         if not c.user_is_admin:
             if not subreddit.is_moderator_with_perms(c.user, 'access', 'mail'):
@@ -1799,6 +1808,9 @@ class ApiController(RedditController):
 
         if not subreddit:
             abort(403, 'Not modmail')
+
+        if not feature.is_enabled('modmail_muting', subreddit=subreddit.name):
+            return abort(403, "This feature is not yet enabled")
 
         user = message.author_slow
         if not c.user_is_admin:

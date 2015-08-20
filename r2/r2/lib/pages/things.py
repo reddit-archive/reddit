@@ -241,14 +241,15 @@ class MessageButtons(PrintableButtons):
 
             if thing.sr_id:
                 sr = thing.subreddit_slow
-                if (sr.is_muted(first_message.author_slow) or
-                        (first_message.to_id and
-                            sr.is_muted(first_message.recipient_slow))):
-                    is_muted = True
+                if feature.is_enabled('modmail_muting', subreddit=sr.name):
+                    if (sr.is_muted(first_message.author_slow) or
+                            (first_message.to_id and
+                                sr.is_muted(first_message.recipient_slow))):
+                        is_muted = True
 
-                if (not sr.is_moderator(thing.author_slow) and
-                        sr.is_moderator_with_perms(c.user, 'access', 'mail')):
-                    can_mute = True
+                    if (not sr.is_moderator(thing.author_slow) and
+                            sr.is_moderator_with_perms(c.user, 'access', 'mail')):
+                        can_mute = True
 
         can_reply = (c.user_is_loggedin and
                      getattr(thing, "repliable", True) and
