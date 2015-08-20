@@ -1662,7 +1662,9 @@ class FormsController(RedditController):
         if not c.user.name in g.admins:
             return self.abort404()
 
-        return AdminModeInterstitial(dest=dest).render()
+        return InterstitialPage(
+            _("turn admin on"),
+            content=AdminInterstitial(dest=dest)).render()
 
     @validate(VAdmin(),
               dest=VDestination())

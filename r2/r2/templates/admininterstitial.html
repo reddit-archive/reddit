@@ -20,18 +20,28 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%
-   from r2.lib.template_helpers import static
+<%!
+  from r2.lib.template_helpers import static
 %>
 
 <%namespace name="utils" file="utils.html"/>
 <%namespace file="utils.html" import="error_field"/>
 
-<div class="content over18" style="text-align: center">
-  <img src="${static('over18.png')}" alt="" height="254" width="180" />
+<%inherit file="interstitial.html"/>
 
-  <h1>let me see your papers</h1>
+<%def name="interstitial_image_attrs()">
+  src="${static('interstitial-image-admin.png')}"
+  title="${_('Are you one of us?')}"
+</%def>
 
+<%def name="interstitial_title()">
+  ${_('Enter your password and one-time code')}
+</%def>
+
+<%def name="interstitial_message()">
+</%def>
+
+<%def name="interstitial_buttons()">
   <form action="/post/adminon" method="post"
       onsubmit="return post_form(this, 'adminon')" id="adminon">
     <div class="spacer">
@@ -44,7 +54,7 @@
       </%utils:round_field>
 
       % if not g.disable_require_admin_otp or c.user.otp_secret:
-      <%utils:round_field title="${_('one-time password')}" description="${_('(required)')}" css_class="adminpasswordform">
+      <%utils:round_field title="${_('one-time verification code')}" description="${_('(required)')}" css_class="adminpasswordform">
       <input type="text" name="otp" maxlength="6" tabindex="1" required pattern="[0-9]{6}" autocomplete="off"
       % if c.otp_cached:
       disabled
@@ -64,8 +74,14 @@
       </%utils:round_field>
       % endif
 
-      <p><button type="submit" class="btn" tabindex="1">${_('turn admin on')}</button></p>
+      <div class="buttons">
+        <button class="c-btn c-btn-primary" type="submit">
+          ${_('turn admin on')}
+        </button>
+      </div>
+
       <p class="status error"></p>
+
     </div>
   </form>
-</div>
+</%def>

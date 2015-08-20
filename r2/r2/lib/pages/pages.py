@@ -1350,20 +1350,6 @@ class RegisterPage(LoginPage):
     def login_template(cls, **kw):
         return Register(**kw)
 
-class AdminModeInterstitial(BoringPage):
-    def __init__(self, dest, *args, **kwargs):
-        self.dest = dest
-        BoringPage.__init__(self, _("turn admin on"),
-                            show_sidebar=False,
-                            *args, **kwargs)
-
-    def content(self):
-        return PasswordVerificationForm(dest=self.dest)
-
-class PasswordVerificationForm(Templated):
-    def __init__(self, dest):
-        self.dest = dest
-        Templated.__init__(self)
 
 class Login(Templated):
     """The two-unit login and register form."""
@@ -2496,6 +2482,11 @@ class Interstitial(Templated):
             sr_description=sr_description,
             **kwargs
         )
+
+
+class AdminInterstitial(Interstitial):
+    """The admin password verification form."""
+    pass
 
 
 class BannedInterstitial(Interstitial):
