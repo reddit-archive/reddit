@@ -354,7 +354,6 @@ class ApiController(RedditController):
         if (form.has_errors("to",
                     errors.USER_DOESNT_EXIST, errors.NO_USER,
                     errors.SUBREDDIT_NOEXIST, errors.USER_BLOCKED,
-                    errors.USER_MUTED,
                 ) or
                 form.has_errors("subject", errors.NO_SUBJECT) or
                 form.has_errors("subject", errors.TOO_LONG) or
@@ -362,6 +361,11 @@ class ApiController(RedditController):
                 form.has_errors("message", errors.TOO_LONG) or
                 form.has_errors("captcha", errors.BAD_CAPTCHA) or
                 form.has_errors("from_sr", errors.SUBREDDIT_NOEXIST)):
+            return
+
+        if form.has_errors("to", errors.USER_MUTED):
+            g.events.muted_forbidden_event("muted", target=to,
+                request=request, context=c)
             return
 
         if from_sr and isinstance(to, Subreddit):
@@ -385,6 +389,8 @@ class ApiController(RedditController):
             elif from_sr.is_muted(to) and not c.user_is_admin:
                 c.errors.add(errors.MUTED_FROM_SUBREDDIT, field="to")
                 form.has_errors("to", errors.MUTED_FROM_SUBREDDIT)
+                g.events.muted_forbidden_event("muted mod", subreddit=from_sr,
+                    target=to, request=request, context=c)
                 return
             m, inbox_rel = Message._new(c.user, to, subject, body, request.ip,
                                         sr=from_sr, from_sr=True)
@@ -1959,14 +1965,24 @@ class ApiController(RedditController):
                 user_muted_error = False
                 if sr.is_muted(message.author_slow):
                     user_muted_error = True
+                    muted_user = message.author_slow
                 elif message.to_id and sr.is_muted(message.recipient_slow):
                     user_muted_error = True
+                    muted_user = message.recipient_slow
 
                 if user_muted_error:
                     if sr.is_moderator(c.user):
                         c.errors.add(errors.MUTED_FROM_SUBREDDIT, field="parent")
+                        g.events.muted_forbidden_event("muted mod",
+                            sr, parent_message=parent, target=muted_user,
+                            request=request, context=c,
+                        )
                     else:
                         c.errors.add(errors.USER_MUTED, field="parent")
+                        g.events.muted_forbidden_event("muted",
+                            parent_message=parent, target=sr,
+                            request=request, context=c,
+                        )
 
             is_message = True
             should_ratelimit = False

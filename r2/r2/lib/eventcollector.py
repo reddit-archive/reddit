@@ -249,6 +249,44 @@ class EventQueue(object):
         self.save_event(event_base)
 
     @squelch_exceptions
+    def muted_forbidden_event(self, details_text, subreddit=None,
+            parent_message=None, target=None, request=None, context=None):
+        """Create a mute-related 'forbidden_event' for event-collector.
+
+        details_text: "muted" if a muted user is trying to message the
+            subreddit or "muted mod" if the subreddit mod is attempting
+            to message the muted user
+        subreddit: The Subreddit of the mod messaging the muted user
+        parent_message: Message that is being responded to
+        target: The intended recipient (Subreddit or Account)
+        request, context: Should be pylons.request & pylons.c respectively;
+
+        """
+        event = EventV2(
+            topic="forbidden_actions",
+            event_type="ss.forbidden_message_attempt",
+            request=request,
+            context=context,
+        )
+        event.add("details_text", details_text)
+
+        if parent_message:
+            event.add("parent_message_id", parent_message._id)
+            event.add("parent_message_fullname", parent_message._fullname)
+
+        if subreddit:
+            event.add("sr_id", subreddit._id)
+            event.add("sr_name", subreddit.name)
+
+        if target:
+            event.add("target_id", target._id)
+            event.add("target_fullname", target._fullname)
+            event.add("target_name", target.name)
+            event.add("target_type", target.__class__.__name__.lower())
+
+        self.save_event(event)
+
+    @squelch_exceptions
     @sampled("events_collector_mod_sample_rate")
     def mod_event(self, modaction, subreddit, mod, target=None,
             request=None, context=None):
