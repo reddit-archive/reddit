@@ -1706,6 +1706,9 @@ class Message(Thing, Printable):
         if to_subreddit:
             SubredditParticipationByAccount.mark_participated(author, sr)
 
+        if to_subreddit:
+            g.stats.simple_event("modmail.received_message")
+
         inbox_rel = []
 
         inbox_hook = hooks.get_hook("message.skip_inbox")
