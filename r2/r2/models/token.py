@@ -308,6 +308,9 @@ class OAuth2Scope:
         return (self.scopes >= required_scopes)
 
     def has_any_scope(self, required_scopes):
+        if self.FULL_ACCESS in self.scopes:
+            return True
+
         return bool(self.scopes & required_scopes)
 
     def is_valid(self):
