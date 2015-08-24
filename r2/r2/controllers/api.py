@@ -500,7 +500,7 @@ class ApiController(RedditController):
                 return
 
         if not is_self:
-            if not url or form.has_errors("url", errors.NO_URL, errors.BAD_URL):
+            if form.has_errors("url", errors.NO_URL, errors.BAD_URL):
                 return
 
             if form.has_errors("url", errors.DOMAIN_BANNED):
