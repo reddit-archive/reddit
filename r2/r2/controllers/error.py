@@ -115,8 +115,6 @@ class ErrorController(RedditController):
         try:
             c.error_page = True
             RedditController.__before__(self)
-            # clear cookies the old fashioned way
-            c.cookies = Cookies()
         except (HTTPMovedPermanently, HTTPFound):
             # ignore an attempt to redirect from an error page
             pass
@@ -204,6 +202,8 @@ class ErrorController(RedditController):
     def GET_document(self):
         try:
             c.errors = c.errors or ErrorSet()
+            # clear cookies the old fashioned way 
+            c.cookies = Cookies()
 
             code =  request.GET.get('code', '')
             try:
