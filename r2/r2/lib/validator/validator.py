@@ -1131,7 +1131,7 @@ class VSrModerator(Validator):
                 or c.user_is_admin):
             if self.fatal:
                 abort(403, "forbidden")
-            return self.set_error('MODERATOR_REQUIRED', code=403)
+            return self.set_error('MOD_REQUIRED', code=403)
 
 class VCanDistinguish(VByName):
     def run(self, thing_name, how):
