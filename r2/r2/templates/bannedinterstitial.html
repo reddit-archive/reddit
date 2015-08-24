@@ -21,10 +21,10 @@
 ###############################################################################
 
 <%!
-  from r2.lib.template_helpers import static 
+  from r2.lib.template_helpers import _wsf, static
 %>
 
-<%namespace file="utils.html" import="_md"/>
+<%namespace file="utils.html" import="_md, buffered_timestamp"/>
 
 <%inherit file="interstitial.html"/>
 
@@ -42,5 +42,11 @@
     ${parent.interstitial_message()}
   %else:
     ${_md("This community has been banned for violating the [Reddit rules](/rules).")}
+  %endif
+
+  %if thing.ban_time:
+    <div class="note">
+      ${_wsf("Banned %(time_ago)s.", time_ago=unsafe(buffered_timestamp(thing.ban_time, include_tense=True)))}
+    </div>
   %endif
 </%def>

@@ -1680,6 +1680,7 @@ class RedditController(OAuth2ResourceController):
                     _("banned"),
                     content=pages.BannedInterstitial(
                         message=message,
+                        ban_time=ban_info.get("banned_at"),
                     ),
                 )
 
