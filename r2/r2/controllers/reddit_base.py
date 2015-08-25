@@ -766,20 +766,11 @@ def make_url_https(url):
     return new_url.unparse()
 
 
-def hsts_eligible():
+def want_secure_session():
     # When we're on HTTP, the secure_session cookie is the only way we can
     # prove the user wants HSTS.
     return (c.user.https_forced or
             (not c.secure and have_secure_session_cookie()))
-
-
-def hsts_modify_redirect(url):
-    hsts_url = UrlParser("https://" + g.domain + "/modify_hsts_grant")
-    # `dest` should be fully qualified so users get sent back to the right
-    # subdomain. `dest` must also be HTTPS because Safari will crash if
-    # you redirect to an http: URL after giving a grant.
-    hsts_url.query_dict['dest'] = make_url_https(url)
-    return hsts_url.unparse()
 
 
 def enforce_https():
@@ -826,14 +817,11 @@ def enforce_https():
         if have_secure_session_cookie() and not c.user_is_loggedin:
             redirect_url = make_url_https(request.fullurl)
 
-    need_grant = False
-    grant = None
     # Forcing the users through the HSTS gateway probably wouldn't help much for
     # other render types since they're mostly made by clients that don't respect
     # HSTS.
     if c.render_style in {"html", "compact", "mobile"} and not is_api_request:
-        if hsts_eligible():
-            grant = g.hsts_max_age
+        if want_secure_session():
             # They're forcing HTTPS but don't have a "secure_session" cookie?
             # Somehow their HTTPS preferences changed without invalidating their
             # old cookies, ensure that this session's cookies are secured
@@ -851,30 +839,17 @@ def enforce_https():
                 # The client might not support HSTS, or might have had their
                 # grant expire. redirect to the HTTPS version through the HSTS
                 # endpoint.
-                need_grant = True
                 redirect_url = make_url_https(request.fullurl)
         else:
-            grant = 0
             if c.secure:
                 # User disabled HTTPS forcing under another session or their
                 # session became invalid and they're left with a dangling cookie
                 if have_secure_session_cookie():
                     change_user_cookie_security(False)
-                    need_grant = True
 
         # Gradual rollout for HTTPS
         if feature.is_enabled("https_redirect") and not c.secure:
             redirect_url = make_url_https(request.fullurl)
-
-    if feature.is_enabled("give_hsts_grants") and grant is not None:
-        if request.host == g.domain and c.secure:
-            # Always set an HSTS header if we can and we're on the base domain
-            c.hsts_grant = grant
-        elif need_grant:
-            # Definitely need to change the grant, but we're not on an origin
-            # where we can modify it, redirect through one that can.
-            dest = redirect_url or request.fullurl
-            redirect_url = hsts_modify_redirect(dest)
 
     if redirect_url:
         headers = {"Cache-Control": "private, no-cache", "Pragma": "no-cache"}
@@ -1114,7 +1089,6 @@ class MinimalController(BaseController):
                                               g.domain_prefix)
         c.secure = request.environ["wsgi.url_scheme"] == "https"
         c.request_origin = request.host_url
-        c.hsts_grant = None
 
         #check if user-agent needs a dose of rate-limiting
         if not c.error_page:
@@ -1292,10 +1266,6 @@ class MinimalController(BaseController):
         if c.ratelimit_headers:
             response.headers.update(c.ratelimit_headers)
 
-        if c.hsts_grant is not None:
-            hsts_val = "max-age=%d; includeSubDomains" % c.hsts_grant
-            response.headers["Strict-Transport-Security"] = hsts_val
-
         # send cookies
         # HACK: make sure c.user always gets set to something
         secure_cookies = c.user and c.user.https_forced
@@ -1403,17 +1373,6 @@ class MinimalController(BaseController):
             return c.update_last_visit
 
         return request.method.upper() != "POST"
-
-    @classmethod
-    def hsts_redirect(cls, dest, is_hsts_eligible=None):
-        """Redirect to `dest` via the HSTS grant endpoint"""
-        if is_hsts_eligible is None:
-            is_hsts_eligible = hsts_eligible()
-        if is_hsts_eligible:
-            dest = hsts_modify_redirect(dest)
-            return cls.redirect(dest, preserve_extension=False)
-        else:
-            return cls.redirect(dest)
 
 
 class OAuth2ResourceController(MinimalController):

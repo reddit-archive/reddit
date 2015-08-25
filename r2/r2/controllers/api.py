@@ -22,7 +22,6 @@
 
 from r2.controllers.reddit_base import (
     cross_domain,
-    hsts_modify_redirect,
     is_trusted_origin,
     MinimalController,
     pagecache_policy,
@@ -610,12 +609,6 @@ class ApiController(RedditController):
         if request.params.get("hoist") != "cookie":
             responder._send_data(modhash = user.modhash())
             responder._send_data(cookie  = user.make_cookie())
-        if user.https_forced:
-            # The client may decide to redirect somewhere after a successful
-            # login, send it our HSTS grant endpoint so it can redirect through
-            # there and pick up the user's grant.
-            hsts_redir = "https://" + g.domain + "/modify_hsts_grant?dest="
-            responder._send_data(hsts_redir=hsts_redir)
         responder._send_data(need_https=user.https_forced)
 
     @validatedForm(VLoggedOut(),
@@ -1265,40 +1258,6 @@ class ApiController(RedditController):
     @validatedForm(
         VUser(),
         VModhash(),
-        password=VVerifyPassword("curpass", fatal=False),
-        force_https=VBoolean("force_https"),
-    )
-    def POST_set_force_https(self, form, jquery, password, force_https):
-        """Toggle HTTPS-only sessions, invalidating other sessions.
-
-        A valid password (`curpass`) must be supplied.
-        """
-        if form.has_errors("curpass", errors.WRONG_PASSWORD):
-            return
-        if not force_https and feature.is_enabled("require_https"):
-            form.set_text(".status",
-                          _("you may not disable HTTPS on this account"))
-            return
-        c.user.pref_force_https = force_https
-        c.user._commit()
-
-        # run the change password command to get a new salt.
-        # OAuth tokens are fine since that always happened over HTTPS.
-        change_password(c.user, password)
-        form.set_text(".status",
-                      _("HTTPS preferences have been successfully changed"))
-        form.set_inputs(curpass="")
-
-        # the password salt has changed, so the user's cookie has been
-        # invalidated.  drop a new cookie.
-        self.login(c.user)
-
-        # Modify their HSTS grant
-        form.redirect(hsts_modify_redirect("/prefs/security"))
-
-    @validatedForm(
-        VUser(),
-        VModhash(),
         VVerifyPassword("curpass", fatal=False),
         email=ValidEmails("email", num=1),
         verify=VBoolean("verify"),
@@ -1408,8 +1367,6 @@ class ApiController(RedditController):
                 form.has_errors("delete_message", errors.TOO_LONG) or
                 form.has_errors("confirm", errors.CONFIRM)):
             redirect_url = "/?deleted=true"
-            if c.user.https_forced:
-                redirect_url = hsts_modify_redirect(redirect_url)
             c.user.delete(delete_message)
             form.redirect(redirect_url)
 

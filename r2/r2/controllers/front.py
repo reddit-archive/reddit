@@ -24,8 +24,6 @@ from pylons.i18n import _, ungettext
 from r2.controllers.reddit_base import (
     base_listing,
     disable_subreddit_css,
-    hsts_modify_redirect,
-    hsts_eligible,
     pagecache_policy,
     PAGECACHE_POLICY,
     paginated_listing,
@@ -1472,6 +1470,7 @@ class FrontController(RedditController):
     @validate(dest=VDestination(default='/'))
     def _modify_hsts_grant(self, dest):
         """Endpoint subdomains can redirect through to update HSTS grants."""
+        # TODO: remove this once it stops getting hit
         from r2.lib.base import abort
         require_https()
         if request.host != g.domain:
@@ -1659,13 +1658,8 @@ class FormsController(RedditController):
               dest=VDestination())
     def POST_logout(self, dest):
         """wipe login cookie and redirect to referer."""
-
-        # Check eligibility before calling logout(), as logout() changes
-        # cookies that hsts_eligible() looks at
-        is_hsts_eligible = hsts_eligible()
         self.logout()
-        self.hsts_redirect(dest, is_hsts_eligible=is_hsts_eligible)
-
+        self.redirect(dest)
 
     @validate(VUser(),
               dest=VDestination())
