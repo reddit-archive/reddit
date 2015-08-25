@@ -198,7 +198,7 @@ def js_config(extra_config=None):
         "extension": c.extension,
         "https_endpoint": is_subdomain(request.host, g.domain) and g.https_endpoint,
         # does the client only want to communicate over HTTPS?
-        "https_forced": c.user.https_forced,
+        "https_forced": feature.is_enabled("force_https"),
         # debugging?
         "debug": g.debug,
         "poisoning_canary": poisoning_canary,

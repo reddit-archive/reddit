@@ -28,39 +28,6 @@
 <%namespace file="utils.html" import="error_field, _md"/>
 <%namespace name="utils" file="utils.html"/>
 
-<h1>${_("use a secure connection (HTTPS) to communicate with reddit")}</h1>
-
-<form action="/post/set_force_https" method="post"
-      onsubmit="return post_form(this, 'set_force_https')" id="pref_force_https">
-
-%if c.user.https_forced:
-    ${_md("HTTPS is currently **enabled** for your account.", wrap=True)}
-%else:
-    ${_md("HTTPS is currently **disabled** for your account.", wrap=True)}
-%endif
-
-${_md(
-    " * enabling this preference will ensure your browser communicates with reddit over a secure channel when signed in.\n"
-    " * some third-party apps may not support this preference.\n"
-    " * changing this preference *will log you out of reddit on other devices*, and will invalidate your old private RSS feeds.",
-wrap=True)}
-
-<div class="spacer">
-  <%utils:round_field title="${_('current password')}" description="${_('(required)')}">
-  <input type="password" name="curpass" />
-  ${error_field("WRONG_PASSWORD", "curpass")}
-  </%utils:round_field>
-</div>
-<%
-    button_label = _("disable") if c.user.https_forced else _("enable")
-    setting_value = "false" if c.user.https_forced else "true"
-%>
-<input type="hidden" name="force_https" value="${setting_value}">
-<button type="submit" class="btn">${button_label}</button>
-<span class="status error"></span>
-
-</form>
-
 
 % if c.user_is_loggedin and c.user.name in g.admins:
 <h1>${_("two-factor authentication")}</h1>

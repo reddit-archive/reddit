@@ -35,7 +35,7 @@ ${unsafe(safemarkdown(_("All feeds are invalidated if you change your password, 
 <%def name="feedbuttons(path)">
 <%
      domain = get_domain(subreddit = False)
-     scheme = "https" if c.user.https_forced else "http"
+     scheme = "https" if feature.is_enabled("force_https") else "http"
  %>
   <a class="feedlink rss-link"
      href="${scheme}://${domain}${make_feedurl(c.user, path, 'rss')}">

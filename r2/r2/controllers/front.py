@@ -1477,10 +1477,9 @@ class FrontController(RedditController):
             abort(ForbiddenError(errors.WRONG_DOMAIN))
 
         # We can't send the user back to http: if they're forcing HTTPS
-        if c.user.https_forced:
-            dest_parsed = UrlParser(dest)
-            dest_parsed.scheme = "https"
-            dest = dest_parsed.unparse()
+        dest_parsed = UrlParser(dest)
+        dest_parsed.scheme = "https"
+        dest = dest_parsed.unparse()
 
         return self.redirect(dest, code=307)
 

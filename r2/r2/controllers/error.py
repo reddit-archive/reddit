@@ -40,10 +40,10 @@ try:
     from r2.config import extensions
     from r2.controllers.reddit_base import (
         RedditController,
-        Cookies,
         pagecache_policy,
         PAGECACHE_POLICY,
     )
+    from r2.lib.cookies import Cookies
     from r2.lib.errors import ErrorSet
     from r2.lib.filters import (
         safemarkdown,

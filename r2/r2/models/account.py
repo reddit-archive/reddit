@@ -648,13 +648,6 @@ class Account(Thing):
                  self.name in g.employees))
 
     @property
-    def https_forced(self):
-        """Return whether this account may only be used via HTTPS."""
-        if feature.is_enabled("require_https", user=self):
-            return True
-        return self.pref_force_https
-
-    @property
     def has_gold_subscription(self):
         return bool(getattr(self, 'gold_subscr_id', None))
 
