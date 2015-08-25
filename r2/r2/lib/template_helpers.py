@@ -25,7 +25,13 @@ import hashlib
 import urllib
 
 from r2.models import *
-from filters import unsafe, websafe, _force_utf8, conditional_websafe
+from filters import (
+    _force_utf8,
+    conditional_websafe,
+    keep_space,
+    unsafe,
+    websafe,
+)
 from r2.lib.cache_poisoning import make_poisoning_report_mac
 from r2.lib.utils import UrlParser, timeago, timesince, is_subdomain
 
@@ -669,12 +675,15 @@ def format_html(format_string, *args, **kwargs):
     return unsafe(format_string % format_args)
 
 
-def _ws(*args, **kwargs):
+def _ws(text, keep_spaces=False):
     """Helper function to get HTML escaped output from gettext"""
-    return websafe(_(*args, **kwargs))
+    if keep_spaces:
+        return keep_space(_(text))
+    else:
+        return websafe(_(text))
 
 
-def _wsf(format_trans, *args, **kwargs):
+def _wsf(format, keep_spaces=True, *args, **kwargs):
     """
     format_html, but with an escaped, translated string as the format str
 
@@ -683,9 +692,10 @@ def _wsf(format_trans, *args, **kwargs):
 
     Example:
 
-      _wsf("Are you %s? %s", name, unsafe(checkbox_html))
+      _wsf("Are you %(name)s? %(box)s", name=name, box=unsafe(checkbox_html))
     """
-    return format_html(_ws(format_trans), *args, **kwargs)
+    format_trans = _ws(format, keep_spaces)
+    return format_html(format_trans, *args, **kwargs)
 
 
 def get_linkflair_css_classes(thing, prefix="linkflair-", on_class="has-linkflair", off_class="no-linkflair"):
