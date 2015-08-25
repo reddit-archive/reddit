@@ -132,7 +132,7 @@
 
   <div class="bottom">
     %if thing.multi.owner:
-      ${unsafe(_ws("created by %(user)s").replace(" ", "&#32;") % dict(user = unsafe(WrappedUser(thing.multi.owner).render())))}
+      ${_wsf("created by %(user)s", user=WrappedUser(thing.multi.owner))}
     %endif
 
     <span class="age">

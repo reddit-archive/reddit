@@ -25,7 +25,7 @@
    from r2.lib.filters import websafe
    from r2.lib.strings import strings, Score
    from r2.lib.pages import WrappedUser, QuarantineOptoutButton, SubscribeButton
-   from r2.lib.template_helpers import _ws
+   from r2.lib.template_helpers import _ws, _wsf
    from r2.models.listing import ModListing
  %>
 
@@ -105,7 +105,7 @@
 
   <div class="bottom">
     %if thing.sr.author:
-      ${unsafe(_ws("created by %(user)s").replace(" ", "&#32;") % dict(user = unsafe(thing.creator_text)))}
+      ${_wsf("created by %(user)s", user=unsafe(thing.creator_text))}
     %endif
     
     <span class="age">

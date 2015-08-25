@@ -25,7 +25,7 @@
 <%!
     from r2.lib.pages import WrappedUser
     from r2.lib.filters import SC_OFF, SC_ON
-    from r2.lib.template_helpers import _ws
+    from r2.lib.template_helpers import _wsf
 %>
 
 %if thing.diff:
@@ -47,7 +47,7 @@
 <em>
 %if thing.edit_date:
     %if thing.edit_by:
-         ${unsafe(_ws("revision by %(user)s").replace(" ", "&#32;") % dict(user=WrappedUser(thing.edit_by).render()))}
+         ${_wsf("revision by %(user)s", user=WrappedUser(thing.edit_by))}
          &mdash;&nbsp;
     %endif
     ${timestamp(thing.edit_date, include_tense=True)}

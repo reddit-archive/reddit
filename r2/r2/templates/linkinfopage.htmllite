@@ -21,13 +21,13 @@
 ###############################################################################
 
 <%!
-    from r2.lib.template_helpers import _ws
+    from r2.lib.template_helpers import _wsf
 %>
 <%inherit file="base.htmllite"/>
 
 ${thing._content}
 
 <%def name="titlebar(site)">
-  ${unsafe(_ws("comments from %(site)s").replace(" ", "&#32;") % dict(site=site))}
+  ${_wsf("comments from %(site)s", site=site)}
 </%def>
 
