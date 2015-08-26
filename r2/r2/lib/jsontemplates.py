@@ -240,7 +240,7 @@ class ThingJsonTemplate(JsonTemplate):
             return distinguished
 
         if attr in ["num_reports", "report_reasons", "banned_by", "approved_by"]:
-            if c.user_is_loggedin and thing.user_is_moderator:
+            if c.user_is_loggedin and thing.can_ban:
                 if attr == "num_reports":
                     return thing.reported
                 elif attr == "report_reasons":
