@@ -733,8 +733,7 @@ class LinkJsonTemplate(ThingJsonTemplate):
         if c.permalink_page:
             d["upvote_ratio"] = thing.upvote_ratio
 
-        if feature.is_enabled('default_sort'):
-            d['suggested_sort'] = thing.sort_if_suggested()
+        d['suggested_sort'] = thing.sort_if_suggested()
 
         preview_object = thing.preview_image
         if preview_object:

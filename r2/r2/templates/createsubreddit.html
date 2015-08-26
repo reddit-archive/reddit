@@ -381,7 +381,6 @@ try participating in other communities on reddit for a little while first before
         %endif
         ${error_field("GOLD_ONLY_SR_REQUIRED", "hide_ads")}
       </ul>
-      %if feature.is_enabled('default_sort'):
       <div class="usertext-edit">
         <label for="suggested_comment_sort">${_('suggested comment sort')}&#32;<span class="gray">${_('(all comment threads will use this sorting method by default)')}</span></label>
         <select class="nomargin" name="suggested_comment_sort" id="suggested_comment_sort">
@@ -391,7 +390,6 @@ try participating in other communities on reddit for a little while first before
            %endfor
         </select>
       </div>
-      %endif
     </div>
     <div class="usertext-edit">
       <div class="delete-field">

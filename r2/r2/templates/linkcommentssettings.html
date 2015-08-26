@@ -77,7 +77,7 @@
   </li>
 </%def>
 
-%if feature.is_enabled('default_sort') and thing.can_edit:
+%if thing.can_edit:
   %if thing.suggested_sort == thing.sort:
     <% clear_suggested_sort() %>
   %else:

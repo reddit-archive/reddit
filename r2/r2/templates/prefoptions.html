@@ -211,12 +211,10 @@
     <p>
       ${_wsf("sort comments by %(sort)s", sort=unsafe(capture(comment_sort_options)))}
     </p>
-    %if feature.is_enabled('default_sort'):
     <p>
     ${checkbox(_(u"ignore suggested sorts"), "ignore_suggested_sort")}
     &#32;<span class="details">${_("(suggested sorts may be set by community moderators for specific threads or subreddits, like Q&As)")}</span>
     </p>
-    %endif
     <p>
     ${checkbox(_(u"show a dagger (†) on comments voted controversial"), "highlight_controversial")}
     &#32;<span class="details">${_("(a controversial comment is one that's been both upvoted and downvoted significantly)")}</span>

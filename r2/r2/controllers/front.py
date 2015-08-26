@@ -371,7 +371,7 @@ class FrontController(RedditController):
             c.referrer_policy = "always"
 
         suggested_sort_active = False
-        if not c.user.pref_ignore_suggested_sort and feature.is_enabled('default_sort'):
+        if not c.user.pref_ignore_suggested_sort:
             suggested_sort = article.sort_if_suggested()
         else:
             suggested_sort = None
