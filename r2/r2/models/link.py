@@ -1917,7 +1917,8 @@ class Message(Thing, Printable):
                 user_is_moderator = item.sr_id in user_mod_sr_ids
 
                 from subreddit import FakeSubreddit
-                if isinstance(c.site, FakeSubreddit):
+                if (isinstance(c.site, FakeSubreddit)
+                        and feature.is_enabled('modmail_colors')):
                     rgb = item.subreddit.get_rgb_key_color()
                     item.bar_color = 'rgb(%s,%s,%s)' % rgb
 
