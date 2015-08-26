@@ -504,8 +504,8 @@ ul.flat-vert {text-align: left;}
  }
 
 .side .side-message {
-    background: lighten(@info-bg, 10%) no-repeat 10px 10px;
-    border: 1px solid darken(@info-bg, 20%);
+    background: lighten(@infobar-legacy-color, 10%) no-repeat 10px 10px;
+    border: 1px solid darken(@infobar-legacy-color, 20%);
     border-radius: 2px;
     padding: 10px;
     line-height: 1.75em;
@@ -1780,25 +1780,6 @@ body.with-listing-chooser.explore-page #header .pagename {
 .commentarea > .usertext {
     margin: 0 0 10px 10px;
     overflow: auto;
-}
-
-@info-bg: #f6e69f;
-@info-border: orange;
-.infobar {
-    background-color: @info-bg;
-    padding: 5px 10px;
-    margin: 5px 305px 5px 0px;
-    border: 1px solid @info-border;
-    font-size: small;
-}
-
-.infobar img {
-    display: inline;
-    vertical-align: middle;
-}
-
-.infobar strong {
-    font-weight: bold;
 }
 
 .infobar.red { 

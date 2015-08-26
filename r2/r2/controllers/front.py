@@ -290,6 +290,8 @@ class FrontController(RedditController):
 
         # check if we just came from the submit page
         infotext = None
+        infotext_class = None
+        infotext_show_icon = False
         if request.GET.get('already_submitted'):
             submit_url = request.GET.get('submit_url') or article.url
             submit_title = request.GET.get('submit_title') or ""
@@ -299,6 +301,8 @@ class FrontController(RedditController):
             infotext = strings.already_submitted % resubmit_url
         elif article.archived:
             infotext = strings.archived_post_message
+            infotext_class = 'archived-infobar'
+            infotext_show_icon = True
 
         check_cheating('comments')
 
@@ -450,6 +454,8 @@ class FrontController(RedditController):
                            subtitle_buttons=subtitle_buttons,
                            nav_menus=[sort_menu, link_settings],
                            infotext=infotext,
+                           infotext_class=infotext_class,
+                           infotext_show_icon=infotext_show_icon,
                            sr_detail=sr_detail).render()
         return res
 

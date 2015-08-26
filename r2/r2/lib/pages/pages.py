@@ -246,8 +246,8 @@ class Reddit(Templated):
     extra_stylesheets  = []
 
     def __init__(self, space_compress=None, nav_menus=None, loginbox=True,
-                 infotext='', infotext_class=None, content=None,
-                 short_description='', title='',
+                 infotext='', infotext_class=None, infotext_show_icon=False,
+                 content=None, short_description='', title='',
                  robots=None, show_sidebar=True, show_chooser=False,
                  header=True, footer=True, srbar=True, page_classes=None,
                  short_title=None, show_wiki_actions=False, extra_js_config=None,
@@ -306,16 +306,19 @@ class Reddit(Templated):
                     infotext = g.live_config["announcement_message"]
 
             if infotext:
-                self.infobar = InfoBar(
-                    message=infotext, extra_class=infotext_class)
+                self.infobar = RedditInfoBar(
+                    message=infotext,
+                    extra_class=infotext_class,
+                    show_icon=infotext_show_icon,
+                )
             elif (isinstance(c.site, DomainSR) and
                     is_subdomain(c.site.domain, "imgur.com")):
-                self.infobar = InfoBar(message=
+                self.infobar = RedditInfoBar(message=
                     _("imgur.com domain listings (including this one) are "
                       "currently disabled to speed up vote processing.")
                 )
             elif isinstance(c.site, AllMinus) and not c.user.gold:
-                self.infobar = InfoBar(message=strings.all_minus_gold_only,
+                self.infobar = RedditInfoBar(message=strings.all_minus_gold_only,
                                        extra_class="gold")
 
             if not c.user_is_loggedin:
@@ -2382,10 +2385,21 @@ class MenuArea(Templated):
     def __init__(self, menus = []):
         Templated.__init__(self, menus = menus)
 
+
 class InfoBar(Templated):
     """Draws the yellow box at the top of a page for info"""
-    def __init__(self, message = '', extra_class = ''):
-        Templated.__init__(self, message = message, extra_class = extra_class)
+    def __init__(self, message='', extra_class=''):
+        Templated.__init__(self, message=message, extra_class=extra_class)
+
+
+class RedditInfoBar(InfoBar):
+    def __init__(self, message='', extra_class='', show_icon=False):
+        self.show_icon = show_icon
+        super(RedditInfoBar, self).__init__(
+            message=message,
+            extra_class=extra_class,
+        )
+
 
 class WelcomeBar(InfoBar):
     def __init__(self):
@@ -4228,7 +4242,7 @@ class PromoteLinkEdit(PromoteLinkBase):
             'help_center': 'https://reddit.zendesk.com/hc/en-us/categories/200352595-Advertising',
             'selfserve': 'https://www.reddit.com/r/selfserve'
         }
-        self.infobar = InfoBar(message=message)
+        self.infobar = RedditInfoBar(message=message)
         self.price_dict = PromotionPrices.get_price_dict(self.author)
 
 
