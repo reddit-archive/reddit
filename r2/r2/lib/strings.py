@@ -145,6 +145,7 @@ string_dict = dict(
     gold_summary_gilding_page_link = _("You're about to give *%(recipient)s* a month of [reddit gold](/gold/about) for this submission:"),
     gold_summary_gilding_page_footer = _("You'll pay a total of %(price)s for this."),
     unvotable_message = _("sorry, this has been archived and can no longer be voted on"),
+    archived_post_message = _("This is an archived post. You won't be able to vote or comment."),
     account_activity_blurb = _("This page shows a history of recent activity on your account. If you notice unusual activity, you should change your password immediately. Location information is guessed from your computer's IP address and may be wildly wrong, especially for visits from mobile devices."),
     your_current_ip_is = _("You are currently accessing reddit from this IP address: %(address)s."),
     account_activity_apps_blurb = _("""
