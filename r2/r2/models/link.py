@@ -1185,6 +1185,17 @@ class Comment(Thing, Printable):
         # If available, that should be used instead of calling this
         return Account._byID(self.author_id, data=True, return_dict=False)
 
+    @property
+    def archived(self):
+        link = getattr(self, 'link', None)
+        if link and getattr(link, 'subreddit', None):
+            sr = link.subreddit
+        elif link:
+            sr = link.subreddit_slow
+        else:
+            sr = self.subreddit_slow
+        return self._age >= sr.archive_age
+
     def keep_item(self, wrapped):
         return True
 
@@ -1518,7 +1529,7 @@ class Comment(Thing, Printable):
             item.is_author = (user == item.author)
             item.is_focal = (focal_comment == item._id36)
 
-            item.votable = item._age < item.subreddit.archive_age
+            item.votable = not item.archived
 
             hide_period = ('{0} minutes'
                           .format(item.subreddit.comment_score_hide_mins))
