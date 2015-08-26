@@ -39,7 +39,7 @@ from account import (
     DeletedUser,
     SubredditParticipationByAccount,
 )
-from subreddit import DefaultSR, DomainSR, Subreddit
+from subreddit import DefaultSR, DomainSR, FakeSubreddit, Subreddit
 from printable import Printable
 from r2.config import extensions
 from r2.lib.memoize import memoize
@@ -149,7 +149,6 @@ class Link(Thing, Printable):
 
     @classmethod
     def _by_url(cls, url, sr):
-        from subreddit import FakeSubreddit
         if isinstance(sr, FakeSubreddit):
             sr = None
 
@@ -460,7 +459,6 @@ class Link(Thing, Printable):
         from r2.lib.utils import timeago
         from r2.lib.template_helpers import get_domain, unsafe, format_html
         from r2.models.report import Report
-        from r2.models.subreddit import FakeSubreddit
         from r2.lib.wrapped import CachedVariable
 
         # referencing c's getattr is cheap, but not as cheap when it
@@ -1985,7 +1983,6 @@ class Message(Thing, Printable):
                 item.user_is_recipient = not user_is_sender
                 user_is_moderator = item.sr_id in user_mod_sr_ids
 
-                from subreddit import FakeSubreddit
                 if (isinstance(c.site, FakeSubreddit)
                         and feature.is_enabled('modmail_colors')):
                     item.bar_color = item.subreddit.get_accent_color()
