@@ -594,8 +594,6 @@ class CommentSortMenu(SortMenu):
     @class_property
     def hidden_options(cls):
         sorts = ['random']
-        if not feature.is_enabled('qa_sort'):
-            sorts.append('qa')
         if feature.is_enabled('remove_hot_comments'):
             sorts.append('hot')
         return sorts
