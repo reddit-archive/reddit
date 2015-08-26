@@ -239,6 +239,7 @@ class FrontController(RedditController):
             return self.abort404()
 
         sr = Subreddit._byID(article.sr_id, True)
+        article.subreddit = sr
 
         if sr.name == g.takedown_sr:
             request.environ['REDDIT_TAKEDOWN'] = article._fullname
@@ -351,7 +352,7 @@ class FrontController(RedditController):
         if c.user_is_loggedin and can_comment_link(article) and not is_api():
             #no comment box for permalinks
             display = False
-            if not comment and article._age < sr.archive_age:
+            if not comment and not article.archived:
                 display = True
 
             if article.promoted:
