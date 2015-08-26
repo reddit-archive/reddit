@@ -353,7 +353,8 @@ class ModAction(tdb_cassandra.UuidThing):
                 item.mod_button = mod_button
 
                 if isinstance(c.site, ModSR) or isinstance(c.site, MultiReddit):
-                    item.bgcolor = 'rgb(%s,%s,%s)' % item.subreddit.get_rgb()
+                    rgb = item.subreddit.get_rgb()
+                    item.bgcolor = 'rgb(%s,%s,%s)' % rgb
                     item.is_multi = True
                 else:
                     item.bgcolor = "rgb(255,255,255)"

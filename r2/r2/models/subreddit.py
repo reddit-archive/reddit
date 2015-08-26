@@ -1247,11 +1247,21 @@ class Subreddit(Thing, Printable, BaseSite):
     @classmethod
     def subscribed_ids_by_user(cls, user):
         return SubscribedSubredditsByAccount.get_all_sr_ids(user)
-        
+
     def get_rgb(self, fade=0.8):
         r = int(256 - (hash(str(self._id)) % 256)*(1-fade))
         g = int(256 - (hash(str(self._id) + ' ') % 256)*(1-fade))
         b = int(256 - (hash(str(self._id) + '  ') % 256)*(1-fade))
+        return (r, g, b)
+
+    def get_rgb_key_color(self):
+        num_colors = len(Subreddit.KEY_COLORS)
+        hex_color = Subreddit.KEY_COLORS.keys()[self._id % num_colors]
+
+        # hex color is in the form `#abc123`
+        r = int(hex_color[1:3], 16)
+        g = int(hex_color[3:5], 16)
+        b = int(hex_color[5:7], 16)
         return (r, g, b)
 
     def get_sticky_fullnames(self):

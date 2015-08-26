@@ -1918,7 +1918,7 @@ class Message(Thing, Printable):
 
                 from subreddit import FakeSubreddit
                 if isinstance(c.site, FakeSubreddit):
-                    rgb = item.subreddit.get_rgb(fade=0)
+                    rgb = item.subreddit.get_rgb_key_color()
                     item.bar_color = 'rgb(%s,%s,%s)' % rgb
 
                 if item.subreddit.is_muted(item.author):
