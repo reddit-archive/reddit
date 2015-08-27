@@ -1706,7 +1706,7 @@ class Message(Thing, Printable):
         if to_subreddit:
             SubredditParticipationByAccount.mark_participated(author, sr)
 
-        if to_subreddit:
+        if sr_id:
             g.stats.simple_event("modmail.received_message")
 
         inbox_rel = []
