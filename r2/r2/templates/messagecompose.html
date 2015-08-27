@@ -29,7 +29,7 @@
    from r2.lib.template_helpers import static
 %>
 
-<h1>${_("send a message")}</h1>
+<h1>${_("send a private message")}</h1>
 
 <%utils:submit_form onsubmit="return post_form(this, 'compose', null, null, true)",
                     method="post", _id = "compose-message",
@@ -52,7 +52,7 @@ ${captcha_field()}
 <%def name="to_field()">
   <div class="spacer">
     <%utils:round_field title="${_('to')}", 
-                        description="${_('(username, or /r/name for that subreddit\'s mods)')}">
+        description="${_('(username, or /r/name for that subreddit\'s moderators)')}">
       <input type="text" name="to" value="${thing.to or ''}"
              onchange="${'admincheck(this)' if thing.admin_check else ''}"/>
       ${error_field("NO_USER", "to")}

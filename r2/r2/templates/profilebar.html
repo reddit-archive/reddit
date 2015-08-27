@@ -168,7 +168,7 @@
     %if not thing.viewing_self:
       <img src="${static('mailgray.png')}"/>
       &#32;
-      ${plain_link(_("send message"), "/message/compose/?to=%s" % thing.user.name)}
+      ${plain_link(_("send a private message"), "/message/compose/?to=%s" % thing.user.name)}
     %endif
 
     <span class="age">

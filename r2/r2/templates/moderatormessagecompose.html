@@ -24,7 +24,7 @@
 <%namespace name="utils" file="utils.html"/>
 <%namespace file="messagecompose.html" import="to_field, subject_field, message_field, captcha_field"/>
 
-<h1>${_("send a message")}</h1>
+<h1>${_("send a private message")}</h1>
 
 <%utils:submit_form onsubmit="return post_form(this, 'compose', null, null, true)",
                     method="post", _id = "compose-message",
