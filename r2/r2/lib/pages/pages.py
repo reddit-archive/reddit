@@ -1869,7 +1869,7 @@ class CommentPane(Templated):
             # buttons and do the same for loggedout users so they can use the
             # same cached page. reply buttons will be hidden client side for
             # loggedout users
-            self.can_reply = article._age < article.subreddit_slow.archive_age
+            self.can_reply = not article.archived and not article.locked
 
         builder = CommentBuilder(
             article, sort, comment=comment, context=context, num=num, **kw)

@@ -357,7 +357,7 @@ class FrontController(RedditController):
         if c.user_is_loggedin and can_comment_link(article) and not is_api():
             #no comment box for permalinks
             display = False
-            if not comment and not article.archived:
+            if not comment and not article.archived and not article.locked:
                 display = True
 
             if article.promoted:

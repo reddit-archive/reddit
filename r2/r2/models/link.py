@@ -112,6 +112,7 @@ class Link(Thing, Printable):
                      managed_promo=False,
                      pending=False,
                      disable_comments=False,
+                     locked=False,
                      selftext='',
                      sendreplies=True,
                      ip='0.0.0.0',
@@ -1406,7 +1407,7 @@ class Comment(Thing, Printable):
             else:
                 item.parent_permalink = None
 
-            item.can_reply = item.link._age < item.subreddit.archive_age
+            item.can_reply = not item.link.archived and not item.link.locked
             if c.user_is_loggedin:
                 item.can_reply &= item.sr_id in can_reply_srs
 
