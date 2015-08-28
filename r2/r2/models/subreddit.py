@@ -324,13 +324,23 @@ class Subreddit(Thing, Printable, BaseSite):
     KEY_COLORS = collections.OrderedDict([
         ('#ff4500', N_('orangered')),
         ('#ff8717', N_('orange')),
-        ('#ffb000', N_('pale orange')),
+        ('#ffb000', N_('mango')),
         ('#94e044', N_('lime')),
         ('#46d160', N_('green')),
         ('#0dd3bb', N_('mint')),
         ('#24a0ed', N_('blue')),
         ('#0079d3', N_('alien blue')),
     ])
+    ACCENT_COLORS = (
+        # primary colors
+        '#ff4500', '#ff8717', '#ffb000', '#94e044', '#46d160', '#0dd3bb',
+        '#24a0ed', '#0079d3',
+        # secondary colors
+        '#db0064', '#a06a42', '#c18d42', '#d4e815', '#46a508', '#25b79f',
+        '#00b985', '#4856a3', '#ff66ac', '#7e53c1',
+        # special colors
+        '#9494ff', '#d8c161', '#ffd635', '#ff585b', '#ea0027', '#fff03e',
+    )
 
     MAX_STICKIES = 2
 
@@ -1254,15 +1264,9 @@ class Subreddit(Thing, Printable, BaseSite):
         b = int(256 - (hash(str(self._id) + '  ') % 256)*(1-fade))
         return (r, g, b)
 
-    def get_rgb_key_color(self):
-        num_colors = len(Subreddit.KEY_COLORS)
-        hex_color = Subreddit.KEY_COLORS.keys()[self._id % num_colors]
-
-        # hex color is in the form `#abc123`
-        r = int(hex_color[1:3], 16)
-        g = int(hex_color[3:5], 16)
-        b = int(hex_color[5:7], 16)
-        return (r, g, b)
+    def get_accent_color(self):
+        num_colors = len(Subreddit.ACCENT_COLORS)
+        return Subreddit.ACCENT_COLORS[self._id % num_colors]
 
     def get_sticky_fullnames(self):
         """Return the fullnames of the Links stickied in the subreddit."""

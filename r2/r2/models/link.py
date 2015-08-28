@@ -1919,8 +1919,7 @@ class Message(Thing, Printable):
                 from subreddit import FakeSubreddit
                 if (isinstance(c.site, FakeSubreddit)
                         and feature.is_enabled('modmail_colors')):
-                    rgb = item.subreddit.get_rgb_key_color()
-                    item.bar_color = 'rgb(%s,%s,%s)' % rgb
+                    item.bar_color = item.subreddit.get_accent_color()
 
                 if item.subreddit.is_muted(item.author):
                     item.sr_muted = True
