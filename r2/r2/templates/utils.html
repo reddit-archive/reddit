@@ -491,23 +491,6 @@ ${unsafe(txt)}
   </form>
 </%def>
 
-<%def name="block_field(title, description = '', css_class= '', **kw)">
-  <div class="roundfield ${css_class}"
-       %for k, v in kw.iteritems():
-         ${k}="${v}"
-       %endfor
-       >
-    <span class="title">${title}</span>
-    &#32;
-    %if description:
-      <span class="gray">${description}</span>
-    %endif
-    <div class="roundfield-content">
-      ${caller.body()}
-    </div>
-  </div>
-</%def>
-
 <%def name="block_field(kind, title, description = '', css_class= '', **kw)">
   <div class="${kind} ${css_class}"
        %for k, v in kw.iteritems():
