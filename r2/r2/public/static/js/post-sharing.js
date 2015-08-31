@@ -495,7 +495,9 @@
       });
 
       postSharing.on('unmount', function() {
-        r.ui.activeShareMenu = null;
+        if (r.ui.activeShareMenu === postSharing) {
+          r.ui.activeShareMenu = null;
+        }
       });
 
       postSharing.on('close', function() {
