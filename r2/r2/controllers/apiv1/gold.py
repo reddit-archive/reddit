@@ -34,6 +34,7 @@ from r2.lib.validator import (
     VAccountByName,
     VByName,
     VInt,
+    VNotInTimeout,
 )
 from r2.models import Account, Comment, Link, NotFound
 from r2.models.gold import creddits_lock
@@ -90,6 +91,7 @@ class APIv1GoldController(OAuth2OnlyController):
         if target.subreddit_slow.quarantine:
             err = RedditError("GILDING_NOT_ALLOWED")
             self.on_validation_error(err)
+        VNotInTimeout().run(target=target, subreddit=target.subreddit_slow)
 
         self._gift_using_creddits(
             recipient=target.author_slow,
@@ -102,12 +104,13 @@ class APIv1GoldController(OAuth2OnlyController):
         VUser(),
         user=VAccountByName("username"),
         months=VInt("months", min=1, max=36),
+        timeout=VNotInTimeout(),
     )
     @api_doc(
         api_section.gold,
         uri="/api/v1/gold/give/{username}",
     )
-    def POST_give(self, user, months):
+    def POST_give(self, user, months, timeout):
         self._gift_using_creddits(
             recipient=user,
             months=months,

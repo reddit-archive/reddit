@@ -37,7 +37,6 @@ from r2.lib import hooks
 from r2.lib.cache_poisoning import cache_headers_valid
 from r2.lib.utils import domain, epoch_timestamp, sampled, squelch_exceptions
 
-
 MAX_EVENT_SIZE = 4096
 MAX_CONTENT_LENGTH = 40 * 1024
 
@@ -278,6 +277,103 @@ class EventQueue(object):
         event.add_target_fields(target)
 
         self.save_event(event)
+
+    @squelch_exceptions
+    def timeout_forbidden_event(self, action_name, target=None,
+            target_fullname=None, subreddit=None, request=None, context=None):
+        """Create a timeout-related 'forbidden_actions' for event-collector.
+
+        action_name: the action taken by a user in timeout
+        target: The intended item the action was to be taken on
+        subreddit: The Subreddit the action was taken in. If target is of the
+            type Subreddit, then this won't be passed in
+        request, context: Should be pylons.request & pylons.c respectively;
+
+        """
+        event = EventV2(
+            topic="forbidden_actions",
+            event_type="ss.forbidden_timeout_attempt",
+            request=request,
+            context=context,
+        )
+
+        if not action_name:
+            request_vars = request.environ["pylons.routes_dict"]
+            action_name = request_vars.get('action_name')
+
+            # type of vote
+            if action_name == "vote":
+                direction = int(request.POST.get("dir", 0))
+                if direction == 1:
+                    action_name = "upvote"
+                elif direction == -1:
+                    action_name = "downvote"
+                else:
+                    action_name = "clearvote"
+            # set or unset for contest mode and subreddit sticky
+            elif action_name in ("set_contest_mode", "set_subreddit_sticky"):
+                if not bool(request.POST.get('state')):
+                    action_name = "un" + action_name
+            # set or unset for suggested sort
+            elif action_name == "set_suggested_sort":
+                if request.POST.get("sort") in ("", "clear"):
+                    action_name = "un" + action_name
+            # action for viewing /about/reports, /about/spam, /about/modqueue
+            elif action_name == "spamlisting":
+                action_name = "spamlisting_%s" % request_vars.get("location")
+
+        if not target:
+            if not target_fullname:
+                if action_name in ("wiki_settings", "wiki_edit"):
+                    target = context.site
+                elif action_name in ("wiki_allow_editor"):
+                    target = Account._by_name(request.POST.get("username"))
+                elif action_name in ("delete_sr_header", "delete_sr_icon",
+                        "delete_sr_banner"):
+                    target = context.site
+
+            if target_fullname:
+                from r2.models import Thing
+                target = Thing._by_fullname(
+                    target_fullname,
+                    return_dict=False,
+                    data=True,
+            )
+
+        event.add("details_text", "forbidden_%s" % action_name)
+        event.add_target_fields(target)
+
+        from r2.models import Comment, Link, Subreddit
+        if not subreddit:
+            if isinstance(context.site, Subreddit):
+                subreddit = context.site
+            elif isinstance(target, (Comment, Link)):
+                subreddit = target.subreddit_slow
+
+        if subreddit:
+            event.add("sr_id", subreddit._id)
+            event.add("sr_name", subreddit.name)
+
+        if target:
+            from r2.models import Comment, Link, Message
+
+            event.add("target_id", target._id)
+            event.add("target_fullname", target._fullname)
+            event.add("target_type", target.__class__.__name__.lower())
+
+            # If the target is an Account or Subreddit (or has a "name" attr),
+            # add the target_name
+            if hasattr(target, "name"):
+                event.add("target_name", target.name)
+            # Pass in the author of the target for comments, links, & messages
+            elif isinstance(target, (Comment, Link, Message)):
+                author = target.author_slow
+                if target._deleted or author._deleted:
+                    event.add("target_author_id", 0)
+                    event.add("target_author_name", "[deleted]")
+                else:
+                    event.add("target_author_id", author._id)
+                    event.add("target_author_name", author.name)
 
     @squelch_exceptions
     @sampled("events_collector_mod_sample_rate")

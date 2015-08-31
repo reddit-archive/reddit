@@ -926,6 +926,23 @@ class VUser(Validator):
             raise UserRequiredException
 
 
+class VNotInTimeout(Validator):
+    def run(self, target_fullname=None, fatal=True, action_name=None,
+            target=None, subreddit=None):
+        if c.user_is_loggedin and c.user.in_timeout:
+            g.events.timeout_forbidden_event(
+                action_name,
+                target=target,
+                target_fullname=target_fullname,
+                subreddit=subreddit,
+                request=request,
+                context=c,
+            )
+            if fatal:
+                abort(403, errors.IN_TIMEOUT)
+            return False
+
+
 class VVerifyPassword(Validator):
     def __init__(self, param, fatal=True, *a, **kw):
         Validator.__init__(self, param, *a, **kw)
@@ -1119,13 +1136,6 @@ class VSrModerator(Validator):
         super(VSrModerator, self).__init__(*a, **kw)
 
     def run(self):
-        # We don't want to allow users who are in timeout to do any sort of
-        # moderator actions.
-        if c.user_is_loggedin and c.user.in_timeout:
-            if self.fatal:
-                abort(403, "forbidden")
-            return self.set_error('IN_TIMEOUT', code=403)
-
         if not (c.user_is_loggedin
                 and c.site.is_moderator_with_perms(c.user, *self.perms)
                 or c.user_is_admin):
@@ -1133,21 +1143,30 @@ class VSrModerator(Validator):
                 abort(403, "forbidden")
             return self.set_error('MOD_REQUIRED', code=403)
 
+
 class VCanDistinguish(VByName):
     def run(self, thing_name, how):
-        if c.user_is_loggedin and not c.user.in_timeout:
+        if c.user_is_loggedin:
+            can_distinguish = False
             item = VByName.run(self, thing_name)
+
             if item.author_id == c.user._id:
                 # will throw a legitimate 500 if this isn't a link or
                 # comment, because this should only be used on links and
                 # comments
                 subreddit = item.subreddit_slow
+
                 if how in ("yes", "no") and subreddit.can_distinguish(c.user):
-                    return True
+                    can_distinguish = True
                 elif how in ("special", "no") and c.user_special_distinguish:
-                    return True
+                    can_distinguish = True
                 elif how in ("admin", "no") and c.user.employee:
-                    return True
+                    can_distinguish = True
+
+                if can_distinguish:
+                    # Don't allow distinguishing for users who are in timeout
+                    VNotInTimeout().run(target=item, subreddit=subreddit)
+                    return can_distinguish
 
         abort(403,'forbidden')
 
@@ -1159,26 +1178,36 @@ class VSrCanAlter(VByName):
         if c.user_is_admin:
             return True
         elif c.user_is_loggedin:
+            can_alter = False
+            subreddit = None
             item = VByName.run(self, thing_name)
+
             if item.author_id == c.user._id:
-                return True
+                can_alter = True
             elif item.promoted and c.user_is_sponsor:
-                return True
+                can_alter = True
             else:
                 # will throw a legitimate 500 if this isn't a link or
                 # comment, because this should only be used on links and
                 # comments
                 subreddit = item.subreddit_slow
                 if subreddit.can_distinguish(c.user):
-                    return True
+                    can_alter = True
+
+            if can_alter:
+                # Don't allow mod actions for users who are in timeout
+                VNotInTimeout().run(target=item, subreddit=subreddit)
+                return can_alter
+
         abort(403,'forbidden')
 
 class VSrCanBan(VByName):
     def run(self, thing_name):
         if c.user_is_admin:
             return True
-        elif c.user_is_loggedin and not c.user.in_timeout:
+        elif c.user_is_loggedin:
             item = VByName.run(self, thing_name)
+
             if isinstance(item, (Link, Comment)):
                 sr = item.subreddit_slow
                 if sr.is_moderator_with_perms(c.user, 'posts'):
@@ -1286,10 +1315,6 @@ class VSubmitSR(Validator):
             Validator.__init__(self, srname_param)
 
     def run(self, sr_name, link_type = None):
-        if c.user_is_loggedin and c.user.in_timeout:
-            self.set_error(errors.IN_TIMEOUT)
-            return
-
         if not sr_name:
             self.set_error(errors.SUBREDDIT_REQUIRED)
             return None

@@ -46,6 +46,7 @@ from r2.lib.validator import (
     VInt,
     VMarkdown,
     VModhash,
+    VNotInTimeout,
     VOneOf,
     VPrintable,
     VRatelimit,
@@ -201,6 +202,7 @@ class WikiController(RedditController):
         if error:
             error = error.msg_params
         if wp[0]:
+            VNotInTimeout().run(target=page)
             return self.redirect(join_urls(c.wiki_base_url, wp[0].name))
         elif api:
             if error:
@@ -217,11 +219,13 @@ class WikiController(RedditController):
                 error_msg = _('a max of %d separators "/" are allowed in a wiki page name.') % error['max_separators']
             return BoringPage(_("Wiki error"), infotext=error_msg).render()
         else:
+            VNotInTimeout().run()
             return WikiCreate(page=page, may_revise=True).render()
 
     @validate(wp=VWikiPageRevise('page', restricted=True, required=True))
     def GET_wiki_revise(self, wp, page, message=None, **kw):
         wp = wp[0]
+        timeout=VNotInTimeout().run(target=wp)
         previous = kw.get('previous', wp._get('revision'))
         content = kw.get('content', wp.content)
         if not message and wp.name in page_descriptions:
@@ -286,15 +290,15 @@ class WikiController(RedditController):
 
     @require_oauth2_scope("modwiki")
     @api_doc(api_section.wiki, uri='/wiki/settings/{page}', uses_site=True)
-    @validate(VModhash(),
-              page=VWikiPage('page', restricted=True, modonly=True),
-              permlevel=VInt('permlevel'),
-              listed=VBoolean('listed'))
-    def POST_wiki_settings(self, page, permlevel, listed):
+    @validate(
+        VModhash(),
+        page=VWikiPage('page', restricted=True, modonly=True),
+        permlevel=VInt('permlevel'),
+        listed=VBoolean('listed'),
+        timeout=VNotInTimeout(),
+    )
+    def POST_wiki_settings(self, page, permlevel, listed, timeout):
         """Update the permissions and visibility of wiki `page`"""
-        if c.user.in_timeout:
-            self.abort403()
-
         oldpermlevel = page.permlevel
         try:
             page.change_permlevel(permlevel)
@@ -368,14 +372,15 @@ class WikiApiController(WikiController):
         if c.user._spam:
             error = _("You are doing that too much, please try again later.")
             self.handle_error(415, 'SPECIAL_ERRORS', special_errors=[error])
-        if c.user.in_timeout:
-            self.handle_error(403)
 
         if not page:
             error = c.errors.get(('WIKI_CREATE_ERROR', 'page'))
             if error:
                 self.handle_error(403, **(error.msg_params or {}))
+            VNotInTimeout().run(action_name='create_wiki_page')
             page = WikiPage.create(c.site, page_name)
+        else:
+            VNotInTimeout().run(action_name='edit_wiki_page', target=page)
 
         renderer = RENDERERS_BY_PAGE.get(page.name, 'wiki')
         if renderer in ('wiki', 'reddit'):
@@ -439,8 +444,10 @@ class WikiApiController(WikiController):
         if not user:
             self.handle_error(404, 'UNKNOWN_USER')
         elif act == 'del':
+            VNotInTimeout().run(action_name='wiki_del_editor', target=user)
             page.remove_editor(user._id36)
         elif act == 'add':
+            VNotInTimeout().run(action_name='wiki_allow_editor', target=user)
             page.add_editor(user._id36)
         else:
             self.handle_error(400, 'INVALID_ACTION')

@@ -768,9 +768,12 @@ class FrontController(RedditController):
     @require_oauth2_scope("read")
     @base_listing
     @disable_subreddit_css()
-    @validate(VSrModerator(perms='posts'),
-              location=nop('location'),
-              only=VOneOf('only', ('links', 'comments')))
+    @validate(
+        VSrModerator(perms='posts'),
+        location=nop('location'),
+        only=VOneOf('only', ('links', 'comments')),
+        timeout=VNotInTimeout(),
+    )
     @api_doc(
         api_section.moderation,
         uses_site=True,
@@ -778,7 +781,8 @@ class FrontController(RedditController):
         uri_variants=['/about/' + loc for loc in
                       ('reports', 'spam', 'modqueue', 'unmoderated', 'edited')],
     )
-    def GET_spamlisting(self, location, only, num, after, reverse, count):
+    def GET_spamlisting(self, location, only, num, after, reverse, count,
+            timeout):
         """Return a listing of posts relevant to moderators.
 
         * reports: Things that have been reported.
@@ -823,9 +827,12 @@ class FrontController(RedditController):
 
     @base_listing
     @disable_subreddit_css()
-    @validate(VSrModerator(perms='flair'),
-              name=nop('name'))
-    def GET_flairlisting(self, num, after, reverse, count, name):
+    @validate(
+        VSrModerator(perms='flair'),
+        name=nop('name'),
+        timeout=VNotInTimeout(),
+    )
+    def GET_flairlisting(self, num, after, reverse, count, name, timeout):
         user = None
         if name:
             try:
@@ -1804,9 +1811,11 @@ class FormsController(RedditController):
               thing=VByName("thing"),
               giftmessage=VLength("giftmessage", 10000),
               email=ValidEmail("email"),
-              edit=VBoolean("edit", default=False))
+              edit=VBoolean("edit", default=False),
+              timeout=VNotInTimeout("thing"),
+    )
     def GET_gold(self, is_payment, goldtype, period, months, num_creddits,
-                 signed, recipient, giftmessage, thing, email, edit):
+                 signed, recipient, giftmessage, thing, email, edit, timeout):
 
         if thing:
             thing_sr = Subreddit._byID(thing.sr_id, data=True)

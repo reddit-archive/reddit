@@ -150,6 +150,10 @@ class ApidocsController(RedditController):
                     docs['parameters'] = {}
                 docs.update(api_doc)
 
+                # hide parameters that don't need to be public
+                if 'parameters' in api_doc:
+                    docs['parameters'].pop('timeout', None)
+
                 # append a message to the docstring if supplied
                 notes = docs.get("notes")
                 if notes:
