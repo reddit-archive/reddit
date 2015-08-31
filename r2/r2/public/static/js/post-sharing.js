@@ -296,6 +296,7 @@
       var title = this.thingData.title;
       var shareParams = {
         canonicalUrl: redditUrl,
+        posttype: 'link',
         title: title,
       };
       var shareUrl = replaceParams('https://www.tumblr.com/widgets/share/tool', shareParams);
