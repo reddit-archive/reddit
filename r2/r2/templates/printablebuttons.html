@@ -61,6 +61,12 @@
       </a>
     </li>
   %endif
+  %if thing.show_lock:
+    <li>${ynbutton(_("lock"), _("locked"), "lock")}</li>
+  %endif
+  %if thing.show_unlock:
+    <li>${ynbutton(_("unlock"), _("unlocked"), "unlock")}</li>
+  %endif
   %if thing.show_marknsfw:
     <li>${ynbutton(_("nsfw"), _("marked"), "marknsfw")}</li>
   %endif

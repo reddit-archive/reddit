@@ -1445,6 +1445,45 @@ class ApiController(RedditController):
     @require_oauth2_scope("modposts")
     @noresponse(VUser(),
                 VModhash(),
+                VSrCanBan('id'),
+                thing=VByName('id', thing_cls=Link))
+    @api_doc(api_section.links_and_comments)
+    def POST_lock(self, thing):
+        """Lock a comment thread.
+
+        See also: [/api/unlock](#POST_api_unlock).
+
+        """
+        thing.locked = True
+        thing._commit()
+
+        ModAction.create(thing.subreddit_slow, c.user, target=thing,
+                         action='lock')
+        g.stats.simple_event('modaction.lock')
+
+
+    @require_oauth2_scope("modposts")
+    @noresponse(VUser(),
+                VModhash(),
+                VSrCanBan('id'),
+                thing=VByName('id', thing_cls=Link))
+    @api_doc(api_section.links_and_comments)
+    def POST_unlock(self, thing):
+        """Unlock a comment thread.
+
+        See also: [/api/lock](#POST_api_lock).
+
+        """
+        thing.locked = False
+        thing._commit()
+
+        ModAction.create(thing.subreddit_slow, c.user, target=thing,
+                         action='unlock')
+        g.stats.simple_event('modaction.unlock')
+
+    @require_oauth2_scope("modposts")
+    @noresponse(VUser(),
+                VModhash(),
                 VSrCanAlter('id'),
                 thing = VByName('id'))
     @api_doc(api_section.links_and_comments)

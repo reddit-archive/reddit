@@ -44,7 +44,8 @@ class PrintableButtons(Styled):
 
     def __init__(self, style, thing,
                  show_delete = False, show_report = True,
-                 show_distinguish = False, show_marknsfw = False,
+                 show_distinguish = False, show_lock = False,
+                 show_unlock = False, show_marknsfw = False,
                  show_unmarknsfw = False, is_link=False,
                  show_flair=False, show_rescrape=False,
                  show_givegold=False, **kw):
@@ -65,6 +66,8 @@ class PrintableButtons(Styled):
                         show_approve = show_approve,
                         show_report = show_report,
                         show_distinguish = show_distinguish,
+                        show_lock = show_lock,
+                        show_unlock = show_unlock,
                         show_marknsfw = show_marknsfw,
                         show_unmarknsfw = show_unmarknsfw,
                         show_flair = show_flair,
@@ -93,6 +96,11 @@ class LinkButtons(PrintableButtons):
         thing_takendown = getattr(thing, 'admin_takedown', False)
         editable = is_author and thing_editable and not thing_takendown
 
+        show_lock = show_unlock = False
+        if thing.can_ban:
+            show_lock = not thing.locked
+            show_unlock = not show_lock
+
         show_marknsfw = show_unmarknsfw = False
         show_rescrape = False
         if thing.can_ban or is_author or (thing.promoted and c.user_is_sponsor):
@@ -104,6 +112,7 @@ class LinkButtons(PrintableButtons):
             if (not thing.is_self and
                     not (thing.has_thumbnail or thing.media_object)):
                 show_rescrape = True
+
         show_givegold = thing.can_gild and (c.permalink_page or c.profilepage)
 
         # do we show the delete button?
@@ -153,6 +162,8 @@ class LinkButtons(PrintableButtons):
                                   mod_reports=thing.mod_reports,
                                   user_reports=thing.user_reports,
                                   show_distinguish = show_distinguish,
+                                  show_lock = show_lock,
+                                  show_unlock = show_unlock,
                                   show_marknsfw = show_marknsfw,
                                   show_unmarknsfw = show_unmarknsfw,
                                   show_flair = thing.can_flair,

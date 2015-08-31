@@ -8667,7 +8667,9 @@ form#banned textarea {
 .modactions.ignorereports,
 .modactions.unignorereports,
 .modactions.sticky,
-.modactions.unsticky {
+.modactions.unsticky,
+.modactions.lock,
+.modactions.unlock {
     height: 16px;
     width: 16px;
     display: block;
@@ -8756,6 +8758,12 @@ form#banned textarea {
 }
 .modactions.unsticky {
     background-image: url(../modactions_unsticky.png); /* SPRITE */
+}
+.modactions.lock {
+    background-image: url(../modactions_lock.png); /* SPRITE */
+}
+.modactions.unlock {
+    background-image: url(../modactions_unlock.png); /* SPRITE */
 }
 
 .adminpasswordform {
