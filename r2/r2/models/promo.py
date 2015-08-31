@@ -27,7 +27,7 @@ from pycassa.types import CompositeType
 from pylons import g, c
 from pylons.i18n import _, N_
 
-from r2.lib import filters
+from r2.lib.unicode import _force_unicode
 from r2.lib.db import tdb_cassandra
 from r2.lib.db.thing import Thing, NotFound
 from r2.lib.memoize import memoize
@@ -591,7 +591,7 @@ class PromotionLog(tdb_cassandra.View):
         now = datetime.now(g.tz).strftime("%Y-%m-%d %H:%M:%S")
         text = "[%s: %s] %s" % (name, now, text)
         rowkey = cls._rowkey(link)
-        column = {uuid1(): filters._force_utf8(text)}
+        column = {uuid1(): _force_unicode(text)}
         cls._set_values(rowkey, column)
         return text
 
