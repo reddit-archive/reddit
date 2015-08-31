@@ -282,6 +282,11 @@ class Link(Thing, Printable):
         else:
             return domain(self.url)
 
+    @property
+    def num_comments(self):
+        # Paper over obviously broken comment counts (those that are negative).
+        return max(self.__getattr__('num_comments'), 0)
+
     def keep_item(self, wrapped):
         user = c.user if c.user_is_loggedin else None
 
