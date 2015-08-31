@@ -1264,9 +1264,9 @@ class Subreddit(Thing, Printable, BaseSite):
 
     @classmethod
     def get_promote_srid(cls):
-        if g.promo_srid36:
-            return int(g.promo_srid36, 36)
-        else:
+        try:
+            return cls._by_name(g.promo_sr_name)._id
+        except NotFound:
             return None
 
     def is_subscriber(self, user):
