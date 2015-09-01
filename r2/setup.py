@@ -72,7 +72,7 @@ setup(
         "lxml",
         "kazoo",
         "stripe",
-        "requests<1.0.0",
+        "requests",
         "tinycss2",
         "unidecode",
         "PyYAML",
