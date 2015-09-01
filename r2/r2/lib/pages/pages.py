@@ -310,8 +310,25 @@ class Reddit(Templated):
                     infotext = strings.read_only_msg
                 elif g.live_config.get("announcement_message"):
                     infotext = g.live_config["announcement_message"]
+            if c.user_is_loggedin and c.user.in_timeout:
+                timeout_days_remaining = c.user.days_remaining_in_timeout
 
-            if infotext:
+                if timeout_days_remaining:
+                    days = ungettext('day', 'days', timeout_days_remaining)
+                    days_str = '%(num)s %(days)s' % {
+                        'num': timeout_days_remaining,
+                        'days': days,
+                    }
+                    message = strings.in_temp_timeout_msg % {'days': days_str}
+                else:
+                    message = strings.in_perma_timeout_msg
+
+                self.infobar = RedditInfoBar(
+                    message=message,
+                    extra_class='timeout-infobar',
+                    show_icon=True,
+                )
+            elif infotext:
                 self.infobar = RedditInfoBar(
                     message=infotext,
                     extra_class=infotext_class,
