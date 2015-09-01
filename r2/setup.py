@@ -24,17 +24,6 @@
 import os
 import fnmatch
 import sys
-
-
-try:
-    import pkg_resources
-except ImportError:
-    print "Distribute >= 0.6.16 is required to run this."
-    sys.exit(1)
-else:
-    pkg_resources.require("distribute>=0.6.16")
-
-
 from setuptools import setup, find_packages, Extension
 
 
