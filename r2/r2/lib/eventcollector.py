@@ -421,9 +421,19 @@ class EventV2(object):
         self.obfuscated_data = obfuscated_data or {}
 
         if context and request:
-            self.payload.update(self.get_context_data(request, context))
-            self.obfuscated_data.update(
-                self.get_sensitive_context_data(request, context))
+            # Since we don't want to override any of these values that callers
+            # might have set, we have to do a bit of finagling to filter out
+            # the values that've already been set. Variety of other solutions
+            # here: http://stackoverflow.com/q/6354436/120999
+            context_data = self.get_context_data(request, context)
+            new_context_data = {k: v for (k, v) in context_data.items()
+                                if k not in self.payload}
+            self.payload.update(new_context_data)
+
+            context_data = self.get_sensitive_context_data(request, context)
+            new_context_data = {k: v for (k, v) in context_data.items()
+                                if k not in self.obfuscated_data}
+            self.obfuscated_data.update(new_context_data)
 
     def add(self, field, value, obfuscate=False):
         if obfuscate:
