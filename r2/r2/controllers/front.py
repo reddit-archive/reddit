@@ -239,7 +239,6 @@ class FrontController(RedditController):
             return self.abort404()
 
         sr = Subreddit._byID(article.sr_id, True)
-        article.subreddit = sr
 
         if sr.name == g.takedown_sr:
             request.environ['REDDIT_TAKEDOWN'] = article._fullname
