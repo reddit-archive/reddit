@@ -329,7 +329,8 @@ class EventQueue(object):
                 elif action_name in ("wiki_allow_editor"):
                     target = Account._by_name(request.POST.get("username"))
                 elif action_name in ("delete_sr_header", "delete_sr_icon",
-                        "delete_sr_banner"):
+                        "delete_sr_banner", "bannedlisting", "mutedlisting",
+                        "wikibannedlisting", "wikicontributorslisting"):
                     target = context.site
 
             if target_fullname:

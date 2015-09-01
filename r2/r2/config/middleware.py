@@ -113,6 +113,8 @@ def error_mapper(code, message, environ, global_conf=None, **kw):
             d['srname'] = environ.get('REDDIT_NAME')
         if environ.get('REDDIT_TAKEDOWN'):
             d['takedown'] = environ.get('REDDIT_TAKEDOWN')
+        if environ.get('REDDIT_ERROR_NAME'):
+            d['error_name'] = environ.get('REDDIT_ERROR_NAME')
 
         # preserve x-frame-options when 304ing
         if code == 304:

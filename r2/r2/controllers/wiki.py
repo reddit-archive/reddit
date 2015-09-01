@@ -226,6 +226,9 @@ class WikiController(RedditController):
     def GET_wiki_revise(self, wp, page, message=None, **kw):
         wp = wp[0]
         timeout=VNotInTimeout().run(target=wp)
+        error = c.errors.get(('MAY_NOT_REVISE', 'page'))
+        if error:
+            self.handle_error(403, **(error.msg_params or {}))
         previous = kw.get('previous', wp._get('revision'))
         content = kw.get('content', wp.content)
         if not message and wp.name in page_descriptions:
@@ -381,6 +384,9 @@ class WikiApiController(WikiController):
             page = WikiPage.create(c.site, page_name)
         else:
             VNotInTimeout().run(action_name='edit_wiki_page', target=page)
+            error = c.errors.get(('MAY_NOT_REVISE', 'page'))
+            if error:
+                self.handle_error(403, **(error.msg_params or {}))
 
         renderer = RENDERERS_BY_PAGE.get(page.name, 'wiki')
         if renderer in ('wiki', 'reddit'):

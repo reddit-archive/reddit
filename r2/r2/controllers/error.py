@@ -195,7 +195,8 @@ class ErrorController(RedditController):
             except ValueError:
                 code = 404
             srname = request.GET.get('srname', '')
-            takedown = request.GET.get('takedown', "")
+            takedown = request.GET.get('takedown', '')
+            error_name = request.GET.get('error_name', '')
 
             # StatusBasedRedirect will override this anyway, but we need this
             # here for pagecache to see.
@@ -206,6 +207,18 @@ class ErrorController(RedditController):
 
             if request.GET.has_key('allow_framing'):
                 c.allow_framing = bool(request.GET['allow_framing'] == '1')
+
+            if (error_name == 'IN_TIMEOUT' and
+                    not 'usable_error_content' in request.environ):
+                timeout_days_remaining = c.user.days_remaining_in_timeout
+
+                errpage = pages.InterstitialPage(
+                    _("banned"),
+                    content=pages.InTimeoutInterstitial(
+                        timeout_days_remaining=timeout_days_remaining,
+                    ),
+                )
+                request.environ['usable_error_content'] = errpage.render()
 
             if code in (204, 304):
                 # NEVER return a content body on 204/304 or downstream

@@ -939,6 +939,7 @@ class VNotInTimeout(Validator):
                 context=c,
             )
             if fatal:
+                request.environ['REDDIT_ERROR_NAME'] = 'IN_TIMEOUT'
                 abort(403, errors.IN_TIMEOUT)
             return False
 

@@ -340,7 +340,9 @@ class VWikiPageRevise(VWikiPage):
         if not this_may_revise(wp):
             if not wp:
                 return self.set_error('PAGE_NOT_FOUND', code=404)
-            return self.set_error('MAY_NOT_REVISE', code=403)
+            # No abort code on purpose, controller will handle
+            self.set_error('MAY_NOT_REVISE')
+            return (None, None)
         if not wp:
             # No abort code on purpose, controller will handle
             error = self.may_not_create(page)
