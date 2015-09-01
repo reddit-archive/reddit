@@ -34,6 +34,7 @@ from r2.lib.base import abort
 from reddit_base import RedditController, MinimalController, require_https
 from r2.lib.db import tdb_cassandra
 from r2.lib.db.thing import NotFound
+from r2.lib.pages import RedditError
 from r2.models import Account
 from r2.models.token import (
     OAuth2Client, OAuth2AuthorizationCode, OAuth2AccessToken,
@@ -100,6 +101,24 @@ class OAuth2FrontendController(RedditController):
         final_redirect = _update_redirect_uri(redirect_uri, resp, as_fragment)
         return self.redirect(final_redirect, code=302)
 
+    def _check_employee_grants(self, client, scope):
+        if not c.user.employee or not client:
+            return
+        if client._id in g.employee_approved_clients:
+            return
+        if client._id in g.mobile_auth_allowed_clients:
+            return
+        # The identity scope doesn't leak much, and we don't mind if employees
+        # prove their identity to some external service
+        if scope.scopes == {"identity"}:
+            return
+        error_page = RedditError(
+            title=_('this app has not been approved for use with employee accounts'),
+            message="",
+        )
+        request.environ["usable_error_content"] = error_page.render()
+        self.abort403()
+
     @validate(VUser(),
               response_type = VOneOf("response_type", ("code", "token")),
               client = VOAuth2ClientID(),
@@ -130,6 +149,8 @@ class OAuth2FrontendController(RedditController):
         **redirect_uri** will be returned, with a **error** parameter
         indicating why the request failed.
         """
+
+        self._check_employee_grants(client, scope)
 
         # Check redirect URI first; it will ensure client exists
         self._check_redirect_uri(client, redirect_uri)
@@ -163,6 +184,8 @@ class OAuth2FrontendController(RedditController):
     def POST_authorize(self, authorize, client, redirect_uri, scope, state,
                        duration, response_type):
         """Endpoint for OAuth2 authorization."""
+
+        self._check_employee_grants(client, scope)
 
         if response_type == "token" and client.is_confidential():
             # Prevent "confidential" clients from distributing tokens

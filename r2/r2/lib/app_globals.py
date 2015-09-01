@@ -374,6 +374,9 @@ class Globals(object):
         ConfigValue.dict(ConfigValue.str, ConfigValue.float): [
             'pennies_per_server_second',
         ],
+        ConfigValue.dict(ConfigValue.str, ConfigValue.str): [
+            'employee_approved_clients',
+        ],
         ConfigValue.dict(ConfigValue.str, ConfigValue.choice(**PERMISSIONS)): [
             'employees',
         ],
@@ -645,6 +648,11 @@ class Globals(object):
             self.live_config, type="sponsor")
         self.employees = PermissionFilteredEmployeeList(
             self.live_config, type="employee")
+
+        # Store which OAuth clients employees may use, the keys are just for
+        # readability.
+        self.employee_approved_clients = \
+            self.live_config["employee_approved_clients"].values()
 
         self.startup_timer.intermediate("zookeeper")
 
