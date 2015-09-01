@@ -302,6 +302,10 @@ class FrontController(RedditController):
             infotext = strings.archived_post_message
             infotext_class = 'archived-infobar'
             infotext_show_icon = True
+        elif article.locked:
+            infotext = strings.locked_post_message
+            infotext_class = 'locked-infobar'
+            infotext_show_icon = True
 
         check_cheating('comments')
 
