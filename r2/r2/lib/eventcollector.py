@@ -315,13 +315,21 @@ class EventQueue(object):
             event.add("details_text", modaction.details_text)
 
         if target:
-            from r2.models import Account
+            from r2.models import Account, Comment, Link
 
             event.add("target_fullname", target._fullname)
             event.add("target_type", target.__class__.__name__.lower())
             event.add("target_id", target._id)
             if isinstance(target, Account):
                 event.add("target_name", target.name)
+            elif isinstance(target, (Comment, Link)):
+                author = target.author_slow
+                if target._deleted or author._deleted:
+                    event.add("target_author_id", 0)
+                    event.add("target_author_name", "[deleted]")
+                else:
+                    event.add("target_author_id", author._id)
+                    event.add("target_author_name", author.name)
 
         self.save_event(event)
 
