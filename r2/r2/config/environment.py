@@ -99,8 +99,7 @@ def load_environment(global_conf={}, app_conf={}, setup_globals=True):
             path = os.path.join(module_directory, filename + ".py")
             return os.path.abspath(path)
     else:
-        # we're probably in "paster run standalone" mode. we'll just avoid
-        # caching templates since we don't know where they should go.
+        # disable caching templates since we don't know where they should go.
         module_directory = mako_module_path = None
 
     # set up the templating system

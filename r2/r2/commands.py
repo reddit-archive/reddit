@@ -20,24 +20,12 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-import paste.deploy.config
-import paste.fixture
-from paste.registry import RegistryManager
-from paste.script import command
-from paste.deploy import appconfig        
-from r2.config.environment import load_environment
-from paste.script.pluginlib import find_egg_info_dir
-from pylons.wsgiapp import PylonsApp
-
-from r2.config.middleware import RedditApp
-
-#from pylons.commands import ShellCommand, ControllerCommand, \
-#     RestControllerCommand
-
 import os, sys
-#
-# commands that will be available by running paste with this app
-#
+
+import paste.fixture
+from paste.script import command
+from paste.deploy import loadapp
+
 
 class RunCommand(command.Command):
     max_args = 2
@@ -64,32 +52,20 @@ class RunCommand(command.Command):
         except ImportError:
             pass
 
+        config_file = self.args[0]
+        config_name = 'config:%s' % config_file
+
         here_dir = os.getcwd()
-
-        is_standalone = self.args[0].lower() == 'standalone'
-        if is_standalone:
-            config = load_environment(setup_globals=False)
-        else:
-            config_name = 'config:%s' % self.args[0]
-
-            conf = appconfig(config_name, relative_to=here_dir)
-            conf.global_conf['running_as_script'] = True
-            conf.update(dict(app_conf=conf.local_conf,
-                             global_conf=conf.global_conf))
-            paste.deploy.config.CONFIG.push_thread_config(conf)
-
-            config = load_environment(conf.global_conf, conf.local_conf)
 
         # Load locals and populate with objects for use in shell
         sys.path.insert(0, here_dir)
 
         # Load the wsgi app first so that everything is initialized right
-        if not is_standalone:
-            wsgiapp = RegistryManager(RedditApp(config=config))
-        else:
-            # in standalone mode we don't have an ini so we can't use
-            # RedditApp since it imports all the fancy controllers.
-            wsgiapp = RegistryManager(PylonsApp(config=config))
+        global_conf = {
+            'running_as_script': "true",
+        }
+        wsgiapp = loadapp(
+            config_name, relative_to=here_dir, global_conf=global_conf)
         test_app = paste.fixture.TestApp(wsgiapp)
 
         # Query the test app to setup the environment
