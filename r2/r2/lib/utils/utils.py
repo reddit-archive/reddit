@@ -1619,7 +1619,7 @@ def simple_traceback(limit):
     """
 
     stack_trace = traceback.extract_stack(limit=limit)[:-2]
-    return "\n".join(":".join((os.path.basename(filename),
+    return "\n".join("-".join((os.path.basename(filename),
                                function_name,
                                str(line_number),
                               ))
