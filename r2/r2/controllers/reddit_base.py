@@ -1143,11 +1143,12 @@ class MinimalController(BaseController):
         secure_cookies = feature.is_enabled("force_https")
         for k, v in c.cookies.iteritems():
             if v.dirty:
+                v_secure = v.secure if v.secure is not None else secure_cookies
                 response.set_cookie(key=k,
                                     value=quote(v.value),
                                     domain=v.domain,
                                     expires=v.expires,
-                                    secure=getattr(v, 'secure', secure_cookies),
+                                    secure=v_secure,
                                     httponly=getattr(v, 'httponly', False))
 
         if self.should_update_last_visit():

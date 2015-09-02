@@ -41,7 +41,7 @@ class Cookies(dict):
 
 class Cookie(object):
     def __init__(self, value, expires=None, domain=None,
-                 dirty=True, secure=False, httponly=False):
+                 dirty=True, secure=None, httponly=False):
         self.value = value
         self.expires = expires
         self.dirty = dirty
