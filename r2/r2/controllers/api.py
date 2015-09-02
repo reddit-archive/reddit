@@ -3539,7 +3539,7 @@ class ApiController(RedditController):
 
         if not sr:
             return abort(404, 'not found')
-        elif action == "sub" and not sr.can_comment(c.user):
+        elif action == "sub" and not sr.can_view(c.user):
             return abort(403, 'permission denied')
         elif isinstance(sr, FakeSubreddit):
             return abort(403, 'permission denied')
