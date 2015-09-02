@@ -302,19 +302,17 @@ def inject_test_data(num_links=25, num_comments=25, num_votes=5):
 
         for i in xrange(num_links):
             link_author = random.choice(accounts)
-
+            url = sr_model.generate_link_url()
+            is_self = (url == "self")
+            content = sr_model.generate_selfpost_body() if is_self else url
             link = Link._submit(
+                is_self=is_self,
                 title=sr_model.generate_link_title(),
-                url=sr_model.generate_link_url(),
+                content=content,
                 author=link_author,
                 sr=sr,
                 ip="127.0.0.1",
             )
-            if link.url == "self":
-                link.url = link.make_permalink(sr)
-                link.is_self = True
-                link.selftext = sr_model.generate_selfpost_body()
-                link._commit()
             queries.queue_vote(link_author, link, dir=True, ip="127.0.0.1")
             queries.new_link(link)
             things.append(link)
