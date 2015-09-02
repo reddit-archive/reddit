@@ -1273,15 +1273,25 @@ class MessageController(ListingController):
         captcha = Captcha() if c.user.needs_captcha() else None
 
         if subreddit_message:
-            content = ModeratorMessageCompose(mod_srs, from_user=from_user,
-                                              to=to, subject=subject,
-                                              captcha=captcha, message=message)
+            content = ModeratorMessageCompose(
+                mod_srs,
+                from_user=from_user,
+                to=to,
+                subject=subject,
+                captcha=captcha,
+                message=message,
+                restrict_recipient=c.user.in_timeout)
         else:
-            content = MessageCompose(to=to, subject=subject, captcha=captcha,
-                                     message=message)
+            content = MessageCompose(
+                to=to,
+                subject=subject,
+                captcha=captcha,
+                message=message,
+                restrict_recipient=c.user.in_timeout)
 
-        return MessagePage(content=content, 
-            title=self.title(), 
+        return MessagePage(
+            content=content,
+            title=self.title(),
             page_classes=self.extra_page_classes + ['compose-page'],
         ).render()
 

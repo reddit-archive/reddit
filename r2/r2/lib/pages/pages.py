@@ -1286,14 +1286,15 @@ class MessagePage(Reddit):
 class MessageCompose(Templated):
     """Compose message form."""
     def __init__(self, to='', subject='', message='', captcha=None,
-                 admin_check=True):
+                 admin_check=True, restrict_recipient=False):
         from r2.models.admintools import admintools
 
         if admin_check:
             self.admins = admintools.admin_list()
 
         Templated.__init__(self, to=to, subject=subject, message=message,
-                           captcha=captcha, admin_check=admin_check)
+                           captcha=captcha, admin_check=admin_check,
+                           restrict_recipient=restrict_recipient)
 
 
 class ModeratorMessageCompose(MessageCompose):

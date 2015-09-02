@@ -1764,7 +1764,7 @@ class VMessageRecipient(VExistingUname):
         # A user in timeout should only be able to message us, the admins.
         if (c.user.in_timeout and
                 not (is_subreddit and
-                     name.path.rstrip('/') == g.admin_message_acct)):
+                     '/r/%s' % name == g.admin_message_acct)):
             abort(403, 'forbidden')
 
         if is_subreddit:
