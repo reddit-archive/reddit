@@ -630,6 +630,7 @@ class Link(Thing, Printable):
                 # set an attribute on the Wrapped item so that it will be
                 # added to the render cache key
                 item.ignore_reports_key = item.ignore_reports
+                item.locked_key = item.locked
 
             item.mod_reports, item.user_reports = Report.get_reports(item)
 
