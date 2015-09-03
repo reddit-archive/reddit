@@ -50,7 +50,11 @@ from r2.lib.filters import _force_utf8
 from r2.lib.geoip import location_by_ips
 from r2.lib.memoize import memoize
 from r2.lib.strings import strings
-from r2.lib.utils import to_date, weighted_lottery
+from r2.lib.utils import (
+    constant_time_compare,
+    to_date,
+    weighted_lottery,
+)
 from r2.models import (
     Account,
     Bid,
@@ -60,6 +64,7 @@ from r2.models import (
     Frontpage,
     Link,
     MultiReddit,
+    NotFound,
     NO_TRANSACTION,
     PromoCampaign,
     PROMOTE_STATUS,
@@ -195,12 +200,30 @@ def update_served(items):
             campaign._commit()
 
 
+NO_CAMPAIGN = "NO_CAMPAIGN"
+
+def is_valid_click_url(link, click_url, click_hash):
+    expected_mac = get_click_url_hmac(link, click_url)
+
+    return constant_time_compare(click_hash, expected_mac)
+
+
+def get_click_url_hmac(link, click_url):
+    secret = g.secrets["adserver_click_url_secret"]
+    data = "|".join([link._fullname, click_url])
+
+    return hmac.new(secret, data, hashlib.sha256).hexdigest()
+
+
 def add_trackers(items, sr, adserver_click_urls=None):
     """Add tracking names and hashes to a list of wrapped promoted links."""
     adserver_click_urls = adserver_click_urls or {}
     for item in items:
         if not item.promoted:
             continue
+
+        if item.campaign is None:
+            item.campaign = NO_CAMPAIGN
 
         tracking_name_fields = [item.fullname, item.campaign]
         if not isinstance(sr, FakeSubreddit):
@@ -242,7 +265,12 @@ def add_trackers(items, sr, adserver_click_urls=None):
         # also overwrite the permalink url with redirect click_url for selfposts
         if item.is_self:
             item.permalink = click_url
-
+        else:
+            # add encrypted click url to the permalink for comments->click
+            item.permalink = update_query(item.permalink, {
+                "click_url": url,
+                "click_hash": get_click_url_hmac(item, url),
+            })
 
 def update_promote_status(link, status):
     queries.set_promote_status(link, status)

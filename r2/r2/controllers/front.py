@@ -448,20 +448,38 @@ class FrontController(RedditController):
             suggested_sort=suggested_sort,
         )
 
+        # Check for click urls on promoted links
+        click_url = None
+        campaign_fullname = None
+        if article.promoted and not article.is_self:
+            campaign_fullname = request.GET.get("campaign", None)
+            click_url = request.GET.get("click_url", None)
+            click_hash = request.GET.get("click_hash", "")
 
-        res = LinkInfoPage(link=article,
-                           comment=comment,
-                           disable_comments=disable_comments,
-                           content=displayPane,
-                           page_classes=page_classes,
-                           subtitle=subtitle,
-                           subtitle_buttons=subtitle_buttons,
-                           nav_menus=[sort_menu, link_settings],
-                           infotext=infotext,
-                           infotext_class=infotext_class,
-                           infotext_show_icon=infotext_show_icon,
-                           sr_detail=sr_detail).render()
-        return res
+            if (click_url and not promote.is_valid_click_url(
+                    link=article,
+                    click_url=click_url,
+                    click_hash=click_hash)):
+                click_url = None
+
+        res = LinkInfoPage(
+            link=article,
+            comment=comment,
+            disable_comments=disable_comments,
+            content=displayPane,
+            page_classes=page_classes,
+            subtitle=subtitle,
+            subtitle_buttons=subtitle_buttons,
+            nav_menus=[sort_menu, link_settings],
+            infotext=infotext,
+            infotext_class=infotext_class,
+            infotext_show_icon=infotext_show_icon,
+            sr_detail=sr_detail,
+            campaign_fullname=campaign_fullname,
+            click_url=click_url,
+        )
+
+        return res.render()
 
     def _add_show_comments_link(self, array, article, num, max_comm, gold=False):
         if num == max_comm:
