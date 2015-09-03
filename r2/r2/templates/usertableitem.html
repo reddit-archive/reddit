@@ -26,7 +26,7 @@
 <%namespace file="printablebuttons.html" import="ynbutton" />
 <%namespace file="utils.html" import="plain_link, timestamp"/>
 
-<tr>
+<tr class="${thing.author_cls}">
   %for cell_type in thing.cells:
     <td>
       ${usertablecell(cell_type)}

@@ -3631,6 +3631,11 @@ class UserTableItem(Templated):
     def __init__(self, user, editable=True, **kw):
         self.user = user
         self.editable = editable
+        self.author_cls = ''
+
+        if c.user_is_admin and user._spam:
+            self.author_cls = 'banned-user'
+
         Templated.__init__(self, **kw)
 
     def __repr__(self):
