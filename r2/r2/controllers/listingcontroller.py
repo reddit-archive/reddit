@@ -52,7 +52,7 @@ from r2.lib.utils import (
     trunc_string,
     precise_format_timedelta,
 )
-from r2.lib import hooks, organic, sup, trending
+from r2.lib import hooks, organic, trending
 from r2.lib.memoize import memoize
 from r2.lib.validator import *
 import socket
@@ -806,17 +806,14 @@ class UserController(ListingController):
             q = queries.get_overview(self.vuser, self.sort, self.time)
 
         elif self.where == 'comments':
-            sup.set_sup_header(self.vuser, 'commented')
             self.check_modified(self.vuser, 'commented')
             q = queries.get_comments(self.vuser, self.sort, self.time)
 
         elif self.where == 'submitted':
-            sup.set_sup_header(self.vuser, 'submitted')
             self.check_modified(self.vuser, 'submitted')
             q = queries.get_submitted(self.vuser, self.sort, self.time)
 
         elif self.where == 'gilded':
-            sup.set_sup_header(self.vuser, 'gilded')
             self.check_modified(self.vuser, 'gilded')
             if self.show == 'given':
                 q = queries.get_user_gildings(self.vuser)
@@ -824,7 +821,6 @@ class UserController(ListingController):
                 q = queries.get_gilded_user(self.vuser)
 
         elif self.where in ('upvoted', 'downvoted'):
-            sup.set_sup_header(self.vuser, self.where)
             self.check_modified(self.vuser, self.where)
             if self.where == 'upvoted':
                 q = queries.get_liked(self.vuser)

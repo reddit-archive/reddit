@@ -55,7 +55,6 @@ from r2.lib.db.tdb_cassandra import MultiColumnQuery
 from r2.lib.strings import strings
 from r2.lib.validator import *
 from r2.lib import jsontemplates
-from r2.lib import sup
 import r2.lib.db.thing as thing
 from r2.lib.errors import errors, ForbiddenError
 from listingcontroller import ListingController
@@ -1324,21 +1323,6 @@ class FrontController(RedditController):
 
     def GET_catchall(self):
         return self.abort404()
-
-    @validate(period=VInt('seconds',
-                          min=sup.MIN_PERIOD,
-                          max=sup.MAX_PERIOD,
-                          default=sup.MIN_PERIOD))
-    def GET_sup(self, period):
-        #dont cache this, it's memoized elsewhere
-        c.used_cache = True
-        sup.set_expires_header()
-
-        if c.extension == 'json':
-            return sup.sup_json(period)
-        else:
-            return self.abort404()
-
 
     @require_oauth2_scope("modtraffic")
     @validate(VSponsor('link'),

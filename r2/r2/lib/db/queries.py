@@ -30,7 +30,7 @@ from r2.lib.db.sorts import epoch_seconds
 from r2.lib.db import tdb_cassandra
 from r2.lib.utils import fetch_things2, tup, UniqueIterator, set_last_modified
 from r2.lib import utils
-from r2.lib import amqp, sup, filters
+from r2.lib import amqp, filters
 from r2.lib.comment_tree import add_comments, update_comment_votes
 from r2.lib.eventcollector import EventV2
 from r2.models.promo import PROMOTE_STATUS, PromotionLog
@@ -1874,27 +1874,15 @@ def handle_vote(user, thing, vote, foreground=False, timer=None, date=None):
         if user._id == thing.author_id:
             timestamps.append('Overview')
             timestamps.append('Submitted')
-            #update sup listings
-            sup.add_update(user, 'submitted')
-
-            #update sup listings
-            if dir:
-                sup.add_update(user, 'liked')
-            elif dir is False:
-                sup.add_update(user, 'disliked')
 
     elif isinstance(thing, Comment):
         #update last modified
         if user._id == thing.author_id:
             timestamps.append('Overview')
             timestamps.append('Commented')
-            #update sup listings
-            sup.add_update(user, 'commented')
 
     else:
         raise NotImplementedError
-
-    timer.intermediate("sup")
 
     for timestamp in timestamps:
         set_last_modified(user, timestamp.lower())

@@ -207,10 +207,6 @@ class ErrorController(RedditController):
             if code in (204, 304):
                 # NEVER return a content body on 204/304 or downstream
                 # caches may become very confused.
-                if request.GET.has_key('x-sup-id'):
-                    x_sup_id = request.GET.get('x-sup-id')
-                    if '\r\n' not in x_sup_id:
-                        response.headers['x-sup-id'] = x_sup_id
                 return ""
             elif c.render_style not in self.allowed_render_styles:
                 return str(code)

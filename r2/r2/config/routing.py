@@ -73,7 +73,6 @@ def make_map():
     mc('/quarantine', controller='post', action='quarantine')
     mc('/quarantine_optout', controller='api', action='quarantine_optout')
 
-    mc('/sup', controller='front', action='sup')
     mc('/traffic', controller='front', action='site_traffic')
     mc('/traffic/languages/:langcode', controller='front',
        action='lang_traffic', langcode='')
