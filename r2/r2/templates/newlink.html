@@ -129,11 +129,11 @@ ${thing.captcha}
     
 </div>
 
-<div class="roundfield info-notice" title="${_('why a brick? read to the bottom of the rules page to find out!')}">
-  ${text_with_links(_("please be mindful of reddit's %(few_rules)s and practice %(good_reddiquette)s."),
-      few_rules=dict(
-        link_text=_("few rules"),
-        path="/rules",
+<div class="roundfield info-notice">
+  ${text_with_links(_("please be mindful of reddit's %(content_policy)s and practice %(good_reddiquette)s."),
+      content_policy=dict(
+        link_text=_("content policy"),
+        path="/help/contentpolicy",
         target="_blank"),
       good_reddiquette=dict(
         link_text=_("good reddiquette"),
