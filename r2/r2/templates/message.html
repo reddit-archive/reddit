@@ -61,6 +61,7 @@
 </%def>
 
 <%def name="thing_data_attributes(what)">
+  ${parent.thing_data_attributes(what)}
   %if getattr(thing, "bar_color", "") and getattr(thing, "is_parent", False):
     style="border-color:${thing.bar_color}"
   %endif
