@@ -262,49 +262,39 @@ rate_limit = (function() {
     };
 })()
 
+$.fn.vote = function(event) {
+    var $this = $(this);
 
-$.fn.vote = function(vh, callback, event, ui_only) {
-    /* for vote to work, $(this) should be the clicked arrow */
-    if (reddit.logged && $(this).hasClass("arrow")) {
-        var dir = ( $(this).hasClass(up_cls) ? 1 :
-                    ( $(this).hasClass(down_cls) ? -1 : 0) );
-        var things = $(this).all_things_by_id();
-        /* find all arrows of things on the page */
-        var arrows = things.children().not(".child").find('.arrow');
+    if (!r.config.logged || !$this.hasClass('arrow')) {
+        return;
+    }
+    
+    var isUpvoting = $this.hasClass(up_cls);
+    var isDownvoting = $this.hasClass(down_cls);
+    var dir = isUpvoting ? 1 : isDownvoting ? -1 : 0;
+    var thing_id = $this.thing().thing_id();
+    var $things = $.things(thing_id);
+    
+    $things.setVoteState(dir);
+    event_data = JSON.stringify(event, ["isTrusted", "type", "timeStamp"]);
+    $.request("vote", {id: thing_id, dir: dir, vh: r.config.vote_hash, event_data: event_data});
+};
 
-        /* set the new arrow states */
-        var u_before = (dir == 1) ? up_cls : upmod_cls;
-        var u_after  = (dir == 1) ? upmod_cls : up_cls;
-        arrows.filter("."+u_before).removeClass(u_before).addClass(u_after);
+$.fn.setVoteState = function(dir) {
+    var $entry = $(this).find(".entry:first, .midcol:first");
 
-        var d_before = (dir == -1) ? down_cls : downmod_cls;
-        var d_after  = (dir == -1) ? downmod_cls : down_cls;
-        arrows.filter("."+d_before).removeClass(d_before).addClass(d_after);
-
-        /* let the user vote only if they are logged in */
-        if(reddit.logged) {
-            things.each(function() {
-                    var entry =  $(this).find(".entry:first, .midcol:first");
-                    if(dir > 0)
-                        entry.addClass('likes')
-                            .removeClass('dislikes unvoted');
-                    else if(dir < 0)
-                        entry.addClass('dislikes')
-                            .removeClass('likes unvoted');
-                    else
-                        entry.addClass('unvoted')
-                            .removeClass('likes dislikes');
-                });
-            if(!$.defined(ui_only)) {
-                var thing_id = things.filter(":first").thing_id();
-                /* IE6 hack */
-                vh += event ? "" : ("-" + thing_id); 
-                $.request("vote", {id: thing_id, dir : dir, vh : vh});
-            }
-        }
-        /* execute any callbacks passed in.  */
-        if(callback) 
-            callback(things, dir);
+    if (dir > 0) {
+        $entry.addClass('likes').removeClass('dislikes unvoted')
+              .find(".arrow."+up_cls).removeClass(up_cls).addClass(upmod_cls).end()
+              .find(".arrow."+downmod_cls).removeClass(downmod_cls).addClass(down_cls);
+    } else if (dir < 0) {
+        $entry.addClass('dislikes').removeClass('likes unvoted')
+              .find(".arrow."+upmod_cls).removeClass(upmod_cls).addClass(up_cls).end()
+              .find(".arrow."+down_cls).removeClass(down_cls).addClass(downmod_cls);
+    } else {
+        $entry.addClass('unvoted').removeClass('likes dislikes')
+              .find(".arrow."+upmod_cls).removeClass(upmod_cls).addClass(up_cls).end()
+              .find(".arrow."+downmod_cls).removeClass(downmod_cls).addClass(down_cls);
     }
 };
 

@@ -209,14 +209,10 @@ ${self.RenderPrintable()}
    arrow_type = "up" if dir > 0 else "down"
    arrow_class = arrow_type + ("mod" if mod else "")
    login_class = "login-required" if not g.read_only_mode else ""
+   archived_class = "archived" if not getattr(thing, 'votable', True) else ""
 %>
-  <div ${classes("arrow", arrow_class, login_class)}
+  <div ${classes("arrow", arrow_class, login_class, archived_class)}
     %if not g.read_only_mode:
-       %if getattr(thing, "votable", True):
-         onclick="$(this).vote(r.config.vote_hash, null, event)"
-       %else:
-         onclick="$(this).show_unvotable_message()"
-       %endif
        role="button"
        % if dir > 0:
        aria-label="${_("upvote")}"
