@@ -212,18 +212,25 @@ class Link(Thing, Printable):
                 spam=False, sendreplies=True):
         from r2.models import admintools
 
-        l = cls(_ups=1,
-                title=title,
-                url=TEMPORARY_SELFPOST_URL if is_self else content,
-                _spam=spam,
-                author_id=author._id,
-                sendreplies=sendreplies,
-                sr_id=sr._id,
-                lang=sr.lang,
-                ip=ip,
-                comment_tree_version=cls._choose_comment_tree_version())
+        l = cls(
+            _ups=1,
+            title=title,
+            url=TEMPORARY_SELFPOST_URL if is_self else content,
+            _spam=spam,
+            author_id=author._id,
+            sendreplies=sendreplies,
+            sr_id=sr._id,
+            lang=sr.lang,
+            ip=ip,
+            comment_tree_version=cls._choose_comment_tree_version(),
+            is_self=is_self,
+        )
 
         l._commit()
+        # Note: this does not provide atomicity, so for self posts when
+        # a request dies after the previous line but before `set_type`,
+        # you will have a link whose URL is literally 'self', and whose
+        # selftext will not be set.
         l.set_type(is_self, content)
 
         LinksByAccount.add_link(author, l)
