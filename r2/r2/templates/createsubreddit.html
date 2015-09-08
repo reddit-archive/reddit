@@ -84,6 +84,9 @@ try participating in other communities on reddit for a little while first before
             ${keep_space(thing.site.public_description or "")}
           %endif
         </textarea>
+        <div class="bottom-area">
+          ${error_field("TOO_LONG", "public_description")}
+        </div>
       </div>
     </div>
   </%utils:line_field>
