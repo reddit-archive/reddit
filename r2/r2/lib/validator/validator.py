@@ -1734,7 +1734,7 @@ class VExistingUname(VRequired):
             try:
                 return Account._by_name(name)
             except NotFound:
-                if self.allow_deleted and c.user_is_admin:
+                if self.allow_deleted:
                     try:
                         return Account._by_name(name, allow_deleted=True)
                     except NotFound:
