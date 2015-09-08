@@ -127,6 +127,6 @@ $(function() {
         r.newsletter.ui.init()
         r.cachePoisoning.init()
     } catch (err) {
-        r.sendError('Error during base.js init', err)
+        r.sendError('Error during base.js init', err.toString());
     }
 })
