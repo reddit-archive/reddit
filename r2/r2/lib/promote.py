@@ -120,20 +120,21 @@ def promotraffic_url(l): # new traffic url
 def promo_edit_url(l):
     return "http://%s/promoted/edit_promo/%s" % (_base_domain(), l._id36)
 
-def pay_url(l, campaign):
-    return "%spromoted/pay/%s/%s" % (g.payment_domain, l._id36, campaign._id36)
-
 def view_live_url(l, srname):
     domain = _base_domain()
     if srname:
         domain += '/r/%s' % srname
     return 'http://%s/?ad=%s' % (domain, l._fullname)
 
+def payment_url(action, link_id36, campaign_id36):
+    path = '/promoted/%s/%s/%s' % (action, link_id36, campaign_id36)
+    return urlparse.urljoin(g.payment_domain, path)
 
-def refund_url(link, campaign):
-    return "%spromoted/refund/%s/%s" % (g.payment_domain, link._id36,
-                                        campaign._id36)
+def pay_url(l, campaign):
+    return payment_url('pay', l._id36, campaign._id36)
 
+def refund_url(l, campaign):
+    return payment_url('refund', l._id36, campaign._id36)
 
 # booleans
 
