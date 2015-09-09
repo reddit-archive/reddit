@@ -258,6 +258,9 @@ class Link(Thing, Printable):
             self.url = self.make_permalink_slow()
             self.selftext = content
         else:
+            if not was_self:
+                LinksByUrl.remove_link(self, self.url)
+
             self.url = content
             self.selftext = self._defaults.get("selftext", "")
             LinksByUrl.add_link(self, self.url)
