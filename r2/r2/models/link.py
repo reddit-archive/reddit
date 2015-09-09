@@ -173,15 +173,6 @@ class Link(Thing, Printable):
 
         raise NotFound('Link "%s"' % url)
 
-    def _unset_url_cache(self):
-        LinksByUrl._remove(LinksByUrl._key_from_url(self.url),
-                           {self._id36: ''})
-
-    def _set_url_cache(self):
-        if not self.is_self:
-            LinksByUrl._set_values(LinksByUrl._key_from_url(self.url),
-                                   {self._id36: ''})
-
     def already_submitted_link(self, url, title):
         permalink = self.make_permalink_slow()
         p = UrlParser(permalink)
@@ -249,14 +240,14 @@ class Link(Thing, Printable):
 
         if is_self:
             if not was_self:
-                self._unset_url_cache()
+                LinksByUrl.remove_link(self, self.url)
 
             self.url = self.make_permalink_slow()
             self.selftext = content
         else:
             self.url = content
             self.selftext = self._defaults.get("selftext", "")
-            self._set_url_cache()
+            LinksByUrl.add_link(self, self.url)
 
         self._commit()
 
@@ -942,6 +933,19 @@ class LinksByUrl(tdb_cassandra.View):
             up.hostname = up.hostname.lower()
             keyurl = _force_utf8(UrlParser.base_url(up.unparse()))
         return keyurl
+
+    @classmethod
+    def add_link(cls, link, url):
+        rowkey = cls._key_from_url(url)
+        column = {link._id36: ''}
+        cls._set_values(rowkey, column)
+
+    @classmethod
+    def remove_link(cls, link, url):
+        rowkey = cls._key_from_url(url)
+        column = {link._id36: ''}
+        cls._remove(rowkey, column)
+
 
 # Note that there are no instances of PromotedLink or LinkCompressed,
 # so overriding their methods here will not change their behaviour
