@@ -55,15 +55,21 @@
 
 <%def name="thing_css_rowclass(what)">
   ${parent.thing_css_rowclass(what)}
-  %if getattr(thing, "bar_color", "") and getattr(thing, "is_parent", False):
+  <%
+    accent_color = getattr(thing, "accent_color", "")
+  %>
+  %if getattr(thing, "is_parent", False) and accent_color:
     color-bar
   %endif
 </%def>
 
 <%def name="thing_data_attributes(what)">
   ${parent.thing_data_attributes(what)}
-  %if getattr(thing, "bar_color", "") and getattr(thing, "is_parent", False):
-    style="border-color:${thing.bar_color}"
+  <%
+    accent_color = getattr(thing, "accent_color", "")
+  %>
+  %if getattr(thing, "is_parent", False) and accent_color:
+    style="border-color:${accent_color};"
   %endif
 </%def>
 
@@ -115,10 +121,13 @@
     %if getattr(thing, "is_parent", False):
        %if thing.sr_id:
          <span class="correspondent reddit rounded">
+           <%
+             accent_color = getattr(thing, "accent_color", "")
+           %>
            <a href="${thing.subreddit.path}message/moderator/inbox">
-            %if getattr(thing, "bar_color", False):
-              <span class="marker-dot" style="background-color: ${thing.bar_color};"></span>
-            %endif
+             %if accent_color:
+               <span class="marker-dot" style="background-color:${accent_color};"></span>
+             %endif
              /r/${thing.subreddit.name}
            </a>
          </span>

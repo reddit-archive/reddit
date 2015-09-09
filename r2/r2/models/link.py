@@ -1648,6 +1648,10 @@ class MoreMessages(Printable):
     def subreddit(self):
         return self.parent.subreddit
 
+    @property
+    def accent_color(self):
+        return getattr(self.parent, "accent_color", None)
+
 
 class MoreComments(Printable):
     cachable = False
@@ -1992,7 +1996,7 @@ class Message(Thing, Printable):
                 user_is_moderator = item.sr_id in user_mod_sr_ids
 
                 if sr_colors and user_is_moderator:
-                    item.bar_color = sr_colors.get(item.sr_id)
+                    item.accent_color = sr_colors.get(item.sr_id)
 
                 if item.subreddit.is_muted(item.author):
                     item.sr_muted = True
