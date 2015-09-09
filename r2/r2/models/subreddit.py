@@ -332,14 +332,25 @@ class Subreddit(Thing, Printable, BaseSite):
         ('#0079d3', N_('alien blue')),
     ])
     ACCENT_COLORS = (
-        # primary colors
-        '#ff4500', '#ff8717', '#ffb000', '#94e044', '#46d160', '#0dd3bb',
-        '#24a0ed', '#0079d3',
-        # secondary colors
-        '#db0064', '#a06a42', '#c18d42', '#d4e815', '#46a508', '#25b79f',
-        '#00b985', '#4856a3', '#ff66ac', '#7e53c1',
-        # special colors
-        '#9494ff', '#d8c161', '#ffd635', '#ff585b', '#ea0027', '#fff03e',
+        '#f44336', # red
+        '#9c27b0', # purple
+        '#3f51b5', # indigo
+        '#03a9f4', # light blue
+        '#009688', # teal
+        '#8bc34a', # light green
+        '#ffeb3b', # yellow
+        '#ff9800', # orange
+        '#795548', # brown
+        '#607d8b', # blue grey
+        '#e91e63', # pink
+        '#673ab7', # deep purple
+        '#2196f3', # blue
+        '#00bcd4', # cyan
+        '#4caf50', # green
+        '#cddc39', # lime
+        '#ffc107', # amber
+        '#ff5722', # deep orange
+        '#9e9e9e', # grey
     )
 
     MAX_STICKIES = 2
