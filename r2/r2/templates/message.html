@@ -122,9 +122,13 @@
        %if thing.sr_id:
          <span class="correspondent reddit rounded">
            <%
+             if getattr(thing, "user_is_moderator", False):
+               sr_path = "%smessage/moderator/inbox" % thing.subreddit.path
+             else:
+               sr_path = thing.subreddit.path
              accent_color = getattr(thing, "accent_color", "")
            %>
-           <a href="${thing.subreddit.path}message/moderator/inbox">
+           <a href="${sr_path}">
              %if accent_color:
                <span class="marker-dot" style="background-color:${accent_color};"></span>
              %endif

@@ -1993,9 +1993,9 @@ class Message(Thing, Printable):
                     "from %(author)s via %(subreddit)s sent %(when)s")
             elif item.sr_id:
                 item.user_is_recipient = not user_is_sender
-                user_is_moderator = item.sr_id in user_mod_sr_ids
+                item.user_is_moderator = item.sr_id in user_mod_sr_ids
 
-                if sr_colors and user_is_moderator:
+                if sr_colors and item.user_is_moderator:
                     item.accent_color = sr_colors.get(item.sr_id)
 
                 if item.subreddit.is_muted(item.author):
@@ -2007,7 +2007,7 @@ class Message(Thing, Printable):
                         item.sr_blocked = True
                         item.is_collapsed = True
 
-                    if not user_is_moderator and not c.user_is_admin:
+                    if not item.user_is_moderator and not c.user_is_admin:
                         item.author = item.subreddit
                         item.hide_author = True
                         item.taglinetext = _(
