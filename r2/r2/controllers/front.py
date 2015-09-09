@@ -1373,11 +1373,6 @@ class FrontController(RedditController):
                           content=ContactUs(), page_classes=["contact-us-page"]
                           ).render()
 
-    def GET_rules(self):
-        return BoringPage(_("rules of reddit"), show_sidebar=False,
-                          content=RulesPage(), page_classes=["rulespage-body"]
-                          ).render()
-
     @validate(vendor=VOneOf("v", ("claimed-gold", "claimed-creddits",
                                   "spent-creddits", "paypal", "coinbase",
                                   "stripe"),

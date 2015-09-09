@@ -4986,8 +4986,6 @@ class ApiHelp(Templated):
         self.api_docs = api_docs
         super(ApiHelp, self).__init__(*a, **kw)
 
-class RulesPage(Templated):
-    pass
 
 class AwardReceived(Templated):
     pass
