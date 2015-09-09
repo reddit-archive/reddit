@@ -399,14 +399,7 @@ class Reddit(Templated):
         self.toolbars = self.build_toolbars()
 
         if c.user_is_loggedin and c.user.in_timeout:
-            hook = hooks.get_hook('timeouts.fetch_expiration')
-            expires = hook.call_until_return(user=c.user)
-            if expires:
-                now = datetime.datetime.now(g.tz)
-                expire_date = expires - now
-                self.timeout_days_remaining = expire_date.days + 1
-            else:
-                self.timeout_days_remaining = 0
+            self.timeout_days_remaining = c.user.days_remaining_in_timeout
 
         has_style_override = (c.user.pref_default_theme_sr and
                 feature.is_enabled('stylesheets_everywhere') and

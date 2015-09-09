@@ -681,6 +681,21 @@ class Account(Thing):
         return (self.has_gold_subscription or
                 (self.pref_creddit_autorenew and self.gold_creddits > 0))
 
+    @property
+    def days_remaining_in_timeout(self):
+        if not self.in_timeout:
+            return 0
+
+        hook = hooks.get_hook('timeouts.fetch_expiration')
+        expires = hook.call_until_return(user=self)
+
+        if not expires:
+            return 0
+
+        now = datetime.now(g.tz)
+        expire_date = expires - now
+        return expire_date.days + 1
+
     def incr_admin_takedown_strikes(self, amt=1):
         return self._incr('admin_takedown_strikes', amt)
 
