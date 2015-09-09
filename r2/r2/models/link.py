@@ -1850,7 +1850,7 @@ class Message(Thing, Printable):
         from r2.lib.template_helpers import get_domain
         p = self.permalink
         if force_domain:
-            res = "http://%s/%s" % (get_domain(cname=False, subreddit=False), p)
+            res = "http://%s%s" % (get_domain(cname=False, subreddit=False), p)
         else:
             res = p
         return res
