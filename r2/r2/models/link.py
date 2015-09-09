@@ -71,6 +71,7 @@ import simplejson as json
 import random, re
 import pycassa
 from collections import defaultdict
+from itertools import cycle
 from pycassa.cassandra.ttypes import NotFoundException
 from pycassa.system_manager import (
     ASCII_TYPE,
@@ -1940,6 +1941,13 @@ class Message(Thing, Printable):
                             c.extension not in ("rss", "xml", "api", "json"))
         to_set_unread = []
 
+        # accent colors for color coded modmail
+        sr_colors = None
+        if (isinstance(c.site, FakeSubreddit) and
+                feature.is_enabled('modmail_colors')):
+            mod_sr_ids = Subreddit.reverse_moderator_ids(user)
+            sr_colors = dict(zip(mod_sr_ids, cycle(Subreddit.ACCENT_COLORS)))
+
         for item in wrapped:
             user_is_recipient = item.to_id == user._id
             user_is_sender = (item.author_id == user._id and
@@ -1983,9 +1991,8 @@ class Message(Thing, Printable):
                 item.user_is_recipient = not user_is_sender
                 user_is_moderator = item.sr_id in user_mod_sr_ids
 
-                if (isinstance(c.site, FakeSubreddit)
-                        and feature.is_enabled('modmail_colors')):
-                    item.bar_color = item.subreddit.get_accent_color()
+                if sr_colors and user_is_moderator:
+                    item.bar_color = sr_colors.get(item.sr_id)
 
                 if item.subreddit.is_muted(item.author):
                     item.sr_muted = True

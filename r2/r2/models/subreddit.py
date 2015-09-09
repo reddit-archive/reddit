@@ -1264,10 +1264,6 @@ class Subreddit(Thing, Printable, BaseSite):
         b = int(256 - (hash(str(self._id) + '  ') % 256)*(1-fade))
         return (r, g, b)
 
-    def get_accent_color(self):
-        num_colors = len(Subreddit.ACCENT_COLORS)
-        return Subreddit.ACCENT_COLORS[self._id % num_colors]
-
     def get_sticky_fullnames(self):
         """Return the fullnames of the Links stickied in the subreddit."""
         
