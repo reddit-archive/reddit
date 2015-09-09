@@ -79,7 +79,6 @@ from pycassa.system_manager import (
 import pytz
 
 NOTIFICATION_EMAIL_DELAY = timedelta(hours=1)
-TEMPORARY_SELFPOST_URL = "self"
 
 class LinkExists(Exception): pass
 
@@ -203,10 +202,18 @@ class Link(Thing, Printable):
                 spam=False, sendreplies=True):
         from r2.models import admintools
 
+        if is_self:
+            url = "self"
+            selftext = content
+        else:
+            url = content
+            selftext = cls._defaults["selftext"]
+
         l = cls(
             _ups=1,
             title=title,
-            url=TEMPORARY_SELFPOST_URL if is_self else content,
+            url=url,
+            selftext=selftext,
             _spam=spam,
             author_id=author._id,
             sendreplies=sendreplies,
@@ -219,10 +226,13 @@ class Link(Thing, Printable):
 
         l._commit()
         # Note: this does not provide atomicity, so for self posts when
-        # a request dies after the previous line but before `set_type`,
-        # you will have a link whose URL is literally 'self', and whose
-        # selftext will not be set.
-        l.set_type(is_self, content)
+        # a request dies after the previous line but before the next line
+        # you will have a link whose URL is literally 'self'
+        if is_self:
+            l.url = l.make_permalink_slow()
+            l._commit()
+        else:
+            LinksByUrl.add_link(l, l.url)
 
         LinksByAccount.add_link(author, l)
         SubredditParticipationByAccount.mark_participated(author, sr)
@@ -234,8 +244,8 @@ class Link(Thing, Printable):
 
         return l
 
-    def set_type(self, is_self, content):
-        was_self = self.is_self and self.url != TEMPORARY_SELFPOST_URL
+    def set_content(self, is_self, content):
+        was_self = self.is_self
         self.is_self = is_self
 
         if is_self:

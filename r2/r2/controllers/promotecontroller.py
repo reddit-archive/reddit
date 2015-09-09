@@ -856,7 +856,7 @@ class PromoteApiController(ApiController):
 
             # type changing
             if is_self != l.is_self:
-                l.set_type(is_self, selftext if is_self else url)
+                l.set_content(is_self, selftext if is_self else url)
                 changed = True
 
         # only trips if the title and url are changed by a non-sponsor
