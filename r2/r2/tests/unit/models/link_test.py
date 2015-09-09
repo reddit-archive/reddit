@@ -23,7 +23,9 @@
 
 import unittest
 
-from r2.models.link import Comment
+from mock import MagicMock
+
+from r2.models.link import Link, Comment
 
 TINY_COMMENT = 'rekt'
 SHORT_COMMENT = 'What is your favorite car from a rival brand?'
@@ -140,3 +142,177 @@ class TestCommentQaSort(unittest.TestCase):
 
         self.assertLess(non_op_score, op_score)
 
+
+ID = 0
+def _mock_id(instance):
+    if not getattr(instance, "__id", False):
+        instance.__id = ID + 1
+    return instance.__id
+
+
+class LinkMock(Link):
+    _nodb = True
+
+    def __init__(self, **kwargs):
+        for key, value in kwargs.iteritems():
+            setattr(self, key, value)
+
+    def __setattr__(self, attr, val):
+        self.__dict__[attr] = val
+
+    def __getattr__(self, attr):
+        return getattr(
+            self.__dict__,
+            attr,
+            getattr(self._defaults, attr, None),
+        )
+
+    @property
+    def _id(self):
+        return _mock_id(self)
+
+    @property
+    def subreddit_slow(self):
+        return SubredditMock()
+
+    def _commit(self):
+        pass
+
+
+class ThingMock():
+    _nodb = True
+
+    @property
+    def _id(self):
+        return _mock_id(self)
+
+
+class AccountMock(ThingMock):
+    @property
+    def _spam(self):
+        return False
+
+
+class SubredditMock(ThingMock):
+    @property
+    def lang(self):
+        return "en"
+
+    @property
+    def name(self):
+        return "linktests"
+
+
+class TestSubmit(unittest.TestCase):
+    def setUp(self):
+        from r2.models import (
+            LinksByAccount,
+            LinksByUrl,
+            SubredditParticipationByAccount,
+        )
+
+        LinksByAccount.add_link = MagicMock()
+        SubredditParticipationByAccount.mark_participated = MagicMock()
+
+        self.links_by_url_add_link = MagicMock()
+        LinksByUrl.add_link = self.links_by_url_add_link
+        self.links_by_url_remove_link = MagicMock()
+        LinksByUrl.remove_link = self.links_by_url_remove_link
+
+    def test_new_self_post_has_url(self):
+        l = LinkMock._submit(
+            is_self=True,
+            content="this is a self post",
+            title="test post",
+            ip="127.0.0.1",
+            sr=SubredditMock(),
+            author=AccountMock()
+        )
+
+        self.assertEqual(l.url, u"/r/linktests/comments/%s/test_post/" % l._id36)
+
+    def test_new_self_post_doesnt_modify_links_by_url(self):
+        l = LinkMock._submit(
+            is_self=True,
+            content="this is a self post",
+            title="test post",
+            ip="127.0.0.1",
+            sr=SubredditMock(),
+            author=AccountMock()
+        )
+
+        self.assertEqual(self.links_by_url_add_link.call_count, 0)
+        self.assertEqual(self.links_by_url_remove_link.call_count, 0)
+
+    def test_changing_non_promo_fails(self):
+        l = LinkMock._submit(
+            is_self=True,
+            content="this is a self post",
+            title="test post",
+            ip="127.0.0.1",
+            sr=SubredditMock(),
+            author=AccountMock()
+        )
+
+        with self.assertRaises(ValueError):
+            l.set_content(False, "http://test.com/1")
+
+    def test_changing_from_self_doesnt_remove_links_by_url(self):
+        l = LinkMock._submit(
+            is_self=True,
+            content="this is a self post",
+            title="test post",
+            ip="127.0.0.1",
+            sr=SubredditMock(),
+            author=AccountMock()
+        )
+        l.promoted = True
+
+        url = "http://test.com/1"
+
+        self.assertEqual(self.links_by_url_add_link.call_count, 0)
+        self.assertEqual(self.links_by_url_remove_link.call_count, 0)
+
+        l.set_content(False, url)
+
+        self.assertEqual(l.url, url)
+        self.assertEqual(self.links_by_url_remove_link.call_count, 0)
+
+    def test_changing_url_adds_links_by_url(self):
+        url1 = "http://test.com/1"
+        url2 = "http://test.com/2"
+        l = LinkMock._submit(
+            is_self=False,
+            content=url1,
+            title="test post",
+            ip="127.0.0.1",
+            sr=SubredditMock(),
+            author=AccountMock()
+        )
+        l.promoted = True
+
+        self.assertEqual(self.links_by_url_add_link.call_count, 1)
+        self.assertEqual(self.links_by_url_remove_link.call_count, 0)
+
+        l.set_content(False, url2)
+
+        self.assertEqual(self.links_by_url_add_link.call_count, 2)
+        self.assertEqual(self.links_by_url_remove_link.call_count, 1)
+
+    def test_changing_to_self_removes_links_by_url(self):
+        url = "http://test.com/1"
+        l = LinkMock._submit(
+            is_self=False,
+            content=url,
+            title="test post",
+            ip="127.0.0.1",
+            sr=SubredditMock(),
+            author=AccountMock()
+        )
+        l.promoted = True
+
+        self.assertEqual(self.links_by_url_add_link.call_count, 1)
+
+        l.set_content(True, "change to self post")
+
+        self.assertEqual(self.links_by_url_remove_link.call_count, 1)
