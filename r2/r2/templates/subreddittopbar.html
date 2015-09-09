@@ -27,9 +27,7 @@
 
 <div id="sr-header-area">
   <div class="width-clip">
-    %if thing.show_my_reddits_dropdown:
-      ${thing.my_reddits_dropdown().render()}
-    %endif
+    ${thing.my_subreddits_dropdown}
 
     <div class="sr-list">
       %for m in thing.sr_bar():

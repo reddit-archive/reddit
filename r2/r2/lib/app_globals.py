@@ -182,7 +182,6 @@ class Globals(object):
             'max_comment_parent_walk',
             'max_sr_images',
             'num_serendipity',
-            'sr_dropdown_threshold',
             'comment_visits_period',
             'butler_max_mentions',
             'min_membership_create_community',
