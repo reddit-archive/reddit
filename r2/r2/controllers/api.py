@@ -1593,6 +1593,8 @@ class ApiController(RedditController):
         sr = thing.subreddit_slow
 
         if state:
+            if thing._fullname in sr.get_sticky_fullnames():
+                abort(409, "Already stickied")
             sr.set_sticky(thing, c.user, num=num)
         else:
             sr.remove_sticky(thing, c.user)

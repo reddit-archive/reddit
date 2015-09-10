@@ -1298,6 +1298,10 @@ class Subreddit(Thing, Printable, BaseSite):
         if not self.sticky_fullnames:
             self.sticky_fullnames = [link._fullname]
         else:
+            # don't re-sticky something that's already stickied
+            if link._fullname in self.sticky_fullnames:
+                return
+
             # XXX: have to work with a copy of the list instead of modifying
             #   it directly, because it doesn't get marked as "dirty" and
             #   saved properly unless we assign a new list to the attr
