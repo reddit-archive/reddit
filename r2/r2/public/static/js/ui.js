@@ -173,16 +173,16 @@ r.ui.initReadNext = function() {
     // 2 week expiration
     var ttl = (1000 * 60 * 60 * 24 * 14);
     var $readNextContainer = $('.read-next-container');
-    var isDismissed = !!store.get('readnext.dismissed');
-    var expiration = parseInt(store.get('readnext.expiration'), 10);
+    var isDismissed = !!store.safeGet('readnext.dismissed');
+    var expiration = parseInt(store.safeGet('readnext.expiration'), 10);
     var now = Date.now();
 
     if (isDismissed) {
         if (!expiration) {
             expiration = now + ttl;
-            store.set('readnext.expiration', expiration);
+            store.safeSet('readnext.expiration', expiration);
         } else if (expiration < now) {
-            store.set('readnext.dismissed', false);
+            store.safeSet('readnext.dismissed', false);
             isDismissed = false;
         }
     }
@@ -280,9 +280,9 @@ r.ui.ReadNext = Backbone.View.extend({
         this.$el.fadeOut();
         window.removeEventListener('scroll', this.updateScroll);
         r.analytics.fireGAEvent('readnext', 'dismiss');
-        store.set('readnext.dismissed', true);
+        store.safeSet('readnext.dismissed', true);
         var expiration = Date.now() + this.options.ttl;
-        store.set('readnext.expiration', expiration);
+        store.safeSet('readnext.expiration', expiration);
     },
 
     updateScroll: function() {

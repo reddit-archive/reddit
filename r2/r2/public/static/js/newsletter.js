@@ -20,7 +20,7 @@ r.newsletter = {
 
 r.newsletter.ui = {
   _setupNewsletterBar: function() {
-    var newsletterBarSeen = !!store.get('newsletterbar.seen');
+    var newsletterBarSeen = !!store.safeGet('newsletterbar.seen');
     if (newsletterBarSeen || r.ui.isSmallScreen()) {
       return;
     }
@@ -31,7 +31,7 @@ r.newsletter.ui = {
       $('.newsletterbar').hide();
     });
 
-    store.set('newsletterbar.seen', true);
+    store.safeSet('newsletterbar.seen', true);
   },
 
   _setupNewsletter: function() {

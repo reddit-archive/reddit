@@ -155,19 +155,19 @@ function fetch_more() {
 }
 
 $(function() {
-    if (!!store.get('mobile-web-redirect-opted')) {
+    if (!!store.safeGet('mobile-web-redirect-opted')) {
         return;
     }
 
     var $bar = $('.mobile-web-redirect-bar');
 
     $bar.find('.mobile-web-redirect-optin').on('click', function() {
-        store.set('mobile-web-redirect-opted', true);
+        store.safeSet('mobile-web-redirect-opted', true);
     });
 
     $bar.find('.mobile-web-redirect-optout').on('click', function(e) {
         e.preventDefault();
-        store.set('mobile-web-redirect-opted', true);
+        store.safeSet('mobile-web-redirect-opted', true);
         $bar.fadeOut();
     });
 

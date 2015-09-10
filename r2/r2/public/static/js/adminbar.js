@@ -12,11 +12,11 @@
     },
 
     initialize: function(options) {
-      this.hidden = store.get('adminbar.hidden') === true
-      this.showTimings = store.get('adminbar.timings.show') === true
-      this.showFullTimings = store.get('adminbar.timings.full') === true
-      this.zoomTimings = store.get('adminbar.timings.zoom') !== false
-      this.timingScale = store.get('adminbar.timings.scale') || 8.0
+      this.hidden = store.safeGet('adminbar.hidden') === true
+      this.showTimings = store.safeGet('adminbar.timings.show') === true
+      this.showFullTimings = store.safeGet('adminbar.timings.full') === true
+      this.zoomTimings = store.safeGet('adminbar.timings.zoom') !== false
+      this.timingScale = store.safeGet('adminbar.timings.scale') || 8.0
 
       this.timings = options.timings
       this.browserTimings = options.browserTimings
@@ -96,25 +96,25 @@
 
     toggleVisibility: function() {
       this.hidden = !this.hidden
-      store.set('adminbar.hidden', this.hidden)
+      store.safeSet('adminbar.hidden', this.hidden)
       this.render()
     },
 
     toggleTimings: function() {
       this.showTimings = !this.showTimings
-      store.set('adminbar.timings.show', this.showTimings)
+      store.safeSet('adminbar.timings.show', this.showTimings)
       this.render()
     },
 
     toggleFullTimings: function(value) {
       this.showFullTimings = !this.showFullTimings
-      store.set('adminbar.timings.full', this.showFullTimings)
+      store.safeSet('adminbar.timings.full', this.showFullTimings)
       this.render()
     },
 
     toggleZoom: function(value) {
       this.zoomTimings = !this.zoomTimings
-      store.set('adminbar.timings.zoom', this.zoomTimings)
+      store.safeSet('adminbar.timings.zoom', this.zoomTimings)
       this.render()
     }
   })
