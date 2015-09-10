@@ -239,10 +239,19 @@ class CachedQuery(_CachedQueryBase):
                 num_pruned = num_fast_prunable
             else:
                 # if something has gone wrong with previous prunings, there may
-                # be a lot of items to prune.  we'll limit this pruning to the
-                # oldest N items to avoid a dangerously large operation.
-                # N = the average number of items to prune (doubled for safety)
-                prune_size = int(MAX_CACHED_ITEMS * PRUNE_CHANCE) * 2
+                # be a lot of items to prune.
+                #
+                # On each attempt we have PRUNE_CHANCE likelihood that we will
+                # get to prune. Assume that each prune attempt occurs as the
+                # result of adding one item to the `CachedQuery`. So, to prevent
+                # unbounded growth we need to remove on average at least one
+                # item per prune attempt.
+                # so:
+                # N_avg = 1 = PRUNE_CHANCE * PRUNE_SIZE
+                # PRUNE_SIZE = 1 / PRUNE_CHANCE
+                # We'll multiply this value by 1.5 to ensure that we return
+                # quickly to the maximum allowed size.
+                prune_size = int(1.5 * 1 / PRUNE_CHANCE)
                 to_prune = to_prune[-prune_size:]
 
                 self.model.remove_if_unchanged(mutator, self.key,
