@@ -409,7 +409,7 @@ class LocalizedModule(Module):
 
 module = {}
 
-catch_errors = "try {{ {content} }} catch (err) {{ r.sendError('Error running module', '{name}', ':', err) }}"
+catch_errors = "try {{ {content} }} catch (err) {{ r.sendError('Error running module', '{name}', ':', err.toString()) }}"
 
 module["reddit-embed-base"] = Module("reddit-embed-base.js",
     "lib/es5-shim.js",
