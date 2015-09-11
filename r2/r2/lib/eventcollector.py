@@ -354,26 +354,7 @@ class EventQueue(object):
             event.add("sr_id", subreddit._id)
             event.add("sr_name", subreddit.name)
 
-        if target:
-            from r2.models import Comment, Link, Message
-
-            event.add("target_id", target._id)
-            event.add("target_fullname", target._fullname)
-            event.add("target_type", target.__class__.__name__.lower())
-
-            # If the target is an Account or Subreddit (or has a "name" attr),
-            # add the target_name
-            if hasattr(target, "name"):
-                event.add("target_name", target.name)
-            # Pass in the author of the target for comments, links, & messages
-            elif isinstance(target, (Comment, Link, Message)):
-                author = target.author_slow
-                if target._deleted or author._deleted:
-                    event.add("target_author_id", 0)
-                    event.add("target_author_name", "[deleted]")
-                else:
-                    event.add("target_author_id", author._id)
-                    event.add("target_author_name", author.name)
+        event.add_target_fields(target)
 
     @squelch_exceptions
     @sampled("events_collector_mod_sample_rate")
