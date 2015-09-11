@@ -33,6 +33,7 @@ from r2.lib.utils        import UrlParser
 from r2.lib.utils        import constant_time_compare, canonicalize_email
 from r2.lib import amqp, filters, hooks
 from r2.lib.log import log_text
+from r2.models.bans import TempTimeout
 from r2.models.last_modified import LastModified
 from r2.models.modaction import ModAction
 from r2.models.trylater import TryLater
@@ -682,12 +683,23 @@ class Account(Thing):
                 (self.pref_creddit_autorenew and self.gold_creddits > 0))
 
     @property
+    def timeout_expiration(self):
+        """Find the expiration date of the user's temp-timeout as a datetime
+        object.
+
+        Returns None if no temp-timeout found.
+        """
+        if not self.in_timeout:
+            return None
+
+        return TempTimeout.search(self.name).get(self.name)
+
+    @property
     def days_remaining_in_timeout(self):
         if not self.in_timeout:
             return 0
 
-        hook = hooks.get_hook('timeouts.fetch_expiration')
-        expires = hook.call_until_return(user=self)
+        expires = self.timeout_expiration
 
         if not expires:
             return 0
