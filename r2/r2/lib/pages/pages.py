@@ -3680,7 +3680,7 @@ class BannedTableItem(RelTableItem):
 
 class MutedTableItem(RelTableItem):
     type = 'muted'
-    cells = ('user', 'age', 'remove')
+    cells = ('user', 'age', 'remove', 'note')
 
     @property
     def executed_message(self):

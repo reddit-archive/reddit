@@ -48,6 +48,14 @@
             <input type="number" min="1" max="999" name="duration" id="duration">
             <span>${_('days (leave blank for permanent)')}</span>
         </div>
+    %elif add_type == "muted":
+        <label for="name">${_('who to mute?')} &nbsp;</label>
+        <input type="text" class="friend-name" name="name" id="name">
+        <div>
+            <label for="note">${_('why the mute?')}</label>
+            <input type="text" maxlength="300" name="note" id="note">
+            <span>${_('(will not be visible to user)')}</span>
+        </div>
     %else:
         <input type="text" name="name" id="name">
     %endif

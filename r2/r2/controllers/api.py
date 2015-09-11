@@ -1101,10 +1101,11 @@ class ApiController(RedditController):
         log_details = None
         log_description = None
 
-        if type in ('banned', 'wikibanned'):
+        if type in ('banned', 'wikibanned', 'muted'):
             container.add_rel_note(type, friend, note)
             log_description = note
 
+        if type in ('banned', 'wikibanned'):
             if duration:
                 container.unschedule_unban(friend, type)
                 tempinfo = container.schedule_unban(
@@ -1187,10 +1188,12 @@ class ApiController(RedditController):
         c.user.add_friend_note(friend, note)
         form.set_text('.status', _("saved"))
 
-    @validatedForm(VModhash(),
-                   type = VOneOf('type', ('bannednote', 'wikibannednote')),
-                   user = VExistingUname('name'),
-                   note = VLength('note', 300))
+    @validatedForm(
+        VModhash(),
+        type=VOneOf('type', ('bannednote', 'wikibannednote', 'mutednote')),
+        user=VExistingUname('name'),
+        note=VLength('note', 300),
+    )
     def POST_relnote(self, form, jquery, type, user, note):
         perm = 'wiki' if type.startswith('wiki') else 'access'
         if (not c.user_is_admin
@@ -1773,7 +1776,10 @@ class ApiController(RedditController):
         # Don't mute the user and create another modaction if already muted
         if added:
             MutedAccountsBySubreddit.mute(subreddit, user, c.user)
-            ModAction.create(subreddit, c.user, 'muteuser', target=user)
+            permalink = message.make_permalink(force_domain=True)
+            ModAction.create(subreddit, c.user, 'muteuser',
+                target=user, description=permalink)
+            subreddit.add_rel_note('muted', user, permalink)
 
     @require_oauth2_scope("modcontributors")
     @noresponse(

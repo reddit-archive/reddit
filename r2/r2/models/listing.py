@@ -228,7 +228,7 @@ class MutedListing(UserListing):
         items = UserListing.get_items(self, *a, **kw)
         wrapped_items = items[0]
         names = [item.user.name for item in wrapped_items]
-        muted = c.site.get_muted(names)
+        muted = c.site.get_muted_items(names)
         for wrapped in wrapped_items:
             MutedListing.populate_from_muted(wrapped, muted)
         return items

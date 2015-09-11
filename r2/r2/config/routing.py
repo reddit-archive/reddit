@@ -395,7 +395,7 @@ def make_map(config):
     mc('/api/:action', controller='apiminimal',
        requirements=dict(action="new_captcha"))
     mc('/api/:type', controller='api',
-       requirements=dict(type='wikibannednote|bannednote'),
+       requirements=dict(type='wikibannednote|bannednote|mutednote'),
        action='relnote')
 
     # Route /api/multi here to prioritize it over the /api/:action rule

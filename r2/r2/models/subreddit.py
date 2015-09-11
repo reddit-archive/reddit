@@ -1223,7 +1223,7 @@ class Subreddit(Thing, Printable, BaseSite):
     def get_tempbans(self, type=None, names=None):
         return SubredditTempBan.search(self.name, type, names)
 
-    def get_muted(self, names=None):
+    def get_muted_items(self, names=None):
         return MutedAccountsBySubreddit.search(self, names)
 
     def add_gilding_seconds(self):
