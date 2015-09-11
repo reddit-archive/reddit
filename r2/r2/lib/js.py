@@ -464,7 +464,6 @@ module["reddit-init-base"] = LocalizedModule("reddit-init-base.js",
     localized_appendices=[
         PluralForms(),
     ],
-    wrap=catch_errors,
 )
 
 module["reddit-init-legacy"] = LocalizedModule("reddit-init-legacy.js",
@@ -473,12 +472,14 @@ module["reddit-init-legacy"] = LocalizedModule("reddit-init-legacy.js",
     "lib/es5-shim.js",
     "lib/es5-sham.js",
     module["reddit-init-base"],
+    wrap=catch_errors,
 )
 
 module["reddit-init"] = LocalizedModule("reddit-init.js",
     "lib/jquery-2.1.1.js",
     "lib/es5-shim.js",
     module["reddit-init-base"],
+    wrap=catch_errors,
 )
 
 module["reddit"] = LocalizedModule("reddit.js",
