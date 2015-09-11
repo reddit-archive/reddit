@@ -368,6 +368,7 @@ class ApiController(RedditController):
         if form.has_errors("to", errors.USER_MUTED):
             g.events.muted_forbidden_event("muted", target=to,
                 request=request, context=c)
+            form.set_inputs(to="", subject="", text="", captcha="")
             return
 
         if from_sr and isinstance(to, Subreddit):
@@ -393,6 +394,7 @@ class ApiController(RedditController):
                 form.has_errors("to", errors.MUTED_FROM_SUBREDDIT)
                 g.events.muted_forbidden_event("muted mod", subreddit=from_sr,
                     target=to, request=request, context=c)
+                form.set_inputs(to="", subject="", text="", captcha="")
                 return
             m, inbox_rel = Message._new(c.user, to, subject, body, request.ip,
                                         sr=from_sr, from_sr=True)
