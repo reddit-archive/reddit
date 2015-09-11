@@ -278,11 +278,7 @@ class EventQueue(object):
             event.add("sr_id", subreddit._id)
             event.add("sr_name", subreddit.name)
 
-        if target:
-            event.add("target_id", target._id)
-            event.add("target_fullname", target._fullname)
-            event.add("target_name", target.name)
-            event.add("target_type", target.__class__.__name__.lower())
+        event.add_target_fields(target)
 
         self.save_event(event)
 
@@ -314,22 +310,7 @@ class EventQueue(object):
         if modaction.details_text:
             event.add("details_text", modaction.details_text)
 
-        if target:
-            from r2.models import Account, Comment, Link
-
-            event.add("target_fullname", target._fullname)
-            event.add("target_type", target.__class__.__name__.lower())
-            event.add("target_id", target._id)
-            if isinstance(target, Account):
-                event.add("target_name", target.name)
-            elif isinstance(target, (Comment, Link)):
-                author = target.author_slow
-                if target._deleted or author._deleted:
-                    event.add("target_author_id", 0)
-                    event.add("target_author_name", "[deleted]")
-                else:
-                    event.add("target_author_id", author._id)
-                    event.add("target_author_name", author.name)
+        event.add_target_fields(target)
 
         self.save_event(event)
 
@@ -440,6 +421,29 @@ class EventV2(object):
             self.obfuscated_data[field] = value
         else:
             self.payload[field] = value
+
+    def add_target_fields(self, target):
+        if not target:
+            return
+        from r2.models import Comment, Link, Message
+
+        self.add("target_id", target._id)
+        self.add("target_fullname", target._fullname)
+        self.add("target_type", target.__class__.__name__.lower())
+
+        # If the target is an Account or Subreddit (or has a "name" attr),
+        # add the target_name
+        if hasattr(target, "name"):
+            self.add("target_name", target.name)
+        # Pass in the author of the target for comments, links, & messages
+        elif isinstance(target, (Comment, Link, Message)):
+            author = target.author_slow
+            if target._deleted or author._deleted:
+                self.add("target_author_id", 0)
+                self.add("target_author_name", "[deleted]")
+            else:
+                self.add("target_author_id", author._id)
+                self.add("target_author_name", author.name)
 
     def get(self, field, obfuscated=False):
         if obfuscated:
