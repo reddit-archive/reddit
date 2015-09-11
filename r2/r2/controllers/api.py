@@ -3948,6 +3948,9 @@ class ApiController(RedditController):
                    flair_template = VFlairTemplateByID('flair_template_id'))
     @api_doc(api_section.flair, uses_site=True)
     def POST_deleteflairtemplate(self, form, jquery, flair_template):
+        if not flair_template:
+            return self.abort404()
+
         idx = FlairTemplateBySubredditIndex.by_sr(c.site._id)
         if idx.delete_by_id(flair_template._id):
             jquery('#%s' % flair_template._id).parent().remove()
