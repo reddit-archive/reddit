@@ -2768,7 +2768,7 @@ def on_subreddit_unban(data):
 
 class MutedAccountsBySubreddit(object):
     @classmethod
-    def mute(cls, sr, user, muter):
+    def mute(cls, sr, user, muter, parent_message=None):
         from r2.lib.db import queries
         from r2.models import Message, ModAction
         info = {
@@ -2796,9 +2796,14 @@ class MutedAccountsBySubreddit(object):
                 muting_link="https://reddit.zendesk.com/hc/en-us/articles/205269739",
                 subredditname=sr.name,
             )
+            if parent_message:
+                subject = parent_message.subject
+                re = "re: "
+                if not subject.startswith(re):
+                    subject = re + subject
 
             item, inbox_rel = Message._new(muter, user, subject, message,
-                request.ip, sr=sr, from_sr=True)
+                request.ip, parent=parent_message, sr=sr, from_sr=True)
             queries.new_message(item, inbox_rel, update_modmail=True)
 
         return {user.name: result.keys()[0]}

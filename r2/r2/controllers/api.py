@@ -1775,7 +1775,7 @@ class ApiController(RedditController):
         added = subreddit.add_muted(user)
         # Don't mute the user and create another modaction if already muted
         if added:
-            MutedAccountsBySubreddit.mute(subreddit, user, c.user)
+            MutedAccountsBySubreddit.mute(subreddit, user, c.user, message)
             permalink = message.make_permalink(force_domain=True)
             ModAction.create(subreddit, c.user, 'muteuser',
                 target=user, description=permalink)
