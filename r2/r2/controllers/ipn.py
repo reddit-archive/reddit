@@ -281,7 +281,7 @@ def send_gift(buyer, recipient, months, days, signed, giftmessage,
 
     if signed:
         sender = buyer.name
-        md_sender = "[%s](/user/%s)" % (sender, sender)
+        md_sender = "/u/%s" % sender
         repliable = True
     else:
         sender = _("An anonymous redditor")
