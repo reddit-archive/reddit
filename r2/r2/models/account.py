@@ -20,6 +20,8 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+import random
+
 from r2.config import feature
 from r2.lib.db.thing     import Thing, Relation, NotFound
 from r2.lib.db.operators import lower
@@ -446,6 +448,14 @@ class Account(Thing):
         rel = rels[friend._id]
         rel.note = note
         rel._commit()
+
+    @memoize("get_random_friends", time=30*60)
+    def get_random_friends(self, limit=100):
+        friends = self.friend_ids()
+        if len(friends) > limit:
+            friends = random.sample(friends, limit)
+
+        return friends
 
     def delete(self, delete_message=None):
         self.delete_message = delete_message

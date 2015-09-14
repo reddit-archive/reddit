@@ -28,7 +28,7 @@ from r2.lib.db.thing import Thing, Merge
 from r2.lib.db.operators import asc, desc, timeago
 from r2.lib.db.sorts import epoch_seconds
 from r2.lib.db import tdb_cassandra
-from r2.lib.utils import fetch_things2, tup, UniqueIterator, set_last_modified
+from r2.lib.utils import fetch_things2, tup, UniqueIterator
 from r2.lib import utils
 from r2.lib import amqp, filters
 from r2.lib.comment_tree import add_comments, update_comment_votes
@@ -1870,28 +1870,6 @@ def handle_vote(user, thing, vote, foreground=False, timer=None, date=None):
         return
 
     new_vote(v, foreground=foreground, timer=timer)
-
-    timestamps = []
-    if isinstance(thing, Link):
-
-        #update the modified flags
-        if user._id == thing.author_id:
-            timestamps.append('Overview')
-            timestamps.append('Submitted')
-
-    elif isinstance(thing, Comment):
-        #update last modified
-        if user._id == thing.author_id:
-            timestamps.append('Overview')
-            timestamps.append('Commented')
-
-    else:
-        raise NotImplementedError
-
-    for timestamp in timestamps:
-        set_last_modified(user, timestamp.lower())
-    LastModified.touch(user._fullname, timestamps)
-    timer.intermediate("last_modified")
 
 
 def process_votes(qname, limit=0):

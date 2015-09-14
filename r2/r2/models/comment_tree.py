@@ -22,7 +22,6 @@
 
 from r2.lib.db import tdb_cassandra
 from r2.lib import utils
-from r2.models.last_modified import LastModified
 from r2.models.link import Comment
 
 from pycassa import batch, types
@@ -488,8 +487,6 @@ class CommentTree:
     def add_comments(self, comments):
         impl = self.IMPLEMENTATIONS[self.link.comment_tree_version]
         impl.add_comments(self, comments)
-        utils.set_last_modified(self.link, 'comments')
-        LastModified.touch(self.link._fullname, 'Comments')
 
     def add_comment(self, comment):
         return self.add_comments([comment])

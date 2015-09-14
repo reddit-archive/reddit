@@ -259,9 +259,6 @@ class FrontController(RedditController):
 
         is_embed = embeds.prepare_embed_request(sr)
 
-        # check for 304
-        self.check_modified(article, 'comments')
-
         if is_embed:
             embeds.set_up_embed(sr, comment, showedits=showedits)
 

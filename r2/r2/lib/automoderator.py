@@ -53,7 +53,6 @@ from r2.lib.utils import (
     TimeoutFunction,
     TimeoutFunctionException,
     lowercase_keys_recursively,
-    set_last_modified,
     timeinterval_fromstr,
     tup,
 )
@@ -973,19 +972,12 @@ class RuleTarget(object):
             )
 
             # TODO: shouldn't need to do all of this here
-            modified_thing = None
             log_action = None
             if isinstance(item, Link):
-                modified_thing = item
                 log_action = "removelink"
             elif isinstance(item, Comment):
-                modified_thing = data["link"]
                 log_action = "removecomment"
                 queries.unnotify(item)
-
-            if modified_thing:
-                set_last_modified(modified_thing, "comments")
-                LastModified.touch(modified_thing._fullname, "Comments")
 
             if log_action:
                 if self.action_reason:

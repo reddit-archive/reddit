@@ -53,13 +53,14 @@ from r2.lib.errors import UserRequiredException, RedditError
 from r2.lib.geoip import location_by_ips
 from r2.lib.memoize import memoize
 from r2.lib.permissions import ModeratorPermissionSet
-from r2.lib.utils import tup, last_modified_multi, fuzz_activity, \
-    unicode_title_to_ascii
 from r2.lib.utils import (
-    timeago,
-    summarize_markdown,
-    in_chunks,
     UrlParser,
+    fuzz_activity,
+    in_chunks,
+    summarize_markdown,
+    timeago,
+    tup,
+    unicode_title_to_ascii,
 )
 from r2.lib.cache import sgm
 from r2.lib.strings import strings, Score
@@ -74,7 +75,6 @@ from r2.lib import hooks
 from r2.models.query_cache import MergedCachedQuery
 import pycassa
 
-from r2.lib.utils import set_last_modified
 from r2.models.keyvalue import NamedGlobals
 from r2.models.wiki import WikiPage
 import os.path
@@ -1526,31 +1526,13 @@ class FriendsSR(FakeSubreddit):
     name = 'friends'
     title = 'friends'
 
-    @classmethod
-    @memoize("get_important_friends", 5*60)
-    def get_important_friends(cls, user_id, max_lookup = 500, limit = 100):
-        a = Account._byID(user_id, data = True)
-        # friends are returned chronologically by date, so pick the end of the list
-        # for the most recent additions
-        friends = Account._byID(a.friends[-max_lookup:], return_dict = False,
-                                data = True)
-
-        # only include friends that have ever interacted with the site
-        last_activity = last_modified_multi(friends, "overview")
-        friends = [x for x in friends if x in last_activity]
-
-        # sort friends by most recent interactions
-        friends.sort(key = lambda x: last_activity[x], reverse = True)
-        return [x._id for x in friends[:limit]]
-
     def get_links(self, sort, time):
         from r2.lib.db import queries
 
         if not c.user_is_loggedin:
             raise UserRequiredException
 
-        friends = self.get_important_friends(c.user._id)
-
+        friends = c.user.get_random_friends()
         if not friends:
             return []
 
@@ -1573,8 +1555,7 @@ class FriendsSR(FakeSubreddit):
         if not c.user_is_loggedin:
             raise UserRequiredException
 
-        friends = self.get_important_friends(c.user._id)
-
+        friends = c.user.get_random_friends()
         if not friends:
             return []
 
@@ -1597,7 +1578,8 @@ class FriendsSR(FakeSubreddit):
         if not c.user_is_loggedin:
             raise UserRequiredException
 
-        friends = self.get_important_friends(c.user._id)
+        friends = c.user.get_random_friends()
+
         if not friends:
             return []
 
