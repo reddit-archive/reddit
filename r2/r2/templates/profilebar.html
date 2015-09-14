@@ -97,7 +97,7 @@
     % endif
   %endif
 
-  %if feature.is_enabled("snoovatars") and thing.user.gold:
+  %if thing.user.gold:
     %if thing.show_private_info or thing.user.pref_show_snoovatar:
       <div class="gold-accent snoovatar-link">
         <a href="/user/${thing.user.name}/snoo">
