@@ -2769,6 +2769,8 @@ def on_subreddit_unban(data):
 class MutedAccountsBySubreddit(object):
     @classmethod
     def mute(cls, sr, user, muter, parent_message=None):
+        NUM_HOURS = 72
+
         from r2.lib.db import queries
         from r2.models import Message, ModAction
         info = {
@@ -2781,7 +2783,7 @@ class MutedAccountsBySubreddit(object):
             cls.cancel_rowkey(sr),
             cls.cancel_colkey(user),
             json.dumps(info),
-            datetime.timedelta(hours=24),
+            datetime.timedelta(hours=NUM_HOURS),
             trylater_rowkey=cls.schedule_rowkey(),
         )
 
@@ -2791,10 +2793,11 @@ class MutedAccountsBySubreddit(object):
             subject %= dict(subredditname=sr.name)
             message = _("You have been [temporarily muted](%(muting_link)s) "
                 "from r/%(subredditname)s. You will not be able to message "
-                "the moderators of r/%(subredditname)s for 24 hours.")
+                "the moderators of r/%(subredditname)s for %(num_hours)s hours.")
             message %= dict(
                 muting_link="https://reddit.zendesk.com/hc/en-us/articles/205269739",
                 subredditname=sr.name,
+                num_hours=NUM_HOURS,
             )
             if parent_message:
                 subject = parent_message.subject
