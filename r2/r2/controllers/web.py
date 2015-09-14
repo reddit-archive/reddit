@@ -66,7 +66,6 @@ class WebLogController(RedditController):
         # Whitelist tags to keep the frontend from creating too many keys in statsd
         valid_frontend_log_tags = {
             'unknown',
-            'jquery-migrate-bad-html',
             'reddit-config-migrate-error',
         }
 
