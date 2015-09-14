@@ -4029,11 +4029,13 @@ class ApiController(RedditController):
             subreddit = link.subreddit_slow
             if not (c.user_is_admin or link.can_flair_slow(c.user)):
                 abort(403)
-        else:
+        elif user:
             flair_type = USER_FLAIR
             subreddit = c.site
             if not (c.user_is_admin or user.can_flair_in_sr(c.user, subreddit)):
                 abort(403)
+        else:
+            return self.abort404()
 
         if flair_template_id:
             try:
