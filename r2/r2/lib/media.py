@@ -283,8 +283,8 @@ def _scrape_media(url, autoplay=False, maxwidth=600, force=False,
         if mediaByURL:
             media = mediaByURL.media
 
-    # Otherwise, scrape it
-    if not media:
+    # Otherwise, scrape it if thumbnail is not present
+    if not media or not media.thumbnail_url:
         media_object = secure_media_object = None
         thumbnail_image = thumbnail_url = thumbnail_size = None
 
