@@ -996,8 +996,7 @@ class CommentBuilder(Builder):
                     depth[comment._id] != 0 and  # (1)
                     not author_is_special and  # (2)
                     not (parent and
-                         parent.author_id in special_responder_ids and
-                         feature.is_enabled('qa_show_replies')) and  # (4)
+                         parent.author_id in special_responder_ids) and # (4)
                     not comment.prevent_collapse):  # (5)
                 comment.hidden = True
 
