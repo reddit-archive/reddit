@@ -368,10 +368,7 @@ def _set_media(link, force=False, **kwargs):
     if link.subreddit_slow.quarantine:
         return
 
-    if link.is_self:
-        if not feature.is_enabled('scrape_self_posts'):
-            return
-    else:
+    if not link.is_self:
         if not force and (link.has_thumbnail or link.media_object):
             return
 
