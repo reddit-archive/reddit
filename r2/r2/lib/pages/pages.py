@@ -616,11 +616,11 @@ class Reddit(Templated):
                                       show_icon=False))
                 else:
                     if c.site.type == 'restricted':
-                        subtitle = _('submission in this subreddit '
-                                     'is restricted to approved submitters.')
+                        subtitle = _('Only approved users may post in this '
+                                     'community.')
                     elif c.site.type == 'gold_restricted':
-                        subtitle = _('submission in this subreddit '
-                                     'is restricted to reddit gold members.')
+                        subtitle = _('Only reddit gold members may post in '
+                                     'this community.')
                     ps.append(SideBox(title=_('Submissions restricted'),
                                       css_class="submit",
                                       disabled=True,
