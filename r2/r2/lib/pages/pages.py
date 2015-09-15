@@ -2625,9 +2625,8 @@ class SubredditTopBar(CachedTemplate):
             menus.append(self.subscribed_reddits())
 
             # if the user has more than ~10 subscriptions the top bar will be
-            # completely full any anything we add to it won't be seen
+            # completely full and anything we add to it won't be seen
             if len(self.my_reddits) < 10:
-                sep = '<span class="separator">&nbsp;&ndash;&nbsp;</span>'
                 menus.append(RawString(sep))
                 menus.append(self.popular_reddits(exclude_mine=True))
 
