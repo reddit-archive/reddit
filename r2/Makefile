@@ -55,7 +55,7 @@ clean_pyx:
 	rm -f $(PYX_C_FILES) $(PYX_SO_FILES)
 
 #################### i18n
-STRINGS_FILE := r2/lib/strings.py
+STRINGS_FILE := r2/lib/generate_strings.py
 GENERATED_STRINGS_FILE := r2/lib/generated_strings.py
 
 .PHONY: i18n clean_i18n
@@ -65,7 +65,7 @@ i18n: $(GENERATED_STRINGS_FILE)
 	$(PYTHON) setup.py extract_messages --input-dirs=r2,$(PLUGIN_I18N_PATHS) -o $(POTFILE)
 
 $(GENERATED_STRINGS_FILE): $(STRINGS_FILE)
-	paster run standalone $(STRINGS_FILE) -c "generate_strings()" > $(GENERATED_STRINGS_FILE)
+	$(PYTHON) $(STRINGS_FILE) > $(GENERATED_STRINGS_FILE)
 
 clean_i18n:
 	rm -f $(GENERATED_STRINGS_FILE)

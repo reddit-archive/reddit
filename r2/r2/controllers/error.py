@@ -52,7 +52,7 @@ try:
         websafe_json,
     )
     from r2.lib import log, pages
-    from r2.lib.strings import rand_strings
+    from r2.lib.strings import get_funny_translated_string
     from r2.lib.template_helpers import static
     from r2.lib.base import abort
     from r2.models.link import Link
@@ -226,9 +226,10 @@ class ErrorController(RedditController):
             elif code == 429:
                 return self.send429()
             elif code == 500:
-                randmin = {'admin': random.choice(self.admins)}
                 failien_url = make_failien_url()
-                sad_message = safemarkdown(rand_strings.sadmessages % randmin)
+                sad_message = get_funny_translated_string("500_page")
+                sad_message %= {'admin': random.choice(self.admins)}
+                sad_message = safemarkdown(sad_message)
                 return redditbroke % (failien_url, sad_message)
             elif code == 503:
                 return self.send503()

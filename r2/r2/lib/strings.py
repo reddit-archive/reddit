@@ -23,9 +23,7 @@
 """
 Module for maintaining long or commonly used translatable strings,
 removing the need to pollute the code with lots of extra _ and
-ungettext calls.  Also provides a capacity for generating a list of
-random strings which can be different in each language, though the
-hooks to the UI are the same.
+ungettext calls.
 """
 
 from pylons import tmpl_context as c
@@ -35,10 +33,12 @@ import random
 import babel.numbers
 
 from r2.lib.filters import websafe
+from r2.lib.generate_strings import funny_translatable_strings
 from r2.lib.translation import set_lang
 
+
 __all__ = ['StringHandler', 'strings', 'PluralManager', 'plurals',
-           'Score', 'rand_strings']
+           'Score', 'get_funny_translated_string']
 
 # here's where all of the really long site strings (that need to be
 # translated) live so as not to clutter up the rest of the code.  This
@@ -344,93 +344,11 @@ def fallback_trans(x):
             set_lang(l[0])
     return t
 
-class RandomString(object):
-    """class for generating a translatable random string that is one
-    of n choices.  The 'description' field passed to the constructor
-    is only used to generate labels for the translation interface.
 
-    Unlike other translations, this class is accessed directly by the
-    translator classes and side-step babel.extract_messages.
-    Untranslated, the strings return are of the form 'description n+1'
-    for the nth string.  The user-facing versions of these strings are
-    therefore completely determined by their translations."""
-    def __init__(self, description, num):
-        self.desc = description
-        self.num = num
-
-    def get(self, quantity = 0):
-        """Generates a list of 'quantity' random strings.  If quantity
-        < self.num, the entries are guaranteed to be unique."""
-        l = []
-        possible = []
-        for x in range(max(quantity, 1)):
-            if not possible:
-                possible = range(self.num)
-            irand = random.choice(possible)
-            possible.remove(irand)
-            l.append(fallback_trans(self._trans_string(irand)))
-
-        return l if len(l) > 1 else l[0]
-
-    def _trans_string(self, n):
-        """Provides the form of the string that is actually translated by gettext."""
-        return "%s %d" % (self.desc, n+1)
-
-    def __iter__(self):
-        for i in xrange(self.num):
-            yield self._trans_string(i)
-
-
-class RandomStringManager(object):
-    """class for keeping randomized translatable strings organized.
-    New strings are added via add, and accessible by either getattr or
-    getitem using the short name passed to add."""
-    def __init__(self):
-        self.strings = {}
-
-    def __getitem__(self, attr):
-        return self.strings[attr].get()
-
-    def __getattr__(self, attr):
-        try:
-            return self[attr]
-        except KeyError:
-            raise AttributeError
-
-    def get(self, attr, quantity = 0):
-        """Convenience method for getting a list of 'quantity' strings
-        from the RandomString named 'attr'"""
-        return self.strings[attr].get(quantity)
-
-    def add(self, name, description, num):
-        """create a new random string accessible by 'name' in the code
-        and explained in the translation interface with 'description'."""
-        self.strings[name] = RandomString(description, num)
-
-    def __iter__(self):
-        """iterator primarily used by r2.lib.translations to fetch the
-        list of random strings and to iterate over their names to
-        insert them into the resulting .po file for a given language"""
-        return self.strings.iteritems()
-
-rand_strings = RandomStringManager()
-
-rand_strings.add('sadmessages',   "Funny 500 page message", 10)
-rand_strings.add('create_reddit', "Reason to create a reddit", 20)
-
-
-def generate_strings():
-    """Print out automatically generated strings for translation."""
-
-    # used by error pages and in the sidebar for why to create a subreddit
-    for name, rand_string in rand_strings:
-        for string in rand_string:
-            print "# TRANSLATORS: Do not translate literally. Come up with a funny/relevant phrase (see the English version for ideas.) Accepts markdown formatting."
-            print "print _('" + string + "')"
-
-    # these are used in r2.lib.pages.trafficpages
-    INTERVALS = ("hour", "day", "month")
-    TYPES = ("uniques", "pageviews", "traffic", "impressions", "clicks")
-    for interval in INTERVALS:
-        for type in TYPES:
-            print "print _('%s by %s')" % (type, interval)
+def get_funny_translated_string(category, num=1):
+    strings = random.sample(funny_translatable_strings[category], num)
+    ret = [fallback_trans(string) for string in strings]
+    if len(ret) == 1:
+        return ret[0]
+    else:
+        return ret
