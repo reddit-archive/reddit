@@ -262,6 +262,14 @@ rate_limit = (function() {
     };
 })()
 
+$.fn.removeLinkFlairClass = function () {
+  $(this)
+    .removeClass("linkflair")
+    .attr('class', function(i, c) {
+      return (c.replace(/(^|\s)linkflair\S+/g, ''));
+    });
+};
+
 $.fn.updateThing = function(update) {
     var $thing = $(this);
     var $entry = $thing.children('.entry');
