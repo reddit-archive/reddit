@@ -453,17 +453,21 @@
     %if thing.can_block:
       ${self.banbuttons()}
         %if (not thing.was_comment or thing.thing.is_mention) and thing.thing.author_id != c.user._id and thing.thing.author_id not in c.user.enemies:
-          <li>
-            %if getattr(thing.thing, "from_sr", False):
-              %if getattr(thing.thing, "sr_blocked", False):
-                ${ynbutton(_("unblock subreddit"), _("unblocked"), "unblock_subreddit")}
-              %else:
-                ${ynbutton(_("block subreddit"), _("blocked"), "block", "hide_thing")}
-              %endif
-            %else:
-              ${ynbutton(_("block user"), _("blocked"), "block", "hide_thing")}
+          %if getattr(thing.thing, "from_sr", False):
+            %if not (thing.thing.user_is_moderator or c.user_is_admin):
+              <li>
+                %if getattr(thing.thing, "sr_blocked", False):
+                  ${ynbutton(_("unblock subreddit"), _("unblocked"), "unblock_subreddit")}
+                %else:
+                  ${ynbutton(_("block subreddit"), _("blocked"), "block", "hide_thing")}
+                %endif
+              </li>
             %endif
-          </li>
+          %else:
+            <li>
+              ${ynbutton(_("block user"), _("blocked"), "block", "hide_thing")}
+            </li>
+          %endif
           %if thing.can_mute:
             <li>
               %if getattr(thing.thing, "sr_muted", False):

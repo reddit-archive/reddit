@@ -1709,7 +1709,9 @@ class ApiController(RedditController):
             sr = None
 
         if getattr(thing, "from_sr", False) and sr:
-            BlockedSubredditsByAccount.block(c.user, sr)
+            # Users may only block a subreddit they don't mod
+            if not (sr.is_moderator(c.user) or c.user_is_admin):
+                BlockedSubredditsByAccount.block(c.user, sr)
             return
 
         # Users may only block someone who has
