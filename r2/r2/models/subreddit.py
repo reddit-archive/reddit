@@ -1036,8 +1036,7 @@ class Subreddit(Thing, Printable, BaseSite):
             automatics = Subreddit._by_name(
                 g.automatic_reddits, stale=True).values()
             automatic_ids = [sr._id for sr in automatics if sr._id in sr_ids]
-            for sr_id in automatic_ids:
-                sr_ids.remove(sr_id)
+            sr_ids = [sr_id for sr_id in sr_ids if sr_id not in automatic_ids]
         else:
             automatic_ids = []
 
