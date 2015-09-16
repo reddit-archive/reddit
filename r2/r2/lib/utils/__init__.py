@@ -22,4 +22,3 @@
 
 from utils import *
 from http_utils import *
-from thing_utils import *
