@@ -179,7 +179,7 @@ def update_query(base_url, query_updates):
     scheme, netloc, path, params, query, fragment = urlparse.urlparse(base_url)
     query_dict = urlparse.parse_qs(query)
     query_dict.update(query_updates)
-    query = urllib.urlencode(query_dict)
+    query = urllib.urlencode(query_dict, doseq=True)
     return urlparse.urlunparse((scheme, netloc, path, params, query, fragment))
 
 
