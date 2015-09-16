@@ -892,7 +892,7 @@ class Subreddit(Thing, Printable, BaseSite):
     @property
     def is_embeddable(self):
         return (self.type not in Subreddit.private_types and
-                not self.over_18 and not self.quarantine)
+                not self.over_18 and not self._spam and not self.quarantine)
 
     def can_demod(self, bully, victim):
         bully_rel = self.get_moderator(bully)
