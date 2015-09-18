@@ -53,7 +53,5 @@ Disallow: /login
 Disallow: /reddits/search
 Disallow: /search
 Disallow: /r/*/search
-Disallow: /over18
-Disallow: /quarantine
 Allow: /
 
