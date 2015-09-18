@@ -37,19 +37,40 @@ from r2.lib.configparse import ConfigValue
 mimetypes.init()
 
 
-def load_environment(global_conf={}, app_conf={}, setup_globals=True):
-    # Setup our paths
-    root_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+def get_r2_path():
+    # we know this file is at r2/r2/config/environment.py
+    this_path = os.path.abspath(__file__)
+    # walk up 3 directories to r2
+    r2_path = os.path.dirname(os.path.dirname(os.path.dirname(this_path)))
+    return r2_path
 
-    paths = {'root': root_path,
-             'controllers': os.path.join(root_path, 'controllers'),
-             'templates': [os.path.join(root_path, 'templates')],
-             }
+
+def get_built_statics_path():
+    """Return the path for built (compiled/compressed) statics."""
+    r2_path = get_r2_path()
+    return os.path.join(r2_path, 'build', 'public')
+
+
+def get_raw_statics_path():
+    """Return the path for the raw (under version control) statics"""
+    r2_path = get_r2_path()
+    return os.path.join(r2_path, 'r2', 'public')
+
+
+def load_environment(global_conf={}, app_conf={}, setup_globals=True):
+    r2_path = get_r2_path()
+    root_path = os.path.join(r2_path, 'r2')
+
+    paths = {
+        'root': root_path,
+        'controllers': os.path.join(root_path, 'controllers'),
+        'templates': [os.path.join(root_path, 'templates')],
+    }
 
     if ConfigValue.bool(global_conf.get('uncompressedJS')):
-        paths['static_files'] = os.path.join(root_path, 'public')
+        paths['static_files'] = get_raw_statics_path()
     else:
-        paths['static_files'] = os.path.join(os.path.dirname(root_path), 'build/public')
+        paths['static_files'] = get_built_statics_path()
 
     config = PylonsConfig()
 

@@ -28,28 +28,19 @@ import re
 import subprocess
 import json
 
+from pylons import app_globals as g
+from pylons import tmpl_context as c
+
+from r2.config.environment import get_built_statics_path
+from r2.lib.permissions import ModeratorPermissionSet
+from r2.lib.plugin import PluginLoader
+from r2.lib.static import locate_static_file
 from r2.lib.translation import (
     extract_javascript_msgids,
     get_catalog,
     iter_langs,
     validate_plural_forms,
 )
-from r2.lib.plugin import PluginLoader
-from r2.lib.permissions import ModeratorPermissionSet
-
-
-try:
-    from pylons import tmpl_context as c, config, app_globals as g
-except ImportError:
-    STATIC_ROOT = None
-else:
-    REDDIT_ROOT = config["pylons.paths"]["root"]
-    STATIC_ROOT = config["pylons.paths"]["static_files"]
-
-# STATIC_ROOT will be None if pylons is uninitialized
-if not STATIC_ROOT:
-    REDDIT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    STATIC_ROOT = os.path.join(os.path.dirname(REDDIT_ROOT), "build/public")
 
 
 script_tag = '<script type="text/javascript" src="{src}"></script>\n'
@@ -72,7 +63,7 @@ class Uglify(object):
 
 class Source(object):
     """An abstract collection of JavaScript code."""
-    def get_source(self):
+    def get_source(self, **kwargs):
         """Return the full JavaScript source code."""
         raise NotImplementedError
 
@@ -94,28 +85,19 @@ class FileSource(Source):
     def __init__(self, name):
         self.name = name
 
-    def get_source(self):
-        with open(self.path) as f:
-            return f.read()
-
-    @property
-    def path(self):
-        """The path to the source file on the filesystem."""
-
-        from r2.lib.static import locate_static_file
-
-        try:
-            g.plugins
-        except TypeError:
-            # g.plugins isn't available. this means we're in the build system.
-            # we can safely find all files in one place in this case since the
-            # build system copies them in from plugins first.
-            pass
+    def get_source(self, use_built_statics=False):
+        if use_built_statics:
+            # we are in the build system so we have already copied all files
+            # into the static build directory
+            built_statics_path = get_built_statics_path()
+            path = os.path.join(built_statics_path, "static", "js", self.name)
         else:
-            # this is in-request. we should check all the plugin directories
-            return locate_static_file(os.path.join("static", "js", self.name))
+            # we are in request so we need to check the pylons static_files
+            # path and the static paths for all plugins
+            path = locate_static_file(os.path.join("static", "js", self.name))
 
-        return os.path.join(STATIC_ROOT, "static", "js", self.name)
+        with open(path) as f:
+            return f.read()
 
     def url(self, absolute=False, mangle_name=False):
         from r2.lib.template_helpers import static
@@ -130,7 +112,9 @@ class FileSource(Source):
 
     @property
     def dependencies(self):
-        return [self.path]
+        built_statics_path = get_built_statics_path()
+        path = os.path.join(built_statics_path, "static", "js", self.name)
+        return [path]
 
 
 class Module(Source):
@@ -148,20 +132,23 @@ class Module(Source):
                 source = FileSource(source)
             self.sources.append(source)
 
-    def get_source(self):
-        return ";".join(s.get_source() for s in self.sources)
+    def get_source(self, use_built_statics=False):
+        return ";".join(
+            s.get_source(use_built_statics=use_built_statics)
+            for s in self.sources
+        )
 
     def extend(self, module):
         self.sources.extend(module.sources)
 
     @property
-    def path(self):
-        """The destination path of the module file on the filesystem."""
-        return os.path.join(STATIC_ROOT, "static", self.name)
+    def destination_path(self):
+        built_statics_path = get_built_statics_path()
+        return os.path.join(built_statics_path, "static", self.name)
 
     def build(self, minifier):
-        with open(self.path, "w") as out:
-            source = self.get_source()
+        with open(self.destination_path, "w") as out:
+            source = self.get_source(use_built_statics=True)
             if self.wrap:
                 source = self.wrap.format(content=source, name=self.name)
 
@@ -195,7 +182,7 @@ class Module(Source):
 
     @property
     def outputs(self):
-        return [self.path]
+        return [self.destination_path]
 
 
 class DataSource(Source):
@@ -207,7 +194,7 @@ class DataSource(Source):
     def get_content(self):
         return self.data
 
-    def get_source(self):
+    def get_source(self, **kw):
         content = self.get_content()
         json_data = json.dumps(content)
         return self.wrap.format(content=json_data) + "\n"
@@ -248,7 +235,7 @@ class PermissionsDataSource(DataSource):
         else:
             raise ValueError, "unsupported type"
 
-    def get_source(self):
+    def get_source(self, **kw):
         permission_set_info = {k: v.info for k, v in
                                self.permission_sets.iteritems()}
         permissions = self._make_marked_json(permission_set_info)
@@ -270,7 +257,6 @@ class TemplateFileSource(DataSource, FileSource):
         self.name = name
 
     def get_content(self):
-        from r2.lib.static import locate_static_file
         name, style = os.path.splitext(self.name)
         path = locate_static_file(os.path.join('static/js', self.name))
         with open(path) as f:
@@ -354,7 +340,7 @@ class LocalizedModule(Module):
     def build(self, minifier):
         Module.build(self, minifier)
 
-        with open(self.path) as f:
+        with open(self.destination_path) as f:
             reddit_source = f.read()
 
         localized_appendices = self.localized_appendices
@@ -364,7 +350,8 @@ class LocalizedModule(Module):
 
         print >> sys.stderr, "Creating language-specific files:"
         for lang, unused in iter_langs():
-            lang_path = LocalizedModule.languagize_path(self.path, lang)
+            lang_path = LocalizedModule.languagize_path(
+                self.destination_path, lang)
 
             # make sure we're not rewriting a different mangled file
             # via symlink
@@ -405,7 +392,8 @@ class LocalizedModule(Module):
     @property
     def outputs(self):
         for lang, unused in iter_langs():
-            yield LocalizedModule.languagize_path(self.path, lang)
+            yield LocalizedModule.languagize_path(self.destination_path, lang)
+
 
 module = {}
 
