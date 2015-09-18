@@ -1430,9 +1430,14 @@ class Comment(Thing, Printable):
                 extra_css += "grayed"
                 if not user_is_admin:
                     item.author = DeletedUser()
-                    item.body = '[deleted]'
                     item.gildings = 0
                     item.distinguished = None
+                    # If removed by an admin or moderator, distinguish that
+                    # from being deleted by the user.
+                    if item._spam:
+                        item.body = '[removed]'
+                    else:
+                        item.body = '[deleted]'
 
             if focal_comment == item._id36:
                 extra_css += " border"
