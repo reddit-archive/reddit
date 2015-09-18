@@ -518,6 +518,13 @@ class Subreddit(Thing, Printable, BaseSite):
         return self.type in {'public', 'restricted',
                              'gold_restricted', 'archived'}
 
+    @property
+    def author_slow(self):
+        if self.author_id:
+            return Account._byID(self.author_id, data=True)
+        else:
+            return None
+
     def add_moderator(self, user, **kwargs):
         if not user.modmsgtime:
             user.modmsgtime = False
