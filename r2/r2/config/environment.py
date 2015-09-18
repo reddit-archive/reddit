@@ -27,34 +27,18 @@ from mako.lookup import TemplateLookup
 from pylons.error import handle_mako_error
 from pylons.configuration import PylonsConfig
 
-import r2.config
 import r2.lib.helpers
+from r2.config.paths import (
+    get_r2_path,
+    get_built_statics_path,
+    get_raw_statics_path,
+)
 from r2.config.routing import make_map
 from r2.lib.app_globals import Globals
 from r2.lib.configparse import ConfigValue
 
 
 mimetypes.init()
-
-
-def get_r2_path():
-    # we know this file is at r2/r2/config/environment.py
-    this_path = os.path.abspath(__file__)
-    # walk up 3 directories to r2
-    r2_path = os.path.dirname(os.path.dirname(os.path.dirname(this_path)))
-    return r2_path
-
-
-def get_built_statics_path():
-    """Return the path for built (compiled/compressed) statics."""
-    r2_path = get_r2_path()
-    return os.path.join(r2_path, 'build', 'public')
-
-
-def get_raw_statics_path():
-    """Return the path for the raw (under version control) statics"""
-    r2_path = get_r2_path()
-    return os.path.join(r2_path, 'r2', 'public')
 
 
 def load_environment(global_conf={}, app_conf={}, setup_globals=True):

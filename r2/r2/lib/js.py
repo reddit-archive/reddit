@@ -31,7 +31,7 @@ import json
 from pylons import app_globals as g
 from pylons import tmpl_context as c
 
-from r2.config.environment import get_built_statics_path
+from r2.config.paths import get_built_statics_path
 from r2.lib.permissions import ModeratorPermissionSet
 from r2.lib.plugin import PluginLoader
 from r2.lib.static import locate_static_file
@@ -191,11 +191,11 @@ class DataSource(Source):
         self.wrap = wrap
         self.data = data
 
-    def get_content(self):
+    def get_content(self, **kw):
         return self.data
 
-    def get_source(self, **kw):
-        content = self.get_content()
+    def get_source(self, use_built_statics=False):
+        content = self.get_content(use_built_statics=use_built_statics)
         json_data = json.dumps(content)
         return self.wrap.format(content=json_data) + "\n"
 
@@ -256,9 +256,15 @@ class TemplateFileSource(DataSource, FileSource):
         FileSource.__init__(self, name)
         self.name = name
 
-    def get_content(self):
+    def get_content(self, use_built_statics=False):
         name, style = os.path.splitext(self.name)
-        path = locate_static_file(os.path.join('static/js', self.name))
+
+        if use_built_statics:
+            built_statics_path = get_built_statics_path()
+            path = os.path.join(built_statics_path, 'static', 'js', self.name)
+        else:
+            path = locate_static_file(os.path.join('static', 'js', self.name))
+
         with open(path) as f:
             return [{
                 "name": name,
