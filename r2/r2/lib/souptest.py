@@ -27,6 +27,7 @@ Tools to check if arbitrary HTML fragments would be safe to embed inline
 import os
 import re
 import sys
+import urllib
 import urlparse
 
 import lxml.etree
@@ -100,7 +101,10 @@ def souptest_sniff_node(node):
                 # work around CRBUG-464270
                 parsed_url = urlparse.urlparse(lv)
                 if parsed_url.hostname and len(parsed_url.hostname) > 255:
-                    raise SoupHostnameLengthError(parsed_url.hostname)
+                    raise SoupDetectedCrasherError(parsed_url.hostname)
+                # work around for Chrome crash with "%%30%30" - Sep 2015
+                if "%00" in urllib.unquote(parsed_url.path):
+                    raise SoupDetectedCrasherError(lv)
     else:
         # Processing instructions and friends fall down here.
         raise SoupUnsupportedNodeError(node)
@@ -222,8 +226,8 @@ class SoupUnsupportedTagError(SoupReprError):
     HUMAN_MESSAGE = "Unsupported tag"
 
 
-class SoupHostnameLengthError(SoupReprError):
-    HUMAN_MESSAGE = "Hostname too long"
+class SoupDetectedCrasherError(SoupReprError):
+    HUMAN_MESSAGE = "Known crasher posted"
 
 
 class SoupUnsupportedEntityError(SoupReprError):

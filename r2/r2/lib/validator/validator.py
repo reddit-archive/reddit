@@ -40,7 +40,7 @@ from r2.lib.db import tdb_cassandra
 from r2.lib.db.operators import asc, desc
 from r2.lib.souptest import (
     SoupError,
-    SoupHostnameLengthError,
+    SoupDetectedCrasherError,
     SoupUnsupportedEntityError,
 )
 from r2.lib.template_helpers import add_sr
@@ -648,7 +648,7 @@ class VMarkdown(Validator):
                 user = c.user.name
 
             # work around CRBUG-464270
-            if isinstance(e, SoupHostnameLengthError):
+            if isinstance(e, SoupDetectedCrasherError):
                 # We want a general idea of how often this is triggered, and
                 # by what
                 g.log.warning("CHROME HAX by %s: %s" % (user, text))

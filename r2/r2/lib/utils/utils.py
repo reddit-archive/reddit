@@ -37,7 +37,7 @@ from collections import OrderedDict
 from copy import deepcopy
 from datetime import date, datetime, timedelta
 from decimal import Decimal
-from urllib import unquote_plus
+from urllib import unquote_plus, unquote
 from urllib2 import urlopen, Request
 from urlparse import urlparse, urlunparse
 
@@ -363,6 +363,9 @@ def sanitize_url(url, require_scheme=False, valid_schemes=VALID_SCHEMES):
         return None
     # work around CRBUG-464270
     if len(u.hostname) > 255:
+        return None
+    # work around for Chrome crash with "%%30%30" - Sep 2015
+    if "%00" in unquote(u.path):
         return None
     if u.username is not None or u.password is not None:
         return None
