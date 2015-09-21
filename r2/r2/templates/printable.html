@@ -160,6 +160,9 @@ ${self.RenderPrintable()}
       selflink = ""
  %>
 <div class="${self.thing_css_class(thing)} ${self.thing_css_rowclass(thing)} ${unsafe(cls)} ${selflink}"
+    %if not getattr(thing, 'deleted', False) or getattr(thing, 'can_ban', False):
+      id="thing_${thing._fullname}"
+    %endif
     ${thing.display} onclick="click_thing(this)"
     ${unsafe(self.thing_data_attributes(thing))}>
   <p class="parent">

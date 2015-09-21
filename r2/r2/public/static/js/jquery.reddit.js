@@ -262,41 +262,57 @@ rate_limit = (function() {
     };
 })()
 
-$.fn.vote = function(event) {
-    var $this = $(this);
+$.fn.updateThing = function(update) {
+    var $thing = $(this);
+    var $entry = $thing.children('.entry');
 
-    if (!r.config.logged || !$this.hasClass('arrow')) {
-        return;
+    if ('friend' in update) {
+        var label = '<a class="friend" title="friend" href="/prefs/friends">F</a>';
+        
+        $entry.find('.author')
+              .addClass('friend')
+              .next('.userattrs')
+              .each(function() {
+                    var $this = $(this);
+
+                    if (!$this.html()) {
+                        $this.html(' [' + label + ']');
+                    } else if (!$this.find('.friend').length) {
+                        $this.find('a:first').before(label + ',');
+                    }
+              });
     }
-    
-    var isUpvoting = $this.hasClass(up_cls);
-    var isDownvoting = $this.hasClass(down_cls);
-    var dir = isUpvoting ? 1 : isDownvoting ? -1 : 0;
-    var thing_id = $this.thing().thing_id();
-    var $things = $.things(thing_id);
-    
-    $things.setVoteState(dir);
-    event_data = JSON.stringify(event, ["isTrusted", "type", "timeStamp"]);
-    $.request("vote", {id: thing_id, dir: dir, vh: r.config.vote_hash, event_data: event_data});
-};
 
-$.fn.setVoteState = function(dir) {
-    var $entry = $(this).find(".entry:first, .midcol:first");
+    if ('voted' in update) {
+        var $midcol = $thing.children('.midcol');
+        var $up = $midcol.find('.arrow.'+up_cls+', .arrow.'+upmod_cls);
+        var $down = $midcol.find('.arrow.'+down_cls+', .arrow.'+downmod_cls);
+        var $elems = $($midcol, $entry);
 
-    if (dir > 0) {
-        $entry.addClass('likes').removeClass('dislikes unvoted')
-              .find(".arrow."+up_cls).removeClass(up_cls).addClass(upmod_cls).end()
-              .find(".arrow."+downmod_cls).removeClass(downmod_cls).addClass(down_cls);
-    } else if (dir < 0) {
-        $entry.addClass('dislikes').removeClass('likes unvoted')
-              .find(".arrow."+upmod_cls).removeClass(upmod_cls).addClass(up_cls).end()
-              .find(".arrow."+down_cls).removeClass(down_cls).addClass(downmod_cls);
-    } else {
-        $entry.addClass('unvoted').removeClass('likes dislikes')
-              .find(".arrow."+upmod_cls).removeClass(upmod_cls).addClass(up_cls).end()
-              .find(".arrow."+downmod_cls).removeClass(downmod_cls).addClass(down_cls);
+        switch (update.voted) {
+            case 1:
+                $elems.addClass('likes').removeClass('dislikes unvoted');
+                $up.removeClass(up_cls).addClass(upmod_cls);
+                $down.removeClass(downmod_cls).addClass(down_cls);
+            break;
+            case -1:
+                $elems.addClass('dislikes').removeClass('likes unvoted');
+                $up.removeClass(upmod_cls).addClass(up_cls);
+                $down.removeClass(down_cls).addClass(downmod_cls);
+            break;
+            default:
+                $elems.addClass('unvoted').removeClass('likes dislikes');
+                $up.removeClass(upmod_cls).addClass(up_cls);
+                $down.removeClass(downmod_cls).addClass(down_cls);
+        }
     }
-};
+
+    if ('saved' in update) {
+        $thing.addClass('saved');
+        $entry.find('.save-button a')
+              .text(r._('unsave'));
+    }
+}
 
 $.fn.show_unvotable_message = function() {
   $(this).thing().find(".entry:first .unvotable-message").css("display", "inline-block");

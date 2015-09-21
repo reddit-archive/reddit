@@ -21,31 +21,40 @@
 ###############################################################################
 
 <%
-  import simplejson
+  from r2.lib.filters import scriptsafe_dumps
  %>
 <script type="text/javascript">
   (function() {
-    var likes = ${unsafe(simplejson.dumps(thing.likes))};
-    var dislikes = ${unsafe(simplejson.dumps(thing.dislikes))};
-    var friends = ${unsafe(simplejson.dumps(list(thing.is_friend)))};
-    $.map(likes, function(l) {
-              $(".id-" + l).setVoteState(1);
-          });
-    $.map(dislikes, function(l) {
-              $(".id-" + l).setVoteState(-1);
-          });
-    $.map(friends, show_friend);
+    var updates = ${scriptsafe_dumps(thing.updates)};
 
-    /* Delay until dom ready because this may be called before r.gold is defined otherwise. */
-    $(function() {
-      var gildings = ${unsafe(simplejson.dumps(thing.gildings))};
-      for (var gilded_thing in gildings) {
-        var gilding_data = gildings[gilded_thing];
-        r.gold.gildThing(gilded_thing, gilding_data[0], gilding_data[1]);
+    if (!updates || !updates.length) {
+      return;
+    }
+
+    var delayedUpdates = [];
+    var update;
+
+    updates.forEach(function(update) {
+      var thing = document.getElementById('thing_' + update.id);
+
+      if (!thing) {
+        return;
+      }
+
+      $(thing).updateThing(update);
+
+      if (update.gilded) {
+        delayedUpdates.push(update);
       }
     });
 
-    var saves = ${unsafe(simplejson.dumps(list(thing.saves)))};
-    $.map(saves, r.ui.setSavedFullname);
-  })()
+    /* Delay until dom ready because this may be called before r.gold is defined otherwise. */
+    $(function() {
+      delayedUpdates.forEach(function(update) {
+        var gilding_data = update.gilded;
+
+        r.gold.gildThing(update.id, gilding_data[0], gilding_data[1]);
+      });
+    });
+  })();
 </script>

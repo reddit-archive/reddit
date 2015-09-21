@@ -60,7 +60,7 @@
       };
 
       $.request("vote", voteData);
-      $thing.setVoteState(dir);
+      $thing.updateThing({ voted: dir });
     });
   })
 }(r);

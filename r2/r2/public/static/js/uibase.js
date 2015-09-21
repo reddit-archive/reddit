@@ -91,9 +91,3 @@ r.ui.Summarize.prototype = {
         e.preventDefault()
     }
 }
-
-r.ui.setSavedFullname = function(fullname) {
-    var $el = $('.id-' + fullname).find('.save-button a').first()
-    $el.text(r._('unsave'))
-    $el.thing().addClass('saved')
-}

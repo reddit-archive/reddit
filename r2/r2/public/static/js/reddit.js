@@ -1106,15 +1106,3 @@ $(function() {
                       function() { $(this).closest("form").submit(); })
             ;
     });
-
-function show_friend(account_fullname) {
-    var label = '<a class="friend" title="friend" href="/prefs/friends">F</a>';
-    var ua = $("div.content .author.id-" + account_fullname).addClass("friend")
-        .next(".userattrs").each(function() {
-                if (!$(this).html()) {
-                    $(this).html(" [" + label + "]");
-                } else if ($(this).find(".friend").length == 0) {
-                    $(this).find("a:first").debug().before(label+',');
-                }
-            });
-}

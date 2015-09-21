@@ -1956,11 +1956,7 @@ class CommentPane(Templated):
 
             # figure out what needs to be updated on the listing
             if c.user_is_loggedin:
-                likes = []
-                dislikes = []
-                is_friend = set()
-                gildings = {}
-                saves = set()
+                updates = []
 
                 # wrap the comments so the builder will customize them for
                 # the loggedin user
@@ -1971,21 +1967,34 @@ class CommentPane(Templated):
                     if not hasattr(t, "likes"):
                         # this is for MoreComments and MoreRecursion
                         continue
-                    if getattr(t, "friend", False) and not t.author._deleted:
-                        is_friend.add(t.author._fullname)
-                    if t.likes:
-                        likes.append(t._fullname)
-                    if t.likes is False:
-                        dislikes.append(t._fullname)
-                    if t.user_gilded:
-                        gildings[t._fullname] = (t.gilded_message, t.gildings)
-                    if t.saved:
-                        saves.add(t._fullname)
-                self.rendered += ThingUpdater(likes = likes,
-                                              dislikes = dislikes,
-                                              is_friend = is_friend,
-                                              gildings = gildings,
-                                              saves = saves).render()
+
+                    is_friend = getattr(t, "friend", False) and not t.author._deleted
+                    liked = t.likes
+                    disliked = t.likes is False
+                    saved = t.saved
+                    gilded = t.user_gilded
+
+                    if not (is_friend or liked or disliked or saved or gilded):
+                        continue
+
+                    update = {
+                        'id': t._fullname,
+                    }
+
+                    if is_friend:
+                        update['friend'] = True
+                    if liked:
+                        update['voted'] = 1
+                    if disliked:
+                        update['voted'] = -1
+                    if saved:
+                        update['saved'] = True
+                    if gilded:
+                        update['gilded'] = (t.gilded_message, t.gildings)
+
+                    updates.append(update)
+
+                self.rendered += ThingUpdater(updates=updates).render()
                 timer.intermediate("thingupdater")
 
         if try_cache:
