@@ -229,7 +229,7 @@ class DomainMiddleware(object):
             subdomains.append(g.domain)
             redir = "%s/r/%s/%s" % ('.'.join(subdomains),
                                     sr_redirect, environ['FULLPATH'])
-            redir = "http://" + redir.replace('//', '/')
+            redir = g.default_scheme + "://" + redir.replace('//', '/')
 
             start_response("301 Moved Permanently", [("Location", redir)])
             return [""]

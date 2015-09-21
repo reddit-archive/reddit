@@ -23,6 +23,7 @@ import re
 import string
 
 from pylons import tmpl_context as c
+from pylons import app_globals as g
 
 from reddit_base import RedditController
 from r2.lib import utils
@@ -53,7 +54,7 @@ def demangle_url(path):
         if not allowed_protocol.match(path):
             return None
     else:
-        path = 'http://%s' % path
+        path = '%s://%s' % (g.default_scheme, path)
 
     if need_insert_slash.match(path):
         path = string.replace(path, '/', '//', 1)

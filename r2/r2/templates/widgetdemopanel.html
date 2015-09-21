@@ -51,20 +51,20 @@ function update() {
     f = document.forms.widget;
     which = getrval(f.which);
     if (which == "all") {
-        url = "http://${sr_domain}/" + f.what.value + "/.embed?limit=" +
+        url = "${g.default_scheme}://${sr_domain}/" + f.what.value + "/.embed?limit=" +
                       f.num.value + "&t=" + f.when.value;
         if(f.what.value == "new") {
            url += "&sort=new";
         }
     } else if (which == "one") {
         if (!f.who.value) return;
-        url = "http://${domain}/user/"+f.who.value+"/"+
+        url = "${g.default_scheme}://${domain}/user/"+f.who.value+"/"+
                       f.where2.value+".embed?limit=" + f.num.value + 
                       "&sort="+f.what.value;
 
     } else if (which == "two") {
         if(!f.domain.value) return;
-         url = "http://${domain}/domain/" + f.domain.value + "/" + 
+         url = "${g.default_scheme}://${domain}/domain/" + f.domain.value + "/" +
                       f.what.value + "/.embed?limit=" 
                       + f.num.value  + "&t=" + f.when.value;
         if(f.what.value == "new") {
@@ -109,7 +109,7 @@ function update() {
   <div id="preview">
     <span>preview</span>
     <div id="previewbox">
-      <script src="http://${sr_domain}/.embed?limit=5" type="text/javascript"></script>
+      <script src="${g.default_scheme}://${sr_domain}/.embed?limit=5" type="text/javascript"></script>
     </div>
   </div>
 
@@ -257,7 +257,7 @@ function update() {
 
   <p>
     <textarea rows="5" cols="50" id="codebox">
-      &lt;script src="http://${domain}/.embed?limit=5" type="text/javascript">&lt;/script>
+      &lt;script src="${g.default_scheme}://${domain}/.embed?limit=5" type="text/javascript">&lt;/script>
     </textarea>
   </p>
 </div>

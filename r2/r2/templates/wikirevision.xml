@@ -26,7 +26,7 @@
 
 <item>
     <title>${thing._id}</title>
-    <link>http://${get_domain(subreddit=False)}/${c.wiki_base_url}/${thing.page}?v=${thing._id}</link>
+    <link>${g.default_scheme}://${get_domain(subreddit=False)}/${c.wiki_base_url}/${thing.page}?v=${thing._id}</link>
     <author>${thing.printable_author}</author>
     <category>${thing.sr}/${thing.page}</category>
     <description>${thing._get('reason')}</description>

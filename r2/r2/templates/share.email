@@ -25,9 +25,9 @@
   from r2.lib.filters import unsafe
 %>
 
-${thing.username} from http://${get_domain(cname = c.cname, subreddit = False)}/ has shared a link with you.
+${thing.username} from ${g.default_scheme}://${get_domain(cname = c.cname, subreddit = False)}/ has shared a link with you.
 
 ${unsafe(thing.body)}
 
 ___
-If you would not like to receive emails from reddit.com in the future, visit http://${g.domain}/mail/optout?x=${thing.msg_hash}
+If you would not like to receive emails from reddit.com in the future, visit ${g.default_scheme}://${g.domain}/mail/optout?x=${thing.msg_hash}

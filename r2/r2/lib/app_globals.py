@@ -520,7 +520,7 @@ class Globals(object):
             self.read_only_mode = True
 
         origin_prefix = self.domain_prefix + "." if self.domain_prefix else ""
-        self.origin = "http://" + origin_prefix + self.domain
+        self.origin = self.default_scheme + "://" + origin_prefix + self.domain
 
         self.trusted_domains = set([self.domain])
         if self.https_endpoint:

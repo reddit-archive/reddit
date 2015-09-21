@@ -393,19 +393,20 @@ class Link(Thing, Printable):
         # include that in the path
         if self.promoted is not None:
             if force_domain:
-                res = "http://%s/%s" % (get_domain(cname=False,
-                                                   subreddit=False), p)
+                permalink_domain = get_domain(cname=False, subreddit=False)
+                res = "%s://%s/%s" % (g.default_scheme, permalink_domain, p)
             else:
                 res = "/%s" % p
         elif not c.cname and not force_domain:
             res = "/r/%s/%s" % (sr.name, p)
         elif sr != c.site or force_domain:
             if(c.cname and sr == c.site):
-                res = "http://%s/%s" % (get_domain(cname=True,
-                                                    subreddit=False), p)
+                permalink_domain = get_domain(cname=True, subreddit=False)
+                res = "%s://%s/%s" % (g.default_scheme, permalink_domain, p)
             else:
-                res = "http://%s/r/%s/%s" % (get_domain(cname=False,
-                                                    subreddit=False), sr.name, p)
+                permalink_domain = get_domain(cname=False, subreddit=False)
+                res = "%s://%s/r/%s/%s" % (g.default_scheme, permalink_domain,
+                                           sr.name, p)
         else:
             res = "/%s" % p
 
@@ -707,7 +708,7 @@ class Link(Thing, Printable):
 
             item.subreddit_path = item.subreddit.path
             if cname:
-                item.subreddit_path = ("http://" +
+                item.subreddit_path = (g.default_scheme + "://" +
                      get_domain(cname=(site == item.subreddit),
                                 subreddit=False))
                 if site != item.subreddit:
@@ -1488,7 +1489,7 @@ class Comment(Thing, Printable):
 
             item.subreddit_path = item.subreddit.path
             if cname:
-                item.subreddit_path = ("http://" +
+                item.subreddit_path = (g.default_scheme + "://" +
                      get_domain(cname=(site == item.subreddit),
                                 subreddit=False))
                 if site != item.subreddit:
@@ -1886,7 +1887,8 @@ class Message(Thing, Printable):
         from r2.lib.template_helpers import get_domain
         p = self.permalink
         if force_domain:
-            res = "http://%s%s" % (get_domain(cname=False, subreddit=False), p)
+            permalink_domain = get_domain(cname=False, subreddit=False)
+            res = "%s://%s%s" % (g.default_scheme, permalink_domain, p)
         else:
             res = p
         return res

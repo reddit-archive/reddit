@@ -47,7 +47,7 @@
 <% 
    from r2.lib.strings import Score
    domain = get_domain(subreddit=False)
-   permalink = "http://%s%s" % (domain, thing.permalink)
+   permalink = "%s://%s%s" % (g.default_scheme, domain, thing.permalink)
    expanded = request.GET.get("expanded")
    two_col = request.GET.has_key("twocolumn") if l else False
  %>

@@ -75,7 +75,7 @@
          }
       })(jQuery);
       document.write('<iframe name="reddit-window" id="reddit-window"' +
-       'src="http://${get_domain(cname=False, subreddit=True)}/framebuster/'
+       'src="${g.default_scheme}://${get_domain(cname=False, subreddit=True)}/framebuster/'
        + Math.random() + 
        '" width="1" height="1" style="visibility: hidden"></iframe>');
     </script>

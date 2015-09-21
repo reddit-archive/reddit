@@ -24,7 +24,7 @@
 
 Your email address will no longer receive email from us.  If you want to reconsider, visit:
 
-http://${g.domain}/mail/optin?x=${thing.msg_hash}
+${g.default_scheme}://${g.domain}/mail/optin?x=${thing.msg_hash}
 
 We promise not to hold it against you.
 

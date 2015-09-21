@@ -51,14 +51,14 @@ ${self.Child()}
   <%
    from r2.lib.template_helpers import get_domain
    domain = get_domain(subreddit=False)
-   permalink = "http://%s%s" % (domain, thing.permalink)
+   permalink = "%s://%s%s" % (g.default_scheme, domain, thing.permalink)
    if thing.likes == False:
-      arrow = "https://%s/static/widget_arrows_down.gif"
+      arrow = "%s://%s/static/widget_arrows_down.gif"
    elif thing.likes:
-      arrow = "https://%s/static/widget_arrows_up.gif"
+      arrow = "%s://%s/static/widget_arrows_up.gif"
    else:
-      arrow = "https://%s/static/widget_arrows.gif"
-   arrow = arrow % domain
+      arrow = "%s://%s/static/widget_arrows.gif"
+   arrow = arrow % (g.default_scheme, domain)
    %>
   <a href="${permalink}" class="reddit-voting-arrows" target="_blank"
      ${optionalstyle("float:left; display:block;")}>
@@ -78,8 +78,8 @@ ${self.Child()}
     </script>
     <%
        from r2.models import FakeSubreddit
-       url = ("http://%s/static/button/button4.html?t=4&id=%s&sr=%s" % 
-               (get_domain(cname = c.cname, subreddit = False), thing._fullname,
+       url = ("%s://%s/static/button/button4.html?t=4&id=%s&sr=%s" %
+               (g.default_scheme, get_domain(cname = c.cname, subreddit = False), thing._fullname,
                c.site.name if not isinstance(c.site, FakeSubreddit) else ""))
        if c.bgcolor:
           url += "&bgcolor=%s&bordercolor=%s" % (c.bgcolor, c.bgcolor)

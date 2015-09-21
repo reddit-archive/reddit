@@ -124,7 +124,7 @@ def make_map(config):
     mc('/awards/received', controller='front', action='received_award')
 
     mc('/i18n', controller='redirect', action='redirect',
-       dest='http://www.reddit.com/r/i18n')
+       dest='https://www.reddit.com/r/i18n')
     mc('/feedback', controller='redirect', action='redirect',
        dest='/contact')
     mc('/contact', controller='front', action='contact_us')
@@ -458,7 +458,7 @@ def make_map(config):
        dest='https://addons.mozilla.org/firefox/addon/socialite/')
 
     mc('/mobile', controller='redirect', action='redirect',
-       dest='http://m.reddit.com/')
+       dest='https://m.reddit.com/')
 
     # Used for showing ads
     mc("/ads/", controller="ad", action="ad")

@@ -106,26 +106,28 @@ def promo_keep_fn(item):
 
 # attrs
 
-def _base_domain():
+def _base_host():
     if g.domain_prefix:
-        return g.domain_prefix + '.' + g.domain
+        base_domain = g.domain_prefix + '.' + g.domain
     else:
-        return g.domain
+        base_domain = g.domain
+    return "%s://%s" % (g.default_scheme, base_domain)
+
 
 def promo_traffic_url(l): # old traffic url
-    return "http://%s/traffic/%s/" % (_base_domain(), l._id36)
+    return "%s/traffic/%s/" % (_base_host(), l._id36)
 
 def promotraffic_url(l): # new traffic url
-    return "http://%s/promoted/traffic/headline/%s" % (_base_domain(), l._id36)
+    return "%s/promoted/traffic/headline/%s" % (_base_host(), l._id36)
 
 def promo_edit_url(l):
-    return "http://%s/promoted/edit_promo/%s" % (_base_domain(), l._id36)
+    return "%s/promoted/edit_promo/%s" % (_base_host(), l._id36)
 
 def view_live_url(l, srname):
-    domain = _base_domain()
+    host = _base_host()
     if srname:
-        domain += '/r/%s' % srname
-    return 'http://%s/?ad=%s' % (domain, l._fullname)
+        host += '/r/%s' % srname
+    return '%s/?ad=%s' % (host, l._fullname)
 
 def payment_url(action, link_id36, campaign_id36):
     path = '/promoted/%s/%s/%s' % (action, link_id36, campaign_id36)

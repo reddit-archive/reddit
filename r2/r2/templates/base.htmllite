@@ -39,12 +39,12 @@
       ${optionalstyle("margin:0;" + 
                       ("padding-bottom:3px" if not c.cname else ""))}
       >
-    <a href="http://${get_domain()}/" ${optionalstyle("margin:5px;")}
+    <a href="${g.default_scheme}://${get_domain()}/" ${optionalstyle("margin:5px;")}
       %if c.link_target:
          target="${c.link_target}"
       %endif
        >
-      <img src="https://${get_domain(subreddit=False)}/static/spreddit1.gif"
+      <img src="${g.default_scheme}://${get_domain(subreddit=False)}/static/spreddit1.gif"
            alt="" 
            ${optionalstyle("border:none")} />
     </a>
@@ -54,11 +54,11 @@
        if not isinstance(c.site, FakeSubreddit):
            name += ".%s" % g.domain
        if c.link_target:
-          link = format_html('<a %s href="http://%s/" target="%s">%s</a></h3>',
-                             style, get_domain(), c.link_target, name)
+          link = format_html('<a %s href="%s://%s/" target="%s">%s</a></h3>',
+                             style, g.default_scheme, get_domain(), c.link_target, name)
        else:
-          link = format_html('<a %s href="http://%s/">%s</a></h3>',
-                             style, get_domain(), name)
+          link = format_html('<a %s href="%s://%s/">%s</a></h3>',
+                             style, g.default_scheme, get_domain(), name)
      %>
     ${self.titlebar(link)}
   </h4>
@@ -67,7 +67,7 @@
      class="powered-by-reddit">
     <small>
       powered by&#32; 
-      <a href="http://${g.domain}" 
+      <a href="${g.default_scheme}://${g.domain}"
          ${optionalstyle("text-decoration:none;color:#336699")}
         %if c.link_target:
           target="${c.link_target}"

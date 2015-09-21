@@ -107,8 +107,8 @@
           <td><b>${_( "bold")}</b></td>
         </tr>
         <tr>
-          <td>[reddit!](http://reddit.com)</td>
-          <td><a href="http://reddit.com">reddit!</a></td>
+          <td>[reddit!](https://reddit.com)</td>
+          <td><a href="https://reddit.com">reddit!</a></td>
         </tr>
         <tr>
           <td>

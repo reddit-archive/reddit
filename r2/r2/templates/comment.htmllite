@@ -49,7 +49,7 @@
 %else:
 
 <small>
-  <a href="http://${get_domain()}/user/${thing.author.name}">
+  <a href="${g.default_scheme}://${get_domain()}/user/${thing.author.name}">
     <b>${thing.author.name}</b></a>&#32;
   <span id="score_${thing._fullname}">
     %if thing.score_hidden:

@@ -368,7 +368,7 @@ def set_subreddit():
             domain = g.domain
             if g.domain_prefix:
                 domain = ".".join((g.domain_prefix, domain))
-            path = 'http://%s%s' % (domain, sr.path)
+            path = '%s://%s%s' % (g.default_scheme, domain, sr.path)
             abort(301, location=BaseController.format_output_url(path))
     elif '+' in sr_name:
         name_filter = lambda name: Subreddit.is_valid_name(name,

@@ -30,7 +30,7 @@
 
 %if c.suggest_compact:
   <script type="text/javascript">
-     window.location = "http://www.${g.domain}/try.compact?dest=/.mobile";
+     window.location = "${g.default_scheme}://www.${g.domain}/try.compact?dest=/.mobile";
   </script>
 %endif
 
