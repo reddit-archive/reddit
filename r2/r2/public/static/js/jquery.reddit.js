@@ -314,19 +314,24 @@ $.fn.all_things_by_id = function() {
     return this.thing().add( $.things(this.thing_id()) );
 };
 
-$.fn.thing_id = function(class_filter) {
-    class_filter = $.with_default(class_filter, "thing");
+$.fn.thing_id = function() {
     /* Returns the (reddit) ID of the current element's thing */
-    var t = (this.hasClass("thing")) ? this : this.thing();
-    if(class_filter != "thing") {
-        t = t.find("." + class_filter + ":first");
+    var t = this.hasClass('thing') ? this : this.thing();
+
+    if (!t.length) {
+        return '';
     }
-    if(t.length) {
-        var id = $.grep(t.get(0).className.match(/\S+/g),
-                        function(i) { return i.match(/^id-/); }); 
-        return (id.length) ? id[0].slice(3, id[0].length) : "";
+
+    var id = t.data('fullname');
+
+    if (id) {
+        return id;
     }
-    return "";
+
+    // fallback to old, clunky way of getting id from class
+    id = $.grep(t.get(0).className.match(/\S+/g),
+                function(i) { return i.match(/^id-/); }); 
+    return (id.length) ? id[0].slice(3, id[0].length) : '';
 };
 
 $.things = function() {
