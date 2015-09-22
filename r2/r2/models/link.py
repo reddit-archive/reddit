@@ -445,8 +445,7 @@ class Link(Thing, Printable):
 
     @staticmethod
     def _should_expunge_selftext(link):
-        verdict = getattr(link, "verdict", "")
-        if verdict not in ("admin-removed", "mod-removed"):
+        if not link._spam:
             return False
         if not c.user_is_loggedin:
             return True
