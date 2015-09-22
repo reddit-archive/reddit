@@ -273,9 +273,6 @@ class Account(Thing):
             return
 
         LastModified.touch(self._fullname, "Visit")
-
-        self.last_visit = int(time.time())
-        self._commit()
         timer.intermediate("set_last_modified.done")
         timer.stop()
 
