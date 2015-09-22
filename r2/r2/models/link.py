@@ -27,6 +27,7 @@ from r2.lib.db.operators import desc
 from r2.lib.utils import (
     base_url,
     domain,
+    epoch_timestamp,
     strip_www,
     timesince,
     title_to_url,
@@ -243,6 +244,9 @@ class Link(Thing, Printable):
 
         LinksByAccount.add_link(author, l)
         SubredditParticipationByAccount.mark_participated(author, sr)
+        author.last_submit_time = int(epoch_timestamp(datetime.now(g.tz)))
+        author._commit()
+
         if author._spam:
             g.stats.simple_event('spam.autoremove.link')
             admintools.spam(l, banner='banned user')
@@ -1117,6 +1121,8 @@ class Comment(Thing, Printable):
         CommentsByAccount.add_comment(author, c)
         SubredditParticipationByAccount.mark_participated(
             author, c.subreddit_slow)
+        author.last_comment_time = int(epoch_timestamp(datetime.now(g.tz)))
+        author._commit()
 
         def should_send():
             # don't send the message to author if replying to own comment
