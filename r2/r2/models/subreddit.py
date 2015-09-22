@@ -49,7 +49,7 @@ from account import (
 from printable import Printable
 from r2.lib.db.userrel import UserRel, MigratingUserRel
 from r2.lib.db.operators import lower, or_, and_, not_, desc
-from r2.lib.errors import UserRequiredException, RedditError
+from r2.lib.errors import RedditError
 from r2.lib.geoip import location_by_ips
 from r2.lib.memoize import memoize
 from r2.lib.permissions import ModeratorPermissionSet
@@ -135,6 +135,7 @@ class BaseSite(object):
         stylesheet=None,
         header=None,
         header_title='',
+        login_required=False,
     )
 
     def __getattr__(self, name):
@@ -1536,12 +1537,13 @@ class FakeSubreddit(BaseSite):
 class FriendsSR(FakeSubreddit):
     name = 'friends'
     title = 'friends'
+    _defaults = dict(
+        FakeSubreddit._defaults,
+        login_required=True,
+    )
 
     def get_links(self, sort, time):
         from r2.lib.db import queries
-
-        if not c.user_is_loggedin:
-            raise UserRequiredException
 
         friends = c.user.get_random_friends()
         if not friends:
@@ -1563,9 +1565,6 @@ class FriendsSR(FakeSubreddit):
     def get_all_comments(self):
         from r2.lib.db import queries
 
-        if not c.user_is_loggedin:
-            raise UserRequiredException
-
         friends = c.user.get_random_friends()
         if not friends:
             return []
@@ -1586,8 +1585,6 @@ class FriendsSR(FakeSubreddit):
 
     def get_gilded(self):
         from r2.lib.db.queries import get_gilded_users
-        if not c.user_is_loggedin:
-            raise UserRequiredException
 
         friends = c.user.get_random_friends()
 
@@ -2435,6 +2432,10 @@ class ModContribSR(MultiReddit):
     name  = None
     title = None
     query_param = None
+    _defaults = dict(
+        MultiReddit._defaults,
+        login_required=True,
+    )
 
     def __init__(self):
         # Can't lookup srs right now, c.user not set

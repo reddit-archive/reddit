@@ -130,6 +130,9 @@ class ListingController(RedditController):
         self.reverse = reverse
         self.sr_detail = sr_detail
 
+        if c.site.login_required and not c.user_is_loggedin:
+            raise UserRequiredException
+
         self.query_obj = self.query()
         self.builder_obj = self.builder()
 

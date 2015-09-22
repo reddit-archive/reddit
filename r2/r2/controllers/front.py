@@ -1010,6 +1010,8 @@ class FrontController(RedditController):
     def GET_search(self, query, num, reverse, after, count, sort, recent,
                    restrict_sr, include_facets, result_types, syntax, sr_detail):
         """Search links page."""
+        if c.site.login_required and not c.user_is_loggedin:
+            raise UserRequiredException
 
         # trigger redirect to /over18
         if request.GET.get('over18') == 'yes':
