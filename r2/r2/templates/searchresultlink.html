@@ -63,8 +63,8 @@
     ${plain_link(
         thing.title,
         thing.permalink,
-        sr_path=False,
-        cname=False,
+        _sr_path=False,
+        nocname=True,
         _class='search-title may-blank',
       )}
     %if c.site.link_flair_position == 'right':
@@ -94,8 +94,8 @@
     ${plain_link(
         '%s %s' % (format_number(thing.num_comments), ungettext('comment', 'comments', thing.num_comments)),
         thing.permalink,
-        sr_path=False,
-        cname=False,
+        _sr_path=False,
+        nocname=True,
         _class="search-comments may-blank",
       )}&#32;
     <span class="search-time">${_("submitted")}&#32;${thing_timestamp(thing, thing.timesince, include_tense=True)}</span>&#32;

@@ -163,8 +163,8 @@
 </%def>
 
 <%def name="subreddit()" buffered="True">
-  ${plain_link('/r/' + thing.subreddit.name, thing.subreddit_path, sr_path = False,
-               cname = False, _class = "subreddit hover may-blank")}
+  ${plain_link('/r/' + thing.subreddit.name, thing.subreddit_path, _sr_path=False,
+               nocname=True, _class="subreddit hover may-blank")}
 </%def>
 
 <%def name="midcol(display=True, cls = '')">
