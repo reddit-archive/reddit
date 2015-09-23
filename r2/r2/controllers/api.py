@@ -2093,14 +2093,15 @@ class ApiController(RedditController):
             return abort(403, 'forbidden')
 
         emails, users = share_to
+        link_title = _force_unicode(link.title)
 
         if getattr(link, "promoted", None) and link.disable_comments:
             message = blockquote_text(message) + "\n\n" if message else ""
-            message += '\n%s\n\n%s\n\n' % (link.title, link.url)
+            message += '\n%s\n\n%s\n\n' % (link_title, link.url)
             email_message = pm_message = message
         else:
             message = blockquote_text(message) + "\n\n" if message else ""
-            message += '\n%s\n' % link.title
+            message += '\n%s\n' % link_title
 
             message_body = '\n'
 
