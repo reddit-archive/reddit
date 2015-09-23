@@ -434,6 +434,19 @@ function togglecomment(elem) {
   }
 }
 
+function toggleSrQuarantine(elem) {
+  var $toolbox = $(".quarantine-tool");
+  var $expander = $toolbox.find(".expand:first");
+  var isCollapsed = $toolbox.hasClass("collapsed");
+  $toolbox.toggleClass("collapsed noncollapsed");
+
+  if (!isCollapsed) {
+    $expander.text('[+]');
+  } else {
+    $expander.text('[–]');
+  }
+}
+
 function togglemessage(elem) {
   var message = $(elem).thing()
   var expander = message.find(".expand:first")

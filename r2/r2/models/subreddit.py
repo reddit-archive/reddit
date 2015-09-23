@@ -793,14 +793,16 @@ class Subreddit(Thing, Printable, BaseSite):
         from r2.models import ModAction
         from r2.lib.media import upload_stylesheet
 
-        author = author if author else c.user._id36
+        if not author:
+            author = c.user
+
         if content is None:
             content = ''
         try:
             wiki = WikiPage.get(self, 'config/stylesheet')
         except tdb_cassandra.NotFound:
             wiki = WikiPage.create(self, 'config/stylesheet')
-        wr = wiki.revise(content, previous=prev, author=author, reason=reason, force=force)
+        wr = wiki.revise(content, previous=prev, author=author._id36, reason=reason, force=force)
 
         if parsed:
             self.stylesheet_url = upload_stylesheet(parsed)
@@ -812,7 +814,7 @@ class Subreddit(Thing, Printable, BaseSite):
             self.stylesheet_url_https = ""
         self._commit()
 
-        ModAction.create(self, c.user, action='wikirevise', details='Updated subreddit stylesheet')
+        ModAction.create(self, author, action='wikirevise', details='Updated subreddit stylesheet')
         return wr
 
     def is_special(self, user):

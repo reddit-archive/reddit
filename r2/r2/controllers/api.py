@@ -3573,6 +3573,40 @@ class ApiController(RedditController):
                 return abort(404, 'not found')
         sr.update_search_index(boost_only=True)
 
+    @validatedForm(
+        VAdmin(),
+        VModhash(),
+        subreddit=VByName('subreddit'),
+        quarantine=VBoolean('quarantine'),
+        subject=VLength('subject', 1000),
+        body=VMarkdownLength('body', max_length=10000),
+    )
+    def POST_quarantine(self, form, jquery, subreddit, quarantine, subject, body):
+        if subreddit.quarantine == quarantine:
+            return
+
+        subreddit.quarantine = quarantine
+        subreddit._commit()
+        system_user = Account.system_user()
+        kw = dict(
+            sr_id36=subreddit._id36,
+            mod_id36=system_user._id36,
+            action="editsettings",
+            details="quarantine",
+        )
+        ma = ModAction(**kw)
+        ma._commit()
+
+        if body.strip():
+            send_system_message(subreddit, subject, body,
+                distinguished='admin', repliable=False)
+
+        # Refresh the CSS since images aren't allowed
+        stylesheet_contents = subreddit.fetch_stylesheet_source()
+        css_errors, parsed = subreddit.parse_css(stylesheet_contents)
+        subreddit.change_css(stylesheet_contents, parsed, author=system_user)
+        jquery.refresh()
+
     @require_oauth2_scope("subscribe")
     @noresponse(
         VUser(),

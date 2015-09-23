@@ -164,6 +164,46 @@
         %endif
       %endif
     </div>
+    <div class="clear"></div>
+
+    <div class="quarantine-tool raisedbox spacer collapsed">
+      <div name="expander">
+        <a href="javascript:void(0)" class="expand" onclick="return toggleSrQuarantine(this)">
+          ${"[%s]" % "+"}
+        </a>
+        ${"Show unquarantine tool" if thing.sr.quarantine else "Show quarantine tool"}
+      </div>
+      <div class="quarantine-info">
+        %if not thing.sr.quarantine:
+          <%
+            subject = "ATTN: Your subreddit has been quarantined"
+            body = "Your subreddit has been [quarantined](https://reddit.zendesk.com/hc/en-us/articles/205701245) due to offensive content."
+            button_label = "Quarantine and send modmail"
+          %>
+        %else:
+          <%
+            subject = "ATTN: Your subreddit is no longer quarantined"
+            body = "Your subreddit has been unquarantined."
+            button_label = "Unquarantine and send modmail"
+          %>
+        %endif
+        <form id="quarantinemessage-form" method="post" onsubmit="return post_form(this, 'quarantine')">
+          <input type="hidden" name="subreddit" value="${thing.sr._fullname}">
+          <input type="hidden" name="quarantine" value="${not thing.sr.quarantine}">
+          <label for="subject">Subject:</label>
+          <br>
+          <textarea name="subject">${subject}</textarea>
+          <br>
+          <label for="body">Body:</label>
+          <br>
+          <textarea name="body" rows=4>${body}</textarea>
+          <br>
+          <input type="submit" class="notes-button" value="${button_label}">
+          <br>
+          <label>Message will be sent by u/reddit and won't send if left blank</label>
+        </form>
+      </div>
+    </div>
   %endif
 
   <div class="clear"> </div>
