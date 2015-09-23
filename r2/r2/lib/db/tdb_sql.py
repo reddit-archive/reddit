@@ -928,6 +928,40 @@ def find_data(type_id, get_cols, sort, limit, offset, constraints):
     return Results(r, lambda(row): row if get_cols else row.thing_id)
 
 
+def sort_thing_ids_by_data_value(type_id, thing_ids, value_name,
+        limit=None, desc=False):
+    """Order thing_ids by the value of a data column."""
+
+    thing_table, data_table = get_thing_table(type_id)
+
+    join = thing_table.join(data_table,
+        data_table.c.thing_id == thing_table.c.thing_id)
+
+    query = (sa.select(
+            [thing_table.c.thing_id],
+            sa.and_(
+                thing_table.c.thing_id.in_(thing_ids),
+                thing_table.c.deleted == False,
+                thing_table.c.spam == False,
+                data_table.c.key == value_name,
+            )
+        )
+        .select_from(join)
+    )
+
+    sort_column = data_table.c.value
+    if desc:
+        sort_column = sa.desc(sort_column)
+    query = query.order_by(sort_column)
+
+    if limit:
+        query = query.limit(limit)
+
+    rows = query.execute()
+
+    return Results(rows, lambda(row): row.thing_id)
+
+
 def find_rels(rel_type_id, get_cols, sort, limit, offset, constraints):
     tables = get_rel_table(rel_type_id)
     r_table, t1_table, t2_table, d_table = tables

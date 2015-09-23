@@ -452,13 +452,24 @@ class Account(Thing):
         rel.note = note
         rel._commit()
 
-    @memoize("get_random_friends", time=30*60)
-    def get_random_friends(self, limit=100):
-        friends = self.friend_ids()
-        if len(friends) > limit:
-            friends = random.sample(friends, limit)
+    def _get_friend_ids_by(self, data_value_name, limit):
+        friend_ids = self.friend_ids()
+        if len(friend_ids) <= limit:
+            return friend_ids
+        
+        with g.stats.get_timer("friends_query.%s" % data_value_name):
+            result = self.sort_ids_by_data_value(
+                friend_ids, data_value_name, limit=limit, desc=True)
 
-        return friends
+        return result.fetchall()
+
+    @memoize("get_recently_submitted_friend_ids", time=10*60)
+    def get_recently_submitted_friend_ids(self, limit=100):
+        return self._get_friend_ids_by("last_submit_time", limit)
+
+    @memoize("get_recently_commented_friend_ids", time=10*60)
+    def get_recently_commented_friend_ids(self, limit=100):
+        return self._get_friend_ids_by("last_comment_time", limit)
 
     def delete(self, delete_message=None):
         self.delete_message = delete_message

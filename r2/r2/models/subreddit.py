@@ -1547,7 +1547,7 @@ class FriendsSR(FakeSubreddit):
     def get_links(self, sort, time):
         from r2.lib.db import queries
 
-        friends = c.user.get_random_friends()
+        friends = c.user.get_recently_submitted_friend_ids()
         if not friends:
             return []
 
@@ -1567,7 +1567,7 @@ class FriendsSR(FakeSubreddit):
     def get_all_comments(self):
         from r2.lib.db import queries
 
-        friends = c.user.get_random_friends()
+        friends = c.user.get_recently_commented_friend_ids()
         if not friends:
             return []
 
@@ -1588,7 +1588,7 @@ class FriendsSR(FakeSubreddit):
     def get_gilded(self):
         from r2.lib.db.queries import get_gilded_users
 
-        friends = c.user.get_random_friends()
+        friends = c.user.friend_ids()
 
         if not friends:
             return []

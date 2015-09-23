@@ -652,6 +652,12 @@ class Thing(DataThing):
 
         return Things(cls, *rules, **kw)
 
+    @classmethod
+    def sort_ids_by_data_value(cls, thing_ids, value_name,
+            limit=None, desc=False):
+        return tdb.sort_thing_ids_by_data_value(
+            cls._type_id, thing_ids, value_name, limit, desc)
+
     def update_search_index(self, boost_only=False):
         msg = {'fullname': self._fullname}
         if boost_only:
