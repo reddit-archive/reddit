@@ -349,9 +349,12 @@ class FrontController(RedditController):
                                                    g.max_comments_gold))))
             num = g.max_comments
 
+        page_classes = ['comments-page']
+
         # if permalink page, add that message first to the content
         if comment:
             displayPane.append(PermalinkMessage(article.make_permalink_slow()))
+            page_classes.append('comment-permalink-page')
 
         displayPane.append(LinkCommentSep())
 
@@ -450,7 +453,7 @@ class FrontController(RedditController):
                            comment=comment,
                            disable_comments=disable_comments,
                            content=displayPane,
-                           page_classes=['comments-page'],
+                           page_classes=page_classes,
                            subtitle=subtitle,
                            subtitle_buttons=subtitle_buttons,
                            nav_menus=[sort_menu, link_settings],
