@@ -175,16 +175,6 @@ try participating in other communities on reddit for a little while first before
       ${error_field("GOLD_REQUIRED", "type")}
       ${error_field("CANT_CONVERT_TO_GOLD_ONLY", "type")}
     </div>
-
-    %if c.user_is_admin:
-      <input class="nomargin" type="checkbox"
-                 name="quarantine" id="quarantine"
-                 %if thing.site and thing.site.quarantine:
-                   checked="checked"
-                 %endif
-      >
-      <label for="quarantine">quarantine this subreddit</label>
-    %endif
   </%utils:line_field>
 
   <%utils:line_field title="${_('content options')}">

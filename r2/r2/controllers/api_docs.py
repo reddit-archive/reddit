@@ -150,10 +150,6 @@ class ApidocsController(RedditController):
                     docs['parameters'] = {}
                 docs.update(api_doc)
 
-                # hide quarantine as a parameter
-                if 'parameters' in api_doc:
-                    docs['parameters'].pop('quarantine', None)
-
                 # append a message to the docstring if supplied
                 notes = docs.get("notes")
                 if notes:

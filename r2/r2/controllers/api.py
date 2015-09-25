@@ -2574,7 +2574,6 @@ class ApiController(RedditController):
                    suggested_comment_sort=VOneOf('suggested_comment_sort',
                                                  CommentSortMenu._options,
                                                  default=None),
-                   quarantine = VBoolean('quarantine'),
                    # community_rules = VLength('community_rules', max_length=1024),
                    # related_subreddits = VSubredditList('related_subreddits', limit=20),
                    # key_color = VColor('key_color'),
@@ -2648,7 +2647,6 @@ class ApiController(RedditController):
             'over_18',
             'public_description',
             'public_traffic',
-            'quarantine',
             'related_subreddits',
             'show_cname_sidebar',
             'show_media',
@@ -2738,13 +2736,6 @@ class ApiController(RedditController):
         if kw['type'] == 'employees_only' and not can_set_employees_only:
             c.errors.add(errors.INVALID_OPTION, field='type')
 
-        # if user is not an admin, set the quarantine argument to the original value
-        if not c.user_is_admin:
-            if sr:
-                kw['quarantine'] = sr.quarantine
-            else:
-                kw['quarantine'] = False
-
         if not sr and form.has_errors("ratelimit", errors.RATELIMIT):
             pass
         elif not sr and form.has_errors("", errors.CANT_CREATE_SR):
@@ -2815,12 +2806,10 @@ class ApiController(RedditController):
 
             update_wiki_text(sr)
 
-            update_stylesheet = kw['quarantine'] != sr.quarantine
-
             if not sr.domain:
                 del kw['css_on_cname']
 
-            if kw['quarantine']:
+            if sr.quarantine:
                 del kw['allow_top']
                 del kw['show_media']
 
@@ -2854,11 +2843,6 @@ class ApiController(RedditController):
 
                 setattr(sr, k, v)
             sr._commit()
-
-            if update_stylesheet:
-                stylesheet_contents = sr.fetch_stylesheet_source()
-                css_errors, parsed = sr.parse_css(stylesheet_contents)
-                sr.change_css(stylesheet_contents, parsed)
 
             #update the domain cache if the domain changed
             if sr.domain != old_domain:
