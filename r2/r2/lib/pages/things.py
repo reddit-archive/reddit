@@ -57,7 +57,7 @@ class PrintableButtons(Styled):
         Styled.__init__(self, style = style,
                         thing = thing,
                         fullname = thing._fullname,
-                        can_ban = thing.can_ban,
+                        can_ban = thing.can_ban and not thing._deleted,
                         show_spam = thing.show_spam,
                         show_reports = thing.show_reports,
                         show_ignore = show_ignore,

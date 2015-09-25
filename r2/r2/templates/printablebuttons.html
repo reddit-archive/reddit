@@ -156,18 +156,20 @@
 
 <%def name="big_modbuttons(thing)">
   <span class="big-mod-buttons">
-    <span role="radiogroup">
-      %if not getattr(thing, "moderator_banned", None) or getattr(thing, "autobanned", False):
-        ${pretty_button(_("spam"), "big_mod_action", -2, "negative")}
-        ${pretty_button(_("remove"), "big_mod_action", -1, "neutral")}
-      %endif
-  
-      %if getattr(thing, "approval_checkmark", None):
-        ${pretty_button(_("reapprove"), "big_mod_action",  1, "positive")}
-      %else:
-        ${pretty_button(_("approve"), "big_mod_action",  1, "positive")}
-      %endif
-    </span>
+    %if not thing._deleted:
+      <span role="radiogroup">
+        %if not getattr(thing, "moderator_banned", None) or getattr(thing, "autobanned", False):
+          ${pretty_button(_("spam"), "big_mod_action", -2, "negative")}
+          ${pretty_button(_("remove"), "big_mod_action", -1, "neutral")}
+        %endif
+
+        %if getattr(thing, "approval_checkmark", None):
+          ${pretty_button(_("reapprove"), "big_mod_action",  1, "positive")}
+        %else:
+          ${pretty_button(_("approve"), "big_mod_action",  1, "positive")}
+        %endif
+      </span>
+    %endif
 
     %if not thing._spam:
       ${ignore_reports_toggle(thing)}
