@@ -42,6 +42,7 @@ ${message_field()}
   ${clippy_field()}
 %endif
 ${captcha_field()}
+<input type="hidden" name="source" value="compose">
 
 <button id="send" name="send" type="submit">${_("send")}</button>
 <span class="status"></span>

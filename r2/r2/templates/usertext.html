@@ -125,6 +125,10 @@
   ##this is set for both editting selftext and creating new comments
   <input type="hidden" name="thing_id" value="${thing.fullname}"/>
 
+  %if thing.source:
+    <input type="hidden" name="source" value="${thing.source}">
+  %endif
+
   %if not thing.creating:
     <div class="usertext-body may-blank-within md-container ${'admin_takedown' if thing.admin_takedown else ''}">
       % if not thing.expunged:

@@ -1328,6 +1328,15 @@ class MessageController(ListingController):
         if self.where == 'unread':
             self.next_suggestions_cls = UnreadMessagesSuggestions
 
+        if self.message:
+            source = "permalink"
+        elif self.where in {"moderator", "multi"}:
+            source = "modmail"
+        else:
+            source = "usermail"
+
+        self.render_params = {"source": source}
+
         return ListingController.GET_listing(self, **env)
 
     @validate(

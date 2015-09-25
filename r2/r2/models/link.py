@@ -2105,6 +2105,9 @@ class Message(Thing, Printable):
                         not first_recipient_modmail):
                     inbox_rel.append(Inbox._add(first_recipient, m, 'inbox'))
 
+        if sr_id:
+            g.events.modmail_event(m, request=request, context=c)
+
         return (m, inbox_rel)
 
     @property

@@ -1345,14 +1345,22 @@ class MessagePage(Reddit):
     def __init__(self, *a, **kw):
         if not kw.has_key('show_sidebar'):
             kw['show_sidebar'] = False
+
+        source = kw.pop("source", None)
+
         Reddit.__init__(self, *a, **kw)
+
         if is_api():
             self.replybox = None
         else:
-            self.replybox = UserText(item = None, creating = True,
-                                     post_form = 'comment', display = False,
-                                     cloneable = True)
-
+            self.replybox = UserText(
+                item=None,
+                creating=True,
+                post_form='comment',
+                display=False,
+                cloneable=True,
+                source=source,
+            )
 
     def content(self):
         return self.content_stack((self.replybox,
@@ -4833,6 +4841,7 @@ class UserText(CachedTemplate):
                  show_embed_help=False,
                  admin_takedown=False,
                  data_attrs={},
+                 source=None,
                 ):
 
         css_class = "usertext"
@@ -4873,6 +4882,7 @@ class UserText(CachedTemplate):
                                 show_embed_help=show_embed_help,
                                 admin_takedown=admin_takedown,
                                 data_attrs=data_attrs,
+                                source=source,
                                )
 
 class MediaEmbedBody(CachedTemplate):
