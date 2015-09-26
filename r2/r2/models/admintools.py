@@ -329,7 +329,7 @@ def valid_thing(v, karma, *a, **kw):
 def valid_user(v, sr, karma, *a, **kw):
     return True
 
-def apply_updates(user):
+def apply_updates(user, timer):
     pass
 
 def update_score(obj, up_change, down_change, vote, old_valid_thing):

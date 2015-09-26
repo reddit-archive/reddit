@@ -259,19 +259,23 @@ class Account(Thing):
     def update_last_visit(self, current_time):
         from admintools import apply_updates
 
-        apply_updates(self)
+        timer = g.stats.get_timer("account.update_last_visit")
+        timer.start()
+
+        apply_updates(self, timer)
 
         prev_visit = LastModified.get(self._fullname, "Visit")
-        if prev_visit and current_time - prev_visit < timedelta(days=1):
-            return
+        timer.intermediate("get_last_modified")
 
-        g.log.debug ("Updating last visit for %s from %s to %s" %
-                    (self.name, prev_visit, current_time))
+        if prev_visit and current_time - prev_visit < timedelta(days=1):
+            timer.stop()
+            return
 
         LastModified.touch(self._fullname, "Visit")
 
         self.last_visit = int(time.time())
         self._commit()
+        timer.stop("set_last_modified")
 
     def make_cookie(self, timestr=None):
         if not self._loaded:
