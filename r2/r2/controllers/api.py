@@ -3581,6 +3581,15 @@ class ApiController(RedditController):
         ma = ModAction(**kw)
         ma._commit()
 
+        if config['r2.import_private']:
+            from r2admin.lib.admin_utils import record_admin_event
+            if quarantine:
+                record_admin_event('quarantine', page="subreddit_page",
+                    target_thing=subreddit)
+            else:
+                record_admin_event('unquarantine', page="subreddit_page",
+                    target_thing=subreddit)
+
         if body.strip():
             send_system_message(subreddit, subject, body,
                 distinguished='admin', repliable=False)
