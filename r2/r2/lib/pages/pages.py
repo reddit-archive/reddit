@@ -506,9 +506,7 @@ class Reddit(Templated):
         if is_single_subreddit:
             if is_moderator_with_perms('access'):
                 buttons.append(NamedButton("banned", css_class="reddit-ban"))
-
-            if (is_moderator_with_perms('access', 'mail') and
-                    feature.is_enabled("modmail_muting")):
+            if is_moderator_with_perms('access', 'mail'):
                 buttons.append(NamedButton("muted", css_class="reddit-mute"))
             if is_moderator_with_perms('flair'):
                 buttons.append(NamedButton("flair", css_class="reddit-flair"))

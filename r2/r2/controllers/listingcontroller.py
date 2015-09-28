@@ -1743,8 +1743,6 @@ class UserListListingController(ListingController):
         elif where == 'muted':
             if not has_mod_access:
                 abort(403)
-            if not feature.is_enabled('modmail_muting'):
-                abort(403)
             self.listing_cls = MutedListing
 
         elif where == 'wikibanned':
