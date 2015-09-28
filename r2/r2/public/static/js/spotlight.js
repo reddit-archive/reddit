@@ -125,7 +125,10 @@
         return;
       }
 
-      var newPromo = this.requestPromo();
+      var newPromo = this.requestPromo({
+        refresh: true,
+      });
+
       newPromo.then(function($promo) {
         if (!$promo || !$promo.length) {
           return;
@@ -155,7 +158,9 @@
       }.bind(this));
     },
 
-    requestPromo: function() {
+    requestPromo: function(options) {
+      options = options || {};
+
       return $.ajax({
         type: 'POST',
         url: '/api/request_promo',
@@ -164,6 +169,7 @@
           srnames: this.srnames,
           r: r.config.post_site,
           loid: this.loid,
+          is_refresh: options.refresh,
         },
       }).pipe(function(promo) {
         var prevPromo = this.$listing.find('.promotedlink')
