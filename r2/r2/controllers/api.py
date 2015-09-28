@@ -1105,18 +1105,20 @@ class ApiController(RedditController):
                     c.user,
                     duration,
                 )
-                log_details = "%d days" % duration
+                log_details = "changed to " if not new else ""
+                log_details += "%d days" % duration
             elif not new:
                 # Preexisting ban and no duration specified means turn the
                 # temporary ban into a permanent one.
                 container.unschedule_unban(friend, type)
+                log_details = "changed to permanent"
             else:
                 log_details = "permanent"
         elif new and type == 'muted':
             MutedAccountsBySubreddit.mute(container, friend, c.user)
 
         # Log this action
-        if new and type in self._sr_friend_types:
+        if (new or log_details) and type in self._sr_friend_types:
             mod_action_by_type = {
                 "banned": "banuser",
                 "muted": "muteuser",
