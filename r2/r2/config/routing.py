@@ -382,6 +382,7 @@ def make_map(config):
     mc('/api/gadget/click/:ids', controller='api', action='gadget',
        type='click')
     mc('/api/gadget/:type', controller='api', action='gadget')
+    mc('/api/zendeskreply', controller='mailgunwebhook', action='zendeskreply')
     mc('/api/:action', controller='promoteapi',
        requirements=dict(action=("promote|unpromote|edit_promo|ad_s3_callback|"
                                  "ad_s3_params|freebie|promote_note|update_pay|"

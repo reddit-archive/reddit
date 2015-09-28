@@ -87,10 +87,12 @@ def notify_user_added(rel_type, author, user, target):
 
         if rel_type in ("moderator_invite", "contributor"):
             # send the message from the subreddit
-            item, inbox_rel = Message._new(author, user, subject, msg, request.ip,
-                                           sr=target, from_sr=True)
+            item, inbox_rel = Message._new(
+                author, user, subject, msg, request.ip, sr=target, from_sr=True,
+                can_send_email=False)
         else:
-            item, inbox_rel = Message._new(author, user, subject, msg, request.ip)
+            item, inbox_rel = Message._new(
+                author, user, subject, msg, request.ip, can_send_email=False)
 
         queries.new_message(item, inbox_rel, update_modmail=False)
 
@@ -134,6 +136,7 @@ def send_ban_message(subreddit, mod, user, note=None, days=None, new=True):
         "[site rules](/rules) and can result in being banned from reddit "
         "entirely.")
 
-    item, inbox_rel = Message._new(mod, user, subject, message, request.ip,
-        sr=subreddit, from_sr=True)
+    item, inbox_rel = Message._new(
+        mod, user, subject, message, request.ip, sr=subreddit, from_sr=True,
+        can_send_email=False)
     queries.new_message(item, inbox_rel, update_modmail=False)

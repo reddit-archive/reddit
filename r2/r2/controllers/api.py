@@ -2167,10 +2167,6 @@ class ApiController(RedditController):
 
             item, inbox_rel = Message._new(c.user, to, subject, comment,
                                            request.ip, parent=parent)
-            item.parent_id = parent._id
-            if parent.display_author and not getattr(parent, "signed", False):
-                item.display_to = parent.display_author
-            item._commit()
         else:
             # Don't let users in timeout comment
             VNotInTimeout().run(action_name='comment', target=parent)
@@ -2995,7 +2991,7 @@ class ApiController(RedditController):
 
             for k, v in kw.iteritems():
                 if getattr(sr, k, None) != v:
-                    ModAction.create(sr, c.user, action='editsettings', 
+                    ModAction.create(sr, c.user, action='editsettings',
                                      details=k)
 
                 setattr(sr, k, v)

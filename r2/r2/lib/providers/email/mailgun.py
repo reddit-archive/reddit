@@ -79,7 +79,9 @@ class MailgunEmailProvider(EmailProvider):
         except ValueError:
             msg = "mailgun sending email bad response {status}: {text}".format(
                 status=response.status_code, text=response.text)
+            g.stats.simple_event("mailgun.outgoing.failure")
             raise EmailSendError(msg)
 
+        g.stats.simple_event("mailgun.outgoing.success")
         email_id = body["id"]
         return email_id

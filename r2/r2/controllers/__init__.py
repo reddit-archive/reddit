@@ -99,5 +99,6 @@ def load_controllers():
     from ipn import StripeController
     from ipn import CoinbaseController
     from ipn import RedditGiftsController
+    from mailgun import MailgunWebhookController
 
     _reddit_controllers.update((name.lower(), obj) for name, obj in locals().iteritems())

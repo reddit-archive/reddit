@@ -1968,6 +1968,8 @@ class Message(Thing, Printable):
                      from_sr=False,
                      display_author=None,
                      display_to=None,
+                     email_id=None,
+                     sent_via_email=False,
                      )
     _data_int_props = Thing._data_int_props + ('reported',)
     _essentials = ('author_id',)
@@ -1975,11 +1977,14 @@ class Message(Thing, Printable):
 
     @classmethod
     def _new(cls, author, to, subject, body, ip, parent=None, sr=None,
-             from_sr=False):
+             from_sr=False, can_send_email=True, sent_via_email=False,
+             email_id=None):
         from r2.lib.emailer import message_notification_email
+        from r2.lib.message_to_email import queue_modmail_email
 
         m = Message(subject=subject, body=body, author_id=author._id, new=True,
-                    ip=ip, from_sr=from_sr)
+                    ip=ip, from_sr=from_sr, sent_via_email=sent_via_email,
+                    email_id=email_id)
         m._spam = author._spam
 
         if author._spam:
@@ -2004,8 +2009,12 @@ class Message(Thing, Printable):
                 m.first_message = parent.first_message
             else:
                 m.first_message = parent._id
+
             if parent.sr_id:
                 sr_id = parent.sr_id
+
+            if parent.display_author and not getattr(parent, "signed", False):
+                m.display_to = parent.display_author
 
         if not to and not sr_id:
             raise CreationError("Message created with neither to nor sr_id")
@@ -2046,6 +2055,10 @@ class Message(Thing, Printable):
             if sr.is_moderator(author):
                 m.distinguished = 'yes'
                 m._commit()
+
+            if (can_send_email and
+                    sr.name in g.live_config['modmail_forwarding_email']):
+                queue_modmail_email(m)
 
         if author.name in g.admins:
             m.distinguished = 'admin'
@@ -2307,7 +2320,12 @@ class Message(Thing, Printable):
                     else:
                         subreddit_distinguish = None
 
-                    if not item.user_is_moderator and not c.user_is_admin:
+                    if item.sent_via_email:
+                        item.hide_author = True
+                        item.distinguished = "yes"
+                        item.taglinetext = _(
+                            "subreddit message via %(subreddit)s sent %(when)s")
+                    elif not item.user_is_moderator and not c.user_is_admin:
                         item.author = item.subreddit
                         item.hide_author = True
                         item.taglinetext = _(

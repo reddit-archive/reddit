@@ -783,11 +783,15 @@ class FrontController(RedditController):
 
     def _edit_normal_reddit(self, location, created):
         if (location == 'edit' and
-            c.user_is_loggedin and
-            (c.user_is_admin or c.site.is_moderator_with_perms(c.user, 'config'))):
+                c.user_is_loggedin and
+                (c.user_is_admin or
+                    c.site.is_moderator_with_perms(c.user, 'config'))):
             pane = PaneStack()
+
             if created == 'true':
-                pane.append(InfoBar(message=strings.sr_created))
+                infobar_message = strings.sr_created
+                pane.append(InfoBar(message=infobar_message))
+
             c.allow_styles = True
             c.site = Subreddit._byID(c.site._id, data=True, stale=False)
             pane.append(CreateSubreddit(site=c.site))
