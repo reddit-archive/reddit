@@ -268,14 +268,16 @@ class Account(Thing):
         timer.intermediate("get_last_modified")
 
         if prev_visit and current_time - prev_visit < timedelta(days=1):
-            timer.stop("set_last_modified.noop")
+            timer.intermediate("set_last_modified.noop")
+            timer.stop()
             return
 
         LastModified.touch(self._fullname, "Visit")
 
         self.last_visit = int(time.time())
         self._commit()
-        timer.stop("set_last_modified.done")
+        timer.intermediate("set_last_modified.done")
+        timer.stop()
 
     def make_cookie(self, timestr=None):
         if not self._loaded:
