@@ -178,7 +178,6 @@ rabbitmq-server
 cassandra=1.2.19
 haproxy
 nginx
-stunnel
 gunicorn
 sutro
 libpcre3-dev
@@ -468,11 +467,36 @@ server {
 }
 PIXEL
 
+cat > /etc/nginx/sites-available/reddit-ssl <<SSL
+server {
+    listen 443;
+
+    ssl on;
+    ssl_certificate /etc/ssl/certs/ssl-cert-snakeoil.pem;
+    ssl_certificate_key /etc/ssl/private/ssl-cert-snakeoil.key;
+
+    ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+    ssl_ciphers EECDH+AES128:RSA+AES128:EECDH+AES256:RSA+AES256:EECDH+3DES:RSA+3DES:!MD5;
+    ssl_prefer_server_ciphers on;
+
+    ssl_session_cache shared:SSL:1m;
+
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host \$http_host;
+        proxy_http_version 1.1;
+        proxy_set_header X-Forwarded-For \$remote_addr;
+        proxy_pass_header Server;
+    }
+}
+SSL
+
 # remove the default nginx site that may conflict with haproxy
 rm -rf /etc/nginx/sites-enabled/default
 # put our config in place
 ln -nsf /etc/nginx/sites-available/reddit-media /etc/nginx/sites-enabled/
 ln -nsf /etc/nginx/sites-available/reddit-pixel /etc/nginx/sites-enabled/
+ln -nsf /etc/nginx/sites-available/reddit-ssl /etc/nginx/sites-enabled/
 
 # make the pixel log directory
 mkdir -p /var/log/nginx/traffic
@@ -569,50 +593,6 @@ HAPROXY
 
 # this will start it even if currently stopped
 service haproxy restart
-
-###############################################################################
-# stunnel
-###############################################################################
-cat > /etc/stunnel/stunnel.conf <<STUNNELCONF
-foreground = no
-
-; replace these with real certificates
-cert = /etc/ssl/certs/ssl-cert-snakeoil.pem
-key = /etc/ssl/private/ssl-cert-snakeoil.key
-
-; protocol version and ciphers
-sslVersion = all
-ciphers = ECDHE-RSA-RC4-SHA:ECDHE-ECDSA-RC4-SHA:ECDH-RSA-RC4-SHA:ECDH-ECDSA-RC4-SHA:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:SRP-DSS-AES-256-CBC-SHA:SRP-RSA-AES-256-CBC-SHA:DHE-DSS-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA256:DHE-RSA-AES256-SHA:DHE-DSS-AES256-SHA:DHE-RSA-CAMELLIA256-SHA:DHE-DSS-CAMELLIA256-SHA:ECDH-RSA-AES256-GCM-SHA384:ECDH-ECDSA-AES256-GCM-SHA384:ECDH-RSA-AES256-SHA384:ECDH-ECDSA-AES256-SHA384:ECDH-RSA-AES256-SHA:ECDH-ECDSA-AES256-SHA:AES256-GCM-SHA384:AES256-SHA256:AES256-SHA:CAMELLIA256-SHA:PSK-AES256-CBC-SHA:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:SRP-DSS-AES-128-CBC-SHA:SRP-RSA-AES-128-CBC-SHA:DHE-DSS-AES128-GCM-SHA256:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES128-SHA256:DHE-DSS-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA:DHE-RSA-SEED-SHA:DHE-DSS-SEED-SHA:DHE-RSA-CAMELLIA128-SHA:DHE-DSS-CAMELLIA128-SHA:ECDH-RSA-AES128-GCM-SHA256:ECDH-ECDSA-AES128-GCM-SHA256:ECDH-RSA-AES128-SHA256:ECDH-ECDSA-AES128-SHA256:ECDH-RSA-AES128-SHA:ECDH-ECDSA-AES128-SHA:AES128-GCM-SHA256:AES128-SHA256:AES128-SHA:SEED-SHA:CAMELLIA128-SHA:PSK-AES128-CBC-SHA:RC4-SHA:DES-CBC3-SHA:RC4-MD5
-options = NO_SSLv2
-options = DONT_INSERT_EMPTY_FRAGMENTS
-options = CIPHER_SERVER_PREFERENCE
-
-; security
-chroot = /var/lib/stunnel4/
-setuid = stunnel4
-setgid = stunnel4
-pid = /stunnel4.pid
-
-; performance
-socket = l:TCP_NODELAY=1
-socket = r:TCP_NODELAY=1
-
-; logging
-output = /var/log/stunnel4/stunnel.log
-syslog = no
-
-[https]
-accept = 443
-connect = 8080
-TIMEOUTclose = 0
-sslVersion = all
-; this requires a patched version of stunnel which is in the reddit ppa
-xforwardedfor = yes
-STUNNELCONF
-
-sed -i s/ENABLED=0/ENABLED=1/ /etc/default/stunnel4
-
-service stunnel4 restart
 
 ###############################################################################
 # sutro (websocket server)
