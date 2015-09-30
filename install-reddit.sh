@@ -150,7 +150,6 @@ python-bcrypt
 python-snudown
 python-l2cs
 python-lxml
-python-zope.interface
 python-kazoo
 python-stripe
 python-tinycss2
