@@ -145,7 +145,7 @@ python-pycassa
 python-imaging
 python-pycaptcha
 python-amqplib
-python-pylibmc
+python-pylibmc=1.2.2-1~trusty5
 python-bcrypt
 python-snudown
 python-l2cs
