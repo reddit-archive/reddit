@@ -1163,13 +1163,12 @@ class ApiController(RedditController):
             table.insert_table_rows(user_row, index=index)
             table.find(".notfound").hide()
 
-        if new:
-            if type == "banned":
-                if friend.has_interacted_with(container):
-                    send_ban_message(container, c.user, friend,
-                        ban_message, duration)
-            else:
-                notify_user_added(type, c.user, friend, container)
+        if type == "banned":
+            if friend.has_interacted_with(container):
+                send_ban_message(container, c.user, friend,
+                    ban_message, duration, new)
+        elif new:
+            notify_user_added(type, c.user, friend, container)
 
     @validatedForm(VGold(),
                    VModhash(),

@@ -108,7 +108,7 @@ def notify_user_added(rel_type, author, user, target):
         queries.new_message(item, inbox_rel)
 
 
-def send_ban_message(subreddit, mod, user, note=None, days=None):
+def send_ban_message(subreddit, mod, user, note=None, days=None, new=True):
     sr_name = "/r/" + subreddit.name
     if days:
         subject = "you've been temporarily banned from %(subreddit)s"
@@ -117,6 +117,10 @@ def send_ban_message(subreddit, mod, user, note=None, days=None):
     else:
         subject = "you've been banned from %(subreddit)s"
         message = "you have been banned from posting to %(subreddit)s."
+
+    if not new:
+        subject = "Your ban from %(subreddit)s has changed"
+
     subject %= {"subreddit": sr_name}
     message %= {"subreddit": sr_name, "duration": days}
 
