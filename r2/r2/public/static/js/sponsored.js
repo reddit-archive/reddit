@@ -500,6 +500,8 @@ var exports = r.sponsored = {
         this.inventory = {}
         this.campaignListColumns = $('.existing-campaigns thead th').length
         $("input[name='media_url_type']").on("change", this.mediaInputChange)
+
+        r.ui.initUploads();
     },
 
     setup: function(inventory_by_sr, priceDict, isEmpty, userIsSponsor) {

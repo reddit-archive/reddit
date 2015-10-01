@@ -322,6 +322,14 @@ $.fn.updateThing = function(update) {
     }
 }
 
+$.fn.resetInput = function() {
+  var $el = $(this);
+  $el.wrap('<form>').closest('form').get(0).reset();
+  $el.unwrap();
+
+  return this;
+};
+
 $.fn.show_unvotable_message = function() {
   $(this).thing().find(".entry:first .unvotable-message").css("display", "inline-block");
 };
