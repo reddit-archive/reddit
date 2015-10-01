@@ -36,6 +36,7 @@ from pylons import tmpl_context as c
 from pylons import app_globals as g
 from pylons.i18n import _, N_
 
+from r2.config import feature
 from r2.controllers.api import ApiController
 from r2.controllers.listingcontroller import ListingController
 from r2.controllers.reddit_base import RedditController
@@ -173,7 +174,7 @@ def _force_images(link, thumbnail, mobile):
         media.force_thumbnail(link, thumbnail["data"], thumbnail["ext"])
         changed = True
 
-    if mobile:
+    if feature.is_enabled("mobile_targeting") and mobile:
         media.force_mobile_ad_image(link, mobile["data"], mobile["ext"])
         changed = True
 
@@ -1140,8 +1141,13 @@ class PromoteApiController(ApiController):
         if form.has_errors('frequency_cap', errors.INVALID_FREQUENCY_CAP):
             return
 
-        # if on mobile platform, do a few checks
-        if platform in ('mobile', 'all'):
+        if (not feature.is_enabled('mobile_targeting') and
+                platform != 'desktop'):
+            return abort(403, 'forbidden')
+
+        if platform == 'desktop':
+            mobile_os = None
+        else:
             # check if platform includes mobile, but no mobile OS is selected
             if not mobile_os:
                 c.errors.add(errors.BAD_PROMO_MOBILE_OS, field='mobile_os')
@@ -1159,12 +1165,6 @@ class PromoteApiController(ApiController):
                     c.errors.add(errors.INVALID_OS_VERSION, field='os_version')
                     form.set_error(errors.INVALID_OS_VERSION, 'os_version')
                     return
-
-        if not (c.user_is_sponsor or platform == 'desktop'):
-            return abort(403, 'forbidden')
-
-        if platform == 'desktop':
-            mobile_os = None
 
         if not target:
             # run form.has_errors to populate the errors in the response
