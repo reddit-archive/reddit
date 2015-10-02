@@ -1065,8 +1065,10 @@ class SubredditInfoBar(CachedTemplate):
 
         self.quarantine = self.sr.quarantine
 
+        has_custom_stylesheet = (self.sr.stylesheet_url or
+            self.sr.stylesheet_url_https or self.sr.stylesheet_url_http)
         if (c.user_is_loggedin and
-                (self.sr.stylesheet_url or self.sr.header) and
+                (has_custom_stylesheet or self.sr.header) and
                 feature.is_enabled('stylesheets_everywhere')):
             # defaults to c.user.pref_show_stylesheets if a match doesn't exist
             self.sr_style_toggle = True
