@@ -198,6 +198,7 @@ def js_config(extra_config=None):
         "stats_sample_rate": g.stats_sample_rate or 0,
         "extension": c.extension,
         "https_endpoint": is_subdomain(request.host, g.domain) and g.https_endpoint,
+        "media_domain": g.media_domain,
         # does the client only want to communicate over HTTPS?
         "https_forced": feature.is_enabled("force_https"),
         # debugging?
