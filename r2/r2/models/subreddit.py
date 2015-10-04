@@ -1039,6 +1039,13 @@ class Subreddit(Thing, Printable, BaseSite):
     @classmethod
     @memoize('random_reddits', time = 1800)
     def random_reddits_cached(cls, user_name, sr_ids, limit):
+        # First filter out any subreddits that don't have a new enough post
+        # to be included in the front page (just doing this may remove enough
+        # to get below the limit anyway)
+        sr_ids = SubredditsActiveForFrontPage.filter_inactive_ids(sr_ids)
+        if len(sr_ids) <= limit:
+            return sr_ids
+
         return random.sample(sr_ids, limit)
 
     @classmethod
