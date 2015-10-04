@@ -59,6 +59,7 @@ from r2.lib.utils import (
     in_chunks,
     summarize_markdown,
     timeago,
+    to36,
     tup,
     unicode_title_to_ascii,
 )
@@ -2862,3 +2863,50 @@ def unmute_hook(data):
 
         subreddit.remove_muted(user)
         MutedAccountsBySubreddit.unmute(subreddit, user, automatic=True)
+
+
+class SubredditsActiveForFrontPage(tdb_cassandra.View):
+    """Tracks which subreddits currently have valid frontpage posts.
+    
+    The front page's "hot" page only includes posts that are newer than
+    g.HOT_PAGE_AGE, so there's no point including subreddits in it if they
+    haven't had a post inside that period. Since we pick random subsets of
+    users' subscriptions when they subscribe to more subreddits than we
+    build the page from, this means that inactive subreddits can effectively
+    "waste" some of these slots, since they may not have any posts that can
+    possibly be added to the page.
+
+    This CF will get an entry inserted for each subreddit whenever a new
+    post is made in that subreddit, with a TTL equal to g.HOT_PAGE_AGE. We
+    will then be able to query it to determine which subreddits don't have
+    any posts recent enough to contribute to the front page, and exclude
+    them from consideration for a user's front page set.
+    """
+
+    _use_db = True
+    _connection_pool = "main"
+    _ttl = datetime.timedelta(days=g.HOT_PAGE_AGE)
+    _extra_schema_creation_args = {
+        "key_validation_class": tdb_cassandra.ASCII_TYPE,
+    }
+    _read_consistency_level = tdb_cassandra.CL.ONE
+    _write_consistency_level = tdb_cassandra.CL.QUORUM
+
+    ROWKEY = "1"
+
+    @classmethod
+    def mark_new_post(cls, subreddit):
+        cls._set_values(cls.ROWKEY, {subreddit._id36: ""})
+
+    @classmethod
+    def filter_inactive_ids(cls, subreddit_ids):
+        sr_id36s = [to36(sr_id) for sr_id in subreddit_ids]
+        try:
+            results = cls._cf.get(cls.ROWKEY, columns=sr_id36s)
+        except tdb_cassandra.NotFoundException:
+            results = {}
+
+        num_filtered = len(subreddit_ids) - len(results)
+        g.stats.simple_event("frontpage.filter_inactive", delta=num_filtered)
+
+        return [int(sr_id36, 36) for sr_id36 in results.keys()]

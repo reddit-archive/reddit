@@ -209,10 +209,12 @@ class TestSubmit(unittest.TestCase):
             LinksByAccount,
             LinksByUrl,
             SubredditParticipationByAccount,
+            SubredditsActiveForFrontPage,
         )
 
         LinksByAccount.add_link = MagicMock()
         SubredditParticipationByAccount.mark_participated = MagicMock()
+        SubredditsActiveForFrontPage.mark_new_post = MagicMock()
 
         self.links_by_url_add_link = MagicMock()
         LinksByUrl.add_link = self.links_by_url_add_link

@@ -40,7 +40,13 @@ from account import (
     DeletedUser,
     SubredditParticipationByAccount,
 )
-from subreddit import DefaultSR, DomainSR, FakeSubreddit, Subreddit
+from subreddit import (
+    DefaultSR,
+    DomainSR,
+    FakeSubreddit,
+    Subreddit,
+    SubredditsActiveForFrontPage,
+)
 from printable import Printable
 from r2.config import extensions
 from r2.lib.memoize import memoize
@@ -244,6 +250,7 @@ class Link(Thing, Printable):
 
         LinksByAccount.add_link(author, l)
         SubredditParticipationByAccount.mark_participated(author, sr)
+        SubredditsActiveForFrontPage.mark_new_post(sr)
         author.last_submit_time = int(epoch_timestamp(datetime.now(g.tz)))
         author._commit()
 
