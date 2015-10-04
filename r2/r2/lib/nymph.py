@@ -23,7 +23,7 @@
 import os
 import re
 import hashlib
-import Image
+from PIL import Image
 import subprocess
 
 from r2.lib.static import generate_static_name

@@ -38,8 +38,7 @@ import urlparse
 import gzip
 
 import BeautifulSoup
-import Image
-import ImageFile
+from PIL import Image, ImageFile
 import lxml.html
 import requests
 
