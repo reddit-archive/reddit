@@ -2485,7 +2485,9 @@ class SidebarMessage(Templated):
         Templated.__init__(self, message=message, extra_class=extra_class)
 
 class RedditError(BoringPage):
+    show_infobar = False
     site_tracking = False
+
     def __init__(self, title, message, image=None, sr_description=None,
             include_message_mods_link=False, explanation=None):
         content = ErrorPage(
