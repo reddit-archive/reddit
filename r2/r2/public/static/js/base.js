@@ -113,6 +113,7 @@ $(function() {
 
         r.login.ui.init()
         r.analytics.init()
+        r.TimeText.init();
         r.ui.init()
         r.interestbar.init()
         r.visited.init()

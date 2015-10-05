@@ -5,6 +5,8 @@
         }
     }
 
+    var clientTimeInit = Date.now();
+
     var CHUNKS = [
         [60 * 60 * 24 * 365, r.NP_('a year ago', '%(num)s years ago')],
         [60 * 60 * 24 * 30, r.NP_('a month ago', '%(num)s months ago')],
@@ -29,7 +31,7 @@
     }
 
     TimeText.prototype._refresh = function(){
-        var now = Date.now()
+        var now = TimeText.now()
 
         this.elCache.each($.proxy(function (i, el) {
             this.refreshOne(el, now)
@@ -43,14 +45,14 @@
 
     TimeText.prototype.refreshOne = function (el, now) {
         if (!now){
-          now = Date.now()
+            now = TimeText.now()
         }
 
         var $el = $(el)
         var timestamp = r.utils.parseTimestamp($el)
         var text
         var age
-
+        
         age = (now - timestamp) / 1000
 
         if (this.opts.maxage !== false && age > this.opts.maxage) {
@@ -75,6 +77,21 @@
             }
         })
         return text
+    }
+
+    TimeText.clientOffset = 0;
+
+    TimeText.now = function() {
+        return Date.now() - TimeText.clientOffset;
+    }
+
+    TimeText.init = function() {
+        var serverTimeInit = r.config.server_time * 1000;
+        var delta = clientTimeInit - serverTimeInit;
+        var msPerHour = 1000 * 60 * 60;
+        var clientHourOffset = Math.round(delta / msPerHour);
+
+        this.clientOffset = clientHourOffset * msPerHour;
     }
 
     r.TimeText = TimeText
