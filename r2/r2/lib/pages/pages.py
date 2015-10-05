@@ -333,7 +333,8 @@ class Reddit(Templated):
                 if getattr(self, "show_newsletterbar", True):
                     self.newsletterbar = NewsletterBar()
 
-            if c.render_style == "compact":
+            if (c.render_style == "compact" and 
+                    getattr(self, "show_mobilewebredirectbar", True)):
                 self.mobilewebredirectbar = MobileWebRedirectBar()
 
             show_locationbar &= not c.user.pref_hide_locationbar
@@ -1393,6 +1394,8 @@ class RegistrationInfo(Templated):
 
 
 class OAuth2AuthorizationPage(BoringPage):
+    show_mobilewebredirectbar = False
+
     def __init__(self, client, redirect_uri, scope, state, duration,
                  response_type):
         if duration == "permanent":
