@@ -381,3 +381,107 @@ r.analytics.breadcrumbs = {
   },
 
 };
+
+
+// http://stackoverflow.com/a/8809472/704286
+r.analytics.uuid = function() {
+  var d = new Date().getTime();
+  var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = (d + Math.random() * 16) % 16 | 0;
+
+    d = Math.floor(d / 16);
+
+    return (c == 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+
+  return uuid;
+};
+
+
+r.analytics.event = {
+  init: function() {
+    this.contextData = {
+      base_url: document.location.pathname,
+      domain: document.location.hostname,
+      loid: null,
+      srName: null,
+      userAgent: navigator.userAgent,
+      userId: null,
+      userName: null,
+    };
+
+    if (r.config.user_id) {
+      this.contextData.userId = r.config.user_id;
+      this.contextData.userName = r.config.logged;
+    } else {
+      var tracker = new redditlib.Tracker();
+      var loggedOutData = tracker.getTrackingData();
+      this.contextData.loid = loggedOutData.loid;
+    }
+
+    if (r.config.post_site) {
+      this.contextData.srName = r.config.post_site;
+    }
+  },
+
+  _eventData: function(eventTopic, eventType, eventPayload) {
+    var now = new Date();
+    var data = {
+      'event_topic': eventTopic,
+      'event_type': eventType,
+      'event_ts': now.getTime(),
+      'uuid': r.analytics.uuid(),
+      'payload': {
+        'domain': this.contextData.domain,
+        'base_url': this.contextData.base_url,
+        'user_agent': this.contextData.userAgent,
+        'utc_offset': now.getTimezoneOffset() / -60,
+      },
+    };
+
+    if (this.contextData.userId) {
+      data.payload['user_id'] = this.contextData.userId;
+      data.payload['user_name'] = this.contextData.userName;
+    } else {
+      data.payload['loid'] = this.contextData.loid;
+    }
+
+    if (this.contextData.srName) {
+      data.payload['sr_name'] = this.contextData.srName;
+    }
+
+    for (var name in eventPayload) {
+      data.payload[name] = eventPayload[name];
+    }
+
+    return data;
+  },
+
+  timeoutForbiddenEvent: function(actionName, actionDetail, targetType, targetFullname) {
+    var eventTopic = 'forbidden_actions';
+    var eventType = 'cs.forbidden_' + actionName;
+    var payload = {'process_notes': 'IN_TIMEOUT'};
+
+    if (actionDetail) {
+      payload['details_text'] = actionDetail;
+    }
+
+    if (targetType) {
+      payload['target_type'] = targetType;
+    }
+
+    if (targetFullname) {
+      payload['target_fullname'] = targetFullname;
+      payload['target_id'] = r.utils.fullnameToId(targetFullname);
+    }
+
+    var data = this._eventData(eventTopic, eventType, payload);
+
+    var pixel = new Image();
+    pixel.src = r.config.eventtracker_url + '?' + $.param({
+      r: Math.round(Math.random() * 2147483647), // cachebuster
+      data: JSON.stringify(data),
+    });
+  },
+
+};

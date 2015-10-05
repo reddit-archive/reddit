@@ -9,6 +9,7 @@ r.setup = function(config) {
 
     r.config.currentOrigin = location.protocol+'//'+location.host
     r.analytics.breadcrumbs.init()
+    r.analytics.event.init()
 }
 
 r.ajax = function(request) {
