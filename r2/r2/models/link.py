@@ -1990,7 +1990,8 @@ class Message(Thing, Printable):
         sr_colors = None
         if isinstance(c.site, FakeSubreddit):
             mod_sr_ids = Subreddit.reverse_moderator_ids(user)
-            sr_colors = dict(zip(mod_sr_ids, cycle(Subreddit.ACCENT_COLORS)))
+            if len(mod_sr_ids) > 1:
+                sr_colors = dict(zip(mod_sr_ids, cycle(Subreddit.ACCENT_COLORS)))
 
         for item in wrapped:
             user_is_recipient = item.to_id == user._id
