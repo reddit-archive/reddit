@@ -676,7 +676,7 @@ var exports = r.sponsored = {
           + '<input type="radio" name="collection" value="<%= name %>"'
           + '    <% print(name === \'' + defaultValue + '\' ? "checked=\'checked\'" : "") %>/>'
           + '  <div class="label-group">'
-          + '    <span class="label"><% print(name === \'none\' ? \'frontpage influencers\' : name) %></span>'
+          + '    <span class="label"><% print(name === \'none\' ? \'Reddit front page\' : name) %></span>'
           + '    <small class="description"><%= description %></small>'
           + '  </div>'
           + '</label>');
