@@ -820,7 +820,9 @@ class Subreddit(Thing, Printable, BaseSite):
             self.stylesheet_url_https = ""
         self._commit()
 
-        ModAction.create(self, author, action='wikirevise', details='Updated subreddit stylesheet')
+        if wr:
+            ModAction.create(self, author, action='wikirevise', details='Updated subreddit stylesheet')
+
         return wr
 
     def is_special(self, user):

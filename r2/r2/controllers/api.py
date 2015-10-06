@@ -2245,9 +2245,6 @@ class ApiController(RedditController):
             form.find('.errors').hide()
             form.set_text(".status", _('saved'))
             form.set_html(".errors ul", "")
-            if wr:
-                description = wiki.modactions.get('config/stylesheet')
-                ModAction.create(c.site, c.user, 'wikirevise', description)
 
         jquery.apply_stylesheet(parsed)
 
