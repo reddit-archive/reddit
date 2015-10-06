@@ -1988,8 +1988,7 @@ class Message(Thing, Printable):
 
         # accent colors for color coded modmail
         sr_colors = None
-        if (isinstance(c.site, FakeSubreddit) and
-                feature.is_enabled('modmail_colors')):
+        if isinstance(c.site, FakeSubreddit):
             mod_sr_ids = Subreddit.reverse_moderator_ids(user)
             sr_colors = dict(zip(mod_sr_ids, cycle(Subreddit.ACCENT_COLORS)))
 
