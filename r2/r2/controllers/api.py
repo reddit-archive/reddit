@@ -1056,6 +1056,9 @@ class ApiController(RedditController):
             form.set_error(errors.CANT_RESTRICT_MODERATOR, "name")
             return
 
+        if type == "muted" and not container.can_mute(c.user, friend):
+            abort(403)
+
         # don't allow increasing privileges of banned or muted users
         unbanned_types = ("moderator", "moderator_invite",
                           "contributor", "wikicontributor")
@@ -1762,6 +1765,9 @@ class ApiController(RedditController):
             abort(403, 'Not modmail')
 
         user = message.author_slow
+        if not subreddit.can_mute(c.user, user):
+            abort(403)
+
         if not c.user_is_admin:
             if not subreddit.is_moderator_with_perms(c.user, 'access', 'mail'):
                 abort(403, 'Invalid mod permissions')

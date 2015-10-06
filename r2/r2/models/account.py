@@ -410,6 +410,15 @@ class Account(Thing):
         #   - None: (the default) the user is not a mod anywhere
         return self.modmsgtime is not None
 
+    def is_mutable(self, subreddit):
+        # Don't allow muting of other mods in the subreddit
+        if subreddit.is_moderator(self):
+            return False
+
+        # Don't allow muting of u/reddit or u/AutoModerator
+        return not (self == self.system_user() or
+            self == self.automoderator_user())
+
     # Used on the goldmember version of /prefs/friends
     @memoize('account.friend_rels')
     def friend_rels_cache(self):
@@ -570,6 +579,13 @@ class Account(Thing):
     def system_user(cls):
         try:
             return cls._by_name(g.system_user)
+        except (NotFound, AttributeError):
+            return None
+
+    @classmethod
+    def automoderator_user(cls):
+        try:
+            return cls._by_name(g.automoderator_account)
         except (NotFound, AttributeError):
             return None
 

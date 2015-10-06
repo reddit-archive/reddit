@@ -748,6 +748,12 @@ class Subreddit(Thing, Printable, BaseSite):
                 and (c.user_is_admin
                      or self.is_moderator_with_perms(user, 'posts')))
 
+    def can_mute(self, muter, user):
+        return (user.is_mutable(self) and
+            (c.user_is_admin or
+                self.is_moderator_with_perms(muter, 'access', 'mail'))
+        )
+
     def can_distinguish(self,user):
         return (user
                 and (c.user_is_admin

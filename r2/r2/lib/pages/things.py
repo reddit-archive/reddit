@@ -274,9 +274,7 @@ class MessageButtons(PrintableButtons):
                             sr.is_muted(first_message.recipient_slow))):
                     can_reply = False
 
-                if (not sr.is_moderator(thing.author_slow) and
-                        sr.is_moderator_with_perms(c.user, 'access', 'mail')):
-                    can_mute = True
+                can_mute = sr.can_mute(c.user, thing.author_slow)
 
         if not was_comment and thing.display_author:
             can_block = False
