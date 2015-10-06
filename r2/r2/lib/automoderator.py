@@ -476,6 +476,11 @@ class RuleTarget(object):
             valid_targets=(Link, Comment),
             component_type="check",
         ),
+        "set_locked": RuleComponent(
+            valid_types=bool,
+            valid_targets=Link,
+            component_type="action",
+        ),
         "set_sticky": RuleComponent(
             valid_types=(bool, int),
             valid_values=set(
@@ -1017,6 +1022,15 @@ class RuleTarget(object):
             if item.contest_mode != self.set_contest_mode:
                 item.contest_mode = self.set_contest_mode
                 item._commit()
+
+        if self.set_locked is not None:
+            if item.locked != self.set_locked:
+                item.locked = self.set_locked
+                item._commit()
+
+                log_action = 'lock' if self.set_locked else 'unlock'
+                ModAction.create(data["subreddit"], ACCOUNT, log_action,
+                    target=item)
 
         if self.set_sticky is not None:
             stickied_fullnames = data["subreddit"].get_sticky_fullnames()
