@@ -105,6 +105,8 @@ ${self.RenderPrintable()}
       rowclass += " gilded"
     if hasattr(what, "user_gilded") and what.user_gilded:
       rowclass += " user-gilded"
+    if not getattr(what, "archived", False) and getattr(what, "locked", False):
+      rowclass += " locked"
     if getattr(what, "stickied", False):
       rowclass += " stickied"
     if getattr(what, "is_controversial", False):
