@@ -1215,38 +1215,48 @@ class VSrSpecial(VByName):
 
 class VSubmitParent(VByName):
     def run(self, fullname, fullname2):
-        #for backwards compatability (with iphone app)
+        # for backwards compatibility (with iphone app)
         fullname = fullname or fullname2
-        if fullname:
-            parent = VByName.run(self, fullname)
-            if not isinstance(parent, (Comment, Link, Message)):
-                abort(403, "forbidden")
+        parent = VByName.run(self, fullname) if fullname else None
 
-            if parent:
-                if c.user_is_loggedin and parent.author_id in c.user.enemies:
-                    self.set_error(errors.USER_BLOCKED)
-                if parent._deleted:
-                    if isinstance(parent, Link):
-                        self.set_error(errors.DELETED_LINK)
-                    else:
-                        self.set_error(errors.DELETED_COMMENT)
-                if parent._spam and isinstance(parent, Comment):
-                    # Only author, mod or admin can reply to removed comments
-                    can_reply = (c.user_is_loggedin and
-                                 (parent.author_id == c.user._id or
-                                  c.user_is_admin or
-                                  parent.subreddit_slow.is_moderator(c.user)))
-                    if not can_reply:
-                        self.set_error(errors.DELETED_COMMENT)
-            if isinstance(parent, Message):
+        if not parent:
+            # for backwards compatibility (normally 404)
+            abort(403, "forbidden")
+
+        if not isinstance(parent, (Comment, Link, Message)):
+            # for backwards compatibility (normally 400)
+            abort(403, "forbidden")
+
+        if c.user_is_loggedin and parent.author_id in c.user.enemies:
+            self.set_error(errors.USER_BLOCKED)
+
+        if isinstance(parent, Message):
+            return parent
+
+        elif isinstance(parent, Link):
+            if parent._deleted:
+                self.set_error(errors.DELETED_LINK)
+
+            if c.user_is_loggedin and can_comment_link(parent):
                 return parent
-            else:
-                link = parent
-                if isinstance(parent, Comment):
-                    link = Link._byID(parent.link_id, data=True)
-                if link and c.user_is_loggedin and can_comment_link(link):
-                    return parent
-        #else
+
+        elif isinstance(parent, Comment):
+            if parent._deleted:
+                self.set_error(errors.DELETED_COMMENT)
+
+            elif parent._spam:
+                # Only author, mod or admin can reply to removed comments
+                can_reply = (c.user_is_loggedin and
+                             (parent.author_id == c.user._id or
+                              c.user_is_admin or
+                              parent.subreddit_slow.is_moderator(c.user)))
+                if not can_reply:
+                    self.set_error(errors.DELETED_COMMENT)
+
+            link = Link._byID(parent.link_id, data=True)
+            if c.user_is_loggedin and can_comment_link(link):
+                return parent
+
         abort(403, "forbidden")
 
     def param_docs(self):
