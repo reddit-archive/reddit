@@ -918,6 +918,20 @@ class Link(Thing, Printable):
         # this preserves the original behavior of `visible_promo()`
         return True
 
+    def can_comment(self, user):
+        if getattr(self, 'subreddit', None):
+            sr = self.subreddit
+        else:
+            sr = self.subreddit_slow
+
+        if self.archived:
+            return False
+
+        if self.locked:
+            return False
+
+        return sr.can_comment(user) and self.can_view_promo(user)
+
     def sort_if_suggested(self):
         """Returns a sort, if the link or its subreddit has suggested one."""
         if self.suggested_sort:

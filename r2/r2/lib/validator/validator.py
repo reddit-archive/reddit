@@ -1227,7 +1227,11 @@ class VSubmitParent(VByName):
             # for backwards compatibility (normally 400)
             abort(403, "forbidden")
 
-        if c.user_is_loggedin and parent.author_id in c.user.enemies:
+        if not c.user_is_loggedin:
+            # in practice this is handled by VUser
+            abort(403, "forbidden")
+
+        if parent.author_id in c.user.enemies:
             self.set_error(errors.USER_BLOCKED)
 
         if isinstance(parent, Message):
@@ -1242,7 +1246,7 @@ class VSubmitParent(VByName):
             elif parent.locked:
                 self.set_error(errors.THREAD_LOCKED)
 
-            if c.user_is_loggedin and can_comment_link(parent):
+            if self.has_errors or parent.can_comment(c.user):
                 return parent
 
         elif isinstance(parent, Comment):
@@ -1265,7 +1269,7 @@ class VSubmitParent(VByName):
             elif link.locked:
                 self.set_error(errors.THREAD_LOCKED)
 
-            if c.user_is_loggedin and can_comment_link(link):
+            if self.has_errors or link.can_comment(c.user):
                 return parent
 
         abort(403, "forbidden")

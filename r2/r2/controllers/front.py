@@ -359,12 +359,11 @@ class FrontController(RedditController):
         displayPane.append(LinkCommentSep())
 
         # insert reply box only for logged in user
-        if c.user_is_loggedin and can_comment_link(article) and not is_api():
-            #no comment box for permalinks
-            display = False
-            if not comment and not article.archived and not article.locked:
-                display = True
+        if not is_api() and c.user_is_loggedin and article.can_comment(c.user):
+            # no comment box for permalinks
+            display = not comment
 
+            # show geotargeting notice only if user is able to comment
             if article.promoted:
                 geotargeted, city_target = promote.is_geotargeted_promo(article)
                 if geotargeted:
