@@ -2202,10 +2202,17 @@ class ProfilePage(Reddit):
         classes = Reddit.page_classes(self)
 
         if c.user_is_admin:
-            if self.user._spam or self.user._banned or self.user.in_timeout:
-                classes.add("banned")
+            if self.user.in_timeout:
+                if self.user.timeout_expiration:
+                    classes.add("user-in-timeout-temp")
+                else:
+                    classes.add("user-in-timeout-perma")
+            if self.user._spam:
+                classes.add("user-spam")
+            if self.user._banned:
+                classes.add("user-banned")
             if self.user._deleted:
-                classes.add("deleted")
+                classes.add("user-deleted")
 
         return classes
 

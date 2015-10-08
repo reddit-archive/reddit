@@ -10956,17 +10956,35 @@ ul.report-reasons {
     }
 }
 
-body.banned div#header {
-  background-color: #cf6165;
-}
+#header {
+    @spam-bg: #ff8b60;
+    @temp-ban-bg: #ff0000;
+    @perma-ban-bg: #cc0000;
+    @deleted-bg: #c6c6c6;
+    @striped-bg-image: repeating-linear-gradient(45deg, transparent,
+                                                        transparent 30px,
+                                                        rgba(255,255,255,0.5) 30px,
+                                                        rgba(255,255,255,0.5) 60px);
 
-body.deleted div#header {
-  background-color: #999;
-}
+    body.deleted &,
+    body.user-deleted & {
+        background-color: @deleted-bg;
+        background-image: @striped-bg-image;
+    }
 
-body.banned.deleted div#header {
-  background-color: #999;
-  background-image: repeating-linear-gradient(45deg, transparent, transparent 30px, #cf6165 30px, #cf6165 60px);
+    body.banned &,
+    body.user-banned &,
+    body.user-in-timeout-perma & {
+        background-color: @perma-ban-bg;
+    }
+
+    body.user-in-timeout-temp & {
+        background-color: @temp-ban-bg;
+    }
+
+    body.user-spam & {
+        background-color: @spam-bg;
+    }
 }
 
 #compose-message select {
