@@ -49,7 +49,6 @@ import r2.lib.validator.preferences as vprefs
 PREFS_JSON_SPEC = VValidatedJSON.PartialObject({
     k[len("pref_"):]: v for k, v in
     vprefs.PREFS_VALIDATORS.iteritems()
-    if k in Account._preference_attrs
 })
 
 
