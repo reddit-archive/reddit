@@ -868,7 +868,8 @@ class UserController(ListingController):
 
         if (vuser.in_timeout and
                 vuser != c.user and
-                not c.user_is_admin):
+                not c.user_is_admin and
+                not vuser.timeout_expiration):
             errpage = InterstitialPage(
                 _("banned"),
                 content=BannedUserInterstitial(),
