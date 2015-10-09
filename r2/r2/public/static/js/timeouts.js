@@ -13,6 +13,10 @@
       if (!r.config.user_in_timeout) { return; }
       
       $('body').on('click', '.access-required', this._handleClick);
+      $('.access-required').removeAttr('onclick');
+      $('body.comments-page').on('focus', '.usertext.cloneable textarea', this._handleClick);
+      $('body.comments-page').on('submit', 'form.usertext.cloneable', this._handleClick);
+      $('body.comments-page form.usertext.cloneable').removeAttr('onsubmit');
     },
 
     getPopup: function() {

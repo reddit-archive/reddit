@@ -849,7 +849,7 @@ function cancel_usertext(elem) {
 }
 
 function reply(elem) {
-    if (r.config.user_in_timeout) {
+    if (r.timeouts.isLinkRestricted(elem)) {
         return;
     }
 
