@@ -44,7 +44,12 @@ ${captcha_field()}
 <%def name="from_field()">
   <div class="spacer">
     <%utils:round_field title="${_('from')}">
-      %if len(thing.mod_srs) > 1 or len(thing.mod_srs) == 1 and thing.from_user:
+      <%
+        from_count = len(thing.mod_srs)
+        if thing.from_user:
+          from_count += 1
+       %>
+      %if from_count > 1 and not thing.restrict_recipient:
         <select name="from_sr">
           % if thing.from_user:
             <option value="">${"/u/%s" % c.user.name}</option>
