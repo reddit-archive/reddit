@@ -122,6 +122,10 @@ r.report = {
   },
 
   toggleReasons: function(e) {
+    if (r.timeouts.isLinkRestricted(e.target)) {
+      return;
+    }
+
     $(e.target).parent().find('.report-reasons').toggle();
   },
 

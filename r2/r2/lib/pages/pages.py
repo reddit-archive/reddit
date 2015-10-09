@@ -507,7 +507,7 @@ class Reddit(Templated):
         if is_single_subreddit:
             if is_moderator_with_perms('access'):
                 buttons.append(NamedButton("moderators",
-                                           css_class="reddit-moderators access-required"))
+                                           css_class="reddit-moderators"))
 
                 if not c.site.hide_contributors:
                     buttons.append(NavButton(

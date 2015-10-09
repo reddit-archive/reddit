@@ -31,7 +31,7 @@
 <%def name="banbuttons()">
   %if thing.show_delete:
     <li>
-      ${ynbutton(_("delete"), _("deleted"), "del", "hide_thing")}
+      ${ynbutton(_("delete"), _("deleted"), "del", "hide_thing", access_required=False)}
     </li>
   %endif
   %if thing.can_ban:
@@ -75,7 +75,7 @@
   %endif
   %if not getattr(thing, 'promoted', None) and thing.show_flair:
     <li>
-      <a class="flairselectbtn" href="javascript://void(0)">${_('flair')}</a>
+      <a class="flairselectbtn access-required" href="javascript://void(0)">${_('flair')}</a>
       <div class="flairselector drop-choices"></div>
     </li>
   %endif
@@ -85,7 +85,8 @@
 </%def>
 
 <%def name="distinguish_setter(name, value=None)">
-  <a href="javascript:void(0)"
+  <a class="access-required"
+     href="javascript:void(0)"
      onclick="return set_distinguish(this, '${jssafe(value or name)}')">${_(name)}</a>
 </%def>
 
@@ -95,7 +96,8 @@
     <form method="post" action="/post/distinguish">
       <input type="hidden" value="${c.profilepage}" name="profilepage">
       <input type="hidden" value="${_('distinguishing...')}" name="executed"/>
-      <a href="javascript:void(0)"
+      <a class="access-required"
+         href="javascript:void(0)"
          onclick="return toggle_distinguish_span(this)">${_("distinguish")}</a>
       <span class="option error">
          ${_("distinguish this?")}
@@ -203,10 +205,10 @@
 <%def name="reports_button()">
 <li 
     %if thing.mod_reports or thing.user_reports:
-      class="rounded reported-stamp stamp has-reasons"
+      class="rounded reported-stamp stamp has-reasons access-required"
       title="${_('click to show report reasons')}"
     %else:
-      class="rounded reported-stamp stamp"
+      class="rounded reported-stamp stamp access-required"
     %endif
     >
   ${strings.reports % thing.thing.reported}
@@ -396,10 +398,10 @@
       <li>
         %if thing.thing.inbox_replies_enabled:
           ${ynbutton(_("disable inbox replies"), _("inbox replies disabled"), "sendreplies",
-            hidden_data=dict(id=thing.thing._fullname, state=False))}
+            hidden_data=dict(id=thing.thing._fullname, state=False), access_required=False)}
         %else:
           ${ynbutton(_("enable inbox replies"), _("inbox replies enabled"), "sendreplies",
-            hidden_data=dict(id=thing.thing._fullname, state=True))}
+            hidden_data=dict(id=thing.thing._fullname, state=True), access_required=False)}
         %endif
       </li>
     %endif
@@ -491,7 +493,10 @@
   %endif
   %if thing.can_reply:
     <li>
-       ${self.simple_button(_("reply {verb}"), "reply", "access-required")}
+       <%
+        css_class = "" if thing.is_admin_message else "access-required"
+       %>
+       ${self.simple_button(_("reply {verb}"), "reply", css_class)}
     </li>
   %endif
 </%def>
@@ -501,9 +506,7 @@
 
   <%def name="_link()" buffered="True">
     <a href="javascript:void(0)"
-       %if a_class:
-         class="${a_class}" 
-       %endif
+       class="${a_class or ''} access-required"
        onclick="${onclick}">${title}</a>
   </%def>
   <%
@@ -557,11 +560,14 @@
                      format = '%(link)s',
                      format_arg = 'link',
                      hidden_data = {},
+                     access_required = True,
                      _class = '')">
   <%
      if question is None:
          question = _("are you sure?")
-     link = ('<a href="#" class="togglebutton access-required" onclick="return toggle(this)">'
+     access_class = 'access-required' if access_required else ''
+
+     link = ('<a href="#" class="togglebutton ' + access_class + '" onclick="return toggle(this)">'
              + conditional_websafe(title) + '</a>')
      link = conditional_websafe(format) % {format_arg : link}
      link = unsafe(link.replace(" <", "&#32;<").replace("> ", ">&#32;"))

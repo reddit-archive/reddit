@@ -36,7 +36,8 @@
                  hidden_data=dict(
                    id=c.user._fullname,
                    type=thing.type,
-                   container=thing.container_name))}
+                   container=thing.container_name),
+                 access_required=False)}
   %endif
 
   %if thing.has_invite:

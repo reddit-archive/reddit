@@ -262,6 +262,7 @@ class MessageButtons(PrintableButtons):
                      valid_recipient)
         can_block = True
         can_mute = False
+        is_admin_message = False
 
         if not was_comment:
             first_message = thing
@@ -270,6 +271,8 @@ class MessageButtons(PrintableButtons):
 
             if thing.sr_id:
                 sr = thing.subreddit_slow
+                is_admin_message = '/r/%s' % sr.name == g.admin_message_acct
+
                 if (sr.is_muted(first_message.author_slow) or
                         (first_message.to_id and
                             sr.is_muted(first_message.recipient_slow))):
@@ -302,6 +305,7 @@ class MessageButtons(PrintableButtons):
                                   show_delete = False,
                                   can_block = can_block,
                                   can_mute = can_mute,
+                                  is_admin_message = is_admin_message,
                                  )
 
 # formerly ListingController.builder_wrapper

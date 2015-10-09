@@ -594,7 +594,7 @@ ${unsafe(txt)}
 </%def>
 
 <%def name="pretty_button(label, func=None, func_vars='', extra_class='')">
-  <a class="pretty-button ${extra_class}" href="#"
+  <a class="pretty-button access-required ${extra_class}" href="#"
      %if func is None:
        onclick="alert('please don\'t do that again');return false;"
      %elif func_vars:

@@ -248,7 +248,7 @@ function toggle_label (elem, callback, cancelback) {
 }
 
 function toggle(elem, callback, cancelback) {
-    if (r.config.user_in_timeout) {
+    if (r.timeouts.isLinkRestricted(elem)) {
         return false;
     }
 
