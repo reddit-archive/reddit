@@ -2047,7 +2047,7 @@ class ApiController(RedditController):
                 to = Account._byID(parent.author_id)
 
             # Only let users in timeout message the admins
-            if (to and not (is_subreddit and
+            if (to and not (isinstance(to, Subreddit) and
                     '/r/%s' % to.name == g.admin_message_acct)):
                 VNotInTimeout().run(action_name='message_reply', target=to)
 
