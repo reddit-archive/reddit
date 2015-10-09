@@ -928,10 +928,11 @@ class VUser(Validator):
 
 class VNotInTimeout(Validator):
     def run(self, target_fullname=None, fatal=True, action_name=None,
-            target=None, subreddit=None):
+            details_text="", target=None, subreddit=None):
         if c.user_is_loggedin and c.user.in_timeout:
             g.events.timeout_forbidden_event(
                 action_name,
+                details_text=details_text,
                 target=target,
                 target_fullname=target_fullname,
                 subreddit=subreddit,
@@ -1786,12 +1787,6 @@ class VMessageRecipient(VExistingUname):
         elif name.startswith('#'):
             name = name[1:]
             is_subreddit = True
-
-        # A user in timeout should only be able to message us, the admins.
-        if (c.user.in_timeout and
-                not (is_subreddit and
-                     '/r/%s' % name == g.admin_message_acct)):
-            abort(403, 'forbidden')
 
         if is_subreddit:
             try:

@@ -279,24 +279,21 @@ class EventQueue(object):
         self.save_event(event)
 
     @squelch_exceptions
-    def timeout_forbidden_event(self, action_name, target=None,
-            target_fullname=None, subreddit=None, request=None, context=None):
+    def timeout_forbidden_event(self, action_name, details_text,
+            target=None, target_fullname=None, subreddit=None,
+            request=None, context=None):
         """Create a timeout-related 'forbidden_actions' for event-collector.
 
         action_name: the action taken by a user in timeout
+        details_text: this provides more details about the action and will
+            be added to the event with "in_timeout_" prepended
         target: The intended item the action was to be taken on
+        target_fullname: The fullname used to convert to a target
         subreddit: The Subreddit the action was taken in. If target is of the
             type Subreddit, then this won't be passed in
         request, context: Should be pylons.request & pylons.c respectively;
 
         """
-        event = EventV2(
-            topic="forbidden_actions",
-            event_type="ss.forbidden_timeout_attempt",
-            request=request,
-            context=context,
-        )
-
         if not action_name:
             request_vars = request.environ["pylons.routes_dict"]
             action_name = request_vars.get('action_name')
@@ -312,15 +309,24 @@ class EventQueue(object):
                     action_name = "clearvote"
             # set or unset for contest mode and subreddit sticky
             elif action_name in ("set_contest_mode", "set_subreddit_sticky"):
-                if not bool(request.POST.get('state')):
+                action_name = action_name.replace("_", "")
+                if request.POST.get('state') == "False":
                     action_name = "un" + action_name
             # set or unset for suggested sort
             elif action_name == "set_suggested_sort":
+                action_name = action_name.replace("_", "")
                 if request.POST.get("sort") in ("", "clear"):
                     action_name = "un" + action_name
             # action for viewing /about/reports, /about/spam, /about/modqueue
             elif action_name == "spamlisting":
-                action_name = "spamlisting_%s" % request_vars.get("location")
+                action_name = "pageview"
+                details_text = request_vars.get("location")
+            elif action_name == "clearflairtemplates":
+                action_name = "editflair"
+                details_text = "flair_clear_template"
+            elif action_name in ("flairconfig", "flaircsv", "flairlisting"):
+                details_text = action_name.replace("flair", "flair_")
+                action_name = "editflair"
 
         if not target:
             if not target_fullname:
@@ -329,7 +335,11 @@ class EventQueue(object):
                 elif action_name in ("wiki_allow_editor"):
                     target = Account._by_name(request.POST.get("username"))
                 elif action_name in ("delete_sr_header", "delete_sr_icon",
-                        "delete_sr_banner", "bannedlisting", "mutedlisting",
+                        "delete_sr_banner"):
+                    details_text = "%s" % action_name.replace("ete_sr", "")
+                    action_name = "editsettings"
+                    target = context.site
+                elif action_name in ("bannedlisting", "mutedlisting",
                         "wikibannedlisting", "wikicontributorslisting"):
                     target = context.site
 
@@ -341,7 +351,15 @@ class EventQueue(object):
                     data=True,
             )
 
-        event.add("details_text", "forbidden_%s" % action_name)
+        event = EventV2(
+            topic="forbidden_actions",
+            event_type="ss.forbidden_%s" % action_name,
+            request=request,
+            context=context,
+        )
+        if details_text:
+            details_text = "_%s" % details_text
+        event.add("details_text", "in_timeout%s" % details_text)
         event.add_target_fields(target)
 
         from r2.models import Comment, Link, Subreddit
@@ -350,12 +368,15 @@ class EventQueue(object):
                 subreddit = context.site
             elif isinstance(target, (Comment, Link)):
                 subreddit = target.subreddit_slow
+            elif isinstance(target, Subreddit):
+                subreddit = target
 
         if subreddit:
             event.add("sr_id", subreddit._id)
             event.add("sr_name", subreddit.name)
 
         event.add_target_fields(target)
+        self.save_event(event)
 
     @squelch_exceptions
     @sampled("events_collector_mod_sample_rate")

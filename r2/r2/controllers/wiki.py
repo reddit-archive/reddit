@@ -202,7 +202,8 @@ class WikiController(RedditController):
         if error:
             error = error.msg_params
         if wp[0]:
-            VNotInTimeout().run(target=page)
+            VNotInTimeout().run(action_name="wikirevise",
+                details_text="create", target=page)
             return self.redirect(join_urls(c.wiki_base_url, wp[0].name))
         elif api:
             if error:
@@ -219,16 +220,19 @@ class WikiController(RedditController):
                 error_msg = _('a max of %d separators "/" are allowed in a wiki page name.') % error['max_separators']
             return BoringPage(_("Wiki error"), infotext=error_msg).render()
         else:
-            VNotInTimeout().run()
+            VNotInTimeout().run(action_name="wikirevise",
+                details_text="create")
             return WikiCreate(page=page, may_revise=True).render()
 
     @validate(wp=VWikiPageRevise('page', restricted=True, required=True))
     def GET_wiki_revise(self, wp, page, message=None, **kw):
         wp = wp[0]
-        timeout=VNotInTimeout().run(target=wp)
+        VNotInTimeout().run(action_name="wikirevise", details_text="revise",
+            target=wp)
         error = c.errors.get(('MAY_NOT_REVISE', 'page'))
         if error:
             self.handle_error(403, **(error.msg_params or {}))
+        
         previous = kw.get('previous', wp._get('revision'))
         content = kw.get('content', wp.content)
         if not message and wp.name in page_descriptions:
@@ -298,11 +302,17 @@ class WikiController(RedditController):
         page=VWikiPage('page', restricted=True, modonly=True),
         permlevel=VInt('permlevel'),
         listed=VBoolean('listed'),
-        timeout=VNotInTimeout(),
     )
-    def POST_wiki_settings(self, page, permlevel, listed, timeout):
+    def POST_wiki_settings(self, page, permlevel, listed):
         """Update the permissions and visibility of wiki `page`"""
         oldpermlevel = page.permlevel
+        if oldpermlevel != permlevel:
+            VNotInTimeout().run(action_name="wikipermlevel",
+                details_text="edit", target=page)
+        if page.listed != listed:
+            VNotInTimeout().run(action_name="wikipagelisted",
+                details_text="edit", target=page)
+
         try:
             page.change_permlevel(permlevel)
         except ValueError:
@@ -380,10 +390,11 @@ class WikiApiController(WikiController):
             error = c.errors.get(('WIKI_CREATE_ERROR', 'page'))
             if error:
                 self.handle_error(403, **(error.msg_params or {}))
-            VNotInTimeout().run(action_name='create_wiki_page')
+            VNotInTimeout().run(action_name="wikirevise", details_text="create")
             page = WikiPage.create(c.site, page_name)
         else:
-            VNotInTimeout().run(action_name='edit_wiki_page', target=page)
+            VNotInTimeout().run(action_name="wikirevise", details_text="edit",
+                target=page)
             error = c.errors.get(('MAY_NOT_REVISE', 'page'))
             if error:
                 self.handle_error(403, **(error.msg_params or {}))
@@ -450,10 +461,12 @@ class WikiApiController(WikiController):
         if not user:
             self.handle_error(404, 'UNKNOWN_USER')
         elif act == 'del':
-            VNotInTimeout().run(action_name='wiki_del_editor', target=user)
+            VNotInTimeout().run(action_name="wikipermlevel",
+                details_text="del_editor", target=user)
             page.remove_editor(user._id36)
         elif act == 'add':
-            VNotInTimeout().run(action_name='wiki_allow_editor', target=user)
+            VNotInTimeout().run(action_name="wikipermlevel",
+                details_text="allow_editor", target=user)
             page.add_editor(user._id36)
         else:
             self.handle_error(400, 'INVALID_ACTION')
@@ -485,6 +498,9 @@ class WikiApiController(WikiController):
         page, revision = pv
         if not revision:
             self.handle_error(400, 'INVALID_REVISION')
+
+        VNotInTimeout().run(action_name="wikirevise",
+                details_text="revision_hide", target=page)
         return json.dumps({'status': revision.toggle_hide()})
 
     @require_oauth2_scope("modwiki")
@@ -497,6 +513,8 @@ class WikiApiController(WikiController):
         page, revision = pv
         if not revision:
             self.handle_error(400, 'INVALID_REVISION')
+        VNotInTimeout().run(action_name="wikirevise",
+                details_text="revision_revert", target=page)
         content = revision.content
         reason = 'reverted back %s' % timesince(revision.date)
         if page.name == 'config/stylesheet':
