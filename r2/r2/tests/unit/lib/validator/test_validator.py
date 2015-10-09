@@ -24,8 +24,10 @@
 import unittest
 from r2.tests import RedditTestCase
 
+from datetime import datetime as dt
 from mock import MagicMock, patch
 from pylons import tmpl_context as c
+from pylons import app_globals as g
 from webob.exc import HTTPForbidden
 
 from r2.lib.errors import errors, ErrorSet
@@ -76,12 +78,16 @@ class TestVSubmitParent(ValidatorTests):
 
         return message
 
-    def _mock_link(id=1, author_id=1, **kwargs):
+    def _mock_link(id=1, author_id=1, sr_id=1, **kwargs):
         kwargs['id'] = id
         kwargs['author_id'] = author_id
+        kwargs['sr_id'] = sr_id
 
         link = Link(**kwargs)
         VByName.run = MagicMock(return_value=link)
+
+        sr = Subreddit(id=sr_id)
+        link.subreddit = sr
 
         return link
 
@@ -99,6 +105,7 @@ class TestVSubmitParent(ValidatorTests):
         sr = Subreddit(id=sr_id)
         comment.subreddit_slow = MagicMock(return_value=sr)
         comment.subreddit_slow.is_moderator = MagicMock(return_value=False)
+        link.subreddit = sr
 
         return comment
 
@@ -181,6 +188,54 @@ class TestVSubmitParent(ValidatorTests):
 
         self.assertEqual(result, link)
         self.assertFalse(self.validator.has_errors)
+
+    @patch('r2.lib.validator.validator.can_comment_link')
+    def test_archived_link(self, can_comment_link):
+        can_comment_link.return_value = True
+
+        link = self._mock_link(date=dt.now(g.tz).replace(year=2000))
+        result = self.validator.run('fullname', None)
+
+        self.assertEqual(result, link)
+        self.assertTrue(self.validator.has_errors)
+        self.assertIn((errors.TOO_OLD, None), c.errors)
+
+    @patch('r2.lib.validator.validator.can_comment_link')
+    def test_archived_deleted_link(self, can_comment_link):
+        can_comment_link.return_value = True
+
+        link = self._mock_link(
+            date=dt.now(g.tz).replace(year=2000),
+            _deleted=True)
+        result = self.validator.run('fullname', None)
+
+        self.assertEqual(result, link)
+        self.assertTrue(self.validator.has_errors)
+        self.assertIn((errors.DELETED_LINK, None), c.errors)
+        self.assertIn((errors.TOO_OLD, None), c.errors)
+
+    @patch('r2.lib.validator.validator.can_comment_link')
+    def test_locked_link(self, can_comment_link):
+        can_comment_link.return_value = True
+
+        link = self._mock_link(locked=True)
+        result = self.validator.run('fullname', None)
+
+        self.assertEqual(result, link)
+        self.assertTrue(self.validator.has_errors)
+        self.assertIn((errors.THREAD_LOCKED, None), c.errors)
+
+    @patch('r2.lib.validator.validator.can_comment_link')
+    def test_locked_deleted_link(self, can_comment_link):
+        can_comment_link.return_value = True
+
+        link = self._mock_link(locked=True, _deleted=True)
+        result = self.validator.run('fullname', None)
+
+        self.assertEqual(result, link)
+        self.assertTrue(self.validator.has_errors)
+        self.assertIn((errors.DELETED_LINK, None), c.errors)
+        self.assertIn((errors.THREAD_LOCKED, None), c.errors)
 
     @patch('r2.lib.validator.validator.can_comment_link')
     def test_invalid_link(self, can_comment_link):

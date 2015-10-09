@@ -1237,6 +1237,11 @@ class VSubmitParent(VByName):
             if parent._deleted:
                 self.set_error(errors.DELETED_LINK)
 
+            if parent.archived:
+                self.set_error(errors.TOO_OLD)
+            elif parent.locked:
+                self.set_error(errors.THREAD_LOCKED)
+
             if c.user_is_loggedin and can_comment_link(parent):
                 return parent
 
@@ -1254,6 +1259,12 @@ class VSubmitParent(VByName):
                     self.set_error(errors.DELETED_COMMENT)
 
             link = Link._byID(parent.link_id, data=True)
+
+            if link.archived:
+                self.set_error(errors.TOO_OLD)
+            elif link.locked:
+                self.set_error(errors.THREAD_LOCKED)
+
             if c.user_is_loggedin and can_comment_link(link):
                 return parent
 

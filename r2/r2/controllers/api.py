@@ -1986,11 +1986,6 @@ class ApiController(RedditController):
                     not sr.should_ratelimit(c.user, 'comment')):
                 should_ratelimit = False
 
-            if link.archived:
-                c.errors.add(errors.TOO_OLD, field="parent")
-            elif link.locked:
-                c.errors.add(errors.THREAD_LOCKED, field="parent")
-
             hooks.get_hook("comment.validate").call(sr=sr, link=link,
                            parent_comment=parent_comment)
 
