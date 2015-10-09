@@ -24,9 +24,18 @@
 import unittest
 from r2.tests import RedditTestCase
 
+from mock import MagicMock, patch
 from pylons import tmpl_context as c
+from webob.exc import HTTPForbidden
+
 from r2.lib.errors import errors, ErrorSet
-from r2.lib.validator import VSubredditName, ValidEmail
+from r2.lib.validator import (
+    VByName,
+    VSubmitParent,
+    VSubredditName,
+    ValidEmail,
+)
+from r2.models import Account, Comment, Link, Message, Subreddit
 
 
 class ValidatorTests(unittest.TestCase):
@@ -44,6 +53,207 @@ class ValidatorTests(unittest.TestCase):
             self.assertEqual(result, input)
 
         return result
+
+
+class TestVSubmitParent(ValidatorTests):
+    def setUp(self):
+        # Reset the validator state and errors before every test.
+        self.validator = VSubmitParent(None)
+        c.errors = ErrorSet()
+
+        c.user_is_loggedin = True
+        c.user_is_admin = False
+        c.user = Account(id=100)
+
+        Account.enemy_ids = MagicMock(return_value=[])
+
+    def _mock_message(id=1, author_id=1, **kwargs):
+        kwargs['id'] = id
+        kwargs['author_id'] = author_id
+
+        message = Message(**kwargs)
+        VByName.run = MagicMock(return_value=message)
+
+        return message
+
+    def _mock_link(id=1, author_id=1, **kwargs):
+        kwargs['id'] = id
+        kwargs['author_id'] = author_id
+
+        link = Link(**kwargs)
+        VByName.run = MagicMock(return_value=link)
+
+        return link
+
+    def _mock_comment(id=1, author_id=1, link_id=1, sr_id=1, **kwargs):
+        kwargs['id'] = id
+        kwargs['author_id'] = author_id
+        kwargs['link_id'] = link_id
+
+        comment = Comment(**kwargs)
+        VByName.run = MagicMock(return_value=comment)
+
+        link = Link(id=link_id)
+        Link._byID = MagicMock(return_value=link)
+
+        sr = Subreddit(id=sr_id)
+        comment.subreddit_slow = MagicMock(return_value=sr)
+        comment.subreddit_slow.is_moderator = MagicMock(return_value=False)
+
+        return comment
+
+    def test_no_fullname(self):
+        with self.assertRaises(HTTPForbidden):
+            self.validator.run('', None)
+
+        self.assertFalse(self.validator.has_errors)
+
+    def test_not_found(self):
+        with self.assertRaises(HTTPForbidden):
+            VByName.run = MagicMock(return_value=None)
+            self.validator.run('fullname', None)
+
+        self.assertFalse(self.validator.has_errors)
+
+    def test_invalid_thing(self):
+        with self.assertRaises(HTTPForbidden):
+            sr = Subreddit(id=1)
+            VByName.run = MagicMock(return_value=sr)
+            self.validator.run('fullname', None)
+
+        self.assertFalse(self.validator.has_errors)
+
+    def test_blocked_user(self):
+        message = self._mock_message()
+        Account.enemy_ids = MagicMock(return_value=[message.author_id])
+
+        result = self.validator.run('fullname', None)
+
+        self.assertEqual(result, message)
+        self.assertTrue(self.validator.has_errors)
+        self.assertIn((errors.USER_BLOCKED, None), c.errors)
+
+    def test_valid_message(self):
+        message = self._mock_message()
+        result = self.validator.run('fullname', None)
+
+        self.assertEqual(result, message)
+        self.assertFalse(self.validator.has_errors)
+
+    @patch('r2.lib.validator.validator.can_comment_link')
+    def test_valid_link(self, can_comment_link):
+        can_comment_link.return_value = True
+
+        link = self._mock_link()
+        result = self.validator.run('fullname', None)
+
+        self.assertEqual(result, link)
+        self.assertFalse(self.validator.has_errors)
+
+    @patch('r2.lib.validator.validator.can_comment_link')
+    def test_deleted_link(self, can_comment_link):
+        can_comment_link.return_value = True
+
+        link = self._mock_link(_deleted=True)
+        result = self.validator.run('fullname', None)
+
+        self.assertEqual(result, link)
+        self.assertTrue(self.validator.has_errors)
+        self.assertIn((errors.DELETED_LINK, None), c.errors)
+
+    @patch('r2.lib.validator.validator.can_comment_link')
+    def test_deleted_link_logged_out(self, can_comment_link):
+        with self.assertRaises(HTTPForbidden):
+            c.user_is_loggedin = False
+
+            link = self._mock_link(_deleted=True)
+            self.validator.run('fullname', None)
+
+        self.assertTrue(self.validator.has_errors)
+        self.assertIn((errors.DELETED_LINK, None), c.errors)
+
+    @patch('r2.lib.validator.validator.can_comment_link')
+    def test_removed_link(self, can_comment_link):
+        can_comment_link.return_value = True
+
+        link = self._mock_link(_spam=True)
+        result = self.validator.run('fullname', None)
+
+        self.assertEqual(result, link)
+        self.assertFalse(self.validator.has_errors)
+
+    @patch('r2.lib.validator.validator.can_comment_link')
+    def test_invalid_link(self, can_comment_link):
+        with self.assertRaises(HTTPForbidden):
+            can_comment_link.return_value = False
+
+            self._mock_link()
+            self.validator.run('fullname', None)
+
+        self.assertFalse(self.validator.has_errors)
+
+    @patch('r2.lib.validator.validator.can_comment_link')
+    def test_valid_comment(self, can_comment_link):
+        can_comment_link.return_value = True
+
+        comment = self._mock_comment()
+        result = self.validator.run('fullname', None)
+
+        self.assertEqual(result, comment)
+        self.assertFalse(self.validator.has_errors)
+
+    @patch('r2.lib.validator.validator.can_comment_link')
+    def test_deleted_comment(self, can_comment_link):
+        can_comment_link.return_value = True
+
+        comment = self._mock_comment(_deleted=True)
+        result = self.validator.run('fullname', None)
+
+        self.assertEqual(result, comment)
+        self.assertTrue(self.validator.has_errors)
+        self.assertIn((errors.DELETED_COMMENT, None), c.errors)
+
+    @patch('r2.lib.validator.validator.can_comment_link')
+    def test_deleted_comment_logged_out(self, can_comment_link):
+        with self.assertRaises(HTTPForbidden):
+            c.user_is_loggedin = False
+
+            comment = self._mock_comment(_deleted=True)
+            self.validator.run('fullname', None)
+
+        self.assertTrue(self.validator.has_errors)
+        self.assertIn((errors.DELETED_COMMENT, None), c.errors)
+
+    @patch('r2.lib.validator.validator.can_comment_link')
+    def test_removed_comment(self, can_comment_link):
+        can_comment_link.return_value = True
+
+        comment = self._mock_comment(_spam=True)
+        result = self.validator.run('fullname', None)
+
+        self.assertEqual(result, comment)
+        self.assertTrue(self.validator.has_errors)
+        self.assertIn((errors.DELETED_COMMENT, None), c.errors)
+
+    @patch('r2.lib.validator.validator.can_comment_link')
+    def test_removed_comment_self_reply(self, can_comment_link):
+        can_comment_link.return_value = True
+
+        comment = self._mock_comment(author_id=c.user._id, _spam=True)
+        result = self.validator.run('fullname', None)
+
+        self.assertEqual(result, comment)
+        self.assertFalse(self.validator.has_errors)
+
+    @patch('r2.lib.validator.validator.can_comment_link')
+    def test_invalid_comment(self, can_comment_link):
+        with self.assertRaises(HTTPForbidden):
+            can_comment_link.return_value = False
+
+            comment = self._mock_comment()
+            self.validator.run('fullname', None)
+
+        self.assertFalse(self.validator.has_errors)
 
 
 class TestVSubredditName(ValidatorTests):
@@ -116,4 +326,3 @@ class TestValidEmail(ValidatorTests):
 
     def test_two_hostnames(self):
         self._test_failure('test@example.com@example.com')
-
