@@ -865,12 +865,6 @@ class Subreddit(Thing, Printable, BaseSite):
         else:
             return self.is_allowed_to_view(user)
 
-    def is_banned(self, user):
-        if user and user.in_timeout:
-            return True
-        else:
-            return super(Subreddit, self).is_banned(user)
-
     def is_allowed_to_view(self, user):
         """Returns whether user can view based on permissions and settings"""
         if self.type in ('public', 'restricted',
