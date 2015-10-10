@@ -61,8 +61,8 @@ class ModAction(tdb_cassandra.UuidThing):
                'wikibanned', 'wikicontributor', 'wikiunbanned', 'wikipagelisted',
                'removewikicontributor', 'wikirevise', 'wikipermlevel',
                'ignorereports', 'unignorereports', 'setpermissions',
-               'setsuggestedsort', 'sticky', 'unsticky', 'lock', 'unlock',
-               'muteuser', 'unmuteuser')
+               'setsuggestedsort', 'sticky', 'unsticky', 'setcontestmode',
+               'unsetcontestmode', 'lock', 'unlock', 'muteuser', 'unmuteuser')
 
     _menu = {'banuser': _('ban user'),
              'unbanuser': _('unban user'),
@@ -94,6 +94,8 @@ class ModAction(tdb_cassandra.UuidThing):
              'setsuggestedsort': _('set suggested sort'),
              'sticky': _('sticky post'),
              'unsticky': _('unsticky post'),
+             'setcontestmode': _('set contest mode'),
+             'unsetcontestmode': _('unset contest mode'),
              'lock': _('lock post'),
              'unlock': _('unlock post'),
              'muteuser': _('mute user'),
@@ -130,6 +132,8 @@ class ModAction(tdb_cassandra.UuidThing):
              'setsuggestedsort': _('set suggested sort'),
              'sticky': _('stickied'),
              'unsticky': _('unstickied'),
+             'setcontestmode': _('set contest mode on'),
+             'unsetcontestmode': _('unset contest mode on'),
              'lock': _('locked'),
              'unlock': _('unlocked'),
              'muteuser': _('muted'),

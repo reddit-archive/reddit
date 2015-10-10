@@ -1574,6 +1574,11 @@ class ApiController(RedditController):
         """
         thing.contest_mode = state
         thing._commit()
+        if state:
+            action = 'setcontestmode'
+        else:
+            action = 'unsetcontestmode'
+        ModAction.create(c.site, c.user, action, target=thing)
         jquery.refresh()
 
     @require_oauth2_scope("modposts")
