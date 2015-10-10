@@ -687,7 +687,7 @@ class LinkJsonTemplate(ThingJsonTemplate):
             if not thing.expunged:
                 return thing.selftext
             else:
-                return ''
+                return '[removed]'
         elif attr == 'selftext_html':
             if not thing.expunged:
                 return safemarkdown(thing.selftext)
