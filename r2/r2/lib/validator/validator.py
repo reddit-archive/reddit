@@ -63,27 +63,11 @@ import re, inspect
 from itertools import chain
 from functools import wraps
 
-def visible_promo(article):
-    is_promo = getattr(article, "promoted", None) is not None
-    is_author = (c.user_is_loggedin and
-                 c.user._id == article.author_id)
-
-    # promos are visible only if the user is either the author
-    # or the link is live/previously live.
-    if is_promo:
-        return (c.user_is_sponsor or
-                is_author or
-                article.promote_status >= PROMOTE_STATUS.promoted)
-    # not a promo, therefore it is visible
-    return True
 
 def can_view_link_comments(article):
     return (article.subreddit_slow.can_view(c.user) and
             article.can_view_promo(c.user))
 
-def can_comment_link(article):
-    return (article.subreddit_slow.can_comment(c.user) and
-            article.can_view_promo(c.user))
 
 class Validator(object):
     notes = None
