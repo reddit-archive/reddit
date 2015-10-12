@@ -905,6 +905,19 @@ class Link(Thing, Printable):
             sr = self.subreddit_slow
         return self._age >= sr.archive_age
 
+    def can_view_promo(self, user):
+        if self.promoted:
+            # promos are visible only if the user is either the author
+            # or the link is live/previously live.
+            is_author = c.user_is_loggedin and user._id == self.author_id
+            return (c.user_is_sponsor or
+                    is_author or
+                    self.promote_status >= PROMOTE_STATUS.promoted)
+
+        # not a promo, therefore it is visible
+        # this preserves the original behavior of `visible_promo()`
+        return True
+
     def sort_if_suggested(self):
         """Returns a sort, if the link or its subreddit has suggested one."""
         if self.suggested_sort:

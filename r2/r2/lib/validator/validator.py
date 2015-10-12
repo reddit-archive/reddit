@@ -79,11 +79,11 @@ def visible_promo(article):
 
 def can_view_link_comments(article):
     return (article.subreddit_slow.can_view(c.user) and
-            visible_promo(article))
+            article.can_view_promo(c.user))
 
 def can_comment_link(article):
     return (article.subreddit_slow.can_comment(c.user) and
-            visible_promo(article))
+            article.can_view_promo(c.user))
 
 class Validator(object):
     notes = None
