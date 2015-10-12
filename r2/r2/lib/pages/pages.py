@@ -3686,8 +3686,15 @@ class WrappedUser(CachedTemplate):
         karma = ''
         if c.user_is_admin:
             karma = ' (%d)' % user.link_karma
-            if user._spam or user.in_timeout:
-                author_cls += " banned-user"
+            if user.in_timeout:
+                if user.timeout_expiration:
+                    author_cls += " user-in-timeout-temp"
+                else:
+                    author_cls += " user-in-timeout-perma"
+            if user._spam:
+                author_cls += " user-spam"
+            if user._banned:
+                author_cls += " user-banned"
 
         CachedTemplate.__init__(self,
                                 name = user.name,
