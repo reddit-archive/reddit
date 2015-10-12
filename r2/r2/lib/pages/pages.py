@@ -2146,12 +2146,11 @@ class ProfilePage(Reddit):
             main_buttons += [
                 NamedButton('upvoted'),
                 NamedButton('downvoted'),
-                NamedButton('hidden'),
             ]
 
         if c.user_is_loggedin and (c.user._id == self.user._id or
                                    c.user_is_admin):
-            main_buttons += [NamedButton('saved')]
+            main_buttons += [NamedButton('hidden'), NamedButton('saved')]
 
         if c.user_is_sponsor:
             main_buttons += [NamedButton('promoted')]
