@@ -5278,6 +5278,7 @@ class PolicyView(Templated):
 
 class PolicyPage(BoringPage):
     css_class = 'policy-page'
+    show_infobar = False
 
     def __init__(self, pagename=None, content=None, **kw):
         BoringPage.__init__(self, pagename=pagename, show_sidebar=False,
