@@ -500,23 +500,6 @@ var exports = r.sponsored = {
         this.inventory = {}
         this.campaignListColumns = $('.existing-campaigns thead th').length
         $("input[name='media_url_type']").on("change", this.mediaInputChange)
-
-        $('input[type=file]').on('change', this._checkFilesize);
-    },
-
-    _checkFilesize: function(e) {
-      var el = e.target;
-      var $el = $(el);
-      var files = el.files;
-
-      if (files && files[0].size > 1024 * 500) {
-        $el
-          .wrap('<form>')
-          .closest('form')
-          .get(0).reset();
-        $el.unwrap();
-        alert(r._('too big. keep it under 500 KiB'));
-      }
     },
 
     setup: function(inventory_by_sr, priceDict, isEmpty, userIsSponsor) {
