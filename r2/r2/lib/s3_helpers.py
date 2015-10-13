@@ -28,11 +28,15 @@ import json
 import os
 import sys
 import time
+import datetime
+import pytz
 
 from pylons import app_globals as g
 
 
 HADOOP_FOLDER_SUFFIX = '_$folder$'
+
+SIGNATURE_V4_ALGORITHM = "AWS4-HMAC-SHA256"
 
 
 def _to_path(bucket, key):
@@ -147,13 +151,23 @@ def delete_keys(bucket_name, prefix, connection=None):
     return connection.get_bucket(bucket_name).delete_keys(keys)
 
 
+def _get_v4_credential(aws_access_key_id, date, service_name, region_name):
+    return ("%(aws_access_key_id)s/%(datestamp)s/%(region_name)s/%(service_name)s/aws4_request" % {
+        "aws_access_key_id": aws_access_key_id,
+        "datestamp": date.strftime("%Y%m%d"),
+        "region_name": region_name,
+        "service_name": service_name,
+    })
+
 def _get_upload_policy(
-        bucket, key, acl, ttl=60,
+        bucket, key, credential, date, acl,
+        ttl=60,
         success_action_redirect=None,
         success_action_status="201",
         content_type=None,
         max_content_length=((1024**2) * 3),
         storage_class="STANDARD",
+        region_name=None,
         meta=None,
         connection=None,
     ):
@@ -173,6 +187,11 @@ def _get_upload_policy(
 
     conditions.append({"acl": acl})
     conditions.append({"x-amz-storage-class": storage_class})
+
+    conditions.append({"x-amz-credential": credential})
+    conditions.append({"x-amz-algorithm": SIGNATURE_V4_ALGORITHM})
+    conditions.append({"x-amz-date": date.strftime("%Y%m%dT%H%M%SZ")})
+    conditions.append({"x-amz-security-token": connection.provider.security_token})
 
     if success_action_redirect:
         conditions.append([
@@ -200,17 +219,31 @@ def _get_upload_policy(
     }))
 
 
+def _sign(secret, msg):
+    return hmac.new(secret, msg.encode("utf-8"), hashlib.sha256).digest()
+
+
+def _derive_v4_signature_key(secret, date, region_name, service_name):
+    key_date = _sign(("AWS4" + secret).encode("utf-8"), date.strftime("%Y%m%d"))
+    key_region = _sign(key_date, region_name)
+    key_service = _sign(key_region, service_name)
+    return _sign(key_service, "aws4_request")
+
+
 def _get_upload_signature(
         policy,
+        date,
+        region_name,
         connection=None,
     ):
 
     connection = connection or get_connection()
 
     key = connection.provider.secret_key.encode("utf-8")
-    hashed = hmac.new(key, policy, hashlib.sha1)
-    return base64.encodestring(
-        hashed.digest()).decode("utf-8").strip()
+    v4_key = _derive_v4_signature_key(
+        secret=key, date=date, region_name=region_name, service_name="s3")
+
+    return hmac.new(v4_key, policy, hashlib.sha256).hexdigest()
 
 
 def get_post_args(
@@ -220,6 +253,7 @@ def get_post_args(
         success_action_status="201",
         content_type=None,
         storage_class="STANDARD",
+        region_name="us-east-1",
         meta=None,
         connection=None,
         **kwargs
@@ -227,26 +261,36 @@ def get_post_args(
 
     meta = meta or []
     connection = connection or get_connection()
+    algorithm = "AWS4-HMAC-SHA256"
+    date = datetime.datetime.now(pytz.utc)
+    credential = _get_v4_credential(
+        aws_access_key_id=connection.provider.access_key,
+        date=date,
+        service_name="s3",
+        region_name=region_name,
+    )
     policy = _get_upload_policy(
         bucket=bucket,
         key=key,
+        credential=credential,
+        date=date,
         acl=acl,
         success_action_redirect=success_action_redirect,
         success_action_status=success_action_status,
         content_type=content_type,
         storage_class=storage_class,
+        region_name=region_name,
         meta=meta,
         connection=connection,
     )
     signature = _get_upload_signature(
-        policy, connection=connection)
+        policy=policy,
+        date=date,
+        region_name=region_name,
+        connection=connection,
+    )
 
     fields = []
-
-    fields.append({
-        "name": "AWSAccessKeyId",
-        "value": connection.provider.access_key,
-    })
 
     fields.append({
         "name": "acl",
@@ -256,6 +300,21 @@ def get_post_args(
     fields.append({
         "name": "key",
         "value": key,
+    })
+
+    fields.append({
+        "name": "X-Amz-Credential",
+        "value": credential,
+    })
+
+    fields.append({
+        "name": "X-Amz-Algorithm",
+        "value": SIGNATURE_V4_ALGORITHM,
+    })
+
+    fields.append({
+        "name": "X-Amz-Date",
+        "value": date.strftime("%Y%m%dT%H%M%SZ"),
     })
 
     if success_action_redirect:
@@ -291,8 +350,13 @@ def get_post_args(
     })
 
     fields.append({
-        "name": "signature",
+        "name": "X-Amz-Signature",
         "value": signature,
+    })
+
+    fields.append({
+        "name": "x-amz-security-token",
+        "value": connection.provider.security_token,
     })
 
     return {
