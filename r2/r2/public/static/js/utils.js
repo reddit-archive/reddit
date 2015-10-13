@@ -1,5 +1,25 @@
 r.utils = {
 
+    /**
+     * update the given url's query params
+     * @param  {String} url
+     * @param  {Object} newParams
+     * @return {String}
+     */
+    replaceUrlParams: function(url, newParams) {
+      var a = document.createElement('a');
+      var urlObj = $.url(url);
+      var params = urlObj.param();
+
+      Object.keys(newParams).forEach(function(key) {
+        params[key] = newParams[key]
+      });
+
+      a.href = url;
+      a.search = $.param(params);
+      return a.href;
+    },
+
     fullnameToId: function(fullname) {
         var parts = fullname.split('_');
         var id36 = parts && parts[1];
