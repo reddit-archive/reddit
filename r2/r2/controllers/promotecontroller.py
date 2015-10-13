@@ -24,12 +24,8 @@ from datetime import datetime, timedelta
 
 from babel.dates import format_date
 from babel.numbers import format_number
-import hashlib
-import hmac
 import json
 import urllib
-import mimetypes
-import os
 
 from pylons import request
 from pylons import tmpl_context as c
@@ -39,26 +35,23 @@ from pylons.i18n import _, N_
 from r2.controllers.api import ApiController
 from r2.controllers.listingcontroller import ListingController
 from r2.controllers.reddit_base import RedditController
-from r2.lib import (
-    hooks,
-    inventory,
-    media,
-    promote,
-    s3_helpers,
-)
 from r2.lib.authorize import (
     get_or_create_customer_profile,
     add_or_update_payment_method,
     PROFILE_LIMIT,
 )
 from r2.lib.authorize.api import AuthorizeNetException
+from r2.lib import hooks, inventory, promote
 from r2.lib.base import abort
 from r2.lib.db import queries
 from r2.lib.errors import errors
-from r2.lib.filters import jssafe, scriptsafe_dumps
-from r2.lib.template_helpers import (
-    add_sr,
-    format_html,
+from r2.lib.filters import websafe
+from r2.lib.template_helpers import format_html
+from r2.lib.media import (
+    force_mobile_ad_image,
+    force_thumbnail,
+    thumbnail_url,
+    _scrape_media,
 )
 from r2.lib.memoize import memoize
 from r2.lib.menus import NamedButton, NavButton, NavMenu, QueryButton
@@ -75,11 +68,11 @@ from r2.lib.pages import (
     RenderableCampaign,
     Roadblocks,
     SponsorLookupUser,
+    UploadedImage,
 )
 from r2.lib.pages.things import default_thing_wrapper, wrap_links
 from r2.lib.system_messages import user_added_messages
 from r2.lib.utils import (
-    constant_time_compare,
     is_subdomain,
     to_date,
     to36,
@@ -112,7 +105,6 @@ from r2.lib.validator import (
     VModhash,
     VOneOf,
     VOSVersion,
-    VPrintable,
     VPriority,
     VPromoCampaign,
     VPromoTarget,
@@ -151,35 +143,6 @@ ANDROID_DEVICES = ('phone', 'tablet',)
 
 ADZERK_URL_MAX_LENGTH = 499
 
-EXPIRES_DATE_FORMAT = "%Y-%m-%dT%H:%M:%S"
-ALLOWED_IMAGE_TYPES = set(["image/jpg", "image/jpeg", "image/png"])
-
-def _format_expires(expires):
-    return expires.strftime(EXPIRES_DATE_FORMAT)
-
-
-def _get_callback_hmac(username, key, expires):
-    secret = g.secrets["s3_direct_post_callback"]
-    expires_str = _format_expires(expires)
-    data = "|".join([username, key, expires_str])
-
-    return hmac.new(secret, data, hashlib.sha256).hexdigest()
-
-
-def _force_images(link, thumbnail, mobile):
-    changed = False
-
-    if thumbnail:
-        media.force_thumbnail(link, thumbnail["data"], thumbnail["ext"])
-        changed = True
-
-    if mobile:
-        media.force_mobile_ad_image(link, mobile["data"], mobile["ext"])
-        changed = True
-
-    return changed
-
-
 def campaign_has_oversold_error(form, campaign):
     if campaign.priority.inventory_override:
         return
@@ -212,65 +175,11 @@ def has_oversold_error(form, campaign, start, end, bid, cpm, target, location):
         return True
 
 
-def _key_to_dict(key, data=False):
-    timer = g.stats.get_timer("providers.s3.get_ads_key_meta.with_%s" %
-        ("data" if data else "no_data"))
-    timer.start()
-
-    result = {
-        "url": key.generate_url(expires_in=0, query_auth=False),
-        "data": key.get_contents_as_string() if data else None,
-        "ext": key.get_metadata("ext"),
-    }
-
-    timer.stop()
-
-    return result
-
-
-def _get_ads_keyspace(thing):
-    return "ads/%s/" % thing._fullname
-
-
-def _get_ads_images(thing, data=False, **kwargs):
-    images = {}
-
-    timer = g.stats.get_timer("providers.s3.get_ads_image_keys")
-    timer.start()
-
-    keys = s3_helpers.get_keys(g.s3_client_uploads_bucket, prefix=_get_ads_keyspace(thing), **kwargs)
-
-    timer.stop()
-
-    for key in keys:
-        filename = os.path.basename(key.key)
-        name, ext = os.path.splitext(filename)
-
-        if name not in ("mobile", "thumbnail"):
-            continue
-
-        images[name] = _key_to_dict(key, data=data)
-
-    return images
-
-
-def _clear_ads_images(thing):
-    timer = g.stats.get_timer("providers.s3.delete_ads_image_keys")
-    timer.start()
-
-    s3_helpers.delete_keys(g.s3_client_uploads_bucket, prefix=_get_ads_keyspace(thing))
-
-    timer.stop()
-
-
 class PromoteController(RedditController):
     @validate(VSponsor())
     def GET_new_promo(self):
-        ads_images = _get_ads_images(c.user)
-        images = {k: v.get("url") for k, v in ads_images.iteritems()}
-
         return PromotePage(title=_("create sponsored link"),
-                           content=PromoteLinkNew(images),
+                           content=PromoteLinkNew(),
                            extra_js_config={
                             "ads_virtual_page": "new-promo",
                            }).render()
@@ -763,7 +672,7 @@ class PromoteApiController(ApiController):
         else:
             form.set_text('.status', _('refund not needed'))
 
-    @validatedForm(
+    @validatedMultipartForm(
         VSponsor('link_id36'),
         VModhash(),
         VRatelimit(rate_user=True,
@@ -788,25 +697,20 @@ class PromoteApiController(ApiController):
         third_party_tracking=VUrl("third_party_tracking"),
         third_party_tracking_2=VUrl("third_party_tracking_2"),
         is_managed=VBoolean("is_managed"),
+        thumbnail_file=VUploadLength('file', 500*1024),
     )
     def POST_create_promo(self, form, jquery, username, title, url,
                           selftext, kind, disable_comments, sendreplies,
                           media_url, media_autoplay, media_override,
                           iframe_embed_url, media_url_type, domain_override,
                           third_party_tracking, third_party_tracking_2,
-                          is_managed):
-
-        images = _get_ads_images(c.user, data=True, meta=True)
-
-        return self._edit_promo(
-            form, jquery, username, title, url,
-            selftext, kind, disable_comments, sendreplies,
-            media_url, media_autoplay, media_override,
-            iframe_embed_url, media_url_type, domain_override,
-            third_party_tracking, third_party_tracking_2, is_managed,
-            thumbnail=images["thumbnail"],
-            mobile=images["mobile"],
-        )
+                          is_managed, thumbnail_file):
+        return self._edit_promo(form, jquery, username, title, url,
+                                selftext, kind, disable_comments, sendreplies,
+                                media_url, media_autoplay, media_override,
+                                iframe_embed_url, media_url_type, domain_override,
+                                third_party_tracking, third_party_tracking_2,
+                                is_managed, thumbnail_file=thumbnail_file)
 
     @validatedForm(
         VSponsor('link_id36'),
@@ -841,30 +745,22 @@ class PromoteApiController(ApiController):
                         iframe_embed_url, media_url_type, domain_override,
                         third_party_tracking, third_party_tracking_2,
                         is_managed, l):
-
-        images = _get_ads_images(l, data=True, meta=True)
-
-        return self._edit_promo(
-            form, jquery, username, title, url,
-            selftext, kind, disable_comments, sendreplies,
-            media_url, media_autoplay, media_override,
-            iframe_embed_url, media_url_type, domain_override,
-            third_party_tracking, third_party_tracking_2, is_managed,
-            l=l,
-            thumbnail=images["thumbnail"],
-            mobile=images["mobile"],
-        )
+        return self._edit_promo(form, jquery, username, title, url,
+                                selftext, kind, disable_comments, sendreplies,
+                                media_url, media_autoplay, media_override,
+                                iframe_embed_url, media_url_type, domain_override,
+                                third_party_tracking, third_party_tracking_2,
+                                is_managed, l=l)
 
     def _edit_promo(self, form, jquery, username, title, url,
                     selftext, kind, disable_comments, sendreplies,
                     media_url, media_autoplay, media_override,
                     iframe_embed_url, media_url_type, domain_override,
                     third_party_tracking, third_party_tracking_2,
-                    is_managed, l=None, thumbnail=None, mobile=None):
+                    is_managed, l=None, thumbnail_file=None):
         should_ratelimit = False
         is_self = (kind == "self")
         is_link = not is_self
-        is_new_promoted = not l
         if not c.user_is_sponsor:
             should_ratelimit = True
 
@@ -872,7 +768,7 @@ class PromoteApiController(ApiController):
             c.errors.remove((errors.RATELIMIT, 'ratelimit'))
 
         # check for user override
-        if is_new_promoted and c.user_is_sponsor and username:
+        if not l and c.user_is_sponsor and username:
             try:
                 user = Account._by_name(username)
             except NotFound:
@@ -918,7 +814,7 @@ class PromoteApiController(ApiController):
                 return
 
         # users can change the disable_comments on promoted links
-        if ((is_new_promoted or not promote.is_promoted(l)) and
+        if ((not l or not promote.is_promoted(l)) and
             (form.has_errors('title', errors.NO_TEXT, errors.TOO_LONG) or
              jquery.has_errors('ratelimit', errors.RATELIMIT))):
             return
@@ -926,7 +822,7 @@ class PromoteApiController(ApiController):
         if is_self and form.has_errors('text', errors.TOO_LONG):
             return
 
-        if is_new_promoted:
+        if not l:
             # creating a new promoted link
             l = promote.new_promotion(
                 is_self=is_self,
@@ -943,7 +839,13 @@ class PromoteApiController(ApiController):
                 l.third_party_tracking_2 = third_party_tracking_2 or None
             l._commit()
 
-            _force_images(l, thumbnail=thumbnail, mobile=mobile)
+            # only set the thumbnail when creating a link
+            if thumbnail_file:
+                try:
+                    force_thumbnail(l, thumbnail_file)
+                    l._commit()
+                except IOError:
+                    pass
 
             form.redirect(promote.promo_edit_url(l))
 
@@ -956,9 +858,6 @@ class PromoteApiController(ApiController):
         if not promote.is_promoted(l) or c.user_is_sponsor:
             if title and title != l.title:
                 l.title = title
-                changed = True
-
-            if _force_images(l, thumbnail=thumbnail, mobile=mobile):
                 changed = True
 
             # type changing
@@ -989,13 +888,13 @@ class PromoteApiController(ApiController):
 
         if c.user_is_sponsor and scraper_embed and media_url != l.media_url:
             if media_url:
-                scraped = media._scrape_media(
+                media = _scrape_media(
                     media_url, autoplay=media_autoplay,
                     save_thumbnail=False, use_cache=True)
 
-                if scraped:
-                    l.set_media_object(scraped.media_object)
-                    l.set_secure_media_object(scraped.secure_media_object)
+                if media:
+                    l.set_media_object(media.media_object)
+                    l.set_secure_media_object(media.secure_media_object)
                     l.media_url = media_url
                     l.gifts_embed_url = None
                     l.media_autoplay = media_autoplay
@@ -1058,11 +957,6 @@ class PromoteApiController(ApiController):
             l.managed_promo = is_managed
 
         l._commit()
-
-        # clean up so the same images don't reappear if they create
-        # another link
-        _clear_ads_images(thing=c.user if is_new_promoted else l)
-
         form.redirect(promote.promo_edit_url(l))
 
     @validatedForm(
@@ -1467,77 +1361,36 @@ class PromoteApiController(ApiController):
         else:
             _handle_failed_payment()
 
-    @json_validate(
-        VSponsor("link"),
+    @validate(
+        VSponsor("link_name"),
         VModhash(),
-        link=VLink("link"),
-        kind=VOneOf("kind", ["thumbnail", "mobile"]),
-        filepath=nop("filepath"),
-        ajax=VBoolean("ajax", default=True)
+        link=VByName('link_name'),
+        file=VUploadLength('file', 500*1024),
+        img_type=VImageType('img_type'),
     )
-    def POST_ad_s3_params(self, responder, link, kind, filepath, ajax):
-        filename, ext = os.path.splitext(filepath)
-        mime_type, encoding = mimetypes.guess_type(filepath)
+    def POST_link_thumb(self, link=None, file=None, img_type='jpg'):
+        if not link or (promote.is_promoted(link) and not c.user_is_sponsor):
+            # only let sponsors edit thumbnails of live promos
+            return abort(403, 'forbidden')
 
-        if not mime_type or mime_type not in ALLOWED_IMAGE_TYPES:
-            request.environ["extra_error_data"] = {
-                "message": _("image must be a jpg or png"),
-            }
-            abort(403)
-
-        keyspace = _get_ads_keyspace(link if link else c.user)
-        key = os.path.join(keyspace, kind)
-        redirect = None
-
-        if not ajax:
-            now = datetime.now().replace(tzinfo=g.tz)
-            signature = _get_callback_hmac(
-                username=c.user.name,
-                key=key,
-                expires=now,
-            )
-            path = ("/api/ad_s3_callback?hmac=%s&ts=%s" %
-                (signature, _format_expires(now)))
-            redirect = add_sr(path, sr_path=False)
-
-        return s3_helpers.get_post_args(
-            bucket=g.s3_client_uploads_bucket,
-            key=key,
-            success_action_redirect=redirect,
-            success_action_status="201",
-            content_type=mime_type,
-            meta={
-                "x-amz-meta-ext": ext,
-            },
-        )
+        force_thumbnail(link, file, file_type=".%s" % img_type)
+        link._commit()
+        return UploadedImage(_('saved'), thumbnail_url(link), "", errors=errors,
+                             form_id="image-upload").render()
 
     @validate(
-        VSponsor(),
-        expires=VDate("ts", format=EXPIRES_DATE_FORMAT),
-        signature=VPrintable("hmac", 255),
-        callback=nop("callback"),
-        key=nop("key"),
+        VSponsor("link_name"),
+        VModhash(),
+        link=VByName('link_name'),
+        file=VUploadLength('file', 500*1024),
+        img_type=VImageType('img_type'),
     )
-    def GET_ad_s3_callback(self, expires, signature, callback, key):
-        now = datetime.now(tz=g.tz)
-        if (expires + timedelta(minutes=10) < now):
-            self.abort404()
+    def POST_link_mobile_ad_image(self, link=None, file=None, img_type='jpg'):
+        if not (link and c.user_is_sponsor and file):
+            # only sponsors can set the mobile img
+            return abort(403, 'forbidden')
 
-        expected_mac = _get_callback_hmac(
-            username=c.user.name,
-            key=key,
-            expires=expires,
-        )
-
-        if not constant_time_compare(signature, expected_mac):
-            self.abort404()
-
-        template = "<script>parent.__s3_callbacks__[%(callback)s](%(data)s);</script>"
-        image = _key_to_dict(
-            s3_helpers.get_key(g.s3_client_uploads_bucket, key))
-        response = {
-            "callback": scriptsafe_dumps(callback),
-            "data": scriptsafe_dumps(image),
-        }
-
-        return format_html(template, response)
+        force_mobile_ad_image(link, file, file_type=".%s" % img_type)
+        link._commit()
+        return UploadedImage(_('saved'), link.mobile_ad_url, "", errors=errors,
+                             form_id="mobile-ad-image-upload").render()

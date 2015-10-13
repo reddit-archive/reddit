@@ -21,20 +21,13 @@
 ###############################################################################
 
 <%!
-    import json
-    from r2.models import FakeSubreddit
-    from r2.lib.filters import spaceCompress, unsafe, safemarkdown, jssafe
-    from r2.lib.template_helpers import (
-        add_sr,
-        html_datetime,
-        js_config,
-        make_url_protocol_relative,
-        simplified_timesince,
-        static,
-    )
-    from r2.lib.utils import cols, long_datetime
-    from r2.lib import tracking
-    from datetime import datetime
+   import json
+   from r2.models import FakeSubreddit
+   from r2.lib.filters import spaceCompress, unsafe, safemarkdown, jssafe
+   from r2.lib.template_helpers import add_sr, js_config, static, html_datetime, simplified_timesince, make_url_protocol_relative
+   from r2.lib.utils import cols, long_datetime
+   from r2.lib import tracking
+   from datetime import datetime
 %>
 <%def name="tags(**kw)">
 %for k, v in kw.iteritems():
@@ -296,38 +289,6 @@ ${unsafe(txt)}
       }
     </script>
   </div>
-</%def>
-
-<%def name="s3_image_upload(id, width, height, src=None, data=None)">
-  <form
-      id="${id}"
-      class="c-image-upload"
-      method="POST"
-      enctype="multipart/form-data"
-      target="${id}-frame"
-      ${tags(**dict(data=data))}
-    >
-    <div class="c-image-upload-preview-container">
-      <img
-        alt="${id} preview"
-        class="c-image-upload-preview"
-        style="width: ${width}px; max-height: ${height}px"
-        %if src:
-          src="${make_url_protocol_relative(src)}"
-        %else:
-          src="${static(width + 'x' + height + '-placeholder.png')}"
-        %endif
-      >
-      <input type="file" name="file" id="${id}-input" class="c-image-upload-input">
-      <div class="c-progress">
-        <div class="c-progress-bar"></div>
-      </div>
-    </div>
-  </form>
-  <iframe id="${id}-frame" name="${id}-frame" src="about:blank" style="display:none;"></iframe>
-  %if caller:
-    ${caller.body()}
-  %endif
 </%def>
 
 <%def name="image_upload(post_target, current_image = None, onsubmit = '', 

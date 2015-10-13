@@ -169,14 +169,6 @@ r.ui.highlightNewComments = function() {
   });
 }
 
-r.ui.initUploads = function() {
-  $('.c-image-upload')
-    .imageUpload()
-    .on('failed.imageUpload', function(e, data) {
-      alert(data.message);
-    });
-};
-
 r.ui.initReadNext = function() {
     // 2 week expiration
     var ttl = (1000 * 60 * 60 * 24 * 14);

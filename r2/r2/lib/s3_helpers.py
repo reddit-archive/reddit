@@ -20,17 +20,10 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-import base64
-import boto
-import hashlib
-import hmac
-import json
 import os
 import sys
-import time
 
-from pylons import app_globals as g
-
+from boto.s3.key import Key
 
 HADOOP_FOLDER_SUFFIX = '_$folder$'
 
@@ -69,7 +62,7 @@ def get_text_from_s3(s3_connection, path):
     """Read a file from S3 and return it as text."""
     bucket_name, key_name = _from_path(path)
     bucket = s3_connection.get_bucket(bucket_name)
-    k = boto.s3.Key(bucket)
+    k = Key(bucket)
     k.key = key_name
     txt = k.get_contents_as_string()
     return txt
@@ -81,7 +74,7 @@ def mv_file_s3(s3_connection, src_path, dst_path):
     dst_bucket_name, dst_key_name = _from_path(dst_path)
 
     src_bucket = s3_connection.get_bucket(src_bucket_name)
-    k = boto.s3.Key(src_bucket)
+    k = Key(src_bucket)
     k.key = src_key_name
     k.copy(dst_bucket_name, dst_key_name)
     k.delete()
@@ -107,7 +100,7 @@ def copy_to_s3(s3_connection, local_path, dst_path, verbose=False):
         return
 
     key_name = os.path.join(dst_key_name, filename)
-    k = boto.s3.Key(bucket)
+    k = Key(bucket)
     k.key = key_name
 
     kw = {}
@@ -116,187 +109,3 @@ def copy_to_s3(s3_connection, local_path, dst_path, verbose=False):
         kw['cb'] = callback
 
     k.set_contents_from_filename(logfile, **kw)
-
-
-def get_connection():
-    return boto.connect_s3(g.S3KEY_ID or None, g.S3SECRET_KEY or None)
-
-
-def get_key(bucket_name, key, connection=None):
-    connection = connection or get_connection()
-    bucket = connection.get_bucket(bucket_name)
-
-    return bucket.get_key(key)
-
-def get_keys(bucket_name, meta=False, connection=None, **kwargs):
-    connection = connection or get_connection()
-    bucket = connection.get_bucket(bucket_name)
-    keys = bucket.get_all_keys(**kwargs)
-
-    if not meta:
-        return keys
-
-    return [bucket.get_key(key.name)
-            for key in keys]
-
-
-def delete_keys(bucket_name, prefix, connection=None):
-    connection = connection or get_connection()
-
-    keys = get_keys(bucket_name, prefix=prefix, connection=connection)
-    return connection.get_bucket(bucket_name).delete_keys(keys)
-
-
-def _get_upload_policy(
-        bucket, key, acl, ttl=60,
-        success_action_redirect=None,
-        success_action_status="201",
-        content_type=None,
-        max_content_length=((1024**2) * 3),
-        storage_class="STANDARD",
-        meta=None,
-        connection=None,
-    ):
-
-    connection = connection or get_connection()
-    meta = meta or {}
-
-    expiration = time.gmtime(int(time.time() + ttl))
-    conditions = []
-
-    conditions.append({"bucket": bucket})
-
-    if key.endswith("${filename}"):
-        conditions.append(["starts-with", "$key", key[:-len("${filename}")]])
-    else:
-        conditions.append({"key": key})
-
-    conditions.append({"acl": acl})
-    conditions.append({"x-amz-storage-class": storage_class})
-
-    if success_action_redirect:
-        conditions.append([
-            "starts-with",
-            "$success_action_redirect",
-            success_action_redirect,
-        ])
-    else:
-        conditions.append({
-            "success_action_status": success_action_status,
-        })
-
-    conditions.append([
-        "content-length-range", 0, max_content_length])
-
-    for key, value in meta.iteritems():
-        conditions.append({key: value})
-
-    if content_type:
-        conditions.append({"content-type": content_type})
-
-    return base64.b64encode(json.dumps({
-        "expiration": time.strftime(boto.utils.ISO8601, expiration),
-        "conditions": conditions,
-    }))
-
-
-def _get_upload_signature(
-        policy,
-        connection=None,
-    ):
-
-    connection = connection or get_connection()
-
-    key = connection.provider.secret_key.encode("utf-8")
-    hashed = hmac.new(key, policy, hashlib.sha1)
-    return base64.encodestring(
-        hashed.digest()).decode("utf-8").strip()
-
-
-def get_post_args(
-        bucket, key,
-        acl="public-read",
-        success_action_redirect=None,
-        success_action_status="201",
-        content_type=None,
-        storage_class="STANDARD",
-        meta=None,
-        connection=None,
-        **kwargs
-    ):
-
-    meta = meta or []
-    connection = connection or get_connection()
-    policy = _get_upload_policy(
-        bucket=bucket,
-        key=key,
-        acl=acl,
-        success_action_redirect=success_action_redirect,
-        success_action_status=success_action_status,
-        content_type=content_type,
-        storage_class=storage_class,
-        meta=meta,
-        connection=connection,
-    )
-    signature = _get_upload_signature(
-        policy, connection=connection)
-
-    fields = []
-
-    fields.append({
-        "name": "AWSAccessKeyId",
-        "value": connection.provider.access_key,
-    })
-
-    fields.append({
-        "name": "acl",
-        "value": acl,
-    })
-
-    fields.append({
-        "name": "key",
-        "value": key,
-    })
-
-    if success_action_redirect:
-        fields.append({
-            "name": "success_action_redirect",
-            "value": success_action_redirect,
-        })
-    else:
-        fields.append({
-            "name": "success_action_status",
-            "value": success_action_status,
-        })
-
-    fields.append({
-        "name": "content-type",
-        "value": content_type,
-    })
-
-    fields.append({
-        "name": "x-amz-storage-class",
-        "value": storage_class,
-    })
-
-    for key, value in meta.iteritems():
-        fields.append({
-            "name": key,
-            "value": value,
-        })
-
-    fields.append({
-        "name": "policy",
-        "value": policy,
-    })
-
-    fields.append({
-        "name": "signature",
-        "value": signature,
-    })
-
-    return {
-        "action": "//%s.%s" % (bucket, g.s3_media_domain),
-        "fields": fields,
-    }
-

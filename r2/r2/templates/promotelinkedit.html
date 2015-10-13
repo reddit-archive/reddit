@@ -184,10 +184,12 @@ ${pr.javascript_setup()}
       </footer>
     </div>
     <div class="uncollapsed-display" style="display:none">
-      <div class="editor-group">
-        %if editable:
+      %if editable:
+        <div class="editor-group">
           ${pr.image_field(thing.link)}
-        %endif
+        </div>
+      %endif
+      <div class="editor-group">
         <% is_link = not thing.link.is_self %>
         ${pr.title_field(thing.link, editable=editable)}
         ${pr.content_field(thing.link, editable=editable, enable_override=c.user_is_sponsor)}
