@@ -21,6 +21,7 @@
 ###############################################################################
 
 <%!
+  from r2.config import feature
   from r2.lib.media import thumbnail_url
   from r2.lib.filters import jssafe, scriptsafe_dumps
   from r2.lib.pages import UserText
@@ -202,28 +203,26 @@
     )}
   </%utils:line_field>
 
-  %if thing.mobile_targeting_enabled:
-    <%utils:line_field title="${_('mobile ad image')}"
-                       css_class="rounded image-field">
-      <div class="infotext">
-        ${_('upload image for use on mobile web.  should be exactly 1200x628 pixels (displayed at 600x314)')}
-      </div>
-      ${utils.s3_image_upload(
-        id="mobile",
-        width="600",
-        height="314",
-        src=mobile_url,
-        data=dict(
-          max=(1024**2) * 3,
-          url="/api/ad_s3_params.json",
-          params=simplejson.dumps(dict(
-            kind="mobile",
-            link=(link and link._id36),
-          )),
-        ),
-      )}
-    </%utils:line_field>
-  %endif
+  <%utils:line_field title="${_('mobile ad image')}"
+                     css_class="rounded image-field">
+    <div class="infotext">
+      ${_('upload image for use on mobile web.  should be exactly 1200x628 pixels (displayed at 600x314)')}
+    </div>
+    ${utils.s3_image_upload(
+      id="mobile",
+      width="600",
+      height="314",
+      src=mobile_url,
+      data=dict(
+        max=(1024**2) * 3,
+        url="/api/ad_s3_params.json",
+        params=simplejson.dumps(dict(
+          kind="mobile",
+          link=(link and link._id36),
+        )),
+      ),
+    )}
+  </%utils:line_field>
 </%def>
 
 <%def name="commenting_field(link)">
@@ -525,7 +524,7 @@
     </div>
   </%def>
 
-  %if thing.mobile_targeting_enabled:
+  %if c.user_is_sponsor:
     <%utils:line_field title="${_('platform')}" css_class="rounded platform-field">
       ${platform_field_content()}
     </%utils:line_field>
