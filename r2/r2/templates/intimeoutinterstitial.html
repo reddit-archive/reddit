@@ -21,36 +21,35 @@
 ###############################################################################
 
 <%!
-  from r2.lib.template_helpers import static 
+  from r2.lib.template_helpers import static, _wsf, format_html
 %>
-
-<%namespace file="utils.html" import="_mdf"/>
 
 <%inherit file="interstitial.html"/>
 
 <%def name="interstitial_image_attrs()">
   src="${static('interstitial-image-banned.png')}"
-  alt="${_('banned')}"
+  alt="${_('suspended')}"
 </%def>
 
 <%def name="interstitial_title()">
+  <%
+    suspended_link = format_html('&#32;<a href="https://reddit.zendesk.com/hc/en-us/articles/205687686">%s</a>',
+                                 _('suspended'))
+  %>
   %if thing.timeout_days_remaining:
-    ${_("You have been temporarily banned from Reddit")}
+    <%
+      days = ungettext('day', 'days', thing.timeout_days_remaining)
+    %>
+    ${_wsf("Your account has been %(suspended_link)s from Reddit  \nfor %(num)s %(days)s",
+           suspended_link=suspended_link, num=thing.timeout_days_remaining, days=days)}
   %else:
-    ${_("You have been banned from Reddit")}
+    ${_wsf("Your account has been permanently %(suspended_link)s from Reddit",
+           suspended_link=suspended_link)}
   %endif
 </%def>
 
 <%def name="interstitial_message()">
-  %if thing.message:
-    ${parent.interstitial_message()}
-  %elif thing.timeout_days_remaining:
-    <%
-      days = ungettext('day', 'days', thing.timeout_days_remaining)
-    %>
-    ${_mdf("You may not participate for %(num)s %(days)s.",
-           num=thing.timeout_days_remaining, days=days)}
-  %else:
-    ${_("You may not participate.")}
+  %if not thing.hide_message:
+    ${_("You may not access this page.")}
   %endif
 </%def>

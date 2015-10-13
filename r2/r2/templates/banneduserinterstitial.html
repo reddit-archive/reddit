@@ -21,13 +21,17 @@
 ###############################################################################
 
 <%!
-  from r2.lib.template_helpers import static 
+  from r2.lib.template_helpers import _wsf, format_html
 %>
 
 <%inherit file="bannedinterstitial.html"/>
 
 <%def name="interstitial_title()">
-  ${_("This user has been banned")}
+  <%
+    suspended_link = format_html('&#32;<a href="https://reddit.zendesk.com/hc/en-us/articles/205687686">%s</a>',
+                                 _('suspended'))
+  %>
+  ${_wsf("This account has been %(suspended_link)s", suspended_link=suspended_link)}
 </%def>
 
 <%def name="interstitial_message()">

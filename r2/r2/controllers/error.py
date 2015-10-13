@@ -213,7 +213,7 @@ class ErrorController(RedditController):
                 timeout_days_remaining = c.user.days_remaining_in_timeout
 
                 errpage = pages.InterstitialPage(
-                    _("banned"),
+                    _("suspended"),
                     content=pages.InTimeoutInterstitial(
                         timeout_days_remaining=timeout_days_remaining,
                     ),

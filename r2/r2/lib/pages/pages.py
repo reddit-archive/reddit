@@ -2581,9 +2581,10 @@ class BannedUserInterstitial(BannedInterstitial):
 
 class InTimeoutInterstitial(BannedInterstitial):
     """The message shown to a user in timeout."""
-    def __init__(self, timeout_days_remaining=0):
+    def __init__(self, timeout_days_remaining=0, hide_message=False):
         self.timeout_days_remaining = timeout_days_remaining
-        BannedInterstitial.__init__(self)
+        self.hide_message = hide_message
+        super(InTimeoutInterstitial, self).__init__()
 
 
 class PrivateInterstitial(Interstitial):

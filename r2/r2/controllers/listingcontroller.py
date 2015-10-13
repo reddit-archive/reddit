@@ -871,7 +871,7 @@ class UserController(ListingController):
                 not c.user_is_admin and
                 not vuser.timeout_expiration):
             errpage = InterstitialPage(
-                _("banned"),
+                _("suspended"),
                 content=BannedUserInterstitial(),
             )
             request.environ['usable_error_content'] = errpage.render()

@@ -183,7 +183,8 @@
     %endif
     %if c.user_is_loggedin and c.user.in_timeout:
       <script id="access-popup" type="text/template">
-        ${InTimeoutInterstitial(timeout_days_remaining=thing.timeout_days_remaining)}
+        ${InTimeoutInterstitial(timeout_days_remaining=thing.timeout_days_remaining,
+                                hide_message=True)}
       </script>
     %endif
   %endif
