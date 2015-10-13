@@ -1222,18 +1222,22 @@ class VSubmitParent(VByName):
             return parent
 
         elif isinstance(parent, Link):
+            sr = parent.subreddit_slow
+
             if parent._deleted:
                 self.set_error(errors.DELETED_LINK)
 
             if parent.archived:
                 self.set_error(errors.TOO_OLD)
-            elif parent.locked:
+            elif parent.locked and not sr.can_distinguish(c.user):
                 self.set_error(errors.THREAD_LOCKED)
 
             if self.has_errors or parent.can_comment(c.user):
                 return parent
 
         elif isinstance(parent, Comment):
+            sr = parent.subreddit_slow
+
             if parent._deleted:
                 self.set_error(errors.DELETED_COMMENT)
 
@@ -1242,7 +1246,7 @@ class VSubmitParent(VByName):
                 can_reply = (c.user_is_loggedin and
                              (parent.author_id == c.user._id or
                               c.user_is_admin or
-                              parent.subreddit_slow.is_moderator(c.user)))
+                              sr.is_moderator(c.user)))
                 if not can_reply:
                     self.set_error(errors.DELETED_COMMENT)
 
@@ -1250,7 +1254,7 @@ class VSubmitParent(VByName):
 
             if link.archived:
                 self.set_error(errors.TOO_OLD)
-            elif link.locked:
+            elif link.locked and not sr.can_distinguish(c.user):
                 self.set_error(errors.THREAD_LOCKED)
 
             if self.has_errors or link.can_comment(c.user):

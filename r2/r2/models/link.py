@@ -927,7 +927,7 @@ class Link(Thing, Printable):
         if self.archived:
             return False
 
-        if self.locked:
+        if self.locked and not sr.can_distinguish(user):
             return False
 
         return sr.can_comment(user) and self.can_view_promo(user)
@@ -1380,8 +1380,17 @@ class Comment(Thing, Printable):
         if c.user_is_loggedin:
             is_moderator_subreddits = {
                 sr._id for sr in subreddits if sr.is_moderator(user)}
+            can_reply_srs = set(
+                sr._id for sr in subreddits if sr.can_comment(user))
+            can_distinguish_srs = set(
+                sr._id for sr in subreddits if sr.can_distinguish(user))
+            promo_sr_id = Subreddit.get_promote_srid()
+            if promo_sr_id:
+                can_reply_srs.add(promo_sr_id)
         else:
             is_moderator_subreddits = set()
+            can_reply_srs = set()
+            can_distinguish_srs = set()
 
         cids = dict((w._id, w) for w in wrapped)
         parent_ids = set(cm.parent_id for cm in wrapped
@@ -1389,12 +1398,6 @@ class Comment(Thing, Printable):
                          and cm.parent_id not in cids)
         parents = Comment._byID(
             parent_ids, data=True, stale=True, ignore_missing=True)
-
-        can_reply_srs = set(s._id for s in subreddits if s.can_comment(user)) \
-                        if c.user_is_loggedin else set()
-        promo_sr_id = Subreddit.get_promote_srid()
-        if promo_sr_id:
-            can_reply_srs.add(promo_sr_id)
 
         profilepage = c.profilepage
         user_is_admin = c.user_is_admin
@@ -1456,9 +1459,12 @@ class Comment(Thing, Printable):
             else:
                 item.parent_permalink = None
 
-            item.can_reply = not item.link.archived and not item.link.locked
-            if c.user_is_loggedin:
-                item.can_reply &= item.sr_id in can_reply_srs
+            if user_is_loggedin:
+                item.can_reply = (not item.link.archived and
+                    (not item.link.locked or item.sr_id in can_distinguish_srs) and
+                    item.sr_id in can_reply_srs)
+            else:
+                item.can_reply = not item.link.archived and not item.link.locked
 
             item.can_embed = c.can_embed or False
 

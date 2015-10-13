@@ -104,8 +104,12 @@ class TestVSubmitParent(ValidatorTests):
         comment = Comment(**kwargs)
         VByName.run = MagicMock(return_value=comment)
 
+        link = Link(id=link_id)
+        Link._byID = MagicMock(return_value=link)
+
         sr = Subreddit(id=sr_id)
         comment.subreddit_slow = sr
+        link.subreddit_slow = sr
 
         Subreddit.can_comment = MagicMock(return_value=can_comment)
         Link.can_view_promo = MagicMock(return_value=can_view_promo)
@@ -203,14 +207,24 @@ class TestVSubmitParent(ValidatorTests):
 
     def test_locked_link(self):
         link = self._mock_link(locked=True)
+        Subreddit.can_distinguish = MagicMock(return_value=False)
         result = self.validator.run('fullname', None)
 
         self.assertEqual(result, link)
         self.assertTrue(self.validator.has_errors)
         self.assertIn((errors.THREAD_LOCKED, None), c.errors)
 
+    def test_locked_link_mod_reply(self):
+        link = self._mock_link(locked=True)
+        Subreddit.can_distinguish = MagicMock(return_value=True)
+        result = self.validator.run('fullname', None)
+
+        self.assertEqual(result, link)
+        self.assertFalse(self.validator.has_errors)
+
     def test_deleted_locked_link(self):
         link = self._mock_link(locked=True, _deleted=True)
+        Subreddit.can_distinguish = MagicMock(return_value=False)
         result = self.validator.run('fullname', None)
 
         self.assertEqual(result, link)
