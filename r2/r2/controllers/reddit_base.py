@@ -231,9 +231,6 @@ class UnloggedUser(FakeAccount):
     def _unsubscribe(self, sr):
         pass
 
-    def valid_hash(self, hash):
-        return False
-
     def _commit(self):
         if self._dirty:
             for k, (oldv, newv) in self._dirties.iteritems():
@@ -722,6 +719,20 @@ def make_url_https(url):
     if not new_url.hostname:
         new_url.hostname = request.host.lower()
     return new_url.unparse()
+
+
+def generate_modhash():
+    # OAuth clients should never receive a modhash of any kind as they could
+    # use it in a CSRF attack to bypass their permitted OAuth scopes
+    if c.oauth_user:
+        return None
+
+    modhash = hooks.get_hook("modhash.generate").call_until_return()
+    if modhash is not None:
+        return modhash
+
+    # if no plugins generate a modhash, just use the user name
+    return c.user.name
 
 
 def enforce_https():
@@ -1463,7 +1474,7 @@ class RedditController(OAuth2ResourceController):
 
         if c.user_is_loggedin:
             self.set_up_user_context()
-            c.modhash = c.user.modhash()
+            c.modhash = generate_modhash()
             c.user_is_admin = maybe_admin and c.user.name in g.admins
             c.user_is_sponsor = c.user_is_admin or c.user.name in g.sponsors
             c.otp_cached = is_otpcookie_valid

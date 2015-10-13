@@ -134,7 +134,7 @@ error_list = dict((
         ('BAD_IMAGE', _('image problem')),
         ('DEVELOPER_ALREADY_ADDED', _('already added')),
         ('TOO_MANY_DEVELOPERS', _('too many developers')),
-        ('BAD_HASH', _("i don't believe you.")),
+        ('INVALID_MODHASH', _("invalid modhash")),
         ('ALREADY_MODERATOR', _('that user is already a moderator')),
         ('CANT_RESTRICT_MODERATOR', _("You can't perform that action because that user is a moderator.")),
         ('NO_INVITE_FOUND', _('there is no pending invite for that subreddit')),

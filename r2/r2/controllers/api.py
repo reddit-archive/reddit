@@ -22,6 +22,7 @@
 
 from r2.controllers.reddit_base import (
     cross_domain,
+    generate_modhash,
     is_trusted_origin,
     MinimalController,
     pagecache_policy,
@@ -51,7 +52,6 @@ from r2.lib.utils import (
     query_string,
     randstr,
     sanitize_url,
-    timeago,
     timefromnow,
     timeuntil,
     tup,
@@ -110,9 +110,11 @@ from r2.lib.system_messages import notify_user_added, send_ban_message
 from r2.controllers.ipn import generate_blob, update_blob
 from r2.lib.lock import TimeoutExpired
 from r2.lib.csrf import csrf_exempt
+from r2.lib.voting import cast_vote
 
 from r2.models import wiki
 from r2.models.recommend import AccountSRFeedback, FEEDBACK_ACTIONS
+from r2.models.vote import Vote
 from r2.lib.merge import ConflictException
 
 import csv
@@ -123,20 +125,6 @@ import hashlib
 import re
 import urllib
 import urllib2
-
-def reject_vote(thing):
-    voteword = request.params.get('dir')
-
-    if voteword == '1':
-        voteword = 'upvote'
-    elif voteword == '0':
-        voteword = '0-vote'
-    elif voteword == '-1':
-        voteword = 'downvote'
-
-    log_text ("rejected vote", "Rejected %s from %s (%s) on %s %s via %s" %
-              (voteword, c.user.name, request.ip, thing.__class__.__name__,
-               thing._id36, request.referer), "info")
 
 
 class ApiminimalController(MinimalController):
@@ -547,7 +535,6 @@ class ApiController(RedditController):
             sendreplies=sendreplies,
         )
 
-
         if not is_self:
             ban = is_banned_domain(url)
             if ban:
@@ -555,9 +542,6 @@ class ApiController(RedditController):
                 admintools.spam(l, banner = "domain (%s)" % ban.banmsg)
                 hooks.get_hook('banned_domain.submit').call(item=l, url=url,
                                                             ban=ban)
-
-        queries.queue_vote(c.user, l, dir=True, ip=request.ip,
-            cheater=c.cheater)
 
         if sr.should_ratelimit(c.user, 'link'):
             VRatelimit.ratelimit(rate_user=True, rate_ip = True,
@@ -607,7 +591,7 @@ class ApiController(RedditController):
         self.login(user, rem = rem)
 
         if request.params.get("hoist") != "cookie":
-            responder._send_data(modhash = user.modhash())
+            responder._send_data(modhash=generate_modhash())
             responder._send_data(cookie  = user.make_cookie())
         responder._send_data(need_https=feature.is_enabled("force_https"))
 
@@ -1882,8 +1866,7 @@ class ApiController(RedditController):
         if item._deleted:
             return abort(403, "forbidden")
 
-        if (item._date < timeago('3 minutes')
-            or (item._ups + item._downs > 2)):
+        if item._age > timedelta(minutes=3) or item.num_votes > 2:
             item.editted = c.start_time
 
         item.ignore_reports = False
@@ -2035,8 +2018,6 @@ class ApiController(RedditController):
         else:
             item, inbox_rel = Comment._new(c.user, link, parent_comment,
                                            comment, request.ip)
-            queries.queue_vote(c.user, item, dir=True, ip=request.ip,
-                cheater=c.cheater)
 
         if is_message:
             queries.new_message(item, inbox_rel)
@@ -2161,12 +2142,12 @@ class ApiController(RedditController):
     @require_oauth2_scope("vote")
     @noresponse(VUser(),
                 VModhash(),
-                vote_info=VVotehash('vh'),
-                dir=VInt('dir', min=-1, max=1, docs={"dir":
-                         "vote direction. one of (1, 0, -1)"}),
+                direction=VInt("dir", min=-1, max=1,
+                    docs={"dir": "vote direction. one of (1, 0, -1)"}
+                ),
                 thing=VByName('id'))
     @api_doc(api_section.links_and_comments)
-    def POST_vote(self, dir, thing, vote_info):
+    def POST_vote(self, direction, thing):
         """Cast a vote on a thing.
 
         `id` should be the fullname of the Link or Comment to vote on.
@@ -2182,34 +2163,31 @@ class ApiController(RedditController):
 
         """
 
-        user = c.user
-        store = True
-
         if not thing or thing._deleted:
             return self.abort404()
 
-        hooks.get_hook("vote.validate").call(thing=thing)
+        if not thing.is_votable:
+            abort(400, "That type of thing can't be voted on.")
 
-        if not isinstance(thing, (Link, Comment)):
-            return self.abort404()
+        hooks.get_hook("vote.validate").call(thing=thing)
 
         if isinstance(thing, Link) and promote.is_promo(thing):
             if not promote.is_promoted(thing):
                 return abort(400, "Bad Request")
 
-        if vote_info == 'rejected':
-            reject_vote(thing)
-            store = False
+        if thing.archived:
+            return abort(400,
+                "This thing is archived and may no longer be voted on")
 
-        if thing._age > thing.subreddit_slow.archive_age:
-            store = False
+        # convert vote direction to enum value
+        if direction == 1:
+            direction = Vote.DIRECTIONS.up
+        elif direction == -1:
+            direction = Vote.DIRECTIONS.down
+        elif direction == 0:
+            direction = Vote.DIRECTIONS.unvote
 
-        dir = (True if dir > 0
-               else False if dir < 0
-               else None)
-
-        queries.queue_vote(user, thing, dir, request.ip, vote_info=vote_info,
-            store=store, cheater=c.cheater)
+        cast_vote(c.user, thing, direction)
 
     @require_oauth2_scope("modconfig")
     @validatedForm(VSrModerator(perms='config'),

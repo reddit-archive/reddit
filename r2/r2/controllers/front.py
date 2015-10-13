@@ -40,7 +40,6 @@ from r2.lib.pages import *
 from r2.lib.pages.things import hot_links_by_url_listing
 from r2.lib.pages import trafficpages
 from r2.lib.menus import *
-from r2.lib.admin_utils import check_cheating
 from r2.lib.csrf import csrf_exempt
 from r2.lib.utils import to36, sanitize_url, title_to_url
 from r2.lib.utils import query_string, UrlParser, url_links_builder
@@ -304,8 +303,6 @@ class FrontController(RedditController):
             infotext = strings.locked_post_message
             infotext_class = 'locked-infobar'
             infotext_show_icon = True
-
-        check_cheating('comments')
 
         if not c.user.pref_num_comments:
             num = g.num_comments
@@ -1169,7 +1166,6 @@ class FrontController(RedditController):
                 content = subreddits
                 subreddits = None
 
-        check_cheating("search")
         res = SearchPage(_('search results'), query,
                          content=content,
                          subreddits=subreddits,

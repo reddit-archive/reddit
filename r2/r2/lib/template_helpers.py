@@ -222,7 +222,6 @@ def js_config(extra_config=None):
         "over_18": bool(c.over18),
         "new_window": bool(c.user.pref_newwindow),
         "mweb_blacklist_expressions": g.live_config['mweb_blacklist_expressions'],
-        "vote_hash": c.vote_hash,
         "gold": gold,
         "has_subscribed": logged and c.user.has_subscribed,
         "is_sponsor": logged and c.user_is_sponsor,

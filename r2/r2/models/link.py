@@ -58,6 +58,7 @@ from r2.lib.strings import strings, Score
 from r2.lib.db import tdb_cassandra, sorts
 from r2.lib.db.tdb_cassandra import view_of
 from r2.lib.utils import sanitize_url
+from r2.lib.voting import cast_vote
 from r2.models.gold import (
     GildedCommentsByAccount,
     GildedLinksByAccount,
@@ -68,6 +69,7 @@ from r2.models.subreddit import MultiReddit
 from r2.models.trylater import TryLater
 from r2.models.query_cache import CachedQueryMutator
 from r2.models.promo import PROMOTE_STATUS
+from r2.models.vote import Vote
 
 from pylons import request
 from pylons import tmpl_context as c
@@ -139,9 +141,28 @@ class Link(Thing, Printable):
     _nsfw = re.compile(r"\bnsf[wl]\b", re.I)
 
     SELFTEXT_MAX_LENGTH = 40000
+    
+    is_votable = True
 
     def __init__(self, *a, **kw):
         Thing.__init__(self, *a, **kw)
+
+    @property
+    def vote_queue_name(self):
+        if self._id36 in g.live_config["fastlane_links"]:
+            return "vote_fastlane_q"
+        else:
+            if g.shard_link_vote_queues:
+                return "vote_link_%s_q" % str(self.sr_id)[-1]
+            else:
+                return "vote_link_q"
+
+    @property
+    def affects_karma_type(self):
+        if self.is_self:
+            return None
+
+        return "link"
 
     @property
     def body(self):
@@ -264,6 +285,8 @@ class Link(Thing, Printable):
             admintools.spam(l, banner='banned user')
 
         hooks.get_hook('link.new').call(link=l)
+
+        cast_vote(author, l, Vote.DIRECTIONS.up)
 
         return l
 
@@ -1101,8 +1124,21 @@ class Comment(Thing, Printable):
                      )
     _essentials = ('link_id', 'author_id')
 
+    is_votable = True
+
     def _markdown(self):
         pass
+
+    @property
+    def vote_queue_name(self):
+        if utils.to36(self.link_id) in g.live_config["fastlane_links"]:
+            return "vote_fastlane_q"
+        else:
+            return "vote_comment_q"
+
+    @property
+    def affects_karma_type(self):
+        return "comment"
 
     @classmethod
     def _new(cls, author, link, parent, body, ip):
@@ -1153,6 +1189,8 @@ class Comment(Thing, Printable):
             name = 'selfreply'
 
         c._commit()
+
+        cast_vote(author, c, Vote.DIRECTIONS.up)
 
         if link.num_comments < 20 or link.num_comments % 10 == 0:
             # link's number of comments changed so re-index it, but don't bother

@@ -28,7 +28,6 @@ from r2.lib.db.operators import lower
 from r2.lib.db.userrel   import UserRel
 from r2.lib.db           import tdb_cassandra
 from r2.lib.memoize      import memoize
-from r2.lib.admin_utils  import modhash, valid_hash
 from r2.lib.utils        import randstr, timefromnow
 from r2.lib.utils        import UrlParser
 from r2.lib.utils        import constant_time_compare, canonicalize_email
@@ -336,22 +335,7 @@ class Account(Thing):
             return False
 
         return True
-
-    def modhash(self, rand=None, test=False):
-        if c.oauth_user:
-            # OAuth clients should never receive a modhash of any kind
-            # as they could use it in a CSRF attack to bypass their
-            # permitted OAuth scopes.
-            return None
-        return modhash(self, rand = rand, test = test)
     
-    def valid_hash(self, hash):
-        if self == c.oauth_user:
-            # OAuth authenticated requests do not require CSRF protection.
-            return True
-        else:
-            return valid_hash(self, hash)
-
     @classmethod
     @memoize('account._by_name')
     def _by_name_cache(cls, name, allow_deleted = False):

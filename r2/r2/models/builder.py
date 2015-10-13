@@ -35,6 +35,7 @@ from pylons.i18n import _
 
 from r2.config import feature
 from r2.config.extensions import API_TYPES, RSS_TYPES
+from r2.lib import hooks
 from r2.lib.comment_tree import (
     conversation,
     link_comments_and_sort,
@@ -64,9 +65,10 @@ from r2.models import (
     Thing,
     wiki,
 )
-from r2.models.admintools import compute_votes, ip_span
+from r2.models.admintools import ip_span
 from r2.models.flair import Flair
 from r2.models.listing import Listing
+from r2.models.vote import Vote
 
 
 EXTRA_FACTOR = 1.5
@@ -202,19 +204,31 @@ class Builder(object):
             if hasattr(item, "sr_id") and item.sr_id is not None:
                 w.subreddit = subreddits[item.sr_id]
 
-            w.likes = likes.get((user, item))
+            user_vote_dir = likes.get((user, item))
 
-            # update vote tallies
-            compute_votes(w, item)
+            if user_vote_dir == Vote.DIRECTIONS.up:
+                w.likes = True
+            elif user_vote_dir == Vote.DIRECTIONS.down:
+                w.likes = False
+            else:
+                w.likes = None
+
+            w.upvotes = item._ups
+            w.downvotes = item._downs
+
+            total_votes = max(item.num_votes, 1)
+            w.upvote_ratio = float(item._ups) / total_votes
+
+            w.is_controversial = self._is_controversial(w)
 
             w.score = w.upvotes - w.downvotes
 
-            if w.likes:
+            if user_vote_dir == Vote.DIRECTIONS.up:
                 base_score = w.score - 1
-            elif w.likes is None:
-                base_score = w.score
-            else:
+            elif user_vote_dir == Vote.DIRECTIONS.down:
                 base_score = w.score + 1
+            else:
+                base_score = w.score
 
             # store the set of available scores based on the vote
             # for ease of i18n when there is a label
@@ -303,6 +317,8 @@ class Builder(object):
                         text = _("approved by %s") % approver
                     w.approval_checkmark = text
 
+            hooks.get_hook("builder.wrap_items").call(item=item, wrapped=w)
+
         # recache the user object: it may be None if user is not logged in,
         # whereas now we are happy to have the UnloggedUser object
         user = c.user
@@ -361,6 +377,24 @@ class Builder(object):
 
         if hasattr(item, 'subreddit') and not item.subreddit.can_view(user):
             return True
+
+    def _is_controversial(self, wrapped):
+        """Determine if an item meets all criteria to display as controversial."""
+
+        # A sample-size threshold before posts can be considered controversial
+        num_votes = wrapped.upvotes + wrapped.downvotes
+        if num_votes < g.live_config['cflag_min_votes']:
+            return False
+
+        # If an item falls within a boundary of upvote ratios, it's controversial
+        # e.g. 0.4 < x < 0.6
+        lower = g.live_config['cflag_lower_bound']
+        upper = g.live_config['cflag_upper_bound']
+        if lower <= wrapped.upvote_ratio <= upper:
+            return True
+
+        return False
+
 
 class QueryBuilder(Builder):
     def __init__(self, query, skip=False, num=None, sr_detail=None, count=0,

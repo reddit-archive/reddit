@@ -19,10 +19,8 @@
 # All portions of the code written by reddit are Copyright (c) 2006-2015 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
-import json
 
-from r2.models import Account, Link, Comment, Report, LinksByAccount
-from r2.models.vote import cast_vote, get_votes, VotesByAccount
+from r2.models import Account, Link, Comment, Report, LinksByAccount, VotesByAccount
 from r2.models import Message, Inbox, Subreddit, ModContribSR, ModeratorInbox, MultiReddit
 from r2.lib.db.thing import Thing, Merge
 from r2.lib.db.operators import asc, desc, timeago
@@ -32,7 +30,7 @@ from r2.lib.utils import fetch_things2, tup, UniqueIterator
 from r2.lib import utils
 from r2.lib import amqp, filters
 from r2.lib.comment_tree import add_comments, update_comment_votes
-from r2.lib.eventcollector import EventV2
+from r2.lib.voting import prequeued_vote_key
 from r2.models.promo import PROMOTE_STATUS, PromotionLog
 from r2.models.query_cache import (
     cached_query,
@@ -47,6 +45,7 @@ from r2.models.query_cache import (
     UserQueryCache,
 )
 from r2.models.last_modified import LastModified
+from r2.models.vote import Vote
 from r2.lib.utils import in_chunks, is_subdomain, SimpleSillyStub
 
 import cPickle as pickle
@@ -576,13 +575,13 @@ def rel_query(rel, thing_id, name, filters = []):
 cached_userrel_query = cached_query(UserQueryCache, filter_thing2)
 cached_srrel_query = cached_query(SubredditQueryCache, filter_thing2)
 
-@cached_userrel_query
+@cached_query(UserQueryCache, filter_thing)
 def get_liked(user):
-    return FakeQuery(sort=[desc("_date")])
+    return FakeQuery(sort=[desc("date")])
 
-@cached_userrel_query
+@cached_query(UserQueryCache, filter_thing)
 def get_disliked(user):
-    return FakeQuery(sort=[desc("_date")])
+    return FakeQuery(sort=[desc("date")])
 
 @cached_query(UserQueryCache)
 def get_hidden_links(user_id):
@@ -1086,25 +1085,22 @@ def new_subreddit(sr):
     amqp.add_item('new_subreddit', sr._fullname)
 
 
-def new_vote(vote, foreground=False, timer=None):
-    user = vote._thing1
-    item = vote._thing2
+def new_vote(vote):
+    vote_valid = vote.is_automatic_initial_vote or vote.effects.affects_score
+    thing_valid = not (vote.thing._spam or vote.thing._deleted)
 
-    if timer is None:
-        timer = SimpleSillyStub()
-
-    if vote.valid_thing and not item._spam and not item._deleted:
-        sr = item.subreddit_slow
+    if vote_valid and thing_valid:
+        sr = vote.thing.subreddit_slow
         results = []
 
-        author = Account._byID(item.author_id)
+        author = Account._byID(vote.thing.author_id)
         for sort in ('hot', 'top', 'controversial', 'new'):
-            if isinstance(item, Link):
+            if isinstance(vote.thing, Link):
                 results.append(get_submitted(author, sort, 'all'))
-            if isinstance(item, Comment):
+            if isinstance(vote.thing, Comment):
                 results.append(get_comments(author, sort, 'all'))
 
-        if isinstance(item, Link):
+        if isinstance(vote.thing, Link):
             # don't do 'new', because that was done by new_link, and
             # the time-filtered versions of top/controversial will be
             # done by mr_top
@@ -1113,29 +1109,30 @@ def new_vote(vote, foreground=False, timer=None):
                             get_links(sr, 'controversial', 'all'),
                             ])
 
-            parsed = utils.UrlParser(item.url)
+            parsed = utils.UrlParser(vote.thing.url)
             if not is_subdomain(parsed.hostname, 'imgur.com'):
                 for domain in parsed.domain_permutations():
                     for sort in ("hot", "top", "controversial"):
                         results.append(get_domain_links(domain, sort, "all"))
+        elif isinstance(vote.thing, Comment):
+            update_comment_votes([vote.thing])
 
-        add_queries(results, insert_items = item, foreground=foreground)
-
-    timer.intermediate("permacache")
+        add_queries(results, insert_items=vote.thing)
     
-    if isinstance(item, Link):
-        # must update both because we don't know if it's a changed
-        # vote
+    if isinstance(vote.thing, Link):
         with CachedQueryMutator() as m:
-            if vote._name == '1':
-                m.insert(get_liked(user), [vote])
-                m.delete(get_disliked(user), [vote])
-            elif vote._name == '-1':
-                m.delete(get_liked(user), [vote])
-                m.insert(get_disliked(user), [vote])
-            else:
-                m.delete(get_liked(user), [vote])
-                m.delete(get_disliked(user), [vote])
+            # if this is a changed vote, remove from the previous cached query
+            if vote.previous_vote:
+                if vote.previous_vote.is_upvote:
+                    m.delete(get_liked(vote.user), [vote.previous_vote])
+                elif vote.previous_vote.is_downvote:
+                    m.delete(get_disliked(vote.user), [vote.previous_vote])
+
+            # and then add to the new cached query
+            if vote.is_upvote:
+                m.insert(get_liked(vote.user), [vote])
+            elif vote.is_downvote:
+                m.insert(get_disliked(vote.user), [vote])
 
 
 def new_message(message, inbox_rels, add_to_sent=True, update_modmail=True):
@@ -1726,73 +1723,31 @@ def run_commentstree(qname="commentstree_q", limit=100):
 
     amqp.handle_items(qname, _run_commentstree, limit = limit)
 
-vote_link_q = 'vote_link_q'
-vote_comment_q = 'vote_comment_q'
-vote_fastlane_q = 'vote_fastlane_q'
-
-vote_names_by_dir = {True: "1", None: "0", False: "-1"}
-vote_dirs_by_name = {v: k for k, v in vote_names_by_dir.iteritems()}
-
-def queue_vote(user, thing, dir, ip, vote_info=None, cheater=False, store=True,
-        send_event=True):
-    # set the vote in memcached so the UI gets updated immediately
-    key = prequeued_vote_key(user, thing)
-    grace_period = int(g.vote_queue_grace_period.total_seconds())
-    g.cache.set(key, vote_names_by_dir[dir], time=grace_period+1)
-
-    # update LastModified immediately to help us cull prequeued_vote lookups
-    rel_cls = VotesByAccount.rel(user.__class__, thing.__class__)
-    LastModified.touch(user._fullname, rel_cls._last_modified_name)
-
-    # queue the vote to be stored unless told not to
-    if store:
-        if isinstance(thing, Link):
-            if thing._id36 in g.live_config["fastlane_links"]:
-                qname = vote_fastlane_q
-            else:
-                if g.shard_link_vote_queues:
-                    qname = "vote_link_%s_q" % str(thing.sr_id)[-1]
-                else:
-                    qname = vote_link_q
-
-        elif isinstance(thing, Comment):
-            if utils.to36(thing.link_id) in g.live_config["fastlane_links"]:
-                qname = vote_fastlane_q
-            else:
-                qname = vote_comment_q
-        else:
-            log.warning("%s tried to vote on %r. that's not a link or comment!",
-                        user, thing)
-            return
-
-        vote = {
-            "uid": user._id,
-            "tid": thing._fullname,
-            "dir": dir,
-            "ip": ip,
-            "info": vote_info,
-            "cheater": cheater,
-        }
-
-        if send_event:
-            # the vote event will actually be sent from an async queue
-            # processor, so we need to pull out the context data at this point
-            vote["event_data"] = {
-                "context": EventV2.get_context_data(request, c),
-                "sensitive": EventV2.get_sensitive_context_data(request, c),
-            }
-
-        amqp.add_item(qname, json.dumps(vote))
-
-def prequeued_vote_key(user, item):
-    return 'registered_vote_%s_%s' % (user._id, item._fullname)
-
 
 def _by_type(items):
     by_type = collections.defaultdict(list)
     for item in items:
         by_type[item.__class__].append(item)
     return by_type
+
+
+def get_stored_votes(user, things):
+    if not user or not things:
+        return {}
+
+    results = {}
+    things_by_type = _by_type(things)
+
+    for thing_class, items in things_by_type.iteritems():
+        if not thing_class.is_votable:
+            continue
+
+        rel_class = VotesByAccount.rel(thing_class)
+        votes = rel_class.fast_query(user, items)
+        for cross, direction in votes.iteritems():
+            results[cross] = Vote.deserialize_direction(int(direction))
+
+    return results
 
 
 def get_likes(user, requested_items):
@@ -1809,14 +1764,13 @@ def get_likes(user, requested_items):
     items_in_grace_period = {}
     items_by_type = _by_type(requested_items)
     for type_, items in items_by_type.iteritems():
-        try:
-            rel_cls = VotesByAccount.rel(user.__class__, type_)
-        except tdb_cassandra.TdbException:
+        if not type_.is_votable:
             # these items can't be voted on. just mark 'em as None and skip.
             for item in items:
                 res[(user, item)] = None
             continue
 
+        rel_cls = VotesByAccount.rel(type_)
         last_vote = getattr(last_modified, rel_cls._last_modified_name, None)
         if last_vote:
             time_since_last_vote = datetime.now(pytz.UTC) - last_vote
@@ -1848,70 +1802,13 @@ def get_likes(user, requested_items):
             "vote.prequeued.fetch", delta=len(items_in_grace_period))
         r = g.cache.get_multi(items_in_grace_period.keys())
         for key, v in r.iteritems():
-            res[items_in_grace_period[key]] = vote_dirs_by_name[v]
+            res[items_in_grace_period[key]] = Vote.deserialize_direction(v)
 
-    cassavotes = get_votes(
+    cassavotes = get_stored_votes(
         user, [i for i in requested_items if (user, i) not in res])
     res.update(cassavotes)
 
     return res
-
-
-def handle_vote(user, thing, vote, foreground=False, timer=None, date=None):
-    if timer is None:
-        timer = SimpleSillyStub()
-
-    from r2.lib.db import tdb_sql
-    from sqlalchemy.exc import IntegrityError
-    try:
-        v = cast_vote(user, thing, vote, timer=timer, date=date)
-    except (tdb_sql.CreationError, IntegrityError):
-        g.log.error("duplicate vote for: %s" % str((user, thing, dir)))
-        return
-
-    new_vote(v, foreground=foreground, timer=timer)
-
-
-def process_votes(qname, limit=0):
-    # limit is taken but ignored for backwards compatibility
-    stats_qname = qname
-    if stats_qname.startswith("vote_link"):
-        stats_qname = "vote_link_q"
-
-    @g.stats.amqp_processor(stats_qname)
-    def _handle_vote(msg):
-        timer = stats.get_timer("service_time." + stats_qname)
-        timer.start()
-
-        vote = json.loads(msg.body)
-
-        voter = Account._byID(vote["uid"], data=True)
-        votee = Thing._by_fullname(vote["tid"], data=True)
-        timer.intermediate("preamble")
-
-        # Convert the naive timestamp we got from amqplib to a
-        # timezone aware one.
-        tt = mktime(msg.timestamp.timetuple())
-        date = datetime.utcfromtimestamp(tt).replace(tzinfo=pytz.UTC)
-
-        # I don't know how, but somebody is sneaking in votes
-        # for subreddits
-        if isinstance(votee, (Link, Comment)):
-            print (voter, votee, vote["dir"], vote["ip"], vote["info"],
-                   vote["cheater"])
-            handle_vote(voter, votee, vote, foreground=True, timer=timer,
-                        date=date)
-
-        if isinstance(votee, Comment):
-            update_comment_votes([votee])
-            timer.intermediate("update_comment_votes")
-
-        stats.simple_event('vote.total')
-        if vote["cheater"]:
-            stats.simple_event('vote.cheater')
-        timer.flush()
-
-    amqp.consume_items(qname, _handle_vote, verbose = False)
 
 
 def consume_mark_all_read():

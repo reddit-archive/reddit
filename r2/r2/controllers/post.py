@@ -109,9 +109,11 @@ class PostController(ApiController):
         request.environ['usable_error_content'] = errpage.render()
         self.abort403()
 
-    @validate(VModhash(fatal=False),
-              over18 = nop('over18'),
-              dest = VDestination(default = '/'))
+    @csrf_exempt
+    @validate(
+        over18=nop('over18'),
+        dest=VDestination(default='/'),
+    )
     def POST_over18(self, over18, dest):
         if over18 == 'yes':
             if c.user_is_loggedin and not c.errors:

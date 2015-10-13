@@ -832,9 +832,6 @@ class Subreddit(Thing, Printable, BaseSite):
                      or self.is_moderator(user)
                      or self.is_contributor(user)))
 
-    def can_give_karma(self, user):
-        return self.is_special(user)
-
     def should_ratelimit(self, user, kind):
         if self.is_special(user):
             return False

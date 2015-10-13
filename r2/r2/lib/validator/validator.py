@@ -950,15 +950,30 @@ class VVerifyPassword(Validator):
 class VModhash(Validator):
     handles_csrf = True
     default_param = 'uh'
+
     def __init__(self, param=None, fatal=True, *a, **kw):
         Validator.__init__(self, param, *a, **kw)
         self.fatal = fatal
 
-    def run(self, uh):
-        if uh is None:
-            uh = request.headers.get('X-Modhash')
+    def run(self, modhash):
+        # OAuth authenticated requests do not require CSRF protection.
+        if c.oauth_user:
+            return
 
-        if not c.user_is_loggedin or uh != c.user.name:
+        VUser().run()
+
+        if modhash is None:
+            modhash = request.headers.get('X-Modhash')
+
+        hook = hooks.get_hook("modhash.validate")
+        result = hook.call_until_return(modhash=modhash)
+
+        # if no plugins validate the hash, just check if it's the user name
+        if result is None:
+            result = (modhash == c.user.name)
+
+        if not result:
+            g.stats.simple_event("event.modhash.invalid")
             if self.fatal:
                 abort(403)
             self.set_error('INVALID_MODHASH')
@@ -977,27 +992,15 @@ class VModhashIfLoggedIn(Validator):
         Validator.__init__(self, param, *a, **kw)
         self.fatal = fatal
 
-    def run(self, uh):
-        # import here so that we don't close around VModhash
-        # before r2admin can override
+    def run(self, modhash):
         if c.user_is_loggedin:
-            from r2.lib.validator import VModhash
-            VModhash(fatal=self.fatal).run(uh)
+            VModhash(fatal=self.fatal).run(modhash)
 
     def param_docs(self):
         return {
             '%s / X-Modhash header' % self.param: 'a [modhash](#modhashes)',
         }
 
-
-class VVotehash(Validator):
-    def run(self, vh):
-        return None
-
-    def param_docs(self):
-        return {
-            self.param[0]: "ignored",
-        }
 
 class VAdmin(Validator):
     def run(self):
@@ -1016,10 +1019,7 @@ def make_or_admin_secret_cls(base_cls):
                 return True
             super(VOrAdminSecret, self).run()
 
-            # import here so that we don't close around VModhash
-            # before r2admin can override
             if request.method.upper() != "GET":
-                from r2.lib.validator import VModhash
                 VModhash(fatal=True).run(request.POST.get("uh"))
 
             return False

@@ -33,7 +33,7 @@
   <div class="explore-header">
     <span id="explore-settings">
       <form method="POST" action="/post/explore_settings">
-        <input type="hidden" name="uh" value="${c.user.modhash()}">
+        <input type="hidden" name="uh" value="${c.modhash}">
         <span>
           <input type="checkbox" name="pers" value=1 ${"checked" if thing.settings.personalized else ""}>
             ${_("personalized")}

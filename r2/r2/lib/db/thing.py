@@ -563,6 +563,8 @@ class Thing(DataThing):
     _incr_data = staticmethod(tdb.incr_thing_data)
     _type_prefix = 't'
 
+    is_votable = False
+
     def __init__(self, ups = 0, downs = 0, date = None, deleted = False,
                  spam = False, id = None, **attrs):
         DataThing.__init__(self)
@@ -617,6 +619,10 @@ class Thing(DataThing):
     @property
     def _confidence(self):
         return sorts.confidence(self._ups, self._downs)
+
+    @property
+    def num_votes(self):
+        return self._ups + self._downs
 
     @classmethod
     def _build(cls, id, bases):

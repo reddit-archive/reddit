@@ -34,9 +34,6 @@ count_period = g.rising_period
 def incr_counts(wrapped):
     pass
 
-def incr_sr_count(sr):
-    pass
-
 def get_link_counts(period = count_period):
     links = Link._query(Link.c._date >= utils.timeago(period),
                         limit=50, data = True)

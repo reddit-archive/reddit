@@ -42,7 +42,6 @@ from r2.lib.db.thing import Query, Merge, Relations
 from r2.lib.db import queries
 from r2.lib.strings import Score
 from r2.lib.template_helpers import add_sr
-from r2.lib.admin_utils import check_cheating
 from r2.lib.csrf import csrf_exempt
 from r2.lib.utils import (
     extract_user_mentions,
@@ -239,7 +238,6 @@ class ListingController(RedditController):
     @require_oauth2_scope("read")
     @base_listing
     def GET_listing(self, **env):
-        check_cheating('site')
         if self.can_send_referrer():
             c.referrer_policy = "always"
         return self.build_listing(**env)
@@ -926,8 +924,6 @@ class UserController(ListingController):
                 category = None
             self.savedsr = sr
             self.savedcategory = category
-
-        check_cheating('user')
 
         self.vuser = vuser
         self.render_params = {'user' : vuser}
@@ -1692,7 +1688,6 @@ class UserListListingController(ListingController):
             abort(404)
 
         kw['num'] = 0
-        check_cheating('site')
         return self.build_listing(**kw)
 
 
@@ -1774,7 +1769,6 @@ class UserListListingController(ListingController):
         if not self.paginated:
             kw['num'] = 0
 
-        check_cheating('site')
         return self.build_listing(**kw)
 
 

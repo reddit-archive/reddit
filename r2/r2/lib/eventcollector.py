@@ -68,60 +68,57 @@ class EventQueue(object):
 
     @squelch_exceptions
     @sampled("events_collector_vote_sample_rate")
-    def vote_event(self, vote, old_vote=None,
-            context_data=None, sensitive_context_data=None):
+    def vote_event(self, vote):
         """Create a 'vote' event for event-collector
 
-        vote: An Storage object representing the new vote, as handled by
-            vote.py / queries.py
-        old_vote: A Storage object representing the previous vote on this
-            thing, if there is one. NOTE: This object has a different
-            set of attributes compared to the new "vote" object.
-        context_data: A dict of fields from EventV2.get_context_data().
-            Necessary because the vote event is sent from an async process
-            separate from the actual vote request.
-        sensitive_context_data: A dict of fields from
-            EventV2.get_sensitive_context_data(). Will be sent to the event
-            collector flagged as needing obfuscation. Necessary for the
-            same reason as `context_data`.
-
+        vote: An r2.models.vote Vote object
         """
-        # Mapping of stored vote "names" to more readable ones
-        vote_dirs = {"1": "up", "0": "clear", "-1": "down"}
+        
+        # For mapping vote directions to readable names used by data team
+        def get_vote_direction_name(vote):
+            if vote.is_upvote:
+                return "up"
+            elif vote.is_downvote:
+                return "down"
+            else:
+                return "clear"
 
         event = EventV2(
             topic="vote_server",
             event_type="server_vote",
-            time=vote._date,
-            data=context_data,
-            obfuscated_data=sensitive_context_data,
+            time=vote.date,
+            data=vote.event_data["context"],
+            obfuscated_data=vote.event_data["sensitive"],
         )
 
-        event.add("vote_direction", vote_dirs[vote._name])
+        event.add("vote_direction", get_vote_direction_name(vote))
 
-        subreddit = vote._thing2.subreddit_slow
+        subreddit = vote.thing.subreddit_slow
         event.add("sr_id", subreddit._id)
         event.add("sr_name", subreddit.name)
 
-        target = vote._thing2
+        target = vote.thing
         target_type = target.__class__.__name__.lower()
         if target_type == "link" and target.is_self:
             target_type = "self"
         event.add("target_fullname", target._fullname)
         event.add("target_type", target_type)
 
-        if old_vote:
-            event.add("prev_vote_direction",  vote_dirs[old_vote.direction])
-            event.add("prev_vote_ts", _epoch_to_millis(old_vote.date))
+        if vote.previous_vote:
+            event.add("prev_vote_direction",
+                get_vote_direction_name(vote.previous_vote))
+            event.add("prev_vote_ts",
+                _epoch_to_millis(epoch_timestamp(vote.previous_vote.date)))
 
-        if event.get("user_id") == target.author_id and not old_vote:
+        if vote.is_automatic_initial_vote:
             event.add("auto_self_vote", True)
 
-        hook = hooks.get_hook("event.get_private_vote_data")
-        private_data = hook.call_until_return(vote=vote)
-        if private_data:
-            for name, value in private_data.iteritems():
-                event.add(name, value)
+        for name, value in vote.effects.serializable_data.iteritems():
+            # rename the "notes" field to "process_notes" for the event
+            if name == "notes":
+                name = "process_notes"
+
+            event.add(name, value)
 
         self.save_event(event)
 

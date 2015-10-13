@@ -89,7 +89,7 @@ class OAuth2FrontendController(RedditController):
             resp["error"] = "unauthorized_client"
         elif (errors.OAUTH2_ACCESS_DENIED, "authorize") in c.errors:
             resp["error"] = "access_denied"
-        elif (errors.BAD_HASH, None) in c.errors:
+        elif (errors.INVALID_MODHASH, None) in c.errors:
             resp["error"] = "access_denied"
         elif (errors.INVALID_OPTION, "response_type") in c.errors:
             resp["error"] = "unsupported_response_type"
