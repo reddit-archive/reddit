@@ -519,7 +519,6 @@ class IdentityJsonTemplate(ThingJsonTemplate):
         over_18="pref_over_18",
         gold_creddits="gold_creddits",
         gold_expiration="gold_expiration",
-        is_banned="in_timeout",
         ban_expiration_utc="ban_expiration_utc",
     )
 
@@ -527,6 +526,8 @@ class IdentityJsonTemplate(ThingJsonTemplate):
         attrs = self._data_attrs_.copy()
         if c.user_is_loggedin and thing._id == c.user._id:
             attrs.update(self._private_data_attrs)
+            if feature.is_enabled('timeouts'):
+                attrs.update({"is_banned": "in_timeout"})
         if thing.pref_hide_from_robots:
             response.headers['X-Robots-Tag'] = 'noindex, nofollow'
         data = {k: self.thing_attr(thing, v) for k, v in attrs.iteritems()}

@@ -867,7 +867,8 @@ class UserController(ListingController):
         if not vuser:
             return self.abort404()
 
-        if (vuser.in_timeout and
+        if (feature.is_enabled('timeouts') and
+                vuser.in_timeout and
                 vuser != c.user and
                 not c.user_is_admin and
                 not vuser.timeout_expiration):
@@ -1286,6 +1287,8 @@ class MessageController(ListingController):
 
         captcha = Captcha() if c.user.needs_captcha() else None
 
+        restrict_recipient = feature.is_enabled('timeouts') and c.user.in_timeout
+
         if subreddit_message:
             content = ModeratorMessageCompose(
                 mod_srs,
@@ -1294,14 +1297,14 @@ class MessageController(ListingController):
                 subject=subject,
                 captcha=captcha,
                 message=message,
-                restrict_recipient=c.user.in_timeout)
+                restrict_recipient=restrict_recipient)
         else:
             content = MessageCompose(
                 to=to,
                 subject=subject,
                 captcha=captcha,
                 message=message,
-                restrict_recipient=c.user.in_timeout)
+                restrict_recipient=restrict_recipient)
 
         return MessagePage(
             content=content,
@@ -1748,7 +1751,8 @@ class UserListListingController(ListingController):
             abort(403)
 
         self.listing_cls = None
-        self.editable = not (c.user_is_loggedin and c.user.in_timeout)
+        self.editable = not (c.user_is_loggedin and c.user.in_timeout and
+                             feature.is_enabled('timeouts'))
         self.paginated = True
         self.jump_to_val = request.GET.get('user')
         self.show_not_found = bool(self.jump_to_val)

@@ -128,6 +128,9 @@
 <%def name="javascript_bottom()">
   <% from r2.lib import js %>
   ${unsafe(js.use('reddit'))}
+  %if thing.show_timeout_modal:
+    ${unsafe(js.use('timeouts'))}
+  %endif
   ${unsafe(c.js_preload.use())}
 </%def>
 

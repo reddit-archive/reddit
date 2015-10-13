@@ -311,7 +311,8 @@ class Reddit(Templated):
                     infotext = strings.read_only_msg
                 elif g.live_config.get("announcement_message"):
                     infotext = g.live_config["announcement_message"]
-            if c.user_is_loggedin and c.user.in_timeout:
+            if (feature.is_enabled('timeouts') and c.user_is_loggedin and
+                    c.user.in_timeout):
                 timeout_days_remaining = c.user.days_remaining_in_timeout
 
                 if timeout_days_remaining:
@@ -416,7 +417,8 @@ class Reddit(Templated):
 
         self.toolbars = self.build_toolbars()
 
-        if c.user_is_loggedin and c.user.in_timeout:
+        if (feature.is_enabled('timeouts') and c.user_is_loggedin and
+                c.user.in_timeout):
             self.show_timeout_modal = True
             self.timeout_days_remaining = c.user.days_remaining_in_timeout
 
@@ -2204,7 +2206,7 @@ class ProfilePage(Reddit):
         classes = Reddit.page_classes(self)
 
         if c.user_is_admin:
-            if self.user.in_timeout:
+            if self.user.in_timeout and feature.is_enabled('timeouts'):
                 if self.user.timeout_expiration:
                     classes.add("user-in-timeout-temp")
                 else:
@@ -3390,6 +3392,7 @@ class NewLink(Templated):
         self.resubmit = resubmit
         self.default_sr = default_sr
         self.extra_subreddits = extra_subreddits
+        self.show_timeout_errors = feature.is_enabled('timeouts')
 
         Templated.__init__(self, captcha = captcha, url = url,
                          title = title, text = text)
@@ -3689,7 +3692,7 @@ class WrappedUser(CachedTemplate):
         karma = ''
         if c.user_is_admin:
             karma = ' (%d)' % user.link_karma
-            if user.in_timeout:
+            if user.in_timeout and feature.is_enabled('timeouts'):
                 if user.timeout_expiration:
                     author_cls += " user-in-timeout-temp"
                 else:

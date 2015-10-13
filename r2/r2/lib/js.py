@@ -494,7 +494,6 @@ module["reddit"] = LocalizedModule("reddit.js",
     "popup.js",
     "login.js",
     "locked.js",
-    "timeouts.js",
     "newsletter.js",
     "flair.js",
     "interestbar.js",
@@ -517,6 +516,11 @@ module["reddit"] = LocalizedModule("reddit.js",
         "moderator_invite": ModeratorPermissionSet,
     }),
     wrap=catch_errors,
+)
+
+# move into reddit module just after permissions when released
+module["timeouts"] = Module("timeouts.js",
+    "timeouts.js",
 )
 
 module["admin"] = Module("admin.js",

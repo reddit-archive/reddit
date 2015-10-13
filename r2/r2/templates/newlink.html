@@ -148,7 +148,9 @@ ${thing.captcha}
   <span class="status"></span>
   ${error_field("RATELIMIT", "ratelimit")}
   ${error_field("INVALID_OPTION", "sr")}
-  ${error_field("IN_TIMEOUT", "sr")}
+  %if thing.show_timeout_errors:
+    ${error_field("IN_TIMEOUT", "sr")}
+  %endif
 </div>
 </%utils:submit_form>
 
