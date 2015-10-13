@@ -500,6 +500,16 @@ var exports = r.sponsored = {
         this.inventory = {}
         this.campaignListColumns = $('.existing-campaigns thead th').length
         $("input[name='media_url_type']").on("change", this.mediaInputChange)
+
+        this.initUploads();
+    },
+
+    initUploads: function() {
+      $('.c-image-upload')
+        .imageUpload()
+        .on('failed.imageUpload', function(e, data) {
+          alert(data.message);
+        });
     },
 
     setup: function(inventory_by_sr, priceDict, isEmpty, userIsSponsor) {

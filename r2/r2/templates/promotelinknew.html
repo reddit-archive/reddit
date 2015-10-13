@@ -20,10 +20,15 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
+<%!
+   from r2.lib import js
+%>
+
 <%namespace file="promotelinkbase.html" import="title_field, content_field, managed_field, image_field" />
 <%namespace file="utils.html" import="error_field" />
 <%namespace name="utils" file="utils.html"/>
 
+${unsafe(js.use('sponsored'))}
 
 <div class="create-promotion sponsored-page">
   <div class="dashboard">
@@ -31,39 +36,33 @@
       <h2>new promotion</h2>
     </header>
     <div class="dashboard-content">
-      <form method="post" action="/api/create_promo"
-            class="pretty-form promotelink-editor editor"
-            id="promo-form"
-            target="upload-iframe"
-            enctype="multipart/form-data">
+      <div class="pretty-form promotelink-editor editor" id="promo-form">
         ## need to set the modhash because we're not using a helper method to post the form
         <input type="hidden" name="uh" value="${c.modhash}">
         <input type="hidden" name="id" value="#promo-form">
-
         <div class="editor-group">
-          ${image_field()}
-        </div>
-        <div class="editor-group">
-        %if c.user_is_sponsor:
-         ${username_field()}
-         ${managed_field(None)}
-        %endif
-        ${title_field(None, editable=True)}
-        ${content_field(None, editable=True, enable_override=c.user_is_sponsor,
-                        tracker_access=c.user_can_track_ads)}
-        <footer class="buttons">
-          <div class="rules">
-            By clicking "next" you agree to the&#32;<a href="https://www.reddit.com/wiki/selfserve#wiki_online_self_serve_advertising_rules" target="_blank">Self Serve Advertising Rules.</a>
-          </div>
-
-          ${error_field("RATELIMIT", "ratelimit")}
-          &#32;
-          <span class="status error"></span>
-          ${error_field("RATELIMIT", "ratelimit")}
-          <button name="create" class="btn primary-button" type="submit">
-            ${_("next")}
-          </button>
-        </footer>
+          ${image_field(images=thing.images)}
+          %if c.user_is_sponsor:
+            ${username_field()}
+            ${managed_field(None)}
+          %endif
+          ${title_field(None, editable=True)}
+          ${content_field(None, editable=True, enable_override=c.user_is_sponsor,
+                          tracker_access=c.user_can_track_ads)}
+          <footer class="buttons">
+            <div class="rules">
+              By clicking "next" you agree to the&#32;<a href="http://www.reddit.com/wiki/selfserve#wiki_online_self_serve_advertising_rules" target="_blank">Self Serve Advertising Rules.</a>
+            </div>
+            ${error_field("RATELIMIT", "ratelimit")}
+            &#32;
+            <span class="status error"></span>
+            ${error_field("RATELIMIT", "ratelimit")}
+            <button
+                name="create" class="btn primary-button" type="button"
+                onclick="return post_pseudo_form('#promo-form', 'create_promo')">
+              ${_("next")}
+            </button>
+          </footer>
         </div>
       </form>
       <iframe src="about:blank" width="600" height="200" 
@@ -85,3 +84,7 @@
     </div>
   </%utils:line_field>
 </%def>
+
+<script type="text/javascript">
+  r.sponsored.initUploads();
+</script>

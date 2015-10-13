@@ -4356,7 +4356,10 @@ class PromoteLinkBase(Templated):
 
 
 class PromoteLinkNew(PromoteLinkBase):
-    pass
+    def __init__(self, images=None, *a, **kw):
+        images = images or {}
+        self.images = images
+        PromoteLinkBase.__init__(self, **kw)
 
 
 class PromoteLinkEdit(PromoteLinkBase):

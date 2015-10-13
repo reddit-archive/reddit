@@ -180,10 +180,14 @@ def is_pending(campaign):
     today = promo_datetime_now().date()
     return today < to_date(campaign.start_date)
 
-def update_query(base_url, query_updates):
+def update_query(base_url, query_updates, unset=False):
     scheme, netloc, path, params, query, fragment = urlparse.urlparse(base_url)
     query_dict = urlparse.parse_qs(query)
     query_dict.update(query_updates)
+
+    if unset:
+        query_dict = dict((k, v) for k, v in query_dict.iteritems() if v is not None)
+
     query = urllib.urlencode(query_dict, doseq=True)
     return urlparse.urlunparse((scheme, netloc, path, params, query, fragment))
 
