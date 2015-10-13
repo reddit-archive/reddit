@@ -4309,9 +4309,9 @@ class PromoteLinkBase(Templated):
     max_start = None
     max_end = None
 
-    def __init__(self, *a, **kw):
+    def __init__(self, **kw):
         self.mobile_targeting_enabled = feature.is_enabled("mobile_targeting")
-        super(PromoteLinkBase, self).__init__(*a, **kw)
+        Templated.__init__(self, **kw)
 
     def get_locations(self): 
         # geotargeting
@@ -4363,13 +4363,13 @@ class PromoteLinkNew(PromoteLinkBase):
     def __init__(self, images=None, *a, **kw):
         images = images or {}
         self.images = images
-        super(PromoteLinkNew, self).__init__(*a, **kw)
+        PromoteLinkBase.__init__(self, **kw)
 
 
 class PromoteLinkEdit(PromoteLinkBase):
     def __init__(self, link, listing, *a, **kw):
         self.setup(link, listing)
-        super(PromoteLinkNew, self).__init__(*a, **kw)
+        PromoteLinkBase.__init__(self, **kw)
 
     def setup(self, link, listing):
         self.bids = []
