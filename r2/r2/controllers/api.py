@@ -857,6 +857,10 @@ class ApiController(RedditController):
                 required_perms.append('wiki')
             else:
                 required_perms.append('access')
+                # ability to unmute requires access and mail permissions
+                if type == 'muted':
+                    required_perms.append('mail')
+
         if (not c.user_is_admin
             and (type in self._sr_friend_types
                  and not container.is_moderator_with_perms(
