@@ -127,6 +127,7 @@ $(function() {
         r.filter.init()
         r.newsletter.ui.init()
         r.cachePoisoning.init()
+        r.locked.init();
     } catch (err) {
         r.sendError('Error during base.js init', err.toString());
     }

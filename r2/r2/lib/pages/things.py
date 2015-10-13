@@ -237,6 +237,7 @@ class CommentButtons(PrintableButtons):
                                   deleted = thing.deleted,
                                   parent_permalink = thing.parent_permalink, 
                                   can_reply = thing.can_reply,
+                                  locked = thing.link.locked,
                                   suppress_reply_buttons = suppress_reply_buttons,
                                   show_report=show_report,
                                   mod_reports=thing.mod_reports,

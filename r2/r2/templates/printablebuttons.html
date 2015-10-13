@@ -409,9 +409,13 @@
     ${self.give_gold()}
     ${self.show_admin_context()}
 
-    %if not getattr(thing, "suppress_reply_buttons", False) and thing.can_reply:
+    %if not getattr(thing, "suppress_reply_buttons", False) and (thing.can_reply or thing.locked):
       <li class="reply-button">
+      %if thing.can_reply:
         ${self.simple_button(_("reply {verb}"), "reply")}
+      %else:
+        ${self.simple_button(_("reply {verb}"), "void", css_class="locked-error")}
+      %endif
       </li>
     %endif
 
