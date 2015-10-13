@@ -321,6 +321,8 @@ class Link(Thing, Printable):
 
     def keep_item(self, wrapped):
         user = c.user if c.user_is_loggedin else None
+        if not c.user_is_admin and self._deleted:
+            return False
 
         if not (c.user_is_admin or (isinstance(c.site, DomainSR) and
                                     wrapped.subreddit.is_moderator(user))):
