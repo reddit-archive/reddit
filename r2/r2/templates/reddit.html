@@ -181,7 +181,7 @@
         <%include file="prefoptions.html" />
       </script>
     %endif
-    %if c.user_is_loggedin and c.user.in_timeout:
+    %if thing.show_timeout_modal:
       <script id="access-popup" type="text/template">
         ${InTimeoutInterstitial(timeout_days_remaining=thing.timeout_days_remaining,
                                 hide_message=True)}

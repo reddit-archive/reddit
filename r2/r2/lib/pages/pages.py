@@ -284,6 +284,7 @@ class Reddit(Templated):
         self.locationbar = None
         self.infobar = None
         self.mobilewebredirectbar = None
+        self.show_timeout_modal = False
 
         # generate a canonical link for google
         self.canonical_link = request.fullpath
@@ -416,6 +417,7 @@ class Reddit(Templated):
         self.toolbars = self.build_toolbars()
 
         if c.user_is_loggedin and c.user.in_timeout:
+            self.show_timeout_modal = True
             self.timeout_days_remaining = c.user.days_remaining_in_timeout
 
         has_style_override = (c.user.pref_default_theme_sr and
