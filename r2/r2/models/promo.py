@@ -371,7 +371,7 @@ class PromoCampaign(Thing):
     @classmethod
     def priority_name_from_priority(cls, priority):
         if not priority in PROMOTE_PRIORITIES.values():
-            raise ValueError("%s is not a valid priority" % val)
+            raise ValueError("%s is not a valid priority" % priority.name)
         return priority.name
 
     @classmethod
