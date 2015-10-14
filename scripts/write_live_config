@@ -25,6 +25,7 @@
 from difflib import SequenceMatcher
 import itertools
 import os
+from pprint import PrettyPrinter
 import sys
 import json
 import getpass
@@ -81,6 +82,20 @@ def write_config_to_zookeeper(node, username, password, config, live_config):
         client.set(node, compressed_data)
 
 
+def get_comparable_repr(obj):
+    """Return a representation of the object that can be string-compared."""
+
+    # If the object is a dict, we'll use the pprint module, because it
+    # automatically sorts by key when generating its output for dicts
+    if isinstance(obj, dict):
+        # specify a huge width so it never tries to wrap the output
+        printer = PrettyPrinter(width=1000000)
+        return printer.pformat(obj)
+
+    # Otherwise, just use the standard repr for that object type
+    return repr(obj)
+
+
 def print_dict_diff(old, new):
     """Output changes between two dicts."""
 
@@ -105,7 +120,10 @@ def print_dict_diff(old, new):
 
         # otherwise, see how similar the reprs are, and if it's less
         # than 50% similar, just display it as a removal and addition
-        matcher = SequenceMatcher(a=repr(old[key]), b=repr(new[key]))
+        old_repr = get_comparable_repr(old[key])
+        new_repr = get_comparable_repr(new[key])
+        matcher = SequenceMatcher(a=old_repr, b=new_repr)
+
         if matcher.ratio() < 0.5:
             added_keys.add(key)
             removed_keys.add(key)
@@ -131,7 +149,10 @@ def print_dict_diff(old, new):
         if key in changed_keys:
             print "! {key:<{length}s} :".format(key=key, length=max_key_length)
 
-            matcher = SequenceMatcher(a=repr(old[key]), b=repr(new[key]))
+            old_repr = get_comparable_repr(old[key])
+            new_repr = get_comparable_repr(new[key])
+            matcher = SequenceMatcher(a=old_repr, b=new_repr)
+
             for tag, i, j, m, n in matcher.get_opcodes():
                 if tag == "equal":
                     continue
