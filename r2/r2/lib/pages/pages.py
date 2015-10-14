@@ -4695,6 +4695,19 @@ class Bookings(object):
         self.subreddit = 0
         self.collection = 0
 
+    def __add__(self, other):
+        if isinstance(other, int) and other == 0:
+            return self
+
+        added = Bookings()
+        added.subreddit = self.subreddit + other.subreddit
+        added.collection = self.collection + other.collection
+
+        return added
+
+    def __radd__(self, other):
+        return self.__add__(other)
+
     def __repr__(self):
         if self.subreddit and not self.collection:
             return format_number(self.subreddit)
@@ -4768,7 +4781,7 @@ class PromoteInventory(PromoteLinkBase):
         account_ids = {link.author_id for link in links_by_id.itervalues()}
         accounts_by_id = Account._byID(account_ids, data=True)
 
-        self.header = ['link'] + [date.strftime("%m/%d/%Y") for date in dates]
+        self.header = ['link'] + [date.strftime("%m/%d/%Y") for date in dates] + ['total']
         rows = []
         for link_id, imps_by_date in imps_by_link.iteritems():
             link = links_by_id[link_id]
@@ -4778,14 +4791,16 @@ class PromoteInventory(PromoteLinkBase):
                 'edit_url': promote.promo_edit_url(link),
             }
             row = Storage(info=info, is_total=False)
-            row.columns = [str(imps_by_date[date]) for date in dates]
+            row.columns = ([str(imps_by_date[date]) for date in dates] +
+                [str(sum(imps_by_date.values()))])
             rows.append(row)
         rows.sort(key=lambda row: row.info['author'].lower())
 
         total_row = Storage(
             info={'title': 'total'},
             is_total=True,
-            columns=[str(total_by_date[date]) for date in dates],
+            columns=([str(total_by_date[date]) for date in dates] +
+                [str(sum(total_by_date.values()))]),
         )
         rows.append(total_row)
 
@@ -4795,7 +4810,8 @@ class PromoteInventory(PromoteLinkBase):
         predicted_row = Storage(
             info={'title': 'predicted'},
             is_total=True,
-            columns=[format_number(predicted_pageviews) for date in dates],
+            columns=([format_number(predicted_pageviews) for date in dates] +
+                [format_number(sum([predicted_pageviews for date in dates]))]),
         )
         rows.append(predicted_row)
 
@@ -4804,7 +4820,8 @@ class PromoteInventory(PromoteLinkBase):
         remaining_row = Storage(
             info={'title': 'remaining'},
             is_total=True,
-            columns=[format_number(available_pageviews[date]) for date in dates],
+            columns=([format_number(available_pageviews[date]) for date in dates] +
+                [format_number(sum(available_pageviews.values()))]),
         )
         rows.append(remaining_row)
 
