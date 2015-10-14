@@ -1294,7 +1294,8 @@ class FrontController(RedditController):
         if not (c.default_sr or c.site.can_submit(c.user)):
             abort(403, "forbidden")
 
-        VNotInTimeout().run(action_name="submit", target=c.site)
+        target = c.site if not isinstance(c.site, FakeSubreddit) else None
+        VNotInTimeout().run(action_name="submit", target=target)
 
         captcha = Captcha() if c.user.needs_captcha() else None
 
