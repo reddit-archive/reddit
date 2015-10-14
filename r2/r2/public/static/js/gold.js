@@ -75,7 +75,7 @@ r.gold = {
     },
     
     _toggleThingGoldForm: function (e) {
-        if (r.config.user_in_timeout) {
+        if (r.access.isLinkRestricted(e.target)) {
           return;
         }
 

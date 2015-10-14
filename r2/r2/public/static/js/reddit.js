@@ -248,7 +248,7 @@ function toggle_label (elem, callback, cancelback) {
 }
 
 function toggle(elem, callback, cancelback) {
-    if (r.timeouts.isLinkRestricted(elem)) {
+    if (r.access.isLinkRestricted(elem)) {
         return false;
     }
 
@@ -849,7 +849,7 @@ function cancel_usertext(elem) {
 }
 
 function reply(elem) {
-    if (r.timeouts.isLinkRestricted(elem)) {
+    if (r.access.isLinkRestricted(elem)) {
         return;
     }
 

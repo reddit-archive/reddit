@@ -35,8 +35,8 @@
   $(function() {
     $(document.body).on('click', '.arrow', function vote(e) {
       var $el = $(this);
-
-      if (!r.config.logged || r.config.user_in_timeout) {
+      
+      if (!r.config.logged || r.access.isLinkRestricted(this)) {
         return;
       }
 

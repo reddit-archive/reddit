@@ -2,6 +2,7 @@
   If the current user is 'in timeout', show a modal on restricted actions.
 
   requires r.config (base.js)
+  requires r.access (access.js)
   requires r.ui.Popup (popup.js)
  */
 !function(r) {
@@ -10,13 +11,17 @@
 
   _.extend(r.timeouts, {
     init: function() {
-      if (!r.config.user_in_timeout) { return; }
-      
       $('body').on('click', '.access-required', this._handleClick);
       $('.access-required').removeAttr('onclick');
       $('body.comments-page').on('focus', '.usertext.cloneable textarea', this._handleClick);
       $('body.comments-page').on('submit', 'form.usertext.cloneable', this._handleClick);
       $('body.comments-page form.usertext.cloneable').removeAttr('onsubmit');
+
+      var isLinkRestricted = r.access.isLinkRestricted;
+
+      r.access.isLinkRestricted = function(el) {
+        return r.timeouts.isLinkRestricted(el) || isLinkRestricted(el);
+      }
     },
 
     getPopup: function() {
@@ -50,5 +55,11 @@
     isLinkRestricted: function(el) {
       return $(el).hasClass('access-required') && r.config.user_in_timeout;
     },
+  });
+
+  r.access.initHook(function() {
+    if (!r.config.user_in_timeout) { return; }
+
+    r.timeouts.init();
   });
 }(r);

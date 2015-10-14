@@ -17,7 +17,7 @@ r.actionForm = {
     var el = e.target;
     var $el = $(el);
 
-    if (r.timeouts.isLinkRestricted(el)) {
+    if (r.access.isLinkRestricted(el)) {
       return;
     }
 
@@ -122,7 +122,7 @@ r.report = {
   },
 
   toggleReasons: function(e) {
-    if (r.timeouts.isLinkRestricted(e.target)) {
+    if (r.access.isLinkRestricted(e.target)) {
       return;
     }
 
