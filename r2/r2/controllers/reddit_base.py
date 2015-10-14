@@ -1127,9 +1127,10 @@ class MinimalController(BaseController):
             and not response.status.startswith("5")
             and not c.is_exception_response):
             try:
+                response_pieces = (response.headers.items(), response.body,
+                    response.status_int, c.cookies)
                 g.pagecache.set(request.environ["REQUEST_KEY"],
-                                (response._current_obj(), c.cookies),
-                                g.page_cache_time)
+                    response_pieces, g.page_cache_time)
             except MemcachedError as e:
                 # this codepath will actually never be hit as long as
                 # the pagecache memcached client is in no_reply mode.
