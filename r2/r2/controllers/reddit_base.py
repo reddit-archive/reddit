@@ -1048,10 +1048,19 @@ class MinimalController(BaseController):
             g.stats.event_count(key, "hit" if r else "miss", sample_rate=0.01)
 
             if r:
-                r, c.cookies = r
-                response.headers = r.headers
-                response.body = r.body
-                response.status_int = r.status_int
+                try:
+                    headers, body, status_int, c.cookies = r
+                except ValueError:
+                    # this is an old style pagecache entry where the Response
+                    # object was cached
+                    r, c.cookies = r
+                    headers = r.headers
+                    body = r.body
+                    status_int = r.status_int
+
+                response.headers = headers
+                response.body = body
+                response.status_int = status_int
 
                 request.environ['pylons.routes_dict']['action'] = 'cached_response'
                 c.request_timer.name = request_timer_name("cached_response")
