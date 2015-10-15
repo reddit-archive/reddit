@@ -247,7 +247,7 @@ def add_trackers(items, sr, adserver_click_urls=None):
             item.third_party_tracking_url_2 = item.third_party_tracking_2
 
         # construct the click redirect url
-        item_url = adserver_click_urls.get(item.campaign, item.url)
+        item_url = adserver_click_urls.get(item.campaign) or item.url
         url = urllib.unquote(_force_utf8(item_url))
         hashable = ''.join((url, tracking_name.encode("utf-8")))
         click_mac = hmac.new(
