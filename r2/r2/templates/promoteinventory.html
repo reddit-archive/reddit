@@ -47,45 +47,43 @@ ${unsafe(js.use('sponsored'))}
       </div>
     </div>
   </div>
+  <table class="inventory-table">
+      <thead>
+          <tr>
+          %for text in thing.header:
+              <th>${text}</th>
+          %endfor
+          </tr>
+      </thead>
+
+      <tbody>
+          %for row in thing.rows:
+          <tr class="${'total' if row.is_total else ''}">
+              <td class="title">
+              %if not row.is_total:
+                  <div class="author view-link">
+                      ${plain_link(row.info['author'], row.info['edit_url'])}
+                  </div>
+              %else:
+                  <div class="author">${row.info['title']}</div>
+              %endif
+              </td>
+              %for column in row.columns:
+                <td
+                    %if column == '0':
+                      class="no-inventory"
+                    %endif
+                    >${column}</td>
+              %endfor
+          %endfor
+      </tbody>
+  </table>
+  %if thing.csv_url:
+  <div class="promote-report-csv">
+    ${plain_link(_("download as csv"), thing.csv_url)}
+  </div>
+  %endif
 </div>
-
-<table class="inventory-table">
-    <thead>
-        <tr>
-        %for text in thing.header:
-            <th>${text}</th>
-        %endfor
-        </tr>
-    </thead>
-
-    <tbody>
-        %for row in thing.rows:
-        <tr class="${'total' if row.is_total else ''}">
-            <td class="title">
-            %if not row.is_total:
-                <div class="author view-link">
-                    ${plain_link(row.info['author'], row.info['edit_url'])}
-                </div>
-            %else:
-                <div class="author">${row.info['title']}</div>
-            %endif
-            </td>
-            %for column in row.columns:
-              <td
-                  %if column == '0':
-                    class="no-inventory"
-                  %endif
-                  >${column}</td>
-            %endfor
-        %endfor
-    </tbody>
-</table>
-
-%if thing.csv_url:
-<div class="promote-report-csv">
-  ${plain_link(_("download as csv"), thing.csv_url)}
-</div>
-%endif
 
 <script type="text/javascript">
     r.sponsored.set_form_render_fnc(r.sponsored.fill_inventory_form);
