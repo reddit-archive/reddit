@@ -287,7 +287,7 @@ $.fn.updateThing = function(update) {
         var $midcol = $thing.children('.midcol');
         var $up = $midcol.find('.arrow.'+up_cls+', .arrow.'+upmod_cls);
         var $down = $midcol.find('.arrow.'+down_cls+', .arrow.'+downmod_cls);
-        var $elems = $($midcol, $entry);
+        var $elems = $($midcol).add($entry);
 
         switch (update.voted) {
             case 1:
