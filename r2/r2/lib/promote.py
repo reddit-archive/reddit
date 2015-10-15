@@ -951,16 +951,31 @@ def all_live_promo_srnames():
 
 
 def srnames_from_site(user, site):
+    is_logged_in = user and not isinstance(user, FakeAccount)
+    srnames = set()
+
     if not isinstance(site, FakeSubreddit):
-        srnames = {site.name}
+        srnames.add(site.name)
     elif isinstance(site, MultiReddit):
-        srnames = {sr.name for sr in site.srs}
-    elif user and not isinstance(user, FakeAccount):
-        srnames = {sr.name for sr in Subreddit.user_subreddits(user, ids=False)}
-        srnames.add(Frontpage.name)
+        srnames = srnames | {sr.name for sr in site.srs}
     else:
-        srnames = {sr.name for sr in Subreddit.user_subreddits(None, ids=False)}
         srnames.add(Frontpage.name)
+
+    if is_logged_in:
+        subscriptions = Subreddit.user_subreddits(
+            user,
+            ids=False,
+        )
+
+        # only use subreddits that aren't quarantined and have the same
+        # age gate as the subreddit being viewed.
+        subscriptions = filter(
+            lambda sr: not sr.quarantine and sr.over_18 == site.over_18,
+            subscriptions,
+        )
+
+        srnames = srnames | {sr.name for sr in subscriptions}
+
     return srnames
 
 
