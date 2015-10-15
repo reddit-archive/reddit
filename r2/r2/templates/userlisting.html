@@ -74,6 +74,7 @@
     %endif
     <button class="btn" type="submit">${verb or _("add")}</button>
     <span class="status"></span>
+    ${error_field("NO_USER", "name")}
     ${error_field("USER_DOESNT_EXIST", "name")}
     ${error_field("ALREADY_MODERATOR", "name")}
     ${error_field("CANT_RESTRICT_MODERATOR", "name")}
