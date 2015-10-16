@@ -1,28 +1,35 @@
 !function(r) {
   var UP_CLS = "up";
   var DOWN_CLS = "down";
-  var MouseEvent = window.MouseEvent;
-  var createEvent = document.createEvent.bind(document);
   var theFakeClick;
+  var MouseEvent;
+  var createEvent;
+  
+  try {
+    MouseEvent = window.MouseEvent;
+    createEvent = document.createEvent.bind(document);
 
-  if (MouseEvent) {
-    theFakeClick = new MouseEvent('click', {bubbles: true});
-  } else if (createEvent) {
-    theFakeClick = createEvent('MouseEvent');
-  } else {
-    theFakeClick = {};
-  }
-
-  window.MouseEvent = function(type, init) {
-    return theFakeClick;
-  }
-
-  document.createEvent = function(type) {
-    if (type === 'MouseEvent' || type === 'MouseEvents') {
-      return theFakeClick;
+    if (MouseEvent) {
+      theFakeClick = new MouseEvent('click', {bubbles: true});
+    } else if (createEvent) {
+      theFakeClick = createEvent('MouseEvent');
     } else {
-      return createEvent(type);
+      theFakeClick = {};
     }
+
+    window.MouseEvent = function(type, init) {
+      return theFakeClick;
+    }
+
+    document.createEvent = function(type) {
+      if (type === 'MouseEvent' || type === 'MouseEvents') {
+        return theFakeClick;
+      } else {
+        return createEvent(type);
+      }
+    }
+  } catch (e) {
+    // something went wrong
   }
 
   $(function() {
@@ -47,7 +54,7 @@
         isTrusted = false;
       } else if ('isTrusted' in MouseEvent.prototype) {
         isTrusted = e.originalEvent.isTrusted;
-      } else {
+      } else if (MouseEvent) {
         isTrusted = (e.originalEvent instanceof MouseEvent &&
                      e.originalEvent !== theFakeClick);
       }
