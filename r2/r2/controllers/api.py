@@ -2080,33 +2080,24 @@ class ApiController(RedditController):
 
             if parent.sr_id and not c.user_is_admin:
                 sr = parent.subreddit_slow
-                # get the first message to see who the non-mod recipient
-                # in a modmail conversation is
-                message = parent
-                if parent.first_message:
-                    message = Message._byID(parent.first_message, data=True)
 
-                user_muted_error = False
-                if sr.is_muted(message.author_slow):
-                    user_muted_error = True
-                    muted_user = message.author_slow
-                elif message.to_id and sr.is_muted(message.recipient_slow):
-                    user_muted_error = True
-                    muted_user = message.recipient_slow
-
-                if user_muted_error:
-                    if sr.is_moderator(c.user):
-                        c.errors.add(errors.MUTED_FROM_SUBREDDIT, field="parent")
+                if sr.is_moderator(c.user) and not c.user_is_admin:
+                    # don't let a moderator message a muted user
+                    muted_user = parent.get_muted_user_in_conversation()
+                    if muted_user:
+                        c.errors.add(
+                            errors.MUTED_FROM_SUBREDDIT, field="parent")
                         g.events.muted_forbidden_event("muted mod",
                             sr, parent_message=parent, target=muted_user,
                             request=request, context=c,
                         )
-                    else:
-                        c.errors.add(errors.USER_MUTED, field="parent")
-                        g.events.muted_forbidden_event("muted",
-                            parent_message=parent, target=sr,
-                            request=request, context=c,
-                        )
+                elif sr.is_muted(c.user):
+                    # don't let a muted user message the subreddit
+                    c.errors.add(errors.USER_MUTED, field="parent")
+                    g.events.muted_forbidden_event("muted",
+                        parent_message=parent, target=sr,
+                        request=request, context=c,
+                    )
 
             is_message = True
             should_ratelimit = False

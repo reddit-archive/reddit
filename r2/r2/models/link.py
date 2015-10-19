@@ -2140,6 +2140,27 @@ class Message(Thing, Printable):
                     first = Message._byID(self.first_message, True)
                     return (first.author_id == c.user._id)
 
+    def get_muted_user_in_conversation(self):
+        """Return the muted user involved in a modmail conversation (if any)."""
+        if not self.sr_id:
+            return None
+
+        sr = self.subreddit_slow
+
+        if self.first_message:
+            first = Message._byID(self.first_message, data=True)
+        else:
+            first = self
+
+        first_author = first.author_slow
+        first_recipient = first.recipient_slow if first.to_id else None
+
+        if sr.is_muted(first_author):
+            return first_author
+        elif first_recipient and sr.is_muted(first_recipient):
+            return first_recipient
+        else:
+            return None
 
     @classmethod
     def add_props(cls, user, wrapped):
