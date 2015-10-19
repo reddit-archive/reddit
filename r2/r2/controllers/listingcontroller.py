@@ -33,8 +33,8 @@ from r2.lib.filters import _force_unicode
 from r2.lib.jsontemplates import get_usertrophies
 from r2.lib.pages import *
 from r2.lib.pages.things import wrap_links
-from r2.lib.menus import TimeMenu, SortMenu, RecSortMenu, ProfileSortMenu
-from r2.lib.menus import ControversyTimeMenu, menu, QueryButton
+from r2.lib.menus import TimeMenu, CommentsTimeMenu, SortMenu, RecSortMenu, ProfileSortMenu
+from r2.lib.menus import ControversyTimeMenu, ProfileOverviewTimeMenu, menu, QueryButton
 from r2.lib.rising import get_rising, normalized_rising
 from r2.lib.wrapped import Wrapped
 from r2.lib.normalized_hot import normalized_hot
@@ -704,7 +704,12 @@ class UserController(ListingController):
         if (self.where in ('overview', 'submitted', 'comments')):
             res.append(ProfileSortMenu(default = self.sort))
             if self.sort not in ("hot", "new"):
-                res.append(TimeMenu(default = self.time))
+                if self.where == "comments":
+                    res.append(CommentsTimeMenu(default = self.time))
+                elif self.where == "overview":
+                    res.append(ProfileOverviewTimeMenu(default = self.time))
+                else:
+                    res.append(TimeMenu(default = self.time))
         if self.where == 'saved' and c.user.gold:
             srnames = LinkSavesBySubreddit.get_saved_subreddits(self.vuser)
             srnames += CommentSavesBySubreddit.get_saved_subreddits(self.vuser)

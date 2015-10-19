@@ -662,6 +662,15 @@ class TimeMenu(SortMenu):
         if time != 'all':
             return Link.c._date >= timeago(time)
 
+class CommentsTimeMenu(TimeMenu):
+    """Time Menu with the title changed for comments"""
+    _title = N_("comments from")
+
+
+class ProfileOverviewTimeMenu(TimeMenu):
+    """Time Menu with the title changed for a user overview"""
+    _title = N_("links and comments from")
+
 
 class ControversyTimeMenu(TimeMenu):
     """time interval for controversial sort.  Make default time 'day' rather than 'all'"""
