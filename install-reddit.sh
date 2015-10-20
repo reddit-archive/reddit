@@ -732,6 +732,16 @@ set_consumer_count automoderator_q 0
 
 chown -R $REDDIT_USER:$REDDIT_GROUP $CONSUMER_CONFIG_ROOT/
 
+
+###############################################################################
+# Start everything up
+###############################################################################
+
+# the initial database setup should be done by one process rather than a bunch
+# vying with eachother to get there first
+reddit-run -c 'print "ok done"'
+
+# ok, now start everything else up
 initctl emit reddit-stop
 initctl emit reddit-start
 
