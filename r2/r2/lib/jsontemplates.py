@@ -621,6 +621,7 @@ class LinkJsonTemplate(ThingJsonTemplate):
         likes="likes",
         link_flair_css_class="flair_css_class",
         link_flair_text="flair_text",
+        locked="locked",
         media="media_object",
         media_embed="media_embed",
         num_comments="num_comments",

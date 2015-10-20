@@ -1407,8 +1407,11 @@ class ApiController(RedditController):
                 VModhash(),
                 VSrCanBan('id'),
                 thing=VByName('id', thing_cls=Link))
+    @api_doc(api_section.links_and_comments)
     def POST_lock(self, thing):
-        """Lock a comment thread.
+        """Lock a link.
+
+        Prevents a post from receiving new comments.
 
         See also: [/api/unlock](#POST_api_unlock).
 
@@ -1426,14 +1429,16 @@ class ApiController(RedditController):
         ModAction.create(thing.subreddit_slow, c.user, target=thing,
                          action='lock')
 
-
     @require_oauth2_scope("modposts")
     @noresponse(VUser(),
                 VModhash(),
                 VSrCanBan('id'),
                 thing=VByName('id', thing_cls=Link))
+    @api_doc(api_section.links_and_comments)
     def POST_unlock(self, thing):
-        """Unlock a comment thread.
+        """Unlock a link.
+
+        Allow a post to receive new comments.
 
         See also: [/api/lock](#POST_api_lock).
 
