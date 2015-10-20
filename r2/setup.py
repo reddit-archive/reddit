@@ -23,7 +23,6 @@
 
 import os
 import fnmatch
-import platform
 import sys
 from setuptools import setup, find_packages, Extension
 
@@ -44,58 +43,40 @@ else:
     pyx_extensions = cythonize(pyx_files)
 
 
-install_requires = [
-    "Pylons",
-    "Routes",
-    "mako>=0.5",
-    "boto >= 2.0",
-    "pytz",
-    "pycrypto",
-    "Babel>=1.0",
-    "cython>=0.14",
-    "SQLAlchemy",
-    "BeautifulSoup",
-    "chardet",
-    "psycopg2",
-    "pycassa>=1.7.0",
-    "pycaptcha",
-    "amqplib",
-    "py-bcrypt",
-    "snudown>=1.1.0",
-    "l2cs>=2.0.2",
-    "lxml",
-    "kazoo",
-    "stripe",
-    "requests",
-    "tinycss2",
-    "unidecode",
-    "PyYAML",
-]
-
-ubuntu, version, adjective = platform.dist()
-
-if adjective == "trusty":
-    install_requires.extend([
+setup(
+    name="r2",
+    version="",
+    install_requires=[
+        "Pylons",
+        "Routes",
+        "mako>=0.5",
+        "boto >= 2.0",
+        "pytz",
+        "pycrypto",
+        "Babel>=1.0",
+        "cython>=0.14",
+        "SQLAlchemy",
+        "BeautifulSoup",
+        "chardet",
+        "psycopg2",
+        "pycassa>=1.7.0",
+        "pycaptcha",
+        "amqplib",
+        "py-bcrypt",
+        "snudown>=1.1.0",
+        "l2cs>=2.0.2",
+        "lxml",
+        "kazoo",
+        "stripe",
+        "requests",
+        "tinycss2",
+        "unidecode",
+        "PyYAML",
         "Pillow",
         "pylibmc==1.2.2",
         "webob",
         "webtest",
-    ])
-elif adjective == "precise":
-    install_requires.extend([
-        "PIL",
-        "pylibmc>=1.2.1",
-        "webob==1.0.8",
-        "webtest<=1.4.3",  # anything newer requires WebOb>=1.2.0
-    ])
-else:
-    raise ValueError("only trusty and precise are supported")
-
-
-setup(
-    name="r2",
-    version="",
-    install_requires=install_requires,
+    ],
     # Extra dependencies that aren't needed for running the app.
     # * https://pythonhosted.org/setuptools/setuptools.html#declaring-extras-optional-features-with-their-own-dependencies
     # * https://github.com/pypa/sampleproject/blob/300f04dc44df51492deb859ac98ba521d2c7a17a/setup.py#L71-L77
