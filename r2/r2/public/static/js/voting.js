@@ -2,34 +2,49 @@
   var UP_CLS = "up";
   var DOWN_CLS = "down";
   var theFakeClick;
-  var MouseEvent;
-  var createEvent;
-  
-  try {
-    MouseEvent = window.MouseEvent;
-    createEvent = document.createEvent.bind(document);
+  var MouseEvent = window.MouseEvent;
+  var createEvent = document.createEvent;
 
+  if (createEvent) {
+    // document.createEvent throws if not called from document;
+    createEvent = createEvent.bind(document);
+  }
+
+  try {
+    // Some browsers (e.g. IE11) throw an error here.
     if (MouseEvent) {
       theFakeClick = new MouseEvent('click', {bubbles: true});
-    } else if (createEvent) {
-      theFakeClick = createEvent('MouseEvent');
-    } else {
-      theFakeClick = {};
-    }
-
-    window.MouseEvent = function(type, init) {
-      return theFakeClick;
-    }
-
-    document.createEvent = function(type) {
-      if (type === 'MouseEvent' || type === 'MouseEvents') {
-        return theFakeClick;
-      } else {
-        return createEvent(type);
-      }
     }
   } catch (e) {
-    // something went wrong
+    // We'll handle this below as if MouseEvent doesn't exist.
+  }
+
+  try {
+    // To be on the safe side, we'll wrap this one in a try/catch as well.
+    // It needs to be in a separate try/catch because if creating theFakeClick
+    // with MouseEvent fails, we still want to fall back to trying with createEvent.
+    if (!theFakeClick && createEvent) {
+      theFakeClick = createEvent('MouseEvent');
+    }
+  } catch (e) {
+    // We'll handle this below as if createEvent doesn't exist.
+  }
+
+  if (!theFakeClick) {
+    // If no method for creating a custom mouse event exists, just use an object.
+    theFakeClick = {};
+  }
+
+  window.MouseEvent = function(type, init) {
+    return theFakeClick;
+  }
+
+  document.createEvent = function(type) {
+    if (type === 'MouseEvent' || type === 'MouseEvents') {
+      return theFakeClick;
+    } else {
+      return createEvent(type);
+    }
   }
 
   $(function() {
@@ -52,11 +67,14 @@
 
       if (!e || !e.originalEvent) {
         isTrusted = false;
-      } else if ('isTrusted' in MouseEvent.prototype) {
+      } else if (MouseEvent instanceof Function &&
+                 'isTrusted' in MouseEvent.prototype) {
         isTrusted = e.originalEvent.isTrusted;
-      } else if (MouseEvent) {
+      } else if (MouseEvent instanceof Function) {
         isTrusted = (e.originalEvent instanceof MouseEvent &&
                      e.originalEvent !== theFakeClick);
+      } else {
+        isTrusted = (e.originalEvent !== theFakeClick);
       }
 
       var voteData = {
@@ -69,5 +87,5 @@
       $.request("vote", voteData);
       $thing.updateThing({ voted: dir });
     });
-  })
+  });
 }(r);
