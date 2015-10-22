@@ -192,6 +192,9 @@ class AccountMock(ThingMock):
     def _spam(self):
         return False
 
+    def _commit(self, *a, **kw):
+        pass
+
 
 class SubredditMock(ThingMock):
     @property
