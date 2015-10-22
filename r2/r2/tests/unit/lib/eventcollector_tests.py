@@ -72,7 +72,7 @@ class TestEventCollector(RedditTestCase):
         with patch.object(g.events, "queue") as queue:
             upvote = MagicMock(_name="1")
             oldvote = MagicMock(direction="-1")
-            g.events.vote_event(upvote, oldvote)
+            g.events.vote_event(upvote)
 
             self.assert_event_item(
                 queue, dict(
@@ -149,6 +149,7 @@ class TestEventCollector(RedditTestCase):
                         'oauth2_client_id': context.oauth2_client._id,
                         'referrer_domain': self.domain_mock(),
                         'details_text': modaction.details_text,
+                        'geoip_country': context.location,
                         'obfuscated_data': {
                             'client_ip': request.ip,
                         }
@@ -182,6 +183,7 @@ class TestEventCollector(RedditTestCase):
                         'sr_id': subreddit._id,
                         'user_name': context.user.name,
                         'oauth2_client_id': context.oauth2_client._id,
+                        'geoip_country': context.location,
                         'obfuscated_data': {
                             'client_ip': request.ip
                         },
