@@ -538,9 +538,6 @@ class NewController(ListingWithPromos):
     @require_oauth2_scope("read")
     @listing_api_doc(uri='/new', uses_site=True)
     def GET_listing(self, **env):
-        if request.params.get('sort') == 'rising':
-            return self.redirect(add_sr('/rising'))
-
         return ListingController.GET_listing(self, **env)
 
 class RisingController(NewController):
