@@ -573,8 +573,11 @@ class Thing(DataThing):
                 self._created = True
                 self._loaded = False
 
-            if not date: date = datetime.now(g.tz)
-            
+            if not date:
+                date = datetime.now(g.tz)
+            else:
+                date = date.astimezone(g.tz)
+
             self._ups = ups
             self._downs = downs
             self._date = date
@@ -751,8 +754,10 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
                     self._created = True
                     self._loaded = False
 
-                if not date: date = datetime.now(g.tz)
-
+                if not date:
+                    date = datetime.now(g.tz)
+                else:
+                    date = date.astimezone(g.tz)
 
                 #store the id, and temporarily store the actual object
                 #because we may need it later
