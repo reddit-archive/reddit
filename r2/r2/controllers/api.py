@@ -115,6 +115,7 @@ from r2.lib.voting import cast_vote
 
 from r2.models import wiki
 from r2.models.recommend import AccountSRFeedback, FEEDBACK_ACTIONS
+from r2.models.rules import SubredditRules
 from r2.models.vote import Vote
 from r2.lib.merge import ConflictException
 
@@ -5008,6 +5009,78 @@ class ApiController(RedditController):
         if note:
             from r2.models.admin_notes import AdminNotesBySystem
             AdminNotesBySystem.add(system, subject, note, author)
+        form.refresh()
+
+    @require_oauth2_scope("modconfig")
+    @validatedForm(
+        VSrModerator(perms="config"),
+        VModhash(),
+        short_name=VLength("short_name", max_length=50, min_length=1),
+        description=VMarkdownLength("description", max_length=500),
+    )
+    @api_doc(api_section.subreddits, uses_site=True)
+    def POST_add_subreddit_rule(self, form, jquery, short_name, description):
+        if form.has_errors("short_name", errors.TOO_SHORT, errors.NO_TEXT,
+                errors.TOO_LONG):
+            return
+        if form.has_errors("description", errors.TOO_LONG):
+            return
+        if SubredditRules.get_rule(c.site, short_name):
+            return
+
+        SubredditRules.create(c.site, short_name, description)
+        ModAction.create(c.site, c.user, 'createrule', details=short_name)
+        form.refresh()
+
+    @require_oauth2_scope("modconfig")
+    @validatedForm(
+        VSrModerator(perms="config"),
+        VModhash(),
+        old_short_name=VLength('old_short_name', max_length=50, min_length=1),
+        short_name=VLength('short_name', max_length=50, min_length=1),
+        description=VMarkdownLength('description', max_length=500),
+    )
+    @api_doc(api_section.subreddits, uses_site=True)
+    def POST_update_subreddit_rule(self, form, jquery, old_short_name,
+            short_name, description):
+        if form.has_errors("short_name", errors.TOO_SHORT, errors.NO_TEXT,
+                errors.TOO_LONG):
+            return
+        if form.has_errors("description", errors.TOO_LONG):
+            return
+        if not SubredditRules.get_rule(c.site, old_short_name):
+            return
+
+        SubredditRules.update(c.site, old_short_name, short_name,
+            description)
+        ModAction.create(c.site, c.user, 'editrule', details=short_name)
+        form.refresh()
+
+    @require_oauth2_scope("modconfig")
+    @validatedForm(
+        VSrModerator(perms="config"),
+        VModhash(),
+        short_name=VLength('short_name', max_length=50, min_length=1),
+        priority=VInt("priority", min=0),
+    )
+    @api_doc(api_section.subreddits, uses_site=True)
+    def POST_reorder_subreddit_rule(self, form, jquery, short_name, priority):
+        if not SubredditRules.get_rule(c.site, short_name):
+            return
+        SubredditRules.reorder(c.site, short_name, priority)
+        ModAction.create(c.site, c.user, 'editrule', details=short_name)
+        form.refresh()
+
+    @require_oauth2_scope("modconfig")
+    @validatedForm(
+        VSrModerator(perms="config"),
+        VModhash(),
+        short_name=VLength("short_name", max_length=50, min_length=1),
+    )
+    @api_doc(api_section.subreddits, uses_site=True)
+    def POST_remove_subreddit_rule(self, form, jquery, short_name):
+        SubredditRules.remove_rule(c.site, short_name)
+        ModAction.create(c.site, c.user, 'deleterule', details=short_name)
         form.refresh()
 
     @validatedForm(VModhashIfLoggedIn())

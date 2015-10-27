@@ -62,7 +62,8 @@ class ModAction(tdb_cassandra.UuidThing):
                'removewikicontributor', 'wikirevise', 'wikipermlevel',
                'ignorereports', 'unignorereports', 'setpermissions',
                'setsuggestedsort', 'sticky', 'unsticky', 'setcontestmode',
-               'unsetcontestmode', 'lock', 'unlock', 'muteuser', 'unmuteuser')
+               'unsetcontestmode', 'lock', 'unlock', 'muteuser', 'unmuteuser',
+               'createrule', 'editrule', 'deleterule')
 
     _menu = {'banuser': _('ban user'),
              'unbanuser': _('unban user'),
@@ -100,6 +101,9 @@ class ModAction(tdb_cassandra.UuidThing):
              'unlock': _('unlock post'),
              'muteuser': _('mute user'),
              'unmuteuser': _('unmute user'),
+             'createrule': _('create rule'),
+             'editrule': _('edit rule'),
+             'deleterule': _('delete rule'),
             }
 
     _text = {'banuser': _('banned'),
@@ -138,6 +142,9 @@ class ModAction(tdb_cassandra.UuidThing):
              'unlock': _('unlocked'),
              'muteuser': _('muted'),
              'unmuteuser': _('unmuted'),
+             'createrule': _('created rule'),
+             'editrule': _('edited rule'),
+             'deleterule': _('deleted rule'),
             }
 
     _details_text = {# approve comment/link

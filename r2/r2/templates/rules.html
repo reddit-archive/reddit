@@ -1,0 +1,89 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be
+## consistent with Exhibit B.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is reddit.
+##
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is reddit Inc.
+##
+## All portions of the code written by reddit are Copyright (c) 2006-2015
+## reddit Inc. All Rights Reserved.
+###############################################################################
+
+<%namespace file="utils.html" import="error_field, md"/>
+<%namespace name="utils" file="utils.html"/>
+
+<div>
+  %if thing.rules:
+    <table class="usertable" style="white-space: normal">
+      <tr>
+        <td class="usertable">Priority</td>
+        <td class="usertable">${_('Short name')}</td>
+        <td class="usertable">${_('Description')}</td>
+      </tr>
+
+      %for rule in thing.rules:
+        <tr>
+          <td>${rule["priority"]}</td>
+          <td>${rule["short_name"]}</td>
+          <td>${md(rule["description"])}</td>
+        </tr>
+      %endfor
+    </table>
+  %endif
+
+  %if thing.can_edit:
+    <form method="post" action="/api/add_subreddit_rule"
+        onsubmit="return post_form(this, 'add_subreddit_rule')">
+        <label for="short_name">short name</label>
+        <textarea name="short_name" value=""></textarea>
+        <br>
+        <label for="description">description</label>
+        <textarea name="description" rows=4></textarea>
+        <input type="submit" value="Add a new rule">
+    </form>
+
+    <br>
+    <form method="post" action="/api/update_subreddit_rule"
+        onsubmit="return post_form(this, 'update_subreddit_rule')">
+        <label for="old_short_name">old short name</label>
+        <textarea name="old_short_name" value=""></textarea>
+        <br>
+        <label for="short_name">short name</label>
+        <textarea name="short_name" value=""></textarea>
+        <br>
+        <label for="description">description</label>
+        <textarea name="description" rows=4></textarea>
+        <input type="submit" value="Update rule">
+    </form>
+
+    <br>
+    <form method="post" action="/api/reorder_subreddit_rule"
+        onsubmit="return post_form(this, 'reorder_subreddit_rule')">
+        <label for="short_name">short name</label>
+        <input type="text" name="short_name" size="2" value="0"></textarea>
+        <br>
+        <label for="priority">priority</label>
+        <input type="text" name="priority" size="2" value="0"></textarea>
+        <input type="submit" value="Reorder rule">
+    </form>
+
+    <br>
+    <form method="post" action="/api/remove_subreddit_rule"
+        onsubmit="return post_form(this, 'remove_subreddit_rule')" style="padding:20px">
+        <label for="short_name">short_name to delete</label>
+        <input type="text" name="short_name" size="50" value="0"></textarea>
+        <input type="submit" value="Delete this rule">
+    </form>
+  %endif
+</div>

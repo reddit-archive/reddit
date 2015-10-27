@@ -90,6 +90,7 @@ from r2.models.promo import (
     PromotionLog,
     Collection,
 )
+from r2.models.rules import SubredditRules
 from r2.models.token import OAuth2Client, OAuth2AccessToken
 from r2.models import traffic
 from r2.models import ModAction
@@ -3939,6 +3940,16 @@ class ModTableItem(InvitedModTableItem):
         elif c.user_is_admin:
             return True
         return c.user != user and c.site.can_demod(c.user, user)
+
+
+class Rules(Templated):
+    """Show subreddit rules for everyone and add edit controls for mods."""
+    def __init__(self):
+        self.can_edit = c.user_is_loggedin and (c.user_is_admin or
+            c.site.is_moderator_with_perms(c.user, 'config'))
+        self.rules = SubredditRules.get_rules(c.site)
+        Templated.__init__(self)
+
 
 class FlairPane(Templated):
     def __init__(self, num, after, reverse, name, user):

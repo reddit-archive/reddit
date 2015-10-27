@@ -173,6 +173,7 @@ def make_map(config):
 
     mc('/oembed', controller='oembed', action='oembed')
 
+    mc('/about/rules', controller='front', action='rules')
     mc('/about/sidebar', controller='front', action='sidebar')
     mc('/about/sticky', controller='front', action='sticky')
     mc('/about/flair', controller='front', action='flairlisting')

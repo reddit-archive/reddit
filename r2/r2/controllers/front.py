@@ -941,6 +941,12 @@ class FrontController(RedditController):
 
     @require_oauth2_scope("read")
     @api_doc(api_section.subreddits, uses_site=True)
+    def GET_rules(self):
+        """Get the rules for the current subreddit"""
+        return Reddit(content=Rules()).render()
+
+    @require_oauth2_scope("read")
+    @api_doc(api_section.subreddits, uses_site=True)
     @validate(
         num=VInt("num",
             min=1, max=Subreddit.MAX_STICKIES, num_default=1, coerce=True),

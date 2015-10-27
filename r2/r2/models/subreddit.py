@@ -74,6 +74,7 @@ from r2.lib.merge import ConflictException
 from r2.lib.cache import CL_ONE
 from r2.lib import hooks
 from r2.models.query_cache import MergedCachedQuery
+from r2.models.rules import SubredditRules
 import pycassa
 
 from r2.models.keyvalue import NamedGlobals
@@ -624,6 +625,10 @@ class Subreddit(Thing, Printable, BaseSite):
     @property
     def discoverable(self):
         return self.allow_top and not self.quarantine
+
+    @property
+    def community_rules(self):
+        return SubredditRules.get_rules(c.site)
 
     @related_subreddits.setter
     def related_subreddits(self, related_subreddits):
