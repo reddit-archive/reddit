@@ -85,7 +85,7 @@ def notify_user_added(rel_type, author, user, target):
         subject = msgs["pm"]["subject"] % d
         msg = msgs["pm"]["msg"] % d
 
-        if rel_type == "moderator_invite":
+        if rel_type in ("moderator_invite", "contributor"):
             # send the message from the subreddit
             item, inbox_rel = Message._new(author, user, subject, msg, request.ip,
                                            sr=target, from_sr=True)
