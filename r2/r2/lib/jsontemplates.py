@@ -282,7 +282,7 @@ class SubredditJsonTemplate(ThingJsonTemplate):
         banner_size="banner_size",
         collapse_deleted_comments="collapse_deleted_comments",
         comment_score_hide_mins="comment_score_hide_mins",
-        # community_rules="community_rules",
+        community_rules="community_rules",
         description="description",
         description_html="description_html",
         display_name="name",
@@ -345,7 +345,7 @@ class SubredditJsonTemplate(ThingJsonTemplate):
 
         # XXX remove this when feature is enabled and use _data_attrs instead
         if feature.is_enabled('mobile_settings'):
-            for attr in ('community_rules', 'key_color', 'related_subreddits'):
+            for attr in ('key_color', 'related_subreddits'):
                 data[attr] = self.thing_attr(thing, attr)
 
         permissions = getattr(thing, 'mod_permissions', None)
@@ -388,10 +388,6 @@ class SubredditJsonTemplate(ThingJsonTemplate):
             return None
         elif attr == 'submit_text_html':
             return safemarkdown(thing.submit_text)
-        elif attr == 'community_rules':
-            if thing.community_rules:
-                return thing.community_rules.split('\n')
-            return []
         elif attr == 'user_sr_style_enabled':
             if c.user_is_loggedin:
                 return c.user.use_subreddit_style(thing)

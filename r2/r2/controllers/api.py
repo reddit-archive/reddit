@@ -2664,7 +2664,6 @@ class ApiController(RedditController):
                    suggested_comment_sort=VOneOf('suggested_comment_sort',
                                                  CommentSortMenu._options,
                                                  default=None),
-                   # community_rules = VLength('community_rules', max_length=1024),
                    # related_subreddits = VSubredditList('related_subreddits', limit=20),
                    # key_color = VColor('key_color'),
                    )
@@ -2706,7 +2705,6 @@ class ApiController(RedditController):
         # and to hide from API docs.
         if feature.is_enabled('mobile_settings'):
             mobile_fields = {
-                'community_rules': VLength('community_rules', max_length=1024),
                 'related_subreddits': VSubredditList('related_subreddits',
                                                      limit=20),
                 'key_color': VColor('key_color'),
@@ -2723,7 +2721,6 @@ class ApiController(RedditController):
             'allow_top',
             'collapse_deleted_comments',
             'comment_score_hide_mins',
-            'community_rules',
             'description',
             'domain',
             'exclude_banned_modqueue',
@@ -2921,7 +2918,6 @@ class ApiController(RedditController):
 
             # do not clobber these fields if absent in request
             no_clobber = (
-                'community_rules',
                 'key_color',
                 'related_subreddits',
             )

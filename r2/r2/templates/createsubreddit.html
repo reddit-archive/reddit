@@ -658,19 +658,6 @@ try participating in other communities on reddit for a little while first before
   </%utils:line_field>
 %endif
 
-%if thing.site:
-  <%utils:line_field title="${_('mobile community rules')}" css_class="mobile">
-    <div class="delete-field">
-      <p class="little gray">${_("a concise summary of community rules for mobile.  one rule per line.")}</p>
-      <div class="usertext-edit">
-        <textarea name="community_rules" rows="1" cols="1">
-          ${keep_space(thing.site.community_rules)}
-        </textarea>
-      </div>
-    </div>
-  </%utils:line_field>
-%endif
-
 %endif  # end feature flag
 
 %if not thing.site:

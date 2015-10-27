@@ -259,7 +259,6 @@ class Subreddit(Thing, Printable, BaseSite):
         icon_size=None,
         banner_img='',
         banner_size=None,
-        community_rules='',
         key_color='',
         hide_ads=False,
         ban_count=0,
