@@ -335,7 +335,7 @@ class ListingWithPromos(SubredditListingController):
     def make_single_ad(self):
         srnames = promote.srnames_with_live_promos(c.user, c.site)
         if srnames:
-            return SpotlightListing(show_promo=True, srnames=srnames,
+            return SpotlightListing(show_promo=c.site.allow_ads, srnames=srnames,
                                     navigable=False).listing()
 
     def make_spotlight(self):
@@ -353,7 +353,7 @@ class ListingWithPromos(SubredditListingController):
 
         show_promo = False
         srnames = []
-        can_show_promo = not c.user.pref_hide_ads or not c.user.gold
+        can_show_promo = not c.user.pref_hide_ads or not c.user.gold and c.site.allow_ads
         try_show_promo = ((c.user_is_loggedin and random.random() > 0.5) or
                           not c.user_is_loggedin)
 
