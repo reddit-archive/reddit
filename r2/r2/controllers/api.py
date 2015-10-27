@@ -2057,10 +2057,22 @@ class ApiController(RedditController):
             else:
                 to = Account._byID(parent.author_id)
 
-            # Only let users in timeout message the admins
-            if (to and not (isinstance(to, Subreddit) and
-                    '/r/%s' % to.name == g.admin_message_acct)):
-                VNotInTimeout().run(action_name='messagereply', target=parent)
+            # Restrict messaging for users in timeout
+            if to:
+                sr_name = None
+                if isinstance(to, Subreddit):
+                    sr_name = to.name
+                # Replies in modmail have an Account as their target, but act
+                # like they're sent to everyone involved in the conversation.
+                elif isinstance(to, Account) and parent and parent.sr_id:
+                    sr = Subreddit._byID(parent.sr_id, data=True)
+                    if sr:
+                        sr_name = sr.name
+                is_messaging_admins = ('/r/%s' % sr_name) == g.admin_message_acct
+
+                # Users in timeout can only message the admins.
+                if not (sr_name and is_messaging_admins):
+                    VNotInTimeout().run(action_name='messagereply', target=parent)
 
             subject = parent.subject
             re = "re: "
