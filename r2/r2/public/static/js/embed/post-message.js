@@ -106,6 +106,10 @@
 
   });
 
-  window.addEventListener('message', receiveMessage, false);
+  if ('addEventListener' in window) {
+    window.addEventListener('message', receiveMessage, false);
+  } else if ('attachEvent' in window) {
+    window.attachEvent('onmessage', receiveMessage)
+  }
 
 })((window.rembeddit = window.rembeddit || {}), this);
