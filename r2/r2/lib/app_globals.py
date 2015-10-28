@@ -737,6 +737,7 @@ class Globals(object):
         rendercaches = CMemcache(
             "render",
             self.rendercaches,
+            noreply=True,
             no_block=True,
             num_clients=num_mc_clients,
             min_compress_len=480,
@@ -747,6 +748,7 @@ class Globals(object):
         pagecaches = CMemcache(
             "page",
             self.pagecaches,
+            noreply=True,
             no_block=True,
             num_clients=num_mc_clients,
             min_compress_len=1400,

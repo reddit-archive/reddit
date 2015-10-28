@@ -136,6 +136,7 @@ class CMemcache(CacheUtils):
                  name,
                  servers,
                  debug=False,
+                 noreply=False,
                  no_block=False,
                  min_compress_len=512 * 1024,
                  num_clients=10,
@@ -153,6 +154,7 @@ class CMemcache(CacheUtils):
             behaviors = {
                 'no_block': no_block, # use async I/O
                 'tcp_nodelay': True, # no nagle
+                '_noreply': int(noreply),
                 'ketama': True, # consistent hashing
             }
             if not binary:
