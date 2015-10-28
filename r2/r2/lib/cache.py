@@ -90,10 +90,18 @@ class MemcachedValueSizeException(Exception):
 # validation functions to be used by memcached pools
 MEMCACHED_MAX_VALUE_SIZE = 2048 * 1024 # 2MB
 
+
+def is_valid_size_for_cache(obj):
+    # NOTE: only the memory consumption directly attributed to the object is
+    # accounted for, not the memory consumption of objects it refers to.
+    # For instance a tuple of strings will only appear to be the size of a
+    # tuple.
+    return sys.getsizeof(obj) < MEMCACHED_MAX_VALUE_SIZE
+
+
 def validate_size_warn(**kwargs):
     if 'value' in kwargs:
-        size = sys.getsizeof(kwargs["value"])
-        if size >= MEMCACHED_MAX_VALUE_SIZE:
+        if not is_valid_size_for_cache(kwargs["value"]):
             key = ".".join((
                 "memcached_large_object",
                 kwargs.get("cache_name", "undefined")
@@ -104,7 +112,7 @@ def validate_size_warn(**kwargs):
                 kwargs.get("caller", "unknown"),
                 kwargs.get("prefix", ""),
                 kwargs.get("key", "undefined"),
-                size
+                sys.getsizeof(kwargs["value"])
             )
             return False
 
@@ -112,14 +120,13 @@ def validate_size_warn(**kwargs):
 
 def validate_size_error(**kwargs):
     if 'value' in kwargs:
-        size = sys.getsizeof(kwargs["value"])
-        if size >= MEMCACHED_MAX_VALUE_SIZE:
+        if not is_valid_size_for_cache(kwargs["value"]):
             raise MemcachedValueSizeException(
                 kwargs.get("cache_name", "unknown"),
                 kwargs.get("caller", "unknown"),
                 kwargs.get("prefix", ""),
                 kwargs.get("key", "undefined"),
-                size
+                sys.getsizeof(kwargs["value"])
             )
 
     return True
