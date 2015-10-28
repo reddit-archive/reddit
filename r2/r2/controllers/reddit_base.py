@@ -1123,8 +1123,6 @@ class MinimalController(BaseController):
                 g.pagecache.set(request.environ["REQUEST_KEY"],
                     response_pieces, g.page_cache_time)
             except MemcachedError as e:
-                # this codepath will actually never be hit as long as
-                # the pagecache memcached client is in no_reply mode.
                 g.log.warning("Ignored exception (%r) on pagecache "
                               "write for %r", e, request.path)
 
