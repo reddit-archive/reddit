@@ -62,8 +62,10 @@ from r2.models import (
     Random,
     RandomNSFW,
     RandomSubscription,
+    SITEWIDE_RULES,
     StylesheetsEverywhere,
     Subreddit,
+    SubredditRules,
     Target,
     Trophy,
     USER_FLAIR,
@@ -90,7 +92,6 @@ from r2.models.promo import (
     PromotionLog,
     Collection,
 )
-from r2.models.rules import SubredditRules
 from r2.models.token import OAuth2Client, OAuth2AccessToken
 from r2.models import traffic
 from r2.models import ModAction
@@ -396,9 +397,6 @@ class Reddit(Templated):
                                        clone_template=True,
                                        thing_type="comment",
                                       )
-            report_form = ReportForm()
-
-            panes.append(report_form)
 
             if self.show_sidebar:
                 panes.extend([gold_comment, gold_link])
@@ -3300,8 +3298,24 @@ class Gilding(Templated):
     pass
 
 
-class ReportForm(Templated):
-    pass
+class ReportForm(CachedTemplate):
+    def __init__(self, thing=None, **kw):
+        subreddit = thing.subreddit_slow
+        self.rules = []
+        self.system_rules = []
+        self.thing_fullname = thing._fullname
+
+        for rule in SubredditRules.get_rules(subreddit):
+            self.rules.append(rule["short_name"])
+
+        if self.rules:
+            self.system_rules = SITEWIDE_RULES
+            self.rules_page_link = "/r/%s/about/rules" % subreddit.name
+        else:
+            self.rules = SITEWIDE_RULES
+            self.rules_page_link = "/help/contentpolicy"
+
+        Templated.__init__(self)
 
 
 class FraudForm(Templated):

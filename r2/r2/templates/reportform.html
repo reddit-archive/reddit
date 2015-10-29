@@ -19,54 +19,54 @@
 ## All portions of the code written by reddit are Copyright (c) 2006-2015
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
-
+<%!
+    from r2.lib.template_helpers import static
+%>
 <%namespace file="utils.html" import="error_field" />
 
-<form id="report-action-form" class="action-form report-action-form rounded" data-form-action="report">
-  <input type="hidden" name="thing_id" value="thing-fullname">
-  <span class="reason-prompt">
-    ${_('why are you reporting this?')}
-  </span>
-  <ol>
-    <li>
-      <label>
-        <input type="radio" name="reason" value="spam">${_("spam")}
-      </label>
-    </li>
-    <li>
-      <label>
-        <input type="radio" name="reason" value="vote manipulation">${_("vote manipulation")}
-      </label>
-    </li>
-    <li>
-      <label>
-        <input type="radio" name="reason" value="personal information">${_("personal information")}
-      </label>
-    </li>
-    <li>
-      <label>
-        <input type="radio" name="reason" value="sexualizing minors">${_("sexualizing minors")}
-      </label>
-    </li>
-    <li>
-      <label>
-        <input type="radio" name="reason" value="breaking reddit">${_("breaking reddit")}
-      </label>
-    </li>
-    <li>
-      <label>
-        <input type="radio" name="reason" value="other">
-        ${_("other (max %(num)s characters):") % dict(num=100)}
-      </label>
-      <input name="other_reason" value="" maxlength="100" type="text" disabled>
-    </li>
-  </ol>
-  <button type="submit" class="btn submit-action-thing" disabled>
-    ${_("submit")}
-  </button>
-  <button type="button" class="btn cancel-action-thing">
-    ${_("cancel")}
-  </button>
-  <span class="status"></span>
-  ${error_field("TOO_LONG", "reason", "span")}
-</form>
+  <form id="report-action-form" class="action-form report-action-form rounded" data-form-action="report">
+    <input type="hidden" name="thing_id" value="${thing.thing_fullname}">
+    <span class="reason-prompt">
+      ${_("Why are you reporting this to the community moderators?")}
+    </span>
+    <span class="rules-page-icon">
+      <a href="${thing.rules_page_link}" title="${_('View the community rules')}">
+        <img src="${static('icon-info.png')}" alt="${_('View the community rules')}"/>
+      </a>
+    </span>
+    <ol>
+      %for rule in thing.rules:
+        <li>
+          <label>
+            <input type="radio" name="reason" value="${rule}">${rule}
+          </label>
+        </li>
+      %endfor
+      %if thing.system_rules:
+        <li>
+          <label>
+            <input type="radio" name="reason" value="site_reason_selected">
+            <select name="site_reason">
+              %for rule in thing.system_rules:
+                <option value="${rule}">${_("Reddit rule: %(rule_name)s" % dict(rule_name=rule))}</option>
+              %endfor
+            </select>
+          </label>
+        </li>
+      %endif
+      <li>
+        <label>
+          <input type="radio" name="reason" value="other">${_("Other (max %(num)s characters):") % dict(num=100)}
+        </label>
+        <input name="other_reason" value="" maxlength="100" type="text" disabled>
+      </li>
+    </ol>
+    <button type="submit" class="btn submit-action-thing">
+      ${_("submit")}
+    </button>
+    <button type="button" class="btn report-cancel">
+      ${_("cancel")}
+    </button>
+    <span class="status"></span>
+    ${error_field("TOO_LONG", "reason", "span")}
+  </form>

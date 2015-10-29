@@ -957,6 +957,20 @@ a.banned-user { color: red; }
 .flairrow .flairdeletebtn { display: inline; }
 .flairrow:hover .flairdeletebtn { opacity: 1.0; }
 
+.rules-page-icon {
+    float: right;
+}
+
+.reportform {
+    postion: relative;
+    display: none;
+    float: left;
+}
+
+.reportform.active {
+    display: block;
+}
+
 .flairselector {
     box-shadow: 4px 4px 4px #ccc;
     font-size: x-small;
@@ -10904,7 +10918,6 @@ body.with-listing-chooser {
     display: none;
     background-color: #f6e69f;
     border: thin solid #d8bb3c;
-    max-width: 300px;
     padding: 5px;
     margin: 5px 0;
     font-size: larger;

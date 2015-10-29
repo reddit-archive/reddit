@@ -25,6 +25,7 @@ from link import *
 from listing import *
 from vote import *
 from report import *
+from rules import *
 from subreddit import *
 from flair import *
 from award import *
