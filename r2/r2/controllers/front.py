@@ -894,15 +894,16 @@ class FrontController(RedditController):
 
         """
         sticky_fullnames = c.site.get_sticky_fullnames()
-        if sticky_fullnames:
-            try:
-                fullname = sticky_fullnames[num-1]
-            except IndexError:
-                abort(404)
-            sticky = Link._by_fullname(fullname, data=True)
-            self.redirect(sticky.make_permalink_slow())
-        else:
+
+        if not num or not sticky_fullnames:
             abort(404)
+
+        try:
+            fullname = sticky_fullnames[num-1]
+        except IndexError:
+            abort(404)
+        sticky = Link._by_fullname(fullname, data=True)
+        self.redirect(sticky.make_permalink_slow())
 
     def GET_awards(self):
         """The awards page."""
