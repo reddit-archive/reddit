@@ -144,30 +144,3 @@ r.setupBackbone = function() {
         Backbone.sync = r.sync
     }
 }
-
-$(function() {
-    try {
-        r.setupBackbone()
-
-        r.login.ui.init()
-        r.analytics.init()
-        r.TimeText.init();
-        r.ui.init()
-        r.interestbar.init()
-        r.visited.init()
-        r.apps.init()
-        r.wiki.init()
-        r.gold.init()
-        r.multi.init()
-        r.recommend.init()
-        r.saved.init()
-        r.messages.init()
-        r.filter.init()
-        r.newsletter.ui.init()
-        r.cachePoisoning.init()
-        r.locked.init();
-        r.access.init();
-    } catch (err) {
-        r.sendError('Error during base.js init', err.toString());
-    }
-})
