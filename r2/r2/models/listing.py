@@ -24,7 +24,7 @@ from account import *
 from link import *
 from vote import *
 from report import *
-from subreddit import DefaultSR, AllSR, Frontpage
+from subreddit import DefaultSR, AllSR, Frontpage, Subreddit
 from pylons import i18n, request
 from pylons import app_globals as g
 from pylons.i18n import _
@@ -33,6 +33,7 @@ from r2.config import feature
 from r2.lib.wrapped import Wrapped, CachedVariable
 from r2.lib import utils
 from r2.lib.db import operators
+from r2.models import rules
 
 from collections import namedtuple
 from copy import deepcopy, copy
@@ -174,6 +175,13 @@ class EnemyListing(UserListing):
 
 class BannedListing(UserListing):
     type = 'banned'
+
+    def __init__(self, builder, show_jump_to=False, show_not_found=False,
+            jump_to_value=None, addable=True, **kw):
+        self.rules = rules.SubredditRules.get_rules(c.site)
+        self.system_rules = rules.SITEWIDE_RULES
+        UserListing.__init__(self, builder, show_jump_to, show_not_found,
+            jump_to_value, addable, **kw)
 
     @classmethod
     def populate_from_tempbans(cls, item, tempbans=None):

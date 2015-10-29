@@ -40,7 +40,18 @@
         <input type="text" class="friend-name" name="name" id="name">
         <div>
             <label for="note">${_('why the ban?')}</label>
-            <input type="text" maxlength="300" name="note" id="note">
+            %if thing.rules:
+              <select name="note">
+                %for rule in thing.rules:
+                  <option value="${rule['short_name']}">${rule['short_name']}</option>
+                %endfor
+                %for rule in thing.system_rules:
+                  <option value="${rule}">${rule}</option>
+                %endfor
+              </select>
+            %else:
+              <input type="text" maxlength="300" name="note" id="note">
+            %endif
             <span>${_('(will not be visible to user)')}</span>
         </div>
         <div>
