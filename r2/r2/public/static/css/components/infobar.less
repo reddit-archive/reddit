@@ -35,6 +35,7 @@
   margin-bottom: @infobar-padding;
   margin-left: 0;
   margin-top: unit(@margin-x-small, px);
+  overflow: auto;
   padding: @infobar-padding;
   position: relative;
 
@@ -44,7 +45,6 @@
 
   &.with-icon {
     min-height: @infobar-icon-size;
-    overflow: auto;
     padding-left: @infobar-padding + @infobar-icon-size;
 
     &:before {
