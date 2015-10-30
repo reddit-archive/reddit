@@ -1738,8 +1738,8 @@ class UserListListingController(ListingController):
             self.listing_cls = BannedListing
 
         elif where == 'muted':
-            if not (has_mod_access and
-                    c.site.is_moderator_with_perms(c.user, 'mail')):
+            if not (c.user_is_admin or (has_mod_access and
+                    c.site.is_moderator_with_perms(c.user, 'mail'))):
                 abort(403)
             self.listing_cls = MutedListing
 
