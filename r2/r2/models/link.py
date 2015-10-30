@@ -674,7 +674,11 @@ class Link(Thing, Printable):
                 item.ignore_reports_key = item.ignore_reports
             item.locked_key = item.locked
 
-            item.mod_reports, item.user_reports = Report.get_reports(item)
+            if (feature.is_enabled('timeouts') and c.user_is_loggedin and
+                    c.user.in_timeout):
+                item.mod_reports, item.user_reports = [], []
+            else:
+                item.mod_reports, item.user_reports = Report.get_reports(item)
 
             item.num = None
             item.permalink = item.make_permalink(item.subreddit)
@@ -1527,7 +1531,11 @@ class Comment(Thing, Printable):
                 item.subreddit.allow_gilding
             )
 
-            item.mod_reports, item.user_reports = Report.get_reports(item)
+            if (feature.is_enabled('timeouts') and c.user_is_loggedin and
+                    c.user.in_timeout):
+                item.mod_reports, item.user_reports = [], []
+            else:
+                item.mod_reports, item.user_reports = Report.get_reports(item)
 
             # not deleted on profile pages,
             # deleted if spam and not author or admin

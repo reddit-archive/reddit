@@ -770,6 +770,11 @@ class LinkJsonTemplate(ThingJsonTemplate):
                     preview_object, censor_nsfw=True)
             d['preview']['images'] = [images]
 
+        if (feature.is_enabled('timeouts') and c.user_is_loggedin and
+                c.user.in_timeout):
+            d['user_reports'] = []
+            d['mod_reports'] = []
+
         return d
 
     def rendered_data(self, thing):
@@ -900,6 +905,11 @@ class CommentJsonTemplate(ThingTemplate):
             data["report_reasons"] = None
             data["approved_by"] = None
             data["banned_by"] = None
+
+        if (feature.is_enabled('timeouts') and c.user_is_loggedin and
+                c.user.in_timeout):
+            data['user_reports'] = []
+            data['mod_reports'] = []
 
         if c.profilepage:
             data["quarantine"] = item.subreddit.quarantine
