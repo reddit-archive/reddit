@@ -519,7 +519,6 @@ class IdentityJsonTemplate(ThingJsonTemplate):
         over_18="pref_over_18",
         gold_creddits="gold_creddits",
         gold_expiration="gold_expiration",
-        ban_expiration_utc="ban_expiration_utc",
     )
 
     def raw_data(self, thing):
@@ -527,9 +526,18 @@ class IdentityJsonTemplate(ThingJsonTemplate):
         if c.user_is_loggedin and thing._id == c.user._id:
             attrs.update(self._private_data_attrs)
             if feature.is_enabled('timeouts'):
-                attrs.update({"is_banned": "in_timeout"})
+                attrs.update({
+                    "is_in_timeout": "in_timeout",
+                    "timeout_expiration_utc": "timeout_expiration_utc",
+                })
+        # Add a public indication when a user is permanently in timeout.
+        elif (feature.is_enabled('timeouts') and thing.in_timeout and
+                thing.timeout_expiration is None):
+            attrs.update({"is_in_timeout": "in_timeout"})
+
         if thing.pref_hide_from_robots:
             response.headers['X-Robots-Tag'] = 'noindex, nofollow'
+
         data = {k: self.thing_attr(thing, v) for k, v in attrs.iteritems()}
         try:
             self.add_message_data(data, thing)
@@ -563,7 +571,7 @@ class IdentityJsonTemplate(ThingJsonTemplate):
             if not thing.gold:
                 return None
             return calendar.timegm(thing.gold_expiration.utctimetuple())
-        elif attr == "ban_expiration_utc":
+        elif attr == "timeout_expiration_utc":
             expiration_date = thing.timeout_expiration
             if not expiration_date:
                 return None
