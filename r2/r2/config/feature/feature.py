@@ -57,6 +57,22 @@ def is_enabled(name, user=None, subreddit=None):
         oauth_client=oauth_client,
     )
 
+def variant(name, user=None):
+    """Return which variant of an experiment a user is part of.
+
+    If the experiment is not found, has no variants, or the user is not part of
+    any of them (control), return None.
+
+    :param name string - an experiment (feature) name
+    :param user - (optional) an Account.  Defaults to the currently signed in
+                  user.
+    :return string, or None if not part of an experiment
+    """
+    if not user:
+        user = _world.current_user()
+
+    return _get_featurestate(name).variant(user)
+
 
 @feature_hooks.on('worker.live_config.update')
 def clear_featurestate_cache():

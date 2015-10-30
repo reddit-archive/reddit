@@ -99,10 +99,10 @@ class World(object):
 
         return user.gold
 
-    def is_user_loggedin(self):
-        if self.current_user():
-            return True
-        return False
+    def is_user_loggedin(self, user):
+        if not (user or self.current_user()):
+            return False
+        return True
 
     def url_features(self):
         return set(request.GET.getall('feature'))

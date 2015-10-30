@@ -1,10 +1,9 @@
 # Feature
 
 `r2.config.feature` is reddit's feature flagging API. It lets us quickly
-switch on and off features for specific segments of users and requests. It may
-also be used in the future for ramping up big changes or A/B testing.
+switch on and off features for specific segments of users and requests.
 
-It's heavily simplified version of Etsy's feature framework, at
+It's inspired by Etsy's feature framework, at
 https://github.com/etsy/feature - if you're looking to add to this, you may
 want to check there first to see if there's learning to be had. There almost
 certainly is.
@@ -92,13 +91,85 @@ feature_some_flag = {"percent_loggedout": 25}
 
 # For both admin and a group of users
 feature_some_flag = {"admin": true, "users": ["user1", "user2"]}
-
-# Not yet available: rampups, variants for A/B, etc.
 ```
 
 Since we're currently overloading live_config, each feature flag should be
 prepended with `feature_` in the config. We may choose to make a live-updating
 features block in the future. 
+
+You can also use feature flags to define A/B-type experiments.  Logically,
+experiments are separated into two parts.  First, there is an *eligibility
+check* to determine if the user is allowed to be a part of the experiment;
+currently, this is statically defined as the set of all logged-in users.
+Secondly, eligible users are either *bucketed* into a variant or *excluded*
+(because the summed percentage of all variants is less than 100).  `is_enabled`
+will return False for users who are non-eligible, fall into a control group, or
+are excluded; for anyone for whom this is true, you should call `variant` to
+find the specific variant they fall into.
+
+In code, this looks something like this:
+
+```python
+from r2.config import feature
+
+if feature.is_enabled('some_flag'):
+    variant = feature.variant('some_flag')
+    if variant == 'test_something':
+        do_new_thing()
+    elif variant == 'test_something_else':
+        do_other_new_thing()
+    else:
+        raise NotImplementedError('unknown variant %s for some_flag' % variant)
+else:
+    do_old_thing()
+```
+
+with a live_config option defining the experiment parameters:
+
+```ini
+feature_some_flag = {"experiment": {"experiment_id": 12345, "variants": {"test_something": 5.5, "test_something_else": 10}}}
+
+# Or with custom control group sizes:
+feature_some_flag = {"experiment": {"experiment_id": 12345, "variants": {"test_something": 5.5, "test_something_else": 10, "control_1": 20, "control_2": 20}}}
+```
+
+If only one non-control variant is defined (an A/A/B test), the code can be
+simplified a little bit:
+
+```python
+from r2.config import feature
+
+if feature.is_enabled('some_flag'):
+    do_new_thing()
+else:
+    do_old_thing()
+```
+
+The experiment dict has a few fields:
+
+* **experiment_id** -- an integer.  While the feature name needs to be unique
+  across all currently-defined feature flags, the experiment id should be
+  unique across all time.  This allows the data team to uniquely identify
+  experiments while looking at historical data.
+* **variants** -- a dictionary mapping variant names to percentages.  The
+  percent indicates roughly how many eligible users will be chosen to be a part
+  of that variant.  Percentages should not exceed 100/n, where n is the number
+  of variants.  The number of variants should not change over the course of the
+  experiment, but the percentages allocated each can.  Percentages can be
+  specified to the tenths of percentages.  If not defined, two control
+  groups ("control_1" and "control_2") at 10% each will be automatically added
+  to the variants.
+* **enabled** -- a boolean, defaulting to true.  Set to false to temporarily
+  disable an experiment while still keeping its definition around.
+
+Since it's useful to be able to force bucketing for testing purposes, you can
+specify a variant with a secondary syntax for a few flag conditions:
+
+```ini
+# ?feature=some_flag_something will force the "test_something" variant and
+# ?feature=some_flag_something_else will force "test_something_else"
+feature_some_flag = {"url": {"some_flag_something": "test_something", "some_flag_something_else": "test_something_else"}}
+```
 
 
 ## When should I use this?

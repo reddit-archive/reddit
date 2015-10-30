@@ -52,6 +52,11 @@ class MockWorld(World):
                 return config
         return MockState('test_state', self)
 
+class TestFeature(unittest.TestCase):
+    _world = None
+    # Append user-supplied error messages to the default output, rather than
+    # overwriting it.
+    longMessage = True
 
 class TestFeatureBase(RedditTestCase):
     # Append user-supplied error messages to the default output, rather than
@@ -77,6 +82,127 @@ class TestFeature(TestFeatureBase):
         # _roughly_ `percent` should have been `True`
         diff = abs((float(stats[True]) / total) - (percent / 100.0))
         self.assertTrue(diff < 0.1)
+
+    def test_calculate_bucket(self):
+        """Test FeatureState's _calculate_bucket function."""
+        feature_state = self._make_state(config={})
+
+        # Give ourselves enough users that we can get some reasonable amount of
+        # precision when checking amounts per bucket.
+        NUM_USERS = FeatureState.NUM_BUCKETS * 2000
+        fullnames = []
+        for i in xrange(NUM_USERS):
+            fullnames.append("t2_%s" % str(i))
+
+        counter = collections.Counter()
+        for fullname in fullnames:
+            bucket = feature_state._calculate_bucket(fullname)
+            counter[bucket] += 1
+            # Ensure bucketing is deterministic.
+            self.assertEqual(bucket, feature_state._calculate_bucket(fullname))
+
+        for bucket in xrange(FeatureState.NUM_BUCKETS):
+            # We want an even distribution across buckets.
+            expected = NUM_USERS / FeatureState.NUM_BUCKETS
+            actual = counter[bucket]
+            # Calculating the percentage difference instead of looking at the
+            # raw difference scales better as we change NUM_USERS.
+            percent_equal = float(actual)/expected
+            self.assertAlmostEqual(percent_equal, 1.0, delta=.10,
+                                   msg='bucket: %s' % bucket)
+
+    def test_choose_variant(self):
+        """Test FeatureState's _choose_variant function."""
+        no_variants = {}
+        three_variants = {
+            'remove_vote_counters': 5,
+            'control_1': 10,
+            'control_2': 5,
+        }
+        three_variants_more = {
+            'remove_vote_counters': 15.6,
+            'control_1': 10,
+            'control_2': 20,
+        }
+
+        counters = collections.defaultdict(collections.Counter)
+        for bucket in xrange(FeatureState.NUM_BUCKETS):
+            variant = FeatureState._choose_variant(bucket, no_variants)
+            if variant:
+                counters['no_variants'][variant] += 1
+            # Ensure variant-choosing is deterministic.
+            self.assertEqual(
+                    variant,
+                    FeatureState._choose_variant(bucket, no_variants))
+
+            variant = FeatureState._choose_variant(bucket, three_variants)
+            if variant:
+                counters['three_variants'][variant] += 1
+            # Ensure variant-choosing is deterministic.
+            self.assertEqual(
+                    variant,
+                    FeatureState._choose_variant(bucket, three_variants))
+
+            previous_variant = variant
+            variant = FeatureState._choose_variant(bucket, three_variants_more)
+            if variant:
+                counters['three_variants_more'][variant] += 1
+            # Ensure variant-choosing is deterministic.
+            self.assertEqual(
+                    variant,
+                    FeatureState._choose_variant(bucket, three_variants_more))
+            # If previously we had a variant, we should still have the same one
+            # now.
+            if previous_variant:
+                self.assertEqual(variant, previous_variant)
+
+        # Only controls chosen in the no-variant case.
+        for variant, percentage in FeatureState.DEFAULT_CONTROL_GROUPS.items():
+            count = counters['no_variants'][variant]
+            # The variant percentage is expressed as a part of 100, so we need
+            # to calculate the fraction-of-1 percentage and scale it
+            # accordingly.
+            scaled_percentage = float(count) / (FeatureState.NUM_BUCKETS / 100)
+            self.assertEqual(scaled_percentage, percentage)
+        for variant, percentage in three_variants.items():
+            count = counters['three_variants'][variant]
+            scaled_percentage = float(count) / (FeatureState.NUM_BUCKETS / 100)
+            self.assertEqual(scaled_percentage, percentage)
+        for variant, percentage in three_variants_more.items():
+            count = counters['three_variants_more'][variant]
+            scaled_percentage = float(count) / (FeatureState.NUM_BUCKETS / 100)
+            self.assertEqual(scaled_percentage, percentage)
+
+        # Test boundary conditions around the maximum percentage allowed for
+        # variants.
+        fifty_fifty = {
+            'control_1': 50,
+            'control_2': 50,
+        }
+        almost_fifty_fifty = {
+            'control_1': 49,
+            'control_2': 51,
+        }
+        for bucket in xrange(FeatureState.NUM_BUCKETS):
+            variant = FeatureState._choose_variant(bucket, fifty_fifty)
+            counters['fifty_fifty'][variant] += 1
+            variant = FeatureState._choose_variant(bucket, almost_fifty_fifty)
+            counters['almost_fifty_fifty'][variant] += 1
+        count = counters['fifty_fifty']['control_1']
+        scaled_percentage = float(count) / (FeatureState.NUM_BUCKETS / 100)
+        self.assertEqual(scaled_percentage, 50)
+
+        count = counters['fifty_fifty']['control_2']
+        scaled_percentage = float(count) / (FeatureState.NUM_BUCKETS / 100)
+        self.assertEqual(scaled_percentage, 50)
+
+        count = counters['almost_fifty_fifty']['control_1']
+        scaled_percentage = float(count) / (FeatureState.NUM_BUCKETS / 100)
+        self.assertEqual(scaled_percentage, 49)
+
+        count = counters['almost_fifty_fifty']['control_2']
+        scaled_percentage = float(count) / (FeatureState.NUM_BUCKETS / 100)
+        self.assertEqual(scaled_percentage, 50)
 
     def test_enabled(self):
         cfg = {'enabled': 'on'}
@@ -200,6 +326,48 @@ class TestFeature(TestFeatureBase):
         self._assert_fuzzy_percent_true(simulate_percent_loggedout(50), 50)
         self._assert_fuzzy_percent_true(simulate_percent_loggedout(99), 99)
 
+    @mock.patch('r2.config.feature.state.g')
+    def test_experiment(self, g):
+        num_users = 2000
+        users = []
+        for i in xrange(num_users):
+            users.append(MockAccount(name=str(i), _fullname="t2_%s" % str(i)))
+
+        def test_simulation(experiment):
+            cfg = {'experiment': experiment}
+
+            mock_world = self.world()
+            mock_world.is_user_loggedin = mock.Mock(return_value=False)
+            feature_state = self._make_state(cfg, mock_world)
+            self.assertFalse(feature_state.is_enabled(None))
+
+            mock_world = self.world()
+            mock_world.is_user_loggedin = mock.Mock(return_value=True)
+            feature_state = self._make_state(cfg, mock_world)
+            counter = collections.Counter()
+            for user in users:
+                if feature_state.is_enabled(user):
+                    counter[feature_state.variant(user)] += 1
+
+            for variant, percent in experiment['variants'].items():
+                # Our actual percentage should be within our expected percent
+                # (expressed as a part of 100 rather than a fraction of 1)
+                # +- 1%.
+                measured_percent = (float(counter[variant]) / num_users) * 100
+                self.assertAlmostEqual(measured_percent, percent, delta=1)
+
+        experiment = {'variants': {'larger': 5, 'smaller': 10}}
+        test_simulation(experiment)
+        experiment['enabled'] = True
+        test_simulation(experiment)
+
+        experiment['enabled'] = False
+        cfg = {'experiment': experiment}
+        mock_world = self.world()
+        mock_world.is_user_loggedin = mock.Mock(return_value=True)
+        feature_state = self._make_state(cfg, mock_world)
+        for user in users:
+            self.assertFalse(feature_state.is_enabled(user))
 
     def test_url_enabled(self):
 
@@ -215,6 +383,12 @@ class TestFeature(TestFeatureBase):
         self.assertTrue(feature_state.is_enabled())
         self.assertTrue(feature_state.is_enabled(user=gary))
 
+        cfg = {'url': {'test_state_a': 'a', 'test_state_b': 'b'}}
+        mock_world.url_features = mock.Mock(return_value={'x', 'test_state_b'})
+        feature_state = self._make_state(cfg, mock_world)
+        self.assertTrue(feature_state.is_enabled())
+        self.assertEqual(feature_state.variant(user=gary), 'b')
+
     def test_url_disabled(self):
 
         cfg = {'url': 'test_state'}
@@ -228,6 +402,16 @@ class TestFeature(TestFeatureBase):
         feature_state = self.world._make_state(cfg)
         self.assertFalse(feature_state.is_enabled())
         self.assertFalse(feature_state.is_enabled(user=gary))
+
+        cfg = {'url': {'test_state_a': 'a', 'test_state_b': 'b'}}
+        mock_world.url_features = mock.Mock(return_value={'x'})
+        feature_state = self._make_state(cfg, mock_world)
+        self.assertFalse(feature_state.is_enabled())
+
+        cfg = {'url': {'test_state_c1': 'control_1', 'test_state_c2': 'control_2'}}
+        mock_world.url_features = mock.Mock(return_value={'x', 'test_state_c2'})
+        feature_state = self._make_state(cfg, mock_world)
+        self.assertFalse(feature_state.is_enabled())
 
     def test_user_in(self):
         cfg = {'users': ['Gary']}
