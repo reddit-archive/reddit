@@ -3761,6 +3761,7 @@ class RelTableItem(UserTableItem):
         return c.site._fullname
 
 class FriendTableItem(RelTableItem):
+    remove_access_required = False
     type = 'friend'
 
     @property
@@ -3774,6 +3775,7 @@ class FriendTableItem(RelTableItem):
         return c.user._fullname
 
 class EnemyTableItem(RelTableItem):
+    remove_access_required = False
     type = 'enemy'
     cells = ('user', 'age', 'remove')
 

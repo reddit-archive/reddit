@@ -48,11 +48,15 @@
       &nbsp;
   %elif cell_type == "remove":
     %if thing.editable:
+      <%
+        access_required = getattr(thing, 'remove_access_required', True)
+      %>
       ${ynbutton(_("remove"), "removed", thing.remove_action,
                  callback="deleteRow",
                  hidden_data = dict(type = thing.type,
                                     id = thing.user._fullname,
-                                    container = thing.container_name))}
+                                    container = thing.container_name),
+                 access_required=access_required)}
     %else:
       %if c.user != thing.user:
         <span class="gray">${_("can't remove")}</span>
