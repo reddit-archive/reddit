@@ -5387,7 +5387,7 @@ ul.colors {
 }
 
 .existing-campaigns {
-    td.campaign-bid span {
+    td.campaign-total-budget span {
         display: inline-block;
         margin-right: 5px;
         line-height: 20px;
@@ -5395,7 +5395,7 @@ ul.colors {
         vertical-align: top;
     }
 
-    td.campaign-bid.paid {
+    td.campaign-total-budget.paid {
         background: url(../green-check.png) no-repeat scroll center right;
     }
 }
@@ -5420,9 +5420,15 @@ ul.colors {
     margin-left: 5px;
 }
 
+.minimum-spend, .daily-budget-minimum {
+    margin-left: 10px;
+    font-size: 13px;
+}
+
 .minimum-spend.error {
     font-weight: bold;
     color: red;
+    font-size: 15px;
 }
 
 .existing-campaigns > table {
@@ -5462,6 +5468,10 @@ ul.colors {
          max-width: 100px;
      }
 
+     .campaign-bid {
+        width: 60px;
+     }
+
     .campaign-row,
     .campaign-header-row {
         > td,
@@ -5478,7 +5488,7 @@ ul.colors {
 
     .campaign-end-date,
     .campaign-buttons,
-    .campaign-bid,
+    .campaign-total-budget,
     .campaign-duration,
     .campaign-spent {
         text-align: right;
@@ -5497,7 +5507,7 @@ ul.colors {
         .campaign-duration {
             width: 8%;
         }
-        .campaign-bid {
+        .campaign-total-budget {
             width: 12%;
         }
         .campaign-buttons {
@@ -5512,7 +5522,8 @@ ul.colors {
     padding: 8px 4px 4px;
 }
 .campaign #bid, .campaign #impressions,
-.campaign #cap, .campaign #duration {
+.campaign #cap, .campaign #duration,
+.campaign #daily_budget {
     text-align: right;
     width: auto;
     margin-bottom: 5px;
@@ -6384,10 +6395,19 @@ div #campaign-field {
             color: lighten(black, 40%);
             letter-spacing: 0.6px;
         }
+        > .label.cost-basis-label {
+            width: 150px;
+        }
     }
  
     .radio-group .form-group {
         margin-bottom: 5px;
+    }
+
+    .inline-dollar {
+        position: absolute;
+        margin-left: 10px;
+        margin-top: 5px;
     }
 
     .targeting-field .radio-group {
@@ -6416,6 +6436,7 @@ div #campaign-field {
 
     .lookup-user-field,
     .budget-field,
+    .pricing-field,
     .timing-field,
     .frequency-cap-field {
         .group {
@@ -6429,20 +6450,38 @@ div #campaign-field {
             label, .label {
                 display: block;
             }
+            .cost-basis-label {
+                width: 300px;
+            }
         }
     }
 
+    .display-text:before {
+        content: "\00a0";
+    }
+    
+    .display-text.daily-max-spend:before {
+        content: "\00a0\0024";
+    }
+
     .display-text {
-        font-size: 16px;
         font-weight: bold;
-        line-height: 20px;
-        margin: 5px 0;
     }
 
     .budget-field {
         .group {
             margin-bottom: 10px;
         }
+    }
+
+    .pricing-message,
+    .budget-message {
+        font-size: 13px;
+    }
+
+    .pricing-message {
+        margin-top: 10px;
+        margin-bottom: 10px;
     }
 
     .campaign-set {
@@ -6489,17 +6528,17 @@ div #campaign-field {
     .campaign-option-table {
         width: 100%;
 
-        .impressions {
-            width: 30%;
-        }
-
         .date {
             text-align: left;
             width: 18%;
         }
 
-        .bid {
-            width: 16%;
+        .total-budget {
+            width: 20%;
+        }
+
+        .total-budget + td {
+            width: 35%;
         }
 
         td {
@@ -6674,7 +6713,7 @@ div #campaign-field {
     }
 
     .campaign-buttons,
-    .campaign-bid {
+    .campaign-total-budget {
         button {
             font-size: 10px;
             font-weight: normal;
@@ -6739,6 +6778,10 @@ div #campaign-field {
     .dashboard {
         padding: 20px;
         border-bottom: 2px solid #ccc;
+
+        .help p {
+            margin-bottom: 10px;
+        }
     }
 
     .campaign-editor {
@@ -6860,6 +6903,10 @@ div #campaign-field {
             padding: 5px;
             box-shadow: inset 0 1px 0 1px darken(white, 5%);
             font-size: 15px;
+        }
+
+        input[type=text].total_budget_pennies {
+            padding-left: 20px;
         }
 
         textarea {
@@ -11290,4 +11337,27 @@ body:not(.loggedin) .report-button {
 
 .subreddit .midcol .sr-type-icon {
     margin-left: 3px;
+}
+
+#auction-announcement-container {
+    #auction-announcement {
+        width: 100%;
+        margin: -5px 5px 0 5px;
+        background-color: #336699;
+        height: 86px;
+        text-align: center;
+        color: #FFF;
+        h1 {
+            font-size: 20px;
+            padding-top: 18px;
+            font-weight: bold;
+        }
+        p {
+            font-size: 12px;
+            font-weight: bold;
+            a {
+                color: #B2D6EE;
+            }
+        }
+    }
 }

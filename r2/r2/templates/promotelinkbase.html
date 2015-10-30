@@ -39,7 +39,8 @@
   r.sponsored.setup(${unsafe(simplejson.dumps(thing.inventory))},
                     ${unsafe(simplejson.dumps(thing.price_dict))},
                     ${simplejson.dumps(not thing.campaigns)},
-                    ${simplejson.dumps(c.user_is_sponsor)});
+                    ${simplejson.dumps(c.user_is_sponsor)},
+                    ${simplejson.dumps(thing.force_auction)});
   r.sponsored.setup_geotargeting(${unsafe(simplejson.dumps(thing.regions))},
                                  ${unsafe(simplejson.dumps(thing.metros))});
   r.sponsored.setup_collections(${unsafe(simplejson.dumps(thing.collections))});
@@ -302,8 +303,8 @@
   </%utils:line_field>
 </%def>
 
-<%def name="timing_field()">
-  <%utils:line_field title="${_('timing')}" css_class="rounded timing-field">
+<%def name="scheduling_field()">
+  <%utils:line_field title="${_('scheduling')}" css_class="rounded timing-field">
     %if thing.min_start:
       <input type="hidden" id="date-min" value="${thing.min_start}">
     %endif
@@ -609,19 +610,21 @@
 <%def name="priority_field()">
   <%def name="priority_field_content()">
     <div class="radio-group">
-      %for value, text, description, default, override, cpm in thing.priorities:
-        <label class="form-group checkbox">
-          <input id="${value}" class="nomargin" 
-                 type="radio"  value="${value}" name="priority"
-                 onclick="r.sponsored.priority_changed()"
-                 ${"checked='checked'" if default else ""}
-                 data-default="${simplejson.dumps(default)}"
-                 data-override="${simplejson.dumps(override)}"
-                 data-cpm="${simplejson.dumps(cpm)}">
-          %if description:
-            <span class="label">${"%s (%s)" % (text, description)}</span>
-          %else:
-            <span class="label">${text}</span>
+      %for value, text, description, default, override, house in thing.priorities:
+        %if value != 'auction':
+          <label class="form-group checkbox">
+            <input id="${value}" class="nomargin" 
+                   type="radio"  value="${value}" name="priority"
+                   onclick="r.sponsored.priority_changed()"
+                   ${"checked='checked'" if default else ""}
+                   data-default="${simplejson.dumps(default)}"
+                   data-override="${simplejson.dumps(override)}"
+                   data-house="${simplejson.dumps(house)}">
+            %if description:
+              <span class="label">${"%s (%s)" % (text, description)}</span>
+            %else:
+              <span class="label">${text}</span>
+            %endif
           %endif
         </label>
       %endfor
@@ -629,14 +632,56 @@
   </%def>
 
   %if c.user_is_sponsor:
-    <%utils:line_field title="${_('priority')}" css_class="rounded priority-field">
+    <%utils:line_field title="${_('priority')}" css_class="rounded priority-field hidden">
       ${priority_field_content()}
     </%utils:line_field>
-  %else:
-    <div style="display:none">
-      ${priority_field_content()}
-    </div>
   %endif
+</%def>
+
+<%def name="pricing_field()">
+  <%utils:line_field title="${_('pricing')}" css_class="rounded pricing-field auction-field">
+    <div class="pricing-message"></div>
+    <div class="group"> 
+      %if thing.cpc_pricing:
+        <div class="form-group pricing-group">
+          <span class="label">Cost basis</span>
+          <div class="cost-basis-select">
+            <select class="cost-basis-select" id="cost_basis" name="cost_basis"
+                    title="${_("price basis")}"
+                    onchange="r.sponsored.on_cost_basis_change()">
+              <option ${"selected='selected'" if selected else ""} value="cpc">
+                CPC
+              </option>
+              <option value="cpm">
+                CPM
+              </option>
+            </select>
+            ${error_field("INVALID_LOCATION", ("country", "region", "metro"), "div")}
+          </div>
+        </div>
+      %else:
+        <input type="hidden" id="cost_basis" name="cost_basis" value="cpm"/>
+      %endif
+      <div class="form-group">
+        <span class="label cost-basis-label" id="cost-basis-label"></span>
+        <div class="input-group">
+          $<input id="bid_dollars" name="bid_dollars" size="7"
+                  type="text" class="rounded styled-input"
+                  style="width:auto"
+                  onchange="r.sponsored.on_bid_change()"
+                  onkeyup="r.sponsored.on_bid_change()"
+                  value="${'%.2f' % (g.default_bid_pennies / 100.)}"
+                  data-default_bid_dollars="${g.default_bid_pennies / 100.}"
+                  data-min_bid_dollars="${thing.min_bid_dollars}"
+                  data-max_bid_dollars="${thing.max_bid_dollars}"/>
+        </div>
+        ${error_field('BAD_BID', 'bid', 'div')}
+      </div>
+      <div class="form-group">
+        
+      </div>
+    </div>
+  </%utils:line_field>
 </%def>
 
 <%def name="budget_field()">
@@ -645,40 +690,46 @@
       <div class="form-group">
         <span class="label">${_("total budget")}</span>
         <div class="input-group">
-          $<input id="bid" name="bid" size="7" type="text"
+          $<input id="total_budget_dollars" name="total_budget_dollars" size="7" type="text"
                   class="rounded styled-input"
                   style="width:auto"
-                  onchange="r.sponsored.on_bid_change()"
-                  onkeyup="r.sponsored.on_bid_change()"
-                  value="${'%.2f' % g.default_promote_bid}"
-                  data-default_bid="${g.default_promote_bid}"
-                  data-min_bid="${thing.min_bid}"
-                  data-real_min_bid="${g.min_promote_bid}"
-                  data-max_bid="${thing.max_bid}"/>
+                  onchange="r.sponsored.on_budget_change()"
+                  onkeyup="r.sponsored.on_budget_change()"
+                  value="${'%.2f' % thing.default_budget_dollars}"
+                  data-default_budget_dollars="${thing.default_budget_dollars}"
+                  data-min_budget_dollars="${thing.min_budget_dollars}"
+                  data-max_budget_dollars="${thing.max_budget_dollars}"/>
           <div class="minimum-spend">
-            ${_('%(minimum)s minimum') % dict(minimum=format_currency(thing.min_bid, 'USD', locale=c.locale))}
+            ${_('%(minimum)s minimum') % dict(minimum=format_currency(thing.min_budget_dollars, 'USD', locale=c.locale))}
           </div>
         </div>
       </div>
-      <div class="form-group">
+      <div class="form-group fixed-cpm-field">
         <span class="label">${_("impressions")}</span>
         <input id="impressions" name="impressions" size="10" type="text"
                class="rounded styled-input"
                onchange="r.sponsored.on_impression_change()">
       </div>
-      <div class="form-group">
+      <div class="form-group fixed-cpm-field">
         <span class="label">${_("price")}</span>
         <div class="display-text price-info"></div>
       </div>
     </div>
+
     <div>
-      ${error_field("BAD_BID", "bid", "div")}
-      ${error_field("BID_LIVE", "bid", "div")}
+      <div class="budget-message auction-field">
+        Your daily spend will not exceed <span class="display-text daily-max-spend"></span>.
+      </div>
+    </div>
+
+    <div>
+      ${error_field("BAD_BUDGET", "total_budget_dollars", "div")}
+      ${error_field("BUDGET_LIVE", "total_budget_dollars", "div")}
       <div class="budget-change-warning error">
         ${_('if you modify the budget of this paid campaign you will need to reauthorize payment by clicking the "pay" button')}
       </div>
       <div class="available-info"></div>
-      ${error_field("OVERSOLD_DETAIL", "bid", "div")}
+      ${error_field("OVERSOLD_DETAIL", "total_budget_dollars", "div")}
     </div>
   </%utils:line_field>
 </%def>
@@ -863,3 +914,33 @@
     </div>
   %endif
 </%def>
+
+<%def name="is_auction_field()">
+  <%def name="is_auction_field_content()">
+    <div class="radio-group">
+      <label class="form-group">
+        <input id="is_auction_true" class="nomargin"
+               type="radio" value="true" name="is_auction"
+               onclick="r.sponsored.toggleAuctionFields()"
+               >
+        <div class="label-group">
+          <span class="label">${_('auction')}</span>
+        </div>
+      </label>
+      <label class="form-group">
+        <input id="is_auction_false" class="nomargin"
+               type="radio" value="false" name="is_auction"
+               onclick="r.sponsored.toggleAuctionFields()"
+               >
+        <div class="label-group">
+          <span class="label">${_('fixed CPM')}</span>
+        </div>
+      </label>
+    </div>
+  </%def>
+  %if thing.auction_optional:
+    <%utils:line_field title="${_('campaign type')}" css_class="rounded">
+      ${is_auction_field_content()}
+    </%utils:line_field>
+  %endif
+</%def> 

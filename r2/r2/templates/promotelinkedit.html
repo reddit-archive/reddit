@@ -92,14 +92,19 @@ ${pr.javascript_setup()}
       <input type="hidden" name="link_id36" value="${thing.link._id36}">
       <div class="editor-group">
         ${pr.targeting_field()}
-        ${pr.timing_field()}
+        ${pr.is_auction_field()}
         ${pr.platform_field()}
         ${pr.frequency_cap_field()}
         ${pr.priority_field()}
         ${pr.budget_field()}
+        ${pr.scheduling_field()}
+        ${pr.pricing_field()}
         <%utils:line_field title="${_('confirm')}" css_class="rounded confirmation-field">
           <div id="campaign-creator">
           </div>
+          ${utils.error_field("COST_BASIS_CANNOT_CHANGE", "cost_basis", "div")}
+          ${utils.error_field("BAD_BUDGET", "total_budget_dollars", "div")}
+          ${utils.error_field("BUDGET_LIVE", "total_budget_dollars", "div")}
         </%utils:line_field>
       </div>
       <footer class="buttons">
@@ -139,12 +144,14 @@ ${pr.javascript_setup()}
               <tr class="campaign-header-row">
                 <th class="campaign-start-date" title="${start_title}">${_("start")}</th>
                 <th class="campaign-end-date" title="${end_title}">${_("end")}</th>
-                <th class="campaign-duration">${_("duration")}</th>
                 <th class="campaign-priority" style="${'display:none' if not c.user_is_sponsor else ''}">
                   ${_("priority")}
                 </th>
-                <th class="campaign-bid">${_("budget")}</th>
+                <th class="campaign-total-budget">${_("total budget")}</th>
                 <th class="campaign-spent">${_("spent")}</th>
+                %if thing.ads_auction_enabled:
+                  <th class="campaign-bid">${_("bid")}</th>
+                %endif
                 <th class="campaign-target" title="${targeting_title}">${_("targeting")}</th>
                 <th class="campaign-location">${_("location")}</th>
                 %if c.user_is_sponsor:

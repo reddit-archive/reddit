@@ -43,7 +43,7 @@ ${unsafe(js.use('sponsored'))}
     <div class="dashboard-content">
       <div class="editor">
         <div class="editor-group">
-          ${pr.timing_field()}
+          ${pr.scheduling_field()}
           <%utils:line_field title="${_('grouping')}" css_class="rounded timing-field">
             <select id="grouping" name="grouping">
               <option value="total" ${"" if thing.group_by_date else "selected='selected'"}>total</option>

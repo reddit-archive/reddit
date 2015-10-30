@@ -143,6 +143,19 @@
     ${ListingChooser()}
   %endif
 
+  %if thing.auction_announcement:
+    <div id="auction-announcement-container">
+      <div id="auction-announcement">
+        <h1>
+          ad auctions are launching monday 2/8
+        </h1>
+        <p>
+          for more details, see our&nbsp;<a href="https://www.reddit.com/r/selfserve/comments/434c0x/the_auction_is_coming/" target="_blank">announcement in /r/selfserve</a>
+        </p>
+      </div>
+    </div>
+  %endif
+
   <% content = getattr(self, "content", None) or thing.content %>
   %if content:
     ##<div class="fixedwidth"></div>

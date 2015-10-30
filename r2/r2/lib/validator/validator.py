@@ -2342,9 +2342,12 @@ class VFrequencyCap(Validator):
 class VPriority(Validator):
     def run(self, val):
         if c.user_is_sponsor:
-            return PROMOTE_PRIORITIES.get(val, PROMOTE_DEFAULT_PRIORITY)
+            return (PROMOTE_PRIORITIES.get(val,
+                PROMOTE_DEFAULT_PRIORITY(context=c)))
+        elif feature.is_enabled('ads_auction'):
+            return PROMOTE_DEFAULT_PRIORITY(context=c)
         else:
-            return PROMOTE_DEFAULT_PRIORITY
+            return PROMOTE_PRIORITIES['standard']
 
 
 class VLocation(Validator):

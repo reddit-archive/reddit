@@ -20,14 +20,17 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+from collections import OrderedDict
 from datetime import datetime, timedelta
 from uuid import uuid1
 
+from babel.numbers import format_currency
 from pycassa.types import CompositeType
 from pylons import tmpl_context as c
 from pylons import app_globals as g
 from pylons.i18n import _, N_
 
+from r2.config import feature
 from r2.lib.unicode import _force_unicode
 from r2.lib.db import tdb_cassandra
 from r2.lib.db.thing import Thing, NotFound
@@ -46,13 +49,11 @@ class PriorityLevel(object):
     name = ''
     _text = N_('')
     _description = N_('')
-    value = 1   # Values are from 1 (highest) to 100 (lowest)
     default = False
     inventory_override = False
-    cpm = True  # Non-cpm is percentage, will fill unsold impressions
 
     def __repr__(self):
-        return "<PriorityLevel %s: %s>" % (self.name, self.value)
+        return "<PriorityLevel %s>" % self.name
 
     @property
     def text(self):
@@ -66,13 +67,11 @@ class PriorityLevel(object):
 class HighPriority(PriorityLevel):
     name = 'high'
     _text = N_('highest')
-    value = 5
 
 
 class MediumPriority(PriorityLevel):
     name = 'standard'
     _text = N_('standard')
-    value = 10
     default = True
 
 
@@ -80,7 +79,6 @@ class RemnantPriority(PriorityLevel):
     name = 'remnant'
     _text = N_('remnant')
     _description = N_('lower priority, impressions are not guaranteed')
-    value = 20
     inventory_override = True
 
 
@@ -88,15 +86,29 @@ class HousePriority(PriorityLevel):
     name = 'house'
     _text = N_('house')
     _description = N_('non-CPM, displays in all unsold impressions')
-    value = 30
     inventory_override = True
-    cpm = False
 
 
-HIGH, MEDIUM, REMNANT, HOUSE = HighPriority(), MediumPriority(), RemnantPriority(), HousePriority()
-PROMOTE_PRIORITIES = {p.name: p for p in (HIGH, MEDIUM, REMNANT, HOUSE)}
-PROMOTE_DEFAULT_PRIORITY = MEDIUM
+class AuctionPriority(PriorityLevel):
+    name = 'auction'
+    _text = N_('auction')
+    _description = N_('auction priority; all self-serve are auction priority')
+    inventory_override = True
 
+
+HIGH, MEDIUM, REMNANT, HOUSE, AUCTION = (HighPriority(), MediumPriority(),
+                                         RemnantPriority(), HousePriority(),
+                                         AuctionPriority(),)
+PROMOTE_PRIORITIES = OrderedDict((p.name, p) for p in (HIGH, MEDIUM, REMNANT,
+                                                       HOUSE, AUCTION,))
+
+
+def PROMOTE_DEFAULT_PRIORITY(context=None):
+    if (not feature.is_enabled('ads_auction') or
+            (context and context.user_is_sponsor)):
+        return MEDIUM
+    else:
+        return AUCTION
 
 class Location(object):
     DELIMITER = '-'
@@ -155,10 +167,8 @@ class Location(object):
         return not self.__eq__(other)
 
 
-def calc_impressions(bid, cpm_pennies):
-    # bid is in dollars, cpm_pennies is pennies
-    # CPM is cost per 1000 impressions
-    return int(bid / cpm_pennies * 1000 * 100)
+def calc_impressions(total_budget_pennies, cpm_pennies):
+    return int(total_budget_pennies / cpm_pennies * 1000)
 
 
 NO_TRANSACTION = 0
@@ -339,9 +349,10 @@ class Target(object):
     def __repr__(self):
         return "<%s: %s>" % (self.__class__.__name__, self.pretty_name)
 
+
 class PromoCampaign(Thing):
     _defaults = dict(
-        priority_name=PROMOTE_DEFAULT_PRIORITY.name,
+        priority_name=PROMOTE_DEFAULT_PRIORITY().name,
         trans_id=NO_TRANSACTION,
         trans_ip=None,
         trans_ip_country=None,
@@ -358,6 +369,10 @@ class PromoCampaign(Thing):
         frequency_cap_duration=None,
         has_served=False,
         paused=False,
+        total_budget_pennies=0,
+        cost_basis=PROMOTE_COST_BASIS.fixed_cpm,
+        bid_pennies=g.default_bid_pennies,
+        adserver_spent_pennies=0,
     )
 
     # special attributes that shouldn't set Thing data attributes because they
@@ -371,6 +386,7 @@ class PromoCampaign(Thing):
         "ios_version_range",
         "android_devices",
         "android_version_range",
+        "is_auction",
     )
 
     SR_NAMES_DELIM = '|'
@@ -378,7 +394,22 @@ class PromoCampaign(Thing):
     MOBILE_TARGET_DELIM = ','
 
     def __getattr__(self, attr):
-        val = Thing.__getattr__(self, attr)
+        val = super(PromoCampaign, self).__getattr__(attr)
+
+        if (attr == 'total_budget_pennies' and hasattr(self, 'bid') and
+                not getattr(self, 'bid_migrated', False)):
+            old_bid = int(super(PromoCampaign, self).__getattr__('bid') * 100)
+            self.total_budget_pennies = old_bid
+            self.bid_migrated = True
+            return self.total_budget_pennies
+
+        if (attr == 'bid_pennies' and hasattr(self, 'cpm') and
+                not getattr(self, 'cpm_migrated', False)):
+            old_cpm = super(PromoCampaign, self).__getattr__('cpm')
+            self.bid_pennies = old_cpm
+            self.cpm_migrated = True
+            return self.bid_pennies
+
         if attr in ('start_date', 'end_date'):
             val = to_datetime(val)
             if not val.tzinfo:
@@ -407,8 +438,14 @@ class PromoCampaign(Thing):
             state = {k: v for k, v in state.iteritems() if k != "_target"}
         return state
 
-    @classmethod
-    def priority_name_from_priority(cls, priority):
+    @property
+    def is_auction(self):
+        if (self.cost_basis is not PROMOTE_COST_BASIS.fixed_cpm):
+            return True
+
+        return False
+
+    def priority_name_from_priority(self, priority):
         if not priority in PROMOTE_PRIORITIES.values():
             raise ValueError("%s is not a valid priority" % priority.name)
         return priority.name
@@ -427,18 +464,20 @@ class PromoCampaign(Thing):
         return target_sr_names, target_name
 
     @classmethod
-    def create(cls, link, target, bid, cpm, start_date, end_date, frequency_cap,
-               frequency_cap_duration, priority, location, platform, mobile_os,
-               ios_devices, ios_version_range, android_devices,
-               android_version_range):
+    def create(cls, link, target, start_date, end_date,
+               frequency_cap, frequency_cap_duration, priority, location,
+               platform, mobile_os, ios_devices, ios_version_range,
+               android_devices, android_version_range, total_budget_pennies,
+               cost_basis, bid_pennies):
         pc = PromoCampaign(
             link_id=link._id,
-            bid=bid,
-            cpm=cpm,
             start_date=start_date,
             end_date=end_date,
             trans_id=NO_TRANSACTION,
             owner_id=link.author_id,
+            total_budget_pennies=total_budget_pennies,
+            cost_basis=cost_basis,
+            bid_pennies=bid_pennies,
         )
         pc.frequency_cap = frequency_cap
         pc.frequency_cap_duration = frequency_cap_duration
@@ -476,12 +515,10 @@ class PromoCampaign(Thing):
 
     @property
     def impressions(self):
-        # deal with pre-CPM PromoCampaigns
-        if not hasattr(self, 'cpm'):
-            return -1
-        elif not self.priority.cpm:
-            return -1
-        return calc_impressions(self.bid, self.cpm)
+        if self.cost_basis == PROMOTE_COST_BASIS.fixed_cpm:
+            return calc_impressions(self.total_budget_pennies, self.bid_pennies)
+
+        return 0
 
     @property
     def priority(self):
@@ -600,6 +637,18 @@ class PromoCampaign(Thing):
     def is_live_now(self):
         now = datetime.now(g.tz)
         return self.start_date < now and self.end_date > now
+
+    @property
+    def is_house(self):
+       return self.priority == HOUSE
+
+    @property
+    def total_budget_dollars(self):
+        return self.total_budget_pennies / 100.
+
+    @property
+    def bid_dollars(self):
+        return self.bid_pennies / 100.
 
     def delete(self):
         self._deleted = True

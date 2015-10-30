@@ -85,6 +85,7 @@ from r2.models.gold import (
 )
 from r2.models.promo import (
     NO_TRANSACTION,
+    PROMOTE_COST_BASIS,
     PROMOTE_PRIORITIES,
     PromotedLinkRoadblock,
     PromotionLog,
@@ -252,7 +253,8 @@ class Reddit(Templated):
                  robots=None, show_sidebar=True, show_chooser=False,
                  header=True, srbar=True, page_classes=None, short_title=None,
                  show_wiki_actions=False, extra_js_config=None,
-                 show_locationbar=False, show_newsletterbar=False, **context):
+                 show_locationbar=False, auction_announcement=False,
+                 show_newsletterbar=False, **context):
         Templated.__init__(self, **context)
         self.title = title
         self.short_title = short_title
@@ -270,6 +272,8 @@ class Reddit(Templated):
         self.debug_footer = DebugFooter()
         self.supplied_page_classes = page_classes or []
         self.show_newsletterbar = show_newsletterbar
+
+        self.auction_announcement = auction_announcement
 
         #put the sort menus at the top
         self.nav_menu = MenuArea(menus = nav_menus) if nav_menus else None
@@ -3436,8 +3440,14 @@ class VerifyEmail(Templated):
     pass
 
 class Promo_Email(Templated):
-    pass
-
+    def __init__(self, *args, **kwargs):
+        # if total_budget_dollars is passed,
+        # format into printable_total_budget
+        if 'total_budget_dollars' in kwargs:
+            locale = c.locale or g.locale
+            self.printable_total_budget = format_currency(
+                kwargs['total_budget_dollars'], 'USD', locale=locale)
+        super(Promo_Email, self).__init__(*args, **kwargs)
 
 class SuspiciousPaymentEmail(Templated):
     def __init__(self, user, link):
@@ -4438,7 +4448,9 @@ class PromotePage(Reddit):
             nav_menus = [menu]
 
         kw['show_sidebar'] = False
-        Reddit.__init__(self, nav_menus=nav_menus, *a, **kw)
+        auction_announcement = not feature.is_enabled('ads_auction')
+        Reddit.__init__(self, nav_menus=nav_menus,
+            auction_announcement=auction_announcement, *a, **kw)
 
 
 class PromoteLinkBase(Templated):
@@ -4487,6 +4499,12 @@ class PromoteLinkBase(Templated):
         self.countries = countries
         self.regions = regions
         self.metros = metros
+
+        ads_auction_enabled = feature.is_enabled('ads_auction')
+        self.force_auction = (ads_auction_enabled and not c.user_is_sponsor)
+        self.auction_optional = (ads_auction_enabled and c.user_is_sponsor)
+
+        self.cpc_pricing = feature.is_enabled('cpc_pricing')
 
     def get_collections(self):
         self.collections = [cl.__dict__ for cl in Collection.get_all()]
@@ -4541,7 +4559,7 @@ class PromoteLinkEdit(PromoteLinkBase):
         min_start, max_start, max_end = promote.get_date_limits(
             link, c.user_is_sponsor)
 
-        default_end = min_start + datetime.timedelta(days=2)
+        default_end = min_start + datetime.timedelta(days=7)
         default_start = min_start
 
         self.min_start = min_start.strftime("%m/%d/%Y")
@@ -4556,11 +4574,27 @@ class PromoteLinkEdit(PromoteLinkBase):
         self.campaigns = RenderableCampaign.from_campaigns(link, campaigns)
         self.promotion_log = PromotionLog.get(link)
 
-        self.min_bid = 0 if c.user_is_sponsor else g.min_promote_bid
-        self.max_bid = 0 if c.user_is_sponsor else g.max_promote_bid
+        if c.user_is_sponsor:
+            self.min_budget_dollars = 0
+            self.max_budget_dollars = 0
+        else:
+            self.min_budget_dollars = g.min_total_budget_pennies / 100.
+            self.max_budget_dollars = g.max_total_budget_pennies / 100.
 
-        self.priorities = [(p.name, p.text, p.description, p.default, p.inventory_override, p.cpm)
-                           for p in sorted(PROMOTE_PRIORITIES.values(), key=lambda p: p.value)]
+        self.default_budget_dollars = g.default_total_budget_pennies / 100.
+
+        if c.user_is_sponsor:
+            self.min_bid_dollars = 0.
+            self.max_bid_dollars = 0.
+        else:
+            self.min_bid_dollars = g.min_bid_pennies / 100.
+            self.max_bid_dollars = g.max_bid_pennies / 100.
+
+        self.priorities = [
+            (p.name, p.text, p.description, p.default,
+            p.inventory_override, p == PROMOTE_PRIORITIES['auction'])
+            for p in PROMOTE_PRIORITIES.values()
+        ]
 
         self.get_locations()
         self.get_collections()
@@ -4583,6 +4617,8 @@ class PromoteLinkEdit(PromoteLinkBase):
         self.infobar = RedditInfoBar(message=message)
         self.price_dict = PromotionPrices.get_price_dict(self.author)
 
+        self.ads_auction_enabled = feature.is_enabled('ads_auction')
+
 
 class RenderableCampaign(Templated):
     def __init__(self, link, campaign, transaction, is_pending, is_live,
@@ -4590,8 +4626,20 @@ class RenderableCampaign(Templated):
         self.link = link
         self.campaign = campaign
 
+        self.ads_auction_enabled = feature.is_enabled('ads_auction')
+        if self.ads_auction_enabled:
+            self.is_auction = campaign.is_auction
+        else:
+            self.is_auction = False
+
+        # Convert total_budget_pennies to dollars for UI
+        self.total_budget_dollars = campaign.total_budget_pennies / 100.
+
         if full_details:
-            self.spent = promote.get_spent_amount(campaign)
+            if not self.campaign.is_house and not self.campaign.is_auction:            
+                self.spent = promote.get_spent_amount(campaign)
+            else:
+                self.spent = campaign.adserver_spent_pennies / 100.
         else:
             self.spent = 0.
 
@@ -4602,7 +4650,7 @@ class RenderableCampaign(Templated):
         self.is_complete = is_complete
         self.needs_refund = (is_complete and c.user_is_sponsor and
                              (transaction and not transaction.is_refund()) and
-                             self.spent < campaign.bid)
+                             self.spent < campaign.total_budget_dollars)
         self.pay_url = promote.pay_url(link, campaign)
         sr_name = random.choice(campaign.target.subreddit_names)
         self.view_live_url = promote.view_live_url(link, campaign, sr_name)
@@ -4631,6 +4679,18 @@ class RenderableCampaign(Templated):
         self.android_versions = campaign.android_version_range
 
         self.pause_ads_enabled = feature.is_enabled('pause_ads')
+
+        # If ads_auction not enabled, default cost_basis to fixed_cpm
+        if not feature.is_enabled('ads_auction'):
+            self.cost_basis = PROMOTE_COST_BASIS.name[PROMOTE_COST_BASIS.fixed_cpm]
+        elif campaign.cost_basis != PROMOTE_COST_BASIS.fixed_cpm:
+            self.cost_basis = PROMOTE_COST_BASIS.name[campaign.cost_basis]
+        else:
+            self.cost_basis = PROMOTE_COST_BASIS.name[PROMOTE_COST_BASIS.cpm]
+        self.bid_pennies = campaign.bid_pennies
+
+        self.printable_bid = format_currency(campaign.bid_dollars, 'USD',
+            locale=c.locale)
 
         Templated.__init__(self)
 
@@ -4682,6 +4742,10 @@ class RefundPage(Reddit):
         self.billable_impressions = billable_impressions
         self.billable_amount = billable_amount
         self.refund_amount = refund_amount
+        self.printable_total_budget = format_currency(
+            campaign.total_budget_dollars, 'USD', locale=c.locale)
+        self.printable_bid = format_currency(campaign.bid_dollars, 'USD',
+            locale=c.locale)
         self.traffic_url = '/traffic/%s/%s' % (link._id36, campaign._id36)
         Reddit.__init__(self, title="refund", show_sidebar=False)
 
@@ -4916,8 +4980,8 @@ class PaymentForm(Templated):
         self.start_date = campaign.start_date.strftime("%m/%d/%Y")
         self.end_date = campaign.end_date.strftime("%m/%d/%Y")
         self.campaign_id36 = campaign._id36
-        self.budget = format_currency(float(campaign.bid), 'USD',
-                                      locale=c.locale)
+        self.budget = format_currency(campaign.total_budget_dollars, 'USD',
+            locale=c.locale)
         Templated.__init__(self, **kw)
 
 
@@ -5194,7 +5258,7 @@ class PromoteReport(PromoteLinkBase):
         traffic_by_key = {}
         for camp in campaigns:
             fullname = camp._fullname
-            bid = camp.bid / max(camp.ndays, 1)
+            bid = camp.total_budget_pennies / max(camp.ndays, 1)
             camp_ndays = max(1, (camp.end_date - camp.start_date).days)
             camp_start = camp.start_date.date()
             days = xrange(camp_ndays)

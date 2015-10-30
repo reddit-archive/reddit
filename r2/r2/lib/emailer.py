@@ -347,9 +347,9 @@ def _promo_email(thing, kind, body = "", **kw):
 def new_promo(thing):
     return _promo_email(thing, Email.Kind.NEW_PROMO)
 
-def promo_bid(thing, bid, start_date):
-    return _promo_email(thing, Email.Kind.BID_PROMO, bid = bid,
-                        start_date = start_date)
+def promo_total_budget(thing, total_budget_dollars, start_date):
+    return _promo_email(thing, Email.Kind.BID_PROMO,
+        total_budget_dollars = total_budget_dollars, start_date = start_date)
 
 def accept_promo(thing):
     return _promo_email(thing, Email.Kind.ACCEPT_PROMO)
@@ -357,9 +357,9 @@ def accept_promo(thing):
 def reject_promo(thing, reason = ""):
     return _promo_email(thing, Email.Kind.REJECT_PROMO, reason)
 
-def queue_promo(thing, bid, trans_id):
-    return _promo_email(thing, Email.Kind.QUEUED_PROMO, bid = bid,
-                        trans_id = trans_id)
+def queue_promo(thing, total_budget_dollars, trans_id):
+    return _promo_email(thing, Email.Kind.QUEUED_PROMO,
+        total_budget_dollars=total_budget_dollars, trans_id = trans_id)
 
 def live_promo(thing):
     return _promo_email(thing, Email.Kind.LIVE_PROMO)
@@ -372,8 +372,9 @@ def refunded_promo(thing):
     return _promo_email(thing, Email.Kind.REFUNDED_PROMO)
 
 
-def void_payment(thing, campaign, reason):
+def void_payment(thing, campaign, total_budget_dollars, reason):
     return _promo_email(thing, Email.Kind.VOID_PAYMENT, campaign=campaign,
+                        total_budget_dollars=total_budget_dollars,
                         reason=reason)
 
 

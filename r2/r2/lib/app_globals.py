@@ -212,12 +212,15 @@ class Globals(object):
             'comment_karma_display_floor',
             'link_karma_display_floor',
             'mobile_auth_gild_time',
+            'default_total_budget_pennies',
+            'min_total_budget_pennies',
+            'max_total_budget_pennies',
+            'default_bid_pennies',
+            'min_bid_pennies',
+            'max_bid_pennies',
         ],
 
         ConfigValue.float: [
-            'default_promote_bid',
-            'min_promote_bid',
-            'max_promote_bid',
             'statsd_sample_rate',
             'querycache_prune_chance',
             'RL_AVG_REQ_PER_SEC',

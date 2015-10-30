@@ -878,6 +878,9 @@ class Link(Thing, Printable):
                         if subparts.intersection(banned_domains):
                             item.link_notes.append('banned domain')
 
+            # This is passed in promotedlink.html
+            item.ads_auction_enabled = feature.is_enabled('ads_auction')
+
         if user_is_loggedin:
             incr_counts(wrapped)
 

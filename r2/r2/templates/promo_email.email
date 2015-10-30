@@ -54,15 +54,16 @@ able. Sometimes we're ninja fast, but we need up to 48 hours officially to
 respond to all inquiries.
 
 %elif thing.kind == Email.Kind.BID_PROMO:
-This email is to confirm that your payment of $${"%.2f" % thing.bid} for a
-self-serve ad on reddit.com has been authorized.  The credit card you provided
-will be charged 12-24 hours prior to the date your self-serve ad is set to run.
+This email is to confirm that your payment of ${thing.printable_total_budget}
+for a self-serve ad on reddit.com has been authorized.  The credit card you
+provided will be charged 12-24 hours prior to the date your self-serve ad is set
+to run.
 
 Having second thoughts about your budget? Need to make any edits? You'll have
 until ${(thing.start_date - timedelta(1)).strftime("%Y-%m-%d")} to change your
 ad here:
 
-    ${edit_url}
+    ${unsafe(edit_url + ref_tags % dict(ref="promo_total_budget", campaign="edit_promo"))}
 
 %elif thing.kind == Email.Kind.ACCEPT_PROMO:
 This email is to confirm that your self-serve reddit.com ad has been approved by
@@ -117,12 +118,12 @@ TRANSACTION #${thing.trans_id}
 DATE: ${datetime.now(g.tz).strftime("%Y-%m-%d")}
 ................................................................................
 
-AMOUNT CHARGED: $${"%.2f" % thing.bid}
-SPONSORSHIP PERMALINK: ${thing.link.make_permalink_slow(force_domain = True)}
+AMOUNT CHARGED: ${thing.printable_total_budget}
+SPONSORSHIP PERMALINK: ${unsafe(thing.link.make_permalink_slow(force_domain=True) + ref_tags % dict(ref="promo_queued", campaign="view_promo"))}
 
 ================================================================================
 %else:
-Your promotion was a freebie in the amount of $${"%.2f" % thing.bid}.
+Your promotion was a freebie in the amount of ${thing.printable_total_budget}.
 %endif
 
 %elif thing.kind == Email.Kind.LIVE_PROMO:
@@ -180,9 +181,9 @@ doesn't happen again. You have been refunded the unspent portion of your budget.
 If you have any questions or concerns please reply to this email.
 
 %elif thing.kind == Email.Kind.VOID_PAYMENT:
-This email is to inform you that your pending payment of $${"%.2f" % thing.campaign.bid} for a self-serve ad on reddit.com has been voided and you will not be charged.
+This email is to inform you that your pending payment of ${thing.printable_total_budget} for a self-serve ad on reddit.com has been voided and you will not be charged.
 
-%if thing.reason == 'changed_bid':
+%if thing.reason == 'changed_budget':
 The payment was voided because you changed the campaign's budget. Before the campaign can go live you'll need to authorize the new payment amount:
 
 ${promote.pay_url(thing.link, thing.campaign)}

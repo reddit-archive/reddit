@@ -55,11 +55,11 @@
       </tr>
       <tr>
         <th>${_("budget")}</th>
-        <td class="prefright">${format_currency(thing.campaign.bid, 'USD', locale=c.locale)}</td>
+        <td class="prefright">${thing.printable_total_budget}</td>
       </tr>
       <tr>
         <th>${_("cpm")}</th>
-        <td class="prefright">${format_currency(thing.campaign.cpm / 100., 'USD', locale=c.locale)}</td>
+        <td class="prefright">${thing.printable_bid}</td>
       </tr>
       <tr>
         <th>${_("impressions purchased")}</th>
