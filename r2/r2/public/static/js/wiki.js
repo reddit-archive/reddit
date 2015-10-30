@@ -64,6 +64,11 @@ r.wiki = {
 
     toggleHide: function(event) {
         event.preventDefault()
+
+        if (r.access.isLinkRestricted(this)) {
+            return;
+        }
+
         var $this = $(this),
             url = r.wiki.baseApiUrl() + '/hide',
             $this_parent = $this.parents('.revision')
