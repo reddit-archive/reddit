@@ -3079,8 +3079,8 @@ class ApiController(RedditController):
 
         wrapper = default_thing_wrapper(expand_children = True)
         w = wrap_links(thing, wrapper)
-        jquery(".content").replace_things(w, True, True)
-        jquery(".content .link .rank").hide()
+        jquery("body>div.content").replace_things(w, True, True)
+        jquery("body>div.content .link .rank").hide()
         if log_modaction:
             sr = thing.subreddit_slow
             ModAction.create(sr, c.user, 'distinguish', target=thing, **log_kw)
