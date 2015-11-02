@@ -487,8 +487,12 @@ class EventV2(object):
             uuid = uuid4()
         self.uuid = str(uuid)
 
-        self.payload = data or {}
-        self.obfuscated_data = obfuscated_data or {}
+        self.payload = {}
+        if data:
+            self.payload.update(data)
+        self.obfuscated_data = {}
+        if obfuscated_data:
+            self.obfuscated_data.update(obfuscated_data)
 
         if context and request:
             # Since we don't want to override any of these values that callers

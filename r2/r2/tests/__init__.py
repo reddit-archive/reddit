@@ -66,3 +66,19 @@ class RedditTestCase(TestCase):
 
     def __init__(self, *args, **kwargs):
         TestCase.__init__(self, *args, **kwargs)
+
+    def assert_same_dict(self, data, expected_data, prefix=None):
+        prefix = prefix or []
+        for k in set(data.keys() + expected_data.keys()):
+            current_prefix = prefix + [k]
+            want = expected_data.get(k)
+            got = data.get(k)
+            if isinstance(want, dict) and isinstance(got, dict):
+                self.assert_same_dict(got, want, prefix=current_prefix)
+            else:
+                self.assertEqual(
+                    got, want,
+                    "Mismatch for %s: %r != %r" % (
+                        ".".join(current_prefix), got, want
+                    )
+                )
