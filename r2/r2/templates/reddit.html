@@ -53,9 +53,6 @@
 
 <%def name="global_stylesheets()">
   ${less_stylesheet("reddit.less")}
-  %if c.site.stylesheet:
-    <link rel="stylesheet" href="${static(c.site.stylesheet)}" type="text/css" >
-  %endif
 </%def>
 
 <%def name="sr_stylesheets()">

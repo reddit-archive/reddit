@@ -133,7 +133,6 @@ time_subreddit_rx = re.compile(r"\At:[A-Za-z0-9][A-Za-z0-9_]{2,22}\Z")
 class BaseSite(object):
     _defaults = dict(
         static_path=g.static_path,
-        stylesheet=None,
         header=None,
         header_title='',
         login_required=False,
