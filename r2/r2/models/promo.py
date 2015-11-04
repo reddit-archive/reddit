@@ -162,11 +162,13 @@ NO_TRANSACTION = 0
 
 
 class Collection(object):
-    def __init__(self, name, sr_names, over_18=False, description=None):
+    def __init__(self, name, sr_names, over_18=False, description=None,
+            is_spotlight=False):
         self.name = name
         self.over_18 = over_18
         self.sr_names = sr_names
         self.description = description
+        self.is_spotlight = is_spotlight
 
     @classmethod
     def by_name(cls, name):
@@ -174,7 +176,17 @@ class Collection(object):
 
     @classmethod
     def get_all(cls):
-        return CollectionStorage.get_all()
+        """
+        Return collections in this order:
+        1. SFW/NSFW
+        2. Spotlighted
+        3. Alphabetical
+        """
+        all_collections = CollectionStorage.get_all()
+        sorted_collections = sorted(all_collections, key=lambda collection:
+            (collection.over_18, -collection.is_spotlight,
+            collection.name.lower()))
+        return sorted_collections
 
     def __repr__(self):
         return "<%s: %s>" % (self.__class__.__name__, self.name)
@@ -197,8 +209,10 @@ class CollectionStorage(tdb_cassandra.View):
     def _from_columns(cls, name, columns):
         description = columns['description']
         sr_names = columns['sr_names'].split(cls.SR_NAMES_DELIM)
-        over_18 = bool(columns.get("over_18", "False"))
-        return Collection(name, sr_names, over_18=over_18, description=description)
+        over_18 = columns.get("over_18") == "True"
+        is_spotlight = columns.get("is_spotlight") == "True"
+        return Collection(name, sr_names, over_18=over_18,
+            description=description, is_spotlight=is_spotlight)
 
     @classmethod
     def _to_columns(cls, description, srs, over_18):
@@ -206,6 +220,7 @@ class CollectionStorage(tdb_cassandra.View):
             'description': description,
             'sr_names': cls.SR_NAMES_DELIM.join(sr.name for sr in srs),
             'over_18': str(over_18),
+            'is_spotlight': is_spotlight,
         }
         return columns
 
@@ -216,12 +231,23 @@ class CollectionStorage(tdb_cassandra.View):
         cls._set_values(rowkey, columns)
 
     @classmethod
-    def set_over_18(cls, name, over_18):
+    def _set_attributes(cls, name, attributes):
         rowkey = name
-        columns = {
-            'over_18': str(over_18),
-        }
+        for key in attributes:
+            if not hasattr(Collection.by_name(name), key):
+                raise AttributeError('No attribute on %s called %s'
+                    % (name, key))
+
+        columns = attributes
         cls._set_values(rowkey, columns)
+
+    @classmethod
+    def set_over_18(cls, name, over_18):
+        cls._set_attributes(name, {'over_18': str(over_18)})
+
+    @classmethod
+    def set_is_spotlight(cls, name, is_spotlight):
+        cls._set_attributes(name, {'is_spotlight': str(is_spotlight)})
 
     @classmethod
     def get_collection(cls, name):
