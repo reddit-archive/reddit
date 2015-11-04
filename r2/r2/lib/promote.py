@@ -713,6 +713,11 @@ def charged_or_not_needed(campaign):
     return charged or not needs_charge
 
 
+def is_served_promo(date, link, campaign):
+    return (campaign.start_date <= date < campaign.end_date and
+            campaign.has_served)
+
+
 def is_accepted_promo(date, link, campaign):
     return (campaign.start_date <= date < campaign.end_date and
             is_accepted(link) and
@@ -768,6 +773,13 @@ def get_scheduled_promos(offset=0):
     date = promo_datetime_now(offset=offset)
     for camp, link in get_promos(date):
         if is_scheduled_promo(date, link, camp):
+            yield camp, link
+
+
+def get_served_promos(offset=0):
+    date = promo_datetime_now(offset=offset)
+    for camp, link in get_promos(date):
+        if is_served_promo(date, link, camp):
             yield camp, link
 
 
