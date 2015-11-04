@@ -243,6 +243,7 @@ class CollectionStorage(tdb_cassandra.View):
             ret.append(cls._from_columns(name, columns))
         return ret
 
+    @classmethod
     def delete(cls, name):
         rowkey = name
         cls._cf.remove(rowkey)
