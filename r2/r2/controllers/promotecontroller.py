@@ -641,7 +641,7 @@ class PromoteApiController(ApiController):
 
         button = jquery(".id-%s .fraud-button" % thing._fullname)
         button.text(_("fraud" if is_fraud else "not fraud"))
-        form.fadeOut()
+        form.parents('.link').fadeOut()
 
     @noresponse(VSponsorAdmin(),
                 VModhash(),
