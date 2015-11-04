@@ -943,21 +943,23 @@ class ApiController(RedditController):
             editor.onCommit(update)
 
     @allow_oauth2_access
-    @validatedForm(VUser(),
-                   VModhash(),
-                   friend = VExistingUname('name'),
-                   container = nop('container'),
-                   type = VOneOf('type', ('friend',) + _sr_friend_types),
-                   type_and_permissions = VPermissions('type', 'permissions'),
-                   note = VLength('note', 300),
-                   duration = VInt('duration', min=1, max=999),
-                   ban_message = VMarkdownLength('ban_message', max_length=1000,
-                                                 empty_error=None),
+    @validatedForm(
+        VUser(),
+        VModhash(),
+        friend=VExistingUname('name'),
+        container=nop('container'),
+        type=VOneOf('type', ('friend',) + _sr_friend_types),
+        type_and_permissions=VPermissions('type', 'permissions'),
+        note=VLength('note', 300),
+        ban_reason=VLength('ban_reason', 100),
+        duration=VInt('duration', min=1, max=999),
+        ban_message=VMarkdownLength('ban_message', max_length=1000,
+            empty_error=None),
     )
     @api_doc(api_section.users, uses_site=True)
     def POST_friend(self, form, jquery, friend,
-                    container, type, type_and_permissions, note, duration,
-                    ban_message):
+            container, type, type_and_permissions, note, ban_reason,
+            duration, ban_message):
         """Create a relationship between a user and another user or subreddit
 
         OAuth2 use requires appropriate scope based
@@ -1047,12 +1049,16 @@ class ApiController(RedditController):
 
         elif form.has_errors("name", errors.USER_DOESNT_EXIST, errors.NO_USER):
             return
-        elif form.has_errors("note", errors.TOO_LONG):
+        elif form.has_errors(("note", "ban_reason"), errors.TOO_LONG):
             return
 
         if type == "banned":
             if form.has_errors("ban_message", errors.TOO_LONG):
                 return
+            if ban_reason and note:
+                note = "%s: %s" % (ban_reason, note)
+            elif ban_reason:
+                note = ban_reason
 
         if type in self._sr_friend_types_with_permissions:
             if form.has_errors('type', errors.INVALID_PERMISSION_TYPE):

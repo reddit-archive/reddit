@@ -39,20 +39,27 @@
         <label for="name">${_('who to ban?')} &nbsp;</label>
         <input type="text" class="friend-name" name="name" id="name">
         <div>
-            <label for="note">${_('why the ban?')}</label>
+          <label for="ban_reason">${_("reason")}</label>
+          <select name="ban_reason">
             %if thing.rules:
-              <select name="note">
+              <optgroup label="Subreddit Rules">
                 %for rule in thing.rules:
                   <option value="${rule['short_name']}">${rule['short_name']}</option>
                 %endfor
-                %for rule in thing.system_rules:
-                  <option value="${rule}">${rule}</option>
-                %endfor
-              </select>
-            %else:
-              <input type="text" maxlength="300" name="note" id="note">
+              </optgroup>
             %endif
+            <optgroup label="Site Rules">
+              %for rule in thing.system_rules:
+                <option value="${rule}">${rule}</option>
+              %endfor
+            </optgroup>
+            <option value="other">${_("Other")}</option>
+          </select>
+          <div>
+            <label for="note">${_("mod note")}
+            <input type="text" maxlength="300" name="note" id="note">
             <span>${_('(will not be visible to user)')}</span>
+          </div>
         </div>
         <div>
             <label for="duration">${_('how long?')}</label>
