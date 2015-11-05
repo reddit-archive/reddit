@@ -424,10 +424,8 @@ class OAuth2Client(Token):
     def _developers(self):
         """Returns a list of users who are developers of this client."""
 
-        devs = Account._byID(list(self._developer_ids))
-        return [dev for dev in devs.itervalues()
-                if not (dev._deleted or dev._spam or
-                        (dev.in_timeout and feature.is_enabled('timeouts')))]
+        devs = Account._byID(list(self._developer_ids), return_dict=False)
+        return [dev for dev in devs if not dev._deleted]
 
     def _developer_colname(self, account):
         """Developer access is granted by way of adding a column with the
@@ -440,8 +438,7 @@ class OAuth2Client(Token):
     def has_developer(self, account):
         """Returns a boolean indicating whether or not the supplied Account is a developer of this application."""
 
-        if (account._deleted or account._spam or
-                (account.in_timeout and feature.is_enabled('timeouts'))):
+        if account._deleted:
             return False
         else:
             return getattr(self, self._developer_colname(account), False)
@@ -482,8 +479,7 @@ class OAuth2Client(Token):
     def _by_developer(cls, account):
         """Returns a (possibly empty) list of clients for which Account is a developer."""
 
-        if (account._deleted or account._spam or
-                (account.in_timeout and feature.is_enabled('timeouts'))):
+        if account._deleted:
             return []
 
         try:
