@@ -667,6 +667,9 @@ def review_fraud(link, is_fraud):
 
 
 def reject_promotion(link, reason=None, notify_why=True):
+    if is_rejected(link):
+        return
+
     was_live = is_promoted(link)
     update_promote_status(link, PROMOTE_STATUS.rejected)
     if reason:
