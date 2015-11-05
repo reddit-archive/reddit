@@ -111,13 +111,13 @@ class WikiBasePage(Reddit):
                  showtitle=False, **context):
         pageactions = []
         if not actionless and page:
-            pageactions += [(page, _("view"), False)]
+            pageactions += [(page, _("view"), False, 'wikiview')]
             if may_revise:
-                pageactions += [('edit', _("edit"), True)]
-            pageactions += [('revisions/%s' % page, _("history"), False)]
-            pageactions += [('discussions', _("talk"), True)]
+                pageactions += [('edit', _("edit"), True, 'wikiedit')]
+            pageactions += [('revisions/%s' % page, _("history"), False, 'wikirevisions')]
+            pageactions += [('discussions', _("talk"), True, 'wikidiscussions')]
             if c.is_wiki_mod and may_revise:
-                pageactions += [('settings', _("settings"), True)]
+                pageactions += [('settings', _("settings"), True, 'wikisettings')]
 
         action = context.get('wikiaction', (page, 'wiki'))
         

@@ -40,7 +40,9 @@
       <input type="hidden" name="sort" value="" />
       <input type="hidden" value="${_('suggested sort cleared')}" name="executed"/>
       <a href="javascript:void(0)"
-         onclick="return toggle_clear_suggested_sort(this)">${_("clear suggested sort")}</a>
+         onclick="return toggle_clear_suggested_sort(this)"
+         data-event-action="unsetsuggestedsort">
+        ${_("clear suggested sort")}</a>
       <span class="option error">
          ${_("clear suggested sort?")}
 
@@ -82,7 +84,8 @@
     <% clear_suggested_sort() %>
   %else:
     ${ynbutton(_("set as suggested sort"), _("suggested sort set"), "set_suggested_sort",
-      hidden_data=dict(id=thing.link._fullname, sort=thing.sort))}
+      hidden_data=dict(id=thing.link._fullname, sort=thing.sort),
+      event_target='link', event_action='setsuggestedsort')}
   %endif
 %endif
 
@@ -100,25 +103,30 @@
 %if thing.can_edit:
   %if thing.contest_mode:
     ${ynbutton(_("disable contest mode"), _("contest mode disabled"), "set_contest_mode",
-      hidden_data=dict(id=thing.link._fullname, state=False))}
+      hidden_data=dict(id=thing.link._fullname, state=False),
+      event_target='link', event_action='unsetcontestmode')}
   %else:
     ${ynbutton(_("enable contest mode"), _("contest mode enabled"), "set_contest_mode",
-      hidden_data=dict(id=thing.link._fullname, state=True))}
+      hidden_data=dict(id=thing.link._fullname, state=True),
+      event_target='link', event_action='setcontestmode')}
   %endif
 %endif
 
 %if thing.can_edit:
   %if thing.stickied:
     ${ynbutton(_("unsticky this post"), _("unstickied"), "set_subreddit_sticky",
-      hidden_data=dict(id=thing.link._fullname, state=False))}
+      hidden_data=dict(id=thing.link._fullname, state=False),
+      event_target='link', event_action='unsticky')}
   %elif thing.stickies_full:
     ${ynbutton(_("sticky this post"), _("stickied"), "set_subreddit_sticky",
       question=_("sticky this? (bottom sticky will be replaced)"),
-      hidden_data=dict(id=thing.link._fullname, state=True))}
+      hidden_data=dict(id=thing.link._fullname, state=True),
+      event_target='link', event_action='sticky')}
   %else:
     ${ynbutton(_("sticky this post"), _("stickied"), "set_subreddit_sticky",
       question=_("sticky this?"),
-      hidden_data=dict(id=thing.link._fullname, state=True))}
+      hidden_data=dict(id=thing.link._fullname, state=True),
+      event_target='link', event_action='sticky')}
   %endif
 %endif
 

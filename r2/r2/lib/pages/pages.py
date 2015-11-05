@@ -463,22 +463,33 @@ class Reddit(Templated):
                     return sr.stylesheet_url_http
 
     def wiki_actions_menu(self, moderator=False):
+        data_attrs = lambda event: (
+            {'type': 'subreddit', 'event-action': 'pageview', 'event-detail': event})
+
         buttons = []
 
-        buttons.append(NamedButton("wikirecentrevisions",
-                                   css_class="wikiaction-revisions",
-                                   dest="/wiki/revisions"))
+        buttons.append(NamedButton(
+            "wikirecentrevisions",
+            css_class="wikiaction-revisions",
+            dest="/wiki/revisions",
+            data=data_attrs('wikirevisions')))
+        buttons.append(NamedButton(
+            "wikipageslist",
+            css_class="wikiaction-pages",
+            dest="/wiki/pages",
+            data=data_attrs('wikipages')))
 
-        buttons.append(NamedButton("wikipageslist",
-                           css_class="wikiaction-pages",
-                           dest="/wiki/pages"))
         if moderator:
-            buttons += [NamedButton('wikibanned', css_class='reddit-ban access-required',
-                                    dest='/about/wikibanned'),
-                        NamedButton('wikicontributors',
-                                    css_class='reddit-contributors access-required',
-                                    dest='/about/wikicontributors')
-                        ]
+            buttons.append(NamedButton(
+                'wikibanned',
+                css_class='reddit-ban access-required',
+                dest='/about/wikibanned',
+                data=data_attrs('wikibanned')))
+            buttons.append(NamedButton(
+                'wikicontributors',
+                css_class='reddit-contributors access-required',
+                dest='/about/wikicontributors',
+                data=data_attrs('wikicontributors')))
 
         return SideContentBox(_('wiki tools'),
                       [NavMenu(buttons,
@@ -494,46 +505,81 @@ class Reddit(Templated):
         is_admin = c.user_is_loggedin and c.user_is_admin
         is_moderator_with_perms = lambda *perms: (
             is_admin or c.site.is_moderator_with_perms(c.user, *perms))
+        data_attrs = lambda event: (
+            {'type': 'subreddit', 'event-action': 'pageview', 'event-detail': event})
 
         if is_single_subreddit and is_moderator_with_perms('config'):
-            buttons.append(NavButton(menu.community_settings,
-                                     css_class="reddit-edit access-required",
-                                     dest="edit"))
-            buttons.append(NavButton(menu.edit_stylesheet,
-                                     css_class="edit-stylesheet access-required",
-                                     dest="stylesheet"))
+            buttons.append(NavButton(
+                menu.community_settings,
+                css_class="reddit-edit access-required",
+                dest="edit",
+                data=data_attrs('editsubreddit')))
+            buttons.append(NavButton(
+                menu.edit_stylesheet,
+                css_class="edit-stylesheet access-required",
+                dest="stylesheet",
+                data=data_attrs('stylesheet')))
 
         if is_moderator_with_perms('mail'):
-            buttons.append(NamedButton("modmail",
-                                    dest="message/inbox",
-                                    css_class="moderator-mail access-required"))
+            buttons.append(NamedButton(
+                "modmail",
+                dest="message/inbox",
+                css_class="moderator-mail access-required",
+                data=data_attrs('modmail')))
 
         if is_single_subreddit:
             if is_moderator_with_perms('access'):
-                buttons.append(NamedButton("moderators",
-                                           css_class="reddit-moderators"))
+                buttons.append(NamedButton(
+                    "moderators",
+                    css_class="reddit-moderators",
+                    data=data_attrs('moderators')))
 
                 if not c.site.hide_contributors:
                     buttons.append(NavButton(
-                            menu.contributors,
-                            "contributors",
-                            css_class="reddit-contributors access-required"))
+                        menu.contributors,
+                        "contributors",
+                        css_class="reddit-contributors access-required",
+                        data=data_attrs('contributors')))
 
-            buttons.append(NamedButton("traffic", css_class="reddit-traffic access-required"))
+            buttons.append(NamedButton(
+                "traffic",
+                css_class="reddit-traffic access-required",
+                data=data_attrs('traffic')))
 
         if is_moderator_with_perms('posts'):
-            buttons += [NamedButton("modqueue", css_class="reddit-modqueue access-required"),
-                        NamedButton("reports", css_class="reddit-reported access-required"),
-                        NamedButton("spam", css_class="reddit-spam access-required"),
-                        NamedButton("edited", css_class="reddit-edited access-required")]
+            buttons.append(NamedButton(
+                "modqueue",
+                css_class="reddit-modqueue access-required",
+                data=data_attrs('modqueue')))
+            buttons.append(NamedButton(
+                "reports",
+                css_class="reddit-reported access-required",
+                data=data_attrs('reports')))
+            buttons.append(NamedButton(
+                "spam",
+                css_class="reddit-spam access-required",
+                data=data_attrs('spam')))
+            buttons.append(NamedButton(
+                "edited",
+                css_class="reddit-edited access-required",
+                data=data_attrs('edited')))
 
         if is_single_subreddit:
             if is_moderator_with_perms('access'):
-                buttons.append(NamedButton("banned", css_class="reddit-ban access-required"))
+                buttons.append(NamedButton(
+                    "banned",
+                    css_class="reddit-ban access-required",
+                    data=data_attrs('banned')))
             if is_moderator_with_perms('access', 'mail'):
-                buttons.append(NamedButton("muted", css_class="reddit-mute access-required"))
+                buttons.append(NamedButton(
+                    "muted",
+                    css_class="reddit-mute access-required",
+                    data=data_attrs('muted')))
             if is_moderator_with_perms('flair'):
-                buttons.append(NamedButton("flair", css_class="reddit-flair access-required"))
+                buttons.append(NamedButton(
+                    "flair",
+                    css_class="reddit-flair access-required",
+                    data=data_attrs('flair')))
 
         if is_single_subreddit and is_moderator_with_perms('config'):
             # append automod button if they have an AutoMod configuration
@@ -543,14 +589,19 @@ class Reddit(Templated):
                     "automod",
                     dest="../wiki/edit/config/automoderator",
                     css_class="reddit-automod access-required",
-                ))
+                    data=data_attrs('automoderator')))
             except tdb_cassandra.NotFound:
                 pass
 
-        buttons.append(NamedButton("log", css_class="reddit-moderationlog access-required"))
+        buttons.append(NamedButton(
+            "log",
+            css_class="reddit-moderationlog access-required",
+            data=data_attrs('moderationlog')))
         if is_moderator_with_perms('posts'):
-            buttons.append(
-                NamedButton("unmoderated", css_class="reddit-unmoderated access-required"))
+            buttons.append(NamedButton(
+                    "unmoderated",
+                    css_class="reddit-unmoderated access-required",
+                    data=data_attrs('unmoderated')))
 
         return SideContentBox(_('moderation tools'),
                               [NavMenu(buttons,
@@ -680,21 +731,33 @@ class Reddit(Templated):
                     css_class = "submit submit-link"
                     if mod_link_override:
                         css_class += " mod-override"
+                    data_attrs = {
+                        'type': 'subreddit',
+                        'event-action': 'submit',
+                        'event-detail': 'link',
+                    }
                     ps.append(SideBox(title=c.site.submit_link_label or
                                             strings.submit_link_label,
                                       css_class=css_class,
                                       link="/submit",
                                       sr_path=not fake_sub or is_multi,
+                                      data_attrs=data_attrs,
                                       show_cover=True))
                 if "self" in submit_buttons:
                     css_class = "submit submit-text"
                     if mod_self_override:
                         css_class += " mod-override"
+                    data_attrs = {
+                        'type': 'subreddit',
+                        'event-action': 'submit',
+                        'event-detail': 'self',
+                    }
                     ps.append(SideBox(title=c.site.submit_text_label or
                                             strings.submit_text_label,
                                       css_class=css_class,
                                       link="/submit?selftext=true",
                                       sr_path=not fake_sub or is_multi,
+                                      data_attrs=data_attrs,
                                       show_cover=True))
 
         no_ads_yet = True
@@ -724,9 +787,11 @@ class Reddit(Templated):
             delta = datetime.datetime.now(g.tz) - c.user._date
             if delta.days >= g.min_membership_create_community:
                 subtitles = get_funny_translated_string("create_subreddit", 2)
+                data_attrs = {'event-action': 'createsubreddit'}
                 ps.append(SideBox(_('Create your own subreddit'),
                            '/subreddits/create', 'create',
                            subtitles=subtitles,
+                           data_attrs=data_attrs,
                            show_cover = True, nocname=True))
 
         if c.default_sr:
@@ -763,7 +828,12 @@ class Reddit(Templated):
                 helplink = HelpLink(
                     "/message/compose?to=%%2Fr%%2F%s" % c.site.name,
                     label,
-                    access_required=not is_admin_sr)
+                    access_required=not is_admin_sr,
+                    data_attrs={
+                        'type': 'subreddit',
+                        'fullname': c.site._fullname,
+                        'event-action': 'compose',
+                    })
 
                 mod_href = c.site.path + 'about/moderators'
                 ps.append(SideContentBox(_('moderators'),

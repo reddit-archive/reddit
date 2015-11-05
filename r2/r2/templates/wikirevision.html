@@ -67,14 +67,22 @@
    
     %if thing.show_extended:
         <td>
-            <a href="#" class="revision_hide access-required" data-revision="${thing._id}">hide</a>
+            <a href="#" class="revision_hide access-required"
+               data-revision="${thing._id}"
+               data-type="wikipage"
+               data-event-action="wikirevise"
+               data-event-detail="hide"
+               >hide</a>
         </td>
         <td class="wiki_revert" style="white-space: nowrap;">
             ${ynbutton(_("revert here"), 
                        _("done"),
                        quote("..%s/revert" % c.wiki_api_url), 
                        hidden_data=dict(revision=thing._id, page=thing.page), 
-                       post_callback="$.refresh"
+                       post_callback="$.refresh",
+                       event_target='wikipage',
+                       event_action='wikirevise',
+                       event_detail='revert'
                       )
              }
         </td>

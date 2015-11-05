@@ -43,8 +43,13 @@
       </span>
       &nbsp;
   %elif c.user_is_loggedin and cell_type == "sendmessage" and c.user != thing.user:
-    ${plain_link(_("send message"),
-                 "/message/compose?to=%s" % (thing.user.name))}
+
+      <a href="${'/message/compose/?to=%s' % thing.user.name}" class="access-required"
+         data-type="account"
+         data-fullname="${thing.user._fullname}"
+         data-event-action="compose">
+         ${_("send message")}
+      </a>
       &nbsp;
   %elif cell_type == "remove":
     %if thing.editable:
@@ -81,7 +86,13 @@
   %elif cell_type == "permissionsctl":
     %if thing.editable:
       <span class="permissions-edit">
-        (<a class="access-required" href="javascript:void(0)">${_('change')}</a>)
+        (<a class="access-required"
+            href="javascript:void(0)"
+            data-type="account"
+            data-fullname="${thing.user._fullname}"
+            data-event-action="editsettings"
+            data-event-detail="set_permissions"
+            >${_('change')}</a>)
       </span>
     %endif
   %elif cell_type == "temp" and hasattr(thing, "tempban"):

@@ -27,7 +27,12 @@
 ${thing.listing}
 
 <div class="morelink discussionlink">
-<a href="/submit?url=${g.default_scheme}://${get_domain()}/wiki/${thing.page}&resubmit=true&no_self=true&title=Check+out+this+wiki+page">${_("submit a discussion")}
+<a class="access-required"
+   href="/submit?url=${g.default_scheme}://${get_domain()}/wiki/${thing.page}&resubmit=true&no_self=true&title=Check+out+this+wiki+page"
+   type="subreddit"
+   data-event-action="submit"
+   data-event-detail="link"
+>${_("submit a discussion")}
 <div class="nub"></div>
 </a>
 </div>

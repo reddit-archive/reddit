@@ -38,17 +38,19 @@
     %if not getattr(thing.thing, "use_big_modbuttons", False):
       %if not thing.show_spam:
         <li>
-           ${ynbutton(_("spam"), _("spammed"), "remove")}
+           ${ynbutton(_("spam"), _("spammed"), "remove", event_action='spam')}
         </li>
         <li>
-           ${ynbutton(_("remove"), _("removed"), "remove", hidden_data=dict(spam=False))}
+           ${ynbutton(_("remove"), _("removed"), "remove", hidden_data=dict(spam=False),
+             event_action='remove')}
         </li>
       %endif
 
       %if thing.show_approve:
         <li>
            ${self.state_button("approve", _("approve"),
-              "return change_state(this, 'approve');", _("approved"))}
+              "return change_state(this, 'approve');", _("approved"),
+              event_action="approve")}
         </li>
       %endif
     %endif
@@ -56,26 +58,29 @@
 
   %if thing.show_report:
     <li class="report-button">
-      <a href="javascript:void(0)" class="action-thing access-required" data-action-form="#report-action-form">
+      <a href="javascript:void(0)" class="action-thing access-required"
+         data-action-form="#report-action-form"
+         data-event-action="report">
         ${_("report")}
       </a>
     </li>
   %endif
   %if thing.show_lock:
-    <li>${ynbutton(_("lock"), _("locked"), "lock")}</li>
+    <li>${ynbutton(_("lock"), _("locked"), "lock", event_action='lock')}</li>
   %endif
   %if thing.show_unlock:
-    <li>${ynbutton(_("unlock"), _("unlocked"), "unlock")}</li>
+    <li>${ynbutton(_("unlock"), _("unlocked"), "unlock", event_action='unlock')}</li>
   %endif
   %if thing.show_marknsfw:
-    <li>${ynbutton(_("nsfw"), _("marked"), "marknsfw")}</li>
+    <li>${ynbutton(_("nsfw"), _("marked"), "marknsfw", event_action='marknsfw')}</li>
   %endif
   %if thing.show_unmarknsfw:
-    <li>${ynbutton(_("un-nsfw"), _("unmarked"), "unmarknsfw")}</li>
+    <li>${ynbutton(_("un-nsfw"), _("unmarked"), "unmarknsfw", event_action='unmarknsfw')}</li>
   %endif
   %if not getattr(thing, 'promoted', None) and thing.show_flair:
     <li>
-      <a class="flairselectbtn access-required" href="javascript://void(0)">${_('flair')}</a>
+      <a class="flairselectbtn access-required" href="javascript://void(0)"
+         data-event-action="editflair" data-event-detail="set">${_('flair')}</a>
       <div class="flairselector drop-choices"></div>
     </li>
   %endif
@@ -98,7 +103,8 @@
       <input type="hidden" value="${_('distinguishing...')}" name="executed"/>
       <a class="access-required"
          href="javascript:void(0)"
-         onclick="return toggle_distinguish_span(this)">${_("distinguish")}</a>
+         onclick="return toggle_distinguish_span(this)"
+         data-event-action="distinguish">${_("distinguish")}</a>
       <span class="option error">
          ${_("distinguish this?")}
 
@@ -142,6 +148,7 @@
     <a href="/gold?goldtype=gift&months=1&thing=${thing.thing._fullname}"
         title="${_("give reddit gold in appreciation of this post.")}"
         class="give-gold login-required access-required"
+        data-event-action="gild"
         >${_("give gold")}</a>
     </li>
   % endif
@@ -152,8 +159,11 @@
     label = _("ignore reports")
     if thing.ignore_reports and thing.reported > 0:
       label += " ({0})".format(thing.reported)
+    event_action = "unignorereports" if thing.ignore_reports else "ignorereports"
   %>
-  ${pretty_button(label, "big_mod_toggle", "'ignore_reports', 'unignore_reports'", "neutral" + (" pressed" if thing.ignore_reports else ""))}
+  ${pretty_button(label, "big_mod_toggle", "'ignore_reports', 'unignore_reports'",
+  "neutral" + (" pressed" if thing.ignore_reports else ""),
+  event_action=event_action)}
 </%def>
 
 <%def name="big_modbuttons(thing)">
@@ -161,14 +171,14 @@
     %if not thing._deleted:
       <span role="radiogroup">
         %if not getattr(thing, "moderator_banned", None) or getattr(thing, "autobanned", False):
-          ${pretty_button(_("spam"), "big_mod_action", -2, "negative")}
-          ${pretty_button(_("remove"), "big_mod_action", -1, "neutral")}
+          ${pretty_button(_("spam"), "big_mod_action", -2, "negative", event_action="spam")}
+          ${pretty_button(_("remove"), "big_mod_action", -1, "neutral", event_action="remove")}
         %endif
 
         %if getattr(thing, "approval_checkmark", None):
-          ${pretty_button(_("reapprove"), "big_mod_action",  1, "positive")}
+          ${pretty_button(_("reapprove"), "big_mod_action",  1, "positive", event_action="approve")}
         %else:
-          ${pretty_button(_("approve"), "big_mod_action",  1, "positive")}
+          ${pretty_button(_("approve"), "big_mod_action",  1, "positive", event_action="approve")}
         %endif
       </span>
     %endif
@@ -210,6 +220,7 @@
     %else:
       class="rounded reported-stamp stamp access-required"
     %endif
+    data-event-action="viewreports"
     >
   ${strings.reports % thing.thing.reported}
 </li>
@@ -416,9 +427,9 @@
     %if not getattr(thing, "suppress_reply_buttons", False) and (thing.can_reply or thing.locked):
       <li class="reply-button">
       %if thing.can_reply:
-        ${self.simple_button(_("reply {verb}"), "reply", "access-required")}
+        ${self.simple_button(_("reply {verb}"), "reply", css_class="access-required", event_action="comment")}
       %else:
-        ${self.simple_button(_("reply {verb}"), "void", css_class="locked-error access-required")}
+        ${self.simple_button(_("reply {verb}"), "void", css_class="locked-error access-required", event_action="comment")}
       %endif
       </li>
     %endif
@@ -498,7 +509,7 @@
        <%
         css_class = "" if thing.is_admin_message else "access-required"
        %>
-       ${self.simple_button(_("reply {verb}"), "reply", css_class)}
+       ${self.simple_button(_("reply {verb}"), "reply", css_class, event_action='reply')}
     </li>
   %endif
 </%def>

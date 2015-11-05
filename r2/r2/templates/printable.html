@@ -221,6 +221,7 @@ ${self.RenderPrintable()}
    access_class = "access-required"
 %>
   <div ${classes("arrow", arrow_class, login_class, archived_class, access_class)}
+    data-event-action="${arrow_type}vote"
     %if not g.read_only_mode:
        role="button"
        % if dir > 0:

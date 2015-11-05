@@ -54,7 +54,11 @@
       ${flair(thing, enabled=thing.force_show_flair)}
     %endif
     %if thing.include_flair_selector:
-      (<a class="flairselectbtn access-required" data-name="${thing.name}" href="javascript://void(0)">${_('edit')}</a>)
+      (<a class="flairselectbtn access-required"
+          data-name="${thing.name}"
+          data-type="account" data-fullname="${thing.fullname}"
+          data-event-action="editflair" data-event-detail="set"
+          href="javascript://void(0)">${_('edit')}</a>)
       <div class="flairselector drop-choices"></div>
     %endif
     <span class="userattrs">

@@ -43,6 +43,11 @@
         %else:
             href="${thing.base_url}/${action[0]}"
         %endif
+        data-type="subreddit"
+        %if action[3]:
+            data-event-action="pageview"
+            data-event-detail="${action[3]}"
+        %endif
         >${action[1]}</a>
     %endfor
 </%def>

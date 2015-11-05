@@ -158,7 +158,9 @@
 
 %if hasattr(thing, "goldlink"):
   <div class="giftgold">
-    <a href="${thing.goldlink}" class="access-required">
+    <a href="${thing.goldlink}" class="access-required"
+       data-type="account" data-fullname="${thing.user._fullname}"
+       data-event-action="gild">
       ${thing.giftmsg}
     </a>
   </div>
@@ -168,7 +170,9 @@
     %if not thing.viewing_self:
       <img src="${static('mailgray.png')}"/>
       &#32;
-      <a href="${"/message/compose/?to=%s" % thing.user.name}" class="access-required">
+      <a href="${"/message/compose/?to=%s" % thing.user.name}" class="access-required"
+         data-type="account" data-fullname="${thing.user._fullname}"
+         data-event-action="compose">
         ${_("send a private message")}
       </a>
     %endif

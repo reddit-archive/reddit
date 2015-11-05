@@ -53,7 +53,8 @@ ${captcha_field()}
   <div class="spacer">
     %if thing.restrict_recipient:
       <%utils:round_field title="${_('to')}">
-        <input type="text" class="access-required" name="to" value="${g.admin_message_acct}" readonly />
+        <input type="text" class="access-required" name="to" value="${g.admin_message_acct}"
+               data-event-action="changerecipient" readonly />
       </%utils:round_field>
     %else:
       <%utils:round_field title="${_('to')}",

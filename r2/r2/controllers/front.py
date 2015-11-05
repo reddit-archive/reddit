@@ -366,10 +366,13 @@ class FrontController(RedditController):
                 if geotargeted:
                     displayPane.append(GeotargetNotice(city_target=city_target))
 
+            data_attrs = {'type': 'link', 'event-action': 'comment'}
+
             displayPane.append(UserText(item=article, creating=True,
                                         post_form='comment',
                                         display=display,
-                                        cloneable=True))
+                                        cloneable=True,
+                                        data_attrs=data_attrs))
 
         if previous_visits:
             displayPane.append(CommentVisitsBox(previous_visits))
