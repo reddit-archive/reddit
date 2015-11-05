@@ -727,7 +727,7 @@ class PromoteApiController(ApiController):
         is_fraud=VBoolean("fraud"),
     )
     def POST_review_fraud(self, form, jquery, thing, is_fraud):
-        if not promote.is_promo(thing):
+        if not thing or not getattr(thing, "promoted", False):
             return
 
         promote.review_fraud(thing, is_fraud)
