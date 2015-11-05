@@ -303,33 +303,35 @@
        </li>
     %endif
     %if c.user_is_sponsor:
-       <li>
-         <form action="/post/reject" class="rejection-form"
+      %if thing.show_approval:
+        <li>
+          <form action="/post/reject" class="rejection-form"
                style="display:none"
                %if getattr(thing, "hide_after_seen", False):
                  data-hide-after-seen="true"
                %endif
                method="post" onsubmit="reject post_form(this, 'unpromote')">
-           <br/>
-           <input type="hidden" name="executed" value="rejected" />
-           <label>Reason:</label><br/>
-           <textarea name="reason" value="" ></textarea>
-           <br/>
-           <a href="javascript: void 0;"
+            <br/>
+            <input type="hidden" name="executed" value="rejected" />
+            <label>Reason:</label><br/>
+            <textarea name="reason" value="" ></textarea>
+            <br/>
+            <a href="javascript: void 0;"
               onclick="change_state(this, 'unpromote', complete_reject_promo)">
              submit
-           </a>/
-         </form>
-         ${toggle_button("reject_promo", \
+            </a>/
+          </form>
+          ${toggle_button("reject_promo", \
                          _("reject"), _("cancel"), \
                          "reject_promo", "cancel_reject_promo")}
-       </li>
-      %if thing.promote_status in (PROMOTE_STATUS.unpaid, PROMOTE_STATUS.unseen, PROMOTE_STATUS.rejected):
-        <li>
-          ${ynbutton(_("accept"), \
-                     _("accepted"), "promote", \
-                     callback="hide_thing" if getattr(thing, "hide_after_seen", False) else "null")}
         </li>
+        %if thing.promote_status in (PROMOTE_STATUS.unpaid, PROMOTE_STATUS.unseen, PROMOTE_STATUS.rejected):
+          <li>
+            ${ynbutton(_("accept"), \
+                       _("accepted"), "promote", \
+                       callback="hide_thing" if getattr(thing, "hide_after_seen", False) else "null")}
+          </li>
+        %endif
       %endif
       %if thing.is_awaiting_fraud_review:
         <li class="fraud-button">
