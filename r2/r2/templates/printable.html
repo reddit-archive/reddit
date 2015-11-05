@@ -117,8 +117,11 @@ ${self.RenderPrintable()}
 
 <%def name="thing_data_attributes(what)">
     % if not getattr(what, 'deleted', False):
+      <% cls = thing.lookups[0].__class__.__name__.lower() %>
       data-fullname="${what._fullname}"
+      data-type="${unsafe(cls)}"
     % endif
+
     % if hasattr(what, 'campaign'):
       data-cid="${what.campaign}"
     % endif
