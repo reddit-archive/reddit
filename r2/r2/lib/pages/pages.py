@@ -523,6 +523,11 @@ class Reddit(Templated):
                 css_class="edit-stylesheet access-required",
                 dest="stylesheet",
                 data=data_attrs('stylesheet')))
+            buttons.append(NavButton(
+                menu.community_rules,
+                css_class="community-rules access-required",
+                dest="rules",
+                data=data_attrs('rules')))
 
         if is_moderator_with_perms('mail'):
             buttons.append(NamedButton(

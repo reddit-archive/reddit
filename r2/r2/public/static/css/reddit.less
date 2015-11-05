@@ -7651,6 +7651,7 @@ dd { margin-left: 20px;  }
 .icon-menu .reddit-moderators:before,
 .icon-menu .moderator-mail:before,
 .icon-menu .edit-stylesheet:before,
+.icon-menu .community-rules:before,
 .icon-menu .reddit-contributors:before,
 .icon-menu .reddit-modqueue:before,
 .giftgold a:before,
@@ -7698,6 +7699,9 @@ dd { margin-left: 20px;  }
 }
 .icon-menu .edit-stylesheet:before {
     background-image: url(../css.png); /* SPRITE */
+}
+.icon-menu .community-rules:before {
+    background-image: url(../reddit_rules.png); /* SPRITE */
 }
 .icon-menu .reddit-traffic:before {
     background-image: url(../reddit_traffic.png); /* SPRITE */
@@ -8658,7 +8662,10 @@ form#banned textarea {
 .modactions.setcontestmode,
 .modactions.unsetcontestmode,
 .modactions.lock,
-.modactions.unlock {
+.modactions.unlock,
+.modactions.createrule,
+.modactions.editrule,
+.modactions.deleterule, {
     height: 16px;
     width: 16px;
     display: block;
@@ -8765,6 +8772,15 @@ form#banned textarea {
 }
 .modactions.unlock {
     background-image: url(../modactions_unlock.png); /* SPRITE */
+}
+.modactions.createrule {
+    background-image: url(../modactions_createrule.png); /* SPRITE */
+}
+.modactions.editrule {
+    background-image: url(../modactions_editrule.png); /* SPRITE */
+}
+.modactions.deleterule {
+    background-image: url(../modactions_deleterule.png); /* SPRITE */
 }
 
 .adminpasswordform {
