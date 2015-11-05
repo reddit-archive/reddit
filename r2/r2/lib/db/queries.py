@@ -988,10 +988,8 @@ def new_link(link):
     sr = Subreddit._byID(link.sr_id)
     author = Account._byID(link.author_id)
 
+    # just update "new" here, new_vote will handle hot/top/controversial
     results = [get_links(sr, 'new', 'all')]
-    # we don't have to do hot/top/controversy because new_vote will do
-    # that
-
     results.append(get_submitted(author, 'new', 'all'))
 
     for domain in utils.UrlParser(link.url).domain_permutations():
@@ -1044,9 +1042,9 @@ def update_comment_notifications(comment, inbox_rels, mutator):
 
 def new_comment(comment, inbox_rels):
     author = Account._byID(comment.author_id)
-    job = [get_comments(author, 'new', 'all'),
-           get_comments(author, 'top', 'all'),
-           get_comments(author, 'controversial', 'all')]
+
+    # just update "new" here, new_vote will handle hot/top/controversial
+    job = [get_comments(author, 'new', 'all')]
 
     sr = Subreddit._byID(comment.sr_id)
 
@@ -1091,28 +1089,27 @@ def new_vote(vote):
 
     if vote_valid and thing_valid:
         sr = vote.thing.subreddit_slow
+
+        # these sorts can be changed by voting - we don't need to do "new"
+        # since that's taken care of by new_link and new_comment
+        sorts_to_update = ["hot", "top", "controversial"]
         results = []
 
         author = Account._byID(vote.thing.author_id)
-        for sort in ('hot', 'top', 'controversial', 'new'):
+        for sort in sorts_to_update:
             if isinstance(vote.thing, Link):
                 results.append(get_submitted(author, sort, 'all'))
             if isinstance(vote.thing, Comment):
                 results.append(get_comments(author, sort, 'all'))
 
         if isinstance(vote.thing, Link):
-            # don't do 'new', because that was done by new_link, and
-            # the time-filtered versions of top/controversial will be
-            # done by mr_top
-            results.extend([get_links(sr, 'hot', 'all'),
-                            get_links(sr, 'top', 'all'),
-                            get_links(sr, 'controversial', 'all'),
-                            ])
+            for sort in sorts_to_update:
+                results.append(get_links(sr, sort, "all"))
 
             parsed = utils.UrlParser(vote.thing.url)
             if not is_subdomain(parsed.hostname, 'imgur.com'):
                 for domain in parsed.domain_permutations():
-                    for sort in ("hot", "top", "controversial"):
+                    for sort in sorts_to_update:
                         results.append(get_domain_links(domain, sort, "all"))
         elif isinstance(vote.thing, Comment):
             update_comment_votes([vote.thing])
