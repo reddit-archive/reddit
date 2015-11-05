@@ -662,11 +662,11 @@ def review_fraud(link, is_fraud):
     queries.unset_payment_flagged_link(link)
 
     if is_fraud:
-        reject_promotion(link, "fraud")
+        reject_promotion(link, "fraud", notify_why=False)
         hooks.get_hook("promote.fraud_identified").call(link=link, sponsor=c.user)
 
 
-def reject_promotion(link, reason=None):
+def reject_promotion(link, reason=None, notify_why=True):
     was_live = is_promoted(link)
     update_promote_status(link, PROMOTE_STATUS.rejected)
     if reason:
@@ -674,7 +674,7 @@ def reject_promotion(link, reason=None):
 
     # Send a rejection email (unless the advertiser requested the reject)
     if not c.user or c.user._id != link.author_id:
-        emailer.reject_promo(link, reason=reason)
+        emailer.reject_promo(link, reason=(reason if notify_why else None))
 
     if was_live:
         all_live_promo_srnames(_update=True)
