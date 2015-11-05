@@ -57,7 +57,7 @@
             dataType: 'json',
             data: _.extend({}, this.options.params, {
               filepath: files[0].name,
-              uh: reddit.modhash,
+              uh: r.config.modhash,
               ajax: this.ajax,
               raw_json: '1',
             }),

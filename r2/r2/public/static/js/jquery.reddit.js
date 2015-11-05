@@ -21,7 +21,7 @@ $.log = function(message) {
 };
 
 $.debug = function(message) {
-    if ($.with_default(reddit.debug, false)) {
+    if ($.with_default(r.config.debug, false)) {
         return $.log(message);
     }
 }
@@ -162,8 +162,8 @@ $.request = function(op, parameters, worker_in, block, type,
     /* 
        Uniquitous reddit AJAX poster.  Automatically addes
        handleResponse(action) worker to deal with the API result.  The
-       current subreddit (reddit.post_site) and the user's modhash
-       (reddit.modhash) are also automatically sent across.
+       current subreddit (r.config.post_site) and the user's modhash
+       (r.config.modhash) are also automatically sent across.
      */
     var action = op;
     var worker = worker_in;
@@ -175,7 +175,7 @@ $.request = function(op, parameters, worker_in, block, type,
         return
     }
 
-    if (window != window.top && !reddit.external_frame) {
+    if (window != window.top && !r.config.external_frame) {
         return
     }
 
@@ -203,18 +203,18 @@ $.request = function(op, parameters, worker_in, block, type,
     get_only = $.with_default(get_only, false);
 
     /* set the subreddit name if there is one */
-    if (reddit.post_site) 
-        parameters.r = reddit.post_site;
+    if (r.config.post_site) 
+        parameters.r = r.config.post_site;
 
     /* add the modhash if the user is logged in */
-    if (reddit.logged) 
-        parameters.uh = reddit.modhash;
+    if (r.config.logged) 
+        parameters.uh = r.config.modhash;
 
-    parameters.renderstyle = reddit.renderstyle;
+    parameters.renderstyle = r.config.renderstyle;
 
     if(have_lock) {
         op = api_loc + op;
-        /*if( document.location.host == reddit.ajax_domain ) 
+        /*if( document.location.host == r.config.ajax_domain ) 
             /* normal AJAX post */
 
         $.ajax({ type: (get_only) ? "GET" : "POST",
@@ -224,7 +224,7 @@ $.request = function(op, parameters, worker_in, block, type,
                     error: errorhandler,
                     dataType: type});
         /*else { /* cross domain it is... * /
-            op = "http://" + reddit.ajax_domain + op + "?callback=?";
+            op = "http://" + r.config.ajax_domain + op + "?callback=?";
             $.getJSON(op, parameters, worker);
             } */
     }

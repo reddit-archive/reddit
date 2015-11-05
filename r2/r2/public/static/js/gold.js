@@ -309,7 +309,7 @@ r.gold = {
         } else {
             status
               .removeClass('error')
-              .text(reddit.status_msg.submitting);
+              .text(r.config.status_msg.submitting);
             submit.attr('disabled', 'disabled');
             Stripe.createToken({
                     name: cardName,

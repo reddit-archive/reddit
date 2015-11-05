@@ -46,7 +46,7 @@ function setCookie(name, value, expires) {
 // Retrieve (or set and return) an ID for this user's logged out session.
 function getLoggedOutData() {
   // Do not return a logged out ID if the user is logged in, for privacy purpose
-  if (window.reddit && window.reddit.logged) {
+  if (window.r && window.r.config && window.r.config.logged) {
     return {};
   }
 
