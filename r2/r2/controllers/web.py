@@ -67,6 +67,7 @@ class WebLogController(RedditController):
         valid_frontend_log_tags = {
             'unknown',
             'jquery-migrate-bad-html',
+            'reddit-config-migrate-error',
         }
 
         # prevent simple CSRF by requiring a custom header

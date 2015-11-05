@@ -2,8 +2,46 @@ r = window.r || {}
 
 r.setup = function(config) {
     r.config = config
-    // Set the legacy config global
-    reddit = config
+
+    // migrating legacy config global
+    try {
+        // create a new object to detect if anywhere is still using the
+        // the legacy config global object
+        window.reddit = {};
+
+        function migrateWarn(message) {
+            r.sendError(message, { tag: 'reddit-config-migrate-error' })
+        }
+
+        var keys = Object.keys(r.config);
+        
+        // some properties are getting set on r.config _after_ setup, so we need
+        // to add them into the list of properties to define on our proxy object
+        keys.push('currentOrigin');
+        keys.push('cur_site');
+        keys.push('sr_cache');
+
+        keys.forEach(function(key) {
+            Object.defineProperty(reddit, key, {
+                configurable: false,
+                enumerable: true,
+                get: function() {
+                    var message = "config property %(key)s accessed through global reddit object.";
+                    migrateWarn(message.format({ key: key }));
+                    return r.config[key];
+                },
+                set: function(value) {
+                    var message = "config property %(key)s set through global reddit object.";
+                    migrateWarn(message.format({ key: key }));
+                    return r.config[key] = value;
+                },
+            });
+        });
+    } catch (err) {
+        // for the odd browser that doesn't support getters/setters, just let
+        // it function as-is.
+        window.reddit = config;
+    }
 
     r.logging.init()
 
