@@ -23,7 +23,7 @@
 
 import unittest
 
-from mock import MagicMock
+from mock import MagicMock, patch
 
 from r2.models.link import Link, Comment
 
@@ -177,6 +177,12 @@ class LinkMock(Link):
 
     def _commit(self):
         pass
+
+    @classmethod
+    @patch('r2.models.link.cast_vote')
+    def _submit(cls, cast_vote, *args, **kwargs):
+        """A _submit that mocks calls we don't care about testing."""
+        return super(LinkMock, cls)._submit(*args, **kwargs)
 
 
 class ThingMock():
