@@ -3982,6 +3982,17 @@ class ModTableItem(InvitedModTableItem):
         return c.user != user and c.site.can_demod(c.user, user)
 
 
+class ModToolsPage(Reddit):
+    """A mod tool page."""
+
+    def __init__(self, **kwargs):
+        super(ModToolsPage, self).__init__(
+            page_classes=['modtools-page'],
+            show_newsletterbar=False,
+            **kwargs
+        )
+
+
 class Rules(Templated):
     """Show subreddit rules for everyone and add edit controls for mods."""
     def __init__(self):

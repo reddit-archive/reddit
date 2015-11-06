@@ -550,6 +550,10 @@ module["reddit"] = LocalizedModule("reddit.js",
     wrap=catch_errors,
 )
 
+module["modtools"] = Module("modtools.js",
+    wrap=catch_errors,
+)
+
 # move into reddit module just after permissions when released
 module["timeouts"] = Module("timeouts.js",
     "timeouts.js",
