@@ -58,6 +58,7 @@ from r2.lib.utils import (
 from r2.models import (
     Account,
     Bid,
+    Collection,
     DefaultSR,
     FakeAccount,
     FakeSubreddit,
@@ -953,6 +954,16 @@ def all_live_promo_srnames():
     )
     return set(srnames)
 
+@memoize('get_nsfw_collections_srnames', time=(60*60))
+def get_nsfw_collections_srnames():
+    all_collections = Collection.get_all()
+    nsfw_collections = [col for col in all_collections if col.over_18]
+    srnames = itertools.chain.from_iterable(
+        col.sr_names for col in nsfw_collections
+    )
+
+    return set(srnames)
+
 
 def srnames_from_site(user, site):
     is_logged_in = user and not isinstance(user, FakeAccount)
@@ -971,14 +982,27 @@ def srnames_from_site(user, site):
             ids=False,
         )
 
+        # a site should be considered nsfw if it's included in a
+        # nsfw collection because nsfw ads can target nsfw collections.
+        nsfw_collection_srnames = get_nsfw_collections_srnames()
+        over_18 = site.over_18 or site.name in nsfw_collection_srnames
+
         # only use subreddits that aren't quarantined and have the same
         # age gate as the subreddit being viewed.
         subscriptions = filter(
-            lambda sr: not sr.quarantine and sr.over_18 == site.over_18,
+            lambda sr: not sr.quarantine and sr.over_18 == over_18,
             subscriptions,
         )
 
-        srnames = srnames | {sr.name for sr in subscriptions}
+        subscription_srnames = {sr.name for sr in subscriptions}
+
+        # remove any subscriptions that may have nsfw ads targeting
+        # them because they're apart of a nsfw collection.
+        if not over_18:
+            subscription_srnames = (subscription_srnames -
+                nsfw_collection_srnames)
+
+        srnames = srnames | subscription_srnames
 
     return srnames
 
