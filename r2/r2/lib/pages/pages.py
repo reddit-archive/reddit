@@ -3310,6 +3310,7 @@ class ReportForm(CachedTemplate):
 
         if self.rules:
             self.system_rules = SITEWIDE_RULES
+            self.system_rules.append("Other")
             self.rules_page_link = "/r/%s/about/rules" % subreddit.name
         else:
             self.rules = SITEWIDE_RULES

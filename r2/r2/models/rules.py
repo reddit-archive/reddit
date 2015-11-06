@@ -23,16 +23,15 @@
 import json
 from datetime import datetime
 from pylons import app_globals as g
+from pylons.i18n import _
 
 from r2.lib.db import tdb_cassandra
 
 
 SITEWIDE_RULES = [
-    "Spam",
-    "Vote manipulation",
-    "Personal information",
-    "Sexualizing minors",
-    "Breaking reddit",
+    _("Spam"),
+    _("Personal and confidential information"),
+    _("Threatening, harassing, or inciting violence"),
 ]
 MAX_RULES_PER_SUBREDDIT = 15
 
