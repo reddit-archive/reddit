@@ -27,7 +27,7 @@
 
 %>
 <%namespace file="utils.html" import="error_field, image_upload"/>
-<%namespace file="printablebuttons.html" import="ynbutton, toggle_button"/>
+<%namespace file="subredditstylesheetbase.html" import="make_li"/>
 
 <div class="stylesheet-customize-container">
   <form
@@ -188,30 +188,6 @@
       /* ]]> */
       </script>
       <ul id="image-preview-list" class="image-list">
-        <%def name="make_li(name='', img=None, prototype=False)">
-          <li ${"style='display:none'" if img is None else ""}>
-            <a href="${img}" class="preview">
-              <img id="img-preview-${name}" src="${img}" 
-                   alt="Image ${name}" title="click to preview"/>
-            </a>
-            <div class="description">
-              <b class="img-name">
-                ${name}
-              </b>
-              <br/>
-              <span>link:</span>
-              <pre class="img-url">url(%%${name}%%)</pre>
-              <br/>
-              <a href="javascript:void(0)" onclick="return paste_url(this)">
-                ${_("paste into stylesheet")}
-              </a>
-              <br/>
-              ${ynbutton(_("delete this image"), _("deleted"),
-                         "delete_sr_img", callback = "delete_img",
-                          hidden_data = dict(img_name = name))}
-            </div>
-          </li>
-          </%def>
         ${make_li(prototype=True)}
         %for name, url in thing.images.iteritems():
            ${make_li(name=name, img=url)}

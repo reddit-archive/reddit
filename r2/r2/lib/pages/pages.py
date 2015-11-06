@@ -3004,20 +3004,26 @@ class CreateSubreddit(Templated):
             )
 
 
-class SubredditStylesheet(Templated):
-    """form for editing or creating subreddit stylesheets"""
-    def __init__(self, site = None,
-                 stylesheet_contents = ''):
-        allow_image_upload = site and not site.quarantine
+class SubredditStylesheetBase(Templated):
+    """Base subreddit stylesheet page."""
+    def __init__(self, stylesheet_contents, **kwargs):
         raw_images = ImagesByWikiPage.get_images(c.site, "config/stylesheet")
         images = {name: make_url_protocol_relative(url)
                   for name, url in raw_images.iteritems()}
-
-        Templated.__init__(
-            self,
-            site=site,
+        super(SubredditStylesheetBase, self).__init__(
             images=images,
             stylesheet_contents=stylesheet_contents,
+            **kwargs
+        )
+
+
+class SubredditStylesheet(SubredditStylesheetBase):
+    """form for editing or creating subreddit stylesheets"""
+    def __init__(self, site=None, stylesheet_contents=''):
+        allow_image_upload = site and not site.quarantine
+        super(SubredditStylesheet, self).__init__(
+            stylesheet_contents=stylesheet_contents,
+            site=site,
             allow_image_upload=allow_image_upload,
         )
 
@@ -3064,10 +3070,11 @@ class SubredditStylesheet(Templated):
                 w.gilded_message = "this comment was fake-gilded"
         return wrapped.render(style="html")
 
-class SubredditStylesheetSource(Templated):
+
+class SubredditStylesheetSource(SubredditStylesheetBase):
     """A view of the unminified source of a subreddit's stylesheet."""
-    def __init__(self, stylesheet_contents):
-        Templated.__init__(self, stylesheet_contents=stylesheet_contents)
+    pass
+
 
 class AutoModeratorConfig(Templated):
     """A view of a subreddit's AutoModerator configuration."""
