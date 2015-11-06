@@ -285,8 +285,7 @@ class EventQueue(object):
         """Create a timeout-related 'forbidden_actions' for event-collector.
 
         action_name: the action taken by a user in timeout
-        details_text: this provides more details about the action and will
-            be added to the event with "in_timeout_" prepended
+        details_text: this provides more details about the action
         target: The intended item the action was to be taken on
         target_fullname: The fullname used to convert to a target
         subreddit: The Subreddit the action was taken in. If target is of the
@@ -357,9 +356,8 @@ class EventQueue(object):
             request=request,
             context=context,
         )
-        if details_text:
-            details_text = "_%s" % details_text
-        event.add("details_text", "in_timeout%s" % details_text)
+        event.add("details_text", details_text)
+        event.add("process_notes", "IN_TIMEOUT")
         event.add_target_fields(target)
 
         from r2.models import Comment, Link, Subreddit
