@@ -40,9 +40,27 @@
       return popup;
     },
 
+    _logEvent: function(e) {
+      var target = $(e.target);
+      var thing = target.thing();
+
+      var targetType = target.data('type') || thing.data('type');
+      var targetFullname = target.data('fullname') || thing.data('fullname');
+      var actionName = target.data('event-action');
+      var actionDetail = target.data('event-detail');
+
+      if (!actionName) {
+        actionName = 'modal';
+        actionDetail = null;
+      }
+
+      r.analytics.event.timeoutForbiddenEvent(actionName, actionDetail, targetType, targetFullname);
+    },
+
     _handleClick: function onClick(e) {
       this.getPopup()
           .show();
+      this._logEvent(e);
       return false;
     }.bind(r.timeouts),
 
