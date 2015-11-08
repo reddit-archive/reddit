@@ -26,7 +26,7 @@
   <div class="morelink">
     ${plain_link(thing.title, thing.link, _sr_path=thing.sr_path,
                  _class='login-required access-required' if thing.show_cover else None, nocname=thing.nocname,
-                 target=thing.target)}
+                 target=thing.target, data=thing.data_attrs)}
     <div class="nub"> </div>
   </div>
 
