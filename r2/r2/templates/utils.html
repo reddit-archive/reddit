@@ -465,63 +465,77 @@ ${unsafe(txt)}
 <%def name="googleanalytics(uitype, is_gold_page=False)">
   %if (g.googleanalytics or g.googleanalytics_gold) and thing.site_tracking:
     <script type="text/javascript">
-      window.user_type = '${"guest" if not c.user_is_loggedin else "goldloggedin" if c.user.gold else "loggedin"}';
-      window.is_gold_page = '${is_gold_page}'.toLowerCase() === 'true';
+      %if thing.dnt_enabled:
+      if (!window.DO_NOT_TRACK) {
+      %endif
+        window.user_type = '${"guest" if not c.user_is_loggedin else "goldloggedin" if c.user.gold else "loggedin"}';
+        window.is_gold_page = '${is_gold_page}'.toLowerCase() === 'true';
+      %if thing.dnt_enabled:
+      }
+      %endif
     </script>
   %endif
 
   %if g.googleanalytics and thing.site_tracking:
   ## it uses old ga.js
   <script type="text/javascript">
+    %if thing.dnt_enabled:
+    if (!window.DO_NOT_TRACK) {
+    %endif
+      var _gaq = _gaq || [];
+      _gaq.push(
+          ['_require', 'inpage_linkid', '//www.google-analytics.com/plugins/ga/inpage_linkid.js'],
+          ['_setAccount', '${g.googleanalytics}'],
+          ['_setDomainName', '${g.domain}'],
+          ['_setCustomVar', 1, 'site', '${tracking.get_site()}', 3],
+          ['_setCustomVar', 2, 'srpath', '${tracking.get_srpath()}', 3],
+          ['_setCustomVar', 3, 'usertype', user_type, 2],
+          ['_setCustomVar', 4, 'uitype', '${uitype}', 3],
+          ['_setCustomVar', 5, 'style_override', '${jssafe(c.user.pref_default_theme_sr)}', 2],
+          %if g.googleanalytics_sample_rate:
+          ['_setSampleRate', '${g.googleanalytics_sample_rate}'],
+          %endif
+          ['_trackPageview']
+      );
 
-    var _gaq = _gaq || [];
-    _gaq.push(
-        ['_require', 'inpage_linkid', '//www.google-analytics.com/plugins/ga/inpage_linkid.js'],
-        ['_setAccount', '${g.googleanalytics}'],
-        ['_setDomainName', '${g.domain}'],
-        ['_setCustomVar', 1, 'site', '${tracking.get_site()}', 3],
-        ['_setCustomVar', 2, 'srpath', '${tracking.get_srpath()}', 3],
-        ['_setCustomVar', 3, 'usertype', user_type, 2],
-        ['_setCustomVar', 4, 'uitype', '${uitype}', 3],
-        ['_setCustomVar', 5, 'style_override', '${jssafe(c.user.pref_default_theme_sr)}', 2],
-        %if g.googleanalytics_sample_rate:
-        ['_setSampleRate', '${g.googleanalytics_sample_rate}'],
-        %endif
-        ['_trackPageview']
-    );
-
-    (function() {
-      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-    })();
-
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    %if thing.dnt_enabled:
+    }
+    %endif
   </script>
   %endif
 
   %if g.googleanalytics_gold and thing.site_tracking:
   ## it uses new analytics.js
   <script type="text/javascript">
+    %if thing.dnt_enabled:
+    if (!window.DO_NOT_TRACK) {
+    %endif
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','_ga');
 
-    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-    })(window,document,'script','//www.google-analytics.com/analytics.js','_ga');
+      window._ga('create', '${g.googleanalytics_gold}', {
+        'name': 'goldTracker',
+        'cookieDomain': '${g.domain}',
+        '1': '${tracking.get_site()}',
+        '2': '${tracking.get_srpath()}',
+        '3': window.user_type,
+        '4': '${uitype}',
+        'sampleRate': ${g.googleanalytics_sample_rate_gold}
+      });
 
-    window._ga('create', '${g.googleanalytics_gold}', {
-      'name': 'goldTracker',
-      'cookieDomain': '${g.domain}',
-      '1': '${tracking.get_site()}',
-      '2': '${tracking.get_srpath()}',
-      '3': window.user_type,
-      '4': '${uitype}',
-      'sampleRate': ${g.googleanalytics_sample_rate_gold}
-    });
-
-    if (window.is_gold_page) {
-      window._ga('goldTracker.send', 'pageview');
+      if (window.is_gold_page) {
+        window._ga('goldTracker.send', 'pageview');
+      }
+    %if thing.dnt_enabled:
     }
-
+    %endif
   </script>
   %endif
 </%def>
