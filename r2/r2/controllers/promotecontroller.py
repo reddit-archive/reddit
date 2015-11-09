@@ -1237,6 +1237,25 @@ class PromoteApiController(ApiController):
 
         promote.delete_campaign(l, campaign)
 
+    @validatedForm(
+        VSponsor('link_id36'),
+        VModhash(),
+        link=VLink('link_id36'),
+        campaign=VPromoCampaign('campaign_id36'),
+        should_pause=VBoolean('should_pause'),)
+    def POST_toggle_pause_campaign(self, form, jquery, link, campaign,
+            should_pause=False):
+        if (not link or not campaign or link._id != campaign.link_id
+                or not feature.is_enabled('pause_ads')):
+            return abort(404, 'not found')
+
+        if campaign.paused == should_pause:
+            return
+
+        promote.toggle_pause_campaign(link, campaign, should_pause)
+        rc = RenderableCampaign.from_campaigns(link, campaign)
+        jquery.update_campaign(campaign._fullname, rc.render_html())
+
     @validatedForm(VSponsorAdmin(),
                    VModhash(),
                    link=VLink('link_id36'),

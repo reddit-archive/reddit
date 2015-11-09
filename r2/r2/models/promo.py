@@ -346,6 +346,7 @@ class PromoCampaign(Thing):
         frequency_cap=None,
         frequency_cap_duration=None,
         has_served=False,
+        paused=False,
     )
 
     # special attributes that shouldn't set Thing data attributes because they

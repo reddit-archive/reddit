@@ -4333,6 +4333,8 @@ class RenderableCampaign(Templated):
         self.android_devices = campaign.android_devices
         self.android_versions = campaign.android_version_range
 
+        self.pause_ads_enabled = feature.is_enabled('pause_ads')
+
         Templated.__init__(self)
 
     @classmethod

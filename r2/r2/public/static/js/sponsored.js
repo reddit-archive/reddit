@@ -1774,6 +1774,15 @@ function del_campaign($campaign_row) {
     });
 }
 
+function toggle_pause_campaign($campaign_row, shouldPause) {
+    var link_id36 = $('#campaign').find('*[name="link_id36"]').val(),
+        campaign_id36 = $campaign_row.data('campaign_id36')
+    $.request('toggle_pause_campaign', {'campaign_id36': campaign_id36,
+                                        'link_id36': link_id36,
+                                        'should_pause': shouldPause},
+              null, true, 'json', false);
+    r.sponsored.render();
+}
 
 function edit_campaign($campaign_row) {
     cancel_edit(function() {

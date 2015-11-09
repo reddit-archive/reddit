@@ -464,6 +464,17 @@ def delete_campaign(link, campaign):
     hooks.get_hook('promote.delete_campaign').call(link=link, campaign=campaign)
 
 
+def toggle_pause_campaign(link, campaign, should_pause):
+    campaign.paused = should_pause
+    campaign._commit()
+
+    action = 'paused' if should_pause else 'resumed'
+    PromotionLog.add(link, '%s campaign %s' % (action, campaign._id))
+
+    hooks.get_hook('promote.edit_campaign').call(link=link,
+        campaign=campaign)
+
+
 def void_campaign(link, campaign, reason):
     transactions = get_transactions(link, [campaign])
     bid_record = transactions.get(campaign._id)

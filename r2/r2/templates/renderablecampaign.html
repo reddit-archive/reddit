@@ -158,6 +158,18 @@
         </button>
       %endif
 
+      %if thing.pause_ads_enabled and thing.is_live:
+        %if thing.campaign.paused:
+          <button class="resume" onclick="toggle_pause_campaign(${jquery_row}, false)">
+            ${_("resume")}
+          </button>
+        %else:
+          <button class="pause" onclick="toggle_pause_campaign(${jquery_row}, true)">
+            ${_("pause")}
+          </button>
+        %endif
+      %endif
+
       %if thing.is_live and c.user_is_sponsor:
         <button class="terminate" onclick="terminate_campaign(${jquery_row})">
           ${_("terminate")}
