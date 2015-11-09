@@ -1585,7 +1585,7 @@ class ApiController(RedditController):
             action = 'setcontestmode'
         else:
             action = 'unsetcontestmode'
-        ModAction.create(c.site, c.user, action, target=thing)
+        ModAction.create(thing.subreddit_slow, c.user, action, target=thing)
         jquery.refresh()
 
     @require_oauth2_scope("modposts")
