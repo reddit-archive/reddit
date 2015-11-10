@@ -416,7 +416,7 @@
       %if thing.can_reply:
         ${self.simple_button(_("reply {verb}"), "reply", "access-required")}
       %else:
-        ${self.simple_button(_("reply {verb}"), "void", css_class="locked-error")}
+        ${self.simple_button(_("reply {verb}"), "void", css_class="locked-error access-required")}
       %endif
       </li>
     %endif

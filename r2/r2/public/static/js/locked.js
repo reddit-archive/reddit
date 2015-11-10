@@ -2,6 +2,7 @@
   If the current post is locked, show a modal on restricted actions.
 
   requires r.config (base.js)
+  requires r.access (access.js)
   requires r.ui.Popup (popup.js)
 */
 !function(r) {
@@ -30,6 +31,10 @@
     },
 
     _handleClick: function onClick(e) {
+      if (r.access.isLinkRestricted(e.target)) {
+        return;
+      }
+
       this.getPopup()
         .show();
       return false;
