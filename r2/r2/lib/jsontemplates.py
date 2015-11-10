@@ -527,13 +527,13 @@ class IdentityJsonTemplate(ThingJsonTemplate):
             attrs.update(self._private_data_attrs)
             if feature.is_enabled('timeouts'):
                 attrs.update({
-                    "is_in_timeout": "in_timeout",
-                    "timeout_expiration_utc": "timeout_expiration_utc",
+                    "is_suspended": "in_timeout",
+                    "suspension_expiration_utc": "timeout_expiration_utc",
                 })
         # Add a public indication when a user is permanently in timeout.
         elif (feature.is_enabled('timeouts') and thing.in_timeout and
                 thing.timeout_expiration is None):
-            attrs.update({"is_in_timeout": "in_timeout"})
+            attrs.update({"is_suspended": "in_timeout"})
 
         if thing.pref_hide_from_robots:
             response.headers['X-Robots-Tag'] = 'noindex, nofollow'
