@@ -2798,9 +2798,9 @@ class MutedAccountsBySubreddit(object):
 
         #if the user has interacted with the subreddit before, message them
         if user.has_interacted_with(sr):
-            subject = _("You have been muted from r/%(subredditname)s")
+            subject = "You have been muted from r/%(subredditname)s"
             subject %= dict(subredditname=sr.name)
-            message = _("You have been [temporarily muted](%(muting_link)s) "
+            message = ("You have been [temporarily muted](%(muting_link)s) "
                 "from r/%(subredditname)s. You will not be able to message "
                 "the moderators of r/%(subredditname)s for %(num_hours)s hours.")
             message %= dict(
