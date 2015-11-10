@@ -1304,6 +1304,11 @@ class PromoteApiController(ApiController):
         is_frontpage = (not target.is_collection and
                         target.subreddit_name == Frontpage.name)
 
+        if link.over_18 and not target.over_18:
+            c.errors.add(errors.INVALID_NSFW_TARGET, field='targeting')
+            form.has_errors('targeting', errors.INVALID_NSFW_TARGET)
+            return
+
         if not target.is_collection and not is_frontpage:
             # targeted to a single subreddit, check roadblock
             sr = target.subreddits_slow[0]

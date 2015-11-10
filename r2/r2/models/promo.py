@@ -291,6 +291,14 @@ class Target(object):
         self._subreddits = None
 
     @property
+    def over_18(self):
+        if self.is_collection:
+            return self.collection.over_18
+        else:
+            subreddits = self.subreddits_slow
+            return subreddits and subreddits[0].over_18
+
+    @property
     def subreddit_names(self):
         if self.is_collection:
             return self.collection.sr_names
