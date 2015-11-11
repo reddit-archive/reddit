@@ -993,37 +993,32 @@ class CommentBuilder(Builder):
             comment.edits_visible = self.edits_visible
 
             parent = wrapped_by_id.get(comment.parent_id)
+
             if qa_sort_hiding:
-                author_is_special = comment.author_id in special_responder_ids
-            else:
-                author_is_special = False
+                # In the Q&A sort type, we want to collapse all comments other
+                # than those that are:
+                #
+                # 1. Top-level comments,
+                # 2. Responses from the OP(s),
+                # 3. Responded to by the OP(s) (dealt with below),
+                # 4. Within one level of an OP reply, or
+                # 5. Already prevented from collapse, like distinguished
+                #    comments or comments in (3) whose children have already
+                #    been processed.
+                #
+                # Note: we can't use |= because 'comment.prevent_collapse'
+                # might be None.
+                comment.prevent_collapse = (depth[comment._id] == 0 or  # (1)
+                        comment.author_id in special_responder_ids or  # (2)
+                        (parent and
+                             parent.author_id in special_responder_ids) or # (4)
+                        comment.prevent_collapse)  # (5)
+                if not comment.prevent_collapse:
+                    comment.hidden = True
 
-            # In the Q&A sort type, we want to collapse all comments other than
-            # those that are:
-            #
-            # 1. Top-level comments,
-            # 2. Responses from the OP(s),
-            # 3. Responded to by the OP(s) (dealt with below),
-            # 4. Within one level of an OP reply, or
-            # 5. Otherwise normally prevented from collapse (eg distinguished
-            #    comments).
-            if (qa_sort_hiding and
-                    depth[comment._id] != 0 and  # (1)
-                    not author_is_special and  # (2)
-                    not (parent and
-                         parent.author_id in special_responder_ids) and # (4)
-                    not comment.prevent_collapse):  # (5)
-                comment.hidden = True
-
-            if comment.collapsed:
-                if comment._id in dont_collapse or author_is_special:
-                    comment.collapsed = False
-                    comment.hidden = False
-
-            if parent:
-                if author_is_special:
-                    # Un-collapse parents as necessary.  It's a lot easier to
-                    # do this here, upwards, than to check through all the
+                if comment.prevent_collapse and parent:
+                    # Un-collapse parents as necessary (3).  It's a lot easier
+                    # to do this here, upwards, than to check through all the
                     # children when we were iterating at the parent.
                     ancestor = parent
                     counter = 0
@@ -1039,6 +1034,11 @@ class CommentBuilder(Builder):
 
                         ancestor = wrapped_by_id.get(ancestor.parent_id)
                         counter += 1
+
+            if comment.collapsed:
+                if comment._id in dont_collapse or comment.prevent_collapse:
+                    comment.collapsed = False
+                    comment.hidden = False
 
         # One more time through to actually add things to the final list.  We
         # couldn't do that the first time because in the Q&A sort we don't know
