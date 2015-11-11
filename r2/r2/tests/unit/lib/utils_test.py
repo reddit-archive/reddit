@@ -95,6 +95,32 @@ class UtilsTest(unittest.TestCase):
             utils.coerce_url_to_protocol('//example.com/foo', 'https'),
             'https://example.com/foo')
 
+    def test_sanitize_url(self):
+        self.assertEquals(
+            utils.sanitize_url('http://dk./'),
+            'http://dk/'
+        )
+
+        self.assertEquals(
+            utils.sanitize_url('http://google.com./'),
+            'http://google.com/'
+        )
+
+        self.assertEquals(
+            utils.sanitize_url('http://google.com/'),
+            'http://google.com/'
+        )
+
+        self.assertEquals(
+            utils.sanitize_url('https://github.com/reddit/reddit/pull/1302'),
+            'https://github.com/reddit/reddit/pull/1302'
+        )
+
+        self.assertEquals(
+            utils.sanitize_url('http://dk../'),
+            None
+        )
+
 
 class TestCanonicalizeEmail(unittest.TestCase):
     def test_empty_string(self):

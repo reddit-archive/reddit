@@ -378,6 +378,11 @@ def sanitize_url(url, require_scheme=False, valid_schemes=VALID_SCHEMES):
     except UnicodeError:
         return None
 
+    # Make sure FQDNs like google.com. (with trailing dot) are allowed. This
+    # is necessary to support linking to bare TLDs.
+    if idna_hostname.endswith('.'):
+        idna_hostname = idna_hostname[:-1]
+
     for label in idna_hostname.split('.'):
         if not re.match(valid_dns, label):
             return None
