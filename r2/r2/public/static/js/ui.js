@@ -1040,3 +1040,39 @@ r.ui.SubredditSubmitText = Backbone.View.extend({
         }
     }
 })
+
+r.ui.TextCounter = Backbone.View.extend({
+    events: {
+      'input input': 'onInput',
+      'input textarea': 'onInput',
+    },
+
+    initialize: function(options) {
+      this.error = false;
+      this.maxLength = options.maxLength;
+      this.$counterDisplay = this.$el.find('.text-counter-display');
+      this.$counterParent = this.$counterDisplay.parent();
+      this.$input = this.$el.find('.text-counter-input');
+      this.update(options.initialText || '');
+    },
+
+    onInput: function(e) {
+      this.update(e.target.value);
+    },
+
+    update: function(inputText) {
+      var remaining = this.maxLength - inputText.length;
+
+      this.$counterDisplay.text(remaining);
+
+      if (remaining < 0 && !this.error) {
+        this.$counterParent.addClass('has-error');
+        this.error = true;
+        this.trigger('invalid');
+      } else if (remaining >= 0 && this.error) {
+        this.$counterParent.removeClass('has-error');
+        this.error = false;
+        this.trigger('valid');
+      }
+    },
+  });
