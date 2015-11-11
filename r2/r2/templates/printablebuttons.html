@@ -606,8 +606,11 @@
   </form>
 </%def>
 
-<%def name="simple_button(title, nameFunc, css_class='')">
+<%def name="simple_button(title, nameFunc, css_class='', event_action=None)">
  <a class="${css_class}" href="javascript:void(0)" 
+    %if event_action:
+      data-event-action="${event_action}"
+    %endif
     onclick="return ${nameFunc}(this)">${title}</a>
 </%def>
 
