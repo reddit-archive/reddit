@@ -510,13 +510,17 @@
                          fmt = None,
                          fmt_param = '',
                          hidden_data = {},
-                         access_required = True)">
+                         access_required = True,
+                         event_action=None)">
   <%def name="_link()" buffered="True">
     <%
       access_class = 'access-required' if access_required else ''
     %>
     <a href="javascript:void(0)"
        class="${a_class or ''} ${access_class}"
+       %if event_action:
+         data-event-action="${event_action}"
+       %endif
        onclick="${onclick}">${title}</a>
   </%def>
   <%
