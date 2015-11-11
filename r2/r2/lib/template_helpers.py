@@ -171,8 +171,10 @@ def js_config(extra_config=None):
     mac = hmac.new(g.secrets["action_name"], route_name, hashlib.sha1)
     verification = mac.hexdigest()
     cur_subreddit = ""
+    cur_sr_fullname = ""
     if isinstance(c.site, Subreddit) and not c.default_sr:
         cur_subreddit = c.site.name
+        cur_sr_fullname = c.site._fullname
 
     config = {
         # is the user logged in?
@@ -181,6 +183,7 @@ def js_config(extra_config=None):
         "user_id": user_id,
         # the subreddit's name (for posts)
         "post_site": cur_subreddit,
+        "cur_site": cur_sr_fullname,
         # the user's voting hash
         "modhash": c.modhash or False,
         # the current rendering style

@@ -131,10 +131,6 @@
   ${unsafe(c.js_preload.use())}
 </%def>
 
-<%def name="javascript_run()">
-   reddit.cur_site = "${c.site._fullname if hasattr(c.site, '_fullname') else ''}";
-</%def>
-
 <%def name="bodyContent()">
   %if thing.header:
     <%include file="adminbar.html"/>
