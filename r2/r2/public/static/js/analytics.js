@@ -403,7 +403,9 @@ r.analytics.event = {
     this.contextData = {
       base_url: document.location.pathname,
       domain: document.location.hostname,
+      linkFullname: null,
       loid: null,
+      srFullname: null,
       srName: null,
       userAgent: navigator.userAgent,
       userId: null,
@@ -421,6 +423,14 @@ r.analytics.event = {
 
     if (r.config.post_site) {
       this.contextData.srName = r.config.post_site;
+    }
+
+    if (r.config.cur_site) {
+      this.contextData.srFullname = r.config.cur_site;
+    }
+
+    if (r.config.cur_link) {
+      this.contextData.linkFullname = r.config.cur_link;
     }
   },
 
@@ -448,6 +458,9 @@ r.analytics.event = {
 
     if (this.contextData.srName) {
       data.payload['sr_name'] = this.contextData.srName;
+    }
+    if (this.contextData.srFullname) {
+      data.payload['sr_id'] = r.utils.fullnameToId(this.contextData.srFullname);
     }
 
     for (var name in eventPayload) {
