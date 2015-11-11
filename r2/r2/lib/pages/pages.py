@@ -3967,6 +3967,7 @@ class Rules(Templated):
         self.can_edit = c.user_is_loggedin and (c.user_is_admin or
             c.site.is_moderator_with_perms(c.user, 'config'))
         self.rules = SubredditRules.get_rules(c.site)
+        self.site_rules = SITEWIDE_RULES
         Templated.__init__(self)
 
 

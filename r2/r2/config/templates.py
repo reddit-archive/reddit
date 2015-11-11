@@ -89,6 +89,7 @@ api('uploadedimage', UploadedImageJsonTemplate)
 api('modaction', ModActionTemplate)
 
 api('trophy', TrophyJsonTemplate)
+api('rules', RulesJsonTemplate)
 
 
 register_api_templates('comment', CommentJsonTemplate)
