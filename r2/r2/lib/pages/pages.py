@@ -4638,6 +4638,7 @@ class UserText(CachedTemplate):
                  include_errors=True,
                  show_embed_help=False,
                  admin_takedown=False,
+                 data_attrs={},
                 ):
 
         css_class = "usertext"
@@ -4677,6 +4678,7 @@ class UserText(CachedTemplate):
                                 include_errors=include_errors,
                                 show_embed_help=show_embed_help,
                                 admin_takedown=admin_takedown,
+                                data_attrs=data_attrs,
                                )
 
 class MediaEmbedBody(CachedTemplate):

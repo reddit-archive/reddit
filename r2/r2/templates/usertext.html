@@ -27,7 +27,7 @@
 %>
 
 <%namespace file="printablebuttons.html" import="toggle_button" />
-<%namespace file="utils.html" import="error_field, md, _md"/>
+<%namespace file="utils.html" import="data, error_field, md, _md"/>
 
 <%def name="markhelp(show_embed_help=False)">
   <div class="markhelp" style="display:none">
@@ -144,6 +144,7 @@
         <textarea rows="1" cols="1"
                   name="${thing.name}"
                   class="${thing.textarea_class}"
+                  ${data(**thing.data_attrs)}
                   >${keep_space(thing.text)}</textarea>
       </div>
 
