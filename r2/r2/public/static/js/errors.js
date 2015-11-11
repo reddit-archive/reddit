@@ -3,6 +3,8 @@
     'NO_TEXT': r._('we need something here'),
     'TOO_LONG': r._('this is too long (max: %(max_length)s)'),
     'TOO_SHORT': r._('this is too short (min: %(min_length)s)'),
+    'SR_RULE_EXISTS': r._('A subreddit rule by that name already exists.'),
+    'SR_RULE_TOO_MANY': r._('This subreddit already has the maximum number of rules.'),
   };
 
   function CustomErrorPrototype() {}
