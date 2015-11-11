@@ -40,7 +40,7 @@ SITEWIDE_RULES = [
     _("Personal and confidential information"),
     _("Threatening, harassing, or inciting violence"),
 ]
-MAX_RULES_PER_SUBREDDIT = 15
+MAX_RULES_PER_SUBREDDIT = 10
 
 class SubredditRules(tdb_cassandra.View):
     _use_db = True
