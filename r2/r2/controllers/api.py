@@ -5029,6 +5029,7 @@ class ApiController(RedditController):
     @validatedForm(
         VSrModerator(perms="config"),
         VModhash(),
+        VAvailableSubredditRuleName("short_name"),
         short_name=VLength("short_name", max_length=50, min_length=1),
         description=VMarkdownLength("description", max_length=500),
     )
@@ -5037,11 +5038,9 @@ class ApiController(RedditController):
         if not feature.is_enabled("subreddit_rules", subreddit=c.site.name):
             abort(404)
         if form.has_errors("short_name", errors.TOO_SHORT, errors.NO_TEXT,
-                errors.TOO_LONG):
+                errors.TOO_LONG, errors.SR_RULE_EXISTS, errors.SR_RULE_TOO_MANY):
             return
         if form.has_errors("description", errors.TOO_LONG):
-            return
-        if SubredditRules.get_rule(c.site, short_name):
             return
 
         SubredditRules.create(c.site, short_name, description)
@@ -5052,21 +5051,22 @@ class ApiController(RedditController):
     @validatedForm(
         VSrModerator(perms="config"),
         VModhash(),
+        rule=VSubredditRule("old_short_name"),
         old_short_name=VLength('old_short_name', max_length=50, min_length=1),
         short_name=VLength('short_name', max_length=50, min_length=1),
         description=VMarkdownLength('description', max_length=500),
     )
     @api_doc(api_section.subreddits, uses_site=True)
-    def POST_update_subreddit_rule(self, form, jquery, old_short_name,
+    def POST_update_subreddit_rule(self, form, jquery, rule, old_short_name,
             short_name, description):
         if not feature.is_enabled("subreddit_rules", subreddit=c.site.name):
             abort(404)
+        if form.has_errors("old_short_name", errors.SR_RULE_DOESNT_EXIST):
+            return
         if form.has_errors("short_name", errors.TOO_SHORT, errors.NO_TEXT,
                 errors.TOO_LONG):
             return
         if form.has_errors("description", errors.TOO_LONG):
-            return
-        if not SubredditRules.get_rule(c.site, old_short_name):
             return
 
         SubredditRules.update(c.site, old_short_name, short_name,

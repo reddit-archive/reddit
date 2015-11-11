@@ -48,6 +48,7 @@ from r2.lib.jsonresponse import JQueryResponse, JsonResponse
 from r2.lib.log import log_text
 from r2.lib.permissions import ModeratorPermissionSet
 from r2.models import *
+from r2.models.rules import MAX_RULES_PER_SUBREDDIT
 from r2.models.promo import Location
 from r2.lib.authorize import Address, CreditCard
 from r2.lib.utils import constant_time_compare
@@ -786,6 +787,27 @@ class VSubredditDesc(Validator):
         if description and len(description) > 500:
             self.set_error(errors.DESC_TOO_LONG)
         return unkeep_space(description or '')
+
+
+class VAvailableSubredditRuleName(Validator):
+    def run(self, short_name):
+        if SubredditRules.get_rule(c.site, short_name):
+            self.set_error(errors.SR_RULE_EXISTS)
+            return None
+        elif len(SubredditRules.get_rules(c.site)) >= MAX_RULES_PER_SUBREDDIT:
+            self.set_error(errors.SR_RULE_TOO_MANY)
+            return None
+        return short_name
+
+
+class VSubredditRule(Validator):
+    def run(self, short_name):
+        rule = SubredditRules.get_rule(c.site, short_name)
+        if not rule:
+            self.set_error(errors.SR_RULE_DOESNT_EXIST)
+        else:
+            return rule
+        
 
 class VAccountByName(VRequired):
     def __init__(self, param, error = errors.USER_DOESNT_EXIST, *a, **kw):

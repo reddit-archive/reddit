@@ -176,6 +176,9 @@ error_list = dict((
         ('USER_MUTED', _("You have been muted from this subreddit.")),
         ('MUTED_FROM_SUBREDDIT', _("This user has been muted from the subreddit.")),
         ('COMMENT_NOT_STICKYABLE', _("This comment is not stickyable. Ensure that it is a top level comment.")),
+        ('SR_RULE_EXISTS', _("A subreddit rule by that name already exists.")),
+        ('SR_RULE_DOESNT_EXIST', _("No subreddit rule by that name exists.")),
+        ('SR_RULE_TOO_MANY', _("This subreddit already has the maximum number of rules.")),
     ))
 
 errors = Storage([(e, e) for e in error_list.keys()])
