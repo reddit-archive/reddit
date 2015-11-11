@@ -760,8 +760,11 @@ class Reddit(Templated):
 
                 wrapped_moderators = [WrappedUser(mod) for mod in moderators
                     if not mod._deleted]
-                helplink = ("/message/compose?to=%%2Fr%%2F%s" % c.site.name,
-                            label, is_admin_sr)
+                helplink = HelpLink(
+                    "/message/compose?to=%%2Fr%%2F%s" % c.site.name,
+                    label,
+                    access_required=not is_admin_sr)
+
                 mod_href = c.site.path + 'about/moderators'
                 ps.append(SideContentBox(_('moderators'),
                                          wrapped_moderators,
@@ -1117,6 +1120,14 @@ class SubredditInfoBar(CachedTemplate):
 
 class SponsorshipBox(Templated):
     pass
+
+
+class HelpLink(Templated):
+    def __init__(self, url, label, access_required=False, data_attrs={}):
+        Templated.__init__(self, url=url, label=label,
+                           access_required=access_required,
+                           data_attrs=data_attrs)
+
 
 class SideContentBox(Templated):
     def __init__(self, title, content, helplink=None, _id=None, extra_class=None,
@@ -2227,7 +2238,7 @@ class ProfilePage(Reddit):
         rb = Reddit.rightbox(self)
 
         tc = TrophyCase(self.user)
-        helplink = ( "/wiki/awards", _("what's this?") )
+        helplink = HelpLink("/wiki/awards", _("what's this?"))
         scb = SideContentBox(title=_("trophy case"),
                  helplink=helplink, content=[tc],
                  extra_class="trophy-area")

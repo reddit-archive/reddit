@@ -20,32 +20,11 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%namespace file="utils.html" import="tags"/>
-<div class="sidecontentbox ${thing.extra_class or ''} ${'collapsible' if thing.collapsible else ''}" ${tags(_id=thing._id)}>
-  %if thing.helplink:
-    ${thing.helplink}
-  %endif
-  <div class="title">
-    <h1>${thing.title.upper()}</h1>
-    %if thing.collapsible:
-      <span class="collapse-button">-</span>
-    %endif
-  </div>
-  <ul class="content">
-    %for c in thing.content:
-      <li>${c}</li>
-    %endfor
+<%namespace file="utils.html" import="data" />
 
-    %if thing.more_href:
-      <li class="more">
-        <a href="${thing.more_href}">
-          ${thing.more_text} &raquo;
-        </a>
-      </li>
-    %endif
-  </ul>
-
-  %if thing.collapsible:
-    <script>r.ui.collapsibleSideBox("${thing._id}")</script>
-  %endif
-</div>
+<a class="helplink ${'access-required' if thing.access_required else ''}"
+   href="${thing.url}"
+   ${data(**thing.data_attrs)}
+>
+  ${thing.label}
+</a>
