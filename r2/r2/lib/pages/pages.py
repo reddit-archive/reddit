@@ -1302,9 +1302,9 @@ class MessageCompose(Templated):
 
 
 class ModeratorMessageCompose(MessageCompose):
-    def __init__(self, mod_srs, from_user=True, **kw):
+    def __init__(self, mod_srs, only_as_subreddit=False, **kw):
         self.mod_srs = sorted(mod_srs, key=lambda sr: sr.name.lower())
-        self.from_user = from_user
+        self.only_as_subreddit = only_as_subreddit
         MessageCompose.__init__(self, admin_check=False, **kw)
 
 
