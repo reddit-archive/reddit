@@ -27,6 +27,13 @@ from pylons.i18n import _
 
 from r2.lib.db import tdb_cassandra
 
+OLD_SITEWIDE_RULES = [
+    _("spam"),
+    _("vote manipulation"),
+    _("personal information"),
+    _("sexualizing minors"),
+    _("breaking reddit"),
+]
 
 SITEWIDE_RULES = [
     _("Spam"),

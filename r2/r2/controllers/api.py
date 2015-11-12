@@ -80,6 +80,7 @@ from r2.lib.pages import (
     ModTableItem,
     MutedTableItem,
     ReportForm,
+    SubredditReportForm,
     SubredditStylesheet,
     WikiBannedTableItem,
     WikiMayContributeTableItem,
@@ -5111,7 +5112,12 @@ class ApiController(RedditController):
     )
     def GET_report_form(self, form, jquery, thing):
         """Return information about report reasons for the thing."""
-        return ReportForm(thing).render(style="html")
+        if feature.is_enabled("new_report_dialog"):
+            return SubredditReportForm(thing).render(style="html")
+        else:
+            return ReportForm(thing).render(style="html")
+        abort(404, 'not found')
+
 
     @validatedForm(VModhashIfLoggedIn())
     def POST_hide_locationbar(self, form, jquery):

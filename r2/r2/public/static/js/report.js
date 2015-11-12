@@ -24,7 +24,7 @@ $(function() {
 
     function handleResponse(r) {
       $reportForm.html(r);
-      var $form = $reportForm.children(".report-action-form");
+      var $form = $reportForm.children("form");
       $form.css( "display", "block");
     }
 

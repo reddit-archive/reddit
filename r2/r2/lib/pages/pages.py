@@ -55,6 +55,7 @@ from r2.models import (
     ModSR,
     MultiReddit,
     NotFound,
+    OLD_SITEWIDE_RULES,
     Printable,
     PromoCampaign,
     PromotionPrices,
@@ -3308,12 +3309,32 @@ class ReportForm(CachedTemplate):
         if feature.is_enabled("subreddit_rules", subreddit=subreddit.name):
             for rule in SubredditRules.get_rules(subreddit):
                 self.rules.append(rule["short_name"])
+            if self.rules:
+                self.system_rules = list(SITEWIDE_RULES)
+                self.system_rules.append("Other")
+                self.rules_page_link = "/r/%s/about/rules" % subreddit.name
+        if not self.rules:
+            self.rules = OLD_SITEWIDE_RULES
+            self.rules_page_link = "/help/contentpolicy"
 
-        if self.rules:
-            self.system_rules = SITEWIDE_RULES
-            self.system_rules.append("Other")
-            self.rules_page_link = "/r/%s/about/rules" % subreddit.name
-        else:
+        Templated.__init__(self)
+
+
+class SubredditReportForm(CachedTemplate):
+    def __init__(self, thing=None, **kw):
+        subreddit = thing.subreddit_slow
+        self.rules = []
+        self.system_rules = []
+        self.thing_fullname = thing._fullname
+
+        if feature.is_enabled("subreddit_rules", subreddit=subreddit.name):
+            for rule in SubredditRules.get_rules(subreddit):
+                self.rules.append(rule["short_name"])
+            if self.rules:
+                self.system_rules = list(SITEWIDE_RULES)
+                self.system_rules.append("Other")
+                self.rules_page_link = "/r/%s/about/rules" % subreddit.name
+        if not self.rules:
             self.rules = SITEWIDE_RULES
             self.rules_page_link = "/help/contentpolicy"
 
