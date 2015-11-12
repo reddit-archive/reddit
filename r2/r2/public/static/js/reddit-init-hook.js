@@ -4,9 +4,7 @@
   requires r.hooks (hooks.js)
  */
 !function(r) {
-  var hook = r.hooks.create('reddit-init');
-
-  hook.register(function() {
+  r.hooks.get('reddit-init').register(function() {
     try {
         r.analytics.init();
         r.access.init();
@@ -16,6 +14,6 @@
   })
 
   $(function() {
-    hook.call();
+    r.hooks.get('reddit-init').call();
   });
 }(r);

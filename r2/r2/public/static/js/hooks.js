@@ -1,7 +1,8 @@
 /*
   Provides a very simple hook system for one-off event hooks.
 
-  var initHook = r.hooks.create('init');
+  r.hooks.get('init').register(someFunction);
+  r.hooks.get('init').call();
  */
 
 !function(r) {
@@ -36,21 +37,13 @@
   };
 
   r.hooks = {
-    create: function(name) {
-      if (name in hooks) {
-        throw 'Hook "' + name + '" already exists.';
-      } else {
-        var hook = new Hook(name);
-        hooks[name] = hook;
-        return hook;
-      }
-    },
-
     get: function(name) {
       if (name in hooks) {
         return hooks[name];
       } else {
-        throw 'Hook "' + name + '" doesn\'t exist.' 
+        var hook = new Hook(name);
+        hooks[name] = hook;
+        return hook;
       }
     },
 

@@ -4,12 +4,9 @@
   requires r.hooks (hooks.js)
  */
 !function(r) {
-  var hook = r.hooks.create('reddit');
-
-  hook.register(function() {
+  r.hooks.get('reddit').register(function() {
     try {
         r.setupBackbone();
-
         r.login.ui.init();
         r.TimeText.init();
         r.ui.init();
@@ -32,6 +29,6 @@
   });
 
   $(function() {
-    hook.call();
+    r.hooks.get('reddit').call();
   });
 }(r);
