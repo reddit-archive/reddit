@@ -498,3 +498,10 @@ r.analytics.event = {
   },
 
 };
+
+
+r.hooks.get('setup').register(function() {
+  r.analytics.breadcrumbs.init();
+  r.analytics.event.init();
+});
+

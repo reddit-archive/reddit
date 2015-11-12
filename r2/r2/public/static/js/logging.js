@@ -120,3 +120,6 @@ r.logging.sendError = function() {
     r.logging.serverLogger.queueLog(log)
 }
 
+r.hooks.get('setup').register(function() {
+    r.logging.init();
+});
