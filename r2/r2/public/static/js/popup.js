@@ -70,6 +70,10 @@
         listener.trigger(tuple[1]);
       });
     });
+
+    // ensures element is 'focusable', otherwise closing with esc key only
+    // works when an input inside the modal is focused.
+    $el.attr('tabindex', $el.attr('tabindex') || 0);
   };
 
   [
