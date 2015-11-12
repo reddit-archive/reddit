@@ -3305,8 +3305,9 @@ class ReportForm(CachedTemplate):
         self.system_rules = []
         self.thing_fullname = thing._fullname
 
-        for rule in SubredditRules.get_rules(subreddit):
-            self.rules.append(rule["short_name"])
+        if feature.is_enabled("subreddit_rules", subreddit=subreddit.name):
+            for rule in SubredditRules.get_rules(subreddit):
+                self.rules.append(rule["short_name"])
 
         if self.rules:
             self.system_rules = SITEWIDE_RULES

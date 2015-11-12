@@ -943,6 +943,8 @@ class FrontController(RedditController):
     @api_doc(api_section.subreddits, uses_site=True)
     def GET_rules(self):
         """Get the rules for the current subreddit"""
+        if not feature.is_enabled("subreddit_rules", subreddit=c.site.name):
+            abort(404)
         return Reddit(content=Rules()).render()
 
     @require_oauth2_scope("read")
