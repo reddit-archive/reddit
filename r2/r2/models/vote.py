@@ -104,6 +104,10 @@ class Vote(object):
         return cls.DESERIALIZED_DIRECTIONS[direction]
 
     @property
+    def _id(self):
+        return "%s_%s" % (self.user._id36, self.thing._id36)
+
+    @property
     def affected_thing_attr(self):
         """The attr on the thing this vote will increment."""
         if not self.effects.affects_score:
