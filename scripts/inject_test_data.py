@@ -263,6 +263,7 @@ def inject_test_data(num_links=25, num_comments=25, num_votes=5):
     ensure_subreddit(g.default_sr, system_user)
     ensure_subreddit(g.takedown_sr, system_user)
     ensure_subreddit(g.beta_sr, system_user)
+    ensure_subreddit(g.promo_sr_name, system_user)
 
     print
     print
