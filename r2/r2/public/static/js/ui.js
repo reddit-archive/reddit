@@ -784,6 +784,10 @@ r.ui.PermissionEditor.prototype = $.extend(new r.ui.Base(), {
     },
 
     show: function(e) {
+        if (r.access.isLinkRestricted(e.target)) {
+            return;
+        }
+
         close_menus(e)
         this.$menu = $('<div class="permission-selector drop-choices">')
         this.$menu.append(this._makeMenuLabel("all"))
