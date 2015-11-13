@@ -113,7 +113,6 @@ def click_redirect():
         abort(403)
 
     # fix encoding in the query string of the destination
-    destination = urllib.unquote(destination)
     u = urlparse(destination)
     if u.query:
         u = _fix_query_encoding(u)
