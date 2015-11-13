@@ -80,7 +80,9 @@
                format=_('you are an approved submitter on this subreddit. (%(leave)s)'),
                format_arg='leave',
                hidden_data=dict(
-                 id=thing.sr._fullname))}
+                 id=thing.sr._fullname),
+               access_required=False,
+              )}
   %endif
 
   %if thing.sr_style_toggle:
