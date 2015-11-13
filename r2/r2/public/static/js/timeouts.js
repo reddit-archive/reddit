@@ -13,7 +13,12 @@
     init: function() {
       $('body').on('click', '.access-required', this._handleClick);
       $('.access-required').removeAttr('onclick');
-      $('body.comments-page').on('focus', '.usertext.cloneable textarea', this._handleClick);
+
+      // special handling for the comment box...
+      $('body.comments-page').on('focus', '.usertext.cloneable textarea', function(e) {
+        $(this).blur();
+        r.timeouts._handleClick(e);
+      });
       $('body.comments-page').on('submit', 'form.usertext.cloneable', this._handleClick);
       $('body.comments-page form.usertext.cloneable').removeAttr('onsubmit');
 
