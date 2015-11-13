@@ -5,6 +5,23 @@ $(function() {
     return false
   }
 
+  function toggleOther() {
+    var $reportForm = $(this).closest('.reportform');
+    var $submit = $reportForm.find('[type="submit"]');
+    var $reason = $reportForm.find('[name=reason]:checked');
+    var $other = $reportForm.find('[name="other_reason"]');
+    var isOther = $reason.val() === 'other';
+
+    $submit.removeAttr('disabled');
+
+    if (isOther) {
+      $other.removeAttr('disabled').focus();
+    } else {
+      $other.attr('disabled', 'disabled');
+    }
+    return false
+  }
+
   function getReportAttrs($el) {
     return {thing: $el.thing_id()}
   }
@@ -39,4 +56,5 @@ $(function() {
 
   $("div.content").on("click", ".tagline .reportbtn, .thing .reportbtn", openReportForm);
   $("div.content").on("click", ".btn.report-cancel", toggleReportForm);
+  $("div.content").on("change", "input[name='reason']", toggleOther);
 });
