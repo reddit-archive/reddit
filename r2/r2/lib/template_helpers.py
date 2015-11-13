@@ -381,7 +381,7 @@ def replace_render(listing, item, render_func):
 
     return _replace_render
 
-def get_domain(cname = False, subreddit = True, no_www = False):
+def get_domain(cname=False, subreddit=True, no_www=False):
     """
     returns the domain on the current subreddit, possibly including
     the subreddit part of the path, suitable for insertion after an
@@ -403,17 +403,28 @@ def get_domain(cname = False, subreddit = True, no_www = False):
     """
     # locally cache these lookups as this gets run in a loop in add_props
     domain = g.domain
-    domain_prefix = c.domain_prefix
-    site  = c.site
+
+    # c.domain_prefix is only set to non '' values, so we're safe to
+    # override if it is falsy. we need to check this here because this method
+    # might be getting called out of request, but c.domain_prefix is set in
+    # request in MinimalController.pre.
+    domain_prefix = c.domain_prefix or g.domain_prefix
+
+    site = c.site
     ccname = c.cname
+
     if not no_www and domain_prefix:
         domain = domain_prefix + "." + domain
+
     if cname and ccname and site.domain:
         domain = site.domain
+
     if hasattr(request, "port") and request.port:
         domain += ":" + str(request.port)
+
     if (not ccname or not cname) and subreddit:
         domain += site.path.rstrip('/')
+
     return domain
 
 def dockletStr(context, type, browser):
