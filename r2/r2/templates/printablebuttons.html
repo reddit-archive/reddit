@@ -23,6 +23,7 @@
 <%namespace file="utils.html" import="plain_link, pretty_button, data, error_field" />
 
 <%!
+   from r2.config import feature
    from r2.lib.filters import conditional_websafe, jssafe
    from r2.lib.strings import strings
    from r2.models.promo import PROMOTE_STATUS
@@ -58,8 +59,13 @@
 
   %if thing.show_report:
     <li class="report-button">
-      <a href="javascript:void(0)" class="reportbtn access-required"
-         data-event-action="report">
+      %if feature.is_enabled("new_report_dialog"):
+        <a href="javascript:void(0)" class="reportbtn access-required"
+           data-event-action="report">
+      %else:
+        <a href="javascript:void(0)" class="action-thing reportbtn access-required"
+           data-event-action="report">
+      %endif
         ${_("report")}
       </a>
     </li>
