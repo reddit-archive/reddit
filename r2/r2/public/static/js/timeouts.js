@@ -54,9 +54,17 @@
       var actionName = target.data('event-action');
       var actionDetail = target.data('event-detail');
 
+      // set default action for modal
       if (!actionName) {
         actionName = 'modal';
         actionDetail = null;
+      }
+
+      // set target using page context
+      if (!targetFullname && targetType == 'subreddit') {
+        targetFullname = r.config.cur_site;
+      } else if (!targetFullname && targetType == 'link') {
+        targetFullname = r.config.cur_link;
       }
 
       r.analytics.event.timeoutForbiddenEvent(actionName, actionDetail, targetType, targetFullname);
