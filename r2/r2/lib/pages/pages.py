@@ -466,7 +466,7 @@ class Reddit(Templated):
         buttons = []
 
         buttons.append(NamedButton("wikirecentrevisions",
-                                   css_class="wikiaction-revisions access-required",
+                                   css_class="wikiaction-revisions",
                                    dest="/wiki/revisions"))
 
         buttons.append(NamedButton("wikipageslist",
@@ -483,7 +483,7 @@ class Reddit(Templated):
         return SideContentBox(_('wiki tools'),
                       [NavMenu(buttons,
                                type="flat_vert",
-                               css_class="icon-menu access-required",
+                               css_class="icon-menu",
                                separator="")],
                       _id="wikiactions",
                       collapsible=True)
