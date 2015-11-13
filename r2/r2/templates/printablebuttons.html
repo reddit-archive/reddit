@@ -272,10 +272,12 @@
     <li>
     %if thing.hidden:
       ${self.state_button("unhide", _("unhide"), \
-        "change_state(this, 'unhide', hide_thing);", _("unhidden"))}
+        "change_state(this, 'unhide', hide_thing);", _("unhidden"),
+        access_required=False)}
     %else:
       ${self.state_button("hide", _("hide"), \
-         "change_state(this, 'hide', hide_thing);", _("hidden"))}
+         "change_state(this, 'hide', hide_thing);", _("hidden"),
+         access_required=False)}
     %endif
     </li>
   %endif
@@ -502,11 +504,19 @@
 </%def>
 
 ##------------
-<%def name="state_button(name, title, onclick, executed, clicked=False, a_class = '', fmt=None, fmt_param = '', hidden_data = {})">
-
+<%def name="state_button(name, title, onclick, executed,
+                         clicked = False,
+                         a_class = '',
+                         fmt = None,
+                         fmt_param = '',
+                         hidden_data = {},
+                         access_required = True)">
   <%def name="_link()" buffered="True">
+    <%
+      access_class = 'access-required' if access_required else ''
+    %>
     <a href="javascript:void(0)"
-       class="${a_class or ''} access-required"
+       class="${a_class or ''} ${access_class}"
        onclick="${onclick}">${title}</a>
   </%def>
   <%
