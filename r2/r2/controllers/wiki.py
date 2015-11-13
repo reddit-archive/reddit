@@ -287,6 +287,8 @@ class WikiController(RedditController):
         """Retrieve the current permission settings for `page`"""
         settings = {'permlevel': page._get('permlevel', 0),
                     'listed': page.listed}
+        VNotInTimeout().run(action_name="pageview",
+                details_text="wikisettings", target=page)
         mayedit = page.get_editor_accounts()
         restricted = (not page.special) and page.restricted
         show_editors = not restricted
