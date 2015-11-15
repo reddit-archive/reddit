@@ -112,7 +112,7 @@ from r2.models import (
     FakeSubreddit,
     Friends,
     Frontpage,
-    get_request_location,
+    get_user_location,
     LabeledMulti,
     Link,
     Mod,
@@ -845,7 +845,7 @@ class MinimalController(BaseController):
             cookies_key = ''
 
         if request.host != g.media_domain:
-            location = get_request_location()
+            location = get_user_location()
         else:
             location = None
 

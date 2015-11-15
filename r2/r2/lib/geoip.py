@@ -108,3 +108,44 @@ def organization_by_ips(ips):
         return organization_by_ip[ips[0]]
     else:
         return organization_by_ip
+
+
+def get_request_location(request, context):
+    """Determine country of origin of the `request` for the given `context`
+
+    This is done by:
+     * checking the CDN headers for country of origin if set
+     * falling back on geocoding request.ip address against the geocoder service
+    The resulting location is memoized on context on `context.location`
+
+    request, context: Should be pylons.request & pylons.c respectively;
+    """
+    if context.location != '':
+        # unset context attributes have the value ''
+        return context.location
+
+    context.location = None
+
+    if getattr(request, 'via_cdn', False):
+        g.stats.simple_event('geoip.cdn_request')
+        edgescape_info = request.environ.get('HTTP_X_AKAMAI_EDGESCAPE')
+        if edgescape_info:
+            try:
+                items = edgescape_info.split(',')
+                location_dict = dict(item.split('=') for item in items)
+                context.location = location_dict.get('country_code', None)
+            except:
+                pass
+        cdn_geoinfo = request.environ.get('HTTP_CF_IPCOUNTRY')
+        if cdn_geoinfo:
+            context.location = cdn_geoinfo
+    elif getattr(request, 'ip', None):
+        g.stats.simple_event('geoip.non_cdn_request')
+        timer = g.stats.get_timer("providers.geoip.location_by_ips")
+        timer.start()
+        location = location_by_ips(request.ip)
+        if location:
+            context.location = location.get('country_code', None)
+        timer.stop()
+
+    return context.location

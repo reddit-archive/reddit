@@ -50,7 +50,7 @@ from printable import Printable
 from r2.lib.db.userrel import UserRel, MigratingUserRel
 from r2.lib.db.operators import lower, or_, and_, not_, desc
 from r2.lib.errors import RedditError
-from r2.lib.geoip import location_by_ips
+from r2.lib.geoip import get_request_location
 from r2.lib.memoize import memoize
 from r2.lib.permissions import ModeratorPermissionSet
 from r2.lib.utils import (
@@ -94,35 +94,18 @@ def get_links_sr_ids(sr_ids, sort, time):
     return queries.merge_results(*results)
 
 
-def get_request_location():
-    if c.location != '':
-        # unset c attributes have the value ''
-        return c.location
+def get_user_location():
+    """Determine country of origin for the current user
 
-    c.location = None
-
+    This is provided via a call to geoip.get_request_location unless the
+    user has opted into the global default location.
+    """
+    # The default location is just the unset one
     if c.user and c.user.pref_use_global_defaults:
-        pass
-    elif getattr(request, 'via_cdn', False):
-        g.stats.simple_event('geoip.cdn_request')
-        edgescape_info = request.environ.get('HTTP_X_AKAMAI_EDGESCAPE')
-        if edgescape_info:
-            try:
-                items = edgescape_info.split(',')
-                location_dict = dict(item.split('=') for item in items)
-                c.location = location_dict.get('country_code', None)
-            except:
-                pass
-    elif getattr(request, 'ip', None):
-        g.stats.simple_event('geoip.non_cdn_request')
-        timer = g.stats.get_timer("providers.geoip.location_by_ips")
-        timer.start()
-        location = location_by_ips(request.ip)
-        if location:
-            c.location = location.get('country_code', None)
-        timer.stop()
+        return ""
 
-    return c.location
+    # this call has the side effect of memoizing on c.location
+    return get_request_location(request, c)
 
 
 subreddit_rx = re.compile(r"\A[A-Za-z0-9][A-Za-z0-9_]{2,20}\Z")
@@ -1021,7 +1004,7 @@ class Subreddit(Thing, Printable, BaseSite):
     @classmethod
     def default_subreddits(cls, ids=True):
         """Return the subreddits a user with no subscriptions would see."""
-        location = get_request_location()
+        location = get_user_location()
         srids = LocalizedDefaultSubreddits.get_defaults(location)
 
         srs = Subreddit._byID(srids, data=True, return_dict=False, stale=True)
