@@ -128,15 +128,7 @@ def get_request_location(request, context):
 
     if getattr(request, 'via_cdn', False):
         g.stats.simple_event('geoip.cdn_request')
-        edgescape_info = request.environ.get('HTTP_X_AKAMAI_EDGESCAPE')
-        if edgescape_info:
-            try:
-                items = edgescape_info.split(',')
-                location_dict = dict(item.split('=') for item in items)
-                context.location = location_dict.get('country_code', None)
-            except:
-                pass
-        cdn_geoinfo = request.environ.get('HTTP_CF_IPCOUNTRY')
+        cdn_geoinfo = g.cdn_provider.get_client_location(request.environ)
         if cdn_geoinfo:
             context.location = cdn_geoinfo
     elif getattr(request, 'ip', None):

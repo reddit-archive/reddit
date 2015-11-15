@@ -69,7 +69,10 @@ class CloudFlareCdnProvider(CdnProvider):
             return None
 
         return client_ip
-     
+
+    def get_client_location(self, environ):
+        return environ.get("HTTP_CF_IPCOUNTRY", None)
+
     def purge_content(self, url):
         """Purges the content specified by url from the cache."""
         # You'll notice purge is being called multiple times. Our sysadmins

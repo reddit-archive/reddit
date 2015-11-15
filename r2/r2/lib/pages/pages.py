@@ -1036,15 +1036,9 @@ class Reddit(Templated):
 class DebugFooter(Templated):
     def __init__(self):
         if request.via_cdn:
-            edgescape_info = request.environ.get('HTTP_X_AKAMAI_EDGESCAPE')
-            if edgescape_info:
-                try:
-                    items = edgescape_info.split(',')
-                    location_dict = dict(item.split('=') for item in items)
-                    country_code = location_dict.get('country_code', None)
-                    c.location_info = "country code: %s" % country_code
-                except:
-                    c.location_info = "parse error"
+            cdn_geoinfo = g.cdn_provider.get_client_location(request.environ)
+            if cdn_geoinfo:
+                c.location_info = "country code: %s" % cdn_geoinfo
         Templated.__init__(self)
 
 

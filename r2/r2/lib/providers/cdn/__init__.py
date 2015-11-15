@@ -41,6 +41,17 @@ class CdnProvider(object):
         """
         raise NotImplementedError
 
+    def get_client_location(self, environ):
+        """Return CDN-provided geo location data for the requester.
+
+        The return value is an ISO 3166-1 Alpha 2 format country code or None.
+
+        This function is only defined when get_client_ip returns a non-None
+        value, i.e. when the request has been validated as being from the CDN.
+
+        """
+        raise NotImplementedError
+
     def purge_content(self, url):
         """Purge content from the CDN by URL"""
         raise NotImplementedError

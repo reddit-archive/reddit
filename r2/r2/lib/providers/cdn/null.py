@@ -30,3 +30,6 @@ class NullCdnProvider(CdnProvider):
 
     def get_client_ip(self, environ):
         return None
+
+    def get_client_location(self, environ):
+        return None
