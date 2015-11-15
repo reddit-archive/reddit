@@ -59,7 +59,9 @@ def cast_vote(user, thing, direction):
         "thing_fullname": thing._fullname,
         "direction": direction,
         "date": int(epoch_timestamp(datetime.now(g.tz))),
-        "data": {},
+        "data": {
+            "ip": getattr(request, "ip", None),
+        },
     }
 
     hooks.get_hook("vote.get_vote_data").call(
