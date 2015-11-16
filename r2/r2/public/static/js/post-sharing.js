@@ -299,7 +299,7 @@
         posttype: 'link',
         title: title,
       };
-      var shareUrl = replaceParams('https://www.tumblr.com/widgets/share/tool', shareParams);
+      var shareUrl = r.utils.replaceUrlParams('https://www.tumblr.com/widgets/share/tool', shareParams);
 
       this.openWebIntent(shareUrl, 'tumblr');
     },
