@@ -1066,6 +1066,12 @@ class PromoteApiController(ApiController):
 
         l._commit()
 
+        # ensure plugins are notified of the final edits to the link.
+        # other methods also call this hook earlier in the process.
+        # see: `promote.unapprove_promotion`
+        if not is_new_promoted:
+            hooks.get_hook('promote.edit_promotion').call(link=l)
+
         # clean up so the same images don't reappear if they create
         # another link
         _clear_ads_images(thing=c.user if is_new_promoted else l)
