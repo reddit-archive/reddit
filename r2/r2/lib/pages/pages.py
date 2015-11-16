@@ -470,7 +470,7 @@ class Reddit(Templated):
                                    dest="/wiki/revisions"))
 
         buttons.append(NamedButton("wikipageslist",
-                           css_class="wikiaction-pages access-required",
+                           css_class="wikiaction-pages",
                            dest="/wiki/pages"))
         if moderator:
             buttons += [NamedButton('wikibanned', css_class='reddit-ban access-required',
