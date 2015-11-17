@@ -195,7 +195,7 @@ def js_config(extra_config=None):
         'store_visits': gold and c.user.pref_store_visits,
 
         # current domain
-        "cur_domain": get_domain(cname=c.frameless_cname, subreddit=False, no_www=True),
+        "cur_domain": get_domain(cname=False, subreddit=False, no_www=True),
         # where do ajax requests go?
         "ajax_domain": get_domain(cname=c.authorized_cname, subreddit=False),
         "stats_domain": g.stats_domain or '',
