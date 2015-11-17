@@ -52,32 +52,3 @@
     </script>
   </body>
 </html>
-
-
-<%def name="framebuster()">
-  %if c.cname and not c.user_is_loggedin:
-    <% 
-       import random 
-       from r2.lib.template_helpers import get_domain
-       %>
-    <script type="text/javascript">
-      (function($) {
-         $.framebuster = function() {
-            $(function() {
-                if($.browser.mozilla) {
-                   var url = window.location.href;
-                   $.redirect(url + ((url.indexOf('?') == -1)?'?':'&') +
-                         'v=' + Math.random());
-                }
-                else
-                   $.refresh();
-             });
-         }
-      })(jQuery);
-      document.write('<iframe name="reddit-window" id="reddit-window"' +
-       'src="${g.default_scheme}://${get_domain(cname=False, subreddit=True)}/framebuster/'
-       + Math.random() + 
-       '" width="1" height="1" style="visibility: hidden"></iframe>');
-    </script>
-  %endif
-</%def>

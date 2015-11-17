@@ -468,7 +468,6 @@ class CachedTemplate(Templated):
             c.domain_prefix,
             style,
             c.secure,
-            c.cname,
             c.lang,
             c.site.user_path,
             self.template_hash(style),

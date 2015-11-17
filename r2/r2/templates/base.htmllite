@@ -37,7 +37,7 @@
                     ("background-color:#CEE3F8" if not c.bgcolor else ""))}>
   <h4 class="reddit-title" 
       ${optionalstyle("margin:0;" + 
-                      ("padding-bottom:3px" if not c.cname else ""))}
+                      "padding-bottom:3px")}
       >
     <a href="${g.default_scheme}://${get_domain()}/" ${optionalstyle("margin:5px;")}
       %if c.link_target:
@@ -62,7 +62,7 @@
      %>
     ${self.titlebar(link)}
   </h4>
-  %if c.cname:
+  %if g.domain != "reddit.com":
   <p ${optionalstyle("margin: 0px 30px 5px 30px; color: gray;")}
      class="powered-by-reddit">
     <small>

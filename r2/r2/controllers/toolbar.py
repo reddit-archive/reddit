@@ -142,28 +142,6 @@ class ToolbarController(RedditController):
         listing = hot_links_by_url_listing(path, sr=c.site, num=1)
         link = listing.things[0] if listing.things else None
 
-        if c.cname:
-            # In this case, we make some bad guesses caused by the
-            # cname frame on unauthorised cnames. 
-            # 1. User types http://foo.com/http://myurl?cheese=brie
-            #    (where foo.com is an unauthorised cname)
-            # 2. We generate a frame that points to
-            #    http://www.reddit.com/r/foo/http://myurl?cnameframe=0.12345&cheese=brie
-            # 3. Because we accept everything after the /r/foo/, and
-            #    we've now parsed, modified, and reconstituted that
-            #    URL to add cnameframe, we really can't make any good
-            #    assumptions about what we've done to a potentially
-            #    already broken URL, and we can't assume that we've
-            #    rebuilt it in the way that it was originally
-            #    submitted (if it was)
-            # We could try to work around this with more guesses (by
-            # having demangle_url try to remove that param, hoping
-            # that it's not already a malformed URL, and that we
-            # haven't re-ordered the GET params, removed
-            # double-slashes, etc), but for now, we'll just refuse to
-            # do this operation
-            return self.abort404()
-
         if link:
             # we were able to find it, let's send them to the
             # toolbar (if enabled) or comments (if not)

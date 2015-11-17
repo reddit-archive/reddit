@@ -2510,11 +2510,10 @@ class VDestination(Validator):
         ip = getattr(request, "ip", "[unknown]")
         fp = getattr(request, "fullpath", "[unknown]")
         dm = c.domain or "[unknown]"
-        cn = c.cname or "[unknown]"
 
         log_text("invalid redirect",
-                 "%s attempted to redirect from %s to %s with domain %s and cname %s"
-                      % (ip, fp, dest, dm, cn),
+                 "%s attempted to redirect from %s to %s with domain %s"
+                      % (ip, fp, dest, dm),
                  "info")
 
         return "/"

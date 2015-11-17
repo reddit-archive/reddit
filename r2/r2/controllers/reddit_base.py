@@ -843,7 +843,6 @@ class MinimalController(BaseController):
                         c.lang,
                         request.host,
                         c.secure,
-                        c.cname,
                         request.fullpath,
                         c.over18,
                         c.extension,
@@ -1585,8 +1584,7 @@ class RedditController(OAuth2ResourceController):
         sr_stylesheet_enabled = c.user.use_subreddit_style(c.site)
 
         if (not sr_stylesheet_enabled and
-                not has_style_override and
-                not c.cname):
+                not has_style_override):
             c.can_apply_styles = False
 
         c.bare_content = request.GET.pop('bare', False)

@@ -444,16 +444,12 @@ class Link(Thing, Printable):
                 res = "%s://%s/%s" % (g.default_scheme, permalink_domain, p)
             else:
                 res = "/%s" % p
-        elif not c.cname and not force_domain:
+        elif not force_domain:
             res = "/r/%s/%s" % (sr.name, p)
         elif sr != c.site or force_domain:
-            if(c.cname and sr == c.site):
-                permalink_domain = get_domain(cname=True, subreddit=False)
-                res = "%s://%s/%s" % (g.default_scheme, permalink_domain, p)
-            else:
-                permalink_domain = get_domain(cname=False, subreddit=False)
-                res = "%s://%s/r/%s/%s" % (g.default_scheme, permalink_domain,
-                                           sr.name, p)
+            permalink_domain = get_domain(cname=False, subreddit=False)
+            res = "%s://%s/r/%s/%s" % (g.default_scheme, permalink_domain,
+                                       sr.name, p)
         else:
             res = "/%s" % p
 
@@ -521,7 +517,6 @@ class Link(Thing, Printable):
         user_is_admin = c.user_is_admin
         user_is_loggedin = c.user_is_loggedin
         pref_media = user.pref_media
-        cname = c.cname
         site = c.site
 
         saved = hidden = visited = {}
@@ -758,12 +753,6 @@ class Link(Thing, Printable):
                 item.nofollow = False
 
             item.subreddit_path = item.subreddit.path
-            if cname:
-                item.subreddit_path = (g.default_scheme + "://" +
-                     get_domain(cname=(site == item.subreddit),
-                                subreddit=False))
-                if site != item.subreddit:
-                    item.subreddit_path += item.subreddit.path
             item.domain_path = "/domain/%s/" % item.domain
             if item.is_self:
                 item.domain_path = item.subreddit_path
@@ -1453,7 +1442,6 @@ class Comment(Thing, Printable):
         user_is_admin = c.user_is_admin
         user_is_loggedin = c.user_is_loggedin
         focal_comment = c.focal_comment
-        cname = c.cname
         site = c.site
 
         if user_is_loggedin:
@@ -1492,7 +1480,7 @@ class Comment(Thing, Printable):
                 add_submitter_distinguish(item.attribs, item.link, item.subreddit)
 
             if not hasattr(item, 'target'):
-                item.target = "_top" if cname else None
+                item.target = None
 
             parent = None
             if item.parent_id:
@@ -1596,12 +1584,6 @@ class Comment(Thing, Printable):
                 item.full_comment_count = 0
 
             item.subreddit_path = item.subreddit.path
-            if cname:
-                item.subreddit_path = (g.default_scheme + "://" +
-                     get_domain(cname=(site == item.subreddit),
-                                subreddit=False))
-                if site != item.subreddit:
-                    item.subreddit_path += item.subreddit.path
 
             # always use the default collapse threshold in contest mode threads
             # if the user has a custom collapse threshold

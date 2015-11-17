@@ -106,9 +106,6 @@
  %>
 <form action="${action}" method="post" class="pretty-form short-text">
   <input type="hidden" name="uh" value="${c.modhash}" />
-  %if c.cname:
-    <input type="hidden" name="${UrlParser.cname_get}" value="${random.random()}" />
-  %endif
 <table class="content preftable">
   <tr>
     <th>${_("interface language")}</th>

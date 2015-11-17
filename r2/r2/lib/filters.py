@@ -205,12 +205,7 @@ def safemarkdown(text, nofollow=False, wrap=True, **kwargs):
     if not text:
         return None
 
-    # this lets us skip the c.cname lookup (which is apparently quite
-    # slow) if target was explicitly passed to this function.
     target = kwargs.get("target", None)
-    if "target" not in kwargs and c.cname:
-        target = "_top"
-
     text = snudown.markdown(_force_utf8(text), nofollow, target)
 
     if wrap:

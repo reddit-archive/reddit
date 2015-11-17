@@ -25,7 +25,7 @@
 <%def name="dropdown()">
   ## caching comment:
   ##  see caching comment for plain_link.  In addition to the args, 
-  ##  this function depends on c.site.name, c.render_style and c.cname.
+  ##  this function depends on c.site.name and c.render_style
   <% css_class = str(thing.css_class) if thing.css_class else "" %>
   %if thing:
     %if thing.title and thing.selected:

@@ -75,8 +75,6 @@ class PostController(ApiController):
         set_prefs(c.user, prefs)
         c.user._commit()
         u.update_query(done='true')
-        if c.cname:
-            u.put_in_frame()
         return self.redirect(u.unparse())
 
     def GET_over18(self):

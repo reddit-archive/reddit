@@ -74,8 +74,6 @@
        %endif
        %if c.link_target:
          target="${c.link_target}"
-       %elif c.cname:
-         target="_top"
        %endif
        >
       ${thing.title}

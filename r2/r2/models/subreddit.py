@@ -945,7 +945,6 @@ class Subreddit(Thing, Printable, BaseSite):
                 elif rel_name == 'muted':
                     muted_srids.add(item._id)
 
-        target = "_top" if c.cname else None
         for item in wrapped:
             item.subscriber = item._id in subscriber_srids
             item.moderator = item._id in moderator_srids
@@ -975,9 +974,7 @@ class Subreddit(Thing, Printable, BaseSite):
             if item.public_description or item.description:
                 text = (item.public_description or
                         summarize_markdown(item.description))
-                item.public_description_usertext = UserText(item,
-                                                            text,
-                                                            target=target)
+                item.public_description_usertext = UserText(item, text)
             else:
                 item.public_description_usertext = None
 

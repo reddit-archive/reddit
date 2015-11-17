@@ -1356,8 +1356,6 @@ class FrontController(RedditController):
         """
         if not c.site.domain:
             return ""
-        elif c.cname:
-            return FrameBuster(login=(what == "login")).render()
         else:
             path = "/framebuster/"
             if c.user_is_loggedin:

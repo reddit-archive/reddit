@@ -153,11 +153,13 @@ def get_srpath():
 
 def _get_encrypted_user_slug():
     """Return an encrypted string containing context info."""
+    # The cname value (formerly c.cname) is expected by The traffic system.
+    cname = False
     data = [
         c.user._id36 if c.user_is_loggedin else "",
         get_srpath(),
         c.lang or "",
-        c.cname,
+        cname,
     ]
     return encrypt("|".join(_force_utf8(s) for s in data))
 

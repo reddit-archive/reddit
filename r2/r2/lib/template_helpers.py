@@ -419,18 +419,14 @@ def get_domain(cname=False, subreddit=True, no_www=False):
     domain_prefix = c.domain_prefix or g.domain_prefix
 
     site = c.site
-    ccname = c.cname
 
     if not no_www and domain_prefix:
         domain = domain_prefix + "." + domain
 
-    if cname and ccname and site.domain:
-        domain = site.domain
-
     if hasattr(request, "port") and request.port:
         domain += ":" + str(request.port)
 
-    if (not ccname or not cname) and subreddit:
+    if subreddit:
         domain += site.path.rstrip('/')
 
     return domain
@@ -497,11 +493,11 @@ def add_sr(
         return path
 
     u = UrlParser(path)
-    if sr_path and (nocname or not c.cname):
+    if sr_path:
         u.path_add_subreddit(c.site)
 
     if not u.hostname or force_hostname:
-        u.hostname = get_domain(cname = (c.cname and not nocname),
+        u.hostname = get_domain(cname = False,
                                 subreddit = False)
 
     if (c.secure and u.is_reddit_url()) or force_https:

@@ -77,9 +77,6 @@ data-${name}="${value}"
 <%def name="submit_form(onsubmit='', action='', _class='', method='post', _id='', **params)">
 <form class="${_class or ''}" onsubmit="${onsubmit or ''}" 
       action="${action or ''}" ${_id and "id='" + _id + "'" or ""} method="${method}"
-      %if c.cname:
-        target="_top"
-      %endif
       >
   %if c.user_is_loggedin:
      <input type="hidden" name="uh" value="${c.modhash}">
@@ -123,8 +120,6 @@ ${first_defined(kw[1:])}
 
 <%def name="img_link(link_text, img, path, _id='', target='', img_id=None, size=None, **kw)">
   <% 
-     if (not target or target == '_parent') and c.cname:
-         target = '_top'
      if target:
          kw['target'] = target
 
@@ -143,17 +138,13 @@ ${first_defined(kw[1:])}
 
 <%def name="plain_link(link_text, path, _sr_path = True, nocname=False, fmt='', target='', **kw)">
   ## caching comment: 
-  ##  in addition to the args, this function also makes use of c.cname, 
-  ##  and, via add_sr, both c.site.name and c.render_style. 
+  ##  in addition to the args, this function also makes use of
+  ##  both c.site.name and c.render_style via add_sr.
   ##
   ##  This function is called by (among other places) NavMenu as the
   ##  primary rendering view.  Any changes to the c-usage of this function 
   ##  will have to be propagated up. 
   <% 
-     if (not target or target == '_parent') and c.cname:
-         target = '_top'
-     if c.cname and path and path.startswith('http://'):
-         target = '_top'
      if target:
          kw['target'] = target
 
@@ -170,10 +161,6 @@ ${first_defined(kw[1:])}
   <%
     action = add_sr(post_path, sr_path=_sr_path, nocname=nocname)
     href = add_sr(redir_path, sr_path=_sr_path, nocname=nocname)
-    if (not target or target == '_parent') and c.cname:
-        target = '_top'
-    if c.cname and redir_path.startswith('http://'):
-        target = '_top'
     if target:
         kw['target'] = target
     onclick = "$(this).parent().submit(); return false;"
