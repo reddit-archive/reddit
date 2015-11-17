@@ -34,6 +34,7 @@
 
 <%inherit file="comment_skeleton.html"/>
 <%namespace file="utils.html" import="thing_timestamp" />
+<%namespace file="wrappeduser.html" import="make_distinguish" />
 
 ## disable voting arrows
 <%def name="midcol(cls='')">
@@ -87,7 +88,21 @@
 
     if thing.sr_id:
         path = thing.subreddit.path.rstrip('/')
-        substitutions['subreddit'] = format_html(u'<span class="subreddit"><a href="%(path)s">%(path)s</a></span>', path=path)
+
+        if getattr(thing, "subreddit_distinguish", None) == "admin":
+            distinguish_attribs_list = []
+            add_admin_distinguish(distinguish_attribs_list)
+            distinguish = format_html(capture(make_distinguish, distinguish_attribs_list))
+            type = "admin-distinguish"
+            substitutions['subreddit'] = format_html(u'<span class="subreddit"><a href="%(path)s" class="%(type)s">%(path)s</a>%(distinguish)s</span>', path=path, distinguish=distinguish, type=type)
+        elif getattr(thing, "subreddit_distinguish", None) == "moderator":
+            distinguish_attribs_list = []
+            add_moderator_distinguish(distinguish_attribs_list, thing.subreddit)
+            distinguish = format_html(capture(make_distinguish, distinguish_attribs_list))
+            type = "moderator-distinguish"
+            substitutions['subreddit'] = format_html(u'<span class="subreddit"><a href="%(path)s" class="%(type)s">%(path)s</a>%(distinguish)s</span>', path=path, distinguish=distinguish, type=type)
+        else:
+            substitutions['subreddit'] = format_html(u'<span class="subreddit"><a href="%(path)s">%(path)s</a></span>', path=path)
 
     substitutions['author'] = format_html(u'<span class="sender">%s</span>', WrappedUser(thing.author, thing.attribs, thing))
 

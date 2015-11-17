@@ -31,6 +31,33 @@
   %endif
 </%def>
 
+<%def name="make_distinguish(distinguish_tuples)">
+<span class="userattrs">
+%if distinguish_tuples:
+  [
+  %for priority, abbv, css_class, label, attr_link in distinguish_tuples:
+    %if attr_link:
+      <a class="${css_class}" title="${label}"
+      %if target:
+         target="${target}"
+      %endif
+         href="${attr_link}">
+        ${unsafe(abbv)}
+      </a>
+    %else:
+      <span class="${css_class}" title="${label}">${abbv}</span>
+    %endif
+
+    ## this is a hack to print a comma after all but the final attr
+    %if priority != distinguish_tuples[-1][0]:
+      ,
+    %endif
+  %endfor
+  ]
+%endif
+</span>
+</%def>
+
 %if context_deleted and not c.user_is_admin:
   <span class="author">[deleted]</span>
 %else:
@@ -61,29 +88,7 @@
           href="javascript://void(0)">${_('edit')}</a>)
       <div class="flairselector drop-choices"></div>
     %endif
-    <span class="userattrs">
-    %if thing.attribs:
-      [
-      %for priority, abbv, css_class, label, attr_link in thing.attribs:
-        %if attr_link:
-          <a class="${css_class}" title="${label}"
-          %if target:
-             target="${target}"
-          %endif
-             href="${attr_link}">
-            ${unsafe(abbv)}
-          </a>
-        %else:
-          <span class="${css_class}" title="${label}">${abbv}</span>
-        %endif
-        ## this is a hack to print a comma after all but the final attr
-        %if priority != thing.attribs[-1][0]:
-          ,
-        %endif
-      %endfor
-      ]
-    %endif
-    </span>
+    ${make_distinguish(thing.attribs)}
   %endif
 %endif
 

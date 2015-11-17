@@ -2142,18 +2142,35 @@ class Message(Thing, Printable):
                         item.sr_blocked = True
                         item.is_collapsed = True
 
+                    # use special handling of admin distinguish because ALL
+                    # messages from admin accounts are marked for admin
+                    # distinguish, but we only want to use the admin distinguish
+                    # on messages sent from /r/reddit.com
+                    if (item.distinguished == "admin" and
+                            "/r/%s" % item.subreddit.name == g.admin_message_acct):
+                        subreddit_distinguish = "admin"
+                    elif (item.distinguished == "moderator" or
+                            item.distinguished == "admin"):
+                        subreddit_distinguish = "moderator"
+                    else:
+                        subreddit_distinguish = None
+
                     if not item.user_is_moderator and not c.user_is_admin:
                         item.author = item.subreddit
                         item.hide_author = True
                         item.taglinetext = _(
                             "subreddit message via %(subreddit)s sent %(when)s")
+                        item.subreddit_distinguish = subreddit_distinguish
                     elif user_is_sender:
                         item.taglinetext = _(
                             "to %(dest)s via %(subreddit)s sent %(when)s")
+                        item.subreddit_distinguish = subreddit_distinguish
                     else:
                         item.taglinetext = _(
                             "from %(author)s via %(subreddit)s to %(dest)s sent"
                             " %(when)s")
+                        # don't set item.subreddit_distinguish because any
+                        # distinguish will be associated with the author
                 else:
                     if item._id in mod_message_authors:
                         # let moderators see the original author when a regular
