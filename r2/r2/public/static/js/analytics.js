@@ -475,11 +475,15 @@ r.analytics.event = {
 
     var data = this._eventData(eventTopic, eventType, payload);
 
+    // pixel tracker
     var pixel = new Image();
     pixel.src = r.config.eventtracker_url + '?' + $.param({
       r: Math.round(Math.random() * 2147483647), // cachebuster
       data: JSON.stringify(data),
     });
+
+    // event collector
+    r.events.track(eventTopic, eventType, data.payload).send();
   },
 
 };

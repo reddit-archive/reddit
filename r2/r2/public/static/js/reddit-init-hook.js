@@ -7,6 +7,7 @@
   r.hooks.get('reddit-init').register(function() {
     try {
         r.analytics.init();
+        r.events.init();
         r.access.init();
     } catch (err) {
         r.sendError('Error during reddit-init.js init', err.toString());
