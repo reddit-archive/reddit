@@ -328,7 +328,7 @@ class ApiController(RedditController):
         VCaptcha(),
         VUser(),
         VModhash(),
-        from_sr=VSRByName('from_sr'),
+        from_sr=VSRByName('from_sr', required=False),
         to=VMessageRecipient('to'),
         subject=VLength('subject', 100, empty_error=errors.NO_SUBJECT),
         body=VMarkdownLength(['text', 'message'], max_length=10000),
@@ -368,8 +368,6 @@ class ApiController(RedditController):
 
         if from_sr and from_sr._spam:
             return
-
-        c.errors.remove((errors.BAD_SR_NAME, "from_sr"))
 
         if from_sr:
             if not from_sr.is_moderator_with_perms(c.user, "mail"):
