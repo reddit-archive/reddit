@@ -49,8 +49,6 @@ class Cookie(object):
         self.httponly = httponly
         if domain:
             self.domain = domain
-        elif c.authorized_cname and not c.default_sr:
-            self.domain = utils.common_subdomain(request.host, c.site.domain)
         else:
             self.domain = g.domain
 

@@ -55,7 +55,7 @@
 
 
 <%def name="framebuster()">
-  %if c.cname and not c.user_is_loggedin and not c.authorized_cname:
+  %if c.cname and not c.user_is_loggedin:
     <% 
        import random 
        from r2.lib.template_helpers import get_domain

@@ -197,7 +197,7 @@ def js_config(extra_config=None):
         # current domain
         "cur_domain": get_domain(cname=False, subreddit=False, no_www=True),
         # where do ajax requests go?
-        "ajax_domain": get_domain(cname=c.authorized_cname, subreddit=False),
+        "ajax_domain": get_domain(cname=False, subreddit=False),
         "stats_domain": g.stats_domain or '',
         "stats_sample_rate": g.stats_sample_rate or 0,
         "extension": c.extension,

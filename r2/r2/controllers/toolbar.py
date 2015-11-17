@@ -142,7 +142,7 @@ class ToolbarController(RedditController):
         listing = hot_links_by_url_listing(path, sr=c.site, num=1)
         link = listing.things[0] if listing.things else None
 
-        if c.cname and not c.authorized_cname:
+        if c.cname:
             # In this case, we make some bad guesses caused by the
             # cname frame on unauthorised cnames. 
             # 1. User types http://foo.com/http://myurl?cheese=brie

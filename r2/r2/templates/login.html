@@ -56,7 +56,7 @@
       tabindex = 2 if register else 3
     %>
     <form id="${'register' if register else 'login'}-form" method="post" 
-          action="${add_sr(base + '/post/' + op, nocname=not c.authorized_cname)}"
+          action="${add_sr(base + '/post/' + op, nocname=True)}"
           class="form-v2">
       %if c.cname:
          <input type="hidden" name="${UrlParser.cname_get}" 
@@ -155,7 +155,7 @@
       tabindex = 2 if register else 3
     %>
     <form id="login_${op}" method="post" 
-          action="${add_sr(base + '/post/' + op, nocname=not c.authorized_cname)}"
+          action="${add_sr(base + '/post/' + op, nocname=True)}"
           class="user-form ${'register-form' if register else 'login-form'}">
       %if c.cname:
          <input type="hidden" name="${UrlParser.cname_get}" 
