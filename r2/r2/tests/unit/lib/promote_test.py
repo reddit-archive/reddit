@@ -67,7 +67,7 @@ class TestSRNamesFromSite(unittest.TestCase):
         multi = MultiReddit(path="/user/test/m/multi_test", srs=multi_subreddits)
         srnames = srnames_from_site(self.logged_in, multi)
 
-        self.assertEqual(srnames, set(multi_srnames) | set(subscriptions_srnames))
+        self.assertEqual(srnames, set(multi_srnames))
 
     def test_subreddit_logged_out(self):
         srname = "test1"
@@ -83,16 +83,15 @@ class TestSRNamesFromSite(unittest.TestCase):
         subreddit = Subreddit(name=srname)
         srnames = srnames_from_site(self.logged_in, subreddit)
 
-        self.assertEqual(srnames, {srname} | set(subscriptions_srnames))
+        self.assertEqual(srnames, {srname})
 
     @patch("r2.models.Subreddit.user_subreddits")
     def test_quarantined_subscriptions_are_never_included(self, user_subreddits):
         user_subreddits.return_value = naughty_subscriptions
-        srname = "test1"
-        subreddit = Subreddit(name=srname)
+        subreddit = Frontpage
         srnames = srnames_from_site(self.logged_in, subreddit)
 
-        self.assertEqual(srnames, {srname} | {nice_srname})
+        self.assertEqual(srnames, {subreddit.name} | {nice_srname})
         self.assertTrue(len(srnames & {quarantined_srname}) == 0)
 
     @patch("r2.models.Subreddit.user_subreddits")
@@ -103,27 +102,6 @@ class TestSRNamesFromSite(unittest.TestCase):
         self.assertEqual(srnames, {Frontpage.name} | {nice_srname})
         self.assertTrue(len(srnames & {nsfw_srname}) == 0)
 
-    @patch("r2.models.Subreddit.user_subreddits")
-    def test_nsfw_subscriptions_arent_included_when_viewing_sfw(self, user_subreddits):
-        user_subreddits.return_value = naughty_subscriptions
-        srname = "test1"
-        subreddit = Subreddit(name=srname)
-        srnames = srnames_from_site(self.logged_in, subreddit)
-
-        self.assertEqual(srnames, {srname} | {nice_srname})
-        self.assertTrue(len(srnames & {nsfw_srname}) == 0)
-
-    @patch("r2.models.Subreddit.user_subreddits")
-    def test_only_nsfw_subscriptions_are_included_when_viewing_nswf(self, user_subreddits):
-        user_subreddits.return_value = naughty_subscriptions
-        srname = "bad"
-        subreddit = Subreddit(name=srname, over_18=True)
-        srnames = srnames_from_site(self.logged_in, subreddit)
-
-        self.assertEqual(srnames, {srname} | {nsfw_srname})
-        self.assertTrue(len(srnames & {nsfw_srname}) == 1)
-        self.assertTrue(len(srnames & {nice_srname}) == 0)
-
     @patch("r2.models.Collection.get_all")
     def test_get_nsfw_collections_srnames(self, get_all):
         get_all.return_value = [nsfw_collection]
@@ -132,7 +110,7 @@ class TestSRNamesFromSite(unittest.TestCase):
         self.assertEqual(srnames, set(nsfw_collection_srnames))
 
     @patch("r2.lib.promote.get_nsfw_collections_srnames")
-    def test_remove_nsfw_collection_srnames_on_sfw(self, get_nsfw_collections_srnames):
+    def test_remove_nsfw_collection_srnames_on_frontpage(self, get_nsfw_collections_srnames):
         get_nsfw_collections_srnames.return_value = set(nsfw_collection.sr_names)
         srname = "test1"
         subreddit = Subreddit(name=srname)
@@ -145,24 +123,5 @@ class TestSRNamesFromSite(unittest.TestCase):
         swf_srnames = srnames_from_site(self.logged_in, subreddit)
 
         self.assertEqual(frontpage_srnames, {Frontpage.name, nice_srname})
-        self.assertEqual(swf_srnames, {srname, nice_srname,})
-
         self.assertTrue(len(frontpage_srnames & {questionably_nsfw}) == 0)
-        self.assertTrue(len(swf_srnames & {questionably_nsfw}) == 0)
-
-    @patch("r2.lib.promote.get_nsfw_collections_srnames")
-    def test_remove_swf_subscriptions_when_viewing_sr_in_nsfw_collection(
-            self, get_nsfw_collections_srnames):
-
-        get_nsfw_collections_srnames.return_value = set(nsfw_collection.sr_names)
-        questionable_subreddit = Subreddit(name=questionably_nsfw)
-        Subreddit.user_subreddits = MagicMock(return_value=[
-            Subreddit(name=nice_srname),
-            Subreddit(name=questionably_nsfw),
-        ])
-
-        srnames = srnames_from_site(self.logged_in, questionable_subreddit)
-
-        self.assertEqual(srnames, {questionably_nsfw})
-        self.assertTrue(len(srnames & {nice_srname}) == 0)
 
