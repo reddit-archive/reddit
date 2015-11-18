@@ -3310,8 +3310,7 @@ class ReportForm(CachedTemplate):
             for rule in SubredditRules.get_rules(subreddit):
                 self.rules.append(rule["short_name"])
             if self.rules:
-                self.system_rules = list(SITEWIDE_RULES)
-                self.system_rules.append("Other")
+                self.system_rules = SITEWIDE_RULES
                 self.rules_page_link = "/r/%s/about/rules" % subreddit.name
         if not self.rules:
             self.rules = OLD_SITEWIDE_RULES
@@ -3331,8 +3330,7 @@ class SubredditReportForm(CachedTemplate):
             for rule in SubredditRules.get_rules(subreddit):
                 self.rules.append(rule["short_name"])
             if self.rules:
-                self.system_rules = list(SITEWIDE_RULES)
-                self.system_rules.append("Other")
+                self.system_rules = SITEWIDE_RULES
                 self.rules_page_link = "/r/%s/about/rules" % subreddit.name
         if not self.rules:
             self.rules = SITEWIDE_RULES
