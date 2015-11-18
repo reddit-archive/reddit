@@ -1398,7 +1398,7 @@ class Comment(Thing, Printable):
 
     @classmethod
     def add_props(cls, user, wrapped):
-        from r2.lib.template_helpers import add_attr, get_domain
+        from r2.lib.template_helpers import add_submitter_distinguish, get_domain
         from r2.lib.utils import timeago
         from r2.lib.wrapped import CachedVariable
         from r2.lib.pages import WrappedUser
@@ -1479,9 +1479,10 @@ class Comment(Thing, Printable):
 
             if not hasattr(item, 'subreddit'):
                 item.subreddit = item.subreddit_slow
+
             if item.author_id == item.link.author_id and not item.link._deleted:
-                add_attr(item.attribs, 'S',
-                         link=item.link.make_permalink(item.subreddit))
+                add_submitter_distinguish(item.attribs, item.link, item.subreddit)
+
             if not hasattr(item, 'target'):
                 item.target = "_top" if cname else None
 

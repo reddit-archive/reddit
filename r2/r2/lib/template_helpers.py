@@ -27,6 +27,7 @@ import urllib
 from r2.config import feature
 from r2.models import *
 from filters import (
+    _force_unicode,
     _force_utf8,
     conditional_websafe,
     keep_space,
@@ -612,6 +613,45 @@ def add_attr(attrs, kind, label=None, link=None, cssclass=None, symbol=None):
         raise ValueError ("Got weird kind [%s]" % kind)
 
     attrs.append( (priority, symbol, cssclass, label, link) )
+
+
+def add_admin_distinguish(distinguish_attribs_list):
+    add_attr(distinguish_attribs_list, 'A')
+
+
+def add_moderator_distinguish(distinguish_attribs_list, subreddit):
+    link = '/r/%s/about/moderators' % subreddit.name
+    label = _('moderator of /r/%(reddit)s, speaking officially')
+    label %= {'reddit': subreddit.name}
+    add_attr(distinguish_attribs_list, 'M', label=label, link=link)
+
+
+def add_friend_distinguish(distinguish_attribs_list, note=None):
+    if note:
+        label = u"%s (%s)" % (_("friend"), _force_unicode(note))
+    else:
+        label = None
+    add_attr(distinguish_attribs_list, 'F', label)
+
+
+def add_cakeday_distinguish(distinguish_attribs_list, user):
+    label = _("%(user)s just celebrated a reddit birthday!")
+    label %= {"user": user.name}
+    link = "/user/%s" % user.name
+    add_attr(distinguish_attribs_list, kind="cake", label=label, link=link)
+
+
+def add_special_distinguish(distinguish_attribs_list, user):
+    args = user.special_distinguish()
+    args.pop('name')
+    if not args.get('kind'):
+        args['kind'] = 'special'
+    add_attr(distinguish_attribs_list, **args)
+
+
+def add_submitter_distinguish(distinguish_attribs_list, link, subreddit):
+    permalink = link.make_permalink(subreddit)
+    add_attr(distinguish_attribs_list, 'S', link=permalink)
 
 
 def search_url(query, subreddit, restrict_sr="off", sort=None, recent=None, ref=None):

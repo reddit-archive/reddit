@@ -91,7 +91,13 @@ class Builder(object):
 
     def wrap_items(self, items):
         from r2.lib.db import queries
-        from r2.lib.template_helpers import add_attr
+        from r2.lib.template_helpers import (
+            add_friend_distinguish,
+            add_admin_distinguish,
+            add_moderator_distinguish,
+            add_cakeday_distinguish,
+            add_special_distinguish,
+        )
 
         user = c.user if c.user_is_loggedin else None
         aids = set(l.author_id for l in items if hasattr(l, 'author_id')
@@ -121,13 +127,6 @@ class Builder(object):
         types = {}
         wrapped = []
 
-        modlink = {}
-        modlabel = {}
-        for s in subreddits.values():
-            modlink[s._id] = '/r/%s/about/moderators' % s.name
-            modlabel[s._id] = (_('moderator of /r/%(reddit)s, '
-                                 'speaking officially') % {'reddit': s.name})
-
         for item in items:
             w = self.wrap(item)
             wrapped.append(w)
@@ -139,9 +138,6 @@ class Builder(object):
             w.author = None
             w.friend = False
 
-            # List of tuples (see add_attr() for details)
-            w.attribs = []
-
             w.distinguished = None
             if hasattr(item, "distinguished"):
                 if item.distinguished == 'yes':
@@ -150,59 +146,42 @@ class Builder(object):
                                             'gold', 'gold-auto'):
                     w.distinguished = item.distinguished
 
-            try:
+            if getattr(item, "author_id", None):
                 w.author = authors.get(item.author_id)
-                author_id = item.author_id
-
-                # if display_author exists, then author_id is unknown to the
-                # receiver, so don't display friend relationship details
-                if hasattr(item, 'display_author') and item.display_author:
-                    author_id = item.display_author
-                if user and author_id in user.friends:
-                    # deprecated old way:
-                    w.friend = True
-
-                    # new way:
-                    label = None
-                    if friend_rels:
-                        rel = friend_rels[author_id]
-                        note = getattr(rel, "note", None)
-                        if note:
-                            label = u"%s (%s)" % (_("friend"), 
-                                                  _force_unicode(note))
-                    add_attr(w.attribs, 'F', label)
-
-            except AttributeError:
-                pass
-
-            if (w.distinguished == 'admin' and w.author):
-                add_attr(w.attribs, 'A')
-
-            if w.distinguished == 'moderator':
-                add_attr(w.attribs, 'M', label=modlabel[item.sr_id],
-                         link=modlink[item.sr_id])
-            
-            if w.distinguished == 'special':
-                args = w.author.special_distinguish()
-                args.pop('name')
-                if not args.get('kind'):
-                    args['kind'] = 'special'
-                add_attr(w.attribs, **args)
-
-            # if display_author exists, then author_id is unknown to the
-            # receiver, so don't display the cake day
-            if (not hasattr(item, 'display_author') and
-                    w.author and w.author._id in cakes and not c.profilepage):
-                add_attr(
-                    w.attribs,
-                    kind="cake",
-                    label=(_("%(user)s just celebrated a reddit birthday!") %
-                           {"user": w.author.name}),
-                    link="/user/%s" % w.author.name,
-                )
 
             if hasattr(item, "sr_id") and item.sr_id is not None:
                 w.subreddit = subreddits[item.sr_id]
+
+            distinguish_attribs_list = []
+
+            # if display_author exists, then w.author is unknown to the
+            # receiver, so we can't check for friend or cakeday
+            author_is_hidden = hasattr(item, 'display_author')
+
+            if (not author_is_hidden and
+                    user and w.author and w.author._id in user.friends):
+                w.friend = True     # TODO: deprecated?
+
+                if item.author_id in friend_rels:
+                    note = getattr(friend_rels[w.author._id], "note", None)
+                else:
+                    note = None
+                add_friend_distinguish(distinguish_attribs_list, note)
+
+            if (w.distinguished == 'admin' and w.author):
+                add_admin_distinguish(distinguish_attribs_list)
+
+            if w.distinguished == 'moderator':
+                add_moderator_distinguish(distinguish_attribs_list, w.subreddit)
+
+            if w.distinguished == 'special':
+                add_special_distinguish(distinguish_attribs_list, w.author)
+
+            if (not author_is_hidden and
+                    w.author and w.author._id in cakes and not c.profilepage):
+                add_cakeday_distinguish(distinguish_attribs_list, w.author)
+
+            w.attribs = distinguish_attribs_list
 
             user_vote_dir = likes.get((user, item))
 
@@ -1444,7 +1423,6 @@ class UserListBuilder(QueryBuilder):
 
 class SavedBuilder(IDBuilder):
     def wrap_items(self, items):
-        from r2.lib.template_helpers import add_attr
         categories = LinkSavesByAccount.fast_query(c.user, items).items()
         categories += CommentSavesByAccount.fast_query(c.user, items).items()
         categories = {item[1]._id: category for item, category in categories if category}

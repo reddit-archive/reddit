@@ -24,7 +24,11 @@
    from r2.lib.filters import safemarkdown, websafe, conditional_websafe
    from r2.lib.pages.things import MessageButtons
    from r2.lib.pages import WrappedUser
-   from r2.lib.template_helpers import static, add_attr, format_html
+   from r2.lib.template_helpers import static, format_html
+   from r2.lib.template_helpers import (
+       add_admin_distinguish,
+       add_moderator_distinguish,
+   )
    from r2.models import Account
 %>
 
@@ -91,13 +95,9 @@
         to_attribs = []
         if thing.sr_id and not thing.was_comment:
             if thing.to.name in g.admins:
-                # distinguish admins in admin modmail
-                add_attr(to_attribs, 'A')
+                add_admin_distinguish(to_attribs)
             elif thing.to_is_moderator:
-                link = '/r/%s/about/moderators' % thing.subreddit.name
-                label = _('moderator of /r/%(reddit)s, speaking officially')
-                label %= {'reddit': thing.subreddit.name}
-                add_attr(to_attribs, 'M', label=label, link=link)
+                add_moderator_distinguish(to_attribs, thing.subreddit)
         substitutions['dest'] = format_html(u'<span class="recipient">%s</span>', WrappedUser(thing.to, to_attribs, thing))
     elif thing.sr_id:
         substitutions['dest'] = format_html(u'<span class="recipient subreddit"><a href="%(path)s">%(path)s</a></span>', path=thing.subreddit.path)
