@@ -1600,9 +1600,6 @@ class RedditController(OAuth2ResourceController):
                 not has_style_override and
                 not c.cname):
             c.can_apply_styles = False
-        #if the site has a cname, but we're not using it
-        elif c.site.domain and c.site.css_on_cname and not c.cname:
-            c.can_apply_styles = False
 
         c.bare_content = request.GET.pop('bare', False)
 

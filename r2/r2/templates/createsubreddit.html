@@ -400,19 +400,6 @@ try participating in other communities on reddit for a little while first before
 
 % if thing.site and thing.site.domain != thing.site._defaults['domain']:
   <%utils:line_field title="${_('domain')}" css_class="usertext">
-    <div class="delete-field">
-      %if thing.site and c.site.domain:
-          <input class="nomargin" type="checkbox" 
-                 name="css_on_cname" id="css_on_cname"
-                 %if thing.site.css_on_cname:
-                   checked="checked"
-                 %endif
-          >
-          <label for="css_on_cname">
-            ${_("make custom CSS styles apply only when accessed from the cname.")}
-          </label>
-      %endif
-    </div>
     <div class="usertext-edit">
       %if thing.site:
         <input id="domain" type="text" name="domain" class="text"

@@ -2662,7 +2662,6 @@ class ApiController(RedditController):
                    wikimode = VOneOf('wikimode', ('disabled', 'modonly', 'anyone')),
                    wiki_edit_karma = VInt("wiki_edit_karma", coerce=False, num_default=0, min=0),
                    wiki_edit_age = VInt("wiki_edit_age", coerce=False, num_default=0, min=0),
-                   css_on_cname = VBoolean("css_on_cname"),
                    hide_ads = VBoolean("hide_ads"),
                    suggested_comment_sort=VOneOf('suggested_comment_sort',
                                                  CommentSortMenu._options,
@@ -2727,7 +2726,6 @@ class ApiController(RedditController):
             'collapse_deleted_comments',
             'comment_score_hide_mins',
             'community_rules',
-            'css_on_cname',
             'description',
             'domain',
             'exclude_banned_modqueue',
@@ -2903,9 +2901,6 @@ class ApiController(RedditController):
             old_domain = sr.domain
 
             update_wiki_text(sr)
-
-            if not sr.domain:
-                del kw['css_on_cname']
 
             if sr.quarantine:
                 del kw['allow_top']
