@@ -497,7 +497,9 @@ class VoteDetailsByDay(tdb_cassandra.View):
         # convert the date to a datetime in the correct timezone
         date = datetime(date.year, date.month, date.day, tzinfo=cls.TIMEZONE)
 
-        return cls._cf.get_count(cls._rowkey_by_datetime(date))
+        # manually count up the number of columns instead of using get_count()
+        # because the large number of columns tends to result in RPC timeouts
+        return sum(1 for x in cls._cf.xget(cls._rowkey_by_datetime(date)))
 
 
 @tdb_cassandra.view_of(LinkVotesByAccount)
