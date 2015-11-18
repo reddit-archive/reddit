@@ -409,6 +409,38 @@ class EventQueue(object):
         self.save_event(event)
 
     @squelch_exceptions
+    @sampled("events_collector_report_sample_rate")
+    def report_event(self, process_notes=None, details_text=None,
+            subreddit=None, target=None, request=None, context=None):
+        """Create a 'report' event for event-collector.
+
+        process_notes: Type of rule (pre-defined report reasons or custom)
+        details_text: The report reason
+        subreddit: The Subreddit the action is being performed in
+        target: The Thing the action was applied to
+        request, context: Should be pylons.request & pylons.c respectively
+
+        """
+        event = EventV2(
+            topic="report_events",
+            event_type="ss.report",
+            request=request,
+            context=context,
+        )
+        if process_notes:
+            event.add("process_notes", process_notes)
+
+        if details_text:
+            event.add("details_text", details_text)
+
+        if subreddit:
+            event.add("sr_id", subreddit._id)
+            event.add("sr_name", subreddit.name)
+
+        event.add_target_fields(target)
+        self.save_event(event)
+
+    @squelch_exceptions
     @sampled("events_collector_quarantine_sample_rate")
     def quarantine_event(self, event_type, subreddit,
             request=None, context=None):

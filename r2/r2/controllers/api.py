@@ -1681,9 +1681,15 @@ class ApiController(RedditController):
             form.has_errors("other_reason", errors.TOO_LONG)):
             return
 
-        reason = other_reason if reason == "other" else reason
-
         sr = getattr(thing, 'subreddit_slow', None)
+
+        if (reason in ("spam", "vote manipulation", "personal information",
+                "sexualizing minors", "breaking reddit")):
+            reason_type = "SITE_RULES"
+        else:
+            reason_type = "CUSTOM"
+            if reason == "other":
+                reason = other_reason
 
         # if it is a message that is being reported, ban it.
         # every user is admin over their own personal inbox
@@ -1716,6 +1722,15 @@ class ApiController(RedditController):
                 (sr and sr.is_banned(c.user))):
             Report.new(c.user, thing, reason)
             admintools.report(thing)
+
+        g.events.report_event(
+            process_notes=reason_type,
+            details_text=reason,
+            subreddit=sr,
+            target=thing,
+            request=request,
+            context=c,
+        )
 
         if isinstance(thing, (Link, Message)):
             button = jquery(".id-%s .report-button" % thing._fullname)
