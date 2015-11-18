@@ -24,49 +24,57 @@
 %>
 <%namespace file="utils.html" import="error_field" />
 
-  <form id="report-action-form" class="action-form rounded" data-form-action="report">
+  <form id="report-action-form" class="subreddit-report-form action-form rounded" data-form-action="report">
     <input type="hidden" name="thing_id" value="${thing.thing_fullname}">
-    <span class="reason-prompt">
+    <a class="action-icon action-icon-info c-hide-text may-blank"
+       href="${thing.rules_page_link}"
+       title="${_('View the community rules')}">
+      ${_('View the community rules')}
+    </a>
+    <div class="reason-prompt">
       ${_("Why are you reporting this to the community moderators?")}
-    </span>
-    <span class="rules-page-icon">
-      <a href="${thing.rules_page_link}" title="${_('View the community rules')}">
-        <img src="${static('icon-info.png')}" alt="${_('View the community rules')}"/>
-      </a>
-    </span>
-    <ol>
+    </div>
+    <ol class="report-reason-list">
       %for rule in thing.rules:
-        <li>
+        <li class="report-reason-item">
           <label>
-            <input type="radio" name="reason" value="${rule}">${rule}
+            <input type="radio" name="reason" value="${rule}">
+            <div class="report-reason-display">${rule}</div>
           </label>
         </li>
       %endfor
       %if thing.system_rules:
-        <li>
+        <li class="report-reason-item">
           <label>
             <input type="radio" name="reason" value="site_reason_selected">
-            <select name="site_reason">
-              %for rule in thing.system_rules:
-                <option value="${rule}">${_("Reddit rule: %(rule_name)s" % dict(rule_name=rule))}</option>
-              %endfor
-            </select>
+            <div class="report-reason-display">
+              <select name="site_reason">
+                %for rule in thing.system_rules:
+                  <option value="${rule}">${_("Reddit rule: %(rule_name)s" % dict(rule_name=rule))}</option>
+                %endfor
+              </select>
+            </div>
           </label>
         </li>
       %endif
-      <li>
+      <li class="report-reason-item report-reason-other">
         <label>
-          <input type="radio" name="reason" value="other">${_("Other (max %(num)s characters):") % dict(num=100)}
+          <input type="radio" name="reason" value="other">
+          <div class="report-reason-display">
+            <div>${_("Other (max %(num)s characters):") % dict(num=100)}</div>
+            <input name="other_reason" class="c-form-control" value="" maxlength="100" type="text" disabled>
+            ${error_field("TOO_LONG", "other_reason", "span")}
+          </div>
         </label>
-        <input name="other_reason" value="" maxlength="100" type="text" disabled>
       </li>
     </ol>
-    <button type="submit" class="btn submit-action-thing" disabled>
-      ${_("submit")}
-    </button>
-    <button type="button" class="btn report-cancel">
-      ${_("cancel")}
-    </button>
-    <span class="status"></span>
-    ${error_field("TOO_LONG", "reason", "span")}
+    <div class="c-submit-group">
+      <button type="button" class="btn c-btn c-btn-secondary report-cancel">
+        ${_("cancel")}
+      </button>
+      <button type="submit" class="btn c-btn c-btn-primary submit-action-thing" disabled>
+        ${_("submit")}
+      </button>
+    </div>
+    <span class="status" style="display: none"></span>
   </form>

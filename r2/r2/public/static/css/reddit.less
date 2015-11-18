@@ -957,10 +957,6 @@ a.banned-user { color: red; }
 .flairrow .flairdeletebtn { display: inline; }
 .flairrow:hover .flairdeletebtn { opacity: 1.0; }
 
-.rules-page-icon {
-    float: right;
-}
-
 .reportform {
     postion: relative;
     display: none;
@@ -10944,6 +10940,81 @@ body.with-listing-chooser {
 
     ol {
         margin-bottom: 5px;
+    }
+}
+
+.subreddit-report-form {
+    font-family: "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+    background-color: #FAFAFA;
+    border: 1px solid #F8F8F8;
+    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.24);
+    padding: 10px 15px;
+    font-size: 14px;
+    line-height: 20px;
+    margin: 5px;
+    position: relative;
+    
+    .reason-prompt {
+        margin-bottom: 10px;
+        font-weight: 500;
+    }
+
+    .report-reason-list {
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+
+    .report-reason-item {
+        margin-top: 5px;
+        margin-bottom: 5px;
+
+        label {
+            cursor: pointer;
+        }
+
+        input[type=radio] {
+            margin-right: 15px;
+            float: left;
+        }
+
+        select {
+            max-width: 100%;
+        }
+
+        .report-reason-display {
+            vertical-align: top;
+            overflow: auto;
+        }
+    }
+
+    .report-reason-other {
+        input[type=text] {
+            width: 100%;
+        }
+    }
+
+    .c-submit-group {
+        text-align: right;
+        margin-top: 10px;
+    }
+
+    .action-icon {
+        width: 16px;
+        height: 16px;
+        display: inline-block;
+    }
+
+    .action-icon-info {
+        .hdpi-bg-image(
+            @1x: url(../action-icon-info-color.png),
+            @2x: url(../action-icon-info-color_2x.png)
+        );
+    }
+
+    .action-icon {
+        position: absolute;
+        top: 12px;
+        right: 15px;
     }
 }
 
