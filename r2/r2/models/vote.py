@@ -493,7 +493,11 @@ class VoteDetailsByDay(tdb_cassandra.View):
 
     @classmethod
     def count_votes(cls, date):
-        return sum(1 for x in cls._cf.xget(cls._rowkey(date)))
+        """Return the number of votes made on a particular date."""
+        # convert the date to a datetime in the correct timezone
+        date = datetime(date.year, date.month, date.day, tzinfo=cls.TIMEZONE)
+
+        return cls._cf.get_count(cls._rowkey_by_datetime(date))
 
 
 @tdb_cassandra.view_of(LinkVotesByAccount)
