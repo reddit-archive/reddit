@@ -765,7 +765,7 @@ class Reddit(Templated):
         show_adbox = c.site.allow_ads and not (user_disabled_ads or g.disable_ads)
 
         # don't show the subreddit info bar on cnames unless the option is set
-        if not isinstance(c.site, FakeSubreddit) and (not c.cname or c.site.show_cname_sidebar):
+        if not isinstance(c.site, FakeSubreddit) and not c.cname:
             ps.append(SubredditInfoBar())
             moderator = c.user_is_loggedin and (c.user_is_admin or
                                           c.site.is_moderator(c.user))

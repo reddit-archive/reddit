@@ -224,7 +224,6 @@ class Subreddit(Thing, Printable, BaseSite):
         reported=0,
         valid_votes=0,
         show_media=False,
-        show_cname_sidebar=False,
         css_on_cname=True,
         domain=None,
         suggested_comment_sort=None,

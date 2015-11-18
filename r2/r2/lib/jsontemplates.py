@@ -1396,7 +1396,6 @@ class SubredditSettingsTemplate(ThingJsonTemplate):
         description='site.description',
         domain='site.domain',
         domain_css='site.css_on_cname',
-        domain_sidebar='site.show_cname_sidebar',
         exclude_banned_modqueue='site.exclude_banned_modqueue',
         header_hover_text='site.header_title',
         # key_color='site.key_color',
