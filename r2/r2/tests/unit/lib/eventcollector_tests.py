@@ -70,8 +70,29 @@ class TestEventCollector(RedditTestCase):
     def test_vote_event(self):
         self._patch_liveconfig("events_collector_vote_sample_rate", 1.0)
         with patch.object(g.events, "queue") as queue:
-            upvote = MagicMock(_name="1")
-            oldvote = MagicMock(direction="-1")
+            initial_vote = MagicMock(is_upvote=True, is_downvote=False,
+                                     is_automatic_initial_vote=True,
+                                     previous_vote=None)
+            g.events.vote_event(initial_vote)
+
+            self.assert_event_item(
+                queue, dict(
+                    event_topic="vote_server",
+                    event_type="server_vote",
+                    payload={
+                        'vote_direction': 'up',
+                        'target_type': 'magicmock',
+                        'sr_id': initial_vote.thing.subreddit_slow._id,
+                        'sr_name': initial_vote.thing.subreddit_slow.name,
+                        'target_fullname': initial_vote.thing._fullname,
+                        'auto_self_vote': True,
+                    }
+                )
+            )
+
+            queue.add_item.reset_mock()
+            upvote = MagicMock(is_automatic_initial_vote=False)
+            upvote.previous_vote = MagicMock(is_upvote=False, is_downvote=True)
             g.events.vote_event(upvote)
 
             self.assert_event_item(
@@ -81,9 +102,9 @@ class TestEventCollector(RedditTestCase):
                     payload={
                         'vote_direction': 'up',
                         'target_type': 'magicmock',
-                        'sr_id': upvote._thing2.subreddit_slow._id,
-                        'sr_name': upvote._thing2.subreddit_slow.name,
-                        'target_fullname': upvote._thing2._fullname,
+                        'sr_id': upvote.thing.subreddit_slow._id,
+                        'sr_name': upvote.thing.subreddit_slow.name,
+                        'target_fullname': upvote.thing._fullname,
                         'prev_vote_ts': 1,
                         'prev_vote_direction': 'down',
                     }
