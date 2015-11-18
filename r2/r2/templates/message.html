@@ -82,7 +82,8 @@
     substitutions = {}
 
     if thing.sr_id:
-        substitutions['subreddit'] = format_html(u'<span class="subreddit"><a href="%(path)s">%(path)s</a></span>', path=thing.subreddit.path)
+        path = thing.subreddit.path.rstrip('/')
+        substitutions['subreddit'] = format_html(u'<span class="subreddit"><a href="%(path)s">%(path)s</a></span>', path=path)
 
     substitutions['author'] = format_html(u'<span class="sender">%s</span>', WrappedUser(thing.author, thing.attribs, thing))
 
