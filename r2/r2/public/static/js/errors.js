@@ -2,6 +2,7 @@
   var errors = {
     'NO_TEXT': r._('we need something here'),
     'TOO_LONG': r._('this is too long (max: %(max_length)s)'),
+    'TOO_SHORT': r._('this is too short (min: %(min_length)s)'),
   };
 
   function CustomErrorPrototype() {}
@@ -78,7 +79,7 @@
       }
     },
 
-    createApiError: function(field, key, messageParams) {
+    createAPIError: function(field, key, messageParams) {
       var message = errors[key] || 'unknown';
 
       if (messageParams) {
