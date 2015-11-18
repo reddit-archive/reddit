@@ -5045,6 +5045,11 @@ class ApiController(RedditController):
 
         SubredditRules.create(c.site, short_name, description)
         ModAction.create(c.site, c.user, 'createrule', details=short_name)
+
+        if description:
+            description_html = safemarkdown(description, wrap=False)
+            form._send_data(description_html=description_html)
+
         form.refresh()
 
     @require_oauth2_scope("modconfig")
@@ -5072,6 +5077,11 @@ class ApiController(RedditController):
         SubredditRules.update(c.site, old_short_name, short_name,
             description)
         ModAction.create(c.site, c.user, 'editrule', details=short_name)
+
+        if description:
+            description_html = safemarkdown(description, wrap=False)
+            form._send_data(description_html=description_html)
+
         form.refresh()
 
     @require_oauth2_scope("modconfig")
