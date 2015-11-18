@@ -11,6 +11,15 @@
   var DESCRIPTION_MAX_LENGTH = 500;
 
 
+  function ValidRulesLength(attrName, maxLength) {
+    return function validate(collection) {
+      if (collection.length > maxLength) {
+        return r.errors.createAPIError(attrName, 'SR_RULE_TOO_MANY');
+      }
+    }
+  }
+
+
   function ValidRule(attrName) {
     var vLength = r.models.validators.StringLength(attrName, 1, SHORT_NAME_MAX_LENGTH);
 
@@ -18,9 +27,12 @@
       var collection = model.collection;
       var isNew = model.isNew();
 
-      if (collection) {
-        if (isNew && collection.length >= collection.maxLength) {
-          return r.errors.createAPIError(attrName, 'SR_RULE_TOO_MANY');
+      if (collection && isNew) {
+        var vRulesLength = ValidRulesLength(attrName, collection.maxLength - 1);
+        var collectionError = vRulesLength(collection);
+
+        if (collectionError) {
+          return collectionError;
         }
       }
 
@@ -144,6 +156,9 @@
 
         this.trigger('sync:' + method, this);
         this.trigger('sync', this, method);
+      }.bind(this), undefined, undefined, undefined, function(res) {
+        var errors = r.errors.getAPIErrorsFromResponse(res);
+        this.trigger('error', this, errors);
       }.bind(this));
     },
 
@@ -153,9 +168,29 @@
   });
 
 
+  var RULES_COLLECTION_MAX_LENGTH = 10;
+
   var SubredditRuleCollection = Backbone.Collection.extend({
     model: SubredditRule,
-    maxLength: 10,    
+    maxLength: RULES_COLLECTION_MAX_LENGTH,
+
+    initialize: function() {
+      this._disabled = this.length >= this.maxLength;
+
+      this.on('add', function() {
+        if (!this._disabled && this.length >= this.maxLength) {
+          this._disabled = true;
+          this.trigger('disabled');
+        }
+      }.bind(this));
+
+      this.on('remove', function() {
+        if (this._disabled && this.length < this.maxLength) {
+          this._disabled = false;
+          this.trigger('enabled');
+        }
+      }.bind(this));
+    },
   });
 
 

@@ -1,5 +1,6 @@
 !function(r) {
   var errors = {
+    'UNKNOWN_ERROR': r._('unknown error %(message)s'),
     'NO_TEXT': r._('we need something here'),
     'TOO_LONG': r._('this is too long (max: %(max_length)s)'),
     'TOO_SHORT': r._('this is too short (min: %(min_length)s)'),
@@ -78,6 +79,12 @@
     getAPIErrorsFromResponse: function(res) {
       if (res && res.json && res.json.errors && res.json.errors.length) {
         return res.json.errors.map(r.errors.formatAPIError);
+      } else if (!res || (res.error && typeof res.error === 'string')) {
+        var message = !res ? 'unknown' : res.error;
+        // return an array here for consistency
+        return [
+          r.errors.createAPIError('', 'UNKNOWN_ERROR', { message: message }),
+        ];
       }
     },
 

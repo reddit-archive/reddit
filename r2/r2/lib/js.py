@@ -551,6 +551,10 @@ module["reddit"] = LocalizedModule("reddit.js",
 )
 
 module["modtools"] = Module("modtools.js",
+    "errors.js",
+    "models/validators.js",
+    "models/subreddit-rule.js",
+    "edit-subreddit-rules.js",
     wrap=catch_errors,
 )
 

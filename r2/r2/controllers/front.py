@@ -945,7 +945,7 @@ class FrontController(RedditController):
         """Get the rules for the current subreddit"""
         if not feature.is_enabled("subreddit_rules", subreddit=c.site.name):
             abort(404)
-        return Reddit(content=Rules()).render()
+        return ModToolsPage(content=Rules()).render()
 
     @require_oauth2_scope("read")
     @api_doc(api_section.subreddits, uses_site=True)
