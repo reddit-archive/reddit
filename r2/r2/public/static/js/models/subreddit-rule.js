@@ -7,8 +7,12 @@
   r.models = r.models || {};
 
 
+  var SHORT_NAME_MAX_LENGTH = 50;
+  var DESCRIPTION_MAX_LENGTH = 500;
+
+
   function ValidRule(attrName) {
-    var vLength = r.models.validators.StringLength(attrName, 1, 50);
+    var vLength = r.models.validators.StringLength(attrName, 1, SHORT_NAME_MAX_LENGTH);
 
     return function validate(model) {
       var collection = model.collection;
@@ -43,14 +47,18 @@
   var SubredditRule = Backbone.Model.extend({
     idAttribute: 'short_name',
 
+    SHORT_NAME_MAX_LENGTH: SHORT_NAME_MAX_LENGTH,
+    DESCRIPTION_MAX_LENGTH: DESCRIPTION_MAX_LENGTH,
+
     validators: [
       ValidRule('short_name'),
-      r.models.validators.StringLength('description', 0, 500),
+      r.models.validators.StringLength('description', 0, DESCRIPTION_MAX_LENGTH),
     ],
 
     api: {
       create: function(model) {
         var data = model.toJSON();
+        delete data.description_html;
         return {
           url: 'add_subreddit_rule',
           data: data,
@@ -60,6 +68,7 @@
       update: function(model) {
         var data = model.toJSON();
         data.old_short_name = model._old_short_name;
+        delete data.description_html;
         return {
           url: 'update_subreddit_rule',
           data: data,
@@ -79,7 +88,7 @@
       return {
         short_name: '',
         description: '',
-        md_description: '',
+        description_html: '',
         priority: 0,
       };
     },
@@ -125,10 +134,16 @@
         
         if (errors) {
           this.trigger('error', this, errors);
-        } else {
-          this.trigger('sync:' + method, this);
-          this.trigger('sync', this, method);
+          return;
         }
+
+        if (res && res.json && res.json.data && res.json.data) {
+          var description_html = _.unescape(res.json.data.description_html || '');
+          this.set({ description_html: description_html });
+        }
+
+        this.trigger('sync:' + method, this);
+        this.trigger('sync', this, method);
       }.bind(this));
     },
 
