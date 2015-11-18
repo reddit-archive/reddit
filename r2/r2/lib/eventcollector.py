@@ -35,7 +35,13 @@ from wsgiref.handlers import format_date_time
 import r2.lib.amqp
 from r2.lib import hooks
 from r2.lib.cache_poisoning import cache_headers_valid
-from r2.lib.utils import domain, epoch_timestamp, sampled, squelch_exceptions
+from r2.lib.utils import (
+    domain,
+    epoch_timestamp,
+    sampled,
+    squelch_exceptions,
+    to36,
+)
 
 MAX_EVENT_SIZE = 4096
 MAX_CONTENT_LENGTH = 40 * 1024
@@ -569,6 +575,13 @@ class EventV2(object):
             else:
                 self.add("target_author_id", author._id)
                 self.add("target_author_name", author.name)
+            if isinstance(target, Link) and not target.is_self:
+                self.add("target_url", target.url)
+                self.add("target_url_domain", target.link_domain())
+            elif isinstance(target, Comment):
+                link_fullname = Link._fullname_from_id36(to36(target.link_id))
+                self.add("link_id", target.link_id)
+                self.add("link_fullname", link_fullname)
 
     def get(self, field, obfuscated=False):
         if obfuscated:
