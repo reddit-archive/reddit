@@ -37,8 +37,8 @@ application = Flask(__name__)
 # SET THESE PATHS TO YOUR MAXMIND GEOIP LEGACY DATABASES
 # http://dev.maxmind.com/geoip/legacy/geolite/
 COUNTRY_DB_PATH = '/usr/share/GeoIP/GeoIP.dat'
-CITY_DB_PATH = '/usr/share/GeoIP/GeoIPCity.dat'
-ORG_DB_PATH = '/usr/share/GeoIP/GeoIPOrg.dat'
+CITY_DB_PATH = '/var/lib/GeoIP/GeoIPCity.dat'
+ORG_DB_PATH = '/var/lib/GeoIP/GeoIPOrg.dat'
 
 
 try:
