@@ -3128,15 +3128,18 @@ class GoldPayment(Templated):
             can_use_creddits = False
 
         if goldtype == "autorenew":
-            summary = strings.gold_summary_autorenew % dict(
-                user=c.user.name,
-                period=period,
-                price=price,
-            )
             if period == "monthly":
                 paypal_buttonid = g.PAYPAL_BUTTONID_AUTORENEW_BYMONTH
+                summary = strings.gold_summary_autorenew_monthly % dict(
+                    user=c.user.name,
+                    price=price,
+                )
             elif period == "yearly":
                 paypal_buttonid = g.PAYPAL_BUTTONID_AUTORENEW_BYYEAR
+                summary = strings.gold_summary_autorenew_yearly % dict(
+                    user=c.user.name,
+                    price=price,
+                )
 
             quantity = None
             stripe_key = g.secrets['stripe_public_key']

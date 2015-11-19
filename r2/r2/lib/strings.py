@@ -52,7 +52,7 @@ string_dict = dict(
     time_banned="removed at %s",
     time_approved="approved at %s",
     reports   = "reports: %d",
-    
+
     submitting = _("submitting..."),
 
     # this accomodates asian languages which don't use spaces
@@ -134,7 +134,8 @@ string_dict = dict(
     unsupported_respond_to_gilder = _("Sorry, replying directly to your mysterious benefactor is not yet supported for this gilding."),
     anonymous_gilder_warning = _("***WARNING: Responding to this message will reveal your username to the gildee.***\n\n"),
     gold_claimed_code = _("Thanks for claiming a reddit gold code.\n\n"),
-    gold_summary_autorenew = _("You're about to set up an ongoing, autorenewing subscription to reddit gold for yourself (%(user)s). You'll pay %(price)s for this, %(period)s."),
+    gold_summary_autorenew_monthly = _("You're about to set up an ongoing, autorenewing subscription to reddit gold for yourself (%(user)s). \n\nYou'll pay **%(price)s** for this, **monthly**. \n\n>This subscription will renew automatically each month until you cancel. You may cancel at any time. If you cancel, you will not be billed for any additional months of service, and service will continue until the end of the billing period. If you cancel, you will not receive a refund for any service already paid for. Receipts will be delivered via private message in your account."),
+    gold_summary_autorenew_yearly = _("You're about to set up an ongoing, autorenewing subscription to reddit gold for yourself (%(user)s). \n\nYou'll pay **%(price)s** for this, **yearly**. \n\n>This subscription will renew automatically each year until you cancel. You may cancel at any time. If you cancel, you will not be billed for any additional years of service, and service will continue until the end of the billing period. If you cancel, you will not receive a refund for any service already paid for. Receipts will be delivered via private message in your account."),
     gold_summary_onetime = _("You're about to make a one-time purchase of %(amount)s of reddit gold for yourself (%(user)s). You'll pay a total of %(price)s for this."),
     gold_summary_creddits = _("You're about to purchase %(amount)s. They work like gift certificates: each creddit you have will allow you to give one month of reddit gold to someone else. You'll pay a total of %(price)s for this."),
     gold_summary_gift_code = _("You're about to purchase %(amount)s of reddit gold in the form of a gift code. The recipient (or you) will be able to claim the code to redeem that gold to their account. You'll pay a total of %(price)s for this."),
@@ -207,7 +208,7 @@ class StringHandler(object):
             return StringHandler(**rval)
         else:
             raise AttributeError
-    
+
     def __iter__(self):
         return iter(self.string_dict)
 

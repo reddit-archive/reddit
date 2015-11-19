@@ -49,6 +49,10 @@
             <div class="transaction-summary">
               ${md(thing.summary)}
 
+              <div>
+                ${_md('> By purchasing Reddit Gold, you agree to the [Reddit User Agreement.](/help/useragreement)')}
+              </div>
+
               %if thing.thing and not thing.clone_template:
                 <div class="gift-message">
                   ${md(thing.description, wrap=True)}
