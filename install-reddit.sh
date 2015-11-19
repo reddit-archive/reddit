@@ -467,6 +467,11 @@ server {
 PIXEL
 
 cat > /etc/nginx/sites-available/reddit-ssl <<SSL
+map $http_upgrade $connection_upgrade {
+  default upgrade;
+  ''      close;
+}
+
 server {
     listen 443;
 
@@ -486,6 +491,10 @@ server {
         proxy_http_version 1.1;
         proxy_set_header X-Forwarded-For \$remote_addr;
         proxy_pass_header Server;
+
+        # allow websockets through if desired
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
     }
 }
 SSL
