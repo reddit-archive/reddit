@@ -109,7 +109,7 @@
       var short_name = this.get('short_name');
       this._old_short_name = short_name;
 
-      if (!this.isNew()) {
+      if (this.isNew()) {
         this.once('sync:create', function(model) {
           model.updateOldShortName();
         });
