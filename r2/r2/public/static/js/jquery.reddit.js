@@ -124,11 +124,11 @@ function release_ajax_lock(op) {
 };
 
 function handleResponse(action) {
-    return function(r) {
-        if(r.jquery) {
+    return function(res) {
+        if(res.jquery) {
             var objs = {};
             objs[0] = jQuery;
-            $.map(r.jquery, function(q) {
+            $.map(res.jquery, function(q) {
                     var old_i = q[0], new_i = q[1], op = q[2], args = q[3];
                     if (typeof(args) == "string") {
                       args = $.unsafe(args);
