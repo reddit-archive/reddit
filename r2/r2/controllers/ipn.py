@@ -284,9 +284,9 @@ def send_gift(buyer, recipient, months, days, signed, giftmessage,
         md_sender = "/u/%s" % sender
         repliable = True
     else:
-        sender = _("An anonymous redditor")
-        md_sender = _("An anonymous redditor")
-        
+        sender = "An anonymous redditor"
+        md_sender = "An anonymous redditor"
+
         if buyer.name in g.live_config["proxy_gilding_accounts"]:
             repliable = False
         else:    
@@ -300,16 +300,16 @@ def send_gift(buyer, recipient, months, days, signed, giftmessage,
         amount = "%d months" % months
 
     if not thing:
-        subject = _('Let there be gold! %s just sent you reddit gold!') % sender
+        subject = 'Let there be gold! %s just sent you reddit gold!' % sender
         message = strings.youve_got_gold % dict(sender=md_sender, amount=amount)
     else:
         url = thing.make_permalink_slow()
         if isinstance(thing, Comment):
-            subject = _('Your comment has been gilded!')
+            subject = 'Your comment has been gilded!'
             message = strings.youve_been_gilded_comment 
             message %= {'sender': md_sender, 'url': url}
         else:
-            subject = _('Your submission has been gilded!')
+            subject = 'Your submission has been gilded!'
             message = strings.youve_been_gilded_link 
             message %= {'sender': md_sender, 'url': url}
 
