@@ -256,7 +256,6 @@ class Globals(object):
             'memcaches',
             'lockcaches',
             'permacache_memcaches',
-            'rendercaches',
             'pagecaches',
             'memoizecaches',
             'srmembercaches',
@@ -751,17 +750,6 @@ class Globals(object):
         else:
             stalecaches = None
 
-        # rendercache holds rendered partial templates.
-        rendercaches = CMemcache(
-            "render",
-            self.rendercaches,
-            noreply=True,
-            no_block=True,
-            num_clients=num_mc_clients,
-            min_compress_len=480,
-            validators=[],
-        )
-
         # pagecaches hold fully rendered pages
         pagecaches = CMemcache(
             "page",
@@ -884,9 +872,10 @@ class Globals(object):
                 (localcache_cls(), ratelimitcaches))
         cache_chains.update(ratelimitcache=self.ratelimitcache)
 
+        # rendercache holds rendered partial templates.
         self.rendercache = MemcacheChain((
             localcache_cls(),
-            rendercaches,
+            self.mcrouter,
         ))
         cache_chains.update(rendercache=self.rendercache)
 
