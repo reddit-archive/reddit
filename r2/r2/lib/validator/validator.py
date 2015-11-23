@@ -791,9 +791,16 @@ class VSubredditDesc(Validator):
 
 class VAvailableSubredditRuleName(Validator):
     def run(self, short_name):
+        short_name = VLength(
+            self.param,
+            max_length=50,
+            min_length=1,
+        ).run(short_name.strip())
+        if not short_name:
+            return None
+
         if SubredditRules.get_rule(c.site, short_name):
             self.set_error(errors.SR_RULE_EXISTS)
-            return None
         elif len(SubredditRules.get_rules(c.site)) >= MAX_RULES_PER_SUBREDDIT:
             self.set_error(errors.SR_RULE_TOO_MANY)
             return None
@@ -802,6 +809,14 @@ class VAvailableSubredditRuleName(Validator):
 
 class VSubredditRule(Validator):
     def run(self, short_name):
+        short_name = VLength(
+            self.param,
+            max_length=50,
+            min_length=1,
+        ).run(short_name.strip())
+        if not short_name:
+            return None
+
         rule = SubredditRules.get_rule(c.site, short_name)
         if not rule:
             self.set_error(errors.SR_RULE_DOESNT_EXIST)

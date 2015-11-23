@@ -5029,8 +5029,7 @@ class ApiController(RedditController):
     @validatedForm(
         VSrModerator(perms="config"),
         VModhash(),
-        VAvailableSubredditRuleName("short_name"),
-        short_name=VLength("short_name", max_length=50, min_length=1),
+        short_name=VAvailableSubredditRuleName("short_name"),
         description=VMarkdownLength("description", max_length=500),
     )
     @api_doc(api_section.subreddits, uses_site=True)
@@ -5057,24 +5056,27 @@ class ApiController(RedditController):
         VSrModerator(perms="config"),
         VModhash(),
         rule=VSubredditRule("old_short_name"),
-        old_short_name=VLength('old_short_name', max_length=50, min_length=1),
-        short_name=VLength('short_name', max_length=50, min_length=1),
+        short_name=VAvailableSubredditRuleName("short_name"),
         description=VMarkdownLength('description', max_length=500),
     )
     @api_doc(api_section.subreddits, uses_site=True)
-    def POST_update_subreddit_rule(self, form, jquery, rule, old_short_name,
+    def POST_update_subreddit_rule(self, form, jquery, rule,
             short_name, description):
         if not feature.is_enabled("subreddit_rules", subreddit=c.site.name):
             abort(404)
         if form.has_errors("old_short_name", errors.SR_RULE_DOESNT_EXIST):
             return
         if form.has_errors("short_name", errors.TOO_SHORT, errors.NO_TEXT,
-                errors.TOO_LONG):
+                errors.TOO_LONG, errors.SR_RULE_TOO_MANY):
             return
+        # if the short_name is changing and the new short_name already exists
+        if rule["short_name"] != short_name:
+            if form.has_errors("short_name", errors.SR_RULE_EXISTS):
+                return
         if form.has_errors("description", errors.TOO_LONG):
             return
 
-        SubredditRules.update(c.site, old_short_name, short_name,
+        SubredditRules.update(c.site, rule["short_name"], short_name,
             description)
         ModAction.create(c.site, c.user, 'editrule', details=short_name)
 
@@ -5105,12 +5107,15 @@ class ApiController(RedditController):
     @validatedForm(
         VSrModerator(perms="config"),
         VModhash(),
-        short_name=VLength("short_name", max_length=50, min_length=1),
+        rule=VSubredditRule("short_name"),
     )
     @api_doc(api_section.subreddits, uses_site=True)
-    def POST_remove_subreddit_rule(self, form, jquery, short_name):
+    def POST_remove_subreddit_rule(self, form, jquery, rule):
         if not feature.is_enabled("subreddit_rules", subreddit=c.site.name):
             abort(404)
+        if form.has_errors("rule", errors.SR_RULE_DOESNT_EXIST):
+            return
+        short_name = rule["short_name"]
         SubredditRules.remove_rule(c.site, short_name)
         ModAction.create(c.site, c.user, 'deleterule', details=short_name)
         form.refresh()
