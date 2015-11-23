@@ -147,6 +147,7 @@ from r2.models import (
 IOS_DEVICES = ('iPhone', 'iPad', 'iPod',)
 ANDROID_DEVICES = ('phone', 'tablet',)
 
+ADZERK_URL_MAX_LENGTH = 499
 
 def campaign_has_oversold_error(form, campaign):
     if campaign.priority.inventory_override:
@@ -808,8 +809,14 @@ class PromoteApiController(ApiController):
                 # want the URL
                 url = url[0].url
 
-        if kind == 'link':
-            if form.has_errors('url', errors.NO_URL, errors.BAD_URL):
+            # Adzerk limits URLs length for creatives
+            if len(url) > ADZERK_URL_MAX_LENGTH:
+                c.errors.add(errors.TOO_LONG, field='url',
+                    msg_params={'max_length': PROMO_URL_MAX_LENGTH})
+
+        if is_link:
+            if form.has_errors('url', errors.NO_URL, errors.BAD_URL,
+                    errors.TOO_LONG):
                 return
 
         # users can change the disable_comments on promoted links
