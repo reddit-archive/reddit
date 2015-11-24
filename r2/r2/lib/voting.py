@@ -96,26 +96,28 @@ def consume_vote_queue(queue):
 
         timer.intermediate("preamble")
 
-        print "Processing vote by %s on %s %s" % (user, thing, vote_data)
+        lock_key = "vote-%s-%s" % (user._id36, thing._fullname)
+        with g.make_lock("voting", lock_key, timeout=5):
+            print "Processing vote by %s on %s %s" % (user, thing, vote_data)
 
-        try:
-            vote = Vote(
-                user,
-                thing,
-                direction=vote_data["direction"],
-                date=datetime.utcfromtimestamp(vote_data["date"]),
-                data=vote_data["data"],
-                event_data=vote_data.get("event_data"),
-            )
-        except TypeError as e:
-            # a vote on an invalid type got in the queue, just skip it
-            g.log.error(e.message)
-            return
+            try:
+                vote = Vote(
+                    user,
+                    thing,
+                    direction=vote_data["direction"],
+                    date=datetime.utcfromtimestamp(vote_data["date"]),
+                    data=vote_data["data"],
+                    event_data=vote_data.get("event_data"),
+                )
+            except TypeError as e:
+                # a vote on an invalid type got in the queue, just skip it
+                g.log.error(e.message)
+                return
 
-        timer.intermediate("create_vote_obj")
+            timer.intermediate("create_vote_obj")
 
-        vote.commit()
+            vote.commit()
 
-        timer.flush()
+            timer.flush()
 
     amqp.consume_items(queue, process_message, verbose=False)
