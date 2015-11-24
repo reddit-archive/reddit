@@ -21,6 +21,7 @@
 ###############################################################################
 
 <%!
+   from r2.config import feature
    from r2.lib.template_helpers import format_html
  %>
 <%namespace file="utils.html" import="error_field, plain_link" />
@@ -39,6 +40,7 @@
         <label for="name">${_('who to ban?')} &nbsp;</label>
         <input type="text" class="friend-name" name="name" id="name">
         <div>
+        %if feature.is_enabled("subreddit_rules", subreddit=c.site.name):
           <label for="ban_reason">${_("reason")}</label>
           <select name="ban_reason">
             %if thing.rules:
@@ -60,6 +62,7 @@
             <input type="text" maxlength="300" name="note" id="note">
             <span>${_('(will not be visible to user)')}</span>
           </div>
+        %endif
         </div>
         <div>
             <label for="duration">${_('how long?')}</label>
