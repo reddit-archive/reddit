@@ -3307,7 +3307,7 @@ class ReportForm(CachedTemplate):
         self.thing_fullname = thing._fullname
         subreddit = None
 
-        if isinstance(thing, Comment, Link):
+        if isinstance(thing, (Comment, Link)):
             subreddit = thing.subreddit_slow
         if (subreddit and
                 feature.is_enabled("subreddit_rules", subreddit=subreddit.name)):
