@@ -310,7 +310,7 @@ requires r.ui.TextCounter
       });
     },
 
-    createSubredditRuleModel(el) {
+    createSubredditRuleModel: function(el) {
       var $el = $(el);
 
       return new r.models.SubredditRule({
