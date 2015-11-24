@@ -1080,7 +1080,6 @@ class RedditFooter(CachedTemplate):
 
             NavMenu([
                     OffsiteButton(_("Alien Blue iOS app"), "//alienblue.org"),
-                    OffsiteButton(_("reddit AMA app"), "//redditama.reddit.com/"),
                     OffsiteButton(_("mobile beta"), "https://m.reddit.com"),
                     NamedButton("buttons", False, nocname=True),
                 ],
