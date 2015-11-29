@@ -858,7 +858,10 @@ body > .content .link.compressed .midcol {
 .tagline a.author.admin { font-weight: bold }
 .tagline a:hover { text-decoration: underline }
 .tagline .edited-timestamp{ cursor: default }
-.tagline .stickied-tagline { color: @moderator-color }
+.tagline .stickied-tagline { color: @moderator-color; }
+.comment .tagline .stickied-tagline:before {
+  content: "- ";
+}
 
 .tagline .userattrs .cakeday {
     display: inline-block;

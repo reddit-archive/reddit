@@ -875,6 +875,9 @@ class CommentJsonTemplate(ThingTemplate):
         distinguished = getattr(item, "distinguished", "no")
         data["distinguished"] = distinguished if distinguished != "no" else None
 
+        if feature.is_enabled('sticky_comments'):
+            data["stickied"] = item.link.sticky_comment_id == item._id
+
         if isinstance(item.editted, bool):
             data["edited"] = item.editted
         else:

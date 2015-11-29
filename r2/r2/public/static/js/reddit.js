@@ -786,6 +786,11 @@ function toggle_distinguish_span(elem) {
 }
 
 function set_distinguish(elem, value) {
+  if (value === "yes_sticky") {
+    $(elem).parents('form').first().find('input[name="sticky"]').val('true');
+    value = 'yes';
+  }
+
   change_state(elem, "distinguish/" + value);
   $(elem).children().toggle();
 }

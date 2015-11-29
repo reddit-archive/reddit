@@ -175,6 +175,7 @@ error_list = dict((
         ('BAD_PROMO_MOBILE_DEVICE', _("you must select at least one device per OS to target")),
         ('USER_MUTED', _("You have been muted from this subreddit.")),
         ('MUTED_FROM_SUBREDDIT', _("This user has been muted from the subreddit.")),
+        ('COMMENT_NOT_STICKYABLE', _("This comment is not stickyable. Ensure that it is a top level comment.")),
     ))
 
 errors = Storage([(e, e) for e in error_list.keys()])

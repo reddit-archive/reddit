@@ -107,6 +107,11 @@ ${parent.midcol(cls = cls)}
   ${edited(thing, thing.lastedited)}
   ${self.gildings()}
 
+  %if thing.is_sticky:
+  &#32;
+  <span class="stickied-tagline" title="${_("selected by this subreddit's moderators")}">${_("stickied comment")}</span>
+  %endif
+
   &nbsp;
   <a href="javascript:void(0)" class="numchildren" onclick="return togglecomment(this)">
     (${thing.numchildren_text})

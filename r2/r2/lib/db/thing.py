@@ -624,6 +624,20 @@ class Thing(DataThing):
     def num_votes(self):
         return self._ups + self._downs
 
+    @property
+    def is_distinguished(self):
+        """Return whether this Thing has a special flag on it (mod, admin, etc).
+
+        Done this way because distinguish is implemented in such a way where it
+        does not exist by default, but can also be set to a string of 'no',
+        which also means it is not distinguished.
+        """
+        if not self._loaded:
+            raise AttributeError("Distinguished cannot be determined without "
+                                 "being loaded. Perhaps you need data=True?")
+
+        return getattr(self, 'distinguished', 'no') != 'no'
+
     @classmethod
     def _build(cls, id, bases):
         return cls(bases.ups, bases.downs, bases.date,

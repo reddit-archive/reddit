@@ -29,7 +29,7 @@ from r2.lib.menus import (
   Styled,
 )
 from r2.lib.wrapped import Wrapped
-from r2.models import LinkListing, Link, Message, PromotedLink, Report
+from r2.models import Comment, LinkListing, Link, Message, PromotedLink, Report
 from r2.models import make_wrapper, IDBuilder, Thing
 from r2.lib.utils import tup
 from r2.lib.strings import Score
@@ -48,7 +48,8 @@ class PrintableButtons(Styled):
                  show_unlock = False, show_marknsfw = False,
                  show_unmarknsfw = False, is_link=False,
                  show_flair=False, show_rescrape=False,
-                 show_givegold=False, **kw):
+                 show_givegold=False, show_sticky_comment=False,
+                 **kw):
         show_ignore = thing.show_reports
         approval_checkmark = getattr(thing, "approval_checkmark", None)
         show_approve = (thing.show_spam or show_ignore or
@@ -66,6 +67,7 @@ class PrintableButtons(Styled):
                         show_approve = show_approve,
                         show_report = show_report,
                         show_distinguish = show_distinguish,
+                        show_sticky_comment=show_sticky_comment,
                         show_lock = show_lock,
                         show_unlock = show_unlock,
                         show_marknsfw = show_marknsfw,
@@ -207,6 +209,11 @@ class CommentButtons(PrintableButtons):
                              c.user.employee or  # Admin distinguish
                              c.user_special_distinguish))
 
+        show_sticky_comment = (feature.is_enabled('sticky_comments') and
+                               thing.is_stickyable and
+                               is_author and
+                               thing.can_ban)
+
         show_givegold = thing.can_gild
 
         embed_button = False
@@ -244,6 +251,7 @@ class CommentButtons(PrintableButtons):
                                   mod_reports=thing.mod_reports,
                                   user_reports=thing.user_reports,
                                   show_distinguish = show_distinguish,
+                                  show_sticky_comment=show_sticky_comment,
                                   show_delete = show_delete,
                                   show_givegold=show_givegold,
                                   embed_button=embed_button,

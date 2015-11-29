@@ -21,6 +21,7 @@
 ###############################################################################
 
 from r2.controllers.reddit_base import (
+    abort_with_error,
     cross_domain,
     generate_modhash,
     is_trusted_origin,
@@ -1410,6 +1411,8 @@ class ApiController(RedditController):
         elif isinstance(thing, Comment):
             if not was_deleted:
                 queries.delete_comment(thing)
+
+            thing.link_slow.remove_sticky_comment(comment=thing, set_by=c.user)
 
             queries.new_comment(thing, None)  # possible inbox_rels are
                                               # handled by unnotify
@@ -3016,6 +3019,7 @@ class ApiController(RedditController):
         if isinstance(thing, Link):
             sr.remove_sticky(thing)
         elif isinstance(thing, Comment):
+            thing.link_slow.remove_sticky_comment(comment=thing, set_by=c.user)
             queries.unnotify(thing)
 
 
@@ -3119,7 +3123,9 @@ class ApiController(RedditController):
     @validatedForm(VUser(), VModhash(),
                    VCanDistinguish(('id', 'how')),
                    thing = VByName('id'),
-                   how = VOneOf('how', ('yes','no','admin','special')))
+                   how = VOneOf('how', ('yes','no','admin','special')),
+                   # sticky=VBoolean('sticky', default=False),
+                   )
     @api_doc(api_section.moderation)
     def POST_distinguish(self, form, jquery, thing, how):
         """Distinguish a thing's author with a sigil.
@@ -3139,7 +3145,31 @@ class ApiController(RedditController):
         in their inbox.
 
         """
+
+        # To be added to API docs when fully enabled:
+        #
+        # `sticky` is a boolean flag for comments, which will stick the
+        #  distingushed comment to the top of all comments threads. If a comment
+        #  is marked sticky, it will override any other stickied comment for that
+        #  link (as only one comment may be stickied at a time.) Only top-level
+        #  comments may be stickied.
+
         if not thing:return
+
+        # XXX: Temporary retrieval of sticky param down here to avoid it
+        # showing up in API docs while in development. Move this to the
+        # validatedForm above when live.
+        sticky = False
+        if feature.is_enabled('sticky_comments'):
+            sticky_validator = VBoolean('sticky', default=False)
+            sticky = sticky_validator.run(request.params.get('sticky'))
+
+        if (feature.is_enabled('sticky_comments') and
+                sticky and
+                not isinstance(thing, Comment)):
+            abort(400, "Only comments may be stickied from distinguish. To "
+                       "sticky a link in a subreddit use set_subreddit_sticky."
+                  )
 
         c.profilepage = request.params.get('profilepage') == 'True'
         log_modaction = True
@@ -3159,14 +3189,16 @@ class ApiController(RedditController):
         else: # From no to yes
             send_message = True
 
-        # Send a message if this is a top-level comment on a submission or
-        # comment that has disabled receiving inbox notifications of replies, if
-        # it's the first distinguish for this comment, and if the user isn't
-        # banned or blocked by the author (replying didn't generate an inbox
-        # notification, send one now upon distinguishing it)
         if isinstance(thing, Comment):
+            link = thing.link_slow
+
+            # Send a message if this is a top-level comment on a submission or
+            # comment that has disabled receiving inbox notifications of
+            # replies, if it's the first distinguish for this comment, and if
+            # the user isn't banned or blocked by the author (replying didn't
+            # generate an inbox notification, send one now upon distinguishing
+            # it)
             if not thing.parent_id:
-                link = Link._byID(thing.link_id, data=True)
                 to = Account._byID(link.author_id, data=True)
                 replies_enabled = link.sendreplies
             else:
@@ -3185,6 +3217,25 @@ class ApiController(RedditController):
                     user_can_notify):
                 inbox_rel = Inbox._add(to, thing, 'selfreply')
                 queries.new_comment(thing, inbox_rel)
+
+            # Sticky handling - done before commit so that if there is an error
+            # setting sticky we don't distinguish. This ordering does leave the
+            # potential for an erroneous sticky if there's a commit error on
+            # distinguish, but a stickied comment that's not distinguished is
+            # not the end of the world, and handling rollback would probably be
+            # more error prone if we're hitting commit errors anyhow.
+            if feature.is_enabled('sticky_comments'):
+                try:
+                    if not sticky or how == 'no':
+                        # Un-distinguished a comment or sticky was False? Check
+                        # to see if it was previously stickied and unsticky if
+                        # so.
+                        if link.sticky_comment_id == thing._id:
+                            link.remove_sticky_comment(set_by=c.user)
+                    elif sticky and how != 'no':
+                        link.set_sticky_comment(thing, set_by=c.user)
+                except RedditError as error:
+                    abort_with_error(error, error.code or 400)
 
         thing.distinguished = how
         thing._commit()

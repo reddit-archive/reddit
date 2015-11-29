@@ -24,6 +24,7 @@ from r2.config import feature
 from r2.lib.db.thing import (
     Thing, Relation, NotFound, MultiRelation, CreationError)
 from r2.lib.db.operators import desc
+from r2.lib.errors import RedditError
 from r2.lib.utils import (
     base_url,
     domain,
@@ -131,6 +132,7 @@ class Link(Thing, Printable):
                      comment_tree_id=0,
                      contest_mode=False,
                      skip_commentstree_q="",
+                     sticky_comment_id=None,
                      ignore_reports=False,
                      gildings=0,
                      mobile_ad_url="",
@@ -987,6 +989,76 @@ class Link(Thing, Printable):
             ModAction.create(self.subreddit_slow, set_by, action='editflair',
                 target=self, details='flair_edit')
 
+    def set_sticky_comment(self, comment, set_by=None):
+        """Given a comment, set it as the sticky (top) comment for this link.
+
+        Only one comment may be stickied at a time, and stickied comments must
+        be top level. `set_by` is an optional Account, which if set will add
+        a ModAction event to the mod log.
+
+        Raises `RedditError` on an attempt to sticky non-top-level comments.
+        """
+        from r2.lib.comment_tree import update_comment_votes
+
+        if not comment.is_stickyable:
+            raise RedditError('COMMENT_NOT_STICKYABLE', code=400)
+
+        if self.sticky_comment_id == comment._id:
+            return
+
+        # Remove the current sticky if it exists before setting a new one
+        self.remove_sticky_comment(set_by=set_by)
+
+        self.sticky_comment_id = comment._id
+        self._commit()
+
+        # Update votes on this comment to reset its sort values (as sticky
+        # maxes them out in comment_tree.py)
+        update_comment_votes(comment)
+
+        if set_by:
+            ModAction.create(
+                self.subreddit_slow,
+                set_by,
+                action='sticky',
+                target=comment,
+            )
+
+    def remove_sticky_comment(self, comment=None, set_by=None):
+        """Remove the sticky (top) comment for this link, if it exists.
+
+        `comment` is an optional argument that, if set, will ensure the
+        sticky comment matches. If it does not match, it will not remove. If
+        `comment` is unset, it will remove regardless of ID.
+
+        `set_by` is an optional Account, which if set will add a ModAction
+        event to the mod log.
+        """
+        from r2.lib.comment_tree import update_comment_votes
+
+        if self.sticky_comment_id is None:
+            return  # nothing to do
+
+        if comment and self.sticky_comment_id != comment._id:
+            return
+
+        prev_sticky_comment = Comment._byID(self.sticky_comment_id)
+
+        self.sticky_comment_id = None
+        self._commit()
+
+        # Update votes on this comment to reset its sort values (as sticky
+        # maxes them out in comment_tree.py)
+        update_comment_votes(prev_sticky_comment)
+
+        if set_by:
+            ModAction.create(
+                self.subreddit_slow,
+                set_by,
+                action='unsticky',
+                target=prev_sticky_comment,
+            )
+
     @classmethod
     def _utf8_encode(cls, value):
         """
@@ -1282,6 +1354,13 @@ class Comment(Thing, Printable):
         else:
             sr = self.subreddit_slow
         return self._age >= sr.archive_age
+
+    @property
+    def is_stickyable(self):
+        if self.parent_id is not None:
+            return False
+
+        return True
 
     def keep_item(self, wrapped):
         return True
@@ -1610,6 +1689,8 @@ class Comment(Thing, Printable):
                 item.collapsed_reason = _("blocked user")
 
             item.editted = getattr(item, "editted", False)
+
+            item.is_sticky = (item.link.sticky_comment_id == item._id)
 
             item.render_css_class = "comment"
 

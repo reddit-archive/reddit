@@ -257,6 +257,8 @@ class VoteEffects(object):
 
     def determine_affects_karma(self, vote):
         """Determine whether the vote should affect the author's karma."""
+        from r2.models import Comment
+
         if not self.affects_score:
             return False
 
@@ -268,6 +270,14 @@ class VoteEffects(object):
         if not bool(vote.thing.affects_karma_type):
             self.add_note("KARMALESS_THING")
             return False
+
+        # never give karma on stickied comments. Only check distinguished
+        # comments to avoid fetching the link on most votes, for performance.
+        if isinstance(vote.thing, Comment) and vote.thing.is_distinguished:
+            link = vote.thing.link_slow
+            if vote.thing._id == link.sticky_comment_id:
+                self.add_note("COMMENT_STICKIED")
+                return False
 
         if self.validator:
             affects_karma = self.validator.determine_affects_karma()

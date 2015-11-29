@@ -41,7 +41,11 @@ def parent_comments_key(link_id):
     return 'comments_parents_' + str(link_id)
 
 
-def _get_sort_value(comment, sort, link=None, children=None):
+def _get_sort_value(comment, sort, link, children=None):
+    # Sticky comments get a very high score for all sorts.
+    if link and comment._id == link.sticky_comment_id:
+        return 2 ** 31 - 1
+
     if sort == "_date":
         return epoch_seconds(comment._date)
     if sort == '_qa':
@@ -155,7 +159,7 @@ def _comment_sorter_from_cids(comments, sort, link, cid_tree, by_36=False):
             child_comments = (all_child_comments[cid] for cid in child_cids)
             sort_value = _get_sort_value(comment, sort, link, child_comments)
         else:
-            sort_value = _get_sort_value(comment, sort)
+            sort_value = _get_sort_value(comment, sort, link)
         if by_36:
             id = comment._id36
         else:

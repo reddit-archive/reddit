@@ -100,6 +100,9 @@
   <li class="toggle">
     <form method="post" action="/post/distinguish">
       <input type="hidden" value="${c.profilepage}" name="profilepage">
+      %if thing.show_sticky_comment:
+      <input type="hidden" value="false" name="sticky">
+      %endif
       <input type="hidden" value="${_('distinguishing...')}" name="executed"/>
       <a class="access-required"
          href="javascript:void(0)"
@@ -113,6 +116,12 @@
          &#32;
          ${distinguish_setter('yes')}
          &#32;/
+
+         %if thing.show_sticky_comment:
+         &#32;
+         ${distinguish_setter('yes & sticky', 'yes_sticky')}
+         &#32;/
+         %endif
          %endif
          
          &#32;
