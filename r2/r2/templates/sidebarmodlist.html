@@ -28,7 +28,14 @@
 
 <ul id="side-mod-list">
 %for sr in thing.subreddits:
-  <li>
+  <%
+    if sr.spammy():
+      sr_class = 'sr-banned'
+    else:
+      sr_class = ''
+  %>
+
+  <li class="${sr_class}">
     <a href="${sr.path}" title="/r/${sr.name}">/r/${sr.name}</a>
     %if sr.quarantine:
       <span class="quarantine-stamp stamp">${quarantine_stamp()}</span>
