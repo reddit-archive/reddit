@@ -41,6 +41,7 @@ from r2.models import (
     Account,
     Comment,
     Link,
+    LocalizedDefaultSubreddits,
     NotFound,
     register,
     Subreddit,
@@ -352,3 +353,6 @@ def inject_test_data(num_links=25, num_comments=25, num_votes=5):
             cast_vote(voter, thing, direction)
 
     amqp.worker.join()
+
+    srs = [Subreddit._by_name(n) for n in ("pics", "videos", "askhistorians")]
+    LocalizedDefaultSubreddits.set_global_srs(srs)
