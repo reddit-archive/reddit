@@ -23,8 +23,11 @@
 
 from collections import Counter, OrderedDict
 
+from thrift import Thrift
+
 from r2.config import feature
 from r2.lib.contrib.ipaddress import ip_address
+from r2.lib.contrib import activity_thrift
 from r2.lib.db.operators import asc
 from r2.lib.wrapped import Wrapped, Templated, CachedTemplate
 from r2.models import (
@@ -1122,6 +1125,7 @@ class LoginFormWide(CachedTemplate):
     pass
 
 
+
 class SubredditInfoBar(CachedTemplate):
     """When not on Default, renders a sidebox which gives info about
     the current reddit, including links to the moderator and
@@ -1142,6 +1146,14 @@ class SubredditInfoBar(CachedTemplate):
         self.path = request.path
 
         self.accounts_active, self.accounts_active_fuzzed = self.sr.get_accounts_active()
+
+        if c.activity_service and feature.is_enabled("activity_service_read"):
+            try:
+                info = c.activity_service.count_activity(self.sr._fullname)
+                self.visitor_count = info.count
+                self.visitor_count_is_fuzzed = info.is_fuzzed
+            except Thrift.TException as exc:
+                g.log.warning("failed to fetch activity: %s", exc)
 
         if c.user_is_loggedin and c.user.pref_show_flair:
             self.flair_prefs = FlairPrefs()

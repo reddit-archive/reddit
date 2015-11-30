@@ -92,6 +92,12 @@ class ConfigValue(object):
     def messages(v, key=None):
         return ConfigValue.messages_re.findall(v.decode("string_escape"))
 
+    @staticmethod
+    def baseplate(baseplate_parser):
+        def adapter(v, key=None):
+            return baseplate_parser(v)
+        return adapter
+
 
 class ConfigValueParser(dict):
     def __init__(self, raw_data):

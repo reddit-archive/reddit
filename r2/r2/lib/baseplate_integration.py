@@ -34,12 +34,12 @@ from pylons import app_globals as g
 
 
 class R2BaseplateObserver(BaseplateObserver):
-    def make_root_observer(self, context, root_span):
+    def on_root_span_created(self, context, root_span):
         return R2RootSpanObserver()
 
 
 class R2RootSpanObserver(RootSpanObserver):
-    def make_child_observer(self, span):
+    def on_child_span_created(self, span):
         return R2SpanObserver(span.name)
 
 

@@ -61,6 +61,12 @@
     </p>
   %endif
 
+  %if feature.is_enabled("activity_service_view") and getattr(thing, "visitor_count", None):
+  <p class="users-online ${'fuzzed' if thing.visitor_count_is_fuzzed else ''}" title="${_('logged-in users viewing this subreddit in the past 15 minutes')}">
+    ${unsafe(Score.users_here_now(thing.visitor_count, prepend='~' if thing.visitor_count_is_fuzzed else ''))}
+  </p>
+  %endif
+
   %if thing.sr.moderator:
     <div class="leavemoderator">
       ${text_with_links(ModListing.remove_self_title % dict(action='(%(action)s)'),

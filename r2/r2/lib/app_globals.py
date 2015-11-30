@@ -36,7 +36,9 @@ import subprocess
 import sys
 
 from sqlalchemy import engine, event
-from baseplate import Baseplate
+from baseplate import Baseplate, config as baseplate_config
+from baseplate.thrift_pool import ThriftConnectionPool
+from baseplate.context.thrift import ThriftContextFactory
 
 import pkg_resources
 import pytz
@@ -62,6 +64,7 @@ from r2.lib.cache import (
 )
 from r2.lib.configparse import ConfigValue, ConfigValueParser
 from r2.lib.contrib import ipaddress
+from r2.lib.contrib.activity_thrift import ActivityService
 from r2.lib.eventcollector import EventQueue
 from r2.lib.lock import make_lock_factory
 from r2.lib.manager import db_manager
@@ -322,6 +325,10 @@ class Globals(object):
             'cpm_selfserve_geotarget_metro',
             'cpm_selfserve_geotarget_country',
             'cpm_selfserve_collection',
+        ],
+
+        ConfigValue.baseplate(baseplate_config.Endpoint): [
+            "activity_endpoint",
         ],
     }
 
@@ -774,6 +781,15 @@ class Globals(object):
         )
 
         self.startup_timer.intermediate("memcache")
+
+        ################# THRIFT-BASED SERVICES
+        activity_endpoint = self.config.get("activity_endpoint")
+        if activity_endpoint:
+            activity_pool = ThriftConnectionPool(activity_endpoint, timeout=0.1)
+            self.baseplate.add_to_context("activity_service",
+                ThriftContextFactory(activity_pool, ActivityService.Client))
+
+        self.startup_timer.intermediate("thrift")
 
         ################# CASSANDRA
         keyspace = "reddit"

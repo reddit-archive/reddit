@@ -52,6 +52,8 @@ import hmac
 import hashlib
 from pycassa.system_manager import ASCII_TYPE
 
+from thrift import Thrift
+
 
 trylater_hooks = hooks.HookRegistrar()
 COOKIE_TIMESTAMP_FORMAT = '%Y-%m-%dT%H:%M:%S'
@@ -614,6 +616,13 @@ class Account(Thing):
     def update_sr_activity(self, sr):
         if not self._spam:
             AccountsActiveBySR.touch(self, sr)
+
+            if c.activity_service and feature.is_enabled("activity_service_write"):
+                try:
+                    c.activity_service.record_activity(
+                        sr._fullname, self._fullname)
+                except Thrift.TException as exc:
+                    g.log.warning("failed to update activity: %s", exc)
 
     def get_trophy_id(self, uid):
         '''Return the ID of the Trophy associated with the given "uid"
