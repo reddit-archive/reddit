@@ -18,7 +18,6 @@ r.setup = function(config) {
         // some properties are getting set on r.config _after_ setup, so we need
         // to add them into the list of properties to define on our proxy object
         keys.push('currentOrigin');
-        keys.push('cur_site');
         keys.push('sr_cache');
 
         keys.forEach(function(key) {
