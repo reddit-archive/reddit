@@ -173,10 +173,10 @@ def event_click():
 
 def _fix_query_encoding(parse_result):
     "Fix encoding in the query string."
-    query_dict = dict(parse_qsl(parse_result.query))
+    query_params = parse_qsl(parse_result.query, keep_blank_values=True)
 
     # this effectively calls urllib.quote_plus on every query value
-    return parse_result._replace(query=urllib.urlencode(query_dict))
+    return parse_result._replace(query=urllib.urlencode(query_params))
 
 
 def _redirect_nocache(destination):
