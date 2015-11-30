@@ -36,12 +36,14 @@ import subprocess
 import sys
 
 from sqlalchemy import engine, event
+from baseplate import Baseplate
 
 import pkg_resources
 import pytz
 
 from r2.config import queues
 import r2.lib.amqp
+from r2.lib.baseplate_integration import R2BaseplateObserver
 from r2.lib.cache import (
     CacheChain,
     CL_ONE,
@@ -432,6 +434,10 @@ class Globals(object):
                            self.config.get('statsd_sample_rate'))
         self.startup_timer = self.stats.get_timer("app_startup")
         self.startup_timer.start()
+
+        self.baseplate = Baseplate()
+        self.baseplate.configure_logging()
+        self.baseplate.register(R2BaseplateObserver())
 
         self.paths = paths
 

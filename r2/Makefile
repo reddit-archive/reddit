@@ -41,7 +41,7 @@ else
 $(error $(DEFS_PY) failed. aborting)
 endif
 
-#################### Cython
+#################### Generated code: Cython + Thrift
 PYX_FILES := $(shell find . -name \*.pyx)
 PYX_C_FILES := $(PYX_FILES:.pyx=.c)
 PYX_SO_FILES := $(PYX_FILES:.pyx=.so)
@@ -49,7 +49,8 @@ PYX_SO_FILES := $(PYX_FILES:.pyx=.so)
 .PHONY: pyx clean_pyx
 
 pyx:
-	$(PYTHON) setup.py build_ext --inplace
+	$(PYTHON) setup.py build
+	$(PYTHON) setup.py build_ext --inplace  # copy the .so files from cython into the source tree
 
 clean_pyx:
 	rm -f $(PYX_C_FILES) $(PYX_SO_FILES)

@@ -43,6 +43,14 @@ else:
     pyx_extensions = cythonize(pyx_files)
 
 
+try:
+    from baseplate.integration.thrift.command import ThriftBuildPyCommand
+except ImportError:
+    print "Cannot find Baseplate. Skipping Thrift build."
+else:
+    commands["build_py"] = ThriftBuildPyCommand
+
+
 setup(
     name="r2",
     version="",

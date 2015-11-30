@@ -157,6 +157,8 @@ python-unidecode
 python-mock
 python-yaml
 
+python-baseplate
+
 python-flask
 geoip-bin
 geoip-database

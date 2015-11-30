@@ -25,6 +25,7 @@ import json
 import re
 import simplejson
 import socket
+import random
 import itertools
 
 from Cookie import CookieError
@@ -953,6 +954,16 @@ class MinimalController(BaseController):
         else:
             c.request_timer = SimpleSillyStub()
 
+        trace_id = random.getrandbits(64)
+        c.trace = g.baseplate.make_root_span(
+            context=c,
+            trace_id=trace_id,
+            parent_id=None,
+            span_id=trace_id,
+            name=key,
+        )
+        c.trace.start()
+
         c.response_wrapper = None
         c.start_time = datetime.now(g.tz)
         c.request_timer.start()
@@ -1171,6 +1182,7 @@ class MinimalController(BaseController):
         c.request_timer.intermediate("post")
 
         # push data to statsd
+        c.trace.stop()
         c.request_timer.stop()
         g.stats.flush()
 
