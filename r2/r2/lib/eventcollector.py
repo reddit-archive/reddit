@@ -391,8 +391,7 @@ class EventQueue(object):
             context=context,
         )
 
-        if modaction.details_text:
-            event.add("details_text", modaction.details_text)
+        event.add("details_text", modaction.details_text)
 
         # Some jobs that perform mod actions (for example, AutoModerator) are
         # run without actually logging into the account that performs the
@@ -426,11 +425,8 @@ class EventQueue(object):
             request=request,
             context=context,
         )
-        if process_notes:
-            event.add("process_notes", process_notes)
-
-        if details_text:
-            event.add("details_text", details_text)
+        event.add("process_notes", process_notes)
+        event.add("details_text", details_text)
 
         event.add_subreddit_fields(subreddit)
         event.add_target_fields(target)
@@ -538,6 +534,12 @@ class EventV2(object):
             self.obfuscated_data.update(new_context_data)
 
     def add(self, field, value, obfuscate=False):
+        # There's no need to send null/empty values, the collector will act
+        # the same whether they're sent or not. Zeros are important though,
+        # so we can't use a simple boolean truth check here.
+        if value is None or value == "":
+            return
+
         if obfuscate:
             self.obfuscated_data[field] = value
         else:
