@@ -52,7 +52,7 @@ from r2.lib import filters, pages, utils, hooks, ratelimit
 from r2.lib.base import BaseController, abort
 from r2.lib.cache import (
     is_valid_size_for_cache,
-    make_key,
+    make_key_id,
     MemcachedError,
 )
 from r2.lib.cookies import (
@@ -830,18 +830,21 @@ class MinimalController(BaseController):
         else:
             location = None
 
-        return make_key('request',
-                        c.lang,
-                        request.host,
-                        c.secure,
-                        request.fullpath,
-                        c.over18,
-                        c.extension,
-                        c.render_style,
-                        location,
-                        feature.is_enabled("https_redirect"),
-                        request.environ.get("WANT_RAW_JSON"),
-                        cookies_key)
+        _id = make_key_id(
+            c.lang,
+            request.host,
+            c.secure,
+            request.fullpath,
+            c.over18,
+            c.extension,
+            c.render_style,
+            location,
+            feature.is_enabled("https_redirect"),
+            request.environ.get("WANT_RAW_JSON"),
+            cookies_key,
+        )
+        key = "page:%s" % _id
+        return key
 
     def cached_response(self):
         return ""
