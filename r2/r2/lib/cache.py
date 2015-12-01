@@ -1056,6 +1056,27 @@ class SelfEmptyingCache(LocalCache):
         self.maybe_reset()
         return LocalCache.add(self, key, val)
 
+
+def _make_hashable(s):
+    if isinstance(s, str):
+        return s
+    elif isinstance(s, unicode):
+        return s.encode('utf-8')
+    elif isinstance(s, (tuple, list)):
+        return ','.join(_make_hashable(x) for x in s)
+    elif isinstance(s, dict):
+        return ','.join('%s:%s' % (_make_hashable(k), _make_hashable(v))
+                        for (k, v) in sorted(s.iteritems()))
+    else:
+        return str(s)
+
+
+def make_key_id(*a, **kw):
+    h = md5()
+    h.update(_make_hashable(a))
+    h.update(_make_hashable(kw))
+    return h.hexdigest()
+
 def make_key(iden, *a, **kw):
     """
     A helper function for making memcached-usable cache keys out of
@@ -1063,26 +1084,13 @@ def make_key(iden, *a, **kw):
     human-readable
     """
     h = md5()
-
-    def _conv(s):
-        if isinstance(s, str):
-            return s
-        elif isinstance(s, unicode):
-            return s.encode('utf-8')
-        elif isinstance(s, (tuple, list)):
-            return ','.join(_conv(x) for x in s)
-        elif isinstance(s, dict):
-            return ','.join('%s:%s' % (_conv(k), _conv(v))
-                            for (k, v) in sorted(s.iteritems()))
-        else:
-            return str(s)
-
-    iden = _conv(iden)
+    iden = _make_hashable(iden)
     h.update(iden)
-    h.update(_conv(a))
-    h.update(_conv(kw))
+    h.update(_make_hashable(a))
+    h.update(_make_hashable(kw))
 
     return '%s(%s)' % (iden, h.hexdigest())
+
 
 def test_stale():
     from pylons import app_globals as g
