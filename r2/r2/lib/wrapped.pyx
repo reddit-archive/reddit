@@ -376,8 +376,7 @@ class Templated(object):
         return res
 
     def _cache_key(self, key):
-        return 'render_%s(%s)' % (self.__class__.__name__,
-                                  md5(key).hexdigest())
+        return 'rend:%s(%s)' % (self.__class__.__name__, md5(key).hexdigest())
 
     def _write_cache(self, keys):
         from pylons import app_globals as g
