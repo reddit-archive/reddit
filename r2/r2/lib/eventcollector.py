@@ -119,47 +119,38 @@ class EventQueue(object):
 
     @squelch_exceptions
     @sampled("events_collector_submit_sample_rate")
-    def submit_event(self, new_link, event_base=None, request=None,
-                     context=None):
+    def submit_event(self, new_post, request=None, context=None):
         """Create a 'submit' event for event-collector
 
-        new_link: An r2.models.Link object
-        event_base: The base fields for an Event. If not given, caller MUST
-            supply a pylons.request and pylons.c object to build a base from
-        request, context: Should be pylons.request & pylons.c respectively;
-            used to build the base Event if event_base is not given
+        new_post: An r2.models.Link object
+        request, context: Should be pylons.request & pylons.c respectively
 
         """
-        if event_base is None:
-            event_base = Event.base_from_request(request, context)
+        event = EventV2(
+            topic="submit_events",
+            event_type="ss.submit",
+            time=new_post._date,
+            request=request,
+            context=context,
+        )
 
-        event_base["event_topic"] = "submit"
-        event_base["event_name"] = "submit_server"
+        event.add("post_id", new_post._id)
+        event.add("post_fullname", new_post._fullname)
+        event.add("post_title", new_post.title)
 
-        submit_ts = epoch_timestamp(new_link._date)
-        event_base["event_ts"] = _epoch_to_millis(submit_ts)
-        event_base["id"] = new_link._fullname
-        event_base["type"] = "self" if new_link.is_self else "link"
+        event.add("user_neutered", new_post.author_slow._spam)
 
-        sr = new_link.subreddit_slow
-        event_base["sr"] = sr.name
-        event_base["sr_id"] = str(sr._id)
+        if new_post.is_self:
+            event.add("post_type", "self")
+            event.add("post_body", new_post.selftext)
+        else:
+            event.add("post_type", "link")
+            event.add("post_target_url", new_post.url)
+            event.add("post_target_domain", new_post.link_domain())
 
-        event_base["title"] = new_link.title
+        event.add_subreddit_fields(new_post.subreddit_slow)
 
-        if new_link._spam:
-            event_base["flagged_spam"] = True
-            banner = getattr(new_link, "ban_info", {}).get("banner")
-            if banner:
-                event_base["spam_reason"] = banner
-
-        content = new_link.selftext if new_link.is_self else new_link.url
-        content_length = len(content)
-
-        event_base["length"] = content_length
-        event_base["text"] = content
-
-        self.save_event(event_base)
+        self.save_event(event)
 
     @squelch_exceptions
     @sampled("events_collector_poison_sample_rate")
