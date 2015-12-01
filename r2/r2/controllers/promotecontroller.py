@@ -534,16 +534,20 @@ class SponsorListingController(PromoteListingController):
 
     @property
     def menus(self):
+        managed_menu = NavMenu([
+            QueryButton("exclude managed", dest=None,
+                        query_param='include_managed'),
+            QueryButton("include managed", dest="yes",
+                        query_param='include_managed'),
+        ], base_path=request.path, type='lightdrop')
+
         if self.sort in {'underdelivered', 'reported', 'house', 'fraud'}:
             menus = []
+            if self.sort == 'house':
+                menus.append(managed_menu)
         else:
             menus = super(SponsorListingController, self).menus
-            menus.append(NavMenu([
-                QueryButton("exclude managed", dest=None,
-                            query_param='include_managed'),
-                QueryButton("include managed", dest="yes",
-                            query_param='include_managed'),
-            ], base_path=request.path, type='lightdrop'))
+            menus.append(managed_menu)
 
         if self.sort == 'live_promos':
             srnames = promote.all_live_promo_srnames()
