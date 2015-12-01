@@ -523,20 +523,16 @@ class IdentityJsonTemplate(ThingJsonTemplate):
         over_18="pref_over_18",
         gold_creddits="gold_creddits",
         gold_expiration="gold_expiration",
+        is_suspended="in_timeout",
+        suspension_expiration_utc="timeout_expiration_utc",
     )
 
     def raw_data(self, thing):
         attrs = self._data_attrs_.copy()
         if c.user_is_loggedin and thing._id == c.user._id:
             attrs.update(self._private_data_attrs)
-            if feature.is_enabled('timeouts'):
-                attrs.update({
-                    "is_suspended": "in_timeout",
-                    "suspension_expiration_utc": "timeout_expiration_utc",
-                })
         # Add a public indication when a user is permanently in timeout.
-        elif (feature.is_enabled('timeouts') and thing.in_timeout and
-                thing.timeout_expiration is None):
+        elif (thing.in_timeout and thing.timeout_expiration is None):
             attrs.update({"is_suspended": "in_timeout"})
 
         if thing.pref_hide_from_robots:
@@ -774,8 +770,7 @@ class LinkJsonTemplate(ThingJsonTemplate):
                     preview_object, censor_nsfw=True)
             d['preview']['images'] = [images]
 
-        if (feature.is_enabled('timeouts') and c.user_is_loggedin and
-                c.user.in_timeout):
+        if c.user_is_loggedin and c.user.in_timeout:
             d['user_reports'] = []
             d['mod_reports'] = []
 
@@ -913,8 +908,7 @@ class CommentJsonTemplate(ThingTemplate):
             data["approved_by"] = None
             data["banned_by"] = None
 
-        if (feature.is_enabled('timeouts') and c.user_is_loggedin and
-                c.user.in_timeout):
+        if c.user_is_loggedin and c.user.in_timeout:
             data['user_reports'] = []
             data['mod_reports'] = []
 

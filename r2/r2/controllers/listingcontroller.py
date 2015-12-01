@@ -892,8 +892,7 @@ class UserController(ListingController):
         if not vuser:
             return self.abort404()
 
-        if (feature.is_enabled('timeouts') and
-                vuser.in_timeout and
+        if (vuser.in_timeout and
                 vuser != c.user and
                 not c.user_is_admin and
                 not vuser.timeout_expiration):
@@ -924,12 +923,11 @@ class UserController(ListingController):
 
         # only allow admins to view deleted users
         if vuser._deleted and not c.user_is_admin:
-            if feature.is_enabled('timeouts'):
-                errpage = InterstitialPage(
-                    _("deleted"),
-                    content=DeletedUserInterstitial(),
-                )
-                request.environ['usable_error_content'] = errpage.render()
+            errpage = InterstitialPage(
+                _("deleted"),
+                content=DeletedUserInterstitial(),
+            )
+            request.environ['usable_error_content'] = errpage.render()
             return self.abort404()
 
         if c.user_is_admin:
@@ -1361,8 +1359,6 @@ class MessageController(ListingController):
 
         captcha = Captcha() if c.user.needs_captcha() else None
 
-        restrict_recipient = feature.is_enabled('timeouts') and c.user.in_timeout
-
         if subreddit_message:
             content = ModeratorMessageCompose(
                 mod_srs,
@@ -1371,14 +1367,14 @@ class MessageController(ListingController):
                 subject=subject,
                 captcha=captcha,
                 message=message,
-                restrict_recipient=restrict_recipient)
+                restrict_recipient=c.user.in_timeout)
         else:
             content = MessageCompose(
                 to=to,
                 subject=subject,
                 captcha=captcha,
                 message=message,
-                restrict_recipient=restrict_recipient)
+                restrict_recipient=c.user.in_timeout)
 
         return MessagePage(
             content=content,
@@ -1861,8 +1857,7 @@ class UserListListingController(ListingController):
             abort(403)
 
         self.listing_cls = None
-        self.editable = not (c.user_is_loggedin and c.user.in_timeout and
-                             feature.is_enabled('timeouts'))
+        self.editable = not (c.user_is_loggedin and c.user.in_timeout)
         self.paginated = True
         self.jump_to_val = request.GET.get('user')
         self.show_not_found = bool(self.jump_to_val)

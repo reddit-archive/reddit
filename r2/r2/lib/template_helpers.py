@@ -198,6 +198,8 @@ def js_config(extra_config=None):
         "logged": logged,
         # logged in user's id
         "user_id": user_id,
+        # is user in timeout?
+        "user_in_timeout": user_in_timeout,
         # the subreddit's name (for posts)
         "post_site": cur_subreddit,
         "cur_site": cur_sr_fullname,
@@ -268,10 +270,6 @@ def js_config(extra_config=None):
 
     if extra_config:
         config.update(extra_config)
-
-    if feature.is_enabled('timeouts'):
-        # is user in timeout?
-        config["user_in_timeout"] = user_in_timeout
 
     hooks.get_hook("js_config").call(config=config)
 
