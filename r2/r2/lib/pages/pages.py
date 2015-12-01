@@ -150,7 +150,7 @@ from r2.lib.utils import trunc_string as _truncate, to_date
 from r2.lib.filters import safemarkdown
 from r2.lib.utils import Storage, tup, url_is_embeddable_image
 from r2.lib.utils import precise_format_timedelta
-from r2.lib.cache import make_key, MemcachedError
+from r2.lib.cache import make_key_id, MemcachedError
 
 from babel.numbers import format_currency
 from babel.dates import format_date
@@ -1939,8 +1939,8 @@ class CommentPane(Templated):
             num = (num / 100) * 100
         elif num > 100:
             num = (num / 10) * 10
-        return make_key(
-            "commentpane",
+
+        _id = make_key_id(
             self.article._fullname,
             self.article.contest_mode,
             self.article.locked,
@@ -1957,6 +1957,8 @@ class CommentPane(Templated):
             self.max_depth,
             self.edits_visible,
         )
+        key = "pane:%s" % _id
+        return key
 
     def __init__(self, article, sort, comment, context, num, **kw):
         from r2.models import CommentBuilder, NestedListing
