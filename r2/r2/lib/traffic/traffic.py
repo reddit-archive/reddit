@@ -221,6 +221,7 @@ def _report_interval(interval):
                 Session.merge(r)
                 Session.commit()
             except DataError:
+                Session.rollback()
                 continue
 
     Session.remove()
