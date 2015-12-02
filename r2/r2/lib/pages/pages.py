@@ -150,7 +150,7 @@ from r2.lib.utils import trunc_string as _truncate, to_date
 from r2.lib.filters import safemarkdown
 from r2.lib.utils import Storage, tup, url_is_embeddable_image
 from r2.lib.utils import precise_format_timedelta
-from r2.lib.cache import make_key
+from r2.lib.cache import make_key, MemcachedError
 
 from babel.numbers import format_currency
 from babel.dates import format_date
@@ -2059,15 +2059,20 @@ class CommentPane(Templated):
 
                     self.rendered = generic_listing.render()
                     timer.intermediate("render_listing")
+                finally:
+                    # undo the spoofing
+                    c.user = user
+                    c.user_is_loggedin = logged_in
+
+                try:
                     g.pagecache.set(
                         key,
                         self.rendered,
                         time=g.commentpane_cache_time
                     )
-                finally:
-                    # undo the spoofing
-                    c.user = user
-                    c.user_is_loggedin = logged_in
+                except MemcachedError as e:
+                    g.log.warning("Ignored exception (%r) on commentpane "
+                                  "write for %r", e, request.path)
 
             # figure out what needs to be updated on the listing
             if c.user_is_loggedin:
