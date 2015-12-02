@@ -29,6 +29,10 @@ from r2.lib.pages import (
     GoogleTagManagerJail,
     GoogleTagManager,
 )
+from r2.lib.validator import (
+    validate,
+    VGTMContainerId,
+)
 
 
 class GoogleTagManagerController(MinimalController):
@@ -42,8 +46,14 @@ class GoogleTagManagerController(MinimalController):
 
         c.allow_framing = True
 
-    def GET_jail(self):
-        return GoogleTagManagerJail().render()
+    @validate(
+        container_id=VGTMContainerId("id")
+    )
+    def GET_jail(self, container_id):
+        return GoogleTagManagerJail(container_id=container_id).render()
 
-    def GET_gtm(self):
-        return GoogleTagManager().render()
+    @validate(
+        container_id=VGTMContainerId("id")
+    )
+    def GET_gtm(self, container_id):
+        return GoogleTagManager(container_id=container_id).render()

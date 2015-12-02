@@ -1380,6 +1380,19 @@ class VSubscribeSR(VByName):
         }
 
 
+RE_GTM_ID = re.compile(r"^GTM-[A-Z0-9]+$")
+
+class VGTMContainerId(Validator):
+    def run(self, value):
+        if not value:
+            return g.googletagmanager
+
+        if RE_GTM_ID.match(value):
+            return value
+        else:
+            abort(404)
+
+
 class VCollection(Validator):
     def run(self, name):
         collection = Collection.by_name(name)

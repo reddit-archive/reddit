@@ -33,7 +33,7 @@
   <title></title>
 </head>
 <body>
-  <iframe id="jail" src="/gtm" style="display:none;" referrer="no-referrer">
+  <iframe id="jail" src="/gtm?id=${thing.container_id}" style="display:none;" referrer="no-referrer">
   ${unsafe(js.use('gtm-jail'))}
 </body>
 </html>
