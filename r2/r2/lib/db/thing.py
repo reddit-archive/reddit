@@ -1032,10 +1032,6 @@ class Query(object):
     def _after(self, thing):
         return self._dir(thing, False)
 
-    def _count(self):
-        return self._cursor().rowcount()
-
-
     def _filter(*a, **kw):
         raise NotImplementedError
 
