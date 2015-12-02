@@ -30,6 +30,7 @@ from boto.s3.connection import S3Connection
 from boto.emr.connection import EmrConnection
 from boto.exception import S3ResponseError
 from pylons import app_globals as g
+from sqlalchemy.exc import DataError
 
 from r2.lib.emr_helpers import (EmrException, terminate_jobflow,
     modify_slave_count)
@@ -215,8 +216,13 @@ def _report_interval(interval):
                   'unique_count': uniques, 'pageview_count': pageviews}
             kw.update(_name_to_kw(category_cls, name))
             r = category_cls(**kw)
-            Session.merge(r)
-            Session.commit()
+
+            try:
+                Session.merge(r)
+                Session.commit()
+            except DataError:
+                continue
+
     Session.remove()
     now = datetime.datetime.now()
     print 'finished reporting %s (%s) - %s' % (pg_interval, interval_type, now)
