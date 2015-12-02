@@ -386,13 +386,10 @@ r.analytics.breadcrumbs = {
 r.analytics.event = {
   init: function() {
     this.contextData = {
-      base_url: document.location.pathname,
-      domain: document.location.hostname,
       linkFullname: null,
       loid: null,
       srFullname: null,
       srName: null,
-      userAgent: navigator.userAgent,
       userId: null,
       userName: null,
     };
@@ -419,46 +416,33 @@ r.analytics.event = {
     }
   },
 
-  _eventData: function(eventTopic, eventType, eventPayload) {
-    var now = new Date();
-    var data = {
-      'event_topic': eventTopic,
-      'event_type': eventType,
-      'event_ts': now.getTime(),
-      'uuid': r.analytics.uuid(),
-      'payload': {
-        'domain': this.contextData.domain,
-        'base_url': this.contextData.base_url,
-        'user_agent': this.contextData.userAgent,
-        'utc_offset': now.getTimezoneOffset() / -60,
-      },
-    };
+  _eventPayload: function() {
+    var payload = {};
 
     if (this.contextData.userId) {
-      data.payload['user_id'] = this.contextData.userId;
-      data.payload['user_name'] = this.contextData.userName;
+      payload['user_id'] = this.contextData.userId;
+      payload['user_name'] = this.contextData.userName;
     } else {
-      data.payload['loid'] = this.contextData.loid;
+      payload['loid'] = this.contextData.loid;
     }
 
     if (this.contextData.srName) {
-      data.payload['sr_name'] = this.contextData.srName;
+      payload['sr_name'] = this.contextData.srName;
     }
+
     if (this.contextData.srFullname) {
-      data.payload['sr_id'] = r.utils.fullnameToId(this.contextData.srFullname);
+      payload['sr_id'] = r.utils.fullnameToId(this.contextData.srFullname);
     }
 
-    for (var name in eventPayload) {
-      data.payload[name] = eventPayload[name];
-    }
-
-    return data;
+    return payload;
   },
 
   timeoutForbiddenEvent: function(actionName, actionDetail, targetType, targetFullname) {
     var eventTopic = 'forbidden_actions';
     var eventType = 'cs.forbidden_' + actionName;
-    var payload = {'process_notes': 'IN_TIMEOUT'};
+    var payload = this._eventPayload();
+
+    payload['process_notes'] = 'IN_TIMEOUT';
 
     if (actionDetail) {
       payload['details_text'] = actionDetail;
@@ -473,17 +457,8 @@ r.analytics.event = {
       payload['target_id'] = r.utils.fullnameToId(targetFullname);
     }
 
-    var data = this._eventData(eventTopic, eventType, payload);
-
-    // pixel tracker
-    var pixel = new Image();
-    pixel.src = r.config.eventtracker_url + '?' + $.param({
-      r: Math.round(Math.random() * 2147483647), // cachebuster
-      data: JSON.stringify(data),
-    });
-
     // event collector
-    r.events.track(eventTopic, eventType, data.payload).send();
+    r.events.track(eventTopic, eventType, payload).send();
   },
 
 };
