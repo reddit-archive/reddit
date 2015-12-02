@@ -27,8 +27,6 @@ import pylibmc
 
 from pylons import app_globals as g
 
-from r2.lib.cache import MemcachedMaximumRetryException
-
 
 TimeSlice = collections.namedtuple("TimeSlice", ["beginning", "remaining", "end"])
 
@@ -85,7 +83,7 @@ def record_usage(key_prefix, time_slice):
             recent_usage = 1
             g.stats.simple_event("ratelimit.eviction")
         return recent_usage
-    except (pylibmc.Error, MemcachedMaximumRetryException) as e:
+    except pylibmc.Error as e:
         raise RatelimitError(e)
 
 
@@ -98,5 +96,5 @@ def get_usage(key_prefix, time_slice):
         return g.ratelimitcache.get(key)
     except pylibmc.NotFound:
         return 0
-    except (pylibmc.Error, MemcachedMaximumRetryException) as e:
+    except pylibmc.Error as e:
         raise RatelimitError(e)

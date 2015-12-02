@@ -72,8 +72,6 @@ class CacheUtils(object):
         return prefix_keys(keys, prefix, lambda k: self.simple_get_multi(k, **kw))
 
 
-class MemcachedMaximumRetryException(Exception): pass
-
 class MemcachedValueSizeException(Exception):
     def __init__(self, cache_name, caller, prefix, key, size):
         self.key = key
@@ -140,13 +138,11 @@ class CMemcache(CacheUtils):
                  no_block=False,
                  min_compress_len=512 * 1024,
                  num_clients=10,
-                 timeout_retry=5,
                  binary=False,
                  validators=None):
         self.name = name
         self.servers = servers
         self.clients = pylibmc.ClientPool(n_slots = num_clients)
-        self.timeout_retry = timeout_retry
         self.validators = validators or []
 
         for x in xrange(num_clients):
@@ -167,31 +163,6 @@ class CMemcache(CacheUtils):
 
         _CACHE_SERVERS.update(servers)
 
-
-    def retry(self, times, fn):
-        ex = None
-        for i in xrange(times):
-            try:
-                val = fn()
-                if i != 0:
-                    event_name = "cache.retry.%s" % fn.__name__
-                    name = "success_on_retry_%s" % i
-                    g.stats.event_count(event_name, name)
-                return val
-            except (pylibmc.NotFound,
-                    pylibmc.BadKeyProvided,
-                    pylibmc.UnknownStatKey,
-                    pylibmc.InvalidHostProtocolError,
-                    pylibmc.NotSupportedError):
-                raise
-            except MemcachedError as e:
-                ex = e
-            sleep(random.uniform(0, 0.1))
-
-        event_name = "cache.retry.%s" % fn.__name__
-        g.stats.event_count(event_name, "fail")
-        raise MemcachedMaximumRetryException(ex)
-
     def validate(self, **kwargs):
         kwargs['caller'] = sys._getframe().f_back.f_code.co_name
         kwargs['cache_name'] = self.name
@@ -204,24 +175,18 @@ class CMemcache(CacheUtils):
         if not self.validate(key=key):
             return default
 
-        def do_get():
-            with self.clients.reserve() as mc:
-                ret = mc.get(str(key))
-                if ret is None:
-                    return default
-                return ret
-
-        return self.retry(self.timeout_retry, do_get)
+        with self.clients.reserve() as mc:
+            ret = mc.get(str(key))
+            if ret is None:
+                return default
+            return ret
 
     def get_multi(self, keys, prefix = ''):
         validated_keys = [k for k in (str(k) for k in keys)
                           if self.validate(prefix=prefix, key=k)]
 
-        def do_get_multi():
-            with self.clients.reserve() as mc:
-                return mc.get_multi(validated_keys, key_prefix = prefix)
-
-        return self.retry(self.timeout_retry, do_get_multi)
+        with self.clients.reserve() as mc:
+            return mc.get_multi(validated_keys, key_prefix = prefix)
 
     # simple_get_multi exists so that a cache chain can
     # single-instance the handling of prefixes for performance, but
@@ -235,25 +200,19 @@ class CMemcache(CacheUtils):
         if not self.validate(key=key, value=val):
             return None
 
-        def do_set():
-            with self.clients.reserve() as mc:
-                return mc.set(str(key), val, time=time,
-                                min_compress_len = self.min_compress_len)
-
-        return self.retry(self.timeout_retry, do_set)
+        with self.clients.reserve() as mc:
+            return mc.set(str(key), val, time=time,
+                            min_compress_len = self.min_compress_len)
 
     def set_multi(self, keys, prefix='', time=0):
         str_keys = ((str(k), v) for k, v in keys.iteritems())
         validated_keys = {k: v for k, v in str_keys
                           if self.validate(prefix=prefix, key=k, value=v)}
 
-        def do_set_multi():
-            with self.clients.reserve() as mc:
-                return mc.set_multi(validated_keys, key_prefix = prefix,
-                                    time = time,
-                                    min_compress_len = self.min_compress_len)
-
-        return self.retry(self.timeout_retry, do_set_multi)
+        with self.clients.reserve() as mc:
+            return mc.set_multi(validated_keys, key_prefix = prefix,
+                                time = time,
+                                min_compress_len = self.min_compress_len)
 
     def add_multi(self, keys, prefix='', time=0):
         str_keys = ((str(k), v) for k, v in keys.iteritems())
@@ -302,21 +261,15 @@ class CMemcache(CacheUtils):
         if not self.validate(key=key):
             return None
 
-        def do_delete():
-            with self.clients.reserve() as mc:
-                return mc.delete(str(key))
-
-        return self.retry(self.timeout_retry, do_delete)
+        with self.clients.reserve() as mc:
+            return mc.delete(str(key))
 
     def delete_multi(self, keys, prefix=''):
         validated_keys = [k for k in (str(k) for k in keys)
                           if self.validate(prefix=prefix, key=k)]
 
-        def do_delete_multi():
-            with self.clients.reserve() as mc:
-                return mc.delete_multi(validated_keys, key_prefix=prefix)
-
-        return self.retry(self.timeout_retry, do_delete_multi)
+        with self.clients.reserve() as mc:
+            return mc.delete_multi(validated_keys, key_prefix=prefix)
 
     def __repr__(self):
         return '<%s(%r)>' % (self.__class__.__name__,
