@@ -86,7 +86,7 @@ class LinkButtons(PrintableButtons):
         is_author = (c.user_is_loggedin and thing.author and
                      c.user.name == thing.author.name)
         # do we show the report button?
-        show_report = not is_author and report
+        show_report = not is_author and not thing._deleted and report
 
         show_share = ((c.user_is_loggedin or not g.read_only_mode) and
                       not thing.subreddit.quarantine)
