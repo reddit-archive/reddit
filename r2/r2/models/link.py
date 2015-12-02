@@ -665,7 +665,8 @@ class Link(Thing, Printable):
                 # ick, if the author deleted their account we shouldn't waste gold
                 not item.author._deleted and
                 # some subreddits can have gilding disabled
-                item.subreddit.allow_gilding
+                item.subreddit.allow_gilding and
+                not item._deleted
             )
 
             # set an attribute on the Wrapped item so that it will be
