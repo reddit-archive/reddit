@@ -22,15 +22,15 @@ r.analytics = {
     }
 
     var url = r.config.tracker_url;
-    var params = {};
+    var params = {
+      dnt: window.DO_NOT_TRACK,
+    };
 
     if (!r.config.user_id) {
       var tracker = new redditlib.Tracker();
       var loggedOutData = tracker.getTrackingData();
       if (loggedOutData && loggedOutData.loid) {
-        params = {
-            loid: loggedOutData.loid
-        };
+        params.loid = loggedOutData.loid;
         if (loggedOutData.loidcreated) {
           params['loidcreated'] = loggedOutData.loidcreated
         }
