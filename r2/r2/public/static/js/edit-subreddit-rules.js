@@ -296,6 +296,10 @@ requires r.ui.TextCounter
         var model = this.createSubredditRuleModel(el);
         this.createSubredditRuleView(el, model);
       }, this);
+
+      if (!this.collection.length) {
+        this.newRuleForm.edit();
+      }
     },
 
     delegateEvents: function() {
