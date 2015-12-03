@@ -1714,11 +1714,15 @@ class ApiController(RedditController):
                 "sexualizing minors", "breaking reddit")):
             reason_type = "SITE_RULES"
         elif reason == "site_reason_selected":
+            reason_type = "SITE_RULES"
             reason = site_reason
         else:
-            reason_type = "CUSTOM"
-            if reason == "other":
-                reason = other_reason
+            if sr and SubredditRules.get_rule(sr, reason):
+                reason_type = "SUBREDDIT_RULES"
+            else:
+                reason_type = "CUSTOM"
+                if reason == "other":
+                    reason = other_reason
 
         # if it is a message that is being reported, ban it.
         # every user is admin over their own personal inbox
