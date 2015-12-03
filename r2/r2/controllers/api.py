@@ -117,7 +117,7 @@ from r2.lib.voting import cast_vote
 
 from r2.models import wiki
 from r2.models.recommend import AccountSRFeedback, FEEDBACK_ACTIONS
-from r2.models.rules import SubredditRules
+from r2.models.rules import OLD_SITEWIDE_RULES, SITEWIDE_RULES, SubredditRules
 from r2.models.vote import Vote
 from r2.lib.merge import ConflictException
 
@@ -1710,8 +1710,7 @@ class ApiController(RedditController):
 
         sr = getattr(thing, 'subreddit_slow', None)
 
-        if (reason in ("spam", "vote manipulation", "personal information",
-                "sexualizing minors", "breaking reddit")):
+        if reason in OLD_SITEWIDE_RULES or reason in SITEWIDE_RULES:
             reason_type = "SITE_RULES"
         elif reason == "site_reason_selected":
             reason_type = "SITE_RULES"
