@@ -171,12 +171,6 @@
       <%include file="prefoptions.html" />
     </script>
   %endif
-  %if thing.show_timeout_modal:
-    <script id="access-popup" type="text/template">
-      ${InTimeoutInterstitial(timeout_days_remaining=thing.timeout_days_remaining,
-                              hide_message=True)}
-    </script>
-  %endif
   % if c.secure:
       ## Pixel to pick up HSTS policies from the base domain
       <img id="hsts_pixel" src="//${g.domain}/static/pixel.png">
