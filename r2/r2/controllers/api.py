@@ -117,7 +117,7 @@ from r2.lib.voting import cast_vote
 
 from r2.models import wiki
 from r2.models.recommend import AccountSRFeedback, FEEDBACK_ACTIONS
-from r2.models.rules import OLD_SITEWIDE_RULES, SITEWIDE_RULES, SubredditRules
+from r2.models.rules import SubredditRules
 from r2.models.vote import Vote
 from r2.lib.merge import ConflictException
 
@@ -1710,18 +1710,10 @@ class ApiController(RedditController):
 
         sr = getattr(thing, 'subreddit_slow', None)
 
-        if reason in OLD_SITEWIDE_RULES or reason in SITEWIDE_RULES:
-            reason_type = "SITE_RULES"
-        elif reason == "site_reason_selected":
-            reason_type = "SITE_RULES"
+        if reason == "site_reason_selected":
             reason = site_reason
-        else:
-            if sr and SubredditRules.get_rule(sr, reason):
-                reason_type = "SUBREDDIT_RULES"
-            else:
-                reason_type = "CUSTOM"
-                if reason == "other":
-                    reason = other_reason
+        elif reason == "other":
+            reason = other_reason
 
         # if it is a message that is being reported, ban it.
         # every user is admin over their own personal inbox
@@ -1756,7 +1748,7 @@ class ApiController(RedditController):
             admintools.report(thing)
 
         g.events.report_event(
-            process_notes=reason_type,
+            reason=reason,
             details_text=reason,
             subreddit=sr,
             target=thing,

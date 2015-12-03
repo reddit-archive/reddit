@@ -436,7 +436,7 @@ class EventQueue(object):
 
     @squelch_exceptions
     @sampled("events_collector_report_sample_rate")
-    def report_event(self, process_notes=None, details_text=None,
+    def report_event(self, reason=None, details_text=None,
             subreddit=None, target=None, request=None, context=None):
         """Create a 'report' event for event-collector.
 
@@ -447,12 +447,22 @@ class EventQueue(object):
         request, context: Should be pylons.request & pylons.c respectively
 
         """
+        from r2.models.rules import OLD_SITEWIDE_RULES, SITEWIDE_RULES, SubredditRules
+
         event = Event(
             topic="report_events",
             event_type="ss.report",
             request=request,
             context=context,
         )
+        if reason in OLD_SITEWIDE_RULES or reason in SITEWIDE_RULES:
+            process_notes = "SITE_RULES"
+        else:
+            if subreddit and SubredditRules.get_rule(subreddit, reason):
+                process_notes = "SUBREDDIT_RULES"
+            else:
+                process_notes = "CUSTOM"
+
         event.add("process_notes", process_notes)
         event.add("details_text", details_text)
 
