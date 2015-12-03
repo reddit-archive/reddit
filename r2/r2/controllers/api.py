@@ -2703,6 +2703,7 @@ class ApiController(RedditController):
         # XXX: This should be moved to @validatedForm above when we remove
         # the feature flag. Down here to avoid processing when flagged off
         # and to hide from API docs.
+        mobile_fields = {}
         if feature.is_enabled('mobile_settings'):
             mobile_fields = {
                 'related_subreddits': VSubredditList('related_subreddits',
@@ -2726,14 +2727,12 @@ class ApiController(RedditController):
             'exclude_banned_modqueue',
             'header_title',
             'hide_ads',
-            'key_color',
             'lang',
             'link_type',
             'name',
             'over_18',
             'public_description',
             'public_traffic',
-            'related_subreddits',
             'show_media',
             'spam_comments',
             'spam_links',
@@ -2747,6 +2746,9 @@ class ApiController(RedditController):
             'wiki_edit_karma',
             'wikimode',
         ]
+
+        if sr and mobile_fields:
+            keyword_fields.extend(mobile_fields.keys())
 
         keyword_fields.append('suggested_comment_sort')
 
@@ -2916,18 +2918,13 @@ class ApiController(RedditController):
                     msg %= (sr.name, ', '.join(collections))
                     emailer.sales_email(msg)
 
-            # do not clobber these fields if absent in request
-            no_clobber = (
-                'key_color',
-                'related_subreddits',
-            )
-
             for k, v in kw.iteritems():
                 if getattr(sr, k, None) != v:
                     ModAction.create(sr, c.user, action='editsettings', 
                                      details=k)
 
-                if k in no_clobber and k not in request.params:
+                # do not clobber these fields if absent in request
+                if k in mobile_fields and k not in request.params:
                     continue
 
                 setattr(sr, k, v)
