@@ -216,7 +216,7 @@ function clone_reddit_repo {
     local repository_url=https://github.com/${2}.git
 
     if [ ! -d $destination ]; then
-        sudo -u $REDDIT_USER git clone $repository_url $destination
+        sudo -u $REDDIT_USER -H git clone $repository_url $destination
     fi
 
     if [ -d $destination/upstart ]; then
