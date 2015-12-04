@@ -44,7 +44,7 @@
         </div>
     </header>
 
-    <div class="md-container-small">
+    <div class="md-container">
         <div id="subreddit-rule-list" class="md">
             %if thing.rules:
                 %for rule in thing.rules:
@@ -64,7 +64,7 @@
     </div>
 
     %if thing.can_edit:
-        <footer class="md-container-small">
+        <footer class="md-container">
             <div id="subreddit-rule-add-form" class="md" hidden>
                 <div class="subreddit-rule-add-form-buttons">
                     <button class="subreddit-rule-edit-button">
@@ -117,11 +117,13 @@
             %endif
         </div>
         %if editable:
-            <div class="subreddit-rule-delete-confirmation" hidden>
-                Delete this rule?&#32;
-                <button class="subreddit-rule-delete-button">delete</button>
-                &#32;|&#32;
-                <button class="subreddit-rule-cancel-button">cancel</button>
+            <div class="md-container-small">
+                <div class="subreddit-rule-delete-confirmation" hidden>
+                    Delete this rule?&#32;
+                    <button class="subreddit-rule-delete-button">delete</button>
+                    &#32;<span class="separator">|</span>&#32;
+                    <button class="subreddit-rule-cancel-button">cancel</button>
+                </div>
             </div>
         %endif
     </div>
@@ -131,11 +133,13 @@
     <form method="post" class="subreddit-rule-form">
         <div class="form-inputs">
             <div class="c-form-group form-group-short_name">
-                <div>
-                    <label for="short_name" class="required">Short name</label>
-                    <div class="text-counter">
-                        <span class="text-counter-display"></span>&#32;
-                        remaining
+                <div class="md-container-small">
+                    <div class="md">
+                        <label for="short_name" class="required">Short name</label>
+                        <div class="text-counter">
+                            <span class="text-counter-display"></span>&#32;
+                            remaining
+                        </div>
                     </div>
                 </div>
                 <input type="text" class="c-form-control text-counter-input" name="short_name" value="${short_name}">
@@ -148,10 +152,14 @@
                 </div>
             </div>
             <div class="c-form-group form-group-description">
-                <label for="description">Full description of this rule</label>
-                <div class="text-counter">
-                    <span class="text-counter-display" rel="description"></span>&#32;
-                    remaining
+                <div class="md-container-small">
+                    <div class="md">
+                        <label for="description">Full description of this rule</label>
+                        <div class="text-counter">
+                            <span class="text-counter-display" rel="description"></span>&#32;
+                            remaining
+                        </div>
+                    </div>
                 </div>
                 <textarea class="c-form-control text-counter-input" name="description" rows=4>${description}</textarea>
                 <div class="error-fields">

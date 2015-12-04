@@ -114,7 +114,15 @@
     color: @color-warning-red;
 
     button {
+        background: transparent;
+        border: none;
+        padding: 0 3px;
         color: @color-light-blue;
+        font-size: 1em;
+    }
+
+    .separator {
+        color: @color-grey;
     }
 }
 
@@ -141,7 +149,6 @@
     }
 
     .subreddit-rule-buttons,
-    .subreddit-rule-delete-confirmation,
     .subreddit-rule-add-form-buttons,
     .form-buttons {
         button {
@@ -178,11 +185,6 @@
             .md-margins(@font-xx-large, 0, 0);
             font-weight: 300;
         }
-    }
-
-    .md-container-small .md {
-        @font-base: @font-x-small;
-        @line-base: @line-x-small;
 
         .subreddit-rule-title {
             .md-font-size(@font-base, @font-medium, @line-medium);
