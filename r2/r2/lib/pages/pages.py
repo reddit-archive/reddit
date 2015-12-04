@@ -4514,12 +4514,18 @@ class RenderableCampaign(Templated):
             live_campaigns = []
 
         ret = []
+        now = promote.promo_datetime_now()
         for camp in campaigns:
             transaction = transactions.get(camp._id)
             is_pending = promote.is_pending(camp)
             is_live = camp in live_campaigns
-            is_complete = (camp.is_paid and
-                           not (is_live or is_pending))
+            is_charged_or_refunded = (transaction and
+                (transaction.is_charged() or transaction.is_refund()))
+            is_expired_house = camp.is_house and camp.end_date < now
+            is_live_or_pending = is_live or is_pending
+            is_complete = ((is_charged_or_refunded and
+                not is_live_or_pending) or
+                is_expired_house)
             rc = cls(link, camp, transaction, is_pending, is_live, is_complete,
                      full_details)
             ret.append(rc)
