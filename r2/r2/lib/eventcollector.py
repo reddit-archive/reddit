@@ -83,7 +83,7 @@ class EventQueue(object):
             else:
                 return "clear"
 
-        event = EventV2(
+        event = Event(
             topic="vote_server",
             event_type="server_vote",
             time=vote.date,
@@ -123,7 +123,7 @@ class EventQueue(object):
         request, context: Should be pylons.request & pylons.c respectively
 
         """
-        event = EventV2(
+        event = Event(
             topic="submit_events",
             event_type="ss.submit",
             time=new_post._date,
@@ -160,7 +160,7 @@ class EventQueue(object):
         """
         poisoner_name = poison_info.pop("poisoner_name")
 
-        event = EventV2(
+        event = Event(
             topic="cache_poisoning_events",
             event_type="ss.cache_poisoning",
             request=request,
@@ -224,7 +224,7 @@ class EventQueue(object):
         request, context: Should be pylons.request & pylons.c respectively;
 
         """
-        event = EventV2(
+        event = Event(
             topic="forbidden_actions",
             event_type="ss.forbidden_message_attempt",
             request=request,
@@ -313,7 +313,7 @@ class EventQueue(object):
                     data=True,
             )
 
-        event = EventV2(
+        event = Event(
             topic="forbidden_actions",
             event_type="ss.forbidden_%s" % action_name,
             request=request,
@@ -349,7 +349,7 @@ class EventQueue(object):
         request, context: Should be pylons.request & pylons.c respectively
 
         """
-        event = EventV2(
+        event = Event(
             topic="mod_events",
             event_type=modaction.action,
             time=modaction.date,
@@ -386,7 +386,7 @@ class EventQueue(object):
         request, context: Should be pylons.request & pylons.c respectively
 
         """
-        event = EventV2(
+        event = Event(
             topic="report_events",
             event_type="ss.report",
             request=request,
@@ -412,7 +412,7 @@ class EventQueue(object):
         request, context: Should be pylons.request & pylons.c respectively
 
         """
-        event = EventV2(
+        event = Event(
             topic="quarantine",
             event_type=event_type,
             request=request,
@@ -447,7 +447,7 @@ class EventQueue(object):
         self.save_event(event)
 
 
-class EventV2(object):
+class Event(object):
     def __init__(self, topic, event_type,
             time=None, uuid=None, request=None, context=None, testing=False,
             data=None, obfuscated_data=None):
