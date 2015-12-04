@@ -44,8 +44,6 @@ from r2.lib.utils import (
     to36,
 )
 
-MAX_EVENT_SIZE = 4096
-
 
 def _make_http_date(when=None):
     if when is None:
@@ -161,11 +159,6 @@ class EventQueue(object):
         event_base["length"] = content_length
         event_base["text"] = content
 
-        size_so_far = len(json.dumps(event_base))
-        oversize = size_so_far - MAX_EVENT_SIZE
-        if oversize > 0:
-            event_base["text"] = event_base["text"][:-oversize]
-
         self.save_event(event_base)
 
     @squelch_exceptions
@@ -230,12 +223,6 @@ class EventQueue(object):
         # are all jacked up.
         if resp_headers and "cf-cache-status" in resp_headers:
             event_base["poison_blame_guess"] = "cdn"
-
-        size_so_far = len(json.dumps(event_base))
-        oversize = size_so_far - MAX_EVENT_SIZE
-        if oversize > 0:
-            # It's almost definitely the headers that are too large
-            event_base["resp_headers"] = {}
 
         # No JSON support in the DBs we target
         event_base["resp_headers"] = json.dumps(event_base["resp_headers"])
@@ -799,7 +786,7 @@ def _get_reason(response):
             getattr(response.raw, "reason", "{unknown}"))
 
 
-def process_events(g, timeout=5.0, max_event_size=MAX_EVENT_SIZE, **kw):
+def process_events(g, timeout=5.0, **kw):
     publisher = EventPublisher(
         g.events_collector_url,
         g.secrets["events_collector_key"],
@@ -823,11 +810,6 @@ def process_events(g, timeout=5.0, max_event_size=MAX_EVENT_SIZE, **kw):
         test_events = []
 
         for msg in msgs:
-            if len(msg.body) > max_event_size:
-                g.log.warning("Event too large (%s); dropping", len(msg.body))
-                g.log.warning("%r", msg.body)
-                continue
-
             if msg.delivery_info["routing_key"] == "event_collector_test":
                 test_events.append(msg.body)
             else:
