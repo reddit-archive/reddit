@@ -61,13 +61,10 @@ class EventQueue(object):
         self.queue = queue
 
     def save_event(self, event):
-        if isinstance(event, EventV2):
-            if event.testing:
-                self.queue.add_item("event_collector_test", event.dump())
-            else:
-                self.queue.add_item("event_collector", event.dump())
+        if event.testing:
+            self.queue.add_item("event_collector_test", event.dump())
         else:
-            self.queue.add_item("event_collector", json.dumps(event))
+            self.queue.add_item("event_collector", event.dump())
 
     @squelch_exceptions
     @sampled("events_collector_vote_sample_rate")
@@ -449,10 +446,6 @@ class EventQueue(object):
 
         self.save_event(event)
 
-    @squelch_exceptions
-    def event_base(self, request, context):
-        return Event.base_from_request(request, context)
-
 
 class EventV2(object):
     def __init__(self, topic, event_type,
@@ -627,77 +620,6 @@ class EventV2(object):
             data["payload"]["obfuscated_data"] = self.obfuscated_data
 
         return json.dumps(data)
-
-
-class Event(dict):
-    """Deprecated. All new events should use EventV2."""
-    REQUIRED_FIELDS = (
-        "event_name",
-        "event_ts",
-        "utc_offset",
-        "user_agent",
-        "client_ip",
-        "domain",
-        "uuid",
-    )
-    @classmethod
-    def base_from_request(cls, request, context, **kw):
-        if context.user_is_loggedin:
-            user_id = str(context.user._id)
-            loid = None
-        else:
-            user_id = None
-            loid = request.cookies.get("loid", None)
-
-        if getattr(context, "oauth2_client", None):
-            oauth2_client_id = context.oauth2_client._id
-        else:
-            oauth2_client_id = None
-
-        return cls.base(
-            user_agent=request.user_agent,
-            ip=request.ip,
-            domain=request.host,
-            user_id=user_id,
-            loid=loid,
-            oauth2_client_id=oauth2_client_id,
-            **kw
-        )
-
-    @classmethod
-    def base(cls, event_name=None, timestamp=None, user_agent=None, ip=None,
-              domain=None, user_id=None, loid=None, oauth2_client_id=None,
-              event_uuid=None, **kw):
-        ret = cls(kw)
-
-        if event_uuid is None:
-            ret["uuid"] = str(uuid4())
-
-        if event_name is not None:
-            ret["event_name"] = event_name
-        if timestamp is not None:
-            ret["event_ts"] = timestamp
-        if user_agent is not None:
-            ret["user_agent"] = user_agent
-        if ip is not None:
-            ret["client_ip"] = ip
-        if domain is not None:
-            ret["domain"] = domain
-        if user_id is not None:
-            ret["user_id"] = user_id
-        if loid is not None:
-            ret["loid"] = loid
-        if oauth2_client_id is not None:
-            ret["oauth_client_id"] = oauth2_client_id
-
-        return ret
-
-    def missing_fields(self):
-        return (f for f in self.REQUIRED_FIELDS if f not in self)
-
-
-def _split_list(some_list):
-    return some_list[:len(some_list)/2], some_list[len(some_list)/2:]
 
 
 class EventPublisher(object):
