@@ -425,6 +425,9 @@ class Link(Thing, Printable):
             s.append(wrapped.flair_css_class)
             s.append(c.site.link_flair_position)
 
+        if wrapped.locked:
+            s.append('locked')
+
         return s
 
     def make_permalink(self, sr, force_domain=False):
@@ -673,7 +676,6 @@ class Link(Thing, Printable):
             # added to the render cache key
             if item.can_ban:
                 item.ignore_reports_key = item.ignore_reports
-            item.locked_key = item.locked
 
             if (feature.is_enabled('timeouts') and c.user_is_loggedin and
                     c.user.in_timeout):
@@ -1299,6 +1301,8 @@ class Comment(Thing, Printable):
         s = Printable.wrapped_cache_key(wrapped, style)
         s.extend([wrapped.body])
         s.extend([hasattr(wrapped, "link") and wrapped.link.contest_mode])
+        if hasattr(wrapped, "link") and wrapped.link.locked:
+            s.append('locked')
         return s
 
     def make_permalink(self, link, sr=None, context=None, anchor=False,
