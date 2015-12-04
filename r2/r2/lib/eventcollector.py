@@ -45,7 +45,6 @@ from r2.lib.utils import (
 )
 
 MAX_EVENT_SIZE = 4096
-MAX_CONTENT_LENGTH = 40 * 1024
 
 
 def _make_http_date(when=None):
@@ -731,6 +730,8 @@ def _split_list(some_list):
 
 
 class EventPublisher(object):
+    MAX_CONTENT_LENGTH = 500 * 1024
+
     def __init__(self, url, signature_key, secret, user_agent, stats,
                  max_content_length=MAX_CONTENT_LENGTH, timeout=None):
         self.url = url
