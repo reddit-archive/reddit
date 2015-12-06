@@ -273,13 +273,18 @@ def link_comments_and_sort(link, sort):
 
     return (cache.cids, cache.tree, cache.depth, cache.parents, sorter)
 
+
 def get_comment_tree(link, _update=False, timer=None):
     if timer is None:
         timer = SimpleSillyStub()
-    cache = CommentTree.by_link(link)
-    timer.intermediate('load')
-    if cache and not _update:
-        return cache
+
+    if not _update:
+        cache = CommentTree.by_link(link)
+        timer.intermediate('load')
+
+        if cache:
+            return cache
+
     with CommentTree.mutation_context(link, timeout=180):
         timer.intermediate('lock')
         cache = CommentTree.rebuild(link)
