@@ -381,10 +381,9 @@ class SpotlightListing(Listing):
         self.interestbar = kw.get('interestbar')
         self.interestbar_prob = kw.get('interestbar_prob', 0.)
         self.show_promo = kw.get('show_promo', False)
-        srnames = kw.get('srnames', [])
-        self.srnames = '+'.join([srname if srname else Frontpage.name
-                                 for srname in srnames] +
-                                 ["loggedin" if c.user_is_loggedin else "loggedout"])
+        keywords = kw.get('keywords', [])
+        self.keywords = '+'.join([keyword if keyword else Frontpage.name
+                                 for keyword in keywords])
         self.navigable = kw.get('navigable', True)
         self.things = kw.get('organic_links', [])
         self.show_placeholder = isinstance(c.site, (DefaultSR, AllSR))

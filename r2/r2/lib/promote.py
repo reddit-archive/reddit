@@ -977,8 +977,16 @@ def get_nsfw_collections_srnames():
     return set(srnames)
 
 
+def is_site_over18(site):
+    # a site should be considered nsfw if it's included in a
+    # nsfw collection because nsfw ads can target nsfw collections.
+    nsfw_collection_srnames = get_nsfw_collections_srnames()
+    return site.over_18 or site.name in nsfw_collection_srnames
+
+
 def srnames_from_site(user, site, include_subscriptions=True):
     is_logged_in = user and not isinstance(user, FakeAccount)
+    over_18 = is_site_over18(site)
     srnames = set()
 
     if not isinstance(site, FakeSubreddit):
@@ -994,11 +1002,6 @@ def srnames_from_site(user, site, include_subscriptions=True):
                 ids=False,
             )
 
-            # a site should be considered nsfw if it's included in a
-            # nsfw collection because nsfw ads can target nsfw collections.
-            nsfw_collection_srnames = get_nsfw_collections_srnames()
-            over_18 = site.over_18 or site.name in nsfw_collection_srnames
-
             # only use subreddits that aren't quarantined and have the same
             # age gate as the subreddit being viewed.
             subscriptions = filter(
@@ -1010,6 +1013,8 @@ def srnames_from_site(user, site, include_subscriptions=True):
 
             # remove any subscriptions that may have nsfw ads targeting
             # them because they're apart of a nsfw collection.
+            nsfw_collection_srnames = get_nsfw_collections_srnames()
+
             if not over_18:
                 subscription_srnames = (subscription_srnames -
                     nsfw_collection_srnames)
@@ -1022,10 +1027,34 @@ def srnames_from_site(user, site, include_subscriptions=True):
 def srnames_with_live_promos(user, site, include_subscriptions=True):
     site_srnames = srnames_from_site(
         user, site,
-        include_subscriptions=True,
+        include_subscriptions,
     )
     promo_srnames = all_live_promo_srnames()
     return promo_srnames.intersection(site_srnames)
+
+
+def keywords_from_context(user, site, include_subscriptions=True):
+    keywords = srnames_with_live_promos(
+        user,
+        site,
+        include_subscriptions,
+    )
+
+    if (not isinstance(site,FakeSubreddit) and
+            site._downs > g.live_config["ads_popularity_threshold"]):
+        keywords.add("s.popular")
+
+    if is_site_over18(site):
+        keywords.add("s.nsfw")
+    else:
+        keywords.add("s.sfw")
+
+    if c.user_is_loggedin:
+        keywords.add("loggedin")
+    else:
+        keywords.add("loggedout")
+
+    return keywords
 
 
 # special handling for memcache ascii protocol

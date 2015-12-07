@@ -334,6 +334,7 @@ class Globals(object):
             'create_sr_comment_karma',
             'create_sr_link_karma',
             'cflag_min_votes',
+            'ads_popularity_threshold',
         ],
         ConfigValue.float: [
             'cflag_lower_bound',

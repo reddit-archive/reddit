@@ -333,9 +333,9 @@ class ListingWithPromos(SubredditListingController):
             return res
 
     def make_single_ad(self):
-        srnames = promote.srnames_with_live_promos(c.user, c.site)
-        if srnames:
-            return SpotlightListing(show_promo=c.site.allow_ads, srnames=srnames,
+        keywords = promote.keywords_from_context(c.user, c.site)
+        if keywords:
+            return SpotlightListing(show_promo=c.site.allow_ads, keywords=keywords,
                                     navigable=False).listing()
 
     def make_spotlight(self):
@@ -352,14 +352,14 @@ class ListingWithPromos(SubredditListingController):
         promoted_links = []
 
         show_promo = False
-        srnames = []
+        keywords = []
         can_show_promo = not c.user.pref_hide_ads or not c.user.gold and c.site.allow_ads
         try_show_promo = ((c.user_is_loggedin and random.random() > 0.5) or
                           not c.user_is_loggedin)
 
         if can_show_promo and try_show_promo:
-            srnames = promote.srnames_with_live_promos(c.user, c.site)
-            if srnames:
+            keywords = promote.keywords_from_context(c.user, c.site)
+            if keywords:
                 show_promo = True
 
         def organic_keep_fn(item):
@@ -385,7 +385,7 @@ class ListingWithPromos(SubredditListingController):
                              interestbar=interestbar,
                              interestbar_prob=interestbar_prob,
                              show_promo=show_promo,
-                             srnames=srnames,
+                             keywords=keywords,
                              max_num = self.listing_obj.max_num,
                              max_score = self.listing_obj.max_score).listing()
         return s
