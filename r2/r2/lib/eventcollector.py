@@ -129,6 +129,7 @@ class EventQueue(object):
             time=new_post._date,
             request=request,
             context=context,
+            truncatable_field="post_body",
         )
 
         event.add("post_id", new_post._id)
@@ -166,6 +167,7 @@ class EventQueue(object):
             request=request,
             context=context,
             data=poison_info,
+            truncatable_field="resp_headers",
         )
 
         event.add("poison_blame_guess", "proxy")
@@ -450,7 +452,7 @@ class EventQueue(object):
 class Event(object):
     def __init__(self, topic, event_type,
             time=None, uuid=None, request=None, context=None, testing=False,
-            data=None, obfuscated_data=None):
+            data=None, obfuscated_data=None, truncatable_field=None):
         """Create a new event for event-collector.
 
         topic: Used to filter events into appropriate streams for processing
@@ -461,10 +463,12 @@ class Event(object):
         testing: Whether to send the event to the test endpoint
         data: A dict of field names/values to initialize the payload with
         obfuscated_data: Same as `data`, but fields that need obfuscation
+        truncatable_field: Field to truncate if the event is too large
         """
         self.topic = topic
         self.event_type = event_type
         self.testing = testing
+        self.truncatable_field = truncatable_field
 
         if not time:
             time = datetime.datetime.now(pytz.UTC)
@@ -618,11 +622,15 @@ class Event(object):
         }
         if self.obfuscated_data:
             data["payload"]["obfuscated_data"] = self.obfuscated_data
+        if self.truncatable_field:
+            data["truncatable_field"] = self.truncatable_field
 
         return json.dumps(data)
 
 
 class EventPublisher(object):
+    # The largest JSON string that can be sent, in bytes (but it's encoded
+    # to ASCII, so this is the same as character length)
     MAX_CONTENT_LENGTH = 500 * 1024
 
     def __init__(self, url, signature_key, secret, user_agent, stats,
@@ -635,6 +643,10 @@ class EventPublisher(object):
         self.stats = stats
         self.max_content_length = max_content_length
 
+        # The max size of a single event needs to account for the square
+        # brackets added around it when serialized to JSON
+        self.max_event_size = max_content_length - 2
+
         self.session = requests.Session()
 
     def _make_signature(self, payload):
@@ -643,7 +655,8 @@ class EventPublisher(object):
 
     def _publish(self, events):
         # Note: If how the JSON payload is created is changed,
-        # update the content-length estimations in `_chunk_events`
+        # update the content-length estimations in `_chunk_events`, and the
+        # max_event_size calculation in `__init__`
         events_json = "[" + ", ".join(events) + "]"
         headers = {
             "Date": _make_http_date(),
@@ -659,19 +672,22 @@ class EventPublisher(object):
 
     def _chunk_events(self, events):
         to_send = []
-        # base content-length is 2 for the `[` and `]`
-        send_size = 2
+        send_size = 0
+
         for event in events:
             # increase estimated content-length by length of message,
             # plus the length of the `, ` used to join the events JSON
-            send_size += len(event) + len(", ")
+            # if there will be more than one event in the list
+            send_size += len(event)
+            if len(to_send) > 0:
+                send_size += len(", ")
 
             # If adding this event would put us over the batch limit,
             # yield the current set of events first
             if send_size >= self.max_content_length:
                 yield to_send
                 to_send = []
-                send_size = 2 + len(event) + len(", ")
+                send_size = len(event)
 
             to_send.append(event)
 
@@ -716,10 +732,48 @@ def process_events(g, timeout=5.0, **kw):
         test_events = []
 
         for msg in msgs:
+            use_test_publisher = False
             if msg.delivery_info["routing_key"] == "event_collector_test":
-                test_events.append(msg.body)
+                use_test_publisher = True
+
+            event_json = msg.body
+
+            # Deserialize the event JSON and look for a truncatable_field key.
+            # If there is one, re-serialize without it
+            truncatable_field = None
+            event_data = json.loads(event_json)
+            if "truncatable_field" in event_data:
+                truncatable_field = event_data.pop("truncatable_field")
+                event_json = json.dumps(event_data)
+
+            # determine the maximum size of an event's JSON
+            if use_test_publisher:
+                max_event_size = test_publisher.max_event_size
             else:
-                events.append(msg.body)
+                max_event_size = publisher.max_event_size
+
+            # if it's going to be too large, truncate it if that's supported
+            if len(event_json) > max_event_size and truncatable_field:
+                # this will over-truncate with unicode characters, but it
+                # shouldn't be important to cut it as close as possible
+                oversize_by = len(event_json) - max_event_size
+                truncated = event_data[truncatable_field][:-oversize_by]
+                event_data[truncatable_field] = truncated
+
+                event_data["is_truncated"] = True
+
+                event_json = json.dumps(event_data)
+
+            # if it's still too large at this point, just drop it
+            if len(event_json) > max_event_size:
+                g.log.warning("Event too large (%s); dropping", len(event_json))
+                g.log.warning("%r", event_json)
+                continue
+
+            if use_test_publisher:
+                test_events.append(event_json)
+            else:
+                events.append(event_json)
 
         to_publish = itertools.chain(
             publisher.publish(events),
