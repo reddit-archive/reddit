@@ -567,8 +567,9 @@ class EventV2(object):
         # add the target_name
         if hasattr(target, "name"):
             self.add("target_name", target.name)
-        # Pass in the author of the target for comments, links, & messages
-        elif isinstance(target, (Comment, Link, Message)):
+
+        # Add info about the target's author for comments, links, & messages
+        if isinstance(target, (Comment, Link, Message)):
             author = target.author_slow
             if target._deleted or author._deleted:
                 self.add("target_author_id", 0)
@@ -576,13 +577,17 @@ class EventV2(object):
             else:
                 self.add("target_author_id", author._id)
                 self.add("target_author_name", author.name)
-            if isinstance(target, Link) and not target.is_self:
-                self.add("target_url", target.url)
-                self.add("target_url_domain", target.link_domain())
-            elif isinstance(target, Comment):
-                link_fullname = Link._fullname_from_id36(to36(target.link_id))
-                self.add("link_id", target.link_id)
-                self.add("link_fullname", link_fullname)
+
+        # Add info about the url being linked to for link posts
+        if isinstance(target, Link) and not target.is_self:
+            self.add("target_url", target.url)
+            self.add("target_url_domain", target.link_domain())
+
+        # Add info about the link being commented on for comments
+        if isinstance(target, Comment):
+            link_fullname = Link._fullname_from_id36(to36(target.link_id))
+            self.add("link_id", target.link_id)
+            self.add("link_fullname", link_fullname)
 
     def get(self, field, obfuscated=False):
         if obfuscated:
