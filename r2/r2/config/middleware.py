@@ -107,8 +107,6 @@ def error_mapper(code, message, environ, global_conf=None, **kw):
             if error_data:
                 environ['extra_error_data'] = error_data
         
-        if environ.get('REDDIT_CNAME'):
-            d['cnameframe'] = 1
         if environ.get('REDDIT_NAME'):
             d['srname'] = environ.get('REDDIT_NAME')
         if environ.get('REDDIT_TAKEDOWN'):

@@ -1361,8 +1361,6 @@ class FrontController(RedditController):
             if c.user_is_loggedin:
                 path += "login/"
             u = UrlParser(path + str(random.random()))
-            u.mk_cname(require_frame=False, subreddit=c.site,
-                       port=request.port)
             return self.redirect(u.unparse())
         # the user is not logged in or there is no cname.
         return FrameBuster(login=False).render()

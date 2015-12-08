@@ -4247,7 +4247,6 @@ class Cnameframe(Templated):
             u = UrlParser(subreddit.path + original_path)
             u.hostname = get_domain(cname = False, subreddit = False)
             u.update_query(**request.GET.copy())
-            u.put_in_frame()
             self.frame_target = u.unparse()
         else:
             self.title = ""

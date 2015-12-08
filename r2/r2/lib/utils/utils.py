@@ -479,8 +479,7 @@ class UrlParser(object):
     path can also be set and queried.
 
     The class also contains reddit-specific functions for setting,
-    checking, and getting a path's subreddit.  It also can convert
-    paths between in-frame and out of frame cname'd forms.
+    checking, and getting a path's subreddit.
     """
 
     __slots__ = ['scheme', 'path', 'params', 'query',
@@ -488,7 +487,6 @@ class UrlParser(object):
                  '_orig_url', '_orig_netloc', '_query_dict']
 
     valid_schemes = ('http', 'https', 'ftp', 'mailto')
-    cname_get = "cnameframe"
 
     def __init__(self, url):
         u = urlparse(url)
@@ -780,51 +778,6 @@ class UrlParser(object):
         elif getattr(self, "port", None):
             return self.hostname + ":" + str(self.port)
         return self.hostname
-
-    def mk_cname(self, require_frame = True, subreddit = None, port = None):
-        """
-        Converts a ?cnameframe url into the corresponding cnamed
-        domain if applicable.  Useful for frame-busting on redirect.
-        """
-
-        # make sure the url is indeed in a frame
-        if require_frame and not self.query_dict.has_key(self.cname_get):
-            return self
-
-        # fetch the subreddit and make sure it
-        subreddit = subreddit or self.get_subreddit()
-        if subreddit and subreddit.domain:
-
-            # no guarantee there was a scheme
-            self.scheme = self.scheme or "http"
-
-            # update the domain (preserving the port)
-            self.hostname = subreddit.domain
-            self.port = getattr(self, 'port', None) or port
-
-            # and remove any cnameframe GET parameters
-            if self.query_dict.has_key(self.cname_get):
-                del self._query_dict[self.cname_get]
-
-            # remove the subreddit reference
-            self.path = lstrips(self.path, subreddit.path)
-            if not self.path.startswith('/'):
-                self.path = '/' + self.path
-
-        return self
-
-    def is_in_frame(self):
-        """
-        Checks if the url is in a frame by determining if
-        cls.cname_get is present.
-        """
-        return self.query_dict.has_key(self.cname_get)
-
-    def put_in_frame(self):
-        """
-        Adds the cls.cname_get get parameter to the query string.
-        """
-        self.update_query(**{self.cname_get:random.random()})
 
     def __repr__(self):
         return "<URL %s>" % repr(self.unparse())

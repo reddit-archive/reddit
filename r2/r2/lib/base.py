@@ -195,10 +195,6 @@ class BaseController(WSGIController):
             if not kw.has_key('port'):
                 kw['port'] = request.port
 
-            # disentangle the cname (for urls that would have
-            # cnameframe=1 in them)
-            u.mk_cname(**kw)
-
             # make sure the extensions agree with the current page
             if preserve_extension and c.extension:
                 u.set_extension(c.extension)
