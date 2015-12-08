@@ -589,6 +589,11 @@ class EventV2(object):
             self.add("link_id", target.link_id)
             self.add("link_fullname", link_fullname)
 
+        # Add info about when target was originally posted for links/comments
+        if isinstance(target, (Comment, Link)):
+            self.add("target_created_ts",
+                _epoch_to_millis(epoch_timestamp(target._date)))
+
     def get(self, field, obfuscated=False):
         if obfuscated:
             return self.obfuscated_data.get(field, None)
