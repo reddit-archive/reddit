@@ -10944,14 +10944,15 @@ body.with-listing-chooser {
 }
 
 .subreddit-report-form {
+    @bg-color: #FBFBFB;
+
     font-family: "Helvetica Neue", "Helvetica", "Arial", sans-serif;
-    background-color: #FAFAFA;
-    border: 1px solid #F8F8F8;
-    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.24);
+    background-color: @bg-color;
+    border: 1px solid darken(@bg-color, 10%);
+    border-radius: 0;
     padding: 10px 15px;
     font-size: 14px;
     line-height: 20px;
-    margin: 5px;
     position: relative;
     
     .reason-prompt {
