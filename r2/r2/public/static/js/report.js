@@ -39,6 +39,16 @@ $(function() {
       return;
     }
 
+    // Automatically focus the radio input when this changes.
+    // known bug: doesn't work if user selects the existing value.
+    $reportForm.on('change', 'select[name=site_reason]', function() {
+      $reportForm.find('.site-reason-radio').focus().prop('checked', true);
+    });
+
+    $reportForm.on('click', 'select[name=site_reason]', function() {
+      $reportForm.find('.site-reason-radio').prop('checked', true);
+    });
+
     function handleResponse(r) {
       $reportForm.html(r);
       var $form = $reportForm.children("form");
