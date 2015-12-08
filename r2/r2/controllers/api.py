@@ -2877,6 +2877,8 @@ class ApiController(RedditController):
             update_wiki_text(sr)
             sr._commit()
 
+            hooks.get_hook("subreddit.new").call(subreddit=sr)
+
             Subreddit.subscribe_defaults(c.user)
             sr.add_subscriber(c.user)
             sr.add_moderator(c.user)
