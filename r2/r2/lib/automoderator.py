@@ -253,7 +253,7 @@ class Ruleset(object):
 
                     # only keep the rule if it had any checks
                     if rule.has_any_checks(targets_only=True):
-                        self.rules.append(Rule(values))
+                        self.rules.append(rule)
 
                 # if both types hit exceptions we should actually error
                 if not rule:
