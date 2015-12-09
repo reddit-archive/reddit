@@ -1024,21 +1024,23 @@ def srnames_from_site(user, site, include_subscriptions=True):
     return srnames
 
 
-def srnames_with_live_promos(user, site, include_subscriptions=True):
-    site_srnames = srnames_from_site(
+def keywords_from_context(
+        user, site,
+        include_subscriptions=True,
+        live_promos_only=True,
+    ):
+
+    keywords = srnames_from_site(
         user, site,
         include_subscriptions,
     )
-    promo_srnames = all_live_promo_srnames()
-    return promo_srnames.intersection(site_srnames)
 
-
-def keywords_from_context(user, site, include_subscriptions=True):
-    keywords = srnames_with_live_promos(
-        user,
-        site,
-        include_subscriptions,
-    )
+    # if the ad was created by selfserve then we know
+    # whether or not there exists an ad for that keyword
+    # and can remove un-targeted keywords accordingly.
+    if live_promos_only:
+        live_srnames = all_live_promo_srnames()
+        keywords = live_srnames.intersection(keywords)
 
     if (not isinstance(site,FakeSubreddit) and
             site._downs > g.live_config["ads_popularity_threshold"]):
