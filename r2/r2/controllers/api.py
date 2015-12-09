@@ -5088,22 +5088,6 @@ class ApiController(RedditController):
     @validatedForm(
         VSrModerator(perms="config"),
         VModhash(),
-        short_name=VLength('short_name', max_length=50, min_length=1),
-        priority=VInt("priority", min=0),
-    )
-    def POST_reorder_subreddit_rule(self, form, jquery, short_name, priority):
-        if not feature.is_enabled("subreddit_rules", subreddit=c.site.name):
-            abort(404)
-        if not SubredditRules.get_rule(c.site, short_name):
-            return
-        SubredditRules.reorder(c.site, short_name, priority)
-        ModAction.create(c.site, c.user, 'editrule', details=short_name)
-        form.refresh()
-
-    @require_oauth2_scope("modconfig")
-    @validatedForm(
-        VSrModerator(perms="config"),
-        VModhash(),
         rule=VSubredditRule("short_name"),
     )
     def POST_remove_subreddit_rule(self, form, jquery, rule):
