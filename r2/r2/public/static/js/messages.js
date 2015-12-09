@@ -48,6 +48,9 @@ r.messages.init = function() {
       success: function(response) {
         r.messages.pollUnread();
       },
+      error: function(response) {
+        $this.parent().removeClass('working');
+      },
     });
   });
 }

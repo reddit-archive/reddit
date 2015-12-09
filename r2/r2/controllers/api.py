@@ -3366,7 +3366,7 @@ class ApiController(RedditController):
     @require_oauth2_scope("privatemessages")
     @noresponse(VUser(),
                 VModhash(),
-                VRatelimit(rate_user=True, prefix="rate_read_all_"))
+                VRatelimit(rate_user=True, prefix="rate_read_all_", fatal=True))
     @api_doc(api_section.messages)
     def POST_read_all_messages(self):
         """Queue up marking all messages for a user as read.
@@ -3375,6 +3375,9 @@ class ApiController(RedditController):
         the request.
         """
         amqp.add_item('mark_all_read', c.user._fullname)
+        # Mark usage in the ratelimiter.
+        VRatelimit.ratelimit(rate_user=True, prefix='rate_read_all_')
+
         return abort(202)
 
     @require_oauth2_scope("report")
