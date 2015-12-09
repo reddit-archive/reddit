@@ -37,6 +37,7 @@ support exists for up to two additional RuleTargets, one for the item's
 author, and another for the parent link (if the original item was a comment).
 """
 
+from collections import namedtuple
 from datetime import datetime
 from hashlib import md5
 import re
@@ -178,6 +179,10 @@ class AutoModeratorRuleTypeError(AutoModeratorSyntaxError):
     pass
 
 
+# used in Ruleset.__init__()
+RuleDefinition = namedtuple("RuleDefinition", ["yaml", "values"])
+
+
 class Ruleset(object):
     """A subreddit's collection of Rules."""
     def __init__(self, yaml_text="", timer=None):
@@ -191,19 +196,30 @@ class Ruleset(object):
         if not yaml_text:
             return
 
-        # force loading all the yaml documents to check for errors
-        try:
-            rule_defs = list(yaml.safe_load_all(yaml_text))
-        except Exception as e:
-            raise ValueError("YAML parsing error: %s" % e)
+        # We want to maintain the original YAML source sections, so we need
+        # to manually split up the YAML by the document delimiter (line
+        # starting with "---") and then try to load each section to see if
+        # it's valid
+        yaml_sections = [section.strip("\r\n")
+            for section in re.split("^---", yaml_text, flags=re.MULTILINE)]
 
-        # drop any sections that aren't dicts (generally just comments)
-        rule_defs = [rule_def for rule_def in rule_defs
-            if isinstance(rule_def, dict)]
+        rule_defs = []
+
+        for section_num, section in enumerate(yaml_sections, 1):
+            try:
+                parsed = yaml.safe_load(section)
+            except Exception as e:
+                raise ValueError(
+                    "YAML parsing error in section %s: %s" % (section_num, e))
+
+            # only keep the section if the parsed result is a dict (otherwise
+            # it's generally just a comment)
+            if isinstance(parsed, dict):
+                rule_defs.append(RuleDefinition(yaml=section, values=parsed))
 
         timer.intermediate("yaml_parsing")
 
-        if any("standard" in rule_def for rule_def in rule_defs):
+        if any("standard" in rule_def.values for rule_def in rule_defs):
             # load standard rules from wiki page
             standard_rules = {}
             try:
@@ -218,10 +234,9 @@ class Ruleset(object):
 
         timer.intermediate("init_standard_rules")
 
-        for values in rule_defs:
-            orig_values = values.copy()
+        for rule_def in rule_defs:
             # use standard rule as a base if they defined one
-            standard_name = values.pop("standard", None)
+            standard_name = rule_def.values.pop("standard", None)
             if standard_name:
                 # error while loading the standards, skip this rule
                 if standard_rules is None:
@@ -233,21 +248,21 @@ class Ruleset(object):
                 if not standard_values:
                     raise AutoModeratorSyntaxError(
                         "Invalid standard: `%s`" % standard_name,
-                        yaml.dump(orig_values),
+                        rule_def.yaml,
                     )
 
                 new_values = standard_values.copy()
-                new_values.update(values)
-                values = new_values
+                new_values.update(rule_def.values)
+                rule_def = rule_def._replace(values=new_values)
 
-            type = values.get("type", "any")
+            type = rule_def.values.get("type", "any")
             if type == "any":
                 # try to create two Rules for comments and links
                 rule = None
                 for type_value in ("comment", "submission"):
-                    values["type"] = type_value
+                    rule_def.values["type"] = type_value
                     try:
-                        rule = Rule(values)
+                        rule = Rule(rule_def.values, rule_def.yaml)
                     except AutoModeratorRuleTypeError as type_error:
                         continue
 
@@ -259,7 +274,7 @@ class Ruleset(object):
                 if not rule:
                     raise type_error
             else:
-                self.rules.append(Rule(values))
+                self.rules.append(Rule(rule_def.values, rule_def.yaml))
 
         timer.intermediate("init_rules")
 
@@ -1183,11 +1198,15 @@ class Rule(object):
         ),
     }
 
-    def __init__(self, values):
+    def __init__(self, values, yaml_source=None):
         values = lowercase_keys_recursively(values)
 
-        self.yaml = yaml.dump(values)
-        self.unique_id = md5(self.yaml).hexdigest()
+        if yaml_source:
+            self.yaml = yaml_source
+        else:
+            self.yaml = yaml.dump(values)
+
+        self.unique_id = md5(self.yaml.encode("utf-8")).hexdigest()
 
         self.checks = set()
         self.actions = set()
