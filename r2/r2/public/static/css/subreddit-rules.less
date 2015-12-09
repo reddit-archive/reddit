@@ -31,10 +31,6 @@
         margin-bottom: 5px;
         margin-left: 5px;
 
-        &:last-child {
-            margin-bottom: 0;
-        }
-
         .mod-action-icon {
             padding: 5px 10px;
         }
@@ -43,12 +39,8 @@
 
 .subreddit-rule-form .form-buttons {
     .display-flex();
-    .flex-direction(column-reverse);
-
-    > button {
-        margin-bottom: 10px;
-        margin-top: 10px;
-    }
+    .flex-direction(column);
+    .justify-content(flex-end);
 }
 
 .subreddit-rule-form {
