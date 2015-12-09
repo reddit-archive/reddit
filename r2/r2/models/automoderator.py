@@ -47,7 +47,7 @@ class PerformedRulesByThing(tdb_cassandra.View):
     @classmethod
     def mark_performed(cls, thing, rule):
         rowkey = cls._rowkey(thing)
-        cls._set_values(rowkey, {rule.unique_id: rule.yaml})
+        cls._set_values(rowkey, {rule.unique_id: ''})
 
     @classmethod
     def get_already_performed(cls, thing):
