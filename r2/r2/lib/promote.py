@@ -1153,6 +1153,8 @@ def get_total_run(thing):
         campaigns = PromoCampaign._by_link(thing._id)
     elif isinstance(thing, PromoCampaign):
         campaigns = [thing]
+    else:
+        campaigns = []
 
     earliest = None
     latest = None

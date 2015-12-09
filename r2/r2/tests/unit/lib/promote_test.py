@@ -1,9 +1,12 @@
+import datetime
 import unittest
 
-from mock import MagicMock, patch
+from mock import MagicMock, Mock, patch
 
 from r2.lib.promote import (
     get_nsfw_collections_srnames,
+    get_refund_amount,
+    refund_campaign,
     srnames_from_site,
 )
 from r2.models import (
@@ -11,6 +14,7 @@ from r2.models import (
     Collection,
     FakeAccount,
     Frontpage,
+    PromoCampaign,
     Subreddit,
     MultiReddit,
 )
@@ -124,4 +128,97 @@ class TestSRNamesFromSite(unittest.TestCase):
 
         self.assertEqual(frontpage_srnames, {Frontpage.name, nice_srname})
         self.assertTrue(len(frontpage_srnames & {questionably_nsfw}) == 0)
+
+
+class TestPromoteRefunds(unittest.TestCase):
+    def setUp(self):
+        self.link = Mock()
+        self.campaign = MagicMock(spec=PromoCampaign)
+        self.campaign._id = 1
+        self.campaign.owner_id = 1
+        self.campaign.trans_id = 1
+        self.campaign.start_date = datetime.datetime.now()
+        self.campaign.end_date = (datetime.datetime.now() +
+            datetime.timedelta(days=1))
+        self.campaign.total_budget_dollars = 200.
+        self.refund_amount = 100.
+        self.billable_amount = 100.
+        self.billable_impressions = 1000
+
+    @patch('r2.lib.promote.authorize.refund_transaction')
+    @patch('r2.lib.promote.PromotionLog.add')
+    @patch('r2.lib.promote.queries.unset_underdelivered_campaigns')
+    @patch('r2.lib.promote.emailer.refunded_promo')
+    def test_refund_campaign_success(self, emailer_refunded_promo,
+            queries_unset, promotion_log_add, refund_transaction):
+        """Assert return value and that correct calls are made on success."""
+        refund_transaction.return_value = (True, None)
+
+        success = refund_campaign(
+            link=self.link,
+            camp=self.campaign,
+            refund_amount=self.refund_amount,
+            billable_amount=self.billable_amount,
+            billable_impressions=self.billable_impressions,
+        )
+
+        self.assertTrue(refund_transaction.called)
+        self.assertTrue(promotion_log_add.called)
+        queries_unset.assert_called_once_with(self.campaign)
+        emailer_refunded_promo.assert_called_once_with(self.link)
+        self.assertTrue(success)
+
+    @patch('r2.lib.promote.authorize.refund_transaction')
+    @patch('r2.lib.promote.PromotionLog.add')
+    def test_refund_campaign_failed(self, promotion_log_add,
+            refund_transaction):
+        """Assert return value and that correct calls are made on failure."""
+        refund_transaction.return_value = (False, None)
+
+        success = refund_campaign(
+            link=self.link,
+            camp=self.campaign,
+            refund_amount=self.refund_amount,
+            billable_amount=self.billable_amount,
+            billable_impressions=self.billable_impressions,
+        )
+
+        self.assertTrue(refund_transaction.called)
+        self.assertTrue(promotion_log_add.called)
+        self.assertFalse(success)
+
+    def test_get_refund_amount_when_zero(self):
+        """
+        Assert that correct value is returned when existing refund_amount is
+        zero.
+        """
+        campaign = Mock(spec=('total_budget_dollars',))
+        campaign.total_budget_dollars = 200.
+        refund_amount = get_refund_amount(campaign, self.billable_amount)
+        self.assertEquals(refund_amount,
+            campaign.total_budget_dollars - self.billable_amount)
+
+    def test_get_refund_amount_rounding(self):
+        """Assert that inputs are correctly rounded up to the nearest penny."""
+        # If campaign.refund_amount is less than a fraction of a penny,
+        # the refund_amount should be campaign.total_budget_dollars.
+        self.campaign.refund_amount = 0.00000001
+        refund_amount = get_refund_amount(self.campaign, self.billable_amount)
+        self.assertEquals(refund_amount, self.billable_amount)
+
+        self.campaign.refund_amount = 0.00999999
+        refund_amount = get_refund_amount(self.campaign, self.billable_amount)
+        self.assertEquals(refund_amount, self.billable_amount)
+
+        # If campaign.refund_amount is just slightly more than a penny,
+        # the refund amount should be campaign.total_budget_dollars - 0.01.
+        self.campaign.refund_amount = 0.01000001
+        refund_amount = get_refund_amount(self.campaign, self.billable_amount)
+        self.assertEquals(refund_amount, self.billable_amount - 0.01)
+
+        # Even if campaign.refund_amount is just barely short of two pennies,
+        # the refund amount should be campaign.total_budget_dollars - 0.01.
+        self.campaign.refund_amount = 0.01999999
+        refund_amount = get_refund_amount(self.campaign, self.billable_amount)
+        self.assertEquals(refund_amount, self.billable_amount - 0.01)
 
