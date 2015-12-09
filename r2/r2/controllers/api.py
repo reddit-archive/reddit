@@ -5032,7 +5032,6 @@ class ApiController(RedditController):
         short_name=VAvailableSubredditRuleName("short_name"),
         description=VMarkdownLength("description", max_length=500),
     )
-    @api_doc(api_section.subreddits, uses_site=True)
     def POST_add_subreddit_rule(self, form, jquery, short_name, description):
         if not feature.is_enabled("subreddit_rules", subreddit=c.site.name):
             abort(404)
@@ -5059,7 +5058,6 @@ class ApiController(RedditController):
         short_name=VAvailableSubredditRuleName("short_name"),
         description=VMarkdownLength('description', max_length=500),
     )
-    @api_doc(api_section.subreddits, uses_site=True)
     def POST_update_subreddit_rule(self, form, jquery, rule,
             short_name, description):
         if not feature.is_enabled("subreddit_rules", subreddit=c.site.name):
@@ -5093,7 +5091,6 @@ class ApiController(RedditController):
         short_name=VLength('short_name', max_length=50, min_length=1),
         priority=VInt("priority", min=0),
     )
-    @api_doc(api_section.subreddits, uses_site=True)
     def POST_reorder_subreddit_rule(self, form, jquery, short_name, priority):
         if not feature.is_enabled("subreddit_rules", subreddit=c.site.name):
             abort(404)
@@ -5109,7 +5106,6 @@ class ApiController(RedditController):
         VModhash(),
         rule=VSubredditRule("short_name"),
     )
-    @api_doc(api_section.subreddits, uses_site=True)
     def POST_remove_subreddit_rule(self, form, jquery, rule):
         if not feature.is_enabled("subreddit_rules", subreddit=c.site.name):
             abort(404)
