@@ -966,7 +966,7 @@ def all_live_promo_srnames():
     )
     return set(srnames)
 
-@memoize('get_nsfw_collections_srnames', time=(60*60))
+@memoize('get_nsfw_collections_srnames', time=(60*60), stale=True)
 def get_nsfw_collections_srnames():
     all_collections = Collection.get_all()
     nsfw_collections = [col for col in all_collections if col.over_18]
