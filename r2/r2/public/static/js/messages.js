@@ -45,7 +45,9 @@ r.messages.init = function() {
       type: 'POST',
       url: '/api/read_all_messages',
       data: {},
-      success: r.messages.pollUnread,
+      success: function(response) {
+        r.messages.pollUnread();
+      },
     });
   });
 }
