@@ -152,7 +152,6 @@ def make_map(config):
        partial_connect(mc, path_prefix='/user/:username/m/:multipath'),
        partial_connect(mc, path_prefix='/me/m/:multipath', my_multi=True),
        partial_connect(mc, path_prefix='/me/f/:filtername'),
-       partial_connect(mc, path_prefix='/m/:multipath', sr_multi=True),
     )
 
     for connect in multi_prefixes:
@@ -416,7 +415,6 @@ def make_map(config):
 
     mc("/api/multi/mine", controller="multiapi", action="my_multis")
     mc("/api/multi/user/:username", controller="multiapi", action="list_multis")
-    mc("/api/multi/r/:srname", controller="multiapi", action="list_sr_multis")
     mc("/api/multi/copy", controller="multiapi", action="multi_copy")
     mc("/api/multi/rename", controller="multiapi", action="multi_rename")
     mc("/api/multi/*multipath/r/:srname", controller="multiapi", action="multi_subreddit")

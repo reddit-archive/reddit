@@ -2957,6 +2957,8 @@ multi_name_rx = re.compile(r"\A[A-Za-z0-9][A-Za-z0-9_]{1,20}\Z")
 multi_name_chars_rx = re.compile(r"[^A-Za-z0-9_]")
 
 class VMultiPath(Validator):
+    """Validates a multireddit path. Returns a path info dictionary.
+    """
     def __init__(self, param, kinds=None, required=True, **kw):
         Validator.__init__(self, param, **kw)
         self.required = required
@@ -2975,13 +2977,10 @@ class VMultiPath(Validator):
         try:
             require(path)
             path = self.normalize(path)
-            require(path.startswith('/user/') or path.startswith('/r/'))
+            require(path.startswith('/user/'))
             prefix, owner, kind, name = require_split(path, 5, sep='/')[1:]
             require(kind in self.kinds)
-            if prefix == 'r':
-                owner = owner if Subreddit.is_valid_name(owner) else None
-            else:
-                owner = chkuser(owner)
+            owner = chkuser(owner)
             require(owner)
         except RequirementException:
             self.set_error('BAD_MULTI_PATH', code=400)
@@ -3018,6 +3017,8 @@ class VMultiPath(Validator):
 
 
 class VMultiByPath(Validator):
+    """Validates a multireddit path.  Returns a LabeledMulti.
+    """
     def __init__(self, param, require_view=True, require_edit=False, kinds=None):
         Validator.__init__(self, param)
         self.require_view = require_view
@@ -3026,6 +3027,8 @@ class VMultiByPath(Validator):
 
     def run(self, path):
         path = VMultiPath.normalize(path)
+        if not path.startswith('/user/'):
+            return self.set_error('MULTI_NOT_FOUND', code=404)
 
         name = path.split('/')[-1]
         if not multi_name_rx.match(name):

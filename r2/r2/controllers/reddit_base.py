@@ -430,16 +430,6 @@ def set_multireddit():
             multiurl = "/user/" + username + "/m/" + fullpath
             multi_ids = ["/user/%s/m/%s" % (username, multipath)
                         for multipath in multipaths]
-        elif 'sr_multi' in routes_dict:
-            if isinstance(c.site, FakeSubreddit):
-                abort(404)
-            if (not is_api() and
-                     not feature.is_enabled('multireddit_customizations')):
-                abort(404)
-
-            multiurl = "/r/" + c.site.name.lower() + "/m/" + fullpath
-            multi_ids = ["/r/%s/m/%s" % (c.site.name.lower(), multipath)
-                        for multipath in multipaths]
         elif "m" in request.GET and is_api():
             # Only supported via API as we don't have a valid non-query
             # parameter equivalent for cross-user multis, which means
