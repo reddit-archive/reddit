@@ -151,6 +151,52 @@ class EventQueue(object):
         self.save_event(event)
 
     @squelch_exceptions
+    @sampled("events_collector_comment_sample_rate")
+    def comment_event(self, new_comment, request=None, context=None):
+        """Create a 'comment' event for event-collector.
+
+        new_comment: An r2.models.Comment object
+        request, context: Should be pylons.request & pylons.c respectively
+        """
+        from r2.models import Comment, Link
+
+        event = Event(
+            topic="comment_events",
+            event_type="ss.comment",
+            time=new_comment._date,
+            request=request,
+            context=context,
+            truncatable_field="comment_body",
+        )
+
+        event.add("comment_id", new_comment._id)
+        event.add("comment_fullname", new_comment._fullname)
+
+        event.add("comment_body", new_comment.body)
+
+        post = Link._byID(new_comment.link_id)
+        event.add("post_id", post._id)
+        event.add("post_fullname", post._fullname)
+        event.add("post_created_ts",
+            _epoch_to_millis(epoch_timestamp(post._date)))
+
+        if new_comment.parent_id:
+            parent = Comment._byID(new_comment.parent_id)
+        else:
+            # If this is a top-level comment, parent is the same as the post
+            parent = post
+        event.add("parent_id", parent._id)
+        event.add("parent_fullname", parent._fullname)
+        event.add("parent_created_ts",
+            _epoch_to_millis(epoch_timestamp(parent._date)))
+
+        event.add("user_neutered", new_comment.author_slow._spam)
+
+        event.add_subreddit_fields(new_comment.subreddit_slow)
+
+        self.save_event(event)
+
+    @squelch_exceptions
     @sampled("events_collector_poison_sample_rate")
     def cache_poisoning_event(self, poison_info, request=None, context=None):
         """Create a 'cache_poisoning_server' event for event-collector
