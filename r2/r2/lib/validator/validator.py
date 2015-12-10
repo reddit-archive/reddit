@@ -2000,12 +2000,13 @@ class VMenu(Validator):
 
 
 class VRatelimit(Validator):
-    def __init__(self, rate_user = False, rate_ip = False,
-                 prefix = 'rate_', error = errors.RATELIMIT, *a, **kw):
+    def __init__(self, rate_user=False, rate_ip=False, prefix='rate_',
+                 error=errors.RATELIMIT, fatal=False, *a, **kw):
         self.rate_user = rate_user
         self.rate_ip = rate_ip
         self.prefix = prefix
         self.error = error
+        self.fatal = fatal
         self.seconds = None
         Validator.__init__(self, *a, **kw)
 
@@ -2048,9 +2049,13 @@ class VRatelimit(Validator):
                 self.seconds = delta.total_seconds()
                 if self.seconds < 3:  # Don't ratelimit within three seconds
                     return
+                if self.fatal:
+                    abort(429)
                 self.set_error(errors.RATELIMIT, {'time': time},
                                field='ratelimit', code=429)
             else:
+                if self.fatal:
+                    abort(429)
                 self.set_error(self.error)
 
     @classmethod
