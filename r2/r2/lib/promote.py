@@ -957,7 +957,7 @@ def refund_campaign(link, camp, billable_amount, billable_impressions):
 PromoTuple = namedtuple('PromoTuple', ['link', 'weight', 'campaign'])
 
 
-@memoize('all_live_promo_srnames')
+@memoize('all_live_promo_srnames', stale=True)
 def all_live_promo_srnames():
     now = promo_datetime_now()
     srnames = itertools.chain.from_iterable(
