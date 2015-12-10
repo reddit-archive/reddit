@@ -571,30 +571,26 @@
     <div class="group frequency-cap-inputs">
       <div>
         <div class="form-group">
-          <span class="label">${_("cap")}</span>
+          <span class="label">${_("cap per 24 hours")}</span>
           <div class="input-group">
             <input id="frequency_cap" name="frequency_cap" size="7" type="text"
                    class="rounded style-input"
-                    style="width:auto"/>
-
+                   style="width:auto"
+                   onkeyup="r.sponsored.on_frequency_cap_change()"
+                   data-frequency_cap_min="${thing.frequency_cap_min}"/>
           </div>
-        </div>
-      </div>
-      <div>
-        <div class="form-group">
-          <span class="label">${_("duration")}</span>
-          <div class="input-group">
-            <input id="frequency_cap_duration" name="frequency_cap_duration"
-                   size="7" type="text" class="rounded styled-input"/>
-          </div>
-          <span class="frequency-cap-dur-unit">hours</span>
         </div>
       </div>
     </div>
-    <div class="frequency-cap-example">
-      ${_('Example: Display this flight 3 times per 24 hours.')}
+    <div class="frequency-cap-message example">
+      ${_('Example: Display this flight no more than %i times per user per 24 hours.' %
+          g.frequency_cap_min)}
+    </div>
+    <div class="frequency-cap-message error">
+      ${_("frequency must be at least %i per 24 hours" % thing.frequency_cap_min)}
     </div>
     ${error_field("INVALID_FREQUENCY_CAP", "frequency_cap", "div")}
+    ${error_field("FREQUENCY_CAP_TOO_LOW", "frequency_cap", "div")}
   </%def>
 
   %if c.user_is_sponsor:

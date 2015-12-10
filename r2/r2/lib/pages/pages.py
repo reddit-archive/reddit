@@ -4617,6 +4617,8 @@ class PromoteLinkEdit(PromoteLinkBase):
         self.infobar = RedditInfoBar(message=message)
         self.price_dict = PromotionPrices.get_price_dict(self.author)
 
+        self.frequency_cap_min = g.frequency_cap_min
+
         self.ads_auction_enabled = feature.is_enabled('ads_auction')
 
 

@@ -729,6 +729,7 @@ var exports = r.sponsored = {
         if (prevChecked != currentlyChecked) {
             $('.frequency-cap-field').toggle('slow');
             this.frequency_capped = currentlyChecked;
+            this.render();
         }
     },
 
@@ -1373,6 +1374,10 @@ var exports = r.sponsored = {
         $bid.trigger("change")
     },
 
+    on_frequency_cap_change: function() {
+        this.render();
+    },
+
     validateDeviceAndVersion: function(os, generalData, osData) {
       var deviceError = false;
       var versionError = false;
@@ -1557,6 +1562,25 @@ var exports = r.sponsored = {
             this.enable_geotargeting();
         } else {
             this.disable_geotargeting();
+        }
+
+        var $frequencyCapped = $form.find('[name=frequency_capped]');
+        if (this.frequency_capped === null) {
+            this.frequency_capped = !!$frequencyCapped.val();
+        }
+        if (this.frequency_capped) {
+            var $frequencyCapField = $form.find('#frequency_cap'),
+                frequencyCapValue = $frequencyCapField.val(),
+                frequencyCapMin = $frequencyCapField.data('frequency_cap_min'),
+                $frequencyCapError = $('.frequency-cap-field').find('.error');
+
+            if (frequencyCapValue < frequencyCapMin || _.isNaN(parseInt(frequencyCapValue, 10))) {
+                $frequencyCapError.show();
+                this.disable_form($form);
+            } else {
+                $frequencyCapError.hide();
+                this.enable_form($form);
+            }
         }
     },
 
@@ -2219,7 +2243,6 @@ function create_campaign() {
                 .find('select[name="metro"]').hide().end()
                 .find('input[name="frequency_cap"]').val('').end()
                 .find('input[name="startdate"]').prop('disabled', false).end()
-                .find('input[name="frequency_cap_duration"]').val('').end()
                 .find('#frequency_capped_false').prop('checked', 'checked').end()
                 .find('.frequency-cap-field').hide().end()
                 .slideDown();

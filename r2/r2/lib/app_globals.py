@@ -218,6 +218,8 @@ class Globals(object):
             'default_bid_pennies',
             'min_bid_pennies',
             'max_bid_pennies',
+            'frequency_cap_min',
+            'eu_cookie_max_attempts',
         ],
 
         ConfigValue.float: [

@@ -165,6 +165,7 @@ error_list = dict((
         ('NO_CHANGE_KIND', _("can't change post type")),
         ('INVALID_LOCATION', _("invalid location")),
         ('INVALID_FREQUENCY_CAP', _("invalid values for frequency cap")),
+        ('FREQUENCY_CAP_TOO_LOW', _('frequency cap must be at least %(min)d')),
         ('BANNED_FROM_SUBREDDIT', _('that user is banned from the subreddit')),
         ('IN_TIMEOUT', _("You can't do that while suspended.")),
         ('GOLD_REQUIRED', _('you must have an active reddit gold subscription to do that')),

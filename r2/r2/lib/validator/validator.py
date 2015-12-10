@@ -2324,19 +2324,22 @@ class VList(Validator):
 
 
 class VFrequencyCap(Validator):
-    def run(self, frequency_capped='false', frequency_cap=None,
-            frequency_cap_duration=None):
+    def run(self, frequency_capped='false', frequency_cap=None):
 
         if frequency_capped == 'true':
-            if frequency_cap and frequency_cap_duration:
+            if frequency_cap and int(frequency_cap) >= g.frequency_cap_min:
                 try:
-                    return (int(frequency_cap), int(frequency_cap_duration),)
+                    return frequency_cap
                 except (ValueError, TypeError):
                     self.set_error(errors.INVALID_FREQUENCY_CAP, code=400)
             else:
-                self.set_error(errors.INVALID_FREQUENCY_CAP, code=400)
+                self.set_error(
+                    errors.FREQUENCY_CAP_TOO_LOW,
+                    {'min': g.frequency_cap_min},
+                    code=400
+                )
         else:
-            return (None, None)
+            return None
 
 
 class VPriority(Validator):

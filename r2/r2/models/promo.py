@@ -366,7 +366,6 @@ class PromoCampaign(Thing):
         android_device_names=None,
         android_version_names=None,
         frequency_cap=None,
-        frequency_cap_duration=None,
         has_served=False,
         paused=False,
         total_budget_pennies=0,
@@ -465,7 +464,7 @@ class PromoCampaign(Thing):
 
     @classmethod
     def create(cls, link, target, start_date, end_date,
-               frequency_cap, frequency_cap_duration, priority, location,
+               frequency_cap, priority, location,
                platform, mobile_os, ios_devices, ios_version_range,
                android_devices, android_version_range, total_budget_pennies,
                cost_basis, bid_pennies):
@@ -480,7 +479,6 @@ class PromoCampaign(Thing):
             bid_pennies=bid_pennies,
         )
         pc.frequency_cap = frequency_cap
-        pc.frequency_cap_duration = frequency_cap_duration
         pc.priority = priority
         pc.location = location
         pc.target = target
