@@ -59,3 +59,23 @@ def get_num_children(list comments, dict tree):
             stack.extend(missing)
 
     return num_children
+
+
+def get_tree_details(dict tree):
+    cdef:
+        list cids = []
+        dict depth = {}
+        dict parents = {}
+        list child_ids
+
+    for parent_id in sorted(tree):
+        child_ids = tree[parent_id]
+
+        cids.extend(child_ids)
+
+        parents.update({child_id: parent_id for child_id in child_ids})
+
+        child_depth = depth.get(parent_id, -1) + 1
+        depth.update({child_id: child_depth for child_id in child_ids})
+
+    return cids, depth, parents
