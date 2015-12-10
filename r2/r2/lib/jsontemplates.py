@@ -526,19 +526,26 @@ class IdentityJsonTemplate(ThingJsonTemplate):
         is_suspended="in_timeout",
         suspension_expiration_utc="timeout_expiration_utc",
     )
+    _public_attrs = {
+        "name",
+        "is_suspended",
+    }
 
     def raw_data(self, thing):
+        viewable = True
         attrs = self._data_attrs_.copy()
         if c.user_is_loggedin and thing._id == c.user._id:
             attrs.update(self._private_data_attrs)
         # Add a public indication when a user is permanently in timeout.
         elif (thing.in_timeout and thing.timeout_expiration is None):
             attrs.update({"is_suspended": "in_timeout"})
+            viewable = False
 
         if thing.pref_hide_from_robots:
             response.headers['X-Robots-Tag'] = 'noindex, nofollow'
 
-        data = {k: self.thing_attr(thing, v) for k, v in attrs.iteritems()}
+        data = {k: self.thing_attr(thing, v) for k, v in attrs.iteritems()
+                if viewable or k in self._public_attrs}
         try:
             self.add_message_data(data, thing)
         except OAuth2Scope.InsufficientScopeError:
