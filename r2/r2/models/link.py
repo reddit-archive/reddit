@@ -1227,7 +1227,7 @@ class Comment(Thing, Printable):
                 else:
                     kw['parents'] = parent._id36
 
-        c = Comment(_ups=1,
+        comment = Comment(_ups=1,
                     body=body,
                     link_id=link._id,
                     sr_id=link.sr_id,
@@ -1238,16 +1238,16 @@ class Comment(Thing, Printable):
         # whitelist promoters commenting on their own promoted links
         from r2.lib import promote
         if promote.is_promo(link) and link.author_id == author._id:
-            c._spam = False
+            comment._spam = False
         else:
-            c._spam = author._spam
+            comment._spam = author._spam
 
         if author._spam:
             g.stats.simple_event('spam.autoremove.comment')
 
         # these props aren't relations
         if parent:
-            c.parent_id = parent._id
+            comment.parent_id = parent._id
 
         link._incr('num_comments', 1)
 
@@ -1259,18 +1259,18 @@ class Comment(Thing, Printable):
             to = Account._byID(link.author_id, True)
             name = 'selfreply'
 
-        c._commit()
+        comment._commit()
 
-        cast_vote(author, c, Vote.DIRECTIONS.up)
+        cast_vote(author, comment, Vote.DIRECTIONS.up)
 
         if link.num_comments < 20 or link.num_comments % 10 == 0:
             # link's number of comments changed so re-index it, but don't bother
             # re-indexing so often when it gets many comments
             link.update_search_index(boost_only=True)
 
-        CommentsByAccount.add_comment(author, c)
+        CommentsByAccount.add_comment(author, comment)
         SubredditParticipationByAccount.mark_participated(
-            author, c.subreddit_slow)
+            author, comment.subreddit_slow)
         author.last_comment_time = int(epoch_timestamp(datetime.now(g.tz)))
         author._commit()
 
@@ -1283,29 +1283,29 @@ class Comment(Thing, Printable):
                 return True
             # don't send the message if spam
             # don't send the message if the recipient has blocked the author
-            if c._spam or author._id in to.enemies:
+            if comment._spam or author._id in to.enemies:
                 return False
             return True
 
         inbox_rel = None
         if to and should_send():
             # Record the inbox relation and give the user an orangered
-            inbox_rel = Inbox._add(to, c, name, orangered=True)
+            inbox_rel = Inbox._add(to, comment, name, orangered=True)
 
             if to.pref_email_messages:
                 data = {
                     'to': to._id36,
                     'from': '/u/%s' % author.name,
-                    'comment': c._fullname,
-                    'permalink': c.make_permalink_slow(force_domain=True),
+                    'comment': comment._fullname,
+                    'permalink': comment.make_permalink_slow(force_domain=True),
                 }
                 data = json.dumps(data)
                 TryLater.schedule('message_notification_email', data,
                                   NOTIFICATION_EMAIL_DELAY)
 
-        hooks.get_hook('comment.new').call(comment=c)
+        hooks.get_hook('comment.new').call(comment=comment)
 
-        return (c, inbox_rel)
+        return (comment, inbox_rel)
 
     def _save(self, user, category=None):
         CommentSavesByAccount._save(user, self, category)
