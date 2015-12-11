@@ -1636,6 +1636,9 @@ class ApiController(RedditController):
         if not isinstance(thing, Link):
             return
 
+        if thing._deleted or thing._spam:
+            abort(400, "Can't sticky a removed or deleted post")
+
         sr = thing.subreddit_slow
 
         if state:

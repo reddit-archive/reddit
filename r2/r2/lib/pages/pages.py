@@ -5290,6 +5290,7 @@ class LinkCommentsSettings(Templated):
             (c.user_is_admin or
                 self.sr.is_moderator_with_perms(c.user, "posts"))
         )
+        self.can_sticky = self.can_edit and not (link._deleted or link._spam)
         self.sort = sort
         self.suggested_sort = suggested_sort
 
