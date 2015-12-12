@@ -1368,10 +1368,10 @@ var exports = r.sponsored = {
         var $form = $("#campaign"),
             cpm = this.get_cpm($form),
             impressions = parseInt($form.find('*[name="impressions"]').val().replace(/,/g, "") || 0),
-            bid = this.calc_bid(impressions, cpm),
-            $bid = $form.find('*[name="bid"]')
-        $bid.val(bid)
-        $bid.trigger("change")
+            totalBudgetDollars = this.calc_budget_dollars_from_impressions(impressions, cpm),
+            $totalBudgetDollars = $form.find('*[name="total_budget_dollars"]')
+        $totalBudgetDollars.val(totalBudgetDollars)
+        $totalBudgetDollars.trigger("change")
     },
 
     on_frequency_cap_change: function() {
@@ -1775,7 +1775,7 @@ var exports = r.sponsored = {
         return Math.floor(bid / cpm_pennies * 1000 * 100);
     },
 
-    calc_bid: function(impressions, cpm_pennies) {
+    calc_budget_dollars_from_impressions: function(impressions, cpm_pennies) {
         return (Math.floor(impressions * cpm_pennies / 1000) / 100).toFixed(2)
     },
 
