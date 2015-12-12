@@ -442,14 +442,14 @@ class Link(Thing, Printable):
         # include that in the path
         if self.promoted is not None:
             if force_domain:
-                permalink_domain = get_domain(cname=False, subreddit=False)
+                permalink_domain = get_domain(subreddit=False)
                 res = "%s://%s/%s" % (g.default_scheme, permalink_domain, p)
             else:
                 res = "/%s" % p
         elif not force_domain:
             res = "/r/%s/%s" % (sr.name, p)
         elif sr != c.site or force_domain:
-            permalink_domain = get_domain(cname=False, subreddit=False)
+            permalink_domain = get_domain(subreddit=False)
             res = "%s://%s/r/%s/%s" % (g.default_scheme, permalink_domain,
                                        sr.name, p)
         else:
@@ -2059,7 +2059,7 @@ class Message(Thing, Printable):
         from r2.lib.template_helpers import get_domain
         p = self.permalink
         if force_domain:
-            permalink_domain = get_domain(cname=False, subreddit=False)
+            permalink_domain = get_domain(subreddit=False)
             res = "%s://%s%s" % (g.default_scheme, permalink_domain, p)
         else:
             res = p

@@ -48,7 +48,7 @@
           </td><td>
       %endif
       <% 
-         domain = get_domain(cname = False, subreddit = False)
+         domain = get_domain(subreddit=False)
        %>
       %if getattr(thing, 'selftext', None):
         %if not thing.expunged:

@@ -4257,7 +4257,7 @@ class Cnameframe(Templated):
         if sub_domain and subreddit and original_path:
             self.title = "%s - %s" % (subreddit.title, sub_domain)
             u = UrlParser(subreddit.path + original_path)
-            u.hostname = get_domain(cname = False, subreddit = False)
+            u.hostname = get_domain(subreddit=False)
             u.update_query(**request.GET.copy())
             self.frame_target = u.unparse()
         else:

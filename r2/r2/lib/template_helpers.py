@@ -195,9 +195,9 @@ def js_config(extra_config=None):
         'store_visits': gold and c.user.pref_store_visits,
 
         # current domain
-        "cur_domain": get_domain(cname=False, subreddit=False, no_www=True),
+        "cur_domain": get_domain(subreddit=False, no_www=True),
         # where do ajax requests go?
-        "ajax_domain": get_domain(cname=False, subreddit=False),
+        "ajax_domain": get_domain(subreddit=False),
         "stats_domain": g.stats_domain or '',
         "stats_sample_rate": g.stats_sample_rate or 0,
         "extension": c.extension,
@@ -402,12 +402,10 @@ def get_domain(cname=False, subreddit=True, no_www=False):
        behavior is to prepend "www." to the front of it (for akamai).
        This flag will optionally disable it.
 
-     * cname: whether to respect the value of c.cname and return
-       c.site.domain rather than g.domain as the host name.
+     * cname: deprecated.
 
-     * subreddit: if a cname is not used in the resulting path, flags
-       whether or not to append to the domain the subreddit path (sans
-       the trailing path).
+     * subreddit: flags whether or not to append to the domain the
+       subreddit path (without the trailing path).
 
     """
     # locally cache these lookups as this gets run in a loop in add_props
@@ -498,8 +496,7 @@ def add_sr(
         u.path_add_subreddit(c.site)
 
     if not u.hostname or force_hostname:
-        u.hostname = get_domain(cname = False,
-                                subreddit = False)
+        u.hostname = get_domain(subreddit=False)
 
     if (c.secure and u.is_reddit_url()) or force_https:
         u.scheme = "https"

@@ -88,8 +88,7 @@ class EmbedController(RedditController):
 
     def GET_blog(self):
         return self.redirect("https://blog.%s/" %
-                             get_domain(cname = False, subreddit = False,
-                                        no_www = True))
+                             get_domain(subreddit=False, no_www=True))
 
     def GET_faq(self):
         if c.default_sr:

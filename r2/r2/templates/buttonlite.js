@@ -27,7 +27,7 @@
    from r2.lib.strings import Score
  %>
 
-<%def name="submiturl(url, title='')">${("%s://%s/submit" % (g.default_scheme, get_domain(cname = False, subreddit = True))) + query_string(dict(url=url, title=title))}</%def>
+<%def name="submiturl(url, title='')">${("%s://%s/submit" % (g.default_scheme, get_domain(subreddit=True))) + query_string(dict(url=url, title=title))}</%def>
 
 <% 
     if thing._fullname:

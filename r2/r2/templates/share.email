@@ -25,7 +25,7 @@
   from r2.lib.filters import unsafe
 %>
 
-${thing.username} from ${g.default_scheme}://${get_domain(cname = False, subreddit = False)}/ has shared a link with you.
+${thing.username} from ${g.default_scheme}://${get_domain(subreddit=False)}/ has shared a link with you.
 
 ${unsafe(thing.body)}
 

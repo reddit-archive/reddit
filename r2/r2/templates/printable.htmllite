@@ -79,7 +79,7 @@ ${self.Child()}
     <%
        from r2.models import FakeSubreddit
        url = ("%s://%s/static/button/button4.html?t=4&id=%s&sr=%s" %
-               (g.default_scheme, get_domain(cname = False, subreddit = False), thing._fullname,
+               (g.default_scheme, get_domain(subreddit=False), thing._fullname,
                c.site.name if not isinstance(c.site, FakeSubreddit) else ""))
        if c.bgcolor:
           url += "&bgcolor=%s&bordercolor=%s" % (c.bgcolor, c.bgcolor)
