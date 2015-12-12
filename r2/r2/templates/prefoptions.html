@@ -102,7 +102,7 @@
        action = "/post/options" 
    else:
        action = "/post/unlogged_options" 
-   action = add_sr(action, sr_path = False, nocname=True)
+   action = add_sr(action, sr_path=False)
  %>
 <form action="${action}" method="post" class="pretty-form short-text">
   <input type="hidden" name="uh" value="${c.modhash}" />

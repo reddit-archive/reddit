@@ -33,7 +33,7 @@
   base = g.https_endpoint
 %>
 <form method="post"
-      action="${add_sr(base + '/post/login', nocname=True)}"
+      action="${add_sr(base + '/post/login')}"
       id="login_${op}"
       class="login-form login-form-side">
   <input type="hidden" name="op" value="${op}" />

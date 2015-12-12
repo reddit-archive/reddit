@@ -470,13 +470,10 @@ def add_sr(
      * sr_path: if a cname is not used for the domain, updates the
        path to include c.site.path.
 
-     * nocname: when updating the hostname, overrides the value of
-       c.cname to set the hostname to g.domain.  The default behavior
-       is to set the hostname consistent with c.cname.
+     * nocname: deprecated.
 
      * force_hostname: if True, force the url's hostname to be updated
-       even if it is already set in the path, and subject to the
-       c.cname/nocname combination.  If false, the path will still
+       even if it is already set in the path. If false, the path will still
        have its domain updated if no hostname is specified in the url.
 
      * retain_extension: if True, sets the extention according to
@@ -485,7 +482,8 @@ def add_sr(
      * force_https: force the URL scheme to https
 
     For caching purposes: note that this function uses:
-      c.cname, c.render_style, c.site.name
+      c.render_style, c.site.name
+
     """
     # don't do anything if it is just an anchor
     if path.startswith(('#', 'javascript:')):

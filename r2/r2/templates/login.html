@@ -56,7 +56,7 @@
       tabindex = 2 if register else 3
     %>
     <form id="${'register' if register else 'login'}-form" method="post" 
-          action="${add_sr(base + '/post/' + op, nocname=True)}"
+          action="${add_sr(base + '/post/' + op)}"
           class="form-v2">
       <input type="hidden" name="op" value="${op}">
       %if dest:
@@ -151,7 +151,7 @@
       tabindex = 2 if register else 3
     %>
     <form id="login_${op}" method="post" 
-          action="${add_sr(base + '/post/' + op, nocname=True)}"
+          action="${add_sr(base + '/post/' + op)}"
           class="user-form ${'register-form' if register else 'login-form'}">
       <input type="hidden" name="op" value="${op}" />
       %if dest:

@@ -149,7 +149,7 @@ ${first_defined(kw[1:])}
          kw['target'] = target
 
      link = _a_buffered(link_text, 
-                        href=path and add_sr(path, sr_path=_sr_path, nocname=nocname),
+                        href=path and add_sr(path, sr_path=_sr_path),
                         **kw) 
   %>
 
@@ -159,8 +159,8 @@ ${first_defined(kw[1:])}
 <%def name="post_link(link_text, post_path, redir_path, params, _sr_path=True,
                       nocname=False, fmt='', target='', **kw)">
   <%
-    action = add_sr(post_path, sr_path=_sr_path, nocname=nocname)
-    href = add_sr(redir_path, sr_path=_sr_path, nocname=nocname)
+    action = add_sr(post_path, sr_path=_sr_path)
+    href = add_sr(redir_path, sr_path=_sr_path)
     if target:
         kw['target'] = target
     onclick = "$(this).parent().submit(); return false;"
