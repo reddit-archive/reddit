@@ -801,7 +801,7 @@ class Reddit(Templated):
                            '/subreddits/create', 'create',
                            subtitles=subtitles,
                            data_attrs=data_attrs,
-                           show_cover = True, nocname=True))
+                           show_cover = True))
 
         if not isinstance(c.site, FakeSubreddit):
             moderator_ids = c.site.moderator_ids()
@@ -1058,23 +1058,23 @@ class RedditFooter(CachedTemplate):
     def __init__(self):
         self.nav = [
             NavMenu([
-                    NamedButton("blog", False, nocname=True, dest="/blog"),
-                    NamedButton("about", False, nocname=True),
-                    NamedButton("team", False, nocname=True, dest="/about/team"),
-                    NamedButton("source_code", False, nocname=True, dest="/code"),
-                    NamedButton("advertising", False, nocname=True),
-                    NamedButton("jobs", False, nocname=True),
+                    NamedButton("blog", False, dest="/blog"),
+                    NamedButton("about", False),
+                    NamedButton("team", False, dest="/about/team"),
+                    NamedButton("source_code", False, dest="/code"),
+                    NamedButton("advertising", False),
+                    NamedButton("jobs", False),
                 ],
                 title = _("about"),
                 type = "flat_vert",
                 separator = ""),
 
             NavMenu([
-                    NamedButton("rules", False, nocname=True),
+                    NamedButton("rules", False),
                     OffsiteButton(_("FAQ"), "https://reddit.zendesk.com"),
-                    NamedButton("wiki", False, nocname=True),
-                    NamedButton("reddiquette", False, nocname=True, dest="/wiki/reddiquette"),
-                    NamedButton("transparency", False, nocname=True, dest="/wiki/transparency"),
+                    NamedButton("wiki", False),
+                    NamedButton("reddiquette", False, dest="/wiki/reddiquette"),
+                    NamedButton("transparency", False, dest="/wiki/transparency"),
                     NamedButton("contact", False),
                 ],
                 title = _("help"),
@@ -1084,14 +1084,14 @@ class RedditFooter(CachedTemplate):
             NavMenu([
                     OffsiteButton(_("Alien Blue iOS app"), "//alienblue.org"),
                     OffsiteButton(_("mobile beta"), "https://m.reddit.com"),
-                    NamedButton("buttons", False, nocname=True),
+                    NamedButton("buttons", False),
                 ],
                 title = _("apps & tools"),
                 type = "flat_vert",
                 separator = ""),
 
             NavMenu([
-                    NamedButton("gold", False, nocname=True, dest="/gold/about", css_class="buygold"),
+                    NamedButton("gold", False, dest="/gold/about", css_class="buygold"),
                     OffsiteButton(_("reddit store"), "http://redditmarket.com"),
                     OffsiteButton(_("redditgifts"), "//redditgifts.com"),
                     OffsiteButton(_("reddit.tv"), "//reddit.tv"),
@@ -1213,12 +1213,12 @@ class SideBox(CachedTemplate):
     Generic sidebox used to generate the 'submit' and 'create a reddit' boxes.
     """
     def __init__(self, title, link=None, css_class='', subtitles = [],
-                 show_cover = False, nocname=False, sr_path = False,
+                 show_cover = False, sr_path = False,
                  disabled=False, show_icon=True, target='_top', data_attrs={}):
         CachedTemplate.__init__(self, link = link, target = target,
                                 title = title, css_class = css_class,
                                 sr_path = sr_path, subtitles = subtitles,
-                                show_cover = show_cover, nocname=nocname,
+                                show_cover = show_cover,
                                 disabled=disabled, show_icon=show_icon,
                                 data_attrs=data_attrs)
 
