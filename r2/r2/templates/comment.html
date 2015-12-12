@@ -40,7 +40,7 @@ ${parent.midcol(cls = cls)}
 
 <%def name="subreddit()" buffered="True">
   ${plain_link(thing.subreddit.name, thing.subreddit_path, _sr_path=False,
-               nocname=True, _class="subreddit hover")}
+               _class="subreddit hover")}
 </%def>
 
 <%def name="link()" buffered="True">

@@ -64,7 +64,6 @@
         thing.title,
         thing.permalink,
         _sr_path=False,
-        nocname=True,
         _class='search-title may-blank',
       )}
     %if c.site.link_flair_position == 'right':
@@ -95,7 +94,6 @@
         '%s %s' % (format_number(thing.num_comments), ungettext('comment', 'comments', thing.num_comments)),
         thing.permalink,
         _sr_path=False,
-        nocname=True,
         _class="search-comments may-blank",
       )}&#32;
     <span class="search-time">${_("submitted")}&#32;${thing_timestamp(thing, thing.timesince, include_tense=True)}</span>&#32;
@@ -107,7 +105,6 @@
         '/r/%s' % thing.subreddit.name,
         '/r/%s' % thing.subreddit.name,
         _sr_path=False,
-        nocname=True,
         fmt=subreddit_link_fmt,
         _class='search-subreddit-link may-blank',
       )}
@@ -136,7 +133,6 @@
           thing.url,
           thing.url,
           _sr_path=False,
-          nocname=True,
           _class='search-link may-blank',
         )}
     </%parent:search_result_footer>

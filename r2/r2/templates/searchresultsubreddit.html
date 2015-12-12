@@ -40,7 +40,6 @@
         thing.title,
         thing.search_path,
         _sr_path=False,
-        nocname=True,
         _class='search-title may-blank',
       )}
   </%parent:search_result_header>
@@ -57,7 +56,6 @@
         thing.path.rstrip('/'),
         thing.search_path,
         _sr_path=False,
-        nocname=True,
         _class='search-subreddit-link may-blank',
       )}&#32;
     %if not thing.score_hidden:
@@ -83,7 +81,6 @@
         _("search within %(subreddit)s") % dict(subreddit=pretty_name),
         search_url(thing.prev_search, thing.name, restrict_sr='on', sort=thing.sort, recent=thing.recent),
         _sr_path=False,
-        nocname=True,
         _class='search-link',
         title=_('search in %(subreddit)s' % dict(subreddit=pretty_name)),
       )}

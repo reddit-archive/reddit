@@ -25,7 +25,7 @@
 <div class="sidebox ${thing.css_class}${' disabled' if thing.disabled else ''}">
   <div class="morelink">
     ${plain_link(thing.title, thing.link, _sr_path=thing.sr_path,
-                 _class='login-required access-required' if thing.show_cover else None, nocname=thing.nocname,
+                 _class='login-required access-required' if thing.show_cover else None,
                  target=thing.target, data=thing.data_attrs)}
     <div class="nub"> </div>
   </div>
@@ -34,7 +34,7 @@
     %if thing.show_icon:
       <div class="spacer">
       ${plain_link('', thing.link, _sr_path=thing.sr_path,
-                   _class='login-required access-required' if thing.show_cover else None, nocname=thing.nocname)}
+                   _class='login-required access-required' if thing.show_cover else None)}
     %else:
       <div class="spacer no-icon">
     %endif

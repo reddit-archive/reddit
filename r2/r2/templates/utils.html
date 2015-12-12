@@ -180,7 +180,6 @@ ${first_defined(kw[1:])}
    from r2.lib.filters import conditional_websafe
    for key, link_args in kw.iteritems():
       link_args.setdefault("_sr_path", _sr_path)
-      link_args.setdefault("nocname", nocname)
       kw[key]=spaceCompress(capture(plain_link, **link_args))
    txt = conditional_websafe(txt) % kw
    txt = txt.replace(" <", "&#32;<").replace("> ", ">&#32;")

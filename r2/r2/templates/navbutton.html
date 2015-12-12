@@ -24,7 +24,7 @@
 
 <%def name="plain()">
   ${plain_link(thing.selected_title() if thing.selected else thing.title, 
-               thing.path, _sr_path = thing.sr_path, nocname = thing.nocname,
+               thing.path, _sr_path = thing.sr_path,
                target = thing.target, 
                _class = thing.css_class, _id = thing._id,
                data=thing.data)}
@@ -32,7 +32,7 @@
 
 <%def name="js()">
   ${plain_link(thing.selected_title() if thing.selected else thing.title, 
-               thing.path, _sr_path = False, nocname = True, 
+               thing.path, _sr_path = False,
                _class = thing.css_class, _id = thing._id, 
                onclick = thing.onclick,
                data=thing.data)}
@@ -41,7 +41,7 @@
 <%def name="post()">
   ${post_link(thing.selected_title() if thing.selected else thing.title,
               thing.base_path, thing.base_path, thing.action_params,
-              _sr_path=thing.sr_path, nocname=thing.nocname,
+              _sr_path=thing.sr_path,
               target=thing.target, _class=thing.css_class, _id=thing._id,
               data=thing.data)}
 </%def>
