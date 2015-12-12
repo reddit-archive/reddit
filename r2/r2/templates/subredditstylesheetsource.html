@@ -27,13 +27,16 @@
 %>
 <%namespace file="subredditstylesheetbase.html" import="make_li"/>
 
-<link rel="stylesheet" type="text/css" href="${static("highlight.css")}">
 
-<pre class="subreddit-stylesheet-source">
-<code class="language-css">${unsafe(SC_OFF)}${thing.stylesheet_contents}${unsafe(SC_ON)}</code>
-</pre>
+%if thing.stylesheet_contents:
+  <link rel="stylesheet" type="text/css" href="${static("highlight.css")}">
 
-${unsafe(js.use("highlight"))}
+  <pre class="subreddit-stylesheet-source">
+  <code class="language-css">${unsafe(SC_OFF)}${thing.stylesheet_contents}${unsafe(SC_ON)}</code>
+  </pre>
+
+  ${unsafe(js.use("highlight"))}
+%endif
 
 %if thing.images:
   <div id="images">
@@ -43,4 +46,8 @@ ${unsafe(js.use("highlight"))}
          ${make_li(name=name, img=url, mod=False)}
       %endfor
     </ul>
+%endif
+
+%if not (thing.stylesheet_contents or thing.images):
+  <p class="error">${_("there doesn't seem to be anything here")}</p>
 %endif
