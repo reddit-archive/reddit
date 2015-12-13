@@ -1064,7 +1064,10 @@ a.banned-user { color: red; }
 
 .thing .title:visited, .thing.visited .title { color: #551a8b }
 
-.thing.stickied a.title, .thing.stickied a.title:visited, .thing.stickied a.title.visited { font-weight: bold; color: @moderator-color; }
+.thing.stickied.link a.title {
+  font-weight: bold;
+  color: @moderator-color;
+}
 
 body.with-listing-chooser.explore-page #header .pagename {
     position: static;
