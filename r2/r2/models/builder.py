@@ -994,6 +994,11 @@ class CommentBuilder(Builder):
 
             parent = wrapped_by_id.get(comment.parent_id)
 
+            # Children of sticky comments are hidden by default to avoid top
+            # comment hijacking or conversation derailing.
+            if parent and self.link.sticky_comment_id == parent._id:
+                comment.hidden = True
+
             if qa_sort_hiding:
                 # In the Q&A sort type, we want to collapse all comments other
                 # than those that are:
