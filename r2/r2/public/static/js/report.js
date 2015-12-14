@@ -112,7 +112,7 @@ $(function() {
 
   function openReportForm(e) {
     if (r.access.isLinkRestricted(e.target)) {
-      return false;
+      return;
     }
 
     var $thing = $(this).closest('.thing');
