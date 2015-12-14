@@ -1183,7 +1183,7 @@ class Comment(Thing, Printable):
         name = 'inbox'
         if parent and parent.sendreplies:
             to = Account._byID(parent.author_id, True)
-        if not parent and link.sendreplies:
+        if not parent and not link._deleted and link.sendreplies:
             to = Account._byID(link.author_id, True)
             name = 'selfreply'
 

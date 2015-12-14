@@ -1264,9 +1264,6 @@ class VSubmitParent(VByName):
         elif isinstance(parent, Link):
             sr = parent.subreddit_slow
 
-            if parent._deleted:
-                self.set_error(errors.DELETED_LINK)
-
             if parent.archived:
                 self.set_error(errors.TOO_OLD)
             elif parent.locked and not sr.can_distinguish(c.user):

@@ -2061,7 +2061,7 @@ class ApiController(RedditController):
                 commentform.has_errors("comment", errors.TOO_LONG) or
                 commentform.has_errors("ratelimit", errors.RATELIMIT) or
                 commentform.has_errors("parent", errors.DELETED_COMMENT,
-                    errors.DELETED_LINK, errors.TOO_OLD, errors.USER_BLOCKED,
+                    errors.TOO_OLD, errors.USER_BLOCKED,
                     errors.USER_MUTED, errors.MUTED_FROM_SUBREDDIT,
                     errors.THREAD_LOCKED)
         ):

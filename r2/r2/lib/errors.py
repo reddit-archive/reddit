@@ -50,7 +50,6 @@ error_list = dict((
         ('NOT_USER', _("You are not logged in as that user.")),
         ('NOT_FRIEND', _("you are not friends with that user")),
         ('LOGGED_IN', _("You are already logged in.")),
-        ('DELETED_LINK', _('the link you are commenting on has been deleted')),
         ('DELETED_COMMENT', _('that comment has been deleted')),
         ('DELETED_THING', _('that element has been deleted')),
         ('SHORT_PASSWORD', _('the password must be at least %(chars)d characters')),

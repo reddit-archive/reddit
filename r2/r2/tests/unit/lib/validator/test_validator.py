@@ -171,14 +171,6 @@ class TestVSubmitParent(ValidatorTests):
         self.assertEqual(result, link)
         self.assertFalse(self.validator.has_errors)
 
-    def test_deleted_link(self):
-        link = self._mock_link(_deleted=True)
-        result = self.validator.run('fullname', None)
-
-        self.assertEqual(result, link)
-        self.assertTrue(self.validator.has_errors)
-        self.assertIn((errors.DELETED_LINK, None), c.errors)
-
     def test_removed_link(self):
         link = self._mock_link(_spam=True)
         result = self.validator.run('fullname', None)
@@ -192,17 +184,6 @@ class TestVSubmitParent(ValidatorTests):
 
         self.assertEqual(result, link)
         self.assertTrue(self.validator.has_errors)
-        self.assertIn((errors.TOO_OLD, None), c.errors)
-
-    def test_deleted_archived_link(self):
-        link = self._mock_link(
-            date=dt.now(g.tz).replace(year=2000),
-            _deleted=True)
-        result = self.validator.run('fullname', None)
-
-        self.assertEqual(result, link)
-        self.assertTrue(self.validator.has_errors)
-        self.assertIn((errors.DELETED_LINK, None), c.errors)
         self.assertIn((errors.TOO_OLD, None), c.errors)
 
     def test_locked_link(self):
@@ -221,16 +202,6 @@ class TestVSubmitParent(ValidatorTests):
 
         self.assertEqual(result, link)
         self.assertFalse(self.validator.has_errors)
-
-    def test_deleted_locked_link(self):
-        link = self._mock_link(locked=True, _deleted=True)
-        Subreddit.can_distinguish = MagicMock(return_value=False)
-        result = self.validator.run('fullname', None)
-
-        self.assertEqual(result, link)
-        self.assertTrue(self.validator.has_errors)
-        self.assertIn((errors.DELETED_LINK, None), c.errors)
-        self.assertIn((errors.THREAD_LOCKED, None), c.errors)
 
     def test_invalid_link(self):
         with self.assertRaises(HTTPForbidden):
