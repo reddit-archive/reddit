@@ -1273,9 +1273,9 @@ class PromoteApiController(ApiController):
         if priority == PROMOTE_PRIORITIES['auction']:
             bid_pennies = bid_dollars * 100
         else:
-            bid_pennies = PromotionPrices.get_price(c.user, target,
+            link_owner = Account._byID(link.author_id)
+            bid_pennies = PromotionPrices.get_price(link_owner, target,
                 location)
-
 
         if (not feature.is_enabled('mobile_targeting') and
                 platform != 'desktop'):
