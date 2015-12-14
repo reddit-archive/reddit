@@ -50,6 +50,7 @@ from r2.lib.db import queries
 from r2.lib.filters import _force_unicode
 from r2.lib.menus import CommentSortMenu
 from r2.lib.utils import (
+    SimpleSillyStub,
     TimeoutFunction,
     TimeoutFunctionException,
     lowercase_keys_recursively,
@@ -179,8 +180,11 @@ class AutoModeratorRuleTypeError(AutoModeratorSyntaxError):
 
 class Ruleset(object):
     """A subreddit's collection of Rules."""
-    def __init__(self, yaml_text=""):
+    def __init__(self, yaml_text="", timer=None):
         """Create a collection of Rules from YAML documents."""
+        if timer is None:
+            timer = SimpleSillyStub()
+
         self.init_time = datetime.now(g.tz)
         self.rules = []
 
@@ -197,6 +201,8 @@ class Ruleset(object):
         rule_defs = [rule_def for rule_def in rule_defs
             if isinstance(rule_def, dict)]
 
+        timer.intermediate("yaml_parsing")
+
         if any("standard" in rule_def for rule_def in rule_defs):
             # load standard rules from wiki page
             standard_rules = {}
@@ -209,6 +215,8 @@ class Ruleset(object):
             except Exception as e:
                 g.log.error("Error while loading automod standards: %s", e)
                 standard_rules = None
+
+        timer.intermediate("init_standard_rules")
 
         for values in rule_defs:
             orig_values = values.copy()
@@ -252,6 +260,8 @@ class Ruleset(object):
                     raise type_error
             else:
                 self.rules.append(Rule(values))
+
+        timer.intermediate("init_rules")
 
         # drop any rules that don't have a check and an action
         self.rules = [rule for rule in self.rules
@@ -1479,13 +1489,21 @@ def run():
                     need_to_init = True
 
             if need_to_init:
+                timer = g.stats.get_timer("automoderator.init_ruleset")
+                timer.start()
+
                 wp = WikiPage.get(subreddit, "config/automoderator")
+                timer.intermediate("get_wiki_page")
+
                 try:
-                    rules = Ruleset(wp.content)
+                    rules = Ruleset(wp.content, timer)
                 except (AutoModeratorSyntaxError, AutoModeratorRuleTypeError):
                     print "ERROR: Invalid config in /r/%s" % subreddit.name
                     return
+
                 rules_by_subreddit[subreddit._id] = rules
+
+                timer.stop()
 
             if not rules:
                 return
