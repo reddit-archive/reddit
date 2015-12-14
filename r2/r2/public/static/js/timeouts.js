@@ -67,7 +67,7 @@
         targetFullname = r.config.cur_link;
       }
 
-      r.analytics.event.timeoutForbiddenEvent(actionName, actionDetail, targetType, targetFullname);
+      r.analytics.timeoutForbiddenEvent(actionName, actionDetail, targetType, targetFullname);
     },
 
     _handleClick: function onClick(e) {

@@ -21,23 +21,32 @@ r.analytics = {
       r.analytics.fireFunnelEvent('ads', r.config.ads_virtual_page);
     }
 
-    var url = r.config.tracker_url;
-    var params = {
-      dnt: window.DO_NOT_TRACK,
+    r.analytics.contextData = {
+      linkFullname: r.config.cur_link || null,
+      loid: null,
+      loidCreated: null,
+      srFullname: r.config.cur_site || null,
+      srName: r.config.post_site || null,
+      userId: null,
+      userName: null,
     };
 
-    if (!r.config.user_id) {
+    if (r.config.user_id) {
+      r.analytics.contextData.userId = r.config.user_id;
+      r.analytics.contextData.userName = r.config.logged;
+    } else {
       var tracker = new redditlib.Tracker();
       var loggedOutData = tracker.getTrackingData();
       if (loggedOutData && loggedOutData.loid) {
-        params.loid = loggedOutData.loid;
+        r.analytics.contextData.loid = loggedOutData.loid;
         if (loggedOutData.loidcreated) {
-          params['loidcreated'] = loggedOutData.loidcreated
+          r.analytics.contextData.loidCreated = loggedOutData.loidcreated;
         }
       }
     }
 
-    r.analytics.firePageTrackingPixel(url, params, r.analytics.stripAnalyticsParams);
+    r.analytics.firePageTrackingPixel(r.analytics.stripAnalyticsParams);
+
   },
 
   _eventPredicates: {},
@@ -226,10 +235,21 @@ r.analytics = {
     );
   },
 
-  firePageTrackingPixel: function(url, params, callback) {
-    if (!url) { return; }
+  firePageTrackingPixel: function(callback) {
+    var url = r.config.tracker_url;
+    if (!url) {
+      return;
+    }
+    var params = {
+      dnt: window.DO_NOT_TRACK,
+    };
 
-    params = params || {};
+    if (this.contextData.loid) {
+      params.loid = this.contextData.loid;
+    }
+    if (this.contextData.loidCreated) {
+      params.loidcreated = this.contextData.loidCreated;
+    }
 
     var querystring = [
       'r=' + Math.random(),
@@ -271,7 +291,47 @@ r.analytics = {
 
       window.history.replaceState({}, document.title, a.href);
     }
-  }
+  },
+
+  timeoutForbiddenEvent: function(actionName, actionDetail, targetType, targetFullname) {
+    var eventTopic = 'forbidden_actions';
+    var eventType = 'cs.forbidden_' + actionName;
+    var payload = {};
+
+    payload['process_notes'] = 'IN_TIMEOUT';
+
+    if (this.contextData.userId) {
+      payload['user_id'] = this.contextData.userId;
+      payload['user_name'] = this.contextData.userName;
+    } else {
+      payload['loid'] = this.contextData.loid;
+    }
+
+    if (this.contextData.srName) {
+      payload['sr_name'] = this.contextData.srName;
+    }
+
+    if (this.contextData.srFullname) {
+      payload['sr_id'] = r.utils.fullnameToId(this.contextData.srFullname);
+    }
+
+    if (actionDetail) {
+      payload['details_text'] = actionDetail;
+    }
+
+    if (targetType) {
+      payload['target_type'] = targetType;
+    }
+
+    if (targetFullname) {
+      payload['target_fullname'] = targetFullname;
+      payload['target_id'] = r.utils.fullnameToId(targetFullname);
+    }
+
+    // event collector
+    r.events.track(eventTopic, eventType, payload).send();
+  },
+
 };
 
 r.analytics.breadcrumbs = {
@@ -383,89 +443,7 @@ r.analytics.breadcrumbs = {
 };
 
 
-r.analytics.event = {
-  init: function() {
-    this.contextData = {
-      linkFullname: null,
-      loid: null,
-      srFullname: null,
-      srName: null,
-      userId: null,
-      userName: null,
-    };
-
-    if (r.config.user_id) {
-      this.contextData.userId = r.config.user_id;
-      this.contextData.userName = r.config.logged;
-    } else {
-      var tracker = new redditlib.Tracker();
-      var loggedOutData = tracker.getTrackingData();
-      this.contextData.loid = loggedOutData.loid;
-    }
-
-    if (r.config.post_site) {
-      this.contextData.srName = r.config.post_site;
-    }
-
-    if (r.config.cur_site) {
-      this.contextData.srFullname = r.config.cur_site;
-    }
-
-    if (r.config.cur_link) {
-      this.contextData.linkFullname = r.config.cur_link;
-    }
-  },
-
-  _eventPayload: function() {
-    var payload = {};
-
-    if (this.contextData.userId) {
-      payload['user_id'] = this.contextData.userId;
-      payload['user_name'] = this.contextData.userName;
-    } else {
-      payload['loid'] = this.contextData.loid;
-    }
-
-    if (this.contextData.srName) {
-      payload['sr_name'] = this.contextData.srName;
-    }
-
-    if (this.contextData.srFullname) {
-      payload['sr_id'] = r.utils.fullnameToId(this.contextData.srFullname);
-    }
-
-    return payload;
-  },
-
-  timeoutForbiddenEvent: function(actionName, actionDetail, targetType, targetFullname) {
-    var eventTopic = 'forbidden_actions';
-    var eventType = 'cs.forbidden_' + actionName;
-    var payload = this._eventPayload();
-
-    payload['process_notes'] = 'IN_TIMEOUT';
-
-    if (actionDetail) {
-      payload['details_text'] = actionDetail;
-    }
-
-    if (targetType) {
-      payload['target_type'] = targetType;
-    }
-
-    if (targetFullname) {
-      payload['target_fullname'] = targetFullname;
-      payload['target_id'] = r.utils.fullnameToId(targetFullname);
-    }
-
-    // event collector
-    r.events.track(eventTopic, eventType, payload).send();
-  },
-
-};
-
-
 r.hooks.get('setup').register(function() {
   r.analytics.breadcrumbs.init();
-  r.analytics.event.init();
 });
 
