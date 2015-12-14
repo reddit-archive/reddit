@@ -21,6 +21,8 @@
 ###############################################################################
 
 import json
+import pytz
+import time
 from datetime import datetime
 from pylons import app_globals as g
 from pylons.i18n import _
@@ -55,20 +57,20 @@ class SubredditRules(tdb_cassandra.View):
     _connection_pool = "main"
 
     @classmethod
-    def get_rule_blob(self, short_name, description, priority, when=None):
-        if not when:
-            when = str(datetime.now(g.tz))
+    def get_rule_blob(self, short_name, description, priority, created_utc=None):
+        if not created_utc:
+            created_utc = time.mktime(datetime.now(pytz.UTC).timetuple())
 
         jsonpacked = json.dumps({
             "description": description,
             "priority": priority,
-            "when": when,
+            "created_utc": created_utc,
         })
         blob = {short_name: jsonpacked}
         return blob
 
     @classmethod
-    def create(self, subreddit, short_name, description, when=None):
+    def create(self, subreddit, short_name, description, created_utc=None):
         """Create a rule and append to the end of the priority list."""
         try:
             priority = len(list(self._cf.get(subreddit._id36)))
@@ -78,7 +80,7 @@ class SubredditRules(tdb_cassandra.View):
         if priority >= MAX_RULES_PER_SUBREDDIT:
             return
 
-        blob = self.get_rule_blob(short_name, description, priority, when)
+        blob = self.get_rule_blob(short_name, description, priority, created_utc)
         self._set_values(subreddit._id36, blob)
 
     @classmethod
@@ -94,7 +96,7 @@ class SubredditRules(tdb_cassandra.View):
                     short_name=rule["short_name"],
                     description=rule["description"],
                     priority=index,
-                    when=rule["when"],
+                    created_utc=rule["created_utc"],
                 ))
         self._set_values(subreddit._id36, blobs)
 
@@ -115,7 +117,7 @@ class SubredditRules(tdb_cassandra.View):
             short_name,
             description,
             old_rule["priority"],
-            old_rule["when"],
+            old_rule["created_utc"],
         )
         self._set_values(subreddit._id36, blob)
 
@@ -140,7 +142,7 @@ class SubredditRules(tdb_cassandra.View):
                     rule_to_reorder["short_name"],
                     rule_to_reorder["description"],
                     priority,
-                    rule_to_reorder["when"],
+                    rule_to_reorder["created_utc"],
         ))
 
         for rule in rules:
@@ -153,7 +155,7 @@ class SubredditRules(tdb_cassandra.View):
                     rule["short_name"],
                     rule["description"],
                     current_priority_index,
-                    rule["when"],
+                    rule["created_utc"],
                 ))
             current_priority_index += 1
         self._set_values(subreddit._id36, blobs)

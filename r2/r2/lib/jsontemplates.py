@@ -1566,4 +1566,9 @@ class RulesJsonTemplate(JsonTemplate):
         rules = {}
         rules['site_rules'] = thing.site_rules
         rules['rules'] = thing.rules
+
+        for rule in rules["rules"]:
+            if rule.get("description"):
+                rule["description_html"] = safemarkdown(rule["description"])
+
         return ObjectTemplate(rules)
