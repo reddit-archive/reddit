@@ -3332,6 +3332,9 @@ class SubredditReportForm(CachedTemplate):
 
         if isinstance(thing, Comment, Link):
             subreddit = thing.subreddit_slow
+
+        self.is_report_to_subreddit = bool(subreddit)
+
         if (subreddit and
                 feature.is_enabled("subreddit_rules", subreddit=subreddit.name)):
             for rule in SubredditRules.get_rules(subreddit):

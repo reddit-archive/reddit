@@ -31,8 +31,8 @@
        title="${_('View the community rules')}">
       ${_('View the community rules')}
     </a>
-    <div class="reason-prompt">
-      ${_("Why are you reporting this to the community moderators?")}
+    <div class="reason-prompt report-header">
+      ${_("What rule does this break?")}
     </div>
     <ol class="report-reason-list">
       %for rule in thing.rules:
@@ -68,6 +68,13 @@
         </label>
       </li>
     </ol>
+    <div class="report-header">
+      %if thing.is_report_to_subreddit:
+        ${_("Reports go to community moderators anonymously")}
+      %else:
+        ${_("Reports go to Reddit admins anonymously")}
+      %endif
+    </div>
     <div class="c-submit-group">
       <button type="button" class="btn c-btn c-btn-secondary report-cancel">
         ${_("cancel")}
