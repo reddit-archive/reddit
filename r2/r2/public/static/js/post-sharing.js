@@ -447,7 +447,7 @@
         },
       ];
 
-      if (r.config.logged) {
+      if (r.config.logged && !r.config.user_in_timeout) {
         shareOptions.push({
           name: 'email',
           tooltip: r._('Email to a Friend'),
