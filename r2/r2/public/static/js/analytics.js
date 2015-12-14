@@ -22,9 +22,13 @@ r.analytics = {
     }
 
     r.analytics.contextData = {
+      doNotTrack: window.DO_NOT_TRACK,
+      language: document.getElementsByTagName('html')[0].getAttribute('lang'),
       linkFullname: r.config.cur_link || null,
       loid: null,
       loidCreated: null,
+      referrer: document.referrer || '',
+      referrerDomain: null,
       srFullname: r.config.cur_site || null,
       srName: r.config.post_site || null,
       userId: null,
@@ -42,6 +46,13 @@ r.analytics = {
         if (loggedOutData.loidcreated) {
           r.analytics.contextData.loidCreated = loggedOutData.loidcreated;
         }
+      }
+    }
+
+    if (document.referrer) {
+      var referrerDomain = document.referrer.match(/\/\/([^\/]+)/);
+      if (referrerDomain && referrerDomain.length > 1) {
+        r.analytics.contextData.referrerDomain = referrerDomain[1];
       }
     }
 
@@ -241,7 +252,7 @@ r.analytics = {
       return;
     }
     var params = {
-      dnt: window.DO_NOT_TRACK,
+      dnt: this.contextData.doNotTrack,
     };
 
     if (this.contextData.loid) {
@@ -255,11 +266,10 @@ r.analytics = {
       'r=' + Math.random(),
     ];
 
-    var referrer = document.referrer || '';
-    var referrerDomain = referrer.match(/\/\/([^\/]+)/);
-
-    if (referrerDomain && referrerDomain.length > 1) {
-      querystring.push('referrer_domain=' + encodeURIComponent(referrerDomain[1]));
+    if (this.contextData.referrerDomain) {
+      querystring.push(
+        'referrer_domain=' + encodeURIComponent(this.contextData.referrerDomain)
+      );
     }
 
     for(var p in params) {
