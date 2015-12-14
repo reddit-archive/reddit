@@ -113,6 +113,12 @@ class SubredditRules(tdb_cassandra.View):
             return False
 
         old_rule = json.loads(old_rule)
+        if not old_rule.get("created_utc"):
+                old_rule["created_utc"] = time.mktime(
+                    datetime.strptime(
+                        old_rule.pop("when")[:-6], "%Y-%m-%d %H:%M:%S.%f"
+                    ).timetuple())
+
         blob = self.get_rule_blob(
             short_name,
             description,
@@ -185,6 +191,11 @@ class SubredditRules(tdb_cassandra.View):
         result = []
         for uuid, json_blob in query.iteritems():
             payload = json.loads(json_blob)
+            if not payload.get("created_utc"):
+                payload["created_utc"] = time.mktime(
+                    datetime.strptime(
+                        payload.pop("when")[:-6], "%Y-%m-%d %H:%M:%S.%f"
+                    ).timetuple())
             payload["short_name"] = uuid
             result.append(payload)
 
