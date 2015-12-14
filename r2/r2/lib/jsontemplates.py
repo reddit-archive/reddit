@@ -1389,7 +1389,6 @@ class SubredditSettingsTemplate(ThingJsonTemplate):
     _data_attrs_ = dict(
         collapse_deleted_comments='site.collapse_deleted_comments',
         comment_score_hide_mins='site.comment_score_hide_mins',
-        # community_rules='site.community_rules',
         content_options='site.link_type',
         default_set='site.allow_top',
         description='site.description',
@@ -1435,7 +1434,7 @@ class SubredditSettingsTemplate(ThingJsonTemplate):
 
         # XXX remove this when feature is enabled and use _data_attrs instead
         if feature.is_enabled('mobile_settings'):
-            for attr in ('community_rules', 'key_color', 'related_subreddits'):
+            for attr in ('key_color', 'related_subreddits'):
                 data[attr] = self.thing_attr(thing.site, attr)
 
         return data
