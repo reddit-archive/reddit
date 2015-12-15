@@ -592,7 +592,12 @@ class Reddit(Templated):
                     css_class="reddit-automod access-required",
                     data=data_attrs('automoderator')))
             except tdb_cassandra.NotFound:
-                pass
+                buttons.append(NamedButton(
+                    "new_automod",
+                    sr_path=False,
+                    dest="../wiki/automoderator",
+                    css_class="reddit-automod access-required",
+                ))
 
         buttons.append(NamedButton(
             "log",
