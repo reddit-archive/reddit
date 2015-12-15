@@ -125,6 +125,7 @@ class Account(Thing):
                      sort_options = {},
                      has_subscribed = False,
                      pref_media = 'subreddit',
+                     pref_media_preview = 'subreddit',
                      wiki_override = None,
                      email = "",
                      email_verified = False,

@@ -4740,18 +4740,21 @@ class TabbedPane(Templated):
         Templated.__init__(self, linkable=linkable)
 
 class LinkChild(object):
-    def __init__(self, link, load = False, expand = False, nofollow = False):
+    def __init__(self, link, load=False, expand=False, nofollow=False,
+                 position_inline=False):
         self.link = link
         self.expand = expand
         self.load = load or expand
         self.nofollow = nofollow
+        self.position_inline = position_inline
 
     def content(self):
         return ''
 
-def make_link_child(item):
+def make_link_child(item, show_media_preview=False):
     link_child = None
     editable = False
+    expandable = getattr(item, 'expand_children', False)
 
     # if the item has a media_object, try to make a MediaEmbed for rendering
     if not c.secure:
@@ -4762,12 +4765,14 @@ def make_link_child(item):
     if media_object:
         media_embed = None
         expand = False
+        position_inline = False
 
         if isinstance(media_object, basestring):
             media_embed = media_object
         else:
-            expand = (media_object.get('type') in g.autoexpand_media_types and
-                      getattr(item, 'expand_children', False))
+            is_autoexpand_type = media_object.get('type') in g.autoexpand_media_types
+            expand = expandable and (show_media_preview or is_autoexpand_type)
+            position_inline = expandable and is_autoexpand_type
 
             try:
                 media_embed = media.get_media_embed(media_object)
@@ -4796,19 +4801,22 @@ def make_link_child(item):
             link_child = MediaChild(item,
                                     media_embed,
                                     load=True,
-                                    expand=expand)
+                                    expand=expand,
+                                    position_inline=position_inline)
 
     # if the item is_self, add a selftext child
     elif item.is_self:
         if not item.selftext: item.selftext = u''
 
-        expand = getattr(item, 'expand_children', False)
-
+        expand = expandable
+        position_inline = expandable
         editable = (expand and
                     item.author == c.user and
                     not item._deleted)
-        link_child = SelfTextChild(item, expand = expand,
-                                   nofollow = item.nofollow)
+        link_child = SelfTextChild(item,
+                                   expand=expand,
+                                   nofollow=item.nofollow,
+                                   position_inline=position_inline)
 
     return link_child, editable
 

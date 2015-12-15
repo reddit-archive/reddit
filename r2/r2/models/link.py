@@ -543,6 +543,7 @@ class Link(Thing, Printable):
         user_is_admin = c.user_is_admin
         user_is_loggedin = c.user_is_loggedin
         pref_media = user.pref_media
+        pref_media_preview = user.pref_media_preview
         site = c.site
 
         saved = hidden = visited = {}
@@ -615,6 +616,13 @@ class Link(Thing, Printable):
                 elif pref_media != 'off' and not user.pref_compress:
                     show_media = True
 
+            show_media_preview = False
+            if pref_media_preview == "on":
+                show_media_preview = True
+            elif pref_media_preview == "subreddit" and item.subreddit.show_media_preview:
+                show_media_preview = True
+
+            item.show_media_preview = show_media_preview
             item.over_18 = item.over_18 or item.subreddit.over_18
             item.nsfw = item.over_18 and user.pref_label_nsfw
 
@@ -779,7 +787,7 @@ class Link(Thing, Printable):
                 item.domain_path = item.subreddit_path
 
             # attach video or selftext as needed
-            item.link_child, item.editable = make_link_child(item)
+            item.link_child, item.editable = make_link_child(item, show_media_preview)
 
             if item.is_self and not item.promoted:
                 item.href_url = item.permalink

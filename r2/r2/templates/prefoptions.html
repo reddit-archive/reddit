@@ -77,6 +77,14 @@
   <br/>
 </%def>
 
+<%def name="media_preview_radio(val, label)">
+  <input id="media_preview_${val}" class="nomargin" 
+         type="radio"  value="${val}" name="media_preview"
+         ${"checked='checked'" if c.user.pref_media_preview == val else ''}>
+  <label for="media_preview_${val}">${label}</label>
+  <br/>
+</%def>
+
 <%def name="num_input(s, name)">
   <input type="text" class="number" size="4" maxlength="4"
          name="${name}" value="${s if s is not None else ''}">
@@ -135,23 +143,32 @@
       ${checkbox(_("open links in a new window"), "newwindow")}
     </td>
   </tr>
-  <tr>
+  <tr class="preferences-media">
     <th>${_("media")}</th>
     <td class="prefright">
+      <h6>${_("thumbnails")}</h6>
       %if not c.user.pref_compress:
-      ${media_radio("on", _("show thumbnails next to links"))}
-      ${media_radio("off", _("don't show thumbnails next to links"))}
-      ${media_radio("subreddit", _("show thumbnails based on that subreddit's media preferences"))}
-     ${checkbox(_("make safe(r) for work "), "no_profanity", disabled = not c.user.pref_over_18, disabled_text = "(requires over 18)")}
+        ${media_radio("on", _("show thumbnails next to links"))}
+        ${media_radio("off", _("don't show thumbnails next to links"))}
+        ${media_radio("subreddit", _("show thumbnails based on that subreddit's media preferences"))}
+      %else:
+        <p class="error">${_("to enable thumbnails, disable compressed link display")}</p>
+        <input type="hidden" name="media" value="${c.user.pref_media}"/>
+      %endif
+      <br>
+
+      <h6>${_("media previews")}</h6>
+      ${media_preview_radio("on", _("auto-expand media previews"))}
+      ${media_preview_radio("off", _("don't auto-expand media previews on comments pages"))}
+      ${media_preview_radio("subreddit", _("expand media previews based on that subreddit's media preferences"))}
+      <br>
+
+      <h6>${_("NSFW content")}</h6>
+      ${checkbox(_("hide images for NSFW/18+ content "), "no_profanity", disabled = not c.user.pref_over_18, disabled_text = "(requires over 18)")}
       &#32;
       <span class="details">
-        ${_("(Don't show thumbnails next to anything labeled NSFW)")}
+        ${_("(Don't show thumbnails or media previews for anything labeled NSFW)")}
       </span>
-      %else:
-      <p class="error">${_("to enable thumbnails, disable compressed link display")}</p>
-      <input type="hidden" name="media" value="${c.user.pref_media}"/>
-      %endif
-     <br/>
     </td>
   </tr>
   <tr>

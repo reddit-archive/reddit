@@ -27,6 +27,8 @@
     afterInitialize: function() {
       if (this.options.expanded) {
         this.expand();
+      } else {
+        this.collapse();
       }
     },
 
@@ -196,9 +198,11 @@
       }
 
       $thing.data('expando', true);
+
+      var expanding = $(e.target).hasClass('collapsed')
       var view = new LinkExpando({
         el: $thing[0],
-        expanded: true,
+        expanded: expanding,
       });
     });
 

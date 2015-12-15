@@ -226,6 +226,7 @@ class Subreddit(Thing, Printable, BaseSite):
         reported=0,
         valid_votes=0,
         show_media=False,
+        show_media_preview=True,
         domain=None,
         suggested_comment_sort=None,
         wikimode="disabled",

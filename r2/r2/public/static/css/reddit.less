@@ -4306,7 +4306,26 @@ form input[type=radio] {margin: 2px .5em 0 0; }
 .sharetable.preftable th label { display: inline; }
 .preftable th span { display: block; }
 
-.preftable td.prefright { padding: 8px 0;}
+.preftable td.prefright {
+    padding: 10px 0;
+
+    h6 {
+        font-weight: normal;
+        font-style: italic;
+        text-transform: capitalize;
+    }
+}
+
+.preferences-media {
+    label {
+        display: inline-block;
+    }
+
+    label:first-letter {
+        text-transform: uppercase;
+    }
+}
+
 .preftable select { margin: 0 .5em 0 .5em; }
 
 .preftable .spacer { margin-bottom: 5px; }
