@@ -56,7 +56,11 @@ from r2.lib import (
 from r2.lib.base import abort
 from r2.lib.db import queries
 from r2.lib.errors import errors
-from r2.lib.filters import jssafe, scriptsafe_dumps
+from r2.lib.filters import (
+    jssafe,
+    scriptsafe_dumps,
+    websafe,
+)
 from r2.lib.template_helpers import (
     add_sr,
     format_html,
