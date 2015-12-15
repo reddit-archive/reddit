@@ -102,6 +102,11 @@ class CommentTreeStorageBase(object):
             if comment._id in tree.depth:
                 del tree.depth[comment._id]
 
+    @classmethod
+    def prepare_new_storage(cls, link):
+        """Do whatever's needed to initialize the storage for a new link."""
+        pass
+
 
 class CommentTreeStorageV3(CommentTreeStorageBase):
     """Cassandra column-based storage for comment trees.
@@ -405,6 +410,26 @@ class CommentTreeStorageV1(CommentTreeStorageBase):
                            timeout=timeout)
 
     @classmethod
+    def prepare_new_storage(cls, link):
+        """Write an empty storage to permacache"""
+        with cls.mutation_context(link):
+            # probably don't need the lock because this should run immediately
+            # when the link is created and before the response is returned
+            key = cls._comments_key(link._id)
+            pkey = cls._parent_comments_key(link._id)
+
+            cids = []
+            tree = {}
+            depth = {}
+            parents = {}
+
+            to_set = {
+                key: (cids, tree, depth),
+                pkey: parents,
+            }
+            g.permacache.set_multi(to_set)
+
+    @classmethod
     def by_link(cls, link):
         key = cls._comments_key(link._id)
         p_key = cls._parent_comments_key(link._id)
@@ -484,6 +509,11 @@ class CommentTree:
         impl = cls.IMPLEMENTATIONS[link.comment_tree_version]
         data = impl.by_link(link)
         return cls(link, **data)
+
+    @classmethod
+    def on_new_link(cls, link):
+        impl = cls.IMPLEMENTATIONS[link.comment_tree_version]
+        impl.prepare_new_storage(link)
 
     def add_comments(self, comments):
         impl = self.IMPLEMENTATIONS[self.link.comment_tree_version]
