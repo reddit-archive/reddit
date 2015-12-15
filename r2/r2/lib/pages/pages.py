@@ -5250,12 +5250,19 @@ class Goldvertisement(Templated):
         revenue_today = gold_revenue_volatile(today)
         yesterday = today - datetime.timedelta(days=1)
         revenue_yesterday = gold_revenue_steady(yesterday)
-        revenue_goal = float(gold_goal_on(today))
-        revenue_goal_yesterday = float(gold_goal_on(yesterday))
+        revenue_goal = gold_goal_on(today)
+        revenue_goal_yesterday = gold_goal_on(yesterday)
 
-        self.percent_filled = int((revenue_today / revenue_goal) * 100)
-        self.percent_filled_yesterday = int((revenue_yesterday /
-                                             revenue_goal_yesterday) * 100)
+        if revenue_goal:
+            self.percent_filled = int((revenue_today / revenue_goal) * 100)
+        else:
+            self.percent_filled = 0
+
+        if revenue_goal_yesterday:
+            self.percent_filled_yesterday = int((revenue_yesterday /
+                                                 revenue_goal_yesterday) * 100)
+        else:
+            self.percent_filled_yesterday = 0
 
         seconds = get_current_value_of_month()
         delta = datetime.timedelta(seconds=seconds)

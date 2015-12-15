@@ -481,7 +481,12 @@ def gold_revenue_steady(date):
 @memoize("gold-goal")
 def gold_goal_on(date):
     """Returns the gold revenue goal (in pennies) for a given date."""
-    return GoldRevenueGoalByDate.get(date)
+    goal = GoldRevenueGoalByDate.get(date)
+
+    if not goal:
+        return 0
+
+    return float(goal)
 
 
 def account_from_stripe_customer_id(stripe_customer_id):
