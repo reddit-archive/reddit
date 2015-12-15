@@ -281,9 +281,7 @@ def get_comment_tree(link, _update=False, timer=None):
     if not _update:
         cache = CommentTree.by_link(link)
         timer.intermediate('load')
-
-        if cache:
-            return cache
+        return cache
 
     with CommentTree.mutation_context(link, timeout=180):
         timer.intermediate('lock')
