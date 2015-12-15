@@ -288,7 +288,7 @@
       <a class="post-sharing-button" href="javascript: void 0;">${_("share")}</a>
     </li>
   % endif
-  %if thing.is_loggedin:
+  %if thing.is_loggedin and not thing.deleted:
     %if thing.saved:
       <li class="link-unsave-button save-button"><a href="#">${_("unsave")}</a></li>
     %else:

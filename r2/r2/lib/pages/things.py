@@ -92,7 +92,8 @@ class LinkButtons(PrintableButtons):
 
         show_share = ((c.user_is_loggedin or not g.read_only_mode) and
                       not thing.subreddit.quarantine and
-                      not thing.disable_comments)
+                      not thing.disable_comments and
+                      not thing._deleted)
 
         # if they are the author, can they edit it?
         thing_editable = getattr(thing, 'editable', True)
@@ -167,6 +168,7 @@ class LinkButtons(PrintableButtons):
                                   # button visibility
                                   saved = thing.saved,
                                   editable = editable, 
+                                  deleted = thing._deleted,
                                   hidden = thing.hidden, 
                                   ignore_reports = thing.ignore_reports,
                                   show_delete = show_delete,
