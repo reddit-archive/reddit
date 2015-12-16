@@ -20,15 +20,15 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from r2.lib.db import tdb_cassandra
-from r2.lib import utils
-from r2.models.link import Comment
-
 from pycassa import batch, types
 from pycassa.cassandra import ttypes
 from pycassa.system_manager import ASCII_TYPE, COUNTER_COLUMN_TYPE
-
 from pylons import app_globals as g
+
+from r2.lib import utils
+from r2.lib.db import tdb_cassandra
+from r2.lib.utils import SimpleSillyStub
+from r2.models.link import Comment
 
 
 """Storage for comment trees
@@ -79,7 +79,7 @@ class CommentTreeStorageBase(object):
         return cls.NoOpContext()
 
     @classmethod
-    def by_link(cls, link):
+    def by_link(cls, link, timer):
         raise NotImplementedError
 
     @classmethod
@@ -194,11 +194,12 @@ class CommentTreeStorageV1(CommentTreeStorageBase):
             g.permacache.set_multi(to_set)
 
     @classmethod
-    def by_link(cls, link):
+    def by_link(cls, link, timer):
         key = cls._comments_key(link._id)
         p_key = cls._parent_comments_key(link._id)
         # prefetch both values, they'll be locally cached
         g.permacache.get_multi([key, p_key])
+        timer.intermediate('load')
 
         r = g.permacache.get(key)
         if not r:
@@ -217,6 +218,7 @@ class CommentTreeStorageV1(CommentTreeStorageBase):
         parents = g.permacache.get(p_key)
         if parents is None:
             parents = {}
+        timer.intermediate('calculate')
         return dict(cids=cids, tree=cid_tree, depth=depth, parents=parents)
 
     @classmethod
@@ -282,9 +284,12 @@ class CommentTree:
         return impl.mutation_context(link, timeout=timeout)
 
     @classmethod
-    def by_link(cls, link):
+    def by_link(cls, link, timer=None):
+        if timer is None:
+            timer = SimpleSillyStub()
+
         impl = cls.IMPLEMENTATIONS[link.comment_tree_version]
-        data = impl.by_link(link)
+        data = impl.by_link(link, timer)
         return cls(link, **data)
 
     @classmethod

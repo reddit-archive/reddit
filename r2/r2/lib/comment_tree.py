@@ -285,8 +285,7 @@ def get_comment_tree(link, timer=None):
     if timer is None:
         timer = SimpleSillyStub()
 
-    cache = CommentTree.by_link(link)
-    timer.intermediate('load')
+    cache = CommentTree.by_link(link, timer)
     return cache
 
 
