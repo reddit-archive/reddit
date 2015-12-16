@@ -262,20 +262,6 @@ def link_comments_and_sort(link, sort):
         sorter.update(_comment_sorter_from_cids(comments, sort, link, tree))
         timer.intermediate('sort')
 
-    if parents is None:
-        g.log.debug("comment_tree.py: parents cache miss for %s", link)
-        parents = {}
-    elif cids and not all(x in parents for x in cids):
-        g.log.debug("Error in comment_tree: parents inconsistent for %s", link)
-        parents = {}
-
-    if not parents and len(cids) > 0:
-        with CommentTree.mutation_context(link):
-            # reload under lock so the sorter and parents are consistent
-            timer.intermediate('lock')
-            cache = get_comment_tree(link, timer=timer)
-            cache.parents = cache.parent_dict_from_tree(cache.tree)
-
     timer.stop()
 
     return (cache.cids, cache.tree, cache.depth, cache.parents, sorter)

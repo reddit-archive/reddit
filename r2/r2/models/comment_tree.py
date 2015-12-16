@@ -28,6 +28,7 @@ from pylons import app_globals as g
 from r2.lib import utils
 from r2.lib.db import tdb_cassandra
 from r2.lib.utils import SimpleSillyStub
+from r2.lib.utils.comment_tree_utils import get_tree_details
 from r2.models.link import Comment
 
 
@@ -196,12 +197,9 @@ class CommentTreeStorageV1(CommentTreeStorageBase):
     @classmethod
     def by_link(cls, link, timer):
         key = cls._comments_key(link._id)
-        p_key = cls._parent_comments_key(link._id)
-        # prefetch both values, they'll be locally cached
-        g.permacache.get_multi([key, p_key])
+        r = g.permacache.get(key)
         timer.intermediate('load')
 
-        r = g.permacache.get(key)
         if not r:
             # this link has not had an empty tree written for it. make an empty
             # tree here and return it. the downside is that until a comment is
@@ -210,16 +208,15 @@ class CommentTreeStorageV1(CommentTreeStorageBase):
             return dict(cids=[], tree={}, depth={}, parents={})
 
         try:
-            cids, cid_tree, depth = r
+            _, tree, _ = r
         except ValueError:
             # We got the old version that includes num_children
-            cids, cid_tree, depth, num_children = r
+            _, tree, _, _ = r
 
-        parents = g.permacache.get(p_key)
-        if parents is None:
-            parents = {}
+        cids, depth, parents = get_tree_details(tree)
         timer.intermediate('calculate')
-        return dict(cids=cids, tree=cid_tree, depth=depth, parents=parents)
+
+        return dict(cids=cids, tree=tree, depth=depth, parents=parents)
 
     @classmethod
     def write_from_comment_tree(cls, link, comment_tree):
