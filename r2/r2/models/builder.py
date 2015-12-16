@@ -1021,24 +1021,25 @@ class CommentBuilder(Builder):
                 if not comment.prevent_collapse:
                     comment.hidden = True
 
-                if comment.prevent_collapse and parent:
-                    # Un-collapse parents as necessary (3).  It's a lot easier
-                    # to do this here, upwards, than to check through all the
-                    # children when we were iterating at the parent.
-                    ancestor = parent
-                    counter = 0
-                    while (ancestor and
-                            not getattr(ancestor, 'walked', False) and
-                            counter < max_relation_walks):
-                        ancestor.hidden = False
-                        # In case we haven't processed this comment yet.
-                        ancestor.prevent_collapse = True
-                        # This allows us to short-circuit when the rest of the
-                        # tree has already been uncollapsed.
-                        ancestor.walked = True
+            if comment.prevent_collapse and parent:
+                # Un-collapse parents as necessary (either from Q&A sort rule
+                # or a deeply nested distinguished comment, etc). It's a lot
+                # easier to do this here, upwards, than to check through all
+                # the children when we were iterating at the parent.
+                ancestor = parent
+                counter = 0
+                while (ancestor and
+                        not getattr(ancestor, 'walked', False) and
+                        counter < max_relation_walks):
+                    ancestor.hidden = False
+                    # In case we haven't processed this comment yet.
+                    ancestor.prevent_collapse = True
+                    # This allows us to short-circuit when the rest of the
+                    # tree has already been uncollapsed.
+                    ancestor.walked = True
 
-                        ancestor = wrapped_by_id.get(ancestor.parent_id)
-                        counter += 1
+                    ancestor = wrapped_by_id.get(ancestor.parent_id)
+                    counter += 1
 
             if comment.collapsed:
                 if comment._id in dont_collapse or comment.prevent_collapse:
