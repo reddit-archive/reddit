@@ -411,6 +411,14 @@ class EventQueue(object):
         if modaction.details_text:
             event.add("details_text", modaction.details_text)
 
+        # Some jobs that perform mod actions (for example, AutoModerator) are
+        # run without actually logging into the account that performs the
+        # the actions. In that case, set the user data based on the mod that's
+        # performing the action.
+        if not event.get("user_id"):
+            event["user_id"] = mod._id
+            event["user_name"] = mod.name
+
         event.add_target_fields(target)
 
         self.save_event(event)
