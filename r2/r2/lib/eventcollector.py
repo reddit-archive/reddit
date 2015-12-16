@@ -56,6 +56,11 @@ def _epoch_to_millis(timestamp):
     return int(timestamp * 1000)
 
 
+def _datetime_to_millis(dt):
+    """Convert a standard datetime to epoch milliseconds."""
+    return _epoch_to_millis(epoch_timestamp(dt))
+
+
 class EventQueue(object):
     def __init__(self, queue=r2.lib.amqp):
         self.queue = queue
@@ -97,7 +102,7 @@ class EventQueue(object):
             event.add("prev_vote_direction",
                 get_vote_direction_name(vote.previous_vote))
             event.add("prev_vote_ts",
-                _epoch_to_millis(epoch_timestamp(vote.previous_vote.date)))
+                _datetime_to_millis(vote.previous_vote.date))
 
         if vote.is_automatic_initial_vote:
             event.add("auto_self_vote", True)
@@ -177,8 +182,7 @@ class EventQueue(object):
         post = Link._byID(new_comment.link_id)
         event.add("post_id", post._id)
         event.add("post_fullname", post._fullname)
-        event.add("post_created_ts",
-            _epoch_to_millis(epoch_timestamp(post._date)))
+        event.add("post_created_ts", _datetime_to_millis(post._date))
 
         if new_comment.parent_id:
             parent = Comment._byID(new_comment.parent_id)
@@ -187,8 +191,7 @@ class EventQueue(object):
             parent = post
         event.add("parent_id", parent._id)
         event.add("parent_fullname", parent._fullname)
-        event.add("parent_created_ts",
-            _epoch_to_millis(epoch_timestamp(parent._date)))
+        event.add("parent_created_ts", _datetime_to_millis(parent._date))
 
         event.add("user_neutered", new_comment.author_slow._spam)
 
@@ -518,7 +521,7 @@ class Event(object):
 
         if not time:
             time = datetime.datetime.now(pytz.UTC)
-        self.timestamp = _epoch_to_millis(epoch_timestamp(time))
+        self.timestamp = _datetime_to_millis(time)
 
         if not uuid:
             uuid = uuid4()
@@ -599,8 +602,7 @@ class Event(object):
 
         # Add info about when target was originally posted for links/comments
         if isinstance(target, (Comment, Link)):
-            self.add("target_created_ts",
-                _epoch_to_millis(epoch_timestamp(target._date)))
+            self.add("target_created_ts", _datetime_to_millis(target._date))
 
     def add_subreddit_fields(self, subreddit):
         if not subreddit:
