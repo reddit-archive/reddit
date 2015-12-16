@@ -1472,6 +1472,11 @@ class PromoteApiController(ApiController):
             if oversold:
                 return
 
+        # Always set frequency_cap_default for auction campaign if frequency_cap
+        # is not set
+        if not frequency_cap and is_auction:
+            frequency_cap = g.frequency_cap_default
+
         dates = (start, end)
         if campaign:
             promote.edit_campaign(

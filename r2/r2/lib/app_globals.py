@@ -219,6 +219,7 @@ class Globals(object):
             'min_bid_pennies',
             'max_bid_pennies',
             'frequency_cap_min',
+            'frequency_cap_default',
             'eu_cookie_max_attempts',
         ],
 
