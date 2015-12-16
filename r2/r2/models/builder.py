@@ -48,7 +48,7 @@ from r2.lib.comment_tree import (
 from r2.lib.wrapped import Wrapped
 from r2.lib.db import operators, tdb_cassandra
 from r2.lib.filters import _force_unicode
-from r2.lib.utils import Storage, timesince, tup, to36
+from r2.lib.utils import Storage, shuffle_slice, timesince, tup, to36
 from r2.lib.utils.comment_tree_utils import get_num_children
 
 from r2.models import (
@@ -1133,7 +1133,12 @@ class CommentBuilder(Builder):
             final.append(w)
 
         if isinstance(self.sort, operators.shuffled):
-            shuffle(final)
+            # If we have a sticky comment, do not shuffle the first element
+            # of the list.
+            if len(final) > 0 and final[0]._id == self.link.sticky_comment_id:
+                shuffle_slice(final, 1)
+            else:
+                shuffle(final)
 
         timer.intermediate("build_morechildren")
         timer.stop()

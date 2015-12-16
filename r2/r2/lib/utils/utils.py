@@ -1709,6 +1709,21 @@ def fuzz_activity(count):
     return count + random.randint(0, jitter)
 
 
+def shuffle_slice(x, start, stop=None):
+    """Given a list, shuffle a portion of the list in-place, returning None.
+
+    This uses a knuth shuffle borrowed from http://stackoverflow.com/a/11706463
+    which is a slightly tweaked version of shuffle from the `random` stdlib:
+    https://hg.python.org/cpython/file/8962d1c442a6/Lib/random.py#l256
+    """
+    if stop is None:
+        stop = len(x)
+
+    for i in reversed(xrange(start + 1, stop)):
+        j = random.randint(start, i)
+        x[i], x[j] = x[j], x[i]
+
+
 # port of https://docs.python.org/dev/library/itertools.html#itertools-recipes
 def partition(pred, iterable):
     "Use a predicate to partition entries into false entries and true entries"
