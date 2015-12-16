@@ -461,6 +461,31 @@ class FrontController(RedditController):
                     click_hash=click_hash)):
                 click_url = None
 
+        # event target for screenviews
+        if comment:
+            event_target = {
+                'target_type': 'comment',
+                'target_fullname': comment._fullname,
+                'target_id': comment._id,
+            }
+        elif article.is_self:
+            event_target = {
+                'target_type': 'self',
+                'target_fullname': article._fullname,
+                'target_id': article._id,
+                'target_sort': sort,
+            }
+        else:
+            event_target = {
+                'target_type': 'link',
+                'target_fullname': article._fullname,
+                'target_id': article._id,
+                'target_url': article.url,
+                'target_url_domain': article.link_domain(),
+                'target_sort': sort,
+            }
+        extra_js_config = {'event_target': event_target}
+
         res = LinkInfoPage(
             link=article,
             comment=comment,
@@ -476,6 +501,7 @@ class FrontController(RedditController):
             sr_detail=sr_detail,
             campaign_fullname=campaign_fullname,
             click_url=click_url,
+            extra_js_config=extra_js_config,
         )
 
         return res.render()
@@ -1018,9 +1044,20 @@ class FrontController(RedditController):
         else:
             content = None
 
+        # event target for screenviews
+        event_target = {}
+        if after:
+            event_target['target_count'] = count
+            if reverse:
+                event_target['target_before'] = after._fullname
+            else:
+                event_target['target_after'] = after._fullname
+        extra_js_config = {'event_target': event_target}
+
         res = SubredditsPage(content=content,
                              prev_search=query,
                              page_classes=['subreddits-page'],
+                             extra_js_config=extra_js_config,
                              # update if we ever add sorts
                              search_params={},
                              title=_("search results"),
@@ -1180,6 +1217,19 @@ class FrontController(RedditController):
                 content = subreddits
                 subreddits = None
 
+        # event target for screenviews
+        event_target = {
+            'target_sort': sort,
+            'target_filter_time': recent,
+        }
+        if after:
+            event_target['target_count'] = count
+            if reverse:
+                event_target['target_before'] = after._fullname
+            else:
+                event_target['target_after'] = after._fullname
+        extra_js_config = {'event_target': event_target}
+
         res = SearchPage(_('search results'), query,
                          content=content,
                          subreddits=subreddits,
@@ -1193,6 +1243,7 @@ class FrontController(RedditController):
                          facets=subreddit_facets,
                          sort=sort,
                          recent=recent,
+                         extra_js_config=extra_js_config,
                          ).render()
 
         return res

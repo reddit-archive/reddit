@@ -56,6 +56,7 @@ r.analytics = {
       }
     }
 
+    r.analytics.screenviewEvent();
     r.analytics.firePageTrackingPixel(r.analytics.stripAnalyticsParams);
 
   },
@@ -301,6 +302,49 @@ r.analytics = {
 
       window.history.replaceState({}, document.title, a.href);
     }
+  },
+
+  screenviewEvent: function() {
+    var eventTopic = 'screenview_events';
+    var eventType = 'cs.screenview';
+    var payload = {};
+
+    if (this.contextData.userId) {
+      payload['user_id'] = this.contextData.userId;
+      payload['user_name'] = this.contextData.userName;
+    } else {
+      payload['loid'] = this.contextData.loid;
+      payload['loid_created'] = this.contextData.loidCreated;
+    }
+
+    if (this.contextData.srName) {
+      payload['sr_name'] = this.contextData.srName;
+    }
+    if (this.contextData.srFullname) {
+      payload['sr_id'] = r.utils.fullnameToId(this.contextData.srFullname);
+    }
+
+    if (this.contextData.referrer) {
+      payload['referrer_url'] = this.contextData.referrer;
+    }
+    if (this.contextData.referrerDomain) {
+      payload['referrer_domain'] = this.contextData.referrerDomain;
+    }
+
+    payload['language'] = this.contextData.language;
+    payload['dnt'] = this.contextData.doNotTrack;
+
+    if (r.config.event_target) {
+      for (var key in r.config.event_target) {
+        var value = r.config.event_target[key];
+        if (value !== null) {
+          payload[key] = value;
+        }
+      }
+    }
+
+    // event collector
+    r.events.track(eventTopic, eventType, payload).send();
   },
 
   timeoutForbiddenEvent: function(actionName, actionDetail, targetType, targetFullname) {
