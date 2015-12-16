@@ -162,10 +162,6 @@ class CommentTreeStorageV1(CommentTreeStorageBase):
         return 'comments_' + str(link_id)
 
     @staticmethod
-    def _parent_comments_key(link_id):
-        return 'comments_parents_' + str(link_id)
-
-    @staticmethod
     def _lock_key(link_id):
         return 'comment_lock_' + str(link_id)
 
@@ -181,18 +177,13 @@ class CommentTreeStorageV1(CommentTreeStorageBase):
             # probably don't need the lock because this should run immediately
             # when the link is created and before the response is returned
             key = cls._comments_key(link._id)
-            pkey = cls._parent_comments_key(link._id)
 
+            # cids and depth are written for legacy compatibility but not read
             cids = []
             tree = {}
             depth = {}
-            parents = {}
-
-            to_set = {
-                key: (cids, tree, depth),
-                pkey: parents,
-            }
-            g.permacache.set_multi(to_set)
+            val = (cids, tree, depth)
+            g.permacache.set(key, val)
 
     @classmethod
     def by_link(cls, link, timer):
@@ -237,11 +228,14 @@ class CommentTreeStorageV1(CommentTreeStorageBase):
     def add_comments(cls, tree, comments):
         with cls.mutation_context(tree.link):
             CommentTreeStorageBase.add_comments(tree, comments)
-            # for read safety write parents first
-            g.permacache.set(cls._parent_comments_key(tree.link_id),
-                             tree.parents)
-            g.permacache.set(cls._comments_key(tree.link_id),
-                             (tree.cids, tree.tree, tree.depth))
+            key = cls._comments_key(tree.link_id)
+
+            # write empty cids and depth to keep the structure the same without
+            # actually storing anything
+            cids = []
+            depth = {}
+            val = (cids, tree.tree, depth)
+            g.permacache.set(key, val)
 
 
 class CommentTree:
