@@ -101,48 +101,25 @@ class CommentTreeStorageBase(object):
     def add_comments(cls, tree, comments):
         cids = tree.cids
         depth = tree.depth
+        parents = tree.parents
 
-        new_parents = {}
         for comment in sorted(comments, key=lambda c: c._id):
             # sort the comments by id so we'll process a parent comment before
             # its child
             cid = comment._id
             p_id = comment.parent_id
 
-            #make sure we haven't already done this before (which would happen
-            #if the tree isn't cached when you add a comment)
+            # don't add a comment that is already in the tree
             if cid in cids:
                 continue
 
             if p_id and p_id not in cids:
                 raise InconsistentCommentTreeError
 
-            #add to comment list
             cids.append(cid)
-
-            #add to tree
             tree.tree.setdefault(p_id, []).append(cid)
-
-            #add to depth
             depth[cid] = depth[p_id] + 1 if p_id else 0
-
-            #if this comment had a parent, find the parent's parents
-            if p_id:
-                new_parents[cid] = p_id
-
-        # update our cache of children -> parents as well:
-        if not tree.parents:
-            tree.parents = tree.parent_dict_from_tree(tree.tree)
-
-        parents = tree.parents
-
-        for cid, p_id in new_parents.iteritems():
             parents[cid] = p_id
-
-        for comment in comments:
-            cid = comment._id
-            if cid not in new_parents:
-                parents[cid] = None
 
     @classmethod
     def delete_comment(cls, tree, comment):
@@ -336,11 +313,3 @@ class CommentTree:
             new_storage_cls.write_from_comment_tree(link, comment_tree)
             link.comment_tree_version = to_version
             link._commit()
-
-    @staticmethod
-    def parent_dict_from_tree(tree):
-        parents = {}
-        for parent, children in tree.iteritems():
-            for child in children:
-                parents[child] = parent
-        return parents
