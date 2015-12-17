@@ -227,6 +227,7 @@ def js_config(extra_config=None):
         "events_collector_url": g.events_collector_url,
         "events_collector_key": g.secrets['events_collector_js_key'],
         "events_collector_secret": g.secrets['events_collector_js_secret'],
+        "feature_screenview_events": feature.is_enabled('screenview_events'),
         "static_root": static(''),
         "over_18": bool(c.over18),
         "new_window": bool(c.user.pref_newwindow),
