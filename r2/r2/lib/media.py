@@ -50,6 +50,7 @@ from r2.lib import amqp, hooks
 from r2.lib.db.tdb_cassandra import NotFound
 from r2.lib.memoize import memoize
 from r2.lib.nymph import optimize_png
+from r2.lib.template_helpers import format_html
 from r2.lib.utils import (
     TimeoutFunction,
     TimeoutFunctionException,
@@ -70,6 +71,10 @@ from urllib2 import (
     HTTPError,
     URLError,
 )
+
+_IMAGE_PREVIEW_TEMPLATE = """
+<img src="%(url)s" width="%(width)s" height="%(height)s">
+"""
 
 
 def _image_to_str(image):
@@ -497,6 +502,55 @@ def upload_icon(image_data, size):
     icon_data = _image_to_str(image)
     file_name = _filename_from_content(icon_data)
     return g.media_provider.put('icons', file_name + ".png", icon_data)
+
+
+def allowed_media_preview_domain(domain):
+    for allowed_domain in g.media_preview_domain_whitelist:
+        if is_subdomain(domain, allowed_domain):
+            return True
+    return False
+
+
+def get_preview_image(preview_object):
+    """Returns a media_object for rendering a media preview image"""
+    min_width, min_height = g.preview_image_min_size
+    max_width, max_height = g.preview_image_max_size
+    source_width = preview_object['width']
+    source_height = preview_object['height']
+
+    if source_width <= max_width and source_height <= max_height:
+        width = source_width
+        height = source_height
+    else:
+        max_ratio = float(max_height) / max_width
+        source_ratio = float(source_height) / source_width
+        if source_ratio >= max_ratio:
+            height = max_height
+            width = int((height * source_width) / source_height)
+        else:
+            width = max_width
+            height = int((width * source_height) / source_width)
+
+    if width < min_width and height < min_height:
+        return None
+
+    url = g.image_resizing_provider.resize_image(preview_object, width)
+
+    img_html = format_html(
+        _IMAGE_PREVIEW_TEMPLATE,
+        url=url,
+        width=width,
+        height=height,
+    )
+
+    media_object = {
+        "type": "media-preview",
+        "width": width,
+        "height": height,
+        "content": img_html,
+    }
+
+    return media_object
 
 
 def _make_custom_media_embed(media_object):

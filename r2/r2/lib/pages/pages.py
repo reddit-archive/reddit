@@ -4821,8 +4821,26 @@ def make_link_child(item, show_media_preview=False):
                                    expand=expand,
                                    nofollow=item.nofollow,
                                    position_inline=position_inline)
+    # if the item has a preview image and is on the whitelist, show it
+    elif item.preview_object and media.allowed_media_preview_domain(item.domain):
+        media_object = media.get_preview_image(item.preview_object)
+        expand = show_media_preview and expandable
+
+        if media_object:
+            media_preview = MediaPreview(
+                media_object=media_object,
+                id36=item._id36,
+            )
+            link_child = MediaChild(
+                item,
+                media_preview,
+                load=True,
+                expand=expand,
+                position_inline=False,
+            )
 
     return link_child, editable
+
 
 class MediaChild(LinkChild):
     """renders when the user hits the expando button to expand media
@@ -4849,6 +4867,16 @@ class MediaEmbed(Templated):
         else:
             self.credentials = ""
         Templated.__init__(self, *args, **kwargs)
+
+
+class MediaPreview(Templated):
+    """Rendered html container for a media child"""
+
+    def __init__(self, media_object, id36, **kwargs):
+        self.media_content = media_object["content"]
+        self.width = media_object["width"]
+        self.id36 = id36
+        super(MediaPreview, self).__init__(**kwargs)
 
 
 class SelfTextChild(LinkChild):

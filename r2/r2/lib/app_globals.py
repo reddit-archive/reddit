@@ -281,6 +281,7 @@ class Globals(object):
             'TRAFFIC_LOG_HOSTS',
             'exempt_login_user_agents',
             'autoexpand_media_types',
+            'media_preview_domain_whitelist',
             'multi_icons',
             'hide_subscribers_srs',
             'mcrouter_addr',
@@ -288,6 +289,8 @@ class Globals(object):
 
         ConfigValue.tuple_of(ConfigValue.int): [
             'thumbnail_size',
+            'preview_image_max_size',
+            'preview_image_min_size',
             'mobile_ad_image_size',
         ],
 
