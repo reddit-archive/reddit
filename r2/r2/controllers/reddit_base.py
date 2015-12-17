@@ -1219,6 +1219,10 @@ class MinimalController(BaseController):
                                     httponly=getattr(v, 'httponly', False))
 
 
+        if not isinstance(c.site, FakeSubreddit) and not g.disallow_db_writes:
+            if c.user_is_loggedin:
+                c.site.record_visitor_activity("logged_in", c.user._fullname)
+
         if self.should_update_last_visit():
             c.user.update_last_visit(c.start_time)
 
@@ -1384,9 +1388,6 @@ class OAuth2ResourceController(MinimalController):
         if c.user.inbox_count > 0:
             c.have_messages = True
         c.have_mod_messages = bool(c.user.modmsgtime)
-
-        if not isinstance(c.site, FakeSubreddit) and not g.disallow_db_writes:
-            c.user.update_sr_activity(c.site)
 
         c.user_special_distinguish = c.user.special_distinguish()
 

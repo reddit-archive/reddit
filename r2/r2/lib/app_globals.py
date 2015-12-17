@@ -66,6 +66,7 @@ from r2.lib.cache import (
 from r2.lib.configparse import ConfigValue, ConfigValueParser
 from r2.lib.contrib import ipaddress
 from r2.lib.contrib.activity_thrift import ActivityService
+from r2.lib.contrib.activity_thrift.ttypes import ActivityInfo
 from r2.lib.eventcollector import EventQueue
 from r2.lib.lock import make_lock_factory
 from r2.lib.manager import db_manager
@@ -801,6 +802,11 @@ class Globals(object):
         ################# THRIFT-BASED SERVICES
         activity_endpoint = self.config.get("activity_endpoint")
         if activity_endpoint:
+            # make ActivityInfo objects rendercache-key friendly
+            # TODO: figure out a more general solution for this if
+            # we need to do this for other thrift-generated objects
+            ActivityInfo.cache_key = lambda self, style: repr(self)
+
             activity_pool = ThriftConnectionPool(activity_endpoint, timeout=0.1)
             self.baseplate.add_to_context("activity_service",
                 ThriftContextFactory(activity_pool, ActivityService.Client))

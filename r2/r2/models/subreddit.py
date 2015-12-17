@@ -37,12 +37,12 @@ from pylons import request
 from pylons import tmpl_context as c
 from pylons import app_globals as g
 from pylons.i18n import _, N_
+from thrift.transport.TTransport import TTransportException
 
 from r2.config import feature
 from r2.lib.db.thing import Thing, Relation, NotFound
 from account import (
     Account,
-    AccountsActiveBySR,
     FakeAccount,
     QuarantinedSubredditOptInsByAccount,
 )
@@ -55,7 +55,6 @@ from r2.lib.memoize import memoize
 from r2.lib.permissions import ModeratorPermissionSet
 from r2.lib.utils import (
     UrlParser,
-    fuzz_activity,
     in_chunks,
     summarize_markdown,
     timeago,
@@ -584,13 +583,6 @@ class Subreddit(Thing, Printable, BaseSite):
         return self.subscriber_ids()
 
     @property
-    def accounts_active(self):
-        if self.hide_num_users_info:
-            return 0
-
-        return self.get_accounts_active()[0]
-
-    @property
     def wiki_use_subreddit_karma(self):
         return True
 
@@ -652,21 +644,56 @@ class Subreddit(Thing, Printable, BaseSite):
         else:
             multi.delete()
 
-    def get_accounts_active(self):
-        fuzzed = False
-        count = AccountsActiveBySR.get_count(self)
-        key = 'get_accounts_active-' + self._id36
+    activity_contexts = (
+        "logged_in",
+    )
+    SubredditActivity = collections.namedtuple(
+        "SubredditActivity", activity_contexts)
 
-        # Fuzz counts having low values, for privacy reasons
-        if count < 100 and not c.user_is_admin:
-            fuzzed = True
-            cached_count = g.cache.get(key)
-            if not cached_count:
-                count = fuzz_activity(count)
-                g.cache.set(key, count, time=5*60)
-            else:
-                count = cached_count
-        return count, fuzzed
+    def record_visitor_activity(self, context, visitor_id):
+        """Record a visit to this subreddit in the activity service.
+
+        This is used to show "here now" numbers. Multiple contexts allow us
+        to bucket different kinds of visitors (logged-in vs. logged-out etc.)
+
+        :param str context: The category of visitor. Must be one of
+            Subreddit.activity_contexts.
+        :param str visitor_id: A unique identifier for this visitor within the
+            given context.
+
+        """
+        assert context in self.activity_contexts
+
+        # we don't actually support other contexts yet
+        assert self.activity_contexts == ("logged_in",)
+
+        if not c.activity_service:
+            return
+
+        try:
+            c.activity_service.record_activity(self._fullname, visitor_id)
+        except TTransportException:
+            pass
+
+    def count_activity(self):
+        """Count activity in this subreddit in all known contexts.
+
+        :returns: a named tuple of activity information for each context.
+
+        """
+        # we don't actually support other contexts yet
+        assert self.activity_contexts == ("logged_in",)
+
+        if not c.activity_service:
+            return None
+
+        try:
+            # TODO: support batch lookup of multiple contexts (requires changes
+            # to activity service)
+            activity = c.activity_service.count_activity(self._fullname)
+            return self.SubredditActivity(activity)
+        except TTransportException:
+            return None
 
     def spammy(self):
         return self._spam

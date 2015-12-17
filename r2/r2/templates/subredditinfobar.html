@@ -55,16 +55,13 @@
 
   ${SubscribeButton(thing.sr)}
   %if not thing.sr.hide_num_users_info:
-    <span class="subscribers">${unsafe(Score.readers(thing.subscribers))}</span>
-    <p class="users-online ${'fuzzed' if thing.accounts_active_fuzzed else ''}" title="${_('logged-in users viewing this subreddit in the past 15 minutes')}">
-        ${unsafe(Score.users_here_now(thing.accounts_active, prepend='~' if thing.accounts_active_fuzzed else ''))}
-    </p>
-  %endif
+  <span class="subscribers">${unsafe(Score.readers(thing.subscribers))}</span>
 
-  %if feature.is_enabled("activity_service_view") and getattr(thing, "visitor_count", None):
-  <p class="users-online ${'fuzzed' if thing.visitor_count_is_fuzzed else ''}" title="${_('logged-in users viewing this subreddit in the past 15 minutes')}">
-    ${unsafe(Score.users_here_now(thing.visitor_count, prepend='~' if thing.visitor_count_is_fuzzed else ''))}
+    %if thing.active_visitors and thing.active_visitors.logged_in:
+  <p class="users-online ${'fuzzed' if thing.active_visitors.logged_in.is_fuzzed else ''}" title="${_('logged-in users viewing this subreddit in the past 15 minutes')}">
+    ${unsafe(Score.users_here_now(thing.active_visitors.logged_in.count, prepend='~' if thing.active_visitors.logged_in.is_fuzzed else ''))}
   </p>
+    %endif
   %endif
 
   %if thing.sr.moderator:

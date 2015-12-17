@@ -45,10 +45,15 @@ class R2RootSpanObserver(RootSpanObserver):
 
 class R2SpanObserver(SpanObserver):
     def __init__(self, span_name):
-        self.timer = g.stats.get_timer("providers.{}".format(span_name))
+        self.metric_name = "providers.{}".format(span_name)
+        self.timer = g.stats.get_timer(self.metric_name)
 
     def on_start(self):
         self.timer.start()
 
-    def on_stop(self):
+    def on_stop(self, error=None):
         self.timer.stop()
+
+        if error:
+            g.log.warning("%s: error: %s", self.metric_name, error)
+            g.stats.simple_event("{}.error".format(self.metric_name))

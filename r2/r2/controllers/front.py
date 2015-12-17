@@ -931,7 +931,16 @@ class FrontController(RedditController):
         Data includes the subscriber count, description, and header image."""
         if not is_api() or isinstance(c.site, FakeSubreddit):
             return self.abort404()
-        item = Wrapped(c.site, accounts_active_count=c.site.accounts_active)
+
+        # we do this here so that item.accounts_active_count is only present on
+        # this one endpoint, and not all the /subreddit listings etc. since
+        # looking up activity across multiple subreddits is more work.
+        accounts_active_count = None
+        activity = c.site.count_activity()
+        if activity:
+            accounts_active_count = activity.logged_in.count
+
+        item = Wrapped(c.site, accounts_active_count=accounts_active_count)
         Subreddit.add_props(c.user, [item])
         return Reddit(content=item).render()
 
