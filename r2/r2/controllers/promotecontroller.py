@@ -543,7 +543,16 @@ class SponsorListingController(PromoteListingController):
 
         if self.sort in {'underdelivered', 'reported', 'house', 'fraud'}:
             menus = []
-            if self.sort == 'house':
+
+            if self.sort == 'fraud':
+                fraud_menu = NavMenu([
+                    QueryButton("exclude unpaid", dest=None,
+                                query_param='exclude_unpaid'),
+                    QueryButton("include unpaid", dest="no",
+                                query_param='exclude_unpaid'),
+                ], base_path=request.path, type='lightdrop')
+                menus.append(fraud_menu)
+            if self.sort in ('house', 'fraud'):
                 menus.append(managed_menu)
         else:
             menus = super(SponsorListingController, self).menus
@@ -594,9 +603,18 @@ class SponsorListingController(PromoteListingController):
     def keep_fn(self):
         base_keep_fn = PromoteListingController.keep_fn(self)
 
+        if self.exclude_unpaid:
+            exclude = set(queries.get_all_unpaid_links())
+        else:
+            exclude = set()
+
         def keep(item):
             if not self.include_managed and item.managed_promo:
                 return False
+
+            if self.exclude_unpaid and item._fullname in exclude:
+                return False
+
             return base_keep_fn(item)
         return keep
 
@@ -651,11 +669,18 @@ class SponsorListingController(PromoteListingController):
         VSponsorAdmin(),
         srname=nop('sr'),
         include_managed=VBoolean("include_managed"),
+        exclude_unpaid=VBoolean("exclude_unpaid"),
     )
-    def GET_listing(self, srname=None, include_managed=False, sort="all", **kw):
+    def GET_listing(self, srname=None, include_managed=False,
+                    exclude_unpaid=None, sort="all", **kw):
         self.sort = sort
         self.sr = None
         self.include_managed = include_managed
+
+        if "exclude_unpaid" not in request.GET:
+            self.exclude_unpaid = self.sort == "fraud"
+        else:
+            self.exclude_unpaid = exclude_unpaid
 
         if srname:
             try:
