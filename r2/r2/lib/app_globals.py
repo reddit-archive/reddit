@@ -327,7 +327,7 @@ class Globals(object):
             'cpm_selfserve_collection',
         ],
 
-        ConfigValue.baseplate(baseplate_config.Endpoint): [
+        ConfigValue.baseplate(baseplate_config.Optional(baseplate_config.Endpoint)): [
             "activity_endpoint",
         ],
     }
