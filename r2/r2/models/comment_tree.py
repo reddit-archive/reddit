@@ -154,13 +154,8 @@ class CommentTreeStorageV1(CommentTreeStorageBase):
             # probably don't need the lock because this should run immediately
             # when the link is created and before the response is returned
             key = cls._comments_key(link._id)
-
-            # cids and depth are written for legacy compatibility but not read
-            cids = []
             tree = {}
-            depth = {}
-            val = (cids, tree, depth)
-            g.permacache.set(key, val)
+            g.permacache.set(key, tree)
 
     @classmethod
     def by_link(cls, link, timer):
@@ -175,11 +170,15 @@ class CommentTreeStorageV1(CommentTreeStorageBase):
             # have a cache miss and fall through to cassandra
             return dict(cids=[], tree={}, depth={}, parents={})
 
-        try:
-            _, tree, _ = r
-        except ValueError:
-            # We got the old version that includes num_children
-            _, tree, _, _ = r
+        if isinstance(r, dict):
+            tree = r
+        else:
+            try:
+                # We got the old version that includes cids and depth
+                _, tree, _ = r
+            except ValueError:
+                # We got the even older version that includes num_children
+                _, tree, _, _ = r
 
         cids, depth, parents = get_tree_details(tree)
         timer.intermediate('calculate')
@@ -206,13 +205,7 @@ class CommentTreeStorageV1(CommentTreeStorageBase):
         with cls.mutation_context(tree.link):
             CommentTreeStorageBase.add_comments(tree, comments)
             key = cls._comments_key(tree.link_id)
-
-            # write empty cids and depth to keep the structure the same without
-            # actually storing anything
-            cids = []
-            depth = {}
-            val = (cids, tree.tree, depth)
-            g.permacache.set(key, val)
+            g.permacache.set(key, tree.tree)
 
 
 class CommentTree:
