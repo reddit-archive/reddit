@@ -51,6 +51,7 @@ def _get_sort_value(comment, sort, link, children=None):
         return comment._qa(children, responder_ids)
     return getattr(comment, sort)
 
+
 def add_comments(comments):
     links = Link._byID([com.link_id for com in tup(comments)], data=True)
     comments = tup(comments)
@@ -82,16 +83,10 @@ def add_comments(comments):
                 'add_comments_nolock failed for link %s %s, recomputing',
                 link_id, comment_ids)
             rebuild_comment_tree(link, timer=timer)
-        except:
-            comment_ids = [comment._id for comment in coms]
-            g.log.exception(
-                'add_comments_nolock bare failed for link %s %s, recomputing',
-                link_id, comment_ids)
-
-            rebuild_comment_tree(link, timer=timer)
 
         timer.stop()
         update_comment_votes(coms)
+
 
 def update_comment_votes(comments):
     from r2.models import CommentScoresByLink
