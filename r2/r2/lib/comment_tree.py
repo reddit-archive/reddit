@@ -67,7 +67,7 @@ def add_comments(comments):
                                   % link.comment_tree_version)
         timer.start()
         try:
-            with CommentTree.mutation_context(link):
+            with CommentTree.mutation_context(link, timeout=30):
                 timer.intermediate('lock')
                 cache = get_comment_tree(link, timer=timer)
                 timer.intermediate('get')
