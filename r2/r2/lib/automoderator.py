@@ -48,6 +48,7 @@ from pylons import app_globals as g
 
 from r2.lib import amqp
 from r2.lib.db import queries
+from r2.lib.errors import RedditError
 from r2.lib.filters import _force_unicode
 from r2.lib.menus import CommentSortMenu
 from r2.lib.utils import (
@@ -1186,6 +1187,7 @@ class Rule(object):
         "priority": RuleComponent(valid_types=int, default=0),
         "moderators_exempt": RuleComponent(valid_types=bool),
         "comment": RuleComponent(valid_types=basestring, component_type="action"),
+        "comment_stickied": RuleComponent(valid_types=bool, default=False),
         "modmail": RuleComponent(valid_types=basestring, component_type="action"),
         "modmail_subject": RuleComponent(
             valid_types=basestring,
@@ -1431,6 +1433,13 @@ class Rule(object):
             new_comment.sendreplies = False
             new_comment._commit()
             queries.new_comment(new_comment, inbox_rel)
+
+            if self.comment_stickied:
+                try:
+                    link.set_sticky_comment(new_comment, set_by=ACCOUNT)
+                except RedditError:
+                    # This comment isn't valid to set to sticky, ignore
+                    pass
 
             g.stats.simple_event("automoderator.comment")
 
