@@ -35,7 +35,9 @@
       if (proxies[namespace]) {
         var proxyWith = proxies[namespace];
 
-        r.frames.postMessage(proxyWith.target, type, message.data, message.options);
+        for (var i = 0; i < proxyWith.targets.length; i++) {
+          r.frames.postMessage(proxyWith.targets[i], type, message.data, message.options);
+        }
       }
 
       var customEvent = new CustomEvent(type, {detail: message.data});
@@ -147,14 +149,27 @@
     /*
      * Proxies messages on a namespace from a frame to a specified target.
      * param {String} namespace The namespace to proxy.
-     * target {Window} [source] The frame to proxy messages to.
+     * targets {Array<Window>} [source] The frames to proxy messages to.
+     *  NOTE: supports a single frame as well.
      */
-    proxy: function(namespace, target) {
+    proxy: function(namespace, targets) {
       this.listen(namespace);
 
-      proxies[namespace] = {
-        target: target,
-      };
+      if (Object.prototype.toString.call(targets) !== '[object Array]') {
+        targets = [targets];
+      }
+
+      var namespaceProxies = proxies[namespace];
+
+      if (namespaceProxies) {
+        namespaceProxies.targets = [].concat(namespaceProxies.targets, target);
+      } else {
+        namespaceProxies = {
+          targets: targets,
+        };
+      }
+
+      proxies[namespace] = namespaceProxies;
     },
 
     /*
