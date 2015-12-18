@@ -56,9 +56,20 @@ r.analytics = {
       }
     }
 
+    if ($('body').hasClass('comments-page')) {
+      r.analytics.contextData.pageType = 'comments';
+    } else if ($('body').hasClass('listing-page')) {
+      r.analytics.contextData.pageType = 'listing';
+
+      if (r.config.cur_listing) {
+        r.analytics.contextData.listingName = r.config.cur_listing;
+      }
+    }
+
     if (r.config.feature_screenview_events) {
       r.analytics.screenviewEvent();
     }
+
     r.analytics.firePageTrackingPixel(r.analytics.stripAnalyticsParams);
 
   },
@@ -392,6 +403,82 @@ r.analytics = {
     r.events.track(eventTopic, eventType, payload).send();
   },
 
+  expandoEvent: function(actionName, targetData) {
+    var eventTopic = 'expando_events';
+    var eventType = 'cs.' + actionName;
+    var payload = {};
+
+    if ('linkIsNSFW' in targetData) {
+      payload['nsfw'] = targetData.linkIsNSFW;
+    }
+
+    if ('linkType' in targetData) {
+      payload['target_type'] = targetData.linkType;
+      
+      if (targetData.linkType === 'self' ||
+          targetData.linkDomain === r.config.cur_domain) {
+        // self posts and reddit live embeds
+        payload['provider'] = 'reddit';
+      } else {
+        payload['provider'] = 'embedly';
+      }
+    }
+
+    if ('linkFullname' in targetData) {
+      payload['target_fullname'] = targetData.linkFullname;
+      payload['target_id'] = r.utils.fullnameToId(targetData.linkFullname);
+    }
+
+    if ('linkCreated' in targetData) {
+      payload['target_create_ts'] = targetData.linkCreated;
+    }
+
+    if ('linkURL' in targetData) {
+      payload['target_url'] = targetData.linkURL;
+    }
+
+    if ('linkDomain' in targetData) {
+      payload['target_url_domain'] = targetData.linkDomain;
+    }
+
+    if ('authorFullname' in targetData) {
+      payload['target_author_id'] = r.utils.fullnameToId(targetData.authorFullname);
+    }
+      
+    if ('subredditName' in targetData) {
+      payload['sr_name'] = targetData.subredditName;
+    }
+
+    if ('subredditFullname' in targetData) {
+      payload['sr_id'] = r.utils.fullnameToId(targetData.subredditFullname);
+    }
+
+    if (this.contextData.userId) {
+      payload['user_id'] = this.contextData.userId;
+      payload['user_name'] = this.contextData.userName;
+    } else {
+      payload['loid'] = this.contextData.loid;
+      payload['loid_created'] = this.contextData.loidCreated;
+    }
+
+    if (this.contextData.referrer) {
+      payload['referrer_url'] = this.contextData.referrer;
+    }
+
+    if (this.contextData.referrerDomain) {
+      payload['referrer_domain'] = this.contextData.referrerDomain;
+    }
+    
+    if (this.contextData.pageType) {
+      payload['page_type'] = this.contextData.pageType;
+    }
+
+    if (this.contextData.listingName) {
+      payload['listing_name'] = this.contextData.listingName;
+    }
+
+    r.events.track(eventTopic, eventType, payload).send();
+  },
 };
 
 r.analytics.breadcrumbs = {

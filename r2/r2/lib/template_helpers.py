@@ -173,9 +173,16 @@ def js_config(extra_config=None):
     verification = mac.hexdigest()
     cur_subreddit = ""
     cur_sr_fullname = ""
+    cur_listing = ""
+
     if isinstance(c.site, Subreddit) and not c.default_sr:
         cur_subreddit = c.site.name
         cur_sr_fullname = c.site._fullname
+        cur_listing = cur_subreddit
+    elif isinstance(c.site, DefaultSR):
+        cur_listing = "frontpage"
+    elif isinstance(c.site, FakeSubreddit):
+        cur_listing = c.site.name
 
     if g.debug:
         events_collector_url = g.events_collector_test_url
@@ -194,6 +201,7 @@ def js_config(extra_config=None):
         # the subreddit's name (for posts)
         "post_site": cur_subreddit,
         "cur_site": cur_sr_fullname,
+        "cur_listing": cur_listing,
         # the user's voting hash
         "modhash": c.modhash or False,
         # the current rendering style

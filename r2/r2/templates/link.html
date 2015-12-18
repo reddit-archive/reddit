@@ -28,6 +28,7 @@
    from r2.lib.template_helpers import (
        get_domain,
        get_linkflair_css_classes,
+       js_timestamp,
        make_url_protocol_relative,
    )
    from r2.lib.pages.things import LinkButtons
@@ -158,6 +159,22 @@
 <%def name="thing_css_class(what)" buffered="True">
   ${parent.thing_css_class(what)} ${"over18" if thing.over_18 else ""} ${thing.visited and 'visited' or ''}
   ${get_linkflair_css_classes(thing, on_class="linkflair", off_class="")}
+</%def>
+
+<%def name="thing_data_attributes(what)">
+  ${parent.thing_data_attributes(what)}
+
+  %if not getattr(what, 'deleted', False):
+    data-author="${what.author.name}"
+    data-author-fullname="${what.author._fullname}"
+  %endif
+
+  data-subreddit="${what.subreddit.name}"
+  data-subreddit-fullname="${what.subreddit._fullname}"
+
+  data-timestamp="${js_timestamp(what._date)}"
+
+  data-domain="${what.domain}"
 </%def>
 
 <%def name="subreddit()" buffered="True">

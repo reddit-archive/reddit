@@ -70,10 +70,57 @@
       this.cachedHTML = this.$expando.data('cachedhtml');
       this.loaded = !!this.cachedHTML;
       this.id = this.$el.thing_id();
-      
+
       $(document).on('hide_thing_' + this.id, function() {
         this.collapse();
       }.bind(this));
+
+      // expando events
+      var linkType = this.$el.hasClass('self') ? 'self' : 'link';
+      var linkURL = this.$el.children('.entry').find('a.title').attr('href');
+      var isNSFW = this.$el.hasClass('over18');
+
+      if (/^\//.test(linkURL)) {
+        var protocol = window.location.protocol;
+        var hostname = window.location.hostname;
+        linkURL = protocol + '//' + hostname + linkURL;
+      }
+
+      // event context
+      var eventData = {
+        linkIsNSFW: isNSFW,
+        linkType: linkType,
+        linkURL: linkURL,
+      };
+      
+      // note that hyphenated data attributes will be converted to camelCase
+      var thingData = this.$el.data();
+
+      if ('fullname' in thingData) {
+        eventData.linkFullname = thingData.fullname;
+      }
+
+      if ('timestamp' in thingData) {
+        eventData.linkCreated = thingData.timestamp;
+      }
+
+      if ('domain' in thingData) {
+        eventData.linkDomain = thingData.domain;
+      }
+
+      if ('authorFullname' in thingData) {
+        eventData.authorFullname = thingData.authorFullname;
+      }
+
+      if ('subreddit' in thingData) {
+        eventData.subredditName = thingData.subreddit;
+      }
+
+      if ('subredditFullname' in thingData) {
+        eventData.subredditFullname = thingData.subredditFullname;
+      }
+
+      this._expandoEventData = eventData;
     },
 
     show: function() {
@@ -88,11 +135,17 @@
         this.$expando.html(this.cachedHTML);
       }
 
+      this.fireExpandoEvent('expand_user');
       this.$expando.show();
     },
 
     hide: function() {
+      this.fireExpandoEvent('collapse_user');
       this.$expando.hide().empty();
+    },
+
+    fireExpandoEvent: function(actionName) {
+      r.analytics.expandoEvent(actionName, this._expandoEventData);
     },
   });
 
