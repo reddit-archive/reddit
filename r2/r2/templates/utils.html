@@ -441,6 +441,7 @@ ${unsafe(txt)}
         frame.style.display = 'none';
         frame.referrer = 'no-referrer';
         frame.id = 'gtm-jail';
+        frame.name = JSON.stringify({ subreddit: r.config.post_site });
         frame.src = '//' + ${scriptsafe_dumps(g.media_domain)} + '/gtm/jail';
 
         document.body.appendChild(frame);

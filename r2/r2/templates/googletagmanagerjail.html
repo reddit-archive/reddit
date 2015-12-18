@@ -21,7 +21,10 @@
 ###############################################################################
 
 <%!
-    from r2.lib.filters import unsafe
+    from r2.lib.filters import (
+      scriptsafe_dumps,
+      unsafe,
+    )
     from r2.lib import js
 %>
 
@@ -31,9 +34,11 @@
   <meta charset=utf-8>
   <meta name="referrer" content="no-referrer">
   <title></title>
+  <script>
+    window.CONTAINER_ID = ${scriptsafe_dumps(thing.container_id)};
+  </script>
 </head>
 <body>
-  <iframe id="jail" src="/gtm?id=${thing.container_id}" style="display:none;" referrer="no-referrer">
   ${unsafe(js.use('gtm-jail'))}
 </body>
 </html>
