@@ -72,6 +72,31 @@ if [[ $EUID -ne 0 ]]; then
     exit 1
 fi
 
+if [[ -z "$REDDIT_USER" ]]; then
+    # in a production install, you'd want the code to be owned by root and run
+    # by a less privileged user. this script is intended to build a development
+    # install, so we expect the owner to run the app and not be root.
+    cat <<END
+ERROR: You have not specified a user. This usually means you're running this
+script directly as root. It is not recommended to run reddit as the root user.
+
+Please create a user to run reddit and set the REDDIT_USER variable
+appropriately.
+END
+    exit 1
+fi
+
+if [[ "amd64" != $(dpkg --print-architecture) ]]; then
+    cat <<END
+ERROR: This host is running the $(dpkg --print-architecture) architecture!
+
+Because of the pre-built dependencies in our PPA, and some extra picky things
+like ID generation in liveupdate, installing reddit is only supported on amd64
+architectures.
+END
+    exit 1
+fi
+
 # seriously! these checks are here for a reason. the packages from the
 # reddit ppa aren't built for anything but trusty (14.04) right now, so
 # if you try and use this install script on another release you're gonna
