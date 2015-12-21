@@ -31,6 +31,38 @@ from pycassa.system_manager import ASCII_TYPE, COUNTER_COLUMN_TYPE
 from pylons import app_globals as g
 
 
+"""Storage for comment trees
+
+CommentTree is a class that provides an interface to the actual storage.
+Whatever the underlying storage is, it must be able to generate the following
+structures:
+* tree: dict of comment id -> list of child comment ids. The `None` entry is
+  top level comments
+* cids: list of all comment ids in the comment tree
+* depth: dict of comment id -> depth
+* parents: dict of comment id -> parent comment id
+
+CommentTreeStorageV1 uses permacache as the storage, and stores cids, tree, and
+depth as a tuple in one key, and parents in a second key.
+
+Attempts were made to move to a different data model that would take advantage
+of the column based storage of Cassandra and eliminate the need for locking when
+adding a comment to the comment tree.
+
+CommentTreeStorageV2: for each comment, write a column where the column name is
+(parent_comment id, comment_id) and the column value is a counter giving the
+size of the subtree rooted at the comment. This data model was abandoned because
+counters ended up being unreliable and the shards put too much GC pressure on
+the Cassandra JVM.
+
+CommentTreeStorageV3: for each comment, write a column where the column name is
+(depth, parent_comment_id, comment_id) and the column value is not used. This
+data model was abandoned because of more unexpected GC problems after longer
+time periods and generally insufficient regular-case performance.
+
+"""
+
+
 class CommentTreeStorageBase(object):
     class NoOpContext:
         def __enter__(self):
@@ -106,287 +138,6 @@ class CommentTreeStorageBase(object):
     def prepare_new_storage(cls, link):
         """Do whatever's needed to initialize the storage for a new link."""
         pass
-
-
-class CommentTreeStorageV3(CommentTreeStorageBase):
-    """Cassandra column-based storage for comment trees.
-
-    Under this implementation, each column in a link's row corresponds to a
-    comment on that link. The column name is an encoding of the tuple of
-    (depth, comment.parent_id, comment._id), and the value is not used.
-
-    Key features:
-        - does not use permacache!
-        - does not require locking for updates
-    """
-
-    __metaclass__ = tdb_cassandra.ThingMeta
-    _connection_pool = 'main'
-    _use_db = True
-
-    _type_prefix = None
-    _cf_name = 'CommentTreeStorage'
-
-    # column names are tuples of (depth, parent_id, comment_id)
-    _compare_with = types.CompositeType(
-        types.LongType(),
-        types.LongType(),
-        types.LongType())
-
-    COLUMN_READ_BATCH_SIZE = tdb_cassandra.max_column_count
-    COLUMN_WRITE_BATCH_SIZE = 1000
-
-    # special value for parent_id when the comment has no parent
-    NO_PARENT = -1
-
-    @staticmethod
-    def _key(link):
-        return utils.to36(link._id)
-
-    @classmethod
-    def by_link(cls, link):
-        try:
-            row = cls.get_row(cls._key(link))
-        except ttypes.NotFoundException:
-            row = {}
-        return cls._from_row(row)
-
-    @classmethod
-    def get_row(cls, key):
-        return cls._cf.xget(key, buffer_size=cls.COLUMN_READ_BATCH_SIZE)
-
-    @classmethod
-    def _from_row(cls, row):
-        # row is an iterable of (depth, parent_id, comment_id), '')
-        cids = []
-        tree = {}
-        depth = {}
-        parents = {}
-        for (d, pid, cid), val in row:
-            if pid == cls.NO_PARENT:
-                pid = None
-
-            cids.append(cid)
-            tree.setdefault(pid, []).append(cid)
-            depth[cid] = d
-            parents[cid] = pid
-        return dict(cids=cids, tree=tree, depth=depth, parents=parents)
-
-    @classmethod
-    @tdb_cassandra.will_write
-    def rebuild(cls, tree, comments):
-        with batch.Mutator(g.cassandra_pools[cls._connection_pool]) as m:
-            g.log.debug('removing tree from %s', cls._key(tree.link))
-            m.remove(cls._cf, cls._key(tree.link))
-
-        return cls.add_comments(tree, comments)
-
-    @classmethod
-    @tdb_cassandra.will_write
-    def add_comments(cls, tree, comments):
-        CommentTreeStorageBase.add_comments(tree, comments)
-        updates = {}
-        for comment in comments:
-            parent_id = comment.parent_id or cls.NO_PARENT
-            depth = tree.depth.get(parent_id, -1) + 1
-            updates[(depth, parent_id, comment._id)] = ''
-
-        cols = updates.keys()
-        for i in xrange(0, len(updates), cls.COLUMN_WRITE_BATCH_SIZE):
-            update_batch = {c: updates[c]
-                            for c in cols[i:i + cls.COLUMN_WRITE_BATCH_SIZE]}
-            with batch.Mutator(g.cassandra_pools[cls._connection_pool]) as m:
-                m.insert(cls._cf, cls._key(tree.link), update_batch)
-
-    @classmethod
-    @tdb_cassandra.will_write
-    def upgrade(cls, tree, link):
-        cids = []
-        for parent, children in tree.tree.iteritems():
-            cids.extend(children)
-
-        comments = {}
-        for i in xrange(0, len(cids), 100):
-            g.log.debug('  loading comments %d..%d', i, i + 100)
-            comments.update(Comment._byID(cids[i:i + 100], data=True))
-
-        cls.add_comments(tree, comments.values())
-
-
-class CommentTreeStorageV2(CommentTreeStorageBase):
-    """Cassandra column-based storage for comment trees.
-
-    Under this implementation, each column in a link's row corresponds to a
-    comment on that link. The column name is an encoding of the tuple of
-    (comment.parent_id, comment._id), and the value is a counter giving the
-    size of the subtree rooted at the comment.
-
-    Key features:
-        - does not use permacache!
-        - does not require locking for updates
-    """
-
-    __metaclass__ = tdb_cassandra.ThingMeta
-    _connection_pool = 'main'
-    _use_db = True
-
-    _type_prefix = None
-    _cf_name = 'CommentTree'
-
-    # column keys are tuples of (depth, parent_id, comment_id)
-    _compare_with = types.CompositeType(
-        types.LongType(),
-        types.LongType(),
-        types.LongType())
-
-    # column values are counters
-    _extra_schema_creation_args = {
-        'default_validation_class': COUNTER_COLUMN_TYPE,
-        'replicate_on_write': True,
-    }
-
-    COLUMN_READ_BATCH_SIZE = tdb_cassandra.max_column_count
-    COLUMN_WRITE_BATCH_SIZE = 1000
-
-    @staticmethod
-    def _key(link):
-        revision = getattr(link, 'comment_tree_id', 0)
-        if revision:
-            return '%s:%s' % (utils.to36(link._id), utils.to36(revision))
-        else:
-            return utils.to36(link._id)
-
-    @staticmethod
-    def _column_to_obj(cols):
-        for col in cols:
-            for (depth, pid, cid), val in col.iteritems():
-                yield (depth, None if pid == -1 else pid, cid), val
-
-    @classmethod
-    def by_link(cls, link):
-        try:
-            row = cls.get_row(cls._key(link))
-        except ttypes.NotFoundException:
-            row = {}
-        return cls._from_row(row)
-
-    @classmethod
-    def get_row(cls, key):
-        return cls._cf.xget(key, buffer_size=cls.COLUMN_READ_BATCH_SIZE)
-
-    @classmethod
-    def _from_row(cls, row):
-        # row is an iterable of ((depth, parent_id, comment_id), subtree_size)
-        cids = []
-        tree = {}
-        depth = {}
-        parents = {}
-        for (d, pid, cid), val in row:
-            if cid == -1:
-                continue
-            if pid == -1:
-                pid = None
-            cids.append(cid)
-            tree.setdefault(pid, []).append(cid)
-            depth[cid] = d
-            parents[cid] = pid
-        return dict(cids=cids, tree=tree, depth=depth, parents=parents)
-
-    @classmethod
-    @tdb_cassandra.will_write
-    def rebuild(cls, tree, comments):
-        with batch.Mutator(g.cassandra_pools[cls._connection_pool]) as m:
-            g.log.debug('removing tree from %s', cls._key(tree.link))
-            m.remove(cls._cf, cls._key(tree.link))
-        tree.link._incr('comment_tree_id')
-        g.log.debug('link %s comment tree revision bumped up to %s',
-                    tree.link._fullname, tree.link.comment_tree_id)
-
-        # make sure all comments have parents attribute filled in
-        parents = {c._id: c.parent_id for c in comments}
-        for c in comments:
-            if c.parent_id and c.parents is None:
-                path = []
-                pid = c.parent_id
-                while pid:
-                    path.insert(0, pid)
-                    pid = parents[pid]
-                c.parents = ':'.join(utils.to36(i) for i in path)
-                c._commit()
-
-        return cls.add_comments(tree, comments)
-
-    @classmethod
-    @tdb_cassandra.will_write
-    def add_comments(cls, tree, comments):
-        CommentTreeStorageBase.add_comments(tree, comments)
-        g.log.debug('building updates dict')
-        updates = {}
-        for c in comments:
-            pids = c.parent_path()
-            pids.append(c._id)
-            for d, (pid, cid) in enumerate(zip(pids, pids[1:])):
-                k = (d, pid, cid)
-                updates[k] = updates.get(k, 0) + 1
-
-        g.log.debug('writing %d updates to %s',
-                    len(updates), cls._key(tree.link))
-        # increment counters in slices of 100
-        cols = updates.keys()
-        for i in xrange(0, len(updates), cls.COLUMN_WRITE_BATCH_SIZE):
-            g.log.debug(
-                'adding updates %d..%d', i, i + cls.COLUMN_WRITE_BATCH_SIZE)
-            update_batch = {c: updates[c]
-                            for c in cols[i:i + cls.COLUMN_WRITE_BATCH_SIZE]}
-            with batch.Mutator(g.cassandra_pools[cls._connection_pool]) as m:
-                m.insert(cls._cf, cls._key(tree.link), update_batch)
-        g.log.debug('added %d comments with %d updates',
-                    len(comments), len(updates))
-
-    @classmethod
-    @tdb_cassandra.will_write
-    def delete_comment(cls, tree, comment):
-        CommentTreeStorageBase.delete_comment(tree, comment)
-        pids = comment.parent_path()
-        pids.append(comment._id)
-        updates = {}
-        for d, (pid, cid) in enumerate(zip(pids, pids[1:])):
-            updates[(d, pid, cid)] = -1
-        with batch.Mutator(g.cassandra_pools[cls._connection_pool]) as m:
-            m.insert(cls._cf, cls._key(tree.link), updates)
-
-    @classmethod
-    @tdb_cassandra.will_write
-    def upgrade(cls, tree, link):
-        cids = []
-        for parent, children in tree.tree.iteritems():
-            cids.extend(children)
-
-        comments = {}
-        for i in xrange(0, len(cids), 100):
-            g.log.debug('  loading comments %d..%d', i, i + 100)
-            comments.update(Comment._byID(cids[i:i + 100], data=True))
-
-        # need to fill in parents attr for each comment
-        modified = []
-        stack = [None]
-        while stack:
-            pid = stack.pop()
-            if pid is None:
-                parents = ''
-            else:
-                parents = comments[pid].parents + ':' + comments[pid]._id36
-            children = tree.tree.get(pid, [])
-            stack.extend(children)
-            for cid in children:
-                if comments[cid].parents != parents:
-                    comments[cid].parents = parents
-                    modified.append(comments[cid])
-
-        for i, comment in enumerate(modified):
-            comment._commit()
-
-        cls.add_comments(tree, comments.values())
 
 
 class CommentTreeStorageV1(CommentTreeStorageBase):
@@ -488,11 +239,9 @@ class CommentTree:
 
     IMPLEMENTATIONS = {
         1: CommentTreeStorageV1,
-        2: CommentTreeStorageV2,
-        3: CommentTreeStorageV3,
+        2: None,    # placeholder for abandoned CommentTreeStorageV2
+        3: None,    # placeholder for abandoned CommentTreeStorageV3
     }
-
-    DEFAULT_IMPLEMENTATION = 3
 
     def __init__(self, link, **kw):
         self.link = link
@@ -549,10 +298,7 @@ class CommentTree:
         return tree
 
     @classmethod
-    def upgrade(cls, link, to_version=None):
-        if to_version is None:
-            to_version = cls.DEFAULT_IMPLEMENTATION
-
+    def upgrade(cls, link, to_version):
         tree = cls.by_link(link)
         new_impl = cls.IMPLEMENTATIONS[to_version]
         new_impl.upgrade(tree, link)
