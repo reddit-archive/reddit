@@ -84,6 +84,16 @@ class CommentTreeStorageBase(object):
         return cls.add_comments(tree, comments)
 
     @classmethod
+    def write_from_comment_tree(cls, link, comment_tree):
+        """Write the storage from a full version of the comment tree.
+
+        Can be used to switch storage methods.
+
+        """
+
+        raise NotImplementedError
+
+    @classmethod
     def add_comments(cls, tree, comments):
         cids = tree.cids
         depth = tree.depth
@@ -207,6 +217,21 @@ class CommentTreeStorageV1(CommentTreeStorageBase):
         return dict(cids=cids, tree=cid_tree, depth=depth, parents=parents)
 
     @classmethod
+    def write_from_comment_tree(cls, link, comment_tree):
+        cids = comment_tree.cids
+        tree = comment_tree.tree
+        depth = comment_tree.depth
+        parents = comment_tree.parents
+
+        key = cls._comments_key(link._id)
+        pkey = cls._parent_comments_key(link._id)
+        to_set = {
+            key: (cids, tree, depth),
+            pkey: parents,
+        }
+        g.permacache.set_multi(to_set)
+
+    @classmethod
     def add_comments(cls, tree, comments):
         with cls.mutation_context(tree.link):
             CommentTreeStorageBase.add_comments(tree, comments)
@@ -298,12 +323,20 @@ class CommentTree:
         return tree
 
     @classmethod
-    def upgrade(cls, link, to_version):
-        tree = cls.by_link(link)
-        new_impl = cls.IMPLEMENTATIONS[to_version]
-        new_impl.upgrade(tree, link)
-        link.comment_tree_version = to_version
-        link._commit()
+    def change_storage_version(cls, link, to_version):
+        """Switch a link's comment tree storage"""
+
+        if to_version == link.comment_tree_version:
+            return
+
+        with cls.mutation_context(link):
+            # get the lock to prevent writes to the comment tree we're moving
+            # away from
+            comment_tree = cls.by_link(link)
+            new_storage_cls = cls.IMPLEMENTATIONS[to_version]
+            new_storage_cls.write_from_comment_tree(link, comment_tree)
+            link.comment_tree_version = to_version
+            link._commit()
 
     @staticmethod
     def parent_dict_from_tree(tree):
