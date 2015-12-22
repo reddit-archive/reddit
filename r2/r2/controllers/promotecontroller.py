@@ -1233,6 +1233,35 @@ class PromoteApiController(ApiController):
                 form.has_errors('frequency_cap', errors.FREQUENCY_CAP_TOO_LOW)):
             return
 
+        if not target:
+            # run form.has_errors to populate the errors in the response
+            form.has_errors('sr', errors.SUBREDDIT_NOEXIST,
+                            errors.SUBREDDIT_NOTALLOWED,
+                            errors.SUBREDDIT_REQUIRED)
+            form.has_errors('collection', errors.COLLECTION_NOEXIST)
+            form.has_errors('targeting', errors.INVALID_TARGET)
+            return
+
+        if not allowed_location_and_target(location, target):
+            return abort(403, 'forbidden')
+
+        if (form.has_errors('startdate', errors.BAD_DATE) or
+                form.has_errors('enddate', errors.BAD_DATE)):
+            return
+
+        if not campaign_id36 and not start:
+            c.errors.add(errors.BAD_DATE, field='startdate')
+            form.set_error('startdate', errors.BAD_DATE)
+
+        if (not feature.is_enabled('mobile_targeting') and
+                platform != 'desktop'):
+            return abort(403, 'forbidden')
+
+        if link.over_18 and not target.over_18:
+            c.errors.add(errors.INVALID_NSFW_TARGET, field='targeting')
+            form.has_errors('targeting', errors.INVALID_NSFW_TARGET)
+            return
+
         if not feature.is_enabled('cpc_pricing'):
             cost_basis = 'cpm'
 
@@ -1277,10 +1306,6 @@ class PromoteApiController(ApiController):
             bid_pennies = PromotionPrices.get_price(link_owner, target,
                 location)
 
-        if (not feature.is_enabled('mobile_targeting') and
-                platform != 'desktop'):
-            return abort(403, 'forbidden')
-
         if platform == 'desktop':
             mobile_os = None
         else:
@@ -1301,26 +1326,6 @@ class PromoteApiController(ApiController):
                     c.errors.add(errors.INVALID_OS_VERSION, field='os_version')
                     form.set_error(errors.INVALID_OS_VERSION, 'os_version')
                     return
-
-        if not target:
-            # run form.has_errors to populate the errors in the response
-            form.has_errors('sr', errors.SUBREDDIT_NOEXIST,
-                            errors.SUBREDDIT_NOTALLOWED,
-                            errors.SUBREDDIT_REQUIRED)
-            form.has_errors('collection', errors.COLLECTION_NOEXIST)
-            form.has_errors('targeting', errors.INVALID_TARGET)
-            return
-
-        if not allowed_location_and_target(location, target):
-            return abort(403, 'forbidden')
-
-        if (form.has_errors('startdate', errors.BAD_DATE) or
-                form.has_errors('enddate', errors.BAD_DATE)):
-            return
-
-        if not campaign_id36 and not start:
-            c.errors.add(errors.BAD_DATE, field='startdate')
-            form.set_error('startdate', errors.BAD_DATE)
 
         min_start, max_start, max_end = promote.get_date_limits(
             link, c.user_is_sponsor)
@@ -1445,11 +1450,6 @@ class PromoteApiController(ApiController):
 
         is_frontpage = (not target.is_collection and
                         target.subreddit_name == Frontpage.name)
-
-        if link.over_18 and not target.over_18:
-            c.errors.add(errors.INVALID_NSFW_TARGET, field='targeting')
-            form.has_errors('targeting', errors.INVALID_NSFW_TARGET)
-            return
 
         if not target.is_collection and not is_frontpage:
             # targeted to a single subreddit, check roadblock
