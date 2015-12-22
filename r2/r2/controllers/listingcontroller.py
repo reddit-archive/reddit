@@ -314,9 +314,10 @@ class SubredditListingController(ListingController):
                 })
 
         # event target for screenviews
-        event_target = {}
+        event_target = {
+            'target_type': 'listing',
+        }
         if not isinstance(c.site, FakeSubreddit):
-            event_target['target_type'] = 'subreddit'
             event_target['target_fullname'] = c.site._fullname
             event_target['target_id'] = c.site._id
         if hasattr(self, 'sort'):
@@ -1474,7 +1475,7 @@ class RedditsController(ListingController):
         if self.where == 'popular':
             render_params['show_interestbar'] = True
 
-        # event target for screenviews
+        # event target for screenviews (/subreddits)
         event_target = {
             'target_sort': self.where,
         }
@@ -1593,7 +1594,7 @@ class MyredditsController(ListingController):
     def render_params(self):
         render_params = {}
 
-        # event target for screenviews
+        # event target for screenviews (/subreddits/mine)
         event_target = {
             'target_sort': self.where,
         }

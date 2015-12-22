@@ -1044,7 +1044,7 @@ class FrontController(RedditController):
         else:
             content = None
 
-        # event target for screenviews
+        # event target for screenviews (/subreddits/search)
         event_target = {}
         if after:
             event_target['target_count'] = count
@@ -1217,7 +1217,7 @@ class FrontController(RedditController):
                 content = subreddits
                 subreddits = None
 
-        # event target for screenviews
+        # event target for screenviews (/search)
         event_target = {
             'target_sort': sort,
             'target_filter_time': recent,
