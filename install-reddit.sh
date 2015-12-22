@@ -197,6 +197,7 @@ make
 optipng
 jpegoptim
 
+mcrouter
 memcached
 postgresql
 postgresql-client
@@ -293,6 +294,50 @@ PGSCRIPT
 fi
 
 sudo -u postgres psql reddit < $REDDIT_HOME/src/reddit/sql/functions.sql
+
+###############################################################################
+# Configure mcrouter
+###############################################################################
+if [ ! -d /etc/mcrouter ]; then
+    mkdir -p /etc/mcrouter
+fi
+
+if [ ! -f /etc/mcrouter/global.conf ]; then
+    cat > /etc/mcrouter/global.conf <<MCROUTER
+{
+  // route all valid prefixes to the local memcached
+  "pools": {
+    "local": {
+      "servers": [
+        "127.0.0.1:11211",
+      ],
+      "protocol": "ascii",
+      "keep_routing_prefix": false,
+    },
+  },
+  "route": {
+    "type": "PrefixSelectorRoute",
+    "policies": {
+      "rend:": {
+        "type": "PoolRoute",
+        "pool": "local",
+      },
+      "page:": {
+        "type": "PoolRoute",
+        "pool": "local",
+      },
+      "pane:": {
+        "type": "PoolRoute",
+        "pool": "local",
+      },
+    },
+    "wildcard": {
+      "type": "NullRoute",
+    },
+  },
+}
+MCROUTER
+fi
 
 ###############################################################################
 # Configure RabbitMQ
