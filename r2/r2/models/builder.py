@@ -853,6 +853,7 @@ class CommentBuilder(Builder):
         dont_collapse = []
         candidates = []
         offset_depth = 0
+        items = []
 
         if self.children:
             # requested specific child comments
@@ -886,14 +887,39 @@ class CommentBuilder(Builder):
             offset_depth = depth.get(path[-1], 0)
 
         else:
-            # full tree requested, start with the top level comments
+            # full tree requested, add all top level comments as candidates to
+            # be considered for display
             top_level_comments = cid_tree.get(None, ())
+
+            # If we have a sticky comment and we're viewing top level comments,
+            # we shove the sticky comment in the top and remove it from the
+            # remainder of the top level comments list so it's displayed first.
+            if self.link.sticky_comment_id:
+                try:
+                    # Remove the sticky comment from the candidates list so it
+                    # isn't displayed twice
+                    top_level_comments.remove(self.link.sticky_comment_id)
+                except ValueError:
+                    g.log.warning("Non-top-level sticky comment detected on "
+                                  "link %r.", self.link)
+                    pass
+                else:
+                    # Make the sticky comment the first item, meaning it is the
+                    # first comment displayed regardless of sort score.
+                    items.append(self.link.sticky_comment_id)
+
+                    # Don't add its children as candidates - we don't want to
+                    # show any replies to the sticky comment when viewing a top
+                    # level list. This will still render the "load more
+                    # comments" link for viewing its children. When viewing
+                    # this comment as non-top-level (for example a permalink)
+                    # sticky comment children will render normally.
+
             self.update_candidates(candidates, sorter, top_level_comments)
 
         timer.intermediate("pick_candidates")
 
         # choose which comments to show
-        items = []
         while (self.num is None or len(items) < self.num) and candidates:
             sort_val, comment_id = heapq.heappop(candidates)
             if comment_id not in cids:
@@ -993,11 +1019,6 @@ class CommentBuilder(Builder):
             comment.edits_visible = self.edits_visible
 
             parent = wrapped_by_id.get(comment.parent_id)
-
-            # Children of sticky comments are hidden by default to avoid top
-            # comment hijacking or conversation derailing.
-            if parent and self.link.sticky_comment_id == parent._id:
-                comment.hidden = True
 
             if qa_sort_hiding:
                 # In the Q&A sort type, we want to collapse all comments other

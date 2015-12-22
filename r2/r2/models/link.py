@@ -1012,10 +1012,6 @@ class Link(Thing, Printable):
         self.sticky_comment_id = comment._id
         self._commit()
 
-        # Update votes on this comment to reset its sort values (as sticky
-        # maxes them out in comment_tree.py)
-        update_comment_votes(comment)
-
         if set_by:
             ModAction.create(
                 self.subreddit_slow,
@@ -1047,8 +1043,11 @@ class Link(Thing, Printable):
         self.sticky_comment_id = None
         self._commit()
 
-        # Update votes on this comment to reset its sort values (as sticky
-        # maxes them out in comment_tree.py)
+        # LEGACY: This is to deal with the old way that sticky comments used
+        # to alter sort values. This is only still here so that when a comment
+        # gets unstickied it will have its sort value corrected. We can remove
+        # this line after 2016-02-01 or so when unstickying comments from
+        # before this update will be rare.
         update_comment_votes(prev_sticky_comment)
 
         if set_by:

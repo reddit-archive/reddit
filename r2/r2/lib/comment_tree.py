@@ -42,10 +42,6 @@ def parent_comments_key(link_id):
 
 
 def _get_sort_value(comment, sort, link, children=None):
-    # Sticky comments get a very high score for all sorts.
-    if link and comment._id == link.sticky_comment_id:
-        return 2 ** 31 - 1
-
     if sort == "_date":
         return epoch_seconds(comment._date)
     if sort == '_qa':
