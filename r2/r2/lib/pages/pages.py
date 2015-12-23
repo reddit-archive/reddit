@@ -131,7 +131,7 @@ from r2.lib.strings import (
     Score,
     strings,
 )
-from r2.lib.utils import is_subdomain, title_to_url, query_string, UrlParser
+from r2.lib.utils import is_subdomain, title_to_url, UrlParser
 from r2.lib.utils import url_links_builder, median, to36
 from r2.lib.utils import trunc_time, timesince, timeuntil, weighted_lottery
 from r2.lib.template_helpers import (
@@ -242,7 +242,6 @@ class Reddit(Templated):
     create_reddit_box  = True
     submit_box         = True
     header             = True
-    footer             = True
     searchbox          = True
     extension_handling = True
     enable_login_cover = True
@@ -257,8 +256,8 @@ class Reddit(Templated):
                  infotext='', infotext_class=None, infotext_show_icon=False,
                  content=None, short_description='', title='',
                  robots=None, show_sidebar=True, show_chooser=False,
-                 header=True, footer=True, srbar=True, page_classes=None,
-                 short_title=None, show_wiki_actions=False, extra_js_config=None,
+                 header=True, srbar=True, page_classes=None, short_title=None,
+                 show_wiki_actions=False, extra_js_config=None,
                  show_locationbar=False,
                  **context):
         Templated.__init__(self, **context)
@@ -273,9 +272,8 @@ class Reddit(Templated):
         self.show_sidebar = show_sidebar
         self.space_compress = space_compress
         self.dnt_enabled = feature.is_enabled("do_not_track")
-        # instantiate a footer
         self.header = header
-        self.footer = RedditFooter() if footer else None
+        self.footer = RedditFooter()
         self.debug_footer = DebugFooter()
         self.supplied_page_classes = page_classes or []
 

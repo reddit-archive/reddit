@@ -46,6 +46,7 @@ from r2.lib.csrf import csrf_exempt
 from r2.lib.utils import (
     extract_user_mentions,
     iters,
+    query_string,
     timeago,
     to36,
     trunc_string,

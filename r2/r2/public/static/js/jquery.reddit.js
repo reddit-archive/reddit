@@ -175,7 +175,7 @@ $.request = function(op, parameters, worker_in, block, type,
         return
     }
 
-    if (window != window.top && !r.config.external_frame) {
+    if (window != window.top) {
         return
     }
 

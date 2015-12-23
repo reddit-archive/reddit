@@ -27,10 +27,8 @@ from pylons import app_globals as g
 
 from reddit_base import RedditController
 from r2.lib import utils
-from r2.lib.filters import spaceCompress, safemarkdown
-from r2.lib.menus import CommentSortMenu
 from r2.lib.pages import *
-from r2.lib.pages.things import hot_links_by_url_listing, wrap_links
+from r2.lib.pages.things import hot_links_by_url_listing
 from r2.lib.template_helpers import add_sr
 from r2.lib.validator import *
 from r2.models import *
@@ -62,16 +60,6 @@ def demangle_url(path):
     path = utils.sanitize_url(path)
 
     return path
-
-def match_current_reddit_subdomain(url):
-    # due to X-Frame-Options: SAMEORIGIN headers, we can't frame mismatched
-    # reddit subdomains
-    parsed = UrlParser(url)
-    if parsed.is_reddit_url():
-        parsed.hostname = request.host
-        return parsed.unparse()
-    else:
-        return url
 
 def force_html():
     """Because we can take URIs like /s/http://.../foo.png, and we can

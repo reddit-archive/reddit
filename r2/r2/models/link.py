@@ -1794,11 +1794,6 @@ class CommentScoresByLink(tdb_cassandra.View):
             return {}
 
 
-class StarkComment(Comment):
-    """Render class for the comments in the top-comments display in
-       the reddit toolbar"""
-    _nodb = True
-
 class MoreMessages(Printable):
     cachable = False
     display = ""

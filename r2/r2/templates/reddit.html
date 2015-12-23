@@ -156,32 +156,29 @@
     </div>
   %endif
 
-  %if thing.footer:
+  ${thing.footer}
 
-    ${thing.footer}
-
-    %if not c.user_is_loggedin and not g.read_only_mode:
-      %if thing.enable_login_cover:
-        <script>
-          var BETA_HOST = 'beta.reddit.com';
-          if (location.host === BETA_HOST) {
-            r.config.https_endpoint = 'https://' + BETA_HOST;
-          }
-        </script>
-        <script id="login-popup" type="text/template">
-          ${Login(is_popup=True)}
-        </script>
-      %endif
-      <script id="lang-popup" type="text/template">
-        <%include file="prefoptions.html" />
+  %if not c.user_is_loggedin and not g.read_only_mode:
+    %if thing.enable_login_cover:
+      <script>
+        var BETA_HOST = 'beta.reddit.com';
+        if (location.host === BETA_HOST) {
+          r.config.https_endpoint = 'https://' + BETA_HOST;
+        }
+      </script>
+      <script id="login-popup" type="text/template">
+        ${Login(is_popup=True)}
       </script>
     %endif
-    %if thing.show_timeout_modal:
-      <script id="access-popup" type="text/template">
-        ${InTimeoutInterstitial(timeout_days_remaining=thing.timeout_days_remaining,
-                                hide_message=True)}
-      </script>
-    %endif
+    <script id="lang-popup" type="text/template">
+      <%include file="prefoptions.html" />
+    </script>
+  %endif
+  %if thing.show_timeout_modal:
+    <script id="access-popup" type="text/template">
+      ${InTimeoutInterstitial(timeout_days_remaining=thing.timeout_days_remaining,
+                              hide_message=True)}
+    </script>
   %endif
   % if c.secure:
       ## Pixel to pick up HSTS policies from the base domain
