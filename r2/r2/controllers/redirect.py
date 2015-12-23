@@ -25,7 +25,8 @@ from pylons import tmpl_context as c
 from pylons.controllers.util import abort
 
 from r2.lib.base import BaseController
-from r2.lib.validator import chkuser
+from r2.lib.utils import UrlParser
+from r2.lib.validator import chkuser, validate, VLink
 from r2.models import Subreddit
 
 
@@ -57,3 +58,21 @@ class RedirectController(BaseController):
         else:
             rest = ''
         return self.redirect("/r/%s/%s" % (sr_name, rest), code=301)
+
+    @validate(link=VLink('link_id'))
+    def GET_link_id_redirect(self, link):
+        if not link:
+            abort(404)
+        elif not link.subreddit_slow.can_view(c.user):
+            # don't disclose the subreddit/title of a post via the redirect url
+            abort(403)
+        else:
+            redirect_url = link.make_permalink_slow(force_domain=True)
+        
+        query_params = dict(request.GET)
+        if query_params:
+            url = UrlParser(redirect_url)
+            url.update_query(**query_params)
+            redirect_url = url.unparse()
+
+        return self.redirect(redirect_url, code=301)

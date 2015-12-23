@@ -99,31 +99,6 @@ class ToolbarController(RedditController):
             return self.redirect(add_sr("/tb/" + link._id36))
         return self.abort404()
 
-    @validate(link = VLink('id'))
-    def GET_tb(self, link):
-        '''/tb/$id36, former toolbar
-        The reddit toolbar is no longer supported, redirect to comments page.
-        The /tb url is still used as redirect from the linkoid short link.
-        
-        '''
-        if not link:
-            return self.abort404()
-        elif not link.subreddit_slow.can_view(c.user):
-            # don't disclose the subreddit/title of a post via the redirect url
-            self.abort403()
-        elif link.is_self:
-            redirect_url = link.url
-        else:
-            redirect_url = link.make_permalink_slow(force_domain=True)
-        
-        query_params = dict(request.GET)
-        if query_params:
-            url = UrlParser(redirect_url)
-            url.update_query(**query_params)
-            redirect_url = url.unparse()
-
-        return self.redirect(redirect_url)
-
     @validate(urloid=nop('urloid'))
     def GET_s(self, urloid):
         """/s/http://..., show a given URL with the toolbar. if it's
@@ -153,10 +128,3 @@ class ToolbarController(RedditController):
 
     def GET_redirect(self):
         return self.redirect('/', code=301)
-
-    @validate(link = VLink('linkoid'))
-    def GET_linkoid(self, link):
-        if not link:
-            return self.abort404()
-        return self.redirect(add_sr("/tb/" + link._id36))
-
