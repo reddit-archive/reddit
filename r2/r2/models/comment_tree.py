@@ -99,7 +99,9 @@ class CommentTreeStorageBase(object):
         depth = tree.depth
 
         new_parents = {}
-        for comment in comments:
+        for comment in sorted(comments, key=lambda c: c._id):
+            # sort the comments by id so we'll process a parent comment before
+            # its child
             cid = comment._id
             p_id = comment.parent_id
 
