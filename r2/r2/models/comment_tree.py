@@ -137,12 +137,7 @@ class CommentTreeStorageBase(object):
 
     @classmethod
     def delete_comment(cls, tree, comment):
-        # only remove leaf comments from the tree
-        if comment._id not in tree.tree:
-            if comment._id in tree.cids:
-                tree.cids.remove(comment._id)
-            if comment._id in tree.depth:
-                del tree.depth[comment._id]
+        pass
 
     @classmethod
     def prepare_new_storage(cls, link):
