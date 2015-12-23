@@ -26,7 +26,7 @@ from itertools import chain
 from r2.lib.utils import SimpleSillyStub, tup, to36
 from r2.lib.db.sorts import epoch_seconds
 from r2.lib.cache import sgm
-from r2.models.comment_tree import CommentTree
+from r2.models.comment_tree import CommentTree, InconsistentCommentTreeError
 from r2.models.link import Comment, Link
 
 MESSAGE_TREE_SIZE_LIMIT = 15000
@@ -76,13 +76,20 @@ def add_comments(comments):
                 for comment in delete_comments:
                     cache.delete_comment(comment, link)
                 timer.intermediate('update')
-        except:
+        except InconsistentCommentTreeError:
+            comment_ids = [comment._id for comment in coms]
             g.log.exception(
-                'add_comments_nolock failed for link %s, recomputing tree',
-                link_id)
+                'add_comments_nolock failed for link %s %s, recomputing',
+                link_id, comment_ids)
+            rebuild_comment_tree(link, timer=timer)
+        except:
+            comment_ids = [comment._id for comment in coms]
+            g.log.exception(
+                'add_comments_nolock bare failed for link %s %s, recomputing',
+                link_id, comment_ids)
 
-            # calculate it from scratch
-            get_comment_tree(link, _update=True, timer=timer)
+            rebuild_comment_tree(link, timer=timer)
+
         timer.stop()
         update_comment_votes(coms)
 
@@ -274,15 +281,16 @@ def link_comments_and_sort(link, sort):
     return (cache.cids, cache.tree, cache.depth, cache.parents, sorter)
 
 
-def get_comment_tree(link, _update=False, timer=None):
+def get_comment_tree(link, timer=None):
     if timer is None:
         timer = SimpleSillyStub()
 
-    if not _update:
-        cache = CommentTree.by_link(link)
-        timer.intermediate('load')
-        return cache
+    cache = CommentTree.by_link(link)
+    timer.intermediate('load')
+    return cache
 
+
+def rebuild_comment_tree(link, timer):
     with CommentTree.mutation_context(link, timeout=180):
         timer.intermediate('lock')
         cache = CommentTree.rebuild(link)
@@ -292,6 +300,7 @@ def get_comment_tree(link, _update=False, timer=None):
         link.update_search_index()
         timer.intermediate('update_search_index')
         return cache
+
 
 # message conversation functions
 def messages_key(user_id):

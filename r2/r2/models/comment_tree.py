@@ -63,6 +63,9 @@ time periods and generally insufficient regular-case performance.
 """
 
 
+class InconsistentCommentTreeError(Exception): pass
+
+
 class CommentTreeStorageBase(object):
     class NoOpContext:
         def __enter__(self):
@@ -109,6 +112,9 @@ class CommentTreeStorageBase(object):
             #if the tree isn't cached when you add a comment)
             if cid in cids:
                 continue
+
+            if p_id and p_id not in cids:
+                raise InconsistentCommentTreeError
 
             #add to comment list
             cids.append(cid)
