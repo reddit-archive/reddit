@@ -443,6 +443,19 @@ class WikiRevisionHistoryByPage(tdb_cassandra.View):
         return {wikirevision._id: ''}
 
 
+def migrate_wiki_revision_index():
+    for page_id, columns in WikiRevisionsByPage._cf.get_range(column_count=1000):
+        print "migrating %s" % page_id
+
+        if len(columns) == 1000:
+            column_generator = WikiRevisionsByPage._cf.xget(page_id)
+        else:
+            column_generator = columns.iteritems()
+
+        to_write = {revision_id: '' for revision_id, _ in column_generator}
+        WikiRevisionHistoryByPage._cf.insert(page_id, to_write)
+
+
 class WikiRevisionsByPage(tdb_cassandra.DenormalizedView):
     """ Associate revisions with pages """
     
