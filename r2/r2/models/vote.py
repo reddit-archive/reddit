@@ -471,6 +471,57 @@ class VoteDetailsByComment(VoteDetailsByThing):
     _use_db = True
 
 
+class VoteDetailsByDay(tdb_cassandra.View):
+    _use_db = False
+    _fetch_all_columns = True
+    _write_consistency_level = tdb_cassandra.CL.ONE
+    _compare_with = CompositeType(AsciiType(), AsciiType())
+    _extra_schema_creation_args = {
+        "key_validation_class": ASCII_TYPE,
+        "default_validation_class": UTF8_TYPE,
+    }
+    TIMEZONE = pytz.timezone("America/Los_Angeles")
+
+    @classmethod
+    def _rowkey(cls, vote):
+        return cls._rowkey_by_datetime(vote.date)
+
+    @classmethod
+    def _rowkey_by_datetime(cls, date):
+        return date.astimezone(cls.TIMEZONE).strftime("%Y-%m-%d")
+
+    @classmethod
+    def create(cls, user, thing, vote):
+        # we don't use the user or thing args, but they need to be there for
+        # calling this automatically when updating views of a DenormalizedRel
+        colname = (vote.user._id36, vote.thing._id36)
+        data = json.dumps({
+            "direction": Vote.serialize_direction(vote.direction),
+            "date": int(epoch_timestamp(vote.date)),
+        })
+        cls._set_values(cls._rowkey(vote), {colname: data})
+
+    @classmethod
+    def count_votes(cls, date):
+        """Return the number of votes made on a particular date."""
+        # convert the date to a datetime in the correct timezone
+        date = datetime(date.year, date.month, date.day, tzinfo=cls.TIMEZONE)
+
+        # manually count up the number of columns instead of using get_count()
+        # because the large number of columns tends to result in RPC timeouts
+        return sum(1 for x in cls._cf.xget(cls._rowkey_by_datetime(date)))
+
+
+@tdb_cassandra.view_of(LinkVotesByAccount)
+class LinkVoteDetailsByDay(VoteDetailsByDay):
+    _use_db = True
+
+
+@tdb_cassandra.view_of(CommentVotesByAccount)
+class CommentVoteDetailsByDay(VoteDetailsByDay):
+    _use_db = True
+
+
 class VoterIPByThing(tdb_cassandra.View):
     _use_db = True
     _ttl = timedelta(days=90)
