@@ -248,6 +248,7 @@ SAFE_PROPERTIES = {
     "pointer-events",
     "position",
     "quotes",
+    "resize",
     "richness",
     "right",
     "speak",
