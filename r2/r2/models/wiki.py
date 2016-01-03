@@ -412,10 +412,11 @@ class WikiPage(tdb_cassandra.Thing):
             raise ValueError('Permlevel not valid')
         self.permlevel = permlevel
         self._commit()
-    
+
     def get_revisions(self, after=None, count=100):
-        return WikiRevisionsByPage.query([self._id], after=after, count=count)
-    
+        return WikiRevisionHistoryByPage.query(
+            rowkeys=[self._id], after=after, count=count)
+
     def _commit(self, *a, **kw):
         if not self._id: # Creating a new page
             pageid = wiki_id(self.sr, self.name)
