@@ -175,13 +175,11 @@ class WikiRevision(tdb_cassandra.UuidThing, Printable):
             kw['reason'] = reason
         wr = cls(**kw)
         wr._commit()
-        WikiRevisionsByPage.add_object(wr)
         WikiRevisionHistoryByPage.add_object(wr)
         WikiRevisionsRecentBySR.add_object(wr)
         return wr
 
     def _on_commit(self):
-        WikiRevisionsByPage.add_object(self)
         WikiRevisionHistoryByPage.add_object(self)
         WikiRevisionsRecentBySR.add_object(self)
 
@@ -443,31 +441,6 @@ class WikiRevisionHistoryByPage(tdb_cassandra.View):
     def _obj_to_column(cls, wikirevision):
         return {wikirevision._id: ''}
 
-
-def migrate_wiki_revision_index():
-    for page_id, columns in WikiRevisionsByPage._cf.get_range(column_count=1000):
-        print "migrating %s" % page_id
-
-        if len(columns) == 1000:
-            column_generator = WikiRevisionsByPage._cf.xget(page_id)
-        else:
-            column_generator = columns.iteritems()
-
-        to_write = {revision_id: '' for revision_id, _ in column_generator}
-        WikiRevisionHistoryByPage._cf.insert(page_id, to_write)
-
-
-class WikiRevisionsByPage(tdb_cassandra.DenormalizedView):
-    """ Associate revisions with pages """
-    
-    _use_db = True
-    _connection_pool = 'main'
-    _view_of = WikiRevision
-    _compare_with = TIME_UUID_TYPE
-    
-    @classmethod
-    def _rowkey(cls, wr):
-        return wr.pageid
 
 class WikiPagesBySR(tdb_cassandra.DenormalizedView):
     """ Associate revisions with subreddits, store only recent """
