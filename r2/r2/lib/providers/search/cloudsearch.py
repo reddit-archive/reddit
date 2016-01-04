@@ -315,7 +315,7 @@ def chunk_xml(xml, depth=0):
         right_half = etree.Element("batch")
         # etree magic simultaneously removes the elements from one tree
         # when they are appended to a different tree
-        right_half.append(xml[half:])
+        right_half.extend(xml[half:])
         for chunk in chunk_xml(left_half, depth=depth):
             yield chunk
         for chunk in chunk_xml(right_half, depth=depth):
