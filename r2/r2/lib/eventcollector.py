@@ -32,8 +32,7 @@ from pylons import app_globals as g
 from uuid import uuid4
 from wsgiref.handlers import format_date_time
 
-import r2.lib.amqp
-from r2.lib import hooks
+from r2.lib import amqp, hooks
 from r2.lib.geoip import get_request_location
 from r2.lib.cache_poisoning import cache_headers_valid
 from r2.lib.utils import (
@@ -62,7 +61,7 @@ def _datetime_to_millis(dt):
 
 
 class EventQueue(object):
-    def __init__(self, queue=r2.lib.amqp):
+    def __init__(self, queue=amqp):
         self.queue = queue
 
     def save_event(self, event):
@@ -861,6 +860,13 @@ def process_events(g, timeout=5.0, **kw):
                     _get_reason(response),
                 )
                 g.log.warning("Response headers: %r", response.headers)
-                response.raise_for_status()
 
-    r2.lib.amqp.handle_items("event_collector", processor, **kw)
+                # if the events were too large, move them into a separate
+                # queue to get them out of here, since they'll always fail
+                if response.status_code == 413:
+                    for event in sent:
+                        amqp.add_item("event_collector_failed", event)
+                else:
+                    response.raise_for_status()
+
+    amqp.handle_items("event_collector", processor, **kw)
