@@ -316,6 +316,7 @@ class SubredditJsonTemplate(ThingJsonTemplate):
         user_is_moderator="is_moderator",
         user_is_subscriber="is_subscriber",
         user_sr_theme_enabled="user_sr_style_enabled",
+        wiki_enabled="wiki_enabled",
     )
 
     # subreddit *attributes* (right side of the equals)
@@ -394,6 +395,12 @@ class SubredditJsonTemplate(ThingJsonTemplate):
                 return c.user.use_subreddit_style(thing)
             else:
                 return True
+        elif attr == 'wiki_enabled':
+            is_admin_or_mod = c.user_is_loggedin and (
+                c.user_is_admin or thing.is_moderator_with_perms(c.user, 'wiki')
+            )
+
+            return thing.wikimode == 'anyone' or (thing.wikimode == 'modonly' and is_admin_or_mod)
         else:
             return ThingJsonTemplate.thing_attr(self, thing, attr)
 
