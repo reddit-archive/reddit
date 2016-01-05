@@ -57,6 +57,11 @@ class PostController(ApiController):
               all_langs=VOneOf('all-langs', ('all', 'some'), default='all'),
               **PREFS_VALIDATORS)
     def POST_options(self, all_langs, **prefs):
+        if feature.is_enabled("autoexpand_media_previews"):
+            validator = VOneOf('media_preview', ('on', 'off', 'subreddit'))
+            value = request.params.get('media_preview')
+            prefs["pref_media_preview"] = validator.run(value)
+
         u = UrlParser(c.site.path + "prefs")
 
         filter_prefs(prefs, c.user)

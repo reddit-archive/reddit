@@ -617,12 +617,12 @@ class Link(Thing, Printable):
                     show_media = True
 
             show_media_preview = False
-            if pref_media_preview == "on":
-                show_media_preview = True
-            elif pref_media_preview == "subreddit" and item.subreddit.show_media_preview:
-                show_media_preview = True
+            if feature.is_enabled('autoexpand_media_previews'):
+                if pref_media_preview == "on":
+                    show_media_preview = True
+                elif pref_media_preview == "subreddit" and item.subreddit.show_media_preview:
+                    show_media_preview = True
 
-            item.show_media_preview = show_media_preview
             item.over_18 = item.over_18 or item.subreddit.over_18
             item.nsfw = item.over_18 and user.pref_label_nsfw
 
@@ -646,6 +646,7 @@ class Link(Thing, Printable):
                 else:
                     item.thumbnail = ""
                 item.preview_image = None
+                show_media_preview = False
             elif not show_media:
                 item.thumbnail = ""
                 item.preview_image = None
@@ -665,6 +666,8 @@ class Link(Thing, Printable):
                 item.thumbnail = "default"
                 item.thumbnail_sprited = True
                 item.preview_image = getattr(item, 'preview_object', None)
+
+            item.show_media_preview = show_media_preview
 
             item.score = max(0, item.score)
 

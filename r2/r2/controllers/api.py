@@ -2709,7 +2709,7 @@ class ApiController(RedditController):
                    over_18 = VBoolean('over_18'),
                    allow_top = VBoolean('allow_top'),
                    show_media = VBoolean('show_media'),
-                   show_media_preview = VBoolean('show_media_preview'),
+                   # show_media_preview = VBoolean('show_media_preview'),
                    public_traffic = VBoolean('public_traffic'),
                    collapse_deleted_comments = VBoolean('collapse_deleted_comments'),
                    exclude_banned_modqueue = VBoolean('exclude_banned_modqueue'),
@@ -2776,6 +2776,11 @@ class ApiController(RedditController):
             validator = VSubredditList('related_subreddits', limit=20)
             value = request.params.get('related_subreddits')
             kw['related_subreddits'] = validator.run(value)
+
+        if feature.is_enabled('autoexpand_media_previews'):
+            validator = VBoolean('show_media_preview')
+            value = request.params.get('show_media_preview')
+            kw["show_media_preview"] = validator.run(value)
 
         # the status button is outside the form -- have to reset by hand
         form.parent().set_html('.status', "")

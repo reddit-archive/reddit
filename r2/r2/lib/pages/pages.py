@@ -1294,8 +1294,10 @@ class PrefOptions(Templated):
                     use_other_theme = False
                     theme.checked = True
 
+        feature_autoexpand_media_previews = feature.is_enabled("autoexpand_media_previews")
         Templated.__init__(self, done=done,
                 error_style_override=error_style_override,
+                feature_autoexpand_media_previews=feature_autoexpand_media_previews,
                 generic_error=generic_error, themes=themes, use_other_theme=use_other_theme)
 
 
@@ -2995,12 +2997,14 @@ class CreateSubreddit(Templated):
     """reddit creation form."""
     def __init__(self, site = None, name = '', captcha=None):
         allow_image_upload = site and not site.quarantine
+        feature_autoexpand_media_previews = feature.is_enabled("autoexpand_media_previews")
         Templated.__init__(self,
                            site=site,
                            name=name,
                            captcha=captcha,
                            comment_sorts=CommentSortMenu.visible_options(),
                            allow_image_upload=allow_image_upload,
+                           feature_autoexpand_media_previews=feature_autoexpand_media_previews,
                            )
         self.color_options = Subreddit.KEY_COLORS
         self.subreddit_selector = SubredditSelector(
