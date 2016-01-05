@@ -1381,15 +1381,6 @@ class FrontController(RedditController):
                         page_classes=['submit-page'],
                         content=newlink).render()
 
-    def GET_frame(self):
-        """used for cname support.  makes a frame and
-        puts the proper url as the frame source"""
-        sub_domain = request.environ.get('sub_domain')
-        original_path = request.environ.get('original_path')
-        sr = Subreddit._by_domain(sub_domain)
-        return Cnameframe(original_path, sr, sub_domain).render()
-
-
     def GET_framebuster(self, what=None, blah=None):
         """
         renders the contents of the iframe which, on a cname, checks

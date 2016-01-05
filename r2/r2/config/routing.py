@@ -231,7 +231,6 @@ def make_map(config):
     mc('/mail/unsubscribe/:user/:key', controller='forms',
        action='unsubscribe_emails')
     mc('/stylesheet', controller='front', action='stylesheet')
-    mc('/frame', controller='front', action='frame')
     mc('/framebuster/:blah', controller='front', action='framebuster')
     mc('/framebuster/:what/:blah',
        controller='front', action='framebuster')

@@ -4250,19 +4250,6 @@ class DetailsPage(LinkInfoPage):
 
         return rb
 
-class Cnameframe(Templated):
-    """The frame page."""
-    def __init__(self, original_path, subreddit, sub_domain):
-        Templated.__init__(self, original_path=original_path)
-        if sub_domain and subreddit and original_path:
-            self.title = "%s - %s" % (subreddit.title, sub_domain)
-            u = UrlParser(subreddit.path + original_path)
-            u.hostname = get_domain(subreddit=False)
-            u.update_query(**request.GET.copy())
-            self.frame_target = u.unparse()
-        else:
-            self.title = ""
-            self.frame_target = None
 
 class FrameBuster(Templated):
     pass

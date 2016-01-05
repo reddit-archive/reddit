@@ -1569,7 +1569,7 @@ class RedditController(OAuth2ResourceController):
 
             #check over 18
             if (c.site.over_18 and not c.over18 and
-                request.path not in ("/frame", "/over18")
+                request.path != "/over18"
                 and c.render_style == 'html'):
                 return self.intermediate_redirect("/over18", sr_path=False)
 
