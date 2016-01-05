@@ -39,6 +39,9 @@ from r2.models.subreddit import Subreddit, Frontpage
 PROMOTE_STATUS = Enum("unpaid", "unseen", "accepted", "rejected",
                       "pending", "promoted", "finished")
 
+PROMOTE_COST_BASIS = Enum('fixed_cpm', 'cpm', 'cpc',)
+
+
 class PriorityLevel(object):
     name = ''
     _text = N_('')
