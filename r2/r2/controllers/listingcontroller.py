@@ -1895,14 +1895,16 @@ class UserListListingController(ListingController):
             self.listing_cls = MutedListing
 
         elif where == 'wikibanned':
-            if not c.site.is_moderator_with_perms(c.user, 'wiki'):
+            if not (c.site.is_moderator_with_perms(c.user, 'wiki') or
+                    c.user_is_admin):
                 abort(403)
             VNotInTimeout().run(action_name="pageview",
                 details_text="wikibanned", target=c.site)
             self.listing_cls = WikiBannedListing
 
         elif where == 'wikicontributors':
-            if not c.site.is_moderator_with_perms(c.user, 'wiki'):
+            if not (c.site.is_moderator_with_perms(c.user, 'wiki') or
+                    c.user_is_admin):
                 abort(403)
             VNotInTimeout().run(action_name="pageview",
                 details_text="wikicontributors", target=c.site)
