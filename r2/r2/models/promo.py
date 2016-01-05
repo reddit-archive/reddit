@@ -228,19 +228,19 @@ class CollectionStorage(tdb_cassandra.View):
             description=description, is_spotlight=is_spotlight)
 
     @classmethod
-    def _to_columns(cls, description, srs, over_18):
+    def _to_columns(cls, description, srs, over_18, is_spotlight):
         columns = {
             'description': description,
             'sr_names': cls.SR_NAMES_DELIM.join(sr.name for sr in srs),
             'over_18': str(over_18),
-            'is_spotlight': is_spotlight,
+            'is_spotlight': str(is_spotlight),
         }
         return columns
 
     @classmethod
-    def set(cls, name, description, srs, over_18):
+    def set(cls, name, description, srs, over_18=False, is_spotlight=False):
         rowkey = name
-        columns = cls._to_columns(description, srs, over_18)
+        columns = cls._to_columns(description, srs, over_18, is_spotlight)
         cls._set_values(rowkey, columns)
 
     @classmethod
