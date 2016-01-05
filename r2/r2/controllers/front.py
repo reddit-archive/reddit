@@ -1381,32 +1381,6 @@ class FrontController(RedditController):
                         page_classes=['submit-page'],
                         content=newlink).render()
 
-    def GET_framebuster(self, what=None, blah=None):
-        """
-        renders the contents of the iframe which, on a cname, checks
-        if the user is currently logged into reddit.
-
-        if this page is hit from the primary domain, redirects to the
-        cnamed domain version of the site.  If the user is logged in,
-        this cnamed version will drop a boolean session cookie on that
-        domain so that subsequent page reloads will be caught in
-        middleware and a frame will be inserted around the content.
-
-        If the user is not logged in, previous session cookies will be
-        emptied so that subsequent refreshes will not be rendered in
-        that pesky frame.
-        """
-        if not c.site.domain:
-            return ""
-        else:
-            path = "/framebuster/"
-            if c.user_is_loggedin:
-                path += "login/"
-            u = UrlParser(path + str(random.random()))
-            return self.redirect(u.unparse())
-        # the user is not logged in or there is no cname.
-        return FrameBuster(login=False).render()
-
     def GET_catchall(self):
         return self.abort404()
 

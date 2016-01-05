@@ -4251,9 +4251,6 @@ class DetailsPage(LinkInfoPage):
         return rb
 
 
-class FrameBuster(Templated):
-    pass
-
 class PromotePage(Reddit):
     create_reddit_box  = False
     submit_box         = False
