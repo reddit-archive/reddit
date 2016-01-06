@@ -200,15 +200,11 @@ def link_comments_and_sort(link, sort):
     """
 
     # This has grown sort of organically over time. Right now the
-    # cache of the comments tree consists in three keys:
-    # 1. The comments_key: A tuple of
-    #      (cids, comment_tree, depth)
+    # cache of the comments tree consists in two keys:
+    # 1. The comments_key: comment_tree
     #    given:
-    #      cids         =:= [comment_id]
     #      comment_tree =:= dict(comment_id -> [comment_id])
-    #      depth        =:= dict(comment_id -> int depth)
-    # 2. The parent_comments_key =:= dict(comment_id -> parent_id)
-    # 3. The comments_sorts keys =:= dict(comment_id36 -> float).
+    # 2. The comments_sorts keys =:= dict(comment_id36 -> float).
     #    These are represented by a Cassandra model
     #    (CommentScoresByLink) rather than a permacache key. One of
     #    these exists for each sort (hot, new, etc)
