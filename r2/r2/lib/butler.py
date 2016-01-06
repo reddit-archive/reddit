@@ -71,6 +71,9 @@ def monitor_mentions(comment):
         # LinkFixer
         return
 
+    if sender.in_timeout:
+        return
+
     subreddit = comment.subreddit_slow
     usernames = extract_user_mentions(comment.body)
     inbox_class = Inbox.rel(Account, Comment)
