@@ -696,7 +696,12 @@ class Account(Thing):
         if not expires:
             return 0
 
-        now = datetime.now(g.tz)
+        # TryLater runs periodically, so if the suspension expires
+        # within that time, then the remaining number of days is 0
+        # which is the same as a permanent suspension. Adding a buffer
+        # of an hour will show that the suspension still has a day
+        # remaining if the TryLater queue isn't backed up.
+        now = datetime.now(g.tz) + timedelta(hours=-1)
         expire_date = expires - now
         return expire_date.days + 1
 
