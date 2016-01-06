@@ -31,15 +31,6 @@ from r2.models.link import Comment, Link
 
 MESSAGE_TREE_SIZE_LIMIT = 15000
 
-def comments_key(link_id):
-    return 'comments_' + str(link_id)
-
-def lock_key(link_id):
-    return 'comment_lock_' + str(link_id)
-
-def parent_comments_key(link_id):
-    return 'comments_parents_' + str(link_id)
-
 
 def _get_sort_value(comment, sort, link, children=None):
     if sort == "_date":
