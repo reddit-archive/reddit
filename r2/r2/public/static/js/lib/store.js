@@ -117,7 +117,7 @@
 		try {
 			storageContainer = new ActiveXObject('htmlfile')
 			storageContainer.open()
-			storageContainer.write('<s' + 'cript>document.w=window</s' + 'cript><iframe src="/favicon.ico"></frame>')
+			storageContainer.write('<s' + 'cript>document.w=window</s' + 'cript><iframe src="/favicon.ico"></iframe>')
 			storageContainer.close()
 			storageOwner = storageContainer.w.frames[0].document
 			storage = storageOwner.createElement('div')
