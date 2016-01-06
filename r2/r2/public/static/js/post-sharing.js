@@ -441,14 +441,11 @@
           name: 'twitter',
           tooltip: r._('Share to %(name)s').format({name: 'Twitter'}),
         },
-      ];
-
-      if (r.config.feature_tumblr_sharing) {
-        shareOptions.push({
+        {
           name: 'tumblr',
           tooltip: r._('Share to %(name)s').format({name: 'Tumblr'}),
-        });
-      }
+        },
+      ];
 
       if (r.config.logged) {
         shareOptions.push({
