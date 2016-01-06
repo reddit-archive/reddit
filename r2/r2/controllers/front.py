@@ -295,7 +295,7 @@ class FrontController(RedditController):
             if c.user_is_loggedin and c.site.can_submit(c.user):
                 resubmit_url = add_sr(resubmit_url)
             infotext = strings.already_submitted % resubmit_url
-        elif article.archived and feature.is_enabled('new_info_bar'):
+        elif article.archived:
             infotext = strings.archived_post_message
             infotext_class = 'archived-infobar'
             infotext_show_icon = True

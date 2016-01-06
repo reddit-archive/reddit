@@ -2539,8 +2539,6 @@ class InfoBar(Templated):
 
 class RedditInfoBar(InfoBar):
     def __init__(self, message='', extra_class='', show_icon=False):
-        if not feature.is_enabled('new_info_bar'):
-            self.render_class = InfoBar
         self.show_icon = show_icon
         super(RedditInfoBar, self).__init__(
             message=message,
