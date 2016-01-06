@@ -100,8 +100,7 @@ class LinkButtons(PrintableButtons):
 
         show_lock = show_unlock = False
         lockable = thing.can_ban and not thing.archived
-        if (lockable and feature.is_enabled('thread_locking',
-                                            subreddit=thing.subreddit.name)):
+        if lockable:
             show_lock = not thing.locked
             show_unlock = not show_lock
 

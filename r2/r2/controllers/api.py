@@ -1433,10 +1433,6 @@ class ApiController(RedditController):
         See also: [/api/unlock](#POST_api_unlock).
 
         """
-        if not feature.is_enabled('thread_locking',
-                                  subreddit=thing.subreddit_slow.name):
-            abort(404, 'not found')
-
         if thing.archived:
             return abort(400, "Bad Request")
         VNotInTimeout().run(action_name="lock", target=thing)
@@ -1460,10 +1456,6 @@ class ApiController(RedditController):
         See also: [/api/lock](#POST_api_lock).
 
         """
-        if not feature.is_enabled('thread_locking',
-                                  subreddit=thing.subreddit_slow.name):
-            abort(404, 'not found')
-
         if thing.archived:
             return abort(400, "Bad Request")
         VNotInTimeout().run(action_name="unlock", target=thing)
