@@ -187,18 +187,8 @@ class CommentTreeStorageV1(CommentTreeStorageBase):
 
     @classmethod
     def write_from_comment_tree(cls, link, comment_tree):
-        cids = comment_tree.cids
-        tree = comment_tree.tree
-        depth = comment_tree.depth
-        parents = comment_tree.parents
-
         key = cls._comments_key(link._id)
-        pkey = cls._parent_comments_key(link._id)
-        to_set = {
-            key: (cids, tree, depth),
-            pkey: parents,
-        }
-        g.permacache.set_multi(to_set)
+        g.permacache.set(key, comment_tree.tree)
 
     @classmethod
     def add_comments(cls, tree, comments):
