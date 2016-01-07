@@ -343,10 +343,11 @@ class SubredditJsonTemplate(ThingJsonTemplate):
     def raw_data(self, thing):
         data = ThingJsonTemplate.raw_data(self, thing)
 
-        # XXX remove this when feature is enabled and use _data_attrs instead
+        # remove this when feature is enabled and use _data_attrs instead
         if feature.is_enabled('mobile_settings'):
-            for attr in ('key_color', 'related_subreddits'):
-                data[attr] = self.thing_attr(thing, attr)
+            data['key_color'] = self.thing_attr(thing, 'key_color')
+        if feature.is_enabled('related_subreddits'):
+            data['related_subreddits'] = self.thing_attr(thing, 'related_subreddits')
 
         permissions = getattr(thing, 'mod_permissions', None)
         if permissions:
@@ -1432,10 +1433,11 @@ class SubredditSettingsTemplate(ThingJsonTemplate):
     def raw_data(self, thing):
         data = ThingJsonTemplate.raw_data(self, thing)
 
-        # XXX remove this when feature is enabled and use _data_attrs instead
+        # remove this when feature is enabled and use _data_attrs instead
         if feature.is_enabled('mobile_settings'):
-            for attr in ('key_color', 'related_subreddits'):
-                data[attr] = self.thing_attr(thing.site, attr)
+            data['key_color'] = self.thing_attr(thing, 'key_color')
+        if feature.is_enabled('related_subreddits'):
+            data['related_subreddits'] = self.thing_attr(thing, 'related_subreddits')
 
         return data
 

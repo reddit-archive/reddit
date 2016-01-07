@@ -2700,19 +2700,17 @@ class ApiController(RedditController):
                 ModAction.create(sr, c.user, 'wikirevise',
                                  details=wiki.modactions.get(pagename))
 
-        # XXX: This should be moved to @validatedForm above when we remove
+        # This should be moved to @validatedForm above when we remove
         # the feature flag. Down here to avoid processing when flagged off
         # and to hide from API docs.
-        mobile_fields = {}
         if feature.is_enabled('mobile_settings'):
-            mobile_fields = {
-                'related_subreddits': VSubredditList('related_subreddits',
-                                                     limit=20),
-                'key_color': VColor('key_color'),
-            }
-            for key, validator in mobile_fields.iteritems():
-                value = request.params.get(key)
-                kw[key] = validator.run(value)
+            validator = VColor('key_color')
+            value = request.params.get('key_color')
+            kw['key_color'] = validator.run(value)
+        if feature.is_enabled('related_subreddits'):
+            validator = VSubredditList('related_subreddits', limit=20)
+            value = request.params.get('related_subreddits')
+            kw['related_subreddits'] = validator.run(value)
 
         # the status button is outside the form -- have to reset by hand
         form.parent().set_html('.status', "")
@@ -2740,6 +2738,7 @@ class ApiController(RedditController):
             'submit_link_label',
             'submit_text',
             'submit_text_label',
+            'suggested_comment_sort',
             'title',
             'type',
             'wiki_edit_age',
@@ -2747,10 +2746,11 @@ class ApiController(RedditController):
             'wikimode',
         ]
 
-        if sr and mobile_fields:
-            keyword_fields.extend(mobile_fields.keys())
-
-        keyword_fields.append('suggested_comment_sort')
+        if sr:
+            if feature.is_enabled('mobile_settings'):
+                keyword_fields.append('key_color')
+            if feature.is_enabled('related_subreddits'):
+                keyword_fields.append('related_subreddits')
 
         kw = {k: v for k, v in kw.iteritems() if k in keyword_fields}
 
@@ -2922,10 +2922,6 @@ class ApiController(RedditController):
                 if getattr(sr, k, None) != v:
                     ModAction.create(sr, c.user, action='editsettings', 
                                      details=k)
-
-                # do not clobber these fields if absent in request
-                if k in mobile_fields and k not in request.params:
-                    continue
 
                 setattr(sr, k, v)
             sr._commit()

@@ -465,9 +465,7 @@ try participating in other communities on reddit for a little while first before
     </%utils:line_field>
 %endif
 
-%if feature.is_enabled('mobile_settings'):  # begin feature flag
-
-%if thing.site:
+%if thing.site and feature.is_enabled('related_subreddits'):
   <%utils:line_field title="${_('related subreddits')}">
     <div class="delete-field">
       <p class="little gray">${_('similar or related subreddits.')}</p>
@@ -545,7 +543,7 @@ try participating in other communities on reddit for a little while first before
   </%utils:line_field>
 %endif
 
-%if thing.site:
+%if thing.site and feature.is_enabled('mobile_settings'):
   <%utils:line_field title="${_('mobile look and feel')}" css_class="mobile">
     <ul class="upload">
       <li>
@@ -608,8 +606,6 @@ try participating in other communities on reddit for a little while first before
     </ul>
   </%utils:line_field>
 %endif
-
-%endif  # end feature flag
 
 %if not thing.site:
   ${thing.captcha}
