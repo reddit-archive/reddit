@@ -160,25 +160,15 @@ class CommentTreeStorageV1(CommentTreeStorageBase):
     @classmethod
     def by_link(cls, link, timer):
         key = cls._comments_key(link._id)
-        r = g.permacache.get(key)
+        tree = g.permacache.get(key)
         timer.intermediate('load')
 
-        if not r:
+        if not tree:
             # this link has not had an empty tree written for it. make an empty
             # tree here and return it. the downside is that until a comment is
             # added every time the storage for this link is requested it will
             # have a cache miss and fall through to cassandra
             return dict(cids=[], tree={}, depth={}, parents={})
-
-        if isinstance(r, dict):
-            tree = r
-        else:
-            try:
-                # We got the old version that includes cids and depth
-                _, tree, _ = r
-            except ValueError:
-                # We got the even older version that includes num_children
-                _, tree, _, _ = r
 
         cids, depth, parents = get_tree_details(tree)
         timer.intermediate('calculate')
