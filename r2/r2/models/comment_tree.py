@@ -80,7 +80,8 @@ class CommentTreeStorageBase(object):
         return cls.NoOpContext()
 
     @classmethod
-    def by_link(cls, link, timer):
+    def get_tree_pieces(cls, link, timer):
+        """Return cids, tree, depth, and parents for link."""
         raise NotImplementedError
 
     @classmethod
@@ -158,7 +159,7 @@ class CommentTreeStorageV1(CommentTreeStorageBase):
             g.permacache.set(key, tree)
 
     @classmethod
-    def by_link(cls, link, timer):
+    def get_tree_pieces(cls, link, timer):
         key = cls._comments_key(link._id)
         tree = g.permacache.get(key)
         timer.intermediate('load')
@@ -167,7 +168,7 @@ class CommentTreeStorageV1(CommentTreeStorageBase):
         cids, depth, parents = get_tree_details(tree)
         timer.intermediate('calculate')
 
-        return dict(cids=cids, tree=tree, depth=depth, parents=parents)
+        return cids, tree, depth, parents
 
     @classmethod
     def write_from_comment_tree(cls, link, comment_tree):
@@ -208,10 +209,13 @@ class CommentTree:
         3: None,    # placeholder for abandoned CommentTreeStorageV3
     }
 
-    def __init__(self, link, **kw):
+    def __init__(self, link, cids, tree, depth, parents):
         self.link = link
         self.link_id = link._id
-        self.__dict__.update(kw)
+        self.cids = cids
+        self.tree = tree
+        self.depth = depth
+        self.parents = parents
 
     @classmethod
     def mutation_context(cls, link, timeout=None):
@@ -224,8 +228,9 @@ class CommentTree:
             timer = SimpleSillyStub()
 
         impl = cls.IMPLEMENTATIONS[link.comment_tree_version]
-        data = impl.by_link(link, timer)
-        return cls(link, **data)
+        cids, tree, depth, parents = impl.get_tree_pieces(link, timer)
+        comment_tree = cls(link, cids, tree, depth, parents)
+        return comment_tree
 
     @classmethod
     def on_new_link(cls, link):
