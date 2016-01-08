@@ -179,7 +179,7 @@ class CommentTreeStorageV1(CommentTreeStorageBase):
     def add_comments(cls, tree, comments):
         with cls.mutation_context(tree.link):
             CommentTreeStorageBase.add_comments(tree, comments)
-            key = cls._comments_key(tree.link_id)
+            key = cls._comments_key(tree.link._id)
             g.permacache.set(key, tree.tree)
 
 
@@ -211,7 +211,6 @@ class CommentTree:
 
     def __init__(self, link, cids, tree, depth, parents):
         self.link = link
-        self.link_id = link._id
         self.cids = cids
         self.tree = tree
         self.depth = depth
