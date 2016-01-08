@@ -1709,7 +1709,7 @@ class Comment(Thing, Printable):
             hide_period = ('{0} minutes'
                           .format(item.subreddit.comment_score_hide_mins))
 
-            if item.link.contest_mode:
+            if item.is_sticky or item.link.contest_mode:
                 item.score_hidden = True
             elif item._date > timeago(hide_period):
                 item.score_hidden = not item.is_author
