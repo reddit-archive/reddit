@@ -74,6 +74,7 @@ def add_comments(comments):
                 'add_comments_nolock failed for link %s %s, recomputing',
                 link_id, comment_ids)
             rebuild_comment_tree(link, timer=timer)
+            g.stats.simple_event('comment_tree_inconsistent')
 
         timer.stop()
         update_comment_votes(coms)
