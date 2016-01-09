@@ -4465,7 +4465,7 @@ class RenderableCampaign(Templated):
                              self.spent < campaign.bid)
         self.pay_url = promote.pay_url(link, campaign)
         sr_name = random.choice(campaign.target.subreddit_names)
-        self.view_live_url = promote.view_live_url(link, sr_name)
+        self.view_live_url = promote.view_live_url(link, campaign, sr_name)
         self.refund_url = promote.refund_url(link, campaign)
 
         if campaign.location:

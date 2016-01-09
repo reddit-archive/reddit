@@ -112,9 +112,10 @@ def promo_keep_fn(item):
 
 # attrs
 
-def _base_host():
-    if g.domain_prefix:
-        base_domain = g.domain_prefix + '.' + g.domain
+def _base_host(is_mobile_web=False):
+    domain_prefix = "m" if is_mobile_web else g.domain_prefix
+    if domain_prefix:
+        base_domain = domain_prefix + '.' + g.domain
     else:
         base_domain = g.domain
     return "%s://%s" % (g.default_scheme, base_domain)
@@ -129,11 +130,12 @@ def promotraffic_url(l): # new traffic url
 def promo_edit_url(l):
     return "%s/promoted/edit_promo/%s" % (_base_host(), l._id36)
 
-def view_live_url(l, srname):
-    host = _base_host()
+def view_live_url(link, campaign, srname):
+    is_mobile_web = campaign.platform == "mobile_web"
+    host = _base_host(is_mobile_web=is_mobile_web)
     if srname:
         host += '/r/%s' % srname
-    return '%s/?ad=%s' % (host, l._fullname)
+    return '%s/?ad=%s' % (host, link._fullname)
 
 def payment_url(action, link_id36, campaign_id36):
     path = '/promoted/%s/%s/%s' % (action, link_id36, campaign_id36)
