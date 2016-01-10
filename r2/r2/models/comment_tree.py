@@ -240,9 +240,6 @@ class CommentTree:
         impl = self.IMPLEMENTATIONS[self.link.comment_tree_version]
         impl.add_comments(self, comments)
 
-    def add_comment(self, comment):
-        return self.add_comments([comment])
-
     def delete_comment(self, comment, link):
         impl = self.IMPLEMENTATIONS[link.comment_tree_version]
         impl.delete_comment(self, comment)
