@@ -20,27 +20,27 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+from collections import defaultdict
+from itertools import chain
+
 from pylons import tmpl_context as c
 from pylons import app_globals as g
-from itertools import chain
-from r2.lib.utils import SimpleSillyStub, tup, to36
-from r2.lib.db.sorts import epoch_seconds
+
 from r2.lib.cache import sgm
+from r2.lib.db.sorts import epoch_seconds
+from r2.lib.utils import SimpleSillyStub, tup
 from r2.models.comment_tree import CommentTree, InconsistentCommentTreeError
 from r2.models.link import Comment, Link
 
 MESSAGE_TREE_SIZE_LIMIT = 15000
 
 
-def _get_sort_value(comment, sort, link, children=None):
+def _get_sort_value(comment, sort):
     if sort == "_date":
         return epoch_seconds(comment._date)
-    if sort == '_qa':
-        # Responder is usually the OP, but there could be support for adding
-        # other answerers in the future.
-        responder_ids = link.responder_ids
-        return comment._qa(children, responder_ids)
-    return getattr(comment, sort)
+    else:
+        return getattr(comment, sort)
+
 
 
 def add_comments(comments):
@@ -85,78 +85,61 @@ def update_comment_votes(comments):
 
     comments = tup(comments)
 
-    link_map = {}
-    for com in comments:
-        link_map.setdefault(com.link_id, []).append(com)
-    all_links = Link._byID(link_map.keys(), data=True)
+    comments_by_link_id = defaultdict(list)
+    for comment in comments:
+        comments_by_link_id[comment.link_id].append(comment)
+    links_by_id = Link._byID(comments_by_link_id.keys(), data=True)
 
-    comment_trees = {}
-    for link in all_links.values():
-        comment_trees[link._id] = get_comment_tree(link)
-
-    for link_id, coms in link_map.iteritems():
-        link = all_links[link_id]
-        for sort in ("_controversy", "_hot", "_confidence", "_score", "_date",
-                     "_qa"):
-            cid_tree = comment_trees[link_id].tree
-            scores_by_comment = _comment_sorter_from_cids(
-                coms, sort, link, cid_tree, by_36=True)
+    for link_id, link_comments in comments_by_link_id.iteritems():
+        link = links_by_id[link_id]
+        for sort in ("_controversy", "_hot", "_confidence", "_score", "_date"):
+            scores_by_comment = {
+                comment._id36: _get_sort_value(comment, sort)
+                for comment in link_comments
+            }
             CommentScoresByLink.set_scores(link, sort, scores_by_comment)
 
+        scores_by_comment = _get_qa_comment_scores(link, comments)
+        CommentScoresByLink.set_scores(link, "_qa", scores_by_comment)
 
-def _comment_sorter_from_cids(comments, sort, link, cid_tree, by_36=False):
-    """Retrieve sort values for comments.
 
-    Arguments:
+def _get_qa_comment_scores(link, comments):
+    """Return a dict of comment_id36 -> qa score"""
 
-    * comments -- an iterable of Comments to retrieve sort values for.
-    * sort -- a string representing the type of sort to use.
-    * cid_tree -- a mapping from parent id to children ids, as created by
-      CommentTree.
-    * by_36 -- a boolean indicating if the resultant map keys off of base 36
-      ids instead of integer ids.
+    # Responder is usually the OP, but there could be support for adding
+    # other answerers in the future.
+    responder_ids = link.responder_ids
 
-    Returns a dictionary from cid to a numeric sort value.
-    """
-    # The Q&A sort requires extra information about surrounding comments.  It's
-    # more efficient to gather it up here instead of in the guts of the comment
-    # sort, but we don't want to do that for sort types that don't need it.
-    if sort == '_qa':
-        # An OP response will change the sort value for its parent, so we need
-        # to process the parent, too.
-        parent_cids = []
-        responder_ids = link.responder_ids
-        for c in comments:
-            if c.author_id in responder_ids and c.parent_id:
-                parent_cids.append(c.parent_id)
-        parent_comments = Comment._byID(parent_cids, data=True,
-                return_dict=False)
-        comments.extend(parent_comments)
+    # An OP response will change the sort value for its parent, so we need
+    # to process the parent, too.
+    parent_cids = []
+    for comment in comments:
+        if comment.author_id in responder_ids and comment.parent_id:
+            parent_cids.append(comment.parent_id)
+    parent_comments = Comment._byID(parent_cids, data=True, return_dict=False)
+    comments.extend(parent_comments)
 
-        # Fetch the comments in batch to avoid a bunch of separate calls down
-        # the line.
-        all_child_cids = []
-        for c in comments:
-            child_cids = cid_tree.get(c._id, None)
-            if child_cids:
-                all_child_cids.extend(child_cids)
-        all_child_comments = Comment._byID(all_child_cids, data=True)
+    comment_tree = get_comment_tree(link)
+    cid_tree = comment_tree.tree
+
+    # Fetch the comments in batch to avoid a bunch of separate calls down
+    # the line.
+    all_child_cids = []
+    for comment in comments:
+        child_cids = cid_tree.get(comment._id, None)
+        if child_cids:
+            all_child_cids.extend(child_cids)
+    all_child_comments = Comment._byID(all_child_cids, data=True)
 
     comment_sorter = {}
     for comment in comments:
-        if sort == '_qa':
-            child_cids = cid_tree.get(comment._id, ())
-            child_comments = (all_child_comments[cid] for cid in child_cids)
-            sort_value = _get_sort_value(comment, sort, link, child_comments)
-        else:
-            sort_value = _get_sort_value(comment, sort, link)
-        if by_36:
-            id = comment._id36
-        else:
-            id = comment._id
-        comment_sorter[id] = sort_value
+        child_cids = cid_tree.get(comment._id, ())
+        child_comments = (all_child_comments[cid] for cid in child_cids)
+        sort_value = comment._qa(child_comments, responder_ids)
+        comment_sorter[comment._id36] = sort_value
 
     return comment_sorter
+
 
 def _get_comment_sorter(link, sort):
     """Retrieve cached sort values for all comments on a post.
@@ -178,6 +161,7 @@ def _get_comment_sorter(link, sort):
     sorter = dict((int(c_id, 36), val)
                   for (c_id, val) in sorter.iteritems())
     return sorter
+
 
 def link_comments_and_sort(link, sort):
     """Fetch and sort the comments on a post.
@@ -236,14 +220,25 @@ def link_comments_and_sort(link, sort):
             "Error in comment_tree: sorter %s/%s inconsistent (missing %d e.g. %r)"
             % (link, sort, len(sorter_needed), sorter_needed[:10]))
         g.stats.simple_event('comment_tree_bad_sorter')
-        if not g.disallow_db_writes:
-            update_comment_votes(Comment._byID(sorter_needed, data=True, return_dict=False))
 
-        # The Q&A sort needs access to attributes the others don't, so save the
-        # extra lookups if we can.
-        data_needed = (sort == '_qa')
-        comments = Comment._byID(sorter_needed, data=data_needed, return_dict=False)
-        sorter.update(_comment_sorter_from_cids(comments, sort, link, tree))
+        comments = Comment._byID(sorter_needed, data=True, return_dict=False)
+
+        if not g.disallow_db_writes:
+            update_comment_votes(comments)
+
+        if sort == "_qa":
+            scores_by_comment_id36 = _get_qa_comment_scores(link, comments)
+            # convert from id36s to ids
+            scores_by_comment = {
+                int(id36, 36): score
+                for id36, score in scores_by_comment_id36.iteritems()
+            }
+        else:
+            scores_by_comment = {
+                comment._id: _get_sort_value(comment, sort)
+                for comment in comments
+            }
+        sorter.update(scores_by_comment)
         timer.intermediate('sort')
 
     timer.stop()
