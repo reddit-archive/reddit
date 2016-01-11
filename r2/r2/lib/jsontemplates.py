@@ -1570,5 +1570,7 @@ class RulesJsonTemplate(JsonTemplate):
         for rule in rules["rules"]:
             if rule.get("description"):
                 rule["description_html"] = safemarkdown(rule["description"])
+            if not rule.get("kind"):
+                rule["kind"] = "all"
 
         return ObjectTemplate(rules)
