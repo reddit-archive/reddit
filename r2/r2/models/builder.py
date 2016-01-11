@@ -889,7 +889,7 @@ class CommentBuilder(Builder):
         else:
             # full tree requested, add all top level comments as candidates to
             # be considered for display
-            top_level_comments = cid_tree.get(None, ())
+            top_level_comments = cid_tree.get(None, [])
 
             # If we have a sticky comment and we're viewing top level comments,
             # we shove the sticky comment in the top and remove it from the
