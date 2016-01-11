@@ -102,6 +102,7 @@
         description: '',
         description_html: '',
         priority: 0,
+        kind: 'all',
       };
     },
 

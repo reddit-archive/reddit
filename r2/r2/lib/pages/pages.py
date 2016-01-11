@@ -3305,19 +3305,16 @@ class ReportForm(CachedTemplate):
         self.rules = []
         self.system_rules = []
         self.thing_fullname = thing._fullname
-        kind = None
+        self.kind = None
         subreddit = None
 
         if isinstance(thing, (Comment, Link)):
             subreddit = thing.subreddit_slow
-            if isinstance(thing, Comment):
-                kind = "comments"
-            else:
-                kind = "posts"
+            self.kind = thing.__class__.__name__.lower()
 
         if (subreddit and
                 feature.is_enabled("subreddit_rules", subreddit=subreddit.name)):
-            for rule in SubredditRules.get_rules(subreddit, kind):
+            for rule in SubredditRules.get_rules(subreddit, self.kind):
                 self.rules.append(rule["short_name"])
             if self.rules:
                 self.system_rules = SITEWIDE_RULES
@@ -3339,10 +3336,7 @@ class SubredditReportForm(CachedTemplate):
 
         if isinstance(thing, Comment, Link):
             subreddit = thing.subreddit_slow
-            if isinstance(thing, Comment):
-                kind = "comments"
-            else:
-                kind = "posts"
+            kind = thing.__class__.__name__.lower()
 
         self.is_report_to_subreddit = bool(subreddit)
 

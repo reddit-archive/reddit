@@ -49,12 +49,15 @@
             %if thing.rules:
                 %for rule in thing.rules:
                     <% description_html = unsafe(safemarkdown(rule['description'], wrap=False)) %>
+                    <% kind = rule.get('kind', 'all') %>
                     <div class="subreddit-rule-item"
                          data-priority="${rule['priority']}"
-                         data-description="${keep_space(rule['description'])}">
+                         data-description="${keep_space(rule['description'])}"
+                         data-kind="${kind}">
                         ${self.subreddit_rule(
                             short_name=rule['short_name'],
                             description=description_html,
+                            kind=kind,
                             editable=thing.can_edit,
                         )}
                     </div>
@@ -82,6 +85,7 @@
             ${self.subreddit_rule(
                 short_name=unsafe("<%- short_name %>"),
                 description=unsafe("<%= description_html %>"),
+                kind=unsafe("<%- kind %>"),
                 editable=True,
             )}
         </script>
@@ -94,13 +98,16 @@
     %endif
 </div>
 
-<%def name="subreddit_rule(short_name='', description='', editable=False)">
+<%def name="subreddit_rule(short_name='', description='', kind='', editable=False)">
     <div class="subreddit-rule ${'editable' if editable else ''}">
         <div class="subreddit-rule-contents">
             <div class="subreddit-rule-contents-display">
                 <h4 class="subreddit-rule-title">
                     ${short_name}
                 </h4>
+                <div class="subreddit-rule-kind">
+                    ${kind}
+                </div>
                 <div class="subreddit-rule-description">
                     ${description}
                 </div>
@@ -150,6 +157,12 @@
                     ${error_field("SR_RULE_EXISTS", "short_name")}
                     ${error_field("SR_RULE_TOO_MANY", "short_name")}
                 </div>
+            </div>
+            <div class="c-form-group form-group-kind">
+                <input type="radio" name="kind" value="link"> links<br>
+                <input type="radio" name="kind" value="comment"> comments<br>
+                <input type="radio" name="kind" value="all" checked> both<br>
+                ${error_field("INVALID_OPTION", "kind")}
             </div>
             <div class="c-form-group form-group-description">
                 <div class="md-container-small">

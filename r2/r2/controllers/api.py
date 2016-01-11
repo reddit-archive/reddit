@@ -5031,8 +5031,10 @@ class ApiController(RedditController):
         VModhash(),
         short_name=VAvailableSubredditRuleName("short_name"),
         description=VMarkdownLength("description", max_length=500),
+        kind=VOneOf('kind', ['link', 'comment', 'all']),
     )
-    def POST_add_subreddit_rule(self, form, jquery, short_name, description):
+    def POST_add_subreddit_rule(self, form, jquery, short_name, description,
+            kind):
         if not feature.is_enabled("subreddit_rules", subreddit=c.site.name):
             abort(404)
         if form.has_errors("short_name", errors.TOO_SHORT, errors.NO_TEXT,
@@ -5040,8 +5042,10 @@ class ApiController(RedditController):
             return
         if form.has_errors("description", errors.TOO_LONG):
             return
+        if form.has_errors("kind", errors.INVALID_OPTION):
+            return
 
-        SubredditRules.create(c.site, short_name, description)
+        SubredditRules.create(c.site, short_name, description, kind)
         ModAction.create(c.site, c.user, 'createrule', details=short_name)
 
         if description:
@@ -5057,9 +5061,10 @@ class ApiController(RedditController):
         rule=VSubredditRule("old_short_name"),
         short_name=VAvailableSubredditRuleName("short_name"),
         description=VMarkdownLength('description', max_length=500),
+        kind=VOneOf('kind', ['link', 'comment', 'all']),
     )
     def POST_update_subreddit_rule(self, form, jquery, rule,
-            short_name, description):
+            short_name, description, kind):
         if not feature.is_enabled("subreddit_rules", subreddit=c.site.name):
             abort(404)
         if form.has_errors("old_short_name", errors.SR_RULE_DOESNT_EXIST):
@@ -5073,9 +5078,11 @@ class ApiController(RedditController):
                 return
         if form.has_errors("description", errors.TOO_LONG):
             return
+        if form.has_errors("kind", errors.INVALID_OPTION):
+            return
 
         SubredditRules.update(c.site, rule["short_name"], short_name,
-            description)
+            description, kind)
         ModAction.create(c.site, c.user, 'editrule', details=short_name)
 
         if description:

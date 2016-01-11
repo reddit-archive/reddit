@@ -182,6 +182,9 @@ requires r.ui.TextCounter
         this.$el.find('.subreddit-rule-delete-confirmation').removeAttr('hidden');
         this.$el.find('.subreddit-rule-buttons button').attr('disabled', true);
       }
+      if (this.state === this.EDITING_STATE) {
+        this.$el.find('.form-group-kind input[value=' + this.model.get('kind') + ']').prop('checked', true);
+      }
     },
 
     renderTemplate: function() {
@@ -322,6 +325,7 @@ requires r.ui.TextCounter
         short_name: $el.find('.subreddit-rule-title').text(),
         description: $el.data('description'),
         description_html: $el.find('.subreddit-rule-description').html(),
+        kind: $el.data('kind'),
       });
     },
 
