@@ -581,11 +581,10 @@ class IpnController(RedditController):
             buyer.gold_subscr_id = subscr_id
 
         instagift = False
-        if payment_blob['goldtype'] in ('autorenew', 'onetime'):
+        if payment_blob['goldtype'] == 'onetime':
             admintools.adjust_gold_expiration(buyer, days=days)
 
             subject = _("Eureka! Thank you for investing in reddit gold!")
-            
             message = _("Thank you for buying reddit gold. Your patronage "
                         "supports the site and makes future development "
                         "possible. For example, one month of reddit gold "
@@ -593,6 +592,9 @@ class IpnController(RedditController):
             message += "\n\n" + strings.gold_benefits_msg
             if g.lounge_reddit:
                 message += "\n* " + strings.lounge_msg
+        elif payment_blob['goldtype'] == 'autorenew':
+            admintools.adjust_gold_expiration(buyer, days=days)
+            subject, message = subscr_pm(pennies, months, new_subscr=True)
         elif payment_blob['goldtype'] == 'creddits':
             buyer._incr("gold_creddits", months)
             buyer._commit()
@@ -858,12 +860,11 @@ class GoldPaymentController(RedditController):
                     else:
                         message = ":)"
                 else:
-                    subject = "your reddit gold has been renewed!"
-                    message = ("see the details of your subscription on "
-                               "[your userpage](/u/%s)" % buyer.name)
-
                     if has_prev_subscr_payments(subscr_id):
                         secret = None
+                        subject, message = subscr_pm(pennies, months, new_subscr=False)
+                    else:
+                        subject, message = subscr_pm(pennies, months, new_subscr=True)
 
             elif goldtype == 'creddits':
                 buyer._incr('gold_creddits', months)
@@ -1409,3 +1410,43 @@ def cancel_stripe_subscription(customer_id):
         return customer
     customer.delete()
     return customer
+
+
+def subscr_pm(pennies, months, new_subscr=True):
+    price = "$%0.2f" % (pennies/100.0)
+    if new_subscr:
+        if months % 12 == 0:
+            message = _("You have created a yearly Reddit Gold subscription "
+                "for %(price)s per year.\n\nThis subscription will renew "
+                "automatically yearly until you cancel. You may cancel your "
+                "subscription at any time by visiting %(subscr_url)s.\n\n")
+        else:
+            message = _("You have created a monthly Reddit Gold subscription "
+                "for %(price)s per month.\n\nThis subscription will renew "
+                "automatically monthly until you cancel. You may cancel your "
+                "subscription at any time by visiting %(subscr_url)s.\n\n")
+    else:
+        if months == 1:
+            message = _("Your Reddit Gold subscription has been renewed "
+                "for 1 month for %(price)s.\n\nThis subscription will renew "
+                "automatically monthly until you cancel. You may cancel your "
+                "subscription at any time by visiting %(subscr_url)s.\n\n")
+        else:
+            message = _("Your Reddit Gold subscription has been renewed "
+                "for 1 year for %(price)s.\n\nThis subscription will renew "
+                "automatically yearly until you cancel. You may cancel your "
+                "subscription at any time by visiting %(subscr_url)s.\n\n")
+
+    subject = _("Reddit Gold Subscription")
+    message += _("If you cancel, you will not be billed for any additional "
+        "months of service, and service will continue until the end of the "
+        "billing period. If you cancel, you will not receive a refund for any "
+        "service already paid for.\n\nIf you have any questions, please "
+        "contact %(gold_email)s.")
+
+    message %= {
+        "price": price,
+        "subscr_url": "https://www.reddit.com/gold/subscription",
+        "gold_email": g.goldsupport_email,
+    }
+    return subject, message
