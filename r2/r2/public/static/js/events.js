@@ -40,9 +40,9 @@
       return this;
     },
 
-    send: function() {
+    send: function(done) {
       if (tracker) {
-        tracker.send();
+        tracker.send(done);
       }
       return this;
     }
