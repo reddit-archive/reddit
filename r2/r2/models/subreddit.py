@@ -305,14 +305,24 @@ class Subreddit(Thing, Printable, BaseSite):
 
     # in "rainbow" order
     KEY_COLORS = collections.OrderedDict([
+        ('#EA0027', N_('red')),
         ('#ff4500', N_('orangered')),
         ('#ff8717', N_('orange')),
         ('#ffb000', N_('mango')),
         ('#94e044', N_('lime')),
         ('#46d160', N_('green')),
         ('#0dd3bb', N_('mint')),
+        ('#25B79F', N_('teal')),
         ('#24a0ed', N_('blue')),
         ('#0079d3', N_('alien blue')),
+        ('#FF66AC', N_('pink')),
+        ('#7E53C1', N_('purple')),
+        ('#DDBD37', N_('gold')),
+        ('#A06A42', N_('brown')),
+        ('#EFEFED', N_('pale grey')),
+        ('#A5A4A4', N_('grey')),
+        ('#545452', N_('dark grey')),
+        ('#222222', N_('semi black')),
     ])
     ACCENT_COLORS = (
         '#f44336', # red
