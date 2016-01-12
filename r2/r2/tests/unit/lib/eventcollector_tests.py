@@ -72,7 +72,8 @@ class TestEventCollector(RedditTestCase):
         with patch.object(g.events, "queue") as queue:
             initial_vote = MagicMock(is_upvote=True, is_downvote=False,
                                      is_automatic_initial_vote=True,
-                                     previous_vote=None)
+                                     previous_vote=None,
+                                     name="initial_vote")
             g.events.vote_event(initial_vote)
 
             self.assert_event_item(
@@ -85,14 +86,18 @@ class TestEventCollector(RedditTestCase):
                         'sr_id': initial_vote.thing.subreddit_slow._id,
                         'sr_name': initial_vote.thing.subreddit_slow.name,
                         'target_fullname': initial_vote.thing._fullname,
+                        'target_name': initial_vote.thing.name,
+                        'target_id': initial_vote.thing._id,
                         'auto_self_vote': True,
                     }
                 )
             )
 
             queue.add_item.reset_mock()
-            upvote = MagicMock(is_automatic_initial_vote=False)
-            upvote.previous_vote = MagicMock(is_upvote=False, is_downvote=True)
+            upvote = MagicMock(name="upvote",
+                               is_automatic_initial_vote=False)
+            upvote.previous_vote = MagicMock(name="previous_vote",
+                                             is_upvote=False, is_downvote=True)
             g.events.vote_event(upvote)
 
             self.assert_event_item(
@@ -105,6 +110,8 @@ class TestEventCollector(RedditTestCase):
                         'sr_id': upvote.thing.subreddit_slow._id,
                         'sr_name': upvote.thing.subreddit_slow.name,
                         'target_fullname': upvote.thing._fullname,
+                        'target_name': upvote.thing.name,
+                        'target_id': upvote.thing._id,
                         'prev_vote_ts': 1,
                         'prev_vote_direction': 'down',
                     }
@@ -114,43 +121,47 @@ class TestEventCollector(RedditTestCase):
     def test_submit_event(self):
         self._patch_liveconfig("events_collector_submit_sample_rate", 1.0)
         with patch.object(g.events, "queue") as queue:
-            new_link = MagicMock()
-            context = MagicMock()
-            request = MagicMock()
+            new_link = MagicMock(name="new_link")
+            context = MagicMock(name="context")
+            request = MagicMock(name="request")
             g.events.submit_event(new_link, context=context, request=request)
 
             self.assert_event_item(
-                queue, {
-                    'event_topic': 'submit',
-                    'event_name': 'submit_server',
-                    'length': 0,
-                    # values from the request
-                    'client_ip': request.ip,
-                    'user_agent': request.user_agent,
-                    # values from the context
-                    'user_id': str(context.user._id),
-                    'oauth_client_id': context.oauth2_client._id,
-                    # values from the new_link
-                    'flagged_spam': True,   # bool(new_link._spam) == True
-                    'type': 'self',
-                    'sr': new_link.subreddit_slow.name,
-                    'title': new_link.title,
-                    'domain': request.host,
-                    'text': new_link.selftext,
-                    'sr_id': str(new_link.subreddit_slow._id),
-                    'spam_reason': new_link.ban_info.get(),
-                    'id': new_link._fullname,
-                }
+                queue, dict(
+                    event_topic="submit_events",
+                    event_type="ss.submit",
+                    payload={
+                        'domain': request.host,
+                        'user_id': context.user._id,
+                        'user_name': context.user.name,
+                        'user_neutered': new_link.author_slow._spam,
+                        'post_id': new_link._id,
+                        'post_fullname': new_link._fullname,
+                        'post_title': new_link.title,
+                        'post_type': "self",
+                        'post_body': new_link.selftext,
+                        'sr_id': new_link.subreddit_slow._id,
+                        'sr_name': new_link.subreddit_slow.name,
+                        'geoip_country': context.location,
+                        'oauth2_client_id': context.oauth2_client._id,
+                        'referrer_domain': self.domain_mock(),
+                        'referrer_url': request.headers.get(),
+                        'user_agent': request.user_agent,
+                        'obfuscated_data': {
+                            'client_ip': request.ip
+                        },
+                    }
+                )
             )
 
     def test_mod_event(self):
         self._patch_liveconfig("events_collector_mod_sample_rate", 1.0)
         with patch.object(g.events, "queue") as queue:
             mod = None  # TODO: this value appears to not be used?
-            modaction = MagicMock()
-            subreddit = MagicMock()
-            context = MagicMock()
-            request = MagicMock()
+            modaction = MagicMock(name="modaction")
+            subreddit = MagicMock(name="subreddit")
+            context = MagicMock(name="context")
+            request = MagicMock(name="request")
             g.events.mod_event(
                 modaction, subreddit, mod, context=context, request=request
             )
@@ -181,10 +192,10 @@ class TestEventCollector(RedditTestCase):
     def test_quarantine_event(self):
         self._patch_liveconfig("events_collector_quarantine_sample_rate", 1.0)
         with patch.object(g.events, "queue") as queue:
-            event_type = MagicMock()
-            subreddit = MagicMock()
-            context = MagicMock()
-            request = MagicMock()
+            event_type = MagicMock(name="event_type")
+            subreddit = MagicMock(name="subreddit")
+            context = MagicMock(name="context")
+            request = MagicMock(name="request")
             g.events.quarantine_event(
                 event_type, subreddit, context=context, request=request
             )

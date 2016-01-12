@@ -36,6 +36,9 @@ class MockAccount(object):
     def __init__(self, name, _fullname):
         self.name = name
         self._fullname = _fullname
+        _, _, _id = _fullname.partition("_")
+        self._id = int(_id, 36)
+
 gary = MockAccount(name='gary', _fullname='t2_beef')
 all_uppercase = MockAccount(name='ALL_UPPERCASE', _fullname='t2_f00d')
 
