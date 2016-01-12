@@ -2759,7 +2759,10 @@ class SubredditTopBar(CachedTemplate):
     @property
     def pop_reddits(self):
         if self._pop_reddits is None:
-            self._pop_reddits = Subreddit.default_subreddits(ids=False)
+            defaults = Subreddit.default_subreddits(ids=False)
+            # sort the default subreddits by "popularity" descending
+            defaults = sorted(defaults, key=lambda sr: sr._downs, reverse=True)
+            self._pop_reddits = defaults
         return self._pop_reddits
 
     def my_reddits_dropdown(self):
