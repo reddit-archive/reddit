@@ -141,7 +141,7 @@ def _get_qa_comment_scores(link, comments):
     return comment_sorter
 
 
-def _get_comment_sorter(link, sort):
+def get_comment_scores(link, sort, comment_ids, timer):
     """Retrieve cached sort values for all comments on a post.
 
     Arguments:
@@ -151,16 +151,52 @@ def _get_comment_sorter(link, sort):
       generating sort values.
 
     Returns a dictionary from cid to a numeric sort value.
+
     """
+
     from r2.models import CommentScoresByLink
 
-    sorter = CommentScoresByLink.get_scores(link, sort)
+    if not comment_ids:
+        # no comments means no scores
+        return {}
+
+    scores_by_id36 = CommentScoresByLink.get_scores(link, sort)
 
     # we store these id36ed, but there are still bits of the code that
     # want to deal in integer IDs
-    sorter = dict((int(c_id, 36), val)
-                  for (c_id, val) in sorter.iteritems())
-    return sorter
+    scores_by_id = {
+        int(id36, 36): score
+        for id36, score in scores_by_id36.iteritems()
+    }
+
+    scores_needed = set(comment_ids) - set(scores_by_id.keys())
+    if scores_needed:
+        g.stats.simple_event('comment_tree_bad_sorter')
+
+        missing_comments = Comment._byID(
+            scores_needed, data=True, return_dict=False)
+
+        if not g.disallow_db_writes:
+            update_comment_votes(missing_comments)
+
+        if sort == "_qa":
+            scores_by_missing_id36 = _get_qa_comment_scores(
+                link, missing_comments)
+
+            scores_by_missing = {
+                int(id36, 36): score
+                for id36, score in scores_by_missing_id36.iteritems()
+            }
+        else:
+            scores_by_missing = {
+                comment._id: _get_sort_value(comment, sort)
+                for comment in missing_comments
+            }
+
+        scores_by_id.update(scores_by_missing)
+        timer.intermediate('sort')
+
+    return scores_by_id
 
 
 def link_comments_and_sort(link, sort):
@@ -203,47 +239,11 @@ def link_comments_and_sort(link, sort):
     depth = cache.depth
     parents = cache.parents
 
-    # load the sorter
-    sorter = _get_comment_sorter(link, sort)
+    scores_by_id = get_comment_scores(link, sort, cids, timer)
     timer.intermediate('get_scores')
-
-    # find comments for which the sort values weren't in the cache
-    sorter_needed = []
-    if cids and not sorter:
-        sorter_needed = cids
-        g.log.debug("comment_tree.py: sorter %s cache miss for %s", sort, link)
-        sorter = {}
-
-    sorter_needed = [x for x in cids if x not in sorter]
-    if cids and sorter_needed:
-        g.log.debug(
-            "Error in comment_tree: sorter %s/%s inconsistent (missing %d e.g. %r)"
-            % (link, sort, len(sorter_needed), sorter_needed[:10]))
-        g.stats.simple_event('comment_tree_bad_sorter')
-
-        comments = Comment._byID(sorter_needed, data=True, return_dict=False)
-
-        if not g.disallow_db_writes:
-            update_comment_votes(comments)
-
-        if sort == "_qa":
-            scores_by_comment_id36 = _get_qa_comment_scores(link, comments)
-            # convert from id36s to ids
-            scores_by_comment = {
-                int(id36, 36): score
-                for id36, score in scores_by_comment_id36.iteritems()
-            }
-        else:
-            scores_by_comment = {
-                comment._id: _get_sort_value(comment, sort)
-                for comment in comments
-            }
-        sorter.update(scores_by_comment)
-        timer.intermediate('sort')
-
     timer.stop()
 
-    return (cache.cids, cache.tree, cache.depth, cache.parents, sorter)
+    return (cache.cids, cache.tree, cache.depth, cache.parents, scores_by_id)
 
 
 def get_comment_tree(link, timer=None):
