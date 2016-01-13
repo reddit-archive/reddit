@@ -145,6 +145,7 @@ def get_comment_scores(link, sort, comment_ids, timer):
 
     """
 
+    from r2.lib.db import queries
     from r2.models import CommentScoresByLink
 
     if not comment_ids:
@@ -172,8 +173,10 @@ def get_comment_scores(link, sort, comment_ids, timer):
             missing_comments = Comment._byID(
                 scores_needed, data=True, return_dict=False)
 
-            if not g.disallow_db_writes:
-                update_comment_votes(missing_comments)
+            # queue the missing comments to be added to the comments tree, which
+            # will trigger adding their scores
+            for comment in missing_comments:
+                queries.add_to_commentstree_q(comment)
 
             if sort == "_qa":
                 scores_by_missing_id36 = _get_qa_comment_scores(
