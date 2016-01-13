@@ -27,20 +27,11 @@ from pylons import tmpl_context as c
 from pylons import app_globals as g
 
 from r2.lib.cache import sgm
-from r2.lib.db.sorts import epoch_seconds
 from r2.lib.utils import SimpleSillyStub, tup
 from r2.models.comment_tree import CommentTree, InconsistentCommentTreeError
 from r2.models.link import Comment, Link
 
 MESSAGE_TREE_SIZE_LIMIT = 15000
-
-
-def _get_sort_value(comment, sort):
-    if sort == "_date":
-        return epoch_seconds(comment._date)
-    else:
-        return getattr(comment, sort)
-
 
 
 def add_comments(comments):
@@ -92,9 +83,9 @@ def update_comment_votes(comments):
 
     for link_id, link_comments in comments_by_link_id.iteritems():
         link = links_by_id[link_id]
-        for sort in ("_controversy", "_hot", "_confidence", "_score", "_date"):
+        for sort in ("_controversy", "_hot", "_confidence", "_score"):
             scores_by_comment = {
-                comment._id36: _get_sort_value(comment, sort)
+                comment._id36: getattr(comment, sort)
                 for comment in link_comments
             }
             CommentScoresByLink.set_scores(link, sort, scores_by_comment)
@@ -160,41 +151,46 @@ def get_comment_scores(link, sort, comment_ids, timer):
         # no comments means no scores
         return {}
 
-    scores_by_id36 = CommentScoresByLink.get_scores(link, sort)
+    if sort == "_date":
+        # comment ids are monotonically increasing, so we can use them as a
+        # substitute for creation date
+        scores_by_id = {comment_id: comment_id for comment_id in comment_ids}
+    else:
+        scores_by_id36 = CommentScoresByLink.get_scores(link, sort)
 
-    # we store these id36ed, but there are still bits of the code that
-    # want to deal in integer IDs
-    scores_by_id = {
-        int(id36, 36): score
-        for id36, score in scores_by_id36.iteritems()
-    }
+        # we store these id36ed, but there are still bits of the code that
+        # want to deal in integer IDs
+        scores_by_id = {
+            int(id36, 36): score
+            for id36, score in scores_by_id36.iteritems()
+        }
 
-    scores_needed = set(comment_ids) - set(scores_by_id.keys())
-    if scores_needed:
-        g.stats.simple_event('comment_tree_bad_sorter')
+        scores_needed = set(comment_ids) - set(scores_by_id.keys())
+        if scores_needed:
+            g.stats.simple_event('comment_tree_bad_sorter')
 
-        missing_comments = Comment._byID(
-            scores_needed, data=True, return_dict=False)
+            missing_comments = Comment._byID(
+                scores_needed, data=True, return_dict=False)
 
-        if not g.disallow_db_writes:
-            update_comment_votes(missing_comments)
+            if not g.disallow_db_writes:
+                update_comment_votes(missing_comments)
 
-        if sort == "_qa":
-            scores_by_missing_id36 = _get_qa_comment_scores(
-                link, missing_comments)
+            if sort == "_qa":
+                scores_by_missing_id36 = _get_qa_comment_scores(
+                    link, missing_comments)
 
-            scores_by_missing = {
-                int(id36, 36): score
-                for id36, score in scores_by_missing_id36.iteritems()
-            }
-        else:
-            scores_by_missing = {
-                comment._id: _get_sort_value(comment, sort)
-                for comment in missing_comments
-            }
+                scores_by_missing = {
+                    int(id36, 36): score
+                    for id36, score in scores_by_missing_id36.iteritems()
+                }
+            else:
+                scores_by_missing = {
+                    comment._id: getattr(comment, sort)
+                    for comment in missing_comments
+                }
 
-        scores_by_id.update(scores_by_missing)
-        timer.intermediate('sort')
+            scores_by_id.update(scores_by_missing)
+            timer.intermediate('sort')
 
     return scores_by_id
 
