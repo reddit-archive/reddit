@@ -439,7 +439,7 @@ var CampaignCreator = React.createClass({
                 className: 'error',
                 target: this.props.targetName,
               },
-              r._('we have insufficient available inventory in %(target)s to fulfill ' +
+              r._('we have insufficient available inventory targeting %(target)s to fulfill ' +
                    'your requested dates. the following campaigns are available:')
             ),
             CampaignOptionTable(null, options)
@@ -1152,7 +1152,6 @@ var exports = r.sponsored = {
             type = isFrontpage ? 'frontpage' : isCollection ? 'collection' : 'subreddit',
             sr = isSubreddit ? $form.find('*[name="sr"]').val() : '',
             collection = isCollection ? collectionVal : null,
-            displayName = isFrontpage ? 'the frontpage' : isCollection ? collection : sr,
             canGeotarget = isFrontpage || this.userIsSponsor || this.isAuction,
             country = canGeotarget && $('#country').val() || '',
             region = canGeotarget && $('#region').val() || '',
@@ -1160,6 +1159,42 @@ var exports = r.sponsored = {
             geotarget = {'country': country, 'region': region, 'metro': metro},
             inventoryKey = this.get_inventory_key(sr, collection, geotarget, platform),
             isValid = isFrontpage || (isSubreddit && sr) || (isCollection && collection);
+
+        var displayName;
+        switch(type) {
+            case 'frontpage':
+                displayName = 'the frontpage'
+                break;
+            case 'subreddit':
+                displayName = '/r/' + sr
+                break;
+            default:
+                displayName = collection
+        }
+
+        if (canGeotarget) {
+            var geoStrings = []
+            if (country) {
+                if (region) {
+                    if (metro) {
+                        var metroName = $('#metro option[value="'+metro+'"]').text()
+                        // metroName is in the form 'metro, state abbreviation';
+                        // since we want 'metro, full state', split the metro
+                        // from the state, then add the full state separately
+                        geoStrings.push(metroName.split(',')[0])
+                    }
+                    var regionName = $('#region option[value="'+region+'"]').text()
+                    geoStrings.push(regionName)
+                }
+                var countryName = $('#country option[value="'+country+'"]').text()
+                geoStrings.push(countryName)
+            }
+
+            if (geoStrings.length > 0) {
+                displayName += ' in '
+                displayName += geoStrings.join(', ')
+            }
+        }
 
         var targets = {
             'type': type,
