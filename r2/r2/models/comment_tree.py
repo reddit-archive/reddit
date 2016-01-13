@@ -256,6 +256,13 @@ class CommentTree:
                            data=True)
         comments = sorted(q, key=lambda c: c.parent_id)
 
+        # remove any comments with missing parents
+        comment_ids = {comment._id for comment in comments}
+        comments = [
+            comment for comment in comments
+            if not comment.parent_id or comment.parent_id in comment_ids 
+        ]
+
         # build tree from scratch (for V2 results in double-counting in cass)
         tree = cls(link, cids=[], tree={}, depth={}, parents={})
         impl = cls.IMPLEMENTATIONS[link.comment_tree_version]
