@@ -230,13 +230,18 @@ class CachedResults(object):
 
         self._mutate(_mutate)
 
-    def _replace(self, tuples):
+    def _replace(self, tuples, lock=True):
         """Take pre-rendered tuples from mr_top and replace the
            contents of the query outright. This should be considered a
            private API"""
-        def _mutate(data):
-            return tuples
-        self._mutate(_mutate, willread=False)
+        if lock:
+            def _mutate(data):
+                return tuples
+            self._mutate(_mutate, willread=False)
+        else:
+            self._fetched = True
+            self.data = tuples
+            query_cache.pessimistically_set(self.iden, tuples)
 
     def update(self):
         """Runs the query and stores the result in the cache. This is

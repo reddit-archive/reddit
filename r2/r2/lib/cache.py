@@ -927,6 +927,15 @@ class Permacache(object):
         self._backend_set_multi(keys, prefix=prefix)
         self.cache_chain.set_multi(keys, prefix=prefix)
 
+    def pessimistically_set(self, key, value):
+        """
+        Sets a value in Cassandra but instead of setting it in memcached,
+        deletes it from there instead. This is useful for the mr_top job which
+        sets thousands of keys but almost all of them will never be read out of
+        """
+        self._backend_set(key, value)
+        self.cache_chain.delete(key)
+
     def get_multi(self, keys, prefix='', allow_local=True, stale=False):
         call_fn = lambda k: self.simple_get_multi(k, allow_local=allow_local,
                                                   stale=stale)

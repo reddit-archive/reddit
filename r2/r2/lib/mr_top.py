@@ -128,12 +128,17 @@ def store_keys(key, maxes):
     elif category == "domain":
         if thing_cls == "link":
             query = queries.get_domain_links(id, sort, time)
-    assert query
+
+    assert query, 'unknown query type for %s' % (key,)
 
     item_tuples = [tuple([item[-1]] + [float(x) for x in item[:-1]])
                    for item in maxes]
-    query._replace(item_tuples)
 
+    # we only need locking updates for non-time-based listings, since for time-
+    # based ones we're the only ones that ever update it
+    lock = time == 'all'
+
+    query._replace(item_tuples, lock=lock)
 
 def write_permacache(fd = sys.stdin):
     mr_tools.mr_reduce_max_per_key(lambda x: map(float, x[:-1]), num=1000,

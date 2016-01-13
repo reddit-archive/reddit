@@ -104,9 +104,9 @@ run_query "\\copy (SELECT thing_id, 'data', '$THING_CLS', key, value
 
 cat $THING_DUMP $DATA_DUMP |
     mrsort |
-    reddit "join_things('$THING_CLS')" |
+    reddit "join_things('$THING_CLS') # $TIMES" |
     reddit "time_listings($TIMES, '$THING_CLS')" |
     mrsort |
-    reddit "write_permacache()"
+    reddit "write_permacache() # $THING_CLS $TIMES"
 
 echo 'Done.'
