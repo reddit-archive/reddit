@@ -221,6 +221,7 @@ def link_comments_and_sort(link, sort):
 
     # load the sorter
     sorter = _get_comment_sorter(link, sort)
+    timer.intermediate('get_scores')
 
     # find comments for which the sort values weren't in the cache
     sorter_needed = []
