@@ -49,7 +49,6 @@ DATA_DUMP=$TMPDIR/$THING_CLS-$INTERVAL-data.dump
 function clean_up {
     rm -f $THING_DUMP $DATA_DUMP
 }
-trap clean_up EXIT
 
 if [ -e $THING_DUMP ]; then
     echo cannot start because $THING_DUMP exists
@@ -58,6 +57,8 @@ if [ -e $THING_DUMP ]; then
 fi
 touch $THING_DUMP
 
+# since we're in charge of this run now, we have to clean up afterwards
+trap clean_up EXIT
 
 function run_query {
     psql -F"\t" -A -t -c "$1"
