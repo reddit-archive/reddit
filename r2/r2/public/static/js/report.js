@@ -1,5 +1,8 @@
 $(function() {
+  var sessionStorageKey = 'subreddit-rules';
+
   var templates;
+  var cachedRules;
 
   function _getTemplate(id) {
     var elem = document.getElementById(id);
@@ -34,6 +37,13 @@ $(function() {
         return formEl;
       },
     };
+
+    try {
+      cachedRules = window.sessionStorage.getItem(sessionStorageKey);
+      cachedRules = JSON.parse(cachedRules);
+    } finally {
+      cachedRules = cachedRules || {};
+    }
   }
 
   function renderFromTemplate(data, thingType) {
@@ -139,14 +149,27 @@ $(function() {
       var formData = { fullname: attrs.thing };
       var form = renderFromTemplate(formData, thingType);
       showForm($reportForm, form);
+    } else if (srFullname in cachedRules) {
+      // render from cached if available (only needs to hit API once per subreddit)
+      var formData = cachedRules[srFullname];
+      formData.fullname = attrs.thing;
+      var form = renderFromTemplate(formData, thingType);
+      showForm($reportForm, form);
     } else {
-      // fetch from the API
+      // fetch from the API and cache for later
       attrs.api_type = 'json';
       $.request("report_form", attrs, function(res) {
         var data = res.json.data;
+        cachedRules[srFullname] = data;
         data.fullname = attrs.thing;
-        var form = renderFromTemplate(data, thingType);
-        showForm($reportForm, form);
+
+        try {
+          var rulesJSON = JSON.stringify(cachedRules);
+          window.sessionStorage.setItem(sessionStorageKey, rulesJSON);
+        } finally {
+          var form = renderFromTemplate(data, thingType);
+          showForm($reportForm, form);
+        }
       }, true, 'json', true);  
     }
 
