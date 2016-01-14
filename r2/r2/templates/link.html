@@ -134,10 +134,6 @@
     ${bottom_buttons()}
   %endif
 
-%if not getattr(thing, "votable", True):
-  <div class="unvotable-message">${strings.unvotable_message}</div>
-%endif
-
   <div class="expando" ${"style='display: none'" if not expand else ""}
     %if not expand and child_content:
       data-cachedhtml="${websafe(child_content)}"

@@ -331,7 +331,7 @@ $.fn.resetInput = function() {
 };
 
 $.fn.show_unvotable_message = function() {
-  $(this).thing().find(".entry:first .unvotable-message").css("display", "inline-block");
+  // deprecated
 };
 
 $.fn.thing = function() {
