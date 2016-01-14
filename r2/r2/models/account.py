@@ -698,12 +698,11 @@ class Account(Thing):
 
         # TryLater runs periodically, so if the suspension expires
         # within that time, then the remaining number of days is 0
-        # which is the same as a permanent suspension. Adding a buffer
-        # of an hour will show that the suspension still has a day
-        # remaining if the TryLater queue isn't backed up.
-        now = datetime.now(g.tz) + timedelta(hours=-1)
-        expire_date = expires - now
-        return expire_date.days + 1
+        # which is the same as a permanent suspension. Return 1 day
+        # remaining if it already expired but the TryLater queue hasn't
+        # cleared it yet.
+        days_left = (expires - datetime.now(g.tz)).days + 1
+        return max(days_left, 1)
 
     def incr_admin_takedown_strikes(self, amt=1):
         return self._incr('admin_takedown_strikes', amt)
