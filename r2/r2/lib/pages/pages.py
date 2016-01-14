@@ -4017,11 +4017,12 @@ class ModToolsPage(Reddit):
 
 class Rules(Templated):
     """Show subreddit rules for everyone and add edit controls for mods."""
-    def __init__(self):
+    def __init__(self, kind_labels):
         self.can_edit = c.user_is_loggedin and (c.user_is_admin or
             c.site.is_moderator_with_perms(c.user, 'config'))
         self.rules = SubredditRules.get_rules(c.site)
         self.site_rules = SITEWIDE_RULES
+        self.kind_labels = kind_labels
         Templated.__init__(self)
 
 

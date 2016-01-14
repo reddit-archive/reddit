@@ -189,6 +189,9 @@ requires r.ui.TextCounter
 
     renderTemplate: function() {
       var modelData = this.model.toJSON();
+      var kind = modelData.kind;
+
+      modelData.kind = r.config.kind_labels[kind];
 
       if (this.state === this.EDITING_STATE) {
         this.$el.html(this.formTemplate(modelData));

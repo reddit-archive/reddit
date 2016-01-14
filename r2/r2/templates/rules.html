@@ -49,7 +49,10 @@
             %if thing.rules:
                 %for rule in thing.rules:
                     <% description_html = unsafe(safemarkdown(rule['description'], wrap=False)) %>
-                    <% kind = rule.get('kind', 'all') %>
+                    <%
+                        kind = rule.get('kind', 'all')
+                        kind_label = thing.kind_labels.get(kind)
+                    %>
                     <div class="subreddit-rule-item"
                          data-priority="${rule['priority']}"
                          data-description="${keep_space(rule['description'])}"
@@ -57,7 +60,7 @@
                         ${self.subreddit_rule(
                             short_name=rule['short_name'],
                             description=description_html,
-                            kind=kind,
+                            kind=kind_label,
                             editable=thing.can_edit,
                         )}
                     </div>
@@ -142,7 +145,7 @@
             <div class="c-form-group form-group-short_name">
                 <div class="md-container-small">
                     <div class="md">
-                        <label for="short_name" class="required">Short name</label>
+                        <label for="short_name" class="label required">Short name</label>
                         <div class="text-counter">
                             <span class="text-counter-display"></span>&#32;
                             remaining
@@ -159,15 +162,29 @@
                 </div>
             </div>
             <div class="c-form-group form-group-kind">
-                <input type="radio" name="kind" value="link"> links<br>
-                <input type="radio" name="kind" value="comment"> comments<br>
-                <input type="radio" name="kind" value="all" checked> both<br>
-                ${error_field("INVALID_OPTION", "kind")}
+                <div class="md-container-small">
+                    <div class="md">
+                        <div class="label">Applies to</div>
+                        <label>
+                            <input type="radio" name="kind" value="all" checked>
+                            ${thing.kind_labels.get('all')}
+                        </label>
+                        <label>
+                            <input type="radio" name="kind" value="link">
+                            ${thing.kind_labels.get('link')}
+                        </label>
+                        <label>
+                            <input type="radio" name="kind" value="comment">
+                            ${thing.kind_labels.get('comment')}
+                        </label>
+                        ${error_field("INVALID_OPTION", "kind")}
+                    </div>
+                </div>
             </div>
             <div class="c-form-group form-group-description">
                 <div class="md-container-small">
                     <div class="md">
-                        <label for="description">Full description of this rule</label>
+                        <label class="label" for="description">Full description of this rule</label>
                         <div class="text-counter">
                             <span class="text-counter-display" rel="description"></span>&#32;
                             remaining

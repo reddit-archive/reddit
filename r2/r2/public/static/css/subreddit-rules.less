@@ -46,12 +46,13 @@
 .subreddit-rule-form {
     .c-form-group {
         position: relative;
+        margin-bottom: unit(@margin-medium, px);
 
-        label {
+        .label {
             color: @color-grey;
         }
 
-        label.required:after {
+        .label.required:after {
             color: @color-warning-red;
             content: ' *';
             display: inline;
@@ -67,6 +68,10 @@
                 color: @color-warning-red;
             }
         }
+    }
+
+    .form-group-kind label {
+        margin-right: unit(@margin-large, px);
     }
 }
 
@@ -152,6 +157,10 @@
 
     > header {
       margin-bottom: @margin-xx-large * 1px;
+
+      p {
+        font-weight: 500;
+      }
     }
 
     > footer {
@@ -180,13 +189,21 @@
 
         .subreddit-rule-title {
             .md-font-size(@font-base, @font-medium, @line-medium);
-            .md-margins(@font-medium, 0, @margin-small);
+            margin-top: 0;
+            margin-bottom: unit(@margin-x-small, px);
             font-weight: 500;
+        }
+
+        .subreddit-rule-kind {
+            .md-font-size(@font-base, @font-x-small, @line-medium);
+            margin-bottom: unit(@margin-x-small, px);
+            font-weight: 500;
+            color: @color-dark-grey;
+        }
+
+        .subreddit-rule-description {
+            color: @color-text-grey;
         }
     }
 }
 
-.subreddit-rule-contents-display .subreddit-rule-kind {
-    margin-left: 10px;
-    margin-bottom: 10px;
-}

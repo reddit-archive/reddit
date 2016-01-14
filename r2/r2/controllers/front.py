@@ -945,7 +945,18 @@ class FrontController(RedditController):
         """Get the rules for the current subreddit"""
         if not feature.is_enabled("subreddit_rules", subreddit=c.site.name):
             abort(404)
-        return ModToolsPage(content=Rules()).render()
+        
+        kind_labels = {
+            "all": _("Posts & Comments"),
+            "link": _("Posts only"),
+            "comment": _("Comments only"),
+        }
+        content = Rules(kind_labels=kind_labels)
+        extra_js_config = {"kind_labels": kind_labels}
+        return ModToolsPage(
+            content=content,
+            extra_js_config=extra_js_config,
+        ).render()
 
     @require_oauth2_scope("read")
     @api_doc(api_section.subreddits, uses_site=True)
