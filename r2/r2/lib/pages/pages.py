@@ -1000,6 +1000,8 @@ class Reddit(Templated):
     def build_popup_panes(self):
         panes = []
          
+        panes.append(Popup('archived-popup', ArchivedInterstitial()))
+
         if self.show_timeout_modal:
             popup_content = InTimeoutInterstitial(
                 timeout_days_remaining=self.timeout_days_remaining,
@@ -2743,6 +2745,16 @@ class Over18Interstitial(Interstitial):
 class LockedInterstitial(Interstitial):
     """The error message shown when attempting to comment on a locked post."""
     pass
+
+
+class ArchivedInterstitial(Interstitial):
+    """The error message shown when attempting to comment on an archived post."""
+    def __init__(self):
+        days = g.ARCHIVE_AGE.days
+        months = days // 30
+        super(ArchivedInterstitial, self).__init__(
+            archive_age_months=months,
+        )
 
 
 class DeletedUserInterstitial(Interstitial):
