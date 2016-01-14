@@ -399,6 +399,10 @@ class Reddit(Templated):
                                        thing_type="comment",
                                       )
 
+            report_form_templates = ReportFormTemplates()
+
+            panes.append(report_form_templates)
+
             if self.show_sidebar:
                 panes.extend([gold_comment, gold_link])
 
@@ -3327,31 +3331,34 @@ class ReportForm(CachedTemplate):
 
 
 class SubredditReportForm(CachedTemplate):
-    def __init__(self, thing=None, **kw):
+    def __init__(self, thing=None, filter_by_kind=True, **kw):
         self.rules = []
-        self.system_rules = []
+        self.system_rules = SITEWIDE_RULES
         self.thing_fullname = thing._fullname
-        kind = None
+        self.kind = None
         subreddit = None
 
         if isinstance(thing, Comment, Link):
             subreddit = thing.subreddit_slow
-            kind = thing.__class__.__name__.lower()
-
-        self.is_report_to_subreddit = bool(subreddit)
+            self.sr_name = subreddit.name
+            if filter_by_kind:
+                self.kind = thing.__class__.__name__.lower()
+        else:
+            self.sr_name = None
 
         if (subreddit and
                 feature.is_enabled("subreddit_rules", subreddit=subreddit.name)):
-            for rule in SubredditRules.get_rules(subreddit, kind):
-                self.rules.append(rule["short_name"])
-            if self.rules:
-                self.system_rules = SITEWIDE_RULES
-                self.rules_page_link = "/r/%s/about/rules" % subreddit.name
-        if not self.rules:
-            self.rules = SITEWIDE_RULES
-            self.rules_page_link = "/help/contentpolicy"
+            self.rules = SubredditRules.get_rules(subreddit, self.kind)
 
         Templated.__init__(self)
+
+
+class ReportFormTemplates(Templated):
+    def __init__(self):
+        super(ReportFormTemplates, self).__init__(
+            system_rules=SITEWIDE_RULES,
+            rules_page_link="/help/contentpolicy",
+        )
 
 
 class FraudForm(Templated):

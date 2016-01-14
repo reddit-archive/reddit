@@ -19,69 +19,138 @@
 ## All portions of the code written by reddit are Copyright (c) 2006-2015
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
-<%!
-    from r2.lib.template_helpers import static
-%>
 <%namespace file="utils.html" import="error_field" />
 
-  <form id="report-action-form" class="subreddit-report-form action-form rounded" data-form-action="report">
-    <input type="hidden" name="thing_id" value="${thing.thing_fullname}">
-    <a class="action-icon action-icon-info c-hide-text may-blank"
-       href="${thing.rules_page_link}"
-       title="${_('View the community rules')}">
-      ${_('View the community rules')}
-    </a>
-    <div class="reason-prompt report-header">
-      ${_("What rule does this break?")}
-    </div>
-    <ol class="report-reason-list">
-      %for rule in thing.rules:
-        <li class="report-reason-item">
-          <label>
-            <input type="radio" name="reason" value="${rule}">
-            <div class="report-reason-display">${rule}</div>
-          </label>
-        </li>
-      %endfor
-      %if thing.system_rules:
-        <li class="report-reason-item">
-          <label>
-            <input type="radio" name="reason" class="site-reason-radio" value="site_reason_selected">
-            <div class="report-reason-display">
-              <select name="site_reason">
-                %for rule in thing.system_rules:
-                  <option value="${rule}">${_("Reddit rule: %(rule_name)s" % dict(rule_name=rule))}</option>
+<%def name="report_form_base(fullname, rules_page_link)">
+    <form id="report-action-form"
+            class="subreddit-report-form action-form rounded">
+        <input type="hidden"
+                name="thing_id"
+                value="${fullname}">
+        <a href="${rules_page_link}"
+                class="action-icon action-icon-info c-hide-text may-blank"
+                title="${_('View the community rules')}">
+            ${_('View the community rules')}
+        </a>
+        <div class="reason-prompt report-header">
+            ${_("What rule does this break?")}
+        </div>
+
+        ${caller.body()}
+
+        <div class="c-submit-group">
+            <button type="button" class="btn c-btn c-btn-secondary report-cancel">
+                ${_("cancel")}
+            </button>&#32;
+            <button type="submit" class="btn c-btn c-btn-primary submit-action-thing" disabled>
+                ${_("report")}
+            </button>
+        </div>
+        <span class="status" style="display: none"></span>
+    </form>
+</%def>
+
+<%def name="subreddit_report_form(fullname, system_rules, rules, sr_name)">
+    <%
+        rules_page_link = "/r/%s/about/rules" % sr_name
+    %>
+    <%self:report_form_base
+            fullname="${fullname}"
+            rules_page_link="${rules_page_link}"
+            >
+        <ol class="report-reason-list">
+            %if rules:
+                %for rule in rules:
+                    ${self.report_form_reason(rule.get("short_name"))}
                 %endfor
-              </select>
+            %endif
+            <li class="report-reason-item report-reason-reddit" 
+                <label>
+                    <input type="radio"
+                            class="site-reason-radio"
+                            name="reason"
+                            value="site_reason_selected">
+                    <div class="report-reason-display">
+                        <select name="site_reason">
+                            %for rule in system_rules:
+                                <option value="${rule}">
+                                    ${_("Reddit rule: %(rule_name)s" % dict(rule_name=rule))}
+                                </option>
+                            %endfor
+                        </select>
+                    </div>
+                </label>
+            </li>
+            ${self.report_form_reason_other()}
+            <div class="report-header">
+                ${_("Reports go to community moderators anonymously")}
             </div>
-          </label>
-        </li>
-      %endif
-      <li class="report-reason-item report-reason-other">
+        </ol>
+    </%self:report_form_base>
+</%def>
+
+<%def name="reddit_report_form(fullname, system_rules, sr_name=None)">
+    <%self:report_form_base
+            fullname="${fullname}"
+            rules_page_link="/help/contentpolicy"
+            >
+        <ol class="report-reason-list">
+            %for rule in system_rules:
+                ${self.report_form_reason(rule)}
+            %endfor
+            ${self.report_form_reason_other()}
+        </ol>
+        <div class="report-header">
+            %if sr_name:
+                ${_("Reports go to community moderators anonymously")}
+            %else:
+                ${_("Reports go to Reddit admins")}
+            %endif
+        </div>
+    </%self:report_form_base>
+</%def>
+
+<%def name="report_form_reason_other()">
+    <li class="report-reason-item report-reason-other">
         <label>
-          <input type="radio" name="reason" value="other">
-          <div class="report-reason-display">
-            <div>${_("Other (max %(num)s characters):") % dict(num=100)}</div>
-            <input name="other_reason" class="c-form-control" value="" maxlength="100" type="text" disabled>
-            ${error_field("TOO_LONG", "other_reason", "span")}
-          </div>
+            <input type="radio"
+                    name="reason"
+                    value="other">
+            <div class="report-reason-display">
+                <div>
+                    ${_("Other (max %(num)s characters):") % dict(num=100)}
+                </div>
+                <input type="text"
+                        class="c-form-control"
+                        name="other_reason"
+                        value=""
+                        maxlength="100"
+                        disabled>
+                ${error_field("TOO_LONG", "other_reason", "span")}
+            </div>
         </label>
-      </li>
-    </ol>
-    <div class="report-header">
-      %if thing.is_report_to_subreddit:
-        ${_("Reports go to community moderators anonymously")}
-      %else:
-        ${_("Reports go to Reddit admins anonymously")}
-      %endif
-    </div>
-    <div class="c-submit-group">
-      <button type="button" class="btn c-btn c-btn-secondary report-cancel">
-        ${_("cancel")}
-      </button>
-      <button type="submit" class="btn c-btn c-btn-primary submit-action-thing" disabled>
-        ${_("report")}
-      </button>
-    </div>
-    <span class="status" style="display: none"></span>
-  </form>
+    </li>
+</%def>
+
+<%def name="report_form_reason(rule)">
+    <li class="report-reason-item">
+        <label>
+          <input type="radio" name="reason" value="${rule}">
+          <div class="report-reason-display">${rule}</div>
+        </label>
+    </li>
+</%def>
+
+%if thing.rules:
+    ${self.subreddit_report_form(
+        fullname=thing.thing_fullname,
+        rules=thing.rules,
+        system_rules=thing.system_rules,
+        sr_name=thing.sr_name,
+    )}
+%else:
+    ${self.reddit_report_form(
+        fullname=thing.thing_fullname,
+        system_rules=thing.system_rules,
+    )}
+%endif

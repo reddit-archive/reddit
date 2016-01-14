@@ -240,6 +240,7 @@ def js_config(extra_config=None):
           "actionName": route_name,
         },
         "facebook_app_id": g.live_config["facebook_app_id"],
+        "feature_new_report_dialog": feature.is_enabled('new_report_dialog'),
     }
 
     if g.tracker_url:

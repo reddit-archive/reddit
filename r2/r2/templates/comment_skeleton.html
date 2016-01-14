@@ -44,6 +44,15 @@
   ${parent.thing_css_class(what)} ${"stickied" if getattr(thing, 'is_sticky', None) else ""} ${"collapsed" if thing.collapsed else "noncollapsed"} ${"collapsed-for-reason" if hasattr(thing, "collapsed_reason") else ""}
 </%def>
 
+<%def name="thing_data_attributes(what)">
+  ${parent.thing_data_attributes(what)}
+
+  %if hasattr(what, 'subreddit'):
+    data-subreddit="${what.subreddit.name}"
+    data-subreddit-fullname="${what.subreddit._fullname}"
+  %endif
+</%def>
+
 <%def name="entry()">
 <%
    from r2.lib.strings import strings

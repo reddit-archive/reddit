@@ -5115,7 +5115,21 @@ class ApiController(RedditController):
     def GET_report_form(self, form, jquery, thing):
         """Return information about report reasons for the thing."""
         if feature.is_enabled("new_report_dialog"):
-            return SubredditReportForm(thing).render(style="html")
+            if request.params.get("api_type") == "json":
+                style = "json"
+                filter_by_kind = False
+            else:
+                style = "html"
+                filter_by_kind = True
+
+            report_form = SubredditReportForm(thing, filter_by_kind=filter_by_kind)
+
+            if style == "json":
+                form._send_data(
+                    rules=report_form.rules,
+                    sr_name=report_form.sr_name,
+                )
+            return report_form.render(style=style)
         else:
             return ReportForm(thing).render(style="html")
         abort(404, 'not found')
