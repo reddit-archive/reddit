@@ -129,6 +129,7 @@ $(function() {
 
     $reportForm.on('click', 'select[name=site_reason]', function() {
       $reportForm.find('.site-reason-radio').prop('checked', true);
+      toggleOther.call(this);
     });
 
     $reportForm.html('<img class="flairthrobber" />')
