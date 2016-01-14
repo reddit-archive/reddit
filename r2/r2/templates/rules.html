@@ -80,15 +80,15 @@
 
         <script id="subreddit-rule-template" type="text/template">
             ${self.subreddit_rule(
-                short_name=unsafe("<%= short_name %>"),
+                short_name=unsafe("<%- short_name %>"),
                 description=unsafe("<%= description_html %>"),
                 editable=True,
             )}
         </script>
         <script id="subreddit-rule-form-template" type="text/template">
             ${self.subreddit_rule_form(
-                short_name=unsafe("<%= short_name %>"),
-                description=unsafe("<%= description %>"),
+                short_name=unsafe("<%- short_name %>"),
+                description=unsafe("<%- description %>"),
             )}
         </script>
     %endif
