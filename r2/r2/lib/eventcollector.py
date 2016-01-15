@@ -19,12 +19,15 @@
 # All portions of the code written by reddit are Copyright (c) 2006-2015 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
+from cStringIO import StringIO
 import datetime
+import gzip
 import hashlib
 import hmac
 import itertools
 import json
 import pytz
+import random
 import requests
 import time
 
@@ -745,16 +748,27 @@ class EventPublisher(object):
     def _publish(self, events):
         # Note: If how the JSON payload is created is changed,
         # update the content-length estimations in `_chunk_events`
-        events_json = "[" + ", ".join(events) + "]"
+        data = "[" + ", ".join(events) + "]"
+
         headers = {
             "Date": _make_http_date(),
             "User-Agent": self.user_agent,
             "Content-Type": "application/json",
-            "X-Signature": self._make_signature(events_json),
+            "X-Signature": self._make_signature(data),
         }
 
+        # Gzip body
+        use_gzip = (g.live_config.get("events_collector_use_gzip_chance", 0) >
+                    random.random())
+        if use_gzip:
+            f = StringIO()
+            gzip.GzipFile(fileobj=f, mode='wb').write(data)
+            data = f.getvalue()
+            headers["Content-Encoding"] = "gzip"
+
+        # Post events
         with self.stats.get_timer("providers.event_collector"):
-            resp = self.session.post(self.url, data=events_json,
+            resp = self.session.post(self.url, data=data,
                                      headers=headers, timeout=self.timeout)
             return resp
 
