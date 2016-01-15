@@ -289,7 +289,12 @@ requires r.ui.TextCounter
     initialize: function(options) {
       this.ruleTemplate = options.ruleTemplate;
       this.formTemplate = options.formTemplate;
-      this.collection = new r.models.SubredditRuleCollection();
+      var collectionOptions = {
+        subredditName: r.config.post_site,
+        subredditFullname: r.config.cur_site,
+      };
+      this.collection = new r.models.SubredditRuleCollection(null, collectionOptions);
+
       this.newRuleForm = new AddSubredditRuleView({
         el: options.addForm,
         collection: this.collection,
@@ -306,6 +311,10 @@ requires r.ui.TextCounter
       if (!this.collection.length) {
         this.newRuleForm.edit();
       }
+
+      r.hooks.get('new-report-form').register(function() {
+        this._updateRuleCache();
+      }.bind(this));
     },
 
     delegateEvents: function() {
@@ -317,6 +326,10 @@ requires r.ui.TextCounter
         setTimeout(function() {
           this.addNewRule(model);
         }.bind(this));
+      });
+
+      this.listenTo(this.collection, 'sync', function() {
+        this._updateRuleCache();
       });
     },
 
@@ -348,6 +361,20 @@ requires r.ui.TextCounter
       var view = this.createSubredditRuleView(el, model);
       view.render();
       this.$el.append(el);
+    },
+
+    _updateRuleCache: function() {
+      debugger;
+      try {
+        var newRules = this.collection.toApiJSON();
+        var storageKey = r.rulesSessionStorageKey;
+        var rulesCache = window.sessionStorage.getItem(storageKey);
+        rulesCache = rulesCache ? JSON.parse(rulesCache) : {};
+        rulesCache[this.collection.subredditFullname] = newRules;
+        rulesCache = JSON.stringify(rulesCache);
+        window.sessionStorage.setItem(storageKey, rulesCache);
+      } catch (err) {
+      }
     },
   });
 

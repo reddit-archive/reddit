@@ -44,6 +44,11 @@ $(function() {
     } finally {
       cachedRules = cachedRules || {};
     }
+
+    // temporary, after release this will get cleaned up and r.reports will
+    // be moved into this file
+    r.rulesSessionStorageKey = sessionStorageKey;
+    r.hooks.get('new-report-form').call();
   }
 
   function renderFromTemplate(data, thingType) {

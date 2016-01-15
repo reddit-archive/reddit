@@ -106,6 +106,16 @@
       };
     },
 
+    toApiJSON: function() {
+      // same as toJSON, but strips it down to only what we'd get from the API
+      var data = this.toJSON();
+      delete data.description_html;
+      if (data.kind === 'all') {
+        delete data.kind;
+      }
+      return data;
+    },
+
     initialize: function() {
       var short_name = this.get('short_name');
       this._old_short_name = short_name;
@@ -174,9 +184,18 @@
   var SubredditRuleCollection = Backbone.Collection.extend({
     model: SubredditRule,
     maxLength: RULES_COLLECTION_MAX_LENGTH,
+    subredditName: null,
+    subredditFullname: null,
 
-    initialize: function() {
+    initialize: function(models, options) {
       this._disabled = this.length >= this.maxLength;
+      
+      if (options && options.subredditName) {
+        this.subredditName = options.subredditName;
+      }
+      if (options && options.subredditFullname) {
+        this.subredditFullname = options.subredditFullname;
+      }
 
       this.on('add', function() {
         if (!this._disabled && this.length >= this.maxLength) {
@@ -191,6 +210,15 @@
           this.trigger('enabled');
         }
       }.bind(this));
+    },
+
+    toApiJSON: function() {
+      return {
+        sr_name: this.subredditName,
+        rules: this.models.map(function(model) {
+          return model.toApiJSON();
+        }),
+      };
     },
   });
 
