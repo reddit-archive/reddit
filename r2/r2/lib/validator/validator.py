@@ -720,8 +720,9 @@ class VAvailableSubredditName(VSubredditName):
 
 
 class VSRByName(Validator):
-    def __init__(self, sr_name, required=True):
+    def __init__(self, sr_name, required=True, return_srname=False):
         self.required = required
+        self.return_srname = return_srname
         Validator.__init__(self, sr_name)
 
     def run(self, sr_name):
@@ -732,7 +733,10 @@ class VSRByName(Validator):
             sr_name = sr_path_rx.sub('\g<name>', sr_name.strip())
             try:
                 sr = Subreddit._by_name(sr_name)
-                return sr
+                if self.return_srname:
+                    return sr.name
+                else:
+                    return sr
             except NotFound:
                 self.set_error(errors.SUBREDDIT_NOEXIST, code=400)
 

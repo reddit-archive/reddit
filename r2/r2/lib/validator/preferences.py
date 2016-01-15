@@ -83,8 +83,10 @@ PREFS_VALIDATORS = dict(
     pref_use_global_defaults=VBoolean("use_global_defaults"),
     pref_creddit_autorenew=VBoolean("creddit_autorenew"),
     pref_enable_default_themes=VBoolean("enable_default_themes", False),
-    pref_default_theme_sr=VSRByName("theme_selector", False),
-    pref_other_theme=VSRByName("other_theme", False),
+    pref_default_theme_sr=VSRByName("theme_selector", required=False,
+        return_srname=True),
+    pref_other_theme=VSRByName("other_theme", required=False,
+        return_srname=True),
     pref_beta=VBoolean('beta'),
     pref_legacy_search=VBoolean('legacy_search'),
     pref_threaded_modmail=VBoolean('threaded_modmail', False),
@@ -140,8 +142,9 @@ def filter_prefs(prefs, user):
         prefs['pref_highlight_new_comments'] = True
 
     # check stylesheet override
-    if feature.is_enabled('stylesheets_everywhere', user=user):
-        override_sr = prefs['pref_default_theme_sr']
+    if (feature.is_enabled('stylesheets_everywhere', user=user) and
+            prefs['pref_default_theme_sr']):
+        override_sr = Subreddit._by_name(prefs['pref_default_theme_sr'])
         if not override_sr:
             del prefs['pref_default_theme_sr']
             if prefs['pref_enable_default_themes']:
