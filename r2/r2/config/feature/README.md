@@ -76,7 +76,7 @@ feature_some_flag = {"subreddits": ["wtf", "aww"]}
 feature_some_flag = {"subdomains": ["beta"]}
 
 # On by OAuth client IDs
-feature_some_flag = {"oauth_clients: ["xyzABC123"]}
+feature_some_flag = {"oauth_clients": ["xyzABC123"]}
 
 # On for a percentage of loggedin users (0 being no users, 100 being all of them)
 feature_some_flag = {"percent_loggedin": 25}
