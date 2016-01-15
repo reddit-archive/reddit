@@ -526,7 +526,7 @@ class Event(object):
         """
         self.topic = topic
         self.event_type = event_type
-        self.testing = testing
+        self.testing = testing or g.debug
         self.truncatable_field = truncatable_field
 
         if not time:
