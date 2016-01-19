@@ -140,6 +140,9 @@ Vagrant.configure(2) do |config|
       # host-only network interface
       redditlocal.vm.network "private_network", ip: guest_ip
 
+      # rabbitmq web interface
+      config.vm.network "forwarded_port", guest: 15672, host: 15672
+
       # run install script
       plugin_string = plugins.join(" ")
       redditlocal.vm.provision "shell", inline: <<-SCRIPT
