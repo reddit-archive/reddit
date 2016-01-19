@@ -473,7 +473,7 @@ class Globals(object):
         if not name.startswith('_') and name in self.config:
             return self.config[name]
         else:
-            raise AttributeError
+            raise AttributeError("g has no attr %r" % name)
 
     def setup(self):
         self.env = 'unit_test' if 'test' in sys.argv[0] else ''
