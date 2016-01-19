@@ -424,7 +424,8 @@ class Reddit(Templated):
             self.show_timeout_modal = True
             self.timeout_days_remaining = c.user.days_remaining_in_timeout
 
-        has_style_override = (c.user.pref_default_theme_sr and
+        has_style_override = (c.user_is_loggedin and
+                c.user.pref_default_theme_sr and
                 feature.is_enabled('stylesheets_everywhere') and
                 c.user.pref_enable_default_themes)
         # if there is no style or the style is disabled for this subreddit
