@@ -20,14 +20,18 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
+<%!
+   from r2.lib.filters import double_websafe
+%>
+
 <item>
-  <title>${thing.title}</title>
+  <title>${thing.title|double_websafe}</title>
   <link>${thing.path}</link>
   <guid>${thing.path}</guid>
   <dc:date>${thing._date.isoformat()}</dc:date>
   <description>
     %if thing.public_description:
-      ${thing.public_description}
+      ${thing.public_description|double_websafe}
     %endif
     &lt;a href="${thing.path}"&gt;[link]&lt;/a&gt;
   </description>

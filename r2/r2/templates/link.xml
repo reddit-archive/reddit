@@ -24,7 +24,9 @@
    from pylons.i18n import _, ungettext
    from r2.lib.template_helpers import add_sr, get_domain
    from r2.models import FakeSubreddit
-   from r2.lib.filters import unsafe, safemarkdown
+   from r2.lib.filters import safemarkdown
+   from r2.lib.filters import double_websafe
+   from r2.lib.filters import websafe
 %>
 <%
    permalink = add_sr(thing.permalink, force_hostname = True)
@@ -32,7 +34,7 @@
    use_thumbs = use_thumbs and not thing.thumbnail_sprited
  %>
 <item>
-  <title>${thing.title}</title>
+  <title>${thing.title|websafe}</title>
   %if thing.different_sr:
     <category>${thing.subreddit.name}</category>
   %endif
@@ -40,7 +42,7 @@
   <guid isPermaLink="true">${permalink}</guid>
   <pubDate>${thing._date.strftime('%a, %d %b %Y %H:%M:%S %z')}</pubDate>
   <description>
-    <%def name="description()" filter="h">
+    <%def name="description()">
       %if use_thumbs:
         <table>
           <tr><td>
@@ -52,7 +54,7 @@
        %>
       %if getattr(thing, 'selftext', None):
         %if not thing.expunged:
-          ${unsafe(safemarkdown(thing.selftext))}
+          ${safemarkdown(thing.selftext)|websafe}
         %else:
           ${_('[removed]')}
         %endif
@@ -71,15 +73,15 @@
       %endif
       <br/>
       <a href="${thing.url}">[link]</a>
+      <a href="${permalink}">[${thing.comment_label}]</a>
+      %if use_thumbs:
+        </td></tr></table>
+      %endif
     </%def>
   ${description()}
-   &lt;a href="${permalink}"&gt;[${thing.comment_label}]&lt;/a&gt;
-   %if use_thumbs:
-     &lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
-   %endif
   </description>
   %if use_thumbs:
-    <media:title>${thing.title}</media:title>
+    <media:title>${thing.title|websafe}</media:title>
     <media:thumbnail url="${thing.thumbnail}" />
   %endif
 </item>

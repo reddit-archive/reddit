@@ -24,14 +24,15 @@
 <%!
    from r2.models.subreddit import DefaultSR
    from r2.lib.template_helpers import get_domain, add_sr, header_url
+   from r2.lib.filters import double_websafe
 %>
 <rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" 
     xmlns:media="http://search.yahoo.com/mrss/"
     xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>${self.Title()}</title>        
+    <title>${self.Title()|double_websafe}</title>
     <link>${add_sr("/", force_hostname = True)}</link>
-    <description>${c.site.public_description or ''}</description>
+    <description>${(c.site.public_description or '')|double_websafe}</description>
     <image>
       <%
         if g.css_killswitch or not c.site.header or not c.can_apply_styles:
@@ -42,7 +43,7 @@
             header_img = add_sr(header_img, sr_path=False, force_hostname=True)
       %>
       <url>${header_img}</url>
-      <title>${self.Title()}</title>
+      <title>${self.Title()|double_websafe}</title>
       <link>${add_sr("/", force_hostname = True)}</link>
     </image>
     <atom:link rel="self" href="${add_sr(request.fullpath, sr_path=False, force_hostname=True)}" type="application/rss+xml" />
@@ -53,4 +54,3 @@
 <%def name="Title()">
 ${c.site.title}
 </%def>
-

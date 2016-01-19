@@ -22,6 +22,7 @@
 
 <%!
    from r2.lib.template_helpers import get_domain
+   from r2.lib.filters import double_websafe
 %>
 
 <item>
@@ -29,7 +30,7 @@
     <link>${g.default_scheme}://${get_domain(subreddit=False)}/${c.wiki_base_url}/${thing.page}?v=${thing._id}</link>
     <author>${thing.printable_author}</author>
     <category>${thing.sr}/${thing.page}</category>
-    <description>${thing._get('reason')}</description>
+    <description>${thing._get('reason')|double_websafe}</description>
     <pubdate>${thing.date}</pubdate>
     <guid>${thing._id}</guid>
 </item>

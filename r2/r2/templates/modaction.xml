@@ -21,7 +21,7 @@
 ###############################################################################
 
 <%!
-    from r2.lib.filters import _force_unicode
+    from r2.lib.filters import _force_unicode, double_websafe
     from r2.lib.template_helpers import add_sr
     from r2.models import Account, Comment, Link
 %>
@@ -54,7 +54,7 @@
 
 <item>
   <guid>${thing._id}</guid>
-  <title>${title}</title>
+  <title>${title|double_websafe}</title>
   <pubDate>${thing.date.strftime('%a, %d %b %Y %H:%M:%S %z')}</pubDate>
   %if permalink:
     <link>${add_sr(permalink)}</link>

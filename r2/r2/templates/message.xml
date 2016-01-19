@@ -21,9 +21,10 @@
 ###############################################################################
 
 <%!
-   from r2.lib.filters import safemarkdown, websafe, conditional_websafe
+   from r2.lib.filters import safemarkdown
    from r2.lib.template_helpers import add_sr, format_html
    from r2.models.account import DeletedUser, Account
+   from r2.lib.filters import websafe
 %>
 
 <%
@@ -61,7 +62,7 @@
 </item>
 
 <%def name="description()" filter="h">
-  ${unsafe(safemarkdown(thing.body))}
+  ${safemarkdown(thing.body)|websafe}
   <div>
     %if thing.was_comment:
       <a href="${permalink + '?context=3'}">[context]</a>

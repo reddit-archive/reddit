@@ -103,6 +103,9 @@ def unsafe(text=''):
 def websafe_json(text=""):
     return c_websafe_json(_force_unicode(text))
 
+def double_websafe(text=""):
+    # RSS requires double escaping on fields that could be interpreted as HTML
+    return unsafe(python_websafe(python_websafe(text)))
 
 def conditional_websafe(text = ''):
     from wrapped import Templated, CacheStub
