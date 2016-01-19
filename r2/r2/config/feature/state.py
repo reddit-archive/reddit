@@ -177,10 +177,15 @@ class FeatureState(object):
     @classmethod
     def _is_variant_enabled(cls, variant):
         """Determine if a variant is "enabled", as returned by is_enabled."""
+        # The excluded experimental group will have a `None` variant and
+        # this feature should be disabled.
         # For users in control groups, the feature is considered "not
         # enabled" because they should get the same behavior as ineligible
         # users.
-        return variant not in cls.DEFAULT_CONTROL_GROUPS
+        return (
+            variant is not None and
+            variant not in cls.DEFAULT_CONTROL_GROUPS
+        )
 
     def is_enabled(self, user=None, subreddit=None, subdomain=None,
                    oauth_client=None):
@@ -270,12 +275,16 @@ class FeatureState(object):
             # an easy way to get rid of extraneous events.
             if not c.have_sent_bucketing_event:
                 c.have_sent_bucketing_event = {}
-            if (g.running_as_script or
-                    not c.have_sent_bucketing_event.get((self.name, user._id))):
+            if (
+                variant is not None and (
+                    g.running_as_script or
+                    not c.have_sent_bucketing_event.get((self.name, user._id))
+                )
+            ):
                 g.events.bucketing_event(
-                        experiment_id=experiment.get('experiment_id'),
-                        experiment_name=self.name,
-                        variant=variant, user=user)
+                    experiment_id=experiment.get('experiment_id'),
+                    experiment_name=self.name,
+                    variant=variant, user=user)
                 c.have_sent_bucketing_event[(self.name, user._id)] = True
 
             return self._is_variant_enabled(variant)
