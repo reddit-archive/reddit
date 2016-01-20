@@ -83,7 +83,7 @@ def update_comment_votes(comments):
 
     for link_id, link_comments in comments_by_link_id.iteritems():
         link = links_by_id[link_id]
-        for sort in ("_controversy", "_hot", "_confidence", "_score"):
+        for sort in ("_controversy", "_confidence", "_score"):
             scores_by_comment = {
                 comment._id36: getattr(comment, sort)
                 for comment in link_comments
