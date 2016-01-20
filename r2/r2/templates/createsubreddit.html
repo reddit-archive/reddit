@@ -543,9 +543,10 @@ try participating in other communities on reddit for a little while first before
   </%utils:line_field>
 %endif
 
-%if thing.site and feature.is_enabled('mobile_settings'):
+%if feature.is_enabled('mobile_settings'):
   <%utils:line_field title="${_('mobile look and feel')}" css_class="mobile">
     <ul class="upload">
+      %if thing.site:
       <li>
         <p><label>${_('icon image')}</label> <span class="gray">${_('icon must be 256x256 pixels. PNG or JPG only.')}</span></p>
         <%utils:image_upload post_target="/api/upload_sr_img"
@@ -583,6 +584,7 @@ try participating in other communities on reddit for a little while first before
           <input type="hidden" name="upload_type" value="banner">
         </%utils:image_upload>
       </li>
+      %endif
       <li>
         <p><label>${_('color')}</label> <span class="gray">${_('used as a thematic color for your subreddit on mobile')}</span></p>
         <ul class="colors">

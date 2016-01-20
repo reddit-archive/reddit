@@ -2746,11 +2746,10 @@ class ApiController(RedditController):
             'wikimode',
         ]
 
-        if sr:
-            if feature.is_enabled('mobile_settings'):
-                keyword_fields.append('key_color')
-            if feature.is_enabled('related_subreddits'):
-                keyword_fields.append('related_subreddits')
+        if feature.is_enabled('mobile_settings'):
+            keyword_fields.append('key_color')
+        if sr and feature.is_enabled('related_subreddits'):
+            keyword_fields.append('related_subreddits')
 
         kw = {k: v for k, v in kw.iteritems() if k in keyword_fields}
 
