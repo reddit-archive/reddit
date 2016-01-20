@@ -232,6 +232,11 @@ class FrontController(RedditController):
         """
         if not sort:
             sort = c.user.pref_default_comment_sort
+
+            # hot sort no longer exists but might still be set as a preference
+            if sort == "hot":
+                sort = "confidence"
+
         if comment and comment.link_id != article._id:
             return self.abort404()
 
