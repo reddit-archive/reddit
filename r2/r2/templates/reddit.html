@@ -52,6 +52,9 @@
 
 <%def name="global_stylesheets()">
   ${less_stylesheet("reddit.less")}
+  %if getattr(thing, "feature_new_expando_icons", False):
+    ${less_stylesheet("expando.less")}
+  %endif
 </%def>
 
 <%def name="sr_stylesheets()">
