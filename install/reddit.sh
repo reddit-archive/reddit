@@ -245,6 +245,11 @@ helper-script /usr/local/bin/reddit-flush <<REDDITFLUSH
 echo flush_all | nc localhost 11211
 REDDITFLUSH
 
+helper-script /usr/local/bin/reddit-serve <<REDDITSERVE
+#!/bin/bash
+exec paster serve --reload $REDDIT_SRC/reddit/r2/run.ini
+REDDITSERVE
+
 ###############################################################################
 # pixel and click server
 ###############################################################################
