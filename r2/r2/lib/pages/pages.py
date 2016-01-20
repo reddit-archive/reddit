@@ -4822,7 +4822,9 @@ def make_link_child(item, show_media_preview=False):
                                    nofollow=item.nofollow,
                                    position_inline=position_inline)
     # if the item has a preview image and is on the whitelist, show it
-    elif item.preview_object and media.allowed_media_preview_domain(item.domain):
+    elif (feature.is_enabled('media_previews') and
+            item.preview_object and
+            media.allowed_media_preview_domain(item.domain)):
         media_object = media.get_preview_image(item.preview_object)
         expand = show_media_preview and expandable
 
