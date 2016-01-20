@@ -191,6 +191,12 @@ $(function() {
       }
     }
 
+    // temp fix for broken subreddit-report-form
+    $('div.content').on('submit', '.subreddit-report-form', function(e) {
+      var $actionForm = $(e.target);
+      return post_pseudo_form($actionForm, 'report');
+    });
+
     $("div.content").on("click", ".tagline .reportbtn, .thing .reportbtn", openReportForm);
     $("div.content").on("click", ".btn.report-cancel", toggleReportForm);
     $("div.content").on("change", "input[name='reason']", toggleOther);
