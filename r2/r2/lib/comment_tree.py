@@ -90,7 +90,7 @@ def update_comment_votes(comments):
             }
             CommentScoresByLink.set_scores(link, sort, scores_by_comment)
 
-        scores_by_comment = _get_qa_comment_scores(link, comments)
+        scores_by_comment = _get_qa_comment_scores(link, link_comments)
         CommentScoresByLink.set_scores(link, "_qa", scores_by_comment)
 
 
