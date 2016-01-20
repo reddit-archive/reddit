@@ -547,7 +547,7 @@ try participating in other communities on reddit for a little while first before
   <%utils:line_field title="${_('mobile look and feel')}" css_class="mobile">
     <ul class="upload">
       <li>
-        <p><label>${_('icon image')}</label> <span class="gray">${_('icon must be 240x240 pixels. PNG or JPG only.')}</span></p>
+        <p><label>${_('icon image')}</label> <span class="gray">${_('icon must be 256x256 pixels. PNG or JPG only.')}</span></p>
         <%utils:image_upload post_target="/api/upload_sr_img"
                              current_image="${thing.site.icon_img}"
                              form_id='icon-upload'>
@@ -565,8 +565,8 @@ try participating in other communities on reddit for a little while first before
         </%utils:image_upload>
       </li>
       <li>
-        <p><label>${_('header image')}</label> <span class="gray">${_('header should have 16:9 aspect ratio. PNG or JPG only.')}</span></p>
-        <p class="little gray">${_('minimum size: 640x360px')} / ${_('maximum size: 1280x720px')}</span></p>
+        <p><label>${_('header image')}</label> <span class="gray">${_('header should have 10:3 aspect ratio. PNG or JPG only.')}</span></p>
+        <p class="little gray">${_('minimum size: 640x192px')} / ${_('maximum size: 1280x384px')}</span></p>
         <%utils:image_upload post_target="/api/upload_sr_img"
                              current_image="${thing.site.banner_img}"
                              form_id='banner-upload'>

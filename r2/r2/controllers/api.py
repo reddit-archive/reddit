@@ -2575,9 +2575,9 @@ class ApiController(RedditController):
                     errors['IMAGE_ERROR'] = (
                         _('must be %dx%d pixels') % Subreddit.ICON_EXACT_SIZE)
             elif upload_type == 'banner':
-                if size[0] * 10 / 16 != size[1] * 10 / 9:
-                    # require precision to one decimal point for aspect ratio
-                    errors['IMAGE_ERROR'] = _('16:9 aspect ratio required')
+                aspect_ratio = float(size[0]) / size[1]
+                if abs(Subreddit.BANNER_ASPECT_RATIO - aspect_ratio) > 0.01:
+                    errors['IMAGE_ERROR'] = _('10:3 aspect ratio required')
                 elif size > Subreddit.BANNER_MAX_SIZE:
                     errors['IMAGE_ERROR'] = (
                         _('max %dx%d pixels') % Subreddit.BANNER_MAX_SIZE)

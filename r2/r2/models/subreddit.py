@@ -281,9 +281,10 @@ class Subreddit(Thing, Printable, BaseSite):
     gold_limit = 100
     DEFAULT_LIMIT = object()
 
-    ICON_EXACT_SIZE = (240, 240)
-    BANNER_MIN_SIZE = (640, 360)
-    BANNER_MAX_SIZE = (1280, 720)
+    ICON_EXACT_SIZE = (256, 256)
+    BANNER_MIN_SIZE = (640, 192)
+    BANNER_MAX_SIZE = (1280, 384)
+    BANNER_ASPECT_RATIO = 10.0 / 3
 
     valid_types = {
         'archived',
