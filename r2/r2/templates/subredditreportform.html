@@ -56,7 +56,7 @@
     %>
     <%self:report_form_base
             fullname="${fullname}"
-            rules_page_link="${rules_page_link}"
+            rules_page_link="${unsafe(rules_page_link)}"
             >
         <ol class="report-reason-list">
             %if rules:
