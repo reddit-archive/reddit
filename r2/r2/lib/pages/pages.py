@@ -802,8 +802,8 @@ class Reddit(Templated):
             ps.append(self.wiki_actions_menu())
 
         if self.create_reddit_box and c.user_is_loggedin:
-            delta = datetime.datetime.now(g.tz) - c.user._date
-            if delta.days >= g.min_membership_create_community:
+            if (c.user._age.days >= g.min_membership_create_community and
+                    c.user.can_create_subreddit):
                 subtitles = get_funny_translated_string("create_subreddit", 2)
                 data_attrs = {'event-action': 'createsubreddit'}
                 ps.append(SideBox(_('Create your own subreddit'),
