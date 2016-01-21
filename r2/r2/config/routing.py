@@ -337,7 +337,7 @@ def make_map(config):
     mc('/w/*page', controller='wiki', action='wiki_redirect')
 
     mc('/goto', controller='toolbar', action='goto')
-    mc('/tb/:link_id', controller='redirect', action='link_id_redirect')
+    mc('/tb/:link_id', controller='front', action='link_id_redirect')
     mc('/toolbar/*frame', controller='toolbar', action='redirect')
 
     mc('/c/:comment_id', controller='front', action='comment_by_id')
@@ -478,7 +478,7 @@ def make_map(config):
     # these should be near the buttom, because they should only kick
     # in if everything else fails. It's the attempted catch-all
     # reddit.com/http://... and reddit.com/34fr
-    mc('/:link_id', controller='redirect', action='link_id_redirect',
+    mc('/:link_id', controller='front', action='link_id_redirect',
        requirements=dict(link_id='[0-9a-z]{1,6}'))
     mc('/:urloid', controller='toolbar', action='s',
        requirements=dict(urloid=r'(\w+\.\w{2,}|https?).*'))

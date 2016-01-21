@@ -76,6 +76,24 @@ class FrontController(RedditController):
 
     allow_stylesheets = True
 
+    @validate(link=VLink('link_id'))
+    def GET_link_id_redirect(self, link):
+        if not link:
+            abort(404)
+        elif not link.subreddit_slow.can_view(c.user):
+            # don't disclose the subreddit/title of a post via the redirect url
+            abort(403)
+        else:
+            redirect_url = link.make_permalink_slow(force_domain=True)
+
+        query_params = dict(request.GET)
+        if query_params:
+            url = UrlParser(redirect_url)
+            url.update_query(**query_params)
+            redirect_url = url.unparse()
+
+        return self.redirect(redirect_url, code=301)
+
     @validate(article=VLink('article'),
               comment=VCommentID('comment'))
     def GET_oldinfo(self, article, type, dest, rest=None, comment=''):
