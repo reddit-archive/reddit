@@ -505,6 +505,9 @@ def get_media_embed(media_object):
         return _make_custom_media_embed(media_object)
 
     if "oembed" in media_object:
+        if media_object.get("type") == "youtube.com":
+            return _YouTubeScraper.media_embed(media_object)
+
         return _EmbedlyScraper.media_embed(media_object)
 
 
@@ -546,6 +549,9 @@ class Scraper(object):
         scraper = hooks.get_hook("scraper.factory").call_until_return(url=url)
         if scraper:
             return scraper
+
+        if _YouTubeScraper.matches(url):
+            return _YouTubeScraper(url, maxwidth=maxwidth)
 
         embedly_services = _fetch_embedly_services()
         for service_re in embedly_services:
@@ -783,6 +789,89 @@ class _EmbedlyScraper(Scraper):
         width = oembed.get("width")
         height = oembed.get("height")
         public_thumbnail_url = oembed.get('thumbnail_url')
+        if not (html and width and height):
+            return
+
+        return MediaEmbed(
+            width=width,
+            height=height,
+            content=html,
+            public_thumbnail_url=public_thumbnail_url,
+        )
+
+
+class _YouTubeScraper(Scraper):
+    OEMBED_ENDPOINT = "https://www.youtube.com/oembed"
+    URL_MATCH = re.compile(r"https?://((www\.)?youtube\.com/watch|youtu\.be/)")
+
+    def __init__(self, url, maxwidth):
+        self.url = url
+        self.maxwidth = maxwidth
+
+    @classmethod
+    def matches(cls, url):
+        return cls.URL_MATCH.match(url)
+
+    def _fetch_from_youtube(self):
+        params = {
+            "url": self.url,
+            "format": "json",
+            "maxwidth": self.maxwidth,
+        }
+
+        with g.stats.get_timer("providers.youtube.oembed"):
+            content = requests.get(self.OEMBED_ENDPOINT, params=params).content
+
+        return json.loads(content)
+
+    def _make_media_object(self, oembed):
+        if oembed.get("type") == "video":
+            return {
+                "type": "youtube.com",
+                "oembed": oembed,
+            }
+        return None
+
+    def scrape(self):
+        oembed = self._fetch_from_youtube()
+        if not oembed:
+            return None, None, None, None
+        thumbnail_url = oembed.get("thumbnail_url")
+
+        if not thumbnail_url:
+            return None, None, None, None
+
+        _, content = _fetch_url(thumbnail_url, referer=self.url)
+        uid = _filename_from_content(content)
+        image = str_to_image(content)
+        storage_url = upload_media(image, category='previews')
+        width, height = image.size
+        preview_object = {
+            'uid': uid,
+            'url': storage_url,
+            'width': width,
+            'height': height,
+        }
+
+        thumbnail = _prepare_image(image)
+        media_object = self._make_media_object(oembed)
+
+        return (
+            thumbnail,
+            preview_object,
+            media_object,
+            media_object,
+        )
+
+    @classmethod
+    def media_embed(cls, media_object):
+        oembed = media_object["oembed"]
+
+        html = oembed.get("html")
+        width = oembed.get("width")
+        height = oembed.get("height")
+        public_thumbnail_url = oembed.get('thumbnail_url')
+
         if not (html and width and height):
             return
 
