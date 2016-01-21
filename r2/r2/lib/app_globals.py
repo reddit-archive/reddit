@@ -477,7 +477,15 @@ class Globals(object):
             raise AttributeError("g has no attr %r" % name)
 
     def setup(self):
-        self.env = 'unit_test' if 'test' in sys.argv[0] else ''
+        self.env = ''
+        if (
+            # handle direct invocation of "nosetests"
+            "test" in sys.argv[0] or
+            # handle "setup.py test" and all permutations thereof.
+            "setup.py" in sys.argv[0] and "test" in sys.argv[1:]
+        ):
+            self.env = "unit_test"
+
         self.queues = queues.declare_queues(self)
 
         self.extension_subdomains = dict(

@@ -85,7 +85,7 @@ $RUNDIR/install_cassandra.sh
 ###############################################################################
 
 [ -x "$(which pip)" ] || easy_install pip
-pip install -U pip wheel setuptools
+pip install -U pip wheel setuptools coverage
 pushd $REDDIT_CODE/r2
 sudo python setup.py build
 python setup.py develop

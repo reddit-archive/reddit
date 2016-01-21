@@ -97,3 +97,10 @@ class RedditTestCase(TestCase):
                         ".".join(current_prefix), got, want
                     )
                 )
+
+    def autopatch(self, obj, attr, *a, **kw):
+        """Helper method to patch an object and automatically cleanup."""
+        p = patch.object(obj, attr, *a, **kw)
+        m = p.start()
+        self.addCleanup(p.stop)
+        return m
