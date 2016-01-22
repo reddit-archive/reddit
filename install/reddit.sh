@@ -589,7 +589,6 @@ set_consumer_count del_account_q 1
 set_consumer_count scraper_q 1
 set_consumer_count markread_q 1
 set_consumer_count commentstree_q 1
-set_consumer_count notifications_q 1
 set_consumer_count newcomments_q 1
 set_consumer_count vote_link_q 1
 set_consumer_count vote_comment_q 1
