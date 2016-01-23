@@ -29,7 +29,7 @@ from r2.config import feature
 from r2.config.extensions import get_api_subtype
 from r2.lib import hooks
 from r2.lib.filters import spaceCompress, safemarkdown, _force_unicode
-from r2.models import Account, Report, Trophy
+from r2.models import Account, Report, Trophy, Comment, Link
 from r2.models.token import OAuth2Scope, extra_oauth2_scope
 import time, pytz
 from pylons import response
@@ -1472,6 +1472,8 @@ class ModActionTemplate(ThingJsonTemplate):
         target_author='target_author',
         target_fullname='target_fullname',
         target_permalink='target_permalink',
+        target_title='target_title',
+        target_body='target_body',
     )
 
     def thing_attr(self, thing, attr):
@@ -1493,6 +1495,13 @@ class ModActionTemplate(ThingJsonTemplate):
             return thing.moderator.name
         elif attr == "subreddit":
             return thing.subreddit.name
+        elif attr == 'target_title' and isinstance(thing.target, Link):
+            return thing.target.title
+        elif attr == 'target_body' and isinstance(thing.target, Comment):
+            return thing.target.body
+        elif (attr == 'target_body' and isinstance(thing.target, Link)
+              and getattr(thing.target, 'selftext', None)):
+            return thing.target.selftext
 
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
