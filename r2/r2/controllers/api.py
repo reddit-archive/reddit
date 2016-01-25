@@ -5059,7 +5059,7 @@ class ApiController(RedditController):
         VSrModerator(perms="config"),
         VModhash(),
         rule=VSubredditRule("old_short_name"),
-        short_name=VAvailableSubredditRuleName("short_name"),
+        short_name=VAvailableSubredditRuleName("short_name", updating=True),
         description=VMarkdownLength('description', max_length=500),
         kind=VOneOf('kind', ['link', 'comment', 'all']),
     )

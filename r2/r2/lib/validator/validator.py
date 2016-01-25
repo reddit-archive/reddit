@@ -790,6 +790,10 @@ class VSubredditDesc(Validator):
 
 
 class VAvailableSubredditRuleName(Validator):
+    def __init__(self, short_name, updating=False):
+        Validator.__init__(self, short_name)
+        self.updating = updating
+
     def run(self, short_name):
         short_name = VLength(
             self.param,
@@ -801,9 +805,11 @@ class VAvailableSubredditRuleName(Validator):
 
         if SubredditRules.get_rule(c.site, short_name):
             self.set_error(errors.SR_RULE_EXISTS)
-        elif len(SubredditRules.get_rules(c.site)) >= MAX_RULES_PER_SUBREDDIT:
-            self.set_error(errors.SR_RULE_TOO_MANY)
-            return None
+        elif not self.updating:
+            number_rules = len(SubredditRules.get_rules(c.site))
+            if number_rules >= MAX_RULES_PER_SUBREDDIT:
+                self.set_error(errors.SR_RULE_TOO_MANY)
+                return None
         return short_name
 
 
