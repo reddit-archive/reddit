@@ -815,6 +815,7 @@ class VSubredditRule(Validator):
             min_length=1,
         ).run(short_name.strip())
         if not short_name:
+            self.set_error(errors.SR_RULE_DOESNT_EXIST)
             return None
 
         rule = SubredditRules.get_rule(c.site, short_name)
