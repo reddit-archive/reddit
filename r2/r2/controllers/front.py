@@ -945,7 +945,9 @@ class FrontController(RedditController):
         """Get the rules for the current subreddit"""
         if not feature.is_enabled("subreddit_rules", subreddit=c.site.name):
             abort(404)
-        
+        if isinstance(c.site, FakeSubreddit):
+            abort(404)
+
         kind_labels = {
             "all": _("Posts & Comments"),
             "link": _("Posts only"),
