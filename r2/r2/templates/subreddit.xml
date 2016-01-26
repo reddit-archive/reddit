@@ -19,20 +19,38 @@
 ## All portions of the code written by reddit are Copyright (c) 2006-2015
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
-
 <%!
-   from r2.lib.filters import double_websafe
+    from r2.lib.template_helpers import html_datetime
+    from r2.lib.template_helpers import get_domain, header_url
+    from r2.lib.utils import UrlParser
 %>
-
-<item>
-  <title>${thing.title|double_websafe}</title>
-  <link>${thing.path}</link>
-  <guid>${thing.path}</guid>
-  <dc:date>${thing._date.isoformat()}</dc:date>
-  <description>
-    %if thing.public_description:
-      ${thing.public_description|double_websafe}
+<%namespace name="utils" file="utils.xml"/>
+<%
+    domain = get_domain(subreddit=False)
+    url = g.default_scheme+"://"+domain+thing.path
+%>
+<entry>
+    %if getattr(thing, 'author', None):
+        <%utils:atom_author author="${thing.author}"/>
     %endif
-    &lt;a href="${thing.path}"&gt;[link]&lt;/a&gt;
-  </description>
-</item>
+
+    <%utils:atom_content>
+        %if thing.header:
+            <img src="${header_url(thing.header, c.secure)}" />
+        %endif
+
+        %if thing.public_description:
+            <div>
+                ${thing.public_description}
+            </div>
+        %endif
+        <div>
+            <a href="${url}">${_("[link]")}</a>
+        </div>
+    </%utils:atom_content>
+
+    <id>${thing._fullname}</id>
+    <link href="${url}" />
+    <published>${html_datetime(thing._date)}</published>
+    <title>${thing.title}</title>
+</entry>

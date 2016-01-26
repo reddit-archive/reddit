@@ -202,9 +202,10 @@ def markdown_souptest(text, nofollow=False, target=None, renderer='reddit'):
 
     return smd
 
-#TODO markdown should be looked up in batch?
-#@memoize('markdown')
 def safemarkdown(text, nofollow=False, wrap=True, **kwargs):
+    # safemarkdown must return valid XHTML. This assumption must hold for
+    # souptest as well as atom_content
+
     if not text:
         return None
 

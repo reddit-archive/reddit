@@ -21,53 +21,70 @@
 ###############################################################################
 
 <%!
-   from r2.lib.filters import safemarkdown
-   from r2.lib.template_helpers import add_sr, format_html
-   from r2.models.account import DeletedUser, Account
-   from r2.lib.filters import websafe
+    from r2.lib.template_helpers import html_datetime
+    from r2.lib.filters import safemarkdown, websafe, conditional_websafe
+    from r2.lib.template_helpers import add_sr, format_html
+    from r2.models.account import DeletedUser, Account
 %>
-
+<%namespace name="utils" file="utils.xml"/>
 <%
-   permalink = add_sr(thing.permalink, force_hostname = True)
- %>
-<item>
-  <guid isPermaLink="true">${permalink}</guid>
-  <link>${permalink}</link>
-  <title>
-  <%
+    permalink = add_sr(thing.permalink, force_hostname = True)
+
+    # we get thing.taglinetext set by add_props, but it requires some %(foo)s
+    # formatting substitutions
+
     substitutions = {}
 
     if thing.sr_id:
-        substitutions['subreddit'] = thing.subreddit.name
+       substitutions['subreddit'] = thing.subreddit.name
 
     substitutions['author'] = (DeletedUser() if thing.author._deleted else thing.author).name
 
     if isinstance(thing.to, Account):
-        substitutions['dest'] = (DeletedUser() if thing.to._deleted else thing.to).name
+       substitutions['dest'] = (DeletedUser() if thing.to._deleted else thing.to).name
     elif thing.sr_id:
-        substitutions['dest'] = substitutions['subreddit']
+       substitutions['dest'] = substitutions['subreddit']
 
     substitutions['when'] = thing.timesince
 
     taglinetext = conditional_websafe(thing.taglinetext)
     taglinetext = format_html(taglinetext, **substitutions)
-  %>
-  ${thing.subject} : ${taglinetext}
-  </title>
-  <pubDate>${thing._date.strftime('%a, %d %b %Y %H:%M:%S %z')}</pubDate>
-  <dc:date>${thing._date.isoformat()}</dc:date>
-  <description>
-    ${description()}
-  </description>
-</item>
 
-<%def name="description()" filter="h">
-  ${safemarkdown(thing.body)|websafe}
-  <div>
+    if thing.was_comment:
+        permalink = permalink + '?context=3'
+        link_text = _("[context]")
+    else:
+        link_text = _("[full conversation]")
+
+%>
+<entry>
+    <%utils:atom_author author="${thing.author}"/>
+
     %if thing.was_comment:
-      <a href="${permalink + '?context=3'}">[context]</a>
-    %else:
-      <a href="${permalink}">[full conversation]</a>
+        <category term="${thing.subreddit.name}" label="/r/${thing.subreddit.name}" />
     %endif
-  </div>
-</%def>
+
+    <%utils:atom_content>
+        <div>
+            ${unsafe(taglinetext)}: ${thing.subject}
+        </div>
+
+        ${unsafe(safemarkdown(thing.body))}
+
+        <div>
+            <a href="${permalink}">${link_text}</a>
+        </div>
+    </%utils:atom_content>
+
+    <id>${thing._fullname}</id>
+
+    <link href="${permalink}"/>
+
+    <published>${html_datetime}</published>
+
+    <%utils:atom_content tag_name="summary">
+        ${unsafe(taglinetext)}: ${thing.subject}
+    </%utils:atom_content>
+    
+    <title>${thing.subject}</title>
+</entry>

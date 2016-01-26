@@ -19,18 +19,29 @@
 ## All portions of the code written by reddit are Copyright (c) 2006-2015
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
-
 <%!
-   from r2.lib.template_helpers import get_domain
-   from r2.lib.filters import double_websafe
+    from r2.lib.template_helpers import add_sr
+    from r2.lib.template_helpers import html_datetime
 %>
-
-<item>
-    <title>${thing._id}</title>
-    <link>${g.default_scheme}://${get_domain(subreddit=False)}/${c.wiki_base_url}/${thing.page}?v=${thing._id}</link>
-    <author>${thing.printable_author}</author>
-    <category>${thing.sr}/${thing.page}</category>
-    <description>${thing._get('reason')|double_websafe}</description>
-    <pubdate>${thing.date}</pubdate>
-    <guid>${thing._id}</guid>
-</item>
+<%namespace name="utils" file="utils.xml"/>
+<%
+    link = add_sr(('/%(wiki_base_url)s/%(page)s?v=%(thing_id)s'
+                   % dict(wiki_base_url=c.wiki_base_url,
+                          page=thing.page,
+                          thing_id=thing._id)),
+                  force_hostname=True,
+                  retain_extension=False,
+                  sr_path=False)
+    category = ('%(sr)s/%(page)s'
+                % dict(sr=thing.sr,
+                       page=thing.page))
+%>
+<entry>
+    <author><name>${thing.printable_author}</name></author>
+    <category term="${category}" label="${category}" />
+    <%utils:atom_content type="text">${thing._get('reason')}</%utils:atom_content>
+    <id>${thing._fullname}</id>
+    <link href="${link}" />
+    <published>${html_datetime(thing.date)}</published>
+    <title>${thing._id}</title> ## is this really the best title?
+</entry>

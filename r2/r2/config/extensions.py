@@ -33,8 +33,8 @@ def get_api_subtype():
         return c.render_style[4:]
 
 extension_mapping = {
-    "rss": ("xml", "text/xml; charset=UTF-8"),
-    "xml": ("xml", "text/xml; charset=UTF-8"),
+    "rss": ("xml", "application/atom+xml; charset=UTF-8"),
+    "xml": ("xml", "application/atom+xml; charset=UTF-8"),
     "js": ("js", "text/javascript; charset=UTF-8"),
     "embed": ("htmllite", "text/javascript; charset=UTF-8"),
     "mobile": ("mobile", "text/html; charset=UTF-8"),

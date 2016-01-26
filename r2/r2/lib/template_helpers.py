@@ -51,6 +51,7 @@ import urlparse
 import calendar
 import math
 import time
+import pytz
 
 from pylons import request
 from pylons import tmpl_context as c
@@ -135,9 +136,11 @@ def make_url_https(url):
     return urlparse.urlunsplit(("https", netloc, path, query, fragment))
 
 
-def header_url(url):
+def header_url(url, https=False):
     if url == g.default_header_url:
         return static(url)
+    elif https:
+        return make_url_https(url)
     else:
         return make_url_protocol_relative(url)
 
@@ -669,7 +672,7 @@ def html_datetime(date):
     # Strip off the microsecond to appease the HTML5 gods, since
     # datetime.isoformat() returns too long of a microsecond value.
     # http://www.whatwg.org/specs/web-apps/current-work/multipage/common-microsyntaxes.html#times
-    return date.replace(microsecond=0).isoformat()
+    return date.astimezone(pytz.UTC).replace(microsecond=0).isoformat()
 
 
 def js_timestamp(date):

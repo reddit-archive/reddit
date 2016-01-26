@@ -21,33 +21,40 @@
 ###############################################################################
 
 <%!
-   from r2.lib.filters import safemarkdown
-   from r2.lib.template_helpers import add_sr
-   from r2.lib.filters import double_websafe
+    from r2.lib.filters import safemarkdown
+    from r2.lib.template_helpers import html_datetime
+    from r2.lib.template_helpers import add_sr
 %>
-
-
+<%namespace name="utils" file="utils.xml"/>
 <%
-  if thing.deleted:
-    author = _('[deleted]')
-    body = _('[deleted]')
-  else:
-    if thing.author._deleted:
+    if thing.deleted:
         author = _('[deleted]')
+        comment_body = _('[deleted]')
     else:
-        author = thing.author.name
+        if thing.author._deleted:
+            author = _('[deleted]')
+        else:
+            author = thing.author.name
+        comment_body = thing.body
 
-    body = thing.body
-
-  permalink = add_sr(thing.permalink, force_hostname = True)
+    permalink = add_sr(thing.permalink, force_hostname=True)
 %>
 
-<item>
-  <guid isPermaLink="true">${permalink}</guid>
-  <title>${author} ${_("on")} ${thing.link.title|double_websafe}</title>
-  <link>${permalink}</link>
-  <dc:date>${thing._date.isoformat()}</dc:date>
-  <description>${body|double_websafe}</description>
-</item>
+<entry>
+    %if not thing.deleted:
+        <%utils:atom_author author="${thing.author}"/>
+    %endif
+
+    <category term="${thing.subreddit.name}" label="/r/${thing.subreddit.name}" />
+
+    <%utils:atom_content>
+        ${unsafe(safemarkdown(comment_body))}
+    </%utils:atom_content>
+
+    <id>${thing._fullname}</id>
+    <link href="${thing.permalink}"/>
+    <published>${html_datetime(thing._date)}</published>
+    <title>/u/${author} ${_("on")} ${thing.link.title}</title>
+</entry>
 
 ${hasattr(thing, "child") and thing.child or ''}

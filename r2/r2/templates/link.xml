@@ -21,68 +21,83 @@
 ###############################################################################
 
 <%!
-   from pylons.i18n import _, ungettext
    from r2.lib.template_helpers import add_sr, get_domain
-   from r2.models import FakeSubreddit
-   from r2.lib.filters import safemarkdown
-   from r2.lib.filters import double_websafe
-   from r2.lib.filters import websafe
+   from r2.lib.filters import unsafe, safemarkdown, keep_space
+   from r2.lib.template_helpers import html_datetime
+   from r2.lib.template_helpers import make_url_https
 %>
+<%namespace name="utils" file="utils.xml"/>
 <%
-   permalink = add_sr(thing.permalink, force_hostname = True)
-   use_thumbs = thing.has_thumbnail and thing.thumbnail and not request.GET.has_key("nothumbs")
-   use_thumbs = use_thumbs and not thing.thumbnail_sprited
- %>
-<item>
-  <title>${thing.title|websafe}</title>
-  %if thing.different_sr:
-    <category>${thing.subreddit.name}</category>
-  %endif
-  <link>${permalink}</link>
-  <guid isPermaLink="true">${permalink}</guid>
-  <pubDate>${thing._date.strftime('%a, %d %b %Y %H:%M:%S %z')}</pubDate>
-  <description>
-    <%def name="description()">
-      %if use_thumbs:
-        <table>
-          <tr><td>
-            <a href="${permalink}"><img src="${thing.thumbnail}" alt="${thing.title}" title="${thing.title}" /></a>
-          </td><td>
-      %endif
-      <% 
-         domain = get_domain(subreddit=False)
-       %>
-      %if getattr(thing, 'selftext', None):
-        %if not thing.expunged:
-          ${safemarkdown(thing.selftext)|websafe}
-        %else:
-          ${_('[removed]')}
-        %endif
-      %endif
-      submitted by
-      %if not thing.author._deleted:
-        <a href="${g.default_scheme}://${domain}/user/${thing.author.name}">
-           ${thing.author.name}
-        </a>
-      %else:
-        ${_("[deleted]")}
-      %endif
-       %if thing.different_sr:
-        to <a href="${g.default_scheme}://${domain}${thing.subreddit.path}">
-         ${thing.subreddit.name}</a> 
-      %endif
-      <br/>
-      <a href="${thing.url}">[link]</a>
-      <a href="${permalink}">[${thing.comment_label}]</a>
-      %if use_thumbs:
-        </td></tr></table>
-      %endif
-    </%def>
-  ${description()}
-  </description>
-  %if use_thumbs:
-    <media:title>${thing.title|websafe}</media:title>
-    <media:thumbnail url="${thing.thumbnail}" />
-  %endif
-</item>
+    domain = get_domain(subreddit=False)
+    permalink = add_sr(thing.permalink, force_hostname=True, retain_extension=False)
+    use_thumbs = thing.has_thumbnail and thing.thumbnail and not request.GET.has_key("nothumbs")
+    use_thumbs = use_thumbs and not thing.thumbnail_sprited
+    thumbnail = thing.thumbnail
+    if c.secure:
+        thumbnail = make_url_https(thumbnail)
+    if thing.deleted:
+        title = _('[deleted]')
+    else:
+        title = thing.title
+%>
+<entry>
+    %if not thing.deleted:
+        <%utils:atom_author author="${thing.author}"/>
+    %endif
 
+    <category term="${thing.subreddit.name}" label="/r/${thing.subreddit.name}"/>
+
+    <%utils:atom_content>
+        %if use_thumbs:
+            <table>
+                <tr><td>
+                    <a href="${permalink}">
+                        <img src="${thumbnail}" alt="${title}" title="${title}" />
+                    </a>
+                </td><td>
+        %endif
+
+        %if getattr(thing, 'selftext', None):
+            %if thing.expunged:
+                ${_('[removed]')}
+            %else:
+                ${unsafe(safemarkdown(thing.selftext))}
+            %endif
+        %endif
+
+        %if not thing.author._deleted:
+            ${keep_space(' ')} submitted by ${keep_space(' ')}
+            <a href="${add_sr('/user/'+thing.author.name,
+                              sr_path=False,
+                              retain_extension=False,
+                              force_hostname=True)}">
+                /u/${thing.author.name}
+            </a>
+        %endif
+
+        %if thing.different_sr:
+            ${keep_space(' ')} to ${keep_space(' ')}
+            <a href="${add_sr(thing.subreddit.path,
+                              sr_path=False,
+                              retain_extension=False,
+                              force_hostname=True)}">
+                /r/${thing.subreddit.name}
+            </a>
+        %endif
+
+        <br/>
+
+        <span><a href="${thing.url}">[${_("link")}]</a></span>
+        ${keep_space(' ')}
+        <span><a href="${permalink}">[${thing.comment_label}]</a></span>
+
+        %if use_thumbs:
+            </td></tr></table>
+        %endif
+    </%utils:atom_content>
+
+    <id>${thing._fullname}</id>
+    <link href="${permalink}" />
+    <published>${html_datetime(thing._date)}</published>
+    <title>${title}</title>
+</entry>

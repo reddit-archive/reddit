@@ -19,38 +19,92 @@
 ## All portions of the code written by reddit are Copyright (c) 2006-2015
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
-
-<?xml version="1.0" encoding="UTF-8"?>
 <%!
-   from r2.models.subreddit import DefaultSR
-   from r2.lib.template_helpers import get_domain, add_sr, header_url
-   from r2.lib.filters import double_websafe
+    from r2.lib.template_helpers import add_sr, header_url
+    from r2.lib.template_helpers import static
+    from r2.lib.utils import UrlParser
+    # atom rfc: https://tools.ietf.org/html/rfc4287
 %>
-<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" 
-    xmlns:media="http://search.yahoo.com/mrss/"
-    xmlns:atom="http://www.w3.org/2005/Atom">
-  <channel>
-    <title>${self.Title()|double_websafe}</title>
-    <link>${add_sr("/", force_hostname = True)}</link>
-    <description>${(c.site.public_description or '')|double_websafe}</description>
-    <image>
-      <%
-        if g.css_killswitch or not c.site.header or not c.can_apply_styles:
-            header_img = header_url(DefaultSR().header)
-        else:
-            header_img = header_url(c.site.header)
-        if not header_img.startswith("http:"):
-            header_img = add_sr(header_img, sr_path=False, force_hostname=True)
-      %>
-      <url>${header_img}</url>
-      <title>${self.Title()|double_websafe}</title>
-      <link>${add_sr("/", force_hostname = True)}</link>
-    </image>
-    <atom:link rel="self" href="${add_sr(request.fullpath, sr_path=False, force_hostname=True)}" type="application/rss+xml" />
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    ${self.Category()}
+
+    %if c.can_apply_styles and not c.css_killswitch:
+        ${self.Icon()}
+    %endif
+
+    ${self.Id()}
+    ${self.Link()}
+
+    %if c.can_apply_styles and not c.css_killswitch:
+        ${self.Logo()}
+    %endif
+
+    ${self.Subtitle()}
+    ${self.Title()}
+
+    ## will be a list of <entry>s
     ${next.body()}
-  </channel>
-</rss>  
+</feed>
+
+## these can all be controlled by the type of listing, but they default to
+## c.site's info
+
+<%def name="Category()">
+    <category term="${c.site.name}" label="/r/${c.site.name}"/>
+</%def>
 
 <%def name="Title()">
-${c.site.title}
+    %if getattr(thing, 'title', None):
+        <title>${thing.title}</title>
+    %elif c.site.title:
+        <title>${c.site.title}</title>
+    %elif c.site.name:
+        <title>${c.site.name}</title>
+    %endif
+</%def>
+
+<%def name="Link()">
+    <link rel="self" href="${add_sr(request.fullpath,
+                                    sr_path=False,
+                                    force_hostname=True)}"
+     type="application/atom+xml" />
+    <link rel="alternate" href="${add_sr(request.fullpath,
+                                         sr_path=False,
+                                         force_hostname=True,
+                                         retain_extension=False)}"
+     type="text/html" />
+</%def>
+
+<%def name="Id()">
+    ## the feed <id>, not the entry one
+    ## https://tools.ietf.org/html/rfc4287#section-4.2.6
+
+    <id>
+        %if hasattr(thing, '_fullname'):
+            ${thing._fullname}
+        %else:
+            ${request.fullpath}
+        %endif
+    </id>
+</%def>
+
+<%def name="Subtitle()">
+    %if c.site.public_description:
+        <subtitle>${c.site.public_description}</subtitle>
+    %endif
+</%def>
+
+<%def name="Icon()">
+    ## a 1x1 aspect image
+    ## https://tools.ietf.org/html/rfc4287#section-4.2.5
+    <icon>${static("icon.png")}/</icon>
+</%def>
+
+<%def name="Logo()">
+    ## a 2x1 aspect image
+    ## https://tools.ietf.org/html/rfc4287#section-4.2.8
+    %if c.site.header:
+        <logo>${header_url(c.site.header, c.secure)}</logo>
+    %endif
 </%def>

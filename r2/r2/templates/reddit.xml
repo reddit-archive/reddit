@@ -19,15 +19,5 @@
 ## All portions of the code written by reddit are Copyright (c) 2006-2015
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
-
 <%inherit file="base.xml"/>
-
-<%def name="Title()">
-  %if thing.title:
-    ${thing.title}
-  %else:
-    ${parent.Title()}
-  %endif
-</%def>
-
 ${thing.content()}
