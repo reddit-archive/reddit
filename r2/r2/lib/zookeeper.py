@@ -67,9 +67,9 @@ class LiveConfig(object):
 
         @client.DataWatch(key)
         def watcher(data, stat):
-            if data.startswith("gzip"):
+            if data and data.startswith("gzip"):
                 data = zlib.decompress(data[len("gzip"):])
-            self.data = json.loads(data)
+            self.data = json.loads(data or '{}')
             hooks.get_hook("worker.live_config.update").call()
 
     def __getitem__(self, key):
