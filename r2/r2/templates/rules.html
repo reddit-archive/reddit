@@ -58,7 +58,7 @@
                          data-description="${keep_space(rule['description'])}"
                          data-kind="${kind}">
                         ${self.subreddit_rule(
-                            short_name=rule['short_name'],
+                            short_name=keep_space(rule['short_name']),
                             description=description_html,
                             kind=kind_label,
                             editable=thing.can_edit,
