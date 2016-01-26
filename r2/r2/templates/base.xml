@@ -98,13 +98,13 @@
 <%def name="Icon()">
     ## a 1x1 aspect image
     ## https://tools.ietf.org/html/rfc4287#section-4.2.5
-    <icon>${static("icon.png")}/</icon>
+    <icon>${static("icon.png", absolute=True)}/</icon>
 </%def>
 
 <%def name="Logo()">
     ## a 2x1 aspect image
     ## https://tools.ietf.org/html/rfc4287#section-4.2.8
     %if c.site.header:
-        <logo>${header_url(c.site.header, c.secure)}</logo>
+        <logo>${header_url(c.site.header, absolute=True)}</logo>
     %endif
 </%def>

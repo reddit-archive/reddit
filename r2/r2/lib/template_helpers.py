@@ -136,10 +136,10 @@ def make_url_https(url):
     return urlparse.urlunsplit(("https", netloc, path, query, fragment))
 
 
-def header_url(url, https=False):
+def header_url(url, absolute=False):
     if url == g.default_header_url:
-        return static(url)
-    elif https:
+        return static(url, absolute=absolute)
+    elif absolute:
         return make_url_https(url)
     else:
         return make_url_protocol_relative(url)
