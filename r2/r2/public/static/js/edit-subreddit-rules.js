@@ -364,7 +364,6 @@ requires r.ui.TextCounter
     },
 
     _updateRuleCache: function() {
-      debugger;
       try {
         var newRules = this.collection.toApiJSON();
         var storageKey = r.rulesSessionStorageKey;
