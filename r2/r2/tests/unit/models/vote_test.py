@@ -3,6 +3,7 @@ from datetime import datetime
 
 import pytz
 
+from r2.lib.utils import tup
 from r2.models.vote import Vote
 from r2.tests import RedditTestCase
 
@@ -27,13 +28,17 @@ class TestVoteValidator(RedditTestCase):
         )
 
     def assert_vote_effects(
-        self, vote, affects_score, affects_karma,
-        affected_thing_attr, *notes
+        self, vote,
+        affects_score=True,
+        affects_karma=True,
+        affected_thing_attr="_ups",
+        notes=None,
     ):
+        notes = set(tup(notes) if notes else [])
         self.assertEqual(vote.effects.affects_score, affects_score)
         self.assertEqual(vote.effects.affects_karma, affects_karma)
         self.assertEqual(vote.affected_thing_attr, affected_thing_attr)
-        self.assertEqual(set(vote.effects.notes), set(notes))
+        self.assertEqual(set(vote.effects.notes), notes)
         return vote
 
     def test_upvote_effects(self):
@@ -41,11 +46,11 @@ class TestVoteValidator(RedditTestCase):
         self.assertTrue(vote.is_upvote)
         self.assertFalse(vote.is_downvote)
         self.assertFalse(vote.is_self_vote)
-        self.assert_vote_effects(vote, True, True, "_ups")
+        self.assert_vote_effects(vote)
 
     def test_downvote_effects(self):
         vote = self.cast_vote(direction=Vote.DIRECTIONS.down)
         self.assertFalse(vote.is_upvote)
         self.assertTrue(vote.is_downvote)
         self.assertFalse(vote.is_self_vote)
-        self.assert_vote_effects(vote, True, True, "_downs")
+        self.assert_vote_effects(vote, affected_thing_attr="_downs")
