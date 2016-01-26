@@ -342,12 +342,15 @@ class Account(Thing):
     
     @classmethod
     @memoize('account._by_name')
-    def _by_name_cache(cls, name, allow_deleted = False):
+    def _by_name_cache(cls, name, allow_deleted=False):
         #relower name here, just in case
         deleted = (True, False) if allow_deleted else False
-        q = cls._query(lower(Account.c.name) == name.lower(),
-                       Account.c._spam == (True, False),
-                       Account.c._deleted == deleted)
+        q = cls._query(
+            lower(cls.c.name) == name.lower(),
+            cls.c._spam == (True, False),
+            cls.c._deleted == deleted,
+            data=True,
+        )
 
         q._limit = 1
         l = list(q)
@@ -359,7 +362,7 @@ class Account(Thing):
         #lower name here so there is only one cache
         uid = cls._by_name_cache(name.lower(), allow_deleted, _update = _update)
         if uid:
-            return cls._byID(uid, True)
+            return cls._byID(uid, data=True)
         else:
             raise NotFound, 'Account %s' % name
 
