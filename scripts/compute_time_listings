@@ -65,7 +65,7 @@ function run_query {
 }
 
 function mrsort {
-    sort -S200m
+    LC_ALL=C sort -S200m
 }
 
 function reddit {
