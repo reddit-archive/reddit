@@ -628,7 +628,7 @@ class Subreddit(Thing, Printable, BaseSite):
 
     @property
     def community_rules(self):
-        return SubredditRules.get_rules(c.site)
+        return SubredditRules.get_rules(self)
 
     @related_subreddits.setter
     def related_subreddits(self, related_subreddits):
