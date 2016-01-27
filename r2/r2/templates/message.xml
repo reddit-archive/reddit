@@ -21,7 +21,7 @@
 ###############################################################################
 
 <%!
-    from r2.lib.template_helpers import html_datetime
+    from r2.lib.template_helpers import html_datetime, simplified_timesince
     from r2.lib.filters import safemarkdown, websafe, conditional_websafe
     from r2.lib.template_helpers import add_sr, format_html
     from r2.models.account import DeletedUser, Account
@@ -45,7 +45,12 @@
     elif thing.sr_id:
        substitutions['dest'] = substitutions['subreddit']
 
-    substitutions['when'] = thing.timesince
+    # most templates use the thing.timesince StringTemplate for this, but the
+    # double- escaping that <%atom:content/> does means that it can't be
+    # properly replaced. Because clients will be caching these, this display
+    # will almost always be incorrect anyway so we may consider replacing these
+    # with more absolute timestamps
+    substitutions['when'] = simplified_timesince(thing._date)
 
     taglinetext = conditional_websafe(thing.taglinetext)
     taglinetext = format_html(taglinetext, **substitutions)
