@@ -2,7 +2,7 @@
     from r2.lib.filters import websafe, keep_space
     from r2.lib.template_helpers import add_sr
 %>
-<%def name="atom_content(type='xhtml', tag_name='content')">
+<%def name="atom_content(type='html', tag_name='content')">
     ## Atom supports 3 types of <content> tags: xhtml, html, and text. here we
     ## try to support all 3
     ## https://tools.ietf.org/html/rfc4287#section-3.1

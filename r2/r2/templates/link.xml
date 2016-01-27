@@ -89,7 +89,7 @@
 
         <span><a href="${thing.url}">[${_("link")}]</a></span>
         ${keep_space(' ')}
-        <span><a href="${permalink}">[${thing.comment_label}]</a></span>
+        <span><a href="${permalink}">[${_("comments")}]</a></span>
 
         %if use_thumbs:
             </td></tr></table>
