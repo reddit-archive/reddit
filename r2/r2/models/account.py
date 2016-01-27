@@ -413,8 +413,11 @@ class Account(Thing):
     # Used on the goldmember version of /prefs/friends
     @memoize('account.friend_rels')
     def friend_rels_cache(self):
-        q = Friend._query(Friend.c._thing1_id == self._id,
-                          Friend.c._name == 'friend')
+        q = Friend._query(
+            Friend.c._thing1_id == self._id,
+            Friend.c._name == 'friend',
+            thing_data=True,
+        )
         return list(f._id for f in q)
 
     def friend_rels(self, _update = False):
