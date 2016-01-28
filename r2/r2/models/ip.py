@@ -13,6 +13,9 @@ __all__ = ["IPsByAccount", "AccountsByIP"]
 CONNECTION_POOL = g.cassandra_pools['main']
 
 
+CF_TTL = datetime.timedelta(days=90).total_seconds()
+
+
 class IPsByAccount(tdb_cassandra.View):
 
     _use_db = True
@@ -21,7 +24,7 @@ class IPsByAccount(tdb_cassandra.View):
         "default_validation_class": tdb_cassandra.ASCII_TYPE,
     }
     _compare_with = tdb_cassandra.DateType()
-    _ttl = datetime.timedelta(days=90)
+    _ttl = CF_TTL
 
     @classmethod
     def set(cls, account_id, ip, date=None):
@@ -75,7 +78,7 @@ class AccountsByIP(tdb_cassandra.View):
         "default_validation_class": tdb_cassandra.ASCII_TYPE,
     }
     _compare_with = tdb_cassandra.DateType()
-    _ttl = datetime.timedelta(days=90)
+    _ttl = CF_TTL
 
     @classmethod
     def set(cls, ip, account_id, date=None):
@@ -122,6 +125,6 @@ def set_account_ip(account_id, ip, date=None):
     if date is None:
         date = datetime.datetime.now(g.tz)
     m = Mutator(CONNECTION_POOL)
-    m.insert(IPsByAccount._cf, str(account_id), {date: ip})
-    m.insert(AccountsByIP._cf, ip, {date: str(account_id)})
+    m.insert(IPsByAccount._cf, str(account_id), {date: ip}, ttl=CF_TTL)
+    m.insert(AccountsByIP._cf, ip, {date: str(account_id)}, ttl=CF_TTL)
     m.send()
