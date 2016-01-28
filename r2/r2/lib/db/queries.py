@@ -51,6 +51,7 @@ from r2.lib.utils import in_chunks, is_subdomain, SimpleSillyStub
 import cPickle as pickle
 
 from datetime import datetime
+from functools import partial
 from time import mktime
 import pytz
 import itertools
@@ -945,19 +946,31 @@ def add_queries(queries, insert_items=None, delete_items=None, foreground=False)
     """Adds multiple queries to the query queue. If insert_items or
        delete_items is specified, the query may not need to be
        recomputed against the database."""
+
+    # we want to time how long background permacache mutations take, so we need
+    # to wrap g.stats up so that we can use it on the other thread
+    def mutation_timer(stats, timer_name, fn, *a):
+        def _fn():
+            with stats.get_timer(timer_name):
+                return fn(*a)
+        return _fn
+    mutation_timer = partial(mutation_timer, g.stats)
+
     for q in queries:
         if insert_items and q.can_insert():
             log.debug("Inserting %s into query %s" % (insert_items, q))
             if foreground:
                 q.insert(insert_items)
             else:
-                worker.do(q.insert, insert_items)
+                worker.do(mutation_timer('permacache.background.insert',
+                                         q.insert, insert_items))
         elif delete_items and q.can_delete():
             log.debug("Deleting %s from query %s" % (delete_items, q))
             if foreground:
                 q.delete(delete_items)
             else:
-                worker.do(q.delete, delete_items)
+                worker.do(mutation_timer('permacache.background.delete',
+                                         q.delete, delete_items))
         else:
             raise Exception("Cannot update query %r!" % (q,))
 
