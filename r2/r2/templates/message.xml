@@ -90,6 +90,6 @@
     <%utils:atom_content tag_name="summary">
         ${unsafe(taglinetext)}: ${thing.subject}
     </%utils:atom_content>
-    
-    <title>${thing.subject}</title>
+
+    <title>${unsafe(taglinetext)}: ${thing.subject}</title>
 </entry>
