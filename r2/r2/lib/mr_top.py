@@ -144,3 +144,10 @@ def write_permacache(fd = sys.stdin):
     mr_tools.mr_reduce_max_per_key(lambda x: map(float, x[:-1]), num=1000,
                                    post=store_keys,
                                    fd = fd)
+
+def reduce_listings(fd=sys.stdin):
+    # like write_permacache, but just sends the reduced version of the listing
+    # to stdout instead of to the permacache. It's handy for debugging to see
+    # the final result before it's written out
+    mr_tools.mr_reduce_max_per_key(lambda x: map(float, x[:-1]), num=1000,
+                                   fd = fd)

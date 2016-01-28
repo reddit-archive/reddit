@@ -69,7 +69,34 @@ function mrsort {
 }
 
 function reddit {
-    paster --plugin=r2 run $REDDIT_INI $REDDIT_ROOT/r2/lib/mr_top.py -c "$1"
+    reddit_usage() {
+        echo "reddit: [-jN] cmd..." 2>&1
+        exit
+    }
+
+    local OPTIND o njobs
+
+    njobs=1
+
+    while getopts ":j:" o; do
+        case "${o}" in
+            j)
+                njobs="${OPTARG}"
+                ;;
+            *)
+                reddit_usage
+                ;;
+        esac
+    done
+    shift $((OPTIND-1))
+
+    cmd="paster --plugin=r2 run $REDDIT_INI $REDDIT_ROOT/r2/lib/mr_top.py -c \"$@ # $THING_CLS $INTERVAL $TIMES\""
+
+    if [ "$njobs" = "1" ]; then
+        sh -c "$cmd" # just execute it directly
+    else
+        $REDDIT_ROOT/../scripts/hashdist.py -n"$njobs" -- sh -c "$cmd"
+    fi
 }
 
 # Hack to let pg fetch all things with intervals
@@ -105,9 +132,9 @@ run_query "\\copy (SELECT thing_id, 'data', '$THING_CLS', key, value
 
 cat $THING_DUMP $DATA_DUMP |
     mrsort |
-    reddit "join_things('$THING_CLS') # $TIMES" |
+    reddit "join_things('$THING_CLS')" |
     reddit "time_listings($TIMES, '$THING_CLS')" |
     mrsort |
-    reddit "write_permacache() # $THING_CLS $TIMES"
+    reddit -j4 "write_permacache()"
 
 echo 'Done.'
