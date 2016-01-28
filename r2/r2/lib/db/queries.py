@@ -1137,7 +1137,7 @@ def new_vote(vote):
         elif isinstance(vote.thing, Comment):
             update_comment_votes([vote.thing])
 
-        add_queries(results, insert_items=vote.thing)
+        add_queries(results, insert_items=vote.thing, foreground=True)
     
     if isinstance(vote.thing, Link):
         with CachedQueryMutator() as m:
