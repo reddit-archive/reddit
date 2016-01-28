@@ -942,35 +942,20 @@ def get_gilded_user(user):
     return [get_gilded_user_comments(user), get_gilded_user_links(user)]
 
 
-def add_queries(queries, insert_items=None, delete_items=None, foreground=False):
+def add_queries(queries, insert_items=None, delete_items=None):
     """Adds multiple queries to the query queue. If insert_items or
        delete_items is specified, the query may not need to be
        recomputed against the database."""
 
-    # we want to time how long background permacache mutations take, so we need
-    # to wrap g.stats up so that we can use it on the other thread
-    def mutation_timer(stats, timer_name, fn, *a):
-        def _fn():
-            with stats.get_timer(timer_name):
-                return fn(*a)
-        return _fn
-    mutation_timer = partial(mutation_timer, g.stats)
-
     for q in queries:
         if insert_items and q.can_insert():
             log.debug("Inserting %s into query %s" % (insert_items, q))
-            if foreground:
+            with g.stats.get_timer('permacache.foreground.insert'):
                 q.insert(insert_items)
-            else:
-                worker.do(mutation_timer('permacache.background.insert',
-                                         q.insert, insert_items))
         elif delete_items and q.can_delete():
             log.debug("Deleting %s from query %s" % (delete_items, q))
-            if foreground:
+            with g.stats.get_timer('permacache.foreground.delete'):
                 q.delete(delete_items)
-            else:
-                worker.do(mutation_timer('permacache.background.delete',
-                                         q.delete, delete_items))
         else:
             raise Exception("Cannot update query %r!" % (q,))
 
@@ -1137,7 +1122,7 @@ def new_vote(vote):
         elif isinstance(vote.thing, Comment):
             update_comment_votes([vote.thing])
 
-        add_queries(results, insert_items=vote.thing, foreground=True)
+        add_queries(results, insert_items=vote.thing)
     
     if isinstance(vote.thing, Link):
         with CachedQueryMutator() as m:
