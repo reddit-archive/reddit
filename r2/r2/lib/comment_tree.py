@@ -27,7 +27,7 @@ from pylons import tmpl_context as c
 from pylons import app_globals as g
 
 from r2.lib.cache import sgm
-from r2.lib.utils import SimpleSillyStub, tup
+from r2.lib.utils import tup
 from r2.models.comment_tree import CommentTree, InconsistentCommentTreeError
 from r2.models.link import Comment, Link
 
@@ -52,12 +52,12 @@ def add_comments(comments):
         try:
             with CommentTree.mutation_context(link, timeout=30):
                 timer.intermediate('lock')
-                cache = get_comment_tree(link, timer=timer)
+                comment_tree = CommentTree.by_link(link, timer)
                 timer.intermediate('get')
                 if add_comments:
-                    cache.add_comments(add_comments)
+                    comment_tree.add_comments(add_comments)
                 for comment in delete_comments:
-                    cache.delete_comment(comment, link)
+                    comment_tree.delete_comment(comment, link)
                 timer.intermediate('update')
         except InconsistentCommentTreeError:
             comment_ids = [comment._id for comment in coms]
@@ -110,7 +110,7 @@ def _get_qa_comment_scores(link, comments):
     parent_comments = Comment._byID(parent_cids, data=True, return_dict=False)
     comments.extend(parent_comments)
 
-    comment_tree = get_comment_tree(link)
+    comment_tree = CommentTree.by_link(link)
     cid_tree = comment_tree.tree
 
     # Fetch the comments in batch to avoid a bunch of separate calls down
@@ -233,35 +233,27 @@ def link_comments_and_sort(link, sort):
     timer = g.stats.get_timer('comment_tree.get.%s' % link.comment_tree_version)
     timer.start()
 
-    cache = get_comment_tree(link, timer=timer)
-    cids = cache.cids
+    comment_tree = CommentTree.by_link(link, timer)
+    cids = comment_tree.cids
 
     scores_by_id = get_comment_scores(link, sort, cids, timer)
     timer.intermediate('get_scores')
     timer.stop()
 
-    return (cache.cids, cache.tree, cache.depth, cache.parents,
-            cache.num_children, scores_by_id)
-
-
-def get_comment_tree(link, timer=None):
-    if timer is None:
-        timer = SimpleSillyStub()
-
-    cache = CommentTree.by_link(link, timer)
-    return cache
+    return (comment_tree.cids, comment_tree.tree, comment_tree.depth,
+            comment_tree.parents, comment_tree.num_children, scores_by_id)
 
 
 def rebuild_comment_tree(link, timer):
     with CommentTree.mutation_context(link, timeout=180):
         timer.intermediate('lock')
-        cache = CommentTree.rebuild(link)
+        comment_tree = CommentTree.rebuild(link)
         timer.intermediate('rebuild')
         # the tree rebuild updated the link's comment count, so schedule it for
         # search reindexing
         link.update_search_index()
         timer.intermediate('update_search_index')
-        return cache
+        return comment_tree
 
 
 # message conversation functions
