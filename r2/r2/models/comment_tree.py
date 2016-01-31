@@ -20,6 +20,8 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+from collections import defaultdict
+
 from pycassa import batch, types
 from pycassa.cassandra import ttypes
 from pycassa.system_manager import ASCII_TYPE, COUNTER_COLUMN_TYPE
@@ -28,7 +30,7 @@ from pylons import app_globals as g
 from r2.lib import utils
 from r2.lib.db import tdb_cassandra
 from r2.lib.utils import SimpleSillyStub
-from r2.lib.utils.comment_tree_utils import get_tree_details
+from r2.lib.utils.comment_tree_utils import get_tree_details, calc_num_children
 from r2.models.link import Comment
 
 
@@ -81,7 +83,7 @@ class CommentTreeStorageBase(object):
 
     @classmethod
     def get_tree_pieces(cls, link, timer):
-        """Return cids, tree, depth, and parents for link."""
+        """Return cids, tree, depth, parents, and num_children for link."""
         raise NotImplementedError
 
     @classmethod
@@ -166,9 +168,11 @@ class CommentTreeStorageV1(CommentTreeStorageBase):
 
         tree = tree or {}   # assume empty tree on miss
         cids, depth, parents = get_tree_details(tree)
+        num_children = calc_num_children(tree)
+        num_children = defaultdict(int, num_children)
         timer.intermediate('calculate')
 
-        return cids, tree, depth, parents
+        return cids, tree, depth, parents, num_children
 
     @classmethod
     def write_from_comment_tree(cls, link, comment_tree):
@@ -209,12 +213,13 @@ class CommentTree:
         3: None,    # placeholder for abandoned CommentTreeStorageV3
     }
 
-    def __init__(self, link, cids, tree, depth, parents):
+    def __init__(self, link, cids, tree, depth, parents, num_children):
         self.link = link
         self.cids = cids
         self.tree = tree
         self.depth = depth
         self.parents = parents
+        self.num_children = num_children
 
     @classmethod
     def mutation_context(cls, link, timeout=None):
@@ -227,8 +232,8 @@ class CommentTree:
             timer = SimpleSillyStub()
 
         impl = cls.IMPLEMENTATIONS[link.comment_tree_version]
-        cids, tree, depth, parents = impl.get_tree_pieces(link, timer)
-        comment_tree = cls(link, cids, tree, depth, parents)
+        cids, tree, depth, parents, num_children = impl.get_tree_pieces(link, timer)
+        comment_tree = cls(link, cids, tree, depth, parents, num_children)
         return comment_tree
 
     @classmethod

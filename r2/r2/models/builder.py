@@ -49,7 +49,6 @@ from r2.lib.wrapped import Wrapped
 from r2.lib.db import operators, tdb_cassandra
 from r2.lib.filters import _force_unicode
 from r2.lib.utils import Storage, shuffle_slice, timesince, tup, to36
-from r2.lib.utils.comment_tree_utils import get_num_children
 
 from r2.models import (
     Account,
@@ -841,7 +840,7 @@ class CommentBuilder(Builder):
         timer = g.stats.get_timer("CommentBuilder.get_items")
         timer.start()
         r = link_comments_and_sort(self.link, self.sort.col)
-        cids, cid_tree, depth, parents, sorter = r
+        cids, cid_tree, depth, parents, num_children, sorter = r
         timer.intermediate("load_storage")
 
         if self.comment and not self.comment._id in depth:
@@ -874,10 +873,17 @@ class CommentBuilder(Builder):
 
             dont_collapse.extend(path)
 
-            # rewrite cid_tree so the parents lead only to the requested comment
-            for comment in path:
-                parent = parents[comment]
-                cid_tree[parent] = [comment]
+            # work through the path starting with the requested comment
+            # (path is requested comment, its parent, its grandparent, etc.)
+            for comment_id in path:
+                # rewrite parent's tree so it leads only to the requested comment
+                parent_id = parents[comment_id]
+                cid_tree[parent_id] = [comment_id]
+
+                # rewrite parent's num_children to count only this branch
+                if parent_id is not None:
+                    branch_num_children = num_children[comment_id]
+                    num_children[parent_id] = branch_num_children + 1
 
             # start building comment tree from earliest comment
             self.update_candidates(candidates, sorter, path[-1])
@@ -961,6 +967,7 @@ class CommentBuilder(Builder):
         self.timer = timer
         self.cid_tree = cid_tree
         self.depth = depth
+        self.num_children = num_children
         self.more_recursions = more_recursions
         self.offset_depth = offset_depth
         self.dont_collapse = dont_collapse
@@ -971,6 +978,7 @@ class CommentBuilder(Builder):
         cid_tree = self.cid_tree
         top_level_candidates = self.top_level_candidates
         depth = self.depth
+        num_children = self.num_children
         more_recursions = self.more_recursions
         offset_depth = self.offset_depth
         dont_collapse = self.dont_collapse
@@ -979,11 +987,6 @@ class CommentBuilder(Builder):
         if not comments and not top_level_candidates:
             timer.stop()
             return []
-
-        # retrieve num_children for the visible comments
-        needs_num_children = [c._id for c in comments] + top_level_candidates
-        num_children = get_num_children(needs_num_children, cid_tree)
-        timer.intermediate("calc_num_children")
 
         wrapped = self.wrap_items(comments)
         timer.intermediate("wrap_comments")

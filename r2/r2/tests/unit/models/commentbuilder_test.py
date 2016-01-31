@@ -21,10 +21,11 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 from mock import MagicMock
 
 from r2.lib import comment_tree
+from r2.lib.utils.comment_tree_utils import get_tree_details, calc_num_children
 from r2.lib.db import operators
 from r2.models import Comment
 from r2.models.builder import CommentBuilder
@@ -55,17 +56,10 @@ TREE = [
 
 
 def make_comment_tree(link):
-    cids = []
-    depth = {}
     tree = {}
-    parents = {}
 
     def _add_comment(comment, parent):
-        cids.append(comment.id)
-        depth[comment.id] = 0 if parent is None else depth[parent.id] + 1
         tree[comment.id] = [child.id for child in comment.children]
-        parents[comment.id] = None if parent is None else parent.id
-
         for child in comment.children:
             _add_comment(child, parent=comment)
 
@@ -74,7 +68,11 @@ def make_comment_tree(link):
     for comment in TREE:
         _add_comment(comment, parent=None)
 
-    return CommentTree(link, cids, tree, depth, parents)
+    cids, depth, parents = get_tree_details(tree)
+    num_children = calc_num_children(tree)
+    num_children = defaultdict(int, num_children)
+
+    return CommentTree(link, cids, tree, depth, parents, num_children)
 
 
 def make_comment_scores():

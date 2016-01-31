@@ -215,6 +215,7 @@ def link_comments_and_sort(link, sort):
     * depth -- a dictionary from cid to the depth that comment resides in the
       tree. A top-level comment has depth 0.
     * parents -- a dictionary from child cid to parent cid.
+    * num_children -- a dictionary from cid to total descendant count
     * sorter -- a dictionary from cid to a numeric value to be used for
       sorting.
     """
@@ -234,15 +235,13 @@ def link_comments_and_sort(link, sort):
 
     cache = get_comment_tree(link, timer=timer)
     cids = cache.cids
-    tree = cache.tree
-    depth = cache.depth
-    parents = cache.parents
 
     scores_by_id = get_comment_scores(link, sort, cids, timer)
     timer.intermediate('get_scores')
     timer.stop()
 
-    return (cache.cids, cache.tree, cache.depth, cache.parents, scores_by_id)
+    return (cache.cids, cache.tree, cache.depth, cache.parents,
+            cache.num_children, scores_by_id)
 
 
 def get_comment_tree(link, timer=None):
