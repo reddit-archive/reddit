@@ -41,14 +41,14 @@ def post_takedown_notice_to_external_site(title,
                           sender_country,
                           ):
     """This method publicly posts a copy of the takedown notice to 
-    https://chillingeffects.org. Posting notices to Chilling Effects is free, 
-    and needs to be arranged by contacting their team. Read more about Chilling 
-    Effects at https://www.chillingeffects.org/pages/about
+    https://lumendatabase.org. Posting notices to Lumen is free, and needs to
+    be arranged by contacting their team. Read more about Lumen at
+    https://www.lumendatabase.org/pages/about
     """
-    # API documentation for ChillingEffects.org found here:
-    # https://github.com/berkmancenter/chillingeffects/blob/master/doc/api_documentation.mkd
+    # API documentation for lumendatabase.org found here:
+    # https://github.com/berkmancenter/lumendatabase/blob/master/doc/api_documentation.mkd
     notice_json = {
-        'authentication_token': g.secrets['chillingeffects_org_api_key'],
+        'authentication_token': g.secrets['lumendatabase_org_api_key'],
         'notice': {
             'title': title,
             'type': request_type,
@@ -88,14 +88,14 @@ def post_takedown_notice_to_external_site(title,
         }
     }
         
-    timer = g.stats.get_timer('chillingeffects.takedown_create')
+    timer = g.stats.get_timer('lumendatabase.takedown_create')
     timer.start()
     response = requests.post(
-        '%snotices' % g.live_config['chillingeffects_org_api_base_url'],
+        '%snotices' % g.live_config['lumendatabase_org_api_base_url'],
         headers={
             'Content-type': 'application/json',
             'Accept': 'application/json',
-            'AUTHENTICATION_TOKEN': g.secrets['chillingeffects_org_api_key']
+            'AUTHENTICATION_TOKEN': g.secrets['lumendatabase_org_api_key']
         },
         data=json.dumps(notice_json)
     )
