@@ -1294,13 +1294,14 @@ class FrontController(RedditController):
 
     def _search_builder_wrapper(self, q):
         query = q.query
-        recent = q.recent
+        recent = str(q.recent) if q.recent else None
         sort = q.sort
         def wrapper_fn(thing):
-            thing.prev_search = query
-            thing.recent = recent
-            thing.sort = sort
             w = Wrapped(thing)
+            w.prev_search = query
+            w.recent = recent
+            w.sort = sort
+
             if isinstance(thing, Link):
                 w.render_class = SearchResultLink
             elif isinstance(thing, Subreddit):
