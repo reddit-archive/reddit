@@ -896,11 +896,6 @@ class CommentBuilder(Builder):
         timer.intermediate("load_storage")
 
         comment_tree = self.modify_comment_tree(comment_tree)
-        cids = comment_tree.cids
-        cid_tree = comment_tree.tree
-        depth = comment_tree.depth
-        parents = comment_tree.parents
-        num_children = comment_tree.num_children
 
         dont_collapse = []
         candidates = []
@@ -909,7 +904,10 @@ class CommentBuilder(Builder):
 
         if self.children:
             # requested specific child comments
-            children = [cid for cid in self.children if cid in cids]
+            children = [
+                comment_id for comment_id in self.children
+                if comment_id in comment_tree.cids
+            ]
             self.update_candidates(candidates, sorter, children)
             dont_collapse = [comment for sort_val, comment in candidates]
             # BUG: current viewing depth isn't considered, so requesting
@@ -931,12 +929,12 @@ class CommentBuilder(Builder):
 
             # set offset_depth because we may not be at the top level and can
             # show deeper levels
-            offset_depth = depth.get(root_comment, 0)
+            offset_depth = comment_tree.depth.get(root_comment, 0)
 
         else:
             # full tree requested, add all top level comments as candidates to
             # be considered for display
-            top_level_comments = cid_tree.get(None, [])
+            top_level_comments = comment_tree.tree.get(None, [])
 
             # If we have a sticky comment and we're viewing top level comments,
             # we shove the sticky comment in the top and remove it from the
@@ -969,18 +967,18 @@ class CommentBuilder(Builder):
         # choose which comments to show
         while (self.num is None or len(items) < self.num) and candidates:
             sort_val, comment_id = heapq.heappop(candidates)
-            if comment_id not in cids:
+            if comment_id not in comment_tree.cids:
                 continue
 
-            comment_depth = depth[comment_id] - offset_depth
+            comment_depth = comment_tree.depth[comment_id] - offset_depth
             if comment_depth >= self.max_depth:
                 continue
 
             items.append(comment_id)
 
             child_depth = comment_depth + 1
-            if child_depth < self.max_depth and comment_id in cid_tree:
-                children = cid_tree[comment_id]
+            if child_depth < self.max_depth and comment_id in comment_tree.tree:
+                children = comment_tree.tree[comment_id]
                 self.update_candidates(candidates, sorter, children)
 
         timer.intermediate("pick_comments")
@@ -989,25 +987,21 @@ class CommentBuilder(Builder):
         self.comment_order = items
 
         self.top_level_candidates = [comment for sort_val, comment in candidates
-            if depth.get(comment, 0) == 0]
+            if comment_tree.depth.get(comment, 0) == 0]
         self.comments = Comment._byID(
             items, data=True, return_dict=False, stale=self.stale)
         timer.intermediate("lookup_comments")
 
         self.timer = timer
-        self.cid_tree = cid_tree
-        self.depth = depth
-        self.num_children = num_children
+        self.comment_tree = comment_tree
         self.offset_depth = offset_depth
         self.dont_collapse = dont_collapse
 
     def _make_wrapped_tree(self):
         timer = self.timer
         comments = self.comments
-        cid_tree = self.cid_tree
+        comment_tree = self.comment_tree
         top_level_candidates = self.top_level_candidates
-        depth = self.depth
-        num_children = self.num_children
         offset_depth = self.offset_depth
         dont_collapse = self.dont_collapse
         timer.intermediate("waiting")
@@ -1016,17 +1010,9 @@ class CommentBuilder(Builder):
             timer.stop()
             return []
 
-        wrapped = self.wrap_items(comments)
+        wrapped = self.wrap_items(comments, comment_tree, offset_depth)
         timer.intermediate("wrap_comments")
         wrapped_by_id = {comment._id: comment for comment in wrapped}
-
-        if self.children:
-            # rewrite the parent links to use anchor tags
-            for comment_id in self.children:
-                if comment_id in wrapped_by_id:
-                    item = wrapped_by_id[comment_id]
-                    if item.parent_id:
-                        item.parent_permalink = '#' + to36(item.parent_id)
 
         final = []
 
@@ -1044,14 +1030,10 @@ class CommentBuilder(Builder):
         max_relation_walks = g.max_comment_parent_walk
         for comment in wrapped:
             # skip deleted comments with no children
-            if (comment.deleted and not cid_tree.has_key(comment._id)
+            if (comment.deleted and not comment_tree.tree.has_key(comment._id)
                 and not self.show_deleted):
                 comment.hidden_completely = True
                 continue
-
-            comment.num_children = num_children[comment._id]
-            comment.depth = depth[comment._id] - offset_depth
-            comment.edits_visible = self.edits_visible
 
             parent = wrapped_by_id.get(comment.parent_id)
 
@@ -1159,7 +1141,7 @@ class CommentBuilder(Builder):
                  # can't have any children
                 continue
 
-            children = cid_tree.get(comment_id, ())
+            children = comment_tree.tree.get(comment_id, ())
             missing_children = [
                 child for child in children if child not in visible_comments]
 
@@ -1168,8 +1150,9 @@ class CommentBuilder(Builder):
 
             visible_children = (
                 child for child in children if child in visible_comments)
-            visible_count = sum(
-                1 + num_children[child] for child in visible_children)
+            visible_count = sum(1 + comment_tree.num_children[child]
+                for child in visible_children
+            )
             missing_count = comment.num_children - visible_count
             child_depth = comment.depth + 1
 
@@ -1193,13 +1176,29 @@ class CommentBuilder(Builder):
             mc = MoreChildren(self.link, self.sort, depth=0, parent_id=None)
             mc.children.extend(top_level_candidates)
             w = Wrapped(mc)
-            w.count = sum(1 + num_children[comment]
+            w.count = sum(1 + comment_tree.num_children[comment]
                           for comment in top_level_candidates)
             final.append(w)
 
         timer.intermediate("build_morechildren")
         timer.stop()
         return final
+
+    def wrap_items(self, comments, comment_tree, offset_depth):
+        wrapped = Builder.wrap_items(self, comments)
+
+        for comment in wrapped:
+            comment.num_children = comment_tree.num_children[comment._id]
+            comment.depth = comment_tree.depth[comment._id] - offset_depth
+            comment.edits_visible = self.edits_visible
+
+            if self.children:
+                # rewrite the parent links to use anchor tags because the parent
+                # is on the page but wasn't included in this batch
+                if comment.parent_id:
+                    comment.parent_permalink = '#' + to36(comment.parent_id)
+
+        return wrapped
 
     def item_iter(self, a):
         for i in a:
