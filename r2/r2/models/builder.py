@@ -789,12 +789,20 @@ class WikiRecentRevisionBuilder(WikiRevisionBuilder):
         return item_age.days >= wiki.WIKI_RECENT_DAYS
 
 
-def add_child_listing(parent, *things):
-    l = Listing(None, nextprev=None)
-    l.things = list(things)
-    parent.child = Wrapped(l)
-    parent_name = parent._fullname if not parent.deleted else "deleted"
-    parent.child.parent_name = parent_name
+def make_child_listing():
+    l = Listing(builder=None, nextprev=None)
+    l.things = []
+    child = Wrapped(l)
+    return child
+
+
+def add_to_child_listing(parent, child_thing):
+    if not hasattr(parent, 'child'):
+        child = make_child_listing()
+        child.parent_name = "deleted" if parent.deleted else parent._fullname
+        parent.child = child
+
+    parent.child.things.append(child_thing)
 
 
 class CommentBuilder(Builder):
@@ -894,7 +902,6 @@ class CommentBuilder(Builder):
         parents = comment_tree.parents
         num_children = comment_tree.num_children
 
-        more_recursions = {}
         dont_collapse = []
         candidates = []
         offset_depth = 0
@@ -966,26 +973,15 @@ class CommentBuilder(Builder):
                 continue
 
             comment_depth = depth[comment_id] - offset_depth
-            if comment_depth < self.max_depth:
-                items.append(comment_id)
+            if comment_depth >= self.max_depth:
+                continue
 
-                # add children
-                if comment_id in cid_tree:
-                    children = cid_tree[comment_id]
-                    self.update_candidates(candidates, sorter, children)
+            items.append(comment_id)
 
-            elif (self.continue_this_thread and
-                  parents.get(comment_id) is not None):
-                # the comment is too deep to add, so add a MoreRecursion for
-                # its parent
-                parent_id = parents[comment_id]
-                if parent_id not in more_recursions:
-                    w = Wrapped(MoreRecursion(self.link, depth=0,
-                                              parent_id=parent_id))
-                else:
-                    w = more_recursions[parent_id]
-                w.children.append(comment_id)
-                more_recursions[parent_id] = w
+            child_depth = comment_depth + 1
+            if child_depth < self.max_depth and comment_id in cid_tree:
+                children = cid_tree[comment_id]
+                self.update_candidates(candidates, sorter, children)
 
         timer.intermediate("pick_comments")
 
@@ -1002,7 +998,6 @@ class CommentBuilder(Builder):
         self.cid_tree = cid_tree
         self.depth = depth
         self.num_children = num_children
-        self.more_recursions = more_recursions
         self.offset_depth = offset_depth
         self.dont_collapse = dont_collapse
 
@@ -1013,7 +1008,6 @@ class CommentBuilder(Builder):
         top_level_candidates = self.top_level_candidates
         depth = self.depth
         num_children = self.num_children
-        more_recursions = self.more_recursions
         offset_depth = self.offset_depth
         dont_collapse = self.dont_collapse
         timer.intermediate("waiting")
@@ -1056,6 +1050,7 @@ class CommentBuilder(Builder):
                 continue
 
             comment.num_children = num_children[comment._id]
+            comment.depth = depth[comment._id] - offset_depth
             comment.edits_visible = self.edits_visible
 
             parent = wrapped_by_id.get(comment.parent_id)
@@ -1074,7 +1069,7 @@ class CommentBuilder(Builder):
                 #
                 # Note: we can't use |= because 'comment.prevent_collapse'
                 # might be None.
-                comment.prevent_collapse = (depth[comment._id] == 0 or  # (1)
+                comment.prevent_collapse = (comment.depth == 0 or  # (1)
                         comment.author_id in special_responder_ids or  # (2)
                         (parent and
                              parent.author_id in special_responder_ids) or # (4)
@@ -1124,23 +1119,24 @@ class CommentBuilder(Builder):
                 # And don't add it to the tree.
                 continue
 
+            if (self.continue_this_thread and
+                    self.load_more and
+                    comment.depth == self.max_depth - 1 and
+                    comment.num_children > 0):
+                # only comments with depth < max_depth are visible
+                # if this comment is as deep as we can go and has children then
+                # we need to insert a MoreRecursion child
+                mr = MoreRecursion(self.link, depth=0, parent_id=comment._id)
+                w = Wrapped(mr)
+                add_to_child_listing(comment, w)
+
             # add the comment as a child of its parent or to the top level of
             # the tree if it has no parent
             parent = wrapped_by_id.get(comment.parent_id)
             if parent:
-                if not hasattr(parent, 'child'):
-                    add_child_listing(parent, comment)
-                else:
-                    parent.child.things.append(comment)
+                add_to_child_listing(parent, comment)
             else:
                 final.append(comment)
-
-        for parent_id, more_recursion in more_recursions.iteritems():
-            if parent_id not in wrapped_by_id:
-                continue
-
-            parent = wrapped_by_id[parent_id]
-            add_child_listing(parent, more_recursion)
 
         timer.intermediate("build_comments")
 
@@ -1149,40 +1145,40 @@ class CommentBuilder(Builder):
             return final
 
         # build MoreChildren for visible comments
+        max_depth_for_children = self.max_depth - 1
         visible_comments = wrapped_by_id.keys()
-        for visible_id in visible_comments:
-            if visible_id in more_recursions:
-                # don't add a MoreChildren if we already have a MoreRecursion
+        for comment_id in visible_comments:
+            comment = wrapped_by_id[comment_id]
+
+            if getattr(comment, 'hidden_completely', False):
                 continue
 
-            children = cid_tree.get(visible_id, ())
-            missing_children = [child for child in children
-                                      if child not in visible_comments]
-            if missing_children:
-                visible_children = (child for child in children
-                                          if child in visible_comments)
-                visible_count = sum(1 + num_children[child]
-                                    for child in visible_children)
-                missing_count = num_children[visible_id] - visible_count
-                missing_depth = depth.get(visible_id, 0) + 1 - offset_depth
+            if comment.depth >= max_depth_for_children:
+                 # any comments at this depth can only have MoreRecursions,
+                 # which have already been added. any comments deeper than this
+                 # can't have any children
+                continue
 
-                if missing_depth < self.max_depth:
-                    mc = MoreChildren(self.link, self.sort, depth=missing_depth,
-                                      parent_id=visible_id)
-                    mc.children.extend(missing_children)
-                    w = Wrapped(mc)
-                    w.count = missing_count
-                else:
-                    mr = MoreRecursion(self.link, depth=missing_depth,
-                                       parent_id=visible_id)
-                    w = Wrapped(mr)
+            children = cid_tree.get(comment_id, ())
+            missing_children = [
+                child for child in children if child not in visible_comments]
 
-                # attach the MoreChildren
-                parent = wrapped_by_id[visible_id]
-                if hasattr(parent, 'child'):
-                    parent.child.things.append(w)
-                else:
-                    add_child_listing(parent, w)
+            if not missing_children:
+                continue
+
+            visible_children = (
+                child for child in children if child in visible_comments)
+            visible_count = sum(
+                1 + num_children[child] for child in visible_children)
+            missing_count = comment.num_children - visible_count
+            child_depth = comment.depth + 1
+
+            mc = MoreChildren(
+                self.link, self.sort, depth=child_depth, parent_id=comment_id)
+            mc.children.extend(missing_children)
+            w = Wrapped(mc)
+            w.count = missing_count
+            add_to_child_listing(comment, w)
 
         if isinstance(self.sort, operators.shuffled):
             # If we have a sticky comment, do not shuffle the first element
@@ -1338,8 +1334,9 @@ class MessageBuilder(Builder):
                 else:
                     i = -1
                 # in flat view replace collapsed chain with MoreMessages
-                add_child_listing(parent)
-                parent = Wrapped(MoreMessages(parent, parent.child))
+                child = make_child_listing()
+                child.parent_name = "deleted" if parent.deleted else parent._fullname
+                parent = Wrapped(MoreMessages(parent, child))
                 children = children[i:]
 
             for child in sorted(children, key=lambda child: child._id):
@@ -1369,10 +1366,8 @@ class MessageBuilder(Builder):
                     substitute_parents[child._id] = child_parent_id
                     child_parent = wrapped[child_parent_id]
 
-                if not hasattr(child_parent, "child"):
-                    add_child_listing(child_parent)
                 child.is_child = True
-                child_parent.child.things.append(child)
+                add_to_child_listing(child_parent, child)
 
             for child in children:
                 # look over the children again to decide whether they can be
