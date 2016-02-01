@@ -823,6 +823,45 @@ class CommentBuilder(Builder):
         self.comments = None
         Builder.__init__(self, **kw)
 
+    @classmethod
+    def get_path_to_comment(cls, comment, context, comment_tree):
+        """Return the path back to top level from comment.
+
+        Restrict the path to a maximum of `context` levels deep."""
+
+        comment_id = comment._id
+        path = []
+        while comment_id and len(path) <= context:
+            path.append(comment_id)
+            comment_id = comment_tree.parents[comment_id]
+
+        # reverse the list so the first element is the most root level comment
+        path.reverse()
+        return path
+
+    def modify_comment_tree(self, comment_tree):
+        if self.comment and not self.comment._id in comment_tree.depth:
+            g.log.error("Hack - self.comment (%d) not in depth. Defocusing..."
+                        % self.comment._id)
+            self.comment = None
+
+        if self.comment:
+            path = self.get_path_to_comment(
+                self.comment, self.context, comment_tree)
+
+            # work through the path in reverse starting with the requested comment
+            for comment_id in reversed(path):
+                # rewrite parent's tree so it leads only to the requested comment
+                parent_id = comment_tree.parents[comment_id]
+                comment_tree.tree[parent_id] = [comment_id]
+
+                # rewrite parent's num_children to count only this branch
+                if parent_id is not None:
+                    branch_num_children = comment_tree.num_children[comment_id]
+                    comment_tree.num_children[parent_id] = branch_num_children + 1
+
+        return comment_tree
+
     def update_candidates(self, candidates, sorter, to_add=None):
         for comment in (comment for comment in tup(to_add)
                                 if comment in sorter):
@@ -848,11 +887,7 @@ class CommentBuilder(Builder):
 
         timer.intermediate("load_storage")
 
-        if self.comment and not self.comment._id in comment_tree.depth:
-            g.log.error("Hack - self.comment (%d) not in depth. Defocusing..."
-                        % self.comment._id)
-            self.comment = None
-
+        comment_tree = self.modify_comment_tree(comment_tree)
         cids = comment_tree.cids
         cid_tree = comment_tree.tree
         depth = comment_tree.depth
@@ -869,42 +904,27 @@ class CommentBuilder(Builder):
             # requested specific child comments
             children = [cid for cid in self.children if cid in cids]
             self.update_candidates(candidates, sorter, children)
-            dont_collapse.extend(comment for sort_val, comment in candidates)
+            dont_collapse = [comment for sort_val, comment in candidates]
             # BUG: current viewing depth isn't considered, so requesting
             # children of a deep comment can return nothing. the fix is to send
             # the current offset_depth along with the MoreChildren request
 
         elif self.comment:
             # requested the tree from a specific comment
+            path = self.get_path_to_comment(
+                self.comment, self.context, comment_tree)
 
-            # construct path back to top level from this comment, a maximum of
-            # `context` levels
-            comment = self.comment._id
-            path = []
-            while comment and len(path) <= self.context:
-                path.append(comment)
-                comment = parents[comment]
+            # don't collapse requested comment or any of its ancestors
+            dont_collapse = list(path)
 
-            dont_collapse.extend(path)
-
-            # work through the path starting with the requested comment
-            # (path is requested comment, its parent, its grandparent, etc.)
-            for comment_id in path:
-                # rewrite parent's tree so it leads only to the requested comment
-                parent_id = parents[comment_id]
-                cid_tree[parent_id] = [comment_id]
-
-                # rewrite parent's num_children to count only this branch
-                if parent_id is not None:
-                    branch_num_children = num_children[comment_id]
-                    num_children[parent_id] = branch_num_children + 1
-
-            # start building comment tree from earliest comment
-            self.update_candidates(candidates, sorter, path[-1])
+            # get_path_to_comment returns path ordered from ancestor to
+            # selected comment
+            root_comment = path[0]
+            self.update_candidates(candidates, sorter, root_comment)
 
             # set offset_depth because we may not be at the top level and can
             # show deeper levels
-            offset_depth = depth.get(path[-1], 0)
+            offset_depth = depth.get(root_comment, 0)
 
         else:
             # full tree requested, add all top level comments as candidates to
