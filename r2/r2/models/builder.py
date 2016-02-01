@@ -803,17 +803,23 @@ class CommentBuilder(Builder):
                  max_depth=MAX_RECURSION, edits_visible=True, num=None,
                  show_deleted=False, **kw):
         self.link = link
+        self.sort = sort
+        self.rev_sort = isinstance(sort, operators.desc)
+
+        # arguments for permalink mode
         self.comment = comment
-        self.children = children
         self.context = context or 0
+
+        # argument for morechildren mode
+        self.children = children
+
         self.load_more = load_more
         self.max_depth = max_depth
         self.show_deleted = show_deleted or c.user_is_admin
         self.edits_visible = edits_visible
         self.num = num
         self.continue_this_thread = continue_this_thread
-        self.sort = sort
-        self.rev_sort = isinstance(sort, operators.desc)
+
         self.comments = None
         Builder.__init__(self, **kw)
 
