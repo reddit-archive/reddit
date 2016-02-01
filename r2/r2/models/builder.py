@@ -1164,6 +1164,14 @@ class CommentBuilder(Builder):
                 else:
                     add_child_listing(parent, w)
 
+        if isinstance(self.sort, operators.shuffled):
+            # If we have a sticky comment, do not shuffle the first element
+            # of the list.
+            if len(final) > 0 and final[0]._id == self.link.sticky_comment_id:
+                shuffle_slice(final, 1)
+            else:
+                shuffle(final)
+
         # build MoreChildren for missing root level comments
         if top_level_candidates:
             mc = MoreChildren(self.link, self.sort, depth=0, parent_id=None)
@@ -1172,14 +1180,6 @@ class CommentBuilder(Builder):
             w.count = sum(1 + num_children[comment]
                           for comment in top_level_candidates)
             final.append(w)
-
-        if isinstance(self.sort, operators.shuffled):
-            # If we have a sticky comment, do not shuffle the first element
-            # of the list.
-            if len(final) > 0 and final[0]._id == self.link.sticky_comment_id:
-                shuffle_slice(final, 1)
-            else:
-                shuffle(final)
 
         timer.intermediate("build_morechildren")
         timer.stop()
