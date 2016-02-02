@@ -198,52 +198,6 @@ def get_comment_scores(link, sort, comment_ids, timer):
     return scores_by_id
 
 
-def link_comments_and_sort(link, sort):
-    """Fetch and sort the comments on a post.
-
-    Arguments:
-
-    * link -- the Link whose comments we want to sort.
-    * sort -- a string indicating the attribute on the comments to use for
-      generating sort values.
-
-    Returns a tuple in the form (cids, cid_tree, depth, parents, sorter), where
-    the values are as follows:
-
-    * cids -- a list of the ids of all comments in the thread.
-    * cid_tree -- a dictionary from parent cid to children cids.
-    * depth -- a dictionary from cid to the depth that comment resides in the
-      tree. A top-level comment has depth 0.
-    * parents -- a dictionary from child cid to parent cid.
-    * num_children -- a dictionary from cid to total descendant count
-    * sorter -- a dictionary from cid to a numeric value to be used for
-      sorting.
-    """
-
-    # This has grown sort of organically over time. Right now the
-    # cache of the comments tree consists in two keys:
-    # 1. The comments_key: comment_tree
-    #    given:
-    #      comment_tree =:= dict(comment_id -> [comment_id])
-    # 2. The comments_sorts keys =:= dict(comment_id36 -> float).
-    #    These are represented by a Cassandra model
-    #    (CommentScoresByLink) rather than a permacache key. One of
-    #    these exists for each sort (hot, new, etc)
-
-    timer = g.stats.get_timer('comment_tree.get.%s' % link.comment_tree_version)
-    timer.start()
-
-    comment_tree = CommentTree.by_link(link, timer)
-    cids = comment_tree.cids
-
-    scores_by_id = get_comment_scores(link, sort, cids, timer)
-    timer.intermediate('get_scores')
-    timer.stop()
-
-    return (comment_tree.cids, comment_tree.tree, comment_tree.depth,
-            comment_tree.parents, comment_tree.num_children, scores_by_id)
-
-
 def rebuild_comment_tree(link, timer):
     with CommentTree.mutation_context(link, timeout=180):
         timer.intermediate('lock')

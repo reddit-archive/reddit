@@ -24,9 +24,9 @@
 from collections import namedtuple, defaultdict
 from mock import MagicMock
 
-from r2.lib import comment_tree
 from r2.lib.utils.comment_tree_utils import get_tree_details, calc_num_children
 from r2.lib.db import operators
+from r2.models import builder
 from r2.models import Comment
 from r2.models.builder import CommentBuilder
 from r2.models.comment_tree import CommentTree
@@ -97,7 +97,7 @@ class CommentOrderTest(RedditTestCase):
 
         comment_scores = make_comment_scores()
         self.autopatch(
-            comment_tree, "get_comment_scores", return_value=comment_scores)
+            builder, "get_comment_scores", return_value=comment_scores)
 
         comment_tree_for_link = make_comment_tree(self.link)
         self.autopatch(

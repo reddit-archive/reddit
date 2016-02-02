@@ -38,7 +38,7 @@ from r2.config.extensions import API_TYPES, RSS_TYPES
 from r2.lib import hooks
 from r2.lib.comment_tree import (
     conversation,
-    link_comments_and_sort,
+    get_comment_scores,
     moderator_messages,
     sr_conversation,
     subreddit_messages,
@@ -65,6 +65,7 @@ from r2.models import (
     wiki,
 )
 from r2.models.admintools import ip_span
+from r2.models.comment_tree import CommentTree
 from r2.models.flair import Flair
 from r2.models.listing import Listing
 from r2.models.vote import Vote
@@ -839,14 +840,27 @@ class CommentBuilder(Builder):
     def _get_comments(self):
         timer = g.stats.get_timer("CommentBuilder.get_items")
         timer.start()
-        r = link_comments_and_sort(self.link, self.sort.col)
-        cids, cid_tree, depth, parents, num_children, sorter = r
+
+        timer_name = 'comment_tree.get.%s' % self.link.comment_tree_version
+        with g.stats.get_timer(timer_name) as comment_tree_timer:
+            comment_tree = CommentTree.by_link(self.link, comment_tree_timer)
+            sort_name = self.sort.col
+            sorter = get_comment_scores(
+                self.link, sort_name, comment_tree.cids, comment_tree_timer)
+            comment_tree_timer.intermediate('get_scores')
+
         timer.intermediate("load_storage")
 
-        if self.comment and not self.comment._id in depth:
+        if self.comment and not self.comment._id in comment_tree.depth:
             g.log.error("Hack - self.comment (%d) not in depth. Defocusing..."
                         % self.comment._id)
             self.comment = None
+
+        cids = comment_tree.cids
+        cid_tree = comment_tree.tree
+        depth = comment_tree.depth
+        parents = comment_tree.parents
+        num_children = comment_tree.num_children
 
         more_recursions = {}
         dont_collapse = []
