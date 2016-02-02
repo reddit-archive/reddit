@@ -20,9 +20,8 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from copy import deepcopy
-from itertools import izip
 import datetime
 import heapq
 from random import shuffle
@@ -65,7 +64,7 @@ from r2.models import (
     wiki,
 )
 from r2.models.admintools import ip_span
-from r2.models.comment_tree import CommentTree
+from r2.models.comment_tree import CommentTree, InconsistentCommentTreeError
 from r2.models.flair import Flair
 from r2.models.listing import Listing
 from r2.models.vote import Vote
@@ -789,47 +788,166 @@ class WikiRecentRevisionBuilder(WikiRevisionBuilder):
         return item_age.days >= wiki.WIKI_RECENT_DAYS
 
 
-def make_child_listing():
-    l = Listing(builder=None, nextprev=None)
-    l.things = []
-    child = Wrapped(l)
-    return child
+CommentTuple = namedtuple("CommentTuple",
+    ["comment_id", "depth", "parent_id", "num_children", "child_ids"])
 
 
-def add_to_child_listing(parent, child_thing):
-    if not hasattr(parent, 'child'):
-        child = make_child_listing()
-        child.parent_name = "deleted" if parent.deleted else parent._fullname
-        parent.child = child
-
-    parent.child.things.append(child_thing)
+MissingChildrenTuple = namedtuple("MissingChildrenTuple",
+    ["num_children", "child_ids"])
 
 
-class CommentBuilder(Builder):
-    def __init__(self, link, sort, comment=None, children=None, context=None,
-                 load_more=True, continue_this_thread=True,
-                 max_depth=MAX_RECURSION, edits_visible=True, num=None,
-                 show_deleted=False, **kw):
+class CommentOrdererBase(object):
+    def __init__(self, link, sort, max_comments, max_depth, timer):
         self.link = link
         self.sort = sort
         self.rev_sort = isinstance(sort, operators.desc)
-
-        # arguments for permalink mode
-        self.comment = comment
-        self.context = context or 0
-
-        # argument for morechildren mode
-        self.children = children
-
-        self.load_more = load_more
+        self.max_comments = max_comments
         self.max_depth = max_depth
-        self.show_deleted = show_deleted or c.user_is_admin
-        self.edits_visible = edits_visible
-        self.num = num
-        self.continue_this_thread = continue_this_thread
+        self.timer = timer
 
-        self.comments = None
-        Builder.__init__(self, **kw)
+    def get_comment_order(self):
+        """Return a list of CommentTuples in tree insertion order.
+
+        Also add a MissingChildrenTuple to the end of the list if there
+        are missing root level comments.
+
+        """
+
+        timer_name = 'comment_tree.get.%s' % self.link.comment_tree_version
+        with g.stats.get_timer(timer_name) as comment_tree_timer:
+            comment_tree = CommentTree.by_link(self.link, comment_tree_timer)
+            sort_name = self.sort.col
+            sorter = get_comment_scores(
+                self.link, sort_name, comment_tree.cids, comment_tree_timer)
+            comment_tree_timer.intermediate('get_scores')
+
+        self.timer.intermediate("load_storage")
+
+        comment_tree = self.modify_comment_tree(comment_tree)
+        self.timer.intermediate("modify_comment_tree")
+
+        initial_candidates, offset_depth = self.get_initial_candidates(comment_tree)
+
+        comment_tuples = self.get_initial_comment_list(comment_tree)
+        if comment_tuples:
+            # some comments have bypassed the sorting/inserting process, remove
+            # them from `initial_candidates` so they won't be inserted again
+            for comment_tuple in comment_tuples:
+                try:
+                    initial_candidates.remove(comment_tuple.comment_id)
+                except ValueError:
+                    pass
+
+        candidates = []
+        self.update_candidates(candidates, sorter, initial_candidates)
+        self.timer.intermediate("pick_candidates")
+
+        # choose which comments to show
+        while candidates and len(comment_tuples) < self.max_comments:
+            sort_val, comment_id = heapq.heappop(candidates)
+            if comment_id not in comment_tree.cids:
+                continue
+
+            comment_depth = comment_tree.depth[comment_id] - offset_depth
+            if comment_depth >= self.max_depth:
+                continue
+
+            child_ids = comment_tree.tree.get(comment_id, [])
+
+            comment_tuples.append(CommentTuple(
+                comment_id=comment_id,
+                depth=comment_depth,
+                parent_id=comment_tree.parents[comment_id],
+                num_children=comment_tree.num_children[comment_id],
+                child_ids=child_ids,
+            ))
+
+            child_depth = comment_depth + 1
+            if child_depth < self.max_depth:
+                self.update_candidates(candidates, sorter, child_ids)
+
+        self.timer.intermediate("pick_comments")
+
+        # add all not-selected top level comments to the comment_tuples list
+        # so we can make MoreChildren for them later
+        top_level_not_visible = {
+            comment_id for sort_val, comment_id in candidates
+            if comment_tree.depth.get(comment_id, 0) - offset_depth == 0
+        }
+
+        if top_level_not_visible:
+            num_children_not_visible = sum(
+                1 + comment_tree.num_children[comment_id]
+                for comment_id in top_level_not_visible
+            )
+            comment_tuples.append(MissingChildrenTuple(
+                num_children=num_children_not_visible,
+                child_ids=top_level_not_visible,
+            ))
+
+        self.timer.intermediate("handle_morechildren")
+        return comment_tuples
+
+    def modify_comment_tree(self, comment_tree):
+        """Potentially rewrite parts of comment_tree."""
+        return comment_tree
+
+    def get_initial_candidates(self, comment_tree):
+        """Return comments to start building the tree from and offset_depth."""
+        raise NotImplementedError
+
+    def get_initial_comment_list(self, comment_tree):
+        """Return the starting list of CommentTuples, possibly inserting some
+        and bypassing the regular sorting/inserting process."""
+        return []
+
+    def update_candidates(self, candidates, sorter, to_add=None):
+        for comment in (comment for comment in tup(to_add)
+                                if comment in sorter):
+            sort_val = -sorter[comment] if self.rev_sort else sorter[comment]
+            heapq.heappush(candidates, (sort_val, comment))
+
+
+class CommentOrderer(CommentOrdererBase):
+    def get_initial_candidates(self, comment_tree):
+        """Build the tree starting from all root level comments."""
+        initial_candidates = comment_tree.tree.get(None, [])
+        if initial_candidates:
+            offset_depth = min(comment_tree.depth[comment_id]
+                for comment_id in initial_candidates)
+        else:
+            offset_depth = 0
+        return initial_candidates, offset_depth
+
+    def get_initial_comment_list(self, comment_tree):
+        """Promote the sticky comment, if any."""
+        comment_tuples = []
+
+        if self.link.sticky_comment_id:
+            root_level_comments = comment_tree.tree.get(None, [])
+            sticky_comment_id = self.link.sticky_comment_id
+            if sticky_comment_id in root_level_comments:
+                comment_tuples.append(CommentTuple(
+                    comment_id=sticky_comment_id,
+                    depth=0,
+                    parent_id=None,
+                    num_children=comment_tree.num_children[sticky_comment_id],
+                    child_ids=comment_tree.tree.get(sticky_comment_id, []),
+                ))
+            else:
+                g.log.warning("Non-top-level sticky comment detected on "
+                              "link %r.", self.link)
+
+        return comment_tuples
+
+
+class PermalinkCommentOrderer(CommentOrdererBase):
+    def __init__(self, link, sort, max_comments, max_depth, timer, comment,
+                 context):
+        CommentOrdererBase.__init__(
+            self, link, sort, max_comments, max_depth, timer)
+        self.comment = comment
+        self.context = context
 
     @classmethod
     def get_path_to_comment(cls, comment, context, comment_tree):
@@ -848,33 +966,112 @@ class CommentBuilder(Builder):
         return path
 
     def modify_comment_tree(self, comment_tree):
-        if self.comment and not self.comment._id in comment_tree.depth:
-            g.log.error("Hack - self.comment (%d) not in depth. Defocusing..."
-                        % self.comment._id)
-            self.comment = None
+        if self.comment._id not in comment_tree.depth:
+            raise InconsistentCommentTreeError
 
-        if self.comment:
-            path = self.get_path_to_comment(
-                self.comment, self.context, comment_tree)
+        path = self.get_path_to_comment(
+            self.comment, self.context, comment_tree)
 
-            # work through the path in reverse starting with the requested comment
-            for comment_id in reversed(path):
-                # rewrite parent's tree so it leads only to the requested comment
-                parent_id = comment_tree.parents[comment_id]
-                comment_tree.tree[parent_id] = [comment_id]
+        # work through the path in reverse starting with the requested comment
+        for comment_id in reversed(path):
+            # rewrite parent's tree so it leads only to the requested comment
+            parent_id = comment_tree.parents[comment_id]
+            comment_tree.tree[parent_id] = [comment_id]
 
-                # rewrite parent's num_children to count only this branch
-                if parent_id is not None:
-                    branch_num_children = comment_tree.num_children[comment_id]
-                    comment_tree.num_children[parent_id] = branch_num_children + 1
+            # rewrite parent's num_children to count only this branch
+            if parent_id is not None:
+                branch_num_children = comment_tree.num_children[comment_id]
+                comment_tree.num_children[parent_id] = branch_num_children + 1
 
         return comment_tree
 
-    def update_candidates(self, candidates, sorter, to_add=None):
-        for comment in (comment for comment in tup(to_add)
-                                if comment in sorter):
-            sort_val = -sorter[comment] if self.rev_sort else sorter[comment]
-            heapq.heappush(candidates, (sort_val, comment))
+    def get_initial_candidates(self, comment_tree):
+        """Start the tree from the first ancestor of requested comment."""
+        path = self.get_path_to_comment(
+            self.comment, self.context, comment_tree)
+
+        # get_path_to_comment returns path ordered from ancestor to
+        # selected comment
+        root_comment = path[0]
+        initial_candidates = [root_comment]
+        offset_depth = comment_tree.depth[root_comment]
+        return initial_candidates, offset_depth
+
+
+class ChildrenCommentOrderer(CommentOrdererBase):
+    def __init__(self, link, sort, max_comments, max_depth, timer, children):
+        CommentOrdererBase.__init__(
+            self, link, sort, max_comments, max_depth, timer)
+        self.children = children
+
+    def get_initial_candidates(self, comment_tree):
+        """Start the tree from the requested children."""
+
+        children = [
+            comment_id for comment_id in self.children
+            if comment_id in comment_tree.depth
+        ]
+
+        if children:
+            children_depth = min(
+                comment_tree.depth[comment_id] for comment_id in children)
+
+            children = [
+                comment_id for comment_id in children
+                if comment_tree.depth[comment_id] == children_depth
+            ]
+
+        initial_candidates = children
+
+        # BUG: current viewing depth isn't considered, so requesting children
+        # of a deep comment can return nothing. the fix is to send the current
+        # offset_depth along with the MoreChildren request
+        offset_depth = 0
+
+        return initial_candidates, offset_depth
+
+
+def make_child_listing():
+    l = Listing(builder=None, nextprev=None)
+    l.things = []
+    child = Wrapped(l)
+    return child
+
+
+def add_to_child_listing(parent, child_thing):
+    if not hasattr(parent, 'child'):
+        child = make_child_listing()
+        child.parent_name = "deleted" if parent.deleted else parent._fullname
+        parent.child = child
+
+    parent.child.things.append(child_thing)
+
+
+class CommentBuilder(Builder):
+    """Build (lookup and wrap) comments for display."""
+    def __init__(self, link, sort, comment=None, children=None, context=None,
+                 load_more=True, continue_this_thread=True,
+                 max_depth=MAX_RECURSION, edits_visible=True, num=None,
+                 show_deleted=False, **kw):
+        self.link = link
+        self.sort = sort
+
+        # arguments for permalink mode
+        self.comment = comment
+        self.context = context or 0
+
+        # argument for morechildren mode
+        self.children = children
+
+        self.load_more = load_more
+        self.max_depth = max_depth
+        self.show_deleted = show_deleted or c.user_is_admin
+        self.edits_visible = edits_visible
+        self.num = num
+        self.continue_this_thread = continue_this_thread
+
+        self.comments = None
+        Builder.__init__(self, **kw)
 
     def get_items(self):
         if self.comments is None:
@@ -882,214 +1079,108 @@ class CommentBuilder(Builder):
         return self._make_wrapped_tree()
 
     def _get_comments(self):
-        timer = g.stats.get_timer("CommentBuilder.get_items")
-        timer.start()
-
-        timer_name = 'comment_tree.get.%s' % self.link.comment_tree_version
-        with g.stats.get_timer(timer_name) as comment_tree_timer:
-            comment_tree = CommentTree.by_link(self.link, comment_tree_timer)
-            sort_name = self.sort.col
-            sorter = get_comment_scores(
-                self.link, sort_name, comment_tree.cids, comment_tree_timer)
-            comment_tree_timer.intermediate('get_scores')
-
-        timer.intermediate("load_storage")
-
-        comment_tree = self.modify_comment_tree(comment_tree)
-
-        dont_collapse = []
-        candidates = []
-        offset_depth = 0
-        items = []
-
-        if self.children:
-            # requested specific child comments
-            children = [
-                comment_id for comment_id in self.children
-                if comment_id in comment_tree.cids
-            ]
-            self.update_candidates(candidates, sorter, children)
-            dont_collapse = [comment for sort_val, comment in candidates]
-            # BUG: current viewing depth isn't considered, so requesting
-            # children of a deep comment can return nothing. the fix is to send
-            # the current offset_depth along with the MoreChildren request
-
-        elif self.comment:
-            # requested the tree from a specific comment
-            path = self.get_path_to_comment(
-                self.comment, self.context, comment_tree)
-
-            # don't collapse requested comment or any of its ancestors
-            dont_collapse = list(path)
-
-            # get_path_to_comment returns path ordered from ancestor to
-            # selected comment
-            root_comment = path[0]
-            self.update_candidates(candidates, sorter, root_comment)
-
-            # set offset_depth because we may not be at the top level and can
-            # show deeper levels
-            offset_depth = comment_tree.depth.get(root_comment, 0)
-
-        else:
-            # full tree requested, add all top level comments as candidates to
-            # be considered for display
-            top_level_comments = comment_tree.tree.get(None, [])
-
-            # If we have a sticky comment and we're viewing top level comments,
-            # we shove the sticky comment in the top and remove it from the
-            # remainder of the top level comments list so it's displayed first.
-            if self.link.sticky_comment_id:
-                try:
-                    # Remove the sticky comment from the candidates list so it
-                    # isn't displayed twice
-                    top_level_comments.remove(self.link.sticky_comment_id)
-                except ValueError:
-                    g.log.warning("Non-top-level sticky comment detected on "
-                                  "link %r.", self.link)
-                    pass
-                else:
-                    # Make the sticky comment the first item, meaning it is the
-                    # first comment displayed regardless of sort score.
-                    items.append(self.link.sticky_comment_id)
-
-                    # Don't add its children as candidates - we don't want to
-                    # show any replies to the sticky comment when viewing a top
-                    # level list. This will still render the "load more
-                    # comments" link for viewing its children. When viewing
-                    # this comment as non-top-level (for example a permalink)
-                    # sticky comment children will render normally.
-
-            self.update_candidates(candidates, sorter, top_level_comments)
-
-        timer.intermediate("pick_candidates")
-
-        # choose which comments to show
-        while (self.num is None or len(items) < self.num) and candidates:
-            sort_val, comment_id = heapq.heappop(candidates)
-            if comment_id not in comment_tree.cids:
-                continue
-
-            comment_depth = comment_tree.depth[comment_id] - offset_depth
-            if comment_depth >= self.max_depth:
-                continue
-
-            items.append(comment_id)
-
-            child_depth = comment_depth + 1
-            if child_depth < self.max_depth and comment_id in comment_tree.tree:
-                children = comment_tree.tree[comment_id]
-                self.update_candidates(candidates, sorter, children)
-
-        timer.intermediate("pick_comments")
-
-        # TEMP: set the order as an attribute so it can be accessed by tests
-        self.comment_order = items
-
-        self.top_level_candidates = [comment for sort_val, comment in candidates
-            if comment_tree.depth.get(comment, 0) == 0]
+        self.load_comment_order()
+        comment_ids = {
+            comment_tuple.comment_id
+            for comment_tuple in self.ordered_comment_tuples
+        }
         self.comments = Comment._byID(
-            items, data=True, return_dict=False, stale=self.stale)
-        timer.intermediate("lookup_comments")
+            comment_ids, data=True, return_dict=False, stale=self.stale)
+        self.timer.intermediate("lookup_comments")
 
-        self.timer = timer
-        self.comment_tree = comment_tree
-        self.offset_depth = offset_depth
-        self.dont_collapse = dont_collapse
+    def load_comment_order(self):
+        self.timer = g.stats.get_timer("CommentBuilder.get_items")
+        self.timer.start()
+
+        if self.comment:
+            orderer = PermalinkCommentOrderer(
+                self.link, self.sort, self.num, self.max_depth, self.timer,
+                self.comment, self.context)
+
+            try:
+                comment_tuples = orderer.get_comment_order()
+            except InconsistentCommentTreeError:
+                g.log.error("Hack - self.comment (%d) not in depth. Defocusing..."
+                            % self.comment._id)
+                self.comment = None
+                orderer = CommentOrderer(
+                    self.link, self.sort, self.num, self.max_depth, self.timer)
+                comment_tuples = orderer.get_comment_order()
+
+        elif self.children:
+            orderer = ChildrenCommentOrderer(
+                self.link, self.sort, self.num, self.max_depth, self.timer,
+                self.children)
+            comment_tuples = orderer.get_comment_order()
+        else:
+            orderer = CommentOrderer(
+                self.link, self.sort, self.num, self.max_depth, self.timer)
+            comment_tuples = orderer.get_comment_order()
+
+        if (comment_tuples and
+                isinstance(comment_tuples[-1], MissingChildrenTuple)):
+            mct = comment_tuples.pop(-1)
+            missing_root_comments = mct.child_ids
+            missing_root_count = mct.num_children
+        else:
+            missing_root_comments = set()
+            missing_root_count = 0
+
+        self.ordered_comment_tuples = comment_tuples
+        self.missing_root_comments = missing_root_comments
+        self.missing_root_count = missing_root_count
 
     def _make_wrapped_tree(self):
         timer = self.timer
-        comments = self.comments
-        comment_tree = self.comment_tree
-        top_level_candidates = self.top_level_candidates
-        offset_depth = self.offset_depth
-        dont_collapse = self.dont_collapse
-        timer.intermediate("waiting")
+        ordered_comment_tuples = self.ordered_comment_tuples
+        missing_root_comments = self.missing_root_comments
+        missing_root_count = self.missing_root_count
 
-        if not comments and not top_level_candidates:
-            timer.stop()
+        if not ordered_comment_tuples:
+            self.timer.stop()
             return []
 
-        wrapped = self.wrap_items(comments, comment_tree, offset_depth)
-        timer.intermediate("wrap_comments")
-        wrapped_by_id = {comment._id: comment for comment in wrapped}
+        comment_order = [
+            comment_tuple.comment_id for comment_tuple in ordered_comment_tuples
+        ]
 
-        self.apply_collapses(wrapped_by_id, dont_collapse)
+        wrapped = self.make_wrapped_items(ordered_comment_tuples)
+        timer.intermediate("wrap_comments")
+
+        wrapped_by_id = {
+            comment._id: comment for comment in wrapped}
+        self.apply_collapses(wrapped_by_id)
+
+        if self.show_deleted:
+            deleted_ids = set()
+        else:
+            # completely skip deleted comments with no children
+            deleted_ids = {
+                comment._id for comment in wrapped
+                if (comment.deleted and not comment.num_children)
+            }
+
+        visible_ids = {
+            comment._id for comment in wrapped
+            if not getattr(comment, 'hidden', False)
+        }
 
         final = []
+        for comment_id in comment_order:
+            comment = wrapped_by_id[comment_id]
 
-        for comment in wrapped:
-            if (comment.deleted and
-                    not comment.num_children and
-                    not self.show_deleted):
-                # completely skip deleted comments with no children
+            if comment._id in deleted_ids or getattr(comment, 'hidden', False):
                 continue
-
-            if getattr(comment, 'hidden', False):
-                # Remove it from the list of visible comments so it'll
-                # automatically be a candidate for the "load more" links.
-                del wrapped_by_id[comment._id]
-                # And don't add it to the tree.
-                continue
-
-            if (self.continue_this_thread and
-                    self.load_more and
-                    comment.depth == self.max_depth - 1 and
-                    comment.num_children > 0):
-                # only comments with depth < max_depth are visible
-                # if this comment is as deep as we can go and has children then
-                # we need to insert a MoreRecursion child
-                mr = MoreRecursion(self.link, depth=0, parent_id=comment._id)
-                w = Wrapped(mr)
-                add_to_child_listing(comment, w)
 
             # add the comment as a child of its parent or to the top level of
-            # the tree if it has no parent
+            # the tree if it has no parent or the parent isn't in the listing
             parent = wrapped_by_id.get(comment.parent_id)
             if parent:
                 add_to_child_listing(parent, comment)
             else:
                 final.append(comment)
 
-        timer.intermediate("build_comments")
-
-        if not self.load_more:
-            timer.stop()
-            return final
-
-        # build MoreChildren for visible comments
-        max_depth_for_children = self.max_depth - 1
-        visible_comments = wrapped_by_id.keys()
-        for comment_id in visible_comments:
-            comment = wrapped_by_id[comment_id]
-
-            if comment.depth >= max_depth_for_children:
-                 # any comments at this depth can only have MoreRecursions,
-                 # which have already been added. any comments deeper than this
-                 # can't have any children
-                continue
-
-            children = comment_tree.tree.get(comment_id, ())
-            missing_children = [
-                child for child in children if child not in visible_comments]
-
-            if not missing_children:
-                continue
-
-            visible_children = (
-                child for child in children if child in visible_comments)
-            visible_count = sum(1 + comment_tree.num_children[child]
-                for child in visible_children
-            )
-            missing_count = comment.num_children - visible_count
-            child_depth = comment.depth + 1
-
-            mc = MoreChildren(
-                self.link, self.sort, depth=child_depth, parent_id=comment_id)
-            mc.children.extend(missing_children)
-            w = Wrapped(mc)
-            w.count = missing_count
-            add_to_child_listing(comment, w)
+        self.timer.intermediate("build_comments")
 
         if isinstance(self.sort, operators.shuffled):
             # If we have a sticky comment, do not shuffle the first element
@@ -1099,25 +1190,58 @@ class CommentBuilder(Builder):
             else:
                 shuffle(final)
 
-        # build MoreChildren for missing root level comments
-        if top_level_candidates:
+        if not self.load_more:
+            timer.stop()
+            return final
+
+        # add MoreRecursion and MoreChildren last so they'll be the last item in
+        # a comment's child listing
+        for comment in wrapped:
+            if (self.continue_this_thread and
+                    comment.depth == self.max_depth - 1 and
+                    comment.num_children > 0):
+                # only comments with depth < max_depth are visible
+                # if this comment is as deep as we can go and has children then
+                # we need to insert a MoreRecursion child
+                mr = MoreRecursion(self.link, depth=0, parent_id=comment._id)
+                w = Wrapped(mr)
+                add_to_child_listing(comment, w)
+            elif comment.depth < self.max_depth - 1:
+                missing_child_ids = set(comment.child_ids) - visible_ids - deleted_ids
+                if missing_child_ids:
+                    missing_depth = comment.depth + 1
+                    mc = MoreChildren(self.link, self.sort, depth=missing_depth,
+                            parent_id=comment._id)
+                    w = Wrapped(mc)
+                    visible_count = sum(
+                        1 + wrapped_by_id[child_id].num_children
+                        for child_id in comment.child_ids
+                        if child_id in visible_ids
+                    )
+                    w.count = comment.num_children - visible_count
+                    w.children.extend(missing_child_ids)
+                    add_to_child_listing(comment, w)
+
+        if missing_root_comments:
             mc = MoreChildren(self.link, self.sort, depth=0, parent_id=None)
-            mc.children.extend(top_level_candidates)
             w = Wrapped(mc)
-            w.count = sum(1 + comment_tree.num_children[comment]
-                          for comment in top_level_candidates)
+            w.count = missing_root_count
+            w.children.extend(missing_root_comments)
             final.append(w)
 
-        timer.intermediate("build_morechildren")
-        timer.stop()
+        self.timer.intermediate("build_morechildren")
+        self.timer.stop()
         return final
 
-    def wrap_items(self, comments, comment_tree, offset_depth):
-        wrapped = Builder.wrap_items(self, comments)
+    def make_wrapped_items(self, comment_tuples):
+        wrapped = Builder.wrap_items(self, self.comments)
+        wrapped_by_id = {comment._id: comment for comment in wrapped}
 
-        for comment in wrapped:
-            comment.num_children = comment_tree.num_children[comment._id]
-            comment.depth = comment_tree.depth[comment._id] - offset_depth
+        for comment_tuple in comment_tuples:
+            comment = wrapped_by_id[comment_tuple.comment_id]
+            comment.num_children = comment_tuple.num_children
+            comment.child_ids = comment_tuple.child_ids
+            comment.depth = comment_tuple.depth
             comment.edits_visible = self.edits_visible
 
             if self.children:
@@ -1174,10 +1298,21 @@ class CommentBuilder(Builder):
         if not comment.prevent_collapse:
             comment.hidden = True
 
-    def apply_collapses(self, wrapped_by_id, dont_collapse=None):
-        dont_collapse = dont_collapse or []
-        # process the entire list because we don't know if a comment should
-        # be visible until after we've processed all its children.
+    def apply_collapses(self, wrapped_by_id):
+        if self.comment:
+            dont_collapse = set([self.comment._id])
+            parent_id = self.comment.parent_id
+            while parent_id:
+                dont_collapse.add(parent_id)
+                if parent_id in wrapped_by_id:
+                    parent_id = wrapped_by_id[parent_id].parent_id
+                else:
+                    parent_id = None
+        elif self.children:
+            dont_collapse = self.children
+        else:
+            dont_collapse = []
+
         for comment_id, comment in sorted(wrapped_by_id.iteritems()):
             parent = wrapped_by_id.get(comment.parent_id)
 

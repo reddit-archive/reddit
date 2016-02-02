@@ -103,61 +103,99 @@ class CommentOrderTest(RedditTestCase):
         self.autopatch(
             CommentTree, "by_link", return_value=comment_tree_for_link)
 
-        # make the lookup in _get_comments a noop
-        self.autopatch(Comment, "_byID", return_value={})
-
     def tearDown(self):
         self.link = None
 
     def test_comment_order_full(self):
         sort = operators.desc("_confidence")
         builder = CommentBuilder(self.link, sort, num=1500)
-        builder._get_comments()
-        self.assertEqual(builder.comment_order,
+        builder.load_comment_order()
+        comment_order = [
+            comment_tuple.comment_id
+            for comment_tuple in builder.ordered_comment_tuples
+        ]
+        self.assertEqual(comment_order,
             [100, 101, 102, 104, 105, 106, 103, 107, 108, 110, 109])
+        self.assertEqual(builder.missing_root_comments, set())
+        self.assertEqual(builder.missing_root_count, 0)
 
     def test_comment_order_full_asc(self):
         sort = operators.asc("_confidence")
         builder = CommentBuilder(self.link, sort, num=1500)
-        builder._get_comments()
-        self.assertEqual(builder.comment_order,
+        builder.load_comment_order()
+        comment_order = [
+            comment_tuple.comment_id
+            for comment_tuple in builder.ordered_comment_tuples
+        ]
+        self.assertEqual(comment_order,
             [109, 108, 107, 100, 103, 102, 106, 105, 101, 104, 110])
+        self.assertEqual(builder.missing_root_comments, set())
+        self.assertEqual(builder.missing_root_count, 0)
 
     def test_comment_order_limit(self):
         sort = operators.desc("_confidence")
         builder = CommentBuilder(self.link, sort, num=5)
-        builder._get_comments()
-        self.assertEqual(builder.comment_order, [100, 101, 102, 104, 105])
+        builder.load_comment_order()
+        comment_order = [
+            comment_tuple.comment_id
+            for comment_tuple in builder.ordered_comment_tuples
+        ]
+        self.assertEqual(comment_order, [100, 101, 102, 104, 105])
+        self.assertEqual(builder.missing_root_comments, {107, 108, 109})
+        self.assertEqual(builder.missing_root_count, 4)
 
     def test_comment_order_depth(self):
         sort = operators.desc("_confidence")
         builder = CommentBuilder(self.link, sort, num=1500, max_depth=1)
-        builder._get_comments()
-        self.assertEqual(builder.comment_order, [100, 107, 108, 109])
+        builder.load_comment_order()
+        comment_order = [
+            comment_tuple.comment_id
+            for comment_tuple in builder.ordered_comment_tuples
+        ]
+        self.assertEqual(comment_order, [100, 107, 108, 109])
+        self.assertEqual(builder.missing_root_comments, set())
+        self.assertEqual(builder.missing_root_count, 0)
 
     def test_comment_order_sticky(self):
         self.link.sticky_comment_id = 100
         sort = operators.desc("_confidence")
         builder = CommentBuilder(self.link, sort, num=1500)
-        builder._get_comments()
-        self.assertEqual(builder.comment_order, [100, 107, 108, 110, 109])
+        builder.load_comment_order()
+        comment_order = [
+            comment_tuple.comment_id
+            for comment_tuple in builder.ordered_comment_tuples
+        ]
+        self.assertEqual(comment_order, [100, 107, 108, 110, 109])
+        self.assertEqual(builder.missing_root_comments, set())
+        self.assertEqual(builder.missing_root_count, 0)
 
     def test_comment_order_invalid_sticky(self):
         self.link.sticky_comment_id = 101
         sort = operators.desc("_confidence")
         builder = CommentBuilder(self.link, sort, num=1500)
-        builder._get_comments()
-        self.assertEqual(builder.comment_order,
+        builder.load_comment_order()
+        comment_order = [
+            comment_tuple.comment_id
+            for comment_tuple in builder.ordered_comment_tuples
+        ]
+        self.assertEqual(comment_order,
             [100, 101, 102, 104, 105, 106, 103, 107, 108, 110, 109])
+        self.assertEqual(builder.missing_root_comments, set())
+        self.assertEqual(builder.missing_root_count, 0)
 
     def test_comment_order_permalink(self):
         sort = operators.desc("_confidence")
         comment = MagicMock()
         comment._id = 100
         builder = CommentBuilder(self.link, sort, comment=comment, num=1500)
-        builder._get_comments()
-        self.assertEqual(builder.comment_order,
-            [100, 101, 102, 104, 105, 106, 103])
+        builder.load_comment_order()
+        comment_order = [
+            comment_tuple.comment_id
+            for comment_tuple in builder.ordered_comment_tuples
+        ]
+        self.assertEqual(comment_order, [100, 101, 102, 104, 105, 106, 103])
+        self.assertEqual(builder.missing_root_comments, set())
+        self.assertEqual(builder.missing_root_count, 0)
 
     def test_comment_order_permalink_context(self):
         sort = operators.desc("_confidence")
@@ -165,28 +203,69 @@ class CommentOrderTest(RedditTestCase):
         comment._id = 104
         builder = CommentBuilder(
             self.link, sort, comment=comment, context=3, num=1500)
-        builder._get_comments()
-        self.assertEqual(builder.comment_order, [100, 102, 104])
+        builder.load_comment_order()
+        comment_order = [
+            comment_tuple.comment_id
+            for comment_tuple in builder.ordered_comment_tuples
+        ]
+        self.assertEqual(comment_order, [100, 102, 104])
+        self.assertEqual(builder.missing_root_comments, set())
+        self.assertEqual(builder.missing_root_count, 0)
 
     def test_comment_order_invalid_permalink_defocus(self):
         sort = operators.desc("_confidence")
         comment = MagicMock()
         comment._id = 999999
         builder = CommentBuilder(self.link, sort, comment=comment, num=1500)
-        builder._get_comments()
-        self.assertEqual(builder.comment_order,
+        builder.load_comment_order()
+        comment_order = [
+            comment_tuple.comment_id
+            for comment_tuple in builder.ordered_comment_tuples
+        ]
+        self.assertEqual(comment_order,
             [100, 101, 102, 104, 105, 106, 103, 107, 108, 110, 109])
+        self.assertEqual(builder.missing_root_comments, set())
+        self.assertEqual(builder.missing_root_count, 0)
 
     def test_comment_order_children(self):
         sort = operators.desc("_confidence")
         builder = CommentBuilder(
             self.link, sort, children=[101, 102, 103], num=1500)
-        builder._get_comments()
-        self.assertEqual(builder.comment_order, [101, 102, 104, 105, 106, 103])
+        builder.load_comment_order()
+        comment_order = [
+            comment_tuple.comment_id
+            for comment_tuple in builder.ordered_comment_tuples
+        ]
+        self.assertEqual(comment_order, [101, 102, 104, 105, 106, 103])
+        self.assertEqual(builder.missing_root_comments, set())
+        self.assertEqual(builder.missing_root_count, 0)
 
     def test_comment_order_children_limit(self):
         sort = operators.desc("_confidence")
         builder = CommentBuilder(
             self.link, sort, children=[107, 108, 109], num=3)
-        builder._get_comments()
-        self.assertEqual(builder.comment_order, [107, 108, 110])
+        builder.load_comment_order()
+        comment_order = [
+            comment_tuple.comment_id
+            for comment_tuple in builder.ordered_comment_tuples
+        ]
+        self.assertEqual(comment_order, [107, 108, 110])
+        self.assertEqual(builder.missing_root_comments, {109})
+        self.assertEqual(builder.missing_root_count, 1)
+
+    def test_comment_order_children_limit_bug(self):
+        sort = operators.desc("_confidence")
+        builder = CommentBuilder(
+            self.link, sort, children=[101, 102, 103], num=3)
+        builder.load_comment_order()
+        comment_order = [
+            comment_tuple.comment_id
+            for comment_tuple in builder.ordered_comment_tuples
+        ]
+        self.assertEqual(comment_order, [101, 102, 104])
+        # missing_root_comments SHOULD be {103}, but there's a bug here.
+        # if the requested children are not root level but we don't show some
+        # of them we should add a MoreChildren to allow a subsequent request
+        # to get the missing comments.
+        self.assertEqual(builder.missing_root_comments, set())
+        self.assertEqual(builder.missing_root_count, 0)

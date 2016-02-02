@@ -1407,8 +1407,15 @@ class Comment(Thing, Printable):
     def keep_item(self, wrapped):
         return True
 
-    cache_ignore = set(["subreddit", "link", "to", "num_children", "depth"]
-                       ).union(Printable.cache_ignore)
+    cache_ignore = set((
+        "subreddit",
+        "link",
+        "to",
+        "num_children",
+        "depth",
+        "child_ids",
+    )).union(Printable.cache_ignore)
+
     @staticmethod
     def wrapped_cache_key(wrapped, style):
         s = Printable.wrapped_cache_key(wrapped, style)
