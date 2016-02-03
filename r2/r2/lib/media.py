@@ -504,9 +504,12 @@ def upload_icon(image_data, size):
     return g.media_provider.put('icons', file_name + ".png", icon_data)
 
 
-def allowed_media_preview_domain(domain):
+def allowed_media_preview_url(url):
+    p = UrlParser(url)
+    if p.has_static_image_extension():
+        return True
     for allowed_domain in g.media_preview_domain_whitelist:
-        if is_subdomain(domain, allowed_domain):
+        if is_subdomain(p.hostname, allowed_domain):
             return True
     return False
 

@@ -583,6 +583,11 @@ class UrlParser(object):
         extension = self.path_extension().lower()
         return extension in {'gif', 'jpeg', 'jpg', 'png', 'tiff'}
 
+    def has_static_image_extension(self):
+        """Guess if the url leads to a non-animated image."""
+        extension = self.path_extension().lower()
+        return extension in {'jpeg', 'jpg', 'png', 'tiff'}
+
     def set_extension(self, extension):
         """
         Changes the extension of the path to the provided value (the
