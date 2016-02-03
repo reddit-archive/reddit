@@ -127,6 +127,9 @@
 <%def name="javascript_bottom()">
   <% from r2.lib import js %>
   ${unsafe(js.use('reddit'))}
+  %if getattr(thing, "feature_expando_nsfw_flow", False):
+    ${unsafe(js.use("expando-nsfw-flow"))}
+  %endif
   ${unsafe(c.js_preload.use())}
 </%def>
 

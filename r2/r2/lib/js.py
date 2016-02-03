@@ -598,6 +598,13 @@ module["reddit-init"] = LocalizedModule("reddit-init.js",
     wrap=catch_errors,
 )
 
+module["expando-nsfw-flow"] = Module("expando-nsfw-flow.js",
+    TemplateFileSource('ui/formbar.html'),
+    "ui/formbar.js",
+    TemplateFileSource('expando/nsfwgate.html'),
+    "expando/nsfwflow.js",
+)
+
 module["reddit"] = LocalizedModule("reddit.js",
     "lib/jquery.url.js",
     "lib/backbone-1.0.0.js",
@@ -633,10 +640,7 @@ module["reddit"] = LocalizedModule("reddit.js",
     "embed.js",
     "post-sharing.js",
     "expando.js",
-    TemplateFileSource('ui/formbar.html'),
-    "ui/formbar.js",
-    TemplateFileSource('expando/nsfwgate.html'),
-    "expando/nsfwflow.js",
+    # inline expando-nsfw-flow.js module here when unflagged
     "saved.js",
     "cache-poisoning-detection.js",
     "messages.js",

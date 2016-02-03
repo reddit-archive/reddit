@@ -290,6 +290,8 @@ class Reddit(Templated):
 
         if feature.is_enabled("new_expando_icons"):
             self.feature_new_expando_icons = True
+        if feature.is_enabled("expando_nsfw_flow"):
+            self.feature_expando_nsfw_flow = True
 
         # generate a canonical link for google
         canonical_url = UrlParser(canonical_link or request.url)
