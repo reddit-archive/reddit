@@ -4828,7 +4828,10 @@ def make_link_child(item, show_media_preview=False):
     elif (feature.is_enabled('media_previews') and
             item.preview_object and
             media.allowed_media_preview_url(item.url)):
-        media_object = media.get_preview_image(item.preview_object)
+        media_object = media.get_preview_image(
+            item.preview_object,
+            include_censored=item.nsfw,
+        )
         expand = show_media_preview and expandable
 
         if media_object:

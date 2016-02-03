@@ -178,11 +178,15 @@ def js_config(extra_config=None):
     cur_subreddit = ""
     cur_sr_fullname = ""
     cur_listing = ""
+    listing_over_18 = False
+    pref_no_profanity = not logged or c.user.pref_no_profanity
+    nsfw_media_acknowledged = logged and c.user.nsfw_media_acknowledged
 
     if isinstance(c.site, Subreddit) and not c.default_sr:
         cur_subreddit = c.site.name
         cur_sr_fullname = c.site._fullname
         cur_listing = cur_subreddit
+        listing_over_18 = c.site.over_18
     elif isinstance(c.site, DefaultSR):
         cur_listing = "frontpage"
     elif isinstance(c.site, FakeSubreddit):
@@ -253,6 +257,9 @@ def js_config(extra_config=None):
         "feature_screenview_events": feature.is_enabled('screenview_events'),
         "static_root": static(''),
         "over_18": bool(c.over18),
+        "listing_over_18": listing_over_18,
+        "pref_no_profanity": pref_no_profanity,
+        "nsfw_media_acknowledged": nsfw_media_acknowledged,
         "new_window": logged and bool(c.user.pref_newwindow),
         "mweb_blacklist_expressions": g.live_config['mweb_blacklist_expressions'],
         "gold": gold,

@@ -73,7 +73,7 @@ from urllib2 import (
 )
 
 _IMAGE_PREVIEW_TEMPLATE = """
-<img src="%(url)s" width="%(width)s" height="%(height)s">
+<img class="%(css_class)s" src="%(url)s" width="%(width)s" height="%(height)s">
 """
 
 
@@ -514,7 +514,7 @@ def allowed_media_preview_url(url):
     return False
 
 
-def get_preview_image(preview_object):
+def get_preview_image(preview_object, include_censored=False):
     """Returns a media_object for rendering a media preview image"""
     min_width, min_height = g.preview_image_min_size
     max_width, max_height = g.preview_image_max_size
@@ -538,13 +538,28 @@ def get_preview_image(preview_object):
         return None
 
     url = g.image_resizing_provider.resize_image(preview_object, width)
-
     img_html = format_html(
         _IMAGE_PREVIEW_TEMPLATE,
+        css_class="preview",
         url=url,
         width=width,
         height=height,
     )
+
+    if include_censored:
+        censored_url = g.image_resizing_provider.resize_image(
+            preview_object,
+            width,
+            censor_nsfw=True,
+        )
+        censored_img_html = format_html(
+            _IMAGE_PREVIEW_TEMPLATE,
+            css_class="censored-preview",
+            url=censored_url,
+            width=width,
+            height=height,
+        )
+        img_html += censored_img_html
 
     media_object = {
         "type": "media-preview",

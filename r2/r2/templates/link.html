@@ -140,7 +140,7 @@
     ${bottom_buttons()}
   %endif
 
-  <div class="expando" ${"style='display: none'" if not expand else ""}
+  <div class="expando expando-uninitialized" ${"style='display: none'" if not expand else ""}
     %if not expand and child_content:
       data-cachedhtml="${websafe(child_content)}"
     %endif

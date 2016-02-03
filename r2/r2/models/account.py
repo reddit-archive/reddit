@@ -129,6 +129,7 @@ class Account(Thing):
                      wiki_override = None,
                      email = "",
                      email_verified = False,
+                     nsfw_media_acknowledged = False,
                      ignorereports = False,
                      pref_show_promote = None,
                      gold = False,

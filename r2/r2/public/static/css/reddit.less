@@ -5027,17 +5027,128 @@ ul.tabmenu.formtab {
 /******* embed stuff ******/
 .expando {
     clear: left;
+    float: left;
     margin: 5px 0 5px 0;
+    position: relative;
+}
+
+.link.over18 .expando-uninitialized {
+    .media-embed,
+    .media-preview {
+        visibility: hidden;
+    }
+}
+
+.link.self .expando {
+    float: none;
 }
 
 .expando-content {
     display: none;
 }
 
+.expando-with-nsfw-interstitial {
+    .media-embed {
+        display: none;
+    }
+
+    .media-preview {
+        img.preview {
+            display: none;
+        }
+
+        img.censored-preview {
+            display: inline;
+        }
+    }
+}
+
+.expando-nsfw-gate {
+    align-items: center;
+    color: @color-white;
+    .display-flex();
+    .justify-content(center);
+
+    &.expando-nsfw-interstitial {
+        background: grey;
+    }
+
+    &.expando-nsfw-overlay {
+        height: 100%;
+        left: 0;
+        position: absolute;
+        top: 0;
+        width: 100%;
+    }
+
+    &.expando-nsfw-normal {
+        .expando-nsfw-gate-text {
+            cursor: pointer;
+        }
+    }
+
+    .expando-nsfw-gate-controls {
+        margin: auto;
+        text-align: center;
+    }
+
+    .expando-nsfw-gate-show-once {
+        background: none;
+        border: 1px solid @color-white;
+        color: inherit;
+        margin: unit(@margin-large, px);
+        padding: unit(@margin-small, px);
+        text-transform: uppercase;
+    }
+}
+
+.expando-nsfw-flow-complete {
+    @icon-size: 16px;
+
+    .form-bar {
+        padding-left: @icon-size + unit(@margin-small * 2, px);
+    }
+
+    .form-bar:before {
+        width: @icon-size;
+        height: @icon-size;
+        content: "";
+        display: block;
+        position: absolute;
+        left: unit(@margin-small, px);
+        top: 50%;
+        .transform(translateY(-50%));
+        .hdpi-bg-image(@1x: url(../mod-action-icon-confirm.png),
+                       @2x: url(../mod-action-icon-confirm_2x.png),
+                       @2x-bg-size: @icon-size);
+    }
+}
+
+.form-bar {
+    position: relative;
+    background: lighten(@color-pale-grey, 10%);
+    border: 1px solid @color-pale-grey;
+    padding: unit(@margin-x-small, px) unit(@margin-small, px);
+    margin-top: unit(@margin-small, px);
+
+    .md {
+        float: left;
+    }
+
+    button {
+        float: right;
+        margin-right: 0;
+    }
+}
+
 .media-preview {
     img {
         width: 100%;
         height: auto;
+    }
+
+    img.censored-preview {
+        display: none;
     }
 }
 

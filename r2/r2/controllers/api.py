@@ -4531,6 +4531,25 @@ class ApiController(RedditController):
                 setattr(c.user, "pref_" + ui_elem, False)
                 c.user._commit()
 
+    @noresponse(VUser(),
+                VModhash(),
+                show_nsfw_media=VBoolean("show_nsfw_media"))
+    def POST_set_nsfw_media_pref(self, show_nsfw_media):
+        changed = False
+
+        if show_nsfw_media is not None:
+            no_profanity = not show_nsfw_media
+            if c.user.pref_no_profanity != no_profanity:
+                c.user.pref_no_profanity = no_profanity
+                changed = True
+
+        if not c.user.nsfw_media_acknowledged:
+            c.user.nsfw_media_acknowledged = True
+            changed = True
+
+        if changed:
+            c.user._commit()
+
     @validatedForm(type = VOneOf('type', ('click'), default = 'click'),
                    links = VByName('ids', thing_cls = Link, multiple = True))
     def GET_gadget(self, form, jquery, type, links):

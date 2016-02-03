@@ -646,7 +646,6 @@ class Link(Thing, Printable):
                 else:
                     item.thumbnail = ""
                 item.preview_image = None
-                show_media_preview = False
             elif not show_media:
                 item.thumbnail = ""
                 item.preview_image = None
