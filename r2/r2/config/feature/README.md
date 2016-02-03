@@ -95,12 +95,13 @@ feature_some_flag = {"admin": true, "users": ["user1", "user2"]}
 
 Since we're currently overloading live_config, each feature flag should be
 prepended with `feature_` in the config. We may choose to make a live-updating
-features block in the future. 
+features block in the future.
 
 You can also use feature flags to define A/B-type experiments.  Logically,
 experiments are separated into two parts.  First, there is an *eligibility
 check* to determine if the user is allowed to be a part of the experiment;
-currently, this is statically defined as the set of all logged-in users.
+eligibility is determined by the same selectors as above with the exception of
+`percent_loggedin` and `percent_loggedout` which would be redundant.  
 Secondly, eligible users are either *bucketed* into a variant or *excluded*
 (because the summed percentage of all variants is less than 100).  `is_enabled`
 will return False for users who are non-eligible, fall into a control group, or
@@ -127,10 +128,15 @@ else:
 with a live_config option defining the experiment parameters:
 
 ```ini
-feature_some_flag = {"experiment": {"experiment_id": 12345, "variants": {"test_something": 5.5, "test_something_else": 10}}}
+# loggedin only experiment with two test variants
+feature_some_flag = {"experiment": {"loggedin": true, "experiment_id": 12345, "variants": {"test_something": 5.5, "test_something_else": 10}}}
 
 # Or with custom control group sizes:
-feature_some_flag = {"experiment": {"experiment_id": 12345, "variants": {"test_something": 5.5, "test_something_else": 10, "control_1": 20, "control_2": 20}}}
+feature_some_flag = {"experiment": {"loggedin": true, "experiment_id": 12345, "variants": {"test_something": 5.5, "test_something_else": 10, "control_1": 20, "control_2": 20}}}
+
+# these can be mixed and matched with other selectors (and will OR)
+# this will enable the flag for gold users, and then run an experiment for other logged in users
+feature_some_flag = {"gold": true, "experiment": {"loggedin": true, "experiment_id": 12345, "variants": {"test_something": 5.5, "test_something_else": 10, "control_1": 20, "control_2": 20}}}
 ```
 
 If only one non-control variant is defined (an A/A/B test), the code can be
@@ -216,5 +222,3 @@ make sure that it would make sense to either remove the check and keep
 the code or to delete the check and the code together. There shouldn’t
 be bits of code within a block guarded by an is_enabled check that
 needs to be salvaged if the feature is removed.
-
-

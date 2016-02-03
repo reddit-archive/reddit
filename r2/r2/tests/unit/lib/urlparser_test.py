@@ -30,14 +30,8 @@ from pylons import app_globals as g
 
 class TestIsRedditURL(RedditTestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        cls._old_offsite = g.offsite_subdomains
-        g.offsite_subdomains = ["blog"]
-
-    @classmethod
-    def tearDownClass(cls):
-        g.offsite_subdomains = cls._old_offsite
+    def setUp(self):
+        self.patch_g(offsite_subdomains=['blog'])
 
     def _is_safe_reddit_url(self, url, subreddit=None):
         web_safe = UrlParser(url).is_web_safe_url()
@@ -146,17 +140,11 @@ class TestIsRedditURL(RedditTestCase):
 
 
 class TestSwitchSubdomainByExtension(RedditTestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls._old_domain = g.domain
-        g.domain = 'reddit.com'
-        cls._old_domain_prefix = g.domain_prefix
-        g.domain_prefix = 'www'
-
-    @classmethod
-    def tearDownClass(cls):
-        g.domain = cls._old_domain
-        g.domain_prefix = cls._old_domain_prefix
+    def setUp(self):
+        self.patch_g(
+            domain='reddit.com',
+            domain_prefix='www',
+        )
 
     def test_normal_urls(self):
         u = UrlParser('http://www.reddit.com/r/redditdev')

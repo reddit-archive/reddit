@@ -630,7 +630,9 @@ class EventQueue(object):
 
         self.save_event(event)
 
-    def bucketing_event(self, experiment_id, experiment_name, variant, user):
+    def bucketing_event(
+        self, experiment_id, experiment_name, variant, user, loid
+    ):
         """Send an event recording an experiment bucketing.
 
         experiment_id: an integer representing the experiment
@@ -645,8 +647,11 @@ class EventQueue(object):
         event.add('experiment_id', experiment_id)
         event.add('experiment_name', experiment_name)
         event.add('variant', variant)
-        event.add('user_id', user._id)
-        event.add('user_name', user.name)
+        # if the user is logged out, we won't have a user_id or name
+        if user is not None:
+            event.add('user_id', user._id)
+            event.add('user_name', user.name)
+        event.add('loid', loid)
         self.save_event(event)
 
 

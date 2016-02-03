@@ -190,7 +190,36 @@ class FeatureState(object):
     def is_enabled(self, user=None, subreddit=None, subdomain=None,
                    oauth_client=None):
         cfg = self.config
+        kw = dict(
+            user=user,
+            subreddit=subreddit,
+            subdomain=subdomain,
+            oauth_client=oauth_client
+        )
+        # first, test if the config would be enabled without an experiment
+        if self._is_config_enabled(cfg, **kw):
+            return True
+
+        # next, test if the config is enabled fractionally
+        if self._is_percent_enabled(cfg, user=user):
+            return True
+
+        # lastly, check experiment
+        experiment = self.config.get('experiment')
+        if self._is_config_enabled(experiment, **kw):
+            return self._is_experiment_enabled(experiment, user=user)
+
+        # Unknown value, default to off.
+        return False
+
+    def _is_config_enabled(
+        self, cfg, user=None, subreddit=None, subdomain=None,
+        oauth_client=None
+    ):
         world = self.world
+
+        if not cfg:
+            return False
 
         if cfg.get('enabled') == self.GLOBALLY_ON:
             return True
@@ -242,6 +271,8 @@ class FeatureState(object):
         if clients and oauth_client and oauth_client in clients:
             return True
 
+    def _is_percent_enabled(self, cfg, user=None):
+        loggedin = self.world.is_user_loggedin(user)
         percent_loggedin = cfg.get('percent_loggedin', 0)
         if percent_loggedin and loggedin:
             bucket = self._calculate_bucket(user._fullname)
@@ -254,7 +285,7 @@ class FeatureState(object):
             # We want this to match the JS function for bucketing loggedout
             # users, and JS doesn't make it easy to mix the feature name in
             # with the LOID. Just look at the last 4 chars of the LOID.
-            loid = world.current_loid()
+            loid = self.world.current_loid()
             if loid:
                 try:
                     bucket = int(loid[-4:], 36) % 100
@@ -263,29 +294,36 @@ class FeatureState(object):
                 except ValueError:
                     pass
 
-        experiment = cfg.get('experiment')
-        # Currently, all logged-in users are eligible for all experiments,
-        # as long as they're enabled.
-        if experiment and experiment.get('enabled', True) and loggedin:
-            bucket = self._calculate_bucket(user._fullname)
-            variant = self._choose_variant(bucket,
-                                           experiment.get('variants', {}))
+    def _is_experiment_enabled(self, experiment, user=None):
+
+        if experiment.get('enabled', True):
+            variant = self._get_experiment_variant(experiment, user)
 
             # We only want to send this event once per request, because that's
             # an easy way to get rid of extraneous events.
             if not c.have_sent_bucketing_event:
                 c.have_sent_bucketing_event = {}
-            if (
-                variant is not None and (
+
+            if variant is not None:
+                loid = self.world.current_loid()
+                if self.world.is_user_loggedin(user):
+                    bucketing_id = user._id
+                else:
+                    bucketing_id = loid
+
+                if (
                     g.running_as_script or
-                    not c.have_sent_bucketing_event.get((self.name, user._id))
-                )
-            ):
-                g.events.bucketing_event(
-                    experiment_id=experiment.get('experiment_id'),
-                    experiment_name=self.name,
-                    variant=variant, user=user)
-                c.have_sent_bucketing_event[(self.name, user._id)] = True
+                    not c.have_sent_bucketing_event.get((self.name, bucketing_id))
+                ):
+                    g.events.bucketing_event(
+                        experiment_id=experiment.get('experiment_id'),
+                        experiment_name=self.name,
+                        variant=variant,
+                        user=user,
+                        loid=loid,
+                    )
+                    key = (self.name, bucketing_id)
+                    c.have_sent_bucketing_event[key] = True
 
             return self._is_variant_enabled(variant)
 
@@ -303,14 +341,26 @@ class FeatureState(object):
                 except KeyError:
                     pass
 
-        if not user:
-            return None
-
         experiment = self.config.get('experiment')
         if not experiment:
             return None
 
-        bucket = self._calculate_bucket(user._fullname)
-        variant = self._choose_variant(bucket, experiment.get('variants', {}))
+        return self._get_experiment_variant(experiment, user)
 
+    def _get_experiment_variant(self, experiment, user):
+        # for logged in users, bucket based on the User's fullname
+        if self.world.is_user_loggedin(user):
+            bucket = self._calculate_bucket(user._fullname)
+        # for logged out users, bucket based on the loid if we have one
+        elif g.enable_loggedout_experiments:
+            loid = self.world.current_loid()
+            # we can't run an experiment if we have no id to vary on.
+            if not loid:
+                return None
+            bucket = self._calculate_bucket(loid)
+        # if logged out experiments are disabled, bail.
+        else:
+            return None
+
+        variant = self._choose_variant(bucket, experiment.get('variants', {}))
         return variant

@@ -21,22 +21,43 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 import collections
-
+import itertools
+import math
 import mock
 
 from r2.config.feature.state import FeatureState
 from . feature_test import TestFeatureBase, MockAccount
 
 
-class TestFeature(TestFeatureBase):
+class TestExperiment(TestFeatureBase):
     _world = None
     # Append user-supplied error messages to the default output, rather than
     # overwriting it.
     longMessage = True
 
+    def setUp(self):
+        super(TestExperiment, self).setUp()
+        # for the purposes of this test, logged in users will be generated as
+        # MockAccount objects and logged out users will be None.  This is in
+        # keeping with how c.user is treated in the default unlogged-in case.
+        self.world.is_user_loggedin = bool
+        self.amqp = self.patch_eventcollector()
+        # test by default with the logged out functionality enabled.
+        self.patch_g(enable_loggedout_experiments=True)
+
+    def get_loggedin_users(self, num_users):
+        users = []
+        for i in xrange(num_users):
+            users.append(MockAccount(name=str(i), _fullname="t2_%s" % str(i)))
+        return users
+
+    @staticmethod
+    def get_loggedout_users(num_users):
+        return [None for _ in xrange(num_users)]
+
     def test_calculate_bucket(self):
         """Test FeatureState's _calculate_bucket function."""
-        feature_state = self._make_state(config={})
+        feature_state = self.world._make_state(config={})
 
         # Give ourselves enough users that we can get some reasonable amount of
         # precision when checking amounts per bucket.
@@ -155,49 +176,155 @@ class TestFeature(TestFeatureBase):
         scaled_percentage = float(count) / (FeatureState.NUM_BUCKETS / 100)
         self.assertEqual(scaled_percentage, 50)
 
-    def do_experiment_simulation(self, users, experiment):
+    def do_experiment_simulation(self, users, loid_generator=None, **cfg):
         num_users = len(users)
-        cfg = {'experiment': experiment}
+        if loid_generator is None:
+            loid_generator = iter(self.generate_loid, None)
 
-        mock_world = self.world()
-        mock_world.is_user_loggedin = mock.Mock(return_value=False)
-        feature_state = self._make_state(cfg, mock_world)
-        self.assertFalse(feature_state.is_enabled(None))
-
-        mock_world = self.world()
-        mock_world.is_user_loggedin = mock.Mock(return_value=True)
-        feature_state = self._make_state(cfg, mock_world)
+        feature_state = self.world._make_state(cfg)
         counter = collections.Counter()
-        for user in users:
+        for user, loid in zip(users, loid_generator):
+            # on every loop, we have a distinct user and a possibly distinct
+            # loid which will be used multiple times.
+            self.world.current_loid.return_value = loid
+            # is_enabled() and variant() are related but independent code
+            # paths so check both are set together.
             variant = feature_state.variant(user)
             if feature_state.is_enabled(user):
                 self.assertIsNotNone(
                     variant, "an enabled experiment should have a variant!")
                 counter[variant] += 1
 
-        for variant, percent in experiment['variants'].items():
+        # this test will still probabilistically fail, but we can mitigate
+        # the likeliness of that happening
+        error_bar_percent = 100. / math.sqrt(num_users)
+        for variant, percent in cfg['experiment']['variants'].items():
             # Our actual percentage should be within our expected percent
             # (expressed as a part of 100 rather than a fraction of 1)
             # +- 1%.
             measured_percent = (float(counter[variant]) / num_users) * 100
-            self.assertAlmostEqual(measured_percent, percent, delta=1)
+            self.assertAlmostEqual(
+                measured_percent, percent, delta=error_bar_percent
+            )
 
-    @mock.patch('r2.config.feature.state.g')
-    def test_experiment(self, g, num_users = 2000):
-        users = []
-        for i in xrange(num_users):
-            users.append(MockAccount(name=str(i), _fullname="t2_%s" % str(i)))
-
-        experiment = {'variants': {'larger': 5, 'smaller': 10}}
-        self.do_experiment_simulation(users, experiment)
-
-        experiment['enabled'] = True
-        self.do_experiment_simulation(users, experiment)
-
-        experiment['enabled'] = False
-        cfg = {'experiment': experiment}
-        mock_world = self.world()
-        mock_world.is_user_loggedin = mock.Mock(return_value=True)
-        feature_state = self._make_state(cfg, mock_world)
+    def assert_no_experiment(self, users, **cfg):
+        feature_state = self.world._make_state(cfg)
         for user in users:
             self.assertFalse(feature_state.is_enabled(user))
+
+    def test_loggedin_experiment(self, num_users=2000):
+        """Test variant distn for logged in users."""
+        self.do_experiment_simulation(
+            self.get_loggedin_users(num_users),
+            experiment={
+                'loggedin': True,
+                'variants': {'larger': 5, 'smaller': 10},
+            }
+        )
+
+    def test_loggedin_experiment_explicit_enable(self, num_users=2000):
+        """Test variant distn for logged in users with explicit enable."""
+        self.do_experiment_simulation(
+            self.get_loggedin_users(num_users),
+            experiment={
+                'loggedin': True,
+                'variants': {'larger': 5, 'smaller': 10},
+                'enabled': True,
+            },
+        )
+
+    def test_loggedin_experiment_explicit_disable(self, num_users=2000):
+        """Test explicit disable for logged in users actually disables."""
+        self.assert_no_experiment(
+            self.get_loggedin_users(num_users),
+            experiment={
+                'loggedin': True,
+                'variants': {'larger': 5, 'smaller': 10},
+                'enabled': False,
+            },
+        )
+
+    def test_loggedout_experiment(self, num_users=2000):
+        """Test variant distn for logged out users."""
+        self.do_experiment_simulation(
+            self.get_loggedout_users(num_users),
+            experiment={
+                "loggedout": True,
+                'variants': {'larger': 5, 'smaller': 10},
+            },
+        )
+
+    def test_loggedout_experiment_missing_loids(self, num_users=2000):
+        """Ensure logged out experiments with no loids do not bucket."""
+        self.assert_no_experiment(
+            self.get_loggedout_users(num_users),
+            loid_generator=itertools.repeat(None),
+            experiment={
+                'loggedout': True,
+                'variants': {'larger': 5, 'smaller': 10},
+            },
+        )
+
+    def test_loggedout_experiment_explicit_enable(self, num_users=2000):
+        """Test variant distn for logged out users with explicit enable."""
+        self.do_experiment_simulation(
+            self.get_loggedout_users(num_users),
+            experiment={
+                'loggedout': True,
+                'variants': {'larger': 5, 'smaller': 10},
+                'enabled': True,
+            },
+        )
+
+    def test_loggedout_experiment_explicit_disable(self, num_users=2000):
+        """Test explicit disable for logged in users actually disables."""
+        self.assert_no_experiment(
+            self.get_loggedout_users(num_users),
+            experiment={
+                'loggedout': True,
+                'variants': {'larger': 5, 'smaller': 10},
+                'enabled': False,
+            }
+        )
+
+    def test_loggedout_experiment_global_disable(self, num_users=2000):
+        """Test we can disable loid-experiments via configuration."""
+        self.patch_g(enable_loggedout_experiments=False)
+
+        self.assert_no_experiment(
+            self.get_loggedout_users(num_users),
+            experiment={
+                'loggedout': True,
+                'variants': {'larger': 5, 'smaller': 10},
+                'enabled': True,
+            }
+        )
+
+    def test_mixed_experiment(self, num_users=2000):
+        """Test a combination of loggedin/out users balances variants."""
+        self.do_experiment_simulation(
+            (
+                self.get_loggedin_users(num_users / 2) +
+                self.get_loggedout_users(num_users / 2)
+            ),
+            experiment={
+                'loggedin': True,
+                'loggedout': True,
+                'variants': {'larger': 5, 'smaller': 10},
+            }
+        )
+
+    def test_mixed_experiment_disable(self, num_users=2000):
+        """Test a combination of loggedin/out users disables properly."""
+        self.assert_no_experiment(
+            (
+                self.get_loggedin_users(num_users / 2) +
+                self.get_loggedout_users(num_users / 2)
+            ),
+            experiment={
+                'loggedin': True,
+                'loggedout': True,
+                'variants': {'larger': 5, 'smaller': 10},
+                'enabled': False,
+            }
+        )

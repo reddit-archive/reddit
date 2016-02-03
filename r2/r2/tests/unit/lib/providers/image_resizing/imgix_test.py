@@ -21,10 +21,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-import unittest
 from r2.tests import RedditTestCase
-
-from pylons import app_globals as g
 
 from r2.lib.providers.image_resizing import NotLargeEnough
 from r2.lib.providers.image_resizing.imgix import ImgixImageResizingProvider
@@ -34,19 +31,13 @@ from r2.lib.utils import UrlParser
 URLENCODED_COMMA = '%2C'
 
 
-class TestImgixResizer(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.provider = ImgixImageResizingProvider()
-        cls.old_imgix_domain = g.imgix_domain
-        g.imgix_domain = 'example.com'
-        cls.old_imgix_signing = g.imgix_signing
-        g.imgix_signing = False
-
-    @classmethod
-    def tearDownClass(cls):
-        g.imgix_domain = cls.old_imgix_domain
-        g.imgix_signing = cls.old_imgix_signing
+class TestImgixResizer(RedditTestCase):
+    def setUp(self):
+        self.provider = ImgixImageResizingProvider()
+        self.patch_g(
+            imgix_domain='example.com',
+            imgix_signing=False,
+        )
 
     def test_no_resize(self):
         image = dict(url='http://s3.amazonaws.com/a.jpg', width=1200,

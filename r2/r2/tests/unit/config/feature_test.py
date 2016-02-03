@@ -69,22 +69,24 @@ class TestFeatureBase(RedditTestCase):
         self.world.current_subreddit = mock.Mock(return_value='')
         self.world.current_loid = mock.Mock(return_value='')
 
-    def _make_state(self, config, world=None):
-        # Mock by hand because _parse_config is called in __init__, so we
-        # can't instantiate then update.
-        class MockState(FeatureState):
-            def _parse_config(*args, **kwargs):
-                return config
-        if not world:
-            world = self.world()
-        return MockState('test_state', world)
 
+class TestFeatureBase(RedditTestCase):
+    # Append user-supplied error messages to the default output, rather than
+    # overwriting it.
+    longMessage = True
 
-class TestFeature(TestFeatureBase):
+    def setUp(self):
+        self.world = MockWorld()
+        self.world.current_user = mock.Mock(return_value='')
+        self.world.current_subreddit = mock.Mock(return_value='')
+        self.world.current_loid = mock.Mock(return_value='')
 
     @classmethod
     def generate_loid(cls):
         return ''.join(random.sample(string.letters + string.digits, 16))
+
+
+class TestFeature(TestFeatureBase):
 
     def _assert_fuzzy_percent_true(self, results, percent):
         stats = collections.Counter(results)
@@ -231,8 +233,8 @@ class TestFeature(TestFeatureBase):
         self.assertTrue(feature_state.is_enabled(user=gary))
 
         cfg = {'url': {'test_state_a': 'a', 'test_state_b': 'b'}}
-        mock_world.url_features = mock.Mock(return_value={'x', 'test_state_b'})
-        feature_state = self._make_state(cfg, mock_world)
+        self.world.url_features = mock.Mock(return_value={'x', 'test_state_b'})
+        feature_state = self.world._make_state(cfg)
         self.assertTrue(feature_state.is_enabled())
         self.assertEqual(feature_state.variant(user=gary), 'b')
 
@@ -251,13 +253,13 @@ class TestFeature(TestFeatureBase):
         self.assertFalse(feature_state.is_enabled(user=gary))
 
         cfg = {'url': {'test_state_a': 'a', 'test_state_b': 'b'}}
-        mock_world.url_features = mock.Mock(return_value={'x'})
-        feature_state = self._make_state(cfg, mock_world)
+        self.world.url_features = mock.Mock(return_value={'x'})
+        feature_state = self.world._make_state(cfg)
         self.assertFalse(feature_state.is_enabled())
 
         cfg = {'url': {'test_state_c1': 'control_1', 'test_state_c2': 'control_2'}}
-        mock_world.url_features = mock.Mock(return_value={'x', 'test_state_c2'})
-        feature_state = self._make_state(cfg, mock_world)
+        self.world.url_features = mock.Mock(return_value={'x', 'test_state_c2'})
+        feature_state = self.world._make_state(cfg)
         self.assertFalse(feature_state.is_enabled())
 
     def test_user_in(self):

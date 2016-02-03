@@ -249,6 +249,7 @@ class Globals(object):
             'ENFORCE_RATELIMIT',
             'RL_SITEWIDE_ENABLED',
             'RL_OAUTH_SITEWIDE_ENABLED',
+            'enable_loggedout_experiments',
         ],
 
         ConfigValue.tuple: [
