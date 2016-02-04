@@ -243,8 +243,9 @@ def make_map(config):
     # sponsor listings
     mc('/sponsor/promoted/:sort', controller='sponsorlisting', action='listing',
        requirements=dict(sort="future_promos|pending_promos|unpaid_promos|"
-                              "rejected_promos|live_promos|underdelivered|"
-                              "reported|house|fraud|all"))
+                              "rejected_promos|live_promos|edited_live_promos|"
+                              "underdelivered|reported|house|fraud|all|"
+                              "unapproved_campaigns|by_platform"))
     mc('/sponsor', controller='sponsorlisting', action="listing",
        sort="all")
     mc('/sponsor/promoted/', controller='sponsorlisting', action="listing",
@@ -256,7 +257,8 @@ def make_map(config):
     # listings of user's promos
     mc('/promoted/:sort', controller='promotelisting', action="listing",
        requirements=dict(sort="future_promos|pending_promos|unpaid_promos|"
-                              "rejected_promos|live_promos|all"))
+                              "rejected_promos|live_promos|edited_live_promos|"
+                              "all"))
     mc('/promoted/', controller='promotelisting', action="listing", sort="all")
 
     # editing endpoints

@@ -65,7 +65,8 @@ ad here:
 
     ${unsafe(edit_url + ref_tags % dict(ref="promo_total_budget", campaign="edit_promo"))}
 
-%elif thing.kind == Email.Kind.ACCEPT_PROMO:
+%elif thing.kind == Email.Kind.ACCEPT_PROMO or thing.kind == Email.Kind.EDITED_LIVE_PROMO:
+%if thing.kind == Email.Kind.ACCEPT_PROMO:
 This email is to confirm that your self-serve reddit.com ad has been approved by
 reddit!  The credit card you provided will not be charged until 12-24 hours
 prior to the date you have set your ad to run.
@@ -74,6 +75,13 @@ If you edit your copy, URL, or thumbnail after approval and before launch, it'll
 have to be reapproved. If it is near midnight and it is about to go live
 imminently, we can't necessarily guarantee we'll get to it in time, so keep that
 in mind when reviewing your ad.
+%endif
+%if thing.kind == Email.Kind.EDITED_LIVE_PROMO:
+This email is to confirm that your live ad below is scheduled to be re-approved
+by reddit. Until the ad is re-approved, the ad will be paused and will not be
+shown on the site. But don't worry – re-approving live ads is among our highest
+priorities!
+%endif
 
     ${edit_url}
 

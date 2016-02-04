@@ -452,9 +452,28 @@ class PromoteListingController(ListingController):
         'unpaid_promos': N_('unpaid promoted links'),
         'rejected_promos': N_('rejected promoted links'),
         'live_promos': N_('live promoted links'),
+        'edited_live_promos': N_('edited live promoted links'),
         'all': N_('all promoted links'),
     }
     base_path = '/promoted'
+
+    default_filters = [
+        NamedButton('all_promos', dest='',
+                    use_params=False,
+                    aliases=['/sponsor']),
+        NamedButton('future_promos',
+                    use_params=False),
+        NamedButton('unpaid_promos',
+                    use_params=False),
+        NamedButton('rejected_promos',
+                    use_params=False),
+        NamedButton('pending_promos',
+                    use_params=False),
+        NamedButton('live_promos',
+                    use_params=False),
+        NamedButton('edited_live_promos',
+                    use_params=False),
+    ]
 
     def title(self):
         return _(self.titles[self.sort])
@@ -518,6 +537,8 @@ class PromoteListingController(ListingController):
             return queries.get_rejected_links(c.user._id)
         elif self.sort == "live_promos":
             return queries.get_live_links(c.user._id)
+        elif self.sort == "edited_live_promos":
+            return queries.get_edited_live_links(c.user._id)
         elif self.sort == "all":
             return queries.get_promoted_links(c.user._id)
 
@@ -639,6 +660,8 @@ class SponsorListingController(PromoteListingController):
             return self.live_by_subreddit(self.sr)
         elif self.sort == 'live_promos':
             return queries.get_all_live_links()
+        elif self.sort == 'edited_live_promos':
+            return queries.get_all_edited_live_links()
         elif self.sort == 'underdelivered':
             q = queries.get_underdelivered_campaigns()
             campaigns = PromoCampaign._by_fullname(list(q), data=True,
@@ -1011,24 +1034,25 @@ class PromoteApiController(ApiController):
             return
 
         changed = False
-        # live items can only be changed by a sponsor, and also
-        # pay the cost of de-approving the link
-        if not promote.is_promoted(l) or c.user_is_sponsor:
-            if title and title != l.title:
-                l.title = title
-                changed = True
+        if title and title != l.title:
+            l.title = title
+            changed = True
 
-            if _force_images(l, thumbnail=thumbnail, mobile=mobile):
-                changed = True
+        if _force_images(l, thumbnail=thumbnail, mobile=mobile):
+            changed = True
 
-            # type changing
-            if is_self != l.is_self:
-                l.set_content(is_self, selftext if is_self else url)
-                changed = True
+        # type changing
+        if is_self != l.is_self:
+            l.set_content(is_self, selftext if is_self else url)
+            changed = True
+
+        if is_link and url and url != l.url:
+            l.url = url
+            changed = True
 
         # only trips if changed by a non-sponsor
-        if changed and not c.user_is_sponsor:
-            promote.unapprove_promotion(l)
+        if changed and not c.user_is_sponsor and promote.is_promoted(l):
+            promote.edited_live_promotion(l)
 
         # selftext can be changed at any time
         if is_self:

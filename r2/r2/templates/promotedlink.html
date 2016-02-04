@@ -75,6 +75,8 @@ ${unsafe(taglinetext % dict(author=author))}
         ${_('sponsored link')}
       %elif promote.is_accepted(thing):
         ${_('accepted sponsored link')}
+      %elif promote.is_edited_live(thing):
+        ${_('edited live sponsored link')}
       %endif
     %else:
       ${_('sponsored link')}

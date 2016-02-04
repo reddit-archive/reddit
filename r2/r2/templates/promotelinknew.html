@@ -46,8 +46,8 @@ ${unsafe(js.use('sponsored'))}
             ${username_field()}
             ${managed_field(None)}
           %endif
-          ${title_field(None, editable=True)}
-          ${content_field(None, editable=True, enable_override=c.user_is_sponsor,
+          ${title_field(None)}
+          ${content_field(None, enable_override=c.user_is_sponsor,
                           tracker_access=c.user_can_track_ads)}
           <footer class="buttons">
             <div class="rules">

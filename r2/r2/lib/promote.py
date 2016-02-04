@@ -159,6 +159,7 @@ def is_promo(link):
 def is_accepted(link):
     return (is_promo(link) and
             link.promote_status != PROMOTE_STATUS.rejected and
+            link.promote_status != PROMOTE_STATUS.edited_live and
             link.promote_status >= PROMOTE_STATUS.accepted)
 
 def is_unpaid(link):
@@ -172,6 +173,9 @@ def is_rejected(link):
 
 def is_promoted(link):
     return is_promo(link) and link.promote_status == PROMOTE_STATUS.promoted
+
+def is_edited_live(link):
+    return is_promo(link) and link.promote_status == PROMOTE_STATUS.edited_live
 
 def is_finished(link):
     return is_promo(link) and link.promote_status == PROMOTE_STATUS.finished
@@ -642,13 +646,15 @@ def get_date_limits(link, is_sponsor=False):
 
 
 def accept_promotion(link):
+    was_edited_live = is_edited_live(link)
     update_promote_status(link, PROMOTE_STATUS.accepted)
 
     if link._spam:
         link._spam = False
         link._commit()
 
-    emailer.accept_promo(link)
+    if not was_edited_live:
+        emailer.accept_promo(link)
 
     # if the link has campaigns running now charge them and promote the link
     now = promo_datetime_now()
@@ -656,7 +662,9 @@ def accept_promotion(link):
     is_live = False
     for camp in campaigns:
         if is_accepted_promo(now, link, camp):
-            charge_campaign(link, camp)
+            # if link was edited live, do not check against Authorize.net
+            if not was_edited_live:
+                charge_campaign(link, camp)
             if charged_or_not_needed(camp):
                 promote_link(link, camp)
                 is_live = True
@@ -718,6 +726,11 @@ def unapprove_promotion(link):
         update_promote_status(link, PROMOTE_STATUS.unpaid)
     else:
         update_promote_status(link, PROMOTE_STATUS.unseen)
+
+
+def edited_live_promotion(link):
+    update_promote_status(link, PROMOTE_STATUS.edited_live)
+    emailer.edited_live_promo(link)
 
 
 def authed_or_not_needed(campaign):

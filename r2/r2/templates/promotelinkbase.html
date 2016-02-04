@@ -69,10 +69,9 @@
   </div>
 </%def>
 
-<%def name="title_field(link, editable=False)">
+<%def name="title_field(link)">
   <%utils:line_field title="${_('title')}" id="title-field" css_class="rounded title-field">
     <textarea name="title" rows="2" cols="1" 
-              ${"disabled" if not editable else ""}
               wrap="hard" class="rounded">${link.title if link else ''}</textarea>
     ${error_field("NO_TEXT", "title", "div")}
     ${error_field("TOO_LONG", "title", "div")}
@@ -82,7 +81,7 @@
   </%utils:line_field>
 </%def>
 
-<%def name="content_field(link, editable=False, enable_override=False)">
+<%def name="content_field(link, enable_override=False, tracker_access=False)">
   <%
     is_link = not link or not link.is_self
     text = link.selftext if link else ''
@@ -114,12 +113,12 @@
   </%utils:line_field>
   <%utils:line_field title="${_('text')}" id="text-field" css_class="rounded text-field"
                      style="${('' if not is_link else 'display:none')}">
-    ${UserText(None, text=text, textarea_class='rounded', have_form=False, creating=True)}
+    ${UserText(None, text=text, textarea_class='rounded', have_form=False,
+               creating=True)}
   </%utils:line_field>
   <%utils:line_field title="${_('url')}" id="url-field" css_class="rounded url-field"
                      style="${('' if is_link else 'display:none')}">
     <input id="url" name="url" type="text" 
-           ${"disabled" if not editable else ""}
            value="${(url if is_link else '') if link else ""}"
            class="rounded">
     ${error_field("NO_URL", "url", "div")}

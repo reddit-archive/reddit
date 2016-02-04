@@ -178,10 +178,6 @@ ${pr.javascript_setup()}
   <div class="pretty-form promotelink-editor editor collapsed" id="promo-form">
     <input type="hidden" name="link_id36" value="${thing.link._id36}">
 
-    <%
-       editable = c.user_is_sponsor or not promote.is_promoted(thing.link)
-     %>
-
     <input name="kind" value="${'self' if thing.link.is_self else 'link'}" type="hidden">
     
     <div class="collapsed-display">
@@ -193,21 +189,18 @@ ${pr.javascript_setup()}
     </div>
     <div class="uncollapsed-display" style="display:none">
       <div class="editor-group">
-        %if editable:
-          ${pr.image_field(thing.link)}
-        %endif
+        ${pr.image_field(thing.link)}
         <% is_link = not thing.link.is_self %>
-        ${pr.title_field(thing.link, editable=editable)}
-        ${pr.content_field(thing.link, editable=editable, enable_override=c.user_is_sponsor)}
+        ${pr.title_field(thing.link)}
+        ${pr.content_field(thing.link, enable_override=c.user_is_sponsor,
+                           tracker_access=c.user_can_track_ads)}
         ${utils.error_field("NO_CHANGE_KIND", "kind", "div")}
         
-        %if editable:
-          ${pr.commenting_field(thing.link)}
+        ${pr.commenting_field(thing.link)}
 
-          %if c.user_is_sponsor:
-            ${pr.managed_field(thing.link)}
-            ${pr.media_field(thing.link)}
-          %endif
+        %if c.user_is_sponsor:
+          ${pr.managed_field(thing.link)}
+          ${pr.media_field(thing.link)}
         %endif
       </div>
       <footer class="buttons">

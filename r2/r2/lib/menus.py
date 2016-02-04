@@ -187,6 +187,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      unpaid_promos  = _('unpaid'),
                      pending_promos = _('pending'),
                      rejected_promos = _('rejected'),
+                     edited_live_promos = _('edited live'),
 
                      sitewide = _('sitewide'),
                      languages = _('languages'),

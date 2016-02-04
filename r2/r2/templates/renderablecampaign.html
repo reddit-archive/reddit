@@ -144,6 +144,8 @@
   <td class="campaign-buttons">
     %if thing.is_complete:
       <span class='info'>${_("complete")}</span>
+    %elif thing.is_edited_live:
+      <span class='info'>${_("edited live")}</span>
     %else:
       %if thing.editable:
         <button class="edit" onclick="edit_campaign(${jquery_row})">

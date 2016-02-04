@@ -4624,7 +4624,8 @@ class PromoteLinkEdit(PromoteLinkBase):
 
 class RenderableCampaign(Templated):
     def __init__(self, link, campaign, transaction, is_pending, is_live,
-                 is_complete, full_details=True):
+                 is_complete, is_edited_live, full_details=True,
+                 hide_after_seen=False):
         self.link = link
         self.campaign = campaign
 
@@ -4660,6 +4661,7 @@ class RenderableCampaign(Templated):
         self.is_pending = is_pending
         self.is_live = is_live
         self.is_complete = is_complete
+        self.is_edited_live = is_edited_live
         self.needs_refund = (is_complete and c.user_is_sponsor and
                              (transaction and not transaction.is_refund()) and
                              self.spent < campaign.total_budget_dollars)
@@ -4707,7 +4709,8 @@ class RenderableCampaign(Templated):
         Templated.__init__(self)
 
     @classmethod
-    def from_campaigns(cls, link, campaigns, full_details=True):
+    def from_campaigns(cls, link, campaigns,
+                       full_details=True, hide_after_seen=False):
         campaigns, is_single = tup(campaigns, ret_is_single=True)
 
         if full_details:
@@ -4727,11 +4730,13 @@ class RenderableCampaign(Templated):
                 (transaction.is_charged() or transaction.is_refund()))
             is_expired_house = camp.is_house and camp.end_date < now
             is_live_or_pending = is_live or is_pending
-            is_complete = ((is_charged_or_refunded and
+            is_edited_live = promote.is_edited_live(link)
+            is_complete = (not is_edited_live and
+                (is_charged_or_refunded and
                 not is_live_or_pending) or
                 is_expired_house)
             rc = cls(link, camp, transaction, is_pending, is_live, is_complete,
-                     full_details)
+                     is_edited_live, full_details, hide_after_seen)
             ret.append(rc)
         if is_single:
             return ret[0]
