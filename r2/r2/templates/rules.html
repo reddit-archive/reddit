@@ -38,8 +38,7 @@
         <div class="md">
             <h2>${thing.title}</h2>
             <p>
-                Rules that visitors must follow to participate. May be used as
-                reasons to report or ban.
+                ${_("Rules that visitors must follow to participate. May be used as reasons to report or ban.")}
             </p>
         </div>
     </header>
@@ -75,10 +74,10 @@
                 <div class="subreddit-rule-add-form-buttons">
                     <button class="subreddit-rule-edit-button">
                         ${self.mod_action_icon('add', _('Add a new rule.'))}&#32;
-                        Add a rule
+                        ${_("Add a rule")}
                     </button>
                     <div class="subreddit-rule-too-many-notice" hidden>
-                        You have reached the maximum number of rules.
+                        ${_("You have reached the maximum number of rules.")}
                     </div>
                 </div>
             </div>
@@ -129,10 +128,10 @@
         %if editable:
             <div class="md-container-small">
                 <div class="subreddit-rule-delete-confirmation" hidden>
-                    Delete this rule?&#32;
-                    <button class="subreddit-rule-delete-button">delete</button>
+                    ${_("Delete this rule?")}&#32;
+                    <button class="subreddit-rule-delete-button">${_("delete")}</button>
                     &#32;<span class="separator">|</span>&#32;
-                    <button class="subreddit-rule-cancel-button">cancel</button>
+                    <button class="subreddit-rule-cancel-button">${_("cancel")}</button>
                 </div>
             </div>
         %endif
@@ -145,10 +144,10 @@
             <div class="c-form-group form-group-short_name">
                 <div class="md-container-small">
                     <div class="md">
-                        <label for="short_name" class="label required">Short name</label>
+                        <label for="short_name" class="label required">${_("Short name")}</label>
                         <div class="text-counter">
                             <span class="text-counter-display"></span>&#32;
-                            remaining
+                            ${_("remaining")}
                         </div>
                     </div>
                 </div>
@@ -164,7 +163,7 @@
             <div class="c-form-group form-group-kind">
                 <div class="md-container-small">
                     <div class="md">
-                        <div class="label">Applies to</div>
+                        <div class="label">${_("Applies to")}</div>
                         <label>
                             <input type="radio" name="kind" value="all" checked>
                             ${thing.kind_labels.get('all')}
@@ -184,10 +183,10 @@
             <div class="c-form-group form-group-description">
                 <div class="md-container-small">
                     <div class="md">
-                        <label class="label" for="description">Full description of this rule</label>
+                        <label class="label" for="description">${_("Full description of this rule")}</label>
                         <div class="text-counter">
                             <span class="text-counter-display" rel="description"></span>&#32;
-                            remaining
+                            ${_("remaining")}
                         </div>
                     </div>
                 </div>
