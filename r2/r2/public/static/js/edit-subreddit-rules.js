@@ -321,11 +321,9 @@ requires r.ui.TextCounter
       SubredditRulesPage.__super__.delegateEvents.apply(this, arguments);
 
       this.listenTo(this.newRuleForm, 'success', function(model) {
-        // need to defer this, otherwise event listeners added to the model
-        // by the new view will get called by the active event :(
-        setTimeout(function() {
-          this.addNewRule(model);
-        }.bind(this));
+        var props = model.toJSON();
+        var newModel = new r.models.SubredditRule(props);
+        this.addNewRule(newModel);
       });
 
       this.listenTo(this.collection, 'sync', function() {
