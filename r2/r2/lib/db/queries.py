@@ -194,7 +194,7 @@ class CachedResults(object):
 
             mutated_length = len(existing_fnames.union(new_fnames))
             would_truncate = mutated_length >= precompute_limit
-            if would_truncate:
+            if would_truncate and data:
                 # only insert items that are already stored or new items
                 # that are large enough that they won't be immediately truncated
                 # out of storage
