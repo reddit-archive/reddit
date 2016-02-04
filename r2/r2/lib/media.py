@@ -388,6 +388,13 @@ def _scrape_media(url, autoplay=False, maxwidth=600, force=False,
 
 def _get_scrape_url(link):
     if not link.is_self:
+        p = UrlParser(link.url)
+        # If it's a gif link on imgur, replacing it with gifv should
+        # give us the embedly friendly video url
+        if is_subdomain(p.hostname, "imgur.com"):
+            if p.path_extension().lower() == "gif":
+                p.set_extension("gifv")
+                return p.unparse()
         return link.url
 
     urls = extract_urls_from_markdown(link.selftext)
