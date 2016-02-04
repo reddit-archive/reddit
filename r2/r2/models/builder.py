@@ -870,6 +870,9 @@ class CommentBuilder(Builder):
             children = [cid for cid in self.children if cid in cids]
             self.update_candidates(candidates, sorter, children)
             dont_collapse.extend(comment for sort_val, comment in candidates)
+            # BUG: current viewing depth isn't considered, so requesting
+            # children of a deep comment can return nothing. the fix is to send
+            # the current offset_depth along with the MoreChildren request
 
         elif self.comment:
             # requested the tree from a specific comment
