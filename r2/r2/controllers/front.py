@@ -953,9 +953,14 @@ class FrontController(RedditController):
             "link": _("Posts only"),
             "comment": _("Comments only"),
         }
-        content = Rules(kind_labels=kind_labels)
+        title_string = _("Rules for r/%(subreddit)s") % { "subreddit" : c.site.name }
+        content = Rules(
+            title=title_string,
+            kind_labels=kind_labels,
+        )
         extra_js_config = {"kind_labels": kind_labels}
         return ModToolsPage(
+            title=title_string,
             content=content,
             extra_js_config=extra_js_config,
         ).render()
