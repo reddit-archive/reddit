@@ -998,8 +998,6 @@ class Link(Thing, Printable):
 
         Raises `RedditError` on an attempt to sticky non-top-level comments.
         """
-        from r2.lib.comment_tree import update_comment_votes
-
         if not comment.is_stickyable:
             raise RedditError('COMMENT_NOT_STICKYABLE', code=400)
 
@@ -1030,8 +1028,6 @@ class Link(Thing, Printable):
         `set_by` is an optional Account, which if set will add a ModAction
         event to the mod log.
         """
-        from r2.lib.comment_tree import update_comment_votes
-
         if self.sticky_comment_id is None:
             return  # nothing to do
 
@@ -1042,13 +1038,6 @@ class Link(Thing, Printable):
 
         self.sticky_comment_id = None
         self._commit()
-
-        # LEGACY: This is to deal with the old way that sticky comments used
-        # to alter sort values. This is only still here so that when a comment
-        # gets unstickied it will have its sort value corrected. We can remove
-        # this line after 2016-02-01 or so when unstickying comments from
-        # before this update will be rare.
-        update_comment_votes(prev_sticky_comment)
 
         if set_by:
             ModAction.create(
