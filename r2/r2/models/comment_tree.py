@@ -181,6 +181,10 @@ class CommentTreeStorageV1(CommentTreeStorageBase):
 
     @classmethod
     def add_comments(cls, tree, comments):
+        if all(comment._id in tree.cids for comment in comments):
+            # don't bother to write if this would be a no-op
+            return
+
         with cls.mutation_context(tree.link):
             CommentTreeStorageBase.add_comments(tree, comments)
             key = cls._comments_key(tree.link._id)

@@ -29,7 +29,7 @@ from r2.lib.db import tdb_cassandra
 from r2.lib.utils import fetch_things2, tup, UniqueIterator
 from r2.lib import utils
 from r2.lib import amqp, filters
-from r2.lib.comment_tree import add_comments, update_comment_votes
+from r2.lib.comment_tree import add_comments
 from r2.lib.voting import prequeued_vote_key
 from r2.models.promo import PROMOTE_STATUS, PromotionLog
 from r2.models.query_cache import (
@@ -1120,7 +1120,7 @@ def new_vote(vote):
                     for sort in sorts_to_update:
                         results.append(get_domain_links(domain, sort, "all"))
         elif isinstance(vote.thing, Comment):
-            update_comment_votes([vote.thing])
+            add_to_commentstree_q(vote.thing)
 
         add_queries(results, insert_items=vote.thing)
     

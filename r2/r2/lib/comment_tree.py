@@ -29,60 +29,55 @@ from pylons import app_globals as g
 from r2.lib.cache import sgm
 from r2.lib.utils import tup
 from r2.models.comment_tree import CommentTree, InconsistentCommentTreeError
-from r2.models.link import Comment, Link
+from r2.models.link import Comment, Link, CommentScoresByLink
 
 MESSAGE_TREE_SIZE_LIMIT = 15000
 
 
 def add_comments(comments):
-    links = Link._byID([com.link_id for com in tup(comments)], data=True)
+    """Add comments to the CommentTree and update scores."""
+    link_ids = [comment.link_id for comment in tup(comments)]
+    links = Link._byID(link_ids, data=True)
+
     comments = tup(comments)
+    comments_by_link_id = defaultdict(list)
+    for comment in comments:
+        comments_by_link_id[comment.link_id].append(comment)
 
-    link_map = {}
-    for com in comments:
-        link_map.setdefault(com.link_id, []).append(com)
-
-    for link_id, coms in link_map.iteritems():
+    for link_id, link_comments in comments_by_link_id.iteritems():
         link = links[link_id]
-        add_comments = [comment for comment in coms if not comment._deleted]
-        delete_comments = (comment for comment in coms if comment._deleted)
-        timer = g.stats.get_timer('comment_tree.add.%s'
-                                  % link.comment_tree_version)
+
+        # retrieve and update the comment tree
+        new_comments = [
+            comment for comment in link_comments if not comment._deleted]
+        deleted_comments = [
+            comment for comment in link_comments if comment._deleted]
+        timer = g.stats.get_timer(
+            'comment_tree.add.%s' % link.comment_tree_version)
         timer.start()
+
         try:
             with CommentTree.mutation_context(link, timeout=30):
                 timer.intermediate('lock')
                 comment_tree = CommentTree.by_link(link, timer)
                 timer.intermediate('get')
-                if add_comments:
-                    comment_tree.add_comments(add_comments)
-                for comment in delete_comments:
+
+                if new_comments:
+                    comment_tree.add_comments(new_comments)
+
+                for comment in deleted_comments:
                     comment_tree.delete_comment(comment, link)
+
                 timer.intermediate('update')
         except InconsistentCommentTreeError:
-            comment_ids = [comment._id for comment in coms]
+            comment_ids = [comment._id for comment in link_comments]
             g.log.exception(
                 'add_comments_nolock failed for link %s %s, recomputing',
                 link_id, comment_ids)
-            rebuild_comment_tree(link, timer=timer)
+            comment_tree = rebuild_comment_tree(link, timer=timer)
             g.stats.simple_event('comment_tree_inconsistent')
 
-        timer.stop()
-        update_comment_votes(coms)
-
-
-def update_comment_votes(comments):
-    from r2.models import CommentScoresByLink
-
-    comments = tup(comments)
-
-    comments_by_link_id = defaultdict(list)
-    for comment in comments:
-        comments_by_link_id[comment.link_id].append(comment)
-    links_by_id = Link._byID(comments_by_link_id.keys(), data=True)
-
-    for link_id, link_comments in comments_by_link_id.iteritems():
-        link = links_by_id[link_id]
+        # update scores
         for sort in ("_controversy", "_confidence", "_score"):
             scores_by_comment = {
                 comment._id36: getattr(comment, sort)
@@ -92,6 +87,8 @@ def update_comment_votes(comments):
 
         scores_by_comment = _get_qa_comment_scores(link, link_comments)
         CommentScoresByLink.set_scores(link, "_qa", scores_by_comment)
+        timer.intermediate('scores')
+        timer.stop()
 
 
 def _get_qa_comment_scores(link, comments):
@@ -443,4 +440,4 @@ def _populate(after_id = None, estimate=54301242):
 
     for chunk in utils.in_chunks(q, chunk_size):
         chunk = filter(lambda x: hasattr(x, 'link_id'), chunk)
-        update_comment_votes(chunk)
+        add_comments(chunk)
