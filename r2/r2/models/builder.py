@@ -949,6 +949,9 @@ class CommentBuilder(Builder):
 
         timer.intermediate("pick_comments")
 
+        # TEMP: set the order as an attribute so it can be accessed by tests
+        self.comment_order = items
+
         self.top_level_candidates = [comment for sort_val, comment in candidates
             if depth.get(comment, 0) == 0]
         self.comments = Comment._byID(
