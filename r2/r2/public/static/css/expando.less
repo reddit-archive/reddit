@@ -14,12 +14,15 @@
 
 .thing .entry .expando-button {
     background-color: transparent;
-    background-position: 0 0;
     cursor: pointer;
     height: 20px;
     margin: 4px 8px 4px 0;
     transition: background-image 0.1s;
     width: 20px;
+
+    &, &:hover {
+        background-position: 0 0;
+    }
 
     &.expanded {
         .hdpi-bg-image(
