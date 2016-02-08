@@ -206,6 +206,9 @@ class CommentButtons(PrintableButtons):
         show_delete = is_author and delete and not thing._deleted
         suppress_reply_buttons = getattr(thing, 'suppress_reply_buttons', False)
 
+        if thing.link.archived:
+          suppress_reply_buttons = True
+
         show_distinguish = (is_author and
                             (thing.can_ban or  # Moderator distinguish
                              c.user.employee or  # Admin distinguish
