@@ -808,7 +808,7 @@ def translate_thing_value(rval):
         return rval
 
 #will assume parameters start with a _ for consistency
-def find_things(type_id, get_cols, sort, limit, offset, constraints):
+def find_things(type_id, sort, limit, offset, constraints):
     table = get_thing_table(type_id)[0]
     constraints = deepcopy(constraints)
 
@@ -839,7 +839,7 @@ def find_things(type_id, get_cols, sort, limit, offset, constraints):
         dbm.mark_dead(table.bind)
         # this thread must die so that others may live
         raise
-    return Results(r, lambda(row): row if get_cols else row.thing_id)
+    return Results(r, lambda(row): row.thing_id)
 
 def translate_data_value(alias, op):
     lval = op.lval
@@ -858,7 +858,7 @@ def translate_data_value(alias, op):
 
 #TODO sort by data fields
 #TODO sort by id wants thing_id
-def find_data(type_id, get_cols, sort, limit, offset, constraints):
+def find_data(type_id, sort, limit, offset, constraints):
     t_table, d_table = get_thing_table(type_id)
     constraints = deepcopy(constraints)
 
@@ -925,7 +925,7 @@ def find_data(type_id, get_cols, sort, limit, offset, constraints):
         # this thread must die so that others may live
         raise
 
-    return Results(r, lambda(row): row if get_cols else row.thing_id)
+    return Results(r, lambda(row): row.thing_id)
 
 
 def sort_thing_ids_by_data_value(type_id, thing_ids, value_name,
@@ -962,7 +962,7 @@ def sort_thing_ids_by_data_value(type_id, thing_ids, value_name,
     return Results(rows, lambda(row): row.thing_id)
 
 
-def find_rels(rel_type_id, get_cols, sort, limit, offset, constraints):
+def find_rels(rel_type_id, sort, limit, offset, constraints):
     tables = get_rel_table(rel_type_id)
     r_table, t1_table, t2_table, d_table = tables
     constraints = deepcopy(constraints)
@@ -1038,7 +1038,7 @@ def find_rels(rel_type_id, get_cols, sort, limit, offset, constraints):
         dbm.mark_dead(r_table.bind)
         # this thread must die so that others may live
         raise
-    return Results(r, lambda (row): (row if get_cols else row.rel_id))
+    return Results(r, lambda (row): row.rel_id)
 
 if logging.getLogger('sqlalchemy').handlers:
     logging.getLogger('sqlalchemy').handlers[0].formatter = log_format

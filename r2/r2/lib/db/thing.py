@@ -365,7 +365,7 @@ class DataThing(object):
 
     #TODO error when something isn't found?
     @classmethod
-    def _byID(cls, ids, data=False, return_dict=True, extra_props=None,
+    def _byID(cls, ids, data=False, return_dict=True,
               stale=False, ignore_missing=False):
         ids, single = tup(ids, True)
         prefix = thing_prefix(cls.__name__)
@@ -419,11 +419,6 @@ class DataThing(object):
                     need.append(v)
             if need:
                 cls._load_multi(need)
-
-        if extra_props:
-            for _id, props in extra_props.iteritems():
-                for k, v in props.iteritems():
-                    bases[_id].__setattr__(k, v, False)
 
         if single:
             return bases[ids[0]] if ids else None
@@ -737,13 +732,12 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
         # rel itself). eager_load means, do you load thing1 and thing2
         # immediately. It calls _byID(xxx, data=thing_data).
         @classmethod
-        def _byID_rel(cls, ids, data=False, return_dict=True, extra_props=None,
+        def _byID_rel(cls, ids, data=False, return_dict=True,
                       eager_load=False, thing_data=False, thing_stale=False):
 
             ids, single = tup(ids, True)
 
-            bases = cls._byID(ids, data=data, return_dict=True,
-                              extra_props=extra_props)
+            bases = cls._byID(ids, data=data, return_dict=True)
 
             values = bases.values()
 
@@ -1117,41 +1111,26 @@ class Things(Query):
         self._rules += rules
         return self
 
-
     def _cursor(self):
-        #TODO why was this even here?
-        #get_cols = bool(self._sort_param)
-        get_cols = False
-        params = (self._kind._type_id,
-                  get_cols,
-                  self._sort,
-                  self._limit,
-                  self._offset,
-                  self._rules)
         if self._use_data:
-            c = tdb.find_data(*params)
+            find_fn = tdb.find_data
         else:
-            c = tdb.find_things(*params)
+            find_fn = tdb.find_things
 
-        #TODO simplfy this! get_cols is always false?
+        cursor = find_fn(
+            type_id=self._kind._type_id,
+            sort=self._sort,
+            limit=self._limit,
+            offset=self._offset,
+            constraints=self._rules,
+        )
+
         #called on a bunch of rows to fetch their properties in batch
-        def row_fn(rows):
-            #if have a sort, add the sorted column to the results
-            if get_cols:
-                extra_props = {}
-                for r in rows:
-                    for sc in (s.col for s in self._sort):
-                        #dict of ids to the extra sort params
-                        props = extra_props.setdefault(r.thing_id, {})
-                        props[sc] = getattr(r, sc)
-                _ids = extra_props.keys()
-            else:
-                _ids = rows
-                extra_props = {}
-            return self._kind._byID(_ids, data=self._data, return_dict=False,
-                                    stale=self._stale, extra_props=extra_props)
+        def row_fn(ids):
+            return self._kind._byID(
+                ids, data=self._data, return_dict=False, stale=self._stale)
 
-        return Results(c, row_fn, True)
+        return Results(cursor, row_fn, do_batch=True)
 
 def load_things(rels, load_data=False, stale=False):
     rels = tup(rels)
@@ -1199,7 +1178,6 @@ class Relations(Query):
 
     def _cursor(self):
         c = tdb.find_rels(self._kind._type_id,
-                          False,
                           sort = self._sort,
                           limit = self._limit,
                           offset = self._offset,
