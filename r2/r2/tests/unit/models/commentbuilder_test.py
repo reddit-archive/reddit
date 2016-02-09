@@ -188,3 +188,10 @@ class CommentOrderTest(RedditTestCase):
             self.link, sort, children=[101, 102, 103], num=1500)
         builder._get_comments()
         self.assertEqual(builder.comment_order, [101, 102, 104, 105, 106, 103])
+
+    def test_comment_order_children_limit(self):
+        sort = operators.desc("_confidence")
+        builder = CommentBuilder(
+            self.link, sort, children=[107, 108, 109], num=3)
+        builder._get_comments()
+        self.assertEqual(builder.comment_order, [107, 108, 110])
