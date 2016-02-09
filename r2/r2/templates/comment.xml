@@ -53,7 +53,7 @@
 
     <id>${thing._fullname}</id>
     <link href="${thing.permalink}"/>
-    <published>${html_datetime(thing._date)}</published>
+    <updated>${html_datetime(thing._date)}</updated>
     <title>/u/${author} ${_("on")} ${thing.link.title}</title>
 </entry>
 

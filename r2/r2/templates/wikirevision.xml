@@ -42,6 +42,6 @@
     <%utils:atom_content type="text">${thing._get('reason')}</%utils:atom_content>
     <id>${thing._fullname}</id>
     <link href="${link}" />
-    <published>${html_datetime(thing.date)}</published>
+    <updated>${html_datetime(thing.date)}</updated>
     <title>${thing._id}</title> ## is this really the best title?
 </entry>

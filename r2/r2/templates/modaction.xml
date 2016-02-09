@@ -60,6 +60,6 @@
     %if permalink:
         <link href="${add_sr(permalink)}"/>
     %endif
-    <published>${html_datetime(thing.date)}</published>
+    <updated>${html_datetime(thing.date)}</updated>
     <title>${title}</title>
 </entry>

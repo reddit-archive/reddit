@@ -85,7 +85,7 @@
 
     <link href="${permalink}"/>
 
-    <published>${html_datetime(thing._date)}</published>
+    <updated>${html_datetime(thing._date)}</updated>
 
     <%utils:atom_content tag_name="summary">
         ${unsafe(taglinetext)}: ${thing.subject}
