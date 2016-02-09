@@ -1632,6 +1632,18 @@ class AllSR(FakeSubreddit):
         from r2.lib.db import queries
         return queries.get_all_gilded()
 
+    def get_reported(self, include_links=True, include_comments=True):
+        from r2.lib.db import queries
+        from r2.lib.db.thing import Merge
+        qs = []
+
+        if include_links:
+            qs.append(queries.get_reported_links(None))
+
+        if include_comments:
+            qs.append(queries.get_reported_comments(None))
+
+        return MergedCachedQuery(qs)
 
 class AllMinus(AllSR):
     analytics_name = "all"

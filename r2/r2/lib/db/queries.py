@@ -435,17 +435,22 @@ def get_spam_filtered(sr):
 
 @cached_query(SubredditQueryCache)
 def get_reported_links(sr_id):
-    return Link._query(Link.c.reported != 0,
-                       Link.c.sr_id == sr_id,
-                       Link.c._spam == False,
-                       sort = db_sort('new'))
+    q = Link._query(Link.c.reported != 0,
+                    Link.c._spam == False,
+                    sort = db_sort('new'))
+    if sr_id is not None:
+        q._filter(Link.c.sr_id == sr_id)
+    return q
 
 @cached_query(SubredditQueryCache)
 def get_reported_comments(sr_id):
-    return Comment._query(Comment.c.reported != 0,
-                          Comment.c.sr_id == sr_id,
+    q = Comment._query(Comment.c.reported != 0,
                           Comment.c._spam == False,
                           sort = db_sort('new'))
+
+    if sr_id is not None:
+        q._filter(Comment.c.sr_id == sr_id)
+    return q
 
 @merged_cached_query
 def get_reported(sr, user=None, include_links=True, include_comments=True):
@@ -1521,8 +1526,10 @@ def _common_del_ban(things):
                     results.append(get_links(sr, sort, time))
             add_queries(results, delete_items=links)
             query_cache_deletes.append([get_reported_links(sr), links])
+            query_cache_deletes.append([get_reported_links(None), links])
         if comments:
             query_cache_deletes.append([get_reported_comments(sr), comments])
+            query_cache_deletes.append([get_reported_comments(None), comments])
 
     return query_cache_inserts, query_cache_deletes
 
@@ -1589,9 +1596,11 @@ def new_report(thing, report_rel):
     with CachedQueryMutator() as m:
         if isinstance(thing, Link):
             m.insert(get_reported_links(thing.sr_id), [thing])
+            m.insert(get_reported_links(None), [thing])
             m.insert(get_user_reported_links(reporter_id), [report_rel])
         elif isinstance(thing, Comment):
             m.insert(get_reported_comments(thing.sr_id), [thing])
+            m.insert(get_reported_comments(None), [thing])
             m.insert(get_user_reported_comments(reporter_id), [report_rel])
         elif isinstance(thing, Message):
             m.insert(get_user_reported_messages(reporter_id), [report_rel])
@@ -1610,8 +1619,10 @@ def clear_reports(things, rels):
 
         if links:
             query_cache_deletes.append([get_reported_links(sr_id), links])
+            query_cache_deletes.append([get_reported_links(None), links])
         if comments:
             query_cache_deletes.append([get_reported_comments(sr_id), comments])
+            query_cache_deletes.append([get_reported_comments(None), comments])
 
     # delete from user_reported if the report was correct
     rels = [r for r in rels if r._name == '1']
