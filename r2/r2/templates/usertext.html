@@ -153,7 +153,7 @@
                         "helpon", "helpoff",
                          style = "" if thing.creating else "display: none")}
 
-        <a href="/wiki/reddiquette" class="reddiquette" target="_blank" tabindex="100">${_('reddiquette')}</a>
+        <a href="/help/contentpolicy" class="reddiquette" target="_blank" tabindex="100">${_('content policy')}</a>
 
         %if thing.include_errors:
           ${error_field("TOO_LONG", thing.name, "span")}
