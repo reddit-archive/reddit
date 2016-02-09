@@ -115,7 +115,6 @@ menu =   MenuHandler(hot          = _('hot'),
 
                      # comments
                      comments     = _("comments {toolbar}"),
-                     related      = _("related"),
                      details      = _("details"),
                      duplicates   = _("other discussions (%(num)s)"),
                      traffic      = _("traffic stats"),

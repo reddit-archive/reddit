@@ -1848,8 +1848,7 @@ class LinkInfoPage(Reddit):
                                fmt_args = fmt_args)
         buttons = []
         if not self.disable_comments:
-            buttons.extend([info_button('comments'),
-                            info_button('related')])
+            buttons.append(info_button('comments'))
 
             if self.num_duplicates > 0:
                 buttons.append(info_button('duplicates', num=self.num_duplicates))

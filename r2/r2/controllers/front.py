@@ -69,7 +69,6 @@ from operator import attrgetter
 import string
 import random as rand
 import re
-import time as time_module
 from urllib import quote_plus
 
 class FrontController(RedditController):
@@ -99,7 +98,7 @@ class FrontController(RedditController):
     def GET_oldinfo(self, article, type, dest, rest=None, comment=''):
         """Legacy: supporting permalink pages from '06,
            and non-search-engine-friendly links"""
-        if not (dest in ('comments','related','details')):
+        if not (dest in ('comments','details')):
                 dest = 'comments'
         if type == 'ancient':
             #this could go in config, but it should never change
@@ -994,39 +993,6 @@ class FrontController(RedditController):
     def GET_awards(self):
         """The awards page."""
         return BoringPage(_("awards"), content=UserAwards()).render()
-
-    # filter for removing punctuation which could be interpreted as search syntax
-    related_replace_regex = re.compile(r'[?\\&|!{}+~^()"\':*-]+')
-    related_replace_with = ' '
-
-    @base_listing
-    @require_oauth2_scope("read")
-    @validate(article=VLink('article'))
-    @api_doc(api_section.listings, uri="/related/{article}")
-    def GET_related(self, num, article, after, reverse, count):
-        """Related page: performs a search using title of article as
-        the search query.
-
-        """
-        if not can_view_link_comments(article):
-            abort(403, 'forbidden')
-
-        query = self.related_replace_regex.sub(self.related_replace_with,
-                                               article.title)
-
-        rel_range = timedelta(days=3)
-        start = int(time_module.mktime((article._date - rel_range).utctimetuple()))
-        end = int(time_module.mktime((article._date + rel_range).utctimetuple()))
-        nsfw = article.is_nsfw
-
-        q = g.search.get_related_query(query, article, start, end, nsfw)
-
-        content = self._search(q, num=num, after=after, reverse=reverse,
-                               count=count)
-
-        return LinkInfoPage(link=article, content=content,
-                            page_classes=['related-page'],
-                            subtitle=_('related')).render()
 
     @base_listing
     @require_oauth2_scope("read")

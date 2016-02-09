@@ -845,15 +845,3 @@ class CloudSearchProvider(SearchProvider):
         amqp.handle_items('cloudsearch_changes', _run_changed, min_size=min_size,
                           limit=limit, drain=drain, sleep_time=sleep_time,
                           verbose=verbose)
-    
-    def get_related_query(self, query, article, start, end, nsfw):
-        '''build related query in cloudsearch syntax'''
-        query = _force_unicode(query)
-        query = query[:1024]
-        query = u"|".join(query.split())
-        query = u"title:'%s'" % query
-        nsfw = nsfw and u"nsfw:0" or u""
-        query = u"(and %s timestamp:%s..%s %s)" % (query, start, end, nsfw)
-        return g.search.SearchQuery(query, 
-                                    raw_sort="-text_relevance",
-                                    syntax="cloudsearch")

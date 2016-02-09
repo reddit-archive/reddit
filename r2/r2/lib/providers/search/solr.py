@@ -841,17 +841,6 @@ class SolrSearchProvider(SearchProvider):
                           limit=limit, drain=drain, sleep_time=sleep_time,
                           verbose=verbose)
 
-    def get_related_query(self, query, article, start, end, nsfw):
-        '''build related query in solr syntax'''
-
-        query = u"|".join(query.split())
-        query = u"title:'%s'" % query
-        nsfw = nsfw and u"nsfw:0" or u""
-        query = u"(%s timestamp:[%s TO %s] %s)" % (query, start, end, nsfw)
-        return g.search.SearchQuery(query, 
-                                    raw_sort="-text_relevance",
-                                    syntax="solr")
-
     def rebuild_link_index(self, start_at=None, sleeptime=1, cls=Link,
                            uploader=SolrLinkUploader, estimate=50000000, 
                            chunk_size=1000):
