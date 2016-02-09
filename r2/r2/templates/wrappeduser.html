@@ -96,7 +96,7 @@
   ${unsafe(thing.ip_span)}
 %endif
 
-%if thing.context_thing_fullname:
+%if thing.show_details_link and thing.context_thing_fullname:
   &#32;
   <a class="adminbox" href="/details/${thing.context_thing_fullname}">i</a>
 %endif

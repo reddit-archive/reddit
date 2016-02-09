@@ -3889,6 +3889,8 @@ class WrappedUser(CachedTemplate):
 
         karma = ''
         context_thing_fullname = ''
+        show_details_link = False
+
         if c.user_is_admin:
             karma = ' (%d)' % user.link_karma
 
@@ -3900,6 +3902,13 @@ class WrappedUser(CachedTemplate):
 
             if context_thing:
                 context_thing_fullname = context_thing._fullname
+
+                if isinstance(context_thing, Wrapped):
+                    unwrapped_thing = context_thing.lookups[0]
+                else:
+                    unwrapped_thing = context_thing
+                if isinstance(unwrapped_thing, (Link, Comment)):
+                    show_details_link = True
 
             if user._spam:
                 author_cls += " user-spam"
@@ -3921,6 +3930,7 @@ class WrappedUser(CachedTemplate):
                                 author_title = author_title,
                                 attribs = attribs,
                                 context_thing_fullname = context_thing_fullname,
+                                show_details_link = show_details_link,
                                 karma = karma,
                                 ip_span = ip_span,
                                 context_deleted = context_deleted,
