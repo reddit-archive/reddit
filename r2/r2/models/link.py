@@ -103,7 +103,6 @@ class Link(Thing, Printable):
                      suggested_sort=None,
                      over_18=False,
                      over_18_override=False,
-                     nsfw_str=False,
                      reported=0, num_comments=0,
                      moderator_banned=False,
                      banned_before_moderator=False,
@@ -179,7 +178,7 @@ class Link(Thing, Printable):
 
     @property
     def is_nsfw(self):
-        return self.over_18 or bool(self._nsfw.search(self.title))
+        return self.over_18
 
     @property
     def is_embeddable(self):
@@ -590,9 +589,7 @@ class Link(Thing, Printable):
                 elif pref_media != 'off' and not user.pref_compress:
                     show_media = True
 
-            item.nsfw_str = item._nsfw.findall(item.title)
-            item.over_18 = bool(item.over_18 or item.subreddit.over_18 or
-                                item.nsfw_str)
+            item.over_18 = item.over_18 or item.subreddit.over_18
             item.nsfw = item.over_18 and user.pref_label_nsfw
 
             item.quarantine = item.subreddit.quarantine

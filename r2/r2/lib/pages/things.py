@@ -109,7 +109,7 @@ class LinkButtons(PrintableButtons):
         if thing.can_ban or is_author or (thing.promoted and c.user_is_sponsor):
             if not thing.nsfw:
                 show_marknsfw = True
-            elif thing.nsfw and not thing.nsfw_str:
+            else:
                 show_unmarknsfw = True
 
             if (not thing.is_self and
