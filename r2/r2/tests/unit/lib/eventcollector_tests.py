@@ -23,9 +23,12 @@
 ###############################################################################
 
 import json
-from r2.tests import RedditTestCase
 from pylons import app_globals as g
 from mock import MagicMock, patch
+
+from r2.tests import RedditTestCase
+from r2.models import Link
+from r2.lib import eventcollector
 
 
 class TestEventCollector(RedditTestCase):
@@ -35,11 +38,13 @@ class TestEventCollector(RedditTestCase):
         p.start()
         self.addCleanup(p.stop)
 
-        p = patch("r2.lib.eventcollector.domain")
-        self.domain_mock = p.start()
-        self.addCleanup(p.stop)
-
+        self.domain_mock = self.autopatch(eventcollector, "domain")
         self.amqp = self.patch_eventcollector()
+
+        self.created_ts_mock = MagicMock(name="created_ts")
+        self._datetime_to_millis = self.autopatch(
+            eventcollector, "_datetime_to_millis",
+            return_value=self.created_ts_mock)
 
     def test_vote_event(self):
         self.patch_liveconfig("events_collector_vote_sample_rate", 1.0)
@@ -56,6 +61,7 @@ class TestEventCollector(RedditTestCase):
                 payload={
                     'vote_direction': 'up',
                     'target_type': 'magicmock',
+                    'target_age_seconds': initial_vote.thing._age.total_seconds(),
                     'sr_id': initial_vote.thing.subreddit_slow._id,
                     'sr_name': initial_vote.thing.subreddit_slow.name,
                     'target_fullname': initial_vote.thing._fullname,
@@ -81,12 +87,13 @@ class TestEventCollector(RedditTestCase):
                 payload={
                     'vote_direction': 'up',
                     'target_type': 'magicmock',
+                    'target_age_seconds': upvote.thing._age.total_seconds(),
                     'sr_id': upvote.thing.subreddit_slow._id,
                     'sr_name': upvote.thing.subreddit_slow.name,
                     'target_fullname': upvote.thing._fullname,
                     'target_name': upvote.thing.name,
                     'target_id': upvote.thing._id,
-                    'prev_vote_ts': 1,
+                    'prev_vote_ts': self.created_ts_mock,
                     'prev_vote_direction': 'down',
                 }
             )
@@ -125,6 +132,50 @@ class TestEventCollector(RedditTestCase):
                     },
                 }
             )
+        )
+
+    def test_report_event_link(self):
+        self.patch_liveconfig("events_collector_report_sample_rate", 1.0)
+
+        target = MagicMock(name="target")
+        target.__class__ = Link
+        target._deleted = False
+        target.author_slow._deleted = False
+
+        context = MagicMock(name="context")
+        request = MagicMock(name="request")
+        g.events.report_event(
+            target=target, context=context, request=request
+        )
+
+        self.amqp.assert_event_item(
+            {
+                'event_type': "ss.report",
+                'event_topic': 'report_events',
+                'payload': {
+                    'process_notes': "CUSTOM",
+                    'target_fullname': target._fullname,
+                    'target_name': target.name,
+                    'target_title': target.title,
+                    'target_type': "self",
+                    'target_author_id': target.author_slow._id,
+                    'target_author_name': target.author_slow.name,
+                    'target_id': target._id,
+                    'target_age_seconds': target._age.total_seconds(),
+                    'target_created_ts': self.created_ts_mock,
+                    'domain': request.host,
+                    'user_agent': request.user_agent,
+                    'referrer_url': request.headers.get(),
+                    'user_id': context.user._id,
+                    'user_name': context.user.name,
+                    'oauth2_client_id': context.oauth2_client._id,
+                    'referrer_domain': self.domain_mock(),
+                    'geoip_country': context.location,
+                    'obfuscated_data': {
+                        'client_ip': request.ip,
+                    }
+                }
+            }
         )
 
     def test_mod_event(self):

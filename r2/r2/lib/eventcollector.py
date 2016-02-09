@@ -578,6 +578,7 @@ class Event(object):
 
         self.add("target_id", target._id)
         self.add("target_fullname", target._fullname)
+        self.add("target_age_seconds", target._age.total_seconds())
 
         target_type = target.__class__.__name__.lower()
         if target_type == "link" and target.is_self:
@@ -600,9 +601,11 @@ class Event(object):
                 self.add("target_author_name", author.name)
 
         # Add info about the url being linked to for link posts
-        if isinstance(target, Link) and not target.is_self:
-            self.add("target_url", target.url)
-            self.add("target_url_domain", target.link_domain())
+        if isinstance(target, Link):
+            self.add("target_title", target.title)
+            if not target.is_self:
+                self.add("target_url", target.url)
+                self.add("target_url_domain", target.link_domain())
 
         # Add info about the link being commented on for comments
         if isinstance(target, Comment):
