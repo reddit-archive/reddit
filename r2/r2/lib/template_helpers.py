@@ -452,7 +452,8 @@ def get_domain(cname=False, subreddit=True, no_www=False):
 
 def add_sr(
         path, sr_path=True, nocname=False, force_hostname=False,
-        retain_extension=True, force_https=False):
+        retain_extension=True, force_https=False,
+        force_extension=None):
     """
     Given a path (which may be a full-fledged url or a relative path),
     parses the path and updates it to include the subreddit path
@@ -490,7 +491,9 @@ def add_sr(
     if (c.secure and u.is_reddit_url()) or force_https:
         u.scheme = "https"
 
-    if retain_extension:
+    if force_extension is not None:
+        u.set_extension(force_extension)
+    elif retain_extension:
         if c.render_style == 'mobile':
             u.set_extension('mobile')
 

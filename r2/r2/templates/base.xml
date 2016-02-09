@@ -72,7 +72,7 @@
     <link rel="alternate" href="${add_sr(request.fullpath,
                                          sr_path=False,
                                          force_hostname=True,
-                                         retain_extension=False)}"
+                                         force_extension='')}"
      type="text/html" />
 </%def>
 
