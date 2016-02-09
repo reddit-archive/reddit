@@ -797,15 +797,6 @@ def add_child_listing(parent, *things):
     parent.child.parent_name = parent_name
 
 
-def make_wrapper(parent_wrapper = Wrapped, **params):
-    def wrapper_fn(thing):
-        w = parent_wrapper(thing)
-        for k, v in params.iteritems():
-            setattr(w, k, v)
-        return w
-    return wrapper_fn
-
-
 class CommentBuilder(Builder):
     def __init__(self, link, sort, comment=None, children=None, context=None,
                  load_more=True, continue_this_thread=True,

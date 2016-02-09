@@ -30,7 +30,7 @@ from r2.lib.menus import (
 )
 from r2.lib.wrapped import Wrapped
 from r2.models import Comment, LinkListing, Link, Message, PromotedLink, Report
-from r2.models import make_wrapper, IDBuilder, Thing
+from r2.models import IDBuilder, Thing
 from r2.lib.utils import tup
 from r2.lib.strings import Score
 from r2.lib.promote import *
@@ -321,6 +321,16 @@ class MessageButtons(PrintableButtons):
                                   can_mute = can_mute,
                                   is_admin_message = is_admin_message,
                                  )
+
+
+def make_wrapper(parent_wrapper = Wrapped, **params):
+    def wrapper_fn(thing):
+        w = parent_wrapper(thing)
+        for k, v in params.iteritems():
+            setattr(w, k, v)
+        return w
+    return wrapper_fn
+
 
 # formerly ListingController.builder_wrapper
 def default_thing_wrapper(**params):
