@@ -1593,14 +1593,21 @@ def unban(things, insert=True):
 def new_report(thing, report_rel):
     reporter_id = report_rel._thing1_id
 
+    # determine if the report is for spam so we can update the global
+    # report queue as well as the per-subreddit one
+    reason = getattr(report_rel, "reason", None)
+    is_spam_report = reason and "spam" in reason.lower()
+
     with CachedQueryMutator() as m:
         if isinstance(thing, Link):
             m.insert(get_reported_links(thing.sr_id), [thing])
-            m.insert(get_reported_links(None), [thing])
+            if is_spam_report:
+                m.insert(get_reported_links(None), [thing])
             m.insert(get_user_reported_links(reporter_id), [report_rel])
         elif isinstance(thing, Comment):
             m.insert(get_reported_comments(thing.sr_id), [thing])
-            m.insert(get_reported_comments(None), [thing])
+            if is_spam_report:
+                m.insert(get_reported_comments(None), [thing])
             m.insert(get_user_reported_comments(reporter_id), [report_rel])
         elif isinstance(thing, Message):
             m.insert(get_user_reported_messages(reporter_id), [report_rel])
