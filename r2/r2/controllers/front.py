@@ -866,8 +866,8 @@ class FrontController(RedditController):
 
         if location in ('reports', 'spam', 'modqueue', 'edited'):
             buttons = [
-                QueryButton(_('links and comments'), None, query_param='only'),
-                QueryButton(_('links'), 'links', query_param='only'),
+                QueryButton(_('posts and comments'), None, query_param='only'),
+                QueryButton(_('posts'), 'links', query_param='only'),
                 QueryButton(_('comments'), 'comments', query_param='only'),
             ]
             menus = [NavMenu(buttons, base_path=request.path, title=_('show'),
