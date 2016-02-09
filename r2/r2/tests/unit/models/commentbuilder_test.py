@@ -173,6 +173,15 @@ class CommentOrderTest(RedditTestCase):
         builder._get_comments()
         self.assertEqual(builder.comment_order, [100, 102, 104])
 
+    def test_comment_order_invalid_permalink_defocus(self):
+        sort = operators.desc("_confidence")
+        comment = MagicMock()
+        comment._id = 999999
+        builder = CommentBuilder(self.link, sort, comment=comment, num=1500)
+        builder._get_comments()
+        self.assertEqual(builder.comment_order,
+            [100, 101, 102, 104, 105, 106, 103, 107, 108, 110, 109])
+
     def test_comment_order_children(self):
         sort = operators.desc("_confidence")
         builder = CommentBuilder(
