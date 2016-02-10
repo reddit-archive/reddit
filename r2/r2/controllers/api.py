@@ -4326,7 +4326,7 @@ class ApiController(RedditController):
             if flair_template:
                 classes = ' '.join('linkflair-' + c for c in css_class.split())
                 jquery('.id-%s' % link._fullname).addClass('linkflair').addClass(classes)
-                flair = format_html('<span class="linkflairlabel">%s</span>' % text)
+                flair = format_html('<span class="linkflairlabel">%s</span>', text)
 
                 if subreddit.link_flair_position == 'left':
                     jquery(title_path).before(flair)
