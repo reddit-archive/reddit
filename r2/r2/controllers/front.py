@@ -997,6 +997,16 @@ class FrontController(RedditController):
     @base_listing
     @require_oauth2_scope("read")
     @validate(article=VLink('article'))
+    def GET_related(self, num, article, after, reverse, count):
+        """Related page: removed, redirects to comments page."""
+        if not can_view_link_comments(article):
+            abort(403, 'forbidden')
+
+        self.redirect(article.make_permalink_slow(), code=301)
+
+    @base_listing
+    @require_oauth2_scope("read")
+    @validate(article=VLink('article'))
     @api_doc(
         api_section.listings,
         uri="/duplicates/{article}",

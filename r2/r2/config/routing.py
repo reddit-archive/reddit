@@ -215,6 +215,8 @@ def make_map(config):
        action='oldinfo', type='old', dest='comments', comment=None)
 
 
+    mc('/related/:article/:title', controller='front',
+       action='related', title=None)
     mc('/details/:article/:title', controller='front',
        action='details', title=None)
     mc('/traffic/:link/:campaign', controller='front', action='traffic',
