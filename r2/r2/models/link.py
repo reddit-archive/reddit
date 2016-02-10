@@ -235,7 +235,7 @@ class Link(Thing, Printable):
 
     @classmethod
     def _submit(cls, is_self, title, content, author, sr, ip,
-                spam=False, sendreplies=True):
+                sendreplies=True):
         from r2.models import admintools
         from r2.models.comment_tree import CommentTree
 
@@ -249,6 +249,15 @@ class Link(Thing, Printable):
         over_18 = False
         if cls._nsfw.search(title):
             over_18 = True
+
+        # determine whether the post should go straight into spam
+        spam = author._spam
+        if is_self:
+            spam_filter_level = sr.spam_selfposts
+        else:
+            spam_filter_level = sr.spam_links
+        if spam_filter_level == "all" and not sr.is_special(author):
+            spam = True
 
         l = cls(
             _ups=1,
@@ -1199,6 +1208,7 @@ class Comment(Thing, Printable):
     @classmethod
     def _new(cls, author, link, parent, body, ip):
         from r2.lib.emailer import message_notification_email
+        subreddit = link.subreddit_slow
 
         kw = {}
         if link.comment_tree_version > 1:
@@ -1212,27 +1222,32 @@ class Comment(Thing, Printable):
                 else:
                     kw['parents'] = parent._id36
 
+        # determine whether the comment should go straight into spam
+        spam = False
+        if link.promoted and link.author_id == author._id:
+            # don't spam promoted link authors commenting on their own promos
+            spam = False
+        elif author._spam:
+            spam = True
+            g.stats.simple_event('spam.autoremove.comment')
+        elif (subreddit.spam_comments == "all" and
+                not subreddit.is_special(author)):
+            spam = True
+
         comment = Comment(_ups=1,
                     body=body,
                     link_id=link._id,
                     sr_id=link.sr_id,
                     author_id=author._id,
                     ip=ip,
+                    _spam=spam,
                     **kw)
-
-        # whitelist promoters commenting on their own promoted links
-        from r2.lib import promote
-        if promote.is_promo(link) and link.author_id == author._id:
-            comment._spam = False
-        else:
-            comment._spam = author._spam
-
-        if author._spam:
-            g.stats.simple_event('spam.autoremove.comment')
 
         # these props aren't relations
         if parent:
             comment.parent_id = parent._id
+
+        comment._commit()
 
         link._incr('num_comments', 1)
 
@@ -1244,8 +1259,6 @@ class Comment(Thing, Printable):
             to = Account._byID(link.author_id, True)
             name = 'selfreply'
 
-        comment._commit()
-
         g.events.comment_event(comment, request=request, context=c)
 
         cast_vote(author, comment, Vote.DIRECTIONS.up)
@@ -1256,8 +1269,7 @@ class Comment(Thing, Printable):
             link.update_search_index(boost_only=True)
 
         CommentsByAccount.add_comment(author, comment)
-        SubredditParticipationByAccount.mark_participated(
-            author, comment.subreddit_slow)
+        SubredditParticipationByAccount.mark_participated(author, subreddit)
         author.last_comment_time = int(epoch_timestamp(datetime.now(g.tz)))
         author._commit()
 

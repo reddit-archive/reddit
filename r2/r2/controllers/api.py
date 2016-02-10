@@ -544,7 +544,6 @@ class ApiController(RedditController):
             author=c.user,
             sr=sr,
             ip=request.ip,
-            spam=c.user._spam,
             sendreplies=sendreplies,
         )
 
