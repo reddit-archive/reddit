@@ -24,6 +24,7 @@ import os
 import sys
 from unittest import TestCase
 from mock import patch
+from collections import defaultdict
 
 import pkg_resources
 import paste.fixture
@@ -54,6 +55,50 @@ except ImportError:
         [x for x in sys.path if not x.endswith("r2/r2/lib")]
     ):
         from Captcha import Base
+
+from pylons import app_globals as g
+
+
+class MockAmqp(object):
+    """An amqp replacement, suitable for unit tests.
+
+    Besides providing a mock `queue` for storing all received events, this
+    class provides a set of handy assert-style functions for checking what
+    was previously queued.
+    """
+    def __init__(self, test_cls):
+        self.queue = defaultdict(list)
+        self.test_cls = test_cls
+
+    def add_item(self, name, body, **kw):
+        self.queue[name].append((body, kw))
+
+    def assert_item_count(self, name, count=None):
+        """Assert that `count` items have been queued in queue `name`.
+
+        If count is none, just asserts that at least one item has been added
+        to that queue
+        """
+        if count is None:
+            self.test_cls.assertTrue(bool(self.queue.get(name)))
+        else:
+            self.test_cls.assertEqual(len(self.queue[name]), count)
+
+    def assert_event_item(self, expected_data, name="event_collector"):
+        self.assert_item_count(name, count=1)
+
+        data, _ = self.queue[name][0]
+
+        # and do they have a timestamp, uuid, and payload?
+        self.test_cls.assertNotEqual(data.pop("event_ts", None), None)
+        self.test_cls.assertNotEqual(data.pop("uuid", None), None)
+        # there is some variability, but this should at least be present
+        self.test_cls.assertIn("event_topic", data)
+
+        # these prints are for debgging when the subsequent assert fails
+        print "GOT: ", data
+        print "WANT:", expected_data
+        self.test_cls.assert_same_dict(data, expected_data)
 
 
 
@@ -104,3 +149,27 @@ class RedditTestCase(TestCase):
         m = p.start()
         self.addCleanup(p.stop)
         return m
+
+    def patch_g(self, **kw):
+        """Helper method to patch attrs on pylons.g.
+
+        Since we do this all the time.  autpatch g with the provided kw.
+        """
+        for k, v in kw.iteritems():
+            self.autopatch(g, k, v, create=not hasattr(g, k))
+
+    def patch_liveconfig(self, k, v):
+        """Helper method to patch g.live_config (with cleanup)."""
+        def cleanup(orig=g.live_config[k]):
+            g.live_config[k] = orig
+        g.live_config[k] = v
+        self.addCleanup(cleanup)
+
+    def patch_eventcollector(self):
+        """Helper method to patch the event collector (g.events).
+
+        Rather than actually enqueuing data in amqp, this creates and returns a
+        MockAmqp object which stores all items enqueued."""
+        amqp = MockAmqp(self)
+        self.autopatch(g.events, "queue", amqp)
+        return amqp
