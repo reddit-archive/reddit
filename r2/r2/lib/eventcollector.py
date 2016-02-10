@@ -127,6 +127,11 @@ class EventQueue(object):
         event.add_subreddit_fields(vote.thing.subreddit_slow)
         event.add_target_fields(vote.thing)
 
+        # add the rank of the vote if we have it (passed in through the API)
+        rank = vote.data.get('rank')
+        if rank:
+            event.add("target_rank", rank)
+
         self.save_event(event)
 
     @squelch_exceptions

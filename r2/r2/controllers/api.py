@@ -2258,9 +2258,10 @@ class ApiController(RedditController):
                 direction=VInt("dir", min=-1, max=1,
                     docs={"dir": "vote direction. one of (1, 0, -1)"}
                 ),
-                thing=VByName('id'))
+                thing=VByName('id'),
+                rank=VInt("rank", min=1))
     @api_doc(api_section.links_and_comments)
-    def POST_vote(self, direction, thing):
+    def POST_vote(self, direction, thing, rank):
         """Cast a vote on a thing.
 
         `id` should be the fullname of the Link or Comment to vote on.
@@ -2305,7 +2306,7 @@ class ApiController(RedditController):
         elif direction == 0:
             direction = Vote.DIRECTIONS.unvote
 
-        cast_vote(c.user, thing, direction)
+        cast_vote(c.user, thing, direction, rank=rank)
 
     @require_oauth2_scope("modconfig")
     @validatedForm(VSrModerator(perms='config'),

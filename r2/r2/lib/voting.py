@@ -50,7 +50,7 @@ def update_vote_lookups(user, thing, direction):
     LastModified.touch(user._fullname, rel_cls._last_modified_name)
 
 
-def cast_vote(user, thing, direction):
+def cast_vote(user, thing, direction, **data):
     """Register a vote and queue it for processing."""
     update_vote_lookups(user, thing, direction)
 
@@ -59,10 +59,10 @@ def cast_vote(user, thing, direction):
         "thing_fullname": thing._fullname,
         "direction": direction,
         "date": int(epoch_timestamp(datetime.now(g.tz))),
-        "data": {
-            "ip": getattr(request, "ip", None),
-        },
     }
+
+    data['ip'] = getattr(request, "ip", None)
+    vote_data['data'] = data
 
     hooks.get_hook("vote.get_vote_data").call(
         data=vote_data["data"],
