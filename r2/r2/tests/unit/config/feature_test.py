@@ -215,12 +215,6 @@ class TestFeature(TestFeatureBase):
         self.assertTrue(feature_state.is_enabled())
         self.assertTrue(feature_state.is_enabled(user=gary))
 
-        cfg = {'url': {'test_state_a': 'a', 'test_state_b': 'b'}}
-        self.world.url_features = mock.Mock(return_value={'x', 'test_state_b'})
-        feature_state = self.world._make_state(cfg)
-        self.assertTrue(feature_state.is_enabled())
-        self.assertEqual(feature_state.variant(user=gary), 'b')
-
     def test_url_disabled(self):
 
         cfg = {'url': 'test_state'}
@@ -234,16 +228,6 @@ class TestFeature(TestFeatureBase):
         feature_state = self.world._make_state(cfg)
         self.assertFalse(feature_state.is_enabled())
         self.assertFalse(feature_state.is_enabled(user=gary))
-
-        cfg = {'url': {'test_state_a': 'a', 'test_state_b': 'b'}}
-        self.world.url_features = mock.Mock(return_value={'x'})
-        feature_state = self.world._make_state(cfg)
-        self.assertFalse(feature_state.is_enabled())
-
-        cfg = {'url': {'test_state_c1': 'control_1', 'test_state_c2': 'control_2'}}
-        self.world.url_features = mock.Mock(return_value={'x', 'test_state_c2'})
-        feature_state = self.world._make_state(cfg)
-        self.assertFalse(feature_state.is_enabled())
 
     def test_user_in(self):
         cfg = {'users': ['Gary']}
