@@ -85,6 +85,9 @@ class FileSource(Source):
     def __init__(self, name):
         self.name = name
 
+    def __eq__(self, other):
+        return type(self) is type(other) and self.name == other.name
+
     def get_source(self, use_built_statics=False):
         if use_built_statics:
             # we are in the build system so we have already copied all files
@@ -132,10 +135,21 @@ class Module(Source):
                 source = FileSource(source)
             self.sources.append(source)
 
+    def get_flattened_sources(self, flattened_sources):
+        for s in self.sources:
+            if s in flattened_sources:
+                continue
+            elif isinstance(s, Module):
+                s.get_flattened_sources(flattened_sources)
+            else:
+                flattened_sources.append(s)
+        return flattened_sources
+
     def get_source(self, use_built_statics=False):
+        sources = self.get_flattened_sources([])
         return ";".join(
             s.get_source(use_built_statics=use_built_statics)
-            for s in self.sources
+            for s in sources
         )
 
     def extend(self, module):
@@ -169,7 +183,8 @@ class Module(Source):
 
     def use(self, **kwargs):
         if g.uncompressedJS:
-            return "".join(source.use(**kwargs) for source in self.sources)
+            sources = self.get_flattened_sources([])
+            return "".join(source.use(**kwargs) for source in sources)
         else:
             return script_tag.format(src=self.url(**kwargs))
 
