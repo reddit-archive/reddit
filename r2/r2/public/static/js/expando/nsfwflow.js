@@ -244,11 +244,11 @@
         }
 
         var $expando = expando.$expando;
-        var $media = $expando.find('.media-embed'); 
+        var $media = $expando.children();
         var width = $media.width();
         var height = $media.height();
         // if it's a `.media-preview`, interstial is shown _over_ the blurred image
-        var isOverlay = !$media.length;
+        var isOverlay = $media.hasClass('media-preview');
         var isWarning = !_state.noProfanity;
 
         nsfwFlow = new ExpandoNSFWFlow({
@@ -262,9 +262,9 @@
         expando.listenTo(nsfwFlow, 'show', destroyNsfwFlow);
 
         if (nsfwFlow.isOverlay) {
-          expando.$expando.append(nsfwFlow.el);
+          $media.append(nsfwFlow.el);
         } else {
-          expando.$expando.html(nsfwFlow.el);
+          $expando.html(nsfwFlow.el);
         }
 
         expando.showExpandoContent();

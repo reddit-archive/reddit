@@ -5027,9 +5027,12 @@ ul.tabmenu.formtab {
 /******* embed stuff ******/
 .expando {
     clear: left;
-    float: left;
     margin: 5px 0 5px 0;
     position: relative;
+
+    .form-bar {
+        float: left;
+    }
 }
 
 .link.over18 .expando-uninitialized {
@@ -5037,10 +5040,6 @@ ul.tabmenu.formtab {
     .media-preview {
         visibility: hidden;
     }
-}
-
-.link.self .expando {
-    float: none;
 }
 
 .expando-content {
@@ -5125,11 +5124,12 @@ ul.tabmenu.formtab {
 }
 
 .form-bar {
-    position: relative;
     background: lighten(@color-pale-grey, 10%);
     border: 1px solid @color-pale-grey;
-    padding: unit(@margin-x-small, px) unit(@margin-small, px);
+    clear: left;
     margin-top: unit(@margin-small, px);
+    padding: unit(@margin-x-small, px) unit(@margin-small, px);
+    position: relative;
 
     .md {
         float: left;
@@ -5142,6 +5142,13 @@ ul.tabmenu.formtab {
 }
 
 .media-preview {
+    overflow: auto;
+    position: relative;
+
+    .media-preview-content {
+        float: left;
+    }
+
     img {
         width: 100%;
         height: auto;
