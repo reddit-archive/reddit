@@ -1375,7 +1375,7 @@ class FrontController(RedditController):
 
         if url and not resubmit:
             # check to see if the url has already been submitted
-            listing = hot_links_by_url_listing(url, sr=c.site)
+            listing = hot_links_by_url_listing(url, sr=c.site, num=100)
             links = listing.things
 
             if links and len(links) == 1:
