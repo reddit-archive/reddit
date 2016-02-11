@@ -522,6 +522,44 @@ class EventQueue(object):
 
         self.save_event(event)
 
+    def login_event(self, action_name, error_msg,
+                    user_name=None, email=None,
+                    remember_me=None, newsletter=None, email_verified=None,
+                    request=None, context=None):
+        """Create a 'login' event for event-collector.
+
+        action_name: login_attempt, register_attempt, password_reset
+        error_msg: error message string if there was an error
+        user_name: user entered username string
+        email: user entered email string (register, password reset)
+        remember_me:  boolean state of remember me checkbox (login, register)
+        newsletter: boolean state of newsletter checkbox (register only)
+        email_verified: boolean value for email verification state, requires
+            email (password reset only)
+        request, context: Should be pylons.request & pylons.c respectively
+
+        """
+        event = Event(
+            topic="login_events",
+            event_type='ss.%s' % action_name,
+            request=request,
+            context=context,
+        )
+
+        if error_msg:
+            event.add('successful', False)
+            event.add('process_notes', error_msg)
+        else:
+            event.add('successful', True)
+
+        event.add('user_name', user_name)
+        event.add('email', email)
+        event.add('remember_me', remember_me)
+        event.add('newsletter', newsletter)
+        event.add('email_verified', email_verified)
+
+        self.save_event(event)
+
 
 class Event(object):
     def __init__(self, topic, event_type,

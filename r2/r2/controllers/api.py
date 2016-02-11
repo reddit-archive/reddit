@@ -611,6 +611,15 @@ class ApiController(RedditController):
                    user = VThrottledLogin(['user', 'passwd']),
                    rem = VBoolean('rem'))
     def _handle_login(self, form, responder, user, rem):
+        def _event(error):
+            g.events.login_event(
+                'login_attempt',
+                error_msg=error,
+                user_name=request.urlvars.get('url_user'),
+                remember_me=rem,
+                request=request,
+                context=c)
+
         exempt_ua = (request.user_agent and
                      any(ua in request.user_agent for ua
                          in g.config.get('exempt_login_user_agents', ())))
@@ -621,10 +630,17 @@ class ApiController(RedditController):
             else:
                 from r2.lib.base import abort
                 from r2.lib.errors import reddit_http_error
+                _event(error='LOGGED_IN')
                 abort(reddit_http_error(409, errors.LOGGED_IN))
 
-        if not (responder.has_errors("ratelimit", errors.RATELIMIT) or
-                responder.has_errors("passwd", errors.WRONG_PASSWORD)):
+        if responder.has_errors("ratelimit", errors.RATELIMIT):
+            _event(error='RATELIMIT')
+
+        elif responder.has_errors("passwd", errors.WRONG_PASSWORD):
+            _event(error='WRONG_PASSWORD')
+
+        else:
+            _event(error=None)
             self._login(responder, user, rem)
 
     @csrf_exempt
@@ -652,29 +668,60 @@ class ApiController(RedditController):
     def _handle_register(self, form, responder, name, email,
                          password, rem, newsletter_subscribe,
                          sponsor):
-        bad_captcha = responder.has_errors('captcha', errors.BAD_CAPTCHA)
-        if not (responder.has_errors("user",
-                                errors.USERNAME_TOO_SHORT,
-                                errors.USERNAME_INVALID_CHARACTERS,
-                                errors.USERNAME_TAKEN_DEL,
-                                errors.USERNAME_TAKEN) or
-                responder.has_errors("email", errors.BAD_EMAIL) or
-                responder.has_errors("passwd", errors.SHORT_PASSWORD) or
-                responder.has_errors("passwd", errors.BAD_PASSWORD) or
-                responder.has_errors("passwd2", errors.BAD_PASSWORD_MATCH) or
-                responder.has_errors('ratelimit', errors.RATELIMIT) or
-                (not g.disable_captcha and bad_captcha)):
+        def _event(error):
+            g.events.login_event(
+                'register_attempt',
+                error_msg=error,
+                user_name=request.urlvars.get('url_user'),
+                email=request.POST.get('email'),
+                remember_me=rem,
+                newsletter=newsletter_subscribe,
+                request=request,
+                context=c)
 
-            if newsletter_subscribe and not email:
-                c.errors.add(errors.NEWSLETTER_NO_EMAIL, field="email")
-                form.has_errors("email", errors.NEWSLETTER_NO_EMAIL)
-                return
+        if responder.has_errors('user', errors.USERNAME_TOO_SHORT):
+            _event(error='USERNAME_TOO_SHORT')
 
-            if sponsor and not email:
-                c.errors.add(errors.SPONSOR_NO_EMAIL, field="email")
-                form.has_errors("email", errors.SPONSOR_NO_EMAIL)
-                return
+        elif responder.has_errors('user', errors.USERNAME_INVALID_CHARACTERS):
+            _event(error='USERNAME_INVALID_CHARACTERS')
 
+        elif responder.has_errors('user', errors.USERNAME_TAKEN_DEL):
+            _event(error='USERNAME_TAKEN_DEL')
+
+        elif responder.has_errors('user', errors.USERNAME_TAKEN):
+            _event(error='USERNAME_TAKEN')
+
+        elif responder.has_errors('email', errors.BAD_EMAIL):
+            _event(error='BAD_EMAIL')
+
+        elif responder.has_errors('passwd', errors.SHORT_PASSWORD):
+            _event(error='SHORT_PASSWORD')
+
+        elif responder.has_errors('passwd', errors.BAD_PASSWORD):
+            # BAD_PASSWORD is set when SHORT_PASSWORD is set
+            _event(error='BAD_PASSWORD')
+
+        elif responder.has_errors('passwd2', errors.BAD_PASSWORD_MATCH):
+            _event(error='BAD_PASSWORD_MATCH')
+
+        elif responder.has_errors('ratelimit', errors.RATELIMIT):
+            _event(error='RATELIMIT')
+
+        elif (not g.disable_captcha and
+                responder.has_errors('captcha', errors.BAD_CAPTCHA)):
+            _event(error='BAD_CAPTCHA')
+
+        elif newsletter_subscribe and not email:
+            c.errors.add(errors.NEWSLETTER_NO_EMAIL, field="email")
+            form.has_errors("email", errors.NEWSLETTER_NO_EMAIL)
+            _event(error='NEWSLETTER_NO_EMAIL')
+
+        elif sponsor and not email:
+            c.errors.add(errors.SPONSOR_NO_EMAIL, field="email")
+            form.has_errors("email", errors.SPONSOR_NO_EMAIL)
+            _event(error='SPONSOR_NO_EMAIL')
+
+        else:
             user = register(name, password, request.ip)
             VRatelimit.ratelimit(rate_ip = True, prefix = "rate_register_")
 
@@ -696,6 +743,7 @@ class ApiController(RedditController):
 
             reject = hooks.get_hook("account.spotcheck").call(account=user)
             if any(reject):
+                _event(error='ACCOUNT_SPOTCHECK')
                 return
 
             if newsletter_subscribe and email:
@@ -703,6 +751,8 @@ class ApiController(RedditController):
                     newsletter.add_subscriber(email, source="register")
                 except newsletter.NewsletterError as e:
                     g.log.warning("Failed to subscribe: %r" % e)
+
+            _event(error=None)
 
             self._login(responder, user, rem)
 
@@ -3629,20 +3679,37 @@ class ApiController(RedditController):
         user=VUserWithEmail('name'),
     )
     def POST_password(self, form, jquery, user):
+        """Send password reset email."""
+        def _event(error):
+            email = user.email if user else None
+            email_verified = bool(user.email_verified) if email else None
+            g.events.login_event(
+                'password_reset',
+                error_msg=error,
+                user_name=request.POST.get('name'),
+                email=email,
+                email_verified=email_verified,
+                request=request,
+                context=c)
+
         if form.has_errors('name', errors.USER_DOESNT_EXIST):
-            return
+            _event(error='USER_DOESNT_EXIST')
+
         elif form.has_errors('name', errors.NO_EMAIL_FOR_USER):
-            return
+            _event(error='NO_EMAIL_FOR_USER')
+
         elif form.has_errors('ratelimit', errors.RATELIMIT):
-            return
+            _event(error='RATELIMIT')
+
         else:
             VRatelimit.ratelimit(rate_ip=True, prefix="rate_password_")
             if emailer.password_email(user):
+                _event(error=None)
                 form.set_text(".status",
                       _("an email will be sent to that account's address shortly"))
             else:
+                _event(error='RESET_LIMIT')
                 form.set_text(".status", _("try again tomorrow"))
-
 
     @csrf_exempt
     @validatedForm(token=VOneTimeToken(PasswordResetToken, "key"),
