@@ -48,7 +48,9 @@
 vagrant_user = "vagrant"
 
 # code directories
-code_share_host_path = "../"
+this_path = File.absolute_path(__FILE__)
+reddit_dir = File.expand_path("..", this_path)
+code_share_host_path = File.expand_path("..", reddit_dir)
 code_share_guest_path = "/media/reddit_code"
 plugins = ["meatspace", "about", "liveupdate", "adzerk", "donate", "gold"]
 
