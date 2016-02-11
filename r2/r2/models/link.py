@@ -1118,6 +1118,69 @@ class LinksByUrl(tdb_cassandra.View):
         cls._remove(rowkey, column)
 
 
+class LinksByUrlAndSubreddit(tdb_cassandra.View):
+    _use_db = True
+    _connection_pool = 'main'
+    _read_consistency_level = tdb_cassandra.CL.ONE
+    _compare_with = tdb_cassandra.LongType()
+    _extra_schema_creation_args = {
+        "key_validation_class": tdb_cassandra.UTF8_TYPE,
+    }
+
+    @classmethod
+    def make_canonical_url(cls, url):
+        if not utils.domain(url) in g.case_sensitive_domains:
+            keyurl = _force_utf8(UrlParser.base_url(url.lower()))
+        else:
+            # Convert only hostname to lowercase
+            up = UrlParser(url)
+            up.hostname = up.hostname.lower()
+            keyurl = _force_utf8(UrlParser.base_url(up.unparse()))
+        return keyurl
+
+    @classmethod
+    def make_sr_rowkey(cls, canonical_url, sr_id):
+        return "{sr}:{url}".format(sr=sr_id, url=canonical_url)
+
+    @classmethod
+    def make_all_rowkey(cls, canonical_url):
+        return "all:{url}".format(url=canonical_url)
+
+    @classmethod
+    def add_link(cls, link):
+        canonical_url = cls.make_canonical_url(link.url)
+        sr_rowkey = cls.make_sr_rowkey(canonical_url, link.sr_id)
+        all_rowkey = cls.make_all_rowkey(canonical_url)
+        column = {link._id: ""}
+        cls._set_values(sr_rowkey, column)
+        cls._set_values(all_rowkey, column)
+
+    @classmethod
+    def remove_link(cls, link):
+        canonical_url = cls.make_canonical_url(link.url)
+        sr_rowkey = cls.make_sr_rowkey(canonical_url, link.sr_id)
+        all_rowkey = cls.make_all_rowkey(canonical_url)
+        column = {link._id: ""}
+        cls._remove(sr_rowkey, column)
+        cls._remove(all_rowkey, column)
+
+    @classmethod
+    def get_link_ids(cls, url, sr=None, limit=1000):
+        canonical_url = cls.make_canonical_url(url)
+        if sr:
+            rowkey = cls.make_sr_rowkey(canonical_url, sr._id)
+        else:
+            rowkey = cls.make_all_rowkey(canonical_url)
+        try:
+            columns = cls._cf.get(
+                rowkey, column_reversed=True, column_count=limit)
+        except tdb_cassandra.NotFoundException:
+            return []
+
+        link_ids = columns.keys()
+        return link_ids
+
+
 # Note that there are no instances of PromotedLink or LinkCompressed,
 # so overriding their methods here will not change their behaviour
 # (except for add_props). These classes are used to override the
