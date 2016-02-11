@@ -427,10 +427,74 @@ class LocalizedModule(Module):
             yield LocalizedModule.languagize_path(self.destination_path, lang)
 
 
+_submodule = {}
 module = {}
 
 catch_errors = "try {{ {content} }} catch (err) {{ r.sendError('Error running module', '{name}', ':', err.toString()) }}"
 
+
+_submodule["config"] = Module("_setup.js",
+    "base.js",
+    "setup.js",
+    "hooks.js",
+)
+
+_submodule["utils"] = Module("_utils.js",
+    "base.js",
+    _submodule["config"],
+    "utils.js",
+)
+
+_submodule["uibase"] = Module("_uibase.js",
+    "base.js",
+    "i18n.js",
+    _submodule["utils"],
+    "uibase.js",
+)
+
+_submodule["analytics"] = Module("_analytics.js",
+    "base.js",
+    _submodule["config"],
+    _submodule["utils"],
+    "events.js",
+    "analytics.js",
+)
+
+_submodule["errors"] = Module("_errors.js",
+    "base.js",
+    "i18n.js",
+    "errors.js",
+)
+
+_submodule["gate-popup"] = Module("_gate-popup.js",
+    "base.js",
+    _submodule["uibase"],
+    _submodule["errors"],
+    "gate-popup.js",
+)
+
+_submodule["timeouts"] = Module("_timeouts.js",
+    "base.js",
+    _submodule["config"],
+    _submodule["analytics"],
+    _submodule["gate-popup"],
+    "access.js",
+    "timeouts.js",
+)
+
+_submodule["locked"] = Module("_locked.js",
+    "base.js",
+    "access.js",
+    _submodule["gate-popup"],
+    "locked.js",
+)
+
+_submodule["archived"] = Module("_archived.js",
+    "base.js",
+    "hooks.js",
+    _submodule["gate-popup"],
+    "archived.js",
+)
 
 module["gtm-jail"] = Module("gtm-jail.js",
     "lib/json2.js",
@@ -551,10 +615,9 @@ module["reddit"] = LocalizedModule("reddit.js",
     "ui.js",
     "popup.js",
     "login.js",
-    "gate-popup.js",
-    "locked.js",
-    "timeouts.js",
-    "archived.js",
+    _submodule["locked"],
+    _submodule["timeouts"],
+    _submodule["archived"],
     "newsletter.js",
     "flair.js",
     "report.js",
