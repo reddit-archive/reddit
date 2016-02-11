@@ -284,6 +284,7 @@ class Link(Thing, Printable):
             l._commit()
         else:
             LinksByUrl.add_link(l, l.url)
+            LinksByUrlAndSubreddit.add_link(l)
 
         LinksByAccount.add_link(author, l)
         SubredditParticipationByAccount.mark_participated(author, sr)
@@ -320,16 +321,19 @@ class Link(Thing, Printable):
         if is_self:
             if not was_self:
                 LinksByUrl.remove_link(self, self.url)
+                LinksByUrlAndSubreddit.remove_link(self)
 
             self.url = self.make_permalink_slow()
             self.selftext = content
         else:
             if not was_self:
                 LinksByUrl.remove_link(self, self.url)
+                LinksByUrlAndSubreddit.remove_link(self)
 
             self.url = content
             self.selftext = self._defaults.get("selftext", "")
             LinksByUrl.add_link(self, self.url)
+            LinksByUrlAndSubreddit.add_link(self)
 
         self._commit()
 
