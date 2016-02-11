@@ -1375,7 +1375,14 @@ class FrontController(RedditController):
 
         if url and not resubmit:
             # check to see if the url has already been submitted
-            listing = hot_links_by_url_listing(url, sr=c.site, num=100)
+
+            def keep_fn(item):
+                # skip promoted links
+                would_keep = item.keep_item(item)
+                return would_keep and getattr(item, "promoted", None) is None
+
+            listing = hot_links_by_url_listing(
+                url, sr=c.site, num=100, skip=True, keep_fn=keep_fn)
             links = listing.things
 
             if links and len(links) == 1:
