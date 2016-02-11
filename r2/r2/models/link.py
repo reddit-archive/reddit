@@ -189,24 +189,14 @@ class Link(Thing, Printable):
         if isinstance(sr, FakeSubreddit):
             sr = None
 
-        try:
-            lbu = LinksByUrl._byID(LinksByUrl._key_from_url(url))
-        except tdb_cassandra.NotFound:
-            # translate the tdb_cassandra.NotFound into the NotFound
-            # the caller is expecting
+        link_ids = LinksByUrlAndSubreddit.get_link_ids(url, sr)
+        links = Link._byID(link_ids, data=True, return_dict=False)
+        links = [l for l in links if not l._deleted]
+
+        if not links:
             raise NotFound('Link "%s"' % url)
 
-        link_id36s = lbu._values()
-
-        links = Link._byID36(link_id36s, data=True, return_dict=False)
-        links = [l for l in links if not l._deleted]
-        if sr:
-            links = [link for link in links if link.sr_id == sr._id]
-
-        if links:
-            return links
-
-        raise NotFound('Link "%s"' % url)
+        return links
 
     def already_submitted_link(self, url, title):
         permalink = self.make_permalink_slow()
