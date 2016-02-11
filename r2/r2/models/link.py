@@ -1185,6 +1185,41 @@ class LinksByUrlAndSubreddit(tdb_cassandra.View):
         return link_ids
 
 
+def backfill_links_by_url_and_subreddit(years_to_backfill=3):
+    from r2.lib.utils import fetch_things2
+
+    date_cutoff = datetime.now(g.tz) - timedelta(days=years_to_backfill*366)
+    q = Link._query(
+        Link.c._date > date_cutoff,
+        Link.c._deleted == False,
+        data=True,
+        sort=desc("_date"),
+    )
+
+    count = 0
+    cf = LinksByUrlAndSubreddit._cf
+    with cf.batch(write_consistency_level=tdb_cassandra.CL.ONE) as b:
+        for link in fetch_things2(q):
+            if link.is_self:
+                # no way to query on this because False is the default
+                continue
+
+            count += 1
+            if count % 1000 == 0 or True:
+                g.log.info("writing %s (%s)" % (link._id, link._date))
+
+            # duplicate the internals of LinksByUrlAndSubreddit.add_link so we
+            # can use the batch mutator
+            canonical_url = LinksByUrlAndSubreddit.make_canonical_url(link.url)
+            sr_rowkey = LinksByUrlAndSubreddit.make_sr_rowkey(
+                canonical_url, link.sr_id)
+            all_rowkey = LinksByUrlAndSubreddit.make_all_rowkey(
+                canonical_url)
+            column = {link._id: ""}
+            b.insert(sr_rowkey, column)
+            b.insert(all_rowkey, column)
+
+
 # Note that there are no instances of PromotedLink or LinkCompressed,
 # so overriding their methods here will not change their behaviour
 # (except for add_props). These classes are used to override the
