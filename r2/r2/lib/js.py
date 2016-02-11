@@ -127,6 +127,11 @@ class Module(Source):
         self.should_compile = kwargs.get('should_compile', True)
         self.wrap = kwargs.get('wrap')
         self.sources = []
+        filter_module = kwargs.get('filter_module')
+        if isinstance(filter_module, Module):
+            self.filter_sources = filter_module.get_flattened_sources([])
+        else:
+            self.filter_sources = None
         sources = sources or (name,)
         for source in sources:
             if not isinstance(source, Source):
@@ -146,6 +151,9 @@ class Module(Source):
                 s.get_flattened_sources(flattened_sources)
             else:
                 flattened_sources.append(s)
+        if self.filter_sources:
+            flattened_sources = [s for s in flattened_sources
+                                 if s not in self.filter_sources]
         return flattened_sources
 
     def get_source(self, use_built_statics=False):
@@ -572,6 +580,7 @@ module["reddit"] = LocalizedModule("reddit.js",
         "moderator_invite": ModeratorPermissionSet,
     }),
     wrap=catch_errors,
+    filter_module=module["reddit-init-base"],
 )
 
 module["modtools"] = Module("modtools.js",
@@ -592,7 +601,8 @@ module["admin"] = Module("admin.js",
 module["mobile"] = LocalizedModule("mobile.js",
     module["reddit"],
     "lib/jquery.lazyload.js",
-    "compact.js"
+    "compact.js",
+    filter_module=module["reddit-init-base"],
 )
 
 
