@@ -132,8 +132,11 @@ class Module(Source):
             if not isinstance(source, Source):
                 if 'prefix' in kwargs:
                     source = os.path.join(kwargs['prefix'], source)
-                source = FileSource(source)
+                source = self.get_default_source(source)
             self.sources.append(source)
+
+    def get_default_source(self, source):
+        return FileSource(source)
 
     def get_flattened_sources(self, flattened_sources):
         for s in self.sources:
