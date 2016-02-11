@@ -71,3 +71,11 @@ class TestModuleGetFlattenedSources(unittest.TestCase):
         test_module_b = TestModule("test_module_b", *test_files)
         test_module = TestModule("test_mobule", test_module_a, test_module_b)
         self.assertEqual(test_module.build(), concat_sources(test_files))
+
+    def test_filtered_modules_do_not_include_filtered_sources(self):
+        test_files = ["foo.js", "bar.js"]
+        filtered_files = ["baz.js", "qux.js"]
+        all_files = test_files + filtered_files
+        filter_module = TestModule("filter_module", *filtered_files)
+        test_module = TestModule("test_module", filter_module=filter_module, *all_files)
+        self.assertEqual(test_module.build(), concat_sources(test_files))
