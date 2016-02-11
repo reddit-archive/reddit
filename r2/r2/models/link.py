@@ -273,7 +273,6 @@ class Link(Thing, Printable):
             l.url = l.make_permalink_slow()
             l._commit()
         else:
-            LinksByUrl.add_link(l, l.url)
             LinksByUrlAndSubreddit.add_link(l)
 
         LinksByAccount.add_link(author, l)
@@ -310,19 +309,16 @@ class Link(Thing, Printable):
 
         if is_self:
             if not was_self:
-                LinksByUrl.remove_link(self, self.url)
                 LinksByUrlAndSubreddit.remove_link(self)
 
             self.url = self.make_permalink_slow()
             self.selftext = content
         else:
             if not was_self:
-                LinksByUrl.remove_link(self, self.url)
                 LinksByUrlAndSubreddit.remove_link(self)
 
             self.url = content
             self.selftext = self._defaults.get("selftext", "")
-            LinksByUrl.add_link(self, self.url)
             LinksByUrlAndSubreddit.add_link(self)
 
         self._commit()
@@ -1083,35 +1079,6 @@ class Link(Thing, Printable):
         self.preview_object = Link._utf8_encode(value)
 
 
-class LinksByUrl(tdb_cassandra.View):
-    _use_db = True
-    _connection_pool = 'main'
-    _read_consistency_level = tdb_cassandra.CL.ONE
-
-    @classmethod
-    def _key_from_url(cls, url):
-        if not utils.domain(url) in g.case_sensitive_domains:
-            keyurl = _force_utf8(UrlParser.base_url(url.lower()))
-        else:
-            # Convert only hostname to lowercase
-            up = UrlParser(url)
-            up.hostname = up.hostname.lower()
-            keyurl = _force_utf8(UrlParser.base_url(up.unparse()))
-        return keyurl
-
-    @classmethod
-    def add_link(cls, link, url):
-        rowkey = cls._key_from_url(url)
-        column = {link._id36: ''}
-        cls._set_values(rowkey, column)
-
-    @classmethod
-    def remove_link(cls, link, url):
-        rowkey = cls._key_from_url(url)
-        column = {link._id36: ''}
-        cls._remove(rowkey, column)
-
-
 class LinksByUrlAndSubreddit(tdb_cassandra.View):
     _use_db = True
     _connection_pool = 'main'
@@ -1173,41 +1140,6 @@ class LinksByUrlAndSubreddit(tdb_cassandra.View):
 
         link_ids = columns.keys()
         return link_ids
-
-
-def backfill_links_by_url_and_subreddit(years_to_backfill=3):
-    from r2.lib.utils import fetch_things2
-
-    date_cutoff = datetime.now(g.tz) - timedelta(days=years_to_backfill*366)
-    q = Link._query(
-        Link.c._date > date_cutoff,
-        Link.c._deleted == False,
-        data=True,
-        sort=desc("_date"),
-    )
-
-    count = 0
-    cf = LinksByUrlAndSubreddit._cf
-    with cf.batch(write_consistency_level=tdb_cassandra.CL.ONE) as b:
-        for link in fetch_things2(q):
-            if link.is_self:
-                # no way to query on this because False is the default
-                continue
-
-            count += 1
-            if count % 1000 == 0 or True:
-                g.log.info("writing %s (%s)" % (link._id, link._date))
-
-            # duplicate the internals of LinksByUrlAndSubreddit.add_link so we
-            # can use the batch mutator
-            canonical_url = LinksByUrlAndSubreddit.make_canonical_url(link.url)
-            sr_rowkey = LinksByUrlAndSubreddit.make_sr_rowkey(
-                canonical_url, link.sr_id)
-            all_rowkey = LinksByUrlAndSubreddit.make_all_rowkey(
-                canonical_url)
-            column = {link._id: ""}
-            b.insert(sr_rowkey, column)
-            b.insert(all_rowkey, column)
 
 
 # Note that there are no instances of PromotedLink or LinkCompressed,

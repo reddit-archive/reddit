@@ -225,7 +225,7 @@ def pushup_permacache(verbosity=1000):
 
 
 def port_cassaurls(after_id=None, estimate=15231317):
-    from r2.models import Link, LinksByUrl
+    from r2.models import Link, LinksByUrlAndSubreddit
     from r2.lib.db import tdb_cassandra
     from r2.lib.db.operators import desc
     from r2.lib.db.tdb_cassandra import CL
@@ -243,11 +243,8 @@ def port_cassaurls(after_id=None, estimate=15231317):
     chunks = in_chunks(q, 500)
 
     for chunk in chunks:
-        with LinksByUrl._cf.batch(write_consistency_level = CL.ONE) as b:
-            for l in chunk:
-                k = LinksByUrl._key_from_url(l.url)
-                if k:
-                    b.insert(k, {l._id36: l._id36})
+        for l in chunk:
+            LinksByUrlAndSubreddit.add_link(l)
 
 def port_deleted_links(after_id=None):
     from r2.models import Link
