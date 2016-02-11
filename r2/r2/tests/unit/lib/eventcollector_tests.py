@@ -51,6 +51,7 @@ class TestEventCollector(RedditTestCase):
         initial_vote = MagicMock(is_upvote=True, is_downvote=False,
                                  is_automatic_initial_vote=True,
                                  previous_vote=None,
+                                 data={"rank": MagicMock()},
                                  name="initial_vote")
         g.events.vote_event(initial_vote)
 
@@ -62,6 +63,7 @@ class TestEventCollector(RedditTestCase):
                     'vote_direction': 'up',
                     'target_type': 'magicmock',
                     'target_age_seconds': initial_vote.thing._age.total_seconds(),
+                    'target_rank': initial_vote.data['rank'],
                     'sr_id': initial_vote.thing.subreddit_slow._id,
                     'sr_name': initial_vote.thing.subreddit_slow.name,
                     'target_fullname': initial_vote.thing._fullname,
@@ -75,7 +77,8 @@ class TestEventCollector(RedditTestCase):
     def test_vote_event_with_prev(self):
         self.patch_liveconfig("events_collector_vote_sample_rate", 1.0)
         upvote = MagicMock(name="upvote",
-                           is_automatic_initial_vote=False)
+                           is_automatic_initial_vote=False,
+                           data={"rank": MagicMock()})
         upvote.previous_vote = MagicMock(name="previous_vote",
                                          is_upvote=False, is_downvote=True)
         g.events.vote_event(upvote)
@@ -88,6 +91,7 @@ class TestEventCollector(RedditTestCase):
                     'vote_direction': 'up',
                     'target_type': 'magicmock',
                     'target_age_seconds': upvote.thing._age.total_seconds(),
+                    'target_rank': upvote.data['rank'],
                     'sr_id': upvote.thing.subreddit_slow._id,
                     'sr_name': upvote.thing.subreddit_slow.name,
                     'target_fullname': upvote.thing._fullname,

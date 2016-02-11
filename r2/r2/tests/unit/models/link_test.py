@@ -211,6 +211,14 @@ class SubredditMock(ThingMock):
     def name(self):
         return "linktests"
 
+    @property
+    def spam_selfposts(self):
+        return "high"
+
+    @property
+    def spam_links(self):
+        return "low"
+
 
 class TestSubmit(unittest.TestCase):
     def setUp(self):
