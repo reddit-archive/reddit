@@ -365,6 +365,36 @@ r.analytics = {
     r.events.track(eventTopic, eventType, payload).send();
   },
 
+  loginRequiredEvent: function(actionName, actionDetail, targetType, targetFullname) {
+    var eventTopic = 'login_events';
+    var eventType = 'cs.loggedout_' + actionName;
+    var payload = this.addContextData([
+      'sr_name',
+      'sr_id',
+      'listing_name',
+      'referrer_domain',
+      'referrer_url',
+    ]);
+
+    payload['process_notes'] = 'LOGIN_REQUIRED';
+
+    if (actionDetail) {
+      payload['details_text'] = actionDetail;
+    }
+
+    if (targetType) {
+      payload['target_type'] = targetType;
+    }
+
+    if (targetFullname) {
+      payload['target_fullname'] = targetFullname;
+      payload['target_id'] = r.utils.fullnameToId(targetFullname);
+    }
+
+    // event collector
+    r.events.track(eventTopic, eventType, payload).send();
+  },
+
   timeoutForbiddenEvent: function(actionName, actionDetail, targetType, targetFullname) {
     var eventTopic = 'forbidden_actions';
     var eventType = 'cs.forbidden_' + actionName;
