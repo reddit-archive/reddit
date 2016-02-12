@@ -291,9 +291,16 @@ class Link(Thing, Printable):
         author.last_submit_time = int(epoch_timestamp(datetime.now(g.tz)))
         author._commit()
 
-        if author._spam:
-            g.stats.simple_event('spam.autoremove.link')
-            admintools.spam(l, banner='banned user')
+        # if the link is coming in removed, we still need to run it through
+        # admintools.spam() to set data properly and update queries
+        if l._spam:
+            if author._spam:
+                g.stats.simple_event('spam.autoremove.link')
+                reason = "banned user"
+            elif spam_filter_level == "all":
+                reason = "subreddit setting"
+
+            admintools.spam(l, banner=reason)
 
         hooks.get_hook('link.new').call(link=l)
 
