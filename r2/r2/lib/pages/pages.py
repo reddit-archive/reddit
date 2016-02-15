@@ -4634,6 +4634,16 @@ class RenderableCampaign(Templated):
         else:
             self.is_auction = False
 
+        # Permission to edit is always granted when:
+        # 1) Advertiser is sponsor
+        # 2) Campaign is auction
+        # 3) Auction is not enabled and campaign is not live
+        if (c.user_is_sponsor or campaign.is_auction or
+                (not self.ads_auction_enabled and not is_live)):
+            self.editable = True
+        else:
+            self.editable = False
+
         # Convert total_budget_pennies to dollars for UI
         self.total_budget_dollars = campaign.total_budget_pennies / 100.
 

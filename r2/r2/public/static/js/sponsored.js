@@ -643,6 +643,22 @@ var exports = r.sponsored = {
         }
     },
 
+    setupLiveEditing: function(isLive) {
+        var $budgetChangeWarning = $('.budget-unchangeable-warning');
+        var $targetChangeWarning = $('.target-change-warning');
+        if (isLive && !this.userIsSponsor) {
+            $budgetChangeWarning.show();
+            $targetChangeWarning.show();
+            $('#total_budget_dollars').prop('disabled', true);
+            $('#startdate').prop('disabled', true);
+        } else {
+            $budgetChangeWarning.hide();
+            $targetChangeWarning.hide();
+            $('#total_budget_dollars').removeAttr('disabled');
+            $('#startdate').removeAttr('disabled');
+        }
+    },
+
     setup_collection_selector: function() {
         var $collectionSelector = $('.collection-selector');
         var $collectionList = $('.form-group-list');
@@ -959,7 +975,7 @@ var exports = r.sponsored = {
           CampaignCreator({
             totalBudgetDollars: totalBudgetDollars,
             dates: dates,
-            isNew: !$("#campaign").parents('tr:first').length,
+            isNew: $form.find('#is_new').val() === 'true',
             minBidDollars: minBidDollars,
             maxBidDollars: maxBidDollars,
             maxBudgetDollars: parseFloat(maxBudgetDollars),
@@ -990,7 +1006,7 @@ var exports = r.sponsored = {
                     bid: null,
                     end: timing.enddate,
                     impressions: 'unsold ',
-                    isNew: !$("#campaign").parents('tr:first').length,
+                    isNew: $form.find('#is_new').val() === 'true',
                     primary: true,
                     start: timing.startdate,
                   })
@@ -1028,7 +1044,7 @@ var exports = r.sponsored = {
                     cpm: cpm,
                     dates: timing.dates,
                     inventory: availableByDay,
-                    isNew: !$("#campaign").parents('tr:first').length,
+                    isNew: $form.find('#is_new').val() === 'true',
                     maxBudgetDollars: parseFloat(maxBudgetDollars),
                     minBudgetDollars: parseFloat(minBudgetDollars),
                     override: isOverride,
@@ -1603,7 +1619,9 @@ var exports = r.sponsored = {
         if (this.frequency_capped === null) {
             this.frequency_capped = !!$frequencyCapped.val();
         }
-        if (this.frequency_capped) {
+        // In some cases, the frequency cap is automatically set, but no
+        // frequencyCapped field is rendered; if so, skip this check
+        if (this.frequency_capped && $frequencyCapped.length > 0) {
             var $frequencyCapField = $form.find('#frequency_cap'),
                 frequencyCapValue = $frequencyCapField.val(),
                 frequencyCapMin = $frequencyCapField.data('frequency_cap_min'),
@@ -1616,6 +1634,11 @@ var exports = r.sponsored = {
                 $frequencyCapError.hide();
                 this.enable_form($form);
             }
+        }
+
+        // If campaign is new, don't set up live editing fields
+        if ($form.find('#is_new').val() === 'true') {
+            this.setupLiveEditing(false);
         }
     },
 
@@ -1761,8 +1784,7 @@ var exports = r.sponsored = {
             var $campaignRow = $('.' + campaignName),
                 campaignIsPaid = $campaignRow.data('paid'),
                 campaignTotalBudgetDollars = $campaignRow.data('total_budget_dollars')
-
-            if (campaignIsPaid && budget != campaignTotalBudgetDollars) {
+            if (campaignIsPaid && budget.totalBudgetDollars != campaignTotalBudgetDollars) {
                 $('.budget-change-warning').show()
             }
         }
@@ -2221,6 +2243,11 @@ function edit_campaign($campaign_row) {
             init_startdate();
             init_enddate();
 
+            /* setup fields for live campaign editing */
+            r.sponsored.setupLiveEditing($campaign_row.data('is_live') === 'True');
+
+            campaign.find('#is_new').val('false')
+
             campaign.find('button[name="save"]').show().end()
                 .find('.create').hide().end();
             campaign.slideDown();
@@ -2280,6 +2307,7 @@ function create_campaign() {
                 .find('input[name="startdate"]').prop('disabled', false).end()
                 .find('#frequency_capped_false').prop('checked', 'checked').end()
                 .find('.frequency-cap-field').hide().end()
+                .find('input[name="is_new"]').val('true').end()
                 .slideDown();
             r.sponsored.render();
         });

@@ -754,6 +754,11 @@ def is_live_promo(link, campaign):
     return is_promoted(link) and is_scheduled_promo(now, link, campaign)
 
 
+def is_complete_promo(link, campaign):
+    return (campaign.is_paid and 
+        not (is_live_promo(link, campaign) or is_pending(campaign)))
+
+
 def _is_geotargeted_promo(link):
     campaigns = live_campaigns_by_link(link)
     geotargeted = filter(lambda camp: camp.location, campaigns)

@@ -724,6 +724,9 @@
       <div class="budget-change-warning error">
         ${_('if you modify the budget of this paid campaign you will need to reauthorize payment by clicking the "pay" button')}
       </div>
+      <div class="budget-unchangeable-warning error">
+        ${_('the budget for campaigns cannot be adjusted once the campaign has gone live')}
+      </div>
       <div class="available-info"></div>
       ${error_field("OVERSOLD_DETAIL", "total_budget_dollars", "div")}
     </div>
@@ -796,7 +799,10 @@
         ${error_field("OVERSOLD", "sr", "div")}
         ${thing.subreddit_selector}
       </div>
-      ${error_field("INVALID_NSFW_TARGET", "targeting", "div")}
+      <div class="target-change-warning error">
+        ${_('changing the target for a live campaign requires reapproval.')}
+        ${_('while your campaign is awaiting reapproval, it will not be displayed.')}
+      </div>
     </div>
     <div class="select-group geotargeting-group">
       <span class="label">location</span>
@@ -939,4 +945,8 @@
       ${is_auction_field_content()}
     </%utils:line_field>
   %endif
-</%def> 
+</%def>
+
+<%def name="is_new_field()">
+  <input type="hidden" id="is_new" name="is_new" value="true">
+</%def>

@@ -1265,6 +1265,29 @@ class PromoteApiController(ApiController):
         if not feature.is_enabled('cpc_pricing'):
             cost_basis = 'cpm'
 
+        # Setup campaign details for existing campaigns
+        campaign = None
+        if campaign_id36:
+            try:
+                campaign = PromoCampaign._byID36(campaign_id36, data=True)
+            except NotFound:
+                pass
+
+            if (not campaign
+                    or (campaign._deleted or link._id != campaign.link_id)):
+                return abort(404, 'not found')
+
+            requires_reapproval = False
+            is_live = promote.is_live_promo(link, campaign)
+            is_complete = promote.is_complete_promo(link, campaign)
+
+            if not c.user_is_sponsor:
+                # If campaign is live, start_date and total_budget_dollars
+                # must not be changed
+                if is_live:
+                    start = campaign.start_date
+                    total_budget_dollars = campaign.total_budget_dollars
+
         # Configure priority, cost_basis, and bid_pennies
         if feature.is_enabled('ads_auction'):
             if c.user_is_sponsor:
@@ -1330,36 +1353,28 @@ class PromoteApiController(ApiController):
         min_start, max_start, max_end = promote.get_date_limits(
             link, c.user_is_sponsor)
 
-        if campaign_id36:
-            promo_campaign = PromoCampaign._byID36(campaign_id36)
-
+        if campaign:
             if feature.is_enabled('ads_auction'):
                 # non-sponsors cannot update fixed CPM campaigns,
                 # even if they haven't launched (due to auction)
-                if not c.user_is_sponsor and not promo_campaign.is_auction:
+                if not c.user_is_sponsor and not campaign.is_auction:
                     c.errors.add(errors.COST_BASIS_CANNOT_CHANGE,
                         field='cost_basis')
                     form.set_error(errors.COST_BASIS_CANNOT_CHANGE, 'cost_basis')
                     return
 
-            # Start not sent for campaigns already serving,
-            # use the current start
-            if not start:
-                start = promo_campaign.start_date
+            if not c.user_is_sponsor:
+                # If target is changed, require reapproval
+                if campaign.target != target:
+                    requires_reapproval = True
 
-            if promo_campaign.start_date.date() != start.date():
+            if campaign.start_date.date() != start.date():
                 # Can't edit the start date of campaigns that have served
-                if promo_campaign.has_served:
+                if campaign.has_served:
                     c.errors.add(errors.START_DATE_CANNOT_CHANGE, field='startdate')
                     form.has_errors('startdate', errors.START_DATE_CANNOT_CHANGE)
                     return
 
-                # Or that are live or completed
-                live_campaigns = promote.live_campaigns_by_link(link)
-                is_pending = promote.is_pending(promo_campaign)
-                is_live = promo_campaign in live_campaigns
-                is_complete = (promo_campaign.is_paid and
-                               not (is_live or is_pending))
                 if is_live or is_complete:
                     c.errors.add(errors.START_DATE_CANNOT_CHANGE, field='startdate')
                     form.has_errors('startdate', errors.START_DATE_CANNOT_CHANGE)
@@ -1401,19 +1416,6 @@ class PromoteApiController(ApiController):
                          field='title')
             form.has_errors('title', errors.TOO_MANY_CAMPAIGNS)
             return
-
-        campaign = None
-        if campaign_id36:
-            try:
-                campaign = PromoCampaign._byID36(campaign_id36, data=True)
-            except NotFound:
-                pass
-
-            if campaign and (campaign._deleted or link._id != campaign.link_id):
-                campaign = None
-
-            if not campaign:
-                return abort(404, 'not found')
 
         if not priority == PROMOTE_PRIORITIES['house']:
             # total_budget_dollars is submitted as a float;
@@ -1478,42 +1480,37 @@ class PromoteApiController(ApiController):
             frequency_cap = g.frequency_cap_default
 
         dates = (start, end)
+
+        campaign_dict = {
+            'dates': dates,
+            'target': target,
+            'frequency_cap': frequency_cap,
+            'priority': priority,
+            'location': location,
+            'total_budget_pennies': total_budget_pennies,
+            'cost_basis': cost_basis,
+            'bid_pennies': bid_pennies,
+            'platform': platform,
+            'mobile_os': mobile_os,
+            'ios_devices': ios_devices,
+            'ios_version_range': ios_versions,
+            'android_devices': android_devices,
+            'android_version_range': android_versions,
+        }
+
         if campaign:
+            if requires_reapproval and promote.is_accepted(link):
+                campaign_dict['is_approved'] = False
+
             promote.edit_campaign(
                 link,
                 campaign,
-                dates=dates,
-                target=target,
-                frequency_cap=frequency_cap,
-                priority=priority,
-                location=location,
-                total_budget_pennies=total_budget_pennies,
-                cost_basis=cost_basis,
-                bid_pennies=bid_pennies,
-                platform=platform,
-                mobile_os=mobile_os,
-                ios_devices=ios_devices,
-                ios_version_range=ios_versions,
-                android_devices=android_devices,
-                android_version_range=android_versions,
+                **campaign_dict
             )
         else:
             campaign = promote.new_campaign(
                 link,
-                dates=dates,
-                target=target,
-                frequency_cap=frequency_cap,
-                priority=priority,
-                location=location,
-                platform=platform,
-                mobile_os=mobile_os,
-                ios_devices=ios_devices,
-                ios_version_range=ios_versions,
-                android_devices=android_devices,
-                android_version_range=android_versions,
-                total_budget_pennies=total_budget_pennies,
-                cost_basis=cost_basis,
-                bid_pennies=bid_pennies,
+                **campaign_dict
             )
         rc = RenderableCampaign.from_campaigns(link, campaign)
         jquery.update_campaign(campaign._fullname, rc.render_html())

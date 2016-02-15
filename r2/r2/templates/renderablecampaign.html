@@ -52,7 +52,8 @@
     data-has-served="${json.dumps(thing.campaign.has_served or thing.is_live or thing.is_complete)}"
     data-total_budget_dollars="${'%.2f' % thing.total_budget_dollars}"
     data-cost_basis="${thing.cost_basis}"
-    data-bid_dollars="${'%.2f' % (thing.bid_pennies / 100.)}">
+    data-bid_dollars="${'%.2f' % (thing.bid_pennies / 100.)}"
+    data-is_live="${thing.is_live}">
   <td class="campaign-start-date">
     ${thing.campaign.start_date.strftime("%m/%d/%Y")}
   </td>
@@ -144,8 +145,7 @@
     %if thing.is_complete:
       <span class='info'>${_("complete")}</span>
     %else:
-      ## if auction enabled, prohibit advertisers from editing any fixed CPM campaign
-      %if c.user_is_sponsor or (not thing.is_live and (not thing.ads_auction_enabled or thing.is_auction)):
+      %if thing.editable:
         <button class="edit" onclick="edit_campaign(${jquery_row})">
           ${_("edit")}
         </button>
@@ -159,7 +159,7 @@
 
       %if thing.is_live:
         <button class="view" onclick="$.redirect('${thing.view_live_url}')">
-          ${_("view live")}
+          ${_("view")}
         </button>
       %endif
 
@@ -168,6 +168,8 @@
           <button class="resume" onclick="toggle_pause_campaign(${jquery_row}, false)">
             ${_("resume")}
           </button>
+        %elif thing.needs_approval:
+          <span class='info'>${_("awaiting approval")}</span>
         %else:
           <button class="pause" onclick="toggle_pause_campaign(${jquery_row}, true)">
             ${_("pause")}
