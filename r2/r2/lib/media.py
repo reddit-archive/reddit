@@ -313,7 +313,8 @@ def upload_stylesheet(content):
 
 
 def _scrape_media(url, autoplay=False, maxwidth=600, force=False,
-                  save_thumbnail=True, use_cache=False, max_cache_age=None):
+                  save_thumbnail=True, use_cache=False, max_cache_age=None,
+                  use_youtube_scraper=False):
     media = None
     autoplay = bool(autoplay)
     maxwidth = int(maxwidth)
@@ -332,7 +333,8 @@ def _scrape_media(url, autoplay=False, maxwidth=600, force=False,
         media_object = secure_media_object = None
         thumbnail_image = thumbnail_url = thumbnail_size = None
 
-        scraper = Scraper.for_url(url, autoplay=autoplay)
+        scraper = Scraper.for_url(url, autoplay=autoplay,
+                                  use_youtube_scraper=use_youtube_scraper)
         try:
             thumbnail_image, preview_object, media_object, secure_media_object = (
                 scraper.scrape())
@@ -388,6 +390,9 @@ def _scrape_media(url, autoplay=False, maxwidth=600, force=False,
 
 def _get_scrape_url(link):
     if not link.is_self:
+        sr_name = link.subreddit_slow.name
+        if not feature.is_enabled("imgur_gif_conversion", subreddit=sr_name):
+            return link.url
         p = UrlParser(link.url)
         # If it's a gif link on imgur, replacing it with gifv should
         # give us the embedly friendly video url
@@ -414,8 +419,10 @@ def _get_scrape_url(link):
 
 
 def _set_media(link, force=False, **kwargs):
+    sr = link.subreddit_slow
+    
     # Do not process thumbnails for quarantined subreddits
-    if link.subreddit_slow.quarantine:
+    if sr.quarantine:
         return
 
     if not link.is_self:
@@ -435,7 +442,9 @@ def _set_media(link, force=False, **kwargs):
             link._commit()
         return
 
-    media = _scrape_media(scrape_url, force=force, **kwargs)
+    youtube_scraper = feature.is_enabled("youtube_scraper", subreddit=sr.name)
+    media = _scrape_media(scrape_url, force=force,
+                          use_youtube_scraper=youtube_scraper, **kwargs)
 
     if media and not link.promoted:
         # While we want to add preview images to self posts for the new apps,
@@ -552,12 +561,12 @@ class MediaEmbed(object):
 
 class Scraper(object):
     @classmethod
-    def for_url(cls, url, autoplay=False, maxwidth=600):
+    def for_url(cls, url, autoplay=False, maxwidth=600, use_youtube_scraper=False):
         scraper = hooks.get_hook("scraper.factory").call_until_return(url=url)
         if scraper:
             return scraper
 
-        if _YouTubeScraper.matches(url):
+        if use_youtube_scraper and _YouTubeScraper.matches(url):
             return _YouTubeScraper(url, maxwidth=maxwidth)
 
         embedly_services = _fetch_embedly_services()
