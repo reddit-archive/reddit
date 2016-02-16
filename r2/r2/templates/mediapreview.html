@@ -28,6 +28,8 @@
      id="media-preview-${thing.id36}"
      style="max-width: ${thing.width}px">
   <div class="media-preview-content">
-    ${unsafe(thing.media_content)}
+    <a href="${thing.url}" class="may-blank">
+      ${unsafe(thing.media_content)}
+    </a>
   </div>
 </div>

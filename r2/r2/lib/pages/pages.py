@@ -4840,6 +4840,7 @@ def make_link_child(item, show_media_preview=False):
             media_preview = MediaPreview(
                 media_object=media_object,
                 id36=item._id36,
+                url=item.url,
             )
             link_child = MediaChild(
                 item,
@@ -4882,10 +4883,11 @@ class MediaEmbed(Templated):
 class MediaPreview(Templated):
     """Rendered html container for a media child"""
 
-    def __init__(self, media_object, id36, **kwargs):
+    def __init__(self, media_object, id36, url, **kwargs):
         self.media_content = media_object["content"]
         self.width = media_object["width"]
         self.id36 = id36
+        self.url = url
         super(MediaPreview, self).__init__(**kwargs)
 
 
