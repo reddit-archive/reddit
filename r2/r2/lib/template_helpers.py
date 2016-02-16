@@ -180,6 +180,17 @@ def js_config(extra_config=None):
     cur_listing = ""
     listing_over_18 = False
     pref_no_profanity = not logged or c.user.pref_no_profanity
+    pref_media_preview = c.user.pref_media_preview
+
+    if not feature.is_enabled("autoexpand_media_previews"):
+        expando_preference = None
+    elif pref_media_preview == "subreddit":
+        expando_preference = "subreddit_default"
+    elif pref_media_preview == "on":
+        expando_preference = "auto_expand"
+    else:
+        expando_preference = "do_not_expand"
+
     nsfw_media_acknowledged = logged and c.user.nsfw_media_acknowledged
 
     if isinstance(c.site, Subreddit) and not c.default_sr:
@@ -258,6 +269,7 @@ def js_config(extra_config=None):
         "static_root": static(''),
         "over_18": bool(c.over18),
         "listing_over_18": listing_over_18,
+        "expando_preference": expando_preference,
         "pref_no_profanity": pref_no_profanity,
         "nsfw_media_acknowledged": nsfw_media_acknowledged,
         "new_window": logged and bool(c.user.pref_newwindow),
