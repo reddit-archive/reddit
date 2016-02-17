@@ -33,6 +33,7 @@ r.analytics = {
       sr_name: r.config.post_site || null,
       user_id: null,
       user_name: null,
+      user_in_beta: r.config.pref_beta,
     };
 
     if (r.config.user_id) {
@@ -365,6 +366,7 @@ r.analytics = {
       'dnt',
       'referrer_domain',
       'referrer_url',
+      'user_in_beta',
     ]);
 
     if (r.config.event_target) {
