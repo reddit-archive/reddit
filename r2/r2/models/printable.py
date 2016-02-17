@@ -57,6 +57,10 @@ class Printable(object):
                         ])
 
     @classmethod
+    def update_nofollow(cls, user, wrapped):
+        pass
+
+    @classmethod
     def add_props(cls, user, wrapped):
         from r2.lib.wrapped import CachedVariable
         for item in wrapped:
