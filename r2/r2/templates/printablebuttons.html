@@ -371,7 +371,7 @@
     %endif
     %if c.user_is_sponsor:
       %if thing.show_approval:
-        %if thing.promote_status in (PROMOTE_STATUS.unpaid, PROMOTE_STATUS.unseen, PROMOTE_STATUS.rejected):
+        %if thing.promote_status not in (PROMOTE_STATUS.rejected, PROMOTE_STATUS.finished):
           <li>
             <form action="/post/reject" class="rejection-form"
                  style="display:none"
