@@ -5063,13 +5063,17 @@ ul.tabmenu.formtab {
 }
 
 .expando-nsfw-gate {
+    @expando-nsfw-gate-color: #545452;
+    @expando-nsfw-font-size: 12px;
+
     align-items: center;
     color: @color-white;
+    font-size: @expando-nsfw-font-size;
     .display-flex();
     .justify-content(center);
 
     &.expando-nsfw-interstitial {
-        background: grey;
+        background: @expando-nsfw-gate-color;
     }
 
     &.expando-nsfw-overlay {
