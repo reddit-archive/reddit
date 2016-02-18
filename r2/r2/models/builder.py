@@ -941,6 +941,84 @@ class CommentOrderer(CommentOrdererBase):
         return comment_tuples
 
 
+class QACommentOrderer(CommentOrderer):
+    def get_comment_order(self):
+        """Filter out the comments we don't want to show in QA sort.
+
+        QA sort only displays comments that are:
+        1. Top-level
+        2. Responses from the OP(s)
+        3. Within one level of an OP reply
+        4. Distinguished
+
+        All ancestors of comments meeting the above rules will also be shown.
+        This ensures the question responded to by OP is shown.
+
+        """
+
+        comment_tuples = CommentOrderer.get_comment_order(self)
+        if not comment_tuples:
+            return comment_tuples
+        elif isinstance(comment_tuples[-1], MissingChildrenTuple):
+            missing_children_tuple = comment_tuples.pop()
+        else:
+            missing_children_tuple = None
+
+        special_responder_ids = self.link.responder_ids
+
+        # unfortunately we need to look up all the Comments for QA
+        comment_ids = {ct.comment_id for ct in comment_tuples}
+        comments_by_id = Comment._byID(comment_ids, data=True)
+
+        # figure out which comments will be kept (all others are discarded)
+        kept_comment_ids = set()
+        for comment_tuple in comment_tuples:
+            if comment_tuple.depth == 0:
+                kept_comment_ids.add(comment_tuple.comment_id)
+                continue
+
+            comment = comments_by_id[comment_tuple.comment_id]
+            parent = comments_by_id[comment.parent_id] if comment.parent_id else None
+
+            if comment.author_id in special_responder_ids:
+                kept_comment_ids.add(comment_tuple.comment_id)
+                continue
+
+            if parent and parent.author_id in special_responder_ids:
+                kept_comment_ids.add(comment_tuple.comment_id)
+                continue
+
+            if hasattr(comment, "distinguished") and comment.distinguished != "no":
+                kept_comment_ids.add(comment_tuple.comment_id)
+                continue
+
+        # add all ancestors to kept_comment_ids
+        for comment_id in sorted(kept_comment_ids):
+            # sort the comments so we start with the most root level comments
+            comment = comments_by_id[comment_id]
+            parent_id = comment.parent_id
+
+            counter = 0
+            while (parent_id and
+                        parent_id not in kept_comment_ids and
+                        counter < g.max_comment_parent_walk):
+                kept_comment_ids.add(parent_id)
+                counter += 1
+
+                comment = comments_by_id[parent_id]
+                parent_id = comment.parent_id
+
+        # remove all comment tuples that aren't in kept_comment_ids
+        comment_tuples = [comment_tuple for comment_tuple in comment_tuples
+            if comment_tuple.comment_id in kept_comment_ids
+        ]
+
+        if missing_children_tuple:
+            comment_tuples.append(missing_children_tuple)
+
+        return comment_tuples
+
+
 class PermalinkCommentOrderer(CommentOrdererBase):
     def __init__(self, link, sort, max_comments, max_depth, timer, comment,
                  context):
@@ -1063,9 +1141,15 @@ class CommentBuilder(Builder):
         # argument for morechildren mode
         self.children = children
 
+        # QA mode only activates for the full comments view
+        self.in_qa_mode = sort.col == '_qa' and not (comment or children)
+
         self.load_more = load_more
         self.max_depth = max_depth
         self.show_deleted = show_deleted or c.user_is_admin
+
+        # uncollapse everything in QA mode because the sorter will prune
+        self.uncollapse_all = c.user_is_admin or self.in_qa_mode
         self.edits_visible = edits_visible
         self.num = num
         self.continue_this_thread = continue_this_thread
@@ -1112,6 +1196,10 @@ class CommentBuilder(Builder):
                 self.link, self.sort, self.num, self.max_depth, self.timer,
                 self.children)
             comment_tuples = orderer.get_comment_order()
+        elif self.in_qa_mode:
+            orderer = QACommentOrderer(
+                self.link, self.sort, self.num, self.max_depth, self.timer)
+            comment_tuples = orderer.get_comment_order()
         else:
             orderer = CommentOrderer(
                 self.link, self.sort, self.num, self.max_depth, self.timer)
@@ -1149,7 +1237,7 @@ class CommentBuilder(Builder):
 
         wrapped_by_id = {
             comment._id: comment for comment in wrapped}
-        self.apply_collapses(wrapped_by_id)
+        self.uncollapse_special_comments(wrapped_by_id)
 
         if self.show_deleted:
             deleted_ids = set()
@@ -1252,54 +1340,17 @@ class CommentBuilder(Builder):
 
         return wrapped
 
-    @staticmethod
-    def uncollapse_parents(parent, wrapped_by_id):
-        # Un-collapse parents as necessary (either from Q&A sort rule
-        # or a deeply nested distinguished comment, etc). It's a lot
-        # easier to do this here, upwards, than to check through all
-        # the children when we were iterating at the parent.
-        ancestor = parent
-        counter = 0
-        while (ancestor and
-                not getattr(ancestor, 'walked', False) and
-                counter < g.max_comment_parent_walk):
-            ancestor.hidden = False
-            # In case we haven't processed this comment yet.
-            ancestor.prevent_collapse = True
-            # This allows us to short-circuit when the rest of the
-            # tree has already been uncollapsed.
-            ancestor.walked = True
+    def uncollapse_special_comments(self, wrapped_by_id):
+        """Undo collapsing for special comments.
 
-            ancestor = wrapped_by_id.get(ancestor.parent_id)
-            counter += 1
+        The builder may have set `collapsed` and `hidden` attributes for
+        comments that we want to ensure are shown.
 
-    @staticmethod
-    def apply_qa_collapse(special_responder_ids, comment, parent):
-        # In the Q&A sort type, we want to collapse all comments other
-        # than those that are:
-        #
-        # 1. Top-level comments,
-        # 2. Responses from the OP(s),
-        # 3. Responded to by the OP(s) (dealt with below),
-        # 4. Within one level of an OP reply, or
-        # 5. Already prevented from collapse, like distinguished
-        #    comments or comments in (3) whose children have already
-        #    been processed.
-        #
-        # Note: we can't use |= because 'comment.prevent_collapse'
-        # might be None.
-        comment.prevent_collapse = (
-            comment.depth == 0 or  # (1)
-            comment.author_id in special_responder_ids or  # (2)
-            (parent and parent.author_id in special_responder_ids) or # (4)
-            comment.prevent_collapse # (5)
-        )
+        """
 
-        if not comment.prevent_collapse:
-            comment.hidden = True
-
-    def apply_collapses(self, wrapped_by_id):
-        if self.comment:
+        if self.uncollapse_all:
+            dont_collapse = set(wrapped_by_id.keys())
+        elif self.comment:
             dont_collapse = set([self.comment._id])
             parent_id = self.comment.parent_id
             while parent_id:
@@ -1309,26 +1360,43 @@ class CommentBuilder(Builder):
                 else:
                     parent_id = None
         elif self.children:
-            dont_collapse = self.children
+            dont_collapse = set(self.children)
         else:
-            dont_collapse = []
+            dont_collapse = set()
 
-        for comment_id, comment in sorted(wrapped_by_id.iteritems()):
-            parent = wrapped_by_id.get(comment.parent_id)
+        # we only care about preventing collapse of wrapped comments
+        dont_collapse &= set(wrapped_by_id.keys())
 
-            # We have some special collapsing rules for the Q&A sort type.
-            # However, we want to show everything when we're building a specific
-            # set of children (like from "load more" links) or when viewing a
-            # comment permalink.
-            if (self.sort.col == '_qa' and
-                    not (self.comment or self.children)):
-                self.apply_qa_collapse(self.link.responder_ids, comment, parent)
+        maybe_collapse = set(wrapped_by_id.keys()) - dont_collapse
 
-            if comment.prevent_collapse and parent:
-                self.uncollapse_parents(parent, wrapped_by_id)
+        for comment_id in maybe_collapse:
+            comment = wrapped_by_id[comment_id]
+            if comment.distinguished and comment.distinguished != "no":
+                dont_collapse.add(comment_id)
 
-            if (comment.collapsed and
-                    (comment.prevent_collapse or comment._id in dont_collapse)):
+        maybe_collapse -= dont_collapse
+
+        # ensure all ancestors of dont_collapse comments are not collapsed
+        if maybe_collapse:
+            for comment_id in sorted(dont_collapse):
+                # sort comments so we start with the most root level comments
+                comment = wrapped_by_id[comment_id]
+                parent_id = comment.parent_id
+
+                counter = 0
+                while (parent_id and
+                            parent_id not in dont_collapse and
+                            parent_id in wrapped_by_id and
+                            counter < g.max_comment_parent_walk):
+                    dont_collapse.add(parent_id)
+                    counter += 1
+
+                    comment = wrapped_by_id[parent_id]
+                    parent_id = comment.parent_id
+
+        for comment_id in dont_collapse:
+            comment = wrapped_by_id[comment_id]
+            if comment.collapsed:
                 comment.collapsed = False
                 comment.hidden = False
 

@@ -55,6 +55,25 @@ TREE = [
 ]
 
 
+DISTINGUISHES = {
+    104: "yes",
+}
+
+AUTHOR_IDS = {
+    100: "a",
+    101: "b",
+    102: "c",
+    103: "d",
+    104: "e",
+    105: "f",
+    106: "g",
+    107: "h",
+    108: "i",
+    109: "j",
+    110: "k",
+}
+
+
 def make_comment_tree(link):
     tree = {}
 
@@ -89,6 +108,22 @@ def make_comment_scores():
     return scores_by_id
 
 
+FakeComment = namedtuple(
+    "Comment", ["parent_id", "author_id", "distinguished"])
+
+def comments_by_id():
+    comment_tree = make_comment_tree(None)
+    ret = {}
+
+    for comment_id in comment_tree.cids:
+        parent_id = comment_tree.parents[comment_id]
+        author_id = AUTHOR_IDS[comment_id]
+        distinguished = DISTINGUISHES.get(comment_id, "no")
+        ret[comment_id] = FakeComment(parent_id, author_id, distinguished)
+
+    return ret
+
+
 class CommentOrderTest(RedditTestCase):
     def setUp(self):
         self.link = MagicMock()
@@ -102,6 +137,10 @@ class CommentOrderTest(RedditTestCase):
         comment_tree_for_link = make_comment_tree(self.link)
         self.autopatch(
             CommentTree, "by_link", return_value=comment_tree_for_link)
+
+        fake_comments = comments_by_id()
+        self.autopatch(
+            Comment, "_byID", return_value=fake_comments)
 
     def tearDown(self):
         self.link = None
@@ -267,5 +306,33 @@ class CommentOrderTest(RedditTestCase):
         # if the requested children are not root level but we don't show some
         # of them we should add a MoreChildren to allow a subsequent request
         # to get the missing comments.
+        self.assertEqual(builder.missing_root_comments, set())
+        self.assertEqual(builder.missing_root_count, 0)
+
+    def test_comment_order_qa(self):
+        self.link.responder_ids = ("c",)
+        sort = operators.desc("_qa")
+        builder = CommentBuilder(self.link, sort, num=1500)
+        builder.load_comment_order()
+        comment_order = [
+            comment_tuple.comment_id
+            for comment_tuple in builder.ordered_comment_tuples
+        ]
+        self.assertEqual(comment_order,
+            [100, 102, 104, 105, 106, 107, 108, 109])
+        self.assertEqual(builder.missing_root_comments, set())
+        self.assertEqual(builder.missing_root_count, 0)
+
+    def test_comment_order_qa_multiple_responders(self):
+        self.link.responder_ids = ("c", "d", "e")
+        sort = operators.desc("_qa")
+        builder = CommentBuilder(self.link, sort, num=1500)
+        builder.load_comment_order()
+        comment_order = [
+            comment_tuple.comment_id
+            for comment_tuple in builder.ordered_comment_tuples
+        ]
+        self.assertEqual(comment_order,
+            [100, 102, 104, 105, 106, 103, 107, 108, 109])
         self.assertEqual(builder.missing_root_comments, set())
         self.assertEqual(builder.missing_root_count, 0)
