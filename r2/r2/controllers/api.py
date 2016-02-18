@@ -640,8 +640,8 @@ class ApiController(RedditController):
             _event(error='WRONG_PASSWORD')
 
         else:
-            _event(error=None)
             self._login(responder, user, rem)
+            _event(error=None)
 
     @csrf_exempt
     @cross_domain(allow_credentials=True)
@@ -752,9 +752,8 @@ class ApiController(RedditController):
                 except newsletter.NewsletterError as e:
                     g.log.warning("Failed to subscribe: %r" % e)
 
-            _event(error=None)
-
             self._login(responder, user, rem)
+            _event(error=None)
 
     @csrf_exempt
     @cross_domain(allow_credentials=True)
