@@ -790,6 +790,7 @@ class Link(Thing, Printable):
 
             # attach video or selftext as needed
             item.link_child, item.editable = make_link_child(item, show_media_preview)
+            item.feature_media_previews = feature.is_enabled("media_previews")
 
             if item.is_self and not item.promoted:
                 item.href_url = item.permalink
