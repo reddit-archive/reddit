@@ -241,12 +241,13 @@ class ThingBase(object):
 
     _value_type = None # if set, overrides all of the _props types
                        # below. Used for Views. One of 'int', 'float',
-                       # 'bool', 'pickle', 'date', 'bytes', 'str'
+                       # 'bool', 'pickle', 'json', 'date', 'bytes', 'str'
 
     _int_props = ()
     _float_props = () # note that we can lose resolution on these
     _bool_props = ()
     _pickle_props = ()
+    _json_props = ()
     _date_props = () # note that we can lose resolution on these
     _bytes_props = ()
     _str_props = () # at present we never actually read out of here
@@ -493,6 +494,8 @@ class ThingBase(object):
             return val == '1'
         elif attr in cls._pickle_props or (cls._value_type and cls._value_type == 'pickle'):
             return pickle.loads(val)
+        elif attr in cls._json_props or (cls._value_type and cls._value_type == 'json'):
+            return json.loads(val)
         elif attr in cls._date_props or attr == cls._timestamp_prop or (cls._value_type and cls._value_type == 'date'):
             return cls._deserialize_date(val)
         elif attr in cls._bytes_props or (cls._value_type and cls._value_type == 'bytes'):
@@ -512,6 +515,8 @@ class ThingBase(object):
             return '1' if val else '0'
         elif attr in cls._pickle_props or (cls._value_type and cls._value_type == 'pickle'):
             return pickle.dumps(val)
+        elif attr in cls._json_props or (cls._value_type and cls._value_type == 'json'):
+            return json.dumps(val)
         elif (attr in cls._date_props or attr == cls._timestamp_prop or
               (cls._value_type and cls._value_type == 'date')):
             # the _timestamp_prop is handled in _commit(), not here
