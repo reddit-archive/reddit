@@ -29,7 +29,15 @@ import subprocess
 from r2.lib.static import generate_static_name
 
 SPRITE_PADDING = 6
-sprite_line = re.compile(r"background-image: *url\((.*)\) *.*/\* *SPRITE *(stretch-x)? *\*/")
+sprite_line = re.compile(
+    r"""background-image:\ *
+        url\((?P<filename>.*)\)\ *
+        .*
+        /\*\ *SPRITE\ *
+        (?P<stretch>stretch-x)?\ *
+        (?:pixel-ratio=(?P<pixel_ratio>\d))?\ *
+        \*/
+     """, re.X)
 
 
 def optimize_png(filename):
@@ -38,10 +46,16 @@ def optimize_png(filename):
 
 
 def _extract_css_info(match):
-    image_filename, properties = match.groups('')
+    image_filename = match.group("filename")
+    should_stretch_property = match.group("stretch")
+    pixel_ratio_property = match.group("pixel_ratio")
     image_filename = image_filename.strip('"\'')
-    should_stretch = (properties == 'stretch-x')
-    return image_filename, should_stretch
+    should_stretch = (should_stretch_property == 'stretch-x')
+    if pixel_ratio_property:
+        pixel_ratio = int(pixel_ratio_property)
+    else:
+        pixel_ratio = 1
+    return image_filename, should_stretch, pixel_ratio
 
 
 class SpritableImage(object):
@@ -89,7 +103,7 @@ def _load_spritable_images(css_filename):
             if not m:
                 continue
 
-            image_filename, should_stretch = _extract_css_info(m)
+            image_filename, should_stretch, pixel_ratio = _extract_css_info(m)
             image = Image.open(os.path.join(css_location, image_filename))
             image_hash = hashlib.md5(image.convert("RGBA").tostring()).hexdigest()
 
@@ -146,12 +160,12 @@ def _generate_sprite(images, sprite_path):
     sprite.save(sprite_path, optimize=True)
     optimize_png(sprite_path)
 
-    # give back the mangled name
+    # give back the sprite and mangled name
     sprite_base, sprite_name = os.path.split(sprite_path)
-    return generate_static_name(sprite_name, base=sprite_base)
+    return (sprite, generate_static_name(sprite_name, base=sprite_base))
 
 
-def _rewrite_css(css_filename, sprite_path, images):
+def _rewrite_css(css_filename, sprite_path, images, sprite_size):
     # map filenames to coordinates
     locations = {}
     for image in images:
@@ -159,14 +173,25 @@ def _rewrite_css(css_filename, sprite_path, images):
             locations[filename] = image.sprite_location
 
     def rewrite_sprite_reference(match):
-        image_filename, should_stretch = _extract_css_info(match)
+        image_filename, should_stretch, pixel_ratio = _extract_css_info(match)
         position = locations[image_filename]
 
-        return ''.join((
+        if pixel_ratio > 1:
+            position = (position[0] / pixel_ratio, position[1] / pixel_ratio)
+
+        css_properties = [
             'background-image: url(%s);' % sprite_path,
             'background-position: -%dpx -%dpx;' % position,
             'background-repeat: %s;' % ('repeat' if should_stretch else 'no-repeat'),
-        ))
+        ]
+
+        if pixel_ratio > 1:
+            size = (sprite_size[0] / pixel_ratio, sprite_size[1] / pixel_ratio)
+            css_properties.append(
+                'background-size: %dpx %dpx;' % size,
+            )
+
+        return ''.join(css_properties)
 
     # read in the css and replace sprite references
     with open(css_filename, 'r') as f:
@@ -176,8 +201,8 @@ def _rewrite_css(css_filename, sprite_path, images):
 
 def spritify(css_filename, sprite_path):
     images = _load_spritable_images(css_filename)
-    sprite_path = _generate_sprite(images, sprite_path)
-    return _rewrite_css(css_filename, sprite_path, images)
+    sprite, sprite_path = _generate_sprite(images, sprite_path)
+    return _rewrite_css(css_filename, sprite_path, images, sprite.size)
 
 
 if __name__ == '__main__':
