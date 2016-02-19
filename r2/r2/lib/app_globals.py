@@ -345,6 +345,7 @@ class Globals(object):
             'create_sr_link_karma',
             'cflag_min_votes',
             'ads_popularity_threshold',
+            'precomputed_comment_sort_min_comments',
         ],
         ConfigValue.float: [
             'cflag_lower_bound',
@@ -363,6 +364,7 @@ class Globals(object):
             'events_collector_comment_sample_rate',
             'events_collector_use_gzip_chance',
             'https_cert_testing_probability',
+            'precomputed_comment_sort_read_chance',
         ],
         ConfigValue.tuple: [
             'fastlane_links',
@@ -370,6 +372,7 @@ class Globals(object):
             'discovery_srs',
             'proxy_gilding_accounts',
             'mweb_blacklist_expressions',
+            'precomputed_comment_sorts',
         ],
         ConfigValue.str: [
             'listing_chooser_gold_multi',

@@ -129,6 +129,7 @@ class CommentOrderTest(RedditTestCase):
         self.link = MagicMock()
         self.link._id = 1000
         self.link.sticky_comment_id = None
+        self.link.precomputed_sorts = None
 
         comment_scores = make_comment_scores()
         self.autopatch(

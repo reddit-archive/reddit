@@ -24,7 +24,7 @@ from collections import defaultdict, namedtuple
 from copy import deepcopy
 import datetime
 import heapq
-from random import shuffle
+from random import shuffle, random
 import time
 
 from pylons import request
@@ -908,6 +908,15 @@ class CommentOrdererBase(object):
             heapq.heappush(candidates, (sort_val, comment))
 
 
+SORT_OPERATOR_BY_NAME = {
+    "new": operators.desc('_date'),
+    "old": operators.asc('_date'),
+    "controversial": operators.desc('_controversy'),
+    "confidence": operators.desc('_confidence'),
+    "qa": operators.desc('_qa'),
+}
+
+
 class CommentOrderer(CommentOrdererBase):
     def get_initial_candidates(self, comment_tree):
         """Build the tree starting from all root level comments."""
@@ -937,12 +946,106 @@ class CommentOrderer(CommentOrdererBase):
             else:
                 g.log.warning("Non-top-level sticky comment detected on "
                               "link %r.", self.link)
+        return comment_tuples
+
+    def cache_key(self):
+        key = "order:{link}_{operator}{column}".format(
+            link=self.link._id36,
+            operator=self.sort.__class__.__name__,
+            column=self.sort.col,
+        )
+        return key
+
+    @classmethod
+    def write_cache(cls, link, sort, timer):
+        comment_orderer = cls(link, sort,
+            max_comments=g.max_comments_gold,
+            max_depth=MAX_RECURSION,
+            timer=timer,
+        )
+        comment_tuples = comment_orderer._get_comment_order()
+
+        key = comment_orderer.cache_key()
+        existing_tuples = g.permacache.get(key) or []
+
+        if comment_tuples != existing_tuples:
+            # don't write cache if the order hasn't changed
+            g.permacache.set(key, comment_tuples)
+
+    def should_read_cache(self):
+        if self.link.precomputed_sorts:
+            precomputed_sorts = [
+                SORT_OPERATOR_BY_NAME[sort_name]
+                for sort_name in self.link.precomputed_sorts
+                if sort_name in SORT_OPERATOR_BY_NAME
+            ]
+            return self.sort in precomputed_sorts
+        else:
+            return False
+
+    def read_cache(self):
+        key = self.cache_key()
+        comment_tuples = g.permacache.get(key) or []
+        self.timer.intermediate("read_precomputed")
+
+        # precomputed order uses the default max_depth. filter the list
+        # if we need a different max_depth. NOTE: we may end up with fewer
+        # comments than were requested.
+        if self.max_depth < MAX_RECURSION:
+            comment_tuples = [
+                comment_tuple for comment_tuple in comment_tuples
+                if comment_tuple.depth < self.max_depth
+            ]
+
+        # precomputed order might have returned more than max_comments
+        if comment_tuples and isinstance(comment_tuples[-1], MissingChildrenTuple):
+            mct = comment_tuples.pop(-1)
+            top_level_not_visible = mct.child_ids
+            num_children_not_visible = mct.num_children
+        else:
+            top_level_not_visible = set()
+            num_children_not_visible = 0
+
+        if len(comment_tuples) > self.max_comments:
+            top_level_not_visible.update({
+                comment_tuple.comment_id
+                for comment_tuple in comment_tuples[self.max_comments:]
+                if comment_tuple.depth == 0
+            })
+            num_children_not_visible += sum(
+                1 + comment_tuple.num_children
+                for comment_tuple in comment_tuples[self.max_comments:]
+                if comment_tuple.depth == 0
+            )
+            comment_tuples = comment_tuples[:self.max_comments]
+
+        if top_level_not_visible:
+            comment_tuples.append(MissingChildrenTuple(
+                num_children=num_children_not_visible,
+                child_ids=top_level_not_visible,
+            ))
+
+        self.timer.intermediate("prune_precomputed")
 
         return comment_tuples
 
+    def _get_comment_order(self):
+        return CommentOrdererBase.get_comment_order(self)
+
+    def get_comment_order(self):
+        if self.link.num_comments <= 0:
+            return []
+
+        read_chance = g.live_config["precomputed_comment_sort_read_chance"]
+        read_enabled = read_chance > random()
+        if read_enabled and self.should_read_cache():
+            return self.read_cache()
+        else:
+            return self._get_comment_order()
+
 
 class QACommentOrderer(CommentOrderer):
-    def get_comment_order(self):
+    def _get_comment_order(self):
         """Filter out the comments we don't want to show in QA sort.
 
         QA sort only displays comments that are:
@@ -956,7 +1059,7 @@ class QACommentOrderer(CommentOrderer):
 
         """
 
-        comment_tuples = CommentOrderer.get_comment_order(self)
+        comment_tuples = CommentOrdererBase.get_comment_order(self)
         if not comment_tuples:
             return comment_tuples
         elif isinstance(comment_tuples[-1], MissingChildrenTuple):
@@ -1017,6 +1120,31 @@ class QACommentOrderer(CommentOrderer):
             comment_tuples.append(missing_children_tuple)
 
         return comment_tuples
+
+
+def write_comment_orders(link, timer):
+    precomputed_sorts = set()
+
+    # value of 0 means don't write for any value of link.num_comments
+    min_comments = g.live_config['precomputed_comment_sort_min_comments']
+    write_comment_order = min_comments and link.num_comments >= min_comments
+
+    if write_comment_order:
+        for sort_name in g.live_config['precomputed_comment_sorts']:
+            sort = SORT_OPERATOR_BY_NAME.get(sort_name)
+            if not sort:
+                continue
+
+            if sort_name == "qa":
+                QACommentOrderer.write_cache(link, sort, timer)
+            else:
+                CommentOrderer.write_cache(link, sort, timer)
+
+            precomputed_sorts.add(sort_name)
+
+    # replace empty set with None to match the Link._defaults value
+    link.precomputed_sorts = precomputed_sorts or None
+    link._commit()
 
 
 class PermalinkCommentOrderer(CommentOrdererBase):

@@ -36,6 +36,8 @@ MESSAGE_TREE_SIZE_LIMIT = 15000
 
 def add_comments(comments):
     """Add comments to the CommentTree and update scores."""
+    from r2.models.builder import write_comment_orders
+
     link_ids = [comment.link_id for comment in tup(comments)]
     links = Link._byID(link_ids, data=True)
 
@@ -98,6 +100,11 @@ def add_comments(comments):
                 link.update_search_index()
                 timer.intermediate('update_search_index')
                 g.stats.simple_event('comment_tree_inconsistent')
+
+            # do this under the same lock because we want to ensure we are using
+            # the same version of the CommentTree as was just written
+            write_comment_orders(link, timer)
+            timer.intermediate('write_order')
 
         timer.stop()
 

@@ -138,6 +138,7 @@ class Link(Thing, Printable):
                      mobile_ad_url="",
                      admin_takedown=False,
                      removed_link_child=None,
+                     precomputed_sorts=None,
                      )
     _essentials = ('sr_id', 'author_id')
     _nsfw = re.compile(r"\bnsf[wl]\b", re.I)
