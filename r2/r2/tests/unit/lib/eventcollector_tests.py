@@ -29,6 +29,7 @@ from mock import MagicMock, patch
 from r2.tests import RedditTestCase
 from r2.models import Link
 from r2.lib import eventcollector
+from r2.lib import hooks
 
 
 class TestEventCollector(RedditTestCase):
@@ -45,6 +46,8 @@ class TestEventCollector(RedditTestCase):
         self._datetime_to_millis = self.autopatch(
             eventcollector, "_datetime_to_millis",
             return_value=self.created_ts_mock)
+
+        self.autopatch(hooks, "get_hook")
 
     def test_vote_event(self):
         self.patch_liveconfig("events_collector_vote_sample_rate", 1.0)
@@ -108,6 +111,7 @@ class TestEventCollector(RedditTestCase):
         new_link = MagicMock(name="new_link")
         context = MagicMock(name="context")
         request = MagicMock(name="request")
+        request.ip = "1.2.3.4"
         g.events.submit_event(new_link, context=context, request=request)
 
         self.amqp.assert_event_item(
@@ -132,8 +136,10 @@ class TestEventCollector(RedditTestCase):
                     'referrer_url': request.headers.get(),
                     'user_agent': request.user_agent,
                     'obfuscated_data': {
-                        'client_ip': request.ip
-                    },
+                        'client_ip': request.ip,
+                        'client_ipv4_24': "1.2.3",
+                        'client_ipv4_16': "1.2",
+                    }
                 }
             )
         )
@@ -148,6 +154,7 @@ class TestEventCollector(RedditTestCase):
 
         context = MagicMock(name="context")
         request = MagicMock(name="request")
+        request.ip = "1.2.3.4"
         g.events.report_event(
             target=target, context=context, request=request
         )
@@ -177,6 +184,8 @@ class TestEventCollector(RedditTestCase):
                     'geoip_country': context.location,
                     'obfuscated_data': {
                         'client_ip': request.ip,
+                        'client_ipv4_24': "1.2.3",
+                        'client_ipv4_16': "1.2",
                     }
                 }
             }
@@ -189,6 +198,7 @@ class TestEventCollector(RedditTestCase):
         subreddit = MagicMock(name="subreddit")
         context = MagicMock(name="context")
         request = MagicMock(name="request")
+        request.ip = "1.2.3.4"
         g.events.mod_event(
             modaction, subreddit, mod, context=context, request=request
         )
@@ -211,6 +221,8 @@ class TestEventCollector(RedditTestCase):
                     'geoip_country': context.location,
                     'obfuscated_data': {
                         'client_ip': request.ip,
+                        'client_ipv4_24': "1.2.3",
+                        'client_ipv4_16': "1.2",
                     }
                 }
             }
@@ -222,6 +234,7 @@ class TestEventCollector(RedditTestCase):
         subreddit = MagicMock(name="subreddit")
         context = MagicMock(name="context")
         request = MagicMock(name="request")
+        request.ip = "1.2.3.4"
         g.events.quarantine_event(
             event_type, subreddit, context=context, request=request
         )
@@ -243,8 +256,10 @@ class TestEventCollector(RedditTestCase):
                     'oauth2_client_id': context.oauth2_client._id,
                     'geoip_country': context.location,
                     'obfuscated_data': {
-                        'client_ip': request.ip
-                    },
+                        'client_ip': request.ip,
+                        'client_ipv4_24': "1.2.3",
+                        'client_ipv4_16': "1.2",
+                    }
                 }
             }
         )

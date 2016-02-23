@@ -670,6 +670,11 @@ class Event(object):
         if isinstance(target, (Comment, Link)):
             self.add("target_created_ts", _datetime_to_millis(target._date))
 
+        hooks.get_hook("eventcollector.add_target_fields").call(
+            event=self,
+            target=target,
+        )
+
     def add_subreddit_fields(self, subreddit):
         if not subreddit:
             return
@@ -715,13 +720,28 @@ class Event(object):
             data["referrer_url"] = http_referrer
             data["referrer_domain"] = domain(http_referrer)
 
+        hooks.get_hook("eventcollector.context_data").call(
+            data=data,
+            user=context.user,
+            request=request,
+            context=context,
+        )
+
         return data
 
     @classmethod
     def get_sensitive_context_data(self, request, context):
         data = {}
-        if getattr(request, "ip", None):
-            data["client_ip"] = request.ip
+        ip = getattr(request, "ip", None)
+        if ip:
+            data["client_ip"] = ip
+            # since we obfuscate IP addresses in the DS pipeline, we can't
+            # extract the subnet for analysis after this step. So, pre-generate
+            # (and separately obfuscate) the subnets.
+            if "." in ip:
+                octets = ip.split(".")
+                data["client_ipv4_24"] = ".".join(octets[:3])
+                data["client_ipv4_16"] = ".".join(octets[:2])
 
         return data
 
