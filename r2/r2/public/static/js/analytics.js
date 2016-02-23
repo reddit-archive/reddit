@@ -361,6 +361,17 @@ r.analytics = {
       }
     }
 
+    var rank_by_link = {};
+    $('.linklisting .thing.link').each(function() {
+        var $thing = $(this);
+        var fullname = $thing.data('fullname');
+        var rank = parseInt($thing.data('rank')) || '';
+        rank_by_link[fullname] = rank;
+    });
+    if (!_.isEmpty(rank_by_link)) {
+        payload['rank_by_link'] = rank_by_link;
+    }
+
     // event collector
     r.events.track(eventTopic, eventType, payload).send();
   },
