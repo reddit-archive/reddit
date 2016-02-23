@@ -36,7 +36,11 @@ from uuid import uuid4
 from wsgiref.handlers import format_date_time
 
 from r2.lib import amqp, hooks
-from r2.lib.geoip import get_request_location
+from r2.lib.language import charset_summary
+from r2.lib.geoip import (
+    get_request_location,
+    location_by_ips,
+)
 from r2.lib.cache_poisoning import cache_headers_valid
 from r2.lib.utils import (
     domain,
@@ -154,13 +158,13 @@ class EventQueue(object):
 
         event.add("post_id", new_post._id)
         event.add("post_fullname", new_post._fullname)
-        event.add("post_title", new_post.title)
+        event.add_text("post_title", new_post.title)
 
         event.add("user_neutered", new_post.author_slow._spam)
 
         if new_post.is_self:
             event.add("post_type", "self")
-            event.add("post_body", new_post.selftext)
+            event.add_text("post_body", new_post.selftext)
         else:
             event.add("post_type", "link")
             event.add("post_target_url", new_post.url)
@@ -192,7 +196,7 @@ class EventQueue(object):
         event.add("comment_id", new_comment._id)
         event.add("comment_fullname", new_comment._fullname)
 
-        event.add("comment_body", new_comment.body)
+        event.add_text("comment_body", new_comment.body)
 
         post = Link._byID(new_comment.link_id)
         event.add("post_id", post._id)
@@ -544,7 +548,7 @@ class EventQueue(object):
         else:
             first_message = message
 
-        event = EventV2(
+        event = Event(
             topic="message_events",
             event_type="ss.send_message",
             time=message._date,
@@ -572,6 +576,10 @@ class EventQueue(object):
         event.add("message_id", message._id)
         event.add("message_kind", "modmail")
         event.add("message_fullname", message._fullname)
+
+        event.add_text("message_body", message.body)
+        event.add_text("message_subject", message.subject)
+
         event.add("first_message_id", first_message._id)
         event.add("first_message_fullname", first_message._fullname)
 
@@ -787,6 +795,11 @@ class Event(object):
         else:
             self.payload[field] = value
 
+    def add_text(self, key, value, obfuscate=False):
+        self.add(key, value, obfuscate=obfuscate)
+        for k, v in charset_summary(value).iteritems():
+            self.add("{}_{}".format(key, k), v)
+
     def add_target_fields(self, target):
         if not target:
             return
@@ -818,7 +831,7 @@ class Event(object):
 
         # Add info about the url being linked to for link posts
         if isinstance(target, Link):
-            self.add("target_title", target.title)
+            self.add_text("target_title", target.title)
             if not target.is_self:
                 self.add("target_url", target.url)
                 self.add("target_url_domain", target.link_domain())
@@ -951,7 +964,6 @@ class PublishableEvent(object):
         original = deserialized_data["payload"][self.truncatable_field]
         truncated = original[:-oversize_by]
         deserialized_data["payload"][self.truncatable_field] = truncated
-
         deserialized_data["payload"]["is_truncated"] = True
 
         self.data = json.dumps(deserialized_data)
