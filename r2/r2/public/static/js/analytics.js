@@ -81,6 +81,7 @@ r.analytics = {
 
     r.analytics.firePageTrackingPixel(r.analytics.stripAnalyticsParams);
 
+    r.hooks.get('analytics').call();
   },
 
   _eventPredicates: {},
@@ -507,6 +508,12 @@ r.analytics = {
       payload['sr_id'] = r.utils.fullnameToId(targetData.subredditFullname);
     }
 
+    r.events.track(eventTopic, eventType, payload).send();
+  },
+
+  sendEvent: function(eventTopic, actionName, defaultFields, customFields) {
+    var eventType = 'cs.' + actionName;
+    var payload = this.addContextData(defaultFields, customFields);
     r.events.track(eventTopic, eventType, payload).send();
   },
 };
