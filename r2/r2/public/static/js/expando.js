@@ -156,6 +156,17 @@
         this.$expando.html(this.cachedHTML);
       }
 
+      if (!this._expandoEventData.provider) {
+        // this needs to be deferred until the actual embed markup is available.
+        var $media = this.$expando.children();
+
+        if ($media.is('iframe')) {
+          this._expandoEventData.provider = 'embedly';
+        } else {
+          this._expandoEventData.provider = 'reddit';
+        }
+      }
+
       this.showExpandoContent();
       this.fireExpandEvent();
     },

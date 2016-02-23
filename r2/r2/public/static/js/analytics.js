@@ -470,13 +470,10 @@ r.analytics = {
     if ('linkType' in targetData) {
       payload['target_type'] = targetData.linkType;
       
-      if (targetData.linkType === 'self' ||
-          targetData.linkDomain === r.config.cur_domain) {
-        // self posts and reddit live embeds
-        payload['provider'] = 'reddit';
-      } else {
-        payload['provider'] = 'embedly';
-      }
+    }
+
+    if ('provider' in targetData) {
+      payload['provider'] = targetData.provider;
     }
 
     if ('linkFullname' in targetData) {
