@@ -4,6 +4,16 @@
   var SYNC_EVENT_KEY = '__synced_session_storage__';
   var PERSIST_SYNCED_KEYS_KEY = '__synced_session_storage_keys__';
 
+  var isStorageSupported = true;
+  try {
+    sessionStorage.setItem(
+      PERSIST_SYNCED_KEYS_KEY,
+      sessionStorage.getItem(PERSIST_SYNCED_KEYS_KEY) || ''
+    )
+  } catch (err) {
+    isStorageSupported = false;
+  }
+
   /*
     SessionStorage is too restrictive; each new tab in sessionStorage is
     considered a separate session.  LocalStorage never expires; manually
@@ -14,6 +24,17 @@
     LocalStorage events for syncing data across multiple open tabs.
    */
   function SyncedSessionStorage(sync_key) {
+    this._bootstrapped = false;
+    this._synced_storage_keys = {};
+
+    // We want the API to match localStorage/sessionStorage, so the
+    // public methods intentionally don't catch errors, but we *should* catch
+    // potential errors during instantiation so we can at least be sure
+    // r.syncedSessionStorage exists.
+    if (!this.isSupported) {
+      return this;
+    }
+
     var persisted_synced_keys = sessionStorage.getItem(PERSIST_SYNCED_KEYS_KEY);
 
     if (persisted_synced_keys) {
@@ -24,11 +45,11 @@
       // send a request to bootstrap from existing sessions if there are any
       // any existing sessions will send back a 'bootstrap' event containing
       // the bootstrap data
-      this._bootstrapped = false;    
-      this._synced_storage_keys = {};
-      this._sync({
-        type: 'init',
-      });
+      if (isStorageSupported) {
+        this._sync({
+          type: 'init',
+        });
+      }
     }
 
     window.addEventListener('storage', function(e) {
@@ -42,6 +63,8 @@
 
   SyncedSessionStorage.prototype = {
     constructor: SyncedSessionStorage,
+
+    isSupported: isStorageSupported,
 
     getItem: function(key) {
       if (key in this._synced_storage_keys) {
