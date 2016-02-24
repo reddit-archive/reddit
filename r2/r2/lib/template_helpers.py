@@ -253,7 +253,7 @@ def js_config(extra_config=None):
         "feature_screenview_events": feature.is_enabled('screenview_events'),
         "static_root": static(''),
         "over_18": bool(c.over18),
-        "new_window": bool(c.user.pref_newwindow),
+        "new_window": logged and bool(c.user.pref_newwindow),
         "mweb_blacklist_expressions": g.live_config['mweb_blacklist_expressions'],
         "gold": gold,
         "has_subscribed": logged and c.user.has_subscribed,
