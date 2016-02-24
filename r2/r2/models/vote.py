@@ -473,7 +473,7 @@ class VoteDetailsByComment(VoteDetailsByThing):
 
 class VoterIPByThing(tdb_cassandra.View):
     _use_db = True
-    _ttl = timedelta(days=90)
+    _ttl = timedelta(days=100)
     _fetch_all_columns = True
     _extra_schema_creation_args = dict(key_validation_class=ASCII_TYPE,
                                        default_validation_class=UTF8_TYPE)
@@ -487,7 +487,7 @@ class VoteNote(tdb_cassandra.View):
     _use_db = True
     _connection_pool = 'main'
     _compare_with = TIME_UUID_TYPE
-    _ttl = timedelta(days=90)
+    _ttl = timedelta(days=100)
 
     @classmethod
     def _rowkey(cls, vote):

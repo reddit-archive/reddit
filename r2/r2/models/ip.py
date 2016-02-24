@@ -13,7 +13,7 @@ __all__ = ["IPsByAccount", "AccountsByIP"]
 CONNECTION_POOL = g.cassandra_pools['main']
 
 
-CF_TTL = datetime.timedelta(days=90).total_seconds()
+CF_TTL = datetime.timedelta(days=100).total_seconds()
 
 
 class IPsByAccount(tdb_cassandra.View):
