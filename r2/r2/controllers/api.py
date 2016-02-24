@@ -722,7 +722,14 @@ class ApiController(RedditController):
             _event(error='SPONSOR_NO_EMAIL')
 
         else:
-            user = register(name, password, request.ip)
+            try:
+                user = register(name, password, request.ip)
+            except AccountExists:
+                c.errors.add(errors.USERNAME_TAKEN, field="user")
+                form.has_errors("user", errors.USERNAME_TAKEN)
+                _event(error='USERNAME_TAKEN')
+                return
+
             VRatelimit.ratelimit(rate_ip = True, prefix = "rate_register_")
 
             #anything else we know (email, languages)?
