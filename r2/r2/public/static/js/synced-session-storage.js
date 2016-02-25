@@ -54,8 +54,8 @@
 
     $(window).on('storage', function(e) {
       // the localStorage.removeItem will come in with a null newValue
-      if (e.key === SYNC_EVENT_KEY && e.newValue) {
-        var event = JSON.parse(e.newValue);
+      if (e.originalEvent.key === SYNC_EVENT_KEY && e.originalEvent.newValue) {
+        var event = JSON.parse(e.originalEvent.newValue);
         this._handleSync(event);
       }
     }.bind(this));
