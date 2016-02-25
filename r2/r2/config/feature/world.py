@@ -72,10 +72,10 @@ class World(object):
         return getattr(client, '_id', None)
 
     def current_loid(self):
-        cookies = self.stacked_proxy_safe_get(request, 'cookies')
-        if not cookies:
+        loid = self.stacked_proxy_safe_get(c, 'loid')
+        if not loid:
             return None
-        return cookies.get("loid", None)
+        return loid.loid
 
     def is_admin(self, user):
         if not user or not hasattr(user, 'name'):

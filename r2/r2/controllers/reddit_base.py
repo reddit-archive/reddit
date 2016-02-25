@@ -73,6 +73,7 @@ from r2.lib.errors import (
     reddit_http_error,
 )
 from r2.lib.filters import _force_utf8, _force_unicode, scriptsafe_dumps
+from r2.lib.loid import LoId
 from r2.lib.require import RequirementException, require, require_split
 from r2.lib.strings import strings
 from r2.lib.template_helpers import add_sr, JSPreload
@@ -471,6 +472,7 @@ def set_content_type():
     e = request.environ
     c.render_style = e['render_style']
     response.content_type = e['content_type']
+    c.loid = LoId.load(request)
 
     if e.has_key('extension'):
         c.extension = ext = e['extension']
@@ -509,7 +511,7 @@ def set_content_type():
             if request.GET.get("keep_extension"):
                 c.cookies['reddit_mobility'] = Cookie(ext, expires=NEVER)
     # allow JSONP requests to generate callbacks, but do not allow
-    # the user to be logged in for these 
+    # the user to be logged in for these
     callback = request.GET.get("jsonp")
     if is_api() and request.method.upper() == "GET" and callback:
         if not valid_jsonp_callback(callback):
@@ -1149,6 +1151,10 @@ class MinimalController(BaseController):
         if c.ratelimit_headers:
             response.headers.update(c.ratelimit_headers)
 
+        # write loid cookie if necessary
+        if c.loid:
+            c.loid.save(c, domain=g.domain)
+
         # send cookies
         secure_cookies = feature.is_enabled("force_https")
         for k, v in c.cookies.iteritems():
@@ -1160,6 +1166,7 @@ class MinimalController(BaseController):
                                     expires=v.expires,
                                     secure=v_secure,
                                     httponly=getattr(v, 'httponly', False))
+
 
         if self.should_update_last_visit():
             c.user.update_last_visit(c.start_time)
@@ -1426,7 +1433,7 @@ class RedditController(OAuth2ResourceController):
 
         delete_obsolete_cookies()
 
-        # the user could have been logged in via one of the feeds 
+        # the user could have been logged in via one of the feeds
         maybe_admin = False
         is_otpcookie_valid = False
 
