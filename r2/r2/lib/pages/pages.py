@@ -1116,7 +1116,6 @@ class RedditFooter(CachedTemplate):
 
             NavMenu([
                     NamedButton("gold", False, dest="/gold/about", css_class="buygold"),
-                    OffsiteButton(_("reddit store"), "http://redditmarket.com"),
                     OffsiteButton(_("redditgifts"), "//redditgifts.com"),
                 ],
                 title = _("<3"),
