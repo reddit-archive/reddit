@@ -161,7 +161,7 @@ sudo -u $REDDIT_USER make clean all
 # so that the proper language-specific static files can be generated and after
 # plugins are installed so all the static files are available.
 cd $REDDIT_SRC/reddit/r2
-sudo -u $REDDIT_USER make clean all
+sudo -u $REDDIT_USER make clean pyx
 
 plugin_str=$(echo -n "$REDDIT_PLUGINS" | tr " " ,)
 if [ ! -f development.update ]; then
