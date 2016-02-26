@@ -472,7 +472,6 @@ def set_content_type():
     e = request.environ
     c.render_style = e['render_style']
     response.content_type = e['content_type']
-    c.loid = LoId.load(request)
 
     if e.has_key('extension'):
         c.extension = ext = e['extension']
@@ -510,6 +509,11 @@ def set_content_type():
         if ext in ("mobile", "m", "compact"):
             if request.GET.get("keep_extension"):
                 c.cookies['reddit_mobility'] = Cookie(ext, expires=NEVER)
+
+    # allow content and api calls to set an loid
+    if is_api() or c.render_style in ("html", "mobile", "compact"):
+        c.loid = LoId.load(request)
+
     # allow JSONP requests to generate callbacks, but do not allow
     # the user to be logged in for these
     callback = request.GET.get("jsonp")
