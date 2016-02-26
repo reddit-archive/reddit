@@ -20,14 +20,18 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 <%!
+    from pylons import app_globals as g
+    from datetime import datetime
     from r2.lib.template_helpers import add_sr, header_url
     from r2.lib.template_helpers import static
+    from r2.lib.template_helpers import html_datetime
     from r2.lib.utils import UrlParser
     # atom rfc: https://tools.ietf.org/html/rfc4287
 %>
 <?xml version="1.0" encoding="UTF-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
     ${self.Category()}
+    ${self.Updated()}
 
     %if c.can_apply_styles and not c.css_killswitch:
         ${self.Icon()}
@@ -52,6 +56,10 @@
 
 <%def name="Category()">
     <category term="${c.site.name}" label="/r/${c.site.name}"/>
+</%def>
+
+<%def name="Updated()">
+    <updated>${html_datetime(datetime.now(g.tz))}</updated>
 </%def>
 
 <%def name="Title()">
