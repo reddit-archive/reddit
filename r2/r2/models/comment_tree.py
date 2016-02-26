@@ -269,7 +269,7 @@ class CommentTree:
         ]
 
         # build tree from scratch (for V2 results in double-counting in cass)
-        tree = cls(link, cids=[], tree={}, depth={}, parents={})
+        tree = cls(link, cids=[], tree={}, depth={}, parents={}, num_children={})
         impl = cls.IMPLEMENTATIONS[link.comment_tree_version]
         impl.rebuild(tree, comments)
 
