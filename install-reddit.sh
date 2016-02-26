@@ -22,6 +22,11 @@
 ###############################################################################
 set -e
 
+if [[ $EUID -ne 0 ]]; then
+    echo "ERROR: Must be run with root privileges."
+    exit 1
+fi
+
 # load configuration
 RUNDIR=$(dirname $0)
 SCRIPTDIR="$RUNDIR/install"
@@ -95,6 +100,6 @@ important "but the easiest thing is probably editing /etc/hosts on the host mach
 echo
 read -er -n1 -p "proceed? [Y/n]" response
 if [[ $response =~ ^[Yy]$ || $response == "" ]]; then
-    echo "Excellent. Here we go.  We're going to need sudo for this one:"
-    sudo $SCRIPTDIR/reddit.sh
+    echo "Excellent. Here we go!"
+    $SCRIPTDIR/reddit.sh
 fi
