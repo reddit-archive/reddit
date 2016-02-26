@@ -29,7 +29,6 @@ SCRIPTDIR="$RUNDIR/install"
 # the canonical source of all installers
 GITREPO="https://raw.github.com/reddit/reddit/master/install"
 NEEDED=(
-    "install.cfg"
     "done.sh"
     "install_apt.sh"
     "install_cassandra.sh"
@@ -49,6 +48,11 @@ for item in ${NEEDED[*]}; do
         break
     fi
 done
+
+if [ ! -e $SCRIPTDIR/install.cfg ]; then
+    MISSING="1"
+fi
+
 
 function important() {
     echo -e "\033[31m${1}\033[0m"
