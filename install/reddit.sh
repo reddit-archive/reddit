@@ -142,9 +142,10 @@ $RUNDIR/setup_rabbitmq.sh
 # Install and configure the reddit code
 ###############################################################################
 function install_reddit_repo {
-    cd $REDDIT_SRC/$1
+    pushd $REDDIT_SRC/$1
     sudo -u $REDDIT_USER python setup.py build
     python setup.py develop --no-deps
+    popd
 }
 
 install_reddit_repo reddit/r2
@@ -154,13 +155,12 @@ for plugin in $REDDIT_PLUGINS; do
 done
 
 # generate binary translation files from source
-cd $REDDIT_SRC/i18n/
-sudo -u $REDDIT_USER make clean all
+sudo -u $REDDIT_USER make -C $REDDIT_SRC/i18n clean all
 
 # this builds static files and should be run *after* languages are installed
 # so that the proper language-specific static files can be generated and after
 # plugins are installed so all the static files are available.
-cd $REDDIT_SRC/reddit/r2
+pushd $REDDIT_SRC/reddit/r2
 sudo -u $REDDIT_USER make clean pyx
 
 plugin_str=$(echo -n "$REDDIT_PLUGINS" | tr " " ,)
@@ -206,6 +206,8 @@ sudo -u $REDDIT_USER make ini
 if [ ! -L run.ini ]; then
     sudo -u $REDDIT_USER ln -nsf development.ini run.ini
 fi
+
+popd
 
 ###############################################################################
 # some useful helper scripts
@@ -641,3 +643,7 @@ PGPASSWORD=password
 #0    0 * * * root /sbin/start --quiet reddit-job-update_gold_users
 CRON
 fi
+
+# print this out here. if vagrant's involved, it's gonna do more steps
+# afterwards and then re-run this script but that's ok.
+$RUNDIR/done.sh
