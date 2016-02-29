@@ -78,7 +78,7 @@ class LoId(object):
             ):
                 d = cookie_attrs.copy()
                 d.setdefault("expires", expires)
-                context.cookies.add(name, quote(value), **d)
+                context.cookies.add(name, value, **d)
 
     def to_dict(self, prefix=None):
         """Serialize LoId, generally for use in the event pipeline."""
