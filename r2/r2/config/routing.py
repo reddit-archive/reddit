@@ -128,7 +128,7 @@ def make_map(config):
        dest='/contact')
     mc('/contact', controller='front', action='contact_us')
     mc('/jobs', controller='redirect', action='redirect',
-       dest='https://jobs.lever.co/reddit')
+       dest='https://boards.greenhouse.io/reddit')
 
     mc('/admin/awards', controller='awards')
     mc('/admin/awards/:awardcn/:action', controller='awards',
