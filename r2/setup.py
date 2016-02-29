@@ -43,6 +43,8 @@ else:
     pyx_extensions = cythonize(pyx_files)
 
 
+# guard against import errors in case this is the first run of setup.py and we
+# don't have any dependencies (including baseplate) yet
 try:
     from baseplate.integration.thrift.command import ThriftBuildPyCommand
 except ImportError:
