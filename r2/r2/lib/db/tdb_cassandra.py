@@ -1076,7 +1076,14 @@ class ColumnQuery(object):
                 try:
                     del columns[column_start]
                 except KeyError:
-                    columns.popitem(last=True)  # remove extra column
+                    # Backup solution: delete the head or tail item, depending
+                    # on whether or not we're reversing.
+                    #
+                    # This can happen when a timezone-aware datetime is
+                    # passed in as a column_start, but non-timezone-aware
+                    # datetimes are returned from cassandra, causing `del` to
+                    # fail.
+                    columns.popitem(last=self.column_reversed)
 
             if not columns:
                 return
