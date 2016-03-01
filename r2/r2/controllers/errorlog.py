@@ -20,17 +20,16 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from pylons import request
-from pylons import app_globals as g
 from reddit_base import RedditController
-from r2.lib.pages import AdminPage, AdminErrorLog
-from r2.lib.validator import validate, VAdmin
+from r2.lib.pages import Reddit, AdminErrorLog
+from r2.lib.validator import validate, VEmployee
 
 class ErrorlogController(RedditController):
-    @validate(VAdmin())
+    @validate(VEmployee())
     def GET_index(self):
-        res = AdminPage(content = AdminErrorLog(),
-                        title = 'error log',
-                        show_sidebar = False
-                        ).render()
+        res = Reddit(
+            content=AdminErrorLog(),
+            title='error log',
+            show_sidebar=False,
+        ).render()
         return res
