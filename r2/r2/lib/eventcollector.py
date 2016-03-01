@@ -651,7 +651,9 @@ class EventQueue(object):
         if user is not None:
             event.add('user_id', user._id)
             event.add('user_name', user.name)
-        event.add('loid', loid)
+        if loid:
+            for k, v in loid.to_dict().iteritems():
+                event.add(k, v)
         self.save_event(event)
 
 

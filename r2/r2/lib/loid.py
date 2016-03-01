@@ -22,6 +22,20 @@ def utcnow_isodate():
     return d.strftime("%Y-%m-%dT%H:%M:%S.") + milliseconds + "Z"
 
 
+def ensure_unquoted(cookie_str):
+    # Some of the cookies issued in the first version of this patch ended up
+    # doubly quote()d.  As a preventative measure, unquote several times.
+    # [This could be a while loop, because every iteration will cause the str
+    # to at worst get shorter and at best stay the same and break the loop.  I
+    # just don't want to replace an escaping error with a possible infinite
+    # loop.]
+    for _ in range(3):
+        new_str = unquote(cookie_str)
+        if new_str == cookie_str:
+            return new_str
+        cookie_str = new_str
+
+
 class LoId(object):
     """Container for holding and validating logged out ids."""
 
@@ -48,7 +62,7 @@ class LoId(object):
         elif loid:
             louser = cls()
             louser.loid = unquote(loid)
-            louser.created = unquote(
+            louser.created = ensure_unquoted(
                 request.cookies.get(LOID_CREATED_COOKIE, ""))
             return louser
         else:

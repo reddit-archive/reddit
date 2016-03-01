@@ -24,7 +24,7 @@ class LoidTests(RedditTestCase):
             ),
             call(
                 LOID_CREATED_COOKIE,
-                quote(loid.created),
+                loid.created,
                 expires=ANY,
             )
         ])

@@ -320,7 +320,7 @@ class FeatureState(object):
                         experiment_name=self.name,
                         variant=variant,
                         user=user,
-                        loid=loid,
+                        loid=self.world.current_loid_obj(),
                     )
                     key = (self.name, bucketing_id)
                     c.have_sent_bucketing_event[key] = True

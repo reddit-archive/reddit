@@ -71,8 +71,11 @@ class World(object):
         client = self.stacked_proxy_safe_get(c, 'oauth2_client', None)
         return getattr(client, '_id', None)
 
+    def current_loid_obj(self):
+        return self.stacked_proxy_safe_get(c, 'loid')
+
     def current_loid(self):
-        loid = self.stacked_proxy_safe_get(c, 'loid')
+        loid = self.current_loid_obj()
         if not loid:
             return None
         return loid.loid
