@@ -33,8 +33,12 @@ class IPsByAccount(tdb_cassandra.View):
         cls._set_values(str(account_id), {date: ip})
 
     @classmethod
-    def get(cls, account_id,
-            column_start="", column_finish="", column_count=100):
+    def get(cls,
+            account_id,
+            column_start="",
+            column_finish="",
+            column_count=100,
+            column_reversed=True):
         """Get the last accessed times of an account by IP address.
 
         Returns a list of dicts of the last accessed times of an account by
@@ -63,7 +67,7 @@ class IPsByAccount(tdb_cassandra.View):
             column_start=column_start,
             column_finish=column_finish,
             column_count=column_count,
-            column_reversed=True)
+            column_reversed=column_reversed)
         for date_ip in query:
             for dt, ip in date_ip.iteritems():
                 results.append({dt.replace(tzinfo=pytz.utc): ip})
@@ -87,7 +91,12 @@ class AccountsByIP(tdb_cassandra.View):
         cls._set_values(ip, {date: str(account_id)})
 
     @classmethod
-    def get(cls, ip, column_start="", column_finish="", column_count=100):
+    def get(cls,
+            ip,
+            column_start="",
+            column_finish="",
+            column_count=100,
+            column_reversed=True):
         """Get the times an IP address has accessed various account IDs.
 
         Returns a list of dicts of the times an IP address has accessed
@@ -110,7 +119,7 @@ class AccountsByIP(tdb_cassandra.View):
             column_start=column_start,
             column_finish=column_finish,
             column_count=column_count,
-            column_reversed=True)
+            column_reversed=column_reversed)
         for date_account in query:
             for dt, account in date_account.iteritems():
                 results.append({dt.replace(tzinfo=pytz.utc): int(account)})
