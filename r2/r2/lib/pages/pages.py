@@ -168,13 +168,7 @@ from itertools import chain, product
 from urllib import quote, urlencode
 from urlparse import urlparse
 
-# the ip tracking code is currently deeply tied with spam prevention stuff
-# this will be open sourced as soon as it can be decoupled
-if config['r2.import_private']:
-    from r2admin.lib.ip_events import ips_by_account_id
-else:
-    def ips_by_account_id(account_id):
-        return []
+from r2.lib.ip_events import ips_by_account_id
 
 from things import wrap_links, wrap_things, default_thing_wrapper
 
