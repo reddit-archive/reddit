@@ -86,6 +86,7 @@ setup(
         "pylibmc==1.2.2",
         "webob",
         "webtest",
+        "python-snappy",
     ],
     # setup tests (allowing for "python setup.py test")
     tests_require=['mock', 'nose', 'coverage'],

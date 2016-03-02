@@ -83,6 +83,7 @@ python-pycaptcha
 python-pylibmc=1.2.2-1~trusty5
 python-amqplib
 python-bcrypt
+python-snappy
 python-snudown
 python-l2cs
 python-lxml
