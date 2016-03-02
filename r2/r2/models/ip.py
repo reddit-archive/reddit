@@ -35,8 +35,8 @@ class IPsByAccount(tdb_cassandra.View):
     @classmethod
     def get(cls,
             account_id,
-            column_start="",
-            column_finish="",
+            column_start=None,
+            column_finish=None,
             column_count=100,
             column_reversed=True):
         """Get the last accessed times of an account by IP address.
@@ -61,6 +61,8 @@ class IPsByAccount(tdb_cassandra.View):
                 {datetime.datetime(2016, 1, 24, 6, 21, 50, 121000, tzinfo=<UTC>): '127.0.0.1'},
             ]
         """
+        column_start = column_start or ""
+        column_finish = column_finish or ""
         results = []
         query = tdb_cassandra.ColumnQuery(
             cls, (str(account_id),),
@@ -93,8 +95,8 @@ class AccountsByIP(tdb_cassandra.View):
     @classmethod
     def get(cls,
             ip,
-            column_start="",
-            column_finish="",
+            column_start=None,
+            column_finish=None,
             column_count=100,
             column_reversed=True):
         """Get the times an IP address has accessed various account IDs.
@@ -113,6 +115,8 @@ class AccountsByIP(tdb_cassandra.View):
         Pagination is also supported.  See the documentation for
         ``IPsByAccount.get``.
         """
+        column_start = column_start or ""
+        column_finish = column_finish or ""
         results = []
         query = tdb_cassandra.ColumnQuery(
             cls, (ip,),
