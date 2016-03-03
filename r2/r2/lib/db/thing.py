@@ -733,11 +733,13 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
         # immediately. It calls _byID(xxx, data=thing_data).
         @classmethod
         def _byID_rel(cls, ids, data=False, return_dict=True,
-                      eager_load=False, thing_data=False, thing_stale=False):
+                      eager_load=False, thing_data=False, thing_stale=False,
+                      ignore_missing=False):
 
             ids, single = tup(ids, True)
 
-            bases = cls._byID(ids, data=data, return_dict=True)
+            bases = cls._byID(
+                ids, data=data, return_dict=True, ignore_missing=ignore_missing)
 
             values = bases.values()
 
