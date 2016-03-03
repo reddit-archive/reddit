@@ -29,7 +29,7 @@ from pylons.i18n import _
 from r2.controllers.reddit_base import MinimalController
 from r2.lib import embeds
 from r2.lib.base import abort
-from r2.lib.errors import ForbiddenError
+from r2.lib.errors import errors, ForbiddenError
 from r2.lib.filters import scriptsafe_dumps, websafe, _force_unicode
 from r2.lib.utils import url_to_thing
 from r2.lib.template_helpers import format_html, make_url_https
@@ -59,7 +59,7 @@ def _oembed_comment(thing, **embed_options):
     link = thing.link_slow
 
     if not can_view_link_comments(link):
-        raise ForbiddenError("Cannot access this comment.")
+        raise ForbiddenError(errors.COMMENT_NOT_ACCESSIBLE)
 
     if not thing._deleted:
         author = thing.author_slow
