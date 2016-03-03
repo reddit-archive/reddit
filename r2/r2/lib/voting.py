@@ -111,7 +111,7 @@ def consume_vote_queue(queue):
                 )
             except TypeError as e:
                 # a vote on an invalid type got in the queue, just skip it
-                g.log.error(e.message)
+                g.log.exception("Invalid type: %r", e.message)
                 return
 
             timer.intermediate("create_vote_obj")
