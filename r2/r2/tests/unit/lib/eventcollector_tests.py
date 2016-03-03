@@ -138,6 +138,10 @@ class TestEventCollector(RedditTestCase):
                     'referrer_domain': self.domain_mock(),
                     'referrer_url': request.headers.get(),
                     'user_agent': request.user_agent,
+                    'user_agent_parsed': {
+                        'platform_version': None,
+                        'platform_name': None,
+                    },
                     'obfuscated_data': {
                         'client_ip': request.ip,
                         'client_ipv4_24': "1.2.3",
@@ -179,6 +183,10 @@ class TestEventCollector(RedditTestCase):
                     'target_created_ts': self.created_ts_mock,
                     'domain': request.host,
                     'user_agent': request.user_agent,
+                    'user_agent_parsed': {
+                        'platform_version': None,
+                        'platform_name': None,
+                    },
                     'referrer_url': request.headers.get(),
                     'user_id': context.user._id,
                     'user_name': context.user.name,
@@ -217,6 +225,10 @@ class TestEventCollector(RedditTestCase):
                     'sr_name': subreddit.name,
                     'domain': request.host,
                     'user_agent': request.user_agent,
+                    'user_agent_parsed': {
+                        'platform_version': None,
+                        'platform_name': None,
+                    },
                     'referrer_url': request.headers.get(),
                     'user_id': context.user._id,
                     'user_name': context.user.name,
@@ -258,6 +270,10 @@ class TestEventCollector(RedditTestCase):
                     'sr_name': subreddit.name,
                     'referrer_url': request.headers.get(),
                     'user_agent': request.user_agent,
+                    'user_agent_parsed': {
+                        'platform_version': None,
+                        'platform_name': None,
+                    },
                     'sr_id': subreddit._id,
                     'user_name': context.user.name,
                     'oauth2_client_id': context.oauth2_client._id,

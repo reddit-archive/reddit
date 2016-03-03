@@ -31,6 +31,7 @@ import random
 import requests
 import time
 
+import httpagentparser
 from pylons import app_globals as g
 from uuid import uuid4
 from wsgiref.handlers import format_date_time
@@ -65,6 +66,22 @@ def _epoch_to_millis(timestamp):
 def _datetime_to_millis(dt):
     """Convert a standard datetime to epoch milliseconds."""
     return _epoch_to_millis(epoch_timestamp(dt))
+
+
+def parse_agent(ua):
+    agent_summary = {}
+    parsed = httpagentparser.detect(ua)
+    for attr in ("browser", "os", "platform"):
+        d = parsed.get(attr)
+        if d:
+            for subattr in ("name", "version"):
+                if subattr in d:
+                    key = "%s_%s" % (attr, subattr)
+                    agent_summary[key] = d[subattr]
+
+    agent_summary['bot'] = parsed.get('bot')
+
+    return agent_summary
 
 
 class EventQueue(object):
@@ -891,6 +908,7 @@ class Event(object):
         data["geoip_country"] = get_request_location(request, context)
         data["domain"] = request.host
         data["user_agent"] = request.user_agent
+        data["user_agent_parsed"] = parse_agent(request.user_agent)
 
         http_referrer = request.headers.get("Referer", None)
         if http_referrer:
