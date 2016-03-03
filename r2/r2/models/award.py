@@ -170,7 +170,7 @@ class Trophy(Relation(Account, Award)):
     def by_account(cls, account, _update=False):
         rel_ids = cls.by_account_cache(account._id, _update=_update)
         trophies = Trophy._byID_rel(rel_ids, data=True, eager_load=True,
-                                    thing_data=True, return_dict = False)
+            thing_data=True, return_dict=False, ignore_missing=True)
         return trophies
 
     @classmethod
