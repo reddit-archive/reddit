@@ -68,8 +68,8 @@ hostname = "reddit.local"
 
 Vagrant.configure(2) do |config|
   config.vm.box = "trusty-cloud-image"
-  config.vm.box_url = "https://cloud-images.ubuntu.com/vagrant/trusty/20160122/trusty-server-cloudimg-amd64-vagrant-disk1.box"
-  config.vm.box_download_checksum = "09b0b9b382b918a4172e4eb77b0ad869dc5fd21cf119c935eabc202b44c1b8d7"
+  config.vm.box_url = "https://cloud-images.ubuntu.com/vagrant/trusty/20160303/trusty-server-cloudimg-amd64-vagrant-disk1.box"
+  config.vm.box_download_checksum = "426f479f529d652fccd0dc7b07135b5e94d95c9237078f443f9f45d18f877608"
   config.vm.box_download_checksum_type = "sha256"
 
   # mount the host shared folder
