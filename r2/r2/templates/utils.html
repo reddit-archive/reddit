@@ -427,7 +427,7 @@ ${unsafe(txt)}
 
 <%def name="js_setup(extra_config=None)">
   <script type="text/javascript" id="config">
-    r.setup(${unsafe(json.dumps(js_config(extra_config)))})
+    r.setup(${scriptsafe_dumps(js_config(extra_config))})
   </script>
 </%def>
 
