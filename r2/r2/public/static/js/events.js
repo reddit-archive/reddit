@@ -44,6 +44,8 @@
     send: function(done) {
       if (tracker) {
         tracker.send(done);
+      } else if (typeof done === 'function') {
+        done();
       }
       return this;
     }

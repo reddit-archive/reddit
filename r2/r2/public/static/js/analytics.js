@@ -508,10 +508,10 @@ r.analytics = {
     r.events.track(eventTopic, eventType, payload).send();
   },
 
-  sendEvent: function(eventTopic, actionName, defaultFields, customFields) {
+  sendEvent: function(eventTopic, actionName, defaultFields, customFields, done) {
     var eventType = 'cs.' + actionName;
     var payload = this.addContextData(defaultFields, customFields);
-    r.events.track(eventTopic, eventType, payload).send();
+    r.events.track(eventTopic, eventType, payload).send(done);
   },
 };
 
