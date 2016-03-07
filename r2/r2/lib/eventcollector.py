@@ -779,6 +779,8 @@ class Event(object):
         oauth2_client = getattr(context, "oauth2_client", None)
         if oauth2_client:
             data["oauth2_client_id"] = oauth2_client._id
+            data["oauth2_client_name"] = oauth2_client.name
+            data["oauth2_client_app_type"] = oauth2_client.app_type
 
         data["geoip_country"] = get_request_location(request, context)
         data["domain"] = request.host
