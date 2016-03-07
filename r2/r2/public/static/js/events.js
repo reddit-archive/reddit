@@ -7,6 +7,7 @@
       url: eventInfo.url + '?' + jQuery.param(eventInfo.query),
       data: eventInfo.data,
       contentType: 'text/plain',
+      complete: eventInfo.done,
     });
   }
 
