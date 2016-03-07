@@ -23,13 +23,17 @@
 
 import unittest
 
+from mock import patch
+
 from r2.lib.media import _get_scrape_url
 from r2.models import Link
 
-
 class TestGetScrapeUrl(unittest.TestCase):
-    def test_link_post(self):
-        post = Link(url='https://example.com')
+    @patch('r2.lib.media.Link')
+    def test_link_post(self, Link):
+        post = Link()
+        post.url = 'https://example.com'
+        post.is_self = False
         url = _get_scrape_url(post)
         self.assertEqual(url, 'https://example.com')
 
