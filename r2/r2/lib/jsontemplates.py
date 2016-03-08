@@ -1440,9 +1440,9 @@ class SubredditSettingsTemplate(ThingJsonTemplate):
     def thing_attr(self, thing, attr):
         if attr.startswith('site.') and thing.site:
             return getattr(thing.site, attr[5:])
-        if attr == 'related_subreddits':
+        if attr == 'related_subreddits' and thing.site:
             # string used for form input
-            return '\n'.join(thing.related_subreddits)
+            return '\n'.join(thing.site.related_subreddits)
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
     def raw_data(self, thing):
