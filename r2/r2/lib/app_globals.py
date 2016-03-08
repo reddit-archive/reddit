@@ -208,6 +208,7 @@ class Globals(object):
             'RL_OAUTH_RESET_MINUTES',
             'comment_karma_display_floor',
             'link_karma_display_floor',
+            'mobile_auth_gild_time',
         ],
 
         ConfigValue.float: [
@@ -334,6 +335,7 @@ class Globals(object):
     live_config_spec = {
         ConfigValue.bool: [
             'frontend_logging',
+            'mobile_gild_first_login',
         ],
         ConfigValue.int: [
             'captcha_exempt_comment_karma',

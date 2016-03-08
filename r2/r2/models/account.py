@@ -154,6 +154,7 @@ class Account(Thing):
                      admin_takedown_strikes=0,
                      pref_threaded_modmail=False,
                      in_timeout=False,
+                     has_used_mobile_app=False,
                      )
     _preference_attrs = tuple(k for k in _defaults.keys()
                               if k.startswith("pref_"))

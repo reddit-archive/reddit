@@ -20,6 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+from datetime import datetime
 from urllib import urlencode
 import base64
 import simplejson
@@ -35,7 +36,8 @@ from reddit_base import RedditController, MinimalController, require_https
 from r2.lib.db import tdb_cassandra
 from r2.lib.db.thing import NotFound
 from r2.lib.pages import RedditError
-from r2.models import Account
+from r2.lib.strings import strings
+from r2.models import Account, admintools, create_gift_gold, send_system_message
 from r2.models.token import (
     OAuth2Client, OAuth2AuthorizationCode, OAuth2AccessToken,
     OAuth2RefreshToken, OAuth2Scope)
@@ -211,6 +213,27 @@ class OAuth2FrontendController(RedditController):
             token_data = OAuth2AccessController._make_token_dict(token)
             token_data["state"] = state
             final_redirect = _update_redirect_uri(redirect_uri, token_data, as_fragment=True)
+
+        # If this is the first time the user is logging in with an official
+        # mobile app, gild them
+        if (g.live_config.get('mobile_gild_first_login') and
+                not c.user.has_used_mobile_app and
+                client._id in g.mobile_auth_gild_clients):
+            buyer = Account.system_user()
+            admintools.adjust_gold_expiration(
+                c.user, days=g.mobile_auth_gild_time)
+            create_gift_gold(
+                buyer._id, c.user._id, g.mobile_auth_gild_time,
+                datetime.now(g.tz), signed=True, note='first_mobile_auth')
+            subject = 'Let there be gold! %s just sent you reddit gold!' % (
+                buyer.name)
+            message = "Thank you for using the reddit mobile app!  For your "\
+                "participation, you've been gifted %s of reddit gold." % (
+                    g.mobile_auth_gild_message)
+            message += '\n\n' + strings.gold_benefits_msg
+            send_system_message(c.user, subject, message, add_to_sent=False)
+            c.user.has_used_mobile_app = True
+            c.user._commit()
 
         return self.redirect(final_redirect, code=302)
 
