@@ -32,7 +32,7 @@
 <%def name="banbuttons()">
   %if thing.show_delete:
     <li>
-      ${ynbutton(_("delete"), _("deleted"), "del", "hide_thing", access_required=False)}
+      ${ynbutton(_("delete"), _("deleted"), "del", "hide_thing", access_required=False, event_action="delete")}
     </li>
   %endif
   %if thing.can_ban:
@@ -90,13 +90,15 @@
     </li>
   %endif
   %if thing.show_rescrape:
-    <li>${ynbutton(_("retry thumb"), _("check back in a few minutes"), "rescrape")}</li>
+    <li>${ynbutton(_("retry thumb"), _("check back in a few minutes"), "rescrape",
+            event_action="retry_thumbnail")}</li>
   %endif
 </%def>
 
-<%def name="distinguish_setter(name, value=None)">
+<%def name="distinguish_setter(name, value=None, event_action='distinguish')">
   <a class="access-required"
      href="javascript:void(0)"
+     data-event-action="${event_action}"
      onclick="return set_distinguish(this, '${jssafe(value or name)}')">${_(name)}</a>
 </%def>
 
@@ -124,24 +126,24 @@
 
          %if thing.show_sticky_comment:
          &#32;
-         ${distinguish_setter('yes & sticky', 'yes_sticky')}
+         ${distinguish_setter('yes & sticky', 'yes_sticky', event_action="sticky_distinguish")}
          &#32;/
          %endif
          %endif
          
          &#32;
-         ${distinguish_setter('no')}
+         ${distinguish_setter('no', event_action="undistinguish")}
          &#32;
 
          %if c.user.employee:
          /&#32;
-         ${distinguish_setter('admin')}
+         ${distinguish_setter('admin', event_action="admin_distinguish")}
          &#32;
          %endif
          
          %if c.user_special_distinguish:
          /&#32;
-         ${distinguish_setter(c.user_special_distinguish['name'], 'special')}
+         ${distinguish_setter(c.user_special_distinguish['name'], 'special', event_action="special_distinguish")}
          &#32;
          %endif
 
@@ -273,9 +275,12 @@
 <%def name="linkbuttons()">
   %if thing.show_comments:
     <li class="first">
-    ${self.comment_button("comment", thing.comment_label, thing.permalink,
-                          _sr_path=(thing.promoted is None),
-                          a_class=thing.commentcls)}
+    ${self.bylink_button(
+        thing.comment_label,
+        thing.permalink,
+        sr_path=(thing.promoted is None),
+        a_class=unsafe("bylink %s" % thing.commentcls),
+        event_action="comments")}
     </li>
   %endif
   %if thing.editable and not thing.promoted:
@@ -298,11 +303,11 @@
     %if thing.hidden:
       ${self.state_button("unhide", _("unhide"), \
         "change_state(this, 'unhide', hide_thing);", _("unhidden"),
-        access_required=False)}
+        access_required=False, event_action="unhide")}
     %else:
       ${self.state_button("hide", _("hide"), \
          "change_state(this, 'hide', hide_thing);", _("hidden"),
-         access_required=False)}
+         access_required=False, event_action="hide")}
     %endif
     </li>
   %endif
@@ -381,7 +386,7 @@
 <%def name="commentbuttons()">
   %if not thing.deleted:
     <li class="first">
-      ${self.bylink_button(_("permalink"), thing.permalink)}
+      ${self.bylink_button(_("permalink"), thing.permalink, event_action="permalink")}
     </li>
     %if thing.embed_button:
       <li>
@@ -401,20 +406,21 @@
 
     %if c.profilepage:
       <li>
-        ${self.bylink_button(_("context"), thing.permalink + "?context=3")}
+        ${self.bylink_button(_("context"), thing.permalink + "?context=3", event_action="context")}
       </li>
       <li class="first">
-      ${self.comment_button("comment",
-                            _("full comments") + " (%d)" % thing.full_comment_count, 
-                            thing.full_comment_path,
-                            _sr_path=True,
-                            a_class="may-blank")}
+      ${self.bylink_button(
+          _("full comments") + " (%d)" % thing.full_comment_count, 
+          thing.full_comment_path,
+          sr_path=True,
+          a_class="bylink may-blank",
+          event_action="full_comments")}
       </li>
     %endif
 
     %if thing.parent_permalink and not thing.profilepage:
       <li>
-        ${self.bylink_button(_("parent"), thing.parent_permalink)}
+        ${self.bylink_button(_("parent"), thing.parent_permalink, event_action="parent")}
       </li>
     %endif
 
@@ -427,10 +433,12 @@
       <li>
         %if thing.thing.inbox_replies_enabled:
           ${ynbutton(_("disable inbox replies"), _("inbox replies disabled"), "sendreplies",
-            hidden_data=dict(id=thing.thing._fullname, state=False), access_required=False)}
+            hidden_data=dict(id=thing.thing._fullname, state=False),
+            access_required=False, event_action="disable_inbox_replies")}
         %else:
           ${ynbutton(_("enable inbox replies"), _("inbox replies enabled"), "sendreplies",
-            hidden_data=dict(id=thing.thing._fullname, state=True), access_required=False)}
+            hidden_data=dict(id=thing.thing._fullname, state=True),
+            access_required=False, event_action="enable_inbox_replies")}
         %endif
       </li>
     %endif
@@ -471,17 +479,18 @@
 <%def name="messagebuttons()"> 
   %if thing.was_comment:
     <li>
-      ${self.bylink_button(_("context"), thing.permalink + "?context=3")}
+      ${self.bylink_button(_("context"), thing.permalink + "?context=3", event_action="context")}
     </li>
     <li>
-      ${self.comment_button("comment",
-                            _("full comments") + " (%d)" % thing.full_comment_count,
-                            thing.full_comment_path,
-                            a_class="may-blank full-comments")}
+      ${self.bylink_button(
+          _("full comments") + " (%d)" % thing.full_comment_count,
+          thing.full_comment_path,
+          a_class="bylink may-blank full-comments",
+          event_action="full_comments")}
     </li>
   %else:
     <li class="first">
-      ${self.bylink_button(_("permalink"), thing.permalink, sr_path=False)}
+      ${self.bylink_button(_("permalink"), thing.permalink, sr_path=False, event_action="permalink")}
     </li>
   %endif
   %if thing.user_is_recipient:
@@ -492,23 +501,28 @@
             %if not (thing.thing.user_is_moderator or c.user_is_admin):
               <li>
                 %if getattr(thing.thing, "sr_blocked", False):
-                  ${ynbutton(_("unblock subreddit"), _("unblocked"), "unblock_subreddit", access_required=False)}
+                  ${ynbutton(_("unblock subreddit"), _("unblocked"), "unblock_subreddit",
+                      access_required=False, event_action="unblock_subreddit")}
                 %else:
-                  ${ynbutton(_("block subreddit"), _("blocked"), "block", "hide_thing", access_required=False)}
+                  ${ynbutton(_("block subreddit"), _("blocked"), "block", "hide_thing",
+                      access_required=False, event_action="block_subreddit")}
                 %endif
               </li>
             %endif
           %else:
             <li>
-              ${ynbutton(_("block user"), _("blocked"), "block", "hide_thing", access_required=False)}
+              ${ynbutton(_("block user"), _("blocked"), "block", "hide_thing",
+                  access_required=False, event_action="block_user")}
             </li>
           %endif
           %if thing.can_mute:
             <li>
               %if getattr(thing.thing, "sr_muted", False):
-                ${ynbutton(_("unmute user"), _("unmuted"), "unmute_message_author")}
+                ${ynbutton(_("unmute user"), _("unmuted"), "unmute_message_author",
+                    event_action="unmute_user")}
               %else:
-                ${ynbutton(_("mute user"), _("muted"), "mute_message_author")}
+                ${ynbutton(_("mute user"), _("muted"), "mute_message_author",
+                    event_action="mute_user")}
               %endif
             </li>
           %endif
@@ -517,7 +531,7 @@
     <li class="unread">
      ${self.state_button("unread", _("mark unread"), \
         "return change_state(this, 'unread_message', unread_thing, true);", \
-         _("unread"))}
+         _("unread"), event_action="mark_unread")}
     </li>
   %endif
   %if thing.can_reply:
@@ -688,14 +702,14 @@
 </span>
 </%def>
 
-### originally in commentbutton
-<%def name="comment_button(name, link_text, link,\
-            _sr_path = True, a_class='', title='')">
-  ${plain_link(link_text, link, 
-               _sr_path = _sr_path,
-               _class=a_class, title=title)}
-</%def>
-
-<%def name="bylink_button(title, link, sr_path=True)">
-  ${plain_link(title, link, _class="bylink", rel="nofollow", _sr_path=sr_path)}
+<%def name="bylink_button(title, link, sr_path=True, a_class='bylink', event_action=None)">
+  <% data_attrs = {"event-action": event_action} if event_action else None %>
+  ${plain_link(
+      title,
+      link,
+      _class=a_class,
+      rel="nofollow",
+      _sr_path=sr_path,
+      data=data_attrs,
+  )}
 </%def>

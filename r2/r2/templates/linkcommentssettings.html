@@ -92,10 +92,12 @@
 %if thing.is_author:
   %if thing.sendreplies:
     ${ynbutton(_("disable inbox replies"), _("inbox replies disabled"), "sendreplies",
-      hidden_data=dict(id=thing.link._fullname, state=False), access_required=False)}
+      hidden_data=dict(id=thing.link._fullname, state=False),
+      access_required=False, event_action="disable_inbox_replies")}
   %else:
     ${ynbutton(_("enable inbox replies"), _("inbox replies enabled"), "sendreplies",
-      hidden_data=dict(id=thing.link._fullname, state=True), access_required=False)}
+      hidden_data=dict(id=thing.link._fullname, state=True),
+      access_required=False, event_action="enable_inbox_replies")}
   %endif
   &nbsp;<span class="help-hoverable" title="${_('inbox replies will send you a message when this link receives a new top-level comment')}">(?)</span>
 %endif
