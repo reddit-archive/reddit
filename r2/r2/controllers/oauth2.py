@@ -102,7 +102,7 @@ class OAuth2FrontendController(RedditController):
         return self.redirect(final_redirect, code=302)
 
     def _check_employee_grants(self, client, scope):
-        if not c.user.employee or not client:
+        if not c.user.employee or not client or not scope:
             return
         if client._id in g.employee_approved_clients:
             return
