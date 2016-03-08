@@ -25,6 +25,8 @@ import itertools
 import math
 import mock
 
+from pylons import app_globals as g, tmpl_context as c
+
 from r2.config.feature.state import FeatureState
 from . feature_test import TestFeatureBase, MockAccount
 
@@ -246,7 +248,18 @@ class TestExperiment(TestFeatureBase):
 
     def test_loggedout_experiment(self, num_users=2000):
         """Test variant distn for logged out users."""
+        c.whitelisted_loid_experiments = ['test_state']
         self.do_experiment_simulation(
+            self.get_loggedout_users(num_users),
+            experiment={
+                "loggedout": True,
+                'variants': {'larger': 5, 'smaller': 10},
+            },
+        )
+
+    def test_loggedout_experiment_no_whitelist(self, num_users=2000):
+        """Test variant distn for logged out users."""
+        self.assert_no_experiment(
             self.get_loggedout_users(num_users),
             experiment={
                 "loggedout": True,
@@ -267,6 +280,7 @@ class TestExperiment(TestFeatureBase):
 
     def test_loggedout_experiment_explicit_enable(self, num_users=2000):
         """Test variant distn for logged out users with explicit enable."""
+        c.whitelisted_loid_experiments = ['test_state']
         self.do_experiment_simulation(
             self.get_loggedout_users(num_users),
             experiment={
@@ -289,8 +303,11 @@ class TestExperiment(TestFeatureBase):
 
     def test_loggedout_experiment_global_disable(self, num_users=2000):
         """Test we can disable loid-experiments via configuration."""
-        self.patch_g(enable_loggedout_experiments=False)
+        # we already patch this attr in setUp, so we can just explicitly change
+        # it and rely on *that* cleanup
+        g.enable_loggedout_experiments = False
 
+        c.whitelist_loid_experiments = ['test_state']
         self.assert_no_experiment(
             self.get_loggedout_users(num_users),
             experiment={

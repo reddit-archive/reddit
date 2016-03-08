@@ -161,6 +161,35 @@ def pagecache_policy(policy):
     return pagecache_decorator
 
 
+def vary_pagecache_on_experiments(*names):
+    """Keep track of which loid-based experiments are affecting the pagecache.
+
+    Since loid-based experiments will vary the resulting content, this is used
+    to accumulate a whitelist of experiments referenced in the decorator below.
+    """
+    # we are going to use this to build the cache key, so
+    # consistent ordering at compile time would be nice
+    global_experiments = g.live_config.get("global_loid_experiments")
+    if global_experiments:
+        names = names + tuple(global_experiments)
+    names = sorted(names)
+
+    def _vary_pagecache_on_experiments(fn):
+        # store this list on the handler itself, since (by the nature of the
+        # page cache) we won't actually *call* this handler.  We'll set
+        # the whitelist on c in `request_key` and in the decorated body
+        fn.whitelisted_loid_experiments = names
+
+        @wraps(fn)
+        def _vary_pagecache_on_experiments_inner(self, *a, **kw):
+            # For checking the whitelist in the feature methods, set it on
+            # the request context.
+            c.whitelisted_loid_experiments = names
+            return fn(self, *a, **kw)
+        return _vary_pagecache_on_experiments_inner
+    return _vary_pagecache_on_experiments
+
+
 cache_affecting_cookies = ('over18', '_options', 'secure_session')
 # Cookies which may be set in a response without making it uncacheable
 CACHEABLE_COOKIES = ()
@@ -836,6 +865,23 @@ class MinimalController(BaseController):
         else:
             location = None
 
+        whitelisted_variants = []
+        # if there are logged out experiments expected, we need to vary
+        # the cache key on them
+        if (
+            g.enable_loggedout_experiments and
+            not c.user_is_loggedin and c.loid
+        ):
+            handler = self._get_action_handler()
+            if hasattr(handler, "whitelisted_loid_experiments"):
+                # pull the whitelist onto `c` as we check there in features
+                whitelist = handler.whitelisted_loid_experiments
+                c.whitelisted_loid_experiments = whitelist
+                for name in whitelist:
+                    whitelisted_variants.append(
+                        (name, feature.variant(name, None))
+                    )
+
         _id = make_key_id(
             c.lang,
             request.host,
@@ -848,6 +894,7 @@ class MinimalController(BaseController):
             feature.is_enabled("https_redirect"),
             request.environ.get("WANT_RAW_JSON"),
             cookies_key,
+            whitelisted_variants,
         )
         key = "page:%s" % _id
         return key

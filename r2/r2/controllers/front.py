@@ -29,6 +29,7 @@ from r2.controllers.reddit_base import (
     paginated_listing,
     RedditController,
     require_https,
+    vary_pagecache_on_experiments,
 )
 from r2 import config
 from r2.models import *
@@ -1094,6 +1095,8 @@ class FrontController(RedditController):
 
     search_help_page = "/wiki/search"
     verify_langs_regex = re.compile(r"\A[a-z][a-z](,[a-z][a-z])*\Z")
+
+    @vary_pagecache_on_experiments("aa_test_loggedout")
     @base_listing
     @require_oauth2_scope("read")
     @validate(query=VLength('q', max_length=512),

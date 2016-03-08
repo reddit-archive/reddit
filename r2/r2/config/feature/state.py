@@ -20,6 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+import logging
 import json
 import hashlib
 
@@ -353,6 +354,15 @@ class FeatureState(object):
             bucket = self._calculate_bucket(user._fullname)
         # for logged out users, bucket based on the loid if we have one
         elif g.enable_loggedout_experiments:
+            # if the experiment is logged-out, the pagecache has to know about
+            # it or we're going to have a bad time
+            if not self.world.is_whitelisted_experiment(self.name):
+                self.world.simple_event("feature.non_whitelisted_experiment")
+                logging.debug(
+                    "loid-based experiment is not whitelisted: %s",
+                    self.name
+                )
+                return None
             loid = self.world.current_loid()
             # we can't run an experiment if we have no id to vary on.
             if not loid:

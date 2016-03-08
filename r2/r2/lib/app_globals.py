@@ -373,6 +373,7 @@ class Globals(object):
             'discovery_srs',
             'proxy_gilding_accounts',
             'mweb_blacklist_expressions',
+            'global_loid_experiments',
             'precomputed_comment_sorts',
         ],
         ConfigValue.str: [
