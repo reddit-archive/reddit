@@ -3268,7 +3268,7 @@ class ApiController(RedditController):
                     not previously_distinguished and
                     user_can_notify):
                 inbox_rel = Inbox._add(to, thing, 'selfreply')
-                queries.new_comment(thing, inbox_rel)
+                queries.update_comment_notifications(thing, inbox_rel)
 
             # Sticky handling - done before commit so that if there is an error
             # setting sticky we don't distinguish. This ordering does leave the
