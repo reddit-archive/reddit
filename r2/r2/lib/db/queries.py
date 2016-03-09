@@ -1023,29 +1023,30 @@ def add_to_commentstree_q(comment):
         amqp.add_item('commentstree_q', comment._fullname)
 
 
-def update_comment_notifications(comment, inbox_rels, mutator):
+def update_comment_notifications(comment, inbox_rels):
     is_visible = not comment._deleted and not comment._spam
 
-    for inbox_rel in tup(inbox_rels):
-        inbox_owner = inbox_rel._thing1
-        unread = (is_visible and
-            getattr(inbox_rel, 'unread_preremoval', True))
+    with CachedQueryMutator() as mutator:
+        for inbox_rel in tup(inbox_rels):
+            inbox_owner = inbox_rel._thing1
+            unread = (is_visible and
+                getattr(inbox_rel, 'unread_preremoval', True))
 
-        if inbox_rel._name == "inbox":
-            query = get_inbox_comments(inbox_owner)
-        elif inbox_rel._name == "selfreply":
-            query = get_inbox_selfreply(inbox_owner)
-        else:
-            raise ValueError("wtf is " + inbox_rel._name)
+            if inbox_rel._name == "inbox":
+                query = get_inbox_comments(inbox_owner)
+            elif inbox_rel._name == "selfreply":
+                query = get_inbox_selfreply(inbox_owner)
+            else:
+                raise ValueError("wtf is " + inbox_rel._name)
 
-        # mentions happen in butler_q
+            # mentions happen in butler_q
 
-        if is_visible:
-            mutator.insert(query, [inbox_rel])
-        else:
-            mutator.delete(query, [inbox_rel])
+            if is_visible:
+                mutator.insert(query, [inbox_rel])
+            else:
+                mutator.delete(query, [inbox_rel])
 
-        set_unread(comment, inbox_owner, unread=unread, mutator=mutator)
+            set_unread(comment, inbox_owner, unread=unread, mutator=mutator)
 
 
 def new_comment(comment, inbox_rels):
@@ -1056,30 +1057,30 @@ def new_comment(comment, inbox_rels):
 
     sr = Subreddit._byID(comment.sr_id)
 
-    with CachedQueryMutator() as m:
-        if comment._deleted:
-            job_key = "delete_items"
-            job.append(get_sr_comments(sr))
-            job.append(get_all_comments())
-        else:
-            job_key = "insert_items"
-            if comment._spam:
+    if comment._deleted:
+        job_key = "delete_items"
+        job.append(get_sr_comments(sr))
+        job.append(get_all_comments())
+    else:
+        job_key = "insert_items"
+        if comment._spam:
+            with CachedQueryMutator() as m:
                 m.insert(get_spam_comments(sr), [comment])
-            if (was_spam_filtered(comment) and
-                    not (sr.exclude_banned_modqueue and author._spam)):
-                m.insert(get_spam_filtered_comments(sr), [comment])
+                if (was_spam_filtered(comment) and
+                        not (sr.exclude_banned_modqueue and author._spam)):
+                    m.insert(get_spam_filtered_comments(sr), [comment])
 
-            amqp.add_item('new_comment', comment._fullname)
-            add_to_commentstree_q(comment)
+        amqp.add_item('new_comment', comment._fullname)
+        add_to_commentstree_q(comment)
 
-        job_dict = { job_key: comment }
-        add_queries(job, **job_dict)
+    job_dict = { job_key: comment }
+    add_queries(job, **job_dict)
 
-        # note that get_all_comments() is updated by the amqp process
-        # r2.lib.db.queries.run_new_comments (to minimise lock contention)
+    # note that get_all_comments() is updated by the amqp process
+    # r2.lib.db.queries.run_new_comments (to minimise lock contention)
 
-        if inbox_rels:
-            update_comment_notifications(comment, inbox_rels, mutator=m)
+    if inbox_rels:
+        update_comment_notifications(comment, inbox_rels)
 
 
 def delete_comment(comment):
@@ -1339,8 +1340,7 @@ def notification_handler(thing, notify_function,
 
         replies = list(replies)
         if replies:
-            with CachedQueryMutator() as m:
-                update_comment_notifications(thing, replies, mutator=m)
+            update_comment_notifications(thing, replies)
     else:
         raise ValueError(error_message)
 
