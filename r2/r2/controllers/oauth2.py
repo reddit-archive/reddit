@@ -41,7 +41,7 @@ from r2.models import Account, admintools, create_gift_gold, send_system_message
 from r2.models.token import (
     OAuth2Client, OAuth2AuthorizationCode, OAuth2AccessToken,
     OAuth2RefreshToken, OAuth2Scope)
-from r2.lib.errors import ForbiddenError, errors
+from r2.lib.errors import BadRequestError, ForbiddenError, errors
 from r2.lib.pages import OAuth2AuthorizationPage
 from r2.lib.require import RequirementException, require, require_split
 from r2.lib.utils import constant_time_compare, parse_http_basic, UrlParser

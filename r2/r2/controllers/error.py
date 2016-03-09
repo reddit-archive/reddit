@@ -143,6 +143,16 @@ class ErrorController(RedditController):
             return handle_awful_failure("ErrorController.__call__: %r" % e)
 
 
+    def send400(self):
+        if 'usable_error_content' in request.environ:
+            return request.environ['usable_error_content']
+        else:
+            res = pages.RedditError(
+                title=_("bad request (%(domain)s)") % dict(domain=g.domain),
+                message=_("you sent an invalid request"),
+                explanation=request.GET.get('explanation'))
+            return res.render()
+
     def send403(self):
         c.site = DefaultSR()
         if 'usable_error_content' in request.environ:
@@ -234,6 +244,8 @@ class ErrorController(RedditController):
             elif takedown and code == 404:
                 link = Link._by_fullname(takedown)
                 return pages.TakedownPage(link).render()
+            elif code == 400:
+                return self.send400()
             elif code == 403:
                 return self.send403()
             elif code == 429:

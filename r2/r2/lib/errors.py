@@ -123,9 +123,12 @@ error_list = dict((
         ('BAD_FLAIR_TARGET', _('not a valid flair target')),
         ('OAUTH2_INVALID_CLIENT', _('invalid client id')),
         ('OAUTH2_INVALID_REDIRECT_URI', _('invalid redirect_uri parameter')),
+        ('OAUTH2_INVALID_RESPONSE_TYPE', _('invalid response type')),
         ('OAUTH2_INVALID_SCOPE', _('invalid scope requested')),
         ('OAUTH2_INVALID_REFRESH_TOKEN', _('invalid refresh token')),
         ('OAUTH2_ACCESS_DENIED', _('access denied by the user')),
+        ('OAUTH2_NO_REFRESH_TOKENS_ALLOWED', _('refresh tokens are not allowed for this response_type')),
+        ('OAUTH2_CONFIDENTIAL_TOKEN', _('confidential clients can not request tokens directly')),
         ('CONFIRM', _("please confirm the form")),
         ('CONFLICT', _("conflict error while saving")),
         ('NO_API', _('cannot perform this action via the API')),
@@ -296,6 +299,7 @@ class BadRequestError(HTTPBadRequest):
             'reason': error_name,
             'explanation': error_list[error_name],
         }
+        self.explanation = error_list[error_name]
 
 
 def reddit_http_error(code=400, error_name='UNKNOWN_ERROR', **data):
