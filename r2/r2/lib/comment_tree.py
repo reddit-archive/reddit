@@ -56,8 +56,8 @@ def add_comments(comments):
             'comment_tree.add.%s' % link.comment_tree_version)
         timer.start()
 
-        try:
-            with CommentTree.mutation_context(link, timeout=30):
+        with CommentTree.mutation_context(link, timeout=180):
+            try:
                 timer.intermediate('lock')
                 comment_tree = CommentTree.by_link(link, timer)
                 timer.intermediate('get')
@@ -69,13 +69,23 @@ def add_comments(comments):
                     comment_tree.delete_comment(comment, link)
 
                 timer.intermediate('update')
-        except InconsistentCommentTreeError:
-            comment_ids = [comment._id for comment in link_comments]
-            g.log.exception(
-                'add_comments_nolock failed for link %s %s, recomputing',
-                link_id, comment_ids)
-            comment_tree = rebuild_comment_tree(link, timer=timer)
-            g.stats.simple_event('comment_tree_inconsistent')
+            except InconsistentCommentTreeError:
+                # this exception occurs when we add a comment to the tree but
+                # its parent isn't in the tree yet, need to rebuild the tree
+                # from scratch
+
+                comment_ids = [comment._id for comment in link_comments]
+                g.log.exception(
+                    'add_comments_nolock failed for link %s %s, recomputing',
+                    link_id, comment_ids)
+
+                comment_tree = CommentTree.rebuild(link)
+                timer.intermediate('rebuild')
+                # the tree rebuild updated the link's comment count, so schedule
+                # it for search reindexing
+                link.update_search_index()
+                timer.intermediate('update_search_index')
+                g.stats.simple_event('comment_tree_inconsistent')
 
         # update scores
         for sort in ("_controversy", "_confidence", "_score"):
@@ -193,18 +203,6 @@ def get_comment_scores(link, sort, comment_ids, timer):
             timer.intermediate('sort')
 
     return scores_by_id
-
-
-def rebuild_comment_tree(link, timer):
-    with CommentTree.mutation_context(link, timeout=180):
-        timer.intermediate('lock')
-        comment_tree = CommentTree.rebuild(link)
-        timer.intermediate('rebuild')
-        # the tree rebuild updated the link's comment count, so schedule it for
-        # search reindexing
-        link.update_search_index()
-        timer.intermediate('update_search_index')
-        return comment_tree
 
 
 # message conversation functions
