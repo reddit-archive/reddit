@@ -55,6 +55,7 @@ for item in ${NEEDED[*]}; do
 done
 
 if [ ! -e $SCRIPTDIR/install.cfg ]; then
+    NEEDED+=("install.cfg")
     MISSING="1"
 fi
 
