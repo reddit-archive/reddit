@@ -47,7 +47,6 @@ def add_comments(comments):
     for link_id, link_comments in comments_by_link_id.iteritems():
         link = links[link_id]
 
-        # retrieve and update the comment tree
         new_comments = [
             comment for comment in link_comments if not comment._deleted]
         deleted_comments = [
@@ -55,6 +54,19 @@ def add_comments(comments):
         timer = g.stats.get_timer(
             'comment_tree.add.%s' % link.comment_tree_version)
         timer.start()
+
+        # write scores before CommentTree because the scores must exist for all
+        # comments in the tree
+        for sort in ("_controversy", "_confidence", "_score"):
+            scores_by_comment = {
+                comment._id36: getattr(comment, sort)
+                for comment in link_comments
+            }
+            CommentScoresByLink.set_scores(link, sort, scores_by_comment)
+
+        scores_by_comment = _get_qa_comment_scores(link, link_comments)
+        CommentScoresByLink.set_scores(link, "_qa", scores_by_comment)
+        timer.intermediate('scores')
 
         with CommentTree.mutation_context(link, timeout=180):
             try:
@@ -87,17 +99,6 @@ def add_comments(comments):
                 timer.intermediate('update_search_index')
                 g.stats.simple_event('comment_tree_inconsistent')
 
-        # update scores
-        for sort in ("_controversy", "_confidence", "_score"):
-            scores_by_comment = {
-                comment._id36: getattr(comment, sort)
-                for comment in link_comments
-            }
-            CommentScoresByLink.set_scores(link, sort, scores_by_comment)
-
-        scores_by_comment = _get_qa_comment_scores(link, link_comments)
-        CommentScoresByLink.set_scores(link, "_qa", scores_by_comment)
-        timer.intermediate('scores')
         timer.stop()
 
 
