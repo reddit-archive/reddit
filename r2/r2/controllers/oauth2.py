@@ -78,29 +78,33 @@ class OAuth2FrontendController(RedditController):
         RedditController.pre(self)
         require_https()
 
+    def _abort_oauth_error(self, error):
+        g.stats.simple_event('oauth2.errors.%s' % error)
+        abort(BadRequestError(error))
+
     def _check_redirect_uri(self, client, redirect_uri):
         if (errors.OAUTH2_INVALID_CLIENT, 'client_id') in c.errors:
-            abort(BadRequestError(errors.OAUTH2_INVALID_CLIENT))
+            self._abort_oauth_error(errors.OAUTH2_INVALID_CLIENT)
 
         if not redirect_uri or redirect_uri != client.redirect_uri:
-            abort(BadRequestError(errors.OAUTH2_INVALID_REDIRECT_URI))
+            self._abort_oauth_error(errors.OAUTH2_INVALID_REDIRECT_URI)
 
     def _check_response_type_and_scope(self, response_type, scope):
         if (errors.INVALID_OPTION, 'response_type') in c.errors:
-            abort(BadRequestError(errors.OAUTH2_INVALID_RESPONSE_TYPE))
+            self._abort_oauth_error(errors.OAUTH2_INVALID_RESPONSE_TYPE)
 
         if (errors.OAUTH2_INVALID_SCOPE, 'scope') in c.errors:
-            abort(BadRequestError(errors.OAUTH2_INVALID_SCOPE))
+            self._abort_oauth_error(errors.OAUTH2_INVALID_SCOPE)
 
     def _check_client_type_and_duration(self, response_type, client, duration):
         if response_type == "token" and client.is_confidential():
             # Prevent "confidential" clients from distributing tokens
             # in a non-confidential manner
-            abort(BadRequestError(errors.OAUTH2_CONFIDENTIAL_TOKEN))
+            self._abort_oauth_error(errors.OAUTH2_CONFIDENTIAL_TOKEN)
 
         if response_type == "token" and duration != "temporary":
             # implicit grant -> No refresh tokens allowed
-            abort(BadRequestError(errors.OAUTH2_NO_REFRESH_TOKENS_ALLOWED))
+            self._abort_oauth_error(errors.OAUTH2_NO_REFRESH_TOKENS_ALLOWED)
 
     def _error_response(self, state, redirect_uri, as_fragment=False):
         """Return an error redirect."""
@@ -161,7 +165,6 @@ class OAuth2FrontendController(RedditController):
         [app preferences](/prefs/apps).  All errors will show a 400 error
         page along with some information on what option was wrong.
         """
-
         self._check_employee_grants(client, scope)
 
         # Check redirect URI first; it will ensure client exists
@@ -175,7 +178,7 @@ class OAuth2FrontendController(RedditController):
             return OAuth2AuthorizationPage(client, redirect_uri, scope, state,
                                            duration, response_type).render()
         else:
-            abort(BadRequestError(errors.INVALID_OPTION))
+            self._abort_oauth_error(errors.INVALID_OPTION)
 
     @validate(VUser(),
               VModhash(fatal=False),
@@ -210,11 +213,13 @@ class OAuth2FrontendController(RedditController):
                                             duration == "permanent")
             resp = {"code": code._id, "state": state}
             final_redirect = _update_redirect_uri(redirect_uri, resp)
+            g.stats.simple_event('oauth2.POST_authorize.authorization_code_create')
         elif response_type == "token":
             token = OAuth2AccessToken._new(client._id, c.user._id36, scope)
             token_data = OAuth2AccessController._make_token_dict(token)
             token_data["state"] = state
             final_redirect = _update_redirect_uri(redirect_uri, token_data, as_fragment=True)
+            g.stats.simple_event('oauth2.POST_authorize.access_token_create')
 
         # If this is the first time the user is logging in with an official
         # mobile app, gild them
@@ -391,10 +396,14 @@ class OAuth2AccessController(MinimalController):
                 refresh_token = OAuth2RefreshToken._new(
                     auth_token.client_id, auth_token.user_id,
                     auth_token.scope)
+                g.stats.simple_event(
+                    'oauth2.access_token_code.refresh_token_create')
             access_token = OAuth2AccessToken._new(
                 auth_token.client_id, auth_token.user_id,
                 auth_token.scope,
                 refresh_token._id if refresh_token else "")
+            g.stats.simple_event(
+                'oauth2.access_token_code.access_token_create')
 
         resp = self._make_token_dict(access_token, refresh_token)
 
@@ -409,15 +418,21 @@ class OAuth2AccessController(MinimalController):
                     refresh_token.client_id, refresh_token.user_id,
                     refresh_token.scope,
                     refresh_token=refresh_token._id)
+                g.stats.simple_event(
+                    'oauth2.access_token_refresh.access_token_create')
             else:
+                g.stats.simple_event(
+                    'oauth2.errors.OAUTH2_INVALID_REFRESH_TOKEN')
                 c.errors.add(errors.OAUTH2_INVALID_REFRESH_TOKEN)
         else:
+            g.stats.simple_event('oauth2.errors.NO_TEXT')
             c.errors.add("NO_TEXT", field="refresh_token")
 
         if c.errors:
             resp = self._check_for_errors()
             response.status = 400
         else:
+            g.stats.simple_event('oauth2.access_token_refresh.success')
             resp = self._make_token_dict(access_token)
         return self.api_wrapper(resp)
 
@@ -428,10 +443,12 @@ class OAuth2AccessController(MinimalController):
         # private use scripts
         client = c.oauth2_client
         if client.app_type != "script":
+            g.stats.simple_event('oauth2.errors.PASSWORD_UNAUTHORIZED_CLIENT')
             return self.api_wrapper({"error": "unauthorized_client",
                 "error_description": "Only script apps may use password auth"})
         dev_ids = client._developer_ids
         if not user or user._id not in dev_ids:
+            g.stats.simple_event('oauth2.errors.INVALID_GRANT')
             return self.api_wrapper({"error": "invalid_grant"})
         if c.errors:
             return self.api_wrapper(self._check_for_errors())
@@ -439,6 +456,7 @@ class OAuth2AccessController(MinimalController):
         if scope:
             scope = OAuth2Scope(scope)
             if not scope.is_valid():
+                g.stats.simple_event('oauth2.errors.PASSWORD_INVALID_SCOPE')
                 c.errors.add(errors.INVALID_OPTION, "scope")
                 return self.api_wrapper({"error": "invalid_scope"})
         else:
@@ -449,6 +467,8 @@ class OAuth2AccessController(MinimalController):
                 user._id36,
                 scope
         )
+        g.stats.simple_event(
+            'oauth2.access_token_password.access_token_create')
         resp = self._make_token_dict(access_token)
         return self.api_wrapper(resp)
 
@@ -458,11 +478,15 @@ class OAuth2AccessController(MinimalController):
     def _access_token_client_credentials(self, scope):
         client = c.oauth2_client
         if not client.is_confidential():
+            g.stats.simple_event(
+                'oauth2.errors.CLIENT_CREDENTIALS_UNAUTHORIZED_CLIENT')
             return self.api_wrapper({"error": "unauthorized_client",
                 "error_description": "Only confidential clients may use client_credentials auth"})
         if scope:
             scope = OAuth2Scope(scope)
             if not scope.is_valid():
+                g.stats.simple_event(
+                    'oauth2.errors.CLIENT_CREDENTIALS_INVALID_SCOPE')
                 c.errors.add(errors.INVALID_OPTION, "scope")
                 return self.api_wrapper({"error": "invalid_scope"})
         else:
@@ -473,6 +497,8 @@ class OAuth2AccessController(MinimalController):
             "",
             scope,
         )
+        g.stats.simple_event(
+            'oauth2.access_token_client_credentials.access_token_create')
         resp = self._make_token_dict(access_token)
         return self.api_wrapper(resp)
 
@@ -484,6 +510,7 @@ class OAuth2AccessController(MinimalController):
         if ((errors.NO_TEXT, "device_id") in c.errors or
                 (errors.TOO_SHORT, "device_id") in c.errors or
                 (errors.TOO_LONG, "device_id") in c.errors):
+            g.stats.simple_event('oauth2.errors.BAD_DEVICE_ID')
             return self.api_wrapper({
                 "error": "invalid_request",
                 "error_description": "bad device_id",
@@ -493,6 +520,8 @@ class OAuth2AccessController(MinimalController):
         if scope:
             scope = OAuth2Scope(scope)
             if not scope.is_valid():
+                g.stats.simple_event(
+                    'oauth2.errors.EXTENSION_CLIENT_CREDENTIALS_INVALID_SCOPE')
                 c.errors.add(errors.INVALID_OPTION, "scope")
                 return self.api_wrapper({"error": "invalid_scope"})
         else:
@@ -504,6 +533,9 @@ class OAuth2AccessController(MinimalController):
             scope,
             device_id=device_id,
         )
+        g.stats.simple_event(
+            'oauth2.access_token_extension_client_credentials.'
+            'access_token_create')
         resp = self._make_token_dict(access_token)
         return self.api_wrapper(resp)
 
@@ -560,6 +592,9 @@ class OAuth2AccessController(MinimalController):
             try:
                 token = token_type._byID(token_id)
             except tdb_cassandra.NotFound:
+                g.stats.simple_event(
+                    'oauth2.POST_revoke_token.cass_not_found.%s'
+                    % token_type.__name__)
                 continue
             else:
                 break
@@ -577,6 +612,8 @@ class OAuth2AccessController(MinimalController):
             # with a valid token then revoke it, returning an error
             # here is best as it may help certain clients debug issues
             response.status = 400
+            g.stats.simple_event(
+                'oauth2.errors.REVOKE_TOKEN_UNAUTHORIZED_CLIENT')
             return self.api_wrapper({"error": "unauthorized_client"})
 
 
