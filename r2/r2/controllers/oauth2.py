@@ -225,11 +225,18 @@ class OAuth2FrontendController(RedditController):
             create_gift_gold(
                 buyer._id, c.user._id, g.mobile_auth_gild_time,
                 datetime.now(g.tz), signed=True, note='first_mobile_auth')
-            subject = 'Let there be gold! %s just sent you reddit gold!' % (
-                buyer.name)
-            message = "Thank you for using the reddit mobile app!  For your "\
-                "participation, you've been gifted %s of reddit gold." % (
-                    g.mobile_auth_gild_message)
+            subject = 'Let there be gold! Reddit just sent you Reddit gold!'
+            message = (
+                "Thank you for using the Reddit mobile app!  As a thank you "
+                "for logging in during launch week, you've been gifted %s of "
+                "Reddit Gold.\n\n"
+                "Reddit Gold is Reddit's premium membership program, which "
+                "grants you: \n"
+                "An ads-free experience in Reddit's mobile apps, and\n"
+                "Extra site features on desktop\n\n"
+                "Discuss and get help on the features and perks at "
+                "r/goldbenefits."
+            ) % g.mobile_auth_gild_message
             message += '\n\n' + strings.gold_benefits_msg
             send_system_message(c.user, subject, message, add_to_sent=False)
             c.user.has_used_mobile_app = True
