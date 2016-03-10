@@ -149,6 +149,7 @@ class ListingController(RedditController):
                                page_classes=self.extra_page_classes,
                                show_sidebar=self.show_sidebar,
                                show_chooser=self.show_chooser,
+                               show_newsletterbar=True,
                                nav_menus=self.menus,
                                title=self.title(),
                                infotext=self.infotext,
