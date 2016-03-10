@@ -737,6 +737,10 @@ class LinkJsonTemplate(ThingJsonTemplate):
         source_height = preview_object['height']
         source_ratio = float(source_height) / source_width
 
+        # previews with a ratio above the max will be cropped to a lower ratio
+        max_ratio = float(LinkJsonTemplate.PREVIEW_MAX_RATIO)
+        preview_ratio = min(source_ratio, max_ratio)
+
         preview_resolutions = []
         for w in LinkJsonTemplate.PREVIEW_RESOLUTIONS:
             if w > source_width:
@@ -745,7 +749,7 @@ class LinkJsonTemplate(ThingJsonTemplate):
             url = g.image_resizing_provider.resize_image(
                 preview_object, w, censor_nsfw,
                 LinkJsonTemplate.PREVIEW_MAX_RATIO)
-            h = int(w * source_ratio)
+            h = int(w * preview_ratio)
             preview_resolutions.append({
                 "url": url,
                 "width": w,
