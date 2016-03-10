@@ -103,7 +103,7 @@ def add_comments(comments):
 
             # do this under the same lock because we want to ensure we are using
             # the same version of the CommentTree as was just written
-            write_comment_orders(link, timer)
+            write_comment_orders(link)
             timer.intermediate('write_order')
 
         timer.stop()

@@ -47,7 +47,14 @@ from r2.lib.comment_tree import (
 from r2.lib.wrapped import Wrapped
 from r2.lib.db import operators, tdb_cassandra
 from r2.lib.filters import _force_unicode
-from r2.lib.utils import Storage, shuffle_slice, timesince, tup, to36
+from r2.lib.utils import (
+    shuffle_slice,
+    SimpleSillyStub,
+    Storage,
+    timesince,
+    to36,
+    tup,
+)
 
 from r2.models import (
     Account,
@@ -1122,8 +1129,12 @@ class QACommentOrderer(CommentOrderer):
         return comment_tuples
 
 
-def write_comment_orders(link, timer):
+def write_comment_orders(link):
     precomputed_sorts = set()
+
+    # we don't really care about getting detailed timings here, the entire
+    # process will be timed by the caller
+    timer = SimpleSillyStub()
 
     # value of 0 means don't write for any value of link.num_comments
     min_comments = g.live_config['precomputed_comment_sort_min_comments']
