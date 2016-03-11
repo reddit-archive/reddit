@@ -51,28 +51,32 @@ try participating in other communities on reddit for a little while first before
 
 %if not thing.site:
     <%utils:line_field title="${_('name')}"
-                        description='${_("no spaces, e.g., slashdot")}'>
-     <input type="text" name="name" id="name" class="text"
-            value="${thing.name}"/>
-      %if not thing.site:
-        ${error_field("SUBREDDIT_EXISTS", "name")}
-        ${error_field("BAD_SR_NAME", "name")}
-      %endif
+                        description='${_("no spaces, e.g., \"books\" or \"bookclub\". avoid using solely trademarked names, e.g. use \"FansOfAcme\" instead of \"Acme\". once chosen, this name cannot be changed.")}'>
+      <div class="usertext-edit">
+        <input type="text" name="name" id="name" class="text"
+              value="${thing.name}"/>
+        %if not thing.site:
+          ${error_field("SUBREDDIT_EXISTS", "name")}
+          ${error_field("BAD_SR_NAME", "name")}
+        %endif
+      </div>
     </%utils:line_field>
 %else:
   <input type="hidden" name="sr" id="name" value="${thing.site._fullname}"/>
 %endif
 
   <%utils:line_field title="${_('title')}"
-       description='${_("e.g., slashdot: news for nerds, stuff that matters")}'>
-    %if thing.site:
-      <input id="title" type="text" name="title" class="text"
-             value="${thing.site.title}"/>
-    %else:
-      <input id="title" type="text" name="title" class="text" />
-    %endif
-    ${error_field("NO_TEXT", "title")}
-    ${error_field("TOO_LONG", "title")}
+       description='${_("e.g., books: made from trees or pixels. recommendations, news, or thoughts")}'>
+    <div class="usertext-edit">
+      %if thing.site:
+        <input id="title" type="text" name="title" class="text"
+               value="${thing.site.title}"/>
+      %else:
+        <input id="title" type="text" name="title" class="text" />
+      %endif
+      ${error_field("NO_TEXT", "title")}
+      ${error_field("TOO_LONG", "title")}
+    </div>
   </%utils:line_field>
 
   <%utils:line_field title="${_('description')}" css_class="usertext"

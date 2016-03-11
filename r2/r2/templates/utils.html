@@ -558,7 +558,7 @@ ${unsafe(txt)}
     <span class="title">${title}</span>
     &#32;
     %if description:
-      <span class="little gray">${description}</span>
+      <span class="little gray ${kind}-description">${description}</span>
     %endif
     <div class="${kind}-content">
       ${caller.body()}
