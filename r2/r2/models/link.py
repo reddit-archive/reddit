@@ -1766,7 +1766,7 @@ class Comment(Thing, Printable):
             item.is_author = (user == item.author)
             item.is_focal = (focal_comment == item._id36)
 
-            item.votable = not item.archived
+            item.votable = item._age < item.subreddit.archive_age
 
             hide_period = ('{0} minutes'
                           .format(item.subreddit.comment_score_hide_mins))
