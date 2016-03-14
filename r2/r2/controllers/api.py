@@ -3647,7 +3647,7 @@ class ApiController(RedditController):
                     message += "\n\n" + strings.gold_benefits_msg
 
                     if g.lounge_reddit:
-                        message += "\n* " + strings.lounge_msg
+                        message += "\n\n" + strings.lounge_msg
                     message = append_random_bottlecap_phrase(message)
 
                     try:

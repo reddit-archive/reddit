@@ -319,7 +319,7 @@ def send_gift(buyer, recipient, months, days, signed, giftmessage,
 
     message += '\n\n' + strings.gold_benefits_msg
     if g.lounge_reddit:
-        message += '\n* ' + strings.lounge_msg
+        message += '\n\n' + strings.lounge_msg
     message = append_random_bottlecap_phrase(message)
 
     if not signed:
@@ -596,7 +596,7 @@ class IpnController(RedditController):
                         "pays for 5 instance hours of reddit's servers.")
             message += "\n\n" + strings.gold_benefits_msg
             if g.lounge_reddit:
-                message += "\n* " + strings.lounge_msg
+                message += "\n\n" + strings.lounge_msg
         elif payment_blob['goldtype'] == 'autorenew':
             admintools.adjust_gold_expiration(buyer, days=days)
             subject, message = subscr_pm(pennies, months, new_subscr=True)
