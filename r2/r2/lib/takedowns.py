@@ -95,7 +95,6 @@ def post_takedown_notice_to_external_site(title,
         headers={
             'Content-type': 'application/json',
             'Accept': 'application/json',
-            'AUTHENTICATION_TOKEN': g.secrets['lumendatabase_org_api_key']
         },
         data=json.dumps(notice_json)
     )
