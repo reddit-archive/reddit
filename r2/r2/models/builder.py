@@ -995,6 +995,17 @@ class CommentOrderer(CommentOrdererBase):
         comment_tuples = g.permacache.get(key) or []
         self.timer.intermediate("read_precomputed")
 
+        # precomputed order might have returned more than max_comments. before
+        # dealing with that we need to preserve the MissingChildrenTuple for
+        # missing root level comments
+        if comment_tuples and isinstance(comment_tuples[-1], MissingChildrenTuple):
+            mct = comment_tuples.pop(-1)
+            top_level_not_visible = mct.child_ids
+            num_children_not_visible = mct.num_children
+        else:
+            top_level_not_visible = set()
+            num_children_not_visible = 0
+
         # precomputed order uses the default max_depth. filter the list
         # if we need a different max_depth. NOTE: we may end up with fewer
         # comments than were requested.
@@ -1003,15 +1014,6 @@ class CommentOrderer(CommentOrdererBase):
                 comment_tuple for comment_tuple in comment_tuples
                 if comment_tuple.depth < self.max_depth
             ]
-
-        # precomputed order might have returned more than max_comments
-        if comment_tuples and isinstance(comment_tuples[-1], MissingChildrenTuple):
-            mct = comment_tuples.pop(-1)
-            top_level_not_visible = mct.child_ids
-            num_children_not_visible = mct.num_children
-        else:
-            top_level_not_visible = set()
-            num_children_not_visible = 0
 
         if len(comment_tuples) > self.max_comments:
             top_level_not_visible.update({
