@@ -1150,9 +1150,17 @@ def write_comment_orders(link):
     # value of 0 means don't write for any value of link.num_comments
     min_comments = g.live_config['precomputed_comment_sort_min_comments']
     write_comment_order = min_comments and link.num_comments >= min_comments
+    write_suggested_sort = g.live_config['precomputed_comment_suggested_sort']
 
     if write_comment_order:
-        for sort_name in g.live_config['precomputed_comment_sorts']:
+        sorts_to_write = set(g.live_config['precomputed_comment_sorts'])
+
+        if write_suggested_sort:
+            suggested_sort = link.sort_if_suggested()
+            if suggested_sort:
+                sorts_to_write.add(suggested_sort)
+
+        for sort_name in sorts_to_write:
             sort = SORT_OPERATOR_BY_NAME.get(sort_name)
             if not sort:
                 continue

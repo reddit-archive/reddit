@@ -337,6 +337,7 @@ class Globals(object):
         ConfigValue.bool: [
             'frontend_logging',
             'mobile_gild_first_login',
+            'precomputed_comment_suggested_sort',
         ],
         ConfigValue.int: [
             'captcha_exempt_comment_karma',
