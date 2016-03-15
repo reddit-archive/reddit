@@ -1042,6 +1042,20 @@ class CommentOrderer(CommentOrdererBase):
         return CommentOrdererBase.get_comment_order(self)
 
     def get_comment_order(self):
+        num_comments = self.link.num_comments
+        if num_comments == 0:
+            bucket = "0"
+        elif num_comments >= 100:
+            bucket = "100_plus"
+        else:
+            bucket_start = num_comments / 5 * 5
+            bucket_end = bucket_start + 5
+            bucket = "%s_%s" % (bucket_start, bucket_end)
+
+        # record the number of comments on this link so we can get an idea of
+        # what value to use for 'precomputed_comment_sort_min_comments'
+        g.stats.simple_event("CommentOrderer.num_comments.%s" % bucket)
+
         if self.link.num_comments <= 0:
             return []
 
@@ -1059,7 +1073,9 @@ class CommentOrderer(CommentOrdererBase):
             with g.stats.get_timer("CommentOrderer.full_load") as timer:
                 return self._get_comment_order()
         else:
-            return self._get_comment_order()
+            timer_name = "CommentOrderer.by_num_comments.%s" % bucket
+            with g.stats.get_timer(timer_name) as timer:
+                return self._get_comment_order()
 
 
 class QACommentOrderer(CommentOrderer):
