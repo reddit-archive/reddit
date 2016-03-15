@@ -122,7 +122,51 @@ def _square_image(img):
     return _crop_image_vertically(img, width)
 
 
+def _apply_exif_orientation(image):
+    """Update the image's orientation if it has the relevant EXIF tag."""
+    try:
+        exif_tags = image._getexif() or {}
+    except AttributeError:
+        # image format with no EXIF tags
+        return image
+
+    # constant from EXIF spec
+    ORIENTATION_TAG_ID = 0x0112
+    orientation = exif_tags.get(ORIENTATION_TAG_ID)
+
+    if orientation == 1:
+        # 1 = Horizontal (normal)
+        pass
+    elif orientation == 2:
+        # 2 = Mirror horizontal
+        image = image.transpose(Image.FLIP_LEFT_RIGHT)
+    elif orientation == 3:
+        # 3 = Rotate 180
+        image = image.transpose(Image.ROTATE_180)
+    elif orientation == 4:
+        # 4 = Mirror vertical
+        image = image.transpose(Image.FLIP_TOP_BOTTOM)
+    elif orientation == 5:
+        # 5 = Mirror horizontal and rotate 90 CCW
+        image = image.transpose(Image.FLIP_LEFT_RIGHT)
+        image = image.transpose(Image.ROTATE_90)
+    elif orientation == 6:
+        # 6 = Rotate 270 CCW
+        image = image.transpose(Image.ROTATE_270)
+    elif orientation == 7:
+        # 7 = Mirror horizontal and rotate 270 CCW
+        image = image.transpose(Image.FLIP_LEFT_RIGHT)
+        image = image.transpose(Image.ROTATE_270)
+    elif orientation == 8:
+        # 8 = Rotate 90 CCW
+        image = image.transpose(Image.ROTATE_90)
+
+    return image
+
+
 def _prepare_image(image):
+    image = _apply_exif_orientation(image)
+
     image = _square_image(image)
 
     if feature.is_enabled('hidpi_thumbnails'):
