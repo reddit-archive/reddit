@@ -26,6 +26,10 @@ import difflib
 from pylons.i18n import _
 from pylons import app_globals as g
 
+
+MAX_DIFF_LINE_LENGTH = 4000
+
+
 class ConflictException(Exception):
     def __init__(self, new, your, original):
         self.your = your
@@ -37,8 +41,13 @@ class ConflictException(Exception):
 
 def make_htmldiff(a, b, adesc, bdesc):
     diffcontent = difflib.HtmlDiff(wrapcolumn=60)
-    return diffcontent.make_table(a.splitlines(),
-                                  b.splitlines(),
+
+    def truncate(line):
+        if len(line) > MAX_DIFF_LINE_LENGTH:
+            line = line[:MAX_DIFF_LINE_LENGTH] + "..."
+        return line
+    return diffcontent.make_table([truncate(i) for i in a.splitlines()],
+                                  [truncate(i) for i in b.splitlines()],
                                   fromdesc=adesc,
                                   todesc=bdesc,
                                   context=3)
