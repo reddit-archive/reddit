@@ -1047,8 +1047,17 @@ class CommentOrderer(CommentOrdererBase):
 
         read_chance = g.live_config["precomputed_comment_sort_read_chance"]
         read_enabled = read_chance > random()
-        if read_enabled and self.should_read_cache():
-            return self.read_cache()
+        has_precomputed_order = self.should_read_cache()
+        if read_enabled and has_precomputed_order:
+            with g.stats.get_timer("CommentOrderer.read_cache") as timer:
+                return self.read_cache()
+        elif has_precomputed_order:
+            # we have precomputed order for this link/sort but did not read it
+            # due to random read chance. time the operation to get a direct
+            # comparison between reading precomputed and loading CommentTree,
+            # CommentScoresByLink, calculating order
+            with g.stats.get_timer("CommentOrderer.full_load") as timer:
+                return self._get_comment_order()
         else:
             return self._get_comment_order()
 
