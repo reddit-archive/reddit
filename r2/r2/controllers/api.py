@@ -2321,6 +2321,10 @@ class ApiController(RedditController):
 
         """
 
+        # a persistent A/A to provide a consistent event stream and confidence
+        # in bucketing to the data team
+        feature.is_enabled('persistent_vote_a_a')
+
         if not thing or thing._deleted:
             return self.abort404()
 
