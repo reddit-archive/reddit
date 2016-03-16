@@ -1073,6 +1073,14 @@ class CommentOrderer(CommentOrdererBase):
             with g.stats.get_timer("CommentOrderer.full_load") as timer:
                 return self._get_comment_order()
         else:
+            if bucket == "100_plus":
+                for sort_name, operator in SORT_OPERATOR_BY_NAME.iteritems():
+                    if operator == self.sort:
+                        break
+                else:
+                    sort_name = "None"
+                g.stats.simple_event("CommentOrderer.100_plus_sort.%s" % sort_name)
+
             timer_name = "CommentOrderer.by_num_comments.%s" % bucket
             with g.stats.get_timer(timer_name) as timer:
                 return self._get_comment_order()
