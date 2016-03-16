@@ -30,6 +30,7 @@ from r2.lib.pages import *
 from reddit_base import (
     set_over18_cookie,
     delete_over18_cookie,
+    vary_pagecache_on_experiments,
 )
 from api import ApiController
 from r2.lib.utils import query_string, UrlParser
@@ -184,6 +185,7 @@ class PostController(ApiController):
 
         return self.redirect(dest)
 
+    @vary_pagecache_on_experiments("registration_captcha")
     @csrf_exempt
     @validate(dest = VDestination(default = "/"))
     def POST_reg(self, dest, *a, **kw):
