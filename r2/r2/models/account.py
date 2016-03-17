@@ -192,16 +192,31 @@ class Account(Thing):
             for k, v in self._t.iteritems():
                 if k.endswith(suffix):
                     total += v
+
+            # link karma includes both "link" and "self" values
+            if kind == "link":
+                total += self.karma("self")
+
             return total
+
+        # if positive karma overall, default to MIN_UP_KARMA instead of 0
+        if self.karma(kind) > 0:
+            default_karma = g.MIN_UP_KARMA
         else:
-            try:
-                return getattr(self, sr.name + suffix)
-            except AttributeError:
-                #if positive karma elsewhere, you get min_up_karma
-                if self.karma(kind) > 0:
-                    return g.MIN_UP_KARMA
-                else:
-                    return 0
+            default_karma = 0
+
+        if kind == "link":
+            # link karma includes both "link" and "self", so it's a bit trickier
+            link_karma = getattr(self, sr.name + suffix, None)
+            self_karma = getattr(self, "%s_self_karma" % sr.name, None)
+
+            # return default value only if they have *neither* link nor self
+            if all(karma is None for karma in (link_karma, self_karma)):
+                return default_karma
+
+            return sum(karma for karma in (link_karma, self_karma) if karma)
+        else:
+            return getattr(self, sr.name + suffix, default_karma)
 
     def incr_karma(self, kind, sr, amt):
         if sr.name.startswith('_'):
@@ -232,6 +247,7 @@ class Account(Thing):
         descending.
         """
         link_suffix = '_link_karma'
+        self_suffix = '_self_karma'
         comment_suffix = '_comment_karma'
 
         comment_karmas = Counter()
@@ -241,7 +257,11 @@ class Account(Thing):
         for key, value in self._t.iteritems():
             if key.endswith(link_suffix):
                 sr_name = key[:-len(link_suffix)]
-                link_karmas[sr_name] = value
+                link_karmas[sr_name] += value
+            elif key.endswith(self_suffix):
+                # self karma gets added to link karma too
+                sr_name = key[:-len(self_suffix)]
+                link_karmas[sr_name] += value
             elif key.endswith(comment_suffix):
                 sr_name = key[:-len(comment_suffix)]
                 comment_karmas[sr_name] = value
