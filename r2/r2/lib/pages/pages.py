@@ -2245,6 +2245,8 @@ class SubredditsPage(Reddit):
             buttons.append(NamedButton("gold"))
         if c.user_is_admin:
             buttons.append(NamedButton("quarantine"))
+        if c.user_is_admin:
+            buttons.append(NamedButton("featured"))
         if c.user_is_loggedin:
             #add the aliases to "my reddits" stays highlighted
             buttons.append(NamedButton("mine",

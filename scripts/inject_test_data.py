@@ -42,6 +42,7 @@ from r2.models import (
     Comment,
     Link,
     LocalizedDefaultSubreddits,
+    LocalizedFeaturedSubreddits,
     NotFound,
     register,
     Subreddit,
@@ -356,3 +357,4 @@ def inject_test_data(num_links=25, num_comments=25, num_votes=5):
 
     srs = [Subreddit._by_name(n) for n in ("pics", "videos", "askhistorians")]
     LocalizedDefaultSubreddits.set_global_srs(srs)
+    LocalizedFeaturedSubreddits.set_global_srs([Subreddit._by_name('pics')])

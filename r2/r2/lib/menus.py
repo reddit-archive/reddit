@@ -153,6 +153,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      create       = _("create"),
                      mine         = _("my subreddits"),
                      quarantine   = _("quarantine"),
+                     featured     = _("featured"),
 
                      i18n         = _("help translate"),
                      errors       = _("errors"),

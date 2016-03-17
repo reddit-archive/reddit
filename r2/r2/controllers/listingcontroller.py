@@ -1453,6 +1453,11 @@ class RedditsController(ListingController):
     def keep_fn(self):
         base_keep_fn = ListingController.keep_fn(self)
         def keep(item):
+            if self.where == 'featured':
+                if item.type not in ('public', 'restricted'):
+                    return False
+                if not item.discoverable:
+                    return False
             return base_keep_fn(item) and (c.over18 or not item.over_18)
         return keep
 
@@ -1509,6 +1514,11 @@ class RedditsController(ListingController):
                 return [
                     sr._fullname
                     for sr in Subreddit.default_subreddits(ids=False)
+                ]
+            elif self.where == 'featured':
+                return [
+                    sr._fullname
+                    for sr in Subreddit.featured_subreddits()
                 ]
             else:
                 reddits = Subreddit._query( write_cache = True,
