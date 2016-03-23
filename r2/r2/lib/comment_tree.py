@@ -92,14 +92,7 @@ def add_comments(comments):
                 g.log.exception(
                     'add_comments_nolock failed for link %s %s, recomputing',
                     link_id, comment_ids)
-
-                comment_tree = CommentTree.rebuild(link)
-                timer.intermediate('rebuild')
-                # the tree rebuild updated the link's comment count, so schedule
-                # it for search reindexing
-                link.update_search_index()
-                timer.intermediate('update_search_index')
-                g.stats.simple_event('comment_tree_inconsistent')
+                return
 
             # do this under the same lock because we want to ensure we are using
             # the same version of the CommentTree as was just written
