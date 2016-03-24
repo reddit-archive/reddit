@@ -31,6 +31,7 @@ import threading
 from pycassa import columnfamily
 from pycassa import pool
 
+from r2.lib import baseplate_integration
 from r2.lib import cache
 from r2.lib import utils
 
@@ -353,6 +354,7 @@ class Stats:
                 # Work the same for amqp.consume_items and amqp.handle_items.
                 msg_tup = utils.tup(msgs)
 
+                baseplate_integration.start_root_span("amqp." + queue_name)
                 start = time.time()
                 try:
                     return processor(msgs, *args)
@@ -363,6 +365,7 @@ class Stats:
                         fake_end = fake_start + service_time
                         self.transact('amqp.%s' % queue_name,
                                       fake_start, fake_end)
+                    baseplate_integration.stop_root_span()
                     self.flush()
             return wrap_processor
         return decorator

@@ -29,8 +29,55 @@ than its own implementations.
 
 """
 
+import functools
+import random
+
 from baseplate.core import BaseplateObserver, RootSpanObserver, SpanObserver
-from pylons import app_globals as g
+from pylons import app_globals as g, tmpl_context as c
+
+
+def start_root_span(span_name):
+    trace_id = random.getrandbits(64)
+    c.trace = g.baseplate.make_root_span(
+        context=c,
+        trace_id=trace_id,
+        parent_id=None,
+        span_id=trace_id,
+        name=span_name,
+    )
+    c.trace.start()
+
+
+def stop_root_span():
+    c.trace.stop()
+
+
+def with_root_span(name):
+    """A decorator for functions that run outside request context.
+
+    This will add a root span which starts just before invocation of the
+    function and ends immediately after. The context (`c`) will have all
+    appropriate baseplate stuff added to it, and metrics will be flushed when
+    the function returns.
+
+    This is useful for functions run in cron jobs or from the shell. Note that
+    you cannot call a function wrapped with this decorator from within an
+    existing root span.
+
+    """
+    def with_root_span_decorator(fn):
+        @functools.wraps(fn)
+        def with_root_span_wrapper(*args, **kwargs):
+            assert not c.trace, "called while already in a root span"
+
+            try:
+                start_root_span(name)
+                return fn(*args, **kwargs)
+            finally:
+                stop_root_span()
+                g.stats.flush()
+        return with_root_span_wrapper
+    return with_root_span_decorator
 
 
 class R2BaseplateObserver(BaseplateObserver):

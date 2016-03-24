@@ -25,7 +25,6 @@ import json
 import re
 import simplejson
 import socket
-import random
 import itertools
 
 from Cookie import CookieError
@@ -48,7 +47,15 @@ from pylons.i18n.translation import LanguageError
 
 from r2.config import feature
 from r2.config.extensions import is_api, set_extension
-from r2.lib import filters, pages, utils, hooks, ratelimit
+from r2.lib import (
+    baseplate_integration,
+    filters,
+    geoip,
+    hooks,
+    pages,
+    ratelimit,
+    utils,
+)
 from r2.lib.base import BaseController, abort
 from r2.lib.cache import (
     is_valid_size_for_cache,
@@ -994,15 +1001,7 @@ class MinimalController(BaseController):
         else:
             c.request_timer = SimpleSillyStub()
 
-        trace_id = random.getrandbits(64)
-        c.trace = g.baseplate.make_root_span(
-            context=c,
-            trace_id=trace_id,
-            parent_id=None,
-            span_id=trace_id,
-            name=key,
-        )
-        c.trace.start()
+        baseplate_integration.start_root_span(span_name=key)
 
         c.response_wrapper = None
         c.start_time = datetime.now(g.tz)
@@ -1231,7 +1230,7 @@ class MinimalController(BaseController):
         c.request_timer.intermediate("post")
 
         # push data to statsd
-        c.trace.stop()
+        baseplate_integration.stop_root_span()
         c.request_timer.stop()
         g.stats.flush()
 
