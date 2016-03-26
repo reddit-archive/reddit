@@ -98,6 +98,10 @@ def replace_placeholders(string, data, matches):
         "{{author}}": data["author"].name,
         "{{body}}": getattr(item, "body", ""),
         "{{subreddit}}": data["subreddit"].name,
+        "{{author_flair_text}}": data["author"].flair_text(
+            data["subreddit"]._id, obey_disabled=True),
+        "{{author_flair_css_class}}": data["author"].flair_css_class(
+            data["subreddit"]._id, obey_disabled=True),
     }
 
     if isinstance(item, Comment):
