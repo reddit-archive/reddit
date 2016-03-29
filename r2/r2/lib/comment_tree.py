@@ -175,6 +175,8 @@ def get_comment_scores(link, sort, comment_ids, timer):
 
         scores_needed = set(comment_ids) - set(scores_by_id.keys())
         if scores_needed:
+            # some scores were missing from CommentScoresByLink--lookup the
+            # comments and calculate the scores.
             g.stats.simple_event('comment_tree_bad_sorter')
 
             missing_comments = Comment._byID(
@@ -189,10 +191,27 @@ def get_comment_scores(link, sort, comment_ids, timer):
                     for id36, score in scores_by_missing_id36.iteritems()
                 }
             else:
-                scores_by_missing = {
-                    comment._id: getattr(comment, sort)
+                scores_by_missing_id36 = {
+                    comment._id36: getattr(comment, sort)
                     for comment in missing_comments
                 }
+
+                scores_by_missing = {
+                    int(id36, 36): score
+                    for id36, score in scores_by_missing_id36.iteritems()
+                }
+
+            # up to once per minute write the scores to limit writes but
+            # eventually return us to the correct state.
+            if not g.disallow_db_writes:
+                write_key = "lock:score_{link}{sort}".format(
+                    link=link._id36,
+                    sort=sort,
+                )
+                should_write = g.lock_cache.add(write_key, "", time=60)
+                if should_write:
+                    CommentScoresByLink.set_scores(
+                        link, sort, scores_by_missing_id36)
 
             scores_by_id.update(scores_by_missing)
             timer.intermediate('sort')
