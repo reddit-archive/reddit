@@ -2143,19 +2143,17 @@ class Message(Thing, Printable):
 
     def can_view_slow(self):
         if c.user_is_loggedin:
-            # simple case from before:
             if (c.user_is_admin or
-                c.user._id in (self.author_id, self.to_id)):
+                    c.user._id in (self.author_id, self.to_id)):
                 return True
             elif self.sr_id:
-                sr = Subreddit._byID(self.sr_id)
-                is_moderator = sr.is_moderator_with_perms(c.user, 'mail')
-                # moderators can view messages on subreddits they moderate
-                if is_moderator:
+                sr = Subreddit._byID(self.sr_id, data=True, stale=True)
+
+                if sr.is_moderator_with_perms(c.user, 'mail'):
                     return True
                 elif self.first_message:
-                    first = Message._byID(self.first_message, True)
-                    return (first.author_id == c.user._id)
+                    first = Message._byID(self.first_message, data=True)
+                    return c.user._id in (first.author_id, first.to_id)
 
     def get_muted_user_in_conversation(self):
         """Return the muted user involved in a modmail conversation (if any)."""
