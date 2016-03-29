@@ -1117,7 +1117,14 @@ def new_vote(vote):
                     for sort in sorts_to_update:
                         results.append(get_domain_links(domain, sort, "all"))
         elif isinstance(vote.thing, Comment):
-            add_to_commentstree_q(vote.thing)
+            comment = vote.thing
+
+            # update the score periodically when a comment has many votes
+            update_threshold = g.live_config['comment_vote_update_threshold']
+            update_period = g.live_config['comment_vote_update_period']
+            num_votes = comment.num_votes
+            if num_votes <= update_threshold or num_votes % update_period == 0:
+                add_to_commentstree_q(comment)
 
         add_queries(results, insert_items=vote.thing)
     
