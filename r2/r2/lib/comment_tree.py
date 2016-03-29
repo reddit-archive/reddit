@@ -84,14 +84,13 @@ def add_comments(comments):
 
                 timer.intermediate('update')
             except InconsistentCommentTreeError:
-                # this exception occurs when we add a comment to the tree but
-                # its parent isn't in the tree yet, need to rebuild the tree
-                # from scratch
-
+                # failed to add a comment to the CommentTree because its parent
+                # is missing from the tree. this comment will be lost forever
+                # unless a rebuild is performed.
                 comment_ids = [comment._id for comment in link_comments]
-                g.log.exception(
-                    'add_comments_nolock failed for link %s %s, recomputing',
-                    link_id, comment_ids)
+                g.log.error(
+                    "comment_tree_inconsistent: %s %s" % (link, comment_ids))
+                g.stats.simple_event('comment_tree_inconsistent')
                 return
 
             # do this under the same lock because we want to ensure we are using
