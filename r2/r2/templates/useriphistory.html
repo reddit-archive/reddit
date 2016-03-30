@@ -35,21 +35,25 @@
 <p>${strings.account_activity_blurb}</p>
 
 <p>${strings.your_current_ip_is % ip_format}</p>
-
 <table>
     <thead>
         <tr>
             <th>${_("IP address")}</th>
             <th>${_("Location")}</th>
             <th>${_("Last Visit")}</th>
+            <th>${_("Organization")}</th>
         </tr>
     </thead>
     <tbody>
-        % for ip, last_visit, location in thing.ips[:10]:
+        % for ip_data in thing.ips[:10]:
+        <% 
+            ip, last_visit, location, org = ip_data[:4]
+        %>
         <tr>
             <td>${ip}</td>
             <td>${location.get('country_name', '')}</td>
             <td>${timestamp(last_visit, live=True, include_tense=True)}</td>
+            <td>${org}</td>
         </tr>
         % endfor
     </tbody>
