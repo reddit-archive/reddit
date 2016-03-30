@@ -1269,7 +1269,7 @@ class MessageController(ListingController):
 
     @property
     def render_params(self):
-        render_params = {}
+        render_params = {'source': self.source}
 
         # event target for screenviews
         event_target = {}
@@ -1331,13 +1331,11 @@ class MessageController(ListingController):
             self.next_suggestions_cls = UnreadMessagesSuggestions
 
         if self.message:
-            source = "permalink"
+            self.source = "permalink"
         elif self.where in {"moderator", "multi"}:
-            source = "modmail"
+            self.source = "modmail"
         else:
-            source = "usermail"
-
-        self.render_params = {"source": source}
+            self.source = "usermail"
 
         return ListingController.GET_listing(self, **env)
 
