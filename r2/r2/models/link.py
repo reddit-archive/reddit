@@ -144,7 +144,7 @@ class Link(Thing, Printable):
     _nsfw = re.compile(r"\bnsf[wl]\b", re.I)
 
     SELFTEXT_MAX_LENGTH = 40000
-    
+
     is_votable = True
 
     def __init__(self, *a, **kw):
@@ -364,15 +364,15 @@ class Link(Thing, Printable):
         if not c.user_is_admin and self._deleted:
             return False
 
-        if not (c.user_is_admin or (isinstance(c.site, DomainSR) and
-                                    wrapped.subreddit.is_moderator(user))):
+        is_mod = wrapped.subreddit.is_moderator(user)
+
+        if not (c.user_is_admin or (isinstance(c.site, DomainSR) and is_mod)):
             if self._spam and (not user or
                                (user and self.author_id != user._id)):
                 return False
 
-            #author_karma = wrapped.author.link_karma
-            #if author_karma <= 0 and random.randint(author_karma, 0) != 0:
-                #return False
+        if not (c.user_is_admin or is_mod) and wrapped.enemy:
+            return False
 
         if user and not c.ignore_hide_rules:
             if wrapped.hidden:
@@ -1406,6 +1406,17 @@ class Comment(Thing, Printable):
         return True
 
     def keep_item(self, wrapped):
+        if c.user_is_admin:
+            return True
+
+        if c.user_is_loggedin:
+            if wrapped.subreddit.is_moderator(c.user):
+                return True
+            if wrapped.author_id == c.user._id:
+                return True
+            if wrapped.author_id in c.user.enemies:
+                return False
+
         return True
 
     cache_ignore = set((
@@ -1729,7 +1740,7 @@ class Comment(Thing, Printable):
 
             # always use the default collapse threshold in contest mode threads
             # if the user has a custom collapse threshold
-            if (item.link.contest_mode and 
+            if (item.link.contest_mode and
                     user.pref_min_comment_score is not None):
                 min_score = Account._defaults['pref_min_comment_score']
             else:
@@ -2070,13 +2081,7 @@ class Message(Thing, Printable):
         if not skip_inbox and to and (not m._spam or to.name in g.admins):
             # if "to" is not a sr moderator they need to be notified
             if not sr_id or not sr.is_moderator(to):
-                # Record the inbox relation, but don't give the user
-                # an orangered, if they PM themselves.
-                # Don't notify on PMs from blocked users, either
-                orangered = (to.name != author.name and
-                             author._id not in to.enemies)
-                inbox_rel.append(Inbox._add(to, m, 'inbox',
-                                            orangered=orangered))
+                inbox_rel.append(Inbox._add(to, m, 'inbox'))
 
                 if orangered and to.pref_email_messages:
                     from r2.lib.template_helpers import get_domain
@@ -2121,6 +2126,8 @@ class Message(Thing, Printable):
 
         if sr_id:
             g.events.modmail_event(m, request=request, context=c)
+        else:
+            g.events.message_event(m, request=request, context=c)
 
         return (m, inbox_rel)
 
@@ -2446,7 +2453,7 @@ class Message(Thing, Printable):
         return s
 
     def keep_item(self, wrapped):
-        return True
+        return c.user_is_admin or not wrapped.enemy
 
 
 class _SaveHideByAccount(tdb_cassandra.DenormalizedRelation):
@@ -2497,7 +2504,7 @@ class _ThingSavesByAccount(_SaveHideByAccount):
     @classmethod
     def value_for(cls, thing1, thing2, category=None):
         return category or ''
-    
+
     @classmethod
     def _remove_from_category_listings(cls, user, things, category):
         things = tup(things)
@@ -2666,7 +2673,7 @@ class _ThingSavesByCategory(_ThingSavesBySubreddit):
 
     @classmethod
     def _get_query_fn():
-        raise NotImplementedError 
+        raise NotImplementedError
 
     @classmethod
     def _check_empty(cls, user, category):
@@ -2773,6 +2780,14 @@ class Inbox(MultiRelation('inbox',
     @classmethod
     def _add(cls, to, obj, *a, **kw):
         orangered = kw.pop("orangered", True)
+
+        # don't orangered (ever!) for enemies
+        if obj.author_id in to.enemies:
+            orangered = False
+        # don't get an orangered for messaging yourself.
+        elif to._id == obj.author_id:
+            orangered = False
+
         i = Inbox(to, obj, *a, **kw)
         i.new = True
         i._commit()

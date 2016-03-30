@@ -2134,31 +2134,27 @@ class CommentPane(Templated):
                         # this is for MoreComments and MoreRecursion
                         continue
 
-                    is_friend = getattr(t, "friend", False) and not t.author._deleted
-                    liked = t.likes
-                    disliked = t.likes is False
-                    saved = t.saved
-                    gilded = t.user_gilded
+                    is_friend = (getattr(t, "friend", False) and
+                                 not t.author._deleted)
+                    is_enemy = getattr(t, "enemy", False)
 
-                    if not (is_friend or liked or disliked or saved or gilded):
-                        continue
-
-                    update = {
-                        'id': t._fullname,
-                    }
-
+                    update = {}
                     if is_friend:
                         update['friend'] = True
-                    if liked:
+                    if is_enemy:
+                        update['enemy'] = True
+                    if t.likes:
                         update['voted'] = 1
-                    if disliked:
+                    if t.likes is False:
                         update['voted'] = -1
-                    if saved:
+                    if t.saved:
                         update['saved'] = True
-                    if gilded:
+                    if t.user_gilded:
                         update['gilded'] = (t.gilded_message, t.gildings)
 
-                    updates.append(update)
+                    if update:
+                        update['id'] = t._fullname
+                        updates.append(update)
 
                 self.rendered += ThingUpdater(updates=updates).render()
                 timer.intermediate("thingupdater")
@@ -2712,6 +2708,11 @@ class BannedInterstitial(Interstitial):
 
 class BannedUserInterstitial(BannedInterstitial):
     """The message shown when viewing a banned user profile."""
+    pass
+
+
+class UserBlockedInterstitial(BannedInterstitial):
+    """The message shown when viewing a blocked user profile."""
     pass
 
 

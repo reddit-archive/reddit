@@ -30,6 +30,7 @@ from r2.tests import RedditTestCase
 from r2.models import Link
 from r2.lib import eventcollector
 from r2.lib import hooks
+from r2 import models
 
 
 class TestEventCollector(RedditTestCase):
@@ -269,5 +270,105 @@ class TestEventCollector(RedditTestCase):
                         'client_ipv4_16': "1.2",
                     }
                 }
+            }
+        )
+
+    def test_modmail_event(self):
+        self.patch_liveconfig("events_collector_modmail_sample_rate", 1.0)
+        message = MagicMock(name="message", _date=FAKE_DATE)
+        first_message = MagicMock(name="first_message")
+        message_cls = self.autopatch(models, "Message")
+        message_cls._byID.return_value = first_message
+        context = MagicMock(name="context")
+        request = MagicMock(name="request")
+        request.ip = "1.2.3.4"
+        g.events.modmail_event(
+            message, context=context, request=request
+        )
+
+        g.events.queue_production.assert_event_item(
+            {
+                'event_type': "ss.send_message",
+                'event_topic': "message_events",
+                "payload": {
+                    'domain': request.host,
+                    'referrer_domain': self.domain_mock(),
+                    'user_id': message.author_slow._id,
+                    'user_name': message.author_slow.name,
+                    'message_id': message._id,
+                    'message_fullname': message._fullname,
+                    'message_kind': "modmail",
+                    'first_message_fullname': first_message._fullname,
+                    'first_message_id': first_message._id,
+                    'sender_type': "moderator",
+                    'is_third_party': True,
+                    'third_party_metadata': "mailgun",
+                    'referrer_url': request.headers.get(),
+                    'user_agent': request.user_agent,
+                    'user_agent_parsed': {
+                        'platform_version': None,
+                        'platform_name': None,
+                    },
+                    'sr_id': message.subreddit_slow._id,
+                    'sr_name': message.subreddit_slow.name,
+                    'oauth2_client_id': context.oauth2_client._id,
+                    'oauth2_client_app_type': context.oauth2_client.app_type,
+                    'oauth2_client_name': context.oauth2_client.name,
+                    'geoip_country': context.location,
+                    'obfuscated_data': {
+                        'client_ip': request.ip,
+                        'client_ipv4_24': "1.2.3",
+                        'client_ipv4_16': "1.2",
+                    },
+                },
+            }
+        )
+
+    def test_message_event(self):
+        self.patch_liveconfig("events_collector_modmail_sample_rate", 1.0)
+        message = MagicMock(name="message", _date=FAKE_DATE)
+        first_message = MagicMock(name="first_message")
+        message_cls = self.autopatch(models, "Message")
+        message_cls._byID.return_value = first_message
+        context = MagicMock(name="context")
+        request = MagicMock(name="request")
+        request.ip = "1.2.3.4"
+        g.events.message_event(
+            message, context=context, request=request
+        )
+
+        g.events.queue_production.assert_event_item(
+            {
+                'event_type': "ss.send_message",
+                'event_topic': "message_events",
+                "payload": {
+                    'domain': request.host,
+                    'referrer_domain': self.domain_mock(),
+                    'user_id': message.author_slow._id,
+                    'user_name': message.author_slow.name,
+                    'message_id': message._id,
+                    'message_fullname': message._fullname,
+                    'message_kind': "message",
+                    'first_message_fullname': first_message._fullname,
+                    'first_message_id': first_message._id,
+                    'sender_type': "user",
+                    'is_third_party': True,
+                    'third_party_metadata': "mailgun",
+                    'referrer_url': request.headers.get(),
+                    'user_agent': request.user_agent,
+                    'user_agent_parsed': {
+                        'platform_version': None,
+                        'platform_name': None,
+                    },
+                    'oauth2_client_id': context.oauth2_client._id,
+                    'oauth2_client_app_type': context.oauth2_client.app_type,
+                    'oauth2_client_name': context.oauth2_client.name,
+                    'geoip_country': context.location,
+                    'obfuscated_data': {
+                        'client_ip': request.ip,
+                        'client_ipv4_24': "1.2.3",
+                        'client_ipv4_16': "1.2",
+                    },
+                },
             }
         )

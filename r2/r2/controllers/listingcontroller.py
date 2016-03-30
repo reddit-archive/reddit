@@ -904,6 +904,16 @@ class UserController(ListingController):
             request.environ['usable_error_content'] = errpage.render()
             return self.abort403()
 
+        if (c.user_is_loggedin and
+                not c.user_is_admin and
+                vuser._id in c.user.enemies):
+            errpage = InterstitialPage(
+                _("blocked"),
+                content=UserBlockedInterstitial(),
+            )
+            request.environ['usable_error_content'] = errpage.render()
+            return self.abort403()
+
         # continue supporting /liked and /disliked paths for API clients
         # but 301 redirect non-API users to the new location
         changed_wheres = {"liked": "upvoted", "disliked": "downvoted"}
@@ -1086,8 +1096,7 @@ class MessageController(ListingController):
 
     def keep_fn(self):
         def keep(item):
-            wouldkeep = item.keep_item(item)
-
+            wouldkeep = True
             # TODO: Consider a flag to disable this (and see above plus builder.py)
             if item._deleted and not c.user_is_admin:
                 return False
@@ -1095,18 +1104,32 @@ class MessageController(ListingController):
                     item.author_id != c.user._id and
                     not c.user_is_admin):
                 return False
+
+            if self.where == 'unread' or self.subwhere == 'unread':
+                # don't show user their own unread stuff
+                if item.author_id == c.user._id:
+                    wouldkeep = False
+                else:
+                    wouldkeep = item.new
+            elif item.is_mention:
+                wouldkeep = (
+                    c.user.name.lower() in extract_user_mentions(item.body)
+                )
+
+            if c.user_is_admin:
+                return wouldkeep
+
+            if (hasattr(item, "subreddit") and
+                    item.subreddit.is_moderator(c.user)):
+                return wouldkeep
+
             if item.author_id in c.user.enemies:
                 return False
-            # don't show user their own unread stuff
-            if ((self.where == 'unread' or self.subwhere == 'unread')
-                and (item.author_id == c.user._id or not item.new)):
-                return False
 
-            if (item.is_mention and
-                c.user.name.lower() not in extract_user_mentions(item.body)):
-                return False
+            if item.author_id == c.user._id:
+                return wouldkeep
 
-            return wouldkeep
+            return wouldkeep and item.keep_item(item)
         return keep
 
     @staticmethod
@@ -1642,15 +1665,22 @@ class CommentsController(SubredditListingController):
 
     def keep_fn(self):
         def keep(item):
-            can_see_spam = (c.user_is_loggedin and
-                            (item.author_id == c.user._id or
-                             c.user_is_admin or
-                             item.subreddit.is_moderator(c.user)))
-            can_see_deleted = c.user_is_loggedin and c.user_is_admin
+            if c.user_is_admin:
+                return True
 
-            return ((not item._spam or can_see_spam) and
-                    (not item._deleted or can_see_deleted))
+            if item._deleted:
+                return False
 
+            if c.user_is_loggedin:
+                if item.subreddit.is_moderator(c.user):
+                    return True
+
+                if item.author_id == c.user._id:
+                    return True
+
+            if item._spam:
+                return False
+            return item.keep_item(item)
         return keep
 
     def query(self):

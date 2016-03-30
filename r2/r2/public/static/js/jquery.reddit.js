@@ -274,6 +274,14 @@ $.fn.updateThing = function(update) {
     var $thing = $(this);
     var $entry = $thing.children('.entry');
 
+    if ('enemy' in update) {
+        // TODO: this will hide comments of enemies along with all of their
+        // children.  The better alternative would be to make it render as
+        // deleted.
+        $thing.remove();
+        return;
+    }
+
     if ('friend' in update) {
         var label = '<a class="friend" title="friend" href="/prefs/friends">F</a>';
         

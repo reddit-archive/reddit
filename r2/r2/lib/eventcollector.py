@@ -570,6 +570,7 @@ class EventQueue(object):
         event.add("sr_id", sr._id)
         event.add("sr_name", sr.name)
         event.add("message_id", message._id)
+        event.add("message_kind", "modmail")
         event.add("message_fullname", message._fullname)
         event.add("first_message_id", first_message._id)
         event.add("first_message_fullname", first_message._fullname)
@@ -587,6 +588,72 @@ class EventQueue(object):
             target = sr
         else:
             target = Account._byID(message.to_id, data=True)
+
+        event.add_target_fields(target)
+
+        self.save_event(event)
+
+    @squelch_exceptions
+    @sampled("events_collector_message_sample_rate")
+    def message_event(self, message, request=None, context=None):
+        """Create a 'message' event for event-collector.
+
+        message: An r2.models.Message object
+        request: pylons.request of the request that created the message
+        context: pylons.tmpl_context of the request that created the message
+
+        """
+
+        from r2.models import Account, Message
+
+        sender = message.author_slow
+
+        if message.first_message:
+            first_message = Message._byID(message.first_message, data=True)
+        else:
+            first_message = message
+
+        event = Event(
+            topic="message_events",
+            event_type="ss.send_message",
+            time=message._date,
+            request=request,
+            context=context,
+            data={
+                # set these manually rather than allowing them to be set from
+                # the request context because the loggedin user might not
+                # be the message sender
+                "user_id": sender._id,
+                "user_name": sender.name,
+            },
+        )
+
+        if sender == Account.system_user():
+            sender_type = "automated"
+        else:
+            sender_type = "user"
+
+        event.add("sender_type", sender_type)
+        event.add("message_kind", "message")
+        event.add("message_id", message._id)
+        event.add("message_fullname", message._fullname)
+
+        event.add_text("message_body", message.body)
+        event.add_text("message_subject", message.subject)
+
+        event.add("first_message_id", first_message._id)
+        event.add("first_message_fullname", first_message._fullname)
+
+        if request and request.POST.get("source", None):
+            source = request.POST["source"]
+            if source in {"compose", "permalink", "usermail"}:
+                event.add("page", source)
+
+        if message.sent_via_email:
+            event.add("is_third_party", True)
+            event.add("third_party_metadata", "mailgun")
+
+        target = Account._byID(message.to_id, data=True)
 
         event.add_target_fields(target)
 

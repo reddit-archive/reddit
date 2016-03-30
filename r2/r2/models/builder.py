@@ -143,6 +143,7 @@ class Builder(object):
 
             w.author = None
             w.friend = False
+            w.enemy = False
 
             w.distinguished = None
             if hasattr(item, "distinguished"):
@@ -164,15 +165,18 @@ class Builder(object):
             # receiver, so we can't check for friend or cakeday
             author_is_hidden = hasattr(item, 'display_author')
 
-            if (not author_is_hidden and
-                    user and w.author and w.author._id in user.friends):
-                w.friend = True     # TODO: deprecated?
+            if user and w.author:
+                # the enemy flag will trigger keep_item to fail in Printable
+                if w.author._id in user.enemies:
+                    w.enemy = True
 
-                if item.author_id in friend_rels:
-                    note = getattr(friend_rels[w.author._id], "note", None)
-                else:
-                    note = None
-                add_friend_distinguish(distinguish_attribs_list, note)
+                elif not author_is_hidden and w.author._id in user.friends:
+                    w.friend = True
+                    if item.author_id in friend_rels:
+                        note = getattr(friend_rels[w.author._id], "note", None)
+                    else:
+                        note = None
+                    add_friend_distinguish(distinguish_attribs_list, note)
 
             if (w.distinguished == 'admin' and w.author):
                 add_admin_distinguish(distinguish_attribs_list)
@@ -1403,6 +1407,12 @@ class CommentBuilder(Builder):
         self.missing_root_comments = missing_root_comments
         self.missing_root_count = missing_root_count
 
+    def keep_item(self, item):
+        if not self.show_deleted:
+            if item.deleted and not item.num_children:
+                return False
+        return item.keep_item(item)
+
     def _make_wrapped_tree(self):
         timer = self.timer
         ordered_comment_tuples = self.ordered_comment_tuples
@@ -1424,14 +1434,7 @@ class CommentBuilder(Builder):
             comment._id: comment for comment in wrapped}
         self.uncollapse_special_comments(wrapped_by_id)
 
-        if self.show_deleted:
-            deleted_ids = set()
-        else:
-            # completely skip deleted comments with no children
-            deleted_ids = {
-                comment._id for comment in wrapped
-                if (comment.deleted and not comment.num_children)
-            }
+        redacted_ids = set()
 
         visible_ids = {
             comment._id for comment in wrapped
@@ -1442,7 +1445,11 @@ class CommentBuilder(Builder):
         for comment_id in comment_order:
             comment = wrapped_by_id[comment_id]
 
-            if comment._id in deleted_ids or getattr(comment, 'hidden', False):
+            if getattr(comment, 'hidden', False):
+                continue
+
+            if not self.keep_item(comment):
+                redacted_ids.add(comment_id)
                 continue
 
             # add the comment as a child of its parent or to the top level of
@@ -1480,7 +1487,9 @@ class CommentBuilder(Builder):
                 w = Wrapped(mr)
                 add_to_child_listing(comment, w)
             elif comment.depth < self.max_depth - 1:
-                missing_child_ids = set(comment.child_ids) - visible_ids - deleted_ids
+                missing_child_ids = (
+                    set(comment.child_ids) - visible_ids - redacted_ids
+                )
                 if missing_child_ids:
                     missing_depth = comment.depth + 1
                     mc = MoreChildren(self.link, self.sort, depth=missing_depth,
@@ -1839,9 +1848,12 @@ class UserMessageBuilder(MessageBuilder):
 
     def _viewable_message(self, message):
         is_author = message.author_id == c.user._id
-        if not c.user_is_admin and not is_author and message._spam:
-            return False
+        if not c.user_is_admin:
+            if not is_author and message._spam:
+                return False
 
+            if message.author_id in self.user.enemies:
+                return False
         return super(UserMessageBuilder, self)._viewable_message(message)
 
     def get_tree(self):
