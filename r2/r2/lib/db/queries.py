@@ -1083,10 +1083,6 @@ def new_comment(comment, inbox_rels):
         update_comment_notifications(comment, inbox_rels)
 
 
-def delete_comment(comment):
-    add_to_commentstree_q(comment)
-
-
 def new_subreddit(sr):
     "no precomputed queries here yet"
     amqp.add_item('new_subreddit', sr._fullname)

@@ -1491,10 +1491,19 @@ class ApiController(RedditController):
             queries.delete(thing)
             thing.subreddit_slow.remove_sticky(thing)
         elif isinstance(thing, Comment):
-            if not was_deleted:
-                queries.delete_comment(thing)
+            link = thing.link_slow
 
-            thing.link_slow.remove_sticky_comment(comment=thing, set_by=c.user)
+            if not was_deleted:
+                # get lock before writing to avoid multiple decrements when
+                # there are simultaneous duplicate requests
+                lock_key = "lock:del_{link}_{comment}".format(
+                    link=link._id36,
+                    comment=thing._id36,
+                )
+                if g.lock_cache.add(lock_key, "", time=60):
+                    link._incr('num_comments', -1)
+
+            link.remove_sticky_comment(comment=thing, set_by=c.user)
 
             queries.new_comment(thing, None)  # possible inbox_rels are
                                               # handled by unnotify

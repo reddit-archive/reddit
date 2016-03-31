@@ -125,10 +125,6 @@ class CommentTreeStorageBase(object):
             parents[cid] = p_id
 
     @classmethod
-    def delete_comment(cls, tree, comment):
-        pass
-
-    @classmethod
     def prepare_new_storage(cls, link):
         """Do whatever's needed to initialize the storage for a new link."""
         pass
@@ -248,11 +244,6 @@ class CommentTree:
     def add_comments(self, comments):
         impl = self.IMPLEMENTATIONS[self.link.comment_tree_version]
         impl.add_comments(self, comments)
-
-    def delete_comment(self, comment, link):
-        impl = self.IMPLEMENTATIONS[link.comment_tree_version]
-        impl.delete_comment(self, comment)
-        self.link._incr('num_comments', -1)
 
     @classmethod
     def rebuild(cls, link):

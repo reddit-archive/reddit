@@ -49,10 +49,6 @@ def add_comments(comments):
     for link_id, link_comments in comments_by_link_id.iteritems():
         link = links[link_id]
 
-        new_comments = [
-            comment for comment in link_comments if not comment._deleted]
-        deleted_comments = [
-            comment for comment in link_comments if comment._deleted]
         timer = g.stats.get_timer(
             'comment_tree.add.%s' % link.comment_tree_version)
         timer.start()
@@ -75,13 +71,7 @@ def add_comments(comments):
                 timer.intermediate('lock')
                 comment_tree = CommentTree.by_link(link, timer)
                 timer.intermediate('get')
-
-                if new_comments:
-                    comment_tree.add_comments(new_comments)
-
-                for comment in deleted_comments:
-                    comment_tree.delete_comment(comment, link)
-
+                comment_tree.add_comments(link_comments)
                 timer.intermediate('update')
             except InconsistentCommentTreeError:
                 # failed to add a comment to the CommentTree because its parent
