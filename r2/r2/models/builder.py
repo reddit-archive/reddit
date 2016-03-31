@@ -1178,15 +1178,13 @@ def write_comment_orders(link):
     # process will be timed by the caller
     timer = SimpleSillyStub()
 
-    # value of 0 means don't write for any value of link.num_comments
+    # only write precomputed sorts for links with enough comments.
+    # (value of 0 means don't write for any value of link.num_comments)
     min_comments = g.live_config['precomputed_comment_sort_min_comments']
-    write_comment_order = min_comments and link.num_comments >= min_comments
-    write_suggested_sort = g.live_config['precomputed_comment_suggested_sort']
-
-    if write_comment_order:
+    if min_comments and link.num_comments >= min_comments:
         sorts_to_write = set(g.live_config['precomputed_comment_sorts'])
 
-        if write_suggested_sort:
+        if g.live_config['precomputed_comment_suggested_sort']:
             suggested_sort = link.sort_if_suggested()
             if suggested_sort:
                 sorts_to_write.add(suggested_sort)
