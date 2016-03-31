@@ -32,6 +32,7 @@ from r2.models import Account, Thing
 from r2.models.last_modified import LastModified
 from r2.models.vote import Vote, VotesByAccount
 
+from r2.lib.geoip import organization_by_ips
 
 def prequeued_vote_key(user, item):
     return 'registered_vote_%s_%s' % (user._id, item._fullname)
@@ -62,6 +63,8 @@ def cast_vote(user, thing, direction, **data):
     }
 
     data['ip'] = getattr(request, "ip", None)
+    if data['ip'] is not None:
+        data['org'] = organization_by_ips(data['ip'])
     vote_data['data'] = data
 
     hooks.get_hook("vote.get_vote_data").call(
