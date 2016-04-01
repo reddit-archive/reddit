@@ -23,6 +23,7 @@
 import hashlib
 
 from pylons import app_globals as g
+import requests
 
 from r2.lib.configparse import ConfigValue
 from r2.lib.providers.image_resizing import (
@@ -96,3 +97,19 @@ class ImgixImageResizingProvider(ImageResizingProvider):
 
         url.update_query(s=signature)
         return url
+
+    def purge_url(self, url):
+        """Purge an image (by url) from imgix.
+
+        Reference: http://www.imgix.com/docs/tutorials/purging-images
+
+        Note that as mentioned in the imgix docs, in order to remove
+        an image, this function should be used *after* already
+        removing the image from our source, or imgix will just re-fetch
+        and replace the image with a new copy even after purging.
+        """
+        requests.post(
+            "https://api.imgix.com/v2/image/purger",
+            auth=(g.secrets["imgix_api_key"], ""),
+            data={"url": url},
+        )

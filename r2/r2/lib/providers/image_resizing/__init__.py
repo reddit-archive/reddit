@@ -51,4 +51,15 @@ class ImageResizingProvider(object):
         """
         raise NotImplementedError
 
+    def purge_url(self, url):
+        """Purge an image (by url) from the provider.
+
+        Providers should override and implement this method if they do
+        something like keep a cache of resized versions that are
+        requested. This will allow the cached version to be deleted, in
+        cases where it needs to be re-generated or removed entirely.
+        """
+        pass
+
+
 class NotLargeEnough(Exception): pass
