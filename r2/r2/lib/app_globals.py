@@ -56,6 +56,7 @@ from r2.lib.cache import (
     HardCache,
     HardcacheChain,
     LocalCache,
+    Mcrouter,
     MemcacheChain,
     Permacache,
     SelfEmptyingCache,
@@ -805,7 +806,7 @@ class Globals(object):
         self.startup_timer.intermediate("memcache")
 
         ################# MCROUTER
-        self.mcrouter = CMemcache(
+        self.mcrouter = Mcrouter(
             "mcrouter",
             self.mcrouter_addr,
             min_compress_len=1400,
