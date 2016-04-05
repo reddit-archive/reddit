@@ -59,11 +59,6 @@ def rollback():
 def obj_id(things):
     return tuple(t if isinstance(t, (int, long)) else t._id for t in things)
 
-def thing_prefix(cls_name, id=None):
-    p = cls_name + '_'
-    if id:
-        p += str(id)
-    return p
 
 class SafeSetAttr:
     def __init__(self, cls):
@@ -173,8 +168,13 @@ class DataThing(object):
 
         raise AttributeError, '%s not found; %s' % (descr, nl)
 
+    @classmethod
+    def _cache_prefix(cls):
+        return cls.__name__ + '_'
+
     def _cache_key(self):
-        return thing_prefix(self.__class__.__name__, self._id)
+        prefix = self._cache_prefix()
+        return "{prefix}{id}".format(prefix=prefix, id=self._id)
 
     def _other_self(self):
         """Load from the cached version of myself. Skip the local cache."""
@@ -313,10 +313,9 @@ class DataThing(object):
                     print "Warning: %s is missing %s" % (i._fullname, attr)
             to_save[i._id] = i
 
-        prefix = thing_prefix(cls.__name__)
-
         #write the data to the cache
-        cls._cache.set_multi(to_save, prefix=prefix, time=THING_CACHE_TTL)
+        cls._cache.set_multi(
+            to_save, prefix=cls._cache_prefix(), time=THING_CACHE_TTL)
 
     def _load(self):
         self._load_multi(self)
@@ -381,7 +380,6 @@ class DataThing(object):
     def _byID(cls, ids, data=False, return_dict=True,
               stale=False, ignore_missing=False):
         ids, single = tup(ids, ret_is_single=True)
-        prefix = thing_prefix(cls.__name__)
 
         for x in ids:
             if not isinstance(x, (int, long)):
@@ -417,8 +415,8 @@ class DataThing(object):
 
             return items
 
-        bases = sgm(cls._cache, ids, items_db, prefix, time=THING_CACHE_TTL,
-                    stale=stale, found_fn=count_found,
+        bases = sgm(cls._cache, ids, items_db, prefix=cls._cache_prefix(),
+                    time=THING_CACHE_TTL, stale=stale, found_fn=count_found,
                     stat_subname=cls.__name__)
 
         # Check to see if we found everything we asked for
@@ -867,7 +865,7 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
 
         @staticmethod
         def _fast_cache_key_from_parts(class_name, thing1_id, thing2_id, name):
-            return thing_prefix(class_name) + '_'.join([
+            return class_name + '_' + '_'.join([
                 str(thing1_id),
                 str(thing2_id),
                 name]

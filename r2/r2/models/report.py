@@ -22,7 +22,7 @@
 
 from collections import Counter
 
-from r2.lib.db.thing import Thing, Relation, MultiRelation, thing_prefix
+from r2.lib.db.thing import Thing, Relation, MultiRelation
 from r2.lib.utils import tup
 from r2.lib.memoize import memoize
 from r2.models import Link, Comment, Message, Subreddit, Account
