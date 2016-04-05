@@ -214,6 +214,8 @@ class SubredditExists(Exception): pass
 
 
 class Subreddit(Thing, Printable, BaseSite):
+    _cache = g.transitionalcache
+
     # Note: As of 2010/03/18, nothing actually overrides the static_path
     # attribute, even on a cname. So c.site.static_path should always be
     # the same as g.static_path.
