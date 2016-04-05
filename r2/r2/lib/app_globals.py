@@ -873,6 +873,16 @@ class Globals(object):
         cache_chains.update(cache=self.cache)
 
         if stalecaches:
+            self.maincache = StaleCacheChain(
+                localcache_cls(),
+                stalecaches,
+                self.mcrouter,
+            )
+        else:
+            self.maincache = CacheChain((localcache_cls(), self.mcrouter))
+        cache_chains.update(maincache=self.maincache)
+
+        if stalecaches:
             self.memoizecache = StaleCacheChain(
                 localcache_cls(),
                 stalecaches,
