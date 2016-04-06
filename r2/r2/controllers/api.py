@@ -1836,6 +1836,10 @@ class ApiController(RedditController):
         if not thing:
             return
 
+        # don't allow blocking yourself
+        if thing.author_id == c.user._id:
+            return
+
         try:
             sr = Subreddit._byID(thing.sr_id) if thing.sr_id else None
         except NotFound:
