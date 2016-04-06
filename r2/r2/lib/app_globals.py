@@ -882,26 +882,6 @@ class Globals(object):
             self.maincache = CacheChain((localcache_cls(), self.mcrouter))
         cache_chains.update(maincache=self.maincache)
 
-        def get_new_subreddit_prefix_and_key(key, prefix=''):
-            old_prefix = "Subreddit_"
-            new_prefix = "sr:"
-
-            if prefix:
-                assert prefix == old_prefix
-                return new_prefix, key
-            else:
-                key = str(key)
-                assert key.startswith(old_prefix)
-                sr_id = key[len(old_prefix):]
-                return '', new_prefix + sr_id
-
-        self.transitionalcache = TransitionalCache(
-            original_cache=self.cache,
-            replacement_cache=self.maincache,
-            read_original=False,
-            key_transform=get_new_subreddit_prefix_and_key,
-        )
-
         if stalecaches:
             self.memoizecache = StaleCacheChain(
                 localcache_cls(),

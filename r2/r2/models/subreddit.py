@@ -214,7 +214,7 @@ class SubredditExists(Exception): pass
 
 
 class Subreddit(Thing, Printable, BaseSite):
-    _cache = g.transitionalcache
+    _cache = g.maincache
 
     # Note: As of 2010/03/18, nothing actually overrides the static_path
     # attribute, even on a cname. So c.site.static_path should always be
@@ -351,6 +351,10 @@ class Subreddit(Thing, Printable, BaseSite):
     )
 
     MAX_STICKIES = 2
+
+    @classmethod
+    def _cache_prefix(cls):
+        return "sr:"
 
     def __setattr__(self, attr, val, make_dirty=True):
         if attr in self._derived_attrs:
