@@ -1847,14 +1847,20 @@ class ApiController(RedditController):
                 BlockedSubredditsByAccount.block(c.user, sr)
             return
 
-        # Users may only block someone who has
-        # actively harassed them (i.e., comment/link reply
-        # or PM). Check that 'thing' is in the user's inbox somewhere
-        if not (sr and sr.is_moderator_with_perms(c.user, 'mail')):
+        # Users may only block someone who has actively harassed them
+        # directly (i.e. comment/link reply or PM). Make sure that 'thing'
+        # is in the user's inbox somewhere, unless it's modmail to a
+        # subreddit that the user moderates (since then it's not
+        # necessarily in their personal inbox)
+        is_modmail = (isinstance(thing, Message)
+            and sr
+            and sr.is_moderator_with_perms(c.user, 'mail'))
+
+        if not is_modmail:
             inbox_cls = Inbox.rel(Account, thing.__class__)
             rels = inbox_cls._fast_query(c.user, thing,
                                         ("inbox", "selfreply", "mention"))
-            if not filter(None, rels.values()):
+            if not any(rels.values()):
                 return
 
         block_acct = Account._byID(thing.author_id)
