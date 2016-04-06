@@ -466,16 +466,20 @@ class TransitionalCache(CacheUtils):
         else:
             return self.replacement.caches
 
-    def transform_memcache_key(self, args):
+    def transform_memcache_key(self, args, kwargs):
         if self.key_transform:
             old_key = args[0]
+            prefix = kwargs.get("prefix", "")
+
             if isinstance(old_key, dict):  # multiget passes a dict
-                new_key = {self.key_transform(k): v for k,v in
-                           old_key.iteritems()}
+                new_key = {
+                    self.key_transform(k, prefix): v
+                    for k, v in old_key.iteritems()
+                }
             elif isinstance(old_key, list):
-                new_key = [self.key_transform(k) for k in old_key]
+                new_key = [self.key_transform(k, prefix) for k in old_key]
             else:
-                new_key = self.key_transform(old_key)
+                new_key = self.key_transform(old_key, prefix)
 
             return (new_key,) + args[1:]
         else:
@@ -486,7 +490,15 @@ class TransitionalCache(CacheUtils):
             if self.read_original:
                 return getattr(self.original, fn_name)(*args, **kwargs)
             else:
-                args = self.transform_memcache_key(args)
+                args = self.transform_memcache_key(args, kwargs)
+
+                # remove the prefix argument because the transform fn has
+                # already tacked that onto the keys
+                try:
+                    kwargs.pop("prefix")
+                except KeyError:
+                    pass
+
                 return getattr(self.replacement, fn_name)(*args, **kwargs)
         return transitional_cache_get_fn
 
@@ -497,7 +509,15 @@ class TransitionalCache(CacheUtils):
     def make_set_fn(fn_name):
         def transitional_cache_set_fn(self, *args, **kwargs):
             ret_original = getattr(self.original, fn_name)(*args, **kwargs)
-            args = self.transform_memcache_key(args)
+            args = self.transform_memcache_key(args, kwargs)
+
+            # remove the prefix argument because the transform fn has
+            # already tacked that onto the keys
+            try:
+                kwargs.pop("prefix")
+            except KeyError:
+                pass
+
             ret_replacement = getattr(self.replacement, fn_name)(*args, **kwargs)
             if self.read_original:
                 return ret_original
