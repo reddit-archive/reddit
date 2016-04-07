@@ -22,6 +22,9 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+import datetime
+
+import pytz
 import json
 from pylons import app_globals as g
 from mock import MagicMock, patch
@@ -31,6 +34,9 @@ from r2.models import Link
 from r2.lib import eventcollector
 from r2.lib import hooks
 from r2 import models
+
+
+FAKE_DATE = datetime.datetime(2005, 6, 23, 3, 14, 0, tzinfo=pytz.UTC)
 
 
 class TestEventCollector(RedditTestCase):
@@ -302,7 +308,7 @@ class TestEventCollector(RedditTestCase):
             message, context=context, request=request
         )
 
-        g.events.queue_production.assert_event_item(
+        self.amqp.assert_event_item(
             {
                 'event_type': "ss.send_message",
                 'event_topic': "message_events",
@@ -314,6 +320,8 @@ class TestEventCollector(RedditTestCase):
                     'message_id': message._id,
                     'message_fullname': message._fullname,
                     'message_kind': "modmail",
+                    'message_body': message.body,
+                    'message_subject': message.subject,
                     'first_message_fullname': first_message._fullname,
                     'first_message_id': first_message._id,
                     'sender_type': "moderator",
@@ -353,7 +361,7 @@ class TestEventCollector(RedditTestCase):
             message, context=context, request=request
         )
 
-        g.events.queue_production.assert_event_item(
+        self.amqp.assert_event_item(
             {
                 'event_type': "ss.send_message",
                 'event_topic': "message_events",
@@ -365,6 +373,8 @@ class TestEventCollector(RedditTestCase):
                     'message_id': message._id,
                     'message_fullname': message._fullname,
                     'message_kind': "message",
+                    'message_body': message.body,
+                    'message_subject': message.subject,
                     'first_message_fullname': first_message._fullname,
                     'first_message_id': first_message._id,
                     'sender_type': "user",
