@@ -738,7 +738,7 @@ class RelationMeta(type):
     def __repr__(cls):
         return '<relation: %s>' % cls._type_name
 
-def Relation(type1, type2, denorm1 = None, denorm2 = None):
+def Relation(type1, type2):
     class RelationCls(DataThing):
         __metaclass__ = RelationMeta
         if not (issubclass(type1, Thing) and issubclass(type2, Thing)):
@@ -815,15 +815,6 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
             for k, v in attrs.iteritems():
                 self.__setattr__(k, v, not self._created)
 
-            def denormalize(denorm, src, dest):
-                if denorm:
-                    setattr(dest, denorm[0], getattr(src, denorm[1]))
-
-            #denormalize
-            if not self._created:
-                denormalize(denorm1, thing2, thing1)
-                denormalize(denorm2, thing1, thing2)
-
         @classmethod
         def record_cache_write(cls, event, delta=1):
             name = cls.__name__.lower()
@@ -875,10 +866,6 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
 
         def _commit(self):
             DataThing._commit(self)
-            #if i denormalized i need to check here
-            if denorm1: self._thing1._commit(denorm1[0])
-            if denorm2: self._thing2._commit(denorm2[0])
-            #set fast query cache
             self._fast_cache.set(self._fast_cache_key(), self._id)
 
         def _delete(self):
