@@ -1088,7 +1088,6 @@ class RedditFooter(CachedTemplate):
                     NamedButton("blog", False, dest="/blog"),
                     NamedButton("about", False),
                     NamedButton("values", False, dest="/about/values"),
-                    NamedButton("team", False, dest="/about/team"),
                     NamedButton("source_code", False, dest="/code"),
                     NamedButton("advertising", False),
                     NamedButton("jobs", False),
@@ -1110,8 +1109,11 @@ class RedditFooter(CachedTemplate):
                 separator = ""),
 
             NavMenu([
-                    OffsiteButton(_("Alien Blue iOS app"), "//alienblue.org"),
-                    OffsiteButton(_("mobile beta"), "https://m.reddit.com"),
+                    OffsiteButton(_("Reddit for iPhone"),
+                        "https://itunes.apple.com/us/app/reddit-the-official-app/id1064216828?mt=8"),
+                    OffsiteButton(_("Reddit for Android"),
+                        "https://play.google.com/store/apps/details?id=com.reddit.frontpage"),
+                    OffsiteButton(_("mobile website"), "https://m.reddit.com"),
                     NamedButton("buttons", False),
                 ],
                 title = _("apps & tools"),
