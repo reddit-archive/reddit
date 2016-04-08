@@ -619,12 +619,6 @@ class Thing(DataThing):
         return '<%s %s>' % (self.__class__.__name__,
                             self._id if self._created else '[unsaved]')
 
-    def _set_id(self, thing_id):
-        if not self._created:
-            with self.safe_set_attr:
-                self._base_props += ('_thing_id',)
-                self._thing_id = thing_id
-
     @property
     def _age(self):
         return datetime.now(g.tz) - self._date
