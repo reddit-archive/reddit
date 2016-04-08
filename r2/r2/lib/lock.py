@@ -62,6 +62,7 @@ class MemcacheLock(object):
 
     def __enter__(self):
         self.acquire()
+        return self
 
     def __exit__(self, type, value, tb):
         self.release()
