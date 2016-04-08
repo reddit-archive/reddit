@@ -56,9 +56,6 @@ def commit():
 def rollback():
     tdb.transactions.rollback()
 
-def obj_id(things):
-    return tuple(t if isinstance(t, (int, long)) else t._id for t in things)
-
 
 class SafeSetAttr:
     def __init__(self, cls):
