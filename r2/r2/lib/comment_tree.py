@@ -393,8 +393,6 @@ def compute_message_trees(messages):
     messages = sorted(messages, key = lambda m: m._date, reverse = True)
 
     for m in messages:
-        if not m._loaded:
-            m._load()
         mdict[m._id] = m
         if m.first_message:
             roots.add(m.first_message)

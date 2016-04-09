@@ -945,7 +945,6 @@ class VByNameIfAuthor(VByName):
     def run(self, fullname):
         thing = VByName.run(self, fullname)
         if thing:
-            if not thing._loaded: thing._load()
             if c.user_is_loggedin and thing.author_id == c.user._id:
                 return thing
         return self.set_error(errors.NOT_AUTHOR)

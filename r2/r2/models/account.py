@@ -279,16 +279,12 @@ class Account(Thing):
         timer.stop()
 
     def make_cookie(self, timestr=None):
-        if not self._loaded:
-            self._load()
         timestr = timestr or time.strftime(COOKIE_TIMESTAMP_FORMAT)
         id_time = str(self._id) + ',' + timestr
         to_hash = ','.join((id_time, self.password, g.secrets["SECRET"]))
         return id_time + ',' + hashlib.sha1(to_hash).hexdigest()
 
     def make_admin_cookie(self, first_login=None, last_request=None):
-        if not self._loaded:
-            self._load()
         first_login = first_login or datetime.utcnow().strftime(COOKIE_TIMESTAMP_FORMAT)
         last_request = last_request or datetime.utcnow().strftime(COOKIE_TIMESTAMP_FORMAT)
         hashable = ','.join((first_login, last_request, request.ip, request.user_agent, self.password))
@@ -296,9 +292,6 @@ class Account(Thing):
         return ','.join((first_login, last_request, mac))
 
     def make_otp_cookie(self, timestamp=None):
-        if not self._loaded:
-            self._load()
-
         timestamp = timestamp or datetime.utcnow().strftime(COOKIE_TIMESTAMP_FORMAT)
         secrets = [request.user_agent, self.otp_secret, self.password]
         signature = hmac.new(g.secrets["SECRET"], ','.join([timestamp] + secrets), hashlib.sha1).hexdigest()

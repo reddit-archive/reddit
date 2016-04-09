@@ -85,6 +85,11 @@ class DataThing(object):
             self._dirties = {}
             self._t = {}
             self._created = False
+
+            # set _loaded=True so objects we write to cache continue to have
+            # the _loaded attribute and will work with old versions of the
+            # code in case we need to revert the commit that removes _loaded
+            # everywhere else.
             self._loaded = True
 
     #TODO some protection here?
@@ -134,11 +139,6 @@ class DataThing(object):
         except AttributeError:
             cl = "???"
 
-        if self._loaded:
-            nl = "it IS loaded"
-        else:
-            nl = "it is NOT loaded"
-
         try:
             id_str = "%d" % _id
         except TypeError:
@@ -146,22 +146,12 @@ class DataThing(object):
 
         descr = '%s(%s).%s' % (cl, id_str, attr)
 
-        essentials = object.__getattribute__(self, "_essentials")
         deleted = object.__getattribute__(self, "_deleted")
 
         if deleted:
-            nl += " and IS deleted."
+            nl = "it IS deleted."
         else:
-            nl += " and is NOT deleted."
-
-        if attr in essentials and not deleted:
-            g.log.error("%s not found; %s forcing reload.", descr, nl)
-            self._load()
-
-            try:
-                return self._t[attr]
-            except KeyError:
-                g.log.error("reload of %s didn't help.", descr)
+            nl = "it is NOT deleted."
 
         raise AttributeError, '%s not found; %s' % (descr, nl)
 
@@ -193,8 +183,7 @@ class DataThing(object):
         for prop in self._base_props:
             self.__setattr__(prop, getattr(other_self, prop), False)
 
-        if other_self._loaded:
-            self._t = other_self._t
+        self._t = other_self._t
 
         #re-apply the .dirties
         old_dirties = self._dirties
@@ -278,42 +267,14 @@ class DataThing(object):
 
         hooks.get_hook("thing.commit").call(thing=self, changes=to_set)
 
-    @classmethod
-    def _load_multi(cls, need):
-        need = tup(need)
-        need_ids = [n._id for n in need]
-        datas = cls._get_data(cls._type_id, need_ids)
-        to_save = {}
-
-        for i in need:
-            #if there wasn't any data, keep the empty dict
-            i._t.update(datas.get(i._id, i._t))
-            i._loaded = True
-            to_save[i._id] = i
-
-        #write the data to the cache
-        cls._cache.set_multi(
-            to_save, prefix=cls._cache_prefix(), time=THING_CACHE_TTL)
-
-    def _load(self):
-        self._load_multi(self)
-
-    def _safe_load(self):
-        if not self._loaded:
-            self._load()
-
     def _incr(self, prop, amt = 1):
         if self._dirty:
             raise ValueError, "cannot incr dirty thing"
 
         #make sure we're incr'ing an _int_prop or _data_int_prop.
         if prop not in self._int_props:
-            if (prop in self._data_int_props or
+            if not (prop in self._data_int_props or
                 self._int_prop_suffix and prop.endswith(self._int_prop_suffix)):
-                #if we're incr'ing a data_prop, make sure we're loaded
-                if not self._loaded:
-                    self._load()
-            else:
                 msg = ("cannot incr non int prop %r on %r -- it's not in %r or %r" %
                        (prop, self, self._int_props, self._data_int_props))
                 raise ValueError, msg
@@ -375,13 +336,7 @@ class DataThing(object):
 
         cls.record_lookup(data=data, delta=len(ids))
 
-        def count_found_and_reject_unloaded(ret, still_need):
-            unloaded_ids = {
-                _id for _id, thing in ret.iteritems() if not thing._loaded}
-            for _id in unloaded_ids:
-                del ret[_id]
-                still_need.add(_id)
-
+        def count_found(ret, still_need):
             if cls._cache.stats:
                 cls._cache.stats.cache_report(
                     hits=len(ret), misses=len(still_need),
@@ -396,6 +351,11 @@ class DataThing(object):
                 thing = cls._build(_id, props)
                 data_props = data_props_by_id.get(_id, {})
                 thing._t.update(data_props)
+
+                # set _loaded=True so objects we write to cache continue to have
+                # the _loaded attribute and will work with old versions of the
+                # code in case we need to revert the commit that removes _loaded
+                # everywhere else.
                 thing._loaded = True
 
                 if not all(data_prop in thing._t for data_prop in cls._essentials):
@@ -416,7 +376,7 @@ class DataThing(object):
 
         things_by_id = sgm(cls._cache, ids, miss_fn=get_things_from_db,
             prefix=cls._cache_prefix(), time=THING_CACHE_TTL, stale=stale,
-            found_fn=count_found_and_reject_unloaded, stat_subname=cls.__name__)
+            found_fn=count_found, stat_subname=cls.__name__)
 
         # Check to see if we found everything we asked for
         missing = [_id for _id in ids if _id not in things_by_id]
@@ -570,7 +530,6 @@ class Thing(DataThing):
             if id:
                 self._id = id
                 self._created = True
-                self._loaded = False
 
             if not date:
                 date = datetime.now(g.tz)
@@ -636,10 +595,6 @@ class Thing(DataThing):
         does not exist by default, but can also be set to a string of 'no',
         which also means it is not distinguished.
         """
-        if not self._loaded:
-            raise AttributeError("Distinguished cannot be determined without "
-                                 "being loaded. Perhaps you need data=True?")
-
         return getattr(self, 'distinguished', 'no') != 'no'
 
     @classmethod
@@ -734,28 +689,26 @@ def Relation(type1, type2):
         _get_item = staticmethod(tdb.get_rel)
         _incr_data = staticmethod(tdb.incr_rel_data)
         _type_prefix = Relation._type_prefix
-        _eagerly_loaded_data = False
         _fast_cache = g.relcache
 
-        # data means, do you load the reddit_data_rel_* fields (the data on the
-        # rel itself). eager_load means, do you load thing1 and thing2
-        # immediately. It calls _byID(xxx, data=thing_data).
+        # eager_load means, do you load thing1 and thing2 immediately. It calls
+        # _byID(xxx).
         @classmethod
-        def _byID_rel(cls, ids, data=False, return_dict=True,
-                      eager_load=False, thing_data=False, thing_stale=False,
+        def _byID_rel(cls, ids, data=True, return_dict=True,
+                      eager_load=False, thing_data=True, thing_stale=False,
                       ignore_missing=False):
+            # data props are ALWAYS loaded, data and thing_data keywords are
+            # meaningless
 
             ids, single = tup(ids, True)
 
             bases = cls._byID(
-                ids, data=data, return_dict=True, ignore_missing=ignore_missing)
+                ids, return_dict=True, ignore_missing=ignore_missing)
 
             values = bases.values()
 
             if values and eager_load:
-                for base in bases.values():
-                    base._eagerly_loaded_data = True
-                load_things(values, load_data=thing_data, stale=thing_stale)
+                load_things(values, stale=thing_stale)
 
             if single:
                 return bases[ids[0]]
@@ -777,7 +730,6 @@ def Relation(type1, type2):
                 if id:
                     self._id = id
                     self._created = True
-                    self._loaded = False
 
                 if not date:
                     date = datetime.now(g.tz)
@@ -809,11 +761,9 @@ def Relation(type1, type2):
 
         def __getattr__(self, attr):
             if attr == '_thing1':
-                return self._type1._byID(self._thing1_id,
-                                         self._eagerly_loaded_data)
+                return self._type1._byID(self._thing1_id)
             elif attr == '_thing2':
-                return self._type2._byID(self._thing2_id,
-                                         self._eagerly_loaded_data)
+                return self._type2._byID(self._thing2_id)
             elif attr.startswith('_t1'):
                 return getattr(self._thing1, attr[3:])
             elif attr.startswith('_t2'):
@@ -860,7 +810,7 @@ def Relation(type1, type2):
 
         @classmethod
         def _fast_query(cls, thing1s, thing2s, name, data=True, eager_load=True,
-                        thing_data=False, thing_stale=False):
+                        thing_data=True, thing_stale=False):
             """looks up all the relationships between thing1_ids and
                thing2_ids and caches them"""
 
@@ -930,9 +880,7 @@ def Relation(type1, type2):
                               if rel_id is not None}
             rels = cls._byID_rel(
                 rel_ids,
-                data=data,
                 eager_load=eager_load,
-                thing_data=thing_data,
                 thing_stale=thing_stale)
 
             # Takes aggregated results from cache and db (res) and transforms
@@ -974,7 +922,6 @@ class Query(object):
         self._cache_time = kw.get('cache_time', QUERY_CACHE_TTL)
         self._limit = kw.get('limit')
         self._offset = kw.get('offset')
-        self._data = kw.get('data')
         self._stale = kw.get('stale', False)
         self._sort = kw.get('sort', ())
         self._filter_primary_sort_only = kw.get('filter_primary_sort_only', False)
@@ -1010,10 +957,7 @@ class Query(object):
             else:
                 s.__class__ = operators.asc
 
-    def _list(self, data = False):
-        if data:
-            self._data = data
-
+    def _list(self, data=True):
         return list(self)
 
     def _dir(self, thing, reverse):
@@ -1086,8 +1030,8 @@ class Query(object):
     def get_from_cache(self, allow_local=True):
         thing_fullnames = self._cache.get(self._iden(), allow_local=allow_local)
         if thing_fullnames:
-            things = Thing._by_fullname(thing_fullnames, data=self._data,
-                return_dict=False, stale=self._stale)
+            things = Thing._by_fullname(thing_fullnames, return_dict=False,
+                                        stale=self._stale)
             return things
 
     def set_to_cache(self, things):
@@ -1151,12 +1095,11 @@ class Things(Query):
 
         #called on a bunch of rows to fetch their properties in batch
         def row_fn(ids):
-            return self._kind._byID(
-                ids, data=self._data, return_dict=False, stale=self._stale)
+            return self._kind._byID(ids, return_dict=False, stale=self._stale)
 
         return Results(cursor, row_fn, do_batch=True)
 
-def load_things(rels, load_data=False, stale=False):
+def load_things(rels, stale=False):
     rels = tup(rels)
     kind = rels[0].__class__
 
@@ -1165,17 +1108,18 @@ def load_things(rels, load_data=False, stale=False):
         t2_ids = t1_ids
     else:
         t2_ids = set()
+
     for rel in rels:
         t1_ids.add(rel._thing1_id)
         t2_ids.add(rel._thing2_id)
-    kind._type1._byID(t1_ids, data=load_data, stale=stale)
+
+    kind._type1._byID(t1_ids, stale=stale)
     if kind._type1 != kind._type2:
-        t2_items = kind._type2._byID(t2_ids, data=load_data, stale=stale)
+        t2_items = kind._type2._byID(t2_ids, stale=stale)
 
 class Relations(Query):
     def __init__(self, kind, *rules, **kw):
         self._eager_load = kw.get('eager_load')
-        self._thing_data = kw.get('thing_data')
         self._thing_stale = kw.get('thing_stale')
         Query.__init__(self, kind, *rules, **kw)
 
@@ -1183,21 +1127,16 @@ class Relations(Query):
         self._rules += rules
         return self
 
-    def _eager(self, eager, thing_data = False):
+    def _eager(self, eager):
         #load the things (id, ups, down, etc.)
         self._eager_load = eager
-        #also load the things' data
-        self._thing_data = thing_data
         return self
 
     def _make_rel(self, rows):
         rel_ids = [row._rel_id for row in rows]
-        rels = self._kind._byID(rel_ids, data=self._data, return_dict=False)
+        rels = self._kind._byID(rel_ids, return_dict=False)
         if rels and self._eager_load:
-            for rel in rels:
-                rel._eagerly_loaded_data = True
-            load_things(rels, load_data=self._thing_data,
-                        stale=self._thing_stale)
+            load_things(rels, stale=self._thing_stale)
         return rels
 
     def _cursor(self):
@@ -1333,12 +1272,10 @@ class MultiQuery(Query):
             q._reverse()
 
     def _setdata(self, data):
-        for q in self._queries:
-            q._data = data
+        return
 
     def _getdata(self):
-        if self._queries:
-            return self._queries[0]._data
+        return True
 
     _data = property(_getdata, _setdata)
 
@@ -1419,7 +1356,7 @@ def MultiRelation(name, *relations):
 
         @classmethod
         def _fast_query(cls, sub, obj, name, data=True, eager_load=True,
-                        thing_data=False):
+                        thing_data=True):
             #divide into types
             def type_dict(items):
                 types = {}
@@ -1435,9 +1372,8 @@ def MultiRelation(name, *relations):
             for types, rel in cls.rels.iteritems():
                 t1, t2 = types
                 if sub_dict.has_key(t1) and obj_dict.has_key(t2):
-                    res.update(rel._fast_query(sub_dict[t1], obj_dict[t2], name,
-                                               data = data, eager_load=eager_load,
-                                               thing_data = thing_data))
+                    res.update(rel._fast_query(
+                        sub_dict[t1], obj_dict[t2], name, eager_load=eager_load))
 
             return res
 

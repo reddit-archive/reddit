@@ -1037,43 +1037,34 @@ def fix_if_broken(thing, delete = True, fudge_links = False):
     if thing.__class__ not in attrs:
         raise TypeError
 
-    tried_loading = False
     for attr in attrs[thing.__class__]:
         try:
             # try to retrieve the attribute
             getattr(thing, attr)
         except AttributeError:
-            # that failed; let's explicitly load it and try again
+            if not delete:
+                raise
 
-            if not tried_loading:
-                tried_loading = True
-                thing._load()
+            if isinstance(thing, Link) and fudge_links:
+                if attr == "sr_id":
+                    thing.sr_id = 6
+                    print "Fudging %s.sr_id to %d" % (thing._fullname,
+                                                      thing.sr_id)
+                elif attr == "author_id":
+                    thing.author_id = 8244672
+                    print "Fudging %s.author_id to %d" % (thing._fullname,
+                                                          thing.author_id)
+                else:
+                    print "Got weird attr %s; can't fudge" % attr
 
-            try:
-                getattr(thing, attr)
-            except AttributeError:
-                if not delete:
-                    raise
-                if isinstance(thing, Link) and fudge_links:
-                    if attr == "sr_id":
-                        thing.sr_id = 6
-                        print "Fudging %s.sr_id to %d" % (thing._fullname,
-                                                          thing.sr_id)
-                    elif attr == "author_id":
-                        thing.author_id = 8244672
-                        print "Fudging %s.author_id to %d" % (thing._fullname,
-                                                              thing.author_id)
-                    else:
-                        print "Got weird attr %s; can't fudge" % attr
+            if not thing._deleted:
+                print "%s is missing %r, deleting" % (thing._fullname, attr)
+                thing._deleted = True
 
-                if not thing._deleted:
-                    print "%s is missing %r, deleting" % (thing._fullname, attr)
-                    thing._deleted = True
+            thing._commit()
 
-                thing._commit()
-
-                if not fudge_links:
-                    break
+            if not fudge_links:
+                break
 
 
 def find_recent_broken_things(from_time = None, to_time = None,

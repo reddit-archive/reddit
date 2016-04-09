@@ -210,7 +210,7 @@ class UnloggedUser(FakeAccount):
         self._defaults['pref_lang'] = lang
         self._defaults['pref_hide_locationbar'] = False
         self._defaults['pref_use_global_defaults'] = False
-        self._load()
+        self._t.update(self._from_cookie())
 
     @property
     def name(self):
@@ -265,10 +265,6 @@ class UnloggedUser(FakeAccount):
             for k, (oldv, newv) in self._dirties.iteritems():
                 self._t[k] = newv
             self._to_cookie(self._t)
-
-    def _load(self):
-        self._t.update(self._from_cookie())
-        self._loaded = True
 
 def read_user_cookie(name):
     uname = c.user.name if c.user_is_loggedin else ""
@@ -1380,9 +1376,6 @@ class OAuth2ResourceController(MinimalController):
                 return None
 
     def set_up_user_context(self):
-        if not c.user._loaded:
-            c.user._load()
-
         if c.user.inbox_count > 0:
             c.have_messages = True
         c.have_mod_messages = bool(c.user.modmsgtime)

@@ -60,8 +60,6 @@ class Report(MultiRelation('report',
             kw['reason'] = reason
 
         r = Report(user, thing, '0', **kw)
-        if not thing._loaded:
-            thing._load()
 
         # mark item as reported
         try:
