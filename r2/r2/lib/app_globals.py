@@ -39,6 +39,7 @@ from sqlalchemy import engine, event
 from baseplate import Baseplate, config as baseplate_config
 from baseplate.thrift_pool import ThriftConnectionPool
 from baseplate.context.thrift import ThriftContextFactory
+from baseplate.server import einhorn
 
 import pkg_resources
 import pytz
@@ -985,6 +986,9 @@ class Globals(object):
                 datetime.now().strftime("%H:%M:%S"),
                 self.startup_timer.elapsed_seconds()
             )
+
+        if einhorn.is_worker():
+            einhorn.ack_startup()
 
     def record_repo_version(self, repo_name, git_dir):
         """Get the currently checked out git revision for a given repository,
