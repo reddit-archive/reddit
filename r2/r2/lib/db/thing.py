@@ -366,10 +366,10 @@ class DataThing(object):
     def _fullname(self):
         return self._fullname_from_id36(self._id36)
 
-    #TODO error when something isn't found?
     @classmethod
-    def _byID(cls, ids, data=False, return_dict=True,
-              stale=False, ignore_missing=False):
+    def _byID(cls, ids, data=True, return_dict=True, stale=False,
+              ignore_missing=False):
+        # data props are ALWAYS loaded, data keyword is meaningless
         ids, single = tup(ids, ret_is_single=True)
 
         for x in ids:
@@ -388,7 +388,13 @@ class DataThing(object):
 
         cls.record_lookup(data=data, delta=len(ids))
 
-        def count_found(ret, still_need):
+        def count_found_and_reject_unloaded(ret, still_need):
+            unloaded_ids = {
+                _id for _id, thing in ret.iteritems() if not thing._loaded}
+            for _id in unloaded_ids:
+                del ret[_id]
+                still_need.add(_id)
+
             cls._cache.stats.cache_report(
                 hits=len(ret), misses=len(still_need),
                 cache_name='sgm.%s' % cls.__name__)
@@ -396,42 +402,51 @@ class DataThing(object):
         if not cls._cache.stats:
             count_found = None
 
-        def items_db(ids):
-            items = cls._get_item(cls._type_id, ids)
-            for i in items.keys():
-                items[i] = cls._build(i, items[i])
+        def get_things_from_db(ids):
+            props_by_id = cls._get_item(cls._type_id, ids)
+            data_props_by_id = cls._get_data(cls._type_id, ids)
+
+            try:
+                essentials = object.__getattribute__(cls, "_essentials")
+            except AttributeError:
+                essentials = ()
+
+            things_by_id = {}
+            for _id, props in props_by_id.iteritems():
+                thing = cls._build(_id, props)
+                data_props = data_props_by_id.get(_id, {})
+                thing._t.update(data_props)
+                thing._loaded = True
+
+                for data_prop in essentials:
+                    if data_prop not in thing._t:
+                        print "Warning: %s is missing %s" % (thing._fullname, data_prop)
+
+                things_by_id[_id] = thing
 
             # caching happens in sgm, but is less intrusive to count here
-            cls.record_cache_write(event="cache", delta=len(items))
+            cls.record_cache_write(event="cache", delta=len(things_by_id))
 
-            return items
+            return things_by_id
 
-        bases = sgm(cls._cache, ids, items_db, prefix=cls._cache_prefix(),
-                    time=THING_CACHE_TTL, stale=stale, found_fn=count_found,
-                    stat_subname=cls.__name__)
+        things_by_id = sgm(cls._cache, ids, miss_fn=get_things_from_db,
+            prefix=cls._cache_prefix(), time=THING_CACHE_TTL, stale=stale,
+            found_fn=count_found_and_reject_unloaded, stat_subname=cls.__name__)
 
         # Check to see if we found everything we asked for
-        missing = [_id for _id in ids if _id not in bases]
+        missing = [_id for _id in ids if _id not in things_by_id]
         if missing and not ignore_missing:
             raise NotFound, '%s %s' % (cls.__name__, missing)
 
         if missing:
             ids = [_id for _id in ids if _id not in missing]
 
-        if data:
-            need = []
-            for v in bases.itervalues():
-                if not v._loaded:
-                    need.append(v)
-            if need:
-                cls._load_multi(need)
-
         if single:
-            return bases[ids[0]] if ids else None
+            return things_by_id[ids[0]] if ids else None
         elif return_dict:
-            return bases
+            return things_by_id
         else:
-            return filter(None, (bases.get(i) for i in ids))
+            return filter(None, (things_by_id.get(_id) for _id in ids))
 
     @classmethod
     def _byID36(cls, id36s, return_dict = True, **kw):
