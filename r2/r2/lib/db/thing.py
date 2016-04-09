@@ -411,15 +411,7 @@ class DataThing(object):
                     stat_subname=cls.__name__)
 
         # Check to see if we found everything we asked for
-        missing = []
-        for i in ids:
-            if i not in bases:
-                missing.append(i)
-            elif bases[i] and bases[i]._id != i:
-                g.log.error("thing.py: Doppleganger on byID: %s got %s for %s" %
-                            (cls.__name__, bases[i]._id, i))
-                bases[i] = items_db([i]).values()[0]
-                bases[i]._cache_myself()
+        missing = [_id for _id in ids if _id not in bases]
         if missing and not ignore_missing:
             raise NotFound, '%s %s' % (cls.__name__, missing)
 
