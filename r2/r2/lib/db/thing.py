@@ -157,6 +157,17 @@ class DataThing(object):
         prefix = self._cache_prefix()
         return "{prefix}{id}".format(prefix=prefix, id=self._id)
 
+    def get_read_modify_write_lock(self):
+        """Return the lock to be used when doing a read-modify-write.
+
+        When modifying a Thing we must read its current version from cache and
+        update that to avoid clobbering modifications made by other processes
+        after we first read the Thing.
+
+        """
+
+        return g.make_lock("thing_commit", 'commit_' + self._fullname)
+
     def _other_self(self):
         """Load from the cached version of myself. Skip the local cache."""
         l = self._cache.get(self._cache_key(), allow_local = False)
@@ -213,7 +224,7 @@ class DataThing(object):
             else:
                 just_created = False
 
-            lock = g.make_lock("thing_commit", 'commit_' + self._fullname)
+            lock = self.get_read_modify_write_lock()
             lock.acquire()
 
             if not just_created and not self._sync_latest():
@@ -273,7 +284,7 @@ class DataThing(object):
                        (prop, self, self._int_props, self._data_int_props))
                 raise ValueError, msg
 
-        with g.make_lock("thing_commit", 'commit_' + self._fullname):
+        with self.get_read_modify_write_lock():
             self._sync_latest()
             old_val = getattr(self, prop)
             if self._defaults.has_key(prop) and self._defaults[prop] == old_val:

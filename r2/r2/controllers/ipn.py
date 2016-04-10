@@ -847,7 +847,7 @@ class GoldPaymentController(RedditController):
             return
 
         gold_recipient = recipient or buyer
-        with g.make_lock("thing_commit", 'commit_' + gold_recipient._fullname):
+        with gold_recipient.get_read_modify_write_lock():
             gold_recipient._sync_latest()
 
             secret_pieces = [goldtype]
@@ -1387,8 +1387,7 @@ def reverse_gold_purchase(transaction_id):
         recipient_name, secret = pieces[1:]
         recipient = Account._by_name(recipient_name)
 
-    gold_recipient = recipient or buyer
-    with g.make_lock("thing_commit", 'commit_' + gold_recipient._fullname):
+    with gold_recipient.get_read_modify_write_lock():
         gold_recipient._sync_latest()
 
         if goldtype in ('onetime', 'autorenew'):
