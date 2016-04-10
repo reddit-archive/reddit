@@ -218,7 +218,7 @@ class DataThing(object):
     def record_lookup(cls, data, delta=1):
         raise NotImplementedError
 
-    def _commit(self, keys=None):
+    def _commit(self):
         lock = None
 
         try:
@@ -248,12 +248,6 @@ class DataThing(object):
             begin()
 
             to_set = self._dirties.copy()
-            if keys:
-                keys = tup(keys)
-                for key in to_set.keys():
-                    if key not in keys:
-                        del to_set[key]
-
             data_props = {}
             thing_props = {}
             for k, (old_value, new_value) in to_set.iteritems():
@@ -271,12 +265,7 @@ class DataThing(object):
             if thing_props:
                 self._set_props(self._type_id, self._id, **thing_props)
 
-            if keys:
-                for k in keys:
-                    if self._dirties.has_key(k):
-                        del self._dirties[k]
-            else:
-                self._dirties.clear()
+            self._dirties.clear()
         except:
             rollback()
             raise
@@ -344,7 +333,7 @@ class DataThing(object):
                 #potential race condition if the same property gets incr'd
                 #from default at the same time
                 setattr(self, prop, old_val + amt)
-                self._commit(prop)
+                self._commit()
             else:
                 self.__setattr__(prop, old_val + amt, False)
                 #db

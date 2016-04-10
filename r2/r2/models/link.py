@@ -337,7 +337,7 @@ class Link(Thing, Printable):
     def _unhide(self, user):
         LinkHidesByAccount._unhide(user, self)
 
-    def _commit(self, *a, **kw):
+    def _commit(self):
         # If we've updated the (denormalized) preview object, we also need to
         # update the metadata that keeps track of the denormalizations.
         if 'preview_object' in self._dirties:
@@ -346,7 +346,7 @@ class Link(Thing, Printable):
                 LinksByImage.remove_link(old_val['uid'], self)
             if val:
                 LinksByImage.add_link(val['uid'], self)
-        Thing._commit(self, *a, **kw)
+        Thing._commit(self)
 
     def link_domain(self):
         if self.is_self:
