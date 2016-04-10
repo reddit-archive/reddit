@@ -47,15 +47,6 @@ CreationError = tdb.CreationError
 thing_types = {}
 rel_types = {}
 
-def begin():
-    tdb.transactions.begin()
-
-def commit():
-    tdb.transactions.commit()
-
-def rollback():
-    tdb.transactions.rollback()
-
 
 class SafeSetAttr:
     def __init__(self, cls):
@@ -66,6 +57,19 @@ class SafeSetAttr:
 
     def __exit__(self, type, value, tb):
         self.cls.__safe__ = False
+
+
+class TdbTransactionContext(object):
+    def __enter__(self):
+        tdb.transactions.begin()
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if exc_type:
+            tdb.transactions.rollback()
+            raise
+        else:
+            tdb.transactions.commit()
+
 
 class DataThing(object):
     _base_props = ()
@@ -157,6 +161,27 @@ class DataThing(object):
         prefix = self._cache_prefix()
         return "{prefix}{id}".format(prefix=prefix, id=self._id)
 
+    @classmethod
+    def get_things_from_db(cls, ids):
+        """Read props from db and return id->thing dict."""
+        raise NotImplementedError
+
+    @classmethod
+    def get_things_from_cache(cls, ids, stale=False, allow_local=True):
+        """Read things from cache and return id->thing dict."""
+        cache = cls._cache
+        prefix = cls._cache_prefix()
+        things_by_id = cache.get_multi(
+            ids, prefix=prefix, stale=stale, allow_local=allow_local)
+        return things_by_id
+
+    @classmethod
+    def write_things_to_cache(cls, things_by_id):
+        """Write id->thing dict to cache."""
+        cache = cls._cache
+        prefix = cls._cache_prefix()
+        cache.set_multi(things_by_id, prefix=prefix, time=THING_CACHE_TTL)
+
     def get_read_modify_write_lock(self):
         """Return the lock to be used when doing a read-modify-write.
 
@@ -168,36 +193,74 @@ class DataThing(object):
 
         return g.make_lock("thing_commit", 'commit_' + self._fullname)
 
-    def _other_self(self):
-        """Load from the cached version of myself. Skip the local cache."""
-        l = self._cache.get(self._cache_key(), allow_local = False)
-        return l
+    def write_new_thing_to_db(self):
+        """Write the new thing to db and return its id."""
+        raise NotImplementedError
 
-    def _cache_myself(self):
-        ck = self._cache_key()
-        self._cache.set(ck, self, time=THING_CACHE_TTL)
+    def write_props_to_db(self, props, data_props, brand_new_thing):
+        """Write the props to db."""
+        raise NotImplementedError
 
-    def _sync_latest(self):
-        """Load myself from the cache to and re-apply the .dirties
-        list to make sure we don't overwrite a previous commit. """
-        other_self = self._other_self()
-        if not other_self:
-            return self._dirty
+    def write_changes_to_db(self, changes, brand_new_thing=False):
+        """Write changes to db."""
+        if not changes:
+            return
 
-        #copy in the cache's version
-        for prop in self._base_props:
-            self.__setattr__(prop, getattr(other_self, prop), False)
+        data_props = {}
+        props = {}
+        for prop, (old_value, new_value) in changes.iteritems():
+            if prop.startswith('_'):
+                props[prop[1:]] = new_value
+            else:
+                data_props[prop] = new_value
 
+        self.write_props_to_db(props, data_props, brand_new_thing)
+
+    def write_thing_to_cache(self, lock, brand_new_thing=False):
+        """After modifying a thing write the entire object to cache.
+
+        The caller must either pass in the read_modify_write lock or be acting
+        for a newly created thing (that has therefore never been cached before).
+
+        """
+
+        assert brand_new_thing or lock.have_lock
+
+        cache = self.__class__._cache
+        key = self._cache_key()
+        cache.set(key, self, time=THING_CACHE_TTL)
+
+    def update_from_cache(self, lock):
+        """Read the current value of thing from cache and update self.
+
+        To be used before writing cache to avoid clobbering changes made by a
+        different process. Must be called under write lock.
+
+        """
+
+        assert lock.have_lock
+
+        # disallow reading from local cache because we want to pull in changes
+        # made by other processes since we first read this thing.
+        other_selfs = self.__class__.get_things_from_cache(
+            [self._id], allow_local=False)
+        if not other_selfs:
+            return
+        other_self = other_selfs[self._id]
+
+        # update base_props
+        for base_prop in self._base_props:
+            other_self_val = getattr(other_self, base_prop)
+            self.__setattr__(base_prop, other_self_val, make_dirty=False)
+
+        # update data_props
         self._t = other_self._t
 
-        #re-apply the .dirties
-        old_dirties = self._dirties
+        # reapply changes made to self
+        self_changes = self._dirties
         self._dirties = {}
-        for k, (old_val, new_val) in old_dirties.iteritems():
-            setattr(self, k, new_val)
-
-        #return whether we're still dirty or not
-        return self._dirty
+        for data_prop, (old_val, new_val) in self_changes.iteritems():
+            setattr(self, data_prop, new_val)
 
     @classmethod
     def record_cache_write(cls, event, delta=1):
@@ -208,100 +271,74 @@ class DataThing(object):
         raise NotImplementedError
 
     def _commit(self):
-        lock = None
+        """Write changes to db and write the full object to cache.
 
-        try:
-            if not self._created:
-                begin()
+        When writing to postgres we write only the changes. The data in postgres
+        is the canonical version.
 
-                # write the props to the thing table and get back the id
-                base_props = (getattr(self, prop) for prop in self._base_props)
-                self._id = self._make_fn(self._type_id, *base_props)
+        For a few reasons (speed, decreased load on postgres, postgres
+        replication lag) we want to keep a perfectly consistent copy of the
+        thing in cache.
+
+        To achieve this we read the current value of the thing from cache to
+        pull in any changes made by other processes, apply our changes to the
+        thing, and finally set it in cache. This is done under lock to ensure
+        read/write safety.
+
+        If the cached thing is evicted or expires we must read from postgres.
+
+        Failure cases:
+        * Write to cache fails. The cache now contains stale/incorrect data. To
+          ensure we recover quickly TTLs should be set as low as possible
+          without overloading postgres.
+        * There is long replication lag and high cache pressure. When an object
+          is modified it is written to cache, but quickly evicted, The next
+          lookup might read from a postgres secondary before the changes have
+          been replicated there. To protect against this replication lag and
+          cache pressure should be monitored and kept at acceptable levels.
+        * Near simultaneous writes that create a logical inconsistency. Say
+          request 1 and request 2 both read state 0 of a Thing. Request 1
+          changes Thing.prop from True to False and writes to cache and
+          postgres. Request 2 examines the value of Thing.prop, sees that it is
+          True, and due to logic in the app sets Thing.prop_is_true to True and
+          writes to cache and postgres. Request 2 didn't clobber the change
+          made by request 1, but it made a logically incorrect change--the
+          resulting state is Thing.prop = False and Thing.prop_is_true = True.
+          Logic like this should be identified and avoided wherever possible, or
+          protected against using locks.
+
+        """
+
+        if not self._created:
+            with TdbTransactionContext():
+                _id = self.write_new_thing_to_db()
+                self._id = _id
                 self._created = True
-                just_created = True
 
-                self.record_cache_write(event="create")
-            else:
-                just_created = False
+                changes = self._dirties.copy()
+                self.write_changes_to_db(changes, brand_new_thing=True)
+                self._dirties.clear()
 
-            lock = self.get_read_modify_write_lock()
-            lock.acquire()
+            self.write_thing_to_cache(lock=None, brand_new_thing=True)
+            self.record_cache_write(event="create")
+        else:
+            with self.get_read_modify_write_lock() as lock:
+                self.update_from_cache(lock)
+                if not self._dirty:
+                    return
 
-            if not just_created and not self._sync_latest():
-                #sync'd and we have nothing to do now, but we still cache anyway
-                self._cache_myself()
-                return
+                with TdbTransactionContext():
+                    changes = self._dirties.copy()
+                    self.write_changes_to_db(changes, brand_new_thing=False)
+                    self._dirties.clear()
 
-            if not just_created:
+                self.write_thing_to_cache(lock)
                 self.record_cache_write(event="modify")
 
-            # begin is a no-op if already done, but in the not-just-created
-            # case we need to do this here because the else block is not
-            # executed when the try block is exited prematurely in any way
-            # (including the return in the above branch)
-            begin()
+        hooks.get_hook("thing.commit").call(thing=self, changes=changes)
 
-            to_set = self._dirties.copy()
-            data_props = {}
-            thing_props = {}
-            for k, (old_value, new_value) in to_set.iteritems():
-                if k.startswith('_'):
-                    thing_props[k[1:]] = new_value
-                else:
-                    data_props[k] = new_value
-
-            if data_props:
-                self._set_data(self._type_id,
-                               self._id,
-                               just_created,
-                               **data_props)
-
-            if thing_props and not just_created:
-                self._set_props(self._type_id, self._id, **thing_props)
-
-            self._dirties.clear()
-        except:
-            rollback()
-            raise
-        else:
-            commit()
-            self._cache_myself()
-        finally:
-            if lock:
-                lock.release()
-
-        hooks.get_hook("thing.commit").call(thing=self, changes=to_set)
-
-    def _incr(self, prop, amt = 1):
-        if self._dirty:
-            raise ValueError, "cannot incr dirty thing"
-
-        #make sure we're incr'ing an _int_prop or _data_int_prop.
-        if prop not in self._int_props:
-            if not (prop in self._data_int_props or
-                self._int_prop_suffix and prop.endswith(self._int_prop_suffix)):
-                msg = ("cannot incr non int prop %r on %r -- it's not in %r or %r" %
-                       (prop, self, self._int_props, self._data_int_props))
-                raise ValueError, msg
-
-        with self.get_read_modify_write_lock():
-            self._sync_latest()
-            old_val = getattr(self, prop)
-            if self._defaults.has_key(prop) and self._defaults[prop] == old_val:
-                #potential race condition if the same property gets incr'd
-                #from default at the same time
-                setattr(self, prop, old_val + amt)
-                self._commit()
-            else:
-                self.__setattr__(prop, old_val + amt, False)
-                #db
-                if prop.startswith('_'):
-                    tdb.incr_thing_prop(self._type_id, self._id, prop[1:], amt)
-                else:
-                    self._incr_data(self._type_id, self._id, prop, amt)
-
-            self._cache_myself()
-        self.record_cache_write(event="incr")
+    def _incr(self, prop, amt=1):
+        raise NotImplementedError
 
     @property
     def _id36(self):
@@ -339,43 +376,33 @@ class DataThing(object):
             else:
                 return []
 
-        cls.record_lookup(data=data, delta=len(ids))
+        cls.record_lookup(data=True, delta=len(ids))
 
-        def count_found(ret, still_need):
-            if cls._cache.stats:
-                cls._cache.stats.cache_report(
-                    hits=len(ret), misses=len(still_need),
-                    cache_name='sgm.%s' % cls.__name__)
+        things_by_id = cls.get_things_from_cache(ids, stale=stale)
+        missing_ids = [_id
+            for _id in ids
+            if _id not in things_by_id
+        ]
 
-        def get_things_from_db(ids):
-            props_by_id = cls._get_item(cls._type_id, ids)
-            data_props_by_id = cls._get_data(cls._type_id, ids)
+        if missing_ids:
+            from_db_by_id = cls.get_things_from_db(missing_ids)
+        else:
+            from_db_by_id = {}
 
-            things_by_id = {}
-            for _id, props in props_by_id.iteritems():
-                thing = cls._build(_id, props)
-                data_props = data_props_by_id.get(_id, {})
-                thing._t.update(data_props)
+        if cls._cache.stats:
+            cls._cache.stats.cache_report(
+                hits=len(things_by_id),
+                misses=len(missing_ids),
+                cache_name='sgm.%s' % cls.__name__,
+            )
 
-                if not all(data_prop in thing._t for data_prop in cls._essentials):
-                    # a Thing missing an essential prop is invalid
-                    # this can happen if a process looks up the Thing as it's
-                    # created but between when the props and the data props are
-                    # written
-                    g.log.error("%s missing essentials, got %s", thing, thing._t)
-                    g.stats.simple_event("thing.load.missing_essentials")
-                    continue
+        if from_db_by_id:
+            # XXX: We don't have the write lock here, so we could clobber
+            # changes made by other processes
+            cls.write_things_to_cache(from_db_by_id)
+            cls.record_cache_write(event="cache", delta=len(from_db_by_id))
 
-                things_by_id[_id] = thing
-
-            # caching happens in sgm, but is less intrusive to count here
-            cls.record_cache_write(event="cache", delta=len(things_by_id))
-
-            return things_by_id
-
-        things_by_id = sgm(cls._cache, ids, miss_fn=get_things_from_db,
-            prefix=cls._cache_prefix(), time=THING_CACHE_TTL, stale=stale,
-            found_fn=count_found, stat_subname=cls.__name__)
+        things_by_id.update(from_db_by_id)
 
         # Check to see if we found everything we asked for
         missing = [_id for _id in ids if _id not in things_by_id]
@@ -469,22 +496,6 @@ class DataThing(object):
     def _query(cls, *a, **kw):
         raise NotImplementedError()
 
-    @classmethod
-    def _build(*a, **kw):
-        raise NotImplementedError()
-
-    def _get_data(*a, **kw):
-        raise NotImplementedError()
-
-    def _set_data(*a, **kw):
-        raise NotImplementedError()
-
-    def _incr_data(*a, **kw):
-        raise NotImplementedError()
-
-    def _get_item(*a, **kw):
-        raise NotImplementedError
-
 
 class ThingMeta(type):
     def __init__(cls, name, bases, dct):
@@ -511,12 +522,6 @@ class Thing(DataThing):
     __metaclass__ = ThingMeta
     _base_props = ('_ups', '_downs', '_date', '_deleted', '_spam')
     _int_props = ('_ups', '_downs')
-    _make_fn = staticmethod(tdb.make_thing)
-    _set_props = staticmethod(tdb.set_thing_props)
-    _get_data = staticmethod(tdb.get_thing_data)
-    _set_data = staticmethod(tdb.set_thing_data)
-    _get_item = staticmethod(tdb.get_thing)
-    _incr_data = staticmethod(tdb.incr_thing_data)
     _type_prefix = 't'
 
     is_votable = False
@@ -562,6 +567,118 @@ class Thing(DataThing):
         return '<%s %s>' % (self.__class__.__name__,
                             self._id if self._created else '[unsaved]')
 
+    @classmethod
+    def get_things_from_db(cls, ids):
+        """Read props from db and return id->thing dict."""
+        props_by_id = tdb.get_thing(cls._type_id, ids)
+        data_props_by_id = tdb.get_thing_data(cls._type_id, ids)
+
+        things_by_id = {}
+        for _id, props in props_by_id.iteritems():
+            data_props = data_props_by_id.get(_id, {})
+            thing = cls(
+                ups=props.ups,
+                downs=props.downs,
+                date=props.date,
+                deleted=props.deleted,
+                spam=props.spam,
+                id=_id,
+            )
+            thing._t.update(data_props)
+
+            if not all(data_prop in thing._t for data_prop in cls._essentials):
+                # a Thing missing an essential prop is invalid
+                # this can happen if a process looks up the Thing as it's
+                # created but between when the props and the data props are
+                # written
+                g.log.error("%s missing essentials, got %s", thing, thing._t)
+                g.stats.simple_event("thing.load.missing_essentials")
+                continue
+
+            things_by_id[_id] = thing
+
+        return things_by_id
+
+    def write_new_thing_to_db(self):
+        """Write the new thing to db and return its id."""
+        assert not self._created
+
+        _id = tdb.make_thing(
+            type_id=self.__class__._type_id,
+            ups=self._ups,
+            downs=self._downs,
+            date=self._date,
+            deleted=self._deleted,
+            spam=self._spam,
+        )
+        return _id
+
+    def write_props_to_db(self, props, data_props, brand_new_thing):
+        """Write the props to db."""
+        if data_props:
+            tdb.set_thing_data(
+                type_id=self.__class__._type_id,
+                thing_id=self._id,
+                brand_new_thing=brand_new_thing,
+                **data_props
+            )
+
+        if props and not brand_new_thing:
+            # if the thing is brand new its props have just been written by
+            # write_new_thing_to_db
+            tdb.set_thing_props(
+                type_id=self.__class__._type_id,
+                thing_id=self._id,
+                **props
+            )
+
+    def _incr(self, prop, amt=1):
+        """Increment self.prop."""
+        assert not self._dirty
+
+        is_base_prop = prop in self._int_props
+        is_data_prop = (prop in self._data_int_props or
+            self._int_prop_suffix and prop.endswith(self._int_prop_suffix))
+        db_prop = prop[1:] if is_base_prop else prop
+
+        assert is_base_prop or is_data_prop
+
+        with self.get_read_modify_write_lock() as lock:
+            self.update_from_cache(lock)
+            old_val = getattr(self, prop)
+            new_val = old_val + amt
+
+            self.__setattr__(prop, new_val, make_dirty=False)
+
+            if is_base_prop:
+                # can just incr a base prop because it must have been set when
+                # the object was created
+                tdb.incr_thing_prop(
+                    type_id=self.__class__._type_id,
+                    thing_id=self._id,
+                    prop=db_prop,
+                    amount=amt,
+                )
+            elif (prop in self.__class__._defaults and
+                    self.__class__._defaults[prop] == old_val):
+                # when updating a data prop from the default value assume the
+                # value was never actually set so it's not safe to incr
+                tdb.set_thing_data(
+                    type_id=self.__class__._type_id,
+                    thing_id=self._id,
+                    brand_new_thing=False,
+                    **{db_prop: new_val}
+                )
+            else:
+                tdb.incr_thing_data(
+                    type_id=self.__class__._type_id,
+                    thing_id=self._id,
+                    prop=db_prop,
+                    amount=amt,
+                )
+            self.write_thing_to_cache(lock)
+        self.record_cache_write(event="incr")
+
     @property
     def _age(self):
         return datetime.now(g.tz) - self._date
@@ -595,11 +712,6 @@ class Thing(DataThing):
         which also means it is not distinguished.
         """
         return getattr(self, 'distinguished', 'no') != 'no'
-
-    @classmethod
-    def _build(cls, id, bases):
-        return cls(bases.ups, bases.downs, bases.date,
-                   bases.deleted, bases.spam, id)
 
     @classmethod
     def _query(cls, *all_rules, **kw):
@@ -681,14 +793,69 @@ def Relation(type1, type2):
         _type2 = type2
 
         _base_props = ('_thing1_id', '_thing2_id', '_name', '_date')
-        _make_fn = staticmethod(tdb.make_relation)
-        _set_props = staticmethod(tdb.set_rel_props)
-        _get_data = staticmethod(tdb.get_rel_data)
-        _set_data = staticmethod(tdb.set_rel_data)
-        _get_item = staticmethod(tdb.get_rel)
-        _incr_data = staticmethod(tdb.incr_rel_data)
         _type_prefix = Relation._type_prefix
         _fast_cache = g.relcache
+
+        @classmethod
+        def get_things_from_db(cls, ids):
+            """Read props from db and return id->rel dict."""
+            props_by_id = tdb.get_rel(cls._type_id, ids)
+            data_props_by_id = tdb.get_rel_data(cls._type_id, ids)
+
+            rels_by_id = {}
+            for _id, props in props_by_id.iteritems():
+                data_props = data_props_by_id.get(_id, {})
+                rel = cls(
+                    thing1=props.thing1_id,
+                    thing2=props.thing2_id,
+                    name=props.name,
+                    date=props.date,
+                    id=_id,
+                )
+                rel._t.update(data_props)
+
+                if not all(data_prop in rel._t for data_prop in cls._essentials):
+                    # a Relation missing an essential prop is invalid
+                    # this can happen if a process looks up the Relation as it's
+                    # created but between when the props and the data props are
+                    # written
+                    g.log.error("%s missing essentials, got %s", rel, rel._t)
+                    g.stats.simple_event("thing.load.missing_essentials")
+                    continue
+
+                rels_by_id[_id] = rel
+
+            return rels_by_id
+
+        def write_new_thing_to_db(self):
+            """Write the new rel to db and return its id."""
+            assert not self._created
+
+            _id = tdb.make_relation(
+                rel_type_id=self.__class__._type_id,
+                thing1_id=self._thing1_id,
+                thing2_id=self._thing2_id,
+                name=self._name,
+                date=self._date,
+            )
+            return _id
+
+        def write_props_to_db(self, props, data_props, brand_new_thing):
+            """Write the props to db."""
+            if data_props:
+                tdb.set_rel_data(
+                    rel_type_id=self.__class__._type_id,
+                    thing_id=self._id,
+                    brand_new_thing=brand_new_thing,
+                    **data_props
+                )
+
+            if props and not brand_new_thing:
+                tdb.set_rel_props(
+                    rel_type_id=self.__class__._type_id,
+                    rel_id=self._id,
+                    **props
+                )
 
         # eager_load means, do you load thing1 and thing2 immediately. It calls
         # _byID(xxx).
@@ -891,10 +1058,6 @@ def Relation(type1, type2):
                 res_obj[t] = rel
 
             return res_obj
-
-        @classmethod
-        def _build(cls, id, bases):
-            return cls(bases.thing1_id, bases.thing2_id, bases.name, bases.date, id)
 
         @classmethod
         def _query(cls, *a, **kw):
