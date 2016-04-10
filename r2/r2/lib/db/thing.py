@@ -178,10 +178,17 @@ class DataThing(object):
 
     @classmethod
     def write_things_to_cache(cls, things_by_id):
-        """Write id->thing dict to cache."""
+        """Write id->thing dict to cache.
+
+        Used to populate the cache after a cache miss/db read. To ensure we
+        don't clobber a write by another process (we don't have a lock) we use
+        add_multi to only set the values that don't exist.
+
+        """
+
         cache = cls._cache
         prefix = cls._cache_prefix()
-        cache.set_multi(things_by_id, prefix=prefix, time=THING_CACHE_TTL)
+        cache.add_multi(things_by_id, prefix=prefix, time=THING_CACHE_TTL)
 
     def get_read_modify_write_lock(self):
         """Return the lock to be used when doing a read-modify-write.
@@ -391,8 +398,6 @@ class DataThing(object):
             from_db_by_id = {}
 
         if from_db_by_id:
-            # XXX: We don't have the write lock here, so we could clobber
-            # changes made by other processes
             cls.write_things_to_cache(from_db_by_id)
             cls.record_cache_write(event="cache", delta=len(from_db_by_id))
 
