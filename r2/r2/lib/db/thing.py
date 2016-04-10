@@ -176,11 +176,6 @@ class DataThing(object):
     def _other_self(self):
         """Load from the cached version of myself. Skip the local cache."""
         l = self._cache.get(self._cache_key(), allow_local = False)
-        if l and l._id != self._id:
-            g.log.error("thing.py: Doppleganger on read: got %s for %s",
-                        (l, self))
-            self._cache.delete(self._cache_key())
-            return 
         return l
 
     def _cache_myself(self):
