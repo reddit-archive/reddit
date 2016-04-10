@@ -437,7 +437,6 @@ def make_thing(type_id, ups, downs, date, deleted, spam, id=None):
     try:
         id = do_insert(table)
         params['thing_id'] = id
-        g.stats.event_count('thing.create', table.thing_name)
         return id
     except sa.exc.DBAPIError, e:
         if not 'IntegrityError' in e.message:
@@ -486,7 +485,6 @@ def make_relation(rel_type_id, thing1_id, thing2_id, name, date=None):
                                    thing2_id = thing2_id,
                                    name = name, 
                                    date = date)
-        g.stats.event_count('rel.create', table.rel_name)
         return r.inserted_primary_key[0]
     except sa.exc.DBAPIError, e:
         if not 'IntegrityError' in e.message:

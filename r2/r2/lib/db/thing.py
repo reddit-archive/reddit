@@ -213,6 +213,10 @@ class DataThing(object):
         #return whether we're still dirty or not
         return self._dirty
 
+    @classmethod
+    def record_cache_write(cls, event, delta=1):
+        raise NotImplementedError
+
     def _commit(self, keys=None):
         lock = None
 
@@ -221,6 +225,7 @@ class DataThing(object):
                 begin()
                 self._create()
                 just_created = True
+                self.record_cache_write(event="create")
             else:
                 just_created = False
 
@@ -231,6 +236,9 @@ class DataThing(object):
                 #sync'd and we have nothing to do now, but we still cache anyway
                 self._cache_myself()
                 return
+
+            if not just_created:
+                self.record_cache_write(event="modify")
 
             # begin is a no-op if already done, but in the not-just-created
             # case we need to do this here because the else block is not
@@ -346,6 +354,7 @@ class DataThing(object):
                     self._incr_data(self._type_id, self._id, prop, amt)
 
             self._cache_myself()
+        self.record_cache_write(event="incr")
 
     @property
     def _id36(self):
@@ -390,6 +399,9 @@ class DataThing(object):
             items = cls._get_item(cls._type_id, ids)
             for i in items.keys():
                 items[i] = cls._build(i, items[i])
+
+            # caching happens in sgm, but is less intrusive to count here
+            cls.record_cache_write(event="cache", delta=len(items))
 
             return items
 
@@ -584,7 +596,13 @@ class Thing(DataThing):
         #new way
         for k, v in attrs.iteritems():
             self.__setattr__(k, v, not self._created)
-        
+
+    @classmethod
+    def record_cache_write(cls, event, delta=1):
+        name = cls.__name__.lower()
+        event_name = "thing.{event}.{name}".format(event=event, name=name)
+        g.stats.simple_event(event_name, delta)
+
     def __repr__(self):
         return '<%s %s>' % (self.__class__.__name__,
                             self._id if self._created else '[unsaved]')
@@ -793,6 +811,12 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
             if not self._created:
                 denormalize(denorm1, thing2, thing1)
                 denormalize(denorm2, thing1, thing2)
+
+        @classmethod
+        def record_cache_write(cls, event, delta=1):
+            name = cls.__name__.lower()
+            event_name = "rel.{event}.{name}".format(event=event, name=name)
+            g.stats.simple_event(event_name, delta)
 
         def __getattr__(self, attr):
             if attr == '_thing1':
