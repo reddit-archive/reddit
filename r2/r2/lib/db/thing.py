@@ -217,6 +217,10 @@ class DataThing(object):
     def record_cache_write(cls, event, delta=1):
         raise NotImplementedError
 
+    @classmethod
+    def record_lookup(cls, data, delta=1):
+        raise NotImplementedError
+
     def _commit(self, keys=None):
         lock = None
 
@@ -392,6 +396,8 @@ class DataThing(object):
                 return {}
             else:
                 return []
+
+        cls.record_lookup(data=data, delta=len(ids))
 
         def count_found(ret, still_need):
             cls._cache.stats.cache_report(
@@ -609,6 +615,13 @@ class Thing(DataThing):
         event_name = "thing.{event}.{name}".format(event=event, name=name)
         g.stats.simple_event(event_name, delta)
 
+    @classmethod
+    def record_lookup(cls, data, delta=1):
+        name = cls.__name__.lower()
+        data_str = "data" if data else "nodata"
+        event_name = "thing.byid.{name}.{data}".format(name=name, data=data_str)
+        g.stats.simple_event(event_name, delta)
+
     def __repr__(self):
         return '<%s %s>' % (self.__class__.__name__,
                             self._id if self._created else '[unsaved]')
@@ -822,6 +835,13 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
         def record_cache_write(cls, event, delta=1):
             name = cls.__name__.lower()
             event_name = "rel.{event}.{name}".format(event=event, name=name)
+            g.stats.simple_event(event_name, delta)
+
+        @classmethod
+        def record_lookup(cls, data, delta=1):
+            name = cls.__name__.lower()
+            data_str = "data" if data else "nodata"
+            event_name = "rel.byid.{name}.{data}".format(name=name, data=data_str)
             g.stats.simple_event(event_name, delta)
 
         def __getattr__(self, attr):
