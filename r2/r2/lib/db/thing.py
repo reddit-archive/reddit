@@ -376,7 +376,7 @@ class DataThing(object):
     @classmethod
     def _byID(cls, ids, data=False, return_dict=True,
               stale=False, ignore_missing=False):
-        ids, single = tup(ids, True)
+        ids, single = tup(ids, ret_is_single=True)
         prefix = thing_prefix(cls.__name__)
 
         for x in ids:
@@ -386,6 +386,12 @@ class DataThing(object):
                 raise NotFound('huge thing_id in %r' % ids)
             elif x < tdb.MIN_THING_ID:
                 raise NotFound('negative thing_id in %r' % ids)
+
+        if not single and not ids:
+            if return_dict:
+                return {}
+            else:
+                return []
 
         def count_found(ret, still_need):
             cls._cache.stats.cache_report(
