@@ -417,8 +417,9 @@ class DataThing(object):
                 bases[i]._cache_myself()
         if missing and not ignore_missing:
             raise NotFound, '%s %s' % (cls.__name__, missing)
-        for i in missing:
-            ids.remove(i)
+
+        if missing:
+            ids = [_id for _id in ids if _id not in missing]
 
         if data:
             need = []
