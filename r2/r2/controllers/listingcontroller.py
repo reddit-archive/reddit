@@ -1566,30 +1566,23 @@ class MyredditsController(ListingController):
     def query(self):
         if self.where == 'moderator' and not c.user.is_moderator_somewhere:
             return []
-        elif self.where == "subscriber":
+
+        if self.where == "subscriber":
             sr_ids = Subreddit.subscribed_ids_by_user(c.user)
-            sr_fullnames = [
-                Subreddit._fullname_from_id36(to36(sr_id)) for sr_id in sr_ids]
-            return sr_fullnames
         else:
-            q = SRMember._query(
+            q = SRMember._simple_query(
+                ["_thing1_id"],
                 SRMember.c._name == self.where,
                 SRMember.c._thing2_id == c.user._id,
                 #hack to prevent the query from
                 #adding it's own date
                 sort=(desc('_t1_ups'), desc('_t1_date')),
-                eager_load=True,
-                thing_data=True,
-                thing_stale=True,
             )
-            return q
+            sr_ids = [row._thing1_id for row in q]
 
-    def prewrap_fn(self):
-        if self.where != "subscriber":
-            def sr_from_srmember(srmember):
-                sr = srmember._thing1
-                return sr
-            return sr_from_srmember
+        sr_fullnames = [
+            Subreddit._fullname_from_id36(to36(sr_id)) for sr_id in sr_ids]
+        return sr_fullnames
 
     def content(self):
         user = c.user if c.user_is_loggedin else None
@@ -1609,13 +1602,8 @@ class MyredditsController(ListingController):
         return stack
 
     def build_listing(self, after=None, **kwargs):
-        if after:
-            if self.where == "subscriber":
-                if not isinstance(after, Subreddit):
-                    abort(400, 'gimme a subreddit')
-            else:
-                after = SRMember._fast_query(
-                    after, c.user, self.where, data=False).values()[0]
+        if after and not isinstance(after, Subreddit):
+            abort(400, 'gimme a subreddit')
 
         return ListingController.build_listing(self, after=after, **kwargs)
 
