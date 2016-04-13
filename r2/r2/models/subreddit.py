@@ -1191,12 +1191,15 @@ class Subreddit(Thing, Printable, BaseSite):
     def get_all_mod_ids(srs):
         from r2.lib.db.thing import Merge
         srs = tup(srs)
-        queries = [SRMember._query(SRMember.c._thing1_id == sr._id,
-                                   SRMember.c._name == 'moderator') for sr in srs]
+        queries = [
+            SRMember._simple_query(
+                ["_thing2_id"],
+                SRMember.c._thing1_id == sr._id,
+                SRMember.c._name == 'moderator',
+            ) for sr in srs
+        ]
+
         merged = Merge(queries)
-        # sr_ids = [sr._id for sr in srs]
-        # query = SRMember._query(SRMember.c._thing1_id == sr_ids, ...)
-        # is really slow
         return [rel._thing2_id for rel in list(merged)]
 
     def update_moderator_permissions(self, user, **kwargs):
