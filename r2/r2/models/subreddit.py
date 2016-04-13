@@ -1886,8 +1886,7 @@ class MultiReddit(FakeSubreddit):
         # Get moderator SRMember relations for all in srs
         # if a relation doesn't exist there will be a None entry in the
         # returned dict
-        mod_rels = SRMember._fast_query(self.srs, user,
-                                        'moderator', data=False)
+        mod_rels = SRMember._fast_query(self.srs, user, 'moderator', data=True)
         if None in mod_rels.values():
             return False
         else:
