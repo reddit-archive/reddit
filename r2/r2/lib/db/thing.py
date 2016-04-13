@@ -994,6 +994,11 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
         def _query(cls, *a, **kw):
             return Relations(cls, *a, **kw)
 
+        @classmethod
+        def _simple_query(cls, props, *rules, **kw):
+            """Return only the requested props rather than Relation objects."""
+            return RelationsPropsOnly(cls, props, *rules, **kw)
+
 
     return RelationCls
 Relation._type_prefix = 'r'
@@ -1098,7 +1103,7 @@ class Query(object):
     def _cursor(*a, **kw):
         raise NotImplementedError
 
-    def _iden(self):
+    def _get_iden_str(self):
         i = str(self._sort) + str(self._kind) + str(self._limit)
 
         if self._offset:
@@ -1109,22 +1114,36 @@ class Query(object):
             rules.sort()
             for r in rules:
                 i += str(r)
+        return i
+
+    def _iden(self):
+        i = self._get_iden_str()
         return hashlib.sha1(i).hexdigest()
 
+    def _get_results(self):
+        things = self._cursor().fetchall()
+        return things
+
+    def get_from_cache(self, allow_local=True):
+        thing_fullnames = self._cache.get(self._iden(), allow_local=allow_local)
+        if thing_fullnames:
+            things = Thing._by_fullname(thing_fullnames, data=self._data,
+                return_dict=False, stale=self._stale)
+            return things
+
+    def set_to_cache(self, things):
+        thing_fullnames = [thing._fullname for thing in things]
+        self._cache.set(self._iden(), thing_fullnames, self._cache_time)
+
     def __iter__(self):
-        used_cache = False
+        if self._read_cache:
+            things = self.get_from_cache()
+        else:
+            things = None
 
-        def _retrieve():
-            return self._cursor().fetchall()
-
-        names = lst = []
-
-        names = self._cache.get(self._iden()) if self._read_cache else None
-        if names is None and not self._write_cache:
-            # it wasn't in the cache, and we're not going to
-            # replace it, so just hit the db
-            lst = _retrieve()
-        elif names is None and self._write_cache:
+        if things is None and not self._write_cache:
+            things = self._get_results()
+        elif things is None:
             # it's not in the cache, and we have the power to
             # update it, which we should do in a lock to prevent
             # concurrent requests for the same data
@@ -1132,23 +1151,17 @@ class Query(object):
                 # see if it was set while we were waiting for our
                 # lock
                 if self._read_cache:
-                    names = self._cache.get(self._iden(), allow_local=False)
+                    things = self.get_from_cache(allow_local=False)
                 else:
-                    names = None
+                    things = None
 
-                if names is None:
-                    lst = _retrieve()
-                    _names = [x._fullname for x in lst]
-                    self._cache.set(self._iden(), _names, self._cache_time)
+                if things is None:
+                    things = self._get_results()
+                    self.set_to_cache(things)
 
-        if names and not lst:
-            # we got our list of names from the cache, so we need to
-            # turn them back into Things
-            lst = Thing._by_fullname(names, data=self._data, return_dict=False,
-                                     stale=self._stale)
+        for thing in things:
+            yield thing
 
-        for item in lst:
-            yield item
 
 class Things(Query):
     def __init__(self, kind, *rules, **kw):
@@ -1201,7 +1214,6 @@ def load_things(rels, load_data=False, stale=False):
         t2_items = kind._type2._byID(t2_ids, data=load_data, stale=stale)
 
 class Relations(Query):
-    #params are thing1, thing2, name, date
     def __init__(self, kind, *rules, **kw):
         self._eager_load = kw.get('eager_load')
         self._thing_data = kw.get('thing_data')
@@ -1220,7 +1232,8 @@ class Relations(Query):
         return self
 
     def _make_rel(self, rows):
-        rels = self._kind._byID(rows, self._data, False)
+        rel_ids = [row._rel_id for row in rows]
+        rels = self._kind._byID(rel_ids, data=self._data, return_dict=False)
         if rels and self._eager_load:
             for rel in rels:
                 rel._eagerly_loaded_data = True
@@ -1229,12 +1242,48 @@ class Relations(Query):
         return rels
 
     def _cursor(self):
-        c = tdb.find_rels(self._kind._type_id,
-                          sort = self._sort,
-                          limit = self._limit,
-                          offset = self._offset,
-                          constraints = self._rules)
-        return Results(c, self._make_rel, True)
+        c = tdb.find_rels(
+            ret_props=["_rel_id"],
+            rel_type_id=self._kind._type_id,
+            sort=self._sort,
+            limit=self._limit,
+            offset=self._offset,
+            constraints=self._rules,
+        )
+        return Results(c, self._make_rel, do_batch=True)
+
+
+class RelationsPropsOnly(Relations):
+    def __init__(self, kind, props, *rules, **kw):
+        self.props = props
+        Relations.__init__(self, kind, *rules, **kw)
+
+    def _cursor(self):
+        c = tdb.find_rels(
+            ret_props=self.props,
+            rel_type_id=self._kind._type_id,
+            sort=self._sort,
+            limit=self._limit,
+            offset=self._offset,
+            constraints=self._rules,
+        )
+        return c
+
+    def _get_iden_str(self):
+        i = Relations._get_iden_str(self)
+        i += '|'.join(sorted(self.props))
+        return i
+
+    def _get_results(self):
+        rows = self._cursor().fetchall()
+        return rows
+
+    def get_from_cache(self, allow_local=True):
+        return self._cache.get(self._iden(), allow_local=allow_local)
+
+    def set_to_cache(self, rows):
+        self._cache.set(self._iden(), rows, self._cache_time)
+
 
 class MultiCursor(object):
     def __init__(self, *execute_params):

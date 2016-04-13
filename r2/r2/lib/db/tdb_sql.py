@@ -960,14 +960,33 @@ def sort_thing_ids_by_data_value(type_id, thing_ids, value_name,
     return Results(rows, lambda(row): row.thing_id)
 
 
-def find_rels(rel_type_id, sort, limit, offset, constraints):
+def find_rels(ret_props, rel_type_id, sort, limit, offset, constraints):
     tables = get_rel_table(rel_type_id)
     r_table, t1_table, t2_table, d_table = tables
     constraints = deepcopy(constraints)
 
     t1_table, t2_table = t1_table.alias(), t2_table.alias()
 
-    s = sa.select([r_table.c.rel_id.label('rel_id')])
+    prop_to_column = {
+        "_rel_id": r_table.c.rel_id.label('rel_id'),
+        "_thing1_id": r_table.c.thing1_id.label('thing1_id'),
+        "_thing2_id": r_table.c.thing2_id.label('thing2_id'),
+        "_name": r_table.c.name.label('name'),
+        "_date": r_table.c.date.label('date'),
+    }
+
+    if not ret_props:
+        valid_props = ', '.join(prop_to_column.keys())
+        raise ValueError("ret_props must contain at least one of " + valid_props)
+
+    columns = []
+    for prop in ret_props:
+        if prop not in prop_to_column:
+            raise ValueError("ret_props got unrecognized %s" % prop)
+
+        columns.append(prop_to_column[prop])
+
+    s = sa.select(columns)
     need_join1 = ('thing1_id', t1_table)
     need_join2 = ('thing2_id', t2_table)
     joins_needed = set()
@@ -1009,20 +1028,22 @@ def find_rels(rel_type_id, sort, limit, offset, constraints):
         s.append_whereclause(sa_op(op))
 
     if sort:
-        s, cols = add_sort(sort,
-                           {'_':r_table, '_t1_':t1_table, '_t2_':t2_table},
-                           s)
-        
+        s, cols = add_sort(
+            sort=sort,
+            t_table={'_': r_table, '_t1_': t1_table, '_t2_': t2_table},
+            select=s,
+        )
+
         #do we need more joins?
         for (col, table) in cols:
             if table == need_join1[1]:
                 joins_needed.add(need_join1)
             elif table == need_join2[1]:
                 joins_needed.add(need_join2)
-        
+
     for j in joins_needed:
         col, table = j
-        s.append_whereclause(r_table.c[col] == table.c.thing_id)    
+        s.append_whereclause(r_table.c[col] == table.c.thing_id)
 
     if limit:
         s = s.limit(limit)
@@ -1036,10 +1057,21 @@ def find_rels(rel_type_id, sort, limit, offset, constraints):
         dbm.mark_dead(r_table.bind)
         # this thread must die so that others may live
         raise
-    return Results(r, lambda (row): row.rel_id)
+
+    def build_fn(row):
+        # return Storage objects with just the requested props
+        props = {}
+        for prop in ret_props:
+            db_prop = prop[1:]  # column name doesn't have _ prefix
+            props[prop] = getattr(row, db_prop)
+        return storage(**props)
+
+    return Results(sa_ResultProxy=r, build_fn=build_fn)
+
 
 if logging.getLogger('sqlalchemy').handlers:
     logging.getLogger('sqlalchemy').handlers[0].formatter = log_format
+
 
 #inconsitencies:
 
