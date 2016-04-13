@@ -620,6 +620,10 @@ module["highlight"] = Module("highlight.js",
     "highlight.js",
 )
 
+module["messagecompose"] = Module("messagecompose.js",
+    # jquery, hooks, ajax, preload
+    "messagecompose.js")
+
 module["less"] = Module('less.js',
     'lib/less-1.4.2.js',
     should_compile=False,

@@ -23,6 +23,11 @@
 <%namespace file="utils.html" import="error_field"/>
 <%namespace name="utils" file="utils.html"/>
 <%namespace file="messagecompose.html" import="to_field, subject_field, message_field, captcha_field"/>
+<%!
+   from r2.lib import js
+%>
+
+${unsafe(js.use("messagecompose"))}
 
 <h1>${_("send a private message")}</h1>
 

@@ -25,9 +25,12 @@
 
 <%!
    import simplejson
+   from r2.lib import js
    from r2.lib.pages import UserText
    from r2.lib.template_helpers import static
 %>
+
+${unsafe(js.use("messagecompose"))}
 
 <h1>${_("send a private message")}</h1>
 
@@ -77,6 +80,12 @@ ${captcha_field()}
 <%def name="subject_field()">
   <div class="spacer">
     <%utils:round_field title="${_('subject')}">
+      ## Hidden by default so that the form is reasonable for users with no JS.
+      <select class="rule_subject" style="display:none">
+        <option value="" selected disabled class="blank"></option>
+        <option value="" class="other">Other</option>
+      </select>
+
       <input type="text" name="subject" value="${thing.subject or ''}"/>
       ${error_field("NO_SUBJECT", "subject", "span")}
       ${error_field("TOO_LONG", "subject", "span")}
