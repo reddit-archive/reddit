@@ -546,6 +546,9 @@ class OAuth2Client(Token):
     def is_confidential(self):
         return self.app_type not in self.PUBLIC_APP_TYPES
 
+    def is_first_party(self):
+        return self.has_developer(Account.system_user())
+
 
 class OAuth2ClientsByDeveloper(tdb_cassandra.View):
     """Index providing access to the list of OAuth2Clients of which an Account is a developer."""
