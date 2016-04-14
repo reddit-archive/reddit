@@ -1809,6 +1809,33 @@ def squelch_exceptions(fn):
 
 EPOCH = datetime(1970, 1, 1, tzinfo=pytz.UTC)
 
+
 def epoch_timestamp(dt):
     """Returns the number of seconds from the epoch to date."""
     return (dt - EPOCH).total_seconds()
+
+
+def rate_limiter(max_per_second):
+    """Limit number of calls to returned closure per second to max_per_second
+    algorithm adapted from here:
+        http://blog.gregburek.com/2011/12/05/Rate-limiting-with-decorators/
+    """
+    min_interval = 1.0 / float(max_per_second)
+    # last_time_called needs to be a list so we can do a closure on it
+    last_time_called = [0.0]
+
+    def throttler():
+        elapsed = time.clock() - last_time_called[0]
+        left_to_wait = min_interval - elapsed
+        if left_to_wait > 0:
+            time.sleep(left_to_wait)
+        last_time_called[0] = time.clock()
+    return throttler
+
+
+def rate_limited_generator(rate_limit_per_second, iterable):
+    """Yield from iterable without going over rate limit"""
+    throttler = rate_limiter(rate_limit_per_second)
+    for i in iterable:
+        throttler()
+        yield i
