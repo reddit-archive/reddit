@@ -106,7 +106,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      friends      = _("friends"),
                      blocked      = _("blocked"),
                      update       = _("password/email"),
-                     delete       = _("delete"),
+                     deactivate   = _("deactivate"),
                      security     = _("security"),
 
                      # messages

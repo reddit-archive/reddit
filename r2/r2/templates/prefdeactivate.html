@@ -26,17 +26,17 @@
 <%namespace file="utils.html" import="error_field, text_with_links"/>
 <%namespace name="utils" file="utils.html"/>
 
-<h1>${_("delete your reddit account")}</h1>
+<h1>${_("deactivate your reddit account")}</h1>
 
-<form action="/post/delete" method="post"
-  onsubmit="${"return post_form(this, 'delete_user', function(x) {return '%s'})" % jssafe(_("deleting..."))}" id="pref-delete">
+<form action="javascript:;" method="post"
+  onsubmit="${"return post_form(this, 'deactivate_user', function(x) {return '%s'})" % jssafe(_("deactivating..."))}" id="pref-deactivate">
 
 <div class="spacer">
   <%utils:round_field title="${_('sorry to see you go!')}">
     <div class="rounded white-field">
       ${unsafe(safemarkdown(_(
-        " * if you're having a problem on reddit, please consider [contacting us](/message/compose?to=%2Fr%2Freddit.com) about it before deleting your account.\n"
-        " * deleting your account will not delete the content of posts and comments you've made on reddit. to do so, please delete them individually."
+        " * if you're having a problem on reddit, please consider [contacting us](/message/compose?to=%2Fr%2Freddit.com) about it before deactivating your account.\n"
+        " * deactivating your account will not delete the content of posts and comments you've made on reddit. to do so, please delete them individually."
       )))}
     </div>
   </%utils:round_field>
@@ -58,35 +58,35 @@
 %endif 
 
 <div class="spacer">
-  <%utils:round_field title="${_('why are you deleting this account?')}" description="(${_('optional')})">
-    <textarea name="delete_message" id="delete-message"></textarea>
-    ${error_field("TOO_LONG", "delete_message")}
+  <%utils:round_field title="${_('why are you deactivating this account?')}" description="(${_('optional')})">
+    <textarea name="deactivate_message" id="deactivate-message"></textarea>
+    ${error_field("TOO_LONG", "deactivate_message")}
   </%utils:round_field>
 </div>
 
 <div class="spacer">
   <%utils:round_field title="${_('account credentials')}" description="(${_('for security purposes')})" css_class="credentials">
-    <label for="delete-password">${_("username")}</label>
+    <label for="deactivate-user">${_("username")}</label>
     ${error_field("NOT_USER", "user")}
-    <input name="user" id="delete_user" type="text" />
-    <label for="delete-password">${_("password")}</label>
+    <input name="user" id="deactivate-user" type="text" />
+    <label for="deactivate-password">${_("password")}</label>
     ${error_field("WRONG_PASSWORD", "passwd")}
-    <input name="passwd" id="delete_password" type="password" />
+    <input name="passwd" id="deactivate-password" type="password" />
   </%utils:round_field>
 </div>  
 
 <div class="spacer">
   <%utils:round_field title="${_('confirmation')}">
     <div class="rounded white-field">
-      <input name="confirm" id="confirm-delete" type="checkbox"/>
-      <label for="confirm-delete">${_("I understand that deleted accounts are not recoverable.")}</label>
+      <input name="confirm" id="confirm-deactivate" type="checkbox"/>
+      <label for="confirm-deactivate">${_("I understand that deactivated accounts are not recoverable.")}</label>
     </div>
     ${error_field("CONFIRM", "confirm")}
   </%utils:round_field>
 </div>
 
 <div class="spacer">
-  <button type="submit" class="btn">${_("delete account")}</button>
+  <button type="submit" class="btn">${_("deactivate account")}</button>
   <span class="status"></span>
   ${error_field("RATELIMIT", "vdelay")}
 </div>

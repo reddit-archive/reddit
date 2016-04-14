@@ -1277,9 +1277,9 @@ class PrefsPage(Reddit):
 
         if c.user.name in g.admins:
             buttons += [NamedButton('security')]
-        #if CustomerID.get_id(user):
-        #    buttons += [NamedButton('payment')]
-        buttons += [NamedButton('delete')]
+
+        buttons += [NamedButton('deactivate')]
+
         return [PageNameNav('nomenu', title = _("preferences")),
                 NavMenu(buttons, base_path = "/prefs", type="tabmenu")]
 
@@ -1342,8 +1342,9 @@ class PrefApps(Templated):
         res = editable_developer_fn.render(app, dev)
         return spaceCompress(res)
 
-class PrefDelete(Templated):
-    """Preference form for deleting a user's own account."""
+    
+class PrefDeactivate(Templated):
+    """Preference form for deactivating a user's own account."""
     def __init__(self):
         self.has_paypal_subscription = c.user.has_paypal_subscription
         if self.has_paypal_subscription:

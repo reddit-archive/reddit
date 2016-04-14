@@ -1702,8 +1702,10 @@ class FormsController(RedditController):
                                developed_apps=OAuth2Client._by_developer(c.user))
         elif location == 'feeds' and c.user.pref_private_feeds:
             content = PrefFeeds()
+        elif location == 'deactivate':
+            content = PrefDeactivate()
         elif location == 'delete':
-            content = PrefDelete()
+            return self.redirect('/prefs/deactivate', code=301)
         elif location == 'security':
             if c.user.name not in g.admins:
                 return self.redirect('/prefs/')
@@ -1712,7 +1714,6 @@ class FormsController(RedditController):
             return self.abort404()
 
         return PrefsPage(content=content, infotext=infotext).render()
-
 
     @validate(dest=VDestination())
     def GET_login(self, dest):

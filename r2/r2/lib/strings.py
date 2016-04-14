@@ -71,7 +71,7 @@ string_dict = dict(
 
     multiple_submitted = _("that link has been submitted to multiple subreddits. you can try to [submit it again](%s)."),
 
-    user_deleted = _("your account has been deleted, but we won't judge you for it."),
+    user_deactivated = _("your account has been deactivated, but we won't judge you for it."),
 
     oauth_login_msg = _(
         "Log in or sign up to connect your reddit account with %(app)s."),

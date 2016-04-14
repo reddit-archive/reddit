@@ -1441,18 +1441,18 @@ class ApiController(RedditController):
 
     @validatedForm(VUser(),
                    VModhash(),
-                   delete_message = VLength("delete_message", max_length=500),
+                   deactivate_message = VLength("deactivate_message", max_length=500),
                    username = VRequired("user", errors.NOT_USER),
                    user = VThrottledLogin(["user", "passwd"]),
                    confirm = VBoolean("confirm"))
-    def POST_delete_user(self, form, jquery, delete_message, username, user, confirm):
-        """Delete the currently logged in account.
+    def POST_deactivate_user(self, form, jquery, deactivate_message, username, user, confirm):
+        """Deactivate the currently logged in account.
 
         A valid username/password and confirmation must be supplied. An
-        optional `delete_message` may be supplied to explain the reason the
+        optional `deactivate_message` may be supplied to explain the reason the
         account is to be deleted.
 
-        Called by /prefs/delete on the site.
+        Called by /prefs/deactivate on the site.
 
         """
         if username and username.lower() != c.user.name.lower():
@@ -1464,10 +1464,10 @@ class ApiController(RedditController):
         if not (form.has_errors('ratelimit', errors.RATELIMIT) or
                 form.has_errors("user", errors.NOT_USER) or
                 form.has_errors("passwd", errors.WRONG_PASSWORD) or
-                form.has_errors("delete_message", errors.TOO_LONG) or
+                form.has_errors("deactivate_message", errors.TOO_LONG) or
                 form.has_errors("confirm", errors.CONFIRM)):
-            redirect_url = "/?deleted=true"
-            c.user.delete(delete_message)
+            redirect_url = "/?deactivated=true"
+            c.user.delete(deactivate_message)
             form.redirect(redirect_url)
 
     @require_oauth2_scope("edit")

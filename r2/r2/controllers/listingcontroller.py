@@ -535,7 +535,7 @@ class HotController(ListingWithPromos):
     @require_oauth2_scope("read")
     @listing_api_doc(uri='/hot', uses_site=True)
     def GET_listing(self, **env):
-        self.infotext = request.GET.get('deleted') and strings.user_deleted
+        self.infotext = request.GET.get('deactivated') and strings.user_deactivated
         return ListingController.GET_listing(self, **env)
 
 class NewController(ListingWithPromos):
