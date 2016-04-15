@@ -224,8 +224,13 @@ class DataThing(object):
         try:
             if not self._created:
                 begin()
-                self._create()
+
+                # write the props to the thing table and get back the id
+                base_props = (getattr(self, prop) for prop in self._base_props)
+                self._id = self._make_fn(self._type_id, *base_props)
+                self._created = True
                 just_created = True
+
                 self.record_cache_write(event="create")
             else:
                 just_created = False
@@ -262,7 +267,7 @@ class DataThing(object):
                                just_created,
                                **data_props)
 
-            if thing_props:
+            if thing_props and not just_created:
                 self._set_props(self._type_id, self._id, **thing_props)
 
             self._dirties.clear()
@@ -529,10 +534,6 @@ class DataThing(object):
     def _get_item(*a, **kw):
         raise NotImplementedError
 
-    def _create(self):
-        base_props = (getattr(self, prop) for prop in self._base_props)
-        self._id = self._make_fn(self._type_id, *base_props)
-        self._created = True
 
 class ThingMeta(type):
     def __init__(cls, name, bases, dct):
