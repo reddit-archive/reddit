@@ -86,12 +86,6 @@ class DataThing(object):
             self._t = {}
             self._created = False
 
-            # set _loaded=True so objects we write to cache continue to have
-            # the _loaded attribute and will work with old versions of the
-            # code in case we need to revert the commit that removes _loaded
-            # everywhere else.
-            self._loaded = True
-
     #TODO some protection here?
     def __setattr__(self, attr, val, make_dirty=True):
         if attr.startswith('__') or self.__safe__:
@@ -351,12 +345,6 @@ class DataThing(object):
                 thing = cls._build(_id, props)
                 data_props = data_props_by_id.get(_id, {})
                 thing._t.update(data_props)
-
-                # set _loaded=True so objects we write to cache continue to have
-                # the _loaded attribute and will work with old versions of the
-                # code in case we need to revert the commit that removes _loaded
-                # everywhere else.
-                thing._loaded = True
 
                 if not all(data_prop in thing._t for data_prop in cls._essentials):
                     # a Thing missing an essential prop is invalid
