@@ -690,7 +690,8 @@ class Subreddit(Thing, Printable, BaseSite):
         try:
             # TODO: support batch lookup of multiple contexts (requires changes
             # to activity service)
-            activity = c.activity_service.count_activity(self._fullname)
+            with c.activity_service.retrying(attempts=4, budget=0.1) as svc:
+                activity = svc.count_activity(self._fullname)
             return self.SubredditActivity(activity)
         except TTransportException:
             return None
