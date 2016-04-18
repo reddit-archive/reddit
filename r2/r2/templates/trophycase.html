@@ -82,21 +82,6 @@
 
 ${trophy_table(thing.trophies)}
 
-%if thing.dupe_trophies:
-  <p>
-    (
-    <a href="javascript:void(0)"
-       onclick="$('.dupe-trophies').show();$(this).parent().hide();return false">
-      ${_("%d more") % len(thing.dupe_trophies)}
-    </a>
-    )
-  </p>
-
-<div class="dupe-trophies" style="display: none">
-${trophy_table(thing.dupe_trophies)}
-</div>
-%endif
-
 %if c.user_is_admin and thing.invisible_trophies:
   ${trophy_table(thing.invisible_trophies, "<p>Invisibles:</p>")}
 %endif
