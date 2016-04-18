@@ -19,6 +19,12 @@
 # All portions of the code written by reddit are Copyright (c) 2006-2015 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
+import csv
+from collections import defaultdict
+import hashlib
+import re
+import urllib
+import urllib2
 
 from r2.controllers.reddit_base import (
     abort_with_error,
@@ -111,6 +117,7 @@ from r2.controllers.oauth2 import require_oauth2_scope, allow_oauth2_access
 from r2.lib.template_helpers import add_sr, get_domain, make_url_protocol_relative
 from r2.lib.system_messages import notify_user_added, send_ban_message
 from r2.controllers.ipn import generate_blob, update_blob
+from r2.controllers.login import handle_login, handle_register
 from r2.lib.lock import TimeoutExpired
 from r2.lib.csrf import csrf_exempt
 from r2.lib.voting import cast_vote
@@ -122,14 +129,8 @@ from r2.models.rules import SubredditRules
 from r2.models.vote import Vote
 from r2.lib.merge import ConflictException
 
-import csv
-from collections import defaultdict
 from datetime import datetime, timedelta
 from urlparse import urlparse
-import hashlib
-import re
-import urllib
-import urllib2
 
 
 class ApiminimalController(MinimalController):
@@ -608,45 +609,14 @@ class ApiController(RedditController):
             responder._send_data(cookie  = user.make_cookie())
         responder._send_data(need_https=feature.is_enabled("force_https"))
 
-    @validatedForm(VLoggedOut(),
-                   user = VThrottledLogin(['user', 'passwd']),
-                   rem = VBoolean('rem'))
-    def _handle_login(self, form, responder, user, rem):
-        def _event(error):
-            g.events.login_event(
-                'login_attempt',
-                error_msg=error,
-                user_name=request.urlvars.get('url_user'),
-                remember_me=rem,
-                request=request,
-                context=c)
-
-        exempt_ua = (request.user_agent and
-                     any(ua in request.user_agent for ua
-                         in g.config.get('exempt_login_user_agents', ())))
-        if (errors.LOGGED_IN, None) in c.errors:
-            if user == c.user or exempt_ua:
-                # Allow funky clients to re-login as the current user.
-                c.errors.remove((errors.LOGGED_IN, None))
-            else:
-                from r2.lib.base import abort
-                from r2.lib.errors import reddit_http_error
-                _event(error='LOGGED_IN')
-                abort(reddit_http_error(409, errors.LOGGED_IN))
-
-        if responder.has_errors("ratelimit", errors.RATELIMIT):
-            _event(error='RATELIMIT')
-
-        elif responder.has_errors("passwd", errors.WRONG_PASSWORD):
-            _event(error='WRONG_PASSWORD')
-
-        else:
-            self._login(responder, user, rem)
-            _event(error=None)
-
     @csrf_exempt
     @cross_domain(allow_credentials=True)
-    def POST_login(self, *args, **kwargs):
+    @validatedForm(
+        VLoggedOut(),
+        user=VThrottledLogin(['user', 'passwd']),
+        rem=VBoolean('rem'),
+    )
+    def POST_login(self, form, responder, user, rem=None, **kwargs):
         """Log into an account.
 
         `rem` specifies whether or not the session cookie returned should last
@@ -655,115 +625,26 @@ class ApiController(RedditController):
         that it is not a session cookie).
 
         """
-        return self._handle_login(*args, **kwargs)
-
-    @validatedForm(VRatelimit(rate_ip = True, prefix = "rate_register_"),
-                   name = VUname(['user']),
-                   email=ValidEmail("email"),
-                   password = VPasswordChange(['passwd', 'passwd2']),
-                   rem = VBoolean('rem'),
-                   newsletter_subscribe=VBoolean('newsletter_subscribe',
-                                                 default=False),
-                   sponsor=VBoolean('sponsor', default=False),
-                   )
-    def _handle_register(self, form, responder, name, email,
-                         password, rem, newsletter_subscribe,
-                         sponsor):
-        def _event(error):
-            g.events.login_event(
-                'register_attempt',
-                error_msg=error,
-                user_name=request.urlvars.get('url_user'),
-                email=request.POST.get('email'),
-                remember_me=rem,
-                newsletter=newsletter_subscribe,
-                request=request,
-                context=c)
-
-        if responder.has_errors('user', errors.USERNAME_TOO_SHORT):
-            _event(error='USERNAME_TOO_SHORT')
-
-        elif responder.has_errors('user', errors.USERNAME_INVALID_CHARACTERS):
-            _event(error='USERNAME_INVALID_CHARACTERS')
-
-        elif responder.has_errors('user', errors.USERNAME_TAKEN_DEL):
-            _event(error='USERNAME_TAKEN_DEL')
-
-        elif responder.has_errors('user', errors.USERNAME_TAKEN):
-            _event(error='USERNAME_TAKEN')
-
-        elif responder.has_errors('email', errors.BAD_EMAIL):
-            _event(error='BAD_EMAIL')
-
-        elif responder.has_errors('passwd', errors.SHORT_PASSWORD):
-            _event(error='SHORT_PASSWORD')
-
-        elif responder.has_errors('passwd', errors.BAD_PASSWORD):
-            # BAD_PASSWORD is set when SHORT_PASSWORD is set
-            _event(error='BAD_PASSWORD')
-
-        elif responder.has_errors('passwd2', errors.BAD_PASSWORD_MATCH):
-            _event(error='BAD_PASSWORD_MATCH')
-
-        elif responder.has_errors('ratelimit', errors.RATELIMIT):
-            _event(error='RATELIMIT')
-
-        elif (not g.disable_captcha and
-                responder.has_errors('captcha', errors.BAD_CAPTCHA)):
-            _event(error='BAD_CAPTCHA')
-
-        elif newsletter_subscribe and not email:
-            c.errors.add(errors.NEWSLETTER_NO_EMAIL, field="email")
-            form.has_errors("email", errors.NEWSLETTER_NO_EMAIL)
-            _event(error='NEWSLETTER_NO_EMAIL')
-
-        elif sponsor and not email:
-            c.errors.add(errors.SPONSOR_NO_EMAIL, field="email")
-            form.has_errors("email", errors.SPONSOR_NO_EMAIL)
-            _event(error='SPONSOR_NO_EMAIL')
-
-        else:
-            try:
-                user = register(name, password, request.ip)
-            except AccountExists:
-                c.errors.add(errors.USERNAME_TAKEN, field="user")
-                form.has_errors("user", errors.USERNAME_TAKEN)
-                _event(error='USERNAME_TAKEN')
-                return
-
-            VRatelimit.ratelimit(rate_ip = True, prefix = "rate_register_")
-
-            #anything else we know (email, languages)?
-            if email:
-                user.set_email(email)
-                emailer.verify_email(user)
-
-            user.pref_lang = c.lang
-
-            d = c.user._dirties.copy()
-            user._commit()
-
-            amqp.add_item('new_account', user._fullname)
-
-            hooks.get_hook("account.registered").call(user=user)
-
-            reject = hooks.get_hook("account.spotcheck").call(account=user)
-            if any(reject):
-                _event(error='ACCOUNT_SPOTCHECK')
-                return
-
-            if newsletter_subscribe and email:
-                try:
-                    newsletter.add_subscriber(email, source="register")
-                except newsletter.NewsletterError as e:
-                    g.log.warning("Failed to subscribe: %r" % e)
-
-            self._login(responder, user, rem)
-            _event(error=None)
+        kwargs.update(dict(
+            controller=self,
+            form=form,
+            responder=responder,
+            user=user,
+        ))
+        return handle_login(**kwargs)
 
     @csrf_exempt
     @cross_domain(allow_credentials=True)
-    def POST_register(self, *args, **kwargs):
+    @validatedForm(
+        VRatelimit(rate_ip=True, prefix="rate_register_"),
+        name=VUname(['user']),
+        email=ValidEmail("email"),
+        password=VPasswordChange(['passwd', 'passwd2']),
+        rem=VBoolean('rem'),
+        newsletter_subscribe=VBoolean('newsletter_subscribe', default=False),
+        sponsor=VBoolean('sponsor', default=False),
+    )
+    def POST_register(self, form, responder, name, email, password, **kwargs):
         """Create a new account.
 
         `rem` specifies whether or not the session cookie returned should last
@@ -772,7 +653,15 @@ class ApiController(RedditController):
         that it is not a session cookie).
 
         """
-        return self._handle_register(*args, **kwargs)
+        kwargs.update(dict(
+            controller=self,
+            form=form,
+            responder=responder,
+            name=name,
+            email=email,
+            password=password,
+        ))
+        return handle_register(**kwargs)
 
     @require_oauth2_scope("modself")
     @noresponse(VUser(),
