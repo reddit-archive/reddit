@@ -548,6 +548,7 @@ module["reddit"] = LocalizedModule("reddit.js",
     "cache-poisoning-detection.js",
     "messages.js",
     "reddit-hook.js",
+    "warn-on-unload.js",
     PermissionsDataSource({
         "moderator": ModeratorPermissionSet,
         "moderator_invite": ModeratorPermissionSet,

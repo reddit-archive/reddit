@@ -185,11 +185,24 @@ $.request = function(op, parameters, worker_in, block, type,
     parameters = $.with_default(parameters, {});
     worker_in  = $.with_default(worker_in, handleResponse(action));
     type  = $.with_default(type, "json");
+
+    var form = $(document.activeElement).closest('form.warn-on-unload');
+
     if (typeof(worker_in) != 'function')
         worker_in  = handleResponse(action);
-    var worker = function(r) {
+    var worker = function(res) {
         release_ajax_lock(action);
-        return worker_in(r);
+
+        /*
+         * check if there exists a form that has the
+         * warn-on-unload class. Remove the beforeunload event
+         * listener if the form submission was successful
+         * and we dont warn the user on succesful form submissions
+         */
+        if($(form).length && res.success && $(form).hasClass('redirect-form')) {
+            $(window).off('beforeunload');
+        }
+        return worker_in(res);
     };
     /* do the same for the error handler, and make sure to release the lock*/
     errorhandler_in = $.with_default(errorhandler, function() { });
@@ -197,7 +210,6 @@ $.request = function(op, parameters, worker_in, block, type,
         release_ajax_lock(action);
         return errorhandler_in(r);
     };
-
 
 
     get_only = $.with_default(get_only, false);

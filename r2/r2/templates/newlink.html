@@ -39,9 +39,9 @@
 
 <h1>${_wsf("submit to %(sr)s", sr=sr)}</h1>
 
-<%utils:submit_form onsubmit="return post_form(this, 'submit', linkstatus, null, true)" 
+<%utils:submit_form onsubmit="return post_form(this, 'submit', linkstatus, null, true)"
                     action=${add_sr("/submit")},
-                    _class="submit content",
+                    _class="submit content warn-on-unload redirect-form",
                     _id="newlink">
 
 %if thing.show_link and thing.show_self:
