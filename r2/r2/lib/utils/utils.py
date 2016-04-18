@@ -159,8 +159,11 @@ class Results():
         row = self.rp.fetchone()
         if row:
             if self.do_batch:
-                row = tup(row)
-                return self.fn(row)[0]
+                if isinstance(row, Storage):
+                    rows = (row,)
+                else:
+                    rows = tup(row)
+                return self.fn(rows)[0]
             else:
                 return self.fn(row)
         else:
