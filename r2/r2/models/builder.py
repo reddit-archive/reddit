@@ -843,11 +843,12 @@ class CommentOrdererBase(object):
         if comment_tuples:
             # some comments have bypassed the sorting/inserting process, remove
             # them from `initial_candidates` so they won't be inserted again
-            for comment_tuple in comment_tuples:
-                try:
-                    initial_candidates.remove(comment_tuple.comment_id)
-                except ValueError:
-                    pass
+            comment_tuple_ids = {
+                comment_tuple.comment_id for comment_tuple in comment_tuples}
+            initial_candidates = [
+                comment_id for comment_id in initial_candidates
+                if comment_id not in comment_tuple_ids
+            ]
 
         candidates = []
         self.update_candidates(candidates, sorter, initial_candidates)
