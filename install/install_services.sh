@@ -39,6 +39,7 @@ rabbitmq-server
 haproxy
 nginx
 gunicorn
+redis-server
 PACKAGES
 
 ###############################################################################
@@ -49,7 +50,8 @@ echo "Waiting for services to be available, see source for port meanings..."
 # 11211 - memcache
 # 5432 - postgres
 # 5672 - rabbitmq
-for port in 11211 5432 5672; do
+# 6379 - redis
+for port in 11211 5432 5672 6379; do
     while ! nc -vz localhost $port; do
         sleep 1
     done

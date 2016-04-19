@@ -114,4 +114,7 @@ libpcre3-dev
 python-gevent
 python-gevent-websocket
 python-haigha
+
+python-redis
+python-pyramid
 PACKAGES

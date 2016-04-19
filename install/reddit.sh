@@ -126,6 +126,7 @@ for plugin in $REDDIT_PLUGINS; do
     clone_reddit_plugin_repo $plugin
 done
 clone_reddit_service_repo websockets
+clone_reddit_service_repo activity
 
 ###############################################################################
 # Configure Services
@@ -159,6 +160,7 @@ for plugin in $REDDIT_PLUGINS; do
     install_reddit_repo $plugin
 done
 install_reddit_repo websockets
+install_reddit_repo activity
 
 # generate binary translation files from source
 sudo -u $REDDIT_USER make -C $REDDIT_SRC/i18n clean all
@@ -493,6 +495,27 @@ UPSTART_WEBSOCKETS
 fi
 
 service reddit-websockets restart
+
+###############################################################################
+# activity service
+###############################################################################
+
+if [ ! -f /etc/init/reddit-activity.conf ]; then
+    cat > /etc/init/reddit-activity.conf << UPSTART_ACTIVITY
+description "activity service"
+
+stop on runlevel [!2345] or reddit-restart all or reddit-restart activity
+start on runlevel [2345] or reddit-restart all or reddit-restart activity
+
+respawn
+respawn limit 10 5
+kill timeout 15
+
+exec baseplate-serve2 --bind localhost:9002 $REDDIT_SRC/activity/example.ini
+UPSTART_ACTIVITY
+fi
+
+service reddit-activity restart
 
 ###############################################################################
 # geoip service
