@@ -1171,18 +1171,22 @@ class PromotedLink(Link):
     @classmethod
     def add_props(cls, user, wrapped):
         Link.add_props(user, wrapped)
-        user_is_sponsor = c.user_is_sponsor
 
-        status_dict = dict((v, k) for k, v in PROMOTE_STATUS.iteritems())
         for item in wrapped:
-            # these are potentially paid for placement
             item.nofollow = True
-            item.user_is_sponsor = user_is_sponsor
-            status = getattr(item, "promote_status", -1)
-            if item.is_author or c.user_is_sponsor:
-                item.rowstyle_cls = "link " + PROMOTE_STATUS.name[status].lower()
-            else:
-                item.rowstyle_cls = "link promoted"
+            item.user_is_sponsor = c.user_is_sponsor
+
+            status = "promoted"
+
+            # change the status class if the viewer is the author or a sponsor
+            if item.is_author or item.user_is_sponsor:
+                try:
+                    status = PROMOTE_STATUS.name[item.promote_status]
+                except (AttributeError, IndexError):
+                    pass
+
+            item.rowstyle_cls = "link %s" % status
+
         # Run this last
         Printable.add_props(user, wrapped)
 
