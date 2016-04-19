@@ -121,7 +121,11 @@ class sort(object):
         return '<sort:%s %s>' % (self.__class__.__name__, str(self.col))
 
     def __eq__(self, other):
-        return self.col == other.col
+        return self.__class__ == other.__class__ and self.col == other.col
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
 
 class asc(sort): pass
 class desc(sort):pass
