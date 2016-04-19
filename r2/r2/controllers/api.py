@@ -2252,6 +2252,11 @@ class ApiController(RedditController):
         VNotInTimeout().run(target=link, subreddit=subreddit)
 
         emails, users = share_to
+
+        # disallow email share for accounts without a verified email address
+        if emails and (not c.user.email or not c.user.email_verified):
+            return abort(403, 'forbidden')
+
         link_title = _force_unicode(link.title)
 
         if getattr(link, "promoted", None) and link.disable_comments:
