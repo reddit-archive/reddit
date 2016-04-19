@@ -139,11 +139,14 @@ class EventQueue(object):
             event.add("auto_self_vote", True)
 
         for name, value in vote.effects.serializable_data.iteritems():
-            # rename the "notes" field to "process_notes" for the event
+            # rename the "notes" field to "details_text" for the event
             if name == "notes":
-                name = "process_notes"
+                name = "details_text"
 
             event.add(name, value)
+
+        # add the note codes separately as "process_notes"
+        event.add("process_notes", ", ".join(vote.effects.note_codes))
 
         event.add_subreddit_fields(vote.thing.subreddit_slow)
         event.add_target_fields(vote.thing)

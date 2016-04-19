@@ -58,11 +58,17 @@ class TestEventCollector(RedditTestCase):
 
     def test_vote_event(self):
         self.patch_liveconfig("events_collector_vote_sample_rate", 1.0)
+        enum_name = "foo"
+        enum_note = "bar"
+        notes = "%s(%s)" % (enum_name, enum_note)
         initial_vote = MagicMock(is_upvote=True, is_downvote=False,
                                  is_automatic_initial_vote=True,
                                  previous_vote=None,
                                  data={"rank": MagicMock()},
-                                 name="initial_vote")
+                                 name="initial_vote",
+                                 effects=MagicMock(
+                                     note_codes=[enum_name],
+                                     serializable_data={"notes": notes}))
         g.events.vote_event(initial_vote)
 
         self.amqp.assert_event_item(
@@ -79,6 +85,8 @@ class TestEventCollector(RedditTestCase):
                     'target_fullname': initial_vote.thing._fullname,
                     'target_name': initial_vote.thing.name,
                     'target_id': initial_vote.thing._id,
+                    'details_text': notes,
+                    'process_notes': enum_name,
                     'auto_self_vote': True,
                 }
             )
