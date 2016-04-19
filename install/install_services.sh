@@ -39,7 +39,6 @@ rabbitmq-server
 haproxy
 nginx
 gunicorn
-sutro
 PACKAGES
 
 ###############################################################################
