@@ -651,7 +651,7 @@
                 CPM
               </option>
             </select>
-            ${error_field("INVALID_LOCATION", ("country", "region", "metro"), "div")}
+            ${error_field("INVALID_LOCATION", "location", "div")}
           </div>
         </div>
       %else:
@@ -824,7 +824,7 @@
         <select class="geotarget-select" id="metro" name="metro"
                 title="${_("metro")}" style="display:none"
                 onchange="r.sponsored.metro_changed()"></select>
-        ${error_field("INVALID_LOCATION", ("country", "region", "metro"), "div")}
+        ${error_field("INVALID_LOCATION", "location", "div")}
       </div>
     </div>
   </%utils:line_field>

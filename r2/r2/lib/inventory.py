@@ -171,7 +171,10 @@ def get_predicted_pageviews(srs, location=None):
         r = LocationPromoMetrics.get(DefaultSR, [no_location, location])
         location_pageviews = r[(DefaultSR, location)]
         all_pageviews = r[(DefaultSR, no_location)]
-        location_factor = float(location_pageviews) / float(all_pageviews)
+        if all_pageviews:
+            location_factor = float(location_pageviews) / float(all_pageviews)
+        else:
+            location_factor = 0.
     else:
         location_factor = 1.0
 

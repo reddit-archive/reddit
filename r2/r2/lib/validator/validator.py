@@ -2365,14 +2365,31 @@ class VLocation(Validator):
         if not (country or region or metro):
             return None
 
+        # Sponsors should only be creating fixed-CPM campaigns, which we
+        # cannot calculate region specific inventory for
+        if c.user_is_sponsor and region and not (region and metro):
+            invalid_region = True
+        else:
+            invalid_region = False
+
+        # Non-sponsors can only create auctions (non-inventory), so they
+        # can target country, country/region, and country/region/metro
         if not (country and not (region or metro) or
+                (country and region and not metro) or
                 (country and region and metro)):
-            # can target just country or country, region, and metro
-            self.set_error(errors.INVALID_LOCATION, code=400)
-        elif (country not in g.locations or
-              region and region not in g.locations[country]['regions'] or
-              metro and metro not in g.locations[country]['regions'][region]['metros']):
-            self.set_error(errors.INVALID_LOCATION, code=400)
+            invalid_geotargets = True
+        else:
+            invalid_geotargets = False
+
+        if (country not in g.locations or
+                region and region not in g.locations[country]['regions'] or
+                metro and metro not in g.locations[country]['regions'][region]['metros']):
+            nonexistent_geotarget = True
+        else:
+            nonexistent_geotarget = False
+
+        if invalid_region or invalid_geotargets or nonexistent_geotarget:
+            self.set_error(errors.INVALID_LOCATION, code=400, field='location')
         else:
             return Location(country, region, metro)
 

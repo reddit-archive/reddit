@@ -1266,6 +1266,9 @@ class PromoteApiController(ApiController):
             form.has_errors('targeting', errors.INVALID_TARGET)
             return
 
+        if form.has_errors('location', errors.INVALID_LOCATION):
+            return
+
         if not allowed_location_and_target(location, target):
             return abort(403, 'forbidden')
 

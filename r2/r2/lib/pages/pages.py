@@ -4488,7 +4488,10 @@ class PromoteLinkBase(Templated):
                     if region['metros']:
                         region_tuple = (region_code, region['name'], False)
                         regions[code].append(region_tuple)
-                        metros[region_code] = []
+                        if c.user_is_sponsor:
+                            metros[region_code] = []
+                        else:
+                            metros[region_code] = [('', _('all'), True)]
 
                         for metro_code, metro in region['metros'].iteritems():
                             metro_tuple = (metro_code, metro['name'], False)

@@ -616,12 +616,16 @@ class PromoCampaign(Thing):
     def location_str(self):
         if not self.location:
             return ''
-        elif self.location.metro:
+        elif self.location.region:
             country = self.location.country
             region = self.location.region
-            metro_str = (g.locations[country]['regions'][region]
-                         ['metros'][self.location.metro]['name'])
-            return '/'.join([country, region, metro_str])
+            if self.location.metro:
+                metro_str = (g.locations[country]['regions'][region]
+                             ['metros'][self.location.metro]['name'])
+                return '/'.join([country, region, metro_str])
+            else:
+                region_name = g.locations[country]['regions'][region]['name']
+                return ('%s, %s' % (region_name, country))
         else:
             return g.locations[self.location.country]['name']
 
