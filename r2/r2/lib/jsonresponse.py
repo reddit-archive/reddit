@@ -200,7 +200,8 @@ class JQueryResponse(JsonResponse):
                 selector += ".field-" + field_name
             message = c.errors[(error_name, field_name)].message
             form.find(selector).show().text(message).end()
-        return {"jquery": self.ops}
+        return {"jquery": self.ops,
+                "success": not self.has_error()}
 
     # thing methods
     #--------------
