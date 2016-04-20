@@ -4828,6 +4828,9 @@ class ApiController(RedditController):
         if client_id:
             # client_id was specified, updating existing OAuth2Client
             client = OAuth2Client.get_token(client_id)
+            if client.is_first_party() and not c.user_is_admin:
+                form.set_text('.status', _('this app can not be modified from this interface'))
+                return
             if app_type != client.app_type:
                 # App type cannot be changed after creation
                 abort(400, "invalid request")
@@ -4875,6 +4878,10 @@ class ApiController(RedditController):
             return
         if form.has_errors('name', errors.USER_DOESNT_EXIST, errors.NO_USER):
             return
+        if client.is_first_party() and not c.user_is_admin:
+            c.errors.add(errors.DEVELOPER_FIRST_PARTY_APP, field='name')
+            form.set_error(errors.DEVELOPER_FIRST_PARTY_APP, 'name')
+            return
         if client.has_developer(account):
             c.errors.add(errors.DEVELOPER_ALREADY_ADDED, field='name')
             form.set_error(errors.DEVELOPER_ALREADY_ADDED, 'name')
@@ -4897,6 +4904,10 @@ class ApiController(RedditController):
                    client=VOAuth2ClientDeveloper(),
                    account=VExistingUname('name'))
     def POST_removedeveloper(self, form, jquery, client, account):
+        if client.is_first_party() and not c.user_is_admin:
+            c.errors.add(errors.DEVELOPER_FIRST_PARTY_APP, field='name')
+            form.set_error(errors.DEVELOPER_FIRST_PARTY_APP, 'name')
+            return
         if client and account and not form.has_errors('name'):
             client.remove_developer(account)
             if account._id == c.user._id:
