@@ -4882,6 +4882,11 @@ class ApiController(RedditController):
             c.errors.add(errors.DEVELOPER_FIRST_PARTY_APP, field='name')
             form.set_error(errors.DEVELOPER_FIRST_PARTY_APP, 'name')
             return
+        if ((account.employee or account == Account.system_user()) and
+           not c.user_is_admin):
+            c.errors.add(errors.DEVELOPER_PRIVILEGED_ACCOUNT, field='name')
+            form.set_error(errors.DEVELOPER_PRIVILEGED_ACCOUNT, 'name')
+            return
         if client.has_developer(account):
             c.errors.add(errors.DEVELOPER_ALREADY_ADDED, field='name')
             form.set_error(errors.DEVELOPER_ALREADY_ADDED, 'name')

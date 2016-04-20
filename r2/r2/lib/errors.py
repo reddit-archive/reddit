@@ -139,6 +139,7 @@ error_list = dict((
         ('DEVELOPER_ALREADY_ADDED', _('already added')),
         ('TOO_MANY_DEVELOPERS', _('too many developers')),
         ('DEVELOPER_FIRST_PARTY_APP', _('this app can not be modified from this interface')),
+        ('DEVELOPER_PRIVILEGED_ACCOUNT', _('you cannot add this account from this interface')),
         ('INVALID_MODHASH', _("invalid modhash")),
         ('ALREADY_MODERATOR', _('that user is already a moderator')),
         ('CANT_RESTRICT_MODERATOR', _("You can't perform that action because that user is a moderator.")),
