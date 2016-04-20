@@ -399,11 +399,6 @@ class DataThing(object):
             props_by_id = cls._get_item(cls._type_id, ids)
             data_props_by_id = cls._get_data(cls._type_id, ids)
 
-            try:
-                essentials = object.__getattribute__(cls, "_essentials")
-            except AttributeError:
-                essentials = ()
-
             things_by_id = {}
             for _id, props in props_by_id.iteritems():
                 thing = cls._build(_id, props)
@@ -411,9 +406,14 @@ class DataThing(object):
                 thing._t.update(data_props)
                 thing._loaded = True
 
-                for data_prop in essentials:
-                    if data_prop not in thing._t:
-                        print "Warning: %s is missing %s" % (thing._fullname, data_prop)
+                if not all(data_prop in thing._t for data_prop in cls._essentials):
+                    # a Thing missing an essential prop is invalid
+                    # this can happen if a process looks up the Thing as it's
+                    # created but between when the props and the data props are
+                    # written
+                    g.log.error("%s missing essentials, got %s", thing, thing._t)
+                    g.stats.simple_event("thing.load.missing_essentials")
+                    continue
 
                 things_by_id[_id] = thing
 
