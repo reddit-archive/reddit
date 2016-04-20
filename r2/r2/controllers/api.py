@@ -1882,6 +1882,16 @@ class ApiController(RedditController):
             return
         c.user.add_enemy(block_acct)
 
+        # report the user blocking to data pipeline
+        g.events.report_event(
+            subreddit=sr,
+            target=thing,
+            request=request,
+            context=c,
+            event_type="ss.block_user"
+        )
+
+
     @require_oauth2_scope("privatemessages")
     @noresponse(
         VUser(),

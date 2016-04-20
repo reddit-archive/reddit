@@ -466,7 +466,8 @@ class EventQueue(object):
     @squelch_exceptions
     @sampled("events_collector_report_sample_rate")
     def report_event(self, reason=None, details_text=None,
-            subreddit=None, target=None, request=None, context=None):
+            subreddit=None, target=None, request=None, context=None,
+                     event_type="ss.report"):
         """Create a 'report' event for event-collector.
 
         process_notes: Type of rule (pre-defined report reasons or custom)
@@ -480,7 +481,7 @@ class EventQueue(object):
 
         event = Event(
             topic="report_events",
-            event_type="ss.report",
+            event_type=event_type,
             request=request,
             context=context,
         )
