@@ -390,12 +390,10 @@ class DataThing(object):
                 del ret[_id]
                 still_need.add(_id)
 
-            cls._cache.stats.cache_report(
-                hits=len(ret), misses=len(still_need),
-                cache_name='sgm.%s' % cls.__name__)
-
-        if not cls._cache.stats:
-            count_found = None
+            if cls._cache.stats:
+                cls._cache.stats.cache_report(
+                    hits=len(ret), misses=len(still_need),
+                    cache_name='sgm.%s' % cls.__name__)
 
         def get_things_from_db(ids):
             props_by_id = cls._get_item(cls._type_id, ids)
