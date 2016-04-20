@@ -2938,6 +2938,8 @@ class ApiController(RedditController):
                 not c.user_is_admin):
             form.set_error(errors.CANT_CONVERT_TO_GOLD_ONLY, 'type')
             c.errors.add(errors.CANT_CONVERT_TO_GOLD_ONLY, field='type')
+        elif form.has_errors('type', errors.GOLD_REQUIRED):
+            pass
         elif not sr and form.has_errors("name", errors.SUBREDDIT_EXISTS,
                                         errors.BAD_SR_NAME):
             form.find('#example_name').hide()
