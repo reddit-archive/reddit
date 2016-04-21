@@ -600,6 +600,7 @@ class ApiController(RedditController):
                 form.set_text(".title-status", "")
             else:
                 form.set_text(".title-status", _("no title found"))
+            form._send_data(title=title)
         
     def _login(self, responder, user, rem = None):
         """
