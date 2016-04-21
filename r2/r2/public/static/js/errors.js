@@ -68,6 +68,10 @@
 
 
   r.errors = {
+    create: function(name, message, field, source) {
+      return new ApiError(name, message, field, source);
+    },
+
     formatAPIError: function(apiErrorArray) {
       var key = apiErrorArray[0];
       var message = apiErrorArray[1];
