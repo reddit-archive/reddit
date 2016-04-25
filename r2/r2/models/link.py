@@ -591,8 +591,6 @@ class Link(Thing, Printable):
         else:
             is_moderator_srids = set()
 
-        sticky_fullnames = site.get_sticky_fullnames()
-
         # set the nofollow state where needed
         cls.update_nofollow(user, wrapped)
 
@@ -767,8 +765,12 @@ class Link(Thing, Printable):
             # is this link a member of a different (non-c.site) subreddit?
             item.different_sr = (isinstance(site, FakeSubreddit) or
                                  site.name != item.subreddit.name)
-            item.stickied = (not item.different_sr and
-                item._fullname in sticky_fullnames)
+
+            item.stickied = item._fullname in item.subreddit.get_sticky_fullnames()
+
+            # we only want to style a sticky specially if we're inside the
+            # subreddit that it's stickied in (not in places like front page)
+            item.use_sticky_style = item.stickied and not item.different_sr
 
             item.subreddit_path = item.subreddit.path
             item.domain_path = "/domain/%s/" % item.domain

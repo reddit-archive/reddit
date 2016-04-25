@@ -42,7 +42,7 @@
 
 <%
     div_class = "thing link id-%s" % thing._fullname
-    if thing.stickied:
+    if thing.use_sticky_style:
         div_class += " stickied"
 %>
 <div class="${div_class}">

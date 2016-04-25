@@ -223,7 +223,7 @@
                               lastedited=capture(edited, thing, thing.lastedited)
                               ))}
   ${self.gildings()}
-  %if thing.stickied:
+  %if thing.use_sticky_style:
     &#32;-&#32;<span class="stickied-tagline" title="selected by this subreddit's moderators">stickied post</span>
   %endif
 

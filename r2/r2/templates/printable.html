@@ -109,7 +109,7 @@ ${self.RenderPrintable()}
       rowclass += " user-gilded"
     if not getattr(what, "archived", False) and getattr(what, "locked", False):
       rowclass += " locked"
-    if getattr(what, "stickied", False):
+    if getattr(what, "use_sticky_style", False):
       rowclass += " stickied"
     if getattr(what, "is_controversial", False):
       rowclass += " controversial"
