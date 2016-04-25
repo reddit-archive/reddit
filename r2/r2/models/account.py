@@ -847,23 +847,30 @@ def change_password(user, newpassword):
     LastModified.touch(user._fullname, 'Password')
     return True
 
-#TODO reset the cache
-def register(name, password, registration_ip):
-    try:
-        a = Account._by_name(name)
-        raise AccountExists
-    except NotFound:
-        a = Account(name = name,
-                    password = bcrypt_password(password))
-        # new accounts keep the profanity filter settings until opting out
-        a.pref_no_profanity = True
-        a.registration_ip = registration_ip
-        a._commit()
 
-        #clear the caches
-        Account._by_name(name, _update = True)
-        Account._by_name(name, allow_deleted = True, _update = True)
-        return a
+def register(name, password, registration_ip):
+    # get a lock for registering an Account with this name to prevent
+    # simultaneous operations from creating multiple Accounts with the same name
+    with g.make_lock("account_register", "register_%s" % name.lower()):
+        try:
+            account = Account._by_name(name)
+            raise AccountExists
+        except NotFound:
+            account = Account(
+                name=name,
+                password=bcrypt_password(password),
+                # new accounts keep the profanity filter settings until opting out
+                pref_no_profanity=True,
+                registration_ip=registration_ip,
+            )
+            account._commit()
+
+            # update Account._by_name to pick up this new name->Account
+            Account._by_name(name, _update=True)
+            Account._by_name(name, allow_deleted=True, _update=True)
+
+            return account
+
 
 class Friend(Relation(Account, Account)): pass
 
