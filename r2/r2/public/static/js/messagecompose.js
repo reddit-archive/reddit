@@ -259,7 +259,7 @@
      * @param {!Event} e
      */
     onSelectedRuleChange: function(e) {
-      if (_(e.target.selectedOptions).contains(mc.dom.$other[0])) {
+      if (e.target.options[e.target.selectedIndex] === mc.dom.$other[0]) {
         // Handle selecting "Other" by showing the custom subject field.
         if (mc.customSubject && /\S/.test(mc.customSubject)) {
           mc.dom.$subject.val(mc.customSubject);
@@ -279,7 +279,7 @@
       }
 
       // Destroy the blank default option once a different one is chosen.
-      if (!_(e.target.selectedOptions).contains(mc.dom.$blank[0])) {
+      if (e.target.options[e.target.selectedIndex] === mc.dom.$blank[0]) {
         mc.dom.$blank.hide();
       }
     },
