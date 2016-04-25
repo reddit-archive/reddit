@@ -42,6 +42,7 @@ try:
         RedditController,
         pagecache_policy,
         PAGECACHE_POLICY,
+        UnloggedUser,
     )
     from r2.lib.cookies import Cookies
     from r2.lib.errors import ErrorSet
@@ -211,6 +212,12 @@ class ErrorController(RedditController):
             # StatusBasedRedirect will override this anyway, but we need this
             # here for pagecache to see.
             response.status_int = code
+
+            if isinstance(c.user, basestring):
+                # somehow requests are getting here with c.user unset
+                c.user_is_loggedin = False
+                c.user = UnloggedUser(browser_langs=None)
+                g.log.exception("ErrorController.GET_document unset c.user")
 
             if srname:
                 c.site = Subreddit._by_name(srname)
