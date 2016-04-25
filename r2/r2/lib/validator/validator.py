@@ -697,10 +697,14 @@ class VSubredditName(VRequired):
     def run(self, name):
         if name:
             name = sr_path_rx.sub('\g<name>', name.strip())
+
         valid_name = Subreddit.is_valid_name(
             name, allow_language_srs=self.allow_language_srs)
+
         if not valid_name:
             self.set_error(self._error, code=400)
+            return
+
         return str(name)
 
     def param_docs(self):
