@@ -1,5 +1,4 @@
 $(function() {
-  var form = $("form.warn-on-unload");
 
   r.warn_on_unload = function() {
     /*
@@ -17,6 +16,7 @@ $(function() {
      * submission.
      */
     $(window).on('beforeunload', function (e) {
+      var form = $("form.warn-on-unload");
 
       if(!$(form).length) {
         return;
@@ -25,7 +25,9 @@ $(function() {
       var elements = form.find("input[type=text]," +
                                "input[type=checkbox]," +
                                "input[type=url]," +
-                               "textarea");
+                               "textarea")
+                         .not(":hidden");
+
       var isDirty = false;
       elements.each(function() {
 
@@ -54,7 +56,7 @@ $(function() {
     });
   };
 
-  if($(form).length) {
+  if($("form.warn-on-unload").length) {
     r.warn_on_unload();
   }
 });

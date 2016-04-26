@@ -112,7 +112,7 @@
 </%def>
 
 %if thing.have_form:
-  <form action="#" class="${thing.css_class}"
+  <form action="#" class="${thing.css_class} warn-on-unload"
       %if thing.post_form:
         onsubmit="return post_form(this, '${thing.post_form}')"
       %endif
