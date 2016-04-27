@@ -58,6 +58,7 @@ class MemcacheLock(object):
         self.time = time
         self.timeout = timeout
         self.have_lock = False
+        self.owns_lock = False
         self.verbose = verbose
 
     def __enter__(self):
@@ -72,14 +73,15 @@ class MemcacheLock(object):
 
         self.nonce = (reddit_host, reddit_pid, simple_traceback(limit=7))
 
-        #if this thread already has this lock, move on
+        # if this thread already has this lock, move on
         if self.key in self.locks:
+            self.have_lock = True
             return
 
         timer = self.stats.get_timer("lock_wait")
         timer.start()
 
-        #try and fetch the lock, looping until it's available
+        # try and fetch the lock, looping until it's available
         lock = None
         while not lock:
             # catch all exceptions here because we can't trust the memcached
@@ -111,17 +113,18 @@ class MemcacheLock(object):
                     # this should prevent unnecessary spam on highly contended locks.
                     sleep(random.uniform(0.1, 1))
 
-
         timer.stop(subname=self.group)
 
-        #tell this thread we have this lock so we can avoid deadlocks
-        #of requests for the same lock in the same thread
-        self.locks.add(self.key)
+        self.owns_lock = True
         self.have_lock = True
 
+        # tell this thread we have this lock so we can avoid deadlocks
+        # of requests for the same lock in the same thread
+        self.locks.add(self.key)
+
     def release(self):
-        #only release the lock if we gained it in the first place
-        if self.have_lock:
+        # only release the lock if we acquired it in the first place (are owner)
+        if self.owns_lock:
             # verify that our lock did not expire before we could release it
             if self.cache.get(self.key) == self.nonce:
                 self.cache.delete(self.key)
@@ -130,7 +133,9 @@ class MemcacheLock(object):
                             self.key, self.nonce)
             self.locks.remove(self.key)
             self.have_lock = False
+            self.owns_lock = False
             self.nonce = None
+
 
 def make_lock_factory(cache, stats):
     def factory(group, key, **kw):
