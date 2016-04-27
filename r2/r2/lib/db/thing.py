@@ -172,7 +172,8 @@ class DataThing(object):
         cache = cls._cache
         prefix = cls._cache_prefix()
         things_by_id = cache.get_multi(
-            ids, prefix=prefix, stale=stale, allow_local=allow_local)
+            ids, prefix=prefix, stale=stale, allow_local=allow_local,
+            stat_subname=cls.__name__)
         return things_by_id
 
     @classmethod
