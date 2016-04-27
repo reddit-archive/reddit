@@ -76,6 +76,7 @@ class TestFeatureBase(RedditTestCase):
     longMessage = True
 
     def setUp(self):
+        super(TestFeatureBase, self).setUp()
         self.world = MockWorld()
         self.world.current_user = mock.Mock(return_value='')
         self.world.current_subreddit = mock.Mock(return_value='')

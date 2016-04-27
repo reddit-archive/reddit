@@ -22,6 +22,7 @@
 
 import os
 import sys
+import Queue
 from unittest import TestCase
 from mock import patch, MagicMock
 from collections import defaultdict
@@ -127,10 +128,6 @@ class RedditTestCase(TestCase):
     this isn't necessary as it'll save time.
 
     """
-    if not _app_context:
-        wsgiapp = loadapp('config:test.ini', relative_to=conf_dir)
-        test_app = paste.fixture.TestApp(wsgiapp)
-
     def setUp(self):
 
         # disable controllers for this type of test, and make sure to set
