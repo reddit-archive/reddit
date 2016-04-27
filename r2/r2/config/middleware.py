@@ -433,6 +433,9 @@ class SafetyMiddleware(object):
 
 
 class RedditApp(PylonsApp):
+
+    test_mode = False
+
     def __init__(self, *args, **kwargs):
         super(RedditApp, self).__init__(*args, **kwargs)
         self._loading_lock = Lock()
@@ -441,20 +444,14 @@ class RedditApp(PylonsApp):
 
     def setup_app_env(self, environ, start_response):
         PylonsApp.setup_app_env(self, environ, start_response)
-        from pylons import app_globals as g
-        # When running tests don't load controllers or register hooks. Loading the
-        # controllers currently causes db initialization and runs queries.
-        if g.env == 'unit_test':
-            return
-        self.load()
 
-    def load(self):
-        if self._controllers and self._hooks_registered:
-            return
+        if not self.test_mode:
+            if self._controllers and self._hooks_registered:
+                return
 
-        with self._loading_lock:
-            self.load_controllers()
-            self.register_hooks()
+            with self._loading_lock:
+                self.load_controllers()
+                self.register_hooks()
 
     def _check_csrf_prevention(self):
         from r2 import controllers
