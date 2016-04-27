@@ -446,20 +446,6 @@ class CacheStats:
                 })
             self.parent.cache_count_multi(data)
 
-    def cache_report(self, hits=0, misses=0, cache_name=None, sample_rate=None):
-        if hits or misses:
-            if not cache_name:
-                cache_name = self.cache_name
-            hit_stat_name = '%s.hit' % cache_name
-            miss_stat_name = '%s.miss' % cache_name
-            total_stat_name = '%s.total' % cache_name
-            data = {
-                hit_stat_name: hits,
-                miss_stat_name: misses,
-                total_stat_name: hits + misses,
-            }
-            self.parent.cache_count_multi(data, sample_rate=sample_rate)
-
 
 class StaleCacheStats(CacheStats):
     def __init__(self, parent, cache_name):
