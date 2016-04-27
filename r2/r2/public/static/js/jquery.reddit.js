@@ -186,7 +186,7 @@ $.request = function(op, parameters, worker_in, block, type,
     worker_in  = $.with_default(worker_in, handleResponse(action));
     type  = $.with_default(type, "json");
 
-    var form = $(document.activeElement).closest('form.warn-on-unload');
+    var form = $('form.warn-on-unload');
 
     if (typeof(worker_in) != 'function')
         worker_in  = handleResponse(action);
