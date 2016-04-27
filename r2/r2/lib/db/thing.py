@@ -390,13 +390,6 @@ class DataThing(object):
         else:
             from_db_by_id = {}
 
-        if cls._cache.stats:
-            cls._cache.stats.cache_report(
-                hits=len(things_by_id),
-                misses=len(missing_ids),
-                cache_name='sgm.%s' % cls.__name__,
-            )
-
         if from_db_by_id:
             # XXX: We don't have the write lock here, so we could clobber
             # changes made by other processes
