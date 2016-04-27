@@ -53,4 +53,12 @@ service ActivityService extends baseplate.BaseplateService {
     */
     ActivityInfo count_activity(1: ContextID context_id)
         throws (1: InvalidContextIDException invalid_context_id),
+
+    /** Count how many visitors are active in a number of given contexts.
+
+    This is the same as `count_activity` but allows for querying in batch.
+
+    */
+    map<ContextID, ActivityInfo> count_activity_multi(1: list<ContextID> context_ids)
+        throws (1: InvalidContextIDException invalid_context_id),
 }
