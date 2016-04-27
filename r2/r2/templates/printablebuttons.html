@@ -102,6 +102,82 @@
      onclick="return set_distinguish(this, '${jssafe(value or name)}')">${_(name)}</a>
 </%def>
 
+<%def name="distinguish_noop(text)">
+  <a class="access-required"
+     href="javascript:void(0)"
+     onclick="return toggle_distinguish_span(this)">${text}</a>
+</%def>
+
+<%def name="distinguish_label(distinguish_clicked)">
+  <%
+    text = _("distinguish") if distinguish_clicked else _("undistinguish")
+  %>
+  <a class="access-required"
+    href="javascript:void(0)"
+    onclick="return toggle_distinguish_span(this)"
+    data-event-action="distinguish">${text}</a>
+</%def>
+
+<%def name="distinguish_help()">
+  <a class="nonbutton" href="/wiki/moderation#wiki_distinguishing">
+    ${_("help")}
+  </a>
+</%def>
+
+<%def name="distinguish_options()">
+  ${_("distinguish this?")}
+
+  ## Note: can_ban is logically equivalent to can_distinguish at this time.
+  %if thing.can_ban:
+    &#32;
+    ${distinguish_setter('yes')}
+    &#32;/
+
+    %if thing.show_sticky_comment:
+      &#32;
+      ${distinguish_setter(_('yes & sticky'), 'yes_sticky', event_action="sticky_distinguish")}
+      &#32;/
+    %endif
+  %endif
+  
+  &#32;
+  ${distinguish_setter('no', event_action="undistinguish")}
+  &#32;
+
+  %if c.user.employee:
+    /&#32;
+    ${distinguish_setter('admin', event_action="admin_distinguish")}
+    &#32;
+  %endif
+  
+  %if c.user_special_distinguish:
+    /&#32;
+    ${distinguish_setter(c.user_special_distinguish['name'], 'special', event_action="special_distinguish")}
+    &#32;
+  %endif
+
+  /&#32;
+  ${distinguish_help()}
+  &#32;
+</%def>
+
+<%def name="undistinguish_options()">
+  ${_("undistinguish this?")}
+
+  &#32;
+  ${distinguish_setter('yes', value="no", event_action="undistinguish")}
+  &#32;/
+
+  &#32;
+  ${distinguish_noop(_("no"))}
+  &#32;
+
+  /&#32;
+  ${distinguish_help()}
+  &#32;
+</%def>
+
+
 <%def name="distinguish()">
   %if thing.show_distinguish:
   <li class="toggle">
@@ -110,48 +186,20 @@
       %if thing.show_sticky_comment:
       <input type="hidden" value="false" name="sticky">
       %endif
-      <input type="hidden" value="${_('distinguishing...')}" name="executed"/>
-      <a class="access-required"
-         href="javascript:void(0)"
-         onclick="return toggle_distinguish_span(this)"
-         data-event-action="distinguish">${_("distinguish")}</a>
+      %if thing.distinguished:
+        <input type="hidden" value="${_('undistinguishing...')}" name="executed"/>
+      %else:
+        <input type="hidden" value="${_('distinguishing...')}" name="executed"/>
+      %endif
+
+      ${distinguish_label(not thing.distinguished)}
+
       <span class="option error">
-         ${_("distinguish this?")}
-
-         ## Note: can_ban is logically equivalent to can_distinguish at this time.
-         %if thing.can_ban:
-         &#32;
-         ${distinguish_setter('yes')}
-         &#32;/
-
-         %if thing.show_sticky_comment:
-         &#32;
-         ${distinguish_setter('yes & sticky', 'yes_sticky', event_action="sticky_distinguish")}
-         &#32;/
-         %endif
-         %endif
-         
-         &#32;
-         ${distinguish_setter('no', event_action="undistinguish")}
-         &#32;
-
-         %if c.user.employee:
-         /&#32;
-         ${distinguish_setter('admin', event_action="admin_distinguish")}
-         &#32;
-         %endif
-         
-         %if c.user_special_distinguish:
-         /&#32;
-         ${distinguish_setter(c.user_special_distinguish['name'], 'special', event_action="special_distinguish")}
-         &#32;
-         %endif
-
-         /&#32;
-         <a class="nonbutton" href="/wiki/moderation#wiki_distinguishing">
-           help
-         </a>
-         &#32;
+        %if thing.distinguished:
+          ${undistinguish_options()}
+        %else:
+          ${distinguish_options()}
+        %endif
       </span>
     </form>
   </li>
