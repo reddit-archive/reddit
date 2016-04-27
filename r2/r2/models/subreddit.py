@@ -37,6 +37,8 @@ from pylons import request
 from pylons import tmpl_context as c
 from pylons import app_globals as g
 from pylons.i18n import _, N_
+from thrift.protocol.TProtocol import TProtocolException
+from thrift.Thrift import TApplicationException
 from thrift.transport.TTransport import TTransportException
 
 from r2.config import feature
@@ -672,7 +674,7 @@ class Subreddit(Thing, Printable, BaseSite):
 
         try:
             c.activity_service.record_activity(self._fullname, visitor_id)
-        except TTransportException:
+        except (TApplicationException, TProtocolException, TTransportException):
             pass
 
     def count_activity(self):
@@ -693,7 +695,7 @@ class Subreddit(Thing, Printable, BaseSite):
             with c.activity_service.retrying(attempts=4, budget=0.1) as svc:
                 activity = svc.count_activity(self._fullname)
             return self.SubredditActivity(activity)
-        except TTransportException:
+        except (TApplicationException, TProtocolException, TTransportException):
             return None
 
     def spammy(self):
