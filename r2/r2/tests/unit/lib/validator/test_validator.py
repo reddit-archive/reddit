@@ -40,7 +40,7 @@ from r2.lib.validator import (
 from r2.models import Account, Comment, Link, Message, Subreddit
 
 
-class ValidatorTests(unittest.TestCase):
+class ValidatorTests(RedditTestCase):
     def _test_failure(self, input, error):
         """Helper for testing bad inputs."""
         self.validator.run(input)
@@ -59,6 +59,7 @@ class ValidatorTests(unittest.TestCase):
 
 class TestVSubmitParent(ValidatorTests):
     def setUp(self):
+        super(TestVSubmitParent, self).setUp()
         # Reset the validator state and errors before every test.
         self.validator = VSubmitParent(None)
         c.errors = ErrorSet()
@@ -67,53 +68,53 @@ class TestVSubmitParent(ValidatorTests):
         c.user_is_admin = False
         c.user = Account(id=100)
 
-        Account.enemy_ids = MagicMock(return_value=[])
+        self.autopatch(Account, "enemy_ids", return_value=[])
+        self.autopatch(Subreddit, "_byID", return_value=None)
 
-    def _mock_message(id=1, author_id=1, **kwargs):
+    def _mock_message(self, id=1, author_id=1, **kwargs):
         kwargs['id'] = id
         kwargs['author_id'] = author_id
 
         message = Message(**kwargs)
-        VByName.run = MagicMock(return_value=message)
+        self.autopatch(VByName, "run", return_value=message)
 
         return message
 
-    def _mock_link(id=1, author_id=1, sr_id=1, can_comment=True,
+    def _mock_link(self, id=1, author_id=1, sr_id=1, can_comment=True,
                    can_view_promo=True, **kwargs):
         kwargs['id'] = id
         kwargs['author_id'] = author_id
         kwargs['sr_id'] = sr_id
 
         link = Link(**kwargs)
-        VByName.run = MagicMock(return_value=link)
+        self.autopatch(VByName, "run", return_value=link)
 
         sr = Subreddit(id=sr_id)
-        link.subreddit_slow = sr
-
-        Subreddit.can_comment = MagicMock(return_value=can_comment)
-        Link.can_view_promo = MagicMock(return_value=can_view_promo)
+        self.autopatch(Subreddit, "_byID", return_value=sr)
+        self.autopatch(Subreddit, "can_comment", return_value=can_comment)
+        self.autopatch(Link, "can_view_promo", return_value=can_view_promo)
 
         return link
 
-    def _mock_comment(id=1, author_id=1, link_id=1, sr_id=1, can_comment=True,
+    def _mock_comment(self,
+                      id=1, author_id=1, link_id=1, sr_id=1, can_comment=True,
                       can_view_promo=True, is_moderator=False, **kwargs):
         kwargs['id'] = id
         kwargs['author_id'] = author_id
         kwargs['link_id'] = link_id
+        kwargs['sr_id'] = sr_id
 
         comment = Comment(**kwargs)
-        VByName.run = MagicMock(return_value=comment)
+        self.autopatch(VByName, "run", return_value=comment)
 
-        link = Link(id=link_id)
-        Link._byID = MagicMock(return_value=link)
+        link = Link(id=link_id, sr_id=sr_id)
+        self.autopatch(Link, "_byID", return_value=link)
 
         sr = Subreddit(id=sr_id)
-        comment.subreddit_slow = sr
-        link.subreddit_slow = sr
-
-        Subreddit.can_comment = MagicMock(return_value=can_comment)
-        Link.can_view_promo = MagicMock(return_value=can_view_promo)
-        Subreddit.is_moderator = MagicMock(return_value=is_moderator)
+        self.autopatch(Subreddit, "_byID", return_value=sr)
+        self.autopatch(Subreddit, "can_comment", return_value=can_comment)
+        self.autopatch(Link, "can_view_promo", return_value=can_view_promo)
+        self.autopatch(Subreddit, "is_moderator", return_value=is_moderator)
 
         return comment
 
@@ -125,16 +126,16 @@ class TestVSubmitParent(ValidatorTests):
 
     def test_not_found(self):
         with self.assertRaises(HTTPForbidden):
-            VByName.run = MagicMock(return_value=None)
-            self.validator.run('fullname', None)
+            with patch.object(VByName, "run", return_value=None):
+                self.validator.run('fullname', None)
 
         self.assertFalse(self.validator.has_errors)
 
     def test_invalid_thing(self):
         with self.assertRaises(HTTPForbidden):
             sr = Subreddit(id=1)
-            VByName.run = MagicMock(return_value=sr)
-            self.validator.run('fullname', None)
+            with patch.object(VByName, "run", return_value=sr):
+                self.validator.run('fullname', None)
 
         self.assertFalse(self.validator.has_errors)
 
@@ -142,20 +143,21 @@ class TestVSubmitParent(ValidatorTests):
         with self.assertRaises(HTTPForbidden):
             c.user_is_loggedin = False
 
-            comment = self._mock_comment()
+            self._mock_comment()
             self.validator.run('fullname', None)
 
         self.assertFalse(self.validator.has_errors)
 
     def test_blocked_user(self):
         message = self._mock_message()
-        Account.enemy_ids = MagicMock(return_value=[message.author_id])
+        with patch.object(
+            Account, "enemy_ids", return_value=[message.author_id]
+        ):
+            result = self.validator.run('fullname', None)
 
-        result = self.validator.run('fullname', None)
-
-        self.assertEqual(result, message)
-        self.assertTrue(self.validator.has_errors)
-        self.assertIn((errors.USER_BLOCKED, None), c.errors)
+            self.assertEqual(result, message)
+            self.assertTrue(self.validator.has_errors)
+            self.assertIn((errors.USER_BLOCKED, None), c.errors)
 
     def test_valid_message(self):
         message = self._mock_message()
@@ -188,20 +190,20 @@ class TestVSubmitParent(ValidatorTests):
 
     def test_locked_link(self):
         link = self._mock_link(locked=True)
-        Subreddit.can_distinguish = MagicMock(return_value=False)
-        result = self.validator.run('fullname', None)
+        with patch.object(Subreddit, "can_distinguish", return_value=False):
+            result = self.validator.run('fullname', None)
 
-        self.assertEqual(result, link)
-        self.assertTrue(self.validator.has_errors)
-        self.assertIn((errors.THREAD_LOCKED, None), c.errors)
+            self.assertEqual(result, link)
+            self.assertTrue(self.validator.has_errors)
+            self.assertIn((errors.THREAD_LOCKED, None), c.errors)
 
     def test_locked_link_mod_reply(self):
         link = self._mock_link(locked=True)
-        Subreddit.can_distinguish = MagicMock(return_value=True)
-        result = self.validator.run('fullname', None)
+        with patch.object(Subreddit, "can_distinguish", return_value=True):
+            result = self.validator.run('fullname', None)
 
-        self.assertEqual(result, link)
-        self.assertFalse(self.validator.has_errors)
+            self.assertEqual(result, link)
+            self.assertFalse(self.validator.has_errors)
 
     def test_invalid_link(self):
         with self.assertRaises(HTTPForbidden):
