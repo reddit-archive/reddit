@@ -5071,9 +5071,12 @@ class ApiController(RedditController):
         that appear in the optional `omit` param.
 
         """
-        omit_id36s = [sr._id36 for sr in to_omit.values()]
-        rec_srs = recommender.get_recommendations(srs.values(),
-                                                  to_omit=omit_id36s)
+
+        srs = [sr for sr in srs.values() if not isinstance(sr, FakeSubreddit)]
+        to_omit = [sr for sr in to_omit.values() if not isinstance(sr, FakeSubreddit)]
+
+        omit_id36s = [sr._id36 for sr in to_omit]
+        rec_srs = recommender.get_recommendations(srs, to_omit=omit_id36s)
         sr_data = [{'sr_name': sr.name} for sr in rec_srs]
         return json.dumps(sr_data)
 
