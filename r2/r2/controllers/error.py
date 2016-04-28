@@ -217,7 +217,6 @@ class ErrorController(RedditController):
                 # somehow requests are getting here with c.user unset
                 c.user_is_loggedin = False
                 c.user = UnloggedUser(browser_langs=None)
-                g.log.exception("ErrorController.GET_document unset c.user")
 
             if srname:
                 c.site = Subreddit._by_name(srname)
