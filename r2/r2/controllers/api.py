@@ -2373,10 +2373,8 @@ class ApiController(RedditController):
             return abort(400,
                 "This thing is archived and may no longer be voted on")
 
-        subreddit = thing.subreddit_slow
-
         # Don't allow users in timeout to vote
-        VNotInTimeout().run(target=thing, subreddit=subreddit)
+        VNotInTimeout().run(target=thing)
 
         # convert vote direction to enum value
         if direction == 1:
