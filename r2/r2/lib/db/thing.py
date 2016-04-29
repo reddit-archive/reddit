@@ -20,15 +20,15 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+from copy import copy, deepcopy
 import cPickle as pickle
+from datetime import datetime, timedelta
 import hashlib
+import itertools
 import new
 import sys
-import itertools
 
-from copy import copy, deepcopy
-from datetime import datetime, timedelta
-
+from _pylibmc import MemcachedError
 from pylons import app_globals as g
 
 from r2.lib import amqp, hooks
@@ -188,7 +188,10 @@ class DataThing(object):
 
         cache = cls._cache
         prefix = cls._cache_prefix()
-        cache.add_multi(things_by_id, prefix=prefix, time=THING_CACHE_TTL)
+        try:
+            cache.add_multi(things_by_id, prefix=prefix, time=THING_CACHE_TTL)
+        except MemcachedError as e:
+            g.log.warning("write_things_to_cache error: %s", e)
 
     def get_read_modify_write_lock(self):
         """Return the lock to be used when doing a read-modify-write.
