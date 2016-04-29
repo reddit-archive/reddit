@@ -2138,10 +2138,10 @@ class ApiController(RedditController):
                 link = parent
                 parent_comment = None
             else:
-                link = Link._byID(parent.link_id, data = True)
+                link = Link._byID(parent.link_id)
                 parent_comment = parent
 
-            sr = parent.subreddit_slow
+            sr = Subreddit._byID(parent.sr_id, stale=True)
             is_author = link.author_id == c.user._id
             if (is_author and (link.is_self or promote.is_promo(link)) or
                     not sr.should_ratelimit(c.user, 'comment')):
