@@ -62,8 +62,6 @@ from r2.lib.cache import (
     SelfEmptyingCache,
     StaleCacheChain,
     TransitionalCache,
-    validate_size_error,
-    validate_size_warn,
 )
 from r2.lib.configparse import ConfigValue, ConfigValueParser
 from r2.lib.contrib import ipaddress
@@ -731,7 +729,6 @@ class Globals(object):
             self.memoizecaches,
             min_compress_len=50 * 1024,
             num_clients=num_mc_clients,
-            validators=[validate_size_error],
         )
 
         # a pool just for srmember rels
@@ -740,7 +737,6 @@ class Globals(object):
             self.srmembercaches,
             min_compress_len=96,
             num_clients=num_mc_clients,
-            validators=[validate_size_error],
         )
 
         # a pool just for rels
@@ -749,7 +745,6 @@ class Globals(object):
             self.relcaches,
             min_compress_len=96,
             num_clients=num_mc_clients,
-            validators=[validate_size_error],
         )
 
         ratelimitcaches = CMemcache(
@@ -757,7 +752,6 @@ class Globals(object):
             self.ratelimitcaches,
             min_compress_len=96,
             num_clients=num_mc_clients,
-            validators=[validate_size_error],
         )
 
         # a smaller pool of caches used only for distributed locks.
@@ -765,18 +759,18 @@ class Globals(object):
             "lock",
             self.lockcaches,
             num_clients=num_mc_clients,
-            validators=[validate_size_error],
         )
         self.make_lock = make_lock_factory(self.lock_cache, self.stats)
 
         # memcaches used in front of the permacache CF in cassandra.
         # XXX: this is a legacy thing; permacache was made when C* didn't have
         # a row cache.
-        permacache_memcaches = CMemcache("perma",
-                                         self.permacache_memcaches,
-                                         min_compress_len=1400,
-                                         num_clients=num_mc_clients,
-                                         validators=[],)
+        permacache_memcaches = CMemcache(
+            "perma",
+            self.permacache_memcaches,
+            min_compress_len=1400,
+            num_clients=num_mc_clients,
+        )
 
         # the stalecache is a memcached local to the current app server used
         # for data that's frequently fetched but doesn't need to be fresh.
@@ -785,7 +779,6 @@ class Globals(object):
                 "stale",
                 self.stalecaches,
                 num_clients=num_mc_clients,
-                validators=[validate_size_error],
             )
         else:
             stalecaches = None
@@ -797,7 +790,6 @@ class Globals(object):
             binary=True,
             min_compress_len=1400,
             num_clients=num_mc_clients,
-            validators=[validate_size_error],
         )
 
         self.startup_timer.intermediate("memcache")

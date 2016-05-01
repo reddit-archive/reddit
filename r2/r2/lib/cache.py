@@ -20,7 +20,6 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-import sys
 from threading import local
 from hashlib import md5
 import cPickle as pickle
@@ -67,63 +66,6 @@ class CacheUtils(object):
         return prefix_keys(keys, prefix, lambda k: self.simple_get_multi(k, **kw))
 
 
-class MemcachedValueSizeException(Exception):
-    def __init__(self, cache_name, caller, prefix, key, size):
-        self.key = key
-        self.size = size
-        self.cache_name = cache_name
-        self.caller = caller
-        self.prefix = prefix
-
-    def __str__(self):
-        return ("Memcached %s %s: The object for key '%s%s' is too big for memcached at %s bytes" %
-            (self.cache_name, self.caller, self.prefix, self.key, self.size))
-
-
-# validation functions to be used by memcached pools
-MEMCACHED_MAX_VALUE_SIZE = 2048 * 1024 # 2MB
-
-
-def is_valid_size_for_cache(obj):
-    # NOTE: only the memory consumption directly attributed to the object is
-    # accounted for, not the memory consumption of objects it refers to.
-    # For instance a tuple of strings will only appear to be the size of a
-    # tuple.
-    return sys.getsizeof(obj) < MEMCACHED_MAX_VALUE_SIZE
-
-
-def validate_size_warn(**kwargs):
-    if 'value' in kwargs:
-        if not is_valid_size_for_cache(kwargs["value"]):
-            key = ".".join((
-                "memcached_large_object",
-                kwargs.get("cache_name", "undefined")
-            ))
-            g.stats.simple_event(key)
-            g.log.debug(
-                "Memcached %s: Attempted to cache an object > 1MB at key: '%s%s' of size %s bytes",
-                kwargs.get("caller", "unknown"),
-                kwargs.get("prefix", ""),
-                kwargs.get("key", "undefined"),
-                sys.getsizeof(kwargs["value"])
-            )
-            return False
-
-    return True
-
-def validate_size_error(**kwargs):
-    if 'value' in kwargs:
-        if not is_valid_size_for_cache(kwargs["value"]):
-            raise MemcachedValueSizeException(
-                kwargs.get("cache_name", "unknown"),
-                kwargs.get("caller", "unknown"),
-                kwargs.get("prefix", ""),
-                kwargs.get("key", "undefined"),
-                sys.getsizeof(kwargs["value"])
-            )
-
-    return True
-
 class CMemcache(CacheUtils):
     def __init__(self,
                  name,
@@ -133,12 +75,10 @@ class CMemcache(CacheUtils):
                  no_block=False,
                  min_compress_len=512 * 1024,
                  num_clients=10,
-                 binary=False,
-                 validators=None):
+                 binary=False):
         self.name = name
         self.servers = servers
         self.clients = pylibmc.ClientPool(n_slots = num_clients)
-        self.validators = validators or []
 
         for x in xrange(num_clients):
             client = pylibmc.Client(servers, binary=binary)
@@ -158,18 +98,7 @@ class CMemcache(CacheUtils):
 
         _CACHE_SERVERS.update(servers)
 
-    def validate(self, **kwargs):
-        kwargs['caller'] = sys._getframe().f_back.f_code.co_name
-        kwargs['cache_name'] = self.name
-        if not all(validator(**kwargs) for validator in self.validators):
-            return False
-
-        return True
-
     def get(self, key, default = None):
-        if not self.validate(key=key):
-            return default
-
         with self.clients.reserve() as mc:
             ret = mc.get(str(key))
             if ret is None:
@@ -177,11 +106,9 @@ class CMemcache(CacheUtils):
             return ret
 
     def get_multi(self, keys, prefix = ''):
-        validated_keys = [k for k in (str(k) for k in keys)
-                          if self.validate(prefix=prefix, key=k)]
-
+        str_keys = [str(key) for key in keys]
         with self.clients.reserve() as mc:
-            return mc.get_multi(validated_keys, key_prefix = prefix)
+            return mc.get_multi(str_keys, key_prefix=prefix)
 
     # simple_get_multi exists so that a cache chain can
     # single-instance the handling of prefixes for performance, but
@@ -191,10 +118,7 @@ class CMemcache(CacheUtils):
     # them, so here it is
     simple_get_multi = get_multi
 
-    def set(self, key, val, time = 0):
-        if not self.validate(key=key, value=val):
-            return None
-
+    def set(self, key, val, time=0):
         # pylibmc converts this number to an unsigned integer without warning
         if time < 0:
             raise ValueError("Rejecting negative TTL for key %s" % key)
@@ -204,45 +128,29 @@ class CMemcache(CacheUtils):
                             min_compress_len = self.min_compress_len)
 
     def set_multi(self, keys, prefix='', time=0):
-        str_keys = ((str(k), v) for k, v in keys.iteritems())
-        validated_keys = {k: v for k, v in str_keys
-                          if self.validate(prefix=prefix, key=k, value=v)}
-
-        # pylibmc converts this number to an unsigned integer without warning
         if time < 0:
             raise ValueError("Rejecting negative TTL for key %s" % key)
 
+        str_keys = {str(k): v for k, v in keys.iteritems()}
         with self.clients.reserve() as mc:
-            return mc.set_multi(validated_keys, key_prefix = prefix,
-                                time = time,
-                                min_compress_len = self.min_compress_len)
+            return mc.set_multi(str_keys, key_prefix=prefix, time=time,
+                                min_compress_len=self.min_compress_len)
 
     def add_multi(self, keys, prefix='', time=0):
-        str_keys = ((str(k), v) for k, v in keys.iteritems())
-        validated_keys = {k: v for k, v in str_keys
-                          if self.validate(prefix=prefix, key=k, value=v)}
-
         # pylibmc converts this number to an unsigned integer without warning
         if time < 0:
             raise ValueError("Rejecting negative TTL for key %s" % key)
 
+        str_keys = {str(k): v for k, v in keys.iteritems()}
         with self.clients.reserve() as mc:
-            return mc.add_multi(validated_keys, key_prefix = prefix,
-                                time = time)
+            return mc.add_multi(str_keys, key_prefix=prefix, time=time)
 
     def incr_multi(self, keys, prefix='', delta=1):
-        validated_keys = [k for k in (str(k) for k in keys)
-                          if self.validate(prefix=prefix, key=k)]
-
+        str_keys = [str(key) for key in keys]
         with self.clients.reserve() as mc:
-            return mc.incr_multi(validated_keys,
-                                 key_prefix = prefix,
-                                 delta=delta)
+            return mc.incr_multi(str_keys, key_prefix=prefix, delta=delta)
 
     def append(self, key, val, time=0):
-        if not self.validate(key=key, value=val):
-            return None
-
         # pylibmc converts this number to an unsigned integer without warning
         if time < 0:
             raise ValueError("Rejecting negative TTL for key %s" % key)
@@ -251,17 +159,11 @@ class CMemcache(CacheUtils):
             return mc.append(str(key), val, time=time)
 
     def incr(self, key, delta=1, time=0):
-        if not self.validate(key=key):
-            return None
-
         # ignore the time on these
         with self.clients.reserve() as mc:
             return mc.incr(str(key), delta)
 
     def add(self, key, val, time=0):
-        if not self.validate(key=key, value=val):
-            return None
-
         # pylibmc converts this number to an unsigned integer without warning
         if time < 0:
             raise ValueError("Rejecting negative TTL for key %s" % key)
@@ -273,18 +175,13 @@ class CMemcache(CacheUtils):
             return None
 
     def delete(self, key, time=0):
-        if not self.validate(key=key):
-            return None
-
         with self.clients.reserve() as mc:
             return mc.delete(str(key))
 
     def delete_multi(self, keys, prefix=''):
-        validated_keys = [k for k in (str(k) for k in keys)
-                          if self.validate(prefix=prefix, key=k)]
-
+        str_keys = [str(key) for key in keys]
         with self.clients.reserve() as mc:
-            return mc.delete_multi(validated_keys, key_prefix=prefix)
+            return mc.delete_multi(str_keys, key_prefix=prefix)
 
     def __repr__(self):
         return '<%s(%r)>' % (self.__class__.__name__,
