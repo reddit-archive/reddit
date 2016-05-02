@@ -56,7 +56,7 @@ $(function() {
     });
   };
 
-  if($("form.warn-on-unload").length) {
+  $("form.warn-on-unload").one("keypress", function(e) {
     r.warn_on_unload();
-  }
+  });
 });
