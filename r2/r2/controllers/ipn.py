@@ -1387,6 +1387,7 @@ def reverse_gold_purchase(transaction_id):
         recipient_name, secret = pieces[1:]
         recipient = Account._by_name(recipient_name)
 
+    gold_recipient = recipient or buyer
     with gold_recipient.get_read_modify_write_lock() as lock:
         gold_recipient.update_from_cache(lock)
 
