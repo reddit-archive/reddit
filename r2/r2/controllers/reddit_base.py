@@ -31,7 +31,7 @@ from Cookie import CookieError
 from copy import copy
 from datetime import datetime, timedelta
 from functools import wraps
-from hashlib import sha1
+from hashlib import sha1, md5
 from urllib import quote, unquote
 from urlparse import urlparse
 
@@ -609,9 +609,15 @@ def set_colors():
 
 
 def ratelimit_agent(agent, limit=10, slice_size=10):
+
+    # Ensure the agent regex is a valid memcached key
+    h = md5()
+    h.update(agent)
+    hashed_agent = h.hexdigest()
+
     slice_size = min(slice_size, 60)
     time_slice = ratelimit.get_timeslice(slice_size)
-    usage = ratelimit.record_usage("rl-agent-" + agent, time_slice)
+    usage = ratelimit.record_usage("rl-agent-" + hashed_agent, time_slice)
     if usage > limit:
         request.environ['retry_after'] = time_slice.remaining
         abort(429)
@@ -631,11 +637,12 @@ def ratelimit_agents():
         ratelimit_agent(appid)
         return
 
-    user_agent = user_agent.lower()
-    for agent, limit in g.agents.iteritems():
-        if agent in user_agent:
-            ratelimit_agent(agent, limit)
+    # Search anywhere in the useragent for the given regex
+    for agent_re, limit in g.user_agent_ratelimit_regexes.iteritems():
+        if agent_re.search(user_agent):
+            ratelimit_agent(agent_re.pattern, limit)
             return
+
 
 def ratelimit_throttled():
     ip = request.ip.strip()

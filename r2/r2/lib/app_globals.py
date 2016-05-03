@@ -292,7 +292,7 @@ class Globals(object):
         ],
 
         ConfigValue.dict(ConfigValue.str, ConfigValue.int): [
-            'agents',
+            'user_agent_ratelimit_regexes',
         ],
 
         ConfigValue.str: [
@@ -655,6 +655,12 @@ class Globals(object):
                                         self.RL_RESET_SECONDS)
         self.RL_SHARE_MAX_REQS = int(self.config["RL_SHARE_AVG_PER_SEC"] *
                                      self.RL_RESET_SECONDS)
+
+        # Compile ratelimit regexs
+        user_agent_ratelimit_regexes = {}
+        for agent_re, limit in self.user_agent_ratelimit_regexes.iteritems():
+            user_agent_ratelimit_regexes[re.compile(agent_re)] = limit
+        self.user_agent_ratelimit_regexes = user_agent_ratelimit_regexes
 
         self.startup_timer.intermediate("configuration")
 
