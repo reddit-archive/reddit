@@ -29,6 +29,7 @@ import locale
 import json
 import logging
 import os
+import re
 import signal
 import site
 import socket
