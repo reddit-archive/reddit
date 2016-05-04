@@ -128,7 +128,7 @@ class SigningTests(RedditTestCase):
         version = 2
         # this is a perfectly valid signature (from `test_valid_header`)
         # and a properly constructed request, but we've patched
-        # is_deprecated_token
+        # is_invalid_token
         header = self.make_sig_header(body, platform=platform, version=version)
         self.assert_invalid(
             body,

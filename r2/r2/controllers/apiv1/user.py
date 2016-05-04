@@ -19,8 +19,9 @@
 # All portions of the code written by reddit are Copyright (c) 2006-2015 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
-from pylons import request, response
+from pylons import response
 from pylons import tmpl_context as c
+
 from r2.controllers.api_docs import api_doc, api_section
 from r2.controllers.oauth2 import require_oauth2_scope
 from r2.controllers.reddit_base import OAuth2OnlyController
@@ -38,8 +39,8 @@ from r2.lib.validator import (
     VFriendOfMine,
     VLength,
     VList,
-    VValidatedJSON,
     VUser,
+    VValidatedJSON,
 )
 from r2.models import Account, Trophy
 import r2.lib.errors as errors
@@ -59,7 +60,7 @@ class APIv1UserController(OAuth2OnlyController):
     )
     @api_doc(api_section.account)
     def GET_me(self):
-        """Returns the identity of the user currently authenticated via OAuth."""
+        "Returns the identity of the user currently authenticated via OAuth."
         resp = IdentityJsonTemplate().data(c.oauth_user)
         return self.api_wrapper(resp)
 

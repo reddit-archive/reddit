@@ -444,6 +444,8 @@ def make_map(config):
        requirements=dict(action="scopes"))
     mc("/api/v1/user/:username/trophies",
        controller="apiv1user", action="usertrophies")
+    mc("/api/v1/:action", controller="apiv1login",
+       requirements=dict(action="register|login"))
     mc("/api/v1/:action", controller="apiv1user")
     # Same controller/action as /prefs/friends
     mc("/api/v1/me/:where", controller="userlistlisting",
