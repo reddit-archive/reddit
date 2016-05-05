@@ -56,7 +56,8 @@ $(function() {
     });
   };
 
-  $("form.warn-on-unload").one("keypress", function(e) {
+  $("form.warn-on-unload").on("keypress", function(e) {
+    $(window).off('beforeunload');
     r.warn_on_unload();
   });
 });

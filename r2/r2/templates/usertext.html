@@ -173,7 +173,7 @@
         <div class="usertext-buttons">
           ${action_button("save", "submit", "",
                           thing.creating and thing.have_form)}
-          ${action_button("cancel", "button", "cancel_usertext(this)", False)}
+          ${action_button("cancel", "button", "return cancel_usertext(this);", False)}
           %if thing.have_form:
             <span class="status"></span>
           %endif
