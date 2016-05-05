@@ -58,6 +58,9 @@ function post_user(form, where) {
 
 function post_form(form, where, statusfunc, nametransformfunc, block) {
     try {
+        if (form.disabled) {
+            return false;
+        }
         if(statusfunc == null)
             statusfunc = function(x) { 
                 return r.config.status_msg.submitting; 
