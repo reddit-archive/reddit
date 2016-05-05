@@ -133,25 +133,22 @@ class DataThing(object):
             _id = "???"
 
         try:
-            cl = object.__getattribute__(self, "__class__").__name__
+            class_name = object.__getattribute__(self, "__class__").__name__
         except AttributeError:
-            cl = "???"
+            class_name = "???"
 
         try:
             id_str = "%d" % _id
         except TypeError:
             id_str = "%r" % _id
 
-        descr = '%s(%s).%s' % (cl, id_str, attr)
+        error_msg = "{cls}({id}).{attr} not found".format(
+            cls=class_name,
+            id=_id,
+            attr=attr,
+        )
 
-        deleted = object.__getattribute__(self, "_deleted")
-
-        if deleted:
-            nl = "it IS deleted."
-        else:
-            nl = "it is NOT deleted."
-
-        raise AttributeError, '%s not found; %s' % (descr, nl)
+        raise AttributeError, error_msg
 
     @classmethod
     def _cache_prefix(cls):
