@@ -2792,9 +2792,17 @@ class LinksByImage(tdb_cassandra.View):
         return columns.iterkeys()
 
 
-class Inbox(MultiRelation('inbox',
-                          Relation(Account, Comment),
-                          Relation(Account, Message))):
+_AccountCommentInbox = Relation(Account, Comment)
+_AccountMessageInbox = Relation(Account, Message)
+
+
+for rel_cls in (_AccountCommentInbox, _AccountMessageInbox):
+    rel_cls._defaults = {
+        "new": False,
+    }
+
+
+class Inbox(MultiRelation('inbox', _AccountCommentInbox, _AccountMessageInbox)):
     @classmethod
     def _add(cls, to, obj, *a, **kw):
         orangered = kw.pop("orangered", True)
