@@ -756,7 +756,7 @@ class LinkJsonTemplate(ThingJsonTemplate):
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
     @staticmethod
-    def generate_image_links(preview_object, censor_nsfw=False):
+    def generate_image_links(preview_object, file_type=None, censor_nsfw=False):
         # Determine which previews would be feasible with our given dims
         source_width = preview_object['width']
         source_height = preview_object['height']
@@ -772,8 +772,12 @@ class LinkJsonTemplate(ThingJsonTemplate):
                 continue
 
             url = g.image_resizing_provider.resize_image(
-                preview_object, w, censor_nsfw,
-                LinkJsonTemplate.PREVIEW_MAX_RATIO)
+                preview_object,
+                w,
+                file_type=file_type,
+                censor_nsfw=censor_nsfw,
+                max_ratio=LinkJsonTemplate.PREVIEW_MAX_RATIO
+            )
             h = int(w * preview_ratio)
             preview_resolutions.append({
                 "url": url,
@@ -782,7 +786,10 @@ class LinkJsonTemplate(ThingJsonTemplate):
             })
 
         url = g.image_resizing_provider.resize_image(
-            preview_object, censor_nsfw=censor_nsfw)
+            preview_object,
+            file_type=file_type,
+            censor_nsfw=censor_nsfw,
+        )
 
         return {
             "source": {
@@ -803,14 +810,24 @@ class LinkJsonTemplate(ThingJsonTemplate):
 
         preview_object = thing.preview_image
         if preview_object:
+            preview_is_gif = preview_object.get('url', '').endswith('.gif')
             d['preview'] = {}
             d['post_hint'] = thing.post_hint
-            images = self.generate_image_links(preview_object)
+            # For gifs, the default preview should be a static image, with the
+            # full gif as a variant
+            if preview_is_gif:
+                images = self.generate_image_links(preview_object, file_type="jpg")
+            else:
+                images = self.generate_image_links(preview_object)
+
             images['id'] = preview_object['uid']
             images['variants'] = {}
             if thing.nsfw:
                 images['variants']['nsfw'] = self.generate_image_links(
-                    preview_object, censor_nsfw=True)
+                    preview_object, censor_nsfw=True, file_type="png")
+            if preview_is_gif:
+                images['variants']['gif'] = self.generate_image_links(preview_object)
+                images['variants']['mp4'] = self.generate_image_links(preview_object, file_type="mp4")
             d['preview']['images'] = [images]
 
         if c.user_is_loggedin and c.user.in_timeout:
