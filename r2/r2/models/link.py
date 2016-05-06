@@ -2097,7 +2097,11 @@ class Message(Thing, Printable):
             if not sr_id or not sr.is_moderator(to):
                 inbox_rel.append(Inbox._add(to, m, 'inbox'))
 
-                if orangered and to.pref_email_messages:
+                if (
+                    to.pref_email_messages and
+                    m.author_id not in to.enemies and
+                    to._id != m.author_id
+                ):
                     from r2.lib.template_helpers import get_domain
                     if from_sr:
                         sender_name = '/r/%s' % sr.name
