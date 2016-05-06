@@ -643,6 +643,9 @@ class OAuth2AccessToken(Token):
             client = OAuth2Client._byID(self.client_id)
             if getattr(client, 'deleted', False):
                 raise NotFound
+        except AttributeError:
+            g.log.error("bad token %s: %s", self, self._t)
+            raise
         except NotFound:
             return False
 
