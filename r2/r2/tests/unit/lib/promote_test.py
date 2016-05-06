@@ -137,6 +137,7 @@ class TestPromoteRefunds(unittest.TestCase):
         self.campaign._id = 1
         self.campaign.owner_id = 1
         self.campaign.trans_id = 1
+        self.campaign.bid_pennies = 1
         self.campaign.start_date = datetime.datetime.now()
         self.campaign.end_date = (datetime.datetime.now() +
             datetime.timedelta(days=1))
@@ -154,13 +155,16 @@ class TestPromoteRefunds(unittest.TestCase):
         """Assert return value and that correct calls are made on success."""
         refund_transaction.return_value = (True, None)
 
-        success = refund_campaign(
-            link=self.link,
-            camp=self.campaign,
-            refund_amount=self.refund_amount,
-            billable_amount=self.billable_amount,
-            billable_impressions=self.billable_impressions,
-        )
+        # the refund process attemtps a db lookup. We don't need it for the
+        # purpose of the test.
+        with patch.object(Account, "_byID"):
+            success = refund_campaign(
+                link=self.link,
+                camp=self.campaign,
+                refund_amount=self.refund_amount,
+                billable_amount=self.billable_amount,
+                billable_impressions=self.billable_impressions,
+            )
 
         self.assertTrue(refund_transaction.called)
         self.assertTrue(promotion_log_add.called)
@@ -175,13 +179,16 @@ class TestPromoteRefunds(unittest.TestCase):
         """Assert return value and that correct calls are made on failure."""
         refund_transaction.return_value = (False, None)
 
-        success = refund_campaign(
-            link=self.link,
-            camp=self.campaign,
-            refund_amount=self.refund_amount,
-            billable_amount=self.billable_amount,
-            billable_impressions=self.billable_impressions,
-        )
+        # the refund process attemtps a db lookup. We don't need it for the
+        # purpose of the test.
+        with patch.object(Account, "_byID"):
+            success = refund_campaign(
+                link=self.link,
+                camp=self.campaign,
+                refund_amount=self.refund_amount,
+                billable_amount=self.billable_amount,
+                billable_impressions=self.billable_impressions,
+            )
 
         self.assertTrue(refund_transaction.called)
         self.assertTrue(promotion_log_add.called)
@@ -192,7 +199,7 @@ class TestPromoteRefunds(unittest.TestCase):
         Assert that correct value is returned when existing refund_amount is
         zero.
         """
-        campaign = Mock(spec=('total_budget_dollars',))
+        campaign = MagicMock(spec=('total_budget_dollars',))
         campaign.total_budget_dollars = 200.
         refund_amount = get_refund_amount(campaign, self.billable_amount)
         self.assertEquals(refund_amount,
@@ -221,4 +228,3 @@ class TestPromoteRefunds(unittest.TestCase):
         self.campaign.refund_amount = 0.01999999
         refund_amount = get_refund_amount(self.campaign, self.billable_amount)
         self.assertEquals(refund_amount, self.billable_amount - 0.01)
-
