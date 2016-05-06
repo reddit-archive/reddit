@@ -19,6 +19,9 @@
 ## All portions of the code written by reddit are Copyright (c) 2006-2015
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
+<%!
+from r2.lib.template_helpers import add_sr
+%>
 # 80legs
 User-agent: 008
 Disallow: /
@@ -55,3 +58,4 @@ Disallow: /search
 Disallow: /r/*/search
 Allow: /
 
+Sitemap: ${add_sr('sitemap', sr_path=False, force_https=True)}
