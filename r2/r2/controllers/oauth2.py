@@ -31,7 +31,6 @@ from pylons import app_globals as g
 from pylons.i18n import _
 
 from r2.config.extensions import set_extension
-from r2.lib import hooks
 from r2.lib.base import abort
 from reddit_base import RedditController, MinimalController, require_https
 from r2.lib.db import tdb_cassandra
@@ -69,6 +68,11 @@ def _update_redirect_uri(base_redirect_uri, params, as_fragment=False):
     else:
         parsed.update_query(**params)
     return parsed.unparse()
+
+
+def get_device_id(client):
+    if client.is_first_party():
+        return request.POST.get('device_id')
 
 
 class OAuth2FrontendController(RedditController):
@@ -216,10 +220,16 @@ class OAuth2FrontendController(RedditController):
             final_redirect = _update_redirect_uri(redirect_uri, resp)
             g.stats.simple_event('oauth2.POST_authorize.authorization_code_create')
         elif response_type == "token":
-            token = OAuth2AccessToken._new(client._id, c.user._id36, scope)
-            token_data = OAuth2AccessController._make_token_dict(token)
-            token_data["state"] = state
-            final_redirect = _update_redirect_uri(redirect_uri, token_data, as_fragment=True)
+            device_id = get_device_id(client)
+            token = OAuth2AccessToken._new(
+                client_id=client._id,
+                user_id=c.user._id36,
+                scope=scope,
+                device_id=device_id,
+            )
+            resp = OAuth2AccessController._make_new_token_response(token)
+            resp["state"] = state
+            final_redirect = _update_redirect_uri(redirect_uri, resp, as_fragment=True)
             g.stats.simple_event('oauth2.POST_authorize.access_token_create')
 
         # If this is the first time the user is logging in with an official
@@ -364,7 +374,7 @@ class OAuth2AccessController(MinimalController):
         return resp
 
     @classmethod
-    def _make_token_dict(cls, access_token, refresh_token=None):
+    def _make_new_token_response(cls, access_token, refresh_token=None):
         if not access_token:
             return {"error": "invalid_grant"}
         expires_in = int(access_token._ttl) if access_token._ttl else None
@@ -377,8 +387,8 @@ class OAuth2AccessController(MinimalController):
         if refresh_token:
             resp["refresh_token"] = refresh_token._id
 
-        hooks.get_hook("oauth2.create_token").call(token_dict=resp,
-                                                   token=access_token)
+        if access_token.device_id:
+            resp['device_id'] = access_token.device_id
 
         return resp
 
@@ -394,23 +404,31 @@ class OAuth2AccessController(MinimalController):
         access_token = None
         refresh_token = None
 
-        auth_token = OAuth2AuthorizationCode.use_token(
-            code, c.oauth2_client._id, redirect_uri)
+        client = c.oauth2_client
+        auth_token = OAuth2AuthorizationCode.use_token(code, client, redirect_uri)
+
         if auth_token:
             if auth_token.refreshable:
                 refresh_token = OAuth2RefreshToken._new(
-                    auth_token.client_id, auth_token.user_id,
-                    auth_token.scope)
+                    client_id=auth_token.client_id,
+                    user_id=auth_token.user_id,
+                    scope=auth_token.scope,
+                )
                 g.stats.simple_event(
                     'oauth2.access_token_code.refresh_token_create')
+
+            device_id = get_device_id(client)
             access_token = OAuth2AccessToken._new(
-                auth_token.client_id, auth_token.user_id,
-                auth_token.scope,
-                refresh_token._id if refresh_token else "")
+                client_id=auth_token.client_id,
+                user_id=auth_token.user_id,
+                scope=auth_token.scope,
+                refresh_token=refresh_token._id if refresh_token else "",
+                device_id=device_id,
+            )
             g.stats.simple_event(
                 'oauth2.access_token_code.access_token_create')
 
-        resp = self._make_token_dict(access_token, refresh_token)
+        resp = self._make_new_token_response(access_token, refresh_token)
 
         return self.api_wrapper(resp)
 
@@ -438,7 +456,7 @@ class OAuth2AccessController(MinimalController):
             response.status = 400
         else:
             g.stats.simple_event('oauth2.access_token_refresh.success')
-            resp = self._make_token_dict(access_token)
+            resp = self._make_new_token_response(access_token)
         return self.api_wrapper(resp)
 
     @validate(user=VThrottledLogin(["username", "password"]),
@@ -467,14 +485,16 @@ class OAuth2AccessController(MinimalController):
         else:
             scope = OAuth2Scope(OAuth2Scope.FULL_ACCESS)
 
+        device_id = get_device_id(client)
         access_token = OAuth2AccessToken._new(
-                client._id,
-                user._id36,
-                scope
+            client_id=client._id,
+            user_id=user._id36,
+            scope=scope,
+            device_id=device_id,
         )
         g.stats.simple_event(
             'oauth2.access_token_password.access_token_create')
-        resp = self._make_token_dict(access_token)
+        resp = self._make_new_token_response(access_token)
         return self.api_wrapper(resp)
 
     @validate(
@@ -497,14 +517,16 @@ class OAuth2AccessController(MinimalController):
         else:
             scope = OAuth2Scope(OAuth2Scope.FULL_ACCESS)
 
+        device_id = get_device_id(client)
         access_token = OAuth2AccessToken._new(
-            client._id,
-            "",
-            scope,
+            client_id=client._id,
+            user_id="",
+            scope=scope,
+            device_id=device_id,
         )
         g.stats.simple_event(
             'oauth2.access_token_client_credentials.access_token_create')
-        resp = self._make_token_dict(access_token)
+        resp = self._make_new_token_response(access_token)
         return self.api_wrapper(resp)
 
     @validate(
@@ -533,15 +555,15 @@ class OAuth2AccessController(MinimalController):
             scope = OAuth2Scope(OAuth2Scope.FULL_ACCESS)
 
         access_token = OAuth2AccessToken._new(
-            client._id,
-            "",
-            scope,
+            client_id=client._id,
+            user_id="",
+            scope=scope,
             device_id=device_id,
         )
         g.stats.simple_event(
             'oauth2.access_token_extension_client_credentials.'
             'access_token_create')
-        resp = self._make_token_dict(access_token)
+        resp = self._make_new_token_response(access_token)
         return self.api_wrapper(resp)
 
     def OPTIONS_revoke_token(self):
