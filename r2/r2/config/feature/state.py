@@ -51,21 +51,23 @@ class FeatureState(object):
     # The variant definition for control groups that are added by default.
     DEFAULT_CONTROL_GROUPS = {'control_1': 10, 'control_2': 10}
 
-    def __init__(self, name, world):
+    def __init__(self, name, world, config_name=None, config_str=None):
         self.name = name
         self.world = world
-        self.config = self._parse_config(name)
+        self.config = self._parse_config(name, config_name, config_str)
 
-    def _parse_config(self, name):
+    def _parse_config(self, name, config_name=None, config_str=None):
         """Find and parse a config from our live config with this given name.
 
         :param name string - a given feature name
         :return dict - a dictionary with at least "enabled". May include more
                        depending on the enabled type.
         """
-        config_name = "feature_%s" % name
+        if not config_name:
+            config_name = "feature_%s" % name
 
-        config_str = self.world.live_config(config_name)
+        if not config_str:
+            config_str = self.world.live_config(config_name)
 
         if not config_str or config_str == FeatureState.GLOBALLY_OFF:
             return self.DISABLED_CFG
@@ -85,6 +87,22 @@ class FeatureState(object):
             return self.DISABLED_CFG
 
         return config
+
+    @staticmethod
+    def get_all(world):
+        """Return FeatureState objects for all features in live_config.
+        
+        Creates a FeatureState object for every config entry prefixed with
+        "feature_".
+
+        :param world - World proxy object to the app/request state.
+        """
+        features = []
+        for (key, config_str) in world.live_config_iteritems():
+            if key.startswith('feature_'):
+                feature_state = FeatureState(key[8:], world, key, config_str)
+                features.append(feature_state)
+        return features
 
     def _calculate_bucket(self, seed):
         """Sort something into one of self.NUM_BUCKETS buckets.

@@ -20,4 +20,4 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from r2.config.feature.feature import is_enabled, variant
+from r2.config.feature.feature import is_enabled, variant, all_enabled

@@ -78,6 +78,9 @@ class LiveConfig(object):
     def get(self, key, default=None):
         return self.data.get(key, default)
 
+    def iteritems(self):
+        return self.data.iteritems()
+
     def __repr__(self):
         return "<LiveConfig %r>" % self.data
 

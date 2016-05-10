@@ -525,6 +525,7 @@ class IdentityJsonTemplate(ThingJsonTemplate):
         gold_expiration="gold_expiration",
         is_suspended="in_timeout",
         suspension_expiration_utc="timeout_expiration_utc",
+        features="features",
     )
     _public_attrs = {
         "name",
@@ -591,6 +592,8 @@ class IdentityJsonTemplate(ThingJsonTemplate):
                 return None
 
             return calendar.timegm(expiration_date.utctimetuple())
+        elif attr == "features":
+            return feature.all_enabled(c.user)
 
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
