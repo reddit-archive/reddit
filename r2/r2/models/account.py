@@ -60,7 +60,7 @@ COOKIE_TIMESTAMP_FORMAT = '%Y-%m-%dT%H:%M:%S'
 class AccountExists(Exception): pass
 
 class Account(Thing):
-    _cache = g.account_transitionalcache
+    _cache = g.thingcache
     _data_int_props = Thing._data_int_props + ('link_karma', 'comment_karma',
                                                'report_made', 'report_correct',
                                                'report_ignored', 'spammer',
@@ -157,6 +157,10 @@ class Account(Thing):
                      )
     _preference_attrs = tuple(k for k in _defaults.keys()
                               if k.startswith("pref_"))
+
+    @classmethod
+    def _cache_prefix(cls):
+        return "account:"
 
     def preferences(self):
         return {pref: getattr(self, pref) for pref in self._preference_attrs}
