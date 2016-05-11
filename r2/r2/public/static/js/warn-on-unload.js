@@ -60,4 +60,17 @@ $(function() {
     $(window).off('beforeunload');
     r.warn_on_unload();
   });
+
+  // Remove beforeunload event handler if a user clears their
+  // comment, exclude the newlink form textareas
+  $(".usertext.warn-on-unload textarea")
+    .not(":hidden")
+    .not("form#newlink .usertext textarea")
+    .on("blur", function(e) {
+
+    if(this.defaultValue === this.value) {
+      $(window).off('beforeunload');
+    }
+  });
+
 });
