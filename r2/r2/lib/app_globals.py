@@ -882,6 +882,26 @@ class Globals(object):
             self.thingcache = CacheChain((localcache_cls(), self.mcrouter))
         cache_chains.update(thingcache=self.thingcache)
 
+        def get_new_link_prefix_and_key(key, prefix=''):
+            old_prefix = "Link_"
+            new_prefix = "link:"
+
+            if prefix:
+                assert prefix == old_prefix
+                return new_prefix, key
+            else:
+                key = str(key)
+                assert key.startswith(old_prefix)
+                link_id = key[len(old_prefix):]
+                return '', new_prefix + link_id
+
+        self.link_transitionalcache = TransitionalCache(
+            original_cache=self.cache,
+            replacement_cache=self.thingcache,
+            read_original=True,
+            key_transform=get_new_link_prefix_and_key,
+        )
+
         if stalecaches:
             self.memoizecache = StaleCacheChain(
                 localcache_cls(),
