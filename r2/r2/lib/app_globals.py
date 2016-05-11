@@ -882,6 +882,26 @@ class Globals(object):
             self.maincache = CacheChain((localcache_cls(), self.mcrouter))
         cache_chains.update(maincache=self.maincache)
 
+        def get_new_account_prefix_and_key(key, prefix=''):
+            old_prefix = "Account_"
+            new_prefix = "account:"
+
+            if prefix:
+                assert prefix == old_prefix
+                return new_prefix, key
+            else:
+                key = str(key)
+                assert key.startswith(old_prefix)
+                account_id = key[len(old_prefix):]
+                return '', new_prefix + account_id
+
+        self.account_transitionalcache = TransitionalCache(
+            original_cache=self.cache,
+            replacement_cache=self.maincache,
+            read_original=True,
+            key_transform=get_new_account_prefix_and_key,
+        )
+
         if stalecaches:
             self.memoizecache = StaleCacheChain(
                 localcache_cls(),

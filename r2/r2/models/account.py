@@ -60,6 +60,7 @@ COOKIE_TIMESTAMP_FORMAT = '%Y-%m-%dT%H:%M:%S'
 class AccountExists(Exception): pass
 
 class Account(Thing):
+    _cache = g.account_transitionalcache
     _data_int_props = Thing._data_int_props + ('link_karma', 'comment_karma',
                                                'report_made', 'report_correct',
                                                'report_ignored', 'spammer',
