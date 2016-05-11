@@ -84,7 +84,7 @@
                %endif
                >
       </%call>
-      <%call expr="form_group('passwd', 'BAD_PASSWORD', show_errors=True)">
+      <%call expr="form_group('passwd', 'BAD_PASSWORD', 'WRONG_PASSWORD', show_errors=True)">
         <label for="passwd_${op}" class="screenreader-only">${_('password')}:</label>
         <input id="passwd_${op}" class="c-form-control" name="passwd" type="password"
                tabindex="${tabindex}" placeholder="${_('password')}"
