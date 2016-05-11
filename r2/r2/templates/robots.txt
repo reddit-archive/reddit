@@ -26,6 +26,10 @@ from r2.lib.template_helpers import add_sr
 User-agent: 008
 Disallow: /
 
+# 80legs' new crawler
+User-agent: voltron
+Disallow: /
+
 User-Agent: bender
 Disallow: /my_shiny_metal_ass
 
