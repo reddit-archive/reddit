@@ -405,7 +405,7 @@ class OAuth2AccessController(MinimalController):
         refresh_token = None
 
         client = c.oauth2_client
-        auth_token = OAuth2AuthorizationCode.use_token(code, client, redirect_uri)
+        auth_token = OAuth2AuthorizationCode.use_token(code, client._id, redirect_uri)
 
         if auth_token:
             if auth_token.refreshable:
