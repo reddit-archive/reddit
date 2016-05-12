@@ -341,6 +341,10 @@ class Globals(object):
         ConfigValue.baseplate(baseplate_config.Optional(baseplate_config.Endpoint)): [
             "activity_endpoint",
         ],
+
+        ConfigValue.dict(ConfigValue.str, ConfigValue.str): [
+            'emr_traffic_tags',
+        ],
     }
 
     live_config_spec = {

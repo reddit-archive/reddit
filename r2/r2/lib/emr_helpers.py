@@ -158,7 +158,7 @@ class EmrJob(object):
                  ami_version='latest', master_instance_type='m1.small',
                  slave_instance_type='m1.small', num_slaves=1,
                  visible_to_all_users=True, job_flow_role=None,
-                 service_role=None):
+                 service_role=None, tags=None):
 
         self.jobflowid = None
         self.conn = emr_connection
@@ -178,6 +178,7 @@ class EmrJob(object):
         self.visible_to_all_users = visible_to_all_users
         self.job_flow_role = job_flow_role
         self.service_role = service_role
+        self.tags = tags or {}
 
     def run(self):
         steps = copy(self.setup_steps)
@@ -196,6 +197,12 @@ class EmrJob(object):
             job_flow_role=self.job_flow_role, service_role=self.service_role)
 
         self.jobflowid = self.conn.run_jobflow(**job_flow_args)
+        if self.tags:
+            assert isinstance(self.tags, dict)
+            # The EMR Cluster name is distinct from the Name tag. The latter
+            # is exportable as a cost allocation tag.
+            self.tags["Name"] = self.name
+            self.conn.add_tags(self.jobflowid, self.tags)
         return
 
     @property
