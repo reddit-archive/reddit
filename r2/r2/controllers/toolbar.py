@@ -57,7 +57,10 @@ def demangle_url(path):
     if need_insert_slash.match(path):
         path = string.replace(path, '/', '//', 1)
 
-    path = utils.sanitize_url(path)
+    try:
+        path = utils.sanitize_url(path)
+    except TypeError:
+        return None
 
     return path
 
