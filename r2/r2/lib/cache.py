@@ -522,39 +522,88 @@ class TransitionalCache(CacheUtils):
             return self.replacement.caches
 
     def transform_memcache_key(self, args, kwargs):
+        """Use key_transform to transform keys and prefix.
+
+        key_transform() returns (new_prefix, new_key)
+
+        If "prefix" is specified in kwargs, the transformation will look like:
+        key_transform("key", "old_prefix_") --> "new_prefix_", "key"
+
+        If "prefix" is not specified in kwargs, it must already be part of the
+        key, and the transformation looks like:
+        key_transform("old_prefix_key") --> "", "new_prefix_key"
+
+        We don't currently handle multiple gets or sets where the prefix is
+        already prepended to the keys because the return values are different:
+        get(["old_prefix_A", "old_prefix_B"])
+        old:
+            {"old_prefix_A": val, "old_prefix_B": val}
+        new:
+            {"new_prefix_A": val, "new_prefix_B": val}
+
+        They must be looked up with a prefix:
+        get(["A", "B"], prefix="old_prefix_")
+        old:
+            {"A": val, "B": val}
+        new (translated to get(["A", "B"], prefix="new_prefix_"):
+            {"A": val, "B": val}
+
+        The special case of the above is for a single item lookup, where the
+        return value does not include the key.
+
+        We could handle the general multiple key case by maintaining a mapping
+        of {old_key: new_key} and using that to transform the return value.
+
+        """
+
         if self.key_transform:
-            old_key = args[0]
             prefix = kwargs.get("prefix", "")
+            new_kwargs = copy(kwargs)
 
-            if isinstance(old_key, dict):  # multiget passes a dict
-                new_key = {
-                    self.key_transform(k, prefix): v
-                    for k, v in old_key.iteritems()
-                }
-            elif isinstance(old_key, (list, set, tuple)):
-                new_key = [self.key_transform(k, prefix) for k in old_key]
+            if isinstance(args[0], dict):
+                assert prefix, "must include prefix"
+                new_prefixes = []
+                old_key_dict = args[0]
+                new_key_dict = {}
+
+                for old_key, val in old_key_dict.iteritems():
+                    new_prefix, new_key = self.key_transform(old_key, prefix)
+                    new_key_dict[new_key] = val
+                    new_prefixes.append(new_prefix)
+
+                assert all(p == new_prefixes[0] for p in new_prefixes[1:])
+                new_kwargs["prefix"] = new_prefixes[0]
+                new_args = (new_key_dict,) + args[1:]
+            elif isinstance(args[0], (list, set, tuple)):
+                assert prefix, "must include prefix"
+                new_prefixes = []
+                old_key_list = args[0]
+                new_key_list = []
+
+                for old_key in old_key_list:
+                    new_prefix, new_key = self.key_transform(old_key, prefix)
+                    new_key_list.append(new_key)
+                    new_prefixes.append(new_prefix)
+
+                assert all(p == new_prefixes[0] for p in new_prefixes[1:])
+                new_kwargs["prefix"] = new_prefixes[0]
+                new_args = (new_key_list,) + args[1:]
             else:
-                new_key = self.key_transform(old_key, prefix)
+                # single keys can't specify a prefix
+                _, new_key = self.key_transform(args[0])
+                new_args = (new_key,) + args[1:]
 
-            return (new_key,) + args[1:]
+            return new_args, new_kwargs
         else:
-            return args
+            return args, kwargs
 
     def make_get_fn(fn_name):
         def transitional_cache_get_fn(self, *args, **kwargs):
             if self.read_original:
                 return getattr(self.original, fn_name)(*args, **kwargs)
             else:
-                args = self.transform_memcache_key(args, kwargs)
-
-                # remove the prefix argument because the transform fn has
-                # already tacked that onto the keys
-                try:
-                    kwargs.pop("prefix")
-                except KeyError:
-                    pass
-
-                return getattr(self.replacement, fn_name)(*args, **kwargs)
+                new_args, new_kwargs = self.transform_memcache_key(args, kwargs)
+                return getattr(self.replacement, fn_name)(*new_args, **new_kwargs)
         return transitional_cache_get_fn
 
     get = make_get_fn("get")
@@ -564,16 +613,10 @@ class TransitionalCache(CacheUtils):
     def make_set_fn(fn_name):
         def transitional_cache_set_fn(self, *args, **kwargs):
             ret_original = getattr(self.original, fn_name)(*args, **kwargs)
-            args = self.transform_memcache_key(args, kwargs)
 
-            # remove the prefix argument because the transform fn has
-            # already tacked that onto the keys
-            try:
-                kwargs.pop("prefix")
-            except KeyError:
-                pass
+            new_args, new_kwargs = self.transform_memcache_key(args, kwargs)
+            ret_replacement = getattr(self.replacement, fn_name)(*new_args, **new_kwargs)
 
-            ret_replacement = getattr(self.replacement, fn_name)(*args, **kwargs)
             if self.read_original:
                 return ret_original
             else:
