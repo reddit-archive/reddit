@@ -74,8 +74,9 @@ class BaseController(WSGIController):
     def __before__(self):
         self.fix_cookie_header()
         try:
-            # webob can't handle non utf-8 encoded query strings
+            # webob can't handle non utf-8 encoded query strings or paths
             request.params
+            request.path
         except UnicodeDecodeError:
             abort(400)
 
