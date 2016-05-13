@@ -531,7 +531,7 @@ class TransitionalCache(CacheUtils):
                     self.key_transform(k, prefix): v
                     for k, v in old_key.iteritems()
                 }
-            elif isinstance(old_key, (list, set)):
+            elif isinstance(old_key, (list, set, tuple)):
                 new_key = [self.key_transform(k, prefix) for k in old_key]
             else:
                 new_key = self.key_transform(old_key, prefix)
