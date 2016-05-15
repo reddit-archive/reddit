@@ -69,7 +69,37 @@ def abort(code_or_exception=None, detail="", headers=None, comment=None,
 
 class BaseController(WSGIController):
     def __before__(self):
-        self.fix_cookie_header()
+        """Perform setup tasks before the controller method/action is executed.
+
+        Called by WSGIController.__call__.
+
+        """
+
+        # we override this here to ensure that this header, and only this
+        # header, is trusted to reduce the number of potential
+        # misconfigurations between wsgi application servers (e.g. gunicorn
+        # which trusts three different headers out of the box for this) and
+        # haproxy (which won't clean out bad headers by default)
+        forwarded_proto = request.environ.get("HTTP_X_FORWARDED_PROTO", "http")
+        forwarded_proto = forwarded_proto.lower()
+        assert forwarded_proto in ("http", "https")
+        request.environ["wsgi.url_scheme"] = forwarded_proto
+
+        forwarded_for = request.environ.get('HTTP_X_FORWARDED_FOR', ())
+        remote_addr = request.environ.get('REMOTE_ADDR')
+
+        request.via_cdn = False
+        cdn_ip = g.cdn_provider.get_client_ip(request.environ)
+        if cdn_ip:
+            request.ip = cdn_ip
+            request.via_cdn = True
+        elif (g.trust_local_proxies and
+                forwarded_for and
+                is_local_address(remote_addr)):
+            request.ip = forwarded_for.split(',')[-1]
+        else:
+            request.ip = request.environ['REMOTE_ADDR']
+
         try:
             # webob can't handle non utf-8 encoded query strings or paths
             request.params
@@ -77,51 +107,33 @@ class BaseController(WSGIController):
         except UnicodeDecodeError:
             abort(400)
 
+        #if x-dont-decode is set, pylons won't unicode all the parameters
+        if request.environ.get('HTTP_X_DONT_DECODE'):
+            request.charset = None
+
+        request.referer = request.environ.get('HTTP_REFERER')
+        request.user_agent = request.environ.get('HTTP_USER_AGENT')
+        request.fullpath = request.environ.get('FULLPATH', request.path)
+        request.fullurl = request.host_url + request.fullpath
+        request.port = request.environ.get('request_port')
+
+        if_modified_since = request.environ.get('HTTP_IF_MODIFIED_SINCE')
+        if if_modified_since:
+            request.if_modified_since = read_http_date(if_modified_since)
+        else:
+            request.if_modified_since = None
+
+        self.fix_cookie_header()
         self.pre()
 
     def __after__(self):
         self.post()
 
     def __call__(self, environ, start_response):
-        # we override this here to ensure that this header, and only this
-        # header, is trusted to reduce the number of potential
-        # misconfigurations between wsgi application servers (e.g. gunicorn
-        # which trusts three different headers out of the box for this) and
-        # haproxy (which won't clean out bad headers by default)
-        forwarded_proto = environ.get("HTTP_X_FORWARDED_PROTO", "http").lower()
-        assert forwarded_proto in ("http", "https")
-        request.environ["wsgi.url_scheme"] = forwarded_proto
-
-        forwarded_for = environ.get('HTTP_X_FORWARDED_FOR', ())
-        remote_addr = environ.get('REMOTE_ADDR')
-
-        request.via_cdn = False
-        cdn_ip = g.cdn_provider.get_client_ip(environ)
-        if cdn_ip:
-            request.ip = cdn_ip
-            request.via_cdn = True
-        elif g.trust_local_proxies and forwarded_for and is_local_address(remote_addr):
-            request.ip = forwarded_for.split(',')[-1]
-        else:
-            request.ip = environ['REMOTE_ADDR']
-
-        #if x-dont-decode is set, pylons won't unicode all the parameters
-        if environ.get('HTTP_X_DONT_DECODE'):
-            request.charset = None
-
-        request.referer = environ.get('HTTP_REFERER')
-        request.user_agent = environ.get('HTTP_USER_AGENT')
-        request.fullpath = environ.get('FULLPATH', request.path)
-        request.fullurl = request.host_url + request.fullpath
-        request.port = environ.get('request_port')
-        
-        if_modified_since = environ.get('HTTP_IF_MODIFIED_SINCE')
-        if if_modified_since:
-            request.if_modified_since = read_http_date(if_modified_since)
-        else:
-            request.if_modified_since = None
-
-        #set the function to be called
+        # as defined by routing rules in in routing.py, a request to
+        # /api/do_something is routed to the ApiController's do_something()
+        # method (action). Rewrite this to include the HTTP verb which is the
+        # real name of the controller method: GET_do_something().
         action = request.environ['pylons.routes_dict'].get('action')
         if action:
             meth = request.method.upper()
@@ -137,6 +149,8 @@ class BaseController(WSGIController):
             request.environ['pylons.routes_dict']['action_name'] = action
             request.environ['pylons.routes_dict']['action'] = handler_name
 
+        # WSGIController.__call__ will run __before__() and then execute the
+        # controller method via environ['pylons.routes_dict']['action']
         return WSGIController.__call__(self, environ, start_response)
 
     def pre(self): pass
