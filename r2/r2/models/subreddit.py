@@ -1291,7 +1291,7 @@ class Subreddit(Thing, Printable, BaseSite):
     @classmethod
     def get_promote_srid(cls):
         try:
-            return cls._by_name(g.promo_sr_name)._id
+            return cls._by_name(g.promo_sr_name, stale=True)._id
         except NotFound:
             return None
 
