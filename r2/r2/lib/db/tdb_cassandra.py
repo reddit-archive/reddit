@@ -1211,34 +1211,6 @@ class Query(object):
             for col, val in row._t.iteritems():
                 print '\t%s: %r' % (col, val)
 
-    @will_write
-    def _delete_all(self, write_consistency_level = None):
-        # uncomment to use on purpose
-        raise InvariantException("Nice try, FBI")
-
-        # TODO: this could use cf.truncate instead and be *way*
-        # faster, but it wouldn't flush the thing_cache at the same
-        # time that way
-
-        q = self.copy()
-        q.after = q.limit = None
-
-        # since we're just deleting it, we only need enough columns to
-        # avoid reading ghost rows
-        q.max_column_count = 1
-
-        # I'm going to guess that if they are trying to flush out an
-        # entire CF, they aren't that worried about how long it takes
-        # to become consistent. So we'll default to the fastest way
-        wcl = q.cls._wcl(write_consistency_level, CL.ONE)
-
-        for row in q:
-            print row
-
-            # n.b. we're not calling _on_destroy!
-            q.cls._cf.remove(row._id, write_consistency_level = wcl)
-            thing_cache.delete(q.cls._cache_key_id(row._id))
-
     def __iter__(self):
         # n.b.: we aren't caching objects that we find this way in the
         # LocalCache. This may will need to be changed if we ever
