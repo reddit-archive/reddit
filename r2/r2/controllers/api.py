@@ -1745,7 +1745,7 @@ class ApiController(RedditController):
         thing._commit()
 
         # report the message deletion to data pipeline
-        g.events.message_event(thing, "ss.delete_message",
+        g.events.message_event(thing, event_type="ss.delete_message",
                                request=request, context=c)
 
     @require_oauth2_scope("privatemessages")

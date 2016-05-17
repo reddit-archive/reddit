@@ -84,11 +84,9 @@
   </a>
 
   %if c.user_is_admin:
-     %if not thing.was_comment and thing.del_on_recipient:
-       <em>${_("deleted message by")}</em>&#32;
+     %if not thing.was_comment and hasattr(thing, "del_on_recipient") and thing.del_on_recipient:
+       <em>${_("deleted message")}</em>&#32;
      %endif
-     ${WrappedUser(thing.to, thing.attribs, thing)}
-     &#32;
   %endif
 
   <%

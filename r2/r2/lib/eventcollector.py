@@ -571,7 +571,7 @@ class EventQueue(object):
 
         event = Event(
             topic="message_events",
-            event_type=event_type,
+            event_type="ss.send_message",
             time=message._date,
             request=request,
             context=context,
@@ -645,7 +645,7 @@ class EventQueue(object):
 
         event = Event(
             topic="message_events",
-            event_type="ss.send_message",
+            event_type=event_type,
             time=message._date,
             request=request,
             context=context,
