@@ -954,11 +954,8 @@ class Globals(object):
         cache_chains.update(pagecache=self.pagecache)
 
         # cassandra_local_cache is used for request-local caching in tdb_cassandra
-        self.cassandra_local_cache = CacheChain(
-            caches=(localcache_cls(),),
-        )
+        self.cassandra_local_cache = localcache_cls()
         cache_chains.update(cassandra_local_cache=self.cassandra_local_cache)
-        # TODO: no stats collection
 
         if stalecaches:
             permacache_cache = StaleCacheChain(
