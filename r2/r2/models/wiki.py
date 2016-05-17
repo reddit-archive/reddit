@@ -249,18 +249,27 @@ class WikiPage(tdb_cassandra.Thing):
     @classmethod
     def get(cls, sr, name):
         return cls._byID(cls.id_for(sr, name))
-    
+
     @classmethod
     def create(cls, sr, name):
-        # Sanity check for a page name and subreddit
         if not name or not sr:
             raise ValueError
+
         name = name.lower()
-        kw = dict(sr=sr._id36, name=name, permlevel=0, content='')
-        page = cls(**kw)
-        page._commit()
-        return page
-    
+        _id = wiki_id(sr._id36, name)
+        lock_key = "wiki_create_%s:%s" % (sr._id36, name)
+        with g.make_lock("wiki", lock_key):
+            try:
+                cls._byID(_id)
+            except tdb_cassandra.NotFound:
+                pass
+            else:
+                raise WikiPageExists
+
+            page = cls(_id=_id, sr=sr._id36, name=name, permlevel=0, content='')
+            page._commit()
+            return page
+
     @property
     def restricted(self):
         return WikiPage.is_restricted(self.name)
@@ -414,16 +423,6 @@ class WikiPage(tdb_cassandra.Thing):
     def get_revisions(self, after=None, count=100):
         return WikiRevisionHistoryByPage.query(
             rowkeys=[self._id], after=after, count=count)
-
-    def _commit(self, *a, **kw):
-        if not self._id: # Creating a new page
-            pageid = wiki_id(self.sr, self.name)
-            try:
-                WikiPage._byID(pageid)
-                raise WikiPageExists()
-            except tdb_cassandra.NotFound:
-                self._id = pageid   
-        return tdb_cassandra.Thing._commit(self, *a, **kw)
 
 
 class WikiRevisionHistoryByPage(tdb_cassandra.View):

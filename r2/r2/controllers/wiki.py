@@ -28,8 +28,13 @@ from reddit_base import RedditController
 from r2.controllers.oauth2 import require_oauth2_scope
 from r2.lib.utils import url_links_builder
 from reddit_base import paginated_listing
-from r2.models.wiki import (WikiPage, WikiRevision, ContentLengthError,
-                            modactions)
+from r2.models.wiki import (
+    ContentLengthError,
+    modactions,
+    WikiPage,
+    WikiPageExists,
+    WikiRevision,
+)
 from r2.models.subreddit import Subreddit
 from r2.models.modaction import ModAction
 from r2.models.builder import WikiRevisionBuilder, WikiRecentRevisionBuilder
@@ -392,8 +397,13 @@ class WikiApiController(WikiController):
             error = c.errors.get(('WIKI_CREATE_ERROR', 'page'))
             if error:
                 self.handle_error(403, **(error.msg_params or {}))
+
             VNotInTimeout().run(action_name="wikirevise", details_text="create")
-            page = WikiPage.create(c.site, page_name)
+            try:
+                page = WikiPage.create(c.site, page_name)
+            except WikiPageExists:
+                self.handle_error(400, 'WIKI_CREATE_ERROR')
+
         else:
             VNotInTimeout().run(action_name="wikirevise", details_text="edit",
                 target=page)
