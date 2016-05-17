@@ -670,12 +670,10 @@ def cache_timer_decorator(fn_name):
 
 
 class CacheChain(CacheUtils, local):
-    def __init__(self, caches, cache_negative_results=False,
-                 check_keys=True):
+    def __init__(self, caches, cache_negative_results=False):
         self.caches = caches
         self.cache_negative_results = cache_negative_results
         self.stats = None
-        self.check_keys = check_keys
 
     def make_set_fn(fn_name):
         @cache_timer_decorator(fn_name)
@@ -865,14 +863,13 @@ class StaleCacheChain(CacheChain):
        cache. Probably doesn't play well with NoneResult cacheing"""
     staleness = 30
 
-    def __init__(self, localcache, stalecache, realcache, check_keys=True):
+    def __init__(self, localcache, stalecache, realcache):
         self.localcache = localcache
         self.stalecache = stalecache
         self.realcache = realcache
         self.caches = (localcache, realcache) # for the other
                                               # CacheChain machinery
         self.stats = None
-        self.check_keys = check_keys
 
     @cache_timer_decorator("get")
     def get(self, key, default=None, stale = False, **kw):
