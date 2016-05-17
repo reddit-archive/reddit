@@ -873,14 +873,14 @@ class Globals(object):
         cache_chains.update(cache=self.cache)
 
         if stalecaches:
-            self.maincache = StaleCacheChain(
+            self.thingcache = StaleCacheChain(
                 localcache_cls(),
                 stalecaches,
                 self.mcrouter,
             )
         else:
-            self.maincache = CacheChain((localcache_cls(), self.mcrouter))
-        cache_chains.update(maincache=self.maincache)
+            self.thingcache = CacheChain((localcache_cls(), self.mcrouter))
+        cache_chains.update(thingcache=self.thingcache)
 
         def get_new_account_prefix_and_key(key, prefix=''):
             old_prefix = "Account_"
@@ -897,7 +897,7 @@ class Globals(object):
 
         self.account_transitionalcache = TransitionalCache(
             original_cache=self.cache,
-            replacement_cache=self.maincache,
+            replacement_cache=self.thingcache,
             read_original=True,
             key_transform=get_new_account_prefix_and_key,
         )
