@@ -464,6 +464,9 @@ class LocalCache(dict, CacheUtils):
     def flush_all(self):
         self.clear()
 
+    def reset(self):
+        self.clear()
+
     def __repr__(self):
         return "<LocalCache(%d)>" % (len(self),)
 

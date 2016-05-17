@@ -996,7 +996,9 @@ class Globals(object):
                     chain = chain.read_chain
 
                 chain.reset()
-                if isinstance(chain, StaleCacheChain):
+                if isinstance(chain, LocalCache):
+                    continue
+                elif isinstance(chain, StaleCacheChain):
                     chain.stats = StaleCacheStats(self.stats, name)
                 else:
                     chain.stats = CacheStats(self.stats, name)
