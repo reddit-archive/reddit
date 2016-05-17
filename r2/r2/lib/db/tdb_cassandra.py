@@ -53,7 +53,6 @@ connection_pools = g.cassandra_pools
 default_connection_pool = g.cassandra_default_pool
 
 keyspace = 'reddit'
-thing_cache = g.thing_cache
 disallow_db_writes = g.disallow_db_writes
 tz = g.tz
 log = g.log
@@ -299,6 +298,9 @@ class ThingBase(object):
     # the columns in a row when there are more than the per-call maximum.
     _fetch_all_columns = False
 
+    # request-local cache to avoid duplicate lookups from hitting C*
+    _local_cache = g.cassandra_local_cache
+
     def __init__(self, _id = None, _committed = False, _partial = None, **kw):
         # things that have changed
         self._dirties = kw.copy()
@@ -396,8 +398,13 @@ class ThingBase(object):
 
             return l_ret
 
-        ret = cache.sgm(thing_cache, ids, lookup, prefix=cls._cache_prefix(),
-                        found_fn=reject_bad_partials)
+        ret = cache.sgm(
+            cache=cls._local_cache,
+            keys=ids,
+            miss_fn=lookup,
+            prefix=cls._cache_prefix(),
+            found_fn=reject_bad_partials,
+        )
 
         if is_single and not ret:
             raise NotFound("<%s %r>" % (cls.__name__,
@@ -654,7 +661,7 @@ class ThingBase(object):
 
         self._committed = True
 
-        thing_cache.set(self._cache_key(), self)
+        self.__class__._local_cache.set(self._cache_key(), self)
 
     def _revert(self):
         if not self._committed:
@@ -1344,13 +1351,13 @@ class View(ThingBase):
             do_inserts(batch)
 
         # can we be smarter here?
-        thing_cache.delete(cls._cache_key_id(row_key))
+        cls._local_cache.delete(cls._cache_key_id(row_key))
 
     @classmethod
     @will_write
     def _remove(cls, key, columns):
         cls._cf.remove(key, columns)
-        thing_cache.delete(cls._cache_key_id(key))
+        cls._local_cache.delete(cls._cache_key_id(key))
 
 class DenormalizedView(View):
     """Store the entire underlying object inside the View column."""
