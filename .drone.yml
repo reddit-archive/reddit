@@ -50,3 +50,9 @@ build:
     - install/drone.sh
     - cd r2
     - nosetests -v .
+
+# These plugins are triggered after a build failure/success.
+notify:
+  slack:
+    webhook_url: $$CI_SLACK_WEBHOOK_URL
+    channel: ci-notifications
