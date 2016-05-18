@@ -545,7 +545,7 @@
   %endif
   %if thing.user_is_recipient:
     ## only allow message deleting on recipient side now
-    %if not (thing.was_comment or thing.thing.del_on_recipient):
+    %if not (thing.was_comment or thing.thing.del_on_recipient) and thing.thing.to_id == c.user._id:
       <li>
         ${ynbutton(_("delete"), _("deleted"), "del_msg", "hide_thing", access_required=False, event_action="delete_message")}
       </li>
