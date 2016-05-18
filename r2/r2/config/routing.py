@@ -72,6 +72,18 @@ def make_map(config):
     mc('/adminoff', controller='forms', action='adminoff')
     mc('/submit', controller='front', action='submit')
 
+    # redirect old urls to the new
+    ABOUT_BASE = "https://about.reddit.com/"
+    mc('/about', controller='redirect', action='redirect', dest=ABOUT_BASE, 
+       conditions={'function':not_in_sr})
+    mc('/about/values', controller='redirect', action='redirect', dest=ABOUT_BASE)
+    mc('/about/team', controller='redirect', action='redirect',
+       dest=ABOUT_BASE)
+    mc('/about/alien', controller='redirect', action='redirect',
+       dest=ABOUT_BASE + "press")
+    mc('/jobs', controller='redirect', action='redirect',
+       dest=ABOUT_BASE + "careers")
+
     mc('/over18', controller='post', action='over18')
     mc('/quarantine', controller='post', action='quarantine')
     mc('/quarantine_optout', controller='api', action='quarantine_optout')
