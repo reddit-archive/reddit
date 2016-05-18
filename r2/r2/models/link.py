@@ -98,7 +98,7 @@ class LinkExists(Exception): pass
 
 
 class Link(Thing, Printable):
-    _cache = g.link_transitionalcache
+    _cache = g.thingcache
     _data_int_props = Thing._data_int_props + (
         'num_comments', 'reported', 'comment_tree_id', 'gildings')
     _defaults = dict(is_self=False,
@@ -147,6 +147,10 @@ class Link(Thing, Printable):
     SELFTEXT_MAX_LENGTH = 40000
 
     is_votable = True
+
+    @classmethod
+    def _cache_prefix(cls):
+        return "link:"
 
     def __init__(self, *a, **kw):
         Thing.__init__(self, *a, **kw)
