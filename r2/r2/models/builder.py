@@ -1853,6 +1853,12 @@ class UserMessageBuilder(MessageBuilder):
 
             if message.author_id in self.user.enemies:
                 return False
+
+            # do not show messages which were deleted on recipient
+            if (hasattr(message, "del_on_recipient") and
+                    message.to_id == c.user._id and message.del_on_recipient):
+                return False
+
         return super(UserMessageBuilder, self)._viewable_message(message)
 
     def get_tree(self):

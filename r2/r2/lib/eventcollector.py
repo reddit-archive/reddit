@@ -571,7 +571,7 @@ class EventQueue(object):
 
         event = Event(
             topic="message_events",
-            event_type="ss.send_message",
+            event_type=event_type,
             time=message._date,
             request=request,
             context=context,
@@ -624,7 +624,8 @@ class EventQueue(object):
 
     @squelch_exceptions
     @sampled("events_collector_message_sample_rate")
-    def message_event(self, message, request=None, context=None):
+    def message_event(self, message, event_type="ss.send_message",
+                      request=None, context=None):
         """Create a 'message' event for event-collector.
 
         message: An r2.models.Message object

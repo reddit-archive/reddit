@@ -42,6 +42,11 @@ def _keep(msg, account):
     if msg.author_id in account.enemies:
         return False
 
+    # do not keep messages which were deleted on recipient
+    if (isinstance(msg, Message) and
+            msg.to_id == account._id and msg.del_on_recipient):
+        return False
+
     # don't show user their own unread stuff
     if msg.author_id == account._id:
         return False

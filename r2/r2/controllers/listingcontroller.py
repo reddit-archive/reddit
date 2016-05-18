@@ -1128,6 +1128,11 @@ class MessageController(ListingController):
             if item.author_id in c.user.enemies:
                 return False
 
+            # do not show messages which were deleted on recipient
+            if (isinstance(item, Message) and
+                    item.to_id == c.user._id and item.del_on_recipient):
+                return False
+
             if item.author_id == c.user._id:
                 return wouldkeep
 

@@ -1730,6 +1730,31 @@ class ApiController(RedditController):
         thing=VByName('id'),
     )
     @api_doc(api_section.messages)
+    def POST_del_msg(self, thing):
+        """Delete messages from the recipient's view of their inbox."""
+        if not thing:
+            return
+
+        if not isinstance(thing, Message):
+            return
+
+        if thing.to_id != c.user._id:
+            return
+
+        thing.del_on_recipient = True
+        thing._commit()
+
+        # report the message deletion to data pipeline
+        g.events.message_event(thing, "ss.delete_message",
+                               request=request, context=c)
+
+    @require_oauth2_scope("privatemessages")
+    @noresponse(
+        VUser(),
+        VModhash(),
+        thing=VByName('id'),
+    )
+    @api_doc(api_section.messages)
     def POST_block(self, thing):
         '''For blocking via inbox.'''
         if not thing:
