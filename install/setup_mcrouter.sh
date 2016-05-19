@@ -64,6 +64,10 @@ if [ ! -f /etc/mcrouter/global.conf ]; then
         "type": "PoolRoute",
         "pool": "local",
       },
+      "link:": {
+        "type": "PoolRoute",
+        "pool": "local",
+      },
     },
     "wildcard": {
       "type": "NullRoute",
