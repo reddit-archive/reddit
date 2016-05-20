@@ -898,7 +898,7 @@ class Globals(object):
         self.comment_transitionalcache = TransitionalCache(
             original_cache=self.cache,
             replacement_cache=self.thingcache,
-            read_original=True,
+            read_original=False,
             key_transform=get_new_comment_prefix_and_key,
         )
 
