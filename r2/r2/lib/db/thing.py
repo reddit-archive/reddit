@@ -1422,13 +1422,20 @@ class MergeCursor(MultiCursor):
             pairs = undone(pairs)
         raise StopIteration
 
+
 class MultiQuery(Query):
     def __init__(self, queries, *rules, **kw):
         self._queries = queries
         Query.__init__(self, None, *rules, **kw)
 
-    def _iden(self):
-        return ''.join(q._iden() for q in self._queries)
+        assert not self._read_cache
+        assert not self._write_cache
+
+    def get_from_cache(self):
+        raise NotImplementedError()
+
+    def set_to_cache(self):
+        raise NotImplementedError()
 
     def _cursor(self):
         raise NotImplementedError()
@@ -1476,6 +1483,7 @@ class MultiQuery(Query):
             q._limit = limit
 
     _limit = property(_getlimit, _setlimit)
+
 
 class Merge(MultiQuery):
     def _cursor(self):
