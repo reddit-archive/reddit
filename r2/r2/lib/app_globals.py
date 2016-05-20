@@ -902,7 +902,7 @@ class Globals(object):
         self.campaign_transitionalcache = TransitionalCache(
             original_cache=self.cache,
             replacement_cache=self.thingcache,
-            read_original=True,
+            read_original=False,
             key_transform=get_new_campaign_prefix_and_key,
         )
 
