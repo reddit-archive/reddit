@@ -886,26 +886,6 @@ class Globals(object):
             self.thingcache = CacheChain((localcache_cls(), self.mcrouter))
         cache_chains.update(thingcache=self.thingcache)
 
-        def get_new_message_prefix_and_key(key, prefix=''):
-            old_prefix = "Message_"
-            new_prefix = "message:"
-
-            if prefix:
-                assert prefix == old_prefix
-                return new_prefix, key
-            else:
-                key = str(key)
-                assert key.startswith(old_prefix)
-                message_id = key[len(old_prefix):]
-                return '', new_prefix + message_id
-
-        self.message_transitionalcache = TransitionalCache(
-            original_cache=self.cache,
-            replacement_cache=self.thingcache,
-            read_original=False,
-            key_transform=get_new_message_prefix_and_key,
-        )
-
         if stalecaches:
             self.memoizecache = StaleCacheChain(
                 localcache_cls(),
