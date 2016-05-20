@@ -1240,7 +1240,7 @@ class LegacySearchResultLink(Link):
 
 
 class Comment(Thing, Printable):
-    _cache = g.comment_transitionalcache
+    _cache = g.thingcache
     _data_int_props = Thing._data_int_props + ('reported', 'gildings')
     _defaults = dict(reported=0,
                      parent_id=None,
@@ -1256,6 +1256,10 @@ class Comment(Thing, Printable):
     _essentials = ('link_id', 'author_id')
 
     is_votable = True
+
+    @classmethod
+    def _cache_prefix(cls):
+        return "comment:"
 
     def _markdown(self):
         pass

@@ -882,26 +882,6 @@ class Globals(object):
             self.thingcache = CacheChain((localcache_cls(), self.mcrouter))
         cache_chains.update(thingcache=self.thingcache)
 
-        def get_new_comment_prefix_and_key(key, prefix=''):
-            old_prefix = "Comment_"
-            new_prefix = "comment:"
-
-            if prefix:
-                assert prefix == old_prefix
-                return new_prefix, key
-            else:
-                key = str(key)
-                assert key.startswith(old_prefix)
-                comment_id = key[len(old_prefix):]
-                return '', new_prefix + comment_id
-
-        self.comment_transitionalcache = TransitionalCache(
-            original_cache=self.cache,
-            replacement_cache=self.thingcache,
-            read_original=False,
-            key_transform=get_new_comment_prefix_and_key,
-        )
-
         if stalecaches:
             self.memoizecache = StaleCacheChain(
                 localcache_cls(),
