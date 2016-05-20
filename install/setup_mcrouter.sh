@@ -68,6 +68,18 @@ if [ ! -f /etc/mcrouter/global.conf ]; then
         "type": "PoolRoute",
         "pool": "local",
       },
+      "comment:": {
+        "type": "PoolRoute",
+        "pool": "local",
+      },
+      "message:": {
+        "type": "PoolRoute",
+        "pool": "local",
+      },
+      "campaign:": {
+        "type": "PoolRoute",
+        "pool": "local",
+      },
     },
     "wildcard": {
       "type": "NullRoute",
