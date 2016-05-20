@@ -351,7 +351,7 @@ class Target(object):
 
 
 class PromoCampaign(Thing):
-    _cache = g.campaign_transitionalcache
+    _cache = g.thingcache
     _defaults = dict(
         priority_name=PROMOTE_DEFAULT_PRIORITY().name,
         trans_id=NO_TRANSACTION,
@@ -392,6 +392,10 @@ class PromoCampaign(Thing):
     SR_NAMES_DELIM = '|'
     SUBREDDIT_TARGET = "subreddit"
     MOBILE_TARGET_DELIM = ','
+
+    @classmethod
+    def _cache_prefix(cls):
+        return "campaign:"
 
     def __getattr__(self, attr):
         val = super(PromoCampaign, self).__getattr__(attr)

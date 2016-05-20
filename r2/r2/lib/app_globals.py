@@ -886,26 +886,6 @@ class Globals(object):
             self.thingcache = CacheChain((localcache_cls(), self.mcrouter))
         cache_chains.update(thingcache=self.thingcache)
 
-        def get_new_campaign_prefix_and_key(key, prefix=''):
-            old_prefix = "PromoCampaign_"
-            new_prefix = "campaign:"
-
-            if prefix:
-                assert prefix == old_prefix
-                return new_prefix, key
-            else:
-                key = str(key)
-                assert key.startswith(old_prefix)
-                campaign_id = key[len(old_prefix):]
-                return '', new_prefix + campaign_id
-
-        self.campaign_transitionalcache = TransitionalCache(
-            original_cache=self.cache,
-            replacement_cache=self.thingcache,
-            read_original=False,
-            key_transform=get_new_campaign_prefix_and_key,
-        )
-
         if stalecaches:
             self.memoizecache = StaleCacheChain(
                 localcache_cls(),
