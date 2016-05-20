@@ -37,7 +37,6 @@ from r2.lib.db import tdb_sql as tdb, sorts, operators
 from r2.lib.utils import class_property, Results, tup, to36
 
 
-THING_CACHE_TTL = int(timedelta(days=1).total_seconds())
 QUERY_CACHE_TTL = int(timedelta(days=1).total_seconds())
 
 
@@ -81,6 +80,7 @@ class DataThing(object):
     c = operators.Slots()
     __safe__ = False
     _cache = g.cache
+    _cache_ttl = int(timedelta(days=1).total_seconds())
 
     def __init__(self):
         safe_set_attr = SafeSetAttr(self)
@@ -186,7 +186,7 @@ class DataThing(object):
         cache = cls._cache
         prefix = cls._cache_prefix()
         try:
-            cache.add_multi(things_by_id, prefix=prefix, time=THING_CACHE_TTL)
+            cache.add_multi(things_by_id, prefix=prefix, time=cls._cache_ttl)
         except MemcachedError as e:
             g.log.warning("write_things_to_cache error: %s", e)
 
@@ -236,7 +236,7 @@ class DataThing(object):
 
         cache = self.__class__._cache
         key = self._cache_key()
-        cache.set(key, self, time=THING_CACHE_TTL)
+        cache.set(key, self, time=self.__class__._cache_ttl)
 
     def update_from_cache(self, lock):
         """Read the current value of thing from cache and update self.
