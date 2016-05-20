@@ -37,10 +37,10 @@ from r2.lib.db import tdb_sql as tdb, sorts, operators
 from r2.lib.utils import class_property, Results, tup, to36
 
 
-QUERY_CACHE_TTL = int(timedelta(days=1).total_seconds())
+class NotFound(Exception):
+    pass
 
 
-class NotFound(Exception): pass
 CreationError = tdb.CreationError
 
 thing_types = {}
@@ -1067,12 +1067,13 @@ def Relation(type1, type2):
             """Return only the requested props rather than Relation objects."""
             return RelationsPropsOnly(cls, props, *rules, **kw)
 
-
     return RelationCls
 Relation._type_prefix = 'r'
 
+
 class Query(object):
     _cache = g.cache
+    _cache_ttl = int(timedelta(days=1).total_seconds())
 
     def __init__(self, kind, *rules, **kw):
         self._rules = []
@@ -1080,7 +1081,7 @@ class Query(object):
 
         self._read_cache = kw.get('read_cache')
         self._write_cache = kw.get('write_cache')
-        self._cache_time = kw.get('cache_time', QUERY_CACHE_TTL)
+        self._cache_time = kw.get('cache_time', self.__class__._cache_ttl)
         self._limit = kw.get('limit')
         self._offset = kw.get('offset')
         self._stale = kw.get('stale', False)
