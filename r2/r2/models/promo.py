@@ -351,6 +351,7 @@ class Target(object):
 
 
 class PromoCampaign(Thing):
+    _cache = g.campaign_transitionalcache
     _defaults = dict(
         priority_name=PROMOTE_DEFAULT_PRIORITY().name,
         trans_id=NO_TRANSACTION,
