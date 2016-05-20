@@ -1992,6 +1992,7 @@ class MoreChildren(MoreComments):
 
 
 class Message(Thing, Printable):
+    _cache = g.message_transitionalcache
     _defaults = dict(reported=0,
                      was_comment=False,
                      parent_id=None,
