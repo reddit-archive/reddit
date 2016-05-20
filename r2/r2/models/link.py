@@ -1240,6 +1240,7 @@ class LegacySearchResultLink(Link):
 
 
 class Comment(Thing, Printable):
+    _cache = g.comment_transitionalcache
     _data_int_props = Thing._data_int_props + ('reported', 'gildings')
     _defaults = dict(reported=0,
                      parent_id=None,
