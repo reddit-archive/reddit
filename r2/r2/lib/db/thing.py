@@ -1076,16 +1076,13 @@ Relation._type_prefix = 'r'
 
 
 class Query(object):
-    _cache = g.cache
-    _cache_ttl = int(timedelta(days=1).total_seconds())
-
     def __init__(self, kind, *rules, **kw):
         self._rules = []
         self._kind = kind
 
         self._read_cache = kw.get('read_cache')
         self._write_cache = kw.get('write_cache')
-        self._cache_time = kw.get('cache_time', self.__class__._cache_ttl)
+        self._cache_time = kw.get('cache_time', 86400)
         self._limit = kw.get('limit')
         self._offset = kw.get('offset')
         self._stale = kw.get('stale', False)
@@ -1093,7 +1090,7 @@ class Query(object):
         self._filter_primary_sort_only = kw.get('filter_primary_sort_only', False)
 
         self._filter(*rules)
-    
+
     def _setsort(self, sorts):
         sorts = tup(sorts)
         #make sure sorts are wrapped in a Sort obj
@@ -1172,29 +1169,27 @@ class Query(object):
     def _cursor(*a, **kw):
         raise NotImplementedError
 
-    def _get_iden_str(self):
-        i = str(self._sort) + str(self._kind) + str(self._limit)
-
-        if self._offset:
-            i += str(self._offset)
-
+    def _cache_key(self):
+        fingerprint = str(self._sort) + str(self._limit) + str(self._offset)
         if self._rules:
             rules = copy(self._rules)
             rules.sort()
-            for r in rules:
-                i += str(r)
-        return i
+            for rule in rules:
+                fingerprint += str(rule)
 
-    def _iden(self):
-        i = self._get_iden_str()
-        return hashlib.sha1(i).hexdigest()
+        cache_key = "query:{kind}.{id}".format(
+            kind=self._kind.__name__,
+            id=hashlib.sha1(fingerprint).hexdigest()
+        )
+        return cache_key
 
     def _get_results(self):
         things = self._cursor().fetchall()
         return things
 
     def get_from_cache(self, allow_local=True):
-        thing_fullnames = self._cache.get(self._iden(), allow_local=allow_local)
+        thing_fullnames = g.gencache.get(
+            self._cache_key(), allow_local=allow_local)
         if thing_fullnames:
             things = Thing._by_fullname(thing_fullnames, return_dict=False,
                                         stale=self._stale)
@@ -1202,7 +1197,7 @@ class Query(object):
 
     def set_to_cache(self, things):
         thing_fullnames = [thing._fullname for thing in things]
-        self._cache.set(self._iden(), thing_fullnames, self._cache_time)
+        g.gencache.set(self._cache_key(), thing_fullnames, self._cache_time)
 
     def __iter__(self):
         if self._read_cache:
@@ -1216,7 +1211,7 @@ class Query(object):
             # it's not in the cache, and we have the power to
             # update it, which we should do in a lock to prevent
             # concurrent requests for the same data
-            with g.make_lock("thing_query", "lock_%s" % self._iden()):
+            with g.make_lock("thing_query", "lock_%s" % self._cache_key()):
                 # see if it was set while we were waiting for our
                 # lock
                 if self._read_cache:
@@ -1333,20 +1328,30 @@ class RelationsPropsOnly(Relations):
         )
         return c
 
-    def _get_iden_str(self):
-        i = Relations._get_iden_str(self)
-        i += '|'.join(sorted(self.props))
-        return i
+    def _cache_key(self):
+        fingerprint = str(self._sort) + str(self._limit) + str(self._offset)
+        if self._rules:
+            rules = copy(self._rules)
+            rules.sort()
+            for rule in rules:
+                fingerprint += str(rule)
+        fingerprint += '|'.join(sorted(self.props))
+
+        cache_key = "query:{kind}.{id}".format(
+            kind=self._kind.__name__,
+            id=hashlib.sha1(fingerprint).hexdigest()
+        )
+        return cache_key
 
     def _get_results(self):
         rows = self._cursor().fetchall()
         return rows
 
     def get_from_cache(self, allow_local=True):
-        return self._cache.get(self._iden(), allow_local=allow_local)
+        return g.gencache.get(self._cache_key(), allow_local=allow_local)
 
     def set_to_cache(self, rows):
-        self._cache.set(self._iden(), rows, self._cache_time)
+        g.gencache.set(self._cache_key(), rows, self._cache_time)
 
 
 class MultiCursor(object):

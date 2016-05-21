@@ -40,7 +40,7 @@ class op(object):
     def __repr__(self):
         return '<%s: %s, %s>' % (self.__class__.__name__, self.lval, self.rval)
 
-    #sorts in a consistent order, required for Query._iden()
+    # sorts in a consistent order, required for Query._cache_key()
     def __cmp__(self, other):
         return cmp(repr(self), repr(other))
 
