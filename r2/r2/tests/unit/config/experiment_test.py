@@ -43,7 +43,7 @@ class TestExperiment(TestFeatureBase):
         # MockAccount objects and logged out users will be None.  This is in
         # keeping with how c.user is treated in the default unlogged-in case.
         self.world.is_user_loggedin = bool
-        self.amqp = self.patch_eventcollector()
+        self.mock_eventcollector()
         # test by default with the logged out functionality enabled.
         self.patch_g(enable_loggedout_experiments=True)
         self.world.is_whitelisted_experiment = MagicMock()
