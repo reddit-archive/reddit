@@ -203,14 +203,6 @@ class EmrJob(object):
             # is exportable as a cost allocation tag.
             self.tags["Name"] = self.name
             self.conn.add_tags(self.jobflowid, self.tags)
-        return
-
-    @property
-    def jobflow_state(self):
-        if self.jobflowid:
-            return self.conn.describe_jobflow(self.jobflowid).state
-        else:
-            return NOTFOUND
 
     def terminate(self):
         terminate_jobflow(self.conn, self.name)
