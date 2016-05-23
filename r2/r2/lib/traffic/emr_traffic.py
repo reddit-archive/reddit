@@ -31,7 +31,7 @@ from boto.emr.bootstrap_action import BootstrapAction
 from r2.lib.emr_helpers import (
     EmrException,
     EmrJob,
-    get_compatible_jobflows,
+    get_compatible_clusters,
     get_step_state,
     LIVE_STATES,
     COMPLETED,
@@ -131,14 +131,14 @@ def _add_step(emr_connection, step, jobflow_name, **jobflow_kw):
 
     """
 
-    running = get_compatible_jobflows(
-                emr_connection,
-                bootstrap_actions=TrafficBase._bootstrap_actions(),
-                setup_steps=TrafficBase._setup_steps())
+    running = get_compatible_clusters(emr_connection,
+        bootstrap_actions=TrafficBase._bootstrap_actions(),
+        steps=TrafficBase._setup_steps(),
+    )
 
-    for jf in running:
-        if jf.name == jobflow_name:
-            jobflowid = jf.jobflowid
+    for cluster in running:
+        if cluster.name == jobflow_name:
+            jobflowid = cluster.id
             emr_connection.add_jobflow_steps(jobflowid, step)
             print 'Added %s to jobflow %s' % (step.name, jobflowid)
             break
