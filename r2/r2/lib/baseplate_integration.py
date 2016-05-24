@@ -82,12 +82,14 @@ def with_root_span(name):
 
 class R2BaseplateObserver(BaseplateObserver):
     def on_root_span_created(self, context, root_span):
-        return R2RootSpanObserver()
+        observer = R2RootSpanObserver()
+        root_span.register(observer)
 
 
 class R2RootSpanObserver(RootSpanObserver):
     def on_child_span_created(self, span):
-        return R2SpanObserver(span.name)
+        observer = R2SpanObserver(span.name)
+        span.register(observer)
 
 
 class R2SpanObserver(SpanObserver):
