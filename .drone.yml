@@ -42,7 +42,7 @@ build:
   # https://github.com/reddit/docker-reddit-py
   # Dependency changes in the install scripts can be optionally mirrored to the
   # image for speedups, but abstaining from doing so won't break the builds.
-  image: reddit/reddit-py:2.7.6-v1
+  image: reddit/reddit-py:2.7.6-v2
   environment:
     DEBIAN_FRONTEND: noninteractive
   commands:
@@ -50,6 +50,8 @@ build:
     - install/drone.sh
     - cd r2
     - nosetests -v .
+    - cd ..
+    - ./scripts/stylecheck_git_diff.sh
 
 # These plugins are triggered after a build failure/success.
 notify:
