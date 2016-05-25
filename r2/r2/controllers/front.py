@@ -274,6 +274,8 @@ class FrontController(RedditController):
         if article.is_nsfw and not c.over18 and c.render_style == 'html':
             return self.intermediate_redirect("/over18", sr_path=False)
 
+        canonical_link = article.make_canonical_link(sr)
+
         # Determine if we should show the embed link for comments
         c.can_embed = bool(comment) and article.is_embeddable
 
@@ -523,6 +525,7 @@ class FrontController(RedditController):
             sr_detail=sr_detail,
             campaign_fullname=campaign_fullname,
             click_url=click_url,
+            canonical_link=canonical_link,
             extra_js_config=extra_js_config,
         )
 

@@ -35,6 +35,7 @@
     <meta name="description" content="${getattr(thing, 'short_description', None) or g.short_description}" />
     <meta name="referrer" content="${c.referrer_policy}">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="canonical" href="${thing.canonical_link}" />
     %if hasattr(thing, 'mobile_link'):
         <link rel="alternate" media="only screen and (max-width: 640px)" href="${thing.mobile_link}" />
     %endif

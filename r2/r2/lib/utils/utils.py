@@ -185,7 +185,15 @@ def strip_www(domain):
 
 def is_subdomain(subdomain, base):
     """Check if a domain is equal to or a subdomain of a base domain."""
-    return subdomain == base or (subdomain is not None and subdomain.endswith('.' + base))
+    return subdomain == base or (
+        subdomain is not None and subdomain.endswith('.' + base))
+
+
+lang_re = re.compile(r"\A\w\w(-\w\w)?\Z")
+
+
+def is_language_subdomain(subdomain):
+    return lang_re.match(subdomain)
 
 
 def base_url(url):
@@ -589,6 +597,14 @@ class UrlParser(object):
         dirs.append(base)
         self.path =  '/'.join(dirs)
         return self
+
+    def canonicalize(self):
+        subdomain = extract_subdomain(self.hostname)
+        if subdomain == '' or is_language_subdomain(subdomain):
+            self.hostname = 'www.{0}'.format(g.domain)
+        if not self.path.endswith('/'):
+            self.path += '/'
+        self.scheme = 'https'
 
     def switch_subdomain_by_extension(self, extension=None):
         """Change the subdomain to the one that fits an extension.

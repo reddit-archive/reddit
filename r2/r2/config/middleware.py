@@ -45,7 +45,7 @@ from routes.middleware import RoutesMiddleware
 from r2.config import hooks
 from r2.config.environment import load_environment
 from r2.config.extensions import extension_mapping, set_extension
-from r2.lib.utils import is_subdomain
+from r2.lib.utils import is_subdomain, is_language_subdomain
 from r2.lib import csrf, filters
 
 
@@ -106,7 +106,7 @@ def error_mapper(code, message, environ, global_conf=None, **kw):
             error_data = getattr(exception, 'error_data', None)
             if error_data:
                 environ['extra_error_data'] = error_data
-        
+
         if environ.get('REDDIT_NAME'):
             d['srname'] = environ.get('REDDIT_NAME')
         if environ.get('REDDIT_TAKEDOWN'):
@@ -161,7 +161,6 @@ class ProfilingMiddleware(object):
 
 
 class DomainMiddleware(object):
-    lang_re = re.compile(r"\A\w\w(-\w\w)?\Z")
 
     def __init__(self, app, config):
         self.app = app
@@ -180,7 +179,9 @@ class DomainMiddleware(object):
 
         # localhost is exempt so paster run/shell will work
         # media_domain doesn't need special processing since it's just ads
-        if domain == "localhost" or is_subdomain(domain, g.media_domain):
+        is_media_only_domain = (is_subdomain(domain, g.media_domain) and
+                                g.domain != g.media_domain)
+        if domain == "localhost" or is_media_only_domain:
             return self.app(environ, start_response)
 
         # tell reddit_base to redirect to the appropriate subreddit for
@@ -211,7 +212,7 @@ class DomainMiddleware(object):
                 prefix_parts.append(subdomain)
             elif extension:
                 environ['reddit-domain-extension'] = extension
-            elif self.lang_re.match(subdomain):
+            elif is_language_subdomain(subdomain):
                 environ['reddit-prefer-lang'] = subdomain
             else:
                 sr_redirect = subdomain
@@ -251,6 +252,7 @@ class SubredditMiddleware(object):
             environ['PATH_INFO'] = self.sr_pattern.sub('', path) or '/'
         return self.app(environ, start_response)
 
+
 class DomainListingMiddleware(object):
     def __init__(self, app):
         self.app = app
@@ -265,9 +267,10 @@ class DomainListingMiddleware(object):
                 environ['PATH_INFO'] = rest or '/'
         return self.app(environ, start_response)
 
+
 class ExtensionMiddleware(object):
     ext_pattern = re.compile(r'\.([^/]+)\Z')
-    
+
     def __init__(self, app):
         self.app = app
 

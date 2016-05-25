@@ -480,6 +480,11 @@ class Link(Thing, Printable):
 
         return res
 
+    def make_canonical_link(self, sr, subdomain='www'):
+        domain = '%s.%s' % (subdomain, g.domain)
+        path = 'comments/%s/%s/' % (self._id36, title_to_url(self.title))
+        return '%s://%s/r/%s/%s' % (g.default_scheme, domain, sr.name, path)
+
     def make_permalink_slow(self, force_domain=False):
         return self.make_permalink(self.subreddit_slow,
                                    force_domain=force_domain)

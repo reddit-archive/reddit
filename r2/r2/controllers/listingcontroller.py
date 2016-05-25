@@ -279,6 +279,25 @@ class SubredditListingController(ListingController):
 
         return u"%s • %s" % (_force_unicode(title), sr_fragment)
 
+    def canonical_link(self):
+        """Return the canonical link of the subreddit.
+
+        Ordinarily canonical links are created using request.url.
+        In the case of subreddits, we perform a bit of magic to strip the
+        subreddit path from the url. This means that a path like:
+
+        https:///www.reddit.com/r/hiphopheads/
+
+        will instead show:
+
+        https://www.reddit.com/
+
+        See SubredditMiddleware for more information.
+
+        This method constructs our url from scratch given other information.
+        """
+        return add_sr('/', force_https=True)
+
     def _build_og_description(self):
         description = c.site.public_description.strip()
         if not description:
@@ -335,6 +354,8 @@ class SubredditListingController(ListingController):
             else:
                 event_target['target_after'] = self.after._fullname
         render_params['extra_js_config'] = {'event_target': event_target}
+
+        render_params['canonical_link'] = self.canonical_link()
 
         return render_params
 
