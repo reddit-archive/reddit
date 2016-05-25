@@ -188,8 +188,6 @@ disable_captcha = true
 disable_ratelimit = true
 disable_require_admin_otp = true
 
-page_cache_time = 0
-
 domain = $REDDIT_DOMAIN
 oauth_domain = $REDDIT_DOMAIN
 

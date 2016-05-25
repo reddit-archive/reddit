@@ -64,10 +64,6 @@ class World(object):
             return ''
         return site.name
 
-    def is_whitelisted_experiment(self, name):
-        exps = self.stacked_proxy_safe_get(c, "whitelisted_loid_experiments")
-        return exps and name in exps
-
     def current_subdomain(self):
         return self.stacked_proxy_safe_get(c, 'subdomain')
 

@@ -33,9 +33,6 @@ from r2.lib import promote, cache
 
 
 class HealthController(MinimalController):
-    def try_pagecache(self):
-        pass
-
     def pre(self):
         pass
 

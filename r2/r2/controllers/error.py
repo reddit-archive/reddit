@@ -38,12 +38,7 @@ try:
     # get caught and the stack trace won't be presented to the user in
     # production
     from r2.config import extensions
-    from r2.controllers.reddit_base import (
-        RedditController,
-        pagecache_policy,
-        PAGECACHE_POLICY,
-        UnloggedUser,
-    )
+    from r2.controllers.reddit_base import RedditController, UnloggedUser
     from r2.lib.cookies import Cookies
     from r2.lib.errors import ErrorSet
     from r2.lib.filters import (
@@ -191,9 +186,6 @@ class ErrorController(RedditController):
             response.headers["Retry-After"] = str(retry_after)
         return request.environ['usable_error_content']
 
-    # Misses are both incredibly common and cheap for this endpoint, don't force
-    # more useful things out of the pagecache.
-    @pagecache_policy(PAGECACHE_POLICY.NEVER)
     def GET_document(self):
         try:
             c.errors = c.errors or ErrorSet()
@@ -208,10 +200,6 @@ class ErrorController(RedditController):
             srname = request.GET.get('srname', '')
             takedown = request.GET.get('takedown', '')
             error_name = request.GET.get('error_name', '')
-
-            # StatusBasedRedirect will override this anyway, but we need this
-            # here for pagecache to see.
-            response.status_int = code
 
             if isinstance(c.user, basestring):
                 # somehow requests are getting here with c.user unset

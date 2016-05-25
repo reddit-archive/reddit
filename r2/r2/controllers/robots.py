@@ -29,9 +29,6 @@ from r2.lib import utils
 
 
 class RobotsController(MinimalController):
-    def try_pagecache(self):
-        pass
-
     def pre(self):
         pass
 

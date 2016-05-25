@@ -32,8 +32,6 @@ from r2.controllers.reddit_base import (
     generate_modhash,
     is_trusted_origin,
     MinimalController,
-    pagecache_policy,
-    PAGECACHE_POLICY,
     paginated_listing,
     RedditController,
     set_user_cookie,
@@ -179,7 +177,6 @@ class ApiController(RedditController):
     def ajax_login_redirect(self, form, jquery, dest):
         form.redirect("/login" + query_string(dict(dest=dest)))
 
-    @pagecache_policy(PAGECACHE_POLICY.NEVER)
     @require_oauth2_scope("read")
     @validate(
         things=VByName('id', multiple=True, ignore_missing=True, limit=100),
@@ -205,7 +202,6 @@ class ApiController(RedditController):
         listing = wrap_links(things)
         return BoringPage(_("API"), content=listing).render()
 
-    @pagecache_policy(PAGECACHE_POLICY.NEVER)
     @require_oauth2_scope("read")
     @validate(
         url=VUrl('url'),

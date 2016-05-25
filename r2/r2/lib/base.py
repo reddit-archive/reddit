@@ -68,9 +68,6 @@ def abort(code_or_exception=None, detail="", headers=None, comment=None,
     raise exc
 
 class BaseController(WSGIController):
-    def try_pagecache(self):
-        pass
-
     def __before__(self):
         self.fix_cookie_header()
         try:
@@ -81,7 +78,6 @@ class BaseController(WSGIController):
             abort(400)
 
         self.pre()
-        self.try_pagecache()
 
     def __after__(self):
         self.post()

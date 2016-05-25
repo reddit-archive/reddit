@@ -57,11 +57,6 @@ from r2.lib import (
     utils,
 )
 from r2.lib.base import BaseController, abort
-from r2.lib.cache import (
-    is_valid_size_for_cache,
-    make_key_id,
-    MemcachedError,
-)
 from r2.lib.cookies import (
     change_user_cookie_security,
     Cookies,
@@ -121,7 +116,6 @@ from r2.models import (
     FakeSubreddit,
     Friends,
     Frontpage,
-    get_user_location,
     LabeledMulti,
     Link,
     Mod,
@@ -143,61 +137,6 @@ from r2.models import (
 from r2.lib.db import tdb_cassandra
 
 
-PAGECACHE_POLICY = Enum(
-    # logged in users may use the pagecache as well.
-    "LOGGEDIN_AND_LOGGEDOUT",
-    # only attempt to use pagecache if the current user is not logged in.
-    "LOGGEDOUT_ONLY",
-    # do not use pagecache.
-    "NEVER",
-)
-
-
-def pagecache_policy(policy):
-    """Decorate a controller method to specify desired pagecache behaviour.
-
-    If not specified, the policy will default to LOGGEDOUT_ONLY.
-
-    """
-
-    assert policy in PAGECACHE_POLICY
-
-    def pagecache_decorator(fn):
-        fn.pagecache_policy = policy
-        return fn
-    return pagecache_decorator
-
-
-def vary_pagecache_on_experiments(*names):
-    """Keep track of which loid-based experiments are affecting the pagecache.
-
-    Since loid-based experiments will vary the resulting content, this is used
-    to accumulate a whitelist of experiments referenced in the decorator below.
-    """
-    # we are going to use this to build the cache key, so
-    # consistent ordering at compile time would be nice
-    global_experiments = g.live_config.get("global_loid_experiments")
-    if global_experiments:
-        names = names + tuple(global_experiments)
-    names = sorted(names)
-
-    def _vary_pagecache_on_experiments(fn):
-        # store this list on the handler itself, since (by the nature of the
-        # page cache) we won't actually *call* this handler.  We'll set
-        # the whitelist on c in `request_key` and in the decorated body
-        fn.whitelisted_loid_experiments = names
-
-        @wraps(fn)
-        def _vary_pagecache_on_experiments_inner(self, *a, **kw):
-            # For checking the whitelist in the feature methods, set it on
-            # the request context.
-            c.whitelisted_loid_experiments = names
-            return fn(self, *a, **kw)
-        return _vary_pagecache_on_experiments_inner
-    return _vary_pagecache_on_experiments
-
-
-cache_affecting_cookies = ('over18', '_options', 'secure_session')
 # Cookies which may be set in a response without making it uncacheable
 CACHEABLE_COOKIES = ()
 
@@ -859,57 +798,6 @@ class MinimalController(BaseController):
     allow_stylesheets = False
     defer_ratelimiting = False
 
-    def request_key(self):
-        # note that this references the cookie at request time, not
-        # the current value of it
-        try:
-            cookies_key = [(x, request.cookies.get(x, ''))
-                           for x in cache_affecting_cookies]
-        except CookieError:
-            cookies_key = ''
-
-        if request.host != g.media_domain:
-            location = get_user_location()
-        else:
-            location = None
-
-        whitelisted_variants = []
-        # if there are logged out experiments expected, we need to vary
-        # the cache key on them
-        if (
-            g.enable_loggedout_experiments and
-            not c.user_is_loggedin and c.loid
-        ):
-            handler = self._get_action_handler()
-            if hasattr(handler, "whitelisted_loid_experiments"):
-                # pull the whitelist onto `c` as we check there in features
-                whitelist = handler.whitelisted_loid_experiments
-                c.whitelisted_loid_experiments = whitelist
-                for name in whitelist:
-                    whitelisted_variants.append(
-                        (name, feature.variant(name, None))
-                    )
-
-        _id = make_key_id(
-            c.lang,
-            request.host,
-            c.secure,
-            request.fullpath,
-            c.over18,
-            c.extension,
-            c.render_style,
-            location,
-            feature.is_enabled("https_redirect"),
-            request.environ.get("WANT_RAW_JSON"),
-            cookies_key,
-            whitelisted_variants,
-        )
-        key = "page:%s" % _id
-        return key
-
-    def cached_response(self):
-        return ""
-
     def run_sitewide_ratelimits(self):
         """Ratelimit users and add ratelimit headers to the response.
 
@@ -985,7 +873,6 @@ class MinimalController(BaseController):
                 event_type = "over"
             if g.ENFORCE_RATELIMIT:
                 # For non-abort situations, the headers will be added in post()
-                # to avoid including them in a pagecache
                 request.environ['retry_after'] = time_slice.remaining
                 response.headers.update(c.ratelimit_headers)
                 abort(429)
@@ -1065,62 +952,6 @@ class MinimalController(BaseController):
 
         hooks.get_hook("reddit.request.minimal_begin").call()
 
-    def can_use_pagecache(self):
-        # Don't allow using pagecache if redirecting from an endpoint
-        # that disallowed it (for ex. redirecting from one that caches loggedin
-        # responses to one that doesn't)
-        if not request.environ.get("CAN_USE_PAGECACHE", True):
-            return False
-
-        handler = self._get_action_handler()
-        policy = getattr(handler, "pagecache_policy",
-                         PAGECACHE_POLICY.LOGGEDOUT_ONLY)
-
-        if policy == PAGECACHE_POLICY.LOGGEDIN_AND_LOGGEDOUT:
-            return True
-        elif policy == PAGECACHE_POLICY.LOGGEDOUT_ONLY:
-            return not c.user_is_loggedin
-
-        return False
-
-    def try_pagecache(self):
-        can_use_pagecache = self.can_use_pagecache()
-        request.environ["CAN_USE_PAGECACHE"] = can_use_pagecache
-
-        # This guards against checking the pagecache twice and possibly
-        # modifying the request key when being redirected from one endpoint
-        # to the other in-request (i.e. when redirected to the error document)
-        if request.environ.get("TRIED_PAGECACHE", False):
-            return
-        request.environ["TRIED_PAGECACHE"] = True
-
-        if request.method.upper() == 'GET' and can_use_pagecache:
-            request.environ["REQUEST_KEY"] = self.request_key()
-            try:
-                r = g.pagecache.get(request.environ["REQUEST_KEY"])
-            except MemcachedError as e:
-                g.log.warning("pagecache error: %s", e)
-                return
-
-            # Store stats on pagecache hits / misses by endpoint
-            controller = request.environ['pylons.routes_dict']['controller']
-            action_name = request.environ['pylons.routes_dict']['action']
-            key = ".".join(("endpoint_pagecache", controller, action_name))
-            g.stats.event_count(key, "hit" if r else "miss", sample_rate=0.01)
-
-            if r:
-                headers, body, status_int, c.cookies = r
-                response.headers = headers
-                response.body = body
-                response.status_int = status_int
-
-                request.environ['pylons.routes_dict']['action'] = 'cached_response'
-                c.request_timer.name = request_timer_name("cached_response")
-
-                c.used_cache = True
-                # response wrappers have already been applied before cache write
-                c.response_wrapper = None
-
     def post(self):
         c.request_timer.intermediate("action")
 
@@ -1133,9 +964,9 @@ class MinimalController(BaseController):
             wrapped_content = c.response_wrapper(content)
             response.content = wrapped_content
 
-        # pagecache stores headers. we need to not add X-Frame-Options to
-        # cached requests (such as media embeds) that intend to allow framing.
-        if not c.allow_framing and not c.used_cache:
+        # we need to not add X-Frame-Options to requests (such as media embeds)
+        # that intend to allow framing.
+        if not c.allow_framing:
             response.headers["X-Frame-Options"] = "SAMEORIGIN"
 
         # set some headers related to client security
@@ -1165,39 +996,6 @@ class MinimalController(BaseController):
             )
             response.headers['Expires'] = '-1'
             response.headers['Cache-Control'] = ', '.join(cache_control)
-
-        # save the result of this page to the pagecache if possible.  we
-        # mustn't cache things that rely on state not tracked by request_key
-        # such as If-Modified-Since headers for 304s or requesting IP for 429s.
-        if (g.page_cache_time and
-                request.method.upper() == 'GET' and
-                request.environ.get("CAN_USE_PAGECACHE", False) and
-                request.environ.get("REQUEST_KEY", None) and
-                not c.used_cache and
-                not would_poison and
-                response.status_int not in (304, 429) and
-                not response.status.startswith("5") and
-                not c.is_exception_response and
-                is_valid_size_for_cache(response.body)):
-            response_pieces = (response.headers.items(), response.body,
-                response.status_int, c.cookies)
-            try:
-                g.pagecache.set(request.environ["REQUEST_KEY"],
-                    response_pieces, g.page_cache_time)
-            except MemcachedError as e:
-                # this codepath will actually never be hit as long as
-                # the pagecache memcached client is in no_reply mode.
-                g.log.warning("Ignored exception (%r) on pagecache "
-                              "write for %r", e, request.path)
-
-        pragmas = [p.strip() for p in
-                   request.headers.get("Pragma", "").split(",")]
-        if g.debug or "x-reddit-pagecache" in pragmas:
-            if request.environ.get("CAN_USE_PAGECACHE", False):
-                pagecache_state = "hit" if c.used_cache else "miss"
-            else:
-                pagecache_state = "disallowed"
-            response.headers["X-Reddit-Pagecache"] = pagecache_state
 
         if c.ratelimit_headers:
             response.headers.update(c.ratelimit_headers)
@@ -1402,9 +1200,6 @@ class OAuth2OnlyController(OAuth2ResourceController):
             self.authenticate_with_token()
             self.set_up_user_context()
             self.run_sitewide_ratelimits()
-
-    def can_use_pagecache(self):
-        return False
 
     def on_validation_error(self, error):
         abort_with_error(error, error.code or 400)

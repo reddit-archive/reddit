@@ -86,8 +86,6 @@ class ButtonsController(RedditController):
 
         if not url:
             url = request.referer
-            # we don't want the JS to be cached if the referer was involved.
-            c.used_cache = True
 
         def builder_wrapper(thing = None):
             kw = {}

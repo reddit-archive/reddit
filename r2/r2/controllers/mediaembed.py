@@ -71,8 +71,5 @@ class MediaembedController(MinimalController):
 
 
 class AdController(MinimalController):
-    def try_pagecache(self):
-        pass
-
     def GET_ad(self):
         return "This is a placeholder ad."

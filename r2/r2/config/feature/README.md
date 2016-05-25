@@ -85,8 +85,6 @@ feature_some_flag = {"percent_loggedin": 25}
 # cookie the feature will be off.
 # The `loid` cookie is currently set in JavaScript, so you can't expect it to
 # exist on the first visit or in requests made by API clients.
-# Also note that using this feature flag might require disabling caching on the
-# CDN and modifying the pagecache key.
 feature_some_flag = {"percent_loggedout": 25}
 
 # For both admin and a group of users
@@ -176,30 +174,6 @@ specify a variant with a secondary syntax for a few flag conditions:
 # ?feature=some_flag_something_else will force "test_something_else"
 feature_some_flag = {"url": {"some_flag_something": "test_something", "some_flag_something_else": "test_something_else"}}
 ```
-
-## An important note about loggedout ("loid-based") experiments
-
-Logged out experiments are special in that many of logged-out requests are
-aggressively cached.  Thus, in order to work with the cache, the cache has to be
-varied based on the variant of a given experiment for a given loid.  
-
-Since the page cache is tested before the handler (and in fact the handler may
-never be called if the page is found in the pagecache), the app needs to be made
-aware of these experiments up front.  This is done in one of two ways:
-
- 1. If the experiment will affect most requests (such as a content experiment or
- a major UI update), it should be added into `global_loid_experiments` (in the
- live config).    
- 2. If the effects are localized to a single handler, the
- `vary_pagecache_on_experiments` decorator needs to be used on that handler.
- It takes the list of all experiments that should be varied on for the sake of
- that handler, and works in a way similar to the `pagecache_policy` decorator.
-
-**NOTE** Use of one or both of these functions is mandatory for the logged out
-experiment to work properly.  If the logged out experiment is not properly whitelisted,
-`r2.config.feature.state._get_experiment_variant` will emit a
-`"feature.non_whitelisted_experiment"` message to graphite and will also write
-`"loid-based experiment is not whitelisted"` to `logging.debug`.  
 
 ## When should I use this?
 

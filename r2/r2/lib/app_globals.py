@@ -172,7 +172,6 @@ class Globals(object):
         ConfigValue.int: [
             'db_pool_size',
             'db_pool_overflow_size',
-            'page_cache_time',
             'commentpane_cache_time',
             'num_mc_clients',
             'MAX_CAMPAIGNS_PER_LINK',
@@ -943,12 +942,12 @@ class Globals(object):
         ))
         cache_chains.update(rendercache=self.rendercache)
 
-        # pagecaches hold fully rendered pages (includes comment panes)
-        self.pagecache = MemcacheChain((
+        # commentpanecaches hold fully rendered comment panes
+        self.commentpanecache = MemcacheChain((
             localcache_cls(),
             self.mcrouter,
         ))
-        cache_chains.update(pagecache=self.pagecache)
+        cache_chains.update(commentpanecache=self.commentpanecache)
 
         # cassandra_local_cache is used for request-local caching in tdb_cassandra
         self.cassandra_local_cache = localcache_cls()

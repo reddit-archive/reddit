@@ -91,7 +91,7 @@ def normalized_rising(sr_ids):
         keys=sr_ids,
         miss_fn=get_rising_tuples,
         prefix='rising:',
-        time=g.page_cache_time,
+        time=90,
     )
 
     merged = heapq.merge(*tuples_by_srid.values())

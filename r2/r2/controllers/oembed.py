@@ -153,9 +153,6 @@ def _oembed_comment(thing, **embed_options):
 
 
 class OEmbedController(MinimalController):
-    def try_pagecache(self):
-        pass
-
     def pre(self):
         c.user = g.auth_provider.get_authenticated_account()
         if c.user and c.user._deleted:
