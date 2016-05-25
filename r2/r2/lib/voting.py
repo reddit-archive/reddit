@@ -84,8 +84,10 @@ def cast_vote(user, thing, direction, **data):
             "context": Event.get_context_data(request, c),
             "sensitive": Event.get_sensitive_context_data(request, c),
         }
-
-    amqp.add_item(thing.vote_queue_name, json.dumps(vote_data))
+    try:
+        amqp.add_item(thing.vote_queue_name, json.dumps(vote_data))
+    except UnicodeDecodeError:
+        g.log.error("Got weird unicode in the vote data: %r", vote_data)
 
 
 def update_user_liked(vote):
