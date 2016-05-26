@@ -259,6 +259,10 @@ class RateLimit(object):
         usage = get_usage_multi([(r.key, r.timeslice) for r in ratelimits])
         return all(r._check(u) for u, r in zip(usage, ratelimits))
 
+    def get_usage(self):
+        """Get the usage of this limit. You should probably be using check()."""
+        return get_usage(self.key, self.timeslice)
+
     def record_usage(self):
         """Record a new usage within the current timeslice."""
         self._record_event('set_{event_type}_limit')

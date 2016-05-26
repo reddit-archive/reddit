@@ -2144,10 +2144,9 @@ class ApiController(RedditController):
     @validatedForm(
         VUser(),
         VModhash(),
-        VRatelimitImproved(prefix='share', max_usage=g.RL_SHARE_MAX_REQS,
-                           rate_user=True, rate_ip=True),
+        VShareRatelimit(),
         share_to=ValidEmailsOrExistingUnames("share_to"),
-        message=VLength("message", max_length=1000), 
+        message=VLength("message", max_length=1000),
         link=VByName('parent', thing_cls=Link),
     )
     def POST_share(self, shareform, jquery, share_to, message, link):
@@ -2243,7 +2242,7 @@ class ApiController(RedditController):
         g.stats.simple_event('share.pm_sent', len(users))
 
         # Set the ratelimiter.
-        VRatelimitImproved.ratelimit('share', rate_user=True, rate_ip=True)
+        VShareRatelimit.ratelimit()
 
     @require_oauth2_scope("vote")
     @noresponse(VUser(),

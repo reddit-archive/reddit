@@ -12,6 +12,7 @@ class TestVoteValidator(RedditTestCase):
 
     def setUp(self):
         self.user = MagicMock(name="user")
+        self.user._id36 = 'userid36'
         self.thing = MagicMock(name="thing")
         self.vote_data = {}
         super(RedditTestCase, self).setUp()
