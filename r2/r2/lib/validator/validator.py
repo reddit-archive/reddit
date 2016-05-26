@@ -1706,9 +1706,9 @@ class VThrottledLogin(VRequired):
                             self.seconds = time_slice.remaining
                             period_end = datetime.utcfromtimestamp(
                                 time_slice.end).replace(tzinfo=pytz.UTC)
-                            time = utils.timeuntil(period_end)
+                            remaining_text = utils.timeuntil(period_end)
                             self.set_error(
-                                errors.RATELIMIT, {'time': time},
+                                errors.RATELIMIT, {'time': remaining_text},
                                 field='ratelimit', code=429)
                             g.stats.event_count('login.throttle', rl.category)
                             return False
