@@ -80,7 +80,7 @@ class DataThing(object):
     c = operators.Slots()
     __safe__ = False
     _cache = g.cache
-    _cache_ttl = int(timedelta(days=1).total_seconds())
+    _cache_ttl = int(timedelta(hours=12).total_seconds())
 
     def __init__(self):
         safe_set_attr = SafeSetAttr(self)
