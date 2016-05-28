@@ -649,33 +649,37 @@ class Thing(DataThing):
 
             self.__setattr__(prop, new_val, make_dirty=False)
 
-            if is_base_prop:
-                # can just incr a base prop because it must have been set when
-                # the object was created
-                tdb.incr_thing_prop(
-                    type_id=self.__class__._type_id,
-                    thing_id=self._id,
-                    prop=db_prop,
-                    amount=amt,
-                )
-            elif (prop in self.__class__._defaults and
-                    self.__class__._defaults[prop] == old_val):
-                # when updating a data prop from the default value assume the
-                # value was never actually set so it's not safe to incr
-                tdb.set_thing_data(
-                    type_id=self.__class__._type_id,
-                    thing_id=self._id,
-                    brand_new_thing=False,
-                    **{db_prop: new_val}
-                )
-            else:
-                tdb.incr_thing_data(
-                    type_id=self.__class__._type_id,
-                    thing_id=self._id,
-                    prop=db_prop,
-                    amount=amt,
-                )
-            self.write_thing_to_cache(lock)
+            with TdbTransactionContext():
+                if is_base_prop:
+                    # can just incr a base prop because it must have been set
+                    # when the object was created
+                    tdb.incr_thing_prop(
+                        type_id=self.__class__._type_id,
+                        thing_id=self._id,
+                        prop=db_prop,
+                        amount=amt,
+                    )
+                elif (prop in self.__class__._defaults and
+                        self.__class__._defaults[prop] == old_val):
+                    # when updating a data prop from the default value assume
+                    # the value was never actually set so it's not safe to incr
+                    tdb.set_thing_data(
+                        type_id=self.__class__._type_id,
+                        thing_id=self._id,
+                        brand_new_thing=False,
+                        **{db_prop: new_val}
+                    )
+                else:
+                    tdb.incr_thing_data(
+                        type_id=self.__class__._type_id,
+                        thing_id=self._id,
+                        prop=db_prop,
+                        amount=amt,
+                    )
+
+                # write to cache within the transaction context so an exception
+                # will cause a transaction rollback
+                self.write_thing_to_cache(lock)
         self.record_cache_write(event="incr")
 
     @property
