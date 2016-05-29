@@ -250,7 +250,7 @@ def process_pixel_log(log_path, fast=False):
     month_date = '%s-%02d' % (year, month)
 
     # All logs from this day use the same jobflow
-    jobflow_name = 'Traffic Processing (%s)' % day_date
+    jobflow_name = 'Traffic Processing %s' % day_date
 
     output_path = os.path.join(PROCESSED_DIR, 'hour', hour_date)
     extract_hour(emr_connection, jobflow_name, log_path, output_path,
@@ -286,7 +286,7 @@ def process_pixel_log(log_path, fast=False):
 
 
 def aggregate_month(month_date):
-    jobflow_name = 'Traffic Processing (%s)' % month_date
+    jobflow_name = 'Traffic Processing %s' % month_date
     input_path = os.path.join(PROCESSED_DIR, 'day', '%s-*' % month_date)
     output_path = os.path.join(AGGREGATE_DIR, month_date)
     aggregate_interval(emr_connection, jobflow_name, input_path, output_path,
