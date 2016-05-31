@@ -2931,7 +2931,12 @@ class Inbox(MultiRelation('inbox', _CommentInbox, _MessageInbox)):
 
 
 class ModeratorInbox(Relation(Subreddit, Message)):
-    #TODO: shouldn't dupe this
+    _cache = g.thingcache
+
+    @classmethod
+    def _cache_prefix(cls):
+        return "modinbox:"
+
     @classmethod
     def _add(cls, sr, obj, *a, **kw):
         i = ModeratorInbox(sr, obj, *a, **kw)
@@ -2951,6 +2956,7 @@ class ModeratorInbox(Relation(Subreddit, Message)):
                 i._commit()
             res.append(i)
         return res
+
 
 class CommentsByAccount(tdb_cassandra.DenormalizedRelation):
     _use_db = True
