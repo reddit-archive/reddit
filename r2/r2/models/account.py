@@ -20,44 +20,45 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-import random
-
-from r2.config import feature
-from r2.lib.db.thing     import Thing, Relation, NotFound
-from r2.lib.db.operators import lower
-from r2.lib.db.userrel   import UserRel
-from r2.lib.db           import tdb_cassandra
-from r2.lib.memoize      import memoize
-from r2.lib.utils        import randstr, timefromnow
-from r2.lib.utils        import UrlParser
-from r2.lib.utils        import constant_time_compare, canonicalize_email
-from r2.lib import amqp, filters, hooks
-from r2.lib.log import log_text
-from r2.models.bans import TempTimeout
-from r2.models.last_modified import LastModified
-from r2.models.modaction import ModAction
-from r2.models.trylater import TryLater
+import bcrypt
+from collections import Counter, OrderedDict
+from datetime import datetime, timedelta
+import hashlib
+import hmac
+import time
 
 from pylons import request
 from pylons import tmpl_context as c
 from pylons import app_globals as g
-from pylons.i18n import _
-import time
-import hashlib
-from collections import Counter, OrderedDict
-from copy import copy
-from datetime import datetime, timedelta
-import bcrypt
-import hmac
-import hashlib
-from pycassa.system_manager import ASCII_TYPE
+
+from r2.config import feature
+from r2.lib import amqp, filters, hooks
+from r2.lib.db.thing import Thing, Relation, NotFound
+from r2.lib.db.operators import lower
+from r2.lib.db.userrel import UserRel
+from r2.lib.db import tdb_cassandra
+from r2.lib.log import log_text
+from r2.lib.memoize import memoize
+from r2.lib.utils import (
+    randstr,
+    UrlParser,
+    constant_time_compare,
+    canonicalize_email,
+    tup,
+)
+from r2.models.bans import TempTimeout
+from r2.models.last_modified import LastModified
+from r2.models.modaction import ModAction
+from r2.models.trylater import TryLater
 
 
 trylater_hooks = hooks.HookRegistrar()
 COOKIE_TIMESTAMP_FORMAT = '%Y-%m-%dT%H:%M:%S'
 
 
-class AccountExists(Exception): pass
+class AccountExists(Exception):
+    pass
+
 
 class Account(Thing):
     _cache = g.thingcache
