@@ -134,19 +134,20 @@ class FakeTrophy(object):
                                   getattr(self._thing2, "url", None))
         self._id = self._id36 = None
 
+
 class Trophy(Relation(Account, Award)):
+    _cache = g.thingcache
+
     @classmethod
-    def _new(cls, recipient, award, description = None,
-             url = None):
+    def _cache_prefix(cls):
+        return "trophy:"
 
-        # The "name" column of the relation can't be a constant or else a
+    @classmethod
+    def _new(cls, recipient, award, description=None, url=None):
+        # The "name" column of the Relation can't be a constant or else a
         # given account would not be allowed to win a given award more than
-        # once. So we're setting it to the string form of the timestamp.
-        # Still, we won't have that date just yet, so for a moment we're
-        # setting it to "trophy".
-
-        t = Trophy(recipient, award, "trophy")
-
+        # once.
+        t = Trophy(recipient, award, name="trophy")
         t._name = str(t._date)
 
         if description:
