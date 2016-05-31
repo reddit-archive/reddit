@@ -2814,17 +2814,23 @@ class LinksByImage(tdb_cassandra.View):
         return columns.iterkeys()
 
 
-_AccountCommentInbox = Relation(Account, Comment)
-_AccountMessageInbox = Relation(Account, Message)
+_CommentInbox = Relation(Account, Comment)
+_CommentInbox._defaults = {
+    "new": False,
+}
+_CommentInbox._cache = g.thingcache
+_CommentInbox._cache_prefix = classmethod(lambda cls: "inboxcomment:")
 
 
-for rel_cls in (_AccountCommentInbox, _AccountMessageInbox):
-    rel_cls._defaults = {
-        "new": False,
-    }
+_MessageInbox = Relation(Account, Message)
+_MessageInbox._defaults = {
+    "new": False,
+}
+_MessageInbox._cache = g.thingcache
+_MessageInbox._cache_prefix = classmethod(lambda cls: "inboxmessage:")
 
 
-class Inbox(MultiRelation('inbox', _AccountCommentInbox, _AccountMessageInbox)):
+class Inbox(MultiRelation('inbox', _CommentInbox, _MessageInbox)):
     @classmethod
     def _add(cls, to, obj, *a, **kw):
         orangered = kw.pop("orangered", True)
