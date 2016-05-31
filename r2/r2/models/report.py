@@ -22,22 +22,30 @@
 
 from collections import Counter
 
-from r2.lib.db.thing import Thing, Relation, MultiRelation
+from r2.lib.db.thing import Relation, MultiRelation
 from r2.lib.utils import tup
-from r2.lib.memoize import memoize
 from r2.models import Link, Comment, Message, Subreddit, Account
-from datetime import datetime
 
 from pylons import tmpl_context as c
 from pylons import app_globals as g
 
-class Report(MultiRelation('report',
-                           Relation(Account, Link),
-                           Relation(Account, Comment),
-                           Relation(Account, Subreddit),
-                           Relation(Account, Message)
-                           )):
 
+_LinkReport = Relation(Account, Link)
+_CommentReport = Relation(Account, Comment)
+_SubredditReport = Relation(Account, Subreddit)
+_MessageReport = Relation(Account, Message)
+REPORT_RELS = (_LinkReport, _CommentReport, _SubredditReport, _MessageReport)
+
+for report_cls in REPORT_RELS:
+    report_cls._cache = g.thingcache
+
+_LinkReport._cache_prefix = classmethod(lambda cls: "reportlink:")
+_CommentReport._cache_prefix = classmethod(lambda cls: "reportcomment:")
+_SubredditReport._cache_prefix = classmethod(lambda cls: "reportsr:")
+_MessageReport._cache_prefix = classmethod(lambda cls: "reportmessage:")
+
+
+class Report(MultiRelation('report', *REPORT_RELS)):
     _field = 'reported'
 
     @classmethod
