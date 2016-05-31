@@ -870,7 +870,13 @@ def register(name, password, registration_ip):
             return account
 
 
-class Friend(Relation(Account, Account)): pass
+class Friend(Relation(Account, Account)):
+    _cache = g.thingcache
+
+    @classmethod
+    def _cache_prefix(cls):
+        return "friend:"
+
 
 Account.__bases__ += (UserRel('friend', Friend, disable_reverse_ids_fn=True),
                       UserRel('enemy', Friend, disable_reverse_ids_fn=False))
