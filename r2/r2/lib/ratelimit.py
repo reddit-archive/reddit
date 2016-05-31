@@ -92,7 +92,7 @@ def record_usage(key_prefix, time_slice):
     key = _append_time_slice(key_prefix, time_slice)
 
     try:
-        g.ratelimitcache.add(key, 0, time=int(time.time() - time_slice.end + 1))
+        g.ratelimitcache.add(key, 0, time=time_slice.remaining)
 
         try:
             return g.ratelimitcache.incr(key)
