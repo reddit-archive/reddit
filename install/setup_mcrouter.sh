@@ -41,45 +41,25 @@ if [ ! -f /etc/mcrouter/global.conf ]; then
       "keep_routing_prefix": false,
     },
   },
+  "named_handles": [
+    {
+      "name": "local-pool",
+      "type": "PoolRoute",
+      "pool": "local",
+    },
+  ],
   "route": {
     "type": "PrefixSelectorRoute",
     "policies": {
-      "rend:": {
-        "type": "PoolRoute",
-        "pool": "local",
-      },
-      "page:": {
-        "type": "PoolRoute",
-        "pool": "local",
-      },
-      "pane:": {
-        "type": "PoolRoute",
-        "pool": "local",
-      },
-      "sr:": {
-        "type": "PoolRoute",
-        "pool": "local",
-      },
-      "account:": {
-        "type": "PoolRoute",
-        "pool": "local",
-      },
-      "link:": {
-        "type": "PoolRoute",
-        "pool": "local",
-      },
-      "comment:": {
-        "type": "PoolRoute",
-        "pool": "local",
-      },
-      "message:": {
-        "type": "PoolRoute",
-        "pool": "local",
-      },
-      "campaign:": {
-        "type": "PoolRoute",
-        "pool": "local",
-      },
+      "rend:": "local-pool",
+      "page:": "local-pool",
+      "pane:": "local-pool",
+      "sr:": "local-pool",
+      "account:": "local-pool",
+      "link:": "local-pool",
+      "comment:": "local-pool",
+      "message:": "local-pool",
+      "campaign:": "local-pool",
     },
     "wildcard": {
       "type": "PoolRoute",
