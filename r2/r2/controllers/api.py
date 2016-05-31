@@ -114,8 +114,16 @@ from r2.lib.filters import safemarkdown
 from r2.lib.media import str_to_image
 from r2.controllers.api_docs import api_doc, api_section
 from r2.controllers.oauth2 import require_oauth2_scope, allow_oauth2_access
-from r2.lib.template_helpers import add_sr, get_domain, make_url_protocol_relative
-from r2.lib.system_messages import notify_user_added, send_ban_message
+from r2.lib.template_helpers import (
+    add_sr,
+    get_domain,
+    make_url_protocol_relative,
+)
+from r2.lib.system_messages import (
+    notify_user_added,
+    send_ban_message,
+    send_mod_removal_message,
+)
 from r2.controllers.ipn import generate_blob, update_blob
 from r2.controllers.login import handle_login, handle_register
 from r2.lib.lock import TimeoutExpired
@@ -816,20 +824,32 @@ class ApiController(RedditController):
                 if type == 'muted':
                     required_perms.append('mail')
 
-        if (not c.user_is_admin
-            and (type in self._sr_friend_types
-                 and not container.is_moderator_with_perms(
-                     c.user, *required_perms))):
+        if (
+            not c.user_is_admin and
+            type in self._sr_friend_types and
+            not container.is_moderator_with_perms(c.user, *required_perms)
+        ):
             abort(403, 'forbidden')
-        if (type == 'moderator' and not
-            (c.user_is_admin or container.can_demod(c.user, victim))):
+        if (
+            type == "moderator" and
+            not c.user_is_admin and
+            not container.can_demod(c.user, victim)
+        ):
             abort(403, 'forbidden')
+
         # if we are (strictly) unfriending, the container had better
         # be the current user.
         if type in ("friend", "enemy") and container != c.user:
             abort(403, 'forbidden')
+
         fn = getattr(container, 'remove_' + type)
         new = fn(victim)
+
+        # for mod removals, let the now ex-mod know (NOTE: doing this earlier
+        # will make the message show up in their mod inbox, which they will
+        # immediately lose access to.)
+        if new and type == 'moderator':
+            send_mod_removal_message(container, c.user, victim)
 
         # Log this action
         if new and type in self._sr_friend_types:
