@@ -24,24 +24,33 @@ import uuid
 
 from pylons import app_globals as g
 
-from r2.lib.db.operators import asc, desc
-from r2.lib.db.thing import Relation, Thing
 from r2.lib.db import tdb_cassandra
+from r2.lib.db.thing import Relation
 from r2.lib.db.userrel import UserRel
-from r2.lib.memoize import memoize
 from r2.lib.utils import to36
-from account import Account
-from subreddit import Subreddit
+from r2.models import Account, Subreddit
+
 
 USER_FLAIR = 'USER_FLAIR'
 LINK_FLAIR = 'LINK_FLAIR'
 
-class Flair(Relation(Subreddit, Account)):
-    pass
 
-Subreddit.__bases__ += (UserRel('flair', Flair,
-                                disable_ids_fn = True,
-                                disable_reverse_ids_fn = True),)
+class Flair(Relation(Subreddit, Account)):
+    _cache = g.thingcache
+
+    @classmethod
+    def _cache_prefix(cls):
+        return "flair:"
+
+
+Subreddit.__bases__ += (
+    UserRel(
+        name='flair',
+        relation=Flair,
+        disable_ids_fn=True,
+        disable_reverse_ids_fn=True,
+    ),
+)
 
 
 class FlairTemplate(tdb_cassandra.Thing):
