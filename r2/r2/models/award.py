@@ -20,20 +20,24 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from r2.lib.db.thing import Thing, Relation, NotFound
-from r2.lib.db.userrel import UserRel
-from r2.lib.db.operators import asc, desc, lower
-from r2.lib.memoize import memoize
-from r2.models import Account
-from pylons import request
-from pylons import tmpl_context as c
 from pylons import app_globals as g
 
-class Award (Thing):
+from r2.lib.db.operators import asc, desc, lower
+from r2.lib.db.thing import Thing, Relation, NotFound
+from r2.lib.memoize import memoize
+from r2.models import Account
+
+
+class Award(Thing):
+    _cache = g.thingcache
     _defaults = dict(
-        awardtype = 'regular',
-        api_ok = False
-        )
+        awardtype='regular',
+        api_ok=False,
+    )
+
+    @classmethod
+    def _cache_prefix(cls):
+        return "award:"
 
     @classmethod
     @memoize('award.all_awards')
@@ -118,6 +122,7 @@ class Award (Thing):
             g.log.debug("Took %s from %s" % (codename, user))
         else:
             g.log.debug("%s didn't have %s" % (user, codename))
+
 
 class FakeTrophy(object):
     def __init__(self, recipient, award, description=None, url=None):
