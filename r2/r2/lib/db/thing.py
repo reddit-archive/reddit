@@ -929,20 +929,27 @@ def Relation(type1, type2):
                      self._type2.__name__,self._thing2_id,
                      '[unsaved]' if not self._created else '\b'))
 
-        @staticmethod
-        def _fast_cache_key_from_parts(class_name, thing1_id, thing2_id, name):
-            return class_name + '_' + '_'.join([
-                str(thing1_id),
-                str(thing2_id),
-                name]
-            ).replace(' ', '_')
+        @classmethod
+        def _fast_cache_prefix(cls):
+            return "rel:"
+
+        @classmethod
+        def _fast_cache_key_from_parts(cls, thing1_id, thing2_id, name):
+            key = "{prefix}{cls}_{t1}_{t2}_{name}".format(
+                prefix=cls._fast_cache_prefix(),
+                cls=cls.__name__,
+                t1=str(thing1_id),
+                t2=str(thing2_id),
+                name=name,
+            )
+            return key
 
         def _fast_cache_key(self):
             return self._fast_cache_key_from_parts(
-                self.__class__.__name__,
                 self._thing1_id,
                 self._thing2_id,
-                self._name)
+                self._name,
+            )
 
         def _commit(self):
             DataThing._commit(self)
@@ -994,12 +1001,12 @@ def Relation(type1, type2):
                         cls.c._name == names)
 
                 for rel in q:
-                    rel_ids[cls._fast_cache_key_from_parts(
-                        cls.__name__,
+                    fast_cache_key = cls._fast_cache_key_from_parts(
                         rel._thing1_id,
                         rel._thing2_id,
-                        str(rel._name)
-                    )] = rel._id
+                        str(rel._name),
+                    )
+                    rel_ids[fast_cache_key] = rel._id
 
                 for cache_key in uncached_keys:
                     if cache_key not in rel_ids:
@@ -1022,12 +1029,12 @@ def Relation(type1, type2):
             # create cache keys for all permutations and initialize lookup
             for t in rel_tuples:
                 thing1, thing2, name = t
-                cache_key = cls._fast_cache_key_from_parts(
-                    cls.__name__,
+                fast_cache_key = cls._fast_cache_key_from_parts(
                     thing1._id,
                     thing2._id,
-                    name)
-                cache_key_lookup[cache_key] = t
+                    name,
+                )
+                cache_key_lookup[fast_cache_key] = t
 
             # get the relation ids from the cache or query the db
             res = sgm(cls._fast_cache, cache_key_lookup.keys(), lookup_rel_ids)
