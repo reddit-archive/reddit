@@ -847,7 +847,7 @@ class ApiController(RedditController):
         # for mod removals, let the now ex-mod know (NOTE: doing this earlier
         # will make the message show up in their mod inbox, which they will
         # immediately lose access to.)
-        if new and type == 'moderator':
+        if new and type == 'moderator' and victim != c.user:
             send_mod_removal_message(container, c.user, victim)
 
         # Log this action
