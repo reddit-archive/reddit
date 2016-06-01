@@ -22,6 +22,7 @@
 
 
 import json
+import re
 
 import requests
 
@@ -47,8 +48,23 @@ class MailgunEmailProvider(EmailProvider):
                    parent_email_id=None, other_email_ids=None):
         from pylons import app_globals as g
 
+        if not text and not html:
+            msg = "must provide either text or html in email body"
+            raise TypeError(msg)
+
+        # pick out the mailgun domain from the from_address field domain
+        from_domain_match = re.search("@([\w.]+)", from_address)
+
+        if from_domain_match is None:
+            raise ValueError("from address is malformed")
+
+        mailgun_domain = from_domain_match.group(1)
+
+        if mailgun_domain not in g.mailgun_domains:
+            raise ValueError("from address must be from an approved domain")
+
         message_post_url = "/".join((
-            g.mailgun_api_base_url, g.mailgun_domain, "messages"))
+            g.mailgun_api_base_url, mailgun_domain, "messages"))
 
         to_address = tup(to_address)
         parent_email_id = parent_email_id or ''
