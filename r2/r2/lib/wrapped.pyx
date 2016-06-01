@@ -389,7 +389,7 @@ class Templated(object):
             toset[self._cache_key(key)] = val
 
         try:
-            g.rendercache.set_multi(toset)
+            g.rendercache.set_multi(toset, time=3600)
         except MemcachedError as e:
             g.log.warning("rendercache error: %s", e)
             return
