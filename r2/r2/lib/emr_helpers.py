@@ -21,6 +21,7 @@
 ###############################################################################
 
 from copy import copy
+from datetime import datetime
 
 from pylons import app_globals as g
 
@@ -118,7 +119,12 @@ def get_step_states(emr_connection, jobflowid):
         ret = emr_connection.list_steps(jobflowid, marker=ret.marker)
         steps.extend(ret.steps)
 
-    return [(step.name, step.status.state) for step in steps]
+    ret = []
+    for step in steps:
+        start_str = step.status.timeline.creationdatetime
+        start = datetime.strptime(start_str, "%Y-%m-%dT%H:%M:%S.%fZ")
+        ret.append((step.name, step.status.state, start))
+    return ret
 
 
 def get_step_state(emr_connection, jobflowid, step_name, update=False):
@@ -132,7 +138,7 @@ def get_step_state(emr_connection, jobflowid, step_name, update=False):
     g.reset_caches()
     steps = get_step_states(emr_connection, jobflowid, _update=update)
 
-    for name, state in reversed(steps):
+    for name, state, start in sorted(steps, key=lambda t: t[2], reverse=True):
         if name == step_name:
             return state
     else:
