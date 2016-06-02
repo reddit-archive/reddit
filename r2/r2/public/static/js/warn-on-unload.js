@@ -8,12 +8,6 @@ $(function() {
      *
      * warn-on-unload - this class will prompt the user if
      * they try to leave a page with a dirty form
-     *
-     * redirect-form - Must use this class in conjunction with
-     * the warn-on-dialog class if the form redirects after
-     * a successful submission. This prevents the beforeunload
-     * event listener from reattaching after a successful form
-     * submission.
      */
     $(window).on('beforeunload', function (e) {
       var form = $("form.warn-on-unload");

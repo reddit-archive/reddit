@@ -200,13 +200,7 @@ $.request = function(op, parameters, worker_in, block, type,
          * and we dont warn the user on succesful form submissions
          */
         if($(form).length && res.success) {
-            $(window).off('beforeunload');
-
-            if(!$(form).hasClass('redirect-form')) {
-              $(form).one('keypress', function(e) {
-                r.warn_on_unload();
-              });
-            }
+          $(window).off('beforeunload');
         }
         return worker_in(res);
     };
