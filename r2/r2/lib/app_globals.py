@@ -876,9 +876,18 @@ class Globals(object):
                 stalecaches,
                 memcaches,
             )
+            # temporary duplicate for g.cache as we move keys in that pool
+            # to mcrouter
+            self.gencache = StaleCacheChain(
+                localcache_cls(),
+                stalecaches,
+                self.mcrouter,
+            )
         else:
             self.cache = CacheChain((localcache_cls(), memcaches))
+            self.gencache = CacheChain((localcache_cls(), self.mcrouter))
         cache_chains.update(cache=self.cache)
+        cache_chains.update(gencache=self.gencache)
 
         if stalecaches:
             self.thingcache = StaleCacheChain(
