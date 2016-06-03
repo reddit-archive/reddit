@@ -34,6 +34,7 @@ import simplejson as json
 
 from r2.config import feature
 from r2.lib import hooks
+from r2.lib.ratelimit import SimpleRateLimit
 from r2.lib.utils import timeago
 from r2.models import Comment, Email, DefaultSR, Account, Award
 from r2.models.token import EmailVerificationToken, PasswordResetToken
@@ -114,15 +115,21 @@ def password_email(user):
     """
     from r2.lib.pages import PasswordReset
 
-    reset_count_key = "email-reset_count_%s" % user._id
-    g.cache.add(reset_count_key, 0, time=3600 * 12)
-    if g.cache.incr(reset_count_key) > 3:
+    user_reset_ratelimit = SimpleRateLimit(
+        name="email_reset_count_%s" % user._id36,
+        seconds=int(datetime.timedelta(hours=12).total_seconds()),
+        limit=3,
+    )
+    if not user_reset_ratelimit.record_and_check():
         return False
 
-    reset_count_global = "email-reset_count_global"
-    g.cache.add(reset_count_global, 0, time=3600)
-    if g.cache.incr(reset_count_global) > 1000:
-        raise ValueError("Somebody's beating the hell out of the password reset box")
+    global_reset_ratelimit = SimpleRateLimit(
+        name="email_reset_count_global",
+        seconds=int(datetime.timedelta(hours=1).total_seconds()),
+        limit=1000,
+    )
+    if not global_reset_ratelimit.record_and_check():
+        raise ValueError("password reset ratelimit exceeded")
 
     token = PasswordResetToken._new(user)
     base = g.https_endpoint or g.origin
