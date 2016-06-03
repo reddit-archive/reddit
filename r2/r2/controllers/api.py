@@ -4641,7 +4641,7 @@ class ApiController(RedditController):
             return
 
         secret = totp.generate_secret()
-        g.cache.set('otp_secret_' + c.user._id36, secret, time=300)
+        g.gencache.set("otp:secret_" + c.user._id36, secret, time=300)
         jquery("body").make_totp_qrcode(secret)
 
     @validatedForm(VUser(),
@@ -4656,7 +4656,7 @@ class ApiController(RedditController):
             form.has_errors("otp", errors.OTP_ALREADY_ENABLED)
             return
 
-        secret = g.cache.get("otp_secret_" + c.user._id36)
+        secret = g.gencache.get("otp:secret_" + c.user._id36)
         if not secret:
             c.errors.add(errors.EXPIRED, field="otp")
             form.has_errors("otp", errors.EXPIRED)
