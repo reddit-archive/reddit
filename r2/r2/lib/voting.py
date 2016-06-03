@@ -35,7 +35,7 @@ from r2.models.vote import Vote, VotesByAccount
 from r2.lib.geoip import organization_by_ips
 
 def prequeued_vote_key(user, item):
-    return 'registered_vote_%s_%s' % (user._id, item._fullname)
+    return 'queuedvote:%s_%s' % (user._id36, item._fullname)
 
 
 def update_vote_lookups(user, thing, direction):
@@ -44,7 +44,7 @@ def update_vote_lookups(user, thing, direction):
     key = prequeued_vote_key(user, thing)
     grace_period = int(g.vote_queue_grace_period.total_seconds())
     direction = Vote.serialize_direction(direction)
-    g.cache.set(key, direction, time=grace_period+1)
+    g.gencache.set(key, direction, time=grace_period+1)
 
     # update LastModified immediately to help us cull prequeued_vote lookups
     rel_cls = VotesByAccount.rel(thing.__class__)

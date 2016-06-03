@@ -1844,7 +1844,7 @@ def get_likes(user, requested_items):
     if items_in_grace_period:
         g.stats.simple_event(
             "vote.prequeued.fetch", delta=len(items_in_grace_period))
-        r = g.cache.get_multi(items_in_grace_period.keys())
+        r = g.gencache.get_multi(items_in_grace_period.keys())
         for key, v in r.iteritems():
             res[items_in_grace_period[key]] = Vote.deserialize_direction(v)
 
