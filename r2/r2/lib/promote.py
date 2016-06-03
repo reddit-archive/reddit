@@ -780,11 +780,11 @@ def _is_geotargeted_promo(link):
 
 
 def is_geotargeted_promo(link):
-    key = 'geotargeted_promo_%s' % link._id
-    from_cache = g.cache.get(key)
+    key = 'geopromo:%s' % link._id
+    from_cache = g.gencache.get(key)
     if not from_cache:
         ret = _is_geotargeted_promo(link)
-        g.cache.set(key, ret, time=60)
+        g.gencache.set(key, ret, time=60)
         return ret
     else:
         return from_cache
@@ -1130,8 +1130,13 @@ def _get_live_promotions(sanitized_names):
 def get_live_promotions(sr_names):
     sanitized_names = [SPECIAL_NAMES.get(name, name) for name in sr_names]
     promos_by_sanitized_name = sgm(
-        g.cache, sanitized_names, miss_fn=_get_live_promotions,
-        prefix='live_promotions', time=60, stale=True)
+        cache=g.gencache,
+        keys=sanitized_names,
+        miss_fn=_get_live_promotions,
+        prefix='srpromos:',
+        time=60,
+        stale=True,
+    )
     promos_by_srname = {
         REVERSED_NAMES.get(name, name): val
         for name, val in promos_by_sanitized_name.iteritems()
