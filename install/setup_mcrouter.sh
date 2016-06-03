@@ -74,6 +74,7 @@ if [ ! -f /etc/mcrouter/global.conf ]; then
       "otp:": "local-pool",
       "captcha:": "local-pool",
       "queuedvote:": "local-pool",
+      "geoip:": "local-pool",
     },
     "wildcard": {
       "type": "PoolRoute",

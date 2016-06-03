@@ -90,9 +90,13 @@ def _organization_by_ips(ips):
 
 def location_by_ips(ips):
     ips, is_single = tup(ips, ret_is_single=True)
-    location_by_ip = sgm(g.cache, ips, miss_fn=_location_by_ips,
-                         prefix='location_by_ip',
-                         time=GEOIP_CACHE_TIME)
+    location_by_ip = sgm(
+        cache=g.gencache,
+        keys=ips,
+        miss_fn=_location_by_ips,
+        prefix='geoip:loc_',
+        time=GEOIP_CACHE_TIME,
+    )
     if is_single and location_by_ip:
         return location_by_ip[ips[0]]
     else:
@@ -101,9 +105,13 @@ def location_by_ips(ips):
 
 def organization_by_ips(ips):
     ips, is_single = tup(ips, ret_is_single=True)
-    organization_by_ip = sgm(g.cache, ips, miss_fn=_organization_by_ips,
-                             prefix='organization_by_ip',
-                             time=GEOIP_CACHE_TIME)
+    organization_by_ip = sgm(
+        cache=g.gencache,
+        keys=ips,
+        miss_fn=_organization_by_ips,
+        prefix='geoip:org_',
+        time=GEOIP_CACHE_TIME,
+    )
     if is_single and organization_by_ip:
         return organization_by_ip[ips[0]]
     else:
