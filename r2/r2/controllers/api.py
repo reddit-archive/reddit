@@ -3641,7 +3641,6 @@ class ApiController(RedditController):
 
                 admintools.adjust_gold_expiration(c.user, days=days)
 
-                g.cache.set("recent-gold-" + c.user.name, True, 600)
                 status = 'claimed-gold'
                 jquery(".lounge").show()
 

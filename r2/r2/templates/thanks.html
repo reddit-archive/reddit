@@ -40,11 +40,7 @@
 %elif thing.status == "mundane":
   ${_("enter your confirmation code below to activate reddit gold")}
 %else:
-  %if thing.status == "recent":
-    ${_("You claimed a reddit gold subscription in the last few minutes.")}
-  %else:
-    ${_("You're already a reddit gold subscriber.")}
-  %endif
+  ${_("You're already a reddit gold subscriber.")}
   &#32;
   ${_("But if you just gave us even more money, enter the new confirmation code below and we'll add the extra credit to your account.")}
 </p>

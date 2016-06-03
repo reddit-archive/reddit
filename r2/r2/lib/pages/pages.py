@@ -3113,8 +3113,6 @@ class Thanks(Templated):
     def __init__(self, secret=None):
         if secret and secret.startswith("cr_"):
             status = "creddits"
-        elif g.cache.get("recent-gold-" + c.user.name):
-            status = "recent"
         elif c.user.gold:
             status = "gold"
         else:
