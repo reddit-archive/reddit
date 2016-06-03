@@ -51,6 +51,7 @@ from r2.models import *
 from r2.lib import amqp
 from r2.lib import recommender
 from r2.lib import hooks
+from r2.lib.ratelimit import SimpleRateLimit
 
 from r2.lib.utils import (
     blockquote_text,
@@ -998,12 +999,15 @@ class ApiController(RedditController):
                 form.set_error(errors.SUBREDDIT_RATELIMIT, "name")
                 return
 
-        if type in self._sr_friend_types and not c.user_is_admin:
-            quota_key = "sr%squota-%s" % (str(type), container._id36)
-            g.cache.add(quota_key, 0, time=g.sr_quota_time)
-            subreddit_quota = g.cache.incr(quota_key)
-            quota_limit = getattr(g, "sr_%s_quota" % type)
-            if subreddit_quota > quota_limit and container.use_quotas:
+        if (type in self._sr_friend_types and
+                not c.user_is_admin and
+                container.use_quotas):
+            sr_ratelimit = SimpleRateLimit(
+                name="sr_%s_%s" % (str(type), container._id36),
+                seconds=g.sr_quota_time,
+                limit=getattr(g, "sr_%s_quota" % type),
+            )
+            if not sr_ratelimit.record_and_check():
                 form.set_text(".status", errors.SUBREDDIT_RATELIMIT)
                 c.errors.add(errors.SUBREDDIT_RATELIMIT)
                 form.set_error(errors.SUBREDDIT_RATELIMIT, None)
@@ -1873,12 +1877,14 @@ class ApiController(RedditController):
             if not subreddit.is_moderator_with_perms(c.user, 'access', 'mail'):
                 abort(403, 'Invalid mod permissions')
 
-            quota_key = "sr%squota-%s" % ("muted", subreddit._id36)
-            g.cache.add(quota_key, 0, time=g.sr_quota_time)
-            subreddit_quota = g.cache.incr(quota_key)
-            quota_limit = getattr(g, "sr_%s_quota" % "muted")
-            if subreddit_quota > quota_limit and subreddit.use_quotas:
-                abort(403, errors.SUBREDDIT_RATELIMIT)
+            if subreddit.use_quotas:
+                sr_ratelimit = SimpleRateLimit(
+                    name="sr_muted_%s" % subreddit._id36,
+                    seconds=g.sr_quota_time,
+                    limit=g.sr_muted_quota,
+                )
+                if not sr_ratelimit.record_and_check():
+                    abort(403, errors.SUBREDDIT_RATELIMIT)
 
         # Don't allow a user in timeout to mute users
         VNotInTimeout().run(action_name="muteuser", details_text="modmail",
