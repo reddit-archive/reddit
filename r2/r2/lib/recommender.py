@@ -32,7 +32,6 @@ from r2.lib.db import operators, tdb_cassandra
 from r2.lib.pages import ExploreItem
 from r2.lib.normalized_hot import normalized_hot
 from r2.lib.utils import roundrobin, tup, to36
-from r2.lib.sgm import sgm
 from r2.models import Account, Link, Subreddit
 from r2.models.builder import CommentBuilder
 from r2.models.listing import NestedListing
@@ -290,16 +289,15 @@ class SRRecommendation(tdb_cassandra.View):
         rowkeys = ['%s.%s' % (source, srid36) for srid36 in srid36s]
 
         # fetch multiple sets of recommendations, one for each input srid36
-        d = sgm(g.cache, rowkeys, SRRecommendation._byID, prefix='srr.')
-        rows = d.values()
+        rows = cls._byID(rowkeys, return_dict=False)
 
         if match_set:
-            sorted_recs = SRRecommendation._merge_and_sort_by_count(rows)
+            sorted_recs = cls._merge_and_sort_by_count(rows)
             # heuristic: if input set is large, rec should match more than one
             min_count = math.floor(.1 * len(srid36s))
             sorted_recs = (rec[0] for rec in sorted_recs if rec[1] > min_count)
         else:
-            sorted_recs = SRRecommendation._merge_roundrobin(rows)
+            sorted_recs = cls._merge_roundrobin(rows)
         # remove duplicates and ids listed in to_omit
         filtered = []
         for r in sorted_recs:
