@@ -72,6 +72,7 @@ if [ ! -f /etc/mcrouter/global.conf ]; then
       "reportmessage:": "local-pool",
       "modinbox:": "local-pool",
       "otp:": "local-pool",
+      "captcha:": "local-pool",
     },
     "wildcard": {
       "type": "PoolRoute",

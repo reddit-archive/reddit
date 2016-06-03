@@ -29,7 +29,6 @@ from pylons import app_globals as g
 from Captcha.Base import randomIdentifier
 from Captcha.Visual import Text, Backgrounds, Distortions, ImageCaptcha
 
-from r2.lib.cache import make_key
 
 IDEN_LENGTH = 32
 SOL_LENGTH = 6
@@ -54,24 +53,27 @@ def make_solution():
     return randomIdentifier(alphabet=string.ascii_letters, length = SOL_LENGTH).upper()
 
 def get_image(iden):
-    key = make_key(iden)
-    solution = g.cache.get(key)
+    key = "captcha:%s" % iden
+    solution = g.gencache.get(key)
     if not solution:
         solution = make_solution()
-        g.cache.set(key, solution, time = 300)
+        g.gencache.set(key, solution, time=300)
     return RandCaptcha(solution=solution).render()
 
-def valid_solution(iden, solution):
-    key = make_key(iden)
 
-    if (not iden
-        or not solution
-        or len(iden) != IDEN_LENGTH
-        or len(solution) != SOL_LENGTH
-        or solution.upper() != g.cache.get(key)):
+def valid_solution(iden, solution):
+    key = "captcha:%s" % iden
+
+    if (not iden or
+            not solution or
+            len(iden) != IDEN_LENGTH or
+            len(solution) != SOL_LENGTH or
+            solution.upper() != g.gencache.get(key)):
+        # the guess was wrong so make a new solution for the next attempt--the
+        # client will need to refresh the image before guessing again
         solution = make_solution()
-        g.cache.set(key, solution, time = 300)
+        g.gencache.set(key, solution, time=300)
         return False
     else:
-        g.cache.delete(key)
+        g.gencache.delete(key)
         return True
