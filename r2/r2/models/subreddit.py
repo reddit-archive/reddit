@@ -446,8 +446,8 @@ class Subreddit(Thing, Printable, BaseSite):
 
         if to_fetch:
             if not _update:
-                srids_by_name = g.cache.get_multi(
-                    to_fetch.keys(), prefix='subreddit.byname', stale=True)
+                srids_by_name = g.gencache.get_multi(
+                    to_fetch.keys(), prefix='srid:', stale=True)
             else:
                 srids_by_name = {}
 
@@ -471,7 +471,7 @@ class Subreddit(Thing, Printable, BaseSite):
                     still_missing = set(srnames) - set(fetched)
                     fetched.update((name, cls.SRNAME_NOTFOUND) for name in still_missing)
 
-                    g.cache.set_multi(fetched, prefix='subreddit.byname')
+                    g.gencache.set_multi(fetched, prefix='srid:')
 
             srs = {}
             srids = [v for v in srids_by_name.itervalues() if v != cls.SRNAME_NOTFOUND]
