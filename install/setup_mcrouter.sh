@@ -79,6 +79,8 @@ if [ ! -f /etc/mcrouter/global.conf ]; then
       "srpromos:": "local-pool",
       "rising:": "local-pool",
       "srid:": "local-pool",
+      "defaultsrs:": "local-pool",
+      "featuredsrs:": "local-pool",
     },
     "wildcard": {
       "type": "PoolRoute",

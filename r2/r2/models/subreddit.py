@@ -2010,8 +2010,12 @@ class BaseLocalizedSubreddits(tdb_cassandra.View):
             return ret
 
         id36s_by_location = sgm(
-            g.cache, keys, miss_fn=_lookup, prefix=cls.CACHE_PREFIX,
-            stale=True, _update=update,
+            cache=g.gencache,
+            keys=keys,
+            miss_fn=_lookup,
+            prefix=cls.CACHE_PREFIX,
+            stale=True,
+            _update=update,
         )
         ids_by_location = {location: [int(id36, 36) for id36 in id36s]
                            for location, id36s in id36s_by_location.iteritems()}
@@ -2034,7 +2038,7 @@ class BaseLocalizedSubreddits(tdb_cassandra.View):
 
         # update cache
         id36s = columns.keys()
-        g.cache.set_multi({rowkey: id36s}, prefix=cls.CACHE_PREFIX)
+        g.gencache.set_multi({rowkey: id36s}, prefix=cls.CACHE_PREFIX)
 
     @classmethod
     def set_global_srs(cls, srs):
@@ -2073,7 +2077,7 @@ class BaseLocalizedSubreddits(tdb_cassandra.View):
 class LocalizedDefaultSubreddits(BaseLocalizedSubreddits):
     _use_db = True
     _type_prefix = "LocalizedDefaultSubreddits"
-    CACHE_PREFIX = "localized_defaults"
+    CACHE_PREFIX = "defaultsrs:"
 
     @classmethod
     def get_defaults(cls, location):
@@ -2083,7 +2087,7 @@ class LocalizedDefaultSubreddits(BaseLocalizedSubreddits):
 class LocalizedFeaturedSubreddits(BaseLocalizedSubreddits):
     _use_db = True
     _type_prefix = "LocalizedFeaturedSubreddits"
-    CACHE_PREFIX = "localized_featured"
+    CACHE_PREFIX = "featuredsrs:"
 
     @classmethod
     def get_featured(cls, location):
