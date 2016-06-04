@@ -508,11 +508,6 @@ class IpnController(RedditController):
         if response:
             return response
 
-        # Check for the debug flag, and if so, dump the IPN dict
-        if g.cache.get("ipn-debug"):
-            g.cache.delete("ipn-debug")
-            dump_parameters(parameters)
-
         if mc_currency != 'USD':
             raise ValueError("Somehow got non-USD IPN %r" % mc_currency)
 
