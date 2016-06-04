@@ -2819,14 +2819,14 @@ class VOneTimePassword(Validator):
     def validate_otp(cls, secret, password):
         # is the password a valid format and has it been used?
         try:
-            key = "otp-%s-%d" % (c.user._id36, int(password))
+            key = "otp:used_%s_%d" % (c.user._id36, int(password))
         except (TypeError, ValueError):
             valid_and_unused = False
         else:
             # leave this key around for one more time period than the maximum
             # number of time periods we'll check for valid passwords
             key_ttl = totp.PERIOD * (len(cls.allowed_skew) + 1)
-            valid_and_unused = g.cache.add(key, True, time=key_ttl)
+            valid_and_unused = g.gencache.add(key, True, time=key_ttl)
 
         # check the password (allowing for some clock-skew as 2FA-users
         # frequently travel at relativistic velocities)
