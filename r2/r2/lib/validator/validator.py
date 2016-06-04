@@ -2272,16 +2272,6 @@ class VCommentIDs(Validator):
         }
 
 
-class CachedUser(object):
-    def __init__(self, cache_prefix, user, key):
-        self.cache_prefix = cache_prefix
-        self.user = user
-        self.key = key
-
-    def clear(self):
-        if self.key and self.cache_prefix:
-            g.cache.delete(str(self.cache_prefix + "_" + self.key))
-
 class VOneTimeToken(Validator):
     def __init__(self, model, param, *args, **kwargs):
         self.model = model
