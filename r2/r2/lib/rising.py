@@ -30,9 +30,6 @@ from r2.lib.cache import sgm
 from r2.models.link import Link
 
 
-CACHE_KEY = "rising"
-
-
 def calc_rising():
     link_counts = count.get_link_counts()
 
@@ -53,11 +50,12 @@ def calc_rising():
 
 
 def set_rising():
-    g.cache.set(CACHE_KEY, calc_rising())
+    # TODO: spread this around to several keys
+    g.gencache.set("rising:all", calc_rising())
 
 
 def get_all_rising():
-    return g.cache.get(CACHE_KEY, [])
+    return g.gencache.get("rising:all", [])
 
 
 def get_rising(sr):
@@ -88,8 +86,13 @@ def normalized_rising(sr_ids):
     if not sr_ids:
         return []
 
-    tuples_by_srid = sgm(g.cache, sr_ids, miss_fn=get_rising_tuples,
-                         prefix='normalized_rising', time=g.page_cache_time)
+    tuples_by_srid = sgm(
+        cache=g.gencache,
+        keys=sr_ids,
+        miss_fn=get_rising_tuples,
+        prefix='rising:',
+        time=g.page_cache_time,
+    )
 
     merged = heapq.merge(*tuples_by_srid.values())
 
