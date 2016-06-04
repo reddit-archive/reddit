@@ -2088,7 +2088,7 @@ class VRatelimit(Validator):
             to_check.append('ip' + str(request.ip))
             self._record_event(self.prefix, 'check_ip')
 
-        r = g.cache.get_multi(to_check, self.prefix)
+        r = g.ratelimitcache.get_multi(to_check, prefix=self.prefix)
         if r:
             expire_time = max(r.values())
             time = utils.timeuntil(expire_time)
@@ -2118,19 +2118,23 @@ class VRatelimit(Validator):
                 self.set_error(self.error)
 
     @classmethod
-    def ratelimit(cls, rate_user = False, rate_ip = False, prefix = "rate_",
-                  seconds = None):
-        to_set = {}
+    def ratelimit(cls, rate_user=False, rate_ip=False, prefix="rate_",
+                  seconds=None):
         if seconds is None:
             seconds = g.RL_RESET_SECONDS
-        expire_time = datetime.now(g.tz) + timedelta(seconds = seconds)
+
+        expire_time = datetime.now(g.tz) + timedelta(seconds=seconds)
+
+        to_set = {}
         if rate_user and c.user_is_loggedin:
             to_set['user' + str(c.user._id36)] = expire_time
             cls._record_event(prefix, 'set_user_limit')
+
         if rate_ip:
             to_set['ip' + str(request.ip)] = expire_time
             cls._record_event(prefix, 'set_ip_limit')
-        g.cache.set_multi(to_set, prefix = prefix, time = seconds)
+
+        g.ratelimitcache.set_multi(to_set, prefix=prefix, time=seconds)
 
     @classmethod
     def _record_event(cls, prefix, event):
