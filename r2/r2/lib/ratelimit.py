@@ -294,3 +294,25 @@ class LiveConfigRateLimit(RateLimit):
     @property
     def limit(self):
         return g.live_config[self.limit_live_key]
+
+
+class SimpleRateLimit(RateLimit):
+    """Simple ratelimiting class.
+
+    Useful for cases where we just want to be able to call record_usage() and
+    check(). Does not record events to g.stats.
+
+    """
+
+    def __init__(self, key, seconds, limit):
+        self.key = key
+        self.seconds = seconds
+        self.limit = limit
+
+    def _record_event(self, event_type_template):
+        # make this a no-op
+        pass
+
+    def record_and_check(self):
+        self.record_usage()
+        return self.check()
