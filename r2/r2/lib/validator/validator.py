@@ -2063,7 +2063,8 @@ class VRatelimit(Validator):
                  error=errors.RATELIMIT, fatal=False, *a, **kw):
         self.rate_user = rate_user
         self.rate_ip = rate_ip
-        self.prefix = prefix
+        self.name = prefix
+        self.cache_prefix = "rl:%s" % self.name
         self.error = error
         self.fatal = fatal
         self.seconds = None
@@ -2077,28 +2078,28 @@ class VRatelimit(Validator):
             hook = hooks.get_hook("account.is_ratelimit_exempt")
             ratelimit_exempt = hook.call_until_return(account=c.user)
             if ratelimit_exempt:
-                self._record_event(self.prefix, 'exempted')
+                self._record_event(self.name, 'exempted')
                 return
 
         to_check = []
         if self.rate_user and c.user_is_loggedin:
             to_check.append('user' + str(c.user._id36))
-            self._record_event(self.prefix, 'check_user')
+            self._record_event(self.name, 'check_user')
         if self.rate_ip:
             to_check.append('ip' + str(request.ip))
-            self._record_event(self.prefix, 'check_ip')
+            self._record_event(self.name, 'check_ip')
 
-        r = g.ratelimitcache.get_multi(to_check, prefix=self.prefix)
+        r = g.ratelimitcache.get_multi(to_check, prefix=self.cache_prefix)
         if r:
             expire_time = max(r.values())
             time = utils.timeuntil(expire_time)
 
-            g.log.debug("rate-limiting %s from %s" % (self.prefix, r.keys()))
+            g.log.debug("rate-limiting %s from %s" % (self.name, r.keys()))
             for key in r.keys():
                 if key.startswith('user'):
-                    self._record_event(self.prefix, 'user_limit_hit')
+                    self._record_event(self.name, 'user_limit_hit')
                 elif key.startswith('ip'):
-                    self._record_event(self.prefix, 'ip_limit_hit')
+                    self._record_event(self.name, 'ip_limit_hit')
 
             # when errors have associated field parameters, we'll need
             # to add that here
@@ -2120,6 +2121,9 @@ class VRatelimit(Validator):
     @classmethod
     def ratelimit(cls, rate_user=False, rate_ip=False, prefix="rate_",
                   seconds=None):
+        name = prefix
+        cache_prefix = "rl:%s" % name
+
         if seconds is None:
             seconds = g.RL_RESET_SECONDS
 
@@ -2128,17 +2132,17 @@ class VRatelimit(Validator):
         to_set = {}
         if rate_user and c.user_is_loggedin:
             to_set['user' + str(c.user._id36)] = expire_time
-            cls._record_event(prefix, 'set_user_limit')
+            cls._record_event(name, 'set_user_limit')
 
         if rate_ip:
             to_set['ip' + str(request.ip)] = expire_time
-            cls._record_event(prefix, 'set_ip_limit')
+            cls._record_event(name, 'set_ip_limit')
 
-        g.ratelimitcache.set_multi(to_set, prefix=prefix, time=seconds)
+        g.ratelimitcache.set_multi(to_set, prefix=cache_prefix, time=seconds)
 
     @classmethod
-    def _record_event(cls, prefix, event):
-        g.stats.event_count('VRatelimit.%s' % prefix, event, sample_rate=0.1)
+    def _record_event(cls, name, event):
+        g.stats.event_count('VRatelimit.%s' % name, event, sample_rate=0.1)
 
 
 class VRatelimitImproved(Validator):
