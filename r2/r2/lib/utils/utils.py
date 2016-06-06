@@ -1912,8 +1912,32 @@ EPOCH = datetime(1970, 1, 1, tzinfo=pytz.UTC)
 
 
 def epoch_timestamp(dt):
-    """Returns the number of seconds from the epoch to date."""
+    """Returns the number of seconds from the epoch to date.
+
+    :param datetime dt: datetime (with time zone)
+    :rtype: float
+    """
     return (dt - EPOCH).total_seconds()
+
+
+def to_epoch_milliseconds(dt):
+    """Returns the number of milliseconds from the epoch to date.
+
+    :param datetime dt: datetime (with time zone)
+    :rtype: int
+    """
+    return int(math.floor(1000. * epoch_timestamp(dt)))
+
+
+def from_epoch_milliseconds(ms):
+    """Convert milliseconds from the epoch to UTC datetime.
+
+    :param int ms: milliseconds since the epoch
+    :rtype: :py:class:`datetime.datetime`
+    """
+    seconds = int(ms / 1000.)
+    microseconds = (ms - 1000 * seconds) * 1000.
+    return EPOCH + timedelta(seconds=seconds, microseconds=microseconds)
 
 
 def rate_limiter(max_per_second):

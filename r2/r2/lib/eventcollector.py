@@ -47,7 +47,8 @@ from r2.lib.geoip import (
 from r2.lib.cache_poisoning import cache_headers_valid
 from r2.lib.utils import (
     domain,
-    epoch_timestamp,
+    to_epoch_milliseconds,
+    parse_agent,
     sampled,
     squelch_exceptions,
     to36,
@@ -60,14 +61,8 @@ def _make_http_date(when=None):
     return format_date_time(time.mktime(when.timetuple()))
 
 
-def _epoch_to_millis(timestamp):
-    """Convert an epoch_timestamp from seconds (float) to milliseconds (int)"""
-    return int(timestamp * 1000)
-
-
-def _datetime_to_millis(dt):
-    """Convert a standard datetime to epoch milliseconds."""
-    return _epoch_to_millis(epoch_timestamp(dt))
+# XXX External dependencies!
+_datetime_to_millis = to_epoch_milliseconds
 
 
 def parse_agent(ua):
@@ -134,8 +129,10 @@ class EventQueue(object):
         if vote.previous_vote:
             event.add("prev_vote_direction",
                 get_vote_direction_name(vote.previous_vote))
-            event.add("prev_vote_ts",
-                _datetime_to_millis(vote.previous_vote.date))
+            event.add(
+                "prev_vote_ts",
+                to_epoch_milliseconds(vote.previous_vote.date)
+            )
 
         if vote.is_automatic_initial_vote:
             event.add("auto_self_vote", True)
@@ -223,7 +220,9 @@ class EventQueue(object):
         post = Link._byID(new_comment.link_id)
         event.add("post_id", post._id)
         event.add("post_fullname", post._fullname)
-        event.add("post_created_ts", _datetime_to_millis(post._date))
+        event.add("post_created_ts", to_epoch_milliseconds(post._date))
+        if post.promoted:
+            event.add("post_is_promoted", bool(post.promoted))
 
         if new_comment.parent_id:
             parent = Comment._byID(new_comment.parent_id)
@@ -232,7 +231,7 @@ class EventQueue(object):
             parent = post
         event.add("parent_id", parent._id)
         event.add("parent_fullname", parent._fullname)
-        event.add("parent_created_ts", _datetime_to_millis(parent._date))
+        event.add("parent_created_ts", to_epoch_milliseconds(parent._date))
 
         event.add("user_neutered", new_comment.author_slow._spam)
 
@@ -879,7 +878,7 @@ class Event(object):
 
         # Add info about when target was originally posted for links/comments
         if isinstance(target, (Comment, Link)):
-            self.add("target_created_ts", _datetime_to_millis(target._date))
+            self.add("target_created_ts", to_epoch_milliseconds(target._date))
 
         hooks.get_hook("eventcollector.add_target_fields").call(
             event=self,
