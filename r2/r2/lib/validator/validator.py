@@ -2196,7 +2196,6 @@ class VRatelimitImproved(Validator):
             hook = hooks.get_hook("account.is_ratelimit_exempt")
             ratelimit_exempt = hook.call_until_return(account=c.user)
             if ratelimit_exempt:
-                self._record_event(self.prefix, 'exempted')
                 return
 
         if self.user_limit and c.user_is_loggedin:
