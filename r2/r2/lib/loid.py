@@ -61,7 +61,8 @@ class LoId(object):
             return cls._create()
         elif loid:
             louser = cls()
-            louser.loid = unquote(loid)
+            # future-proof to v1 id tracking
+            louser.loid, _, _ = unquote(loid).partition(".")
             louser.created = ensure_unquoted(
                 request.cookies.get(LOID_CREATED_COOKIE, ""))
             return louser
