@@ -304,8 +304,8 @@ class SimpleRateLimit(RateLimit):
 
     """
 
-    def __init__(self, key, seconds, limit):
-        self.key = key
+    def __init__(self, name, seconds, limit):
+        self.key = "rl:%s" % name
         self.seconds = seconds
         self.limit = limit
 
