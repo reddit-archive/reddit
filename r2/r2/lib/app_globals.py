@@ -197,6 +197,7 @@ class Globals(object):
             'bcrypt_work_factor',
             'cassandra_pool_size',
             'sr_banned_quota',
+            'sr_muted_quota',
             'sr_wikibanned_quota',
             'sr_wikicontributor_quota',
             'sr_moderator_invite_quota',
