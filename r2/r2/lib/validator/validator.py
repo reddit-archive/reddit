@@ -2853,10 +2853,12 @@ class VOneTimePassword(Validator):
         # make sure they're not trying this too much
         if not g.disable_ratelimit:
             current_password = totp.make_totp(secret)
-            key = "otp-tries-" + current_password
-            g.cache.add(key, 0)
-            recent_attempts = g.cache.incr(key)
-            if recent_attempts > self.ratelimit:
+            ratelimit = ratelimit.SimpleRateLimit(
+                name="otp_tries_%s_%s" % (c.user._id36, current_password),
+                seconds=600,
+                limit=self.ratelimit,
+            )
+            if not ratelimit.record_and_check():
                 self.set_error(errors.RATELIMIT, dict(time="30 seconds"))
                 return
 
