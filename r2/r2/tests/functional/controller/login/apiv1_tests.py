@@ -33,8 +33,7 @@ class APIV1LoginTests(LoginRegBase, RedditControllerTestCase):
     CONTROLLER = "apiv1login"
 
     def setUp(self):
-        RedditControllerTestCase.setUp(self)
-        LoginRegBase.setUp(self)
+        super(APIV1LoginTests, self).setUp()
         self.device_id = "dead-beef"
 
     def make_ua_signature(self, platform="test", version=1):

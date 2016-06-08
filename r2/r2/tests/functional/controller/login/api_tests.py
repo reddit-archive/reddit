@@ -26,10 +26,6 @@ from common import LoginRegBase
 class LoginRegTests(LoginRegBase, RedditControllerTestCase):
     CONTROLLER = "api"
 
-    def setUp(self):
-        RedditControllerTestCase.setUp(self)
-        LoginRegBase.setUp(self)
-
     def assert_success(self, res):
         self.assertEqual(res.status, 200)
         self.assertTrue("error" not in res)

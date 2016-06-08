@@ -21,6 +21,7 @@
 ###############################################################################
 from r2.tests import RedditControllerTestCase
 from r2.lib.errors import error_list
+from r2.lib.unicode import _force_unicode
 from common import LoginRegBase
 
 
@@ -31,8 +32,7 @@ class PostLoginRegTests(LoginRegBase, RedditControllerTestCase):
     }
 
     def setUp(self):
-        RedditControllerTestCase.setUp(self)
-        LoginRegBase.setUp(self)
+        super(PostLoginRegTests, self).setUp()
         self.dest = "/foo"
 
     def find_headers(self, res, name):
@@ -69,7 +69,7 @@ class PostLoginRegTests(LoginRegBase, RedditControllerTestCase):
         self.assertEqual(res.status, 200)
         # recaptcha is done entirely in JS
         if code != "BAD_CAPTCHA":
-            self.assertTrue(error_list[code] in res.body)
+            self.assertTrue(error_list[code] in _force_unicode(res.body))
 
     def make_qs(self, **kw):
         kw['dest'] = self.dest
