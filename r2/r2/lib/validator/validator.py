@@ -3256,3 +3256,7 @@ class VSigned(Validator):
             abort(403, 'forbidden')
 
         return signature
+
+
+def need_provider_captcha():
+    return False

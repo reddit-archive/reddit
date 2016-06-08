@@ -20,6 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 import contextlib
+import unittest
 from mock import patch, MagicMock
 
 from pylons import app_globals as g
@@ -147,6 +148,7 @@ class LoginRegBase(object):
             res = self.do_register()
             self.assert_failure(res, "USERNAME_TAKEN")
 
+    @unittest.skip("registration captcha is unfinished")
     def test_captcha_blocking(self):
         with contextlib.nested(
             self.mock_register(),
@@ -155,6 +157,7 @@ class LoginRegBase(object):
             res = self.do_register()
             self.assert_failure(res, "BAD_CAPTCHA")
 
+    @unittest.skip("registration captcha is unfinished")
     def test_captcha_disabling(self):
         with contextlib.nested(
             self.mock_register(),
