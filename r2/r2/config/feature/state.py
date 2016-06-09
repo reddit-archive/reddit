@@ -91,7 +91,7 @@ class FeatureState(object):
     @staticmethod
     def get_all(world):
         """Return FeatureState objects for all features in live_config.
-        
+
         Creates a FeatureState object for every config entry prefixed with
         "feature_".
 
@@ -175,9 +175,15 @@ class FeatureState(object):
         # error.  It's not the most correct to only check the one, but it's
         # easy and quick, and anything with that high a percentage should be
         # selected quite often.
-        if (all_variants[candidate_variant] / 100.0) > 1.0/num_variants:
-            g.log.warning('Variant %s exceeds allowable percentage; truncating.',
-                          candidate_variant)
+        variant_fraction = all_variants[candidate_variant] / 100.0
+        variant_cap = 1.0 / num_variants
+        if variant_fraction > variant_cap:
+            g.log.warning(
+                'Variant %s exceeds allowable percentage (%.2f > %.2f)',
+                candidate_variant,
+                variant_fraction,
+                variant_cap,
+            )
         # Variant percentages are expressed as numeric percentages rather than
         # a fraction of 1 (that is, 1.5 means 1.5%, not 150%); thus, at 100
         # buckets, buckets and percents map 1:1 with each other.  Since we may
