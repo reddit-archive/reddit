@@ -56,14 +56,12 @@ you might need to cancel your jobs later, use ``TryLaterBySubject``, which uses
 almost the exact same semantics, but has a useful ``unschedule`` method.
 """
 
-import contextlib
 from collections import OrderedDict
 import datetime
-import json
 import uuid
 
 from pycassa.system_manager import TIME_UUID_TYPE, UTF8_TYPE
-from pycassa.util import convert_time_to_uuid, convert_uuid_to_time
+from pycassa.util import convert_uuid_to_time
 from pylons import app_globals as g
 
 from r2.lib.db import tdb_cassandra
@@ -77,8 +75,7 @@ class TryLater(tdb_cassandra.View):
     _compare_with = TIME_UUID_TYPE
 
     @classmethod
-    @contextlib.contextmanager
-    def get_ready_items_and_cleanup(cls, rowkey):
+    def process_ready_items(cls, rowkey, ready_fn):
         cutoff = datetime.datetime.utcnow()
 
         columns = cls._cf.xget(rowkey, column_finish=cutoff)
@@ -89,11 +86,35 @@ class TryLater(tdb_cassandra.View):
             delta=len(items),
         )
 
-        # return the columns to the context caller
-        yield items
+        try:
+            ready_fn(items)
+        except:
+            g.stats.simple_event(
+                "trylater.{system}.failed".format(system=rowkey),
+            )
 
-        # on context __exit__ cleanup all the ready columns
+        # delete ALL the ready items, even if we didn't process them due to
+        # an exception in ready_fn
         cls._cf.remove(rowkey, items.keys())
+
+    @classmethod
+    def run(cls):
+        """Run all ready items through their processing hook."""
+        from r2.lib import amqp
+        from r2.lib.hooks import all_hooks
+
+        for hook_name, hook in all_hooks().iteritems():
+            if hook_name.startswith("trylater."):
+                rowkey = hook_name[len("trylater."):]
+
+                def ready_fn(ready_items):
+                    return hook.call(data=ready_items)
+
+                g.log.info("Trying %s", rowkey)
+                cls.process_ready_items(rowkey, ready_fn)
+
+        amqp.worker.join()
+        g.stats.flush()
 
     @classmethod
     def search(cls, rowkey, when):
