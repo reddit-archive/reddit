@@ -57,6 +57,7 @@ almost the exact same semantics, but has a useful ``unschedule`` method.
 """
 
 import contextlib
+from collections import OrderedDict
 import datetime
 import json
 import uuid
@@ -77,26 +78,22 @@ class TryLater(tdb_cassandra.View):
 
     @classmethod
     @contextlib.contextmanager
-    def multi_handle(cls, rowkeys, cutoff=None):
-        if cutoff is None:
-            cutoff = datetime.datetime.utcnow()
+    def get_ready_items_and_cleanup(cls, rowkey):
+        cutoff = datetime.datetime.utcnow()
 
-        ready = cls._cf.multiget(
-            rowkeys,
-            column_finish=cutoff,
-            column_count=tdb_cassandra.max_column_count,
+        columns = cls._cf.xget(rowkey, column_finish=cutoff)
+
+        items = OrderedDict(columns)
+        g.stats.simple_event(
+            "trylater.{system}.ready".format(system=rowkey),
+            delta=len(items),
         )
 
-        # return the rows to the context caller
-        yield ready
+        # return the columns to the context caller
+        yield items
 
         # on context __exit__ cleanup all the ready columns
-        for system, items in ready.iteritems():
-            cls._cf.remove(system, items.keys())
-            g.stats.simple_event(
-                "trylater.{system}.ready".format(system=system),
-                delta=len(items),
-            )
+        cls._cf.remove(rowkey, items.keys())
 
     @classmethod
     def search(cls, rowkey, when):

@@ -26,19 +26,18 @@ from r2.lib import amqp
 from r2.lib.hooks import all_hooks, get_hook
 from r2.models.trylater import TryLater
 
-PREFIX = "trylater."
 
-
-## Entry point
 def run_trylater():
-    our_hooks = (key[len(PREFIX):] for key in all_hooks().keys()
-                 if key.startswith(PREFIX))
-    with TryLater.multi_handle(our_hooks) as handleable:
-        for system, data in handleable.iteritems():
-            hook_name = "trylater.%s" % system
-            g.log.info("Trying %s", system)
+    trylater_names = {
+        hook_name[len("trylater."):]: hook_name
+        for hook_name in all_hooks().iterkeys()
+        if hook_name.startswith("trylater.")
+    }
 
-            get_hook(hook_name).call(data=data)
+    for trylater_name, trylater_hook in trylater_names.iteritems():
+        with TryLater.get_ready_items_and_cleanup(trylater_name) as items:
+            g.log.info("Trying %s", trylater_name)
+            get_hook(trylater_hook).call(data=items)
 
     amqp.worker.join()
     g.stats.flush()
