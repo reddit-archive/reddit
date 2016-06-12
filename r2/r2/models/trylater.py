@@ -57,7 +57,7 @@ almost the exact same semantics, but has a useful ``unschedule`` method.
 """
 
 from collections import OrderedDict
-import datetime
+from datetime import datetime, timedelta
 import uuid
 
 from pycassa.system_manager import TIME_UUID_TYPE, UTF8_TYPE
@@ -76,26 +76,64 @@ class TryLater(tdb_cassandra.View):
 
     @classmethod
     def process_ready_items(cls, rowkey, ready_fn):
-        cutoff = datetime.datetime.utcnow()
+        cutoff = datetime.now(g.tz)
 
-        columns = cls._cf.xget(rowkey, column_finish=cutoff)
+        columns = cls._cf.xget(rowkey, include_timestamp=True)
+        ready_items = OrderedDict()
+        ready_timestamps = []
+        unripe_timestamps = []
 
-        items = OrderedDict(columns)
+        for ready_time_uuid, (data, timestamp) in columns:
+            ready_time = convert_uuid_to_time(ready_time_uuid)
+            ready_datetime = datetime.fromtimestamp(ready_time, tz=g.tz)
+            if ready_datetime <= cutoff:
+                ready_items[ready_datetime] = data
+                ready_timestamps.append(timestamp)
+            else:
+                unripe_timestamps.append(timestamp)
+
         g.stats.simple_event(
             "trylater.{system}.ready".format(system=rowkey),
-            delta=len(items),
+            delta=len(ready_items),
+        )
+        g.stats.simple_event(
+            "trylater.{system}.pending".format(system=rowkey),
+            delta=len(unripe_timestamps),
         )
 
+        if not ready_items:
+            return
+
         try:
-            ready_fn(items)
+            ready_fn(ready_items)
         except:
             g.stats.simple_event(
                 "trylater.{system}.failed".format(system=rowkey),
             )
 
-        # delete ALL the ready items, even if we didn't process them due to
-        # an exception in ready_fn
-        cls._cf.remove(rowkey, items.keys())
+        cls.cleanup(rowkey, ready_items, ready_timestamps, unripe_timestamps)
+
+    @classmethod
+    def cleanup(cls, rowkey, ready_items, ready_timestamps, unripe_timestamps):
+        """Remove ALL ready items from the C* row"""
+        if (not unripe_timestamps or
+                min(unripe_timestamps) > max(ready_timestamps)):
+            # do a row/timestamp delete to avoid generating column
+            # tombstones
+            cls._cf.remove(rowkey, timestamp=max(ready_timestamps))
+            g.stats.simple_event(
+                "trylater.{system}.row_delete".format(system=rowkey),
+                delta=len(ready_items),
+            )
+        else:
+            # the columns weren't created with a fixed delay and there are some
+            # unripe items with older (lower) timestamps than the items we want
+            # to delete. fallback to deleting specific columns.
+            cls._cf.remove(rowkey, ready_items.keys())
+            g.stats.simple_event(
+                "trylater.{system}.column_delete".format(system=rowkey),
+                delta=len(ready_items),
+            )
 
     @classmethod
     def run(cls):
@@ -135,8 +173,8 @@ class TryLater(tdb_cassandra.View):
                  execution time
         """
         if delay is None:
-            delay = datetime.timedelta(minutes=60)
-        key = datetime.datetime.now(g.tz) + delay
+            delay = timedelta(minutes=60)
+        key = datetime.now(g.tz) + delay
         scheduled = {key: data}
         cls._set_values(system, scheduled)
         return scheduled
@@ -167,7 +205,7 @@ class TryLaterBySubject(tdb_cassandra.View):
 
         # TTL 10 minutes after the TryLater runs just in case TryLater
         # is running late.
-        ttl = (delay + datetime.timedelta(minutes=10)).total_seconds()
+        ttl = (delay + timedelta(minutes=10)).total_seconds()
         coldict = {subject: when}
         cls._set_values(system, coldict, ttl=ttl)
         return scheduled
