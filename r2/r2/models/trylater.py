@@ -76,22 +76,23 @@ class TryLater(tdb_cassandra.View):
     _compare_with = TIME_UUID_TYPE
 
     @classmethod
-    def multi_ready(cls, rowkeys, cutoff=None):
-        if cutoff is None:
-            cutoff = datetime.datetime.utcnow()
-        return cls._cf.multiget(rowkeys,
-                                column_finish=cutoff,
-                                column_count=tdb_cassandra.max_column_count)
-
-    @classmethod
     @contextlib.contextmanager
     def multi_handle(cls, rowkeys, cutoff=None):
         if cutoff is None:
             cutoff = datetime.datetime.utcnow()
-        ready = cls.multi_ready(rowkeys, cutoff)
+
+        ready = cls._cf.multiget(
+            rowkeys,
+            column_finish=cutoff,
+            column_count=tdb_cassandra.max_column_count,
+        )
+
+        # return the rows to the context caller
         yield ready
+
+        # on context __exit__ cleanup all the ready columns
         for system, items in ready.iteritems():
-            cls._remove(system, items.keys())
+            cls._cf.remove(system, items.keys())
 
     @classmethod
     def search(cls, rowkey, when):
