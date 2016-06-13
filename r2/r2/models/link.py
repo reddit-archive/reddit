@@ -1113,11 +1113,7 @@ class Link(Thing, Printable):
         if self._deleted or self._spam:
             return False
 
-        author = self.author_slow
         subreddit = self.subreddit_slow
-
-        if not subreddit.is_moderator(author):
-            return False
 
         if self.is_self:
             return True
