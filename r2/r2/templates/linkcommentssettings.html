@@ -116,17 +116,17 @@
 
 %if thing.can_sticky:
   %if thing.stickied:
-    ${ynbutton(_("unsticky this post"), _("unstickied"), "set_subreddit_sticky",
+    ${ynbutton(_("make announcement"), _("unannounced"), "set_subreddit_sticky",
       hidden_data=dict(id=thing.link._fullname, state=False),
       event_target='link', event_action='unsticky')}
   %elif thing.stickies_full:
-    ${ynbutton(_("sticky this post"), _("stickied"), "set_subreddit_sticky",
-      question=_("sticky this? (bottom sticky will be replaced)"),
+    ${ynbutton(_("make announcement"), _("announced"), "set_subreddit_sticky",
+      question=_("make announcement? (bottom announcement will be replaced)"),
       hidden_data=dict(id=thing.link._fullname, state=True),
       event_target='link', event_action='sticky')}
   %else:
-    ${ynbutton(_("sticky this post"), _("stickied"), "set_subreddit_sticky",
-      question=_("sticky this?"),
+    ${ynbutton(_("make announcement"), _("announced"), "set_subreddit_sticky",
+      question=_("make announcement?"),
       hidden_data=dict(id=thing.link._fullname, state=True),
       event_target='link', event_action='sticky')}
   %endif

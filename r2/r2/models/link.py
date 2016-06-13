@@ -1109,6 +1109,31 @@ class Link(Thing, Printable):
     def set_preview_object(self, value):
         self.preview_object = Link._utf8_encode(value)
 
+    def is_stickyable(self):
+        if self._deleted or self._spam:
+            return False
+
+        author = self.author_slow
+        subreddit = self.subreddit_slow
+
+        if not subreddit.is_moderator(author):
+            return False
+
+        if self.is_self:
+            return True
+
+        # check if it is a live thread or a wiki page
+        parsed = UrlParser(self.url)
+        if parsed.is_reddit_url():
+            path = parsed.path
+            if path.startswith("/live/"):
+                return True
+
+            wiki_path = "/r/%s/wiki/" % subreddit.name
+            if path.startswith(wiki_path):
+                return True
+
+        return False
 
 class LinksByUrlAndSubreddit(tdb_cassandra.View):
     _use_db = True

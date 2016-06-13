@@ -5526,8 +5526,9 @@ class LinkCommentsSettings(Templated):
             if self.stickied:
                 # always allow un-stickying things
                 self.can_sticky = True
-            elif not (link._deleted or link._spam):
-                self.can_sticky = True
+            # non deleted/spam self-posts by mods are eligible for stickying
+            else:
+                self.can_sticky = link.is_stickyable()
         self.sort = sort
         self.suggested_sort = suggested_sort
 

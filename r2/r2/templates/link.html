@@ -229,7 +229,7 @@
                               ))}
   ${self.gildings()}
   %if thing.use_sticky_style:
-    &#32;-&#32;<span class="stickied-tagline" title="selected by this subreddit's moderators">stickied post</span>
+    &#32;-&#32;<span class="stickied-tagline" title="selected by this subreddit's moderators">announcement</span>
   %endif
 
   %if getattr(thing, 'savedcategory', None) is not None:
@@ -256,4 +256,3 @@
   </%call>
   %endif
 </%def>
-
