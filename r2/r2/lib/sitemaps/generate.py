@@ -65,6 +65,7 @@ Each sitemap and sitemap index will have 50000 links or fewer.
 
 from lxml import etree
 from pylons import app_globals as g
+
 from r2.lib.template_helpers import add_sr
 from r2.lib.utils import in_chunks
 
@@ -72,11 +73,11 @@ SITEMAP_NAMESPACE = "http://www.sitemaps.org/schemas/sitemap/0.9"
 LINKS_PER_SITEMAP = 50000
 
 
-def absolute_url(path):
+def _absolute_url(path):
     return add_sr(path, force_https=True, sr_path=False)
 
 
-def stringify_xml(root_element):
+def _stringify_xml(root_element):
     return etree.tostring(
         root_element,
         pretty_print=g.debug,
@@ -85,18 +86,19 @@ def stringify_xml(root_element):
     )
 
 
-def subreddit_links(subreddits):
+def _subreddit_links(subreddits):
     for subreddit in subreddits:
-        yield absolute_url(subreddit.path)
+        path = '/r/{0}/'.format(subreddit)
+        yield _absolute_url(path)
 
 
-def subreddit_sitemap(subreddits):
-    urlset  = etree.Element('urlset', xmlns=SITEMAP_NAMESPACE)
-    for link in subreddit_links(subreddits):
+def _subreddit_sitemap(subreddits):
+    urlset = etree.Element('urlset', xmlns=SITEMAP_NAMESPACE)
+    for link in _subreddit_links(subreddits):
         url_elem = etree.SubElement(urlset, 'url')
         loc_elem = etree.SubElement(url_elem, 'loc')
         loc_elem.text = link
-    return stringify_xml(urlset)
+    return _stringify_xml(urlset)
 
 
 def subreddit_sitemaps(subreddits):
@@ -106,13 +108,15 @@ def subreddit_sitemaps(subreddits):
     links according to the sitemap standard.
     """
     for subreddit_chunks in in_chunks(subreddits, LINKS_PER_SITEMAP):
-        yield subreddit_sitemap(subreddit_chunks)
+        yield _subreddit_sitemap(subreddit_chunks)
 
 
 def sitemap_index(count):
-    sm_elem  = etree.Element('sitemapindex', xmlns=SITEMAP_NAMESPACE)
+    sm_elem = etree.Element('sitemapindex', xmlns=SITEMAP_NAMESPACE)
     for i in xrange(count):
         sitemap_elem = etree.SubElement(sm_elem, 'sitemap')
         loc_elem = etree.SubElement(sitemap_elem, 'loc')
-        loc_elem.text = absolute_url('/subreddit_sitemap?index={0}'.format(i))
-    return stringify_xml(sm_elem)
+        url = '{0}/subreddit_sitemap/{1}.xml'.format(
+            g.sitemap_s3_static_host, i)
+        loc_elem.text = url
+    return _stringify_xml(sm_elem)

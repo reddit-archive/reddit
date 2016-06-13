@@ -62,4 +62,4 @@ Disallow: /search
 Disallow: /r/*/search
 Allow: /
 
-Sitemap: ${add_sr('sitemap', sr_path=False, force_https=True)}
+Sitemap: ${thing.subreddit_sitemap}

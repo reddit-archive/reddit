@@ -30,6 +30,7 @@ import sys
 import time
 import datetime
 import pytz
+from collections import namedtuple
 
 from pylons import app_globals as g
 
@@ -67,6 +68,17 @@ def _from_path(path):
         raise ValueError('Bad S3 path %s' % path)
 
     return bucket, key
+
+
+S3Path = namedtuple('S3Path', ['bucket', 'key'])
+
+
+def parse_s3_path(path):
+    return S3Path(*_from_path(path))
+
+
+def format_expires(expires):
+    return expires.strftime(EXPIRES_DATE_FORMAT)
 
 
 def get_text_from_s3(s3_connection, path):
@@ -363,4 +375,3 @@ def get_post_args(
         "action": "//%s.%s" % (bucket, g.s3_media_domain),
         "fields": fields,
     }
-

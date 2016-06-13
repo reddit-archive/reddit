@@ -34,8 +34,7 @@ Reddit contains tons and tons of links. Generating them on the fly is simply
 impractical. The solution this module implements is a very slow batch that
 goes through every subreddit and every link and creates crawlable permalinks
 from them. These links are then put into sitemaps and stored in
-r2.lib.sitemap.Sitemap. The sitemap controllers then simply serve up the xml
-files that they find in the Sitemap Thing.
+s3. We then upload those sitemaps as static files to s3 where we host them.
 
 The Sitemap protocol specifies a hard limit of 50000 links. Since we have
 significantly more links than that, we have to define a Sitemap Index
@@ -57,11 +56,11 @@ This module is split into 3 parts.
 
   r2.lib.sitemaps.data - Loads up the raw Subreddit and Link Things.
   r2.lib.sitemaps.generate - Transforms the Things into sitemap xml strings.
-  r2.lib.sitemaps.store - Glue code that makes and stores the sitemaps.
+  r2.lib.sitemaps.store - Stores the sitemaps on s3.
+  r2.lib.sitemaps.watcher - Reads from the SQS queue and starts a new upload
 
 
 The only function that's supposed to be used outside of this module is
-r2.lib.sitemaps.store.store_sitemaps which dumps the new
-sitemaps into r2.models.sitemap.Sitemap. This is designed to be used
-through a daily cron job given the slow speed of the operation.
+r2.lib.sitemaps.watcher.watcher. This is designed to be used as a constantly
+running daemon.
 """

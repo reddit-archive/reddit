@@ -25,53 +25,49 @@
 Currently only supports subreddit links but will soon support comment links.
 """
 
-import hashlib
-import itertools
+import tempfile
 
+from boto.s3.connection import S3Connection
 from pylons import app_globals as g
 
-from r2.lib.db.operators import asc
-from r2.lib.utils import fetch_things2, rate_limited_generator
-from r2.models.subreddit import Subreddit
+from r2.lib.hadoop_decompress import hadoop_decompress
 
 
-DB_CHUNK_SIZE = 50000
-DB_RATE_LIMIT = DB_CHUNK_SIZE
-EXPERIMENT_SUBREDDIT_SITEMAP = 'experiment-subreddit-sitemap'
-# number of possible ways a subreddit can be partitioned for the experiment.
-EXPERIMENT_BUCKET_COUNT = 20
+def _read_subreddit_etl_from_s3(s3path):
+    s3conn = S3Connection()
+    bucket = s3conn.get_bucket(s3path.bucket, validate=False)
+    s3keys = bucket.list(s3path.key)
+
+    key_count = 0
+    for s3key in s3keys:
+        g.log.info("Importing key %r", s3key)
+
+        with tempfile.TemporaryFile(mode='rw+b') as ntf_download:
+            with tempfile.TemporaryFile(mode='rw+b') as ntf_decompress:
+
+                # download it
+                g.log.debug("Downloading %r", s3key)
+                s3key.get_contents_to_file(ntf_download)
+
+                # decompress it
+                ntf_download.flush()
+                ntf_download.seek(0)
+                g.log.debug("Decompressing %r", s3key)
+                hadoop_decompress(ntf_download, ntf_decompress)
+                ntf_decompress.flush()
+                ntf_decompress.seek(0)
+
+                # import it
+                g.log.debug("Starting import of %r", s3key)
+                for line in ntf_decompress:
+                    yield line
+        key_count += 1
+
+    if key_count == 0:
+        raise ValueError('{0} contains no readable keys.'.format(s3path))
 
 
-def rate_limit_query(query):
-    return rate_limited_generator(
-        DB_RATE_LIMIT,
-        fetch_things2(query, DB_CHUNK_SIZE),
-    )
-
-def is_part_of_experiment(subreddit):
-    """Decide that this subreddit is part of the seo traffic experiment.
-
-    At the moment the features system (r2/config/feature/README.md)
-    is designed to be bucketed on a per user basis. We would like an
-    experiment that is bucketed by subreddits instead. To do this we
-    are going completely around the features system and instead
-    bucketing the code here and communicating our hashing method with
-    the data team.
-
-    Much of this logic is borrowed from FeatureState.
-    """
-    key = '_'.join((EXPERIMENT_SUBREDDIT_SITEMAP, subreddit.name))
-    hashed = hashlib.sha1(key)
-    bucket = long(hashed.hexdigest(), 16) % EXPERIMENT_BUCKET_COUNT
-    return bucket == 0
-
-def is_subreddit_to_crawl(subreddit):
-    return (subreddit.quarantine == False and
-            subreddit.over_18 == False and
-            is_part_of_experiment(subreddit))
-
-def find_all_subreddits():
-    iterator = rate_limit_query(Subreddit._query(
-        *[Subreddit.c.type != type_ for type_ in Subreddit.private_types],
-        sort=asc('_date')))
-    return itertools.ifilter(is_subreddit_to_crawl, iterator)
+def find_all_subreddits(s3path):
+    for line in _read_subreddit_etl_from_s3(s3path):
+        _, subreddit, __ = line.split('\x01')
+        yield subreddit

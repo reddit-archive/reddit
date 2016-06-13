@@ -61,9 +61,6 @@ def make_map(config):
     mc('/robots.txt', controller='robots', action='robots')
     mc('/crossdomain', controller='robots', action='crossdomain')
 
-    mc('/sitemap', controller='sitemap', action='index')
-    mc('/subreddit_sitemap', controller='sitemap', action='subreddits')
-
     mc('/login', controller='forms', action='login')
     mc('/register', controller='forms', action='register')
     mc('/logout', controller='forms', action='logout')
