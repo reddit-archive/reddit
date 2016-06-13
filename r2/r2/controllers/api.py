@@ -1637,10 +1637,10 @@ class ApiController(RedditController):
         if not stickied and (thing._deleted or thing._spam):
             abort(400, "Can't sticky a removed or deleted post")
 
-        if not thing.is_stickyable():
-            abort(400, "Post not stickyable")
-
         if state:
+            if not thing.is_stickyable():
+                abort(400, "Post not stickyable")
+
             if stickied:
                 abort(409, "Already stickied")
             sr.set_sticky(thing, c.user, num=num)
