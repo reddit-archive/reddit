@@ -246,7 +246,6 @@ def make_map(config):
     # sponsor endpoints
     mc('/sponsor/report', controller='sponsor', action='report')
     mc('/sponsor/inventory', controller='sponsor', action='promote_inventory')
-    mc('/sponsor/roadblock', controller='sponsor', action="roadblock")
     mc('/sponsor/lookup_user', controller='sponsor', action="lookup_user")
 
     # sponsor listings
@@ -398,7 +397,7 @@ def make_map(config):
        requirements=dict(action=("promote|unpromote|edit_promo|ad_s3_callback|"
                                  "ad_s3_params|freebie|promote_note|update_pay|"
                                  "edit_campaign|delete_campaign|"
-                                 "add_roadblock|rm_roadblock|check_inventory|"
+                                 "check_inventory|"
                                  "refund_campaign|terminate_campaign|"
                                  "review_fraud|create_promo|"
                                  "toggle_pause_campaign")))

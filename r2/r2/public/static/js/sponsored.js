@@ -89,7 +89,7 @@ var CampaignButton = React.createClass({
         React.DOM.button(
           { className: this.getClassName(), onClick: this.handleClick },
           r._('+ close')
-        ) 
+        )
       );
     }
     return React.DOM.button(
@@ -329,12 +329,12 @@ var CampaignCreator = React.createClass({
           InfoText(cssClass, message),
           CampaignOptionTable(null, CampaignOption(auction))
         ),
-      ];      
+      ];
     } else {
       var requested = this.getRequestedOption();
       requested.primary = true;
       var maximized = this.getMaximizedOption();
-      
+
       if (this.props.override) {
         if (requested.impressions <= this.state.available) {
           return [CampaignSet(null,
@@ -412,7 +412,7 @@ var CampaignCreator = React.createClass({
                this.state.totalAvailable > this.state.available &&
                maximized.totalBudgetDollars > this.props.minBudgetDollars) {
         return CampaignSet(null,
-          InfoText(null, 
+          InfoText(null,
             r._('the campaign you requested is too big! the largest campaign ' +
                  'available is:')
           ),
@@ -458,7 +458,7 @@ var CampaignCreator = React.createClass({
         }
       }
     }
-    
+
     return null;
   },
 
@@ -468,7 +468,7 @@ var CampaignCreator = React.createClass({
 
   getBudget: function(impressions, requestedBudget) {
     if (this.getImpressions(requestedBudget) === impressions) {
-      return requestedBudget; 
+      return requestedBudget;
     } else {
       return Math.floor((impressions / 1000) * this.props.cpm) / 100;
     }
@@ -672,7 +672,7 @@ var exports = r.sponsored = {
         var subredditNameTemplate = _.template('<% _.each(sr_names, function(name) { %>'
             + ' <li><%= name %></li> <% }); %>');
         var render_subreddit_list = _.bind(function(collection) {
-            if (collection === 'none' || 
+            if (collection === 'none' ||
                     typeof this.collectionsByName[collection] === 'undefined') {
                 return '';
             }
@@ -685,7 +685,7 @@ var exports = r.sponsored = {
             this.collapse_collection_selector();
             this.render();
         }, this);
-        
+
         this.collapse_collection_selector = function collapse_widget() {
             $('body').off('click', collapse);
             var $selected = get_selected();
@@ -765,7 +765,7 @@ var exports = r.sponsored = {
         this.frequency_capped = !!frequency_capped;
     },
 
-    setup_mobile_targeting: function(mobileOS, iOSDevices, iOSVersions, 
+    setup_mobile_targeting: function(mobileOS, iOSDevices, iOSVersions,
                                      androidDevices, androidVersions) {
       this.mobileOS = mobileOS;
       this.iOSDevices = iOSDevices;
@@ -783,8 +783,8 @@ var exports = r.sponsored = {
         defaultValue = defaultValue || 'none';
 
         this.collections = [{
-            name: 'none', 
-            sr_names: null, 
+            name: 'none',
+            sr_names: null,
             description: 'influencers on reddit’s highest trafficking page',
         }].concat(collections || []);
 
@@ -856,7 +856,7 @@ var exports = r.sponsored = {
     fetch_inventory: function(targeting, timing) {
         var srname = targeting.sr,
             collection = targeting.collection,
-            geotarget = targeting.geotarget, 
+            geotarget = targeting.geotarget,
             platform = targeting.platform,
             inventoryKey = targeting.inventoryKey,
             dates = timing.dates;
@@ -1029,7 +1029,7 @@ var exports = r.sponsored = {
             requested = budget.impressions,
             daily_request = Math.floor(requested / timing.duration),
             inventoryKey = targeting.inventoryKey,
-            booked = this.get_booked_inventory($form, targeting.sr, 
+            booked = this.get_booked_inventory($form, targeting.sr,
                     targeting.geotarget, isOverride),
             minBudgetDollars = r.sponsored.get_min_budget_dollars(),
             maxBudgetDollars = r.sponsored.get_max_budget_dollars();
@@ -1231,7 +1231,7 @@ var exports = r.sponsored = {
             var iOSVersionRange = platformTargets.iOSVersionRange;
             var androidDevices = platformTargets.androidDevices;
             var androidVersionRange = platformTargets.androidVersionRange;
-            
+
             platformTargetsList = ['platform',
                                    'iOSDevices',
                                    'iOSVersionRange',
@@ -1608,7 +1608,7 @@ var exports = r.sponsored = {
         } else if (!this.isAuction && validTargeting) {
             this.check_inventory($form, targeting, timing, budget, priority.isOverride)
         }
-            
+
         if (targeting.canGeotarget) {
             this.enable_geotargeting();
         } else {
@@ -1760,7 +1760,7 @@ var exports = r.sponsored = {
         // maxBidDollars should be the lowest either
         // of maxBidDollars or dailyMaxBid
         var maxBidDollars = r.sponsored.get_max_bid_dollars(),
-            dailyMaxBid = totalBudgetDollars / duration; 
+            dailyMaxBid = totalBudgetDollars / duration;
 
         return Math.min(maxBidDollars, dailyMaxBid);
     },
@@ -1891,13 +1891,6 @@ var exports = r.sponsored = {
         };
 
         this.reload_with_params(data);
-    },
-
-    fill_roadblock_form: function() {
-        var $form = $('.roadblock-dashboard'),
-            timing = this.get_timing($form);
-
-        this.render_timing_duration($form, timing.duration);
     },
 
     reload_with_params: function(data) {
@@ -2047,7 +2040,7 @@ function cancel_edit(callback) {
             });
     } else {
         var keep_open = $campaign.hasClass('keep-open');
-        
+
         if ($campaign.is(':visible') && !keep_open) {
             $campaign.slideUp(callback);
         } else if (callback) {
@@ -2207,7 +2200,7 @@ function edit_campaign($campaign_row) {
                 radios.filter('*[value="one"]')
                     .prop("checked", "checked");
                 campaign.find('*[name="sr"]').val(targeting).prop("disabled", false).end()
-                    .find(".subreddit-targeting").show();    
+                    .find(".subreddit-targeting").show();
                 $(".collection-targeting").hide();
             } else {
                 radios.filter('*[value="collection"]')
@@ -2319,7 +2312,7 @@ function free_campaign($campaign_row) {
     $.request("freebie", {"campaign_id36": campaign_id36, "link_id36": link_id36},
               null, true, "json", false);
     $campaign_row.find(".free").fadeOut();
-    return false; 
+    return false;
 }
 
 function terminate_campaign($campaign_row) {
@@ -2370,7 +2363,7 @@ function cancel_edit_campaign() {
         return check(days, 0);
 
         /**
-         * check if a set of days is valid, then compare to results of this 
+         * check if a set of days is valid, then compare to results of this
          * function called on subsets of that date range
          * @param  {Number[]} days inventory values
          * @param  {Number} offset offset from the original days array we are
@@ -2456,7 +2449,7 @@ function cancel_edit_campaign() {
           sub.push(days[i])
         }
         else {
-          // whenever we hit the end of a contiguous set of days above the 
+          // whenever we hit the end of a contiguous set of days above the
           // minValue threshold, compare that sub-array to our current bestOption
           if (sub.length) {
             bestOption = compare(bestOption, check(sub, subOffset))

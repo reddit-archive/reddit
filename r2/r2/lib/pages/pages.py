@@ -87,7 +87,6 @@ from r2.models.promo import (
     NO_TRANSACTION,
     PROMOTE_COST_BASIS,
     PROMOTE_PRIORITIES,
-    PromotedLinkRoadblock,
     PromotionLog,
     Collection,
 )
@@ -4364,7 +4363,6 @@ class PromotePage(Reddit):
         if c.user_is_sponsor:
             buttons = [
                 NavButton(menu['new_promo'], dest='/promoted/new_promo'),
-                NavButton(menu['roadblock'], dest='/sponsor/roadblock'),
                 NavButton(menu['current_promos'], dest='/sponsor/promoted',
                           aliases=['/sponsor']),
                 NavButton('inventory', '/sponsor/inventory'),
@@ -4713,19 +4711,17 @@ class RefundPage(Reddit):
         self.traffic_url = '/traffic/%s/%s' % (link._id36, campaign._id36)
         Reddit.__init__(self, title="refund", show_sidebar=False)
 
-
-class Roadblocks(PromoteLinkBase):
+class PromotePost(PromoteLinkBase):
     def __init__(self):
-        self.roadblocks = PromotedLinkRoadblock.get_roadblocks()
-        Templated.__init__(self)
-        # reference "now" to what we use for promtions
-        now = promote.promo_datetime_now()
+        PromoteLinkBase.__init__(self)
 
-        startdate = now + datetime.timedelta(1)
-        enddate   = startdate + datetime.timedelta(1)
 
-        self.default_start = startdate.strftime('%m/%d/%Y')
-        self.default_end = enddate.strftime('%m/%d/%Y')
+class SponsorLookupUser(PromoteLinkBase):
+    def __init__(self, id_user=None, email=None, email_users=None):
+        PromoteLinkBase.__init__(
+            self, id_user=id_user, email=email, email_users=email_users or [])
+
+
 
 
 class SponsorLookupUser(PromoteLinkBase):
