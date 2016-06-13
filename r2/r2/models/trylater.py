@@ -93,6 +93,10 @@ class TryLater(tdb_cassandra.View):
         # on context __exit__ cleanup all the ready columns
         for system, items in ready.iteritems():
             cls._cf.remove(system, items.keys())
+            g.stats.simple_event(
+                "trylater.{system}.ready".format(system=system),
+                delta=len(items),
+            )
 
     @classmethod
     def search(cls, rowkey, when):
