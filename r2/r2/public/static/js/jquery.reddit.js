@@ -139,6 +139,10 @@ function handleResponse(action) {
                     if (op == "call") 
                         objs[new_i] = objs[old_i].apply(objs[old_i]._obj, args);
                     else if (op == "attr") {
+                        // remove beforeunload event handler if exists for redirects
+                        if(args == 'redirect') {
+                          $(window).off('beforeunload');
+                        }
                         objs[new_i] = objs[old_i][args];
                         if(objs[new_i])
                             objs[new_i]._obj = objs[old_i];
