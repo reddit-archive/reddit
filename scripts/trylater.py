@@ -41,3 +41,4 @@ def run_trylater():
             get_hook(hook_name).call(data=data)
 
     amqp.worker.join()
+    g.stats.flush()
