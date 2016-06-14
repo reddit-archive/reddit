@@ -40,6 +40,7 @@ haproxy
 nginx
 gunicorn
 redis-server
+zookeeperd
 PACKAGES
 
 ###############################################################################

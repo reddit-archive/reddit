@@ -43,6 +43,9 @@ compose:
     # NOTE: Using 1.4.21 instead of 1.4.17 due to tag availability.
     image: memcached:1.4.21
 
+  zookeeper:
+    image: jplock/zookeeper:3.4.6
+
 # Build steps are where the setup, compilation, and tests happen.
 build:
   # This is a fat Docker image with the apt dependencies pre-installed.

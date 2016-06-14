@@ -82,6 +82,7 @@ from r2.lib.stats import (
 )
 from r2.lib.translation import get_active_langs, I18N_PATH
 from r2.lib.utils import config_gold_price, thread_dump
+from r2.lib.zookeeper import connect_to_zookeeper, LiveConfig, LiveList
 
 
 LIVE_CONFIG_NODE = "/config/live"
@@ -323,6 +324,11 @@ class Globals(object):
         ConfigValue.choice(ONE=CL_ONE, QUORUM=CL_QUORUM): [
              'cassandra_rcl',
              'cassandra_wcl',
+        ],
+
+        ConfigValue.choice(zookeeper="zookeeper", config="config"): [
+            "liveconfig_source",
+            "secrets_source",
         ],
 
         ConfigValue.timeinterval: [
@@ -679,33 +685,29 @@ class Globals(object):
         self.startup_timer.intermediate("configuration")
 
         ################# ZOOKEEPER
-        # for now, zookeeper will be an optional part of the stack.
-        # if it's not configured, we will grab the expected config from the
-        # [live_config] section of the ini file
-        zk_hosts = self.config.get("zookeeper_connection_string")
-        if zk_hosts:
-            from r2.lib.zookeeper import (connect_to_zookeeper,
-                                          LiveConfig, LiveList)
-            zk_username = self.config["zookeeper_username"]
-            zk_password = self.config["zookeeper_password"]
-            self.zookeeper = connect_to_zookeeper(zk_hosts, (zk_username,
-                                                             zk_password))
-            self.live_config = LiveConfig(self.zookeeper, LIVE_CONFIG_NODE)
-            self.secrets = fetch_secrets(self.zookeeper)
-            self.throttles = LiveList(self.zookeeper, "/throttles",
-                                      map_fn=ipaddress.ip_network,
-                                      reduce_fn=ipaddress.collapse_addresses)
+        zk_hosts = self.config["zookeeper_connection_string"]
+        zk_username = self.config["zookeeper_username"]
+        zk_password = self.config["zookeeper_password"]
+        self.zookeeper = connect_to_zookeeper(zk_hosts, (zk_username,
+                                                         zk_password))
 
-            # close our zk connection when the app shuts down
-            SHUTDOWN_CALLBACKS.append(self.zookeeper.stop)
+        self.throttles = LiveList(self.zookeeper, "/throttles",
+                                  map_fn=ipaddress.ip_network,
+                                  reduce_fn=ipaddress.collapse_addresses)
+
+        parser = ConfigParser.RawConfigParser()
+        parser.optionxform = str
+        parser.read([self.config["__file__"]])
+
+        if self.config["liveconfig_source"] == "zookeeper":
+            self.live_config = LiveConfig(self.zookeeper, LIVE_CONFIG_NODE)
         else:
-            self.zookeeper = None
-            parser = ConfigParser.RawConfigParser()
-            parser.optionxform = str
-            parser.read([self.config["__file__"]])
             self.live_config = extract_live_config(parser, self.plugins)
+
+        if self.config["secrets_source"] == "zookeeper":
+            self.secrets = fetch_secrets(self.zookeeper)
+        else:
             self.secrets = extract_secrets(parser)
-            self.throttles = tuple()  # immutable since it's not real
 
         ################# PRIVILEGED USERS
         self.admins = PermissionFilteredEmployeeList(
