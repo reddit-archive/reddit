@@ -87,7 +87,7 @@ class TryLater(tdb_cassandra.View):
             ready_time = convert_uuid_to_time(ready_time_uuid)
             ready_datetime = datetime.fromtimestamp(ready_time, tz=g.tz)
             if ready_datetime <= cutoff:
-                ready_items[ready_datetime] = data
+                ready_items[ready_time_uuid] = data
                 ready_timestamps.append(timestamp)
             else:
                 unripe_timestamps.append(timestamp)
