@@ -763,20 +763,18 @@ function reply(elem) {
         }
     }
 
-        //show the right buttons
-        show_edit_usertext(form);
-        //re-show the whole form if required
-        form.show();
-        //update the cancel button to call the toggle button's click
-        form.find(".cancel").get(0).onclick = function() {
-          $(window).off('beforeunload');
-          form.hide();
-        };
-        $(e.target).thing().find(".showreplies:visible").click();
-		return false;
-    });
-});
-    
+    //show the right buttons
+    show_edit_usertext(form);
+    //re-show the whole form if required
+    form.show();
+    //update the cancel button to call the toggle button's click
+    form.find(".cancel").get(0).onclick = function() {
+      $(window).off('beforeunload');
+      form.hide();
+    };
+    $(e.target).thing().find(".showreplies:visible").click();
+    return false;
+}
 
 function toggle_distinguish_span(elem) {
   var form = $(elem).parents("form")[0];
