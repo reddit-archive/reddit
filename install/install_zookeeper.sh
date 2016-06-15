@@ -17,41 +17,16 @@
 # The Original Developer is the Initial Developer.  The Initial Developer of
 # the Original Code is reddit Inc.
 #
-# All portions of the code written by reddit are Copyright (c) 2006-2015 reddit
+# All portions of the code written by reddit are Copyright (c) 2006-2016 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
 
-###############################################################################
-# Install services
-###############################################################################
-
-# load configuration
 RUNDIR=$(dirname $0)
 source $RUNDIR/install.cfg
 
-# install prerequisites
-cat <<PACKAGES | xargs apt-get install $APTITUDE_OPTIONS
-mcrouter
-memcached
-postgresql
-postgresql-client
-rabbitmq-server
-haproxy
-nginx
-gunicorn
-redis-server
-PACKAGES
+sudo apt-get install $APTITUDE_OPTIONS zookeeperd
 
-###############################################################################
-# Wait for all the services to be up
-###############################################################################
-# check each port for connectivity
-echo "Waiting for services to be available, see source for port meanings..."
-# 11211 - memcache
-# 5432 - postgres
-# 5672 - rabbitmq
-for port in 11211 5432 5672; do
-    while ! nc -vz localhost $port; do
-        sleep 1
-    done
+echo "Waiting for ZooKeeper to be available..."
+while ! nc -vz localhost 2181; do
+    sleep 1
 done

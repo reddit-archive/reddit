@@ -79,6 +79,7 @@ fi
 $RUNDIR/install_apt.sh
 
 $RUNDIR/install_cassandra.sh
+$RUNDIR/install_zookeeper.sh
 
 ###############################################################################
 # Install and configure the reddit code

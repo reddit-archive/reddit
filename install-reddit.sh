@@ -38,6 +38,7 @@ NEEDED=(
     "install_apt.sh"
     "install_cassandra.sh"
     "install_services.sh"
+    "install_zookeeper.sh"
     "reddit.sh"
     "setup_cassandra.sh"
     "setup_mcrouter.sh"

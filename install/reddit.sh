@@ -88,6 +88,9 @@ $RUNDIR/install_apt.sh
 # install cassandra from datastax
 $RUNDIR/install_cassandra.sh
 
+# install zookeeper
+$RUNDIR/install_zookeeper.sh
+
 # install services (rabbitmq, postgres, memcached, etc.)
 $RUNDIR/install_services.sh
 
