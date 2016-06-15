@@ -141,7 +141,7 @@ class TryLater(tdb_cassandra.View):
         from r2.lib import amqp
         from r2.lib.hooks import all_hooks
 
-        for hook_name, hook in all_hooks().iteritems():
+        for hook_name, hook in all_hooks().items():
             if hook_name.startswith("trylater."):
                 rowkey = hook_name[len("trylater."):]
 
