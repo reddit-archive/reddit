@@ -1404,6 +1404,9 @@ class ApiController(RedditController):
         if isinstance(thing, Link):
             queries.delete(thing)
             thing.subreddit_slow.remove_sticky(thing)
+            if thing.preview_object:
+                thing.set_preview_object(None)
+                thing._commit()
         elif isinstance(thing, Comment):
             link = thing.link_slow
 
