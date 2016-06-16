@@ -84,9 +84,57 @@ pylons.translator._push_object(translator)
 url._push_object(URLGenerator(pylons.config['routes.map'], {}))
 
 
+def diff_dicts(d, expected, prefix=None):
+    """Given 2 dicts, return a summary of their differences
+
+    :param dict d: dict to match from ("got")
+    :param dict expected: dict to match against ("want")
+    :param prefix: key prefix (used for recursion)
+    :type prefix: list or None
+    :rtype: dict
+    :returns: mapping of flattened keys to 2-ples of (got, want)
+    """
+    prefix = prefix or []
+    diffs = {}
+    for k in set(d.keys() + expected.keys()):
+        current_prefix = prefix + [k]
+        want = d.get(k)
+        got = expected.get(k)
+        if isinstance(want, dict) and isinstance(got, dict):
+            diffs.update(diff_dicts(got, want, prefix=current_prefix))
+        elif got != want:
+            key = ".".join(current_prefix)
+            diffs[key] = (got, want)
+    return diffs
+
+
+class DiffAssertionError(AssertionError):
+    def __init__(self, diffs):
+        s = "\n".join(
+            "\t{key}: {want} != {got}".format(
+                key=key, want=repr(want), got=repr(got),
+            ) for key, (want, got) in sorted(diffs.iteritems())
+        )
+        super(DiffAssertionError, self).__init__(
+            "Mismatched ditionaries:\n%s" % s
+        )
+
+
+def assert_same_dict(data, expected_data):
+    """Asserts two dicts are the same (recursively)
+
+    :param dict data: dictionary to be compared from
+    :param dict expected_data: expected dictionary
+
+    :raises: :py:class:`DiffAssertionError`
+    """
+    diffs = diff_dicts(data, expected_data)
+    if diffs:
+        raise DiffAssertionError(diffs)
+
+
 class MockAmqp(object):
     """An amqp replacement, suitable for unit tests.
-
     Besides providing a mock `queue` for storing all received events, this
     class provides a set of handy assert-style functions for checking what
     was previously queued.
@@ -112,21 +160,51 @@ class MockAmqp(object):
             )
             assert len(self.queue) == count, err
 
-    def assert_event_item(self, expected_data, name="event_collector"):
-        self.assert_item_count(name, count=1)
+    def assert_event_item(
+        self, expected_data, expected_num=1, name="event_collector"
+    ):
+        candidates = []
 
-        data, _ = self.queue[name][0]
+        queue, _ = self.queue[name]
 
-        # and do they have a timestamp, uuid, and payload?
-        self.test_cls.assertNotEqual(data.pop("event_ts", None), None)
-        self.test_cls.assertNotEqual(data.pop("uuid", None), None)
-        # there is some variability, but this should at least be present
-        self.test_cls.assertIn("event_topic", data)
+        # find candidate events that are of the same topic as the provided
+        # error.
+        for data in queue:
+            data = data.copy()
+            # and do they have a timestamp, uuid, and payload?
+            assert data.pop("event_ts", None) is not None, \
+                "event_ts is missing"
+            assert data.pop("uuid", None) is not None, "uuid is missing"
+            # there is some variability, but this should at least be present
+            assert "event_topic" in data, "event_topic is missing"
 
-        # these prints are for debgging when the subsequent assert fails
-        print "GOT: ", data
-        print "WANT:", expected_data
-        self.test_cls.assert_same_dict(data, expected_data)
+            if data['event_topic'] == expected_data['event_topic']:
+                candidates.append(data)
+
+        # No candidates when expecting some, fail early.
+        if not candidates and expected_num > 0:
+            raise AssertionError(
+                "No %r events found" % expected_data['event_topic']
+            )
+
+        # for each candidate, look for an exact dictionary match
+        diffs = []
+        nmatches = 0
+        for candidate in candidates:
+            diff = diff_dicts(candidate, expected_data)
+            if not diff:
+                nmatches += 1
+            diffs.append(diff)
+
+        # if no matches, present the closest match.
+        if nmatches == 0 and expected_num > 0:
+            raise DiffAssertionError(min(diffs, key=len))
+
+        # raise if we found matches, but not the correct number
+        if nmatches != expected_num:
+            raise AssertionError("Expected %d event, got %d of %r" % (
+                expected_num, nmatches, expected_data,
+            ))
 
 
 class RedditTestCase(TestCase):

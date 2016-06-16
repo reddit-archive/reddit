@@ -48,7 +48,6 @@ from r2.lib.cache_poisoning import cache_headers_valid
 from r2.lib.utils import (
     domain,
     to_epoch_milliseconds,
-    parse_agent,
     sampled,
     squelch_exceptions,
     to36,
