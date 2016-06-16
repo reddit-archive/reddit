@@ -28,7 +28,7 @@
   def mobile_web_url():
     url = request.environ['FULLPATH']
     scheme, netloc, path, query, fragment = urlparse.urlsplit(url)
-    netloc = "%s.%s" % ('h', g.domain)
+    netloc = "%s.%s" % ('m', g.domain)
     path = path.replace('.compact', '')
     return urlparse.urlunsplit((None, netloc, path, query, fragment))
 %>
