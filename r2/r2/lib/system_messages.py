@@ -112,15 +112,16 @@ def notify_user_added(rel_type, author, user, target):
 
 def send_mod_removal_message(subreddit, mod, user):
     sr_name = "/r/" + subreddit.name
-    subject = "You've been removed as a moderator from %(subreddit)s"
+    u_name = "/u/" + user.name
+    subject = "%(user)s has been removed as a moderator from %(subreddit)s"
     message = (
-        "You have been removed as a moderator from %(subreddit)s.  "
+        "%(user)s: You have been removed as a moderator from %(subreddit)s.  "
         "If you have a question regarding your removal, you can "
         "contact the moderator team for %(subreddit)s by replying to this "
         "message."
     )
-    subject %= {"subreddit": sr_name}
-    message %= {"subreddit": sr_name}
+    subject %= {"subreddit": sr_name, "user": u_name}
+    message %= {"subreddit": sr_name, "user": user.name}
 
     item, inbox_rel = Message._new(
         mod, user, subject, message, request.ip,
