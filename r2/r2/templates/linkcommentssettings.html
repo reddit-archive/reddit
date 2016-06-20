@@ -116,7 +116,7 @@
 
 %if thing.can_sticky:
   %if thing.stickied:
-    ${ynbutton(_("make announcement"), _("unannounced"), "set_subreddit_sticky",
+    ${ynbutton(_("remove announcement"), _("removed"), "set_subreddit_sticky",
       hidden_data=dict(id=thing.link._fullname, state=False),
       event_target='link', event_action='unsticky')}
   %elif thing.stickies_full:

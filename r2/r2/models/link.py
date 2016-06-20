@@ -1118,23 +1118,8 @@ class Link(Thing, Printable):
         if self._deleted or self._spam:
             return False
 
-        subreddit = self.subreddit_slow
+        return True
 
-        if self.is_self:
-            return True
-
-        # check if it is a live thread or a wiki page
-        parsed = UrlParser(self.url)
-        if parsed.is_reddit_url():
-            path = parsed.path
-            if path.startswith("/live/"):
-                return True
-
-            wiki_path = "/r/%s/wiki/" % subreddit.name
-            if path.startswith(wiki_path):
-                return True
-
-        return False
 
 class LinksByUrlAndSubreddit(tdb_cassandra.View):
     _use_db = True
