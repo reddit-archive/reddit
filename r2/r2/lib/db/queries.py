@@ -20,17 +20,48 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from r2.models import Account, Link, Comment, Report, LinksByAccount, VotesByAccount
-from r2.models import Message, Inbox, Subreddit, ModContribSR, ModeratorInbox, MultiReddit
-from r2.lib.db.thing import Thing, Merge
+import collections
+from copy import deepcopy, copy
+import cPickle as pickle
+from datetime import datetime
+from functools import partial
+import hashlib
+import itertools
+import pytz
+from time import mktime
+
+from pylons import app_globals as g
+from pylons import tmpl_context as c
+from pylons import request
+
+from r2.lib import amqp
+from r2.lib import filters
+from r2.lib.comment_tree import add_comments
+from r2.lib.db import tdb_cassandra
+from r2.lib.db.operators import and_, or_
 from r2.lib.db.operators import asc, desc, timeago
 from r2.lib.db.sorts import epoch_seconds
-from r2.lib.db import tdb_cassandra
-from r2.lib.utils import fetch_things2, tup, UniqueIterator
+from r2.lib.db.thing import Thing, Merge
 from r2.lib import utils
-from r2.lib import amqp, filters
-from r2.lib.comment_tree import add_comments
+from r2.lib.utils import in_chunks, is_subdomain, SimpleSillyStub
+from r2.lib.utils import fetch_things2, tup, UniqueIterator
 from r2.lib.voting import prequeued_vote_key
+from r2.models import (
+    Account,
+    Comment,
+    Inbox,
+    Link,
+    LinksByAccount,
+    Message,
+    ModContribSR,
+    ModeratorInbox,
+    MultiReddit,
+    PromoCampaign,
+    Report,
+    Subreddit,
+    VotesByAccount,
+)
+from r2.models.last_modified import LastModified
 from r2.models.promo import PROMOTE_STATUS, PromotionLog
 from r2.models.query_cache import (
     cached_query,
@@ -44,31 +75,8 @@ from r2.models.query_cache import (
     ThingTupleComparator,
     UserQueryCache,
 )
-from r2.models.last_modified import LastModified
 from r2.models.vote import Vote
-from r2.lib.utils import in_chunks, is_subdomain, SimpleSillyStub
 
-import cPickle as pickle
-
-from datetime import datetime
-from functools import partial
-from time import mktime
-import pytz
-import itertools
-import collections
-from copy import deepcopy
-from r2.lib.db.operators import and_, or_
-
-from pylons import app_globals as g
-from pylons import tmpl_context as c
-from pylons import request
-
-
-query_cache = g.permacache
-log = g.log
-make_lock = g.make_lock
-worker = amqp.worker
-stats = g.stats
 
 precompute_limit = 1000
 
@@ -103,6 +111,7 @@ def filter_thing2(x):
     the object of the relationship."""
     return x._thing2
 
+
 class CachedResults(object):
     """Given a query returns a list-like object that will lazily look up
     the query from the persistent cache. """
@@ -110,10 +119,26 @@ class CachedResults(object):
         self.query = query
         self.query._limit = precompute_limit
         self.filter = filter
-        self.iden = self.query._iden()
+        self.iden = self.get_query_iden(query)
         self.sort_cols = [s.col for s in self.query._sort]
         self.data = []
         self._fetched = False
+
+    @classmethod
+    def get_query_iden(cls, query):
+        # previously in Query._iden()
+        i = str(query._sort) + str(query._kind) + str(query._limit)
+
+        if query._offset:
+            i += str(query._offset)
+
+        if query._rules:
+            rules = copy(query._rules)
+            rules.sort()
+            for r in rules:
+                i += str(r)
+
+        return hashlib.sha1(i).hexdigest()
 
     @property
     def sort(self):
@@ -130,7 +155,11 @@ class CachedResults(object):
             return
 
         keys = [cr.iden for cr in unfetched]
-        cached = query_cache.get_multi(keys, allow_local=not force, stale=stale)
+        cached = g.permacache.get_multi(
+            keys=keys,
+            allow_local=not force,
+            stale=stale,
+        )
         for cr in unfetched:
             cr.data = cached.get(cr.iden) or []
             cr._fetched = True
@@ -177,7 +206,12 @@ class CachedResults(object):
         return True
 
     def _mutate(self, fn, willread=True):
-        self.data = query_cache.mutate(self.iden, fn, default=[], willread=willread)
+        self.data = g.permacache.mutate(
+            key=self.iden,
+            mutation_fn=fn,
+            default=[],
+            willread=willread,
+        )
         self._fetched=True
 
     def insert(self, items):
@@ -242,14 +276,14 @@ class CachedResults(object):
         else:
             self._fetched = True
             self.data = tuples
-            query_cache.pessimistically_set(self.iden, tuples)
+            g.permacache.pessimistically_set(self.iden, tuples)
 
     def update(self):
         """Runs the query and stores the result in the cache. This is
            only run by hand."""
         self.data = [self.make_item_tuple(i) for i in self.query]
         self._fetched = True
-        query_cache.set(self.iden, self.data)
+        g.permacache.set(self.iden, self.data)
 
     def __repr__(self):
         return '<CachedResults %s %s>' % (self.query._rules, self.query._sort)
@@ -966,11 +1000,11 @@ def add_queries(queries, insert_items=None, delete_items=None):
 
     for q in queries:
         if insert_items and q.can_insert():
-            log.debug("Inserting %s into query %s" % (insert_items, q))
+            g.log.debug("Inserting %s into query %s" % (insert_items, q))
             with g.stats.get_timer('permacache.foreground.insert'):
                 q.insert(insert_items)
         elif delete_items and q.can_delete():
-            log.debug("Deleting %s from query %s" % (delete_items, q))
+            g.log.debug("Deleting %s from query %s" % (delete_items, q))
             with g.stats.get_timer('permacache.foreground.delete'):
                 q.delete(delete_items)
         else:
