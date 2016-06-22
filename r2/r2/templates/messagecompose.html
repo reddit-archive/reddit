@@ -107,9 +107,7 @@ ${captcha_field()}
     var admins = ${unsafe(simplejson.dumps(thing.admins))};
 
     if ($.inArray(elem.value, admins) >= 0) {
-      $(".admin-to")
-        .text(elem.value)
-        .attr('href', '/about/team/#user/' + elem.value);
+      $(".admin-to").text(elem.value);
       $(".clippy").show();
     } else {
       $(".clippy").hide();
@@ -124,16 +122,12 @@ ${captcha_field()}
        <p>
          Before you click "send", you might want to make sure that
          &#32;
-         <a class="admin-to" href="/about/team/#user/${thing.to}">${thing.to}</a>
+         <span class="admin-to">${thing.to}</span>
          &#32;
-         is the right admin for the job. The
-         &#32;
-         <a href="/about/team/">team page</a>
-         &#32;
-         has some info about who handles what.
-
-         Also:
+         is the right admin for the job.
        </p>
+
+       <p>In many cases, there is probably a better alternative than messaging an individual admin:</p>
 
        <ul>
          <li>If you'd like to message all the admins at once, send your message to the&#32;<a href="/message/compose?to=${g.admin_message_acct|u}">admin message list.</a></li>
@@ -151,7 +145,7 @@ ${captcha_field()}
          <li>If
            &#32;
            <span class="admin-to">${thing.to}</span>
-           &#32;<i>is</i>&#32; is a moderator of a specific subreddit you're
+           &#32;<i>is</i>&#32; a moderator of a specific subreddit you're
            inquiring about, and that's actually the reason you're writing, please
            message 
            &#32;
