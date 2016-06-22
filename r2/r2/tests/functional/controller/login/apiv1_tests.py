@@ -74,6 +74,15 @@ class APIV1LoginTests(LoginRegBase, RedditControllerTestCase):
         data = body['json'].get("data")
         self.assertFalse(bool(data))
 
+    def assert_403_response(self, res, calling):
+        self.assertEqual(res.status, 403)
+        self.simple_event.assert_any_call(calling)
+        self.assert_headers(
+            res,
+            "content-type",
+            "application/json; charset=UTF-8",
+        )
+
     def test_nosigning_login(self):
         res = self.do_login(
             headers={
@@ -82,8 +91,7 @@ class APIV1LoginTests(LoginRegBase, RedditControllerTestCase):
             },
             expect_errors=True,
         )
-        self.assertEqual(res.status, 403)
-        self.simple_event.assert_any_call("signing.ua.invalid.invalid_format")
+        self.assert_403_response(res, "signing.ua.invalid.invalid_format")
 
     def test_no_body_signing_login(self):
         res = self.do_login(
@@ -92,10 +100,7 @@ class APIV1LoginTests(LoginRegBase, RedditControllerTestCase):
             },
             expect_errors=True,
         )
-        self.assertEqual(res.status, 403)
-        self.simple_event.assert_any_call(
-            "signing.body.invalid.invalid_format"
-        )
+        self.assert_403_response(res, "signing.body.invalid.invalid_format")
 
     def test_nosigning_register(self):
         res = self.do_register(
@@ -105,8 +110,7 @@ class APIV1LoginTests(LoginRegBase, RedditControllerTestCase):
             },
             expect_errors=True,
         )
-        self.assertEqual(res.status, 403)
-        self.simple_event.assert_any_call("signing.ua.invalid.invalid_format")
+        self.assert_403_response(res, "signing.ua.invalid.invalid_format")
 
     def test_no_body_signing_register(self):
         res = self.do_login(
@@ -115,10 +119,7 @@ class APIV1LoginTests(LoginRegBase, RedditControllerTestCase):
             },
             expect_errors=True,
         )
-        self.assertEqual(res.status, 403)
-        self.simple_event.assert_any_call(
-            "signing.body.invalid.invalid_format"
-        )
+        self.assert_403_response(res, "signing.body.invalid.invalid_format")
 
     @unittest.skip("registration captcha is unfinished")
     def test_captcha_blocking(self):

@@ -244,6 +244,9 @@ class ErrorController(RedditController):
                 return str(code)
             elif c.render_style in extensions.API_TYPES:
                 data = request.environ.get('extra_error_data', {'error': code})
+                message = request.GET.get('message', '')
+                if message:
+                    data['message'] = message
                 if request.environ.get("WANT_RAW_JSON"):
                     return scriptsafe_dumps(data)
                 return websafe_json(json.dumps(data))

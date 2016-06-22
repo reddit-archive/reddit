@@ -35,19 +35,6 @@ class PostLoginRegTests(LoginRegBase, RedditControllerTestCase):
         super(PostLoginRegTests, self).setUp()
         self.dest = "/foo"
 
-    def find_headers(self, res, name):
-        for k, v in res.headers:
-            if k == name.lower():
-                yield v
-
-    def assert_headers(self, res, name, test):
-        for value in self.find_headers(res, name):
-            if callable(test) and test(value):
-                return
-            elif value == test:
-                return
-        raise AssertionError("No matching %s header found" % name)
-
     def assert_success(self, res):
         # On sucess, we redirect the user to the provided "dest" parameter
         # that has been added in make_qs

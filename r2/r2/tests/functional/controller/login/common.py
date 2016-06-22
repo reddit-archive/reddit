@@ -118,6 +118,21 @@ class LoginRegBase(object):
             ),
         )
 
+    def find_headers(self, res, name):
+        """Find header in res"""
+        for k, v in res.headers:
+            if k == name.lower():
+                yield v
+
+    def assert_headers(self, res, name, test):
+        """Assert header value with test (lambda function or value)"""
+        for value in self.find_headers(res, name):
+            if callable(test) and test(value):
+                return
+            elif value == test:
+                return
+        raise AssertionError("No matching %s header found" % name)
+
     def assert_success(self, res):
         """Test that is run when we expect the post to succeed."""
         raise NotImplementedError
