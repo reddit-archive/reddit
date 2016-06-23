@@ -279,7 +279,7 @@ class MessageButtons(PrintableButtons):
         can_block = True
         can_mute = False
         is_admin_message = False
-        show_distinguish = c.user.employee
+        show_distinguish = c.user.employee and c.user._id == thing.author_id
         del_on_recipient = (isinstance(thing, Message) and
                             thing.del_on_recipient)
 
