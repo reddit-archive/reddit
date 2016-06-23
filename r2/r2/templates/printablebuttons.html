@@ -542,6 +542,7 @@
     <li class="first">
       ${self.bylink_button(_("permalink"), thing.permalink, sr_path=False, event_action="permalink")}
     </li>
+    ${self.distinguish()}
   %endif
   %if thing.user_is_recipient:
     ## only allow message deleting on recipient side now

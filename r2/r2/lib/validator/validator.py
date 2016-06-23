@@ -1205,20 +1205,22 @@ class VCanDistinguish(VByName):
             item = VByName.run(self, thing_name)
 
             if item.author_id == c.user._id:
-                # will throw a legitimate 500 if this isn't a link or
-                # comment, because this should only be used on links and
-                # comments
+                if isinstance(item, Message) and c.user.employee:
+                    return True
                 subreddit = item.subreddit_slow
 
-                if how in ("yes", "no") and subreddit.can_distinguish(c.user):
+                if (how in ("yes", "no") and
+                        subreddit.can_distinguish(c.user)):
                     can_distinguish = True
-                elif how in ("special", "no") and c.user_special_distinguish:
+                elif (how in ("special", "no") and
+                        c.user_special_distinguish):
                     can_distinguish = True
-                elif how in ("admin", "no") and c.user.employee:
+                elif (how in ("admin", "no") and
+                        c.user.employee):
                     can_distinguish = True
 
                 if can_distinguish:
-                    # Don't allow distinguishing for users who are in timeout
+                    # Don't allow distinguishing for users in timeout
                     VNotInTimeout().run(target=item, subreddit=subreddit)
                     return can_distinguish
 
