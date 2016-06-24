@@ -21,7 +21,6 @@
 ###############################################################################
 
 from copy import copy
-from datetime import datetime
 
 from pylons import app_globals as g
 
@@ -122,8 +121,7 @@ def get_step_states(emr_connection, jobflowid):
     ret = []
     for step in steps:
         start_str = step.status.timeline.creationdatetime
-        start = datetime.strptime(start_str, "%Y-%m-%dT%H:%M:%S.%fZ")
-        ret.append((step.name, step.status.state, start))
+        ret.append((step.name, step.status.state, start_str))
     return ret
 
 
