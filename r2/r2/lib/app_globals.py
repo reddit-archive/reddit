@@ -266,7 +266,6 @@ class Globals(object):
         ConfigValue.tuple: [
             'plugins',
             'stalecaches',
-            'memcaches',
             'lockcaches',
             'permacache_memcaches',
             'memoizecaches',
@@ -726,15 +725,6 @@ class Globals(object):
         ################# MEMCACHE
         num_mc_clients = self.num_mc_clients
 
-        # the main memcache pool. used for most everything.
-        memcaches = CMemcache(
-            "main",
-            self.memcaches,
-            min_compress_len=1400,
-            num_clients=num_mc_clients,
-            validators=[validate_size_error],
-        )
-
         # a pool just used for @memoize results
         memoizecaches = CMemcache(
             "memoize",
@@ -870,22 +860,13 @@ class Globals(object):
                           else LocalCache)
 
         if stalecaches:
-            self.cache = StaleCacheChain(
-                localcache_cls(),
-                stalecaches,
-                memcaches,
-            )
-            # temporary duplicate for g.cache as we move keys in that pool
-            # to mcrouter
             self.gencache = StaleCacheChain(
                 localcache_cls(),
                 stalecaches,
                 self.mcrouter,
             )
         else:
-            self.cache = CacheChain((localcache_cls(), memcaches))
             self.gencache = CacheChain((localcache_cls(), self.mcrouter))
-        cache_chains.update(cache=self.cache)
         cache_chains.update(gencache=self.gencache)
 
         if stalecaches:
