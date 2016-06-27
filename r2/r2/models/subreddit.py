@@ -64,6 +64,7 @@ from r2.lib.utils import (
     tup,
     unicode_title_to_ascii,
 )
+from r2.lib.cache import MemcachedError
 from r2.lib.sgm import sgm
 from r2.lib.strings import strings, Score
 from r2.lib.filters import _force_unicode
@@ -470,8 +471,10 @@ class Subreddit(Thing, Printable, BaseSite):
 
                     still_missing = set(srnames) - set(fetched)
                     fetched.update((name, cls.SRNAME_NOTFOUND) for name in still_missing)
-
-                    g.gencache.set_multi(fetched, prefix='srid:')
+                    try:
+                        g.gencache.add_multi(fetched, prefix='srid:')
+                    except MemcachedError:
+                        pass
 
             srs = {}
             srids = [v for v in srids_by_name.itervalues() if v != cls.SRNAME_NOTFOUND]
