@@ -79,7 +79,7 @@ class DataThing(object):
     _essentials = ()
     c = operators.Slots()
     __safe__ = False
-    _cache = g.cache
+    _cache = None
     _cache_ttl = int(timedelta(hours=12).total_seconds())
 
     def __init__(self):
