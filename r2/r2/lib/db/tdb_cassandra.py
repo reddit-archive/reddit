@@ -43,6 +43,7 @@ from pycassa.types import DateType, LongType, IntegerType
 from pycassa.util import convert_uuid_to_time
 from r2.lib.utils import tup, Storage
 from r2.lib import cache
+from r2.lib.sgm import sgm
 from uuid import uuid1, UUID
 from itertools import chain
 import cPickle as pickle
@@ -398,7 +399,7 @@ class ThingBase(object):
 
             return l_ret
 
-        ret = cache.sgm(
+        ret = sgm(
             cache=cls._local_cache,
             keys=ids,
             miss_fn=lookup,

@@ -64,7 +64,7 @@ from r2.lib.utils import (
     tup,
     unicode_title_to_ascii,
 )
-from r2.lib.cache import sgm
+from r2.lib.sgm import sgm
 from r2.lib.strings import strings, Score
 from r2.lib.filters import _force_unicode
 from r2.lib.db import tdb_cassandra

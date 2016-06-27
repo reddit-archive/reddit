@@ -42,11 +42,6 @@ from pycassa.cassandra.ttypes import ConsistencyLevel
 from r2.lib.utils import in_chunks, prefix_keys, trace, tup
 from r2.lib.hardcachebackend import HardCacheBackend
 
-from r2.lib.sgm import sgm # get this into our namespace so that it's
-                           # importable from us
-
-import random
-                           
 # This is for use in the health controller
 _CACHE_SERVERS = set()
 

@@ -26,7 +26,7 @@ from itertools import chain
 from pylons import tmpl_context as c
 from pylons import app_globals as g
 
-from r2.lib.cache import sgm
+from r2.lib.sgm import sgm
 from r2.lib.utils import tup
 from r2.models.comment_tree import CommentTree, InconsistentCommentTreeError
 from r2.models.link import Comment, Link, CommentScoresByLink

@@ -26,7 +26,7 @@ import heapq
 from pylons import app_globals as g
 
 from r2.lib import count
-from r2.lib.cache import sgm
+from r2.lib.sgm import sgm
 from r2.models.link import Link
 
 

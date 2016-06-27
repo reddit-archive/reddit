@@ -30,7 +30,7 @@ import urllib2
 
 from pylons import app_globals as g
 
-from r2.lib.cache import sgm
+from r2.lib.sgm import sgm
 from r2.lib.utils import in_chunks, tup
 
 # If the geoip service has nginx in front of it there is a default limit of 8kb:

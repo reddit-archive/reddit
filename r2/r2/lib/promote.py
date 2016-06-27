@@ -45,10 +45,10 @@ from r2.lib import (
 )
 from r2.lib.db.operators import not_
 from r2.lib.db import queries
-from r2.lib.cache import sgm
 from r2.lib.filters import _force_utf8
 from r2.lib.geoip import location_by_ips
 from r2.lib.memoize import memoize
+from r2.lib.sgm import sgm
 from r2.lib.strings import strings
 from r2.lib.utils import (
     constant_time_compare,

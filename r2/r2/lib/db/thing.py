@@ -32,8 +32,8 @@ from _pylibmc import MemcachedError
 from pylons import app_globals as g
 
 from r2.lib import amqp, hooks
-from r2.lib.cache import sgm
 from r2.lib.db import tdb_sql as tdb, sorts, operators
+from r2.lib.sgm import sgm
 from r2.lib.utils import class_property, Results, tup, to36
 
 
