@@ -20,11 +20,15 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+from r2.lib.cache import MemcachedError
+
+
 # smart get multi:
 # For any keys not found in the cache, miss_fn() is run and the result is
 # stored in the cache. Then it returns everything, both the hits and misses.
 def sgm(cache, keys, miss_fn, str prefix='', int time=0, stale=False,
-        found_fn=None, _update=False, stat_subname=None):
+        found_fn=None, _update=False, stat_subname=None,
+        ignore_set_errors=False):
     cdef dict ret
     cdef dict s_keys
     cdef dict cached
@@ -74,6 +78,11 @@ def sgm(cache, keys, miss_fn, str prefix='', int time=0, stale=False,
         calculated_to_cache = {}
         for k, v in calculated.iteritems():
             calculated_to_cache[str(k)] = v
-        cache.set_multi(calculated_to_cache, prefix=prefix, time=time)
+
+        try:
+            cache.set_multi(calculated_to_cache, prefix=prefix, time=time)
+        except MemcachedError:
+            if not ignore_set_errors:
+                raise
 
     return ret
