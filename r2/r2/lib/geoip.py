@@ -96,6 +96,7 @@ def location_by_ips(ips):
         miss_fn=_location_by_ips,
         prefix='geoip:loc_',
         time=GEOIP_CACHE_TIME,
+        ignore_set_errors=True,
     )
     if is_single and location_by_ip:
         return location_by_ip[ips[0]]
@@ -111,6 +112,7 @@ def organization_by_ips(ips):
         miss_fn=_organization_by_ips,
         prefix='geoip:org_',
         time=GEOIP_CACHE_TIME,
+        ignore_set_errors=True,
     )
     if is_single and organization_by_ip:
         return organization_by_ip[ips[0]]
