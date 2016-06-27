@@ -2019,6 +2019,7 @@ class BaseLocalizedSubreddits(tdb_cassandra.View):
             prefix=cls.CACHE_PREFIX,
             stale=True,
             _update=update,
+            ignore_set_errors=True,
         )
         ids_by_location = {location: [int(id36, 36) for id36 in id36s]
                            for location, id36s in id36s_by_location.iteritems()}
