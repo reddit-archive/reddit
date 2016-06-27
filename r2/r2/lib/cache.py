@@ -1236,7 +1236,7 @@ def make_key(iden, *a, **kw):
 
 def test_stale():
     from pylons import app_globals as g
-    ca = g.cache
+    ca = g.gencache
     assert isinstance(ca, StaleCacheChain)
 
     ca.localcache.clear()
