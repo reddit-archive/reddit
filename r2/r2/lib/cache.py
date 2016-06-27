@@ -489,11 +489,10 @@ class LocalCache(dict, CacheUtils):
 class TransitionalCache(CacheUtils):
     """A cache "chain" for moving keys to a new cluster live.
 
-    `original_cache` is the cache chain previously in use (this'll frequently
-    be `g.cache` since it's the catch-all for most things) and
-    `replacement_cache` is the new place for the keys using this chain to
-    live.  `key_transform` is an optional function to translate the key names
-    into different names on the `replacement_cache`.
+    `original_cache` is the cache chain previously in use
+    `replacement_cache` is the new place for the keys using this chain to live.
+    `key_transform` is an optional function to translate the key names into
+    different names on the `replacement_cache`
 
     To use this cache chain, do three separate deployments as follows:
 
