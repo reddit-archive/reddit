@@ -52,8 +52,6 @@ def add_comments(comments):
         timer = g.stats.get_timer('comment_tree.add.1')
         timer.start()
 
-        # write scores before CommentTree because the scores must exist for all
-        # comments in the tree
         for sort in ("_controversy", "_confidence", "_score"):
             scores_by_comment = {
                 comment._id36: getattr(comment, sort)
