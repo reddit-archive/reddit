@@ -42,7 +42,9 @@ def write_comment_scores(link, comments):
         }
         CommentScoresByLink.set_scores(link, sort, scores_by_comment)
 
-    scores_by_comment = _get_qa_comment_scores(link, comments)
+    comment_tree = CommentTree.by_link(link)
+    cid_tree = comment_tree.tree
+    scores_by_comment = _get_qa_comment_scores(link, cid_tree, comments)
     CommentScoresByLink.set_scores(link, "_qa", scores_by_comment)
 
 
@@ -76,7 +78,7 @@ def add_comments(comments):
         timer.stop()
 
 
-def _get_qa_comment_scores(link, comments):
+def _get_qa_comment_scores(link, cid_tree, comments):
     """Return a dict of comment_id36 -> qa score"""
 
     # Responder is usually the OP, but there could be support for adding
@@ -89,11 +91,8 @@ def _get_qa_comment_scores(link, comments):
     for comment in comments:
         if comment.author_id in responder_ids and comment.parent_id:
             parent_cids.append(comment.parent_id)
-    parent_comments = Comment._byID(parent_cids, data=True, return_dict=False)
+    parent_comments = Comment._byID(parent_cids, return_dict=False)
     comments.extend(parent_comments)
-
-    comment_tree = CommentTree.by_link(link)
-    cid_tree = comment_tree.tree
 
     # Fetch the comments in batch to avoid a bunch of separate calls down
     # the line.
@@ -102,7 +101,7 @@ def _get_qa_comment_scores(link, comments):
         child_cids = cid_tree.get(comment._id, None)
         if child_cids:
             all_child_cids.extend(child_cids)
-    all_child_comments = Comment._byID(all_child_cids, data=True)
+    all_child_comments = Comment._byID(all_child_cids)
 
     comment_sorter = {}
     for comment in comments:
@@ -158,8 +157,10 @@ def get_comment_scores(link, sort, comment_ids, timer):
                 scores_needed, data=True, return_dict=False)
 
             if sort == "_qa":
+                comment_tree = CommentTree.by_link(link)
+                cid_tree = comment_tree.tree
                 scores_by_missing_id36 = _get_qa_comment_scores(
-                    link, missing_comments)
+                    link, cid_tree, missing_comments)
 
                 scores_by_missing = {
                     int(id36, 36): score
