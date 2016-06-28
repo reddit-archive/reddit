@@ -35,17 +35,9 @@ MESSAGE_TREE_SIZE_LIMIT = 15000
 
 
 def write_comment_scores(link, comments):
-    for sort in ("_controversy", "_confidence", "_score"):
-        scores_by_comment = {
-            comment._id36: getattr(comment, sort)
-            for comment in comments
-        }
-        CommentScoresByLink.set_scores(link, sort, scores_by_comment)
-
-    comment_tree = CommentTree.by_link(link)
-    cid_tree = comment_tree.tree
-    scores_by_comment = _get_qa_comment_scores(link, cid_tree, comments)
-    CommentScoresByLink.set_scores(link, "_qa", scores_by_comment)
+    for sort in ("_controversy", "_confidence", "_score", "_qa"):
+        scores = calculate_comment_scores(link, sort, comments)
+        CommentScoresByLink.set_scores(link, sort, scores)
 
 
 def add_comments(comments):
@@ -78,7 +70,23 @@ def add_comments(comments):
         timer.stop()
 
 
-def _get_qa_comment_scores(link, cid_tree, comments):
+def calculate_comment_scores(link, sort, comments):
+    if sort in ("_controversy", "_confidence", "_score"):
+        scores = {
+            comment._id36: getattr(comment, sort)
+            for comment in comments
+        }
+    elif sort == "_qa":
+        comment_tree = CommentTree.by_link(link)
+        cid_tree = comment_tree.tree
+        scores = _calculate_qa_comment_scores(link, cid_tree, comments)
+    else:
+        raise ValueError("unsupported comment sort %s" % sort)
+
+    return scores
+
+
+def _calculate_qa_comment_scores(link, cid_tree, comments):
     """Return a dict of comment_id36 -> qa score"""
 
     # Responder is usually the OP, but there could be support for adding
@@ -153,29 +161,13 @@ def get_comment_scores(link, sort, comment_ids, timer):
             # comments and calculate the scores.
             g.stats.simple_event('comment_tree_bad_sorter')
 
-            missing_comments = Comment._byID(
-                scores_needed, data=True, return_dict=False)
-
-            if sort == "_qa":
-                comment_tree = CommentTree.by_link(link)
-                cid_tree = comment_tree.tree
-                scores_by_missing_id36 = _get_qa_comment_scores(
-                    link, cid_tree, missing_comments)
-
-                scores_by_missing = {
-                    int(id36, 36): score
-                    for id36, score in scores_by_missing_id36.iteritems()
-                }
-            else:
-                scores_by_missing_id36 = {
-                    comment._id36: getattr(comment, sort)
-                    for comment in missing_comments
-                }
-
-                scores_by_missing = {
-                    int(id36, 36): score
-                    for id36, score in scores_by_missing_id36.iteritems()
-                }
+            missing = Comment._byID(scores_needed, return_dict=False)
+            scores_by_missing_id36 = calculate_comment_scores(
+                link, sort, missing)
+            scores_by_missing = {
+                int(id36, 36): score
+                for id36, score in scores_by_missing_id36.iteritems()
+            }
 
             # up to once per minute write the scores to limit writes but
             # eventually return us to the correct state.
