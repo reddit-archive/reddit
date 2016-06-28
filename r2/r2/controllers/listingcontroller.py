@@ -197,14 +197,22 @@ class ListingController(RedditController):
     def keep_fn(self):
         def keep(item):
             wouldkeep = item.keep_item(item)
+
             if isinstance(c.site, AllSR):
                 if not item.subreddit.discoverable:
                     return False
+            elif isinstance(c.site, FriendsSR):
+                if item.author._deleted or item.author._spam:
+                    return False
+
             if getattr(item, "promoted", None) is not None:
                 return False
+
             if item._deleted and not c.user_is_admin:
                 return False
+
             return wouldkeep
+
         return keep
 
     def prewrap_fn(self):
@@ -1696,6 +1704,10 @@ class CommentsController(SubredditListingController):
 
             if item._deleted:
                 return False
+
+            if isinstance(c.site, FriendsSR):
+                if item.author._deleted or item.author._spam:
+                    return False
 
             if c.user_is_loggedin:
                 if item.subreddit.is_moderator(c.user):
