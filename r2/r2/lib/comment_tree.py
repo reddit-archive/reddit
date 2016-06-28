@@ -34,12 +34,24 @@ from r2.models.link import Comment, Link, CommentScoresByLink
 MESSAGE_TREE_SIZE_LIMIT = 15000
 
 
+def write_comment_scores(link, comments):
+    for sort in ("_controversy", "_confidence", "_score"):
+        scores_by_comment = {
+            comment._id36: getattr(comment, sort)
+            for comment in comments
+        }
+        CommentScoresByLink.set_scores(link, sort, scores_by_comment)
+
+    scores_by_comment = _get_qa_comment_scores(link, comments)
+    CommentScoresByLink.set_scores(link, "_qa", scores_by_comment)
+
+
 def add_comments(comments):
     """Add comments to the CommentTree and update scores."""
     from r2.models.builder import write_comment_orders
 
     link_ids = [comment.link_id for comment in tup(comments)]
-    links = Link._byID(link_ids, data=True)
+    links_by_id = Link._byID(link_ids)
 
     comments = tup(comments)
     comments_by_link_id = defaultdict(list)
@@ -47,20 +59,12 @@ def add_comments(comments):
         comments_by_link_id[comment.link_id].append(comment)
 
     for link_id, link_comments in comments_by_link_id.iteritems():
-        link = links[link_id]
+        link = links_by_id[link_id]
 
         timer = g.stats.get_timer('comment_tree.add.1')
         timer.start()
 
-        for sort in ("_controversy", "_confidence", "_score"):
-            scores_by_comment = {
-                comment._id36: getattr(comment, sort)
-                for comment in link_comments
-            }
-            CommentScoresByLink.set_scores(link, sort, scores_by_comment)
-
-        scores_by_comment = _get_qa_comment_scores(link, link_comments)
-        CommentScoresByLink.set_scores(link, "_qa", scores_by_comment)
+        write_comment_scores(link, link_comments)
         timer.intermediate('scores')
 
         CommentTree.add_comments(link, link_comments)
