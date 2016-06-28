@@ -1010,6 +1010,7 @@ def fetch_things(t_class,since,until,batch_fn=None,
         q._after(t)
         things = list(q)
 
+
 def fetch_things2(query, chunk_size = 100, batch_fn = None, chunks = False):
     """Incrementally run query with a limit of chunk_size until there are
     no results left. batch_fn transforms the results for each chunk
@@ -1041,6 +1042,95 @@ def fetch_things2(query, chunk_size = 100, batch_fn = None, chunks = False):
             query._rules = deepcopy(orig_rules)
             query._after(after)
             items = list(query)
+
+
+def exponential_retrier(func_to_retry,
+                        exception_filter=lambda *args, **kw: True,
+                        retry_min_wait_ms=500,
+                        max_retries=5):
+    """Call func_to_retry and return it's results.
+    If func_to_retry throws an exception, retry.
+
+    :param Function func_to_retry: Function to execute
+        and possibly retry.
+    :param exception_filter:  Only retry exceptions for
+        which this function returns True.  Always returns True by default.
+    :param int retry_min_wait_ms: Initial wait period
+        if an exception happens in milliseconds.
+        After each retry this value will be multiplied by 2
+        thus achieving exponential backoff algorithm.
+    :param int max_retries:  How many times to wait before
+        just re-throwing last exception.
+        Value of zero would result in no retry attempts.
+    """
+    sleep_time = retry_min_wait_ms
+    num_retried = 0
+    while True:
+        try:
+            return func_to_retry()
+        # StopIteration should never be retried as its part of regular logic.
+        except StopIteration as stop_iteration:
+            raise stop_iteration
+        except Exception as e:
+            g.log.exception("%d number retried" % num_retried)
+            num_retried += 1
+            # if we ran out of retries or this Exception
+            # shouldnt be retried then raise the exception instead of sleeping
+            if num_retried > max_retries or not exception_filter(e):
+                raise e
+
+            # convert to ms.  Use floating point literal for int -> float
+            time.sleep(sleep_time / 1000.0)
+            sleep_time *= 2
+
+
+def fetch_things_with_retry(query,
+                            chunk_size=100,
+                            batch_fn=None,
+                            chunks=False,
+                            retry_min_wait_ms=500,
+                            max_retries=0):
+    """Incrementally run query with a limit of chunk_size until there are
+    no results left. batch_fn transforms the results for each chunk
+    before returning.
+
+    If a query at some point generates an exception
+    retry it using exponential backoff.
+
+    By default retrying is turned off."""
+
+    assert query._sort, "you must specify the sort order in your query!"
+
+    retrier = functools.partial(exponential_retrier,
+                                retry_min_wait_ms=retry_min_wait_ms,
+                                max_retries=max_retries)
+
+    orig_rules = deepcopy(query._rules)
+    query._limit = chunk_size
+    items = retrier(lambda: list(query))
+
+    done = False
+    while items and not done:
+        # don't need to query again at the bottom if we didn't get enough
+        if len(items) < chunk_size:
+            done = True
+
+        after = items[-1]
+
+        if batch_fn:
+                items = batch_fn(items)
+
+        if chunks:
+            yield items
+        else:
+            for i in items:
+                yield i
+
+        if not done:
+            query._rules = deepcopy(orig_rules)
+            query._after(after)
+            items = retrier(lambda: list(query))
+
 
 def fix_if_broken(thing, delete = True, fudge_links = False):
     from r2.models import Link, Comment, Subreddit, Message

@@ -23,8 +23,96 @@
 
 import collections
 import unittest
+import contextlib
+import math
+import functools
+
+from mock import MagicMock, patch
+from pylons import request
+from pylons import app_globals as g
 
 from r2.lib import utils
+
+
+class CrappyQuery(object):
+    """Helper class for testing.
+    It satisfies the methods fetch_things2 will call on a query
+    and also generator interface.
+
+    It is expected that fetch_things2 will set _after on
+    instance of this class."""
+
+    def __init__(self,
+                 start,
+                 end,
+                 failures_between_chunks=0,
+                 chunk_num_to_fail_on=None
+                 ):
+        """
+        :param int start: integer to stat yielding from.
+        :param int end: integer to end yielding at (exclusive).
+        :param int failure_between_chunks: number of times to
+            fail before starting to yield numbers from next chunk.
+        :param int chunk_num_to_fail_on:  If not None, fail only
+            after this chunk.  Do not fail between other chunks.
+        """
+        self.start = start
+        self.end = end
+        self.failures_between_chunks = failures_between_chunks
+        self.chunk_num_to_fail_on = chunk_num_to_fail_on
+
+        self._sort = "ascending"
+        self._rules = []
+
+        self.current_chunk = 0
+        self.num_after_was_called = 0
+        self.total_num_failed = 0
+        self.num_failed = 0
+        self.should_fail = False
+        self._reset_state()
+
+    def _reset_state(self):
+        self.i = self.start
+
+    def __iter__(self):
+        return self
+
+    def _after(self, num):
+        self.num_after_was_called += 1
+        self.start = num + 1
+
+    def __next__(self):
+        if (self.i >= self.start + self._limit or
+                self.i >= self.end):
+            # quit iterating if we reach end or end of chunk
+            self.current_chunk += 1
+            raise StopIteration()
+        if self.i == self.start:
+            # if we are at a start of a chunk, do some failing
+            if (self.num_failed < self.failures_between_chunks and
+                (self.chunk_num_to_fail_on is None or
+                    self.chunk_num_to_fail_on == self.current_chunk)):
+                self.should_fail = True
+            else:
+                self.should_fail = False
+                self.num_failed = 0
+        if self.should_fail:
+            self.num_failed += 1
+            self.total_num_failed += 1
+            raise ValueError("FOO %d %d %d" %
+                             (self.i,
+                              self.current_chunk,
+                              self.num_failed))
+        ret = self.i
+        self.i += 1
+        return ret
+
+    def next(self):
+        return self.__next__()
+
+    def __call__(self):
+        self._reset_state()
+        return self
 
 
 class UtilsTest(unittest.TestCase):
@@ -34,6 +122,226 @@ class UtilsTest(unittest.TestCase):
         self.assertRaises(
             ValueError, utils.weighted_lottery,
             collections.OrderedDict([('x', -1), ('y', 1)]))
+
+    @contextlib.contextmanager
+    def check_exponential_backoff_sleep_times(self,
+                                              start,
+                                              num):
+        sleepy_times = []
+
+        def record_sleep_times(sec):
+            sleepy_times.append(sec)
+
+        try:
+            with patch('time.sleep', new=record_sleep_times):
+                yield
+        finally:
+            self.assertEquals(len(sleepy_times), num)
+            walker = start / 1000.0
+            for i in sleepy_times:
+                self.assertEquals(i, walker)
+                walker *= 2
+
+    def test_exponential_retrier(self):
+
+        num_retries = 5
+
+        def make_crappy_function(fail_start=1, fail_end=5):
+            """Make a function that iterates from zero to infinity.
+            However when it is iterating in the range [fail_start,fail_end]
+            it will throw a ValueError exception but still increment
+            """
+            side_effects = [0]
+
+            def ret():
+                ret = side_effects[0]
+                side_effects[0] += 1
+                if ret >= fail_start and ret <= fail_end:
+                    raise ValueError("foo %d" % ret)
+                return ret
+
+            return ret
+
+        crappy_function = make_crappy_function()
+
+        with self.check_exponential_backoff_sleep_times(500, 0):
+            # first call to crappy_function should return zero without
+            # any retrying
+            self.assertEquals(0,
+                              utils.exponential_retrier(
+                                  crappy_function,
+                                  max_retries=num_retries))
+
+        with self.check_exponential_backoff_sleep_times(500, num_retries):
+            # this should return 6 as we will retry 5 times
+            self.assertEquals(6,
+                              utils.exponential_retrier(
+                                  crappy_function,
+                                  max_retries=num_retries))
+
+        with self.check_exponential_backoff_sleep_times(500, 0):
+            self.assertEqual(7,
+                             utils.exponential_retrier(
+                                 crappy_function,
+                                 max_retries=num_retries))
+
+        with self.check_exponential_backoff_sleep_times(1, num_retries):
+            # make sure this will fail in exponential_retrier and
+            # test that last exception is re_thrown
+            crappy_function = make_crappy_function(fail_start=0,
+                                                   fail_end=1000)
+
+            error = None
+            try:
+                utils.exponential_retrier(crappy_function,
+                                          retry_min_wait_ms=1,
+                                          max_retries=num_retries)
+            except ValueError as e:
+                error = e
+
+            self.assertEquals(error.message, "foo %d" % num_retries)
+
+        with patch('time.sleep'):
+            # check that exception is rethrown if we pass
+            # exception filter that returns False if exception
+            # is ValueError
+            crappy_function = make_crappy_function(fail_start=0,
+                                                   fail_end=0)
+
+            def exception_filter(exception):
+                return type(exception) is not ValueError
+
+            error = None
+            try:
+                utils.exponential_retrier(crappy_function,
+                                          retry_min_wait_ms=1,
+                                          max_retries=100000,
+                                          exception_filter=exception_filter)
+            except ValueError as e:
+                error = e
+
+            self.assertEquals(error.message, "foo 0")
+
+    def test_retriable_fetch_things_passthrough(self):
+        # test simple pass through case
+
+        num_retries = 5
+        chunk_size = 5
+        end = 20
+        num_chunks = int(math.ceil(end / float(chunk_size)))
+
+        fetch_things_with_retry = functools.partial(
+            utils.fetch_things_with_retry,
+            chunk_size=chunk_size,
+            max_retries=num_retries,
+            retry_min_wait_ms=1)
+
+        crappy_query = CrappyQuery(0, end, 0)
+        generated = list(fetch_things_with_retry(crappy_query))
+
+        self.assertEquals(generated, range(0, end))
+        self.assertEquals(crappy_query.total_num_failed, 0)
+        self.assertEquals(crappy_query.num_after_was_called, num_chunks)
+
+    def test_retriable_fetch_things_exception_rethrow(self):
+        # test that exception is rethrown if we run out of retries
+
+        num_retries = 5
+        chunk_size = 5
+        end = 20
+        num_chunks = int(math.ceil(end / float(chunk_size)))
+
+        fetch_things_with_retry = functools.partial(
+            utils.fetch_things_with_retry,
+            chunk_size=chunk_size,
+            max_retries=num_retries,
+            retry_min_wait_ms=1)
+
+        with self.check_exponential_backoff_sleep_times(1, num_retries):
+            error = None
+            crappy_query = CrappyQuery(0, end, num_retries + 1)
+            try:
+                list(fetch_things_with_retry(crappy_query))
+            except ValueError as e:
+                error = e
+
+            # after should not have ever been called because
+            # getting the first chunk should have failed
+            self.assertEquals(0, crappy_query.num_after_was_called)
+            self.assertEquals("FOO %d %d %d" % (0, 0, num_retries + 1),
+                              error.message)
+
+        # test same thing but failing in subsequent chunk
+        with self.check_exponential_backoff_sleep_times(1, num_retries):
+            crappy_query = CrappyQuery(0, end, num_retries + 1, 2)
+            generated = []
+            try:
+                # cant use list here as it wont get cbunks that succeeded
+                for i in fetch_things_with_retry(crappy_query):
+                    generated.append(i)
+            except ValueError as e:
+                error = e
+
+            # we should have generated some partial results
+            self.assertEquals(generated, range(0, chunk_size * 2))
+            self.assertEquals("FOO %d %d %d" % (10, 2, num_retries + 1),
+                              error.message)
+            self.assertEquals(2, crappy_query.num_after_was_called)
+
+    def test_retriable_fetch_things_recover_from_fail(self):
+        # test that we get all of the numbers in the range
+        # if we the number of failures is less than number of retries
+
+        num_retries = 5
+        chunk_size = 5
+        end = 20
+        num_chunks = int(math.ceil(end / float(chunk_size)))
+
+        fetch_things_with_retry = functools.partial(
+            utils.fetch_things_with_retry,
+            chunk_size=chunk_size,
+            max_retries=num_retries,
+            retry_min_wait_ms=1)
+
+        with patch('time.sleep'):
+            crappy_query = CrappyQuery(0, end, num_retries - 1)
+            generated = list(fetch_things_with_retry(crappy_query))
+
+            self.assertEquals(generated, range(0, end))
+            self.assertEqual(num_chunks,
+                             crappy_query.num_after_was_called)
+
+            # same thing but fail in the subsequent chunk
+            crappy_query = CrappyQuery(0, end, num_retries - 1, 2)
+            generated = list(fetch_things_with_retry(crappy_query))
+
+            self.assertEquals(generated, range(0, end))
+            self.assertEquals(num_chunks,
+                              crappy_query.num_after_was_called)
+
+        # test same thing as above but with chunks=True
+        with patch('time.sleep'):
+            expected = []
+            for i in range(0, num_chunks):
+                expected.append(range(i * chunk_size,
+                                      i * chunk_size + chunk_size))
+
+            crappy_query = CrappyQuery(0, end, num_retries - 1)
+            generated = list(fetch_things_with_retry(crappy_query,
+                                                     chunks=True))
+
+            self.assertEquals(generated, expected)
+            self.assertEqual(num_chunks,
+                             crappy_query.num_after_was_called)
+
+            # same thing but fail in the subsequent chunk
+            crappy_query = CrappyQuery(0, end, num_retries - 1, 2)
+            generated = list(fetch_things_with_retry(crappy_query,
+                                                     chunks=True))
+
+            self.assertEquals(generated, expected)
+            self.assertEquals(num_chunks,
+                              crappy_query.num_after_was_called)
 
     def test_weighted_lottery(self):
         weights = collections.OrderedDict(
