@@ -824,8 +824,7 @@ class CommentOrdererBase(object):
 
         """
 
-        timer_name = 'comment_tree.get.%s' % self.link.comment_tree_version
-        with g.stats.get_timer(timer_name) as comment_tree_timer:
+        with g.stats.get_timer('comment_tree.get.1') as comment_tree_timer:
             comment_tree = CommentTree.by_link(self.link, comment_tree_timer)
             sort_name = self.sort.col
             sorter = get_comment_scores(

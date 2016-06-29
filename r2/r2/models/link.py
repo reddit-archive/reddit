@@ -100,7 +100,7 @@ class LinkExists(Exception): pass
 class Link(Thing, Printable):
     _cache = g.thingcache
     _data_int_props = Thing._data_int_props + (
-        'num_comments', 'reported', 'comment_tree_id', 'gildings')
+        'num_comments', 'reported', 'gildings')
     _defaults = dict(is_self=False,
                      suggested_sort=None,
                      over_18=False,
@@ -129,8 +129,6 @@ class Link(Thing, Printable):
                      ip='0.0.0.0',
                      flair_text=None,
                      flair_css_class=None,
-                     comment_tree_version=1,
-                     comment_tree_id=0,
                      contest_mode=False,
                      skip_commentstree_q="",
                      sticky_comment_id=None,
@@ -219,18 +217,6 @@ class Link(Thing, Printable):
         return p.unparse()
 
     @classmethod
-    def _choose_comment_tree_version(cls):
-        try:
-            weights = g.live_config['comment_tree_version_weights']
-        except KeyError:
-            return cls._defaults['comment_tree_version']
-        try:
-            return int(utils.weighted_lottery(weights))
-        except ValueError, ex:
-            g.log.error("error choosing comment tree version: %s", ex.message)
-            return cls._defaults['comment_tree_version']
-
-    @classmethod
     def _submit(cls, is_self, title, content, author, sr, ip,
                 sendreplies=True):
         from r2.models import admintools
@@ -267,7 +253,6 @@ class Link(Thing, Printable):
             sr_id=sr._id,
             lang=sr.lang,
             ip=ip,
-            comment_tree_version=cls._choose_comment_tree_version(),
             is_self=is_self,
             over_18=over_18,
         )
@@ -1253,17 +1238,17 @@ class LegacySearchResultLink(Link):
 class Comment(Thing, Printable):
     _cache = g.thingcache
     _data_int_props = Thing._data_int_props + ('reported', 'gildings')
-    _defaults = dict(reported=0,
-                     parent_id=None,
-                     moderator_banned=False,
-                     new=False,
-                     gildings=0,
-                     banned_before_moderator=False,
-                     parents=None,
-                     ignore_reports=False,
-                     sendreplies=True,
-                     admin_takedown=False,
-                     )
+    _defaults = dict(
+        reported=0,
+        parent_id=None,
+        moderator_banned=False,
+        new=False,
+        gildings=0,
+        banned_before_moderator=False,
+        ignore_reports=False,
+        sendreplies=True,
+        admin_takedown=False,
+    )
     _essentials = ('link_id', 'author_id')
 
     is_votable = True
@@ -1291,18 +1276,6 @@ class Comment(Thing, Printable):
         from r2.lib.emailer import message_notification_email
         subreddit = link.subreddit_slow
 
-        kw = {}
-        if link.comment_tree_version > 1:
-            # for top-level comments, parents is an empty string
-            # for all others, it looks like "<id36>:<id36>:...".
-            if parent:
-                if parent.parent_id:
-                    if parent.parents is None:
-                        parent._fill_in_parents()
-                    kw['parents'] = parent.parents + ':' + parent._id36
-                else:
-                    kw['parents'] = parent._id36
-
         # determine whether the comment should go straight into spam
         spam = False
         if link.promoted and link.author_id == author._id:
@@ -1315,14 +1288,15 @@ class Comment(Thing, Printable):
                 not subreddit.is_special(author)):
             spam = True
 
-        comment = Comment(_ups=1,
-                    body=body,
-                    link_id=link._id,
-                    sr_id=link.sr_id,
-                    author_id=author._id,
-                    ip=ip,
-                    _spam=spam,
-                    **kw)
+        comment = Comment(
+            _ups=1,
+            body=body,
+            link_id=link._id,
+            sr_id=link.sr_id,
+            author_id=author._id,
+            ip=ip,
+            _spam=spam,
+        )
 
         # these props aren't relations
         if parent:
@@ -1506,42 +1480,6 @@ class Comment(Thing, Printable):
             m.insert(queries.get_user_gildings(user), [gilding])
 
         hooks.get_hook('comment.gild').call(comment=self, gilder=user)
-
-    def _fill_in_parents(self):
-        if not self.parent_id:
-            self.parents = ''
-            self._commit()
-            return
-        parent = Comment._byID(self.parent_id)
-        if parent.parent_id:
-            if parent.parents is None:
-                parent._fill_in_parents()
-            self.parents = parent.parents + ':' + parent._id36
-        else:
-            self.parents = parent._id36
-        self._commit()
-
-    def parent_path(self):
-        """Returns path of comment in tree as list of comment ids.
-
-        The returned list will always begin with -1, followed by comment ids in
-        path order. The return value for top-level comments will always be [-1].
-        """
-        if self.parent_id and self.parents is None:
-            self._fill_in_parents()
-
-        if self.parents is None:
-            return [-1]
-
-        # eliminate any leading colons from the path and parse
-        pids = [long(pid_str, 36) if pid_str else -1
-                for pid_str in self.parents.lstrip(':').split(':')]
-
-        # ensure path starts with -1
-        if pids[0] != -1:
-            pids.insert(0, -1)
-
-        return pids
 
     def _qa(self, children, responder_ids):
         """Sort a comment according to the Q&A-type sort.
