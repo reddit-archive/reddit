@@ -1069,15 +1069,15 @@ def exponential_retrier(func_to_retry,
         try:
             return func_to_retry()
         # StopIteration should never be retried as its part of regular logic.
-        except StopIteration as stop_iteration:
-            raise stop_iteration
+        except StopIteration:
+            raise
         except Exception as e:
             g.log.exception("%d number retried" % num_retried)
             num_retried += 1
             # if we ran out of retries or this Exception
             # shouldnt be retried then raise the exception instead of sleeping
             if num_retried > max_retries or not exception_filter(e):
-                raise e
+                raise
 
             # convert to ms.  Use floating point literal for int -> float
             time.sleep(sleep_time / 1000.0)

@@ -26,6 +26,8 @@ import unittest
 import contextlib
 import math
 import functools
+import traceback
+import sys
 
 from mock import MagicMock, patch
 from pylons import request
@@ -197,6 +199,10 @@ class UtilsTest(unittest.TestCase):
                                           retry_min_wait_ms=1,
                                           max_retries=num_retries)
             except ValueError as e:
+                # test that exception caught here has proper stack trace
+                self.assertTrue(any(map(
+                    lambda x: x[3] == "raise ValueError(\"foo %d\" % ret)",
+                    traceback.extract_tb(sys.exc_traceback))))
                 error = e
 
             self.assertEquals(error.message, "foo %d" % num_retries)
