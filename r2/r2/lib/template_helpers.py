@@ -663,11 +663,20 @@ def format_number(number, locale=None):
     if not locale:
         locale = c.locale
 
-    return babel.numbers.format_number(number, locale=locale)
+    if locale:
+        return babel.numbers.format_number(number, locale=locale)
+    else:
+        return babel.numbers.format_number(number)
 
 
 def format_percent(ratio, locale=None):
-    return babel.numbers.format_percent(ratio, locale=locale or c.locale)
+    if not locale:
+        locale = c.locale
+
+    if locale:
+        return babel.numbers.format_percent(ratio, locale=locale)
+    else:
+        return babel.numbers.format_percent(ratio)
 
 
 def html_datetime(date):
