@@ -54,7 +54,7 @@ def set_rising():
 
 
 def get_all_rising():
-    return g.gencache.get("all:rising", [])
+    return g.gencache.get("all:rising", [], stale=True)
 
 
 def get_rising(sr):
