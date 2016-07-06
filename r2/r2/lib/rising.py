@@ -50,12 +50,11 @@ def calc_rising():
 
 
 def set_rising():
-    # TODO: spread this around to several keys
-    g.gencache.set("rising:all", calc_rising())
+    g.gencache.set("all:rising", calc_rising())
 
 
 def get_all_rising():
-    return g.gencache.get("rising:all", [])
+    return g.gencache.get("all:rising", [])
 
 
 def get_rising(sr):
