@@ -3253,18 +3253,35 @@ class VResultTypes(Validator):
 
 
 class VSigned(Validator):
-    def run(self):
-        ua_signature = signing.valid_ua_signature(request)
-        if not ua_signature.valid:
-            g.stats.simple_event(
-                "signing.ua.invalid.%s" % ua_signature.error.code.lower())
-            abort(403, 'forbidden')
+    """Validate if the request is properly signed.
 
-        signature = signing.valid_post_signature(request)
-        if not signature.valid:
+    Checks the headers (mostly the User-Agent) are signed with
+    :py:function:`~r2.lib.signing.valid_ua_signature` and in the case
+    of POST and PUT ensure that any request.body included is also signed
+    via :py:function:`~r2.lib.signing.valid_body_signature`.
+
+    In :py:method:`run`, the signatures are combined as needed to generate a
+    final signature that is generally the combination of the two.
+    """
+
+    def run(self):
+        signature = signing.valid_ua_signature(request)
+
+        # only check the request body when there should be one
+        if request.method.upper() in ("POST", "PUT"):
+            signature.update(signing.valid_post_signature(request))
+
+        # add a simple event for each error as it appears (independent of
+        # whether we're going to ignore them).
+        for code, field in signature.errors:
             g.stats.simple_event(
-                "signing.body.invalid.%s" % signature.error.code.lower())
-            abort(403, 'forbidden')
+                "signing.%s.invalid.%s" % (field, code.lower())
+            )
+
+        # persistent skew problems on android suggest something deeper is
+        # wrong in v1.  Disable the expiration check for now!
+        if signature.platform == "android" and signature.version == 1:
+            signature.add_ignore(signing.ERRORS.EXPIRED_TOKEN)
 
         return signature
 

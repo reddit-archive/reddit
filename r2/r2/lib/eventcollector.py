@@ -32,6 +32,8 @@ import requests
 import time
 
 import httpagentparser
+import time
+
 from pylons import app_globals as g
 from uuid import uuid4
 from wsgiref.handlers import format_date_time
@@ -728,6 +730,13 @@ class EventQueue(object):
             event.add("signed", True)
             event.add("signature_platform", signature.platform)
             event.add("signature_version", signature.version)
+            event.add("signature_valid", signature.is_valid())
+            sigerror = ", ".join(
+                "%s_%s" % (field, code) for code, field in signature.errors
+            )
+            event.add("signature_errors", sigerror)
+            if signature.epoch:
+                event.add("signature_age", int(time.time()) - signature.epoch)
 
         self.save_event(event)
 

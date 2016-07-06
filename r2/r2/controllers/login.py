@@ -47,6 +47,10 @@ def handle_login(
             request=request,
             context=c)
 
+    if signature and not signature.is_valid():
+        _event(error="SIGNATURE")
+        abort(403)
+
     hook_error = hooks.get_hook("account.login").call_until_return(
         responder=responder,
         request=request,
@@ -97,6 +101,10 @@ def handle_register(
             signature=signature,
             request=request,
             context=c)
+
+    if signature and not signature.is_valid():
+        _event(error="SIGNATURE")
+        abort(403)
 
     if responder.has_errors('user', errors.USERNAME_TOO_SHORT):
         _event(error='USERNAME_TOO_SHORT')

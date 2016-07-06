@@ -44,8 +44,11 @@ class SigningTests(RedditTestCase):
         if header:
             request.headers[signing.SIGNATURE_BODY_HEADER] = header
         signature = signing.valid_post_signature(request)
-        self.assertEqual(bool(signature.valid), bool(success))
-        self.assertEqual(signature.error, error)
+        self.assertEqual(signature.is_valid(), bool(success))
+        if error:
+            self.assertIn(error.code, [code for code, _ in signature.errors])
+        else:
+            self.assertEqual(len(signature.errors), 0)
         has_mac = expected.pop("has_mac", False)
         for k, v in expected.iteritems():
             got = getattr(signature, k)

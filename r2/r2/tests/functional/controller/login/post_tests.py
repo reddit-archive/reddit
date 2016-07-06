@@ -22,6 +22,7 @@
 from r2.tests import RedditControllerTestCase
 from r2.lib.errors import error_list
 from r2.lib.unicode import _force_unicode
+from r2.models import Subreddit
 from common import LoginRegBase
 
 
@@ -33,6 +34,7 @@ class PostLoginRegTests(LoginRegBase, RedditControllerTestCase):
 
     def setUp(self):
         super(PostLoginRegTests, self).setUp()
+        self.autopatch(Subreddit, "_byID", return_value=[])
         self.dest = "/foo"
 
     def assert_success(self, res):

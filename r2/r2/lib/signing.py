@@ -19,7 +19,7 @@
 # All portions of the code written by reddit are Copyright (c) 2006-2015 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
-"""Module for request (and eventually cookie) signing.
+"""Module for request signing.
 
 """
 import hmac
@@ -31,7 +31,7 @@ from datetime import datetime
 from collections import namedtuple
 from pylons import app_globals as g
 
-from r2.lib.utils import Storage, epoch_timestamp, constant_time_compare
+from r2.lib.utils import Storage, epoch_timestamp, constant_time_compare, tup
 
 GLOBAL_TOKEN_VERSION = 1
 SIGNATURE_UA_HEADER = "X-hmac-signed-result"
@@ -41,6 +41,7 @@ SIG_HEADER_RE = re.compile(r"^(?P<global_version>\d+?):(?P<payload>.*)$")
 SIG_CONTENT_V1_RE = re.compile(
     r"^(?P<platform>.+?):(?P<version>\d+?):(?P<epoch>\d+?):(?P<mac>.*)$"
 )
+
 
 ERRORS = Storage()
 SignatureError = namedtuple("SignatureError", "code msg")
@@ -52,9 +53,116 @@ for code, msg in (
     ("INVALIDATED_TOKEN", "platform/version combination is invalid."),
     ("EXPIRED_TOKEN", "epoch provided is too old."),
     ("SIGNATURE_MISMATCH", "the payload's signature doesn't match the header"),
+    ("MULTISIG_MISMATCH", "more than one version on multiple signatures!")
 ):
     code = code.upper()
     ERRORS[code] = SignatureError(code, msg)
+
+
+class SigningResult(object):
+    """
+    """
+    __slots__ = ["global_version", "platform", "version",
+                 "mac", "valid_hmac", "epoch", "ignored_errors", "errors"]
+
+    def __init__(
+        self,
+        global_version=-1,
+        platform=None,
+        version=-1,
+        mac=None,
+        valid_hmac=False,
+        epoch=None,
+    ):
+        self.global_version = global_version
+        self.platform = platform
+        self.version = version
+        self.mac = mac
+        self.valid_hmac = valid_hmac
+        self.epoch = epoch
+        self.ignored_errors = []
+        self.errors = {}
+
+    def __repr__(self):
+        return "<%s (%s)>" % (
+            self.__class__.__name__,
+            ", ".join("%s=%r" % (k, getattr(self, k)) for k in self.__slots__)
+        )
+
+    def add_error(self, error, field=None, details=None):
+        """Add an error.
+
+        Duplicate errors (those with the same code and field) will have the
+        last `details` stored.
+
+        :param error: The error to be set.
+        :param field: where the error came from (generally "body" or "ua")
+        :param details: additional error info (for the event)
+
+        :type error: :py:class:`SignatureError`
+        :type field: str or None
+        :type details: object
+        """
+        self.errors[(error.code, field)] = details
+
+    def add_ignore(self, ignored_error):
+        """Add error to list of ignored errors.
+
+        :param ignored_error: error to be ignored.
+        :type ignored_error: :py:class:`SignatureError`
+        """
+        self.ignored_errors.append(ignored_error)
+
+    def has_errors(self):
+        """Determines if the signature has any errors.
+
+        :returns: whether or not there are non-ignored errors
+        :rtype: bool
+        """
+        if self.ignored_errors:
+            igcodes = {err.code for err in tup(self.ignored_errors)}
+            error_codes = {code for code, _ in self.errors}
+            return not error_codes.issubset(igcodes)
+        else:
+            return bool(self.errors)
+
+    def is_valid(self):
+        """Returns if the hmac is valid and the signature has no errors.
+
+        :returns: whether or not this is valid
+        :rtype: bool
+        """
+        return self.valid_hmac and not self.has_errors()
+
+    def update(self, other):
+        """Destructively merge this result with another.
+
+        the signatures are combined as needed to generate a final signature
+        that is generally the combination of the two as follows:
+
+         - `errors` are combined
+         - `global_version`, `platform`, and `version` are compared. In the
+            case of a mismatch, "MULTISIG_MISMATCH" error is set.
+         - signature validity is independently checked with :py:meth:`is_valid`
+
+        :param other: other result to be merged from
+        :type other: :py:class:`SigningResult`
+
+        """
+        assert isinstance(other, SigningResult)
+
+        # copy errors onto self
+        self.errors.update(other.errors)
+
+        # verify both signatures share versioning info (if they don't,
+        # something is _very weird_)
+        for attr in ("global_version", "platform", "version"):
+            if getattr(self, attr) != getattr(other, attr):
+                self.add_error(ERRORS.MULTISIG_MISMATCH, details=attr)
+                break
+
+        # also the signature is valid only if both hmacs are valid
+        self.valid_hmac = self.valid_hmac and other.valid_hmac
 
 
 def current_epoch():
@@ -116,7 +224,8 @@ def valid_post_signature(request, signature_header=SIGNATURE_BODY_HEADER):
     "Validate that the request has a properly signed body."
     return valid_signature(
         "Body:{}".format(request.body),
-        request.headers.get(signature_header)
+        request.headers.get(signature_header),
+        field="body",
     )
 
 
@@ -130,10 +239,14 @@ def valid_ua_signature(
         "{}:{}".format(h, request.headers.get(h) or "")
         for h in signed_headers
     )
-    return valid_signature(payload, request.headers.get(signature_header))
+    return valid_signature(
+        payload,
+        request.headers.get(signature_header),
+        field="ua",
+    )
 
 
-def valid_signature(payload, signature):
+def valid_signature(payload, signature, field=None):
     """Checks if `signature` matches `payload`.
 
     `Signature` (at least as of version 1) be of the form:
@@ -150,50 +263,58 @@ def valid_signature(payload, signature):
             per app build as needs be.
       * signature is the hmac of the request's POST body with the token derived
             from the above three parameters via `get_secret_token`
-    """
-    result = Storage(
-        global_version=-1,
-        platform=None,
-        version=-1,
-        mac=None,
-        valid=False,
-        epoch=None,
-        error=ERRORS.UNKNOWN,
-    )
 
+    :param str payload: the signed data
+    :param str signature: the signature of the payload
+    :param str field: error field to set (one of "ua", "body")
+    :returns: object with signature validity and any errors
+    :rtype: :py:class:`SigningResult`
+    """
+    result = SigningResult()
+
+    # if the signature is unparseable, there's not much to do
     sig_match = SIG_HEADER_RE.match(signature or "")
     if not sig_match:
-        result.error = ERRORS.INVALID_FORMAT
+        result.add_error(ERRORS.INVALID_FORMAT, field=field)
         return result
 
     sig_header_dict = sig_match.groupdict()
     # we're matching \d so this shouldn't throw a TypeError
     result.global_version = int(sig_header_dict['global_version'])
+
     # incrementing this value is drastic.  We can't validate a token protocol
     # we don't understand.
     if result.global_version > GLOBAL_TOKEN_VERSION:
-        result.error = ERRORS.UNKOWN_GLOBAL_VERSION
+        result.add_error(ERRORS.UNKOWN_GLOBAL_VERSION, field=field)
         return result
 
     # currently there's only one version, but here's where we'll eventually
     # patch in more.
     sig_match = SIG_CONTENT_V1_RE.match(sig_header_dict['payload'])
     if not sig_match:
-        result.error = ERRORS.UNPARSEABLE
+        result.add_error(ERRORS.UNPARSEABLE, field=field)
         return result
 
-    result.update(sig_match.groupdict())
-    result.version = int(result.version)
-    result.epoch = int(result.epoch)
+    # slop the matched data over to the SigningResult
+    sig_match_dict = sig_match.groupdict()
+    result.platform = sig_match_dict['platform']
+    result.version = int(sig_match_dict['version'])
+    result.epoch = int(sig_match_dict['epoch'])
+    result.mac = sig_match_dict['mac']
 
     # verify that the token provided hasn't been invalidated
     if is_invalid_token(result.platform, result.version):
-        result.error = ERRORS.INVALIDATED_TOKEN
+        result.add_error(ERRORS.INVALIDATED_TOKEN, field=field)
         return result
 
+    # check the epoch validity, but don't fail -- leave that up to the
+    # validator!
     if not valid_epoch(result.platform, result.epoch):
-        result.error = ERRORS.EXPIRED_TOKEN
-        return result
+        result.add_error(
+            ERRORS.EXPIRED_TOKEN,
+            field=field,
+            details=result.epoch,
+        )
 
     # get the expected secret used to verify this request.
     secret_token = get_secret_token(
@@ -201,7 +322,8 @@ def valid_signature(payload, signature):
         result.version,
         global_version=result.global_version,
     )
-    result.valid = constant_time_compare(
+
+    result.valid_hmac = constant_time_compare(
         result.mac,
         versioned_hmac(
             secret_token,
@@ -209,10 +331,9 @@ def valid_signature(payload, signature):
             result.global_version
         ),
     )
-    if result.valid:
-        result.error = None
-    else:
-        result.error = ERRORS.SIGNATURE_MISMATCH
+
+    if not result.valid_hmac:
+        result.add_error(ERRORS.SIGNATURE_MISMATCH, field=field)
 
     return result
 
@@ -220,7 +341,7 @@ def valid_signature(payload, signature):
 def sign_v1_message(body, platform, version, epoch=None):
     """Reference implementation of the v1 mobile body signing."""
     token = get_secret_token(platform, version, global_version=1)
-    epoch = epoch or current_epoch()
+    epoch = int(epoch or current_epoch())
     payload = epoch_wrap(epoch, body)
     signature = versioned_hmac(token, payload, global_version=1)
     return "{global_version}:{platform}:{version}:{epoch}:{signature}".format(
