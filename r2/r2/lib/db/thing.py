@@ -274,10 +274,6 @@ class DataThing(object):
     def record_cache_write(cls, event, delta=1):
         raise NotImplementedError
 
-    @classmethod
-    def record_lookup(cls, data, delta=1):
-        raise NotImplementedError
-
     def _commit(self):
         """Write changes to db and write the full object to cache.
 
@@ -383,8 +379,6 @@ class DataThing(object):
                 return {}
             else:
                 return []
-
-        cls.record_lookup(data=True, delta=len(ids))
 
         things_by_id = cls.get_things_from_cache(ids, stale=stale)
         missing_ids = [_id
@@ -553,13 +547,6 @@ class Thing(DataThing):
     def record_cache_write(cls, event, delta=1):
         name = cls.__name__.lower()
         event_name = "thing.{event}.{name}".format(event=event, name=name)
-        g.stats.simple_event(event_name, delta)
-
-    @classmethod
-    def record_lookup(cls, data, delta=1):
-        name = cls.__name__.lower()
-        data_str = "data" if data else "nodata"
-        event_name = "thing.byid.{name}.{data}".format(name=name, data=data_str)
         g.stats.simple_event(event_name, delta)
 
     def __repr__(self):
@@ -919,13 +906,6 @@ def Relation(type1, type2):
         def record_cache_write(cls, event, delta=1):
             name = cls.__name__.lower()
             event_name = "rel.{event}.{name}".format(event=event, name=name)
-            g.stats.simple_event(event_name, delta)
-
-        @classmethod
-        def record_lookup(cls, data, delta=1):
-            name = cls.__name__.lower()
-            data_str = "data" if data else "nodata"
-            event_name = "rel.byid.{name}.{data}".format(name=name, data=data_str)
             g.stats.simple_event(event_name, delta)
 
         def __getattr__(self, attr):
