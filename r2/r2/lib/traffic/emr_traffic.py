@@ -31,7 +31,7 @@ from boto.emr.bootstrap_action import BootstrapAction
 from r2.lib.emr_helpers import (
     EmrException,
     EmrJob,
-    get_compatible_clusters,
+    get_live_clusters,
     get_step_state,
     LIVE_STATES,
     COMPLETED,
@@ -124,19 +124,19 @@ class PigCoalesce(PigStep):
 def _add_step(emr_connection, step, jobflow_name, **jobflow_kw):
     """Add step to a running jobflow.
 
-    Append the step onto a compatible jobflow with the specified name if one
-    exists, otherwise create a new jobflow and run it. Returns the jobflowid.
+    Append the step onto a jobflow with the specified name if one exists,
+    otherwise create a new jobflow and run it. Returns the jobflowid.
     NOTE: jobflow_kw will be used to configure the jobflow ONLY if a new
     jobflow is created.
 
     """
 
-    running = get_compatible_clusters(emr_connection,
-        bootstrap_actions=TrafficBase._bootstrap_actions(),
-        steps=TrafficBase._setup_steps(),
-    )
+    running = get_live_clusters(emr_connection)
 
     for cluster in running:
+        # NOTE: the existing cluster's bootstrap actions aren't checked so we
+        # are assuming that any cluster with the correct name is compatible
+        # with our new step
         if cluster.name == jobflow_name:
             jobflowid = cluster.id
             emr_connection.add_jobflow_steps(jobflowid, step)
