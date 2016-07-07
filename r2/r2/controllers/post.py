@@ -181,7 +181,6 @@ class PostController(ApiController):
 
         return self.redirect(dest)
 
-    @vary_pagecache_on_experiments("registration_captcha")
     @csrf_exempt
     @validate(dest = VDestination(default = "/"))
     def POST_reg(self, dest, *a, **kw):

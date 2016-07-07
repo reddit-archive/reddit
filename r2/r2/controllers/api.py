@@ -641,7 +641,6 @@ class ApiController(RedditController):
         ))
         return handle_login(**kwargs)
 
-    @vary_pagecache_on_experiments("registration_captcha")
     @csrf_exempt
     @cross_domain(allow_credentials=True)
     @validatedForm(
