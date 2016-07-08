@@ -48,10 +48,10 @@ from r2.lib.wrapped import Wrapped
 from r2.lib.db import operators, tdb_cassandra
 from r2.lib.filters import _force_unicode
 from r2.lib.utils import (
+    long_datetime,
     shuffle_slice,
     SimpleSillyStub,
     Storage,
-    timesince,
     to36,
     tup,
 )
@@ -299,9 +299,9 @@ class Builder(object):
                     approver = approver or _("a moderator")
 
                     if approval_time:
-                        text = _("approved by %(who)s %(when)s ago") % {
+                        text = _("approved by %(who)s at %(when)s") % {
                                     "who": approver,
-                                    "when": timesince(approval_time)}
+                                    "when": long_datetime(approval_time)}
                     else:
                         text = _("approved by %s") % approver
                     w.approval_checkmark = text
