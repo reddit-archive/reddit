@@ -1115,20 +1115,6 @@ def make_key_id(*a, **kw):
     h.update(_make_hashable(kw))
     return h.hexdigest()
 
-def make_key(iden, *a, **kw):
-    """
-    A helper function for making memcached-usable cache keys out of
-    arbitrary arguments. Hashes the arguments but leaves the `iden'
-    human-readable
-    """
-    h = md5()
-    iden = _make_hashable(iden)
-    h.update(iden)
-    h.update(_make_hashable(a))
-    h.update(_make_hashable(kw))
-
-    return '%s(%s)' % (iden, h.hexdigest())
-
 
 def test_stale():
     from pylons import app_globals as g
