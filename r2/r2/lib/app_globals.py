@@ -807,7 +807,7 @@ class Globals(object):
             "mcrouter",
             self.mcrouter_addr,
             min_compress_len=1400,
-            num_clients=1,
+            num_clients=num_mc_clients,
         )
 
         ################# THRIFT-BASED SERVICES
