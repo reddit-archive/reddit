@@ -29,7 +29,7 @@
       <input type="text" maxlength="20" id="flair_jump_name" name="name"
              value="${name}">
       <button type="submit">${_('go')}</button>
-      ${utils.error_field(('USER_DOESNT_EXIST', 'name'), 'name')}
+      ${utils.error_field('USER_DOESNT_EXIST', 'name')}
     </form>
     %if thing.user or thing.name:
         ${utils.plain_link(_('back to full list'), '/about/flair',
