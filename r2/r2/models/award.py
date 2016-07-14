@@ -137,6 +137,7 @@ class FakeTrophy(object):
 
 class Trophy(Relation(Account, Award)):
     _cache = g.thingcache
+    _enable_fast_query = False
 
     @classmethod
     def _cache_prefix(cls):
