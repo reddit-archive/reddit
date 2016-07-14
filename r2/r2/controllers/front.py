@@ -201,7 +201,7 @@ class FrontController(RedditController):
                           show_chooser=True,
                           page_classes=['explore-page'],
                           content=content).render()
- 
+
     @validate(article=VLink('article'))
     def GET_shirt(self, article):
         if not can_view_link_comments(article):
@@ -268,7 +268,12 @@ class FrontController(RedditController):
             abort(403, 'forbidden')
 
         # check over 18
-        if article.is_nsfw and not c.over18 and c.render_style == 'html':
+        if (
+            article.is_nsfw and
+            not c.over18 and
+            c.render_style == 'html' and
+            not request.parsed_agent.bot
+        ):
             return self.intermediate_redirect("/over18", sr_path=False)
 
         canonical_link = article.make_canonical_link(sr)
@@ -1949,7 +1954,7 @@ class FormsController(RedditController):
                              not c.user.has_gold_subscription)
             if not can_subscribe and goldtype == "autorenew":
                 self.redirect("/creddits", code=302)
-                
+
             return BoringPage(_("reddit gold"),
                               show_sidebar=False,
                               content=Gold(goldtype, period, months, signed,

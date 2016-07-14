@@ -689,6 +689,23 @@ class EventQueue(object):
 
         self.save_event(event)
 
+    def loid_event(self, loid, action_name, request=None, context=None):
+        """Create a 'loid' event for event-collector.
+
+        loid: the created/modified loid
+        action_name: create_loid (only allowed value currently)
+        """
+        event = Event(
+            topic="loid_events",
+            event_type='ss.%s' % action_name,
+            request=request,
+            context=context,
+        )
+        event.add("request_url", request.fullpath)
+        for k, v in loid.to_dict().iteritems():
+            event.add(k, v)
+        self.save_event(event)
+
     def login_event(self, action_name, error_msg,
                     user_name=None, email=None,
                     remember_me=None, newsletter=None, email_verified=None,
@@ -924,7 +941,7 @@ class Event(object):
         data["geoip_country"] = get_request_location(request, context)
         data["domain"] = request.host
         data["user_agent"] = request.user_agent
-        data["user_agent_parsed"] = parse_agent(request.user_agent)
+        data["user_agent_parsed"] = request.parsed_agent.to_dict()
 
         http_referrer = request.headers.get("Referer", None)
         if http_referrer:

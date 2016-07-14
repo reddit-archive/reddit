@@ -54,11 +54,7 @@ class LoidTests(RedditTestCase):
                     'referrer_domain': self.domain_mock(),
                     'referrer_url': request.headers.get(),
                     'user_agent': request.user_agent,
-
-                    'user_agent_parsed': {
-                        'platform_version': None,
-                        'platform_name': None,
-                    },
+                    'user_agent_parsed': request.parsed_agent.to_dict(),
                     'obfuscated_data': {
                         'client_ip': request.ip,
                     }

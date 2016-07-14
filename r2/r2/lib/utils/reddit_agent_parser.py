@@ -186,3 +186,83 @@ class BaconReaderDetector(RedditBrowser):
 
 def detect(*args, **kw):
     return de(*args, **kw)
+
+
+class Agent(object):
+    __slots__ = (
+        "agent_string",
+        "browser_name",
+        "browser_version",
+        "os_name",
+        "os_version",
+        "platform_name",
+        "platform_version",
+        "sub_platform_name",
+        "bot",
+        "app_name",
+        "is_mobile_browser",
+    )
+
+    MOBILE_PLATFORMS = {'iOS', 'Windows', 'Android', 'BlackBerry'}
+
+    def __init__(self, **kw):
+        kw.setdefault("is_mobile_browser", False)
+        for k in self.__slots__:
+            setattr(self, k, kw.get(k))
+
+    @classmethod
+    def parse(cls, ua):
+        agent = cls(agent_string=ua)
+        parsed = detect(ua)
+        for attr in ("browser", "os", "platform"):
+            d = parsed.get(attr)
+            if d:
+                for subattr in ("name", "version"):
+                    if subattr in d:
+                        key = "%s_%s" % (attr, subattr)
+                        setattr(agent, key, d[subattr])
+
+        agent.bot = parsed.get('bot')
+        dist = parsed.get('dist')
+        if dist:
+            agent.sub_platform_name = dist.get('name')
+
+        # if this is a known app, extract the app_name
+        agent.app_name = parsed.get('app_name')
+        agent.is_mobile_browser = agent.determine_mobile_browser()
+        return agent
+
+    def determine_mobile_browser(self):
+        if self.platform_name in self.MOBILE_PLATFORMS:
+            if self.sub_platform_name == 'IPad':
+                return False
+
+            if (
+                self.platform_name == 'Android' and
+                not (
+                    'Mobile' in self.agent_string or
+                    self.browser_name == 'Opera Mobile'
+                )
+            ):
+                return False
+
+            if (
+                self.platform_name == 'Windows' and
+                self.sub_platform_name != 'Windows Phone'
+            ):
+                return False
+
+            if 'Opera Mini' in self.agent_string:
+                return False
+
+            return True
+        return False
+
+    def to_dict(self):
+        d = {}
+        for k in self.__slots__:
+            if k != "agent_string":
+                v = getattr(self, k, None)
+                if v:
+                    d[k] = v
+        return d

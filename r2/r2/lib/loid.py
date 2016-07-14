@@ -4,6 +4,8 @@ import pytz
 import string
 from urllib import quote, unquote
 
+from pylons import app_globals as g
+
 from . import hooks
 from .utils import randstr, to_epoch_milliseconds
 

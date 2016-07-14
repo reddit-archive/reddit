@@ -68,53 +68,6 @@ def randstr(length,
     return ''.join(random.choice(alphabet) for _ in xrange(length))
 
 
-def parse_agent(ua):
-    agent_summary = {}
-    parsed = reddit_agent_parser.detect(ua)
-    for attr in ("browser", "os", "platform"):
-        d = parsed.get(attr)
-        if d:
-            for subattr in ("name", "version"):
-                if subattr in d:
-                    key = "%s_%s" % (attr, subattr)
-                    agent_summary[key] = d[subattr]
-
-    agent_summary['bot'] = parsed.get('bot')
-    dist = parsed.get('dist')
-    if dist:
-        agent_summary['sub-platform'] = dist.get('name')
-    app_name = parsed.get('app_name')
-    if app_name:
-        agent_summary['app_name'] = app_name
-
-    return agent_summary
-
-MOBILE_PLATFORMS = {'iOS', 'Windows', 'Android', 'BlackBerry'}
-def detect_mobile(ua):
-    parsed = parse_agent(ua)
-    platform = parsed.get('platform_name')
-    sub_platform = parsed.get('sub-platform')
-    browser_name = parsed.get('browser_name')
-
-    if platform in MOBILE_PLATFORMS:
-        if parsed.get('sub-platform') == 'IPad':
-            return False
-
-        if platform == 'Android' and not \
-                ('Mobile' in ua or browser_name == 'Opera Mobile'):
-            return False
-
-        if platform == 'Windows' and not sub_platform == 'Windows Phone':
-            return False
-
-        if 'Opera Mini' in ua:
-            return False
-
-        return True
-    else:
-        return False
-
-
 class Storage(dict):
     """
     A Storage object is like a dictionary except `obj.foo` can be used

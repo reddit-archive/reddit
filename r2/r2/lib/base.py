@@ -28,6 +28,7 @@ from pylons.i18n import N_, _, ungettext, get_lang
 from webob.exc import HTTPException, status_map
 from r2.lib.filters import spaceCompress, _force_unicode
 from r2.lib.template_helpers import get_domain
+from r2.lib.utils import Agent
 from utils import string2js, read_http_date
 
 import re, hashlib
@@ -113,6 +114,7 @@ class BaseController(WSGIController):
 
         request.referer = request.environ.get('HTTP_REFERER')
         request.user_agent = request.environ.get('HTTP_USER_AGENT')
+        request.parsed_agent = Agent.parse(request.user_agent)
         request.fullpath = request.environ.get('FULLPATH', request.path)
         request.fullurl = request.host_url + request.fullpath
         request.port = request.environ.get('request_port')
@@ -266,4 +268,3 @@ def proxyurl(url):
     r = urllib2.Request(url, None, {})
     content = embedopen.open(r).read()
     return content
-

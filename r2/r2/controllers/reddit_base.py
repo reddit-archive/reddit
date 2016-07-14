@@ -82,7 +82,6 @@ from r2.lib.template_helpers import add_sr, JSPreload
 from r2.lib.tracking import encrypt, decrypt, get_pageview_pixel_url
 from r2.lib.translation import set_lang
 from r2.lib.utils import (
-    Enum,
     SimpleSillyStub,
     UniqueIterator,
     extract_subdomain,
@@ -481,7 +480,7 @@ def set_content_type():
 
     # allow content and api calls to set an loid
     if is_api() or c.render_style in ("html", "mobile", "compact"):
-        c.loid = LoId.load(request)
+        c.loid = LoId.load(request, c)
 
     # allow JSONP requests to generate callbacks, but do not allow
     # the user to be logged in for these
@@ -1421,10 +1420,13 @@ class RedditController(OAuth2ResourceController):
                         request=request, context=c)
                     return self.intermediate_redirect("/quarantine", sr_path=False)
 
-            #check over 18
-            if (c.site.over_18 and not c.over18 and
-                request.path != "/over18"
-                and c.render_style == 'html'):
+            # check over 18
+            if (
+                c.site.over_18 and not c.over18 and
+                request.path != "/over18" and
+                c.render_style == 'html' and
+                not request.parsed_agent.bot
+            ):
                 return self.intermediate_redirect("/over18", sr_path=False)
 
         #check whether to allow custom styles
