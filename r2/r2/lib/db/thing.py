@@ -784,6 +784,8 @@ def Relation(type1, type2):
 
         _base_props = ('_thing1_id', '_thing2_id', '_name', '_date')
         _type_prefix = Relation._type_prefix
+
+        _enable_fast_query = True
         _fast_cache = g.relcache
 
         @classmethod
@@ -944,7 +946,9 @@ def Relation(type1, type2):
 
         def _commit(self):
             DataThing._commit(self)
-            self._fast_cache.set(self._fast_cache_key(), self._id)
+
+            if self.__class__._enable_fast_query:
+                self._fast_cache.set(self._fast_cache_key(), self._id)
 
         def _delete(self):
             tdb.del_rel(self._type_id, self._id)
@@ -952,7 +956,8 @@ def Relation(type1, type2):
             #clear cache
             self._cache.delete(self._cache_key())
             #update fast query cache
-            self._fast_cache.set(self._fast_cache_key(), None)
+            if self.__class__._enable_fast_query:
+                self._fast_cache.set(self._fast_cache_key(), None)
             #temporarily set this property so the rest of this request
             #know it's deleted. save -> unsave, hide -> unhide
             self._name = 'un' + self._name
@@ -962,6 +967,9 @@ def Relation(type1, type2):
                         thing_data=True, thing_stale=False):
             """looks up all the relationships between thing1_ids and
                thing2_ids and caches them"""
+
+            if not cls._enable_fast_query:
+                raise ValueError("%s._fast_query is disabled" % cls.__name__)
 
             cache_key_lookup = dict()
 
