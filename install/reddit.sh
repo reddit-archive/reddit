@@ -78,6 +78,20 @@ if [[ "2000000" -gt $(awk '/MemTotal/{print $2}' /proc/meminfo) ]]; then
     fi
 fi
 
+REDDIT_AVAILABLE_PLUGINS=""
+for plugin in $REDDIT_PLUGINS; do
+    if [ -d $REDDIT_SRC/$plugin ]; then
+        if [[ -z "$REDDIT_PLUGINS" ]]; then
+            REDDIT_AVAILABLE_PLUGINS+="$plugin"
+        else
+            REDDIT_AVAILABLE_PLUGINS+=" $plugin"
+        fi
+        echo "plugin $plugin found"
+    else
+        echo "plugin $plugin not found"
+    fi
+done
+
 ###############################################################################
 # Install prerequisites
 ###############################################################################
@@ -102,6 +116,12 @@ if [ ! -d $REDDIT_SRC ]; then
     chown $REDDIT_USER $REDDIT_SRC
 fi
 
+function copy_upstart {
+    if [ -d ${1}/upstart ]; then
+        cp ${1}/upstart/* /etc/init/
+    fi
+}
+
 function clone_reddit_repo {
     local destination=$REDDIT_SRC/${1}
     local repository_url=https://github.com/${2}.git
@@ -110,13 +130,7 @@ function clone_reddit_repo {
         sudo -u $REDDIT_USER -H git clone $repository_url $destination
     fi
 
-    if [ -d $destination/upstart ]; then
-        cp $destination/upstart/* /etc/init/
-    fi
-}
-
-function clone_reddit_plugin_repo {
-    clone_reddit_repo $1 reddit/reddit-plugin-$1
+    copy_upstart $destination
 }
 
 function clone_reddit_service_repo {
@@ -125,9 +139,6 @@ function clone_reddit_service_repo {
 
 clone_reddit_repo reddit reddit/reddit
 clone_reddit_repo i18n reddit/reddit-i18n
-for plugin in $REDDIT_PLUGINS; do
-    clone_reddit_plugin_repo $plugin
-done
 clone_reddit_service_repo websockets
 clone_reddit_service_repo activity
 
@@ -159,7 +170,8 @@ function install_reddit_repo {
 
 install_reddit_repo reddit/r2
 install_reddit_repo i18n
-for plugin in $REDDIT_PLUGINS; do
+for plugin in $REDDIT_AVAILABLE_PLUGINS; do
+    copy_upstart $REDDIT_SRC/$plugin
     install_reddit_repo $plugin
 done
 install_reddit_repo websockets
@@ -174,7 +186,7 @@ sudo -u $REDDIT_USER make -C $REDDIT_SRC/i18n clean all
 pushd $REDDIT_SRC/reddit/r2
 sudo -u $REDDIT_USER make clean pyx
 
-plugin_str=$(echo -n "$REDDIT_PLUGINS" | tr " " ,)
+plugin_str=$(echo -n "$REDDIT_AVAILABLE_PLUGINS" | tr " " ,)
 if [ ! -f development.update ]; then
     cat > development.update <<DEVELOPMENT
 # after editing this file, run "make ini" to
@@ -622,6 +634,19 @@ PGPASSWORD=password
 CRON
 fi
 
+###############################################################################
+# Complete plugin setup, if setup.sh exists
+###############################################################################
+for plugin in $REDDIT_AVAILABLE_PLUGINS; do
+    if [ -x $REDDIT_SRC/$plugin/setup.sh ]; then
+        echo "Found setup.sh for $plugin; running setup script"
+        $REDDIT_SRC/$plugin/setup.sh $REDDIT_SRC $REDDIT_USER
+    fi
+done
+
+###############################################################################
+# Finished with install script
+###############################################################################
 # print this out here. if vagrant's involved, it's gonna do more steps
 # afterwards and then re-run this script but that's ok.
 $RUNDIR/done.sh

@@ -8,22 +8,19 @@
 # r2:         {ROOTDIR}/reddit
 #
 # plugins:
-# i18n:       {ROOTDIR}/i18n
 # about:      {ROOTDIR}/about
-# meatspace:  {ROOTDIR}/meatspace
-# liveupdate: {ROOTDIR}/liveupdate
 # adzerk:     {ROOTDIR}/adzerk
 # donate:     {ROOTDIR}/donate
 # gold:       {ROOTDIR}/gold
-#
-# private internal reddit plugin:
+# liveupdate: {ROOTDIR}/liveupdate
+# meatspace:  {ROOTDIR}/meatspace
 # private:    {ROOTDIR}/private
 #
-# The plugins are all optional, but they will get cloned in the VM (and as a
-# result be uneditable from the host) by the install script if their directory
-# is missing but is included in `plugins` below. The general rule for naming
-# each plugin directory is that "reddit-plugin-NAME" should be in the directory
-# {ROOTDIR}/NAME.
+# All plugins are optional. A plugin will only be installed if it is listed
+# in `plugins` AND it is located in a directory that both follows the plugin
+# naming convention and is correctly located on the host machine. The general
+# rule for naming each plugin directory is that "reddit-plugin-NAME" should be
+# in the directory {ROOTDIR}/NAME.
 #
 # This VagrantFile allows for the creation of two VMs:
 #   * default: the primary VM, with all services necessary to run reddit
@@ -52,7 +49,15 @@ this_path = File.absolute_path(__FILE__)
 reddit_dir = File.expand_path("..", this_path)
 code_share_host_path = File.expand_path("..", reddit_dir)
 code_share_guest_path = "/media/reddit_code"
-plugins = ["meatspace", "about", "liveupdate", "adzerk", "donate", "gold"]
+plugins = [
+  "about",
+  "adzerk",
+  "donate",
+  "gold",
+  "liveupdate",
+  "meatspace",
+  "private",
+]
 
 # overlayfs directories
 overlay_mount = "/home/#{vagrant_user}/src"
@@ -117,7 +122,6 @@ Vagrant.configure(2) do |config|
   config.vm.define "travis", autostart: false do |travis|
       travis.vm.hostname = "travis"
       # run install script
-      plugin_string = plugins.join(" ")
       travis.vm.provision "shell", inline: <<-SCRIPT
         if [ ! -f /var/local/reddit_installed ]; then
           echo "running install script"
@@ -155,13 +159,6 @@ Vagrant.configure(2) do |config|
           echo "install script already run"
         fi
       SCRIPT
-
-      # set up private code
-      if File.exist?("#{code_share_host_path}/private/vagrant_setup.sh")
-        redditlocal.vm.provision "shell",
-          path: "#{code_share_host_path}/private/vagrant_setup.sh",
-          args: [vagrant_user]
-      end
 
       # inject test data
       redditlocal.vm.provision "shell", inline: <<-SCRIPT
