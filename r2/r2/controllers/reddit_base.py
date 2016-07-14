@@ -1002,7 +1002,7 @@ class MinimalController(BaseController):
 
         # write loid cookie if necessary
         if c.loid:
-            c.loid.save(c, domain=g.domain)
+            c.loid.save(domain=g.domain)
 
         # send cookies
         secure_cookies = feature.is_enabled("force_https")
