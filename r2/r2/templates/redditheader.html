@@ -100,7 +100,7 @@
       %endif
       <span class="user">
          ${plain_link(c.user.name, "/user/%s/" % c.user.name, _sr_path=False)}
-         &nbsp;(<span class="userkarma" title="${_("link karma")}">${format_number(display_link_karma(c.user.link_karma))}</span>)
+         &nbsp;(<span class="userkarma" title="${_("post karma")}">${format_number(display_link_karma(c.user.link_karma))}</span>)
       </span>
 
       ${separator("|")}

@@ -539,10 +539,11 @@ class RuleTarget(object):
             valid_targets=Account,
             component_type="check",
         ),
-        "link_karma": RuleComponent(
+        "post_karma": RuleComponent(
             valid_regex=_oper_int_regex,
             valid_targets=Account,
             component_type="check",
+            aliases=["link_karma"],
         ),
         "combined_karma": RuleComponent(
             valid_regex=_oper_int_regex,
@@ -866,7 +867,7 @@ class RuleTarget(object):
 
     def check_account_thresholds(self, account, data):
         """Check karma/age thresholds against an account."""
-        thresholds = ["comment_karma", "link_karma", "combined_karma",
+        thresholds = ["comment_karma", "post_karma", "combined_karma",
             "account_age"]
         # figure out which thresholds/values we need to check against
         checks = {}
@@ -1155,14 +1156,14 @@ class RuleTarget(object):
                 value = ''
         elif field == "account_age":
             value = item._age
-        elif field == "link_karma":
+        elif field == "post_karma":
             value = max(item.link_karma, g.link_karma_display_floor)
         elif field == "comment_karma":
             value = max(item.comment_karma, g.comment_karma_display_floor)
         elif field == "combined_karma":
-            link = self.get_field_value_from_item(item, data, "link_karma")
+            post = self.get_field_value_from_item(item, data, "post_karma")
             comment = self.get_field_value_from_item(item, data, "comment_karma")
-            value = link + comment
+            value = post + comment
         elif field == "flair_text" and isinstance(item, Account):
             value = item.flair_text(data["subreddit"]._id, obey_disabled=True)
         elif field == "flair_css_class" and isinstance(item, Account):
