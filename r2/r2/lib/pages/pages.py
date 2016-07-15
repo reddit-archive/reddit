@@ -1745,7 +1745,13 @@ class LinkInfoPage(Reddit):
             self.num_duplicates = num_duplicates
 
         self.show_promote_button = show_promote_button
-        robots = "noindex,nofollow" if link._deleted or link._spam else None
+        if link._deleted or link._spam:
+            robots = "noindex,nofollow"
+        elif comment:
+            # We don't want crawlers to index the comment permalink pages.
+            robots = "noindex"
+        else:
+            robots = None
 
         if 'extra_js_config' not in kw:
             kw['extra_js_config'] = {}
