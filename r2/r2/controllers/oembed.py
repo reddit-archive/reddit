@@ -44,12 +44,13 @@ _OEMBED_BASE = {
 }
 
 EMBEDLY_SCRIPT = 'https://embed.redditmedia.com/widgets/platform.js'
+SCRIPT_TEMPLATE = '<script async src="%(embedly_script)s" charset="UTF-8"></script>'
 POST_EMBED_TEMPLATE = """
     <blockquote class="reddit-card" %(live_data_attr)s>
       <a href="%(link_url)s">%(title)s</a> from
       <a href="%(subreddit_url)s">%(subreddit_name)s</a>
     </blockquote>
-    <script async src="%(embedly_script)s" charset="UTF-8"></script>
+    %(script)s
 """
 
 def _oembed_for(thing, **embed_options):
@@ -77,6 +78,12 @@ def _oembed_post(thing, **embed_options):
         time = datetime.now(g.tz).isoformat()
         live = 'data-card-created="{}"'.format(time)
 
+    script = ''
+    if not embed_options.get('omitscript', False):
+        script = format_html(SCRIPT_TEMPLATE,
+                             embedly_script=EMBEDLY_SCRIPT,
+                             )
+
     link_url = UrlParser(thing.make_permalink_slow(force_domain=True))
     link_url.update_query(ref='share', ref_source='embed')
 
@@ -94,7 +101,7 @@ def _oembed_post(thing, **embed_options):
                        title=websafe(thing.title),
                        subreddit_url=make_url_https(subreddit.path),
                        subreddit_name=subreddit.name,
-                       embedly_script=EMBEDLY_SCRIPT,
+                       script=script,
                        )
 
     oembed_response = dict(_OEMBED_BASE,
@@ -129,7 +136,7 @@ def _oembed_comment(thing, **embed_options):
         author_name = ""
         title = ""
 
-    html = format_html(embeds.get_inject_template(),
+    html = format_html(embeds.get_inject_template(embed_options.get('omitscript')),
                        media=g.media_domain,
                        parent="true" if embed_options.get('parent') else "false",
                        live="true" if embed_options.get('live') else "false",
@@ -163,8 +170,9 @@ class OEmbedController(MinimalController):
         url=VUrl('url'),
         parent=VBoolean("parent", default=False),
         live=VBoolean("live", default=False),
+        omitscript=VBoolean("omitscript", default=False)
     )
-    def GET_oembed(self, url, parent, live):
+    def GET_oembed(self, url, parent, live, omitscript):
         """Get the oEmbed response for a URL, if any exists.
 
         Spec: http://www.oembed.com/
@@ -181,6 +189,7 @@ class OEmbedController(MinimalController):
         embed_options = {
             "parent": parent,
             "live": live,
+            "omitscript": omitscript
         }
 
         try:

@@ -27,13 +27,16 @@ _COMMENT_EMBED_TEMPLATE = (
 )
 
 
-def get_inject_template():
-    script_urls = js.src("comment-embed", absolute=True, mangle_name=False)
-    scripts = "".join('<script%s src="%s"></script>' % (
-        ' async' if len(script_urls) == 1 else '',
-        script_url
-    ) for script_url in script_urls)
-    return _COMMENT_EMBED_TEMPLATE + scripts
+def get_inject_template(omitscript=False):
+    template = _COMMENT_EMBED_TEMPLATE
+    if not omitscript:
+        script_urls = js.src("comment-embed", absolute=True, mangle_name=False)
+        scripts = "".join('<script%s src="%s"></script>' % (
+            ' async' if len(script_urls) == 1 else '',
+            script_url
+        ) for script_url in script_urls)
+        template += scripts
+    return template
 
 
 def edited_after(thing, iso_timestamp, showedits):
