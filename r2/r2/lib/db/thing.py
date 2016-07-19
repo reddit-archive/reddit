@@ -1045,6 +1045,7 @@ def Relation(type1, type2):
                 keys=cache_key_lookup.keys(),
                 miss_fn=lookup_rel_ids,
                 time=cls._rel_cache_ttl,
+                ignore_set_errors=True,
             )
 
             # get the relation objects
