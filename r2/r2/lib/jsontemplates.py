@@ -300,6 +300,7 @@ class SubredditJsonTemplate(ThingJsonTemplate):
         # related_subreddits="related_subreddits",
         hide_ads="hide_ads",
         quarantine="quarantine",
+        show_media="show_media",
         submission_type="link_type",
         submit_link_label="submit_link_label",
         submit_text_label="submit_text_label",
