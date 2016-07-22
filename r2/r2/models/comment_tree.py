@@ -69,9 +69,6 @@ time periods and generally insufficient regular-case performance.
 """
 
 
-class InconsistentCommentTreeError(Exception): pass
-
-
 class CommentTreePermacache(object):
     @staticmethod
     def _comments_key(link_id):
@@ -134,7 +131,13 @@ class CommentTreePermacache(object):
                     continue
 
                 if p_id and p_id not in tree.cids:
-                    raise InconsistentCommentTreeError
+                    # can't add a comment to the CommentTree because its parent
+                    # is missing. this comment will be lost forever unless the
+                    # tree is rebuilt.
+                    g.log.error(
+                        "comment_tree_inconsistent: %s %s" % (tree.link, cid))
+                    g.stats.simple_event('comment_tree_inconsistent')
+                    continue
 
                 tree.cids.append(cid)
                 tree.tree.setdefault(p_id, []).append(cid)

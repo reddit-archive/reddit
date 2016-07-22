@@ -71,7 +71,7 @@ from r2.models import (
     wiki,
 )
 from r2.models.admintools import ip_span
-from r2.models.comment_tree import CommentTree, InconsistentCommentTreeError
+from r2.models.comment_tree import CommentTree
 from r2.models.flair import Flair
 from r2.models.listing import Listing
 from r2.models.vote import Vote
@@ -79,6 +79,11 @@ from r2.models.vote import Vote
 
 EXTRA_FACTOR = 1.5
 MAX_RECURSION = 10
+
+
+class InconsistentCommentTreeError(Exception):
+  pass
+
 
 class Builder(object):
     def __init__(self, wrap=Wrapped, prewrap_fn=None, keep_fn=None, stale=True,

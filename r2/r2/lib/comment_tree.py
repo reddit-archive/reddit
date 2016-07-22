@@ -28,7 +28,7 @@ from pylons import app_globals as g
 
 from r2.lib.sgm import sgm
 from r2.lib.utils import tup
-from r2.models.comment_tree import CommentTree, InconsistentCommentTreeError
+from r2.models.comment_tree import CommentTree
 from r2.models.link import Comment, Link, CommentScoresByLink
 
 MESSAGE_TREE_SIZE_LIMIT = 15000
@@ -66,21 +66,11 @@ def add_comments(comments):
         timer.intermediate('scores')
 
         with CommentTree.mutation_context(link, timeout=180):
-            try:
-                timer.intermediate('lock')
-                comment_tree = CommentTree.by_link(link, timer)
-                timer.intermediate('get')
-                comment_tree.add_comments(link_comments)
-                timer.intermediate('update')
-            except InconsistentCommentTreeError:
-                # failed to add a comment to the CommentTree because its parent
-                # is missing from the tree. this comment will be lost forever
-                # unless a rebuild is performed.
-                comment_ids = [comment._id for comment in link_comments]
-                g.log.error(
-                    "comment_tree_inconsistent: %s %s" % (link, comment_ids))
-                g.stats.simple_event('comment_tree_inconsistent')
-                continue
+            timer.intermediate('lock')
+            comment_tree = CommentTree.by_link(link, timer)
+            timer.intermediate('get')
+            comment_tree.add_comments(link_comments)
+            timer.intermediate('update')
 
         write_comment_orders(link)
         timer.intermediate('write_order')
