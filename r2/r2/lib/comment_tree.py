@@ -82,10 +82,8 @@ def add_comments(comments):
                 g.stats.simple_event('comment_tree_inconsistent')
                 continue
 
-            # do this under the same lock because we want to ensure we are using
-            # the same version of the CommentTree as was just written
-            write_comment_orders(link)
-            timer.intermediate('write_order')
+        write_comment_orders(link)
+        timer.intermediate('write_order')
 
         timer.stop()
 
