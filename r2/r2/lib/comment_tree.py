@@ -65,12 +65,8 @@ def add_comments(comments):
         CommentScoresByLink.set_scores(link, "_qa", scores_by_comment)
         timer.intermediate('scores')
 
-        with CommentTree.mutation_context(link, timeout=180):
-            timer.intermediate('lock')
-            comment_tree = CommentTree.by_link(link, timer)
-            timer.intermediate('get')
-            comment_tree.add_comments(link_comments)
-            timer.intermediate('update')
+        CommentTree.add_comments(link, link_comments)
+        timer.intermediate('update')
 
         write_comment_orders(link)
         timer.intermediate('write_order')

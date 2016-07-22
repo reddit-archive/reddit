@@ -70,36 +70,44 @@ time periods and generally insufficient regular-case performance.
 
 
 class CommentTreePermacache(object):
-    @staticmethod
-    def _comments_key(link_id):
-        return 'comments_' + str(link_id)
-
-    @staticmethod
-    def _lock_key(link_id):
-        return 'comment_lock_' + str(link_id)
+    @classmethod
+    def _permacache_key(cls, link):
+        return 'comments_' + str(link._id)
 
     @classmethod
-    def mutation_context(cls, link, timeout=None):
-        return g.make_lock("comment_tree", cls._lock_key(link._id),
-                           timeout=timeout)
+    def _mutation_context(cls, link):
+        """Return a lock for use during read-modify-write operations"""
+        key = 'comment_lock_' + str(link._id)
+        return g.make_lock("comment_tree", key)
 
     @classmethod
     def prepare_new_storage(cls, link):
-        """Write an empty storage to permacache"""
-        with cls.mutation_context(link):
-            # probably don't need the lock because this should run immediately
-            # when the link is created and before the response is returned
-            key = cls._comments_key(link._id)
-            tree = {}
-            g.permacache.set(key, tree)
+        """Write an empty tree to permacache"""
+        with cls._mutation_context(link) as lock:
+            # read-modify-write, so get the lock
+            existing_tree = cls._load_tree(link)
+            if not existing_tree:
+                # don't overwrite an existing non-empty tree
+                tree = {}
+                cls._write_tree(link, tree, lock)
+
+    @classmethod
+    def _load_tree(cls, link):
+        key = cls._permacache_key(link)
+        tree = g.permacache.get(key)
+        return tree or {}   # assume empty tree on miss
+
+    @classmethod
+    def _write_tree(cls, link, tree, lock):
+        assert lock.have_lock
+        key = cls._permacache_key(link)
+        g.permacache.set(key, tree)
 
     @classmethod
     def get_tree_pieces(cls, link, timer):
-        key = cls._comments_key(link._id)
-        tree = g.permacache.get(key)
+        tree = cls._load_tree(link)
         timer.intermediate('load')
 
-        tree = tree or {}   # assume empty tree on miss
         cids, depth, parents = get_tree_details(tree)
         num_children = calc_num_children(tree)
         num_children = defaultdict(int, num_children)
@@ -108,48 +116,53 @@ class CommentTreePermacache(object):
         return cids, tree, depth, parents, num_children
 
     @classmethod
-    def add_comments(cls, tree, comments):
-        if all(comment._id in tree.cids for comment in comments):
-            # don't bother to write if this would be a no-op
-            return
+    def add_comments(cls, link, comments):
+        with cls._mutation_context(link) as lock:
+            # adding comments requires read-modify-write, so get the lock
+            tree = cls._load_tree(link)
+            cids, _, _ = get_tree_details(tree)
 
-        with cls.mutation_context(tree.link):
-            # NOTE: should really wait until here to get the tree to make
-            # sure it's done under lock. r2.lib.comment_tree.add_comments is
-            # the only current caller, and it does get the lock before calling
-            # this method, but it should be enforced in the structure of this
-            # class
+            # skip any comments that are already in the stored tree and convert
+            # to a set to remove any duplicate comments
+            comments = {
+                comment for comment in comments
+                if comment._id not in cids
+            }
 
-            for comment in sorted(comments, key=lambda c: c._id):
-                # sort the comments by id so we'll process a parent comment
-                # before its child
-                cid = comment._id
-                p_id = comment.parent_id
+            # skip adding any comments whose parents are missing from the tree
+            # because they will never be displayed unless the tree is rebuilt.
+            # check for the parent in the existing tree and in the current
+            # batch of comments to be added.
+            parent_ids = set(cids) | {comment._id for comment in comments}
+            orphan_comments = {
+                comment for comment in comments
+                if (comment.parent_id and comment.parent_id not in parent_ids)
+            }
+            if orphan_comments:
+                g.log.error("comment_tree_inconsistent: %s %s", link,
+                    orphan_comments)
+                g.stats.simple_event('comment_tree_inconsistent')
+            comments -= orphan_comments
 
-                # don't add a comment that is already in the tree
-                if cid in tree.cids:
-                    continue
+            if not comments:
+                return
 
-                if p_id and p_id not in tree.cids:
-                    # can't add a comment to the CommentTree because its parent
-                    # is missing. this comment will be lost forever unless the
-                    # tree is rebuilt.
-                    g.log.error(
-                        "comment_tree_inconsistent: %s %s" % (tree.link, cid))
-                    g.stats.simple_event('comment_tree_inconsistent')
-                    continue
+            for comment in comments:
+                tree.setdefault(comment.parent_id, []).append(comment._id)
 
-                tree.cids.append(cid)
-                tree.tree.setdefault(p_id, []).append(cid)
-                tree.depth[cid] = tree.depth[p_id] + 1 if p_id else 0
-                tree.parents[cid] = p_id
-
-            key = cls._comments_key(tree.link._id)
-            g.permacache.set(key, tree.tree)
+            cls._write_tree(link, tree, lock)
 
     @classmethod
-    def rebuild(cls, tree, comments):
-        return cls.add_comments(tree, comments)
+    def rebuild(cls, link, comments):
+        """Generate a tree from comments and overwrite any existing tree."""
+        with cls._mutation_context(link) as lock:
+            # not reading, but we should block other read-modify-write
+            # operations to avoid being clobbered by their write
+            tree = {}
+            for comment in comments:
+                tree.setdefault(comment.parent_id, []).append(comment._id)
+
+            cls._write_tree(link, tree, lock)
 
 
 class CommentTree:
@@ -160,10 +173,6 @@ class CommentTree:
         self.depth = depth
         self.parents = parents
         self.num_children = num_children
-
-    @classmethod
-    def mutation_context(cls, link, timeout=None):
-        return CommentTreePermacache.mutation_context(link, timeout=timeout)
 
     @classmethod
     def by_link(cls, link, timer=None):
@@ -179,19 +188,20 @@ class CommentTree:
     def on_new_link(cls, link):
         CommentTreePermacache.prepare_new_storage(link)
 
-    def add_comments(self, comments):
-        CommentTreePermacache.add_comments(self, comments)
+    @classmethod
+    def add_comments(cls, link, comments):
+        CommentTreePermacache.add_comments(link, comments)
 
     @classmethod
     def rebuild(cls, link):
-        # fetch all comments and sort by parent_id, so parents are added to the
-        # tree before their children
-        q = Comment._query(Comment.c.link_id == link._id,
-                           Comment.c._deleted == (True, False),
-                           Comment.c._spam == (True, False),
-                           optimize_rules=True,
-                           data=True)
-        comments = sorted(q, key=lambda c: c.parent_id)
+        # retrieve all the comments for the link
+        q = Comment._query(
+            Comment.c.link_id == link._id,
+            Comment.c._deleted == (True, False),
+            Comment.c._spam == (True, False),
+            optimize_rules=True,
+        )
+        comments = list(q)
 
         # remove any comments with missing parents
         comment_ids = {comment._id for comment in comments}
@@ -200,11 +210,7 @@ class CommentTree:
             if not comment.parent_id or comment.parent_id in comment_ids 
         ]
 
-        # build tree from scratch
-        tree = cls(link, cids=[], tree={}, depth={}, parents={}, num_children={})
-        CommentTreePermacache.rebuild(tree, comments)
+        CommentTreePermacache.rebuild(link, comments)
 
         link.num_comments = sum(1 for c in comments if not c._deleted)
         link._commit()
-
-        return tree
