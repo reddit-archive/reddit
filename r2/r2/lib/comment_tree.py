@@ -81,7 +81,7 @@ def add_comments(comments):
                 g.log.error(
                     "comment_tree_inconsistent: %s %s" % (link, comment_ids))
                 g.stats.simple_event('comment_tree_inconsistent')
-                return
+                continue
 
             # do this under the same lock because we want to ensure we are using
             # the same version of the CommentTree as was just written
