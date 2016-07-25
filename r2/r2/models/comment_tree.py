@@ -129,23 +129,22 @@ class CommentTreePermacache(object):
                 if comment._id not in cids
             }
 
-            # skip adding any comments whose parents are missing from the tree
-            # because they will never be displayed unless the tree is rebuilt.
-            # check for the parent in the existing tree and in the current
-            # batch of comments to be added.
+            if not comments:
+                return
+
+            # warn on any comments whose parents are missing from the tree
+            # because they will never be displayed unless their parent is
+            # added. this can happen in normal operation if there are multiple
+            # queue consumers and a child is processed before its parent.
             parent_ids = set(cids) | {comment._id for comment in comments}
-            orphan_comments = {
+            possible_orphan_comments = {
                 comment for comment in comments
                 if (comment.parent_id and comment.parent_id not in parent_ids)
             }
-            if orphan_comments:
+            if possible_orphan_comments:
                 g.log.error("comment_tree_inconsistent: %s %s", link,
-                    orphan_comments)
+                    possible_orphan_comments)
                 g.stats.simple_event('comment_tree_inconsistent')
-            comments -= orphan_comments
-
-            if not comments:
-                return
 
             for comment in comments:
                 tree.setdefault(comment.parent_id, []).append(comment._id)
