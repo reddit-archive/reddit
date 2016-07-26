@@ -80,7 +80,11 @@ from r2.lib.stats import (
 )
 from r2.lib.translation import get_active_langs, I18N_PATH
 from r2.lib.utils import config_gold_price, thread_dump
-from r2.lib.zookeeper import connect_to_zookeeper, LiveConfig, LiveList
+from r2.lib.zookeeper import (
+    connect_to_zookeeper,
+    LiveConfig,
+    IPNetworkLiveList,
+)
 
 
 LIVE_CONFIG_NODE = "/config/live"
@@ -680,9 +684,11 @@ class Globals(object):
         self.zookeeper = connect_to_zookeeper(zk_hosts, (zk_username,
                                                          zk_password))
 
-        self.throttles = LiveList(self.zookeeper, "/throttles",
-                                  map_fn=ipaddress.ip_network,
-                                  reduce_fn=ipaddress.collapse_addresses)
+        self.throttles = IPNetworkLiveList(
+            self.zookeeper,
+            root="/throttles",
+            reduced_data_node="/throttles_reduced",
+        )
 
         parser = ConfigParser.RawConfigParser()
         parser.optionxform = str
