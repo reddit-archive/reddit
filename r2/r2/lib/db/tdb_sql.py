@@ -142,15 +142,12 @@ def index_commands(table, type):
     commands = []
 
     if type == 'thing':
-        commands.append(index_str(table, 'id', 'thing_id'))
         commands.append(index_str(table, 'date', 'date'))
         commands.append(index_str(table, 'deleted_spam', 'deleted, spam'))
         commands.append(index_str(table, 'hot', 'hot(ups, downs, date), date'))
         commands.append(index_str(table, 'score', 'score(ups, downs), date'))
         commands.append(index_str(table, 'controversy', 'controversy(ups, downs), date'))
     elif type == 'data':
-        commands.append(index_str(table, 'id', 'thing_id'))
-        commands.append(index_str(table, 'thing_id', 'thing_id'))
         commands.append(index_str(table, 'key_value', 'key, substring(value, 1, %s)' \
                                   % max_val_len))
 
