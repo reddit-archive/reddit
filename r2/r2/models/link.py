@@ -167,9 +167,6 @@ class Link(Thing, Printable):
 
     @property
     def affects_karma_type(self):
-        if self.is_promoted_post:
-            return None
-
         if self.is_self:
             return "self"
 
