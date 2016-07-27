@@ -431,7 +431,11 @@ class Subreddit(Thing, Printable, BaseSite):
         ret = {}
 
         for name in names:
-            ascii_only = str(name.decode("ascii", errors="ignore"))
+            try:
+                ascii_only = str(name.decode("ascii", errors="ignore"))
+            except UnicodeEncodeError:
+                continue
+
             lname = ascii_only.lower()
 
             if lname in cls._specials:
