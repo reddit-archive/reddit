@@ -165,11 +165,11 @@ class MockAmqp(object):
     ):
         candidates = []
 
-        queue, _ = self.queue[name]
+        queue = self.queue[name]
 
         # find candidate events that are of the same topic as the provided
         # error.
-        for data in queue:
+        for data, _ in queue:
             data = data.copy()
             # and do they have a timestamp, uuid, and payload?
             assert data.pop("event_ts", None) is not None, \
