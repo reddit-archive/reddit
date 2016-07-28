@@ -4795,7 +4795,7 @@ class ApiController(RedditController):
             if not client:
                 form.set_text('.status', _('invalid client id'))
                 return
-            if getattr(client, 'deleted', False):
+            if client.deleted:
                 form.set_text('.status', _('cannot update deleted app'))
                 return
             if not client.has_developer(c.user):

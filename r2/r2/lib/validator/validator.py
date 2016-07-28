@@ -2884,7 +2884,7 @@ class VOAuth2ClientID(VRequired):
         client_id = VRequired.run(self, client_id)
         if client_id:
             client = OAuth2Client.get_token(client_id)
-            if client and not getattr(client, 'deleted', False):
+            if client and not client.deleted:
                 return client
             else:
                 self.error()

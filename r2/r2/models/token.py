@@ -380,10 +380,14 @@ class OAuth2Client(Token):
     max_developers = 20
     token_size = 10
     client_secret_size = 20
+    _bool_props = (
+        "deleted",
+    )
     _float_props = (
         "max_reqs_sec",
     )
     _defaults = dict(name="",
+                     deleted=False,
                      description="",
                      about_url="",
                      icon_url="",
@@ -488,8 +492,7 @@ class OAuth2Client(Token):
 
         clients = cls._byID(cba._values().keys())
         return [client for client in clients.itervalues()
-                if not getattr(client, 'deleted', False)
-                    and client.has_developer(account)]
+                if not client.deleted and client.has_developer(account)]
 
     @classmethod
     def _by_user(cls, account):
@@ -644,7 +647,7 @@ class OAuth2AccessToken(Token):
         # Is the OAuth2Client still valid?
         try:
             client = OAuth2Client._byID(self.client_id)
-            if getattr(client, 'deleted', False):
+            if client.deleted:
                 raise NotFound
         except AttributeError:
             g.log.error("bad token %s: %s", self, self._t)
