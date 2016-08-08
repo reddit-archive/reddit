@@ -24,7 +24,7 @@ from collections import defaultdict, namedtuple
 from copy import deepcopy
 import datetime
 import heapq
-from random import shuffle, random
+from random import shuffle
 import time
 
 from pylons import request
@@ -1082,19 +1082,9 @@ class CommentOrderer(CommentOrdererBase):
         if self.link.num_comments <= 0:
             return []
 
-        read_chance = g.live_config["precomputed_comment_sort_read_chance"]
-        read_enabled = read_chance > random()
-        has_precomputed_order = self.should_read_cache()
-        if read_enabled and has_precomputed_order:
+        if self.should_read_cache():
             with g.stats.get_timer("CommentOrderer.read_cache") as timer:
                 return self.read_cache()
-        elif has_precomputed_order:
-            # we have precomputed order for this link/sort but did not read it
-            # due to random read chance. time the operation to get a direct
-            # comparison between reading precomputed and loading CommentTree,
-            # CommentScoresByLink, calculating order
-            with g.stats.get_timer("CommentOrderer.full_load") as timer:
-                return self._get_comment_order()
         else:
             if bucket == "100_plus":
                 for sort_name, operator in SORT_OPERATOR_BY_NAME.iteritems():
