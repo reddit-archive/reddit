@@ -226,7 +226,10 @@ class ByNameTest(unittest.TestCase):
 
         self.assertEqual(ret, sr)
         self.cache.set_multi.assert_called_once_with(
-            {sr.name: sr._id}, prefix="srid:")
+            keys={sr.name: sr._id},
+            prefix="srid:",
+            time=3600,
+        )
 
     def testCacheNegativeResults(self):
         self.cache.get_multi.return_value = {}
@@ -237,7 +240,10 @@ class ByNameTest(unittest.TestCase):
             Subreddit._by_name("doesnotexist")
 
         self.cache.set_multi.assert_called_once_with(
-            {"doesnotexist": Subreddit.SRNAME_NOTFOUND}, prefix="srid:")
+            keys={"doesnotexist": Subreddit.SRNAME_NOTFOUND},
+            prefix="srid:",
+            time=3600,
+        )
 
     def testExcludeNegativeLookups(self):
         self.cache.get_multi.return_value = {"doesnotexist": Subreddit.SRNAME_NOTFOUND}
