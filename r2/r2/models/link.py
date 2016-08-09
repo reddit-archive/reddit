@@ -128,7 +128,6 @@ class Link(Thing, Printable):
                      flair_text=None,
                      flair_css_class=None,
                      contest_mode=False,
-                     skip_commentstree_q="",
                      sticky_comment_id=None,
                      ignore_reports=False,
                      gildings=0,
