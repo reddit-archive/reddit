@@ -787,7 +787,7 @@ def Relation(type1, type2):
 
         _enable_fast_query = True
         _rel_cache = g.relcache
-        _rel_cache_ttl = int(timedelta(hours=12).total_seconds())
+        _rel_cache_ttl = int(timedelta(hours=1).total_seconds())
 
         @classmethod
         def get_things_from_db(cls, ids):
