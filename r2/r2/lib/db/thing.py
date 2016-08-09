@@ -785,6 +785,8 @@ def Relation(type1, type2):
         _base_props = ('_thing1_id', '_thing2_id', '_name', '_date')
         _type_prefix = Relation._type_prefix
 
+        _cache_ttl = int(timedelta(hours=1).total_seconds())
+
         _enable_fast_query = True
         _rel_cache = g.relcache
         _rel_cache_ttl = int(timedelta(hours=1).total_seconds())
