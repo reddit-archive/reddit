@@ -1628,7 +1628,7 @@ class LoginRatelimit(object):
         self.key = key
 
     def __str__(self):
-        return "rl-login-%s-%s" % (self.category, self.key)
+        return "login-%s-%s" % (self.category, self.key)
 
     def __hash__(self):
         return hash(str(self))

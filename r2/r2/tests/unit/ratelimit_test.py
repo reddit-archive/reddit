@@ -49,48 +49,48 @@ class RateLimitStandaloneFunctionsTest(unittest.TestCase):
         self.assertEquals(180, ts.end)
         self.assertEquals(55, ts.remaining)
 
-    def test_append_time_slice_1s(self):
+    def test_make_ratelimit_cache_key_1s(self):
         self.now = 14
         ts = ratelimit.get_timeslice(1)
-        key = ratelimit._append_time_slice('a', ts)
-        self.assertEquals('a-000014', key)
+        key = ratelimit._make_ratelimit_cache_key('a', ts)
+        self.assertEquals('rl:a-000014', key)
 
-    def test_append_time_slice_1m(self):
+    def test_make_ratelimit_cache_key_1m(self):
         self.now = 65
         ts = ratelimit.get_timeslice(60)
-        key = ratelimit._append_time_slice('a', ts)
-        self.assertEquals('a-000100', key)
+        key = ratelimit._make_ratelimit_cache_key('a', ts)
+        self.assertEquals('rl:a-000100', key)
 
-    def test_append_time_slice_1h(self):
+    def test_make_ratelimit_cache_key_1h(self):
         self.now = 3650
         ts = ratelimit.get_timeslice(3600)
-        key = ratelimit._append_time_slice('a', ts)
-        self.assertEquals('a-010000', key)
+        key = ratelimit._make_ratelimit_cache_key('a', ts)
+        self.assertEquals('rl:a-010000', key)
 
-    def test_append_time_slice_1d(self):
+    def test_make_ratelimit_cache_key_1d(self):
         self.now = 24 * 3600 + 5
         ts = ratelimit.get_timeslice(24 * 3600)
-        key = ratelimit._append_time_slice('a', ts)
-        self.assertEquals('a-@86400', key)
+        key = ratelimit._make_ratelimit_cache_key('a', ts)
+        self.assertEquals('rl:a-@86400', key)
 
-    def test_append_time_slice_1w(self):
+    def test_make_ratelimit_cache_key_1w(self):
         self.now = 7 * 24 * 3600 + 5
         ts = ratelimit.get_timeslice(24 * 3600)
-        key = ratelimit._append_time_slice('a', ts)
-        self.assertEquals('a-@604800', key)
+        key = ratelimit._make_ratelimit_cache_key('a', ts)
+        self.assertEquals('rl:a-@604800', key)
 
     def test_record_usage(self):
         self.now = 24 * 3600 + 5
         ts = ratelimit.get_timeslice(3600)
         ratelimit.record_usage('a', ts)
-        self.assertEquals(1, self.cache['a-000000'])
+        self.assertEquals(1, self.cache['rl:a-000000'])
         ratelimit.record_usage('a', ts)
-        self.assertEquals(2, self.cache['a-000000'])
+        self.assertEquals(2, self.cache['rl:a-000000'])
 
         self.now = 24 * 3600 + 5 * 3600
         ts = ratelimit.get_timeslice(3600)
         ratelimit.record_usage('a', ts)
-        self.assertEquals(1, self.cache['a-050000'])
+        self.assertEquals(1, self.cache['rl:a-050000'])
 
     def test_record_usage_across_slice_expiration(self):
         self.now = 24 * 3600 + 5
@@ -109,7 +109,7 @@ class RateLimitStandaloneFunctionsTest(unittest.TestCase):
             # initial add() call inside record_usage().
             evicted = True
             ratelimit.record_usage('a', ts)
-            self.assertEquals(1, self.cache['a-000000'])
+            self.assertEquals(1, self.cache['rl:a-000000'])
 
     def test_get_usage(self):
         self.now = 24 * 3600 + 5 * 3600
@@ -123,7 +123,7 @@ class RateLimitTest(unittest.TestCase):
     class TestRateLimit(ratelimit.RateLimit):
         event_name = 'TestRateLimit'
         event_type = 'tests'
-        key = 'rl-tests'
+        key = 'tests'
         limit = 1
         seconds = 3600
 
@@ -143,13 +143,13 @@ class RateLimitTest(unittest.TestCase):
 
         self.now = 24 * 3600 + 5
         rl.record_usage()
-        self.assertEquals(1, self.cache['rl-tests-000000'])
+        self.assertEquals(1, self.cache['rl:tests-000000'])
         rl.record_usage()
-        self.assertEquals(2, self.cache['rl-tests-000000'])
+        self.assertEquals(2, self.cache['rl:tests-000000'])
 
         self.now = 24 * 3600 + 5 * 3600
         rl.record_usage()
-        self.assertEquals(1, self.cache['rl-tests-050000'])
+        self.assertEquals(1, self.cache['rl:tests-050000'])
 
     def test_get_usage(self):
         rl = self.TestRateLimit()

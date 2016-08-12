@@ -56,13 +56,16 @@ class RatelimitError(Exception):
         return str(self.wrapped)
 
 
-def _append_time_slice(key_prefix, time_slice):
+def _make_ratelimit_cache_key(key_prefix, time_slice):
     # Short term rate limits: use a timestamp that's only valid for a day.
     fmt = '-%H%M%S'
     # Long term rate limits: use an unambigious timestamp.
     if time_slice.end - time_slice.beginning >= 86400:
         fmt = '-@%s'
-    return key_prefix + time.strftime(fmt, time.gmtime(time_slice.beginning))
+
+    # enforce the "rl:" prefix for mcrouter
+    prefix = "rl:" + key_prefix
+    return prefix + time.strftime(fmt, time.gmtime(time_slice.beginning))
 
 
 def get_timeslice(slice_seconds):
@@ -89,7 +92,7 @@ def record_usage(key_prefix, time_slice):
 
     """
 
-    key = _append_time_slice(key_prefix, time_slice)
+    key = _make_ratelimit_cache_key(key_prefix, time_slice)
 
     try:
         g.ratelimitcache.add(key, 0, time=time_slice.remaining)
@@ -128,7 +131,7 @@ def record_usage_multi(prefix_slices):
 
     """
 
-    keys = [_append_time_slice(k, t) for k, t in prefix_slices]
+    keys = [_make_ratelimit_cache_key(k, t) for k, t in prefix_slices]
 
     try:
         # Can't use add_multi because the various timeslices may be different.
@@ -159,7 +162,7 @@ def record_usage_multi(prefix_slices):
 def get_usage(key_prefix, time_slice):
     """Return the current usage of a ratelimit for the specified time slice."""
 
-    key = _append_time_slice(key_prefix, time_slice)
+    key = _make_ratelimit_cache_key(key_prefix, time_slice)
 
     try:
         return g.ratelimitcache.get(key)
@@ -178,7 +181,8 @@ def get_usage_multi(prefix_slices):
     Returns:
         A list of usages in the same order as prefix_slices
     """
-    keys = [_append_time_slice(k, t) for k, t in prefix_slices]
+    keys = [_make_ratelimit_cache_key(k, t) for k, t in prefix_slices]
+
     try:
         values = g.ratelimitcache.get_multi(keys)
         return [values.get(k, 0) for k in keys]
@@ -305,7 +309,7 @@ class SimpleRateLimit(RateLimit):
     """
 
     def __init__(self, name, seconds, limit):
-        self.key = "rl:%s" % name
+        self.key = name
         self.seconds = seconds
         self.limit = limit
 
