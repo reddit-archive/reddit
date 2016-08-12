@@ -266,7 +266,6 @@ class Globals(object):
             'stalecaches',
             'lockcaches',
             'permacache_memcaches',
-            'ratelimitcaches',
             'hardcache_memcaches',
             'cassandra_seeds',
             'automatic_reddits',
@@ -717,13 +716,6 @@ class Globals(object):
         ################# MEMCACHE
         num_mc_clients = self.num_mc_clients
 
-        ratelimitcaches = CMemcache(
-            "ratelimit",
-            self.ratelimitcaches,
-            min_compress_len=96,
-            num_clients=num_mc_clients,
-        )
-
         # a smaller pool of caches used only for distributed locks.
         self.lock_cache = CMemcache(
             "lock",
@@ -875,7 +867,7 @@ class Globals(object):
         cache_chains.update(relcache=self.relcache)
 
         self.ratelimitcache = MemcacheChain(
-                (localcache_cls(), ratelimitcaches))
+                (localcache_cls(), self.mcrouter))
         cache_chains.update(ratelimitcache=self.ratelimitcache)
 
         # rendercache holds rendered partial templates.
