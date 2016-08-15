@@ -27,9 +27,6 @@ from r2.lib.cache import NoneResult, make_key, make_key_id
 from r2.lib.lock import make_lock_factory
 from pylons import app_globals as g
 
-make_lock = g.make_lock
-memoizecache_old = g.memoizecache_old
-memoizecache = g.memoizecache
 
 def memoize(iden, time = 0, stale=False, timeout=30):
     def memoize_fn(fn):
@@ -43,16 +40,23 @@ def memoize(iden, time = 0, stale=False, timeout=30):
             old_key = make_key(iden, *a, **kw)
             key = "memo:%s:%s" % (iden, make_key_id(*a, **kw))
 
-            res = None if update else memoizecache_old.get(old_key, stale=stale)
+            if update:
+                res = None
+            else:
+                res = g.memoizecache_old.get(old_key, stale=stale)
 
             if res is None:
                 # not cached, we should calculate it.
-                with make_lock("memoize", 'memoize_lock(%s)' % old_key,
-                               time=timeout, timeout=timeout):
+                with g.make_lock("memoize", 'memoize_lock(%s)' % old_key,
+                                 time=timeout, timeout=timeout):
 
                     # see if it was completed while we were waiting
                     # for the lock
-                    stored = None if update else memoizecache_old.get(old_key)
+                    if update:
+                        stored = None
+                    else:
+                        stored = g.memoizecache_old.get(old_key)
+
                     if stored is not None:
                         # it was calculated while we were waiting
                         res = stored
@@ -61,8 +65,8 @@ def memoize(iden, time = 0, stale=False, timeout=30):
                         res = fn(*a, **kw)
                         if res is None:
                             res = NoneResult
-                        memoizecache_old.set(old_key, res, time=time)
-                        memoizecache.set(key, res, time=time)
+                        g.memoizecache_old.set(old_key, res, time=time)
+                        g.memoizecache.set(key, res, time=time)
 
             if res == NoneResult:
                 res = None
