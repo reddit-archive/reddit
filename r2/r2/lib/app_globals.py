@@ -266,7 +266,6 @@ class Globals(object):
             'stalecaches',
             'lockcaches',
             'permacache_memcaches',
-            'memoizecaches',
             'ratelimitcaches',
             'hardcache_memcaches',
             'cassandra_seeds',
@@ -718,14 +717,6 @@ class Globals(object):
         ################# MEMCACHE
         num_mc_clients = self.num_mc_clients
 
-        # a pool just used for @memoize results
-        memoizecaches = CMemcache(
-            "memoize",
-            self.memoizecaches,
-            min_compress_len=50 * 1024,
-            num_clients=num_mc_clients,
-        )
-
         ratelimitcaches = CMemcache(
             "ratelimit",
             self.ratelimitcaches,
@@ -851,19 +842,12 @@ class Globals(object):
         cache_chains.update(thingcache=self.thingcache)
 
         if stalecaches:
-            self.memoizecache_old = StaleCacheChain(
-                localcache_cls(),
-                stalecaches,
-                memoizecaches,
-            )
             self.memoizecache = StaleCacheChain(
                 localcache_cls(),
                 stalecaches,
                 self.mcrouter,
             )
         else:
-            self.memoizecache_old = MemcacheChain(
-                (localcache_cls(), memoizecaches))
             self.memoizecache = MemcacheChain(
                 (localcache_cls(), self.mcrouter))
         cache_chains.update(memoizecache=self.memoizecache)

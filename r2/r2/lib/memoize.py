@@ -23,7 +23,7 @@
 from hashlib import md5
 
 from r2.lib.filters import _force_utf8
-from r2.lib.cache import NoneResult, make_key, make_key_id
+from r2.lib.cache import NoneResult, make_key_id
 from r2.lib.lock import make_lock_factory
 from pylons import app_globals as g
 
@@ -37,14 +37,13 @@ def memoize(iden, time = 0, stale=False, timeout=30):
             #overwritten no matter what
             update = kw.pop('_update', False)
 
-            old_key = make_key(iden, *a, **kw)
             key = "memo:%s:%s" % (iden, make_key_id(*a, **kw))
 
             res = None if update else g.memoizecache.get(key, stale=stale)
 
             if res is None:
                 # not cached, we should calculate it.
-                with g.make_lock("memoize", 'memoize_lock(%s)' % old_key,
+                with g.make_lock("memoize", 'memoize_lock(%s)' % key,
                                  time=timeout, timeout=timeout):
 
                     # see if it was completed while we were waiting
@@ -58,7 +57,6 @@ def memoize(iden, time = 0, stale=False, timeout=30):
                         res = fn(*a, **kw)
                         if res is None:
                             res = NoneResult
-                        g.memoizecache_old.set(old_key, res, time=time)
                         g.memoizecache.set(key, res, time=time)
 
             if res == NoneResult:
