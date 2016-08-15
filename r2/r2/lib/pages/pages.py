@@ -1531,7 +1531,7 @@ class RegistrationInfo(Templated):
         Templated.__init__(self, content_html=html)
 
     @classmethod
-    @memoize('registration_info_html', time=10*60)
+    @memoize('registration_info_html', stale=True, time=10*60)
     def get_registration_info_html(cls):
         try:
             wp = WikiPage.get(Frontpage, g.wiki_page_registration_info)
