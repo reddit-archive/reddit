@@ -866,7 +866,7 @@ class Globals(object):
                 (localcache_cls(), memoizecaches))
             self.memoizecache = MemcacheChain(
                 (localcache_cls(), self.mcrouter))
-        cache_chains.update(memoizecache=self.memoizecache_old)
+        cache_chains.update(memoizecache=self.memoizecache)
 
         if stalecaches:
             self.srmembercache = StaleCacheChain(
