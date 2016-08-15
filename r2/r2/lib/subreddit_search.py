@@ -64,7 +64,7 @@ def search_reddits(query, include_over_18=True):
     except tdb_cassandra.NotFound:
         return []
 
-@memoize('popular_searches', time = 3600)
+@memoize('popular_searches', stale=True, time=3600)
 def popular_searches(include_over_18=True):
     top_reddits = Subreddit._query(Subreddit.c.type == 'public',
                                    sort = desc('_downs'),
