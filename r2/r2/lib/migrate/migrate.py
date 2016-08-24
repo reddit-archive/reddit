@@ -61,45 +61,6 @@ def subscribe_to_blog_and_annoucements(filename):
                 print ("%d: didn't subscribe %s to %s" % (i, account.name, sr.name))
 
 
-def upgrade_messages(update_comments = True, update_messages = True,
-                     update_trees = True):
-    from r2.lib.db import queries
-    from r2.lib import comment_tree, cache
-    from r2.models import Account
-    from pylons import app_globals as g
-    accounts = set()
-
-    def batch_fn(items):
-        g.reset_caches()
-        return items
-    
-    if update_messages or update_trees:
-        q = Message._query(Message.c.new == True,
-                           sort = desc("_date"),
-                           data = True)
-        for m in fetch_things2(q, batch_fn = batch_fn):
-            print m,m._date
-            if update_messages:
-                accounts = accounts | queries.set_unread(m, m.new)
-            else:
-                accounts.add(m.to_id)
-    if update_comments:
-        q = Comment._query(Comment.c.new == True,
-                           sort = desc("_date"))
-        q._filter(Comment.c._id < 26152162676)
-
-        for m in fetch_things2(q, batch_fn = batch_fn):
-            print m,m._date
-            queries.set_unread(m, True)
-
-    print "Precomputing comment trees for %d accounts" % len(accounts)
-
-    for i, a in enumerate(accounts):
-        if not isinstance(a, Account):
-            a = Account._byID(a)
-        print i, a
-        comment_tree.user_messages(a)
-
 def recompute_unread(min_date = None):
     from r2.models import Inbox, Account, Comment, Message
     from r2.lib.db import queries
