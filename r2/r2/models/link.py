@@ -2781,8 +2781,11 @@ _MessageInbox._cache_prefix = classmethod(lambda cls: "inboxmessage:")
 
 class Inbox(MultiRelation('inbox', _CommentInbox, _MessageInbox)):
     @classmethod
-    def _add(cls, to, obj, *a, **kw):
-        orangered = kw.pop("orangered", True)
+    def _add(cls, to, obj, name, orangered=True):
+        if isinstance(obj, Comment):
+            assert name in ("inbox", "selfreply", "mention")
+        elif isinstance(obj, Message):
+            assert name == "inbox"
 
         # don't orangered (ever!) for enemies
         if obj.author_id in to.enemies:
@@ -2791,7 +2794,7 @@ class Inbox(MultiRelation('inbox', _CommentInbox, _MessageInbox)):
         elif to._id == obj.author_id:
             orangered = False
 
-        i = Inbox(to, obj, *a, **kw)
+        i = Inbox(to, obj, name)
         i._commit()
 
         if orangered:
