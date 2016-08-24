@@ -2765,7 +2765,7 @@ class LinksByImage(tdb_cassandra.View):
 
 _CommentInbox = Relation(Account, Comment)
 _CommentInbox._defaults = {
-    "new": False,
+    "new": True,
 }
 _CommentInbox._cache = g.thingcache
 _CommentInbox._cache_prefix = classmethod(lambda cls: "inboxcomment:")
@@ -2773,7 +2773,7 @@ _CommentInbox._cache_prefix = classmethod(lambda cls: "inboxcomment:")
 
 _MessageInbox = Relation(Account, Message)
 _MessageInbox._defaults = {
-    "new": False,
+    "new": True,
 }
 _MessageInbox._cache = g.thingcache
 _MessageInbox._cache_prefix = classmethod(lambda cls: "inboxmessage:")
@@ -2792,7 +2792,6 @@ class Inbox(MultiRelation('inbox', _CommentInbox, _MessageInbox)):
             orangered = False
 
         i = Inbox(to, obj, *a, **kw)
-        i.new = True
         i._commit()
 
         if orangered:
@@ -2881,6 +2880,9 @@ class Inbox(MultiRelation('inbox', _CommentInbox, _MessageInbox)):
 
 class ModeratorInbox(Relation(Subreddit, Message)):
     _cache = g.thingcache
+    _defaults = {
+        "new": True,
+    }
 
     @classmethod
     def _cache_prefix(cls):
@@ -2888,8 +2890,7 @@ class ModeratorInbox(Relation(Subreddit, Message)):
 
     @classmethod
     def _add(cls, sr, obj, *a, **kw):
-        i = ModeratorInbox(sr, obj, *a, **kw)
-        i.new = True
+        i = cls(sr, obj, *a, **kw)
         i._commit()
         return i
 
