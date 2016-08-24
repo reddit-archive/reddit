@@ -1221,13 +1221,13 @@ def new_message(message, inbox_rels, add_to_sent=True, update_modmail=True):
             if isinstance(inbox_rel, ModeratorInbox):
                 m.insert(get_subreddit_messages(to), [inbox_rel])
                 modmail_rel_included = True
+                set_sr_unread(message, to, unread=True, mutator=m)
             else:
                 m.insert(get_inbox_messages(to), [inbox_rel])
                 update_recipient = True
                 # make sure we add this message to the user's inbox
                 add_to_user = to
-
-            set_unread(message, to, unread=True, mutator=m)
+                set_unread(message, to, unread=True, mutator=m)
 
     update_modmail = update_modmail and modmail_rel_included
 
@@ -1247,42 +1247,70 @@ def new_message(message, inbox_rels, add_to_sent=True, update_modmail=True):
                 mod._commit()
 
 
-def set_unread(messages, to, unread, mutator=None):
-    # Maintain backwards compatability
+def set_unread(messages, user, unread, mutator=None):
     messages = tup(messages)
 
+    inbox_rels = Inbox.set_unread(messages, user, unread)
+
+    update_unread_queries(inbox_rels, insert=unread, mutator=mutator)
+
+
+def update_unread_queries(inbox_rels, insert=True, mutator=None):
+    """Update all the cached queries related to the inbox relations"""
     if not mutator:
         m = CachedQueryMutator()
     else:
         m = mutator
 
-    if isinstance(to, Subreddit):
-        for i in ModeratorInbox.set_unread(messages, unread):
-            q = get_unread_subreddit_messages(i._thing1_id)
-            if unread:
-                m.insert(q, [i])
-            else:
-                m.delete(q, [i])
-    else:
-        # All messages should be of the same type
-        # (asserted by Inbox.set_unread)
-        for i in Inbox.set_unread(messages, to, unread):
-            query = None
-            if isinstance(messages[0], Comment):
-                if i._name == "inbox":
-                    query = get_unread_comments(i._thing1_id)
-                elif i._name == "selfreply":
-                    query = get_unread_selfreply(i._thing1_id)
-                elif i._name == "mention":
-                    query = get_unread_comment_mentions(i._thing1_id)
-            elif isinstance(messages[0], Message):
-                query = get_unread_messages(i._thing1_id)
-            assert query is not None
+    inbox_rels = tup(inbox_rels)
+    for inbox_rel in inbox_rels:
+        thing = inbox_rel._thing2
+        user = inbox_rel._thing1
 
-            if unread:
-                m.insert(query, [i])
-            else:
-                m.delete(query, [i])
+        if isinstance(thing, Comment):
+            if inbox_rel._name == "inbox":
+                query = get_unread_comments(user._id)
+            elif inbox_rel._name == "selfreply":
+                query = get_unread_selfreply(user._id)
+            elif inbox_rel._name == "mention":
+                query = get_unread_comment_mentions(user._id)
+        elif isinstance(thing, Message):
+            query = get_unread_messages(user._id)
+        else:
+            raise ValueError("can't handle %s" % thing.__class__.__name__)
+
+        if insert:
+            m.insert(query, [inbox_rel])
+        else:
+            m.delete(query, [inbox_rel])
+
+    if not mutator:
+        m.send()
+
+
+def set_sr_unread(messages, sr, unread, mutator=None):
+    messages = tup(messages)
+
+    inbox_rels = ModeratorInbox.set_unread(messages, unread)
+
+    update_unread_sr_queries(inbox_rels, insert=unread, mutator=mutator)
+
+
+def update_unread_sr_queries(inbox_rels, insert=True, mutator=None):
+    if not mutator:
+        m = CachedQueryMutator()
+    else:
+        m = mutator
+
+    inbox_rels = tup(inbox_rels)
+    for inbox_rel in inbox_rels:
+        sr = inbox_rel._thing1
+        query = get_unread_subreddit_messages(sr)
+
+        if insert:
+            m.insert(query, [inbox_rel])
+        else:
+            m.delete(query, [inbox_rel])
 
     if not mutator:
         m.send()
@@ -1309,19 +1337,22 @@ def unread_handler(things, user, unread):
     else:
         mod_srs = []
 
-    # Batch set items as unread
-    for sr_id, things in sr_messages.items():
-        # Remove the item(s) from the user's inbox
-        set_unread(things, user, unread)
-        if sr_id in mod_srs:
-            # Only moderators can change the read status of that
-            # message in the modmail inbox
-            sr = srs[sr_id]
-            set_unread(things, sr, unread)
-    if comments:
-        set_unread(comments, user, unread)
-    if messages:
-        set_unread(messages, user, unread)
+    with CachedQueryMutator() as m:
+        for sr_id, things in sr_messages.items():
+            # Remove the item(s) from the user's inbox
+            set_unread(things, user, unread, mutator=m)
+
+            if sr_id in mod_srs:
+                # Only moderators can change the read status of that
+                # message in the modmail inbox
+                sr = srs[sr_id]
+                set_sr_unread(things, sr, unread, mutator=m)
+
+        if comments:
+            set_unread(comments, user, unread, mutator=m)
+
+        if messages:
+            set_unread(messages, user, unread, mutator=m)
 
 
 def unnotify(thing, possible_recipients=None):
