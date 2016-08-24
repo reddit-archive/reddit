@@ -1266,7 +1266,7 @@ def set_unread(messages, to, unread, mutator=None):
     else:
         # All messages should be of the same type
         # (asserted by Inbox.set_unread)
-        for i in Inbox.set_unread(messages, unread, to=to):
+        for i in Inbox.set_unread(messages, to, unread):
             query = None
             if isinstance(messages[0], Comment):
                 if i._name == "inbox":

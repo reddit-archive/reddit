@@ -2839,28 +2839,24 @@ class Inbox(MultiRelation('inbox', _CommentInbox, _MessageInbox)):
 
 
     @classmethod
-    def set_unread(cls, things, unread, to=None):
+    def set_unread(cls, things, to, unread=True):
         things = tup(things)
         if len(set(type(x) for x in things)) != 1:
             raise TypeError('things must only be of a single type')
         thing_ids = [x._id for x in things]
-        inbox_rel = cls.rel(Account, things[0].__class__)
-        if to:
-            inbox = inbox_rel._query(inbox_rel.c._thing2_id == thing_ids,
-                                     inbox_rel.c._thing1_id == to._id,
-                                     data=True)
-        else:
-            inbox = inbox_rel._query(inbox_rel.c._thing2_id == thing_ids,
-                                     data=True)
-        res = []
-
+        inbox_rel_cls = cls.rel(Account, things[0].__class__)
+        q = inbox_rel_cls._query(
+            inbox_rel_cls.c._thing2_id == thing_ids,
+            inbox_rel_cls.c._thing1_id == to._id,
+        )
+        inbox_rels = []
         read_counter = 0
-        for i in inbox:
-            if getattr(i, "new", False) != unread:
+        for inbox_rel in q:
+            if inbox_rel.new != unread:
                 read_counter += 1 if unread else -1
-                i.new = unread
-                i._commit()
-            res.append(i)
+                inbox_rel.new = unread
+                inbox_rel._commit()
+            inbox_rels.append(inbox_rel)
 
         if read_counter != 0 and hasattr(to, 'inbox_count'):
             if to.inbox_count + read_counter < 0:
@@ -2875,7 +2871,7 @@ class Inbox(MultiRelation('inbox', _CommentInbox, _MessageInbox)):
             else:
                 to._incr('inbox_count', read_counter)
 
-        return res
+        return inbox_rels
 
 
 class ModeratorInbox(Relation(Subreddit, Message)):
