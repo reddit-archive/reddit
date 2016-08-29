@@ -1250,7 +1250,8 @@ def new_message(message, inbox_rels, add_to_sent=True, update_modmail=True):
 def set_unread(messages, user, unread, mutator=None):
     messages = tup(messages)
 
-    inbox_rels = Inbox.set_unread(messages, user, unread)
+    inbox_rels = Inbox.get_rels(user, messages)
+    Inbox.set_unread(inbox_rels, unread)
 
     update_unread_queries(inbox_rels, insert=unread, mutator=mutator)
 
@@ -1291,7 +1292,8 @@ def update_unread_queries(inbox_rels, insert=True, mutator=None):
 def set_sr_unread(messages, sr, unread, mutator=None):
     messages = tup(messages)
 
-    inbox_rels = ModeratorInbox.set_unread(messages, unread)
+    inbox_rels = ModeratorInbox.get_rels(sr, messages)
+    ModeratorInbox.set_unread(inbox_rels, unread)
 
     update_unread_sr_queries(inbox_rels, insert=unread, mutator=mutator)
 

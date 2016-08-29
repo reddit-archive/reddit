@@ -2842,7 +2842,7 @@ class Inbox(MultiRelation('inbox', _CommentInbox, _MessageInbox)):
 
 
     @classmethod
-    def set_unread(cls, things, to, unread=True):
+    def get_rels(cls, user, things):
         things = tup(things)
         if len(set(type(x) for x in things)) != 1:
             raise TypeError('things must only be of a single type')
@@ -2850,31 +2850,37 @@ class Inbox(MultiRelation('inbox', _CommentInbox, _MessageInbox)):
         inbox_rel_cls = cls.rel(Account, things[0].__class__)
         q = inbox_rel_cls._query(
             inbox_rel_cls.c._thing2_id == thing_ids,
-            inbox_rel_cls.c._thing1_id == to._id,
+            inbox_rel_cls.c._thing1_id == user._id,
         )
-        inbox_rels = []
-        read_counter = 0
-        for inbox_rel in q:
+        inbox_rels = list(q)
+        return inbox_rels
+
+    @classmethod
+    def set_unread(cls, inbox_rels, unread=True):
+        inbox_rels = tup(inbox_rels)
+        unread_count_by_user = defaultdict(int)
+        for inbox_rel in inbox_rels:
             if inbox_rel.new != unread:
-                read_counter += 1 if unread else -1
+                user = inbox_rel._thing1
+                unread_count_by_user[user] += 1 if unread else -1
                 inbox_rel.new = unread
                 inbox_rel._commit()
-            inbox_rels.append(inbox_rel)
 
-        if read_counter != 0 and hasattr(to, 'inbox_count'):
-            if to.inbox_count + read_counter < 0:
+        for user, unread_count in unread_count_by_user.iteritems():
+            if unread_count == 0:
+                continue
+
+            if user.inbox_count + unread_count < 0:
                 g.log.info(
                     "Inbox count for %r would be negative: %d + %d. Zeroing.",
-                    to.name,
-                    to.inbox_count,
-                    read_counter,
+                    user.name,
+                    user.inbox_count,
+                    unread_count,
                 )
                 g.stats.simple_event("inbox_counts.negative_total_fix")
-                to._incr('inbox_count', -to.inbox_count)
-            else:
-                to._incr('inbox_count', read_counter)
+                unread_count = -user.inbox_count
 
-        return inbox_rels
+            user._incr('inbox_count', unread_count)
 
 
 class ModeratorInbox(Relation(Subreddit, Message)):
@@ -2894,17 +2900,20 @@ class ModeratorInbox(Relation(Subreddit, Message)):
         return i
 
     @classmethod
-    def set_unread(cls, things, unread):
-        things = tup(things)
-        thing_ids = [x._id for x in things]
-        inbox = cls._query(cls.c._thing2_id == thing_ids, data=True)
-        res = []
-        for i in inbox:
-            if getattr(i, "new", False) != unread:
-                i.new = unread
-                i._commit()
-            res.append(i)
-        return res
+    def get_rels(cls, sr, messages):
+        messages = tup(messages)
+        message_ids = [m._id for m in messages]
+        q = cls._query(cls.c._thing2_id == message_ids)
+        inbox_rels = list(q)
+        return inbox_rels
+
+    @classmethod
+    def set_unread(cls, inbox_rels, unread=True):
+        inbox_rels = tup(inbox_rels)
+        for inbox_rel in inbox_rels:
+            if inbox_rel.new != unread:
+                inbox_rel.new = unread
+                inbox_rel._commit()
 
 
 class CommentsByAccount(tdb_cassandra.DenormalizedRelation):
