@@ -2401,13 +2401,7 @@ class Message(Thing, Printable):
                 item.to_is_moderator = item.to._id in mods_by_srid[item.sr_id]
 
         if to_set_unread:
-            unread_by_class = defaultdict(list)
-            for thing in to_set_unread:
-                unread_by_class[thing.__class__.__name__].append(thing)
-
-            for things in unread_by_class.itervalues():
-                # Inbox.set_unread can only handle one type of thing at a time
-                queries.set_unread(things, user, unread=False)
+            queries.set_unread(to_set_unread, user, unread=False)
 
         Printable.add_props(user, wrapped)
 
@@ -2844,15 +2838,32 @@ class Inbox(MultiRelation('inbox', _CommentInbox, _MessageInbox)):
     @classmethod
     def get_rels(cls, user, things):
         things = tup(things)
-        if len(set(type(x) for x in things)) != 1:
-            raise TypeError('things must only be of a single type')
-        thing_ids = [x._id for x in things]
-        inbox_rel_cls = cls.rel(Account, things[0].__class__)
-        q = inbox_rel_cls._query(
-            inbox_rel_cls.c._thing2_id == thing_ids,
-            inbox_rel_cls.c._thing1_id == user._id,
-        )
-        inbox_rels = list(q)
+        messages = [t for t in things if isinstance(t, Message)]
+        comments = [t for t in things if isinstance(t, Comment)]
+
+        res = {}
+
+        if messages:
+            inbox_rel_cls = cls.rel(Account, Message)
+            message_res = inbox_rel_cls._fast_query(
+                thing1s=user,
+                thing2s=messages,
+                name="inbox",
+            )
+            res.update(message_res)
+
+        if comments:
+            inbox_rel_cls = cls.rel(Account, Comment)
+            comment_res = inbox_rel_cls._fast_query(
+                thing1s=user,
+                thing2s=comments,
+                name=("inbox", "selfreply", "mention"),
+            )
+            res.update(comment_res)
+
+        # _fast_query returns a dict of {(t1, t2, name): rel}, with rel of None
+        # if the relation doesn't exist
+        inbox_rels = [inbox_rel for inbox_rel in res.itervalues() if inbox_rel]
         return inbox_rels
 
     @classmethod
@@ -2902,9 +2913,14 @@ class ModeratorInbox(Relation(Subreddit, Message)):
     @classmethod
     def get_rels(cls, sr, messages):
         messages = tup(messages)
-        message_ids = [m._id for m in messages]
-        q = cls._query(cls.c._thing2_id == message_ids)
-        inbox_rels = list(q)
+        res = ModeratorInbox._fast_query(
+            thing1s=sr,
+            thing2s=messages,
+            name="inbox",
+        )
+        # _fast_query returns a dict of {(t1, t2, name): rel}, with rel of None
+        # if the relation doesn't exist
+        inbox_rels = [inbox_rel for inbox_rel in res.itervalues() if inbox_rel]
         return inbox_rels
 
     @classmethod
