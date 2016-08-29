@@ -1225,20 +1225,27 @@ class PermalinkCommentOrderer(CommentOrdererBase):
 
         Restrict the path to a maximum of `context` levels deep."""
 
+        if comment._id not in comment_tree.cids:
+            # the comment isn't in the tree
+            raise InconsistentCommentTreeError
+
         comment_id = comment._id
         path = []
         while comment_id and len(path) <= context:
             path.append(comment_id)
-            comment_id = comment_tree.parents[comment_id]
+            try:
+                comment_id = comment_tree.parents[comment_id]
+            except KeyError:
+                # the comment's parent is missing from the tree. this might
+                # just mean that the child was added to the tree first and
+                # the tree will be correct when the parent is added.
+                raise InconsistentCommentTreeError
 
         # reverse the list so the first element is the most root level comment
         path.reverse()
         return path
 
     def modify_comment_tree(self, comment_tree):
-        if self.comment._id not in comment_tree.depth:
-            raise InconsistentCommentTreeError
-
         path = self.get_path_to_comment(
             self.comment, self.context, comment_tree)
 
