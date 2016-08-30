@@ -4033,6 +4033,9 @@ class ApiController(RedditController):
         applied, or a reason for the failure.
 
         """
+
+        if not flair_csv:
+            return
         
         limit = 100  # max of 100 flair settings per call
         results = FlairCsv()
