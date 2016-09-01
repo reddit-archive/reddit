@@ -223,16 +223,21 @@ class ListingController(RedditController):
         if (getattr(c.site, "_id", -1) == Subreddit.get_promote_srid() and
             not c.user_is_sponsor):
             abort(403, 'forbidden')
+
         model = LinkListing(self.builder_obj, show_nums=self.show_nums)
+
         suggestions = None
-        if self.next_suggestions_cls:
+        if c.render_style == "html" and self.next_suggestions_cls:
             suggestions = self.next_suggestions_cls()
+
         pane = model.listing(next_suggestions=suggestions)
+
         # Indicate that the comment tree wasn't built for comments
         for i in pane:
             if hasattr(i, 'full_comment_path'):
                 i.child = None
             i.suppress_reply_buttons = self.suppress_reply_buttons
+
         return pane
 
     def title(self):
