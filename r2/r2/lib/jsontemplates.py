@@ -705,8 +705,6 @@ class LinkJsonTemplate(ThingJsonTemplate):
 
     def thing_attr(self, thing, attr):
         from r2.lib.media import get_media_embed
-        if attr == "sr_detail":
-            return get_trimmed_sr_dict(thing.subreddit, c.user)
         if attr in ("media_embed", "secure_media_embed"):
             media_object = getattr(thing, attr.replace("_embed", "_object"))
             if media_object and not isinstance(media_object, basestring):

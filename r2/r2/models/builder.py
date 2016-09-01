@@ -47,6 +47,7 @@ from r2.lib.comment_tree import (
 from r2.lib.wrapped import Wrapped
 from r2.lib.db import operators, tdb_cassandra
 from r2.lib.filters import _force_unicode
+from r2.lib.jsontemplates import get_trimmed_sr_dict
 from r2.lib.utils import (
     long_datetime,
     shuffle_slice,
@@ -493,9 +494,16 @@ class QueryBuilder(Builder):
         if self.num and num_have < self.num and not stopped_early:
             have_next = False
 
-        if getattr(self, 'sr_detail', False):
+        if getattr(self, "sr_detail", False) and c.render_style in API_TYPES:
+            items_by_subreddit = defaultdict(list)
             for item in items:
-                item.sr_detail = True
+                if isinstance(item.lookups[0], Link):
+                    items_by_subreddit[item.subreddit].append(item)
+
+            for sr, sr_items in items_by_subreddit.iteritems():
+                sr_detail = get_trimmed_sr_dict(sr, c.user)
+                for item in sr_items:
+                    item.sr_detail = sr_detail
 
         # Make sure first_item and last_item refer to things in items
         # NOTE: could retrieve incorrect item if there were items with
