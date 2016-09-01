@@ -455,7 +455,7 @@ class LabeledMultiJsonTemplate(LabeledMultiDescriptionJsonTemplate):
         sr_props = dict(thing.sr_props)
         if expand:
             for sr in srs:
-                sr_props[sr._id]["data"] = TrimmedSubredditJsonTemplate().data(sr)
+                sr_props[sr._id]["data"] = get_trimmed_sr_dict(sr, c.user)
         return [dict(sr_props[sr._id], name=sr.name) for sr in srs]
 
     def thing_attr(self, thing, attr):
@@ -475,39 +475,47 @@ class LabeledMultiJsonTemplate(LabeledMultiDescriptionJsonTemplate):
             return super_.thing_attr(thing, attr)
 
 
-class TrimmedSubredditJsonTemplate(SubredditJsonTemplate):
-    _data_attrs_ = dict(
-        name="_fullname",
-        display_name="name",
-        banner_img="banner_img",
-        banner_size="banner_size",
-        header_img="header",
-        header_size="header_size",
-        icon_img="icon_img",
-        icon_size="icon_size",
-        key_color="key_color",
-        subscribers="_ups",
-        url="path",
-        user_is_banned="is_banned",
-        user_is_muted="is_muted",
-        user_is_contributor="is_contributor",
-        user_is_moderator="is_moderator",
-        user_is_subscriber="is_subscriber",
+def get_trimmed_sr_dict(sr, user):
+    can_view = sr.can_view(user)
+
+    subscribers = sr._ups if not sr.hide_subscribers else 0
+
+    if c.user_is_loggedin and can_view:
+        banned = bool(sr.is_banned(user))
+        muted = bool(sr.is_muted(user))
+        contributor = bool(sr.is_contributor(user))
+        moderator = bool(sr.is_moderator(user))
+        subscriber = bool(sr.is_subscriber(user))
+    else:
+        banned = None
+        muted = None
+        contributor = None
+        moderator = None
+        subscriber = None
+
+    data = dict(
+        name=sr._fullname,
+        display_name=sr.name,
+        url=sr.path,
+        banner_img=sr.banner_img if can_view else None,
+        banner_size=sr.banner_size if can_view else None,
+        header_img=sr.header if can_view else None,
+        header_size=sr.header_size if can_view else None,
+        icon_img=sr.icon_img if can_view else None,
+        icon_size=sr.icon_size if can_view else None,
+        key_color=sr.key_color if can_view else None,
+        subscribers=subscribers if can_view else None,
+        user_is_banned=banned,
+        user_is_muted=muted,
+        user_is_contributor=contributor,
+        user_is_moderator=moderator,
+        user_is_subscriber=subscriber,
     )
 
-    def thing_attr(self, thing, attr):
-        if attr in ('is_banned', 'is_contributor', 'is_moderator',
-                'is_subscriber', 'is_muted'):
-            # can't use SubredditJsonTemplate.thing_attr for these attributes
-            # because it depends on the thing being a fully built/wrapped object
-            # that has run through Subreddit.add_props
-            if c.user_is_loggedin:
-                check_func = getattr(thing, attr)
-                return bool(check_func(c.user))
-            else:
-                return None
-        else:
-            return SubredditJsonTemplate.thing_attr(self, thing, attr)
+    if feature.is_enabled('mobile_settings'):
+        data["key_color"] = sr.key_color if can_view else None
+
+    return data
 
 
 class IdentityJsonTemplate(ThingJsonTemplate):
@@ -698,7 +706,7 @@ class LinkJsonTemplate(ThingJsonTemplate):
     def thing_attr(self, thing, attr):
         from r2.lib.media import get_media_embed
         if attr == "sr_detail":
-            return TrimmedSubredditJsonTemplate().data(thing.subreddit)
+            return get_trimmed_sr_dict(thing.subreddit, c.user)
         if attr in ("media_embed", "secure_media_embed"):
             media_object = getattr(thing, attr.replace("_embed", "_object"))
             if media_object and not isinstance(media_object, basestring):
