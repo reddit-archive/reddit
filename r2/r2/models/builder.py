@@ -47,7 +47,7 @@ from r2.lib.comment_tree import (
 from r2.lib.wrapped import Wrapped
 from r2.lib.db import operators, tdb_cassandra
 from r2.lib.filters import _force_unicode
-from r2.lib.jsontemplates import get_trimmed_sr_dict
+from r2.lib.jsontemplates import get_trimmed_sr_dicts
 from r2.lib.utils import (
     long_datetime,
     shuffle_slice,
@@ -500,8 +500,11 @@ class QueryBuilder(Builder):
                 if isinstance(item.lookups[0], Link):
                     items_by_subreddit[item.subreddit].append(item)
 
+            srs = items_by_subreddit.keys()
+            sr_dicts = get_trimmed_sr_dicts(srs, c.user)
+
             for sr, sr_items in items_by_subreddit.iteritems():
-                sr_detail = get_trimmed_sr_dict(sr, c.user)
+                sr_detail = sr_dicts[sr._id]
                 for item in sr_items:
                     item.sr_detail = sr_detail
 

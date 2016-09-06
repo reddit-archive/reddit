@@ -21,6 +21,7 @@
 ###############################################################################
 
 import calendar
+from collections import defaultdict
 
 from utils import to36, tup, iters
 from wrapped import Wrapped, StringTemplate, CacheStub, Templated
@@ -29,7 +30,15 @@ from r2.config import feature
 from r2.config.extensions import get_api_subtype
 from r2.lib import hooks
 from r2.lib.filters import spaceCompress, safemarkdown, _force_unicode
-from r2.models import Account, Report, Trophy, Comment, Link
+from r2.models import (
+    Account,
+    Comment,
+    Link,
+    Report,
+    Subreddit,
+    SubredditUserRelations,
+    Trophy,
+)
 from r2.models.token import OAuth2Scope, extra_oauth2_scope
 import time, pytz
 from pylons import response
@@ -454,8 +463,9 @@ class LabeledMultiJsonTemplate(LabeledMultiDescriptionJsonTemplate):
     def sr_props(cls, thing, srs, expand=False):
         sr_props = dict(thing.sr_props)
         if expand:
+            sr_dicts = get_trimmed_sr_dicts(srs, c.user)
             for sr in srs:
-                sr_props[sr._id]["data"] = get_trimmed_sr_dict(sr, c.user)
+                sr_props[sr._id]["data"] = sr_dicts[sr._id]
         return [dict(sr_props[sr._id], name=sr.name) for sr in srs]
 
     def thing_attr(self, thing, attr):
@@ -475,47 +485,51 @@ class LabeledMultiJsonTemplate(LabeledMultiDescriptionJsonTemplate):
             return super_.thing_attr(thing, attr)
 
 
-def get_trimmed_sr_dict(sr, user):
-    can_view = sr.can_view(user)
-
-    subscribers = sr._ups if not sr.hide_subscribers else 0
-
-    if c.user_is_loggedin and can_view:
-        banned = bool(sr.is_banned(user))
-        muted = bool(sr.is_muted(user))
-        contributor = bool(sr.is_contributor(user))
-        moderator = bool(sr.is_moderator(user))
-        subscriber = bool(sr.is_subscriber(user))
+def get_trimmed_sr_dicts(srs, user):
+    if c.user_is_loggedin:
+        sr_user_relations = Subreddit.get_sr_user_relations(user, srs)
     else:
-        banned = None
-        muted = None
-        contributor = None
-        moderator = None
-        subscriber = None
+        # backwards compatibility: for loggedout users don't return boolean,
+        # instead return None for all relations.
+        NO_SR_USER_RELATIONS = SubredditUserRelations(
+            subscriber=None,
+            moderator=None,
+            contributor=None,
+            banned=None,
+            muted=None,
+        )
+        sr_user_relations = defaultdict(lambda: NO_SR_USER_RELATIONS)
 
-    data = dict(
-        name=sr._fullname,
-        display_name=sr.name,
-        url=sr.path,
-        banner_img=sr.banner_img if can_view else None,
-        banner_size=sr.banner_size if can_view else None,
-        header_img=sr.header if can_view else None,
-        header_size=sr.header_size if can_view else None,
-        icon_img=sr.icon_img if can_view else None,
-        icon_size=sr.icon_size if can_view else None,
-        key_color=sr.key_color if can_view else None,
-        subscribers=subscribers if can_view else None,
-        user_is_banned=banned,
-        user_is_muted=muted,
-        user_is_contributor=contributor,
-        user_is_moderator=moderator,
-        user_is_subscriber=subscriber,
-    )
+    ret = {}
+    for sr in srs:
+        relations = sr_user_relations[sr._id]
+        can_view = sr.can_view(user)
+        subscribers = sr._ups if not sr.hide_subscribers else 0
 
-    if feature.is_enabled('mobile_settings'):
-        data["key_color"] = sr.key_color if can_view else None
+        data = dict(
+            name=sr._fullname,
+            display_name=sr.name,
+            url=sr.path,
+            banner_img=sr.banner_img if can_view else None,
+            banner_size=sr.banner_size if can_view else None,
+            header_img=sr.header if can_view else None,
+            header_size=sr.header_size if can_view else None,
+            icon_img=sr.icon_img if can_view else None,
+            icon_size=sr.icon_size if can_view else None,
+            key_color=sr.key_color if can_view else None,
+            subscribers=subscribers if can_view else None,
+            user_is_banned=relations.banned if can_view else None,
+            user_is_muted=relations.muted if can_view else None,
+            user_is_contributor=relations.contributor if can_view else None,
+            user_is_moderator=relations.moderator if can_view else None,
+            user_is_subscriber=relations.subscriber if can_view else None,
+        )
 
-    return data
+        if feature.is_enabled('mobile_settings'):
+            data["key_color"] = sr.key_color if can_view else None
+
+        ret[sr._id] = data
+    return ret
 
 
 class IdentityJsonTemplate(ThingJsonTemplate):
