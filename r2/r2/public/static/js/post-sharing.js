@@ -378,6 +378,10 @@
       }
     },
 
+    onOpenEmailForm: function() {
+        this.refs.$shareTo.focus();
+    },
+
     render: function() {
       var requestState = this.state.get('requestState');
       var errors = this.state.get('errors');
@@ -392,12 +396,13 @@
 
         if (selectedOption === 'email' || selectedOption === 'reddit-pm') {
           this.refs.$mainForm.slideUp('fast');
-          this.refs.$emailForm.slideDown('fast');
+          this.refs.$emailForm.slideDown('fast', this.onOpenEmailForm.bind(this));
         } else {
           this.refs.$mainForm.slideDown('fast');
           this.refs.$emailForm.slideUp('fast');
         }
       }
+
 
       if (selectedOption === 'email' || selectedOption === 'reddit-pm') {
         this.refs.$shareToFeedback.stateify('clear');
