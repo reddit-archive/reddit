@@ -974,44 +974,67 @@ class Subreddit(Thing, Printable, BaseSite):
         return sr_id == self._id
 
     @classmethod
-    def add_props(cls, user, wrapped):
+    def get_sr_user_relations(cls, user, srs):
+        """Return SubredditUserRelations for the user and subreddits.
+
+        The SubredditUserRelation objects indicate whether the user is a
+        moderator, contributor, subscriber, banned, or muted. This method
+        batches the lookups of all the relations for all the subreddits.
+
+        """
+
         moderator_srids = set()
         contributor_srids = set()
         banned_srids = set()
         muted_srids = set()
-        srmembers_to_fetch = []
-
-        if not user or not c.user_is_loggedin or not user.has_subscribed:
-            # NOTE: add_props is called with user = c.user, so
-            # default_subreddits (which uses c.user rather than taking user as
-            # an argument) will act as expected
-            subscriber_srids = set(Subreddit.default_subreddits())
-        else:
-            subscriber_srids = Subreddit.subscribed_ids_by_user(user)
+        subscriber_srids = cls.user_subreddits(user, limit=None)
 
         if user and c.user_is_loggedin:
-            srmembers_to_fetch.extend(['moderator', 'contributor', 'banned', 'muted'])
+            res = SRMember._fast_query(
+                thing1s=srs,
+                thing2s=user,
+                name=["moderator", "contributor", "banned", "muted"],
+            )
+            # _fast_query returns a dict of {(t1, t2, name): rel}, with rel of
+            # None if the relation doesn't exist
+            rels = [rel for rel in res.itervalues() if rel]
+            for rel in rels:
+                rel_name = rel._name
+                sr_id = rel._thing1_id
 
-        if srmembers_to_fetch:
-            rels = SRMember._fast_query(wrapped, [user], srmembers_to_fetch)
-            for (item, i_user, rel_name), rel in rels.iteritems():
-                if not rel:
-                    continue
-                elif rel_name == 'moderator':
-                    moderator_srids.add(item._id)
-                elif rel_name == 'contributor':
-                    contributor_srids.add(item._id)
-                elif rel_name == 'banned':
-                    banned_srids.add(item._id)
-                elif rel_name == 'muted':
-                    muted_srids.add(item._id)
+                if rel_name == "moderator":
+                    moderator_srids.add(sr_id)
+                elif rel_name == "contributor":
+                    contributor_srids.add(sr_id)
+                elif rel_name == "banned":
+                    banned_srids.add(sr_id)
+                elif rel_name == "muted":
+                    muted_srids.add(sr_id)
+
+        ret = {}
+        for sr in srs:
+            sr_id = sr._id
+            ret[sr_id] = SubredditUserRelations(
+                subscriber=sr_id in subscriber_srids,
+                moderator=sr_id in moderator_srids,
+                contributor=sr_id in contributor_srids,
+                banned=sr_id in banned_srids,
+                muted=sr_id in muted_srids,
+            )
+        return ret
+
+    @classmethod
+    def add_props(cls, user, wrapped):
+        srs = {item.lookups[0] for item in wrapped}
+        sr_user_relations = cls.get_sr_user_relations(user, srs)
 
         for item in wrapped:
-            item.subscriber = item._id in subscriber_srids
-            item.moderator = item._id in moderator_srids
-            item.contributor = item._id in contributor_srids
-            item.banned = item._id in banned_srids
-            item.muted = item._id in muted_srids
+            relations = sr_user_relations[item._id]
+            item.subscriber = relations.subscriber
+            item.moderator = relations.moderator
+            item.contributor = relations.contributor
+            item.banned = relations.banned
+            item.muted = relations.muted
 
             if item.hide_subscribers and not c.user_is_admin:
                 item._ups = 0
@@ -2688,6 +2711,12 @@ Subreddit._specials.update({
 
 # some subreddits have unfortunate names
 Subreddit._specials['mod'] = Mod
+
+
+SubredditUserRelations = collections.namedtuple(
+    "SubredditUserRelations",
+    ["subscriber", "moderator", "contributor", "banned", "muted"],
+)
 
 
 class SRMember(Relation(Subreddit, Account)):
