@@ -59,13 +59,16 @@
     '</div>' +
     '<div class="post-sharing-email-form post-sharing-form" ref="$emailForm">' +
       '<p class="post-sharing-label">' +
-        _.escape(r._('Share via email as %(username)s').format({ username: r.config.logged })) +
+        '<span ref="$emailFormEmailLabel">' + _.escape(r._('Share via email as %(username)s').format({ username: r.config.logged })) + '</span>' +
+        '<span ref="$emailFormPMLabel">' + _.escape(r._('Share via private message on reddit as %(username)s').format({ username: r.config.logged })) + '</span>' +
       '</p>' +
       '<div class="c-form-group">' +
         '<input class="post-sharing-recipient-input c-form-control" ' +
                'ref="$shareTo" ' +
                'name="recipient" type="text" ' +
-               'placeholder="name@example.com, name@example.com">' +
+               'placeholder="name@example.com, name@example.com" ' +
+               'data-placeholder-email="name@example.com, name@example.com" ' +
+               'data-placeholder-reddit-pm="username">' +
         feedbackTemplate({ ref: '$shareToFeedback' }) +
       '</div>' +
       '<div class="c-form-group">' +
@@ -194,6 +197,8 @@
 
       switch (option) {
         case 'email':
+          // fall through
+        case 'reddit-pm':
           return this.state.set({
             selectedOption: option,
           });
@@ -380,7 +385,12 @@
       var selectedOption = this.state.get('selectedOption');
 
       if ('selectedOption' in changed) {
-        if (selectedOption === 'email') {
+          this.refs.$emailFormEmailLabel.toggle(selectedOption === 'email');
+          this.refs.$emailFormPMLabel.toggle(selectedOption === 'reddit-pm');
+
+          this.refs.$shareTo.attr('placeholder', this.refs.$shareTo.data('placeholder-' + selectedOption));
+
+        if (selectedOption === 'email' || selectedOption === 'reddit-pm') {
           this.refs.$mainForm.slideUp('fast');
           this.refs.$emailForm.slideDown('fast');
         } else {
@@ -389,7 +399,7 @@
         }
       }
 
-      if (selectedOption === 'email') {
+      if (selectedOption === 'email' || selectedOption === 'reddit-pm') {
         this.refs.$shareToFeedback.stateify('clear');
         this.refs.$messageFeedback.stateify('clear');
         this.refs.$requestStateFeedback.stateify('clear');
@@ -452,6 +462,13 @@
         shareOptions.push({
           name: 'email',
           tooltip: r._('Email to a Friend'),
+        });
+      }
+
+      if (r.config.logged && !r.config.user_in_timeout) {
+        shareOptions.push({
+          name: 'reddit-pm',
+          tooltip: r._('Private Message a Friend on Reddit'),
         });
       }
 
