@@ -207,8 +207,8 @@ class CommentButtons(PrintableButtons):
         show_delete = is_author and delete and not thing._deleted
         suppress_reply_buttons = getattr(thing, 'suppress_reply_buttons', False)
 
-        if thing.link.archived:
-          suppress_reply_buttons = True
+        if thing.link.is_archived(thing.subreddit):
+            suppress_reply_buttons = True
 
         show_distinguish = (is_author and
                             (thing.can_ban or  # Moderator distinguish
@@ -304,7 +304,7 @@ class MessageButtons(PrintableButtons):
 
         if was_comment:
             link = thing.link_slow
-            if link.archived or link.locked:
+            if link.is_archived(thing.subreddit) or link.locked:
                 can_reply = False
 
         # Allow comment-reply messages to have links to the full thread.
