@@ -1389,6 +1389,9 @@ class Comment(Thing, Printable):
     @property
     def archived(self):
         sr = self.subreddit_slow
+        return self.is_archived(sr)
+
+    def is_archived(self, sr):
         return self._age >= sr.archive_age
 
     @property
@@ -1609,12 +1612,19 @@ class Comment(Thing, Printable):
             else:
                 item.parent_permalink = None
 
+            link_is_archived = item.link.is_archived(item.subreddit)
+            link_is_locked = item.link.locked
+            sr_can_distinguish = item.sr_id in can_distinguish_srs
+            sr_can_reply = item.sr_id in can_reply_srs
+
             if user_is_loggedin:
-                item.can_reply = (not item.link.archived and
-                    (not item.link.locked or item.sr_id in can_distinguish_srs) and
-                    item.sr_id in can_reply_srs)
+                item.can_reply = (
+                    not link_is_archived and
+                    (not link_is_locked or sr_can_distinguish) and
+                    sr_can_reply
+                )
             else:
-                item.can_reply = not item.link.archived and not item.link.locked
+                item.can_reply = not link_is_archived and not link_is_locked
 
             item.can_embed = c.can_embed or False
 
