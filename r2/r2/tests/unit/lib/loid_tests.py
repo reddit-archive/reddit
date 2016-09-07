@@ -8,11 +8,15 @@ from r2.lib.utils import to_epoch_milliseconds
 
 class LoidTests(RedditTestCase):
 
+    def setUp(self):
+        super(LoidTests, self).setUp()
+        self.mock_eventcollector()
+
     def test_ftue_autocreate(self):
         request = MagicMock()
         context = MagicMock()
         request.cookies = {}
-        loid = LoId.load(request, create=True)
+        loid = LoId.load(request, context, create=True)
         self.assertIsNotNone(loid.loid)
         self.assertIsNotNone(loid.created)
         self.assertTrue(loid.new)
@@ -43,7 +47,6 @@ class LoidTests(RedditTestCase):
 
                     'user_id': context.user._id,
                     'user_name': context.user.name,
-                    'user_features': context.user.user_features,
 
                     'request_url': request.fullpath,
                     'domain': request.host,
@@ -76,7 +79,7 @@ class LoidTests(RedditTestCase):
         request = MagicMock()
         context = MagicMock()
         request.cookies = {LOID_COOKIE: "foo", LOID_CREATED_COOKIE: "bar"}
-        loid = LoId.load(request, create=False)
+        loid = LoId.load(request, context, create=False)
         self.assertEqual(loid.loid, "foo")
         self.assertNotEqual(loid.created, "bar")
         self.assertFalse(loid.new)
