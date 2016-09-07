@@ -923,10 +923,9 @@ class Link(Thing, Printable):
 
     @property
     def subreddit_slow(self):
-        """Returns the link's subreddit."""
         # The subreddit is often already on the wrapped link as .subreddit
         # If available, that should be used instead of calling this
-        return Subreddit._byID(self.sr_id, data=True, return_dict=False)
+        return Subreddit._byID(self.sr_id, stale=True)
 
     @property
     def author_slow(self):
