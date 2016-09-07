@@ -1384,13 +1384,7 @@ class Comment(Thing, Printable):
 
     @property
     def archived(self):
-        link = getattr(self, 'link', None)
-        if link and getattr(link, 'subreddit', None):
-            sr = link.subreddit
-        elif link:
-            sr = link.subreddit_slow
-        else:
-            sr = self.subreddit_slow
+        sr = self.subreddit_slow
         return self._age >= sr.archive_age
 
     @property
