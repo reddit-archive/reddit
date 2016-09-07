@@ -799,7 +799,7 @@ class LinkJsonTemplate(ThingJsonTemplate):
         if c.permalink_page:
             d["upvote_ratio"] = thing.upvote_ratio
 
-        d['suggested_sort'] = thing.sort_if_suggested()
+        d['suggested_sort'] = thing.sort_if_suggested(sr=thing.subreddit)
 
         preview_object = thing.preview_image
         if preview_object:

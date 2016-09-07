@@ -976,16 +976,17 @@ class Link(Thing, Printable):
 
         return sr.can_comment(user) and self.can_view_promo(user)
 
-    def sort_if_suggested(self):
+    def sort_if_suggested(self, sr=None):
         """Returns a sort, if the link or its subreddit has suggested one."""
-        if self.suggested_sort:
+        if self.suggested_sort == "blank":
             # A suggested sort of "blank" means explicitly empty: Do not obey
             # the subreddit's suggested sort, either.
-            if self.suggested_sort == 'blank':
-                return None
+            return None
+
+        if self.suggested_sort:
             return self.suggested_sort
 
-        sr = self.subreddit_slow
+        sr = sr or self.subreddit_slow
         if sr.suggested_comment_sort:
             return sr.suggested_comment_sort
 
