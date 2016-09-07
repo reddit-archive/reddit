@@ -807,6 +807,7 @@ class Link(Thing, Printable):
                 item.as_deleted = True
                 item.selftext = '[deleted]'
 
+            item.archived = item.is_archived(item.subreddit)
             item.votable = not item.archived
 
             item.expunged = False
@@ -946,6 +947,9 @@ class Link(Thing, Printable):
     @property
     def archived(self):
         sr = self.subreddit_slow
+        return self.is_archived(sr)
+
+    def is_archived(self, sr):
         return self._age >= sr.archive_age
 
     def can_view_promo(self, user):
@@ -964,7 +968,7 @@ class Link(Thing, Printable):
     def can_comment_slow(self, user):
         sr = self.subreddit_slow
 
-        if self.archived:
+        if self.is_archived(sr):
             return False
 
         if self.locked and not sr.can_distinguish(user):
