@@ -961,7 +961,7 @@ class Link(Thing, Printable):
         # this preserves the original behavior of `visible_promo()`
         return True
 
-    def can_comment(self, user):
+    def can_comment_slow(self, user):
         sr = self.subreddit_slow
 
         if self.archived:

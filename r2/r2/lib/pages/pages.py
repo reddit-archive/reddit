@@ -2043,7 +2043,7 @@ class CommentPane(Templated):
             try_cache &= user_threshold == default_threshold
 
         if c.user_is_loggedin:
-            self.can_reply = article.can_comment(c.user)
+            self.can_reply = article.can_comment_slow(c.user)
         else:
             # assume that the common case is for loggedin users to see reply
             # buttons and do the same for loggedout users so they can use the

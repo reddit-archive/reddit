@@ -382,7 +382,9 @@ class FrontController(RedditController):
         displayPane.append(LinkCommentSep())
 
         # insert reply box only for logged in user
-        if not is_api() and c.user_is_loggedin and article.can_comment(c.user):
+        if (not is_api() and
+                c.user_is_loggedin and
+                article.can_comment_slow(c.user)):
             # no comment box for permalinks
             display = not comment
 
