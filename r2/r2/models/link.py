@@ -1377,16 +1377,9 @@ class Comment(Thing, Printable):
 
     @property
     def subreddit_slow(self):
-        from subreddit import Subreddit
-        """return's a comments's subreddit. in most case the subreddit is already
-        on the wrapped link (as .subreddit), and that should be used
-        when possible. if sr_id does not exist, then use the parent link's"""
-        if hasattr(self, 'sr_id'):
-            sr_id = self.sr_id
-        else:
-            l = Link._byID(self.link_id, True)
-            sr_id = l.sr_id
-        return Subreddit._byID(sr_id, True, return_dict=False)
+        # When the Comment is Wrapped the subreddit is available as .subreddit
+        # and that should be used
+        return Subreddit._byID(self.sr_id, stale=True)
 
     @property
     def author_slow(self):
