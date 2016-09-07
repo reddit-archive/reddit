@@ -41,13 +41,12 @@ nsfw_collection = Collection(
     over_18=True
 )
 
-class TestSRNamesFromSite(unittest.TestCase):
+class TestSRNamesFromSite(RedditTestCase):
     def setUp(self):
         self.logged_in = Account(name="test")
         self.logged_out = FakeAccount()
 
-        from r2.lib.memoize import g
-        self.autopatch(g, "memoizecache", NonCache())
+        self.patch_g(memoizecache=NonCache())
 
     def test_frontpage_logged_out(self):
         srnames = srnames_from_site(self.logged_out, Frontpage)
