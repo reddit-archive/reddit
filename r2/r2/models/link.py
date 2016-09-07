@@ -945,10 +945,7 @@ class Link(Thing, Printable):
 
     @property
     def archived(self):
-        if getattr(self, 'subreddit', None):
-            sr = self.subreddit
-        else:
-            sr = self.subreddit_slow
+        sr = self.subreddit_slow
         return self._age >= sr.archive_age
 
     def can_view_promo(self, user):
@@ -965,10 +962,7 @@ class Link(Thing, Printable):
         return True
 
     def can_comment(self, user):
-        if getattr(self, 'subreddit', None):
-            sr = self.subreddit
-        else:
-            sr = self.subreddit_slow
+        sr = self.subreddit_slow
 
         if self.archived:
             return False
