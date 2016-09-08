@@ -211,25 +211,8 @@ class ThingJsonTemplate(JsonTemplate):
             if thing.author._deleted:
                 return "[deleted]"
             return thing.author.name
-        if attr == "author_flair_text":
-            if thing.author._deleted:
-                return None
-            if thing.author.flair_enabled_in_sr(thing.subreddit._id):
-                return getattr(thing.author,
-                               'flair_%s_text' % (thing.subreddit._id),
-                               None)
-            else:
-                return None
-        if attr == "author_flair_css_class":
-            if thing.author._deleted:
-                return None
-            if thing.author.flair_enabled_in_sr(thing.subreddit._id):
-                return getattr(thing.author,
-                               'flair_%s_css_class' % (thing.subreddit._id),
-                               None)
-            else:
-                return None
-        elif attr == "created":
+
+        if attr == "created":
             return time.mktime(thing._date.timetuple())
         elif attr == "created_utc":
             return (time.mktime(thing._date.astimezone(pytz.UTC).timetuple())
@@ -240,37 +223,12 @@ class ThingJsonTemplate(JsonTemplate):
                 return child.render()
             else:
                 return ""
-        elif attr == "upvotes":
-            return thing.score
-        elif attr == "downvotes":
-            return 0
 
         if attr == 'distinguished':
             distinguished = getattr(thing, attr, 'no')
             if distinguished == 'no':
                 return None
             return distinguished
-
-        if attr in ["num_reports", "report_reasons", "banned_by", "approved_by"]:
-            if c.user_is_loggedin and thing.can_ban:
-                if attr == "num_reports":
-                    return thing.reported
-                elif attr == "report_reasons":
-                    return Report.get_reasons(thing)
-
-                ban_info = getattr(thing, "ban_info", {})
-                if attr == "banned_by":
-                    banner = (ban_info.get("banner")
-                              if ban_info.get('moderator_banned')
-                              else True)
-                    return banner if thing._spam else None
-                elif attr == "approved_by":
-                    return ban_info.get("unbanner") if not thing._spam else None
-
-        if attr == 'admin_takedown':
-            if thing.admin_takedown:
-                return 'legal'
-            return None
 
         return getattr(thing, attr, None)
 
