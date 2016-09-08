@@ -745,201 +745,208 @@ def get_removal_reason_attributes(item):
     return data
 
 
-class LinkJsonTemplate(ThingJsonTemplate):
-    _optional_data_attrs = dict(
-        action_type="action_type",
-        sr_detail="sr_detail",
-        show_media="show_media",
-        )
-    _data_attrs_ = ThingJsonTemplate.data_attrs(
-        approved_by="approved_by",
-        archived="archived",
-        author="author",
-        author_flair_css_class="author_flair_css_class",
-        author_flair_text="author_flair_text",
-        banned_by="banned_by",
-        visited="visited",
-        clicked="clicked",
-        distinguished="distinguished",
-        domain="domain",
-        downs="downvotes",
-        edited="editted",
-        gilded="gildings",
-        hidden="hidden",
-        hide_score="hide_score",
-        is_self="is_self",
-        likes="likes",
-        link_flair_css_class="flair_css_class",
-        link_flair_text="flair_text",
-        locked="locked",
-        media="media_object",
-        media_embed="media_embed",
-        num_comments="num_comments",
-        num_reports="num_reports",
-        report_reasons="report_reasons",
-        mod_reports="mod_reports",
-        user_reports="user_reports",
-        over_18="over_18",
-        quarantine="quarantine",
-        permalink="permalink",
-        removal_reason="admin_takedown",
-        saved="saved",
-        score="score",
-        secure_media="secure_media_object",
-        secure_media_embed="secure_media_embed",
-        selftext="selftext",
-        selftext_html="selftext_html",
-        stickied="stickied",
-        subreddit="subreddit",
-        subreddit_id="subreddit_id",
-        thumbnail="thumbnail",
-        title="title",
-        ups="upvotes",
-        url="url",
-    )
+def get_media_embed_attributes(item):
+    from r2.lib.media import get_media_embed
 
+    data = {
+        "media_embed": {},
+        "secure_media_embed": {},
+    }
+
+    media_object = item.media_object
+    if media_object and not isinstance(media_object, basestring):
+        media_embed = get_media_embed(media_object)
+        if media_embed:
+            data["media_embed"] = {
+                "scrolling": media_embed.scrolling,
+                "width": media_embed.width,
+                "height": media_embed.height,
+                "content": media_embed.content,
+            }
+
+    secure_media_object = item.secure_media_object
+    if secure_media_object and not isinstance(secure_media_object, basestring):
+        secure_media_embed = get_media_embed(secure_media_object)
+        if secure_media_embed:
+            data["secure_media_embed"] = {
+                "scrolling": secure_media_embed.scrolling,
+                "width": secure_media_embed.width,
+                "height": secure_media_embed.height,
+                "content": secure_media_embed.content,
+            }
+    return data
+
+
+def get_selftext_attributes(item):
+    data = {}
+    if not item.expunged:
+        data["selftext"] = item.selftext
+        data["selftext_html"] = safemarkdown(item.selftext)
+    else:
+        data["selftext"] = "[removed]"
+        data["selftext_html"] = safemarkdown(_("[removed]"))
+    return data
+
+
+def generate_image_links(preview_object, file_type=None, censor_nsfw=False):
     PREVIEW_RESOLUTIONS = (108, 216, 320, 640, 960, 1080)
     PREVIEW_MAX_RATIO = 2
 
-    def thing_attr(self, thing, attr):
-        from r2.lib.media import get_media_embed
-        if attr in ("media_embed", "secure_media_embed"):
-            media_object = getattr(thing, attr.replace("_embed", "_object"))
-            if media_object and not isinstance(media_object, basestring):
-                media_embed = get_media_embed(media_object)
-                if media_embed:
-                    return {
-                        "scrolling": media_embed.scrolling,
-                        "width": media_embed.width,
-                        "height": media_embed.height,
-                        "content": media_embed.content,
-                    }
-            return {}
-        elif attr == "clicked":
-            # this hasn't been used in years.
-            return False
-        elif attr == "editted" and not isinstance(thing.editted, bool):
-            return (time.mktime(thing.editted.astimezone(pytz.UTC).timetuple())
-                    - time.timezone)
-        elif attr == 'subreddit':
-            return thing.subreddit.name
-        elif attr == 'subreddit_id':
-            return thing.subreddit._fullname
-        elif attr == 'selftext':
-            if not thing.expunged:
-                return thing.selftext
-            else:
-                return '[removed]'
-        elif attr == 'selftext_html':
-            if not thing.expunged:
-                return safemarkdown(thing.selftext)
-            else:
-                return safemarkdown(_("[removed]"))
-        elif attr == "archived":
-            return not thing.votable
-        return ThingJsonTemplate.thing_attr(self, thing, attr)
+    # Determine which previews would be feasible with our given dims
+    source_width = preview_object['width']
+    source_height = preview_object['height']
+    source_ratio = float(source_height) / source_width
 
-    @staticmethod
-    def generate_image_links(preview_object, file_type=None, censor_nsfw=False):
-        # Determine which previews would be feasible with our given dims
-        source_width = preview_object['width']
-        source_height = preview_object['height']
-        source_ratio = float(source_height) / source_width
+    # previews with a ratio above the max will be cropped to a lower ratio
+    max_ratio = float(PREVIEW_MAX_RATIO)
+    preview_ratio = min(source_ratio, max_ratio)
 
-        # previews with a ratio above the max will be cropped to a lower ratio
-        max_ratio = float(LinkJsonTemplate.PREVIEW_MAX_RATIO)
-        preview_ratio = min(source_ratio, max_ratio)
-
-        preview_resolutions = []
-        for w in LinkJsonTemplate.PREVIEW_RESOLUTIONS:
-            if w > source_width:
-                continue
-
-            url = g.image_resizing_provider.resize_image(
-                preview_object,
-                w,
-                file_type=file_type,
-                censor_nsfw=censor_nsfw,
-                max_ratio=LinkJsonTemplate.PREVIEW_MAX_RATIO
-            )
-            h = int(w * preview_ratio)
-            preview_resolutions.append({
-                "url": url,
-                "width": w,
-                "height": h,
-            })
+    preview_resolutions = []
+    for w in PREVIEW_RESOLUTIONS:
+        if w > source_width:
+            continue
 
         url = g.image_resizing_provider.resize_image(
             preview_object,
+            w,
             file_type=file_type,
             censor_nsfw=censor_nsfw,
+            max_ratio=PREVIEW_MAX_RATIO,
         )
+        h = int(w * preview_ratio)
+        preview_resolutions.append({
+            "url": url,
+            "width": w,
+            "height": h,
+        })
 
-        return {
-            "source": {
-                "url": url,
-                "width": source_width,
-                "height": source_height,
-            },
-            "resolutions": preview_resolutions,
-        }
+    url = g.image_resizing_provider.resize_image(
+        preview_object,
+        file_type=file_type,
+        censor_nsfw=censor_nsfw,
+    )
 
-    def raw_data(self, thing):
-        d = ThingJsonTemplate.raw_data(self, thing)
+    return {
+        "source": {
+            "url": url,
+            "width": source_width,
+            "height": source_height,
+        },
+        "resolutions": preview_resolutions,
+    }
+
+
+class LinkJsonTemplate(ThingTemplate):
+    @classmethod
+    def get_json(cls, item):
+        data = ThingTemplate.get_json(item)
+
+        data.update(get_mod_attributes(item))
+        data.update(get_author_attributes(item))
+        data.update(get_distinguished_attributes(item))
+        data.update(get_edited_attributes(item))
+        data.update(get_media_embed_attributes(item))
+        data.update(get_report_reason_attributes(item))
+        data.update(get_removal_reason_attributes(item))
+        data.update(get_selftext_attributes(item))
+
+        data.update({
+            "archived": not item.votable,
+            "visited": item.visited,
+            "clicked": False,
+            "domain": item.domain,
+            "downs": 0,
+            "gilded": item.gildings,
+            "hidden": item.hidden,
+            "hide_score": item.hide_score,
+            "is_self": item.is_self,
+            "likes": item.likes,
+            "link_flair_css_class": item.flair_css_class,
+            "link_flair_text": item.flair_text,
+            "locked": item.locked,
+            "media": item.media_object,
+            "secure_media": item.secure_media_object,
+            "num_comments": item.num_comments,
+            "over_18": item.over_18,
+            "quarantine": item.quarantine,
+            "permalink": item.permalink,
+            "saved": item.saved,
+            "score": item.score,
+            "stickied": item.stickied,
+            "subreddit": item.subreddit.name,
+            "subreddit_id": item.subreddit._fullname,
+            "suggested_sort": item.sort_if_suggested(sr=item.subreddit),
+            "thumbnail": item.thumbnail,
+            "title": item.title,
+            "ups": item.score,
+            "url": item.url,
+        })
+
+        if hasattr(item, "action_type"):
+            data["action_type"] = item.action_type
+
+        if hasattr(item, "sr_detail"):
+            data["sr_detail"] = item.sr_detail
+
+        if hasattr(item, "show_media"):
+            data["show_media"] = item.show_media
 
         if c.permalink_page:
-            d["upvote_ratio"] = thing.upvote_ratio
+            data["upvote_ratio"] = item.upvote_ratio
 
-        d['suggested_sort'] = thing.sort_if_suggested(sr=thing.subreddit)
-
-        preview_object = thing.preview_image
+        preview_object = item.preview_image
         if preview_object:
             preview_is_gif = preview_object.get('url', '').endswith('.gif')
-            d['preview'] = {}
-            d['post_hint'] = thing.post_hint
+            data['preview'] = {}
+            data['post_hint'] = item.post_hint
             # For gifs, the default preview should be a static image, with the
             # full gif as a variant
             if preview_is_gif:
-                images = self.generate_image_links(preview_object, file_type="jpg")
+                images = generate_image_links(preview_object, file_type="jpg")
             else:
-                images = self.generate_image_links(preview_object)
+                images = generate_image_links(preview_object)
 
             images['id'] = preview_object['uid']
             images['variants'] = {}
-            if thing.nsfw:
-                images['variants']['nsfw'] = self.generate_image_links(
+            if item.nsfw:
+                images['variants']['nsfw'] = generate_image_links(
                     preview_object, censor_nsfw=True, file_type="png")
             if preview_is_gif:
-                images['variants']['gif'] = self.generate_image_links(preview_object)
-                images['variants']['mp4'] = self.generate_image_links(preview_object, file_type="mp4")
-            d['preview']['images'] = [images]
+                images['variants']['gif'] = generate_image_links(
+                    preview_object)
+                images['variants']['mp4'] = generate_image_links(
+                    preview_object, file_type="mp4")
+            data['preview']['images'] = [images]
+        return data
 
-        if c.user_is_loggedin and c.user.in_timeout:
-            d['user_reports'] = []
-            d['mod_reports'] = []
-
-        return d
-
-    def rendered_data(self, thing):
-        d = ThingJsonTemplate.rendered_data(self, thing)
-        d['sr'] = thing.subreddit._fullname
-        return d
+    @classmethod
+    def get_rendered(cls, item, render_style):
+        data = ThingTemplate.get_rendered(item, render_style)
+        data.update({
+            "sr": item.subreddit._fullname,
+        })
+        return data
 
 
 class PromotedLinkJsonTemplate(LinkJsonTemplate):
-    _data_attrs_ = LinkJsonTemplate.data_attrs(
-        promoted="promoted",
-        imp_pixel="imp_pixel",
-        href_url="href_url",
-        adserver_imp_pixel="adserver_imp_pixel",
-        adserver_click_url="adserver_click_url",
-        mobile_ad_url="mobile_ad_url",
-        disable_comments="disable_comments",
-        third_party_tracking="third_party_tracking",
-        third_party_tracking_2="third_party_tracking_2",
-    )
-    del _data_attrs_['subreddit']
-    del _data_attrs_['subreddit_id']
+    @classmethod
+    def get_json(cls, item):
+        data = LinkJsonTemplate.get_json(item)
+        data.update({
+            "promoted": item.promoted,
+            "imp_pixel": getattr(item, "imp_pixel", None),
+            "href_url": item.href_url,
+            "adserver_imp_pixel": getattr(item, "adserver_imp_pixel", None),
+            "adserver_click_url": getattr(item, "adserver_click_url", None),
+            "mobile_ad_url": item.mobile_ad_url,
+            "disable_comments": item.disable_comments,
+            "third_party_tracking": item.third_party_tracking,
+            "third_party_tracking_2": item.third_party_tracking_2,
+        })
+
+        del data["subreddit"]
+        del data["subreddit_id"]
+        return data
 
 
 class CommentJsonTemplate(ThingTemplate):
