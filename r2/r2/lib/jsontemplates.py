@@ -657,6 +657,94 @@ class PrefsJsonTemplate(ThingJsonTemplate):
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
 
+def get_mod_attributes(item):
+    data = {}
+    if c.user_is_loggedin and item.can_ban:
+        data["num_reports"] = item.reported
+        data["report_reasons"] = Report.get_reasons(item)
+
+        ban_info = getattr(item, "ban_info", {})
+        if item._spam:
+            data["approved_by"] = None
+            if ban_info.get('moderator_banned'):
+                data["banned_by"] = ban_info.get("banner")
+            else:
+                data["banned_by"] = True
+        else:
+            data["approved_by"] = ban_info.get("unbanner")
+            data["banned_by"] = None
+    else:
+        data["num_reports"] = None
+        data["report_reasons"] = None
+        data["approved_by"] = None
+        data["banned_by"] = None
+    return data
+
+
+def get_author_attributes(item):
+    data = {}
+    if not item.author._deleted:
+        author = item.author
+        sr_id = item.subreddit._id
+
+        data["author"] = author.name
+
+        if author.flair_enabled_in_sr(sr_id):
+            flair_text = getattr(author, 'flair_%s_text' % sr_id, None)
+            flair_css = getattr(author, 'flair_%s_css_class' % sr_id, None)
+        else:
+            flair_text = None
+            flair_css = None
+        data["author_flair_text"] = flair_text
+        data["author_flair_css_class"] = flair_css
+
+    else:
+        data["author"] = "[deleted]"
+        data["author_flair_text"] = None
+        data["author_flair_css_class"] = None
+    return data
+
+
+def get_distinguished_attributes(item):
+    data = {}
+    distinguished = getattr(item, "distinguished", "no")
+    data["distinguished"] = distinguished if distinguished != "no" else None
+    return data
+
+
+def get_edited_attributes(item):
+    data = {}
+    if isinstance(item.editted, bool):
+        data["edited"] = item.editted
+    else:
+        editted_timetuple = item.editted.astimezone(pytz.UTC).timetuple()
+        data["edited"] = time.mktime(editted_timetuple) - time.timezone
+    return data
+
+
+def get_report_reason_attributes(item):
+    if c.user_is_loggedin and c.user.in_timeout:
+        data = {
+            "user_reports": [],
+            "mod_reports": [],
+        }
+    else:
+        data = {
+            "user_reports": item.user_reports,
+            "mod_reports": item.mod_reports,
+        }
+    return data
+
+
+def get_removal_reason_attributes(item):
+    data = {}
+    if getattr(item, "admin_takedown", None):
+        data["removal_reason"] = "legal"
+    else:
+        data["removal_reason"] = None
+    return data
+
+
 class LinkJsonTemplate(ThingJsonTemplate):
     _optional_data_attrs = dict(
         action_type="action_type",
@@ -885,6 +973,13 @@ class CommentJsonTemplate(ThingTemplate):
 
         data = ThingTemplate.get_json(item)
 
+        data.update(get_mod_attributes(item))
+        data.update(get_author_attributes(item))
+        data.update(get_distinguished_attributes(item))
+        data.update(get_edited_attributes(item))
+        data.update(get_report_reason_attributes(item))
+        data.update(get_removal_reason_attributes(item))
+
         data.update({
             "archived": not item.votable,
             "body": item.body,
@@ -894,83 +989,21 @@ class CommentJsonTemplate(ThingTemplate):
             "gilded": item.gildings,
             "likes": item.likes,
             "link_id": cls.get_link_name(item),
-            "mod_reports": item.mod_reports,
-            "user_reports": item.user_reports,
             "saved": item.saved,
             "score": item.score,
             "score_hidden": item.score_hidden,
             "subreddit": item.subreddit.name,
             "subreddit_id": item.subreddit._fullname,
             "ups": item.score,
+            "replies": cls.render_child(item),
+            "parent_id": cls.get_parent_id(item),
         })
-
-        if getattr(item, "admin_takedown", None):
-            data["removal_reason"] = "legal"
-        else:
-            data["removal_reason"] = None
-
-        if not item.author._deleted:
-            author = item.author
-            sr_id = item.subreddit._id
-
-            data["author"] = author.name
-
-            if author.flair_enabled_in_sr(sr_id):
-                flair_text = getattr(author, 'flair_%s_text' % sr_id, None)
-                flair_css = getattr(author, 'flair_%s_css_class' % sr_id, None)
-            else:
-                flair_text = None
-                flair_css = None
-            data["author_flair_text"] = flair_text
-            data["author_flair_css_class"] = flair_css
-
-        else:
-            data["author"] = "[deleted]"
-            data["author_flair_text"] = None
-            data["author_flair_css_class"] = None
-
-        data["replies"] = cls.render_child(item)
-
-        distinguished = getattr(item, "distinguished", "no")
-        data["distinguished"] = distinguished if distinguished != "no" else None
 
         if feature.is_enabled('sticky_comments'):
             data["stickied"] = item.link.sticky_comment_id == item._id
 
-        if isinstance(item.editted, bool):
-            data["edited"] = item.editted
-        else:
-            editted_timetuple = item.editted.astimezone(pytz.UTC).timetuple()
-            data["edited"] = time.mktime(editted_timetuple) - time.timezone
-
-        data["parent_id"] = cls.get_parent_id(item)
-
         if hasattr(item, "action_type"):
             data["action_type"] = item.action_type
-
-        if c.user_is_loggedin and item.can_ban:
-            data["num_reports"] = item.reported
-            data["report_reasons"] = Report.get_reasons(item)
-
-            ban_info = getattr(item, "ban_info", {})
-            if item._spam:
-                data["approved_by"] = None
-                if ban_info.get('moderator_banned'):
-                    data["banned_by"] = ban_info.get("banner") 
-                else:
-                    data["banned_by"] = True
-            else:
-                data["approved_by"] = ban_info.get("unbanner")
-                data["banned_by"] = None
-        else:
-            data["num_reports"] = None
-            data["report_reasons"] = None
-            data["approved_by"] = None
-            data["banned_by"] = None
-
-        if c.user_is_loggedin and c.user.in_timeout:
-            data['user_reports'] = []
-            data['mod_reports'] = []
 
         if c.profilepage:
             data["quarantine"] = item.subreddit.quarantine
