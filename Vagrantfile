@@ -13,7 +13,6 @@
 # donate:     {ROOTDIR}/donate
 # gold:       {ROOTDIR}/gold
 # liveupdate: {ROOTDIR}/liveupdate
-# meatspace:  {ROOTDIR}/meatspace
 # private:    {ROOTDIR}/private
 #
 # All plugins are optional. A plugin will only be installed if it is listed
@@ -55,7 +54,6 @@ plugins = [
   "donate",
   "gold",
   "liveupdate",
-  "meatspace",
   "private",
 ]
 
