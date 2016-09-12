@@ -860,7 +860,13 @@ def valid_password(a, password, compare_password=None):
 
     if compare_password.startswith('$2a$'):
         # it's bcrypt.
-        expected_hash = bcrypt.hashpw(password, compare_password)
+
+        try:
+            expected_hash = bcrypt.hashpw(password, compare_password)
+        except ValueError:
+            # password is invalid because it contains null characters
+            return False
+
         if not constant_time_compare(compare_password, expected_hash):
             return False
 
