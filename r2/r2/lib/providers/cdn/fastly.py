@@ -20,14 +20,34 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+import hashlib
 import requests
 from pylons import app_globals as g
 
 from r2.lib.providers.cdn import CdnProvider
+from r2.lib.utils import constant_time_compare
 
 
 class FastlyCdnProvider(CdnProvider):
     """A provider for reddit's configuration of Fastly."""
+
+    def get_client_ip(self, environ):
+        try:
+            client_ip = environ["HTTP_CF_CONNECTING_IP"]
+            provided_hash = environ["HTTP_CF_CIP_TAG"].lower()
+        except KeyError:
+            return None
+
+        secret = g.secrets["cdn_ip_verification"]
+        expected_hash = hashlib.sha1(client_ip + secret).hexdigest()
+
+        if not constant_time_compare(expected_hash, provided_hash):
+            return None
+
+        return client_ip
+
+    def get_client_location(self, environ):
+        return environ.get("HTTP_CF_IPCOUNTRY", None)
 
     def purge_content(self, url):
         """Purge the content specified by url from the cache.
