@@ -57,7 +57,7 @@ def _system_email(email, plaintext_body, kind, reply_to="",
 
     Email.handler.add_to_queue(user,
         email, g.domain, from_address, kind,
-        body=body, reply_to=reply_to, thing=thing,
+        body=plaintext_body, reply_to=reply_to, thing=thing,
     )
 
 def _nerds_email(body, from_name, kind):
