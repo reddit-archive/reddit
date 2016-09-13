@@ -812,6 +812,7 @@ class LinkJsonTemplate(ThingTemplate):
             "archived": not item.votable,
             "visited": item.visited,
             "clicked": False,
+            "contest_mode": item.contest_mode,
             "domain": item.domain,
             "downs": 0,
             "gilded": item.gildings,
