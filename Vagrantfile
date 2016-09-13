@@ -10,7 +10,6 @@
 # plugins:
 # about:      {ROOTDIR}/about
 # adzerk:     {ROOTDIR}/adzerk
-# donate:     {ROOTDIR}/donate
 # gold:       {ROOTDIR}/gold
 # liveupdate: {ROOTDIR}/liveupdate
 # private:    {ROOTDIR}/private
@@ -51,7 +50,6 @@ code_share_guest_path = "/media/reddit_code"
 plugins = [
   "about",
   "adzerk",
-  "donate",
   "gold",
   "liveupdate",
   "private",
