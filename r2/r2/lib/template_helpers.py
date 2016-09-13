@@ -661,13 +661,16 @@ def search_url(query, subreddit, restrict_sr="off", sort=None, recent=None, ref=
 
 def format_number(number, locale=None):
     if not locale:
-        locale = c.locale
+        locale = c.locale or g.locale
 
     return babel.numbers.format_number(number, locale=locale)
 
 
 def format_percent(ratio, locale=None):
-    return babel.numbers.format_percent(ratio, locale=locale or c.locale)
+    if not locale:
+        locale = c.locale or g.locale
+
+    return babel.numbers.format_percent(ratio, locale=locale)
 
 
 def html_datetime(date):
