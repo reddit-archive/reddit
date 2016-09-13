@@ -1122,6 +1122,11 @@ class LinksByUrlAndSubreddit(tdb_cassandra.View):
             up = UrlParser(url)
             up.hostname = up.hostname.lower()
             keyurl = _force_utf8(UrlParser.base_url(up.unparse()))
+
+        # Cassandra max key length is 65535, truncate url if it's near that
+        # (leaving some space for the prefix)
+        keyurl = keyurl[:65000]
+
         return keyurl
 
     @classmethod
