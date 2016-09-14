@@ -4,6 +4,7 @@ from pycassa.batch import Mutator
 from pylons import app_globals as g
 import pytz
 
+from r2.lib.contrib.ipaddress import ip_address
 from r2.lib.db import tdb_cassandra
 
 
@@ -135,6 +136,11 @@ def set_account_ip(account_id, ip, date=None):
 
     Updates all underlying datastores.
     """
+    # don't store private IPs, send a graphite event so we can alert on this
+    if ip_address(ip).is_private:
+        g.stats.simple_event('ip.private_ip_storage_prevented')
+        return
+
     if date is None:
         date = datetime.datetime.now(g.tz)
     m = Mutator(CONNECTION_POOL)
