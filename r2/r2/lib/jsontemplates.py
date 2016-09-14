@@ -749,6 +749,7 @@ class LinkJsonTemplate(ThingJsonTemplate):
     _optional_data_attrs = dict(
         action_type="action_type",
         sr_detail="sr_detail",
+        show_media="show_media",
         )
     _data_attrs_ = ThingJsonTemplate.data_attrs(
         approved_by="approved_by",
@@ -799,11 +800,6 @@ class LinkJsonTemplate(ThingJsonTemplate):
 
     PREVIEW_RESOLUTIONS = (108, 216, 320, 640, 960, 1080)
     PREVIEW_MAX_RATIO = 2
-
-    def __init__(self):
-        super(LinkJsonTemplate, self).__init__()
-        if feature.is_enabled('default_sort'):
-            self._data_attrs_['default_sort'] = 'default_sort'
 
     def thing_attr(self, thing, attr):
         from r2.lib.media import get_media_embed
@@ -939,6 +935,8 @@ class PromotedLinkJsonTemplate(LinkJsonTemplate):
         adserver_click_url="adserver_click_url",
         mobile_ad_url="mobile_ad_url",
         disable_comments="disable_comments",
+        third_party_tracking="third_party_tracking",
+        third_party_tracking_2="third_party_tracking_2",
     )
     del _data_attrs_['subreddit']
     del _data_attrs_['subreddit_id']
