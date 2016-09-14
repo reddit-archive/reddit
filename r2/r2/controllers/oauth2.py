@@ -266,6 +266,9 @@ class OAuth2AccessController(MinimalController):
     handles_csrf = True
 
     def pre(self):
+        if g.disallow_db_writes:
+            abort(403)
+
         set_extension(request.environ, "json")
         MinimalController.pre(self)
         require_https()
