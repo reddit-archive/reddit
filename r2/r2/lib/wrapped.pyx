@@ -24,13 +24,16 @@
 from datetime import datetime
 from hashlib import md5
 from itertools import chain
+import random
 import re
 import types
 
 from r2.lib.cache import MemcachedError
+from r2.lib.utils import SimpleSillyStub
 
 
-RENDER_CACHE_SAMPLE_RATE = 0.001
+CACHE_HIT_SAMPLE_RATE = 0.001
+RENDER_TIMER_SAMPLE_RATE = 0.001
 
 class _TemplateUpdater(object):
     # this class is just a hack to get around Cython's closure rules
@@ -189,7 +192,16 @@ class Templated(object):
         """
         from filters import unsafe
         from pylons import tmpl_context as c
+        from pylons import app_globals as g
 
+        if (self.cachable and
+                style != "api" and
+                random.random() < RENDER_TIMER_SAMPLE_RATE):
+            timer = g.stats.get_timer(name="render.%s" % self.render_class_name)
+        else:
+            timer = SimpleSillyStub()
+
+        timer.start()
         template = self.template(style)
 
         # store the global render style (child templates might override it)
@@ -202,6 +214,7 @@ class Templated(object):
 
         # reset the global render style
         c.render_style = render_style
+        timer.stop()
         return res
 
     def _render(self, style, **kwargs):
@@ -292,7 +305,7 @@ class Templated(object):
                     event_name = 'render-cache.%s' % item.render_class_name
                     name = 'hit' if cache_key in cached else 'miss'
                     g.stats.event_count(
-                        event_name, name, sample_rate=RENDER_CACHE_SAMPLE_RATE)
+                        event_name, name, sample_rate=CACHE_HIT_SAMPLE_RATE)
 
                     # store the unevaluated templates in
                     # cached for caching
