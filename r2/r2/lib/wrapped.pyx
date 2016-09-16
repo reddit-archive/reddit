@@ -189,31 +189,19 @@ class Templated(object):
         """
         from filters import unsafe
         from pylons import tmpl_context as c
-        from pylons import app_globals as g
 
-        if self.render_class_name in g.timed_templates:
-            timer = g.stats.get_timer('render.%s.nocache' %
-                                      self.render_class_name,
-                                      publish=False)
-            timer.start()
-        else:
-            timer = None
-
-        # the style has to default to the global render style
-        # fetch template
         template = self.template(style)
-        if timer: timer.intermediate('template')
-        # store the global render style (since child templates)
+
+        # store the global render style (child templates might override it)
         render_style = c.render_style
         c.render_style = style
-        # render the template
-        res = template.render(thing = self)
-        if timer: timer.intermediate('render')
+
+        res = template.render(thing=self)
         if not isinstance(res, StringTemplate):
             res = StringTemplate(res)
+
         # reset the global render style
         c.render_style = render_style
-        if timer: timer.stop()
         return res
 
     def _render(self, style, **kwargs):
