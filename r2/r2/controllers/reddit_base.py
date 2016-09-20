@@ -940,8 +940,6 @@ class MinimalController(BaseController):
         # True/False forces. None updates for most non-POST requests
         c.update_last_visit = None
 
-        g.stats.count_string('user_agents', request.user_agent)
-
         if is_subdomain(request.host, g.oauth_domain):
             self.check_cors()
 
