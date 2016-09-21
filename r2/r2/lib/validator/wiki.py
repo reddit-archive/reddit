@@ -281,7 +281,7 @@ class VWikiPage(VWikiPageName):
                 self.set_error('HIDDEN_REVISION', code=403)
                 raise AbortWikiError
             return r
-        except (tdb_cassandra.NotFound, WikiBadRevision):
+        except (tdb_cassandra.NotFound, WikiBadRevision, ValueError):
             self.set_error('INVALID_REVISION', code=404)
             raise AbortWikiError
 
