@@ -1446,6 +1446,7 @@ class StylesheetTemplate(ThingJsonTemplate):
 
 class SubredditSettingsTemplate(ThingJsonTemplate):
     _data_attrs_ = dict(
+        allow_images='site.allow_images',
         collapse_deleted_comments='site.collapse_deleted_comments',
         comment_score_hide_mins='site.comment_score_hide_mins',
         content_options='site.link_type',
