@@ -530,7 +530,7 @@ class WikiApiController(WikiController):
 
                 # continue storing the special pages as data attributes on the subreddit
                 # object. TODO: change this to minimize subreddit get sizes.
-                if page.special:
+                if page.name in ATTRIBUTE_BY_PAGE:
                     setattr(c.site, ATTRIBUTE_BY_PAGE[page.name], content)
                     c.site._commit()
             except ContentLengthError as e:
