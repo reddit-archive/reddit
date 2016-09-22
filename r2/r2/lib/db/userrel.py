@@ -23,6 +23,7 @@
 import functools
 import types
 
+from r2.lib.db.thing import CreationError
 from r2.lib.memoize import memoize
 
 
@@ -48,7 +49,12 @@ class UserRelManager(object):
         r = self.relation(thing, user, self.name, **attrs)
         if permissions is not None:
             r.set_permissions(permissions)
-        r._commit()
+
+        try:
+            r._commit()
+        except CreationError:
+            return None
+
         r._permission_class = self.permission_class
         return r
 
