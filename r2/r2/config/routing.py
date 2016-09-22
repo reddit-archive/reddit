@@ -139,9 +139,7 @@ def make_map(config):
        dest='https://www.reddit.com/r/i18n')
     mc('/feedback', controller='redirect', action='redirect',
        dest='/contact')
-    mc('/contact', controller='front', action='contact_us')
-    mc('/jobs', controller='redirect', action='redirect',
-       dest='https://boards.greenhouse.io/reddit')
+    mc('/contact', controller='frontunstyled', action='contact_us')
 
     mc('/admin/awards', controller='awards')
     mc('/admin/awards/:awardcn/:action', controller='awards',
