@@ -1204,6 +1204,9 @@ class VCanDistinguish(VByName):
             can_distinguish = False
             item = VByName.run(self, thing_name)
 
+            if not item:
+                abort(404)
+
             if item.author_id == c.user._id:
                 if isinstance(item, Message) and c.user.employee:
                     return True
