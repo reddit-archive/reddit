@@ -9,7 +9,6 @@
 #
 # plugins:
 # about:      {ROOTDIR}/about
-# adzerk:     {ROOTDIR}/adzerk
 # gold:       {ROOTDIR}/gold
 # liveupdate: {ROOTDIR}/liveupdate
 # private:    {ROOTDIR}/private
@@ -49,7 +48,6 @@ code_share_host_path = File.expand_path("..", reddit_dir)
 code_share_guest_path = "/media/reddit_code"
 plugins = [
   "about",
-  "adzerk",
   "gold",
   "liveupdate",
   "private",
