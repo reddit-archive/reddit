@@ -367,21 +367,14 @@ class Templated(object):
 
         return res
 
-    def _cache_key(self, key):
-        return 'rend:%s(%s)' % (self.__class__.__name__, md5(key).hexdigest())
-
     def _write_cache(self, keys):
         from pylons import app_globals as g
 
         if not keys:
             return
 
-        toset = {}
-        for key, val in keys.iteritems():
-            toset[self._cache_key(key)] = val
-
         try:
-            g.rendercache.set_multi(toset, time=3600)
+            g.rendercache.set_multi(keys, time=3600)
         except MemcachedError as e:
             g.log.warning("rendercache error: %s", e)
             return
@@ -389,13 +382,7 @@ class Templated(object):
     def _read_cache(self, keys):
         from pylons import app_globals as g
 
-        ekeys = {}
-        for key in keys:
-            ekeys[self._cache_key(key)] = key
-        found = g.rendercache.get_multi(ekeys)
-        ret = {}
-        for fkey, val in found.iteritems():
-            ret[ekeys[fkey]] = val
+        ret = g.rendercache.get_multi(keys)
         return ret
 
     def render(self, style = None, **kw):
@@ -482,7 +469,7 @@ class CachedTemplate(Templated):
                      for k, v in self.cachable_attrs()]
         keys.append(repr(auto_keys))
         h = md5(u''.join(keys)).hexdigest()
-        return "<%s:[%s]>" % (self.__class__.__name__, h)
+        return "rend:%s:%s" % (self.render_class_name, h)
 
 
 class Wrapped(CachedTemplate):
