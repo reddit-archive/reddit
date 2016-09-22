@@ -780,6 +780,9 @@ class ApiController(RedditController):
         self.check_api_friend_oauth_scope(type)
 
         victim = iuser or nuser
+
+        if not victim:
+            abort(400, 'No user specified')
         
         if type in self._sr_friend_types:
             mod_action_by_type = dict(
