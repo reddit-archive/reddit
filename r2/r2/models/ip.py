@@ -136,9 +136,10 @@ def set_account_ip(account_id, ip, date=None):
 
     Updates all underlying datastores.
     """
-    # don't store private IPs, send a graphite event so we can alert on this
+    # don't store private IPs, send event + string so we can investigate this
     if ip_address(ip).is_private:
         g.stats.simple_event('ip.private_ip_storage_prevented')
+        g.stats.count_string('private_ip_storage_prevented', ip)
         return
 
     if date is None:
