@@ -88,6 +88,7 @@ setup(
         "webtest",
         "python-snappy",
         "httpagentparser==1.7.8",
+        "raven",
     ],
     # setup tests (allowing for "python setup.py test")
     tests_require=['mock', 'nose', 'coverage'],

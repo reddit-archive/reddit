@@ -21,13 +21,18 @@
 ###############################################################################
 
 import cPickle
-
 from datetime import datetime
+from hashlib import md5
 
 from pylons import request
 from pylons import tmpl_context as c
 from pylons import app_globals as g
+from pylons.util import PylonsContext, AttribSafeContextObj, ContextObj
+import raven
+from raven.processors import Processor
 from weberror.reporter import Reporter
+
+from r2.lib.app_globals import Globals
 
 
 QUEUE_NAME = 'log_q'
@@ -67,6 +72,27 @@ def log_text(classification, text=None, level="info"):
     amqp.add_item(QUEUE_NAME, cPickle.dumps(d))
 
 
+def get_operational_exceptions():
+    import _pylibmc
+    import sqlalchemy.exc
+    import pycassa.pool
+    import r2.lib.db.thing
+    import r2.lib.lock
+    import r2.lib.cache
+
+    return (
+        SystemExit,  # gunicorn is shutting us down
+        _pylibmc.MemcachedError,
+        r2.lib.db.thing.NotFound,
+        r2.lib.lock.TimeoutExpired,
+        sqlalchemy.exc.OperationalError,
+        sqlalchemy.exc.IntegrityError,
+        pycassa.pool.AllServersUnavailable,
+        pycassa.pool.NoConnectionAvailable,
+        pycassa.pool.MaximumRetryException,
+    )
+
+
 class LogQueueErrorReporter(Reporter):
     """ErrorMiddleware-compatible reporter that writes exceptions to log_q.
 
@@ -75,39 +101,10 @@ class LogQueueErrorReporter(Reporter):
 
     """
 
-    @staticmethod
-    def _operational_exceptions():
-        """Get a list of exceptions caused by transient operational stuff.
-
-        These errors aren't terribly useful to track in /admin/errors because
-        they aren't directly bugs in the code but rather symptoms of
-        operational issues.
-
-        """
-
-        import _pylibmc
-        import sqlalchemy.exc
-        import pycassa.pool
-        import r2.lib.db.thing
-        import r2.lib.lock
-        import r2.lib.cache
-
-        return (
-            SystemExit,  # gunicorn is shutting us down
-            _pylibmc.MemcachedError,
-            r2.lib.db.thing.NotFound,
-            r2.lib.lock.TimeoutExpired,
-            sqlalchemy.exc.OperationalError,
-            sqlalchemy.exc.IntegrityError,
-            pycassa.pool.AllServersUnavailable,
-            pycassa.pool.NoConnectionAvailable,
-            pycassa.pool.MaximumRetryException,
-        )
-
     def report(self, exc_data):
         from r2.lib import amqp
 
-        if issubclass(exc_data.exception_type, self._operational_exceptions()):
+        if issubclass(exc_data.exception_type, get_operational_exceptions()):
             return
 
         d = _default_dict()
@@ -120,6 +117,80 @@ class LogQueueErrorReporter(Reporter):
                           for f in exc_data.frames]
 
         amqp.add_item(QUEUE_NAME, cPickle.dumps(d))
+
+
+class SanitizeStackLocalsProcessor(Processor):
+    keys_to_remove = (
+        "self",
+        "__traceback_supplement__",
+    )
+
+    classes_to_remove = (
+        Globals,
+        PylonsContext,
+        AttribSafeContextObj,
+        ContextObj,
+    )
+
+    def filter_stacktrace(self, data, **kwargs):
+        def remove_keys(obj):
+            if isinstance(obj, dict):
+                for k in obj.keys():
+                    if k in self.keys_to_remove:
+                        obj.pop(k)
+                    elif isinstance(obj[k], self.classes_to_remove):
+                        obj.pop(k)
+                    elif isinstance(obj[k], basestring):
+                        contains_forbidden_repr = any(
+                            _cls.__name__ in obj[k]
+                            for _cls in self.classes_to_remove
+                        )
+                        if contains_forbidden_repr:
+                            obj.pop(k)
+                    elif isinstance(obj[k], (list, dict)):
+                        remove_keys(obj[k])
+            elif isinstance(obj, list):
+                for v in obj:
+                    if isinstance(v, (list, dict)):
+                        remove_keys(v)
+
+        for frame in data.get('frames', []):
+            if 'vars' in frame:
+                remove_keys(frame['vars'])
+
+
+class RavenErrorReporter(Reporter):
+    @classmethod
+    def get_raven_client(cls):
+        repositories = g.versions.keys()
+        release_str = '|'.join(
+           "%s:%s" % (repo, commit_hash)
+           for repo, commit_hash in sorted(g.versions.items())
+        )
+        release_hash = md5(release_str).hexdigest()
+
+        RAVEN_CLIENT = raven.Client(
+            dsn=g.sentry_dsn,
+            # use the default transport to send errors from another thread:
+            transport=raven.transport.threaded.ThreadedHTTPTransport,
+            include_paths=repositories,
+            processors=[
+                'raven.processors.SanitizePasswordsProcessor',
+                'r2.lib.log.SanitizeStackLocalsProcessor',
+            ],
+            release=release_hash,
+            environment=g.pool_name,
+        )
+        commit_hash_by_repo = g.versions
+        RAVEN_CLIENT.tags_context(commit_hash_by_repo)
+        return RAVEN_CLIENT
+
+    def report(self, exc_data):
+        if issubclass(exc_data.exception_type, get_operational_exceptions()):
+            return
+
+        client = self.get_raven_client()
+        client.captureException()
 
 
 def write_error_summary(error):
