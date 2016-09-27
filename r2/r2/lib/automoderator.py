@@ -874,7 +874,7 @@ class RuleTarget(object):
         for threshold in thresholds:
             compare_value = getattr(self, threshold, None)
             if compare_value is not None:
-                checks[threshold] = compare_value
+                checks[threshold] = str(compare_value)
 
         # if we don't need to actually check anything, just return True
         if not checks:
