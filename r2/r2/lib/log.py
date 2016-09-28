@@ -161,6 +161,13 @@ class SanitizeStackLocalsProcessor(Processor):
 
 class RavenErrorReporter(Reporter):
     @classmethod
+    def get_module_versions(cls):
+        return {
+            repo: commit_hash[:6]
+            for repo, commit_hash in g.versions.iteritems()
+        }
+
+    @classmethod
     def get_raven_client(cls):
         repositories = g.versions.keys()
         release_str = '|'.join(
@@ -180,9 +187,8 @@ class RavenErrorReporter(Reporter):
             ],
             release=release_hash,
             environment=g.pool_name,
+            include_versions=False,     # handled by get_module_versions
         )
-        commit_hash_by_repo = g.versions
-        RAVEN_CLIENT.tags_context(commit_hash_by_repo)
         return RAVEN_CLIENT
 
     def report(self, exc_data):
@@ -190,7 +196,10 @@ class RavenErrorReporter(Reporter):
             return
 
         client = self.get_raven_client()
-        client.captureException()
+
+        client.captureException(data={
+            "modules": self.get_module_versions(),
+        })
 
 
 def write_error_summary(error):
