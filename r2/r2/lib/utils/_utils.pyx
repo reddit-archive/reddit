@@ -181,7 +181,8 @@ cdef timetext(delta, precision=None, bare=True):
     """
     delta = max(delta, timedelta(0))
     cdef long since = delta.days * 24 * 60 * 60 + delta.seconds
-    cdef int i, seconds, count, count2, n
+    cdef long count
+    cdef int i, seconds, n
     cdef TimeText name, name2
 
     for i, (seconds, name) in enumerate(timechunks):
