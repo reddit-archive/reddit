@@ -1181,9 +1181,6 @@ class FrontController(RedditController):
         else:
             sr_num = 0
 
-        if feature.is_enabled('link_relevancy') and sort == 'relevance':
-            sort = 'relevance2'
-
         content = None
         subreddits = None
         nav_menus = None
