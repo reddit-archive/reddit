@@ -168,6 +168,56 @@ class RavenErrorReporter(Reporter):
         }
 
     @classmethod
+    def add_http_context(cls, client):
+        """Add request details to the 'request' context
+
+        These fields will be filtered by SanitizePasswordsProcessor
+        as long as they are one of 'data', 'cookies', 'headers', 'env', and
+        'query_string'.
+
+        """
+
+        HEADER_WHITELIST = (
+            "user-agent",
+            "host",
+            "accept",
+            "accept-encoding",
+            "accept-language",
+            "referer",
+        )
+        headers = {
+            k: v for k, v in request.headers.iteritems()
+            if k.lower() in HEADER_WHITELIST
+        }
+
+        client.http_context({
+            "url": request.path,
+            "method": request.method,
+            "query_string": request.query_string,
+            "data": request.body,
+            "headers": headers,
+        })
+
+    @classmethod
+    def add_reddit_context(cls, client):
+        reddit_context = {
+            "language": c.lang,
+            "render_style": c.render_style,
+        }
+
+        if c.site:
+            reddit_context["subreddit"] = c.site.name
+
+        if c.user_is_loggedin:
+            reddit_context["user"] = c.user._id
+
+        if c.oauth2_client:
+            reddit_context["oauth_client_id"] = c.oauth2_client._id
+            reddit_context["oauth_client_name"] = c.oauth2_client.name
+
+        client.extra_context(reddit_context)
+
+    @classmethod
     def get_raven_client(cls):
         repositories = g.versions.keys()
         release_str = '|'.join(
@@ -197,15 +247,21 @@ class RavenErrorReporter(Reporter):
 
         client = self.get_raven_client()
 
+        self.add_http_context(client)
+        self.add_reddit_context(client)
+
         routes_dict = request.environ["pylons.routes_dict"]
         controller = routes_dict.get("controller", "unknown")
         action = routes_dict.get("action", "unknown")
         culprit = "%s.%s" % (controller, action)
 
-        client.captureException(data={
-            "modules": self.get_module_versions(),
-            "culprit": culprit,
-        })
+        try:
+            client.captureException(data={
+                "modules": self.get_module_versions(),
+                "culprit": culprit,
+            })
+        finally:
+            client.context.clear()
 
 
 def write_error_summary(error):
