@@ -197,8 +197,14 @@ class RavenErrorReporter(Reporter):
 
         client = self.get_raven_client()
 
+        routes_dict = request.environ["pylons.routes_dict"]
+        controller = routes_dict.get("controller", "unknown")
+        action = routes_dict.get("action", "unknown")
+        culprit = "%s.%s" % (controller, action)
+
         client.captureException(data={
             "modules": self.get_module_versions(),
+            "culprit": culprit,
         })
 
 
