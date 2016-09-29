@@ -118,4 +118,5 @@ python-haigha
 
 python-redis
 python-pyramid
+python-raven
 PACKAGES
