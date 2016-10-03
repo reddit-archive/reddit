@@ -354,18 +354,17 @@ class Stats:
                 # Work the same for amqp.consume_items and amqp.handle_items.
                 msg_tup = utils.tup(msgs)
 
-                baseplate_integration.start_root_span("amqp." + queue_name)
+                metrics_name = "amqp." + queue_name
                 start = time.time()
                 try:
-                    return processor(msgs, *args)
+                    with baseplate_integration.make_server_span(metrics_name):
+                        return processor(msgs, *args)
                 finally:
                     service_time = (time.time() - start) / len(msg_tup)
                     for n, msg in enumerate(msg_tup):
                         fake_start = start + n * service_time
                         fake_end = fake_start + service_time
-                        self.transact('amqp.%s' % queue_name,
-                                      fake_start, fake_end)
-                    baseplate_integration.stop_root_span()
+                        self.transact(metrics_name, fake_start, fake_end)
                     self.flush()
             return wrap_processor
         return decorator

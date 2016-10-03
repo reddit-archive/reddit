@@ -894,7 +894,7 @@ class MinimalController(BaseController):
         else:
             c.request_timer = SimpleSillyStub()
 
-        baseplate_integration.start_root_span(span_name=key)
+        baseplate_integration.make_server_span(span_name=key).start()
 
         c.response_wrapper = None
         c.start_time = datetime.now(g.tz)
@@ -1032,7 +1032,7 @@ class MinimalController(BaseController):
         c.request_timer.intermediate("post")
 
         # push data to statsd
-        baseplate_integration.stop_root_span()
+        baseplate_integration.finish_server_span()
         c.request_timer.stop()
         g.stats.flush()
 
