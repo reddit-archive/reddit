@@ -67,7 +67,6 @@ def load_controllers():
     from post import PostController
     from toolbar import ToolbarController
     from awards import AwardsController
-    from errorlog import ErrorlogController
     from newsletter import NewsletterController
     from googletagmanager import GoogleTagManagerController
     from promotecontroller import PromoteController

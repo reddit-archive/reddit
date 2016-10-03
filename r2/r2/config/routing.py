@@ -148,8 +148,6 @@ def make_map(config):
     mc('/admin/creddits', controller='admintool', action='creddits')
     mc('/admin/gold', controller='admintool', action='gold')
 
-    mc('/admin/errors', controller='errorlog')
-
     mc('/user/:username/about', controller='user', action='about',
        where='overview')
     mc('/user/:username/trophies', controller='user', action='trophies')

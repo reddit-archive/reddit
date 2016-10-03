@@ -93,32 +93,6 @@ def get_operational_exceptions():
     )
 
 
-class LogQueueErrorReporter(Reporter):
-    """ErrorMiddleware-compatible reporter that writes exceptions to log_q.
-
-    The log_q queue processor then picks these up, updates the /admin/errors
-    overview, and decides whether or not to send out emails about them.
-
-    """
-
-    def report(self, exc_data):
-        from r2.lib import amqp
-
-        if issubclass(exc_data.exception_type, get_operational_exceptions()):
-            return
-
-        d = _default_dict()
-        d["type"] = "exception"
-        d["exception_type"] = exc_data.exception_type.__name__
-        d["exception_desc"] = exc_data.exception_value
-        # use the format that log_q expects; same as traceback.extract_tb
-        d["traceback"] = [(f.filename, f.lineno, f.name,
-                           f.get_source_line().strip())
-                          for f in exc_data.frames]
-
-        amqp.add_item(QUEUE_NAME, cPickle.dumps(d))
-
-
 class SanitizeStackLocalsProcessor(Processor):
     keys_to_remove = (
         "self",

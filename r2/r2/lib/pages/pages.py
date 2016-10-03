@@ -145,7 +145,6 @@ from r2.lib.template_helpers import (
     static,
 )
 from r2.lib.subreddit_search import popular_searches
-from r2.lib.log import log_text
 from r2.lib.memoize import memoize
 from r2.lib.utils import trunc_string as _truncate, to_date
 from r2.lib.filters import safemarkdown
@@ -3698,75 +3697,6 @@ class UserAwards(Templated):
             else:
                 raise NotImplementedError
 
-class AdminErrorLog(Templated):
-    """The admin page for viewing the error log"""
-    def __init__(self):
-        hcb = g.hardcache.backend
-
-        date_groupings = {}
-        hexkeys_seen = {}
-
-        idses = hcb.ids_by_category("error", limit=5000)
-        errors = g.hardcache.get_multi(prefix="error-", keys=idses)
-
-        for ids in idses:
-            date, hexkey = ids.split("-")
-
-            hexkeys_seen[hexkey] = True
-
-            d = errors.get(ids, None)
-
-            if d is None:
-                log_text("error=None", "Why is error-%s None?" % ids,
-                         "warning")
-                continue
-
-            tpl = (d.get('times_seen', 1), hexkey, d)
-            date_groupings.setdefault(date, []).append(tpl)
-
-        self.nicknames = {}
-        self.statuses = {}
-
-        nicks = g.hardcache.get_multi(prefix="error_nickname-",
-                                      keys=hexkeys_seen.keys())
-        stati = g.hardcache.get_multi(prefix="error_status-",
-                                      keys=hexkeys_seen.keys())
-
-        for hexkey in hexkeys_seen.keys():
-            self.nicknames[hexkey] = nicks.get(hexkey, "???")
-            self.statuses[hexkey] = stati.get(hexkey, "normal")
-
-        idses = hcb.ids_by_category("logtext")
-        texts = g.hardcache.get_multi(prefix="logtext-", keys=idses)
-
-        for ids in idses:
-            date, level, classification = ids.split("-", 2)
-            textoccs = []
-            dicts = texts.get(ids, None)
-            if dicts is None:
-                log_text("logtext=None", "Why is logtext-%s None?" % ids,
-                         "warning")
-                continue
-            for d in dicts:
-                textoccs.append( (d['text'], d['occ'] ) )
-
-            sort_order = {
-                'error': -1,
-                'warning': -2,
-                'info': -3,
-                'debug': -4,
-                }[level]
-
-            tpl = (sort_order, level, classification, textoccs)
-            date_groupings.setdefault(date, []).append(tpl)
-
-        self.date_summaries = []
-
-        for date in sorted(date_groupings.keys(), reverse=True):
-            groupings = sorted(date_groupings[date], reverse=True)
-            self.date_summaries.append( (date, groupings) )
-
-        Templated.__init__(self)
 
 class AdminAwards(Templated):
     """The admin page for editing awards"""
