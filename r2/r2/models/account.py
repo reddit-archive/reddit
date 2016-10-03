@@ -37,7 +37,6 @@ from r2.lib.db.thing import Thing, Relation, NotFound
 from r2.lib.db.operators import lower
 from r2.lib.db.userrel import UserRel
 from r2.lib.db import tdb_cassandra
-from r2.lib.log import log_text
 from r2.lib.memoize import memoize
 from r2.lib.utils import (
     randstr,
@@ -456,20 +455,12 @@ class Account(Thing):
             if _update:
                 raise
             else:
-                log_text("friend-rels-bandaid 1",
-                         "Had to recalc friend_rels (1) for %s" % self.name,
-                         "warning")
                 return self.friend_rels(_update=True)
 
         if not _update:
             sorted_1 = sorted([r._thing2_id for r in rels])
             sorted_2 = sorted(list(self.friends))
             if sorted_1 != sorted_2:
-                g.log.error("FR1: %r" % sorted_1)
-                g.log.error("FR2: %r" % sorted_2)
-                log_text("friend-rels-bandaid 2",
-                         "Had to recalc friend_rels (2) for %s" % self.name,
-                         "warning")
                 self.friend_ids(_update=True)
                 return self.friend_rels(_update=True)
         return dict((r._thing2_id, r) for r in rels)

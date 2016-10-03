@@ -45,7 +45,6 @@ from r2.lib.souptest import (
 )
 from r2.lib.template_helpers import add_sr
 from r2.lib.jsonresponse import JQueryResponse, JsonResponse
-from r2.lib.log import log_text
 from r2.lib.permissions import ModeratorPermissionSet
 from r2.models import *
 from r2.models.rules import MAX_RULES_PER_SUBREDDIT
@@ -2624,15 +2623,6 @@ class VDestination(Validator):
 
             if u.is_reddit_url(c.site) and u.is_web_safe_url():
                 return dest
-
-        ip = getattr(request, "ip", "[unknown]")
-        fp = getattr(request, "fullpath", "[unknown]")
-        dm = c.domain or "[unknown]"
-
-        log_text("invalid redirect",
-                 "%s attempted to redirect from %s to %s with domain %s"
-                      % (ip, fp, dest, dm),
-                 "info")
 
         return "/"
 

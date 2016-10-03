@@ -27,7 +27,6 @@ from r2.lib.errors import MessageError
 from r2.lib.utils import tup, fetch_things2
 from r2.lib.filters import websafe
 from r2.lib.hooks import HookRegistrar
-from r2.lib.log import log_text
 from r2.models import (
     Account,
     Comment,

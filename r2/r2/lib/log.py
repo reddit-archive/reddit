@@ -20,8 +20,6 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-import cPickle
-from datetime import datetime
 from hashlib import md5
 
 from pylons import request
@@ -33,43 +31,6 @@ from raven.processors import Processor
 from weberror.reporter import Reporter
 
 from r2.lib.app_globals import Globals
-
-
-QUEUE_NAME = 'log_q'
-
-
-def _default_dict():
-    return dict(time=datetime.now(g.display_tz),
-                host=g.reddit_host,
-                port="default",
-                pid=g.reddit_pid)
-
-
-def log_text(classification, text=None, level="info"):
-    """Send some log text to log_q for appearance in the streamlog.
-
-    This is deprecated. All logging should be done through python's stdlib
-    logging library.
-
-    """
-
-    from r2.lib import amqp
-    from r2.lib.filters import _force_utf8
-
-    if text is None:
-        text = classification
-
-    if level not in ('debug', 'info', 'warning', 'error'):
-        print "What kind of loglevel is %s supposed to be?" % level
-        level = 'error'
-
-    d = _default_dict()
-    d['type'] = 'text'
-    d['level'] = level
-    d['text'] = _force_utf8(text)
-    d['classification'] = classification
-
-    amqp.add_item(QUEUE_NAME, cPickle.dumps(d))
 
 
 def get_operational_exceptions():

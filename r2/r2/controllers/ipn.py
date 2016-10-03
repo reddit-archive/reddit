@@ -38,7 +38,6 @@ from r2.lib.emailer import _system_email
 from r2.lib.errors import MessageError
 from r2.lib.filters import _force_unicode, _force_utf8
 from r2.lib.hooks import get_hook
-from r2.lib.log import log_text
 from r2.lib.pages import GoldGiftCodeEmail
 from r2.lib.strings import strings
 from r2.lib.utils import constant_time_compare, randstr, timeago
@@ -142,25 +141,12 @@ def check_payment_status(payment_status):
     if psl == 'completed':
         return (None, psl)
     elif psl == 'refunded':
-        log_text("refund", "Just got notice of a refund.", "info")
-        # TODO: something useful when this happens -- and don't
-        # forget to verify first
         return ("Ok", psl)
     elif psl == 'pending':
-        log_text("pending",
-                 "Just got notice of a Pending, whatever that is.", "info")
-        # TODO: something useful when this happens -- and don't
-        # forget to verify first
         return ("Ok", psl)
     elif psl == 'reversed':
-        log_text("reversal",
-                 "Just got notice of a PayPal reversal.", "info")
-        # TODO: something useful when this happens -- and don't
-        # forget to verify first
         return ("Ok", psl)
     elif psl == 'canceled_reversal':
-        log_text("canceled_reversal",
-                 "Just got notice of a PayPal 'canceled reversal'.", "info")
         return ("Ok", psl)
     elif psl == 'failed':
         return ("Ok", psl)
@@ -179,12 +165,8 @@ def check_txn_type(txn_type, psl):
     elif txn_type == 'subscr_eot':
         return ("Ok", None)
     elif txn_type == 'subscr_failed':
-        log_text("failed_subscription",
-                 "Just got notice of a failed PayPal resub.", "info")
         return ("Ok", None)
     elif txn_type == 'subscr_modify':
-        log_text("modified_subscription",
-                 "Just got notice of a modified PayPal sub.", "info")
         return ("Ok", None)
     elif txn_type == 'send_money':
         return ("Ok", None)
@@ -484,9 +466,6 @@ class IpnController(RedditController):
         # Make sure it's really PayPal
         if not constant_time_compare(paypal_secret,
                                      g.secrets['paypal_webhook']):
-            log_text("invalid IPN secret",
-                     "%s guessed the wrong IPN secret" % request.ip,
-                     "warning")
             raise ValueError
 
         # Return early if it's an IPN class we don't care about

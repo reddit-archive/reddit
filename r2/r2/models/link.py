@@ -54,7 +54,6 @@ from r2.lib.memoize import memoize
 from r2.lib.wrapped import Wrapped
 from r2.lib.filters import _force_utf8, _force_unicode
 from r2.lib import hooks, utils
-from r2.lib.log import log_text
 from mako.filters import url_escape
 from r2.lib.strings import strings, Score
 from r2.lib.db import tdb_cassandra, sorts

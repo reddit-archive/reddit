@@ -108,7 +108,6 @@ from r2.lib.db import tdb_cassandra
 from r2.lib import promote
 from r2.lib import tracking, emailer, newsletter
 from r2.lib.subreddit_search import search_reddits
-from r2.lib.log import log_text
 from r2.lib.filters import safemarkdown
 from r2.lib.media import str_to_image
 from r2.controllers.api_docs import api_doc, api_section
@@ -3611,22 +3610,12 @@ class ApiController(RedditController):
 
         if rv is None:
             c.errors.add(errors.INVALID_CODE, field = "code")
-            log_text ("invalid gold claim",
-                      "%s just tried to claim %s" % (c.user.name, code),
-                      "info")
         elif rv == "already claimed":
             c.errors.add(errors.CLAIMED_CODE, field = "code")
-            log_text ("invalid gold reclaim",
-                      "%s just tried to reclaim %s" % (c.user.name, code),
-                      "info")
         else:
             days, subscr_id = rv
             if days <= 0:
                 raise ValueError("days = %r?" % days)
-
-            log_text ("valid gold claim",
-                      "%s just claimed %s" % (c.user.name, code),
-                      "info")
 
             if subscr_id:
                 c.user.gold_subscr_id = subscr_id
