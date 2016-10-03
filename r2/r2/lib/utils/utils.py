@@ -888,7 +888,7 @@ def url_to_thing(url):
         sr_name = None
 
     path = sr_pattern.sub('', urlparser.path)
-    if not path:
+    if not path or path == '/':
         if not sr_name:
             return None
 

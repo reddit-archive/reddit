@@ -104,7 +104,15 @@ class FeatureState(object):
                 features.append(feature_state)
         return features
 
-    def _calculate_bucket(self, seed):
+    @staticmethod
+    def is_user_experiment(experiment):
+        return not FeatureState.is_page_experiment(experiment)
+
+    @staticmethod
+    def is_page_experiment(experiment):
+        return experiment.get('page')
+
+    def _calculate_bucket(self, seed, experiment_seed=None):
         """Sort something into one of self.NUM_BUCKETS buckets.
 
         :param seed -- a string used for shifting the deterministic bucketing
@@ -214,6 +222,11 @@ class FeatureState(object):
 
     def is_enabled(self, user=None, subreddit=None, subdomain=None,
                    oauth_client=None):
+        """Determine if a feature is enabled.
+
+        For experiments, this induces a bucketing event by calling
+        self._is_experiment_enabled.
+        """
         cfg = self.config
         kw = dict(
             user=user,
@@ -320,25 +333,39 @@ class FeatureState(object):
                     pass
 
     def _is_experiment_enabled(self, experiment, user=None):
+        """ Determine if there's an active variant of the specified experiment
+        for the current user.
 
-        if experiment.get('enabled', True):
-            variant = self._get_experiment_variant(experiment, user)
+        Sends a bucketing event.
+        """
+        if not experiment.get('enabled', True):
+            return False
 
-            # We only want to send this event once per request, because that's
-            # an easy way to get rid of extraneous events.
-            if not c.have_sent_bucketing_event:
-                c.have_sent_bucketing_event = {}
+        variant = None
+        if FeatureState.is_user_experiment(experiment):
+            variant = self._get_user_experiment_variant(experiment, user)
+        elif FeatureState.is_page_experiment(experiment):
+            content_id, _ = FeatureState.get_content_id()
+            variant = self._get_page_experiment_variant(experiment)
 
-            if variant is not None:
+        # We only want to send this event once per request, because that's
+        # an easy way to get rid of extraneous events.
+        if not c.have_sent_bucketing_event:
+            c.have_sent_bucketing_event = set()
+
+        if variant is not None and self.world.valid_experiment_request():
+            if FeatureState.is_user_experiment(experiment):
                 loid = self.world.current_loid()
                 if self.world.is_user_loggedin(user):
                     bucketing_id = user._id
                 else:
                     bucketing_id = loid
 
+                key = ('user', self.name, bucketing_id)
+
                 if (
                     g.running_as_script or
-                    not c.have_sent_bucketing_event.get((self.name, bucketing_id))
+                    key not in c.have_sent_bucketing_event
                 ):
                     g.events.bucketing_event(
                         experiment_id=experiment.get('experiment_id'),
@@ -347,15 +374,31 @@ class FeatureState(object):
                         user=user,
                         loid=self.world.current_loid_obj(),
                     )
-                    key = (self.name, bucketing_id)
-                    c.have_sent_bucketing_event[key] = True
+                    c.have_sent_bucketing_event.add(key)
+            else:
+                # This is a page experiment, so we know we have a content_id
+                key = ('page', self.name, content_id)
+                if (
+                    g.running_as_script or
+                    key not in c.have_sent_bucketing_event
+                ):
+                    g.events.page_bucketing_event(
+                        experiment_id=experiment.get('experiment_id'),
+                        experiment_name=self.name,
+                        variant=variant,
+                        content_id=content_id,
+                        request=request,
+                        context=c,
+                    )
+                    c.have_sent_bucketing_event.add(key)
 
-            return self._is_variant_enabled(variant)
-
-        # Unknown value, default to off.
-        return False
+        return self._is_variant_enabled(variant)
 
     def variant(self, user):
+        """ Determine which variant of this experiment, if any, is active.
+
+        Does not send a bucketing event.
+        """
         url_flag = self.config.get('url')
         # We only care about the dict-type 'url_flag's, since those are the
         # only ones that can specify a variant.
@@ -370,9 +413,11 @@ class FeatureState(object):
         if not experiment:
             return None
 
-        return self._get_experiment_variant(experiment, user)
+        if FeatureState.is_user_experiment(experiment):
+            return self._get_user_experiment_variant(experiment, user)
+        return self._get_page_experiment_variant(experiment)
 
-    def _get_experiment_variant(self, experiment, user):
+    def _get_user_experiment_variant(self, experiment, user):
         # for logged in users, bucket based on the User's fullname
         if self.world.is_user_loggedin(user):
             bucket = self._calculate_bucket(user._fullname)
@@ -387,5 +432,48 @@ class FeatureState(object):
         else:
             return None
 
+        variant = self._choose_variant(bucket, experiment.get('variants', {}))
+        return variant
+
+    @staticmethod
+    def get_content_id():
+        from r2.lib import utils
+        thing = utils.url_to_thing(request.fullurl)
+
+        if not thing:
+            return None, None
+
+        content_id = None
+        type_name = getattr(thing, '_type_name', None)
+        if type_name == 'comment':
+            # We use the parent link for comment permalink pages, since
+            # they share a canonical URL
+            link = getattr(thing, 'link', thing.link_slow)
+            content_id = link._fullname
+        elif type_name == 'link':
+            content_id = thing._fullname
+        elif type_name == 'subreddit':
+            content_id = thing._fullname
+        return content_id, type_name
+
+    def _get_page_experiment_variant(self, experiment):
+        content_id, type_name = FeatureState.get_content_id()
+
+        if content_id is None:
+            return None
+
+        # If we've restricted the experiment to certain page types, make sure
+        # the request is for one of those
+        if (experiment.get('subreddit_only', False) and
+                type_name != 'subreddit'):
+            return None
+
+        if (experiment.get('link_only', False) and
+                (type_name != 'link' and type_name != 'comment')):
+            # We treat comment permalink pages like general comments pages
+            return None
+
+        experiment_seed = experiment.get('experiment_seed', None)
+        bucket = self._calculate_bucket(content_id, experiment_seed)
         variant = self._choose_variant(bucket, experiment.get('variants', {}))
         return variant

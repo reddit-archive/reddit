@@ -488,3 +488,28 @@ class TestTruncString(unittest.TestCase):
     def test_really_long_words(self):
         truncated = utils.trunc_string('ThisIsALongWord', 10)
         self.assertEqual(truncated, 'ThisIsA...')
+
+
+class TestUrlToThing(unittest.TestCase):
+
+    def test_subreddit_noslash(self):
+        with patch('r2.models.Subreddit') as MockSubreddit:
+            MockSubreddit._by_name.return_value = s.Subreddit
+            self.assertEqual(
+                utils.url_to_thing('http://reddit.local/r/pics'),
+                s.Subreddit,
+            )
+
+    def test_subreddit(self):
+        with patch('r2.models.Subreddit') as MockSubreddit:
+            MockSubreddit._by_name.return_value = s.Subreddit
+            self.assertEqual(
+                utils.url_to_thing('http://reddit.local/r/pics/'),
+                s.Subreddit,
+            )
+
+    def test_frontpage(self):
+        self.assertEqual(
+            utils.url_to_thing('http://reddit.local/'),
+            None,
+        )

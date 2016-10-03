@@ -781,6 +781,32 @@ class EventQueue(object):
                 event.add(k, v)
         self.save_event(event)
 
+    def page_bucketing_event(
+        self, experiment_id, experiment_name, variant, content_id,
+        request, context=None
+    ):
+        """Send an event recording bucketing of a page for a page-based
+        experiment.
+
+        experiment_id: an integer representing the experiment
+        experiment_name: a human-readable name representing the experiment
+        variant: a string representing the variant name
+        content_id: the primary content fullname for the page being bucketed
+        """
+        event = Event(
+            topic='bucketing_events',
+            event_type='bucket_page',
+            request=request,
+            context=context,
+        )
+        event.add('experiment_id', experiment_id)
+        event.add('experiment_name', experiment_name)
+        event.add('variant', variant)
+        event.add('bucketing_fullname', content_id)
+        event.add('crawler_name', g.pool_name)
+        event.add('url', request.fullurl)
+        self.save_event(event)
+
 
 class Event(object):
     def __init__(self, topic, event_type,

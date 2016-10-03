@@ -83,6 +83,9 @@ def all_enabled(user=None):
     condition features on experiment variants. Those clients should manually
     send the appropriate bucketing events.
 
+    This does not include page-based experiments, which operate independently
+    of the particular user.
+
     :param user - (optional) an Account. Defaults to None, for which we
                   determine logged-out features.
     :return dict - a dictionary mapping enabled feature keys to True or to the
@@ -94,7 +97,8 @@ def all_enabled(user=None):
     active = {}
     for feature in features:
         experiment = feature.config.get('experiment')
-        if experiment:
+        # Exclude page experiments
+        if experiment and FeatureState.is_user_experiment(experiment):
             # Get experiment names, ids, and assigned variants, leaving out
             # experiments for which this user is excluded
             variant = feature.variant(user)
