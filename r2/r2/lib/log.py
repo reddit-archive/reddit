@@ -198,6 +198,9 @@ class RavenErrorReporter(Reporter):
             "headers": headers,
         })
 
+        if "app" in request.GET:
+            client.tags_context({"app": request.GET["app"]})
+
     @classmethod
     def add_reddit_context(cls, client):
         reddit_context = {
