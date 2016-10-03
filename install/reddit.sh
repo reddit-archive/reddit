@@ -580,7 +580,6 @@ function set_consumer_count {
     fi
 }
 
-set_consumer_count log_q 0
 set_consumer_count search_q 0
 set_consumer_count del_account_q 1
 set_consumer_count scraper_q 1

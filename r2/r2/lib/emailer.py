@@ -60,12 +60,6 @@ def _system_email(email, plaintext_body, kind, reply_to="",
         body=plaintext_body, reply_to=reply_to, thing=thing,
     )
 
-def _nerds_email(body, from_name, kind):
-    """
-    For sending email to the nerds who run this joint
-    """
-    Email.handler.add_to_queue(None, g.nerds_email, from_name, g.nerds_email,
-                               kind, body = body)
 
 def _ads_email(body, from_name, kind):
     """
@@ -235,10 +229,6 @@ def email_change_email(user):
 def community_email(body, kind):
     return _community_email(body, kind)
 
-
-def nerds_email(body, from_name=g.domain):
-    """Queues a feedback email to the nerds running this site."""
-    return _nerds_email(body, from_name, Email.Kind.NERDMAIL)
 
 def ads_email(body, from_name=g.domain):
     """Queues an email to the Sales team."""

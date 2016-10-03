@@ -308,7 +308,6 @@ class Globals(object):
             'fraud_email',
             'feedback_email',
             'share_reply',
-            'nerds_email',
             'community_email',
             'smtp_server',
             'events_collector_url',
