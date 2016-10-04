@@ -122,6 +122,7 @@ class BaseSite(object):
         header=None,
         header_title='',
         login_required=False,
+        sticky_fullnames=None,
     )
 
     def __getattr__(self, name):
@@ -205,10 +206,6 @@ class BaseSite(object):
 
     def get_live_promos(self):
         raise NotImplementedError
-
-    def get_sticky_fullnames(self):
-        # return empty list for "special" subreddits, overridden in Subreddit
-        return []
 
 
 class SubredditExists(Exception): pass
@@ -1380,30 +1377,6 @@ class Subreddit(Thing, Printable, BaseSite):
         b = int(256 - (hash(str(self._id) + '  ') % 256)*(1-fade))
         return (r, g, b)
 
-    def get_sticky_fullnames(self):
-        """Return the fullnames of the Links stickied in the subreddit."""
-        
-        # Note: This function is to ease the transition from a single sticky to
-        # multiple. At some point in the future we can probably replace this
-        # function with a simple usage of the sticky_fullnames attr.
-
-        if self.sticky_fullnames is None:
-            # for apps that can't update the db, just return
-            if g.disallow_db_writes:
-                if getattr(self, "sticky_fullname", None):
-                    return [self.sticky_fullname]
-                else:
-                    return []
-
-            # if there's an old single sticky, convert it
-            if getattr(self, "sticky_fullname", None):
-                self.sticky_fullnames = [self.sticky_fullname]
-            else:
-                self.sticky_fullnames = []
-            self._commit()
-
-        return self.sticky_fullnames
-
     def set_sticky(self, link, log_user=None, num=None):
         unstickied_fullnames = []
 
@@ -1428,7 +1401,7 @@ class Subreddit(Thing, Printable, BaseSite):
 
                 # if we're already at the max number of stickies, remove
                 # the bottom-most to make room for this new one
-                if len(sticky_fullnames) >= self.MAX_STICKIES:
+                if self.has_max_stickies:
                     unstickied_fullnames.extend(
                         sticky_fullnames[self.MAX_STICKIES-1:])
                     sticky_fullnames = sticky_fullnames[:self.MAX_STICKIES-1]
@@ -1463,6 +1436,12 @@ class Subreddit(Thing, Printable, BaseSite):
         if log_user:
             from r2.models import ModAction
             ModAction.create(self, log_user, "unsticky", target=link)
+
+    @property
+    def has_max_stickies(self):
+        if not self.sticky_fullnames:
+            return False
+        return len(self.sticky_fullnames) >= self.MAX_STICKIES
 
 
 class SubscribedSubredditsByAccount(tdb_cassandra.DenormalizedRelation):

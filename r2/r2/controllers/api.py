@@ -1640,7 +1640,7 @@ class ApiController(RedditController):
             return
 
         sr = thing.subreddit_slow
-        stickied = thing._fullname in sr.get_sticky_fullnames()
+        stickied = thing.is_stickied(sr)
 
         if not stickied and (thing._deleted or thing._spam):
             abort(400, "Can't sticky a removed or deleted post")

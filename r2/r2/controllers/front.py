@@ -997,13 +997,11 @@ class FrontController(RedditController):
         Will 404 if there is not currently a sticky post in this subreddit.
 
         """
-        sticky_fullnames = c.site.get_sticky_fullnames()
-
-        if not num or not sticky_fullnames:
+        if not num or not c.site.sticky_fullnames:
             abort(404)
 
         try:
-            fullname = sticky_fullnames[num-1]
+            fullname = c.site.sticky_fullnames[num-1]
         except IndexError:
             abort(404)
         sticky = Link._by_fullname(fullname, data=True)

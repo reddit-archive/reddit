@@ -767,7 +767,7 @@ class Link(Thing, Printable):
             item.different_sr = (isinstance(site, FakeSubreddit) or
                                  site.name != item.subreddit.name)
 
-            item.stickied = item._fullname in item.subreddit.get_sticky_fullnames()
+            item.stickied = item.is_stickied(item.subreddit)
 
             # we only want to style a sticky specially if we're inside the
             # subreddit that it's stickied in (not in places like front page)
@@ -1101,6 +1101,19 @@ class Link(Thing, Printable):
             return False
 
         return True
+
+    @property
+    def is_stickied_slow(self):
+        return self.is_stickied(self.subreddit_slow)
+
+    def is_stickied(self, subreddit):
+        if not subreddit.sticky_fullnames:
+            return False
+
+        if self._fullname in subreddit.sticky_fullnames:
+            return True
+
+        return False
 
 
 class LinksByUrlAndSubreddit(tdb_cassandra.View):

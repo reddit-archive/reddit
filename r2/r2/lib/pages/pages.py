@@ -5450,9 +5450,8 @@ class LinkCommentsSettings(Templated):
         self.link = link
         self.is_author = c.user_is_loggedin and c.user._id == link.author_id
         self.contest_mode = link.contest_mode
-        stickied_fullnames = self.sr.get_sticky_fullnames()
-        self.stickied = link._fullname in stickied_fullnames
-        self.stickies_full = len(stickied_fullnames) >= Subreddit.MAX_STICKIES
+        self.stickied = link.is_stickied(self.sr)
+        self.stickies_full = self.sr.has_max_stickies
         self.sendreplies = link.sendreplies
         self.can_edit = (
             c.user_is_loggedin and
