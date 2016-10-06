@@ -21,6 +21,7 @@
 ###############################################################################
 
 from hashlib import md5
+import sys
 
 from pylons import request
 from pylons import tmpl_context as c
@@ -191,14 +192,22 @@ class RavenErrorReporter(Reporter):
 
         client = self.get_raven_client()
 
-        self.add_http_context(client)
-        self.add_reddit_context(client)
-        self.add_user_context(client)
+        if g.running_as_script:
+            # scripts are run like:
+            # paster run INIFILE -c "python code to execute"
+            # OR
+            # paster run INIFILE script.py
+            # either way sys.argv[-1] will tell us the entry point to the error
+            culprit = 'script: "%s"' % sys.argv[-1]
+        else:
+            self.add_http_context(client)
+            self.add_reddit_context(client)
+            self.add_user_context(client)
 
-        routes_dict = request.environ["pylons.routes_dict"]
-        controller = routes_dict.get("controller", "unknown")
-        action = routes_dict.get("action", "unknown")
-        culprit = "%s.%s" % (controller, action)
+            routes_dict = request.environ["pylons.routes_dict"]
+            controller = routes_dict.get("controller", "unknown")
+            action = routes_dict.get("action", "unknown")
+            culprit = "%s.%s" % (controller, action)
 
         try:
             client.captureException(data={
