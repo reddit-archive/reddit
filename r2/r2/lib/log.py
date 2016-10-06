@@ -183,6 +183,7 @@ class RavenErrorReporter(Reporter):
             release=release_hash,
             environment=g.pool_name,
             include_versions=False,     # handled by get_module_versions
+            install_sys_hook=False,
         )
         return RAVEN_CLIENT
 
