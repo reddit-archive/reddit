@@ -146,14 +146,20 @@ class RavenErrorReporter(Reporter):
         if c.site:
             reddit_context["subreddit"] = c.site.name
 
+        client.extra_context(reddit_context)
+
+    @classmethod
+    def add_user_context(cls, client):
+        user_context = {}
+
         if c.user_is_loggedin:
-            reddit_context["user"] = c.user._id
+            user_context["user"] = c.user._id
 
         if c.oauth2_client:
-            reddit_context["oauth_client_id"] = c.oauth2_client._id
-            reddit_context["oauth_client_name"] = c.oauth2_client.name
+            user_context["oauth_client_id"] = c.oauth2_client._id
+            user_context["oauth_client_name"] = c.oauth2_client.name
 
-        client.extra_context(reddit_context)
+        client.user_context(user_context)
 
     @classmethod
     def get_raven_client(cls):
@@ -187,6 +193,7 @@ class RavenErrorReporter(Reporter):
 
         self.add_http_context(client)
         self.add_reddit_context(client)
+        self.add_user_context(client)
 
         routes_dict = request.environ["pylons.routes_dict"]
         controller = routes_dict.get("controller", "unknown")
