@@ -44,6 +44,9 @@ export TIMES="$3"
 
 echo "Starting $THING_CLS processing"
 
+# enable reporting to sentry
+export REDDIT_ERRORS_TO_SENTRY=1
+
 THING_DUMP=$TMPDIR/$THING_CLS-$INTERVAL-thing.dump
 DATA_DUMP=$TMPDIR/$THING_CLS-$INTERVAL-data.dump
 function clean_up {
