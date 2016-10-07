@@ -26,6 +26,8 @@ import paste.fixture
 from paste.script import command
 from paste.deploy import loadapp
 
+from r2.lib.log import RavenErrorReporter
+
 
 class RunCommand(command.Command):
     max_args = 2
@@ -54,6 +56,8 @@ class RunCommand(command.Command):
 
         config_file = self.args[0]
         config_name = 'config:%s' % config_file
+
+        report_to_sentry = "REDDIT_ERRORS_TO_SENTRY" in os.environ
 
         here_dir = os.getcwd()
 
@@ -84,8 +88,14 @@ class RunCommand(command.Command):
 
         loaded_namespace = {}
 
-        if self.args[1:]:
-            execfile(self.args[1], loaded_namespace)
+        try:
+            if self.args[1:]:
+                execfile(self.args[1], loaded_namespace)
 
-        if self.options.command:
-            exec self.options.command in loaded_namespace
+            if self.options.command:
+                exec self.options.command in loaded_namespace
+        except Exception:
+            if report_to_sentry:
+                exc_info = sys.exc_info()
+                RavenErrorReporter.capture_exception(exc_info=exc_info)
+            raise

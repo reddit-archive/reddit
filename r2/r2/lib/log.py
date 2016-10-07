@@ -187,11 +187,18 @@ class RavenErrorReporter(Reporter):
         )
         return RAVEN_CLIENT
 
-    def report(self, exc_data):
-        if issubclass(exc_data.exception_type, get_operational_exceptions()):
+    @classmethod
+    def capture_exception(cls, exc_info=None):
+        if exc_info is None:
+            # if possible exc_info should be captured as close to the exception
+            # as possible and passed in because sys.exc_info() can give
+            # unexpected behavior
+            exc_info = sys.exc_info()
+
+        if issubclass(exc_info[0], get_operational_exceptions()):
             return
 
-        client = self.get_raven_client()
+        client = cls.get_raven_client()
 
         if g.running_as_script:
             # scripts are run like:
@@ -201,9 +208,9 @@ class RavenErrorReporter(Reporter):
             # either way sys.argv[-1] will tell us the entry point to the error
             culprit = 'script: "%s"' % sys.argv[-1]
         else:
-            self.add_http_context(client)
-            self.add_reddit_context(client)
-            self.add_user_context(client)
+            cls.add_http_context(client)
+            cls.add_reddit_context(client)
+            cls.add_user_context(client)
 
             routes_dict = request.environ["pylons.routes_dict"]
             controller = routes_dict.get("controller", "unknown")
@@ -211,12 +218,18 @@ class RavenErrorReporter(Reporter):
             culprit = "%s.%s" % (controller, action)
 
         try:
-            client.captureException(data={
-                "modules": self.get_module_versions(),
-                "culprit": culprit,
-            })
+            client.captureException(
+                exc_info=exc_info,
+                data={
+                    "modules": cls.get_module_versions(),
+                    "culprit": culprit,
+                },
+            )
         finally:
             client.context.clear()
+
+    def report(self, exc_data):
+        self.capture_exception()
 
 
 def write_error_summary(error):
