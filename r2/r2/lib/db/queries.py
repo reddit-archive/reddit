@@ -1139,60 +1139,79 @@ def new_subreddit(sr):
     amqp.add_item('new_subreddit', sr._fullname)
 
 
-def new_vote(vote):
+def new_link_vote(vote):
+
     vote_valid = vote.is_automatic_initial_vote or vote.effects.affects_score
-    thing_valid = not (vote.thing._spam or vote.thing._deleted)
+    link = vote.thing
+    link_valid = not (link._spam or link._deleted)
 
-    if vote_valid and thing_valid:
-        sr = vote.thing.subreddit_slow
-
+    if vote_valid and link_valid:
         # these sorts can be changed by voting - we don't need to do "new"
-        # since that's taken care of by new_link and new_comment
-        sorts_to_update = ["hot", "top", "controversial"]
-        results = []
+        # since that's taken care of by new_link
+        SORTS = ["hot", "top", "controversial"]
 
-        author = Account._byID(vote.thing.author_id)
-        for sort in sorts_to_update:
-            if isinstance(vote.thing, Link):
-                results.append(get_submitted(author, sort, 'all'))
-            if isinstance(vote.thing, Comment):
-                results.append(get_comments(author, sort, 'all'))
+        author = Account._byID(link.author_id)
+        add_queries(
+            queries=[get_submitted(author, sort, 'all') for sort in SORTS],
+            insert_items=link,
+        )
 
-        if isinstance(vote.thing, Link):
-            for sort in sorts_to_update:
-                results.append(get_links(sr, sort, "all"))
+        sr = link.subreddit_slow
+        add_queries(
+            queries=[get_links(sr, sort, "all") for sort in SORTS],
+            insert_items=link,
+        )
 
-            parsed = utils.UrlParser(vote.thing.url)
-            if not is_subdomain(parsed.hostname, 'imgur.com'):
-                for domain in parsed.domain_permutations():
-                    for sort in sorts_to_update:
-                        results.append(get_domain_links(domain, sort, "all"))
-        elif isinstance(vote.thing, Comment):
-            comment = vote.thing
+        parsed = utils.UrlParser(link.url)
+        if not is_subdomain(parsed.hostname, 'imgur.com'):
+            domains = parsed.domain_permutations()
+            add_queries(
+                queries=[
+                    get_domain_links(domain, sort, "all")
+                    for domain, sort in itertools.product(domains, SORTS)
+                ],
+                insert_items=link,
+            )
 
-            # update the score periodically when a comment has many votes
-            update_threshold = g.live_config['comment_vote_update_threshold']
-            update_period = g.live_config['comment_vote_update_period']
-            num_votes = comment.num_votes
-            if num_votes <= update_threshold or num_votes % update_period == 0:
-                add_to_commentstree_q(comment)
+    with CachedQueryMutator() as m:
+        # if this is a changed vote, remove from the previous cached query
+        if vote.previous_vote:
+            if vote.previous_vote.is_upvote:
+                m.delete(get_liked(vote.user), [vote.previous_vote])
+            elif vote.previous_vote.is_downvote:
+                m.delete(get_disliked(vote.user), [vote.previous_vote])
 
-        add_queries(results, insert_items=vote.thing)
-    
-    if isinstance(vote.thing, Link):
-        with CachedQueryMutator() as m:
-            # if this is a changed vote, remove from the previous cached query
-            if vote.previous_vote:
-                if vote.previous_vote.is_upvote:
-                    m.delete(get_liked(vote.user), [vote.previous_vote])
-                elif vote.previous_vote.is_downvote:
-                    m.delete(get_disliked(vote.user), [vote.previous_vote])
+        # and then add to the new cached query
+        if vote.is_upvote:
+            m.insert(get_liked(vote.user), [vote])
+        elif vote.is_downvote:
+            m.insert(get_disliked(vote.user), [vote])
 
-            # and then add to the new cached query
-            if vote.is_upvote:
-                m.insert(get_liked(vote.user), [vote])
-            elif vote.is_downvote:
-                m.insert(get_disliked(vote.user), [vote])
+
+def new_comment_vote(vote):
+    vote_valid = vote.is_automatic_initial_vote or vote.effects.affects_score
+    comment = vote.thing
+    comment_valid = not (comment._spam or comment._deleted)
+
+    if not (vote_valid and comment_valid):
+        return
+
+    # these sorts can be changed by voting - we don't need to do "new" since
+    # that's taken care of by new_comment
+    SORTS = ["hot", "top", "controversial"]
+
+    author = Account._byID(comment.author_id)
+    add_queries(
+        queries=[get_comments(author, sort, 'all') for sort in SORTS],
+        insert_items=comment,
+    )
+
+    # update the score periodically when a comment has many votes
+    update_threshold = g.live_config['comment_vote_update_threshold']
+    update_period = g.live_config['comment_vote_update_period']
+    num_votes = comment.num_votes
+    if num_votes <= update_threshold or num_votes % update_period == 0:
+        add_to_commentstree_q(comment)
 
 
 def new_message(message, inbox_rels, add_to_sent=True, update_modmail=True):

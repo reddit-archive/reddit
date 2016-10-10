@@ -181,8 +181,13 @@ class Vote(object):
         if self.thing.num_votes < 20 or self.thing.num_votes % 10 == 0:
             self.thing.update_search_index(boost_only=True)
 
-        from r2.lib.db.queries import new_vote
-        new_vote(self)
+        from r2.lib.db.queries import new_link_vote, new_comment_vote
+        from r2.models import Comment, Link
+
+        if isinstance(self.thing, Link):
+            new_link_vote(self)
+        elif isinstance(self.thing, Comment):
+            new_comment_vote(self)
 
         if self.event_data:
             g.events.vote_event(self)
