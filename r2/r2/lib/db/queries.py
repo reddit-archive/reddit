@@ -1140,6 +1140,8 @@ def new_subreddit(sr):
 
 
 def new_link_vote(vote):
+    timer = g.stats.get_timer("link_vote_processor")
+    timer.start()
 
     vote_valid = vote.is_automatic_initial_vote or vote.effects.affects_score
     link = vote.thing
@@ -1155,12 +1157,14 @@ def new_link_vote(vote):
             queries=[get_submitted(author, sort, 'all') for sort in SORTS],
             insert_items=link,
         )
+        timer.intermediate("author_queries")
 
         sr = link.subreddit_slow
         add_queries(
             queries=[get_links(sr, sort, "all") for sort in SORTS],
             insert_items=link,
         )
+        timer.intermediate("subreddit_queries")
 
         parsed = utils.UrlParser(link.url)
         if not is_subdomain(parsed.hostname, 'imgur.com'):
@@ -1172,6 +1176,7 @@ def new_link_vote(vote):
                 ],
                 insert_items=link,
             )
+            timer.intermediate("domain_queries")
 
     with CachedQueryMutator() as m:
         # if this is a changed vote, remove from the previous cached query
@@ -1186,6 +1191,9 @@ def new_link_vote(vote):
             m.insert(get_liked(vote.user), [vote])
         elif vote.is_downvote:
             m.insert(get_disliked(vote.user), [vote])
+
+    timer.intermediate("voter_likes")
+    timer.stop()
 
 
 def new_comment_vote(vote):
