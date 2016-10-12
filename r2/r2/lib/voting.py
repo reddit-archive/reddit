@@ -28,7 +28,7 @@ from pylons import tmpl_context as c, app_globals as g, request
 from r2.lib import amqp, hooks
 from r2.lib.eventcollector import Event
 from r2.lib.utils import epoch_timestamp
-from r2.models import Account, Thing
+from r2.models import Account, Comment, Link
 from r2.models.last_modified import LastModified
 from r2.models.vote import Vote, VotesByAccount
 
@@ -86,10 +86,12 @@ def cast_vote(user, thing, direction, **data):
     amqp.add_item(thing.vote_queue_name, json.dumps(vote_data))
 
 
-def consume_vote_queue(queue):
-    @g.stats.amqp_processor(queue)
+def consume_link_vote_queue(qname="vote_link_q"):
+    @g.stats.amqp_processor(qname)
     def process_message(msg):
-        timer = g.stats.get_timer("new_voting.%s" % queue)
+        from r2.lib.db.queries import new_link_vote
+
+        timer = g.stats.get_timer("new_voting.%s" % qname)
         timer.start()
 
         vote_data = json.loads(msg.body)
@@ -102,19 +104,18 @@ def consume_vote_queue(queue):
                     vote_data)
             return
 
-        user = Account._byID(vote_data.pop("user_id"), data=True)
-        thing = Thing._by_fullname(vote_data.pop("thing_fullname"), data=True)
-
+        user = Account._byID(vote_data.pop("user_id"))
+        link = Link._by_fullname(vote_data.pop("thing_fullname"))
         timer.intermediate("preamble")
 
-        lock_key = "vote-%s-%s" % (user._id36, thing._fullname)
+        lock_key = "vote-%s-%s" % (user._id36, link._fullname)
         with g.make_lock("voting", lock_key, timeout=5):
-            print "Processing vote by %s on %s %s" % (user, thing, vote_data)
+            print "Processing vote by %s on %s %s" % (user, link, vote_data)
 
             try:
                 vote = Vote(
                     user,
-                    thing,
+                    link,
                     direction=vote_data["direction"],
                     date=datetime.utcfromtimestamp(vote_data["date"]),
                     data=vote_data["data"],
@@ -129,6 +130,59 @@ def consume_vote_queue(queue):
 
             vote.commit()
 
+            new_link_vote(vote)
+
             timer.flush()
 
-    amqp.consume_items(queue, process_message, verbose=False)
+    amqp.consume_items(qname, process_message, verbose=False)
+
+
+def consume_comment_vote_queue(qname="vote_comment_q"):
+    @g.stats.amqp_processor(qname)
+    def process_message(msg):
+        from r2.lib.db.queries import new_comment_vote
+
+        timer = g.stats.get_timer("new_voting.%s" % qname)
+        timer.start()
+
+        vote_data = json.loads(msg.body)
+        hook = hooks.get_hook('vote.validate_vote_data')
+        if hook.call_until_return(msg=msg, vote_data=vote_data) is False:
+            # Corrupt records in the queue. Ignore them.
+            print "Ignoring invalid vote by %s on %s %s" % (
+                    vote_data.get('user_id', '<unknown>'),
+                    vote_data.get('thing_fullname', '<unknown>'),
+                    vote_data)
+            return
+
+        user = Account._byID(vote_data.pop("user_id"))
+        comment = Comment._by_fullname(vote_data.pop("thing_fullname"))
+        timer.intermediate("preamble")
+
+        lock_key = "vote-%s-%s" % (user._id36, comment._fullname)
+        with g.make_lock("voting", lock_key, timeout=5):
+            print "Processing vote by %s on %s %s" % (user, comment, vote_data)
+
+            try:
+                vote = Vote(
+                    user,
+                    comment,
+                    direction=vote_data["direction"],
+                    date=datetime.utcfromtimestamp(vote_data["date"]),
+                    data=vote_data["data"],
+                    event_data=vote_data.get("event_data"),
+                )
+            except TypeError as e:
+                # a vote on an invalid type got in the queue, just skip it
+                g.log.exception("Invalid type: %r", e.message)
+                return
+
+            timer.intermediate("create_vote_obj")
+
+            vote.commit()
+
+            new_comment_vote(vote)
+
+            timer.flush()
+
+    amqp.consume_items(qname, process_message, verbose=False)
