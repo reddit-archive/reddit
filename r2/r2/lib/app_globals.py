@@ -270,7 +270,6 @@ class Globals(object):
             'stalecaches',
             'lockcaches',
             'permacache_memcaches',
-            'hardcache_memcaches',
             'cassandra_seeds',
             'automatic_reddits',
             'hardcache_categories',
@@ -752,15 +751,6 @@ class Globals(object):
         else:
             stalecaches = None
 
-        # hardcache memcache pool
-        hardcache_memcaches = CMemcache(
-            "hardcache",
-            self.hardcache_memcaches,
-            binary=True,
-            min_compress_len=1400,
-            num_clients=num_mc_clients,
-        )
-
         self.startup_timer.intermediate("memcache")
 
         ################# MCROUTER
@@ -916,7 +906,7 @@ class Globals(object):
         # hardcache is used for various things that tend to expire
         # TODO: replace hardcache w/ cassandra stuff
         self.hardcache = HardcacheChain(
-            (localcache_cls(), hardcache_memcaches, HardCache(self)),
+            (localcache_cls(), HardCache(self)),
             cache_negative_results=True,
         )
         cache_chains.update(hardcache=self.hardcache)
