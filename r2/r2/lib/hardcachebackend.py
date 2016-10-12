@@ -324,8 +324,7 @@ class HardCacheBackend(object):
 
 def delete_expired(expiration="now", limit=5000):
     # the following depends on the structure of g.hardcache not changing
-    backend = g.hardcache.caches[2].backend
-    memcache = g.hardcache.caches[1]
+    backend = g.hardcache.caches[1].backend
     # localcache = g.hardcache.caches[0]
 
     masters = set()
@@ -342,14 +341,5 @@ def delete_expired(expiration="now", limit=5000):
         if len(rows) == 0:
             continue
 
-        # Delete them from memcache
-        mc_keys = [ "%s-%s" % (c, i) for e, c, i in rows ]
-        memcache.delete_multi(mc_keys)
-
-        # Now delete them from the backend.
+        # Delete from the backend.
         engine.delete(expiration_clause).execute()
-
-        # Note: In between the previous two steps, a key with a
-        # near-instantaneous expiration could have been added and expired, and
-        # thus it'll be deleted from the backend but not memcache. But that's
-        # okay, because it should be expired from memcache anyway by now.
