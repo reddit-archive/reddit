@@ -22,7 +22,6 @@
 
 from collections import defaultdict
 from datetime import datetime
-from itertools import product
 import json
 
 from pylons import tmpl_context as c, app_globals as g, request
@@ -108,26 +107,6 @@ def update_user_liked(vote):
             m.insert(get_disliked(vote.user), [vote])
 
 
-# these sorts can be changed by voting - we don't need to do "new" since that's
-# taken care of by new_link and doesn't change afterwards
-SORTS = ["hot", "top", "controversial"]
-
-
-def update_domain_queries(link):
-    from r2.lib.db.queries import add_queries, get_domain_links
-
-    parsed = UrlParser(link.url)
-    if not is_subdomain(parsed.hostname, 'imgur.com'):
-        domains = parsed.domain_permutations()
-        add_queries(
-            queries=[
-                get_domain_links(domain, sort, "all")
-                for domain, sort in product(domains, SORTS)
-            ],
-            insert_items=link,
-        )
-
-
 def consume_link_vote_queue(qname="vote_link_q"):
     @g.stats.amqp_processor(qname)
     def process_message(msg):
@@ -178,14 +157,17 @@ def consume_link_vote_queue(qname="vote_link_q"):
         if vote_valid and link_valid:
             add_to_author_query_q(link)
             add_to_subreddit_query_q(link)
-
-            update_domain_queries(link)
-            timer.intermediate("domain_queries")
+            add_to_domain_query_q(link)
 
         timer.stop()
         timer.flush()
 
     amqp.consume_items(qname, process_message, verbose=False)
+
+
+# these sorts can be changed by voting - we don't need to do "new" since that's
+# taken care of by new_link and doesn't change afterwards
+SORTS = ["hot", "top", "controversial"]
 
 
 def add_to_author_query_q(link):
@@ -273,6 +255,62 @@ def consume_subreddit_query_queue(qname="subreddit_query_q", limit=1000):
                 sr = srs_by_id[sr_id]
                 add_queries(
                     queries=[get_links(sr, sort, "all") for sort in SORTS],
+                    insert_items=links,
+                )
+
+    amqp.handle_items(qname, process_message, limit=limit)
+
+
+def add_to_domain_query_q(link):
+    parsed = UrlParser(link.url)
+    if is_subdomain(parsed.hostname, 'imgur.com'):
+        # don't build domain listings for imgur
+        return
+
+    if not parsed.domain_permutations():
+        # no valid domains found
+        return
+
+    if g.shard_domain_query_queues:
+        domain_shard = hash(parsed.hostname) % 10
+        queue_name = "domain_query_%s_q" % domain_shard
+    else:
+        queue_name = "domain_query_q"
+    amqp.add_item(queue_name, link._fullname)
+
+
+def consume_domain_query_queue(qname="domain_query_q", limit=1000):
+    @g.stats.amqp_processor(qname)
+    def process_message(msgs, chan):
+        """Update get_domain_links(), the Links by domain precomputed query.
+
+        get_domain_links() is a CachedResult which is stored in permacache. To
+        update these objects we need to do a read-modify-write which requires
+        obtaining a lock. Sharding these updates by domain allows us to run
+        multiple consumers (but ideally just one per shard) to avoid lock
+        contention.
+
+        """
+
+        from r2.lib.db.queries import add_queries, get_domain_links
+
+        link_names = {msg.body for msg in msgs}
+        links = Link._by_fullname(link_names, return_dict=False)
+        print 'Processing %r' % (links,)
+
+        links_by_domain = defaultdict(list)
+        for link in links:
+            parsed = UrlParser(link.url)
+
+            # update the listings for all permutations of the link's domain
+            for domain in parsed.domain_permutations():
+                links_by_domain[domain].append(link)
+
+        for d, links in links_by_domain.iteritems():
+            with g.stats.get_timer("link_vote_processor.domain_queries"):
+                add_queries(
+                    queries=[
+                        get_domain_links(d, sort, "all") for sort in SORTS],
                     insert_items=links,
                 )
 

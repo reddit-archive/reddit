@@ -259,6 +259,7 @@ class Globals(object):
             'shard_commentstree_queues',
             'shard_author_query_queues',
             'shard_subreddit_query_queues',
+            'shard_domain_query_queues',
             'authnet_validate',
             'ENFORCE_RATELIMIT',
             'RL_SITEWIDE_ENABLED',
