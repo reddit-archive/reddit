@@ -20,6 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+from collections import defaultdict
 from datetime import datetime
 from itertools import product
 import json
@@ -112,16 +113,6 @@ def update_user_liked(vote):
 SORTS = ["hot", "top", "controversial"]
 
 
-def update_author_queries(link):
-    from r2.lib.db.queries import add_queries, get_submitted
-
-    author = Account._byID(link.author_id)
-    add_queries(
-        queries=[get_submitted(author, sort, 'all') for sort in SORTS],
-        insert_items=link,
-    )
-
-
 def update_subreddit_queries(link):
     from r2.lib.db.queries import add_queries, get_links
 
@@ -195,8 +186,7 @@ def consume_link_vote_queue(qname="vote_link_q"):
         vote_valid = vote.is_automatic_initial_vote or vote.effects.affects_score
         link_valid = not (link._spam or link._deleted)
         if vote_valid and link_valid:
-            update_author_queries(link)
-            timer.intermediate("author_queries")
+            add_to_author_query_q(link)
 
             update_subreddit_queries(link)
             timer.intermediate("subreddit_queries")
@@ -208,6 +198,52 @@ def consume_link_vote_queue(qname="vote_link_q"):
         timer.flush()
 
     amqp.consume_items(qname, process_message, verbose=False)
+
+
+def add_to_author_query_q(link):
+    if g.shard_author_query_queues:
+        author_shard = link.author_id % 10
+        queue_name = "author_query_%s_q" % author_shard
+    else:
+        queue_name = "author_query_q"
+    amqp.add_item(queue_name, link._fullname)
+
+
+def consume_author_query_queue(qname="author_query_q", limit=1000):
+    @g.stats.amqp_processor(qname)
+    def process_message(msgs, chan):
+        """Update get_submitted(), the Links by author precomputed query.
+
+        get_submitted() is a CachedResult which is stored in permacache. To
+        update these objects we need to do a read-modify-write which requires
+        obtaining a lock. Sharding these updates by author allows us to run
+        multiple consumers (but ideally just one per shard) to avoid lock
+        contention.
+
+        """
+
+        from r2.lib.db.queries import add_queries, get_submitted
+
+        link_names = {msg.body for msg in msgs}
+        links = Link._by_fullname(link_names, return_dict=False)
+        print 'Processing %r' % (links,)
+
+        links_by_author_id = defaultdict(list)
+        for link in links:
+            links_by_author_id[link.author_id].append(link)
+
+        authors_by_id = Account._byID(links_by_author_id.keys())
+
+        for author_id, links in links_by_author_id.iteritems():
+            with g.stats.get_timer("link_vote_processor.author_queries"):
+                author = authors_by_id[author_id]
+                add_queries(
+                    queries=[
+                        get_submitted(author, sort, 'all') for sort in SORTS],
+                    insert_items=links,
+                )
+
+    amqp.handle_items(qname, process_message, limit=limit)
 
 
 def consume_comment_vote_queue(qname="vote_comment_q"):

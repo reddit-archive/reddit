@@ -257,6 +257,7 @@ class Globals(object):
             'disable_require_admin_otp',
             'trust_local_proxies',
             'shard_commentstree_queues',
+            'shard_author_query_queues',
             'authnet_validate',
             'ENFORCE_RATELIMIT',
             'RL_SITEWIDE_ENABLED',
