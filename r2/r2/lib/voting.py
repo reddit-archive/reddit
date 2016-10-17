@@ -116,6 +116,8 @@ def consume_link_vote_queue(qname="vote_link_q"):
         user = Account._byID(vote_data.pop("user_id"))
         link = Link._by_fullname(vote_data.pop("thing_fullname"))
 
+        # create the vote and update the voter's liked/disliked under lock so
+        # that the vote state and cached query are consistent
         lock_key = "vote-%s-%s" % (user._id36, link._fullname)
         with g.make_lock("voting", lock_key, timeout=5):
             print "Processing vote by %s on %s %s" % (user, link, vote_data)
@@ -137,42 +139,9 @@ def consume_link_vote_queue(qname="vote_link_q"):
             vote.commit()
             timer.intermediate("create_vote_object")
 
-            vote_valid = vote.is_automatic_initial_vote or vote.effects.affects_score
-            link_valid = not (link._spam or link._deleted)
-
-            if vote_valid and link_valid:
-                # these sorts can be changed by voting - we don't need to do "new"
-                # since that's taken care of by new_link
-                SORTS = ["hot", "top", "controversial"]
-
-                author = Account._byID(link.author_id)
-                add_queries(
-                    queries=[get_submitted(author, sort, 'all') for sort in SORTS],
-                    insert_items=link,
-                )
-                timer.intermediate("author_queries")
-
-                sr = link.subreddit_slow
-                add_queries(
-                    queries=[get_links(sr, sort, "all") for sort in SORTS],
-                    insert_items=link,
-                )
-                timer.intermediate("subreddit_queries")
-
-                parsed = UrlParser(link.url)
-                if not is_subdomain(parsed.hostname, 'imgur.com'):
-                    domains = parsed.domain_permutations()
-                    add_queries(
-                        queries=[
-                            get_domain_links(domain, sort, "all")
-                            for domain, sort in product(domains, SORTS)
-                        ],
-                        insert_items=link,
-                    )
-                    timer.intermediate("domain_queries")
-
             with CachedQueryMutator() as m:
-                # if this is a changed vote, remove from the previous cached query
+                # if this is a changed vote, remove from the previous cached
+                # query
                 if vote.previous_vote:
                     if vote.previous_vote.is_upvote:
                         m.delete(get_liked(vote.user), [vote.previous_vote])
@@ -187,8 +156,42 @@ def consume_link_vote_queue(qname="vote_link_q"):
 
             timer.intermediate("voter_likes")
 
-            timer.stop()
-            timer.flush()
+        vote_valid = vote.is_automatic_initial_vote or vote.effects.affects_score
+        link_valid = not (link._spam or link._deleted)
+
+        if vote_valid and link_valid:
+            # these sorts can be changed by voting - we don't need to do "new"
+            # since that's taken care of by new_link
+            SORTS = ["hot", "top", "controversial"]
+
+            author = Account._byID(link.author_id)
+            add_queries(
+                queries=[get_submitted(author, sort, 'all') for sort in SORTS],
+                insert_items=link,
+            )
+            timer.intermediate("author_queries")
+
+            sr = link.subreddit_slow
+            add_queries(
+                queries=[get_links(sr, sort, "all") for sort in SORTS],
+                insert_items=link,
+            )
+            timer.intermediate("subreddit_queries")
+
+            parsed = UrlParser(link.url)
+            if not is_subdomain(parsed.hostname, 'imgur.com'):
+                domains = parsed.domain_permutations()
+                add_queries(
+                    queries=[
+                        get_domain_links(domain, sort, "all")
+                        for domain, sort in product(domains, SORTS)
+                    ],
+                    insert_items=link,
+                )
+                timer.intermediate("domain_queries")
+
+        timer.stop()
+        timer.flush()
 
     amqp.consume_items(qname, process_message, verbose=False)
 
@@ -218,52 +221,51 @@ def consume_comment_vote_queue(qname="vote_comment_q"):
         user = Account._byID(vote_data.pop("user_id"))
         comment = Comment._by_fullname(vote_data.pop("thing_fullname"))
 
-        lock_key = "vote-%s-%s" % (user._id36, comment._fullname)
-        with g.make_lock("voting", lock_key, timeout=5):
-            print "Processing vote by %s on %s %s" % (user, comment, vote_data)
+        print "Processing vote by %s on %s %s" % (user, comment, vote_data)
 
-            try:
-                vote = Vote(
-                    user,
-                    comment,
-                    direction=vote_data["direction"],
-                    date=datetime.utcfromtimestamp(vote_data["date"]),
-                    data=vote_data["data"],
-                    event_data=vote_data.get("event_data"),
-                )
-            except TypeError as e:
-                # a vote on an invalid type got in the queue, just skip it
-                g.log.exception("Invalid type: %r", e.message)
-                return
-
-            vote.commit()
-            timer.intermediate("create_vote_object")
-
-            vote_valid = vote.is_automatic_initial_vote or vote.effects.affects_score
-            comment_valid = not (comment._spam or comment._deleted)
-
-            if not (vote_valid and comment_valid):
-                return
-
-            # these sorts can be changed by voting - we don't need to do "new"
-            # since that's taken care of by new_comment
-            SORTS = ["hot", "top", "controversial"]
-
-            author = Account._byID(comment.author_id)
-            add_queries(
-                queries=[get_comments(author, sort, 'all') for sort in SORTS],
-                insert_items=comment,
+        try:
+            vote = Vote(
+                user,
+                comment,
+                direction=vote_data["direction"],
+                date=datetime.utcfromtimestamp(vote_data["date"]),
+                data=vote_data["data"],
+                event_data=vote_data.get("event_data"),
             )
-            timer.intermediate("author_queries")
+        except TypeError as e:
+            # a vote on an invalid type got in the queue, just skip it
+            g.log.exception("Invalid type: %r", e.message)
+            return
 
-            # update the score periodically when a comment has many votes
-            update_threshold = g.live_config['comment_vote_update_threshold']
-            update_period = g.live_config['comment_vote_update_period']
-            num_votes = comment.num_votes
-            if num_votes <= update_threshold or num_votes % update_period == 0:
-                add_to_commentstree_q(comment)
+        vote.commit()
+        timer.intermediate("create_vote_object")
 
-            timer.stop()
-            timer.flush()
+        # update queries
+        vote_valid = vote.is_automatic_initial_vote or vote.effects.affects_score
+        comment_valid = not (comment._spam or comment._deleted)
+
+        if not (vote_valid and comment_valid):
+            return
+
+        # these sorts can be changed by voting - we don't need to do "new"
+        # since that's taken care of by new_comment
+        SORTS = ["hot", "top", "controversial"]
+
+        author = Account._byID(comment.author_id)
+        add_queries(
+            queries=[get_comments(author, sort, 'all') for sort in SORTS],
+            insert_items=comment,
+        )
+        timer.intermediate("author_queries")
+
+        # update the score periodically when a comment has many votes
+        update_threshold = g.live_config['comment_vote_update_threshold']
+        update_period = g.live_config['comment_vote_update_period']
+        num_votes = comment.num_votes
+        if num_votes <= update_threshold or num_votes % update_period == 0:
+            add_to_commentstree_q(comment)
+
+        timer.stop()
+        timer.flush()
 
     amqp.consume_items(qname, process_message, verbose=False)
