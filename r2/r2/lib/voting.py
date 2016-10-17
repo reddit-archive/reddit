@@ -88,18 +88,68 @@ def cast_vote(user, thing, direction, **data):
     amqp.add_item(thing.vote_queue_name, json.dumps(vote_data))
 
 
+def update_user_liked(vote):
+    from r2.lib.db.queries import get_disliked, get_liked
+
+    with CachedQueryMutator() as m:
+        # if this is a changed vote, remove from the previous cached
+        # query
+        if vote.previous_vote:
+            if vote.previous_vote.is_upvote:
+                m.delete(get_liked(vote.user), [vote.previous_vote])
+            elif vote.previous_vote.is_downvote:
+                m.delete(get_disliked(vote.user), [vote.previous_vote])
+
+        # and then add to the new cached query
+        if vote.is_upvote:
+            m.insert(get_liked(vote.user), [vote])
+        elif vote.is_downvote:
+            m.insert(get_disliked(vote.user), [vote])
+
+
+# these sorts can be changed by voting - we don't need to do "new" since that's
+# taken care of by new_link and doesn't change afterwards
+SORTS = ["hot", "top", "controversial"]
+
+
+def update_author_queries(link):
+    from r2.lib.db.queries import add_queries, get_submitted
+
+    author = Account._byID(link.author_id)
+    add_queries(
+        queries=[get_submitted(author, sort, 'all') for sort in SORTS],
+        insert_items=link,
+    )
+
+
+def update_subreddit_queries(link):
+    from r2.lib.db.queries import add_queries, get_links
+
+    sr = link.subreddit_slow
+    add_queries(
+        queries=[get_links(sr, sort, "all") for sort in SORTS],
+        insert_items=link,
+    )
+
+
+def update_domain_queries(link):
+    from r2.lib.db.queries import add_queries, get_domain_links
+
+    parsed = UrlParser(link.url)
+    if not is_subdomain(parsed.hostname, 'imgur.com'):
+        domains = parsed.domain_permutations()
+        add_queries(
+            queries=[
+                get_domain_links(domain, sort, "all")
+                for domain, sort in product(domains, SORTS)
+            ],
+            insert_items=link,
+        )
+
+
 def consume_link_vote_queue(qname="vote_link_q"):
     @g.stats.amqp_processor(qname)
     def process_message(msg):
-        from r2.lib.db.queries import (
-            add_queries,
-            get_disliked,
-            get_domain_links,
-            get_liked,
-            get_links,
-            get_submitted,
-        )
-
         vote_data = json.loads(msg.body)
         hook = hooks.get_hook('vote.validate_vote_data')
         if hook.call_until_return(msg=msg, vote_data=vote_data) is False:
@@ -139,56 +189,20 @@ def consume_link_vote_queue(qname="vote_link_q"):
             vote.commit()
             timer.intermediate("create_vote_object")
 
-            with CachedQueryMutator() as m:
-                # if this is a changed vote, remove from the previous cached
-                # query
-                if vote.previous_vote:
-                    if vote.previous_vote.is_upvote:
-                        m.delete(get_liked(vote.user), [vote.previous_vote])
-                    elif vote.previous_vote.is_downvote:
-                        m.delete(get_disliked(vote.user), [vote.previous_vote])
-
-                # and then add to the new cached query
-                if vote.is_upvote:
-                    m.insert(get_liked(vote.user), [vote])
-                elif vote.is_downvote:
-                    m.insert(get_disliked(vote.user), [vote])
-
+            update_user_liked(vote)
             timer.intermediate("voter_likes")
 
         vote_valid = vote.is_automatic_initial_vote or vote.effects.affects_score
         link_valid = not (link._spam or link._deleted)
-
         if vote_valid and link_valid:
-            # these sorts can be changed by voting - we don't need to do "new"
-            # since that's taken care of by new_link
-            SORTS = ["hot", "top", "controversial"]
-
-            author = Account._byID(link.author_id)
-            add_queries(
-                queries=[get_submitted(author, sort, 'all') for sort in SORTS],
-                insert_items=link,
-            )
+            update_author_queries(link)
             timer.intermediate("author_queries")
 
-            sr = link.subreddit_slow
-            add_queries(
-                queries=[get_links(sr, sort, "all") for sort in SORTS],
-                insert_items=link,
-            )
+            update_subreddit_queries(link)
             timer.intermediate("subreddit_queries")
 
-            parsed = UrlParser(link.url)
-            if not is_subdomain(parsed.hostname, 'imgur.com'):
-                domains = parsed.domain_permutations()
-                add_queries(
-                    queries=[
-                        get_domain_links(domain, sort, "all")
-                        for domain, sort in product(domains, SORTS)
-                    ],
-                    insert_items=link,
-                )
-                timer.intermediate("domain_queries")
+            update_domain_queries(link)
+            timer.intermediate("domain_queries")
 
         timer.stop()
         timer.flush()
@@ -240,30 +254,22 @@ def consume_comment_vote_queue(qname="vote_comment_q"):
         vote.commit()
         timer.intermediate("create_vote_object")
 
-        # update queries
         vote_valid = vote.is_automatic_initial_vote or vote.effects.affects_score
         comment_valid = not (comment._spam or comment._deleted)
+        if vote_valid and comment_valid:
+            author = Account._byID(comment.author_id)
+            add_queries(
+                queries=[get_comments(author, sort, 'all') for sort in SORTS],
+                insert_items=comment,
+            )
+            timer.intermediate("author_queries")
 
-        if not (vote_valid and comment_valid):
-            return
-
-        # these sorts can be changed by voting - we don't need to do "new"
-        # since that's taken care of by new_comment
-        SORTS = ["hot", "top", "controversial"]
-
-        author = Account._byID(comment.author_id)
-        add_queries(
-            queries=[get_comments(author, sort, 'all') for sort in SORTS],
-            insert_items=comment,
-        )
-        timer.intermediate("author_queries")
-
-        # update the score periodically when a comment has many votes
-        update_threshold = g.live_config['comment_vote_update_threshold']
-        update_period = g.live_config['comment_vote_update_period']
-        num_votes = comment.num_votes
-        if num_votes <= update_threshold or num_votes % update_period == 0:
-            add_to_commentstree_q(comment)
+            # update the score periodically when a comment has many votes
+            update_threshold = g.live_config['comment_vote_update_threshold']
+            update_period = g.live_config['comment_vote_update_period']
+            num_votes = comment.num_votes
+            if num_votes <= update_threshold or num_votes % update_period == 0:
+                add_to_commentstree_q(comment)
 
         timer.stop()
         timer.flush()
