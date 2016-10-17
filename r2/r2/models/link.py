@@ -156,10 +156,7 @@ class Link(Thing, Printable):
         if self._id36 in g.live_config["fastlane_links"]:
             return "vote_fastlane_q"
         else:
-            if g.shard_link_vote_queues:
-                return "vote_link_%s_q" % str(self.sr_id)[-1]
-            else:
-                return "vote_link_q"
+            return "vote_link_q"
 
     @property
     def affects_karma_type(self):

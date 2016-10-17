@@ -90,12 +90,6 @@ def declare_queues(g):
         "modmail_email_q": MessageQueue(bind_to_self=True),
     })
 
-    if g.shard_link_vote_queues:
-        sharded_vote_queues = {"vote_link_%d_q" % i :
-                               MessageQueue(bind_to_self=True)
-                               for i in xrange(10)}
-        queues.declare(sharded_vote_queues)
-
     if g.shard_commentstree_queues:
         sharded_commentstree_queues = {"commentstree_%d_q" % i :
                                        MessageQueue(bind_to_self=True)

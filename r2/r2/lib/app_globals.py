@@ -256,7 +256,6 @@ class Globals(object):
             'disable_ads',
             'disable_require_admin_otp',
             'trust_local_proxies',
-            'shard_link_vote_queues',
             'shard_commentstree_queues',
             'authnet_validate',
             'ENFORCE_RATELIMIT',
