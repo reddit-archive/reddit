@@ -89,6 +89,7 @@ def declare_queues(g):
         "event_collector_failed": MessageQueue(bind_to_self=True),
         "modmail_email_q": MessageQueue(bind_to_self=True),
         "author_query_q": MessageQueue(bind_to_self=True),
+        "subreddit_query_q": MessageQueue(bind_to_self=True),
     })
 
     if g.shard_commentstree_queues:
@@ -104,6 +105,12 @@ def declare_queues(g):
         }
         queues.declare(sharded_author_query_queues)
 
+    if g.shard_subreddit_query_queues:
+        sharded_subreddit_query_queues = {
+            "subreddit_query_%d_q" % i: MessageQueue(bind_to_self=True)
+            for i in xrange(10)
+        }
+        queues.declare(sharded_subreddit_query_queues)
 
     queues.cloudsearch_changes << "search_changes"
     queues.scraper_q << ("new_link", "link_text_edited")

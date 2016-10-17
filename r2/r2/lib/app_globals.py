@@ -258,6 +258,7 @@ class Globals(object):
             'trust_local_proxies',
             'shard_commentstree_queues',
             'shard_author_query_queues',
+            'shard_subreddit_query_queues',
             'authnet_validate',
             'ENFORCE_RATELIMIT',
             'RL_SITEWIDE_ENABLED',

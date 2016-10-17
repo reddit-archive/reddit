@@ -30,7 +30,7 @@ from pylons import tmpl_context as c, app_globals as g, request
 from r2.lib import amqp, hooks
 from r2.lib.eventcollector import Event
 from r2.lib.utils import epoch_timestamp, is_subdomain, UrlParser
-from r2.models import Account, Comment, Link
+from r2.models import Account, Comment, Link, Subreddit
 from r2.models.last_modified import LastModified
 from r2.models.query_cache import CachedQueryMutator
 from r2.models.vote import Vote, VotesByAccount
@@ -113,16 +113,6 @@ def update_user_liked(vote):
 SORTS = ["hot", "top", "controversial"]
 
 
-def update_subreddit_queries(link):
-    from r2.lib.db.queries import add_queries, get_links
-
-    sr = link.subreddit_slow
-    add_queries(
-        queries=[get_links(sr, sort, "all") for sort in SORTS],
-        insert_items=link,
-    )
-
-
 def update_domain_queries(link):
     from r2.lib.db.queries import add_queries, get_domain_links
 
@@ -187,9 +177,7 @@ def consume_link_vote_queue(qname="vote_link_q"):
         link_valid = not (link._spam or link._deleted)
         if vote_valid and link_valid:
             add_to_author_query_q(link)
-
-            update_subreddit_queries(link)
-            timer.intermediate("subreddit_queries")
+            add_to_subreddit_query_q(link)
 
             update_domain_queries(link)
             timer.intermediate("domain_queries")
@@ -240,6 +228,51 @@ def consume_author_query_queue(qname="author_query_q", limit=1000):
                 add_queries(
                     queries=[
                         get_submitted(author, sort, 'all') for sort in SORTS],
+                    insert_items=links,
+                )
+
+    amqp.handle_items(qname, process_message, limit=limit)
+
+
+def add_to_subreddit_query_q(link):
+    if g.shard_subreddit_query_queues:
+        subreddit_shard = link.sr_id % 10
+        queue_name = "subreddit_query_%s_q" % subreddit_shard
+    else:
+        queue_name = "subreddit_query_q"
+    amqp.add_item(queue_name, link._fullname)
+
+
+def consume_subreddit_query_queue(qname="subreddit_query_q", limit=1000):
+    @g.stats.amqp_processor(qname)
+    def process_message(msgs, chan):
+        """Update get_links(), the Links by Subreddit precomputed query.
+
+        get_links() is a CachedResult which is stored in permacache. To
+        update these objects we need to do a read-modify-write which requires
+        obtaining a lock. Sharding these updates by subreddit allows us to run
+        multiple consumers (but ideally just one per shard) to avoid lock
+        contention.
+
+        """
+
+        from r2.lib.db.queries import add_queries, get_links
+
+        link_names = {msg.body for msg in msgs}
+        links = Link._by_fullname(link_names, return_dict=False)
+        print 'Processing %r' % (links,)
+
+        links_by_sr_id = defaultdict(list)
+        for link in links:
+            links_by_sr_id[link.sr_id].append(link)
+
+        srs_by_id = Subreddit._byID(links_by_sr_id.keys(), stale=True)
+
+        for sr_id, links in links_by_sr_id.iteritems():
+            with g.stats.get_timer("link_vote_processor.subreddit_queries"):
+                sr = srs_by_id[sr_id]
+                add_queries(
+                    queries=[get_links(sr, sort, "all") for sort in SORTS],
                     insert_items=links,
                 )
 
