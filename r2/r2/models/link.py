@@ -59,7 +59,6 @@ from r2.lib.strings import strings, Score
 from r2.lib.db import tdb_cassandra, sorts
 from r2.lib.db.tdb_cassandra import view_of
 from r2.lib.utils import sanitize_url
-from r2.lib.voting import cast_vote
 from r2.models.gold import (
     GildedCommentsByAccount,
     GildedLinksByAccount,
@@ -218,6 +217,7 @@ class Link(Thing, Printable):
     @classmethod
     def _submit(cls, is_self, title, content, author, sr, ip,
                 sendreplies=True):
+        from r2.lib.voting import cast_vote
         from r2.models import admintools
         from r2.models.comment_tree import CommentTree
 
@@ -1300,6 +1300,8 @@ class Comment(Thing, Printable):
     @classmethod
     def _new(cls, author, link, parent, body, ip):
         from r2.lib.emailer import message_notification_email
+        from r2.lib.voting import cast_vote
+
         subreddit = link.subreddit_slow
 
         # determine whether the comment should go straight into spam
