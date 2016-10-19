@@ -164,7 +164,11 @@ class RavenErrorReporter(Reporter):
 
     @classmethod
     def get_raven_client(cls):
-        repositories = g.versions.keys()
+        app_path_prefixes = [
+            "r2",
+            "reddit_",  # plugins such as 'reddit_liveupdate'
+            "/opt/",    # scripts may be run from /opt/REPO/scripts
+        ]
         release_str = '|'.join(
            "%s:%s" % (repo, commit_hash)
            for repo, commit_hash in sorted(g.versions.items())
@@ -175,7 +179,7 @@ class RavenErrorReporter(Reporter):
             dsn=g.sentry_dsn,
             # use the default transport to send errors from another thread:
             transport=raven.transport.threaded.ThreadedHTTPTransport,
-            include_paths=repositories,
+            include_paths=app_path_prefixes,
             processors=[
                 'raven.processors.SanitizePasswordsProcessor',
                 'r2.lib.log.SanitizeStackLocalsProcessor',
