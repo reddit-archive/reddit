@@ -263,10 +263,6 @@ def consume_subreddit_query_queue(qname="subreddit_query_q", limit=1000):
 
 def add_to_domain_query_q(link):
     parsed = UrlParser(link.url)
-    if is_subdomain(parsed.hostname, 'imgur.com'):
-        # don't build domain listings for imgur
-        return
-
     if not parsed.domain_permutations():
         # no valid domains found
         return
