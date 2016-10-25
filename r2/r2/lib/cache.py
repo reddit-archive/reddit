@@ -325,8 +325,10 @@ class LocalCache(dict, CacheUtils):
     def simple_get_multi(self, keys):
         out = {}
         for k in keys:
-            if self.has_key(k):
+            try:
                 out[k] = self[k]
+            except KeyError:
+                pass
         return out
 
     def set(self, key, val, time = 0):
