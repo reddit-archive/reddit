@@ -345,12 +345,6 @@ class Reddit(Templated):
                     extra_class=infotext_class,
                     show_icon=infotext_show_icon,
                 )
-            elif (isinstance(c.site, DomainSR) and
-                    is_subdomain(c.site.domain, "imgur.com")):
-                self.infobar = RedditInfoBar(message=
-                    _("imgur.com domain listings (including this one) are "
-                      "currently disabled to speed up vote processing.")
-                )
             elif isinstance(c.site, AllMinus) and not c.user.gold:
                 self.infobar = RedditInfoBar(message=strings.all_minus_gold_only,
                                        extra_class="gold")
