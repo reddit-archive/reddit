@@ -1261,11 +1261,19 @@ class ApiController(RedditController):
         OAuth2AccessToken.revoke_all_by_user(c.user)
         OAuth2RefreshToken.revoke_all_by_user(c.user)
 
+    def revoke_sessions_and_login(self, user, password):
+        self.revoke_sessions(user)
+
         # run the change password command to get a new salt
         change_password(c.user, password)
         # the password salt has changed, so the user's cookie has been
         # invalidated.  drop a new cookie.
         self.login(c.user)
+
+    def revoke_sessions(self, user):
+        # deauthorize all access tokens
+        OAuth2AccessToken.revoke_all_by_user(user)
+        OAuth2RefreshToken.revoke_all_by_user(user)
 
     @validatedForm(
         VUser(),
@@ -1324,8 +1332,9 @@ class ApiController(RedditController):
         VModhash(),
         VVerifyPassword("curpass", fatal=False),
         password=VPasswordChange(['newpass', 'verpass']),
+        invalidate_oauth=VBoolean("invalidate_oauth"),
     )
-    def POST_update_password(self, form, jquery, password):
+    def POST_update_password(self, form, jquery, password, invalidate_oauth):
         """Update account password.
 
         Called by /prefs/update on the site. For frontend form verification
@@ -1340,6 +1349,9 @@ class ApiController(RedditController):
         if (password and
             not (form.has_errors("newpass", errors.BAD_PASSWORD) or
                  form.has_errors("verpass", errors.BAD_PASSWORD_MATCH))):
+            if invalidate_oauth:
+                self.revoke_sessions(c.user)
+
             change_password(c.user, password)
 
             if c.user.email:
