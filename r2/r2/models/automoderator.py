@@ -23,6 +23,7 @@
 from datetime import timedelta
 
 from pycassa.cassandra.ttypes import NotFoundException
+from pycassa.system_manager import ASCII_TYPE, UTF8_TYPE
 
 from r2.lib.db import tdb_cassandra
 
@@ -35,9 +36,9 @@ class PerformedRulesByThing(tdb_cassandra.View):
     _write_consistency_level = tdb_cassandra.CL.QUORUM
     _ttl = timedelta(days=3)
     _extra_schema_creation_args = {
-        "key_validation_class": tdb_cassandra.ASCII_TYPE,
-        "column_name_class": tdb_cassandra.ASCII_TYPE,
-        "default_validation_class": tdb_cassandra.UTF8_TYPE,
+        "key_validation_class": ASCII_TYPE,
+        "column_name_class": ASCII_TYPE,
+        "default_validation_class": UTF8_TYPE,
     }
 
     @classmethod

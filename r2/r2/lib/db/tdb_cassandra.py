@@ -39,10 +39,9 @@ from pycassa.system_manager import (
     TIME_UUID_TYPE,
     UTF8_TYPE,
 )
-from pycassa.types import DateType, LongType, IntegerType
+from pycassa.types import DateType
 from pycassa.util import convert_uuid_to_time
 from r2.lib.utils import tup, Storage
-from r2.lib import cache
 from r2.lib.sgm import sgm
 from uuid import uuid1, UUID
 from itertools import chain

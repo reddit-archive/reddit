@@ -20,25 +20,25 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from itertools import chain, izip_longest
+from itertools import chain
 import math
 import random
 from collections import defaultdict
 from datetime import timedelta
 from operator import itemgetter
+from pycassa.types import LongType
 
 from r2.lib import rising
 from r2.lib.db import operators, tdb_cassandra
 from r2.lib.pages import ExploreItem
 from r2.lib.normalized_hot import normalized_hot
 from r2.lib.utils import roundrobin, tup, to36
-from r2.models import Account, Link, Subreddit
+from r2.models import Link, Subreddit
 from r2.models.builder import CommentBuilder
 from r2.models.listing import NestedListing
 from r2.models.recommend import (
     AccountSRPrefs,
     AccountSRFeedback,
-    ExploreSettings,
 )
 
 from pylons import app_globals as g
@@ -269,7 +269,7 @@ def is_visible(sr):
 class SRRecommendation(tdb_cassandra.View):
     _use_db = True
 
-    _compare_with = tdb_cassandra.LongType()
+    _compare_with = LongType()
 
     # don't keep these around if a run hasn't happened lately, or if the last
     # N runs didn't generate recommendations for a given subreddit

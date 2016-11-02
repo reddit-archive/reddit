@@ -20,6 +20,9 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+from pycassa.system_manager import ASCII_TYPE, UTF8_TYPE
+from pycassa.types import LongType
+
 from r2.config import feature
 from r2.lib.db.thing import (
     Thing, Relation, NotFound, MultiRelation, CreationError)
@@ -1120,9 +1123,9 @@ class LinksByUrlAndSubreddit(tdb_cassandra.View):
     _use_db = True
     _connection_pool = 'main'
     _read_consistency_level = tdb_cassandra.CL.ONE
-    _compare_with = tdb_cassandra.LongType()
+    _compare_with = LongType()
     _extra_schema_creation_args = {
-        "key_validation_class": tdb_cassandra.UTF8_TYPE,
+        "key_validation_class": UTF8_TYPE,
     }
 
     @classmethod
@@ -2736,7 +2739,7 @@ class LinksByImage(tdb_cassandra.View):
     _fetch_all_columns = True
 
     _extra_schema_creation_args = {
-        'key_validation_class': tdb_cassandra.ASCII_TYPE,
+        'key_validation_class': ASCII_TYPE,
     }
 
     @classmethod
@@ -2991,7 +2994,7 @@ class CommentVisitsByUser(tdb_cassandra.View):
     _ttl = timedelta(days=2)
     _compare_with = tdb_cassandra.DateType()
     _extra_schema_creation_args = {
-        "key_validation_class": tdb_cassandra.ASCII_TYPE,
+        "key_validation_class": ASCII_TYPE,
     }
     MAX_VISITS = 10
 

@@ -21,11 +21,10 @@
 ###############################################################################
 
 from collections import OrderedDict
-from datetime import datetime, timedelta
+from datetime import datetime
 from uuid import uuid1
 
-from babel.numbers import format_currency
-from pycassa.types import CompositeType
+from pycassa.system_manager import INT_TYPE, TIME_UUID_TYPE, UTF8_TYPE
 from pylons import tmpl_context as c
 from pylons import app_globals as g
 from pylons.i18n import _, N_
@@ -33,9 +32,8 @@ from pylons.i18n import _, N_
 from r2.config import feature
 from r2.lib.unicode import _force_unicode
 from r2.lib.db import tdb_cassandra
-from r2.lib.db.thing import Thing, NotFound
-from r2.lib.memoize import memoize
-from r2.lib.utils import Enum, to_datetime, to_date
+from r2.lib.db.thing import Thing
+from r2.lib.utils import Enum, to_datetime
 from r2.models.subreddit import Subreddit, Frontpage
 
 
@@ -209,11 +207,11 @@ class CollectionStorage(tdb_cassandra.View):
     _use_db = True
     _connection_pool = 'main'
     _extra_schema_creation_args = {
-        "key_validation_class": tdb_cassandra.UTF8_TYPE,
-        "column_name_class": tdb_cassandra.UTF8_TYPE,
-        "default_validation_class": tdb_cassandra.UTF8_TYPE,
+        "key_validation_class": UTF8_TYPE,
+        "column_name_class": UTF8_TYPE,
+        "default_validation_class": UTF8_TYPE,
     }
-    _compare_with = tdb_cassandra.UTF8_TYPE
+    _compare_with = UTF8_TYPE
     _read_consistency_level = tdb_cassandra.CL.ONE
     _write_consistency_level = tdb_cassandra.CL.QUORUM
     SR_NAMES_DELIM = '|'
@@ -675,7 +673,7 @@ def backfill_campaign_targets():
 class PromotionLog(tdb_cassandra.View):
     _use_db = True
     _connection_pool = 'main'
-    _compare_with = tdb_cassandra.TIME_UUID_TYPE
+    _compare_with = TIME_UUID_TYPE
 
     @classmethod
     def _rowkey(cls, link):
@@ -790,9 +788,9 @@ class PromotionPrices(tdb_cassandra.View):
     _read_consistency_level = tdb_cassandra.CL.ONE
     _write_consistency_level = tdb_cassandra.CL.ALL
     _extra_schema_creation_args = {
-        "key_validation_class": tdb_cassandra.UTF8_TYPE,
-        "column_name_class": tdb_cassandra.UTF8_TYPE,
-        "default_validation_class": tdb_cassandra.INT_TYPE,
+        "key_validation_class": UTF8_TYPE,
+        "column_name_class": UTF8_TYPE,
+        "default_validation_class": INT_TYPE,
     }
 
     COLLECTION_DEFAULT = g.cpm_selfserve_collection.pennies

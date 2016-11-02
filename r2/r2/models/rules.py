@@ -24,7 +24,7 @@ import json
 import pytz
 import time
 from datetime import datetime
-from pylons import app_globals as g
+from pycassa.system_manager import UTF8_TYPE
 from pylons.i18n import _
 
 from r2.lib.db import tdb_cassandra
@@ -44,14 +44,15 @@ SITEWIDE_RULES = [
 ]
 MAX_RULES_PER_SUBREDDIT = 10
 
+
 class SubredditRules(tdb_cassandra.View):
     _use_db = True
     _extra_schema_creation_args = {
-        "key_validation_class": tdb_cassandra.UTF8_TYPE,
-        "column_name_class": tdb_cassandra.UTF8_TYPE,
-        "default_validation_class": tdb_cassandra.UTF8_TYPE,
+        "key_validation_class": UTF8_TYPE,
+        "column_name_class": UTF8_TYPE,
+        "default_validation_class": UTF8_TYPE,
     }
-    _compare_with = tdb_cassandra.UTF8_TYPE
+    _compare_with = UTF8_TYPE
     _read_consistency_level = tdb_cassandra.CL.ONE
     _write_consistency_level = tdb_cassandra.CL.ONE
     _connection_pool = "main"

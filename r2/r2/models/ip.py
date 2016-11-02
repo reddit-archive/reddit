@@ -1,6 +1,7 @@
 import datetime
 
 from pycassa.batch import Mutator
+from pycassa.system_manager import ASCII_TYPE
 from pylons import app_globals as g
 import pytz
 
@@ -21,8 +22,8 @@ class IPsByAccount(tdb_cassandra.View):
 
     _use_db = True
     _extra_schema_creation_args = {
-        "key_validation_class": tdb_cassandra.ASCII_TYPE,
-        "default_validation_class": tdb_cassandra.ASCII_TYPE,
+        "key_validation_class": ASCII_TYPE,
+        "default_validation_class": ASCII_TYPE,
     }
     _compare_with = tdb_cassandra.DateType()
     _ttl = CF_TTL
@@ -81,8 +82,8 @@ class AccountsByIP(tdb_cassandra.View):
 
     _use_db = True
     _extra_schema_creation_args = {
-        "key_validation_class": tdb_cassandra.ASCII_TYPE,
-        "default_validation_class": tdb_cassandra.ASCII_TYPE,
+        "key_validation_class": ASCII_TYPE,
+        "default_validation_class": ASCII_TYPE,
     }
     _compare_with = tdb_cassandra.DateType()
     _ttl = CF_TTL

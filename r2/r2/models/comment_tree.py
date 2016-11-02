@@ -22,13 +22,8 @@
 
 from collections import defaultdict
 
-from pycassa import batch, types
-from pycassa.cassandra import ttypes
-from pycassa.system_manager import ASCII_TYPE, COUNTER_COLUMN_TYPE
 from pylons import app_globals as g
 
-from r2.lib import utils
-from r2.lib.db import tdb_cassandra
 from r2.lib.utils import SimpleSillyStub
 from r2.lib.utils.comment_tree_utils import get_tree_details, calc_num_children
 from r2.models.link import Comment
