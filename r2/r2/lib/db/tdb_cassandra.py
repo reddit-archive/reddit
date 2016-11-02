@@ -190,35 +190,6 @@ class ThingMeta(type):
     def __repr__(cls):
         return '<thing: %s>' % cls.__name__
 
-class Counter(object):
-    __metaclass__ = ThingMeta
-
-    _use_db = False
-    _connection_pool = 'main'
-    _extra_schema_creation_args = {
-        'default_validation_class': COUNTER_COLUMN_TYPE,
-        'replicate_on_write': True
-    }
-
-    _type_prefix = None
-    _cf_name = None
-    _compare_with = UTF8_TYPE
-
-    @classmethod
-    def _byID(cls, key):
-        return cls._cf.get(key)
-
-    @classmethod
-    @will_write
-    def _incr(cls, key, column, delta=1, super_column=None):
-        cls._cf.add(key, column, delta, super_column)
-
-    @classmethod
-    @will_write
-    def _incr_multi(cls, key, data):
-        with cls._cf.batch() as b:
-            b.insert(key, data)
-
 
 class ThingBase(object):
     # base class for Thing
