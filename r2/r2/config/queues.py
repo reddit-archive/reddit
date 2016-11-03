@@ -79,7 +79,6 @@ def declare_queues(g):
         "commentstree_fastlane_q": MessageQueue(bind_to_self=True),
         "vote_link_q": MessageQueue(bind_to_self=True),
         "vote_comment_q": MessageQueue(bind_to_self=True),
-        "vote_fastlane_q": MessageQueue(bind_to_self=True),
         "cloudsearch_changes": MessageQueue(bind_to_self=True),
         "butler_q": MessageQueue(),
         "markread_q": MessageQueue(),

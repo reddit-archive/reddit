@@ -152,13 +152,6 @@ class Link(Thing, Printable):
         Thing.__init__(self, *a, **kw)
 
     @property
-    def vote_queue_name(self):
-        if self._id36 in g.live_config["fastlane_links"]:
-            return "vote_fastlane_q"
-        else:
-            return "vote_link_q"
-
-    @property
     def affects_karma_type(self):
         if self.is_self:
             return "self"
@@ -1282,13 +1275,6 @@ class Comment(Thing, Printable):
 
     def _markdown(self):
         pass
-
-    @property
-    def vote_queue_name(self):
-        if utils.to36(self.link_id) in g.live_config["fastlane_links"]:
-            return "vote_fastlane_q"
-        else:
-            return "vote_comment_q"
 
     @property
     def affects_karma_type(self):

@@ -55,6 +55,9 @@ def update_vote_lookups(user, thing, direction):
 
 def cast_vote(user, thing, direction, **data):
     """Register a vote and queue it for processing."""
+    if not isinstance(thing, (Link, Comment)):
+        return
+
     update_vote_lookups(user, thing, direction)
 
     vote_data = {
@@ -84,10 +87,19 @@ def cast_vote(user, thing, direction, **data):
             "context": Event.get_context_data(request, c),
             "sensitive": Event.get_sensitive_context_data(request, c),
         }
+
     try:
-        amqp.add_item(thing.vote_queue_name, json.dumps(vote_data))
+        vote_dump = json.dumps(vote_data)
     except UnicodeDecodeError:
         g.log.error("Got weird unicode in the vote data: %r", vote_data)
+        return
+
+    if isinstance(thing, Link):
+        queue = "vote_link_q"
+    elif isinstance(thing, Comment):
+        queue = "vote_comment_q"
+
+    amqp.add_item(queue, vote_dump)
 
 
 def update_user_liked(vote):
