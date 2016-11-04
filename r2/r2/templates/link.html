@@ -49,10 +49,11 @@
 <%def name="make_link(name, css_class, tabindex=0)">
   <%
     media_override = thing.link_child and getattr(thing, 'media_override', False)
+    url = thing.tracking_link(thing.href_url, thing, name)
   %>
   <a class="${css_class} may-blank ${ c.user_is_loggedin and 'loggedin' or ''}
             ${ media_override and 'open-expando' or '' }"
-     href="${thing.href_url}"
+     href="${url}"
      %if tabindex:
        tabindex="${tabindex}"
      %endif

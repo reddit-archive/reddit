@@ -21,10 +21,13 @@
 ###############################################################################
 
 <%inherit file="comment_skeleton.html"/>
+<%!
+    from r2.models import Link
+%>
 
 
 <%def name="commentBody()">
-<span class="deepthread"><a href="${thing.parent_permalink}">${_("continue this thread")}</a></span>
+<span class="deepthread"><a href="${Link.tracking_link(thing.parent_permalink, thing, context='continue_thread')}">${_("continue this thread")}</a></span>
 </%def>
 
 <%def name="midcol(cls='')">

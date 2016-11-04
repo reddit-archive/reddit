@@ -763,7 +763,7 @@
   <% data_attrs = {"event-action": event_action} if event_action else None %>
   ${plain_link(
       title,
-      link,
+      Link.tracking_link(link, thing, element_name=event_action),
       _class=a_class,
       rel="nofollow",
       _sr_path=sr_path,

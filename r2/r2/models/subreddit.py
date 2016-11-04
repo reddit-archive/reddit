@@ -1777,6 +1777,7 @@ class AllFiltered(Filtered, AllMinus):
 
 
 class _DefaultSR(FakeSubreddit):
+    analytics_name = 'frontpage'
     #notice the space before reddit.com
     name = ' reddit.com'
     path = '/'

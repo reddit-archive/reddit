@@ -20,6 +20,10 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
+<%!
+    from r2.models import Link
+%>
+
 <div class="trending-subreddits">
   <div class="rank-spacer"></div>
   <div class="midcol-spacer"></div>
@@ -27,7 +31,7 @@
     <strong>${_('trending subreddits')}</strong>
     <ul>
     %for i, subreddit_name in enumerate(thing.subreddit_names):
-      <li><a href="/r/${subreddit_name}?ref=trending_sr_${i+1}" target="_blank">/r/${subreddit_name}</a></li>
+      <li><a href="${Link.tracking_link('/r/%s'%subreddit_name, context='trending_subreddits_bar', element_name='trending_sr_%s'%(i+1))}" target="_blank">/r/${subreddit_name}</a></li>
     %endfor
     </ul>
     <a href="${thing.comment_url}" class="${thing.comment_label_cls}">${thing.comment_label}</a>

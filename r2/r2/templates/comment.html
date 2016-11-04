@@ -44,7 +44,10 @@ ${parent.midcol(cls = cls)}
 </%def>
 
 <%def name="link()" buffered="True">
-  <a href="${thing.link.url}" class="title"
+  <%
+    url = thing.link.tracking_link(thing.link.url, thing, "title", site_name=False)
+  %>
+  <a href="${url}" class="title"
      %if thing.nofollow:
        rel="nofollow"
      %endif

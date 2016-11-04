@@ -1991,7 +1991,7 @@ class CommentPane(Templated):
         elif num > 100:
             num = (num / 10) * 10
 
-        _id = make_key_id(
+        cache_key_args = [
             self.article._fullname,
             self.article.contest_mode,
             self.article.locked,
@@ -2007,7 +2007,12 @@ class CommentPane(Templated):
             c.can_embed,
             self.max_depth,
             self.edits_visible,
-        )
+        ]
+
+        if feature.is_enabled("utm_comment_links"):
+            cache_key_args.append("utm_comment_links")
+
+        _id = make_key_id(*cache_key_args)
         key = "pane:%s" % _id
         return key
 

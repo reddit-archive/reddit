@@ -28,6 +28,9 @@ from r2.lib.db.thing import (
     Thing, Relation, NotFound, MultiRelation, CreationError)
 from r2.lib.db.operators import desc
 from r2.lib.errors import RedditError
+from r2.lib.tracking import (
+    get_site,
+)
 from r2.lib.utils import (
     base_url,
     domain,
@@ -471,6 +474,62 @@ class Link(Thing, Printable):
         title = title.replace("]", r"\]")
         return "[%s](%s)" % (title, self.make_permalink_slow())
 
+    @classmethod
+    def tracking_link(cls,
+                      link,
+                      wrapped_thing=None,
+                      element_name=None,
+                      context=None,
+                      site_name=None):
+        """Add utm query parameters to reddit.com links to track navigation.
+
+        context => ?utm_medium (listing page, post listing on hybrid page)
+        site_name => ?utm_name (subreddit that user is currently browsing)
+        element_name => ?utm_content (what element leads to this link)
+        """
+
+        if (c.user_is_admin or
+                not feature.is_enabled('utm_comment_links')):
+            return link
+
+        urlparser = UrlParser(link)
+        if not urlparser.path:
+            # `href="#some_anchor"`
+            return link
+        if urlparser.scheme == 'javascript':
+            return link
+        if not urlparser.is_reddit_url():
+            return link
+
+        query_params = {}
+
+        query_params["utm_source"] = "reddit"
+
+        if context is None:
+            if (hasattr(wrapped_thing, 'context') and
+                    wrapped_thing.context != cls.get_default_context()):
+                context = wrapped_thing.context
+            else:
+                context = request.route_dict["controller"]
+        if context:
+            query_params["utm_medium"] = context
+
+        if element_name:
+            query_params["utm_content"] = element_name
+
+        if site_name is None:
+            site_name = get_site()
+        if site_name:
+            query_params["utm_name"] = site_name
+
+        query_params = {k: v for (k, v) in query_params.iteritems() if (
+                        v is not None)}
+
+        if query_params:
+            urlparser.update_query(**query_params)
+            return urlparser.unparse()
+        return link
+
     def _gild(self, user):
         now = datetime.now(g.tz)
 
@@ -884,6 +943,10 @@ class Link(Thing, Printable):
 
         # Run this last
         Printable.add_props(user, wrapped)
+
+    @classmethod
+    def get_default_context(cls):
+        return request.route_dict["action_name"]
 
     @property
     def post_hint(self):
