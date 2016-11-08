@@ -124,7 +124,10 @@ def _get_featurestate(name):
     :param name string - a given feature name
     :return FeatureState
     """
-    if name not in _featurestate_cache:
-        _featurestate_cache[name] = FeatureState(name, _world)
 
-    return _featurestate_cache[name]
+    featurestate = _featurestate_cache.get(name, None)
+    if featurestate is None:
+        featurestate = FeatureState(name, _world)
+        _featurestate_cache[name] = featurestate
+
+    return featurestate
