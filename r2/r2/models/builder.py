@@ -1198,6 +1198,8 @@ def write_comment_orders(link):
     # (value of 0 means don't write for any value of link.num_comments)
     min_comments = g.live_config['precomputed_comment_sort_min_comments']
     if min_comments and link.num_comments >= min_comments:
+        g.stats.simple_event("CommentOrderer.write_comment_orders.write")
+
         sorts_to_write = set(g.live_config['precomputed_comment_sorts'])
 
         if g.live_config['precomputed_comment_suggested_sort']:
@@ -1216,6 +1218,8 @@ def write_comment_orders(link):
                 CommentOrderer.write_cache(link, sort, timer)
 
             precomputed_sorts.add(sort_name)
+    else:
+        g.stats.simple_event("CommentOrderer.write_comment_orders.noop")
 
     # replace empty set with None to match the Link._defaults value
     link.precomputed_sorts = precomputed_sorts or None
