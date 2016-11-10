@@ -1177,37 +1177,42 @@ class QACommentOrderer(CommentOrderer):
         return comment_tuples
 
 
-def write_comment_orders(link):
-    precomputed_sorts = set()
+def get_active_sort_orders_for_link(link):
+    # only activate precomputed sorts for links with enough comments.
+    # (value of 0 means not active for any value of link.num_comments)
+    min_comments = g.live_config['precomputed_comment_sort_min_comments']
+    if min_comments <= 0 or link.num_comments < min_comments:
+        return set()
 
+    active_sorts = set(g.live_config['precomputed_comment_sorts'])
+    if g.live_config['precomputed_comment_suggested_sort']:
+        suggested_sort = link.sort_if_suggested()
+        if suggested_sort:
+            active_sorts.add(suggested_sort)
+
+    return active_sorts
+
+
+def write_comment_orders(link):
     # we don't really care about getting detailed timings here, the entire
     # process will be timed by the caller
     timer = SimpleSillyStub()
 
-    # only write precomputed sorts for links with enough comments.
-    # (value of 0 means don't write for any value of link.num_comments)
-    min_comments = g.live_config['precomputed_comment_sort_min_comments']
-    if min_comments and link.num_comments >= min_comments:
+    precomputed_sorts = set()
+    for sort_name in get_active_sort_orders_for_link(link):
+        sort = SORT_OPERATOR_BY_NAME.get(sort_name)
+        if not sort:
+            continue
+
+        if sort_name == "qa":
+            QACommentOrderer.write_cache(link, sort, timer)
+        else:
+            CommentOrderer.write_cache(link, sort, timer)
+
+        precomputed_sorts.add(sort_name)
+
+    if precomputed_sorts:
         g.stats.simple_event("CommentOrderer.write_comment_orders.write")
-
-        sorts_to_write = set(g.live_config['precomputed_comment_sorts'])
-
-        if g.live_config['precomputed_comment_suggested_sort']:
-            suggested_sort = link.sort_if_suggested()
-            if suggested_sort:
-                sorts_to_write.add(suggested_sort)
-
-        for sort_name in sorts_to_write:
-            sort = SORT_OPERATOR_BY_NAME.get(sort_name)
-            if not sort:
-                continue
-
-            if sort_name == "qa":
-                QACommentOrderer.write_cache(link, sort, timer)
-            else:
-                CommentOrderer.write_cache(link, sort, timer)
-
-            precomputed_sorts.add(sort_name)
     else:
         g.stats.simple_event("CommentOrderer.write_comment_orders.noop")
 
