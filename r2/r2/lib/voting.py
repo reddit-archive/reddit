@@ -330,11 +330,13 @@ def consume_domain_query_queue(qname="domain_query_q", limit=1000):
 def consume_comment_vote_queue(qname="vote_comment_q"):
     @g.stats.amqp_processor(qname)
     def process_message(msg):
+        from r2.lib.comment_tree import write_comment_scores
         from r2.lib.db.queries import (
             add_queries,
             add_to_commentstree_q,
             get_comments,
         )
+        from r2.models.builder import get_active_sort_orders_for_link
 
         vote_data = json.loads(msg.body)
         hook = hooks.get_hook('vote.validate_vote_data')
@@ -395,9 +397,18 @@ def consume_comment_vote_queue(qname="vote_comment_q"):
         # updates will be handled by new_comment. Also only update scores
         # periodically once a comment has many votes.
         if not vote.is_automatic_initial_vote and not skip_score_update:
-            # send this comment to commentstree_q where we will update
-            # CommentScoresByLink, CommentTree (noop), and CommentOrderer
-            add_to_commentstree_q(comment)
+            # check whether this link is using precomputed sorts, if it is
+            # we'll need to push an update to commentstree_q
+            link = Link._byID(comment.link_id)
+            if get_active_sort_orders_for_link(link):
+                # send this comment to commentstree_q where we will update
+                # CommentScoresByLink, CommentTree (noop), and CommentOrderer
+                add_to_commentstree_q(comment)
+            else:
+                # the link isn't using precomputed sorts, so just update the
+                # scores
+                write_comment_scores(link, [comment])
+                timer.intermediate("update_scores")
 
         timer.stop()
         timer.flush()
