@@ -371,22 +371,33 @@ def consume_comment_vote_queue(qname="vote_comment_q"):
         vote.commit()
         timer.intermediate("create_vote_object")
 
-        vote_valid = vote.is_automatic_initial_vote or vote.effects.affects_score
-        comment_valid = not (comment._spam or comment._deleted)
-        if vote_valid and comment_valid:
-            author = Account._byID(comment.author_id)
-            add_queries(
-                queries=[get_comments(author, sort, 'all') for sort in SORTS],
-                insert_items=comment,
-            )
-            timer.intermediate("author_queries")
+        vote_invalid = (not vote.effects.affects_score and
+            not vote.is_automatic_initial_vote)
+        comment_invalid = comment._spam or comment._deleted
+        if vote_invalid or comment_invalid:
+            timer.stop()
+            timer.flush()
+            return
 
-            # update the score periodically when a comment has many votes
-            update_threshold = g.live_config['comment_vote_update_threshold']
-            update_period = g.live_config['comment_vote_update_period']
-            num_votes = comment.num_votes
-            if num_votes <= update_threshold or num_votes % update_period == 0:
-                add_to_commentstree_q(comment)
+        author = Account._byID(comment.author_id)
+        add_queries(
+            queries=[get_comments(author, sort, 'all') for sort in SORTS],
+            insert_items=comment,
+        )
+        timer.intermediate("author_queries")
+
+        update_threshold = g.live_config['comment_vote_update_threshold']
+        update_period = g.live_config['comment_vote_update_period']
+        skip_score_update = (comment.num_votes > update_threshold and
+            comment.num_votes % update_period != 0)
+
+        # skip updating scores if this was the automatic initial vote. those
+        # updates will be handled by new_comment. Also only update scores
+        # periodically once a comment has many votes.
+        if not vote.is_automatic_initial_vote and not skip_score_update:
+            # send this comment to commentstree_q where we will update
+            # CommentScoresByLink, CommentTree (noop), and CommentOrderer
+            add_to_commentstree_q(comment)
 
         timer.stop()
         timer.flush()
