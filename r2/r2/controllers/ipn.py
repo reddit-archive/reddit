@@ -927,6 +927,7 @@ class StripeController(GoldPaymentController):
         'customer.subscription.deleted': 'deleted_subscription',
         'customer.subscription.trial_will_end': 'noop',
         'customer.subscription.updated': 'noop',
+        'review.opened': 'noop',
         'dummy': 'noop',
     }
 
