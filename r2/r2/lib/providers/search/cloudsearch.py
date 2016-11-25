@@ -51,6 +51,7 @@ from r2.lib.providers.search.common import (
 import r2.lib.utils as r2utils
 from r2.models import (
     Account,
+    AllMinus,
     DomainSR,
     FakeSubreddit,
     FriendsSR,
@@ -751,7 +752,7 @@ class LinkSearchQuery(CloudSearchQuery):
     @staticmethod
     def _restrict_sr(sr):
         '''Return a cloudsearch appropriate query string that restricts
-        results to only contain results from self.sr
+        results to only contain results from sr
         
         '''
         if isinstance(sr, MultiReddit):
@@ -760,7 +761,7 @@ class LinkSearchQuery(CloudSearchQuery):
             srs = ["sr_id:%s" % sr_id for sr_id in sr.sr_ids]
             return "(or %s)" % ' '.join(srs)
         elif isinstance(sr, DomainSR):
-            return "site:'%s'" % sr.domain
+            return "site:'\"%s\"'" % sr.domain
         elif isinstance(sr, FriendsSR):
             if not c.user_is_loggedin or not c.user.friends:
                 raise InvalidQuery
@@ -771,6 +772,11 @@ class LinkSearchQuery(CloudSearchQuery):
                        Account._fullname_from_id36(r2utils.to36(id_))
                        for id_ in friend_ids]
             return "(or %s)" % ' '.join(friends)
+        elif isinstance(sr, AllMinus):
+            if not sr.exclude_sr_ids:
+                raise InvalidQuery
+            exclude_srs = ["sr_id:%s" % sr_id for sr_id in sr.exclude_sr_ids]
+            return "(not (or %s))" % ' '.join(exclude_srs)
         elif not isinstance(sr, FakeSubreddit):
             return "sr_id:%s" % sr._id
 

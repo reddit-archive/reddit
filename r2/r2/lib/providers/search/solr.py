@@ -52,12 +52,12 @@ import r2.lib.utils as r2utils
 from r2.models import (
         Account, 
         All, 
+        AllMinus,
         DefaultSR,
         DomainSR, 
         FakeSubreddit, 
         Friends, 
         Link, 
-        ModContribSR,
         MultiReddit, 
         NotFound,
         Subreddit, 
@@ -337,7 +337,7 @@ class LinkSearchQuery(SolrSearchQuery):
     @staticmethod
     def _get_sr_restriction(sr):
         '''Return a solr-appropriate query string that restricts
-        results to only contain results from self.sr
+        results to only contain results from sr
         
         '''
         bq = []
@@ -356,9 +356,9 @@ class LinkSearchQuery(SolrSearchQuery):
                        Account._fullname_from_id36(r2utils.to36(id_))
                        for id_ in friend_ids]
             bq.extend(friends)
-        elif isinstance(sr, ModContribSR):
-            for sr_id in sr.sr_ids:
-                bq.append("sr_id:%s" % sr_id)
+        elif isinstance(sr, AllMinus):
+            for sr_id in sr.exclude_sr_ids:
+                bq.append("-sr_id:%s" % sr_id)
         elif not isinstance(sr, FakeSubreddit):
             bq = ["sr_id:%s" % sr._id]
         return ' OR '.join(bq)
