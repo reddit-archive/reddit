@@ -774,7 +774,7 @@ class UserController(ListingController):
         if self.where == 'saved' and c.user.gold:
             srnames = LinkSavesBySubreddit.get_saved_subreddits(self.vuser)
             srnames += CommentSavesBySubreddit.get_saved_subreddits(self.vuser)
-            srs = Subreddit._by_name(srnames)
+            srs = Subreddit._by_name(set(srnames), stale=True)
             srnames = [name for name, sr in srs.iteritems()
                             if sr.can_view(c.user)]
             srnames = sorted(set(srnames), key=lambda name: name.lower())
