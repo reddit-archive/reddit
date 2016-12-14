@@ -34,10 +34,10 @@
 %>
 
 <div hidden class="mobile-web-redirect-bar">
-  <div class="mobile-web-redirect-header">${_("You've been invited to try out reddit's new beta mobile website!")}</div>
+  <div class="mobile-web-redirect-header">${_("You've been invited to try out reddit's new mobile website!")}</div>
 
   <a href="${mobile_web_url()}"
-     class="mobile-web-redirect-optin">${_("try reddit's beta website")}</a>
+     class="mobile-web-redirect-optin">${_("try reddit's mobile website")}</a>
 
   <a href="#" class="mobile-web-redirect-optout">${_("No thanks")}</a>
 </div>
