@@ -88,7 +88,8 @@ multi_description_json_spec = VValidatedJSON.Object({
 
 
 class MultiApiController(RedditController):
-    on_validation_error = staticmethod(abort_with_error)
+    def on_validation_error(self, error):
+        abort_with_error(error, error.code or 400)
 
     def pre(self):
         set_extension(request.environ, "json")
