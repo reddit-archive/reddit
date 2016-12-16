@@ -467,9 +467,6 @@ def make_map(config):
     mc('/socialite', controller='redirect', action='redirect',
        dest='https://addons.mozilla.org/firefox/addon/socialite/')
 
-    mc('/mobile', controller='redirect', action='redirect',
-       dest='https://m.reddit.com/')
-
     # Used for showing ads
     mc("/ads/", controller="ad", action="ad")
 
