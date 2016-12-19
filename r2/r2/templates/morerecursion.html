@@ -27,7 +27,17 @@
 
 
 <%def name="commentBody()">
-<span class="deepthread"><a href="${Link.tracking_link(thing.parent_permalink, thing, context='continue_thread')}">${_("continue this thread")}</a></span>
+<%
+  url = thing.parent_permalink
+  inbound_tracking_url = Link.tracking_link(thing.parent_permalink, thing, context='continue_thread')
+%>
+<span class="deepthread"><a
+    href="${url}"
+    %if inbound_tracking_url != url:
+      data-href-url="${url}"
+      data-inbound-url="${inbound_tracking_url}"
+    %endif
+    >${_("continue this thread")}</a></span>
 </%def>
 
 <%def name="midcol(cls='')">

@@ -761,10 +761,20 @@
 </%def>
 
 <%def name="bylink_button(title, link, sr_path=True, a_class='bylink', event_action=None)">
-  <% data_attrs = {"event-action": event_action} if event_action else None %>
+  <%
+    data_attrs = {}
+
+    if event_action:
+      data_attrs["event-action"] = event_action
+
+    inbound_tracking_url = Link.tracking_link(link, thing, element_name=event_action)
+    if inbound_tracking_url != link:
+      data_attrs["href-url"] = link
+      data_attrs["inbound-url"] = inbound_tracking_url
+  %>
   ${plain_link(
       title,
-      Link.tracking_link(link, thing, element_name=event_action),
+      link,
       _class=a_class,
       rel="nofollow",
       _sr_path=sr_path,

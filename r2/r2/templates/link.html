@@ -49,7 +49,12 @@
 <%def name="make_link(name, css_class, tabindex=0)">
   <%
     media_override = thing.link_child and getattr(thing, 'media_override', False)
-    url = thing.tracking_link(thing.href_url, thing, name)
+    if thing.is_self:
+      url = thing.href_url
+      inbound_tracking_url = thing.tracking_link(url, thing, name)
+    else:
+      url = thing.href_url
+      inbound_tracking_url = None
   %>
   <a class="${css_class} may-blank ${ c.user_is_loggedin and 'loggedin' or ''}
             ${ media_override and 'open-expando' or '' }"
@@ -59,6 +64,10 @@
      %endif
      %if thing.nofollow:
        rel="nofollow"
+     %endif
+     %if inbound_tracking_url and inbound_tracking_url != url:
+       data-href-url="${url}"
+       data-inbound-url="${inbound_tracking_url}"
      %endif
      >
      ${caller.body()}

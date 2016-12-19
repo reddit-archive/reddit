@@ -45,9 +45,19 @@ ${parent.midcol(cls = cls)}
 
 <%def name="link()" buffered="True">
   <%
-    url = thing.link.tracking_link(thing.link.url, thing, "title", site_name=False)
+
+    if thing.link.is_self:
+      url = thing.link.url
+      inbound_tracking_url = thing.link.tracking_link(url, thing, "title", site_name=False)
+    else:
+      url = thing.link.url
+      inbound_tracking_url = None
   %>
   <a href="${url}" class="title"
+     %if inbound_tracking_url and inbound_tracking_url != url:
+       data-inbound-url="${inbound_tracking_url}"
+       data-href-url="${url}"
+     %endif
      %if thing.nofollow:
        rel="nofollow"
      %endif

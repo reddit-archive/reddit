@@ -147,8 +147,13 @@ from r2.lib.subreddit_search import popular_searches
 from r2.lib.memoize import memoize
 from r2.lib.utils import trunc_string as _truncate, to_date
 from r2.lib.filters import safemarkdown
-from r2.lib.utils import Storage, tup, url_is_embeddable_image
-from r2.lib.utils import precise_format_timedelta
+from r2.lib.utils import (
+    Storage,
+    feature_utils,
+    precise_format_timedelta,
+    tup,
+    url_is_embeddable_image,
+)
 from r2.lib.cache import make_key_id, MemcachedError
 
 from babel.numbers import format_currency
@@ -2003,7 +2008,7 @@ class CommentPane(Templated):
             self.edits_visible,
         ]
 
-        if feature.is_enabled("utm_comment_links"):
+        if feature_utils.is_tracking_link_enabled(self.article):
             cache_key_args.append("utm_comment_links")
 
         _id = make_key_id(*cache_key_args)

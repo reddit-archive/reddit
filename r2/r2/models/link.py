@@ -35,6 +35,7 @@ from r2.lib.utils import (
     base_url,
     domain,
     epoch_timestamp,
+    feature_utils,
     strip_www,
     timesince,
     title_to_url,
@@ -938,8 +939,13 @@ class Link(Thing, Printable):
             # This is passed in promotedlink.html
             item.ads_auction_enabled = feature.is_enabled('ads_auction')
 
+            if feature_utils.is_tracking_link_enabled(item):
+                # Split cache for template rendered with tracking link
+                item.use_tracking_link = True
+
         if user_is_loggedin:
             incr_counts(wrapped)
+
 
         # Run this last
         Printable.add_props(user, wrapped)
