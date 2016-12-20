@@ -27,7 +27,7 @@
    from r2.lib import tracking
 %>
 <%namespace file="utils.html" import="js_setup, googleanalytics, googletagmanager, classes"/>
-<html xmlns="http://www.w3.org/1999/xhtml" lang="${c.lang}" 
+<html xmlns="http://www.w3.org/1999/xhtml" lang="${c.lang}"
       xml:lang="${c.lang}">
   <head>
     <title>${self.Title()}</title>
@@ -37,9 +37,6 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <link type="application/opensearchdescription+xml" rel="search" href="/static/opensearch.xml"/>
     <link rel="canonical" href="${thing.canonical_link}" />
-    %if hasattr(thing, 'mobile_link'):
-        <link rel="alternate" media="only screen and (max-width: 640px)" href="${thing.mobile_link}" />
-    %endif
     ${self.viewport()}
     ${self.robots()}
     ${self.pagemeta()}
