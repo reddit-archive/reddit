@@ -329,6 +329,10 @@ r.analytics = {
       var a = document.createElement('a');
       a.href = window.location.href;
       a.search = $.param(strippedParams);
+      if (!a.search) {
+        // Safari leaves a trailing ? when search is empty
+        a.href = a.href.replace(/\?(#.+)?$/, a.hash);
+      }
 
       window.history.replaceState({}, document.title, a.href);
     }
