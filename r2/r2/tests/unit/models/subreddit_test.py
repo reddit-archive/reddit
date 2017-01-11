@@ -228,7 +228,7 @@ class ByNameTest(unittest.TestCase):
         self.cache.set_multi.assert_called_once_with(
             keys={sr.name: sr._id},
             prefix="srid:",
-            time=3600,
+            time=43200,
         )
 
     def testCacheNegativeResults(self):
@@ -242,7 +242,7 @@ class ByNameTest(unittest.TestCase):
         self.cache.set_multi.assert_called_once_with(
             keys={"doesnotexist": Subreddit.SRNAME_NOTFOUND},
             prefix="srid:",
-            time=3600,
+            time=43200,
         )
 
     def testExcludeNegativeLookups(self):

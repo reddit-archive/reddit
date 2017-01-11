@@ -410,6 +410,7 @@ class Subreddit(Thing, Printable, BaseSite):
     _specials = {}
 
     SRNAME_NOTFOUND = "n"
+    SRNAME_TTL = int(datetime.timedelta(hours=12).total_seconds())
 
     @classmethod
     def _by_name(cls, names, stale=False, _update = False):
@@ -478,7 +479,7 @@ class Subreddit(Thing, Printable, BaseSite):
                         g.gencache.set_multi(
                             keys=fetched,
                             prefix='srid:',
-                            time=3600,
+                            time=cls.SRNAME_TTL,
                         )
                     except MemcachedError:
                         pass
