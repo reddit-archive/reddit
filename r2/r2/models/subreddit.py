@@ -468,7 +468,8 @@ class Subreddit(Thing, Printable, BaseSite):
                         optimize_rules=True,
                         data=True,
                     )
-                    fetched = {sr.name.lower(): sr._id for sr in q}
+                    with g.stats.get_timer('subreddit_by_name'):
+                        fetched = {sr.name.lower(): sr._id for sr in q}
                     srids_by_name.update(fetched)
 
                     still_missing = set(srnames) - set(fetched)
