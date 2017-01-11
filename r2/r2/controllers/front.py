@@ -1158,11 +1158,9 @@ class FrontController(RedditController):
         else:
             include_over18 = True
 
-        # do not request facets for api requests, unless specifically requested
-        if is_api():
-            faceting = None if include_facets else {}
-        else:
-            faceting = None
+        # do not request facets--they are not popular with users and result in
+        # looking up unpopular subreddits (which is bad for site performance)
+        faceting = {}
 
         # no subreddit results if fielded search or structured syntax
         if syntax == 'cloudsearch' or (query and ':' in query):
