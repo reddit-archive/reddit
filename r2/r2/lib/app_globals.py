@@ -235,6 +235,7 @@ class Globals(object):
             'RL_LOGIN_AVG_PER_SEC',
             'RL_LOGIN_IP_AVG_PER_SEC',
             'RL_SHARE_AVG_PER_SEC',
+            'tracing_sample_rate',
         ],
 
         ConfigValue.bool: [
@@ -345,6 +346,7 @@ class Globals(object):
 
         ConfigValue.baseplate(baseplate_config.Optional(baseplate_config.Endpoint)): [
             "activity_endpoint",
+            "tracing_endpoint",
         ],
 
         ConfigValue.dict(ConfigValue.str, ConfigValue.str): [
@@ -476,6 +478,11 @@ class Globals(object):
         self.baseplate = Baseplate()
         self.baseplate.configure_logging()
         self.baseplate.register(R2BaseplateObserver())
+        self.baseplate.configure_tracing(
+            service_name="r2",
+            tracing_endpoint=self.config.get("tracing_endpoint"),
+            sample_rate=self.config.get("tracing_sample_rate"),
+        )
 
         self.paths = paths
 
