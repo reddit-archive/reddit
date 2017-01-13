@@ -1031,6 +1031,10 @@ class MinimalController(BaseController):
 
         c.request_timer.intermediate("post")
 
+        # add tags to the trace
+        c.trace.set_tag("user", c.user._fullname if c.user_is_loggedin else None)
+        c.trace.set_tag("render_style", c.render_style)
+
         # push data to statsd
         baseplate_integration.finish_server_span()
         c.request_timer.stop()
