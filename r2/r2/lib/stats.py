@@ -576,17 +576,36 @@ class StatsCollectingConnectionPool(pool.ConnectionPool):
         # of the response from cassandra.
         def instrument(f, get_cf_name, size_sample=0.01):
             def call_with_instrumentation(*args, **kwargs):
+                from pylons import tmpl_context as c
+
                 cf_name = get_cf_name(args, kwargs)
+                method_name = f.__name__
+
+                try:
+                    c.trace
+                except TypeError:
+                    # the tmpl_context global isn't available out of request
+                    cassandra_child_trace = utils.SimpleSillyStub()
+                else:
+                    if c.trace:
+                        cassandra_child_trace = c.trace.make_child("cassandra")
+                        cassandra_child_trace.set_tag("column_family", cf_name)
+                        cassandra_child_trace.set_tag("method", method_name)
+                    else:
+                        cassandra_child_trace = utils.SimpleSillyStub()
+
                 start = time.time()
                 try:
-                    result = f(*args, **kwargs)
-                    if random.random() < size_sample:
-                        record_size(f.__name__, cf_name, result)
+                    with cassandra_child_trace:
+                        result = f(*args, **kwargs)
                 except:
-                    record_error(f.__name__, cf_name, start, time.time())
+                    record_error(method_name, cf_name, start, time.time())
                     raise
                 else:
-                    record_success(f.__name__, cf_name, start, time.time())
+                    if random.random() < size_sample:
+                        record_size(method_name, cf_name, result)
+
+                    record_success(method_name, cf_name, start, time.time())
                     return result
             return call_with_instrumentation
 
