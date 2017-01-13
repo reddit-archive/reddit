@@ -392,12 +392,31 @@ class Stats:
 
     def pg_before_cursor_execute(self, conn, cursor, statement, parameters,
                                context, executemany):
+        from pylons import tmpl_context as c
+
         context._query_start_time = time.time()
+
+        try:
+            c.trace
+        except TypeError:
+            # the tmpl_context global isn't available out of request
+            return
+
+        if c.trace:
+            context.pg_child_trace = c.trace.make_child("postgres")
+            context.pg_child_trace.start()
 
     def pg_after_cursor_execute(self, conn, cursor, statement, parameters,
                               context, executemany):
         dsn = dict(part.split('=', 1)
                    for part in context.engine.url.query['dsn'].split())
+
+        if getattr(context, "pg_child_trace", None):
+            context.pg_child_trace.set_tag("host", dsn["host"])
+            context.pg_child_trace.set_tag("db", dsn["dbname"])
+            context.pg_child_trace.set_tag("statement", statement)
+            context.pg_child_trace.finish()
+
         start = context._query_start_time
         self.pg_event(dsn['host'], dsn['dbname'], start, time.time())
 
