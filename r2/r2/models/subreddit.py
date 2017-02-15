@@ -2630,9 +2630,15 @@ class DomainSR(FakeSubreddit):
         self.name = domain
         self.title = _("%(domain)s on %(reddit.com)s") % {
             "domain": domain, "reddit.com": g.domain}
-        idn = domain.decode('idna')
-        if idn != domain:
-            self.idn = idn
+        try:
+            idn = domain.decode('idna')
+            if idn != domain:
+                self.idn = idn
+        except UnicodeError:
+            # If we were given a bad domain name (e.g. xn--.com) we'll get an
+            # error here. These domains are invalid to register so it should
+            # be fine to ignore the error.
+            pass
 
     def get_links(self, sort, time):
         from r2.lib.db import queries
