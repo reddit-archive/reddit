@@ -50,7 +50,6 @@ from r2.lib.filters import _force_unicode
 from r2.lib.jsontemplates import get_trimmed_sr_dicts
 from r2.lib.utils import (
     long_datetime,
-    shuffle_slice,
     SimpleSillyStub,
     Storage,
     to36,
@@ -847,6 +846,15 @@ class CommentOrdererBase(object):
                 self.link, sort_name, comment_tree.cids, comment_tree_timer)
             comment_tree_timer.intermediate('get_scores')
 
+        if isinstance(self.sort, operators.shuffled):
+            # randomize the scores of top level comments
+            top_level_ids = comment_tree.tree.get(None, [])
+            top_level_scores = [
+                sorter[comment_id] for comment_id in top_level_ids]
+            shuffle(top_level_scores)
+            for i, comment_id in enumerate(top_level_ids):
+                sorter[comment_id] = top_level_scores[i]
+
         self.timer.intermediate("load_storage")
 
         comment_tree = self.modify_comment_tree(comment_tree)
@@ -1481,14 +1489,6 @@ class CommentBuilder(Builder):
                 final.append(comment)
 
         self.timer.intermediate("build_comments")
-
-        if isinstance(self.sort, operators.shuffled):
-            # If we have a sticky comment, do not shuffle the first element
-            # of the list.
-            if len(final) > 0 and final[0]._id == self.link.sticky_comment_id:
-                shuffle_slice(final, 1)
-            else:
-                shuffle(final)
 
         if not self.load_more:
             timer.stop()
