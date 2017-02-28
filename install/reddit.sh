@@ -596,6 +596,15 @@ set_consumer_count domain_query_q 1
 
 chown -R $REDDIT_USER:$REDDIT_GROUP $CONSUMER_CONFIG_ROOT/
 
+###############################################################################
+# Complete plugin setup, if setup.sh exists
+###############################################################################
+for plugin in $REDDIT_AVAILABLE_PLUGINS; do
+    if [ -x $REDDIT_SRC/$plugin/setup.sh ]; then
+        echo "Found setup.sh for $plugin; running setup script"
+        $REDDIT_SRC/$plugin/setup.sh $REDDIT_SRC $REDDIT_USER
+    fi
+done
 
 ###############################################################################
 # Start everything up
@@ -635,16 +644,6 @@ PGPASSWORD=password
 #0    0 * * * root /sbin/start --quiet reddit-job-update_gold_users
 CRON
 fi
-
-###############################################################################
-# Complete plugin setup, if setup.sh exists
-###############################################################################
-for plugin in $REDDIT_AVAILABLE_PLUGINS; do
-    if [ -x $REDDIT_SRC/$plugin/setup.sh ]; then
-        echo "Found setup.sh for $plugin; running setup script"
-        $REDDIT_SRC/$plugin/setup.sh $REDDIT_SRC $REDDIT_USER
-    fi
-done
 
 ###############################################################################
 # Finished with install script
