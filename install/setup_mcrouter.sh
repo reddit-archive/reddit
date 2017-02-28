@@ -94,3 +94,15 @@ if [ ! -f /etc/mcrouter/global.conf ]; then
 }
 MCROUTER
 fi
+
+# this file is sourced by the default mcrouter upstart config, see
+# /etc/init/mcrouter.conf
+cat > /etc/default/mcrouter <<MCROUTER_DEFAULT
+MCROUTER_FLAGS="-f /etc/mcrouter/global.conf -L /var/log/mcrouter/mcrouter.log -p 5050 -R /././ --stats-root=/var/mcrouter/stats"
+MCROUTER_DEFAULT
+
+# set an upstart override so mcrouter starts when reddit starts
+echo "start on networking or reddit-start" > /etc/init/mcrouter.override
+
+# restart mcrouter to read the updated config
+service mcrouter restart
