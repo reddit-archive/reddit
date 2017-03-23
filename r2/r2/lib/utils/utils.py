@@ -1534,6 +1534,7 @@ class Bomb(object):
     def __repr__(cls):
         raise Hell()
 
+
 class SimpleSillyStub(object):
     """A simple stub object that does nothing when you call its methods."""
     def __nonzero__(self):
@@ -1544,6 +1545,9 @@ class SimpleSillyStub(object):
 
     def stub(self, *args, **kwargs):
         pass
+
+    __exit__ = __enter__ = stub
+
 
 def strordict_fullname(item, key='fullname'):
     """Sometimes we migrate AMQP queues from simple strings to pickled
