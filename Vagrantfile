@@ -11,7 +11,6 @@
 # about:      {ROOTDIR}/about
 # gold:       {ROOTDIR}/gold
 # liveupdate: {ROOTDIR}/liveupdate
-# private:    {ROOTDIR}/private
 #
 # All plugins are optional. A plugin will only be installed if it is listed
 # in `plugins` AND it is located in a directory that both follows the plugin
@@ -50,7 +49,6 @@ plugins = [
   "about",
   "gold",
   "liveupdate",
-  "private",
 ]
 
 # overlayfs directories
