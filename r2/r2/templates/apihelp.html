@@ -126,7 +126,6 @@
 <div class="contents">
   <div class="section introduction">
     <p>This is automatically-generated documentation for the reddit API.</p>
-    <p>The reddit API and code are&#32;<a href="/code">open source</a>. Found a mistake or interested in helping us improve? Have a gander at&#32;<a href="https://github.com/reddit/reddit/blob/master/r2/r2/controllers/api.py">api.py</a>&#32;and send us a pull request.</p>
     <p><strong>Please take care to respect our&#32;<a href="https://github.com/reddit/reddit/wiki/API">API access rules</a>.</strong></p>
   </div>
 
@@ -229,9 +228,6 @@ of this behaviour, add a `raw_json=1` parameter to your request.
           %>
           <div class="endpoint" id="${api_method_id(uri, method)}">
             <div class="links">
-              %if docs.get('lineno') and docs.get('relfilepath'):
-                <a href="${docs["source_root_url"]}${docs['relfilepath']}#L${docs['lineno']}">view code</a>
-              %endif
               <a href="#${api_method_id(uri, method)}">#</a>
             </div>
             <h3>
