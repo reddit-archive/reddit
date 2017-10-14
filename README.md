@@ -1,31 +1,22 @@
-# reddit
+## This repository is archived.
 
-<img src="https://secure.gravatar.com/avatar/c638493729c2f009988c9e5bd9b5e116?s=200" align="right">
+This repository is archived and will not receive any updates or accept issues or pull requests.
 
-Greetings!
+To report bugs in reddit.com please make a post in [/r/bugs](http://www.reddit.com/r/bugs).
 
-This is the primary codebase that powers [reddit.com](http://www.reddit.com).
-
-For notices about major changes and general discussion of reddit development, subscribe to the [/r/redditdev](http://www.reddit.com/r/redditdev) and [/r/changelog](http://www.reddit.com/r/changelog) subreddits. 
-
-You can also chat with us via IRC in [#reddit-dev on freenode](http://webchat.freenode.net/?channels=reddit-dev).
+If you have found a bug that can in some way compromise the security of the
+site or its users, please exercise [responsible
+disclosure](http://www.reddit.com/wiki/whitehat) and e-mail
+security@reddit.com.
 
 ---
 
-### Quickstart
+### API
 
-To set up your own instance of reddit to develop with, we have a handy [install script for Ubuntu](https://github.com/reddit/reddit/wiki/reddit-install-script-for-Ubuntu) that will automatically install and configure most of the stack.
-
-Alternatively, refer to our [Install Guide](https://github.com/reddit/reddit/wiki/Install-guide) for instructions on setting up reddit from scratch. Many frequently asked questions regarding local reddit installs are covered in our [FAQ](https://github.com/reddit/reddit/wiki/FAQ).
-
-### APIs
+For notices about reddit API changes and discussion of reddit API client development, subscribe to the [/r/redditdev](http://www.reddit.com/r/redditdev) and [/r/changelog](http://www.reddit.com/r/changelog) subreddits.
 
 To learn more about reddit's API, check out our [automated API documentation](http://www.reddit.com/dev/api) and the [API wiki page](https://github.com/reddit/reddit/wiki/API). Please use a unique User-Agent string and take care to abide by our [API rules](https://github.com/reddit/reddit/wiki/API#wiki-rules).
 
-Happy hacking!
+### Quickstart
 
-### Issues and Contribution Guidelines
-
-Thanks for wanting to help make reddit better! First things first, though: **github issues is only for _confirmed_, active bugs**. Please submit ideas to [/r/ideasfortheadmins](https://www.reddit.com/r/ideasfortheadmins/).
-
-Please read more on contributions in [CONTRIBUTING.md](CONTRIBUTING.md).
+To set up your own instance of reddit see the [install guide](https://github.com/reddit/reddit/wiki/Install-guide).
