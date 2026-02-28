@@ -1374,6 +1374,10 @@ class VSubmitSR(Validator):
             self.set_error(errors.SUBREDDIT_REQUIRED)
             return None
 
+        if sr_name.lower() == 'the_donald':
+            self.set_error(errors.USER_MUTED) # ¯\_(ツ)_/¯
+            return
+
         try:
             sr_name = sr_path_rx.sub('\g<name>', str(sr_name).strip())
             sr = Subreddit._by_name(sr_name)
